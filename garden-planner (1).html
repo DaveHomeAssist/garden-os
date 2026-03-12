@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raised Bed Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #6b4226;
+    --soil-light: #8b5e3c;
+    --leaf: #4a7c59;
+    --leaf-bright: #6ab04c;
+    --sun: #f5c842;
+    --sky: #e8f4f8;
+    --cream: #faf6ef;
+    --text: #2c1810;
+    --text-light: #6b5040;
+    --border: #d4b896;
+    --warn: #e07b39;
+    --good: #4a7c59;
+    --bad: #c0392b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--soil);
+    color: #faf0e0;
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 4px solid var(--sun);
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    opacity: 0.75;
+    margin-top: 0.25rem;
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 100px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: #f3ede4;
+    border-right: 2px solid var(--border);
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--soil);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-light);
+    margin-bottom: 0.3rem;
+  }
+
+  select, input[type="range"] {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  select {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b4226' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 2rem;
+  }
+
+  select:focus { outline: none; border-color: var(--soil); }
+
+  .sun-slider { display: flex; align-items: center; gap: 0.75rem; }
+  .sun-slider input { flex: 1; accent-color: var(--sun); }
+  .sun-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--soil);
+    min-width: 2.5rem;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .toggle {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: var(--leaf); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle.on::after { left: 21px; }
+
+  .toggle-label { font-size: 0.8rem; color: var(--text); }
+
+  .crop-selects { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .crop-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .crop-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .crop-slot select { flex: 1; }
+
+  .btn-calculate {
+    width: 100%;
+    margin-top: 1.5rem;
+    background: var(--soil);
+    color: var(--sun);
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-calculate:hover { background: #4a2a12; }
+  .btn-calculate:active { transform: scale(0.98); }
+
+  /* MAIN PANEL */
+  .main {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* SCORE BAR */
+  .score-panel {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .score-big {
+    text-align: center;
+  }
+
+  .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+  }
+
+  .score-bars { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .bar-row { display: flex; align-items: center; gap: 0.75rem; }
+  .bar-label { font-size: 0.75rem; color: var(--text-light); width: 90px; flex-shrink: 0; }
+  .bar-track {
+    flex: 1; height: 8px;
+    background: #ede6dc;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    background: var(--leaf);
+  }
+  .bar-fill.medium { background: var(--sun); }
+  .bar-fill.low { background: var(--warn); }
+
+  /* LAYOUT SECTION */
+  .layouts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .layout-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .layout-card.active {
+    border-color: var(--leaf);
+    box-shadow: 0 0 0 3px rgba(74,124,89,0.15);
+  }
+
+  .layout-header {
+    background: var(--soil);
+    color: #faf0e0;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .layout-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .layout-badge {
+    background: var(--sun);
+    color: var(--soil);
+    font-size: 0.6rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .layout-body { padding: 1rem; }
+
+  .bed-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    aspect-ratio: 1;
+    max-width: 200px;
+    margin: 0 auto 1rem;
+  }
+
+  .bed-cell {
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    aspect-ratio: 1;
+    border: 1.5px solid rgba(0,0,0,0.08);
+  }
+
+  .bed-cell:hover { transform: scale(1.05); opacity: 0.9; }
+
+  .layout-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text);
+  }
+
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* VARIETIES + WARNINGS */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .info-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .info-card-header {
+    padding: 0.75rem 1rem;
+    background: #f3ede4;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--soil);
+    font-weight: 500;
+  }
+
+  .info-card-body { padding: 1rem; }
+
+  .variety-item {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f0e8de;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .variety-item:last-child { border-bottom: none; }
+
+  .variety-name {
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .variety-crop {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .variety-desc {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    line-height: 1.4;
+  }
+
+  .warning-item {
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .warning-item.warn { background: #fef3e8; border-left: 3px solid var(--warn); color: #7a3a10; }
+  .warning-item.good { background: #eaf5ec; border-left: 3px solid var(--good); color: #2a5a35; }
+  .warning-item.tip { background: #e8f0fe; border-left: 3px solid #4a72b8; color: #1a3a6a; }
+
+  .warn-icon { font-size: 0.9rem; flex-shrink: 0; }
+
+  /* COUNTS */
+  .counts-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .count-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f3ede4;
+    border-radius: 8px;
+    min-width: 80px;
+  }
+
+  .count-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .count-crop {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.2rem;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .layouts-row, .bottom-row { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 2px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Raised Bed Planner</h1>
+  <p>Dynamic layout engine · Variety recommendations · Fit scoring</p>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="section-label">Site Conditions</div>
+
+    <div class="form-group">
+      <label>Sun Hours (direct)</label>
+      <div class="sun-slider">
+        <input type="range" id="sunHours" min="3" max="10" value="5" step="0.5">
+        <span class="sun-value" id="sunVal">5 hrs</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Bed Orientation</label>
+      <select id="orientation">
+        <option value="ew">East–West (parallel to wall)</option>
+        <option value="ns">North–South (perpendicular to wall)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Wall Side</label>
+      <select id="wallSide">
+        <option value="back">Back edge (farthest from you)</option>
+        <option value="left">Left edge</option>
+        <option value="right">Right edge</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <div class="toggle-row">
+        <button class="toggle on" id="trellisToggle" onclick="this.classList.toggle('on'); calculate()"></button>
+        <span class="toggle-label">Trellis available</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Season</label>
+      <select id="season">
+        <option value="spring">Spring (cool, shorter days)</option>
+        <option value="summer" selected>Early Summer (ideal)</option>
+        <option value="latesummer">Late Summer (hot, shorter window)</option>
+      </select>
+    </div>
+
+    <div class="section-label">Crop Selection</div>
+    <div class="crop-selects">
+      <div class="crop-slot">
+        <div class="crop-dot" style="background:#4a7c59"></div>
+        <select id="crop1" onchange="calculate()">
+          <option value="beit_cucumber">Beit Alpha / Pickling Cucumber</option>
+          <option value="slicing_cucumber">Slicing Cucumber</option>
+          <option value="bush_cucumber">Bush Pickle (compact)</option>
+          <option value="none">— None —</option>
+        </select>
+      </div>
+      <div class="crop-slot">
+        <div class="crop-dot" style="background:#f5c842"></div>
+        <select id="crop2" onchange="calculate()">
+          <option value="leaf_lettuce" selected>Leaf Lettuce</option>
+          <option value="head_lettuce">Head Lettuce</option>
+          <option value="spinach">Spinach</option>
+          <option value="none">— None —</option>
+        </select>
+      </div>
+      <div class="crop-slot">
+        <div class="crop-dot" style="background:#e07b39"></div>
+        <select id="crop3" onchange="calculate()">
+          <option value="bush_beans" selected>Bush Green Beans</option>
+          <option value="pole_beans">Pole Beans</option>
+          <option value="radish">Radish</option>
+          <option value="none">— None —</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Goal</div>
+    <div class="form-group">
+      <select id="goal" onchange="calculate()">
+        <option value="balanced">Balanced harvest</option>
+        <option value="yield">Highest yield</option>
+        <option value="easy">Lowest maintenance</option>
+        <option value="salad">Salad focused</option>
+        <option value="pickling">Pickling focused</option>
+      </select>
+    </div>
+
+    <button class="btn-calculate" onclick="calculate()">↻ Update Plan</button>
+  </aside>
+
+  <main class="main" id="mainPanel">
+    <!-- populated by JS -->
+  </main>
+</div>
+
+<script>
+const CROPS = {
+  beit_cucumber: {
+    name: 'Beit Alpha Cucumber',
+    short: 'Cucumber',
+    emoji: '🥒',
+    color: '#4a7c59',
+    sunMin: 5.5, sunIdeal: 7,
+    height: 'tall', habit: 'vining',
+    trellisBonus: 2, trellisRequired: false,
+    shadeScore: 2,
+    spacingPerSqFt: 0.5,
+    coolSeason: false,
+    smallBedScore: 3,
+    varieties: [
+      { name: 'Beit Alpha', desc: 'Classic Middle Eastern type. Smooth skin, crisp, excellent in small spaces on trellis.' },
+      { name: 'Picklebush', desc: 'Ultra-compact bush habit. Bred for raised beds. No trellis needed if desired.' },
+      { name: 'Spacemaster 80', desc: 'Compact vines, heavy producer. Good partial sun tolerance for a cucumber.' }
+    ]
+  },
+  slicing_cucumber: {
+    name: 'Slicing Cucumber',
+    short: 'Cucumber',
+    emoji: '🥒',
+    color: '#2d6644',
+    sunMin: 6, sunIdeal: 8,
+    height: 'tall', habit: 'vining',
+    trellisBonus: 2, trellisRequired: false,
+    shadeScore: 1,
+    spacingPerSqFt: 0.33,
+    coolSeason: false,
+    smallBedScore: 2,
+    varieties: [
+      { name: 'Marketmore 76', desc: 'Reliable classic. Tolerates some disease pressure. Needs full sun ideally.' },
+      { name: 'Straight Eight', desc: 'Long, smooth slicers. Best at 6+ hours of sun.' }
+    ]
+  },
+  bush_cucumber: {
+    name: 'Bush Pickle Cucumber',
+    short: 'Cucumber',
+    emoji: '🥒',
+    color: '#5d9e70',
+    sunMin: 5, sunIdeal: 7,
+    height: 'medium', habit: 'bush',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 3,
+    spacingPerSqFt: 1,
+    coolSeason: false,
+    smallBedScore: 5,
+    varieties: [
+      { name: 'Picklebush', desc: 'Excellent for 4x4 beds. Dense bush, no trellis needed, produces well.' },
+      { name: 'Bush Pickle', desc: 'Very compact, 2–3 ft spread. Good for tight spaces.' }
+    ]
+  },
+  leaf_lettuce: {
+    name: 'Leaf Lettuce',
+    short: 'Lettuce',
+    emoji: '🥬',
+    color: '#8bc34a',
+    sunMin: 3, sunIdeal: 5,
+    height: 'low', habit: 'rosette',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 5,
+    spacingPerSqFt: 4,
+    coolSeason: true,
+    smallBedScore: 5,
+    varieties: [
+      { name: 'Black Seeded Simpson', desc: 'Fastest growing, very heat-tolerant for a lettuce. Good succession crop.' },
+      { name: 'Red Sails', desc: 'Beautiful red-tinged leaves, slow to bolt, outstanding for spring beds.' },
+      { name: 'Salad Bowl', desc: 'Cut-and-come-again type. Plant once, harvest for weeks.' }
+    ]
+  },
+  head_lettuce: {
+    name: 'Head Lettuce',
+    short: 'Lettuce',
+    emoji: '🥬',
+    color: '#7cb342',
+    sunMin: 4, sunIdeal: 6,
+    height: 'low', habit: 'compact',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 4,
+    spacingPerSqFt: 1,
+    coolSeason: true,
+    smallBedScore: 3,
+    varieties: [
+      { name: 'Butterhead / Boston', desc: 'Soft, buttery leaves. Needs cooler temps. Spring or fall only.' },
+      { name: 'Little Gem', desc: 'Mini romaine. Compact, very good for raised beds.' }
+    ]
+  },
+  spinach: {
+    name: 'Spinach',
+    short: 'Spinach',
+    emoji: '🌿',
+    color: '#388e3c',
+    sunMin: 3, sunIdeal: 5,
+    height: 'low', habit: 'rosette',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 5,
+    spacingPerSqFt: 4,
+    coolSeason: true,
+    smallBedScore: 5,
+    varieties: [
+      { name: 'Bloomsdale', desc: 'Classic savoy-leaf type. Heat-sensitive — best spring or fall.' },
+      { name: 'Space', desc: 'Smooth leaves, slow to bolt, more heat-tolerant than Bloomsdale.' }
+    ]
+  },
+  bush_beans: {
+    name: 'Bush Green Beans',
+    short: 'Beans',
+    emoji: '🫘',
+    color: '#d4a017',
+    sunMin: 5, sunIdeal: 6,
+    height: 'medium', habit: 'bush',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 3,
+    spacingPerSqFt: 3,
+    coolSeason: false,
+    smallBedScore: 5,
+    varieties: [
+      { name: 'Provider', desc: 'Top pick for partial sun. Bred for shade and cool conditions. Very reliable.' },
+      { name: 'Contender', desc: 'Heat and disease tolerant. Good early producer.' },
+      { name: 'Blue Lake Bush', desc: 'Classic. Best flavor, needs more sun than Provider.' }
+    ]
+  },
+  pole_beans: {
+    name: 'Pole Beans',
+    short: 'Beans',
+    emoji: '🫘',
+    color: '#b8860b',
+    sunMin: 6, sunIdeal: 8,
+    height: 'tall', habit: 'vining',
+    trellisBonus: 2, trellisRequired: true,
+    shadeScore: 2,
+    spacingPerSqFt: 2,
+    coolSeason: false,
+    smallBedScore: 3,
+    varieties: [
+      { name: 'Kentucky Wonder', desc: 'Very heavy yielder. Classic pole type. Needs trellis or teepee.' },
+      { name: 'Dragon Tongue', desc: 'Unusual yellow-purple variety. Visually striking. Can do without trellis.' }
+    ]
+  },
+  radish: {
+    name: 'Radish',
+    short: 'Radish',
+    emoji: '🌰',
+    color: '#c0392b',
+    sunMin: 3, sunIdeal: 5,
+    height: 'very low', habit: 'root',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 4,
+    spacingPerSqFt: 16,
+    coolSeason: true,
+    smallBedScore: 5,
+    varieties: [
+      { name: 'Cherry Belle', desc: '24-day radish. Extremely fast. Good succession filler between other crops.' },
+      { name: 'French Breakfast', desc: 'Mild, elongated type. Good spring performer.' }
+    ]
+  },
+  none: {
+    name: '—',
+    short: 'None',
+    emoji: '',
+    color: '#ddd',
+    sunMin: 0, sunIdeal: 0,
+    height: 'n/a', habit: 'n/a',
+    trellisBonus: 0, trellisRequired: false,
+    shadeScore: 5,
+    spacingPerSqFt: 0,
+    coolSeason: false,
+    smallBedScore: 5,
+    varieties: []
+  }
+};
+
+// ─── INPUTS ──────────────────────────────────────────────────────────────────
+
+function getInputs() {
+  return {
+    sunHours: parseFloat(document.getElementById('sunHours').value),
+    orientation: document.getElementById('orientation').value,   // 'ew' | 'ns'
+    wallSide: document.getElementById('wallSide').value,         // 'back' | 'left' | 'right'
+    trellis: document.getElementById('trellisToggle').classList.contains('on'),
+    season: document.getElementById('season').value,
+    crops: [
+      document.getElementById('crop1').value,
+      document.getElementById('crop2').value,
+      document.getElementById('crop3').value
+    ],
+    goal: document.getElementById('goal').value
+  };
+}
+
+document.getElementById('sunHours').oninput = function() {
+  document.getElementById('sunVal').textContent = this.value + ' hrs';
+  calculate();
+};
+['orientation','wallSide','season'].forEach(id => {
+  document.getElementById(id).onchange = calculate;
+});
+
+// ─── ZONE MAP ─────────────────────────────────────────────────────────────────
+// Build a 4×4 array of zone objects (row 0 = back/wall side, row 3 = front).
+// Each zone carries: effectiveLight, wallPenalty, trellisAllowed, accessScore.
+
+function buildZoneMap(inputs) {
+  const zones = [];
+  const sun = inputs.sunHours;
+
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
+      // wallPenalty: cells on the wall edge lose light due to shade/obstruction
+      let wallPenalty = 0;
+      if (inputs.wallSide === 'back'  && row === 0) wallPenalty = 1.5;
+      if (inputs.wallSide === 'left'  && col === 0) wallPenalty = 1.5;
+      if (inputs.wallSide === 'right' && col === 3) wallPenalty = 1.5;
+
+      // orientationBonus: E-W beds get slightly more even light;
+      // N-S beds shade themselves more in the middle
+      let orientationPenalty = 0;
+      if (inputs.orientation === 'ns') {
+        // center cols get marginally less light
+        if (col === 1 || col === 2) orientationPenalty = 0.5;
+      }
+
+      const effectiveLight = Math.max(0, sun - wallPenalty - orientationPenalty);
+
+      // trellisAllowed: only the wall edge supports climbing crops natively
+      const trellisAllowed = inputs.trellis && (
+        (inputs.wallSide === 'back'  && row === 0) ||
+        (inputs.wallSide === 'left'  && col === 0) ||
+        (inputs.wallSide === 'right' && col === 3)
+      );
+
+      // accessScore: front rows are easier to reach (harvest, watering)
+      const accessScore = row / 3; // 0 = hard (back), 1 = easy (front)
+
+      zones.push({ row, col, effectiveLight, wallPenalty, trellisAllowed, accessScore });
+    }
+  }
+  return zones; // 16 zone objects, index = row*4 + col
+}
+
+// ─── SCORE CROP IN ZONE ───────────────────────────────────────────────────────
+// How well does a crop fit a specific zone given its properties?
+
+function scoreCropInZone(cropKey, zone, inputs) {
+  if (cropKey === 'none') return 0;
+  const c = CROPS[cropKey];
+  const light = zone.effectiveLight;
+
+  // Sun fit within this zone's actual light level
+  let sunFit = light >= c.sunIdeal ? 5
+             : light >= c.sunMin   ? 3 + 2 * (light - c.sunMin) / (c.sunIdeal - c.sunMin)
+             : 1 + Math.max(0, light / c.sunMin);
+  sunFit = Math.min(5, Math.max(0.5, sunFit));
+
+  // Vining crops strongly prefer trellis-capable zones
+  let supportFit = 3;
+  if (c.habit === 'vining') {
+    supportFit = zone.trellisAllowed ? 5 : (inputs.trellis ? 2 : 1);
+  } else if (c.trellisRequired) {
+    supportFit = zone.trellisAllowed ? 5 : 1;
+  }
+
+  // Shade-tolerant crops actually benefit from low-light zones (less competition)
+  const shadeFit = light < c.sunMin ? c.shadeScore * 0.6 : c.shadeScore;
+
+  // Access: low-growing easy-harvest crops benefit from front rows
+  const accessFit = c.height === 'low' ? zone.accessScore * 2 + 3 : 3;
+
+  return (sunFit * 2 + supportFit + shadeFit + accessFit) / 5;
+}
+
+// ─── WHOLE-BED CROP SCORE ─────────────────────────────────────────────────────
+// Score a crop against overall site conditions (used for bar chart display).
+
+function scoreCrop(cropKey, inputs) {
+  const c = CROPS[cropKey];
+  if (cropKey === 'none') return { total: 0, breakdown: {} };
+
+  const sun = inputs.sunHours;
+  let sunScore = sun >= c.sunIdeal ? 5 : sun >= c.sunMin ? 3 + 2*(sun-c.sunMin)/(c.sunIdeal-c.sunMin) : 1;
+  sunScore = Math.min(5, Math.max(1, sunScore));
+
+  let seasonScore = 5;
+  if (inputs.season === 'spring' && !c.coolSeason) seasonScore = 3;
+  if (inputs.season === 'latesummer' && c.coolSeason) seasonScore = 2;
+
+  let supportScore = 5;
+  if (c.trellisRequired && !inputs.trellis) supportScore = 1;
+  if (c.habit === 'vining' && inputs.trellis) supportScore = 5;
+  else if (c.habit === 'vining' && !inputs.trellis) supportScore = 2;
+
+  let shadeScore = sun >= c.sunMin ? c.shadeScore : Math.max(1, c.shadeScore - 1);
+
+  let goalBonus = 0;
+  if (inputs.goal === 'yield'    && (cropKey.includes('bean') || cropKey.includes('cucumber'))) goalBonus = 1;
+  if (inputs.goal === 'easy'     && c.habit === 'rosette')                                      goalBonus = 1;
+  if (inputs.goal === 'salad'    && (cropKey.includes('lettuce') || cropKey === 'spinach'))      goalBonus = 2;
+  if (inputs.goal === 'pickling' && cropKey.includes('cucumber'))                                goalBonus = 2;
+
+  const total = Math.min(10, (sunScore + seasonScore + supportScore + shadeScore + c.smallBedScore) / 5 * 10 + goalBonus * 0.5);
+  return { total: Math.round(total * 10) / 10, breakdown: { sunScore, seasonScore, supportScore, shadeScore } };
+}
+
+// ─── BUILD LAYOUTS ────────────────────────────────────────────────────────────
+// Create two candidate 16-cell grid assignments using the zone map.
+// Layout A: sun-demanding crops get wall/trellis zone; shade-tolerant to front.
+// Layout B: sun-demanding crops pushed to outer sunny edge away from wall.
+
+function buildLayouts(inputs) {
+  const crops = inputs.crops.filter(c => c !== 'none');
+  if (crops.length === 0) return [null, null];
+
+  const zones = buildZoneMap(inputs);
+
+  // Sort crops: most sun-demanding first
+  const byDemand = [...crops].sort((a, b) => CROPS[b].sunMin - CROPS[a].sunMin);
+
+  // Helper: assign crops to rows (4 rows, row 0 = back)
+  function assignByRows(order) {
+    // Distribute 4 rows among up to 3 crops; last crop fills remaining rows
+    const rowMap = []; // index = row 0..3, value = cropKey
+    if (order.length === 1) {
+      rowMap.push(order[0], order[0], order[0], order[0]);
+    } else if (order.length === 2) {
+      rowMap.push(order[0], order[0], order[1], order[1]);
+    } else {
+      rowMap.push(order[0], order[0], order[1], order[2]);
+    }
+    const grid = [];
+    for (let row = 0; row < 4; row++)
+      for (let col = 0; col < 4; col++)
+        grid.push(rowMap[row]);
+    return grid;
+  }
+
+  const gridA = assignByRows(byDemand);                 // hungry at back, tolerant at front
+  const gridB = assignByRows([...byDemand].reverse());  // tolerant at back, hungry at front
+
+  const titleA = inputs.wallSide === 'back'
+    ? 'Option A — Hungry Crops at Wall'
+    : 'Option A — Wall-Adjacent Arrangement';
+  const titleB = 'Option B — Sunniest Outer Edge';
+
+  const descA = 'Most sun-demanding crops assigned to wall rows; shade-tolerant crops toward open front.';
+  const descB = 'Shade-tolerant crops near wall; sun-demanding crops at the brightest outer edge.';
+
+  return [
+    { title: titleA, grid: gridA, desc: descA, score: null },
+    { title: titleB, grid: gridB, desc: descB, score: null }
+  ];
+}
+
+// ─── SCORE LAYOUT ─────────────────────────────────────────────────────────────
+// Evaluate a layout by summing per-zone crop fit scores across all 16 cells.
+
+function scoreLayout(layout, inputs) {
+  if (!layout) return 0;
+  const zones = buildZoneMap(inputs);
+  let total = 0;
+  layout.grid.forEach((cropKey, i) => {
+    total += scoreCropInZone(cropKey, zones[i], inputs);
+  });
+  return total / 16; // normalise to 0–5 range
+}
+
+// ─── COMBINATION SCORE ────────────────────────────────────────────────────────
+// Scores the overall combo quality with bonuses and penalties beyond avg fit.
+
+function scoreCombination(layout, inputs) {
+  const crops = inputs.crops.filter(c => c !== 'none');
+  if (crops.length === 0) return 0;
+
+  // Base: average individual crop scores (0–10 each)
+  let base = 0;
+  crops.forEach(ck => { base += scoreCrop(ck, inputs).total; });
+  base = base / crops.length;
+
+  let modifier = 0;
+
+  // Compatibility bonus: lettuce + cucumbers is a classic companion combo
+  if (crops.some(c => c.includes('cucumber')) && crops.some(c => c.includes('lettuce') || c === 'spinach'))
+    modifier += 3;
+
+  // Space efficiency bonus: using all 3 slots
+  if (crops.length === 3) modifier += 2;
+
+  // Crowding penalty: multiple tall vining crops in a 4×4 bed
+  const tallCount = crops.filter(c => CROPS[c].height === 'tall').length;
+  if (tallCount > 1) modifier -= 4;
+
+  // Trellis conflict penalty: multiple crops needing trellis but only one wall
+  const trellisWanting = crops.filter(c => CROPS[c].habit === 'vining' || CROPS[c].trellisRequired);
+  if (trellisWanting.length > 1) modifier -= 3;
+
+  // Season mismatch penalty: mixing cool-season and hot-season in latesummer
+  const coolCount = crops.filter(c => CROPS[c].coolSeason).length;
+  const warmCount = crops.filter(c => !CROPS[c].coolSeason).length;
+  if (inputs.season === 'latesummer' && coolCount > 0) modifier -= coolCount * 3;
+  if (inputs.season === 'spring' && warmCount > 0 && coolCount > 0) modifier -= 1;
+
+  // Shade conflict: sun-hungry crop on a very low-light site
+  crops.forEach(ck => {
+    if (inputs.sunHours < CROPS[ck].sunMin - 1) modifier -= 2;
+  });
+
+  // Harvest balance bonus: crops with different maturity timelines
+  const hasFast = crops.some(c => ['radish','leaf_lettuce','spinach'].includes(c));
+  const hasSlow = crops.some(c => ['beit_cucumber','slicing_cucumber','pole_beans'].includes(c));
+  if (hasFast && hasSlow) modifier += 1;
+
+  // Goal alignment bonus
+  if (inputs.goal === 'salad' && crops.some(c => c.includes('lettuce') || c === 'spinach')) modifier += 2;
+  if (inputs.goal === 'pickling' && crops.some(c => c.includes('cucumber'))) modifier += 2;
+  if (inputs.goal === 'easy' && tallCount === 0 && trellisWanting.length === 0) modifier += 2;
+
+  // Layout quality bonus/penalty
+  const layoutScore = scoreLayout(layout, inputs);
+  modifier += (layoutScore - 3) * 2; // above-avg layout earns bonus
+
+  return Math.min(100, Math.max(0, Math.round(base * 10 + modifier)));
+}
+
+// ─── PLANT COUNTS FROM LAYOUT ─────────────────────────────────────────────────
+// Count cells allocated to each crop, convert to realistic plant numbers.
+
+function getCountsFromLayout(layout) {
+  if (!layout) return {};
+  const cellCount = {};
+  layout.grid.forEach(ck => {
+    if (ck && ck !== 'none') cellCount[ck] = (cellCount[ck] || 0) + 1;
+  });
+  const result = {};
+  Object.entries(cellCount).forEach(([ck, cells]) => {
+    const sqFt = cells; // each cell = 1 sq ft in a 4×4 bed
+    result[ck] = Math.max(1, Math.round(CROPS[ck].spacingPerSqFt * sqFt));
+  });
+  return result;
+}
+
+// ─── SUBSTITUTION SUGGESTIONS ────────────────────────────────────────────────
+// If a crop scores below threshold, recommend a better-fit alternative.
+
+const SUBSTITUTES = {
+  slicing_cucumber: { swap: 'bush_cucumber',  reason: 'Bush Pickle fits small beds and tolerates partial sun much better.' },
+  head_lettuce:     { swap: 'leaf_lettuce',   reason: 'Leaf lettuce is more forgiving of heat and easier to succession-plant.' },
+  pole_beans:       { swap: 'bush_beans',     reason: 'Bush beans need no trellis and are more compact for a 4×4 bed.' },
+  beit_cucumber:    { swap: 'bush_cucumber',  reason: 'If sun is limited, Bush Pickle handles lower light more gracefully.' },
+  spinach:          { swap: 'leaf_lettuce',   reason: 'Leaf lettuce tolerates heat better and has a longer harvest window.' }
+};
+
+function getBestSubstitutions(inputs, scores) {
+  const suggestions = [];
+  inputs.crops.forEach(ck => {
+    if (ck === 'none') return;
+    if (scores[ck].total < 6 && SUBSTITUTES[ck]) {
+      const sub = SUBSTITUTES[ck];
+      const subScore = scoreCrop(sub.swap, inputs);
+      if (subScore.total > scores[ck].total + 0.5) {
+        suggestions.push({
+          from: CROPS[ck].name,
+          to: CROPS[sub.swap].name,
+          reason: sub.reason,
+          gain: Math.round((subScore.total - scores[ck].total) * 10)
+        });
+      }
+    }
+  });
+  return suggestions;
+}
+
+// ─── VARIETY RANKING ──────────────────────────────────────────────────────────
+// Re-order varieties within each crop based on site fit.
+
+function rankVarieties(cropKey, inputs) {
+  const c = CROPS[cropKey];
+  if (!c || !c.varieties.length) return [];
+  const sun = inputs.sunHours;
+  const needsTrellis = inputs.trellis;
+
+  // Assign a simple priority score per variety based on name hints
+  return [...c.varieties].sort((a, b) => {
+    function varScore(v) {
+      let s = 0;
+      const lc = v.name.toLowerCase() + ' ' + v.desc.toLowerCase();
+      if (sun < 6 && (lc.includes('compact') || lc.includes('partial') || lc.includes('tolerant') || lc.includes('shade'))) s += 2;
+      if (!needsTrellis && (lc.includes('bush') || lc.includes('compact') || lc.includes('no trellis'))) s += 2;
+      if (inputs.season === 'latesummer' && lc.includes('heat')) s += 1;
+      if (inputs.season === 'spring' && lc.includes('cool')) s += 1;
+      if (lc.includes('raised bed') || lc.includes('small')) s += 1;
+      return s;
+    }
+    return varScore(b) - varScore(a);
+  });
+}
+
+// ─── WARNINGS ─────────────────────────────────────────────────────────────────
+
+function generateWarnings(inputs, scores, substitutions) {
+  const warnings = [];
+  const sun = inputs.sunHours;
+
+  inputs.crops.forEach(ck => {
+    if (ck === 'none') return;
+    const c = CROPS[ck];
+    if (sun < c.sunMin) {
+      warnings.push({ type: 'warn', text: `${c.name} needs ≥${c.sunMin} hrs of direct sun. This site may be marginal — prioritise a compact or shade-tolerant variety.` });
+    }
+    if (c.trellisRequired && !inputs.trellis) {
+      warnings.push({ type: 'warn', text: `${c.name} really needs a trellis. Without one yields drop and vines crowd the bed quickly.` });
+    }
+    if (c.coolSeason && inputs.season === 'latesummer') {
+      warnings.push({ type: 'warn', text: `${c.name} bolts in late-summer heat. Consider a fall succession or swap for a bolt-resistant variety.` });
+    }
+  });
+
+  // Crowding warning
+  const tallCrops = inputs.crops.filter(c => c !== 'none' && CROPS[c].height === 'tall');
+  if (tallCrops.length > 1) {
+    warnings.push({ type: 'warn', text: `Two tall crops (${tallCrops.map(c => CROPS[c].short).join(' + ')}) in a 4×4 bed will shade each other. Consider swapping one for a compact type.` });
+  }
+
+  if (sun >= 6) warnings.push({ type: 'good', text: 'With 6+ hours of sun, cucumbers are a strong fit — you have enough light to support good yields.' });
+
+  if (inputs.crops.includes('leaf_lettuce') || inputs.crops.includes('spinach')) {
+    warnings.push({ type: 'tip', text: 'Succession-sow lettuce or spinach every 2–3 weeks for a continuous harvest window through the season.' });
+  }
+  if (inputs.crops.includes('bush_beans')) {
+    warnings.push({ type: 'good', text: 'Provider bush beans were bred for partial sun and cool starts — a reliable pick for this kind of site.' });
+  }
+
+  // Substitution suggestions
+  substitutions.forEach(s => {
+    warnings.push({ type: 'tip', text: `Better fit swap: consider replacing ${s.from} with ${s.to}. ${s.reason} (+${s.gain} pts)` });
+  });
+
+  return warnings;
+}
+
+// ─── CALCULATE (MAIN) ─────────────────────────────────────────────────────────
+
+function calculate() {
+  const inputs = getInputs();
+  const panel = document.getElementById('mainPanel');
+
+  // Individual crop scores
+  const scores = {};
+  inputs.crops.forEach(c => { scores[c] = scoreCrop(c, inputs); });
+
+  const validCrops = inputs.crops.filter(c => c !== 'none');
+
+  // Build and score both layouts; mark best one as recommended
+  let layouts = buildLayouts(inputs);
+  layouts = layouts.map(l => l ? { ...l, score: scoreLayout(l, inputs) } : null);
+  if (layouts[0] && layouts[1]) {
+    const recIdx = layouts[0].score >= layouts[1].score ? 0 : 1;
+    layouts[recIdx].primary = true;
+    layouts[1 - recIdx].primary = false;
+  } else if (layouts[0]) {
+    layouts[0].primary = true;
+  }
+
+  // Combination score from best layout
+  const bestLayout = layouts.find(l => l && l.primary) || layouts[0];
+  const comboScore = scoreCombination(bestLayout, inputs);
+
+  // Plant counts from best layout
+  const counts = getCountsFromLayout(bestLayout);
+
+  // Substitutions
+  const substitutions = getBestSubstitutions(inputs, scores);
+
+  const warnings = generateWarnings(inputs, scores, substitutions);
+
+  const cropColors = { [inputs.crops[0]]: '#4a7c59', [inputs.crops[1]]: '#f5c842', [inputs.crops[2]]: '#e07b39' };
+  const scoreColor = comboScore >= 75 ? '#4a7c59' : comboScore >= 55 ? '#c08020' : '#c0392b';
+
+  // Bar chart for individual crops
+  const bars = validCrops.map(ck => {
+    const s = scores[ck];
+    const pct = s.total * 10;
+    const cls = pct >= 70 ? '' : pct >= 50 ? 'medium' : 'low';
+    return `<div class="bar-row">
+      <span class="bar-label">${CROPS[ck].short}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+      <span style="font-size:0.7rem;font-family:'DM Mono',monospace;width:30px;text-align:right">${Math.round(s.total)}/10</span>
+    </div>`;
+  }).join('');
+
+  // Layout cards
+  const layoutsHTML = layouts.filter(Boolean).map(l => {
+    const sorted = validCrops;
+    return `<div class="layout-card ${l.primary ? 'active' : ''}">
+      <div class="layout-header">
+        <span class="layout-title">${l.title}</span>
+        ${l.primary ? '<span class="layout-badge">Recommended</span>' : ''}
+      </div>
+      <div class="layout-body">
+        <div class="bed-grid">
+          ${l.grid.map((cell, i) => {
+            const abbr = cell !== 'none' ? CROPS[cell].emoji || CROPS[cell].short.slice(0,3).toUpperCase() : '';
+            const bg = cropColors[cell] || '#ddd';
+            return `<div class="bed-cell" style="background:${bg}22;border-color:${bg}66;" title="${CROPS[cell]?.name || ''}">${abbr}</div>`;
+          }).join('')}
+        </div>
+        <div class="legend-item" style="margin-bottom:0.5rem;font-size:0.7rem;color:var(--text-light);font-style:italic">${l.desc}</div>
+        <div class="layout-legend">
+          ${sorted.map(ck => `<div class="legend-item">
+            <div class="legend-dot" style="background:${cropColors[ck]}"></div>
+            <span>${CROPS[ck].name}</span>
+          </div>`).join('')}
+        </div>
+        <div style="margin-top:0.6rem;font-size:0.65rem;font-family:'DM Mono',monospace;color:var(--text-light)">Zone score: ${(l.score * 20).toFixed(0)}/100</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Varieties — ranked by site fit
+  const varietiesHTML = validCrops.flatMap(ck => {
+    const ranked = rankVarieties(ck, inputs);
+    return ranked.map((v, idx) => `<div class="variety-item">
+      <span class="variety-name">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cropColors[ck]};display:inline-block;flex-shrink:0"></span>
+        ${v.name}${idx === 0 ? ' <span style="font-size:0.6rem;background:#eaf5ec;color:#2a5a35;padding:1px 5px;border-radius:3px;font-family:DM Mono,monospace">Best fit</span>' : ''}
+      </span>
+      <span class="variety-crop">${CROPS[ck].short}</span>
+      <span class="variety-desc">${v.desc}</span>
+    </div>`);
+  }).join('');
+
+  const warningsHTML = warnings.map(w =>
+    `<div class="warning-item ${w.type}">
+      <span class="warn-icon">${w.type === 'warn' ? '⚠' : w.type === 'good' ? '✓' : 'ℹ'}</span>
+      <span>${w.text}</span>
+    </div>`
+  ).join('');
+
+  // Counts derived from layout allocation
+  const countsHTML = validCrops.map(ck => {
+    const n = counts[ck] || 0;
+    return `<div class="count-chip">
+      <span class="count-num" style="color:${cropColors[ck]}">${n}</span>
+      <span class="count-crop">${CROPS[ck].short}<br>plants</span>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="score-panel">
+      <div class="score-big">
+        <div class="score-num" style="color:${scoreColor}">${comboScore}</div>
+        <div class="score-label">Combo Score</div>
+      </div>
+      <div class="score-bars">${bars}</div>
+      <div class="counts-row">${countsHTML}</div>
+    </div>
+
+    <div class="layouts-row">${layoutsHTML}</div>
+
+    <div class="bottom-row">
+      <div class="info-card">
+        <div class="info-card-header">Recommended Varieties</div>
+        <div class="info-card-body">${varietiesHTML || '<em style="color:var(--text-light);font-size:0.8rem">Select crops to see variety recommendations.</em>'}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-header">Site Notes & Warnings</div>
+        <div class="info-card-body">${warningsHTML || '<em style="color:var(--text-light);font-size:0.8rem">No issues detected for this configuration.</em>'}</div>
+      </div>
+    </div>
+  `;
+}
+
+calculate();
+</script>
+</body>
+</html>

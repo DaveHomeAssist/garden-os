@@ -1,0 +1,78 @@
+Architecture Evaluation - Raised Bed Planner v3
+Date: 2026-03-10
+Source reviewed: Garden/garden-planner (7).html
+Scope limitation: Review is based only on the single visible HTML file (inline CSS + JS). No backend, build system, tests, or deployment context were provided.
+
+Architecture Overview
+- Current architecture is a client-side single-page app implemented as a monolith in one HTML file.
+- Runtime model is state-driven: a global state object (`ui`) and bed array (`bed`) feed a centralized `render()` pipeline.
+- Core domain logic is mostly pure and separated by function groups (scoring, recommendations, warnings, persistence), with shell functions handling DOM and localStorage.
+- This is a good fit for offline-first use and low operational complexity.
+- For continued growth, the next clean step is modular monolith architecture (separate modules, same deployment), not microservices.
+
+Component Breakdown
+1) Presentation Layer
+- HTML layout for 3-pane UI (left controls, center grid, right analysis panes).
+- Inline CSS design system with variables and responsive behavior.
+- DOM renderers: `renderBed`, `renderPalette`, `renderRight`, `renderScorePane`, `renderInspectPane`, `renderNotesPane`, calendar/heatmap renderers.
+
+2) Interaction/Controller Layer
+- Event handlers: `onSite`, `clickCell`, `setTool`, `setMode`, tab switching, undo/redo, import/export, print, slot switching.
+- Input orchestration with `scheduleRender()` and `debouncedSave()`.
+
+3) Domain Layer
+- Crop knowledge base (`CROPS`, `SUBS`, `CROP_CALENDAR`).
+- Core planners/scoring: `buildZoneMap`, `scoreCropInCell`, `scoreCell`, `scoreBed`, `buildRec`, `betterCropForCell`, `warnings`, `cellIssues`.
+- View-model assembly: `buildScoreViewModel`.
+
+4) State & Persistence Layer
+- In-memory state: `bed`, `ui`, undo/redo stacks.
+- Browser persistence: `localStorage` via `saveState/loadState` and per-slot storage.
+- Import/export as JSON with allow-list validation (`validateImportPayload`).
+
+5) Reporting Layer
+- Print document generation (`buildPrintHTML`) and popup printing workflow (`printLayout`).
+
+Data Flow Diagram (text description)
+1) User action (e.g., slider change, cell click, tool switch)
+-> 2) Handler updates state (`ui` or `bed`) and optionally pushes undo snapshot
+-> 3) `render()` computes derived domain data (zone map, per-cell scores, warnings, counts)
+-> 4) Renderers update left/center/right panes and optional overlays (heatmap/calendar)
+-> 5) Debounced persistence writes state to `localStorage`
+-> 6) On app load, `loadState()` hydrates state, syncs DOM, and triggers render path.
+
+Tech Stack Recommendation
+Current stack (kept)
+- HTML/CSS/Vanilla JS is appropriate for this feature scope and zero-build portability.
+
+Recommended next evolution (highest ROI)
+- Keep a modular monolith, split into files:
+  - `domain/` (scoring, recs, warnings)
+  - `state/` (store, undo-redo, persistence)
+  - `ui/` (renderers + event bindings)
+  - `data/` (CROPS, calendars, substitutions)
+- Add TypeScript incrementally for domain/state modules first to reduce regression risk.
+- Add a lightweight test runner (Vitest or Jest) for pure domain functions.
+- Add schema validation library (e.g., Zod) for import payloads and persisted state migrations.
+- Introduce a minimal build step (Vite) only when module split and tests are in place.
+
+Risks and Mitigation
+1) Risk: Maintainability bottleneck from single-file monolith
+- Impact: Slower edits, higher regression probability, difficult onboarding.
+- Mitigation: File/module split by layer, preserve current function boundaries, add lint rules per module.
+
+2) Risk: State consistency issues with multiple write paths
+- Impact: UI drift or stale values between DOM and state.
+- Mitigation: Enforce single source of truth (`ui.settings`), consolidate state writes into reducers/actions, keep DOM as render target only.
+
+3) Risk: Performance degradation as crop rules/features grow
+- Impact: Jank during frequent renders and warning computations.
+- Mitigation: Keep cached derived data (`cache`, `_warningsCache`), move expensive calculations to memoized selectors, optionally batch UI updates.
+
+4) Risk: Data model drift in localStorage over future versions
+- Impact: Corrupt/invalid restored sessions, confusing user behavior.
+- Mitigation: Add persisted `schemaVersion` + migration functions and fail-safe fallback to defaults.
+
+5) Risk: Testing gap in core recommendation/scoring behavior
+- Impact: Silent logic regressions after rule changes.
+- Mitigation: Add deterministic tests for `buildZoneMap`, `scoreCropInCell`, `scoreBed`, `buildRec`, `warnings`, and import validation cases.

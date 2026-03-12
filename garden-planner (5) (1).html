@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raised Bed Planner v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil:#6b4226;--soil-light:#8b5e3c;--leaf:#4a7c59;--leaf-bright:#6ab04c;
+    --sun:#f5c842;--cream:#faf6ef;--text:#2c1810;--text-light:#6b5040;
+    --border:#d4b896;--warn:#e07b39;--good:#4a7c59;--bad:#c0392b;--panel:#f3ede4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+
+  header{background:var(--soil);color:#faf0e0;padding:.9rem 1.5rem;border-bottom:4px solid var(--sun);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;}
+  header h1{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;letter-spacing:-.02em;}
+  header p{font-size:.68rem;opacity:.7;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+  .mode-btns{display:flex;gap:.35rem;}
+  .mode-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#faf0e0;
+    font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;
+    padding:.32rem .7rem;border-radius:4px;cursor:pointer;transition:background .15s;}
+  .mode-btn.active{background:var(--sun);color:var(--soil);border-color:var(--sun);font-weight:600;}
+
+  .app{display:grid;grid-template-columns:252px 1fr 272px;min-height:calc(100vh - 62px);}
+
+  /* LEFT */
+  .sl{background:var(--panel);border-right:2px solid var(--border);padding:.9rem;overflow-y:auto;}
+  .slabel{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;
+    color:var(--soil);font-weight:600;margin:1rem 0 .45rem;padding-bottom:.28rem;border-bottom:1px solid var(--border);}
+  .slabel:first-child{margin-top:0;}
+  .fg{margin-bottom:.65rem;}
+  label{display:block;font-size:.73rem;font-weight:500;color:var(--text-light);margin-bottom:.22rem;}
+  select{width:100%;background:white;border:1.5px solid var(--border);border-radius:5px;
+    padding:.38rem 2rem .38rem .55rem;font-size:.78rem;color:var(--text);cursor:pointer;
+    appearance:none;font-family:'DM Sans',sans-serif;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='9' viewBox='0 0 12 9'%3E%3Cpath fill='%236b4226' d='M6 9L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;}
+  select:focus{outline:none;border-color:var(--soil);}
+  /* FIX-01 · Focus rings — keyboard navigation */
+  :focus-visible{outline:2px solid var(--soil);outline-offset:2px;border-radius:3px;}
+  input[type="range"]:focus-visible{outline:none;}
+  input[type="range"]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--soil);outline-offset:3px;border-radius:50%;}
+  input[type="range"]:focus-visible::-moz-range-thumb{outline:2px solid var(--soil);outline-offset:3px;}
+  select:focus-visible{outline:2px solid var(--soil);outline-offset:2px;border-color:var(--soil);}
+  .tog:focus-visible{outline:2px solid var(--soil);outline-offset:3px;border-radius:11px;}
+  .tab-btn:focus-visible,.cbar-btn:focus-visible,.mode-btn:focus-visible,.catb:focus-visible{outline:2px solid var(--soil);outline-offset:2px;}
+  .sun-row{display:flex;align-items:center;gap:.45rem;}
+  .sun-row input{flex:1;accent-color:var(--sun);}
+  .sunv{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500;color:var(--soil);min-width:2.4rem;}
+  .tog-row{display:flex;align-items:center;gap:.45rem;}
+  .tog{width:34px;height:19px;background:var(--border);border-radius:9px;position:relative;
+    cursor:pointer;transition:background .2s;border:none;flex-shrink:0;}
+  .tog.on{background:var(--leaf);}
+  .tog::after{content:'';position:absolute;width:13px;height:13px;background:white;border-radius:50%;
+    top:3px;left:3px;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .tog.on::after{left:18px;}
+  .tog-lbl{font-size:.75rem;color:var(--text);}
+
+  /* FIX-06 · High-impact control accent (Season + Goal) */
+  .fg-intent{border-left:3px solid var(--sun);padding-left:.55rem;margin-left:-.55rem;}
+  .fg-intent label{font-weight:600;color:var(--text);}
+  /* FIX-07 · Visual divider between site geometry and planting intent */
+  .fg-divider{border-top:1px solid var(--border);padding-top:.75rem;margin-top:.2rem;}
+
+  /* FIX-10 · Contextual help tooltip */
+  .help-wrap{position:relative;display:inline-block;}
+  .help-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+    border-radius:50%;background:var(--border);color:var(--soil);font-size:.55rem;font-weight:700;
+    cursor:pointer;margin-left:4px;vertical-align:middle;border:none;font-family:'DM Sans',sans-serif;
+    line-height:1;flex-shrink:0;}
+  .help-icon:hover,.help-icon:focus-visible{background:var(--soil-light);color:white;outline:none;}
+  .help-tip{display:none;position:absolute;left:0;top:calc(100% + 4px);
+    background:var(--soil);color:#faf0e0;border-radius:6px;padding:.45rem .6rem;
+    font-size:.68rem;line-height:1.45;z-index:20;width:200px;box-shadow:0 3px 12px rgba(0,0,0,.22);
+    font-family:'DM Sans',sans-serif;font-weight:400;}
+  .help-tip::before{content:'';position:absolute;bottom:100%;left:10px;border:5px solid transparent;border-bottom-color:var(--soil);}
+  .help-icon:focus+.help-tip,.help-wrap:focus-within .help-tip,.help-icon.open+.help-tip{display:block;}
+
+  .tool-row{display:flex;gap:.35rem;margin-bottom:.45rem;}
+  .tool-btn{flex:1;padding:.38rem;border-radius:5px;border:1.5px solid var(--border);
+    background:white;font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;
+    letter-spacing:.05em;cursor:pointer;color:var(--text-light);transition:all .1s;text-align:center;}
+  .tool-btn.active{background:var(--soil);color:var(--sun);border-color:var(--soil);}
+
+  .psearch{width:100%;padding:.38rem .55rem;border:1.5px solid var(--border);border-radius:5px;
+    font-family:'DM Sans',sans-serif;font-size:.78rem;background:white;margin-bottom:.45rem;}
+  .psearch:focus{outline:none;border-color:var(--soil);}
+  .catf{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.5rem;}
+  .catb{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.06em;
+    padding:.18rem .45rem;border-radius:3px;cursor:pointer;border:1px solid var(--border);
+    background:white;color:var(--text-light);transition:all .1s;}
+  .catb.active{background:var(--soil);color:var(--sun);border-color:var(--soil);}
+  .pgrid{display:flex;flex-direction:column;gap:2px;}
+  .pitem{display:flex;align-items:center;gap:.45rem;padding:.38rem .45rem;border-radius:5px;
+    cursor:pointer;border:1.5px solid transparent;transition:all .1s;background:white;}
+  .pitem:hover{background:#f9f4ec;}
+  .pitem.sel{border-color:var(--soil);background:#efe6d8;}
+  .pdot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+  .pname{font-size:.75rem;font-weight:500;flex:1;}
+  .pemo{font-size:.85rem;}
+
+  /* CENTER */
+  .center{padding:1.4rem;display:flex;flex-direction:column;gap:1rem;align-items:center;}
+  .btitle{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--text-light);display:flex;align-items:center;gap:.75rem;width:100%;max-width:440px;}
+  .btitle span{flex:1;}
+  .brec{background:var(--soil);color:var(--sun);border:none;border-radius:5px;
+    padding:.32rem .75rem;font-family:'DM Mono',monospace;font-size:.6rem;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:background .15s;}
+  .brec:hover{background:#4a2a12;}
+  .bclr{background:white;color:var(--bad);border:1.5px solid #c0392b44;border-radius:5px;
+    padding:.32rem .75rem;font-family:'DM Mono',monospace;font-size:.6rem;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;}
+
+  .bwrap{background:white;border:2px solid var(--border);border-radius:12px;padding:.9rem;
+    width:100%;max-width:440px;}
+  .wlbl{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--text-light);text-align:center;margin-bottom:.35rem;}
+  .bedge{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .bc{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;cursor:pointer;border:2px solid transparent;transition:all .12s;
+    position:relative;min-height:0;}
+  .bc:hover{transform:scale(1.05);z-index:2;}
+  .bc.selc{border-color:var(--soil)!important;box-shadow:0 0 0 2px rgba(107,66,38,.28);}
+  .bc.weak::after{content:'!';position:absolute;top:2px;right:3px;font-size:.5rem;
+    font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;}
+  .cemo{font-size:1.05rem;line-height:1;}
+  .cname{font-size:.4rem;font-family:'DM Mono',monospace;color:var(--text-light);margin-top:1px;text-align:center;}
+  .csbar{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:3px;border-radius:2px;}
+  .ctip{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);
+    background:var(--soil);color:#faf0e0;border-radius:6px;padding:.45rem .65rem;font-size:.68rem;
+    white-space:nowrap;z-index:10;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.2);}
+  .ctip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:4px solid transparent;border-top-color:var(--soil);}
+  .bc:hover .ctip{display:block;}
+  .flbl{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--text-light);text-align:center;margin-top:.35rem;}
+  .chint{font-size:.68rem;color:var(--text-light);text-align:center;font-style:italic;margin-top:.2rem;}
+
+  /* RIGHT */
+  .sr{background:var(--panel);border-left:2px solid var(--border);padding:.9rem;overflow-y:auto;display:flex;flex-direction:column;gap:.65rem;}
+  .swidget{background:white;border:1.5px solid var(--border);border-radius:10px;padding:.9rem;
+    display:flex;align-items:center;gap:.9rem;}
+  .sbig{text-align:center;flex-shrink:0;}
+  .snum{font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:700;line-height:1;}
+  .slbl2{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);}
+  .srating{font-size:.68rem;font-weight:500;margin-top:.12rem;}
+  .sbars{flex:1;display:flex;flex-direction:column;gap:.38rem;}
+  .brow{display:flex;align-items:center;gap:.45rem;}
+  .blbl{font-size:.65rem;color:var(--text-light);width:52px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .btrk{flex:1;height:5px;background:#ede6dc;border-radius:3px;overflow:hidden;}
+  .bfill{height:100%;border-radius:3px;transition:width .4s ease;background:var(--leaf);}
+  .bfill.m{background:var(--sun);}
+  .bfill.l{background:var(--warn);}
+  .crow{display:flex;gap:.45rem;flex-wrap:wrap;}
+  .cchip{flex:1;min-width:56px;display:flex;flex-direction:column;align-items:center;
+    padding:.55rem .35rem;background:white;border:1px solid var(--border);border-radius:7px;}
+  .cnum{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;line-height:1;}
+  .ccrp{font-size:.52rem;font-family:'DM Mono',monospace;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;text-align:center;margin-top:.12rem;}
+  .icard{background:white;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+  .ichdr{padding:.5rem .7rem;background:var(--panel);border-bottom:1px solid var(--border);
+    font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.12em;color:var(--soil);font-weight:600;}
+  .icbody{padding:.7rem;}
+  .vitem{padding:.45rem 0;border-bottom:1px solid #f0e8de;display:flex;flex-direction:column;gap:.12rem;}
+  .vitem:last-child{border-bottom:none;}
+  .vname{font-weight:500;font-size:.78rem;display:flex;align-items:center;gap:.32rem;flex-wrap:wrap;}
+  .vcrp{font-size:.58rem;font-family:'DM Mono',monospace;color:var(--text-light);text-transform:uppercase;}
+  .vdesc{font-size:.7rem;color:var(--text-light);line-height:1.4;}
+  .bbadge{font-size:.52rem;background:#eaf5ec;color:#2a5a35;padding:1px 4px;border-radius:3px;font-family:'DM Mono',monospace;}
+  .wi{padding:.48rem .6rem;border-radius:5px;margin-bottom:.35rem;font-size:.72rem;
+    line-height:1.4;display:flex;gap:.38rem;align-items:flex-start;}
+  .wi.warn{background:#fef3e8;border-left:3px solid var(--warn);color:#7a3a10;}
+  .wi.good{background:#eaf5ec;border-left:3px solid var(--good);color:#2a5a35;}
+  .wi.tip {background:#e8f0fe;border-left:3px solid #4a72b8;color:#1a3a6a;}
+  .wico{font-size:.78rem;flex-shrink:0;}
+  .insp{background:white;border:1.5px solid var(--soil);border-radius:10px;overflow:hidden;}
+  .insph{background:var(--soil);color:#faf0e0;padding:.5rem .7rem;font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.1em;}
+  .inspb{padding:.7rem;font-size:.72rem;display:flex;flex-direction:column;gap:.3rem;}
+  .irow{display:flex;justify-content:space-between;align-items:center;}
+  .ikey{color:var(--text-light);font-size:.68rem;}
+  .ival{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500;}
+
+  .cell-issue{position:absolute;top:1px;left:2px;font-size:.48rem;line-height:1;pointer-events:none;}
+
+  /* ── TAB BARS ── */
+  .tab-bar{display:flex;gap:2px;background:rgba(0,0,0,.07);border-radius:7px;padding:3px;margin-bottom:.9rem;flex-shrink:0;}
+  .tab-btn{flex:1;text-align:center;padding:.28rem .4rem;border-radius:5px;border:none;
+    font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.07em;
+    cursor:pointer;color:var(--text-light);background:transparent;transition:all .15s;white-space:nowrap;}
+  .tab-btn.active{background:var(--soil);color:var(--sun);font-weight:600;}
+  .tab-pane{display:none;flex:1;overflow-y:auto;}
+  .tab-pane.on{display:flex;flex-direction:column;}
+  .tab-badge{display:inline-block;width:5px;height:5px;background:var(--warn);border-radius:50%;
+    margin-left:3px;vertical-align:middle;position:relative;top:-1px;}
+
+  /* ── LEFT SIDEBAR shell ── */
+  .sl{background:var(--panel);border-right:2px solid var(--border);padding:.75rem;overflow:hidden;
+    display:flex;flex-direction:column;}
+
+  /* ── RIGHT SIDEBAR shell ── */
+  .sr{background:var(--panel);border-left:2px solid var(--border);padding:.75rem;overflow:hidden;
+    display:flex;flex-direction:column;}
+  .sr .tab-pane.on{gap:.6rem;padding-right:2px;}
+
+  /* ── CENTER TOOLBAR ── */
+  .cbar{display:flex;align-items:center;gap:.28rem;width:100%;max-width:440px;}
+  .cbar-btn{padding:.3rem .55rem;border-radius:5px;border:1.5px solid var(--border);background:white;
+    font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.05em;
+    cursor:pointer;color:var(--text-light);transition:all .1s;white-space:nowrap;}
+  .cbar-btn:hover:not(:disabled){background:#f0e8de;}
+  .cbar-btn.active{background:var(--soil);color:var(--sun);border-color:var(--soil);}
+  .cbar-btn.act-leaf{background:var(--leaf);color:white;border-color:var(--leaf);}
+  .cbar-btn.danger{color:var(--bad);border-color:#c0392b33;}
+  .cbar-btn.danger:hover{background:#fef0ee;}
+  .cbar-btn:disabled{opacity:.32;cursor:default;}
+  .cbar-sep{width:1px;height:16px;background:var(--border);flex-shrink:0;margin:0 .1rem;}
+  .cbar-gap{flex:1;}
+
+  /* ── SCORE TAB ── */
+  .score-hero{display:flex;align-items:center;gap:.9rem;background:white;
+    border:1.5px solid var(--border);border-radius:10px;padding:.85rem;}
+
+  /* ── INSPECT EMPTY STATE ── */
+  .inspect-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:1;gap:.5rem;opacity:.45;padding:2rem 1rem;text-align:center;}
+  .inspect-empty span{font-size:2rem;}
+  .inspect-empty p{font-size:.75rem;font-family:'DM Mono',monospace;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--text-light);}
+
+  @media(max-width:960px){.app{grid-template-columns:210px 1fr 236px;}}
+  @media(max-width:740px){.app{grid-template-columns:1fr;}.sl,.sr{border:none;border-bottom:2px solid var(--border);}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Raised Bed Planner <span style="font-size:.9rem;opacity:.55">v3</span></h1>
+    <p>Zone-aware · Cell editor · Live scoring · 20 crops</p>
+  </div>
+</header>
+
+<div class="app">
+<!-- LEFT: tabbed Site / Palette -->
+<aside class="sl">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="ltab-site" onclick="switchLTab('site')">Site</button>
+    <button class="tab-btn" id="ltab-palette" onclick="switchLTab('palette')">Crops</button>
+  </div>
+
+  <!-- SITE PANE -->
+  <div class="tab-pane on" id="lpane-site" style="gap:.55rem;">
+    <div class="fg">
+      <label for="sunHours">Sun Hours (direct)
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Sun Hours" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">Direct sunlight hours per day at your bed location. 6+ hrs suits most fruiting crops; 3–5 hrs is shade territory.</span></span>
+      </label>
+      <div class="sun-row">
+        <input type="range" id="sunHours" min="3" max="10" value="5" step=".5" oninput="onSite(this)" aria-label="Sun hours" aria-valuemin="3" aria-valuemax="10">
+        <span class="sunv" id="sunVal" aria-live="polite">5 hrs</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:2px;padding:0 2px;">
+        <span style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-light)">3 hrs</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-light)">10 hrs</span>
+      </div>
+    </div>
+    <div class="fg">
+      <label for="orientation">Bed Orientation
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Bed Orientation" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">Which direction your bed runs. East–West beds get more even light; North–South beds shade their own center columns.</span></span>
+      </label>
+      <select id="orientation" onchange="onSite()">
+        <option value="ew">East–West (parallel to wall)</option>
+        <option value="ns">North–South (perpendicular)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label for="wallSide">Wall / Shade Side
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Wall / Shade Side" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">Which edge of your bed is closest to a wall, fence, or structure that casts shade first.</span></span>
+      </label>
+      <span style="font-size:.63rem;color:var(--text-light);font-style:italic;display:block;margin-bottom:.2rem;">Where does shade fall first?</span>
+      <select id="wallSide" onchange="onSite()">
+        <option value="back">North wall / Back fence</option>
+        <option value="front">South edge / Front path</option>
+        <option value="left">West side / Left fence</option>
+        <option value="right">East side / Right fence</option>
+      </select>
+    </div>
+    <div class="fg">
+      <div class="tog-row">
+        <button class="tog on" id="trellisToggle"
+          role="switch"
+          aria-checked="true"
+          aria-label="Trellis available"
+          onclick="toggleTrellis()"></button>
+        <span class="tog-lbl" id="trellisLabel" aria-hidden="true">Trellis available</span>
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Trellis" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">A vertical support on the wall-side edge for vining crops like cucumbers and pole beans.</span></span>
+      </div>
+    </div>
+    <div class="fg fg-intent fg-divider">
+      <label for="season">Season
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Season" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">Current or planned planting season. Cool-season crops bolt in late summer; warm-season crops struggle in spring cold.</span></span>
+      </label>
+      <select id="season" onchange="onSite()">
+        <option value="spring">Spring (cool)</option>
+        <option value="summer" selected>Early Summer (ideal)</option>
+        <option value="latesummer">Late Summer (hot)</option>
+      </select>
+    </div>
+    <div class="fg fg-intent">
+      <label for="goal">Goal
+        <span class="help-wrap"><button class="help-icon" aria-label="Help for Goal" onclick="this.classList.toggle('open')">i</button><span class="help-tip" role="tooltip">Your primary harvest focus. This drives which crops the Auto-fill recommends for your bed.</span></span>
+      </label>
+      <select id="goal" onchange="onSite()">
+        <option value="balanced">Balanced harvest</option>
+        <option value="yield">Highest yield</option>
+        <option value="easy">Low maintenance</option>
+        <option value="salad" selected>Salad focused</option>
+        <option value="pickling">Pickling focused</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- PALETTE PANE -->
+  <div class="tab-pane" id="lpane-palette" style="gap:0;">
+    <input class="psearch" type="text" id="psearch" placeholder="Search crops…" oninput="renderPalette()" style="margin-bottom:.4rem;flex-shrink:0;">
+    <div class="catf" id="catf" style="flex-shrink:0;"></div>
+    <div class="pgrid" id="pgrid" style="overflow-y:auto;flex:1;"></div>
+  </div>
+</aside>
+
+<!-- CENTER -->
+<main class="center">
+  <!-- compact toolbar -->
+  <div class="cbar">
+    <button class="cbar-btn act-leaf" onclick="loadRec()">✦ Auto-fill</button>
+    <button class="cbar-btn danger" onclick="clearBed()">✕ Clear</button>
+    <div class="cbar-sep"></div>
+    <button class="cbar-btn active" id="toolPaint" onclick="setTool('paint')">🖌 Paint</button>
+    <button class="cbar-btn" id="toolErase" onclick="setTool('erase')">✕ Erase</button>
+    <div class="cbar-sep"></div>
+    <button class="cbar-btn" id="undoBtn" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩</button>
+    <button class="cbar-btn" id="redoBtn" onclick="redo()" disabled title="Redo (Ctrl+Y / Ctrl+Shift+Z)">↪</button>
+    <div class="cbar-gap"></div>
+    <button class="mode-btn active" id="modeManual" onclick="setMode('manual')" style="font-size:.58rem;padding:.28rem .6rem;">✏ Manual</button>
+    <button class="mode-btn" id="modeAuto" onclick="setMode('auto')" style="font-size:.58rem;padding:.28rem .6rem;">✦ Rec</button>
+  </div>
+
+  <div class="bwrap">
+    <div class="wlbl" id="wtop">▲ Wall / Trellis Zone</div>
+    <div class="bedge" id="bedGrid"></div>
+    <div class="flbl">▼ Front (access side)</div>
+    <div class="chint" id="chint"></div>
+  </div>
+</main>
+
+<!-- RIGHT: tabbed Score / Inspect / Notes -->
+<aside class="sr">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="rtab-score"   onclick="switchRTab('score')">Score</button>
+    <button class="tab-btn"        id="rtab-inspect" onclick="switchRTab('inspect')">Inspect</button>
+    <button class="tab-btn"        id="rtab-notes"   onclick="switchRTab('notes')">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
+  </div>
+  <div class="tab-pane on" id="rpane-score"></div>
+  <div class="tab-pane"    id="rpane-inspect"></div>
+  <div class="tab-pane"    id="rpane-notes"></div>
+</aside>
+</div>
+
+<script>
+// ═══════════════ CROP DB ═══════════════════════════════════════════════════════
+const CROPS = {
+  beit_cucumber:{name:'Beit Alpha Cucumber',short:'Cucumber',emoji:'🥒',color:'#4a7c59',
+    category:'cucurbit',sunMin:5.5,sunIdeal:7,height:'tall',habit:'vining',trellisRequired:false,
+    shadeScore:2,spacingPerSqFt:.5,coolSeason:false,smallBedScore:3,heatTolerance:4,
+    companionTags:['legume','greens'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
+    varieties:[{name:'Beit Alpha',desc:'Classic crisp type. Excellent on trellis in small spaces.'},
+      {name:'Spacemaster 80',desc:'Compact vines, good partial-sun tolerance. Raised-bed star.'},
+      {name:'Picklebush',desc:'Bush habit, no trellis needed. Top pick for tight spots.'}]},
+  slicing_cucumber:{name:'Slicing Cucumber',short:'Cucumber',emoji:'🥒',color:'#2d6644',
+    category:'cucurbit',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:false,
+    shadeScore:1,spacingPerSqFt:.33,coolSeason:false,smallBedScore:2,heatTolerance:4,
+    companionTags:['legume','greens'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
+    varieties:[{name:'Marketmore 76',desc:'Reliable, disease-tolerant. Needs full sun ideally.'},
+      {name:'Straight Eight',desc:'Long smooth slicers. Best at 6+ hrs.'}]},
+  bush_cucumber:{name:'Bush Pickle Cucumber',short:'Cucumber',emoji:'🥒',color:'#5d9e70',
+    category:'cucurbit',sunMin:5,sunIdeal:7,height:'medium',habit:'bush',trellisRequired:false,
+    shadeScore:3,spacingPerSqFt:1,coolSeason:false,smallBedScore:5,heatTolerance:3,
+    companionTags:['legume','greens','roots'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
+    varieties:[{name:'Picklebush',desc:'Compact. No trellis. Great for 4×4 beds.'},
+      {name:'Bush Pickle',desc:'2–3 ft spread. Good for tight spaces.'}]},
+  leaf_lettuce:{name:'Leaf Lettuce',short:'Lettuce',emoji:'🥬',color:'#8bc34a',
+    category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    shadeScore:5,spacingPerSqFt:4,coolSeason:true,smallBedScore:5,heatTolerance:2,
+    companionTags:['cucurbit','roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
+    varieties:[{name:'Black Seeded Simpson',desc:'Fast, heat-tolerant for lettuce. Great succession crop.'},
+      {name:'Salad Bowl',desc:'Cut-and-come-again. Plant once, harvest for weeks.'},
+      {name:'Red Sails',desc:'Slow to bolt, beautiful red leaves. Outstanding spring bed crop.'}]},
+  head_lettuce:{name:'Head Lettuce',short:'Lettuce',emoji:'🥬',color:'#7cb342',
+    category:'greens',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
+    shadeScore:4,spacingPerSqFt:1,coolSeason:true,smallBedScore:3,heatTolerance:1,
+    companionTags:['cucurbit','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
+    varieties:[{name:'Little Gem',desc:'Mini romaine. Compact, great for raised beds.'},
+      {name:'Butterhead',desc:'Buttery soft leaves. Spring or fall only.'}]},
+  spinach:{name:'Spinach',short:'Spinach',emoji:'🌿',color:'#388e3c',
+    category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    shadeScore:5,spacingPerSqFt:4,coolSeason:true,smallBedScore:5,heatTolerance:1,
+    companionTags:['roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
+    varieties:[{name:'Space',desc:'Smooth leaves, slow to bolt. More heat-tolerant than Bloomsdale.'},
+      {name:'Bloomsdale',desc:'Classic savoy type. Best in cool spring or fall.'}]},
+  kale:{name:'Kale',short:'Kale',emoji:'🥦',color:'#2e7d32',
+    category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    shadeScore:4,spacingPerSqFt:1,coolSeason:true,smallBedScore:4,heatTolerance:2,
+    companionTags:['roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
+    varieties:[{name:'Lacinato (Dino)',desc:'Tall, dark leaves. Very cold-hardy and productive.'},
+      {name:'Dwarf Curled',desc:'Compact form, great for tight beds.'}]},
+  arugula:{name:'Arugula',short:'Arugula',emoji:'🌱',color:'#558b2f',
+    category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    shadeScore:5,spacingPerSqFt:6,coolSeason:true,smallBedScore:5,heatTolerance:1,
+    companionTags:['roots','greens'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
+    varieties:[{name:'Roquette',desc:'Classic peppery arugula. Fast-growing, succession every 3 weeks.'},
+      {name:'Astro',desc:'Slower to bolt, milder flavor. Good for summer edges.'}]},
+  swiss_chard:{name:'Swiss Chard',short:'Chard',emoji:'🍃',color:'#43a047',
+    category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    shadeScore:4,spacingPerSqFt:2,coolSeason:false,smallBedScore:5,heatTolerance:4,
+    companionTags:['legume','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
+    varieties:[{name:'Rainbow Chard',desc:'Multicolored stems. Ornamental and productive.'},
+      {name:'Fordhook Giant',desc:'Classic white-stemmed. Very heat-tolerant.'}]},
+  bush_beans:{name:'Bush Green Beans',short:'Beans',emoji:'🫘',color:'#d4a017',
+    category:'legume',sunMin:5,sunIdeal:6,height:'medium',habit:'bush',trellisRequired:false,
+    shadeScore:3,spacingPerSqFt:3,coolSeason:false,smallBedScore:5,heatTolerance:4,
+    companionTags:['greens','roots','cucurbit'],conflictTags:['onion'],replacementCategory:'legume',successionFriendly:true,
+    varieties:[{name:'Provider',desc:'Top pick for partial sun. Bred for shade and cool conditions.'},
+      {name:'Contender',desc:'Heat and disease tolerant. Good early producer.'},
+      {name:'Blue Lake Bush',desc:'Classic best flavor, needs more sun than Provider.'}]},
+  pole_beans:{name:'Pole Beans',short:'Beans',emoji:'🫘',color:'#b8860b',
+    category:'legume',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:true,
+    shadeScore:2,spacingPerSqFt:2,coolSeason:false,smallBedScore:3,heatTolerance:4,
+    companionTags:['greens','roots'],conflictTags:['onion'],replacementCategory:'legume',successionFriendly:false,
+    varieties:[{name:'Kentucky Wonder',desc:'Heavy yielder. Classic pole type. Needs trellis.'},
+      {name:'Dragon Tongue',desc:'Yellow-purple variety. Can do without trellis.'}]},
+  radish:{name:'Radish',short:'Radish',emoji:'🌰',color:'#c0392b',
+    category:'roots',sunMin:3,sunIdeal:5,height:'very low',habit:'root',trellisRequired:false,
+    shadeScore:4,spacingPerSqFt:16,coolSeason:true,smallBedScore:5,heatTolerance:2,
+    companionTags:['greens','legume','cucurbit'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
+    varieties:[{name:'Cherry Belle',desc:'24-day radish. Great succession filler.'},
+      {name:'French Breakfast',desc:'Mild, elongated. Good spring performer.'}]},
+  carrots:{name:'Carrots',short:'Carrot',emoji:'🥕',color:'#e67e22',
+    category:'roots',sunMin:5,sunIdeal:7,height:'very low',habit:'root',trellisRequired:false,
+    shadeScore:3,spacingPerSqFt:9,coolSeason:true,smallBedScore:4,heatTolerance:2,
+    companionTags:['greens','radish'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
+    varieties:[{name:'Chantenay',desc:'Stubby, ideal for raised bed soil depth.'},
+      {name:'Danvers 126',desc:'Reliable, tolerates heavier soils.'}]},
+  scallions:{name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
+    category:'roots',sunMin:4,sunIdeal:6,height:'low',habit:'upright',trellisRequired:false,
+    shadeScore:4,spacingPerSqFt:12,coolSeason:true,smallBedScore:5,heatTolerance:3,
+    companionTags:['greens','carrots'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:true,
+    varieties:[{name:'Evergreen Hardy',desc:'Reliable bunching onion. Winter-hardy.'},
+      {name:'Tokyo Long White',desc:'Slender, mild flavor. Great for raised beds.'}]},
+  beets:{name:'Beets',short:'Beets',emoji:'🫐',color:'#880e4f',
+    category:'roots',sunMin:5,sunIdeal:7,height:'low',habit:'root',trellisRequired:false,
+    shadeScore:3,spacingPerSqFt:4,coolSeason:true,smallBedScore:4,heatTolerance:3,
+    companionTags:['greens','carrots'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
+    varieties:[{name:'Detroit Dark Red',desc:'Classic. Reliable yields, beautiful color.'},
+      {name:'Chioggia',desc:'Candy-striped Italian heirloom. Mild taste.'}]},
+  basil:{name:'Basil',short:'Basil',emoji:'🌿',color:'#66bb6a',
+    category:'herbs',sunMin:6,sunIdeal:8,height:'low',habit:'bush',trellisRequired:false,
+    shadeScore:2,spacingPerSqFt:2,coolSeason:false,smallBedScore:5,heatTolerance:5,
+    companionTags:['fruiting'],conflictTags:[],replacementCategory:'herbs',successionFriendly:true,
+    varieties:[{name:'Genovese',desc:'Classic large-leaf. Best for pesto.'},
+      {name:'Compact Globe',desc:'Tiny mound habit. Great for small squares.'}]},
+  peppers:{name:'Peppers',short:'Peppers',emoji:'🫑',color:'#e53935',
+    category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:false,
+    shadeScore:1,spacingPerSqFt:1,coolSeason:false,smallBedScore:4,heatTolerance:5,
+    companionTags:['herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'California Wonder',desc:'Classic bell pepper. Reliable in warm beds.'},
+      {name:'Jimmy Nardello',desc:'Sweet frying pepper. Prolific in full sun.'}]},
+  compact_tomato:{name:'Compact Tomato',short:'Tomato',emoji:'🍅',color:'#d32f2f',
+    category:'fruiting',sunMin:7,sunIdeal:9,height:'medium',habit:'bush',trellisRequired:false,
+    shadeScore:1,spacingPerSqFt:.5,coolSeason:false,smallBedScore:3,heatTolerance:4,
+    companionTags:['herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'Tumbling Tom',desc:'Very compact. Cascading habit. Good for small beds.'},
+      {name:'Tiny Tim',desc:'Dwarf plant, cherry tomatoes. Easy in a 4×4.'}]},
+  peas:{name:'Peas',short:'Peas',emoji:'🫛',color:'#7eb038',
+    category:'legume',sunMin:4,sunIdeal:6,height:'tall',habit:'vining',trellisRequired:true,
+    shadeScore:3,spacingPerSqFt:4,coolSeason:true,smallBedScore:4,heatTolerance:1,
+    companionTags:['greens','roots','carrots'],conflictTags:[],replacementCategory:'legume',successionFriendly:false,
+    varieties:[{name:'Sugar Snap',desc:'Eat pod and all. Sweet, reliable, great on a trellis.'},
+      {name:'Oregon Sugar Pod',desc:'Flat snow pea. Very productive in cool weather.'}]},
+  marigold:{name:'Marigold (companion)',short:'Marigold',emoji:'🌼',color:'#ff8f00',
+    category:'companion',sunMin:4,sunIdeal:7,height:'low',habit:'bush',trellisRequired:false,
+    shadeScore:3,spacingPerSqFt:3,coolSeason:false,smallBedScore:5,heatTolerance:5,
+    companionTags:['cucurbit','fruiting','legume'],conflictTags:[],replacementCategory:'companion',successionFriendly:false,
+    varieties:[{name:'French Marigold',desc:'Best pest deterrent. Plant at bed edges.'},
+      {name:'African Marigold',desc:'Taller, striking. Good border plant.'}]}
+};
+
+const SUBS = {
+  slicing_cucumber:{swap:'bush_cucumber',reason:'Bush Pickle tolerates partial sun and small beds far better.'},
+  head_lettuce:{swap:'leaf_lettuce',reason:'Leaf lettuce handles heat better and is easier to succession-plant.'},
+  pole_beans:{swap:'bush_beans',reason:'Bush beans need no trellis and are more compact for a 4×4 bed.'},
+  beit_cucumber:{swap:'bush_cucumber',reason:'Under 5 hrs sun, Bush Pickle handles lower light more gracefully.'},
+  spinach:{swap:'arugula',reason:'Arugula handles heat a little better with the same shade tolerance.'},
+  compact_tomato:{swap:'peppers',reason:'Peppers need slightly less sun and are more compact in a small bed.'}
+};
+
+// ═══════════════ STATE ═══════════════════════════════════════════════════════════
+let bed = createEmptyBed();
+let ui = { selectedCrop:'leaf_lettuce', tool:'paint', selCell:null, mode:'manual', catFilter:'all', rTab:'score' };
+
+// Undo / redo stacks — each entry is a snapshot of bed crop assignments only
+let undoStack = [];
+let redoStack = [];
+const MAX_HISTORY = 40;
+
+function createEmptyBed(){
+  const a=[];
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++) a.push({id:`r${r}c${c}`,row:r,col:c,crop:null});
+  return a;
+}
+function getCell(r,c){return bed[r*4+c]||null;}
+
+// ─── Snapshot helpers ─────────────────────────────────────────────────────────
+function bedSnapshot(){ return bed.map(c=>c.crop); }
+function restoreSnapshot(snap){ bed.forEach((c,i)=>{ c.crop=snap[i]; }); }
+
+function pushUndo(){
+  undoStack.push(bedSnapshot());
+  if(undoStack.length>MAX_HISTORY) undoStack.shift();
+  redoStack=[];
+  updateUndoButtons();
+}
+
+function undo(){
+  if(!undoStack.length) return;
+  redoStack.push(bedSnapshot());
+  restoreSnapshot(undoStack.pop());
+  updateUndoButtons();
+  saveState();
+  render();
+}
+
+function redo(){
+  if(!redoStack.length) return;
+  undoStack.push(bedSnapshot());
+  restoreSnapshot(redoStack.pop());
+  updateUndoButtons();
+  saveState();
+  render();
+}
+
+function updateUndoButtons(){
+  const u=document.getElementById('undoBtn');
+  const r=document.getElementById('redoBtn');
+  if(u) u.disabled=!undoStack.length;
+  if(r) r.disabled=!redoStack.length;
+}
+
+// ═══════════════ PERSISTENCE ════════════════════════════════════════════════════
+const LS_KEY = 'rbp_v3';
+
+function saveState(){
+  try {
+    const payload = {
+      bed: bed.map(c=>c.crop),
+      ui: { selectedCrop:ui.selectedCrop, tool:ui.tool, selCell:ui.selCell, mode:ui.mode, catFilter:ui.catFilter },
+      settings: {
+        sunHours: document.getElementById('sunHours').value,
+        orientation: document.getElementById('orientation').value,
+        wallSide: document.getElementById('wallSide').value,
+        trellis: document.getElementById('trellisToggle').classList.contains('on'),
+        season: document.getElementById('season').value,
+        goal: document.getElementById('goal').value
+      }
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  } catch(e){}
+}
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const p = JSON.parse(raw);
+    // Restore bed
+    if(p.bed && p.bed.length===16){
+      p.bed.forEach((crop,i)=>{ bed[i].crop = (crop && CROPS[crop]) ? crop : null; });
+    }
+    // Restore ui
+    if(p.ui){
+      if(p.ui.selectedCrop && CROPS[p.ui.selectedCrop]) ui.selectedCrop=p.ui.selectedCrop;
+      if(p.ui.tool) ui.tool=p.ui.tool;
+      if(p.ui.selCell) ui.selCell=p.ui.selCell;
+      if(p.ui.mode) ui.mode=p.ui.mode;
+      if(p.ui.catFilter) ui.catFilter=p.ui.catFilter;
+    }
+    // Restore settings
+    if(p.settings){
+      const s=p.settings;
+      if(s.sunHours != null){
+        document.getElementById('sunHours').value=s.sunHours;
+        document.getElementById('sunVal').textContent=s.sunHours+' hrs';
+      }
+      if(s.orientation) document.getElementById('orientation').value=s.orientation;
+      if(s.wallSide) document.getElementById('wallSide').value=s.wallSide;
+      if(s.trellis != null){
+        const tog=document.getElementById('trellisToggle');
+        const lbl=document.getElementById('trellisLabel');
+        s.trellis ? tog.classList.add('on') : tog.classList.remove('on');
+        tog.setAttribute('aria-checked', !!s.trellis);
+        if(lbl) lbl.textContent = s.trellis ? 'Trellis available' : 'No trellis';
+      }
+      if(s.season) document.getElementById('season').value=s.season;
+      if(s.goal) document.getElementById('goal').value=s.goal;
+    }
+    return true;
+  } catch(e){ return false; }
+}
+
+// ═══════════════ INPUTS ══════════════════════════════════════════════════════════
+function inp(){
+  return{
+    sunHours:parseFloat(document.getElementById('sunHours').value),
+    orientation:document.getElementById('orientation').value,
+    wallSide:document.getElementById('wallSide').value,
+    trellis:document.getElementById('trellisToggle').classList.contains('on'),
+    season:document.getElementById('season').value,
+    goal:document.getElementById('goal').value
+  };
+}
+function toggleTrellis(){
+  const tog=document.getElementById('trellisToggle');
+  const lbl=document.getElementById('trellisLabel');
+  tog.classList.toggle('on');
+  const isOn=tog.classList.contains('on');
+  tog.setAttribute('aria-checked', isOn);
+  lbl.textContent=isOn?'Trellis available':'No trellis';
+  onSite();
+}
+
+function onSite(el){
+  if(el) document.getElementById('sunVal').textContent=el.value+' hrs';
+  saveState();
+  render();
+}
+
+// ═══════════════ ZONE MAP ════════════════════════════════════════════════════════
+function buildZoneMap(i){
+  const z=[];
+  const sun=i.sunHours;
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      let wp=0;
+      if(i.wallSide==='back'  &&r===0) wp=1.5;
+      if(i.wallSide==='front' &&r===3) wp=1.5;
+      if(i.wallSide==='left'  &&c===0) wp=1.5;
+      if(i.wallSide==='right' &&c===3) wp=1.5;
+      const op=(i.orientation==='ns'&&(c===1||c===2))?.4:0;
+      const el=Math.max(0,sun-wp-op);
+      const ta=i.trellis&&(
+        (i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===3)||
+        (i.wallSide==='left'&&c===0)||(i.wallSide==='right'&&c===3));
+      z.push({row:r,col:c,effectiveLight:el,wallPenalty:wp,trellisAllowed:ta,accessScore:r/3});
+    }
+  }
+  return z;
+}
+
+function applyZones(zones){
+  bed.forEach((cell,i)=>{
+    cell.effectiveLight=zones[i].effectiveLight;
+    cell.wallPenalty=zones[i].wallPenalty;
+    cell.trellisAllowed=zones[i].trellisAllowed;
+    cell.accessScore=zones[i].accessScore;
+  });
+}
+
+// ═══════════════ SCORING ═════════════════════════════════════════════════════════
+function scoreCropInCell(ck,cell,inputs){
+  if(!ck||ck==='none') return 0;
+  const c=CROPS[ck]; const l=cell.effectiveLight||0;
+  let sunFit=l>=c.sunIdeal?5:l>=c.sunMin?3+2*(l-c.sunMin)/(c.sunIdeal-c.sunMin):1+Math.max(0,(l/Math.max(c.sunMin,.1))*2);
+  sunFit=Math.min(5,Math.max(0,sunFit));
+  let supFit=3;
+  if(c.habit==='vining') supFit=cell.trellisAllowed?5:(inputs.trellis?2:1);
+  if(c.trellisRequired) supFit=cell.trellisAllowed?5:1;
+  const shadeFit=l<c.sunMin?Math.max(1,c.shadeScore*.6):c.shadeScore;
+  const accFit=(c.height==='low'||c.height==='very low')?3+(cell.accessScore||0)*2:3;
+  let seaFit=5;
+  if(inputs.season==='latesummer'&&c.coolSeason) seaFit=1;
+  if(inputs.season==='spring'&&!c.coolSeason) seaFit=3;
+  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3));
+}
+
+function neighbors(r,c){return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCell(r+dr,c+dc)).filter(Boolean);}
+
+function adjScore(cell){
+  if(!cell.crop) return 0;
+  const c=CROPS[cell.crop]; let b=0;
+  neighbors(cell.row,cell.col).forEach(n=>{
+    if(!n.crop) return;
+    const nc=CROPS[n.crop];
+    if(c.companionTags.some(t=>nc.category===t)) b+=.5;
+    if(c.conflictTags.some(t=>nc.category===t||nc.name.toLowerCase().includes(t))) b-=1;
+    if(nc.height==='tall'&&c.height==='tall') b-=.75;
+    if(n.crop===cell.crop) b-=.2;
+  });
+  return Math.max(-2,Math.min(2,b));
+}
+
+function scoreCell(cell,inputs){
+  if(!cell.crop) return 0;
+  return Math.min(10,Math.max(0,scoreCropInCell(cell.crop,cell,inputs)+adjScore(cell)));
+}
+
+function scoreCropPlacement(ck,inputs){
+  const cells=bed.filter(c=>c.crop===ck);
+  if(!cells.length) return 0;
+  return cells.reduce((s,c)=>s+scoreCell(c,inputs),0)/cells.length;
+}
+
+function scoreBed(inputs){
+  const occ=bed.filter(c=>c.crop);
+  if(!occ.length) return 0;
+  let score=occ.reduce((s,c)=>s+scoreCell(c,inputs),0)/occ.length*10;
+  const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+  if(uniq.length>=3) score+=5;
+  else if(uniq.length>=2) score+=3;
+  const tall=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].height==='tall');
+  if(tall.length>1) score-=8;
+  const trN=uniq.filter(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired));
+  if(trN.length>1) score-=6;
+  const cool=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].coolSeason);
+  if(inputs.season==='latesummer'&&cool.length) score-=cool.length*5;
+  score+=goalBonus(inputs);
+  // Fix 8: smooth fill scaling — penalty scales linearly from 0 (full bed) to -15 (empty)
+  // instead of a binary cliff at 50%. Uses sqrt curve for gentler ramp.
+  const fillPct=occ.length/16;
+  if(fillPct<1) score-=Math.round((1-Math.sqrt(fillPct))*15);
+  return Math.min(100,Math.max(0,Math.round(score)));
+}
+
+function goalBonus(inputs){
+  const u=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+  let b=0;
+  if(inputs.goal==='salad'&&u.some(ck=>['leaf_lettuce','arugula','spinach'].includes(ck))) b+=5;
+  if(inputs.goal==='pickling'&&u.some(ck=>ck.includes('cucumber'))) b+=5;
+  if(inputs.goal==='yield'&&u.some(ck=>ck.includes('bean')||ck.includes('cucumber'))) b+=3;
+  if(inputs.goal==='easy'&&!u.some(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired))) b+=4;
+  return b;
+}
+
+// ═══════════════ COUNTS ══════════════════════════════════════════════════════════
+function getCounts(){
+  const cc={};
+  bed.forEach(c=>{if(c.crop)cc[c.crop]=(cc[c.crop]||0)+1;});
+  const r={};
+  Object.entries(cc).forEach(([ck,n])=>{r[ck]=Math.max(1,Math.round(CROPS[ck].spacingPerSqFt*n));});
+  return r;
+}
+
+// ═══════════════ RECOMMENDATIONS ════════════════════════════════════════════════
+function weakestCells(inputs,n=2){
+  return bed.filter(c=>c.crop).map(c=>({cell:c,score:scoreCell(c,inputs)}))
+    .sort((a,b)=>a.score-b.score).slice(0,n);
+}
+
+function betterCropForCell(cell,inputs){
+  if(!cell.crop) return null;
+  // Fix 3: use full scoreCell (with adjacency) not just scoreCropInCell
+  const curScore=scoreCell(cell,inputs);
+  let best=null, bs=curScore+0.5; // must beat current by at least 0.5
+
+  Object.keys(CROPS).forEach(ck=>{
+    if(ck===cell.crop) return;
+    // Temporarily swap crop into cell to get full adjacency-aware score
+    const orig=cell.crop;
+    cell.crop=ck;
+    const s=scoreCell(cell,inputs);
+    cell.crop=orig;
+    if(s>bs){ bs=s; best=ck; }
+  });
+
+  if(!best) return null;
+
+  // Fix 4: build reason tags explaining why the swap is better
+  const reasons=[];
+  const cur=CROPS[cell.crop];
+  const cnd=CROPS[best];
+  const light=cell.effectiveLight||0;
+  if(cnd.sunMin<=light && cur.sunMin>light) reasons.push('+light');
+  if(cell.trellisAllowed && cnd.habit!=='vining' && cur.habit==='vining') reasons.push('+trellis');
+  if(!cell.trellisAllowed && cur.habit==='vining' && cnd.habit!=='vining') reasons.push('+no-trellis');
+  // Check companion gain
+  const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
+  const companionGain=nbrs.some(n=>cnd.companionTags.some(t=>CROPS[n.crop]&&CROPS[n.crop].category===t));
+  const companionLoss=nbrs.some(n=>cur.companionTags.some(t=>CROPS[n.crop]&&CROPS[n.crop].category===t));
+  if(companionGain&&!companionLoss) reasons.push('+companions');
+  if(inputs.season==='latesummer'&&cur.coolSeason&&!cnd.coolSeason) reasons.push('+heat-ok');
+  if(inputs.season==='spring'&&!cur.coolSeason&&cnd.coolSeason) reasons.push('+season');
+
+  return { cropKey:best, score:bs, reasons };
+}
+
+function subs(inputs){
+  const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+  const out=[];
+  uniq.forEach(ck=>{
+    if(scoreCropPlacement(ck,inputs)<6&&SUBS[ck]){
+      const s=SUBS[ck];
+      out.push({from:CROPS[ck].name,to:CROPS[s.swap].name,reason:s.reason});
+    }
+  });
+  return out;
+}
+
+function buildRec(inputs){
+  const zones=buildZoneMap(inputs);
+
+  // Goal → [cropKey, maxCells] pairs. Caps prevent any one crop monopolising the bed.
+  const GOAL_SETS = {
+    salad:    [['leaf_lettuce',8],['arugula',4],['radish',4]],
+    pickling: [['beit_cucumber',6],['leaf_lettuce',6],['bush_beans',4]],
+    yield:    [['bush_beans',6],['beit_cucumber',5],['swiss_chard',5]],
+    easy:     [['bush_beans',6],['leaf_lettuce',6],['radish',4]],
+    balanced: [['beit_cucumber',5],['leaf_lettuce',6],['bush_beans',5]]
+  };
+  const cropCaps = Object.fromEntries((GOAL_SETS[inputs.goal]||GOAL_SETS.balanced));
+  const cropSet  = Object.keys(cropCaps);
+  const used     = Object.fromEntries(cropSet.map(k=>[k,0]));
+
+  // Sort zones brightest-first so sun-hungry crops get first pick
+  const sortedZones=[...zones].map((z,i)=>({...z,idx:i}))
+    .sort((a,b)=>b.effectiveLight-a.effectiveLight);
+
+  const grid=Array(16).fill(null);
+
+  sortedZones.forEach(z=>{
+    // Rank eligible crops for this zone (respecting caps)
+    const ranked=cropSet
+      .filter(ck=>used[ck]<cropCaps[ck])
+      .map(ck=>({ck,s:scoreCropInCell(ck,z,inputs)}))
+      .sort((a,b)=>b.s-a.s);
+    if(!ranked.length) return;
+    const chosen=ranked[0].ck;
+    grid[z.idx]=chosen;
+    used[chosen]++;
+  });
+
+  // Fill any remaining nulls with the best-fitting uncapped crop
+  grid.forEach((val,i)=>{
+    if(val) return;
+    const z=zones[i];
+    let best=cropSet[0],bs=-Infinity;
+    cropSet.forEach(ck=>{const s=scoreCropInCell(ck,z,inputs);if(s>bs){bs=s;best=ck;}});
+    grid[i]=best;
+  });
+
+  return grid;
+}
+
+function loadRec(){
+  pushUndo();
+  const inputs=inp();
+  const grid=buildRec(inputs);
+  bed.forEach((cell,i)=>{cell.crop=grid[i];});
+  ui.mode='auto';
+  document.getElementById('modeManual').classList.remove('active');
+  document.getElementById('modeAuto').classList.add('active');
+  saveState();
+  render();
+}
+
+// ═══════════════ VARIETY RANKING ════════════════════════════════════════════════
+function rankVar(ck,inputs){
+  const c=CROPS[ck]; if(!c||!c.varieties.length) return [];
+  return[...c.varieties].sort((a,b)=>{
+    function vs(v){let s=0;const lc=(v.name+' '+v.desc).toLowerCase();
+      if(inputs.sunHours<6&&(lc.includes('compact')||lc.includes('tolerant')||lc.includes('partial')||lc.includes('shade')))s+=2;
+      if(!inputs.trellis&&(lc.includes('bush')||lc.includes('compact')||lc.includes('no trellis')))s+=2;
+      if(inputs.season==='latesummer'&&(lc.includes('heat')||lc.includes('tolerant')))s+=1;
+      if(inputs.season==='spring'&&(lc.includes('cool')||lc.includes('spring')))s+=1;
+      if(lc.includes('raised bed')||lc.includes('small')||lc.includes('compact'))s+=1;
+      return s;}
+    return vs(b)-vs(a);});
+}
+
+// ═══════════════ PER-CELL ISSUES ═════════════════════════════════════════════════
+// Returns array of {cellId, icon, msg} for cells with specific placement problems.
+function cellIssues(inputs){
+  const issues=[];
+  bed.forEach(cell=>{
+    if(!cell.crop) return;
+    const c=CROPS[cell.crop];
+    const light=cell.effectiveLight||0;
+    const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
+
+    // Off-trellis vine: vining crop not in a trellis zone
+    if(c.habit==='vining'&&!cell.trellisAllowed){
+      issues.push({cellId:cell.id,icon:'🪴',msg:`${c.short} is a vine but not in a trellis zone — yields will be lower.`});
+    }
+    // Low-light mismatch: effective light below crop minimum
+    if(light<c.sunMin){
+      issues.push({cellId:cell.id,icon:'☀',msg:`${c.short} needs ≥${c.sunMin} hrs; this cell gets only ${light.toFixed(1)} hrs.`});
+    }
+    // Tall-on-tall adjacency
+    if(c.height==='tall'&&nbrs.some(n=>CROPS[n.crop]&&CROPS[n.crop].height==='tall'&&n.crop!==cell.crop)){
+      issues.push({cellId:cell.id,icon:'↕',msg:`Tall crop next to another tall crop — mutual shading expected.`});
+    }
+    // Same-crop clumping: 3+ adjacent identical crops
+    const sameNbrs=nbrs.filter(n=>n.crop===cell.crop).length;
+    if(sameNbrs>=2){
+      issues.push({cellId:cell.id,icon:'⬛',msg:`${c.short} is clumped — spreading them improves airflow and yield.`});
+    }
+    // Hot-season cool-crop
+    if(c.coolSeason&&inputs.season==='latesummer'){
+      issues.push({cellId:cell.id,icon:'🌡',msg:`${c.short} will bolt in late-summer heat. Move to fall or swap variety.`});
+    }
+  });
+  return issues;
+}
+
+// ═══════════════ WARNINGS ════════════════════════════════════════════════════════
+function warnings(inputs){
+  const w=[];
+  const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+  uniq.forEach(ck=>{
+    const c=CROPS[ck];
+    if(inputs.sunHours<c.sunMin) w.push({t:'warn',msg:`${c.name} needs ≥${c.sunMin} hrs sun. Marginal here — choose compact or tolerant varieties.`});
+    if(c.trellisRequired&&!inputs.trellis) w.push({t:'warn',msg:`${c.name} needs a trellis. Without one, vines crowd the bed and yields fall.`});
+    if(c.coolSeason&&inputs.season==='latesummer') w.push({t:'warn',msg:`${c.name} bolts in late-summer heat. Consider fall planting or a bolt-resistant variety.`});
+  });
+  const tall=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].height==='tall');
+  if(tall.length>1) w.push({t:'warn',msg:`Multiple tall crops (${tall.map(ck=>CROPS[ck].short).join(', ')}) will shade each other. Swap one for a compact type.`});
+  if(inputs.sunHours>=6) w.push({t:'good',msg:'6+ hours of sun: cucumbers can perform well here. Enough light for a productive bed.'});
+  if(uniq.some(ck=>CROPS[ck]&&CROPS[ck].successionFriendly))
+    w.push({t:'tip',msg:'Succession-sow fast crops (lettuce, radish, arugula) every 2–3 weeks for a continuous harvest.'});
+  if(uniq.includes('bush_beans')&&(uniq.includes('leaf_lettuce')||uniq.includes('radish')))
+    w.push({t:'good',msg:'Beans + lettuce/radish is a classic companion combo — beans fix nitrogen that leafy crops love.'});
+  weakestCells(inputs,2).forEach(({cell,score})=>{
+    if(score<4){
+      const b=betterCropForCell(cell,inputs);
+      if(b){
+        const rtag=b.reasons&&b.reasons.length?` [${b.reasons.join(' ')}]`:'';
+        w.push({t:'tip',msg:`${cell.id}: ${CROPS[cell.crop].name} scores ${score.toFixed(1)}/10 here. ${CROPS[b.cropKey].name} (~${b.score.toFixed(1)})${rtag} would fit better.`});
+      }
+    }
+  });
+  subs(inputs).forEach(s=>w.push({t:'tip',msg:`Swap: ${s.from} → ${s.to}. ${s.reason}`}));
+
+  // Per-cell issues as warnings (deduplicated by message)
+  const seen=new Set();
+  cellIssues(inputs).forEach(({msg})=>{
+    if(!seen.has(msg)){ seen.add(msg); w.push({t:'warn',msg}); }
+  });
+
+  return w;
+}
+
+// ═══════════════ UI ACTIONS ══════════════════════════════════════════════════════
+function setMode(m){
+  ui.mode=m;
+  document.getElementById('modeManual').classList.toggle('active',m==='manual');
+  document.getElementById('modeAuto').classList.toggle('active',m==='auto');
+  if(m==='auto') loadRec(); else render();
+}
+
+function setTool(t){
+  ui.tool=t;
+  document.getElementById('toolPaint').classList.toggle('active',t==='paint');
+  document.getElementById('toolErase').classList.toggle('active',t==='erase');
+  saveState();
+}
+
+function clickCell(id){
+  const cell=bed.find(c=>c.id===id);
+  if(!cell) return;
+  pushUndo();
+  ui.selCell=id;
+  if(ui.tool==='erase') cell.crop=null;
+  else cell.crop=ui.selectedCrop;
+  switchRTab('inspect');
+  saveState();
+  render();
+}
+
+function clearBed(){
+  pushUndo();
+  bed.forEach(c=>c.crop=null);
+  saveState();
+  render();
+}
+
+function selectCrop(ck){
+  ui.selectedCrop=ck; ui.tool='paint'; setTool('paint');
+  saveState();
+  renderPalette();
+}
+
+// ═══════════════ RENDER ══════════════════════════════════════════════════════════
+function render(){
+  const inputs=inp();
+  const zones=buildZoneMap(inputs);
+  applyZones(zones);
+  renderBed(inputs);
+  renderRight(inputs);
+  // Wall label
+  const lm={back:'▲ Wall / Trellis Zone (Row 1)',front:'▼ Wall / Trellis Zone (Row 4)',left:'◀ Wall (Col 1)',right:'▶ Wall (Col 4)'};
+  document.getElementById('wtop').textContent=lm[inputs.wallSide]||'▲ Wall';
+  document.getElementById('chint').textContent=inputs.orientation==='ew'
+    ?'Bed runs East–West · morning sun from the east'
+    :'Bed runs North–South · western edge gets afternoon sun';
+}
+
+function renderBed(inputs){
+  const g=document.getElementById('bedGrid');
+  g.innerHTML='';
+  // Fix 6: build per-cell issue map for inline icons
+  const issueMap={};
+  cellIssues(inputs).forEach(({cellId,icon})=>{
+    if(!issueMap[cellId]) issueMap[cellId]=[];
+    issueMap[cellId].push(icon);
+  });
+
+  bed.forEach(cell=>{
+    const cs=scoreCell(cell,inputs);
+    const weak=cell.crop&&cs<4;
+    const sel=cell.id===ui.selCell;
+    const c=cell.crop?CROPS[cell.crop]:null;
+    const bg=c?c.color+'28':'#f0ebe3';
+    const bdc=c?c.color+'88':'#d4b896';
+    const sbc=cs>=7?'#4a7c59':cs>=4.5?'#f5c842':'#e07b39';
+    const issues=issueMap[cell.id]||[];
+    const tipLines=c
+      ?[c.name,`☀ ${cell.effectiveLight.toFixed(1)} hrs`,`Score: ${cs.toFixed(1)}/10`,cell.trellisAllowed?'🪴 Trellis zone':'',issues.length?issues.join(' '):'']
+      :[`Row ${cell.row+1} · Col ${cell.col+1}`,`☀ ${(cell.effectiveLight||0).toFixed(1)} hrs`,'Click to plant'];
+    const el=document.createElement('div');
+    el.className='bc'+(weak?' weak':'')+(sel?' selc':'');
+    el.style.background=bg; el.style.borderColor=bdc;
+    // Show first issue icon as a small overlay (top-left), weak marker stays top-right
+    const issueIcon=issues.length?`<span class="cell-issue">${issues[0]}</span>`:'';
+    el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
+      ${issueIcon}
+      <span class="cemo">${c?c.emoji:''}</span>
+      ${c?`<span class="cname">${c.short}</span>`:''}
+      ${c?`<div class="csbar" style="background:${sbc}"></div>`:''}`;
+    el.onclick=()=>clickCell(cell.id);
+    g.appendChild(el);
+  });
+}
+
+function switchLTab(t){
+  ['site','palette'].forEach(id=>{
+    document.getElementById('ltab-'+id).classList.toggle('active',id===t);
+    document.getElementById('lpane-'+id).classList.toggle('on',id===t);
+  });
+  saveState(); // persist so tab position restores
+}
+
+function switchRTab(t){
+  ui.rTab=t;
+  ['score','inspect','notes'].forEach(id=>{
+    document.getElementById('rtab-'+id).classList.toggle('active',id===t);
+    document.getElementById('rpane-'+id).classList.toggle('on',id===t);
+  });
+}
+
+function renderPalette(){
+  const f=ui.catFilter;
+  const q=(document.getElementById('psearch').value||'').toLowerCase();
+  const cats=['all',...new Set(Object.values(CROPS).map(c=>c.category).filter(Boolean))];
+  document.getElementById('catf').innerHTML=cats.map(cat=>
+    `<button class="catb ${f===cat?'active':''}" onclick="ui.catFilter='${cat}';renderPalette()">${cat}</button>`).join('');
+  const vis=Object.entries(CROPS).filter(([k,c])=>{
+    if(f!=='all'&&c.category!==f) return false;
+    if(q&&!c.name.toLowerCase().includes(q)&&!c.short.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('pgrid').innerHTML=vis.map(([k,c])=>
+    `<div class="pitem ${ui.selectedCrop===k?'sel':''}" onclick="selectCrop('${k}')">
+      <div class="pdot" style="background:${c.color}"></div>
+      <span class="pname">${c.name}</span>
+      <span class="pemo">${c.emoji}</span>
+    </div>`).join('');
+}
+
+function renderRight(inputs){
+  const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+  const counts=getCounts();
+  const bs=scoreBed(inputs);
+  const ws=warnings(inputs);
+  const warnCount=ws.filter(w=>w.t==='warn').length;
+  const sc=bs>=75?'#4a7c59':bs>=55?'#c08020':'#c0392b';
+  const rl=bs>=80?'Excellent':bs>=65?'Good':bs>=50?'Workable':bs>=35?'Risky':'Poor fit';
+
+  // ── warn badge on Notes tab ──
+  const badge=document.getElementById('warnBadge');
+  if(badge) badge.style.display=warnCount>0?'inline-block':'none';
+
+  // ── SCORE PANE ──
+  const bars=uniq.map(ck=>{
+    const s=scoreCropPlacement(ck,inputs);
+    const p=s*10; const cls=p>=70?'':p>=50?'m':'l';
+    return`<div class="brow">
+      <span class="blbl" title="${CROPS[ck].name}">${CROPS[ck].short}</span>
+      <div class="btrk"><div class="bfill ${cls}" style="width:${p}%"></div></div>
+      <span style="font-size:.6rem;font-family:'DM Mono',monospace;width:26px;text-align:right">${s.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+
+  const chtml=uniq.map(ck=>{
+    const n=counts[ck]||0;
+    return`<div class="cchip"><span class="cnum" style="color:${CROPS[ck].color}">${n}</span>
+      <span class="ccrp">${CROPS[ck].short}<br>plants</span></div>`;
+  }).join('');
+
+  document.getElementById('rpane-score').innerHTML=`
+    <div class="score-hero">
+      <div class="sbig">
+        <div class="snum" style="color:${sc}">${bs}</div>
+        <div class="slbl2">/ 100</div>
+        <div class="srating" style="color:${sc}">${rl}</div>
+      </div>
+      <div class="sbars">${bars||'<em style="font-size:.7rem;color:var(--text-light)">Paint crops to score</em>'}</div>
+    </div>
+    ${uniq.length?`<div class="crow">${chtml}</div>`:''}
+  `;
+
+  // ── INSPECT PANE ──
+  const selCell=ui.selCell?bed.find(c=>c.id===ui.selCell):null;
+  let inspHtml='';
+  if(selCell&&selCell.crop){
+    const cs=scoreCell(selCell,inputs);
+    const bt=betterCropForCell(selCell,inputs);
+    const btLabel=bt
+      ?`${CROPS[bt.cropKey].name} (~${bt.score.toFixed(1)})${bt.reasons&&bt.reasons.length
+          ?' <span style="font-size:.6rem;color:#4a7c59;font-family:\'DM Mono\',monospace">['+bt.reasons.join(' ')+']</span>':''}`
+      :'';
+
+    // varieties for selected crop
+    const ck=selCell.crop;
+    const rv=rankVar(ck,inputs);
+    const vhtml=rv.map((v,i)=>`<div class="vitem">
+      <span class="vname">
+        <span style="width:7px;height:7px;border-radius:2px;background:${CROPS[ck].color};display:inline-block;flex-shrink:0"></span>
+        ${v.name}${i===0?' <span class="bbadge">Best fit</span>':''}
+      </span>
+      <span class="vdesc">${v.desc}</span>
+    </div>`).join('');
+
+    inspHtml=`
+      <div class="insp">
+        <div class="insph">${CROPS[ck].emoji} ${CROPS[ck].name} · ${selCell.id.replace('r','R').replace('c','C')}${selCell.trellisAllowed?' 🪴':''}</div>
+        <div class="inspb">
+          <div class="irow"><span class="ikey">Effective light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
+          <div class="irow"><span class="ikey">Cell score</span>
+            <span class="ival" style="color:${cs>=7?'#4a7c59':cs>=4?'#c08020':'#c0392b'}">${cs.toFixed(1)}/10</span>
+          </div>
+          ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:#4a7c59">${btLabel}</span></div>`:''}
+        </div>
+      </div>
+      <div class="icard"><div class="ichdr">Varieties · ranked for this site</div>
+        <div class="icbody">${vhtml||'<em style="font-size:.72rem;color:var(--text-light)">No varieties listed.</em>'}</div>
+      </div>`;
+  } else if(selCell){
+    inspHtml=`<div class="insp">
+      <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.trellisAllowed?' 🪴':''}</div>
+      <div class="inspb">
+        <div class="irow"><span class="ikey">Light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
+        <div class="irow"><span class="ikey">Crop</span><span class="ival" style="color:var(--text-light)">— Empty —</span></div>
+      </div></div>`;
+  } else {
+    inspHtml=`<div class="inspect-empty"><span>👆</span><p>Click any cell to inspect</p></div>`;
+  }
+  document.getElementById('rpane-inspect').innerHTML=inspHtml;
+
+  // ── NOTES PANE ──
+  const whtml=ws.map(w=>`<div class="wi ${w.t}">
+    <span class="wico">${w.t==='warn'?'⚠':w.t==='good'?'✓':'ℹ'}</span>
+    <span>${w.msg}</span>
+  </div>`).join('');
+  document.getElementById('rpane-notes').innerHTML=
+    `<div class="icard"><div class="icbody">${whtml||
+      '<em style="font-size:.72rem;color:var(--text-light)">Paint crops into the bed to see feedback.</em>'
+    }</div></div>`;
+}
+
+// ═══════════════ INIT ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  const mod = e.ctrlKey||e.metaKey;
+  if(mod && e.key==='z' && !e.shiftKey){ e.preventDefault(); undo(); }
+  if(mod && (e.key==='y' || (e.key==='z' && e.shiftKey))){ e.preventDefault(); redo(); }
+});
+
+renderPalette();
+
+const hadSavedState = loadState();
+if(!hadSavedState){
+  loadRec();
+} else {
+  document.getElementById('modeManual').classList.toggle('active', ui.mode==='manual');
+  document.getElementById('modeAuto').classList.toggle('active', ui.mode==='auto');
+  setTool(ui.tool);
+  if(ui.rTab) switchRTab(ui.rTab);
+  renderPalette();
+  render();
+}
+updateUndoButtons();
+</script>
+</body>
+</html>
