@@ -224,6 +224,52 @@
     text-transform:uppercase;cursor:pointer;white-space:nowrap;
   }
 
+  /* === CAGE SYSTEM === */
+  .cage-info{background:white;border:1.5px solid var(--leaf);border-radius:var(--radius);padding:.6rem;margin-bottom:.5rem;}
+  .cage-info-hdr{font-family:'DM Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--leaf);font-weight:600;margin-bottom:.35rem;}
+  .cage-zone-row{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.25rem;font-size:.7rem;}
+  .cage-zone-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;margin-top:3px;}
+
+  .cage-trellis-bar{background:linear-gradient(90deg,#8b6914,#a07820,#8b6914);
+    border-radius:6px 6px 0 0;padding:.28rem .6rem;display:flex;align-items:center;justify-content:space-between;
+    border:2px solid #8b6914;border-bottom:none;margin-bottom:-2px;position:relative;z-index:1;display:none;}
+  .cage-trellis-bar.on{display:flex;}
+  .cage-trellis-label{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;
+    color:#fff8e7;font-weight:600;}
+  .cage-trellis-sign{font-size:.58rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+    color:#fff8e7;font-family:'DM Sans',sans-serif;padding:.08rem .32rem;border-radius:3px;}
+
+  .cage-wire-wrap{display:grid;grid-template-columns:10px 1fr 10px;gap:0;display:none;}
+  .cage-wire-wrap.on{display:grid;}
+  .cage-wire-side{background:repeating-linear-gradient(
+    45deg,#7a9e7e 0px,#7a9e7e 1px,transparent 1px,transparent 4px),
+    repeating-linear-gradient(-45deg,#7a9e7e 0px,#7a9e7e 1px,transparent 1px,transparent 4px);
+    background-color:#e8f2e9;border:1.5px solid #7a9e7e;}
+  .cage-wire-side.left{border-radius:0 0 0 6px;border-right:none;}
+  .cage-wire-side.right{border-radius:0 0 6px 0;border-left:none;}
+
+  .cage-door-bar{background:#8b6914;border-radius:0 0 6px 6px;padding:.15rem .5rem;
+    text-align:center;font-family:'DM Mono',monospace;font-size:.44rem;text-transform:uppercase;
+    letter-spacing:.1em;color:#fff8e7;border:2px solid #8b6914;border-top:1px dashed #c4915c;
+    margin-top:-2px;display:none;}
+  .cage-door-bar.on{display:block;}
+
+  .bc.trellis-zone{box-shadow:inset 0 0 0 1px rgba(232,200,74,0.25);}
+  .bc.protected-zone{box-shadow:inset 0 0 0 1px rgba(61,122,79,0.18);}
+
+  .zone-badge{font-size:.44rem;font-family:'DM Mono',monospace;text-transform:uppercase;
+    padding:1px 4px;border-radius:2px;flex-shrink:0;letter-spacing:.03em;}
+  .zone-badge.trellis{background:#fff3cd;color:#8b6914;}
+  .zone-badge.protected{background:#e8f5ea;color:#2a5a35;}
+
+  .zone-legend{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.35rem;}
+  .zleg{display:flex;align-items:center;gap:.22rem;font-size:.56rem;color:var(--text-light);font-family:'DM Mono',monospace;}
+  .zleg-dot{width:6px;height:6px;border-radius:2px;}
+
+  .cage-bed-shortcuts{display:flex;gap:.25rem;margin-bottom:.4rem;}
+  .cage-bed-shortcuts .preset-btn{flex:1;}
+
   @media(max-width:900px){
     .app{grid-template-columns:1fr;}
     .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;}
@@ -236,7 +282,7 @@
     <h1>Garden OS</h1>
     <span class="hv">v4.1</span>
   </div>
-  <p class="hsub">Raised Bed Planner · 43 crops · Variable beds · Live scoring</p>
+  <p class="hsub">Raised Bed Planner · 44 crops · Variable beds · Cage-aware · Live scoring</p>
 </header>
 
 <div class="app">
@@ -244,6 +290,7 @@
 <aside class="sl">
   <div class="tab-bar">
     <button class="tab-btn active" id="ltab-site">Site</button>
+    <button class="tab-btn" id="ltab-cage">Cage</button>
     <button class="tab-btn" id="ltab-palette">Crops</button>
   </div>
 
@@ -254,7 +301,7 @@
       <div class="bed-presets" id="bed-presets"></div>
       <div class="bed-custom">
         <span>Custom:</span>
-        <input type="number" id="bedW" min="2" max="10" value="4"> W
+        <input type="number" id="bedW" min="2" max="10" value="8"> W
         <input type="number" id="bedH" min="2" max="10" value="4"> H
       </div>
     </div>
@@ -310,6 +357,7 @@
         <option value="salad">Salad focused</option>
         <option value="pickling">Pickling focused</option>
         <option value="herbs">Herb garden</option>
+        <option value="sanctuary">Mom's Sanctuary</option>
       </select>
     </div>
     <div class="fg">
@@ -326,9 +374,74 @@
     </div>
   </div>
 
+  <!-- CAGE PANE -->
+  <div class="tab-pane" id="lpane-cage">
+    <div class="cage-info">
+      <div class="cage-info-hdr">Cage Structure Zones</div>
+      <div class="cage-zone-row">
+        <div class="cage-zone-dot" style="background:#d4a017"></div>
+        <div>
+          <div style="font-size:.7rem;font-weight:500;">Trellis Zone (Row 1)</div>
+          <div style="font-size:.62rem;color:var(--text-light)">Back row — climbers, vines, beans on rear trellis frame.</div>
+        </div>
+      </div>
+      <div class="cage-zone-row" style="margin-top:.2rem;">
+        <div class="cage-zone-dot" style="background:#7a9e7e"></div>
+        <div>
+          <div style="font-size:.7rem;font-weight:500;">Protected Zone (Rows 2+)</div>
+          <div style="font-size:.62rem;color:var(--text-light)">Wire-enclosed front section. Herbs, lettuce, roots.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slabel">Cage Configuration</div>
+    <div class="fg">
+      <div class="tog-row">
+        <button class="tog" id="cageEnabled"></button>
+        <span class="tog-lbl">Cage structure present</span>
+      </div>
+    </div>
+    <div class="fg">
+      <div class="tog-row">
+        <button class="tog on" id="cageRearTrellis"></button>
+        <span class="tog-lbl">Rear trellis wall</span>
+      </div>
+    </div>
+    <div class="fg">
+      <div class="tog-row">
+        <button class="tog on" id="cageWireSides"></button>
+        <span class="tog-lbl">Wire sides (critter protection)</span>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Cage lower band height</label>
+      <select id="cageHeight">
+        <option value="18">18" (min — rabbits can breach)</option>
+        <option value="24" selected>24" (recommended)</option>
+        <option value="36">36" (maximum protection)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Front door style</label>
+      <select id="doorStyle">
+        <option value="double" selected>Double door (recommended)</option>
+        <option value="single">Single wide door</option>
+        <option value="none">Open front (no doors)</option>
+      </select>
+    </div>
+    <div class="slabel">Bed Width Shortcut</div>
+    <div class="cage-bed-shortcuts">
+      <button class="preset-btn" id="cageBed4x4" data-pw="4" data-ph="4">4x4 ft</button>
+      <button class="preset-btn" id="cageBed4x8" data-pw="4" data-ph="8">4x8 ft</button>
+    </div>
+    <div style="background:var(--sun-pale);border:1px solid rgba(232,200,74,0.3);border-radius:var(--radius);padding:.5rem;font-size:.65rem;color:var(--text-mid);line-height:1.45;margin-top:.3rem;">
+      <strong>Build guide:</strong> The 4x8 bed uses two 4x4 beds side-by-side with the cage spanning the full 96" width. Three arch ribs, 6 posts, 24" hardware cloth on all sides.
+    </div>
+  </div>
+
   <!-- PALETTE PANE -->
   <div class="tab-pane" id="lpane-palette">
-    <input class="psearch" type="text" id="psearch" placeholder="Search 43 crops…" style="flex-shrink:0;margin-bottom:.35rem;">
+    <input class="psearch" type="text" id="psearch" placeholder="Search 44 crops…" style="flex-shrink:0;margin-bottom:.35rem;">
     <div class="catf" id="catf" style="flex-shrink:0;"></div>
     <div class="pgrid" id="pgrid"></div>
   </div>
@@ -350,11 +463,27 @@
   </div>
 
   <div class="bwrap">
+    <div id="cageTrellisBar" class="cage-trellis-bar">
+      <span class="cage-trellis-label">Rear Trellis Wall — Climbing Zone</span>
+      <span class="cage-trellis-sign">Mom's Sanctuary</span>
+    </div>
     <div class="wlbl" id="wtop">▲ Wall / Trellis Zone</div>
-    <div class="bedge" id="bedGrid"></div>
+    <div id="cageWireWrap" class="cage-wire-wrap">
+      <div class="cage-wire-side left"></div>
+      <div class="bedge" id="bedGrid"></div>
+      <div class="cage-wire-side right"></div>
+    </div>
+    <div class="bedge" id="bedGridNoCage" style="display:none"></div>
+    <div id="cageDoorBar" class="cage-door-bar">Double Door — Front Access</div>
     <div class="flbl">▼ Front (access side)</div>
     <div class="chint" id="chint"></div>
     <div class="fillbar"><div class="fillbar-fill" id="fillbar-fill" style="width:0%"></div></div>
+    <div class="zone-legend" id="zoneLegend" style="display:none">
+      <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
+      <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
+      <span class="zleg"><span class="zleg-dot" style="background:#d4651a"></span>Score &lt; 4.5</span>
+      <span class="zleg"><span class="zleg-dot" style="background:#3d7a4f"></span>Score &ge; 7</span>
+    </div>
   </div>
 </main>
 
@@ -373,7 +502,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-// CROP DATABASE — 43 crops across 8 categories
+// CROP DATABASE — 44 crops across 8 categories
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY HELPERS
@@ -388,15 +517,18 @@ function escapeHtml(str){
 const VALID_ORIENTATIONS=['ew','ns'];
 const VALID_WALLS=['back','front','left','right','none'];
 const VALID_SEASONS=['spring','summer','latesummer','fall'];
-const VALID_GOALS=['balanced','yield','easy','salad','pickling','herbs'];
+const VALID_GOALS=['balanced','yield','easy','salad','pickling','herbs','sanctuary'];
 const VALID_ZONES=['','5','6','7','8','9','10'];
 const VALID_TOOLS=['paint','erase'];
+const VALID_CAGE_HEIGHTS=['18','24','36'];
+const VALID_DOOR_STYLES=['double','single','none'];
 const MAX_SHARE_PAYLOAD=50000;
 
 const CROPS = {
   // ── CUCURBITS ──────────────────────────────────────────────────────────────
   beit_cucumber:{name:'Beit Alpha Cucumber',short:'Beit Cuke',emoji:'🥒',color:'#4a7c59',
     category:'cucurbit',sunMin:5.5,sunIdeal:7,height:'tall',habit:'vining',trellisRequired:false,
+    trellisZone:true,protectedZone:false,
     shadeScore:2,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['legume','greens'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
     varieties:[{name:'Beit Alpha',desc:'Classic crisp type. Excellent on trellis in small spaces.'},
@@ -404,12 +536,14 @@ const CROPS = {
       {name:'Picklebush',desc:'Bush habit, no trellis needed. Top pick for tight spots.'}]},
   slicing_cucumber:{name:'Slicing Cucumber',short:'Slicer',emoji:'🥒',color:'#2d6644',
     category:'cucurbit',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:false,
+    trellisZone:true,protectedZone:false,
     shadeScore:1,spacingPerSqFt:.33,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['legume','greens'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
     varieties:[{name:'Marketmore 76',desc:'Reliable, disease-tolerant. Needs full sun ideally.'},
       {name:'Straight Eight',desc:'Long smooth slicers. Best at 6+ hrs.'}]},
   bush_cucumber:{name:'Bush Pickle Cucumber',short:'Bush Cuke',emoji:'🥒',color:'#5d9e70',
     category:'cucurbit',sunMin:5,sunIdeal:7,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:1,coolSeason:false,heatTolerance:3,waterNeed:'medium',
     companionTags:['legume','greens','roots'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
     varieties:[{name:'Picklebush',desc:'Compact. No trellis. Great for 4×4 beds.'},
@@ -417,6 +551,7 @@ const CROPS = {
   // ── GREENS ─────────────────────────────────────────────────────────────────
   leaf_lettuce:{name:'Leaf Lettuce',short:'Lettuce',emoji:'🥬',color:'#8bc34a',
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['cucurbit','roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Black Seeded Simpson',desc:'Fast, heat-tolerant for lettuce. Great succession crop.'},
@@ -424,36 +559,42 @@ const CROPS = {
       {name:'Red Sails',desc:'Slow to bolt, beautiful red leaves. Outstanding spring bed crop.'}]},
   head_lettuce:{name:'Head Lettuce',short:'Head Lettuce',emoji:'🥬',color:'#7cb342',
     category:'greens',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:1,coolSeason:true,heatTolerance:1,waterNeed:'medium',
     companionTags:['cucurbit','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Little Gem',desc:'Mini romaine. Compact, great for raised beds.'},
       {name:'Butterhead',desc:'Buttery soft leaves. Spring or fall only.'}]},
   spinach:{name:'Spinach',short:'Spinach',emoji:'🌿',color:'#388e3c',
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:4,coolSeason:true,heatTolerance:1,waterNeed:'medium',
     companionTags:['roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Space',desc:'Smooth leaves, slow to bolt. More heat-tolerant than Bloomsdale.'},
       {name:'Bloomsdale',desc:'Classic savoy type. Best in cool spring or fall.'}]},
   kale:{name:'Kale',short:'Kale',emoji:'🥦',color:'#2e7d32',
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['roots','legume'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Lacinato (Dino)',desc:'Tall, dark leaves. Very cold-hardy and productive.'},
       {name:'Dwarf Curled',desc:'Compact form, great for tight beds.'}]},
   arugula:{name:'Arugula',short:'Arugula',emoji:'🌱',color:'#558b2f',
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:6,coolSeason:true,heatTolerance:1,waterNeed:'low',
     companionTags:['roots','greens'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Roquette',desc:'Classic peppery arugula. Fast-growing, succession every 3 weeks.'},
       {name:'Astro',desc:'Slower to bolt, milder flavor. Good for summer edges.'}]},
   swiss_chard:{name:'Swiss Chard',short:'Chard',emoji:'🍃',color:'#43a047',
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:2,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['legume','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Rainbow Chard',desc:'Multicolored stems. Ornamental and productive.'},
       {name:'Fordhook Giant',desc:'Classic white-stemmed. Very heat-tolerant.'}]},
   bok_choy:{name:'Bok Choy',short:'Bok Choy',emoji:'🥬',color:'#a0c379',
     category:'greens',sunMin:3,sunIdeal:6,height:'low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','herbs','roots'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Mei Qing Choi',desc:'Compact baby-bok type, heat tolerant and suitable for raised beds.'},
@@ -461,6 +602,7 @@ const CROPS = {
       {name:'Black Summer',desc:'Dark-leaved variety bred for heat tolerance and partial shade.'}]},
   mustard_greens:{name:'Mustard Greens',short:'Mustard',emoji:'🥬',color:'#a5b44f',
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','herbs'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Red Giant',desc:'Attractive red-tinged leaves; tolerates partial shade.'},
@@ -468,12 +610,14 @@ const CROPS = {
       {name:'Mizuna Green Wave',desc:'Mild flavour and bolt resistance.'}]},
   tatsoi:{name:'Tatsoi',short:'Tatsoi',emoji:'🥬',color:'#7fa86f',
     category:'greens',sunMin:3,sunIdeal:6,height:'very low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','roots'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Rosette Tat',desc:'Compact, spoon-shaped leaves; suited to small beds.'},
       {name:'Yukina Savoy',desc:'Upright habit with thick leaves; heat tolerant.'}]},
   mizuna:{name:'Mizuna',short:'Mizuna',emoji:'🥬',color:'#a6c75b',
     category:'greens',sunMin:4,sunIdeal:6,height:'low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
     companionTags:['legume','herbs'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Kyona',desc:'Fast-growing, deeply serrated leaves; tolerant of partial shade.'},
@@ -482,6 +626,7 @@ const CROPS = {
   // ── LEGUMES ────────────────────────────────────────────────────────────────
   bush_beans:{name:'Bush Green Beans',short:'Bush Beans',emoji:'🫘',color:'#d4a017',
     category:'legume',sunMin:5,sunIdeal:6,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:3,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['greens','roots','cucurbit'],conflictTags:['allium'],replacementCategory:'legume',successionFriendly:true,
     varieties:[{name:'Provider',desc:'Top pick for partial sun. Bred for shade and cool conditions.'},
@@ -489,12 +634,14 @@ const CROPS = {
       {name:'Blue Lake Bush',desc:'Classic best flavor, needs more sun than Provider.'}]},
   pole_beans:{name:'Pole Beans',short:'Pole Beans',emoji:'🫘',color:'#b8860b',
     category:'legume',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:true,
+    trellisZone:true,protectedZone:false,
     shadeScore:2,spacingPerSqFt:2,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['greens','roots'],conflictTags:['allium'],replacementCategory:'legume',successionFriendly:false,
     varieties:[{name:'Kentucky Wonder',desc:'Heavy yielder. Classic pole type. Needs trellis.'},
       {name:'Dragon Tongue',desc:'Yellow-purple variety. Can do without trellis.'}]},
   peas:{name:'Peas',short:'Peas',emoji:'🫛',color:'#7eb038',
     category:'legume',sunMin:4,sunIdeal:6,height:'tall',habit:'vining',trellisRequired:true,
+    trellisZone:true,protectedZone:false,
     shadeScore:3,spacingPerSqFt:4,coolSeason:true,heatTolerance:1,waterNeed:'medium',
     companionTags:['greens','roots'],conflictTags:['allium'],replacementCategory:'legume',successionFriendly:false,
     varieties:[{name:'Sugar Snap',desc:'Eat pod and all. Sweet, reliable, great on a trellis.'},
@@ -502,30 +649,35 @@ const CROPS = {
   // ── ROOTS ──────────────────────────────────────────────────────────────────
   radish:{name:'Radish',short:'Radish',emoji:'🌰',color:'#c0392b',
     category:'roots',sunMin:3,sunIdeal:5,height:'very low',habit:'root',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:16,coolSeason:true,heatTolerance:2,waterNeed:'low',
     companionTags:['greens','legume','cucurbit'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Cherry Belle',desc:'24-day radish. Great succession filler.'},
       {name:'French Breakfast',desc:'Mild, elongated. Good spring performer.'}]},
   carrots:{name:'Carrots',short:'Carrot',emoji:'🥕',color:'#e67e22',
     category:'roots',sunMin:5,sunIdeal:7,height:'very low',habit:'root',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:3,spacingPerSqFt:9,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['greens'],conflictTags:['dill'],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Chantenay',desc:'Stubby, ideal for raised bed soil depth.'},
       {name:'Danvers 126',desc:'Reliable, tolerates heavier soils.'}]},
   scallions:{name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
     category:'roots',sunMin:4,sunIdeal:6,height:'low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:12,coolSeason:true,heatTolerance:3,waterNeed:'low',
     companionTags:['greens','carrots'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Evergreen Hardy',desc:'Reliable bunching onion. Winter-hardy.'},
       {name:'Tokyo Long White',desc:'Slender, mild flavor. Great for raised beds.'}]},
   beets:{name:'Beets',short:'Beets',emoji:'🫐',color:'#880e4f',
     category:'roots',sunMin:5,sunIdeal:7,height:'low',habit:'root',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:3,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
     companionTags:['greens'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Detroit Dark Red',desc:'Classic. Reliable yields, beautiful color.'},
       {name:'Chioggia',desc:'Candy-striped Italian heirloom. Mild taste.'}]},
   turnips:{name:'Turnips',short:'Turnips',emoji:'🥔',color:'#c98ec2',
     category:'roots',sunMin:3,sunIdeal:6,height:'low',habit:'root',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:9,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Hakurei',desc:'Small white Tokyo turnip ideal for raised beds and quick harvest.'},
@@ -533,6 +685,7 @@ const CROPS = {
       {name:'Golden Ball',desc:'Heirloom with sweet yellow flesh; heat tolerant.'}]},
   onions:{name:'Onions',short:'Onions',emoji:'🧅',color:'#e0c776',
     category:'roots',sunMin:6,sunIdeal:8,height:'low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:9,coolSeason:true,heatTolerance:4,waterNeed:'medium',
     companionTags:['greens'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:false,
     varieties:[{name:'Evergreen Bunching',desc:'Scallion type; compact and tolerant of partial shade.'},
@@ -540,6 +693,7 @@ const CROPS = {
       {name:'Yellow Granex',desc:'Short-day variety adapted to raised beds in warm climates.'}]},
   garlic:{name:'Garlic',short:'Garlic',emoji:'🧄',color:'#e6d8a6',
     category:'roots',sunMin:6,sunIdeal:8,height:'low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:16,coolSeason:true,heatTolerance:4,waterNeed:'low',
     companionTags:['greens','cucurbit'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:false,
     varieties:[{name:'Music',desc:'Hardneck garlic with large cloves, cold-hardy.'},
@@ -548,12 +702,14 @@ const CROPS = {
   // ── HERBS ──────────────────────────────────────────────────────────────────
   basil:{name:'Basil',short:'Basil',emoji:'🌿',color:'#66bb6a',
     category:'herbs',sunMin:6,sunIdeal:8,height:'low',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:2,spacingPerSqFt:2,coolSeason:false,heatTolerance:5,waterNeed:'medium',
     companionTags:['fruiting'],conflictTags:['shiso'],replacementCategory:'herbs',successionFriendly:true,
     varieties:[{name:'Genovese',desc:'Classic large-leaf. Best for pesto.'},
       {name:'Compact Globe',desc:'Tiny mound habit. Great for small squares.'}]},
   cilantro:{name:'Cilantro',short:'Cilantro',emoji:'🌿',color:'#9dbe93',
     category:'herbs',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','roots','greens'],conflictTags:['fennel'],replacementCategory:'herbs',successionFriendly:true,
     varieties:[{name:'Santo',desc:'Slow-bolting type suitable for summer succession plantings.'},
@@ -561,6 +717,7 @@ const CROPS = {
       {name:'Caribe',desc:'Heat-tolerant cilantro that thrives in raised beds and containers.'}]},
   parsley:{name:'Parsley',short:'Parsley',emoji:'🌿',color:'#5fa147',
     category:'herbs',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
     companionTags:['roots','greens','fruiting'],conflictTags:['mint'],replacementCategory:'herbs',successionFriendly:true,
     varieties:[{name:'Flat-leaf (Italian)',desc:'Flavourful, upright plants; tolerant of partial shade.'},
@@ -568,6 +725,7 @@ const CROPS = {
       {name:'Gigante d\'Italia',desc:'Vigorous, heat-tolerant variety with large leaves.'}]},
   dill:{name:'Dill',short:'Dill',emoji:'🌿',color:'#7fb772',
     category:'herbs',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:2,coolSeason:true,heatTolerance:3,waterNeed:'low',
     companionTags:['cucurbit','roots'],conflictTags:['carrot'],replacementCategory:'herbs',successionFriendly:true,
     varieties:[{name:'Fernleaf',desc:'Compact, dwarf dill ideal for containers and raised beds.'},
@@ -575,6 +733,7 @@ const CROPS = {
       {name:'Bouquet',desc:'Upright variety with abundant seed heads; good companion plant.'}]},
   chives:{name:'Chives',short:'Chives',emoji:'🧅',color:'#93c47d',
     category:'herbs',sunMin:4,sunIdeal:6,height:'very low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:4,waterNeed:'low',
     companionTags:['fruiting','greens'],conflictTags:['legume'],replacementCategory:'herbs',successionFriendly:false,
     varieties:[{name:'Common',desc:'Standard garlic chives; hardy and tolerates partial shade.'},
@@ -582,18 +741,29 @@ const CROPS = {
   // ── FRUITING ───────────────────────────────────────────────────────────────
   peppers:{name:'Peppers',short:'Peppers',emoji:'🫑',color:'#e53935',
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:5,waterNeed:'medium',
     companionTags:['herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'California Wonder',desc:'Classic bell pepper. Reliable in warm beds.'},
       {name:'Jimmy Nardello',desc:'Sweet frying pepper. Prolific in full sun.'}]},
   compact_tomato:{name:'Compact Tomato',short:'Tomato',emoji:'🍅',color:'#d32f2f',
     category:'fruiting',sunMin:7,sunIdeal:9,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:true,protectedZone:false,
     shadeScore:1,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['herbs'],conflictTags:['corn'],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'Tumbling Tom',desc:'Very compact. Cascading habit. Good for small beds.'},
       {name:'Tiny Tim',desc:'Dwarf plant, cherry tomatoes. Easy in a 4×4.'}]},
+  cherry_tomato:{name:'Cherry Tomato (climbing)',short:'Cherry Tom',emoji:'🍅',color:'#c62828',
+    category:'fruiting',sunMin:7,sunIdeal:9,height:'tall',habit:'vining',trellisRequired:true,
+    trellisZone:true,protectedZone:false,
+    shadeScore:1,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
+    companionTags:['herbs','companion'],conflictTags:['corn'],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'Sun Gold',desc:'Orange cherry. Incredibly sweet. Vigorous on trellis.'},
+      {name:'Sweet Million',desc:'Heavy yields on cage trellis. Disease resistant.'},
+      {name:'Black Cherry',desc:'Rich complex flavor. Excellent cage climber.'}]},
   eggplant:{name:'Eggplant',short:'Eggplant',emoji:'🍆',color:'#7a3e6c',
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:true,
+    trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['legume','herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'Fairy Tale',desc:'Compact, dwarf plants with striped fruit; ideal for containers.'},
@@ -601,6 +771,7 @@ const CROPS = {
       {name:'Hansel',desc:'Mini eggplant variety well-suited to small raised beds.'}]},
   zucchini:{name:'Zucchini',short:'Zucchini',emoji:'🥒',color:'#9dae4c',
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['legume','herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'Raven',desc:'Compact bush variety with dark green fruits.'},
@@ -609,6 +780,7 @@ const CROPS = {
   // ── BRASSICA ───────────────────────────────────────────────────────────────
   compact_cabbage:{name:'Compact Cabbage',short:'Cabbage',emoji:'🥬',color:'#88b378',
     category:'brassica',sunMin:6,sunIdeal:8,height:'medium',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume'],conflictTags:['brassica'],replacementCategory:'brassica',successionFriendly:false,
     varieties:[{name:'Golden Acre',desc:'Early, compact cabbage head ideal for small spaces.'},
@@ -616,6 +788,7 @@ const CROPS = {
       {name:'Tender Sweet',desc:'Sweet leaves; tolerant of partial shade.'}]},
   broccoli:{name:'Broccoli',short:'Broccoli',emoji:'🥦',color:'#6aa84f',
     category:'brassica',sunMin:6,sunIdeal:8,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume'],conflictTags:['brassica'],replacementCategory:'brassica',successionFriendly:false,
     varieties:[{name:'De Cicco',desc:'Heirloom with side shoots; compact plants.'},
@@ -623,6 +796,7 @@ const CROPS = {
       {name:'Spigariello',desc:'Leafy broccoli cross tolerant of heat.'}]},
   kohlrabi:{name:'Kohlrabi',short:'Kohlrabi',emoji:'🥬',color:'#b4c17c',
     category:'brassica',sunMin:6,sunIdeal:8,height:'low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','herbs'],conflictTags:['brassica'],replacementCategory:'brassica',successionFriendly:true,
     varieties:[{name:'Early White Vienna',desc:'Compact, early variety suitable for spring and fall.'},
@@ -631,12 +805,14 @@ const CROPS = {
   // ── COMPANION ──────────────────────────────────────────────────────────────
   marigold:{name:'Marigold',short:'Marigold',emoji:'🌼',color:'#ff8f00',
     category:'companion',sunMin:4,sunIdeal:7,height:'low',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:3,coolSeason:false,heatTolerance:5,waterNeed:'low',
     companionTags:['cucurbit','fruiting','legume','brassica'],conflictTags:[],replacementCategory:'companion',successionFriendly:false,
     varieties:[{name:'French Marigold',desc:'Best pest deterrent. Plant at bed edges.'},
       {name:'African Marigold',desc:'Taller, striking. Good border plant.'}]},
   nasturtium:{name:'Nasturtium',short:'Nasturtium',emoji:'🌸',color:'#efa94a',
     category:'companion',sunMin:4,sunIdeal:6,height:'low',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:2,coolSeason:false,heatTolerance:3,waterNeed:'low',
     companionTags:['brassica','cucurbit','fruiting'],conflictTags:[],replacementCategory:'companion',successionFriendly:true,
     varieties:[{name:'Empress of India',desc:'Compact, bushy plants with dark leaves and red flowers.'},
@@ -651,15 +827,17 @@ const SUBS = {
   beit_cucumber:{swap:'bush_cucumber',reason:'Under 5 hrs sun, Bush Pickle handles lower light more gracefully.'},
   spinach:{swap:'arugula',reason:'Arugula handles heat a little better with the same shade tolerance.'},
   compact_tomato:{swap:'peppers',reason:'Peppers need slightly less sun and are more compact in a small bed.'},
+  cherry_tomato:{swap:'compact_tomato',reason:'If no trellis available, Compact Tomato is more self-supporting.'},
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════════════════
-let bedW = 4, bedH = 4;
+let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
 let ui = { selectedCrop:'leaf_lettuce', tool:'paint', selCell:null, catFilter:'all', rTab:'score' };
 let undoStack = [], redoStack = [];
+let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
 const MAX_HISTORY = 40;
 
 function createEmptyBed(w, h){
@@ -704,6 +882,7 @@ function saveState(){
         season: document.getElementById('season').value,
         goal: document.getElementById('goal').value,
         zone: document.getElementById('zone').value,
+        cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
       }
     };
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -783,7 +962,31 @@ function applyLoadedState(p){
       document.getElementById('goal').value=s.goal;
     if(typeof s.zone==='string'&&VALID_ZONES.includes(s.zone))
       document.getElementById('zone').value=s.zone;
+    if(s.cage && typeof s.cage==='object'){
+      cage.enabled = typeof s.cage.enabled==='boolean' ? s.cage.enabled : false;
+      cage.rearTrellis = typeof s.cage.rearTrellis==='boolean' ? s.cage.rearTrellis : true;
+      cage.wireSides = typeof s.cage.wireSides==='boolean' ? s.cage.wireSides : true;
+      if(typeof s.cage.height==='string' && VALID_CAGE_HEIGHTS.includes(s.cage.height)) cage.height = s.cage.height;
+      if(typeof s.cage.doorStyle==='string' && VALID_DOOR_STYLES.includes(s.cage.doorStyle)) cage.doorStyle = s.cage.doorStyle;
+      syncCageUI();
+    }
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CAGE UI SYNC
+// ═══════════════════════════════════════════════════════════════════════════════
+function syncCageUI(){
+  const en=document.getElementById('cageEnabled');
+  const rt=document.getElementById('cageRearTrellis');
+  const ws=document.getElementById('cageWireSides');
+  if(en) cage.enabled?en.classList.add('on'):en.classList.remove('on');
+  if(rt) cage.rearTrellis?rt.classList.add('on'):rt.classList.remove('on');
+  if(ws) cage.wireSides?ws.classList.add('on'):ws.classList.remove('on');
+  const ch=document.getElementById('cageHeight');
+  const ds=document.getElementById('doorStyle');
+  if(ch) ch.value=cage.height;
+  if(ds) ds.value=cage.doorStyle;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -798,6 +1001,7 @@ function inp(){
     season:document.getElementById('season').value,
     goal:document.getElementById('goal').value,
     zone:document.getElementById('zone').value,
+    cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
     bedW, bedH
   };
 }
@@ -912,7 +1116,15 @@ function scoreCropInCell(ck, cell, inputs){
   if(inputs.season==='spring'&&!c.coolSeason) seaFit=3;
   if(inputs.season==='fall'&&c.coolSeason) seaFit=5; // fall is great for cool crops
   if(inputs.season==='fall'&&!c.coolSeason) seaFit=2;
-  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3));
+  let cageBonus=0;
+  if(inputs.cage&&inputs.cage.enabled&&inputs.cage.rearTrellis){
+    const cr=CROPS[ck];
+    const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
+    const inTR=trellisRow>=0&&cell.row===trellisRow;
+    if(cr.trellisZone) cageBonus+=inTR?1.0:-0.5;
+    if(cr.protectedZone) cageBonus+=inTR?-0.3:0.5;
+  }
+  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3+cageBonus));
 }
 
 function neighbors(r,c){ return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCell(r+dr,c+dc)).filter(Boolean); }
@@ -957,6 +1169,7 @@ function goalBonus(inputs){
   if(inputs.goal==='yield'&&u.some(ck=>ck.includes('bean')||ck.includes('cucumber')||ck==='zucchini')) b+=3;
   if(inputs.goal==='easy'&&!u.some(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired))) b+=4;
   if(inputs.goal==='herbs'&&u.filter(ck=>CROPS[ck]&&CROPS[ck].category==='herbs').length>=2) b+=5;
+  if(inputs.goal==='sanctuary'&&u.some(ck=>ck==='cherry_tomato')&&u.some(ck=>ck==='basil')&&u.some(ck=>ck==='nasturtium')) b+=5;
   return b;
 }
 
@@ -1039,6 +1252,7 @@ function buildRec(inputs){
     easy:     [['bush_beans',6],['leaf_lettuce',6],['radish',4],['marigold',2]],
     balanced: [['beit_cucumber',4],['leaf_lettuce',6],['bush_beans',4],['radish',2]],
     herbs:    [['basil',4],['parsley',4],['chives',4],['cilantro',4]],
+    sanctuary: [['cherry_tomato',4],['basil',4],['leaf_lettuce',4],['nasturtium',2],['marigold',2]],
   };
   const total=bedW*bedH;
   const cropCaps=Object.fromEntries((GOAL_SETS[inputs.goal]||GOAL_SETS.balanced)
@@ -1048,7 +1262,25 @@ function buildRec(inputs){
   const sortedZones=[...zones].map((z,i)=>({...z,idx:i}))
     .sort((a,b)=>b.effectiveLight-a.effectiveLight);
   const grid=Array(total).fill(null);
+  // Cage-aware: prioritize trellis zone crops in trellis row
+  if(inputs.cage&&inputs.cage.enabled&&inputs.cage.rearTrellis){
+    const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
+    if(trellisRow>=0){
+      const trCrops=cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].trellisZone);
+      const prCrops=cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].protectedZone);
+      sortedZones.forEach(z=>{
+        if(grid[z.idx]) return;
+        const pool=(z.row===trellisRow)?trCrops:prCrops;
+        if(!pool.length) return;
+        const ranked=pool.filter(ck=>used[ck]<cropCaps[ck])
+          .map(ck=>({ck,s:scoreCropInCell(ck,z,inputs)}))
+          .sort((a,b)=>b.s-a.s);
+        if(ranked.length){ grid[z.idx]=ranked[0].ck; used[ranked[0].ck]++; }
+      });
+    }
+  }
   sortedZones.forEach(z=>{
+    if(grid[z.idx]) return;
     const ranked=cropSet.filter(ck=>used[ck]<cropCaps[ck])
       .map(ck=>({ck,s:scoreCropInCell(ck,z,inputs)}))
       .sort((a,b)=>b.s-a.s);
@@ -1137,6 +1369,13 @@ function warnings(inputs,issues){
   if(uniq.some(ck=>['marigold','nasturtium'].includes(ck)))
     w.push({t:'good',msg:'Companion flowers attract pollinators and deter pests — great choice!'});
   if(inputs.season==='fall') w.push({t:'tip',msg:'Fall is ideal for cool-season crops: lettuce, bok choy, arugula, turnips.'});
+  if(inputs.cage&&inputs.cage.enabled){
+    if(!inputs.cage.rearTrellis) w.push({t:'warn',msg:'Cage has no rear trellis — climbing crops won\'t benefit from cage structure.'});
+    if(inputs.cage.height==='18') w.push({t:'warn',msg:'18" cage band is minimal — rabbits and small critters may still breach.'});
+    if(inputs.cage.doorStyle==='none') w.push({t:'tip',msg:'Open front means easy access but less critter protection.'});
+  }
+  if(inputs.goal==='sanctuary'&&!(inputs.cage&&inputs.cage.enabled))
+    w.push({t:'tip',msg:'Mom\'s Sanctuary works best with the cage structure enabled — turn it on in the Cage tab.'});
   weakestCells(inputs,2).forEach(({cell,score})=>{
     if(score<4){
       const b=betterCropForCell(cell,inputs);
@@ -1167,6 +1406,7 @@ function shareLayout(){
       season:document.getElementById('season').value,
       goal:document.getElementById('goal').value,
       zone:document.getElementById('zone').value,
+      cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
     }
   };
   const hash='#bed='+encodeURIComponent(JSON.stringify(payload));
@@ -1238,6 +1478,17 @@ function render(){
   // Wall label
   const lm={back:'▲ Wall / Trellis Zone (Row 1)',front:'▼ Wall / Trellis Zone (last row)',left:'◀ Wall (Col 1)',right:'▶ Wall (last col)',none:'○ No wall'};
   document.getElementById('wtop').textContent=lm[inputs.wallSide]||'▲ Wall';
+  // Cage visuals
+  const cageOn=inputs.cage&&inputs.cage.enabled;
+  const tb=document.getElementById('cageTrellisBar');
+  const db=document.getElementById('cageDoorBar');
+  const zl=document.getElementById('zoneLegend');
+  if(tb) tb.classList.toggle('on',cageOn&&inputs.cage.rearTrellis);
+  if(db){
+    db.classList.toggle('on',cageOn);
+    if(cageOn) db.textContent=inputs.cage.doorStyle==='double'?'Double Door — Front Access':inputs.cage.doorStyle==='single'?'Single Door — Front Access':'Open Front — No Doors';
+  }
+  if(zl) zl.style.display=cageOn?'flex':'none';
   document.getElementById('chint').textContent=inputs.orientation==='ew'
     ?'East–West orientation · morning sun from the east'
     :'North–South orientation · western edge gets afternoon sun';
@@ -1248,7 +1499,14 @@ function render(){
 }
 
 function renderBed(inputs,issues){
-  const g=document.getElementById('bedGrid');
+  const cageOn=inputs.cage&&inputs.cage.enabled;
+  const g=document.getElementById(cageOn?'bedGrid':'bedGridNoCage');
+  const gOther=document.getElementById(cageOn?'bedGridNoCage':'bedGrid');
+  g.style.display='';
+  gOther.style.display='none';
+  // Show/hide wire wrap
+  const ww=document.getElementById('cageWireWrap');
+  if(ww){ww.classList.toggle('on',cageOn&&inputs.cage.wireSides);}
   g.style.gridTemplateColumns=`repeat(${bedW},1fr)`;
   g.innerHTML='';
   const issueMap={};
@@ -1268,8 +1526,14 @@ function renderBed(inputs,issues){
     const tipLines=c
       ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,`Score: ${cs.toFixed(1)}/10`,cell.trellisAllowed?'🪴 Trellis':'',issues.length?issues.join(' '):'']
       :[`Row ${cell.row+1} · Col ${cell.col+1}`,`☀ ${(cell.effectiveLight||0).toFixed(1)} hrs`,'Click to plant'];
+    let zoneClass='';
+    if(inputs.cage&&inputs.cage.enabled){
+      const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
+      if(trellisRow>=0&&cell.row===trellisRow) zoneClass=' trellis-zone';
+      else if(trellisRow>=0) zoneClass=' protected-zone';
+    }
     const el=document.createElement('div');
-    el.className='bc'+(weak?' weak':'')+(sel?' selc':'');
+    el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
     el.style.background=bg; el.style.borderColor=bdc;
     const issueIcon=issues.length?`<span class="cell-issue">${escapeHtml(issues[0])}</span>`:'';
     el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
@@ -1283,7 +1547,7 @@ function renderBed(inputs,issues){
 }
 
 function switchLTab(t){
-  ['site','palette'].forEach(id=>{
+  ['site','cage','palette'].forEach(id=>{
     document.getElementById('ltab-'+id).classList.toggle('active',id===t);
     document.getElementById('lpane-'+id).classList.toggle('on',id===t);
   });
@@ -1312,6 +1576,7 @@ function renderPalette(){
       <div class="pdot" style="background:${c.color}"></div>
       <span class="pname">${escapeHtml(c.name)}</span>
       <span class="pcat">${escapeHtml(c.category)}</span>
+      ${c.trellisZone?'<span class="zone-badge trellis">TRELLIS</span>':''}${c.protectedZone?'<span class="zone-badge protected">PROTECTED</span>':''}
       <span class="pemo">${escapeHtml(c.emoji)}</span>
     </div>`).join('');
 }
@@ -1430,6 +1695,7 @@ document.addEventListener('keydown',e=>{
 
 // Left tab bar
 document.getElementById('ltab-site').addEventListener('click',()=>switchLTab('site'));
+document.getElementById('ltab-cage').addEventListener('click',()=>switchLTab('cage'));
 document.getElementById('ltab-palette').addEventListener('click',()=>switchLTab('palette'));
 
 // Bed size
@@ -1444,6 +1710,25 @@ document.getElementById('trellisToggle').addEventListener('click',function(){thi
 document.getElementById('season').addEventListener('change',()=>onSite());
 document.getElementById('goal').addEventListener('change',()=>onSite());
 document.getElementById('zone').addEventListener('change',()=>onSite());
+
+// Cage controls
+document.getElementById('cageEnabled').addEventListener('click',function(){
+  this.classList.toggle('on'); cage.enabled=this.classList.contains('on'); onSite();
+});
+document.getElementById('cageRearTrellis').addEventListener('click',function(){
+  this.classList.toggle('on'); cage.rearTrellis=this.classList.contains('on'); onSite();
+});
+document.getElementById('cageWireSides').addEventListener('click',function(){
+  this.classList.toggle('on'); cage.wireSides=this.classList.contains('on'); onSite();
+});
+document.getElementById('cageHeight').addEventListener('change',function(){
+  cage.height=this.value; onSite();
+});
+document.getElementById('doorStyle').addEventListener('change',function(){
+  cage.doorStyle=this.value; onSite();
+});
+document.getElementById('cageBed4x4').addEventListener('click',()=>setPreset(4,4));
+document.getElementById('cageBed4x8').addEventListener('click',()=>setPreset(4,8));
 
 // Search
 document.getElementById('psearch').addEventListener('input',renderPalette);
