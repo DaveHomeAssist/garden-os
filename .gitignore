@@ -5,4 +5,6 @@ dist/
 *.log
 .env
 .env.*
-
+GARDEN-OS-IMPLEMENTATION-PLAN.md
+Garden Os Production Process.pdf
+audit/

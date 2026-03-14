@@ -5,547 +5,2123 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garden Cage Build Guide — Mom's Sanctuary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — Garden palette
+═══════════════════════════════════════════════ */
+:root {
+  --soil:       #2c1f0e;
+  --soil-mid:   #3d2c18;
+  --cedar:      #8b5e3c;
+  --cedar-lt:   #c4915c;
+  --cedar-pale: #e8d4be;
+  --gravel:     #c8bfa8;
+  --leaf:       #3a6b2a;
+  --leaf-dark:  #2d5421;
+  --seedling:   #6aab4a;
+  --wire:       #8a9a8a;
+  --wire-lt:    #d0d8cc;
+  --rust:       #b84a1a;
+  --rust-lt:    #fdeee6;
+  --cream:      #f7f3ec;
+  --parchment:  #ede7da;
+  --ink:        #1e1608;
+  --faded:      #7a6c58;
+  --highlight:  #eef5e8;
+  --tag-bg:     #e4ede0;
+  --white:      #ffffff;
+  --shadow-sm:  0 1px 3px rgba(44,31,14,0.06);
+  --shadow-md:  0 4px 16px rgba(44,31,14,0.10);
+  --shadow-lg:  0 8px 32px rgba(44,31,14,0.14);
+  --radius:     8px;
+  --radius-sm:  4px;
+  --radius-pill:20px;
+  --transition: 0.18s ease;
+  --header-h:   72px;
+  --search-h:   56px;
+  --sidebar-w:  280px;
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--cream);
+  background-image:
+    radial-gradient(ellipse at 15% 85%, rgba(58,107,42,0.045) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(139,94,60,0.05)  0%, transparent 55%);
+  color: var(--ink);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cedar);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ═══════════════════════════════════════════════
+   SKIP LINK (accessibility)
+═══════════════════════════════════════════════ */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--leaf);
+  color: white;
+  padding: 8px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  z-index: 9999;
+  border-radius: 0 0 var(--radius) 0;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 0; }
+
+.os-nav{
+  background:var(--soil);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  padding:0;
+  display:flex;
+  gap:0;
+  justify-content:center;
+  font-family:"DM Mono",monospace;
+  font-size:11px;
+}
+
+.os-nav a{
+  color:rgba(255,248,240,0.6);
+  text-decoration:none;
+  padding:8px 14px;
+  letter-spacing:.04em;
+  transition:color .15s;
+}
+
+.os-nav a:hover{ color:#fff8f0; }
+.os-nav a.active{
+  color:#fff8f0;
+  border-bottom:2px solid #e8c84a;
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER / MASTHEAD
+═══════════════════════════════════════════════ */
+.masthead {
+  background: var(--soil);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.013) 0, rgba(255,255,255,0.013) 1px,
+    transparent 1px, transparent 36px
+  );
+  border-bottom: 3px solid var(--cedar);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  height: var(--header-h);
+}
+
+.masthead-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.masthead-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.masthead-icon { flex-shrink: 0; opacity: 0.88; }
+
+.masthead-title h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(18px, 2.8vw, 32px);
+  font-weight: 900;
+  color: var(--cream);
+  line-height: 1.05;
+}
+
+.masthead-title h1 em {
+  font-style: italic;
+  color: var(--cedar-lt);
+}
+
+.masthead-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.32);
+  margin-top: 4px;
+}
+
+.masthead-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Mobile menu toggle */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--cream);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Progress pill in header */
+.header-progress {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--cedar-lt);
+  letter-spacing: 0.1em;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(196,145,92,0.3);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   SEARCH BAR
+═══════════════════════════════════════════════ */
+.search-bar-wrap {
+  background: #231a0d;
+  border-bottom: 1px solid rgba(139,94,60,0.25);
+  position: sticky;
+  top: var(--header-h);
+  z-index: 190;
+  height: var(--search-h);
+}
+
+.search-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-icon {
+  color: var(--cedar-lt);
+  opacity: 0.6;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--cream);
+  letter-spacing: 0.04em;
+}
+
+.search-input::placeholder {
+  color: rgba(255,255,255,0.22);
+  font-style: italic;
+}
+
+.search-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--seedling);
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+  letter-spacing: 0.06em;
+}
+
+.search-clear {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-pill);
+  color: rgba(255,255,255,0.4);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all var(--transition);
+  display: none;
+}
+
+.search-clear.visible { display: block; }
+.search-clear:hover { background: rgba(255,255,255,0.08); color: var(--cream); }
+
+/* Search highlight */
+mark.search-hl {
+  background: rgba(106,171,74,0.28);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* No results state */
+.no-results {
+  display: none;
+  text-align: center;
+  padding: 64px 20px;
+  color: var(--faded);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+
+.no-results.visible { display: block; }
+.no-results .nr-emoji { font-size: 48px; display: block; margin-bottom: 16px; }
+.no-results strong {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--cedar);
+  margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT — 2-column
+═══════════════════════════════════════════════ */
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: calc(100vh - var(--header-h) - var(--search-h));
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR / TOC
+═══════════════════════════════════════════════ */
+.sidebar {
+  border-right: 1px solid var(--wire-lt);
+  position: sticky;
+  top: calc(var(--header-h) + var(--search-h));
+  height: calc(100vh - var(--header-h) - var(--search-h));
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--cream) 0%, #f0ece3 100%);
+  padding: 20px 0 40px;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--wire-lt); border-radius: 2px; }
+
+.toc-header {
+  padding: 0 20px 14px;
+  border-bottom: 1px solid var(--wire-lt);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toc-header-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cedar);
+  font-weight: 500;
+}
+
+.toc-group-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cedar);
+  padding: 14px 20px 4px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0.75;
+}
+
+.toc-group-label::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 1px;
+  background: var(--cedar-lt);
+}
+
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all var(--transition);
+  font-family: 'Lora', serif;
+  font-size: 12.5px;
+  color: var(--faded);
+  text-decoration: none;
+  position: relative;
+}
+
+.toc-item:hover {
+  background: var(--highlight);
+  color: var(--ink);
+  border-left-color: var(--wire-lt);
+}
+
+.toc-item.active {
+  background: var(--highlight);
+  color: var(--ink);
+  border-left-color: var(--cedar);
+  font-weight: 500;
+}
+
+.toc-item.completed { color: var(--leaf); }
+
+.toc-item.hidden-by-search { display: none; }
+
+.toc-check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--wire-lt);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  color: transparent;
+  transition: all 0.22s;
+  background: white;
+}
+
+.toc-item.completed .toc-check {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: white;
+}
+
+/* progress bar below TOC */
+.toc-progress-wrap {
+  padding: 20px 20px 0;
+  border-top: 1px solid var(--wire-lt);
+  margin-top: 16px;
+}
+
+.toc-progress-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faded);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.toc-progress-label span:last-child {
+  color: var(--seedling);
+  font-weight: 500;
+}
+
+.toc-track {
+  height: 4px;
+  background: var(--wire-lt);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.toc-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--leaf), var(--seedling));
+  border-radius: 10px;
+  transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  width: 0%;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════ */
+.main-content {
+  padding: 36px 44px 80px;
+  min-width: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   CONTENT SECTION WRAPPERS
+═══════════════════════════════════════════════ */
+.content-section {
+  margin-bottom: 12px;
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+
+.content-section:hover { box-shadow: var(--shadow-md); }
+
+.content-section.hidden-by-search { display: none; }
+
+/* Section toggle header */
+.section-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: background var(--transition);
+  position: relative;
+}
+
+.section-toggle::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 24px; right: 24px;
+  height: 1px;
+  background: var(--wire-lt);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.content-section.open .section-toggle::after { opacity: 1; }
+
+.section-toggle:hover { background: #fbf8f3; }
+
+.section-toggle-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--wire-lt);
+  flex-shrink: 0;
+  line-height: 1;
+  width: 48px;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.section-toggle-text { flex: 1; min-width: 0; }
+
+.section-toggle-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.section-toggle-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--faded);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+}
+
+.section-badge {
+  background: var(--soil);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cedar-lt);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.section-badge.day1 { background: #1a3a12; color: #90d070; }
+.section-badge.day2 { background: #2a2a0a; color: #c8b850; }
+.section-badge.day3 { background: #3a1a0a; color: #e09060; }
+
+.toggle-chevron {
+  flex-shrink: 0;
+  color: var(--wire);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.content-section.open .toggle-chevron { transform: rotate(180deg); }
+
+/* Collapsible body */
+.section-body {
+  display: none;
+  padding: 24px 28px 28px;
+  animation: slidedown 0.22s ease;
+}
+
+@keyframes slidedown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.content-section.open .section-body { display: block; }
+
+/* ═══════════════════════════════════════════════
+   SPEC TABLE
+═══════════════════════════════════════════════ */
+.spec-box {
+  background: var(--soil);
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.018) 0, rgba(255,255,255,0.018) 1px,
+    transparent 1px, transparent 24px
+  );
+  color: var(--cream);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  font-family: 'DM Mono', monospace;
+  border: 1px solid rgba(139,94,60,0.2);
+}
+
+.spec-box-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--cedar-lt);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.spec-table tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.spec-table tr:last-child { border-bottom: none; }
+.spec-table td { padding: 7px 0; font-size: 11.5px; }
+.spec-table td:first-child { color: rgba(255,255,255,0.42); width: 56%; }
+.spec-table td:last-child { color: var(--cream); font-weight: 500; text-align: right; }
+
+/* ═══════════════════════════════════════════════
+   VERDICT / CALLOUT
+═══════════════════════════════════════════════ */
+.verdict {
+  background: linear-gradient(135deg, var(--leaf) 0%, var(--leaf-dark) 100%);
+  color: white;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.verdict::after {
+  content: '🌿';
+  position: absolute;
+  right: 18px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 44px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.verdict h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  font-style: italic;
+  color: #d4f0c8;
+  margin-bottom: 8px;
+}
+
+.verdict p {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1.75;
+  opacity: 0.9;
+}
+
+/* ═══════════════════════════════════════════════
+   NOTE / INFO BOX
+═══════════════════════════════════════════════ */
+.note-box {
+  border-left: 3px solid var(--cedar);
+  background: #fdf5ea;
+  padding: 12px 16px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+.note-box strong {
+  font-family: 'Lora', serif;
+  font-size: 12px;
+  color: var(--cedar);
+}
+
+/* ═══════════════════════════════════════════════
+   ASCII DIAGRAMS
+═══════════════════════════════════════════════ */
+.diagram-box {
+  background: var(--parchment);
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.diagram-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cedar), var(--leaf));
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.diagram-box h3 {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cedar);
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+.diagram-box pre {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ═══════════════════════════════════════════════
+   MATERIAL GRID
+═══════════════════════════════════════════════ */
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.material-card {
+  background: var(--cream);
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.material-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--soil);
+  margin-bottom: 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--wire-lt);
+}
+
+.material-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  color: var(--faded);
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--wire-lt);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.material-item:last-child { border-bottom: none; }
+
+.material-item span:last-child {
+  color: var(--cedar);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   TASK CARDS
+═══════════════════════════════════════════════ */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.task-card {
+  background: var(--white);
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.task-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: transparent;
+  transition: background 0.25s;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.task-card:hover {
+  border-color: var(--cedar-lt);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.task-card.done {
+  background: #f2f8ef;
+  border-color: #bdd9b5;
+}
+
+.task-card.done::before { background: var(--leaf); }
+.task-card.done .task-title { text-decoration: line-through; color: var(--wire); }
+
+.task-cb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--wire-lt);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: all 0.22s ease;
+  color: transparent;
+  background: white;
+}
+
+.task-card.done .task-cb {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: white;
+}
+
+.task-body { flex: 1; min-width: 0; }
+
+.task-title {
+  font-family: 'Lora', serif;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--ink);
+  margin-bottom: 3px;
+  line-height: 1.4;
+}
+
+.task-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  color: var(--faded);
+  line-height: 1.65;
+}
+
+.task-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--tag-bg);
+  border: 1px solid #c8d8c0;
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  color: var(--leaf);
+}
+
+.tag.warn { background: var(--rust-lt); border-color: #e8b090; color: var(--rust); }
+.tag.good { background: #dff0d8; border-color: #a8cc9a; color: var(--leaf); font-weight: 500; }
+.tag.opt  { background: #f0ecf8; border-color: #c8b8e0; color: #6a4a9a; }
+
+/* ═══════════════════════════════════════════════
+   COMPLETE BANNER
+═══════════════════════════════════════════════ */
+.complete-banner {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #eef8e8 0%, #f7f9f2 100%);
+  border: 1px solid #bdd9b5;
+  border-radius: var(--radius);
+  animation: fadein 0.4s ease;
+}
+
+.complete-banner.visible { display: block; }
+
+.complete-banner .garden-emoji {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 12px;
+  animation: bounce 0.7s ease;
+}
+
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  40%  { transform: translateY(-20px); }
+  70%  { transform: translateY(-8px); }
+}
+
+.complete-banner h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--leaf);
+  margin-bottom: 10px;
+}
+
+.complete-banner p {
+  font-family: 'DM Mono', monospace;
+  color: var(--faded);
+  max-width: 380px;
+  margin: 0 auto 24px;
+  line-height: 1.8;
+  font-size: 11.5px;
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 20px;
+  border: 1.5px solid var(--cedar);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  background: transparent;
+  color: var(--cedar);
+  transition: all var(--transition);
+}
+
+.btn:hover { background: var(--cedar); color: white; box-shadow: 0 2px 8px rgba(139,94,60,0.3); }
+
+.btn.primary { background: var(--soil); color: var(--cream); border-color: var(--soil); }
+.btn.primary:hover { background: var(--leaf); border-color: var(--leaf); }
+
+/* ═══════════════════════════════════════════════
+   EXPAND ALL / COLLAPSE ALL control bar
+═══════════════════════════════════════════════ */
+.ctrl-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--wire-lt);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ctrl-bar-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.ctrl-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ctrl-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  background: white;
+  color: var(--faded);
+  transition: all var(--transition);
+}
+
+.ctrl-btn:hover { background: var(--parchment); color: var(--ink); border-color: var(--gravel); }
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════ */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE OVERLAY SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 299;
+}
+
+.sidebar-overlay.open { display: block; }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 860px) {
   :root {
-    --soil:#2c1f0e; --cedar:#8b5e3c; --cedar-lt:#c4915c; --gravel:#c8bfa8; --gravel-lt:#e8e2d6;
-    --leaf:#3a6b2a; --seedling:#6aab4a; --wire:#8a9a8a; --wire-lt:#d0d8cc; --rust:#b84a1a;
-    --cream:#f7f3ec; --parchment:#ede7da; --ink:#1e1608; --faded:#7a6c58; --trellis:#7a5820;
-    --trellis-lt:#b8943c; --bg:var(--cream); --paper:var(--parchment); --rule:var(--wire-lt);
-    --highlight:#eef5e8; --tag-bg:#e4ede0; --done:var(--leaf); --warn:var(--rust); --grid:#d8d0c4;
-    --focus:rgba(106,171,74,0.35);
+    --sidebar-w: 260px;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:var(--bg);
-    background-image:radial-gradient(circle at 20% 80%, rgba(58,107,42,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(139,94,60,0.05) 0%, transparent 50%);
-    color:var(--ink); font-family:'Lora', Georgia, serif; font-size:13.5px; line-height:1.65; min-height:100vh;
+
+  .layout { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: -280px;
+    width: 280px;
+    height: 100vh;
+    z-index: 300;
+    transition: left 0.28s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: none;
+    border-right: 2px solid var(--wire-lt);
   }
-  button,input{font:inherit}
-  .masthead{background:var(--soil);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 32px);color:var(--cream);padding:0 32px;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--cedar)}
-  .masthead-inner{max-width:1100px;margin:0 auto;display:flex;align-items:stretch;justify-content:space-between;gap:16px;min-height:76px}
-  .masthead-left{display:flex;align-items:center;gap:18px;padding:16px 0}.masthead-icon{flex-shrink:0;opacity:.85}
-  .masthead h1{font-family:'Playfair Display', Georgia, serif;font-size:clamp(22px,3.2vw,40px);font-weight:900;letter-spacing:-.01em;line-height:1;color:var(--cream)}
-  .masthead h1 em{font-style:italic;color:var(--cedar-lt)}
-  .masthead-sub{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:5px}
-  .masthead-meta{font-family:'DM Mono',monospace;font-size:10px;opacity:.45;text-align:right;line-height:1.7;align-self:center}
-  .progress-bar-wrap{background:#231a0d;padding:8px 32px 10px;border-bottom:1px solid rgba(139,94,60,.3)}
-  .progress-bar-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .progress-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gravel);white-space:nowrap;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:6px}
-  .progress-label::before{content:'🌱';font-size:11px}.progress-track{flex:1;min-width:180px;height:5px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--leaf),var(--seedling));border-radius:10px;transition:width .35s ease;width:0%;position:relative}
-  .progress-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:12px;background:rgba(255,255,255,.3);border-radius:10px;animation:shimmer 1.5s ease-in-out infinite}
-  @keyframes shimmer{0%,100%{opacity:0}50%{opacity:1}}
-  .progress-pct,.progress-copy{font-family:'DM Mono',monospace;font-size:11px;color:var(--seedling);font-weight:500}
-  .progress-copy{color:var(--gravel)}
-  .search-row{max-width:1100px;margin:10px auto 0;display:flex;gap:10px;align-items:center}
-  .search-input{flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:20px;background:rgba(255,255,255,.96);color:var(--ink);font-size:12px}
-  .search-btn{padding:9px 12px;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:transparent;color:var(--gravel);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-  .layout{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:256px 1fr;gap:0;min-height:calc(100vh - 156px)}
-  .sidebar{border-right:1px solid var(--rule);padding:24px 0;position:sticky;top:156px;height:calc(100vh - 156px);overflow-y:auto;background:linear-gradient(180deg,var(--cream) 0%, #f0ece2 100%)}
-  .sidebar-deco{padding:0 20px 16px;border-bottom:1px solid var(--rule);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .sidebar-section-label{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--cedar);font-weight:500}
-  .nav-day-label{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cedar);padding:14px 20px 4px;display:flex;align-items:center;gap:6px}
-  .nav-day-label::before{content:'';display:inline-block;width:14px;height:1px;background:var(--cedar-lt)}
-  .nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;border:0;border-left:3px solid transparent;background:transparent;transition:all .18s ease;font-family:'Lora',serif;font-size:12.5px;color:var(--faded);text-align:left}
-  .nav-item:hover{background:var(--highlight);color:var(--ink);border-left-color:var(--wire-lt)}
-  .nav-item.active{background:var(--highlight);color:var(--ink);border-left-color:var(--cedar);font-weight:500}
-  .nav-item.completed{color:var(--leaf)}
-  .nav-check{width:16px;height:16px;border:1.5px solid var(--wire-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;color:transparent;transition:all .2s;background:white}
-  .nav-item.completed .nav-check{background:var(--leaf);border-color:var(--leaf);color:white}
-  .main{padding:34px 44px}
-  .section{display:none;animation:fadein .28s ease}.section.active{display:block}@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-  .section-header{display:flex;align-items:flex-start;gap:20px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--rule);position:relative}
-  .section-header::after{content:'';position:absolute;bottom:-1px;left:0;width:60px;height:2px;background:var(--cedar);border-radius:2px}
-  .section-num{font-family:'Playfair Display',serif;font-size:56px;font-weight:900;line-height:1;color:var(--wire-lt);flex-shrink:0;letter-spacing:-.02em}
-  .section-title-block h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--ink);line-height:1.1;letter-spacing:-.01em}
-  .section-title-block .subtitle{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);margin-top:5px;letter-spacing:.04em}
-  .section-day-badge{margin-left:auto;background:var(--soil);border-radius:20px;padding:5px 14px;font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cedar-lt);white-space:nowrap;align-self:center}
-  .section-day-badge.trellis-badge{background:var(--trellis);color:#f5e5c0}.section-day-badge.planting-badge{background:var(--leaf);color:#d4f0c8}
-  .spec-box{background:var(--soil);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0px,rgba(255,255,255,.02) 1px,transparent 1px,transparent 24px);color:var(--cream);border-radius:8px;padding:22px 26px;margin-bottom:24px;font-family:'DM Mono',monospace;border:1px solid rgba(139,94,60,.2)}
-  .spec-box h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;font-style:italic;color:var(--cedar-lt);margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:10px;display:flex;align-items:center;gap:8px}
-  .spec-box h3::before{content:'📐';font-style:normal}.spec-table{width:100%;border-collapse:collapse}.spec-table tr{border-bottom:1px solid rgba(255,255,255,.05)}.spec-table td{padding:7px 0;font-size:11.5px}.spec-table td:first-child{color:rgba(255,255,255,.45);width:55%}.spec-table td:last-child{color:var(--cream);font-weight:500;text-align:right}
-  .diagram-box{background:var(--parchment);border:1px solid var(--rule);border-radius:8px;padding:20px 24px;margin-bottom:20px;overflow-x:auto;position:relative}
-  .diagram-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cedar),var(--leaf));border-radius:8px 8px 0 0}
-  .diagram-box h3{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--cedar);margin-bottom:14px;font-weight:500}
-  .diagram-box pre{font-family:'DM Mono',monospace;font-size:11px;line-height:1.55;color:var(--ink);white-space:pre}
-  .material-grid,.plant-grid{display:grid;gap:12px;margin-bottom:24px}.material-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}.plant-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
-  .material-card,.plant-card{background:white;border:1px solid var(--rule);border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px rgba(44,31,14,.04)}
-  .material-card h4{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--soil);margin-bottom:10px;border-bottom:1px solid var(--rule);padding-bottom:7px}
-  .material-item{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);padding:4px 0;border-bottom:1px dotted var(--grid);display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .material-item span:last-child{color:var(--cedar);font-weight:500;white-space:nowrap}
-  .verdict,.verdict-trellis{color:white;border-radius:8px;padding:20px 24px;margin-bottom:24px;position:relative;overflow:hidden}.verdict{background:linear-gradient(135deg,var(--leaf) 0%, #2d5421 100%);border:1px solid rgba(58,107,42,.3)}.verdict::after{content:'🌿';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:48px;opacity:.15}.verdict h3,.verdict-trellis h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;font-style:italic;margin-bottom:8px}.verdict h3{color:#d4f0c8}.verdict p,.verdict-trellis p{font-family:'DM Mono',monospace;font-size:11px;line-height:1.7;opacity:.9}.verdict-trellis{background:linear-gradient(135deg,var(--trellis) 0%, #5c3e14 100%);border:1px solid rgba(122,88,32,.3)}.verdict-trellis::after{content:'🪴';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:48px;opacity:.18}.verdict-trellis h3{color:#f5e5c0}
-  .note-box{border-left:3px solid var(--cedar);background:#fdf5ea;padding:12px 16px;border-radius:0 6px 6px 0;margin-bottom:20px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);line-height:1.65}.note-box strong{color:var(--cedar);font-family:'Lora',serif;font-size:12px}.note-box.trellis-note{border-left-color:var(--trellis);background:#fdf6e8}.note-box.trellis-note strong{color:var(--trellis)}
-  .sanctuary-banner{background:linear-gradient(135deg,#f7f0e4,#f0e8d4);border:1px solid rgba(139,94,60,.25);border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .sanctuary-signs{display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0}.sanctuary-sign{font-family:'Playfair Display',serif;font-size:12px;font-weight:700;font-style:italic;color:var(--trellis);background:white;border:1.5px solid rgba(122,88,32,.3);border-radius:6px;padding:6px 12px;white-space:nowrap}.sanctuary-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--faded);line-height:1.6}
-  .zone-header{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;font-style:italic;color:var(--ink);margin:24px 0 12px;display:flex;align-items:center;gap:10px}.zone-header::after{content:'';flex:1;height:1px;background:var(--rule)}
-  .plant-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(44,31,14,.08)}
-  .plant-card-zone{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:5px}
-  .plant-card-zone.zone-trellis{color:var(--trellis)}.plant-card-zone.zone-protected{color:var(--leaf)}.plant-card-zone.zone-front{color:var(--cedar)}
-  .plant-card h5{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px;line-height:1.2}
-  .plant-card p{font-family:'DM Mono',monospace;font-size:10px;color:var(--faded);line-height:1.6}
-  .task-list{display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
-  .task-card{background:white;border:1px solid var(--rule);border-radius:6px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:flex-start;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(44,31,14,.04);transition:all .18s ease}
-  .task-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent;transition:background .25s;border-radius:6px 0 0 6px}
-  .task-card:hover{border-color:var(--cedar-lt);box-shadow:0 2px 8px rgba(44,31,14,.08);transform:translateY(-1px)}
-  .task-toggle{width:22px;height:22px;margin-top:0;accent-color:var(--leaf);cursor:pointer}
-  .task-body{flex:1}.task-title{font-family:'Lora',serif;font-weight:500;font-size:13.5px;color:var(--ink);margin-bottom:3px;line-height:1.4}.task-note{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);line-height:1.6}
-  .task-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}.tag{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--tag-bg);border:1px solid #c8d8c0;border-radius:20px;padding:2px 8px;color:var(--leaf)}.tag.warn{background:#fdeee6;border-color:#e8b090;color:var(--rust)}.tag.good{background:#dff0d8;border-color:#a8cc9a;color:var(--leaf);font-weight:500}.tag.trellis{background:#fdf3e0;border-color:#d4b070;color:var(--trellis)}
-  .task-card.done{background:#f3f8f0;border-color:#bdd9b5}.task-card.done::before{background:var(--leaf)}.task-card.done .task-title{text-decoration:line-through;color:var(--wire)}
-  .nav-buttons{display:flex;gap:12px;margin-top:36px;padding-top:22px;border-top:1px solid var(--rule);flex-wrap:wrap}
-  .btn{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1.5px solid var(--cedar);border-radius:20px;cursor:pointer;background:transparent;color:var(--cedar);transition:all .18s ease}
-  .btn:hover{background:var(--cedar);color:white;box-shadow:0 2px 8px rgba(139,94,60,.3)}.btn.primary{background:var(--soil);color:var(--cream);border-color:var(--soil)}.btn.primary:hover{background:var(--leaf);border-color:var(--leaf);box-shadow:0 2px 10px rgba(58,107,42,.3)}.btn:disabled{opacity:.28;cursor:not-allowed}.btn:disabled:hover{background:transparent;color:var(--cedar);box-shadow:none}
-  .complete-banner{text-align:center;padding:36px 20px;border:1px solid var(--rule);border-radius:8px;background:white;display:none}.complete-banner.visible{display:block;animation:fadein .4s ease}.complete-banner .garden-emoji{font-size:80px;display:block;margin-bottom:12px;animation:bounce .6s ease}@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-8px)}}.complete-banner h2{font-family:'Playfair Display',serif;font-size:38px;font-weight:900;font-style:italic;color:var(--leaf);margin-bottom:12px}.complete-banner p{font-family:'DM Mono',monospace;color:var(--faded);max-width:420px;margin:0 auto 28px;line-height:1.8;font-size:11.5px}
-  .search-hidden{display:none !important}
-  .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:transparent}.sidebar::-webkit-scrollbar-thumb{background:var(--wire-lt);border-radius:2px}
-  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}.progress-fill,.task-card,.btn,.nav-item,.plant-card{transition:none} .progress-fill::after{animation:none}}
-  @media (max-width:768px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--rule);padding:16px 0}.main{padding:24px 20px}.section-num{font-size:38px}.plant-grid{grid-template-columns:1fr 1fr}.masthead,.progress-bar-wrap{padding-left:20px;padding-right:20px}.search-row{padding:0 20px}}
-  @media (max-width:560px){.plant-grid,.material-grid{grid-template-columns:1fr}.section-header{gap:12px}.section-day-badge{margin-left:0}.masthead-inner{flex-direction:column;justify-content:center;padding:10px 0}.masthead-meta{text-align:left;align-self:flex-start}.layout{min-height:auto}}
-  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;}
-  .os-nav a{color:rgba(247,243,236,0.55);text-decoration:none;padding:8px 14px;letter-spacing:.04em;transition:color .15s;}
-  .os-nav a:hover{color:var(--cream);}
-  .os-nav a.active{color:var(--cream);border-bottom:2px solid var(--cedar-lt);}
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .menu-toggle { display: block; }
+
+  .main-content { padding: 24px 20px 60px; }
+
+  .material-grid { grid-template-columns: 1fr 1fr; }
+
+  .header-progress { display: none; }
+}
+
+@media (max-width: 520px) {
+  .material-grid { grid-template-columns: 1fr; }
+  .diagram-box pre { font-size: 9.5px; }
+  .masthead-title h1 { font-size: 18px; }
+}
 </style>
 </head>
 <body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <nav class="os-nav" aria-label="Garden OS">
   <a href="index.html">Home</a>
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html" class="active">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
 </nav>
-<div class="masthead">
+
+<!-- ═══ MASTHEAD ═══ -->
+<header class="masthead" role="banner">
   <div class="masthead-inner">
     <div class="masthead-left">
-      <svg class="masthead-icon" width="48" height="44" viewBox="0 0 48 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="3" y="34" width="42" height="8" rx="1.5" fill="rgba(58,107,42,0.3)" stroke="#3a6b2a" stroke-width="1.2"/>
-        <line x1="3" y1="6" x2="3" y2="34" stroke="#c4915c" stroke-width="2.5" stroke-linecap="round"/>
-        <line x1="45" y1="6" x2="45" y2="34" stroke="#c4915c" stroke-width="2.5" stroke-linecap="round"/>
-        <line x1="3" y1="6" x2="45" y2="6" stroke="#c4915c" stroke-width="2" stroke-linecap="round"/>
-        <line x1="13" y1="6" x2="13" y2="34" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
-        <line x1="24" y1="6" x2="24" y2="34" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
-        <line x1="35" y1="6" x2="35" y2="34" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
-        <line x1="3" y1="14" x2="45" y2="14" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
-        <line x1="3" y1="22" x2="45" y2="22" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
-        <line x1="3" y1="30" x2="45" y2="30" stroke="rgba(196,145,92,0.5)" stroke-width="1.2"/>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+        ☰
+      </button>
+      <svg class="masthead-icon" width="44" height="38" viewBox="0 0 48 40" fill="none" aria-hidden="true">
+        <path d="M4 38 Q4 4 24 4 Q44 4 44 38" stroke="#c4915c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M10 38 Q10 12 24 12 Q38 12 38 38" stroke="#c4915c" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="3 3"/>
+        <line x1="4" y1="22" x2="44" y2="22" stroke="rgba(196,145,92,0.4)" stroke-width="1"/>
+        <line x1="6" y1="30" x2="42" y2="30" stroke="rgba(196,145,92,0.4)" stroke-width="1"/>
+        <rect x="2" y="30" width="44" height="8" rx="1" fill="rgba(58,107,42,0.25)" stroke="#3a6b2a" stroke-width="1"/>
       </svg>
-      <div>
+      <div class="masthead-title">
         <h1>Garden Cage <em>Build Guide</em></h1>
-        <div class="masthead-sub">8 × 4 ft · Cedar Trellis Wall · Critter-Proof Wire Enclosure</div>
+        <div class="masthead-sub">8 × 4 ft · Cattle Panel Tunnel · Critter-Proof Enclosure</div>
       </div>
     </div>
-    <div class="masthead-meta">Mom's Sanctuary<br>Two 4×4 beds · 3-day build</div>
+    <div class="masthead-right">
+      <div class="header-progress" id="headerProgress" aria-live="polite">0 / 25 tasks</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ SEARCH BAR ═══ -->
+<div class="search-bar-wrap" role="search">
+  <div class="search-bar-inner">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input
+      type="search"
+      class="search-input"
+      id="searchInput"
+      placeholder="Search tasks, materials, dimensions…"
+      aria-label="Search build guide content"
+      autocomplete="off"
+    >
+    <span class="search-count" id="searchCount" aria-live="polite" aria-atomic="true"></span>
+    <button class="search-clear" id="searchClear" aria-label="Clear search">Clear</button>
   </div>
 </div>
-<div class="progress-bar-wrap">
-  <div class="progress-bar-inner">
-    <span class="progress-label">Build Progress</span>
-    <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
-    <span class="progress-copy" id="progressCopy">0 of 29 tasks complete</span>
-    <span class="progress-pct" id="progressPct">0%</span>
-  </div>
-  <div class="search-row">
-    <input class="search-input" id="searchInput" type="search" placeholder="Search steps, crops, materials, or warnings">
-    <button class="search-btn" id="clearSearchBtn" type="button">Clear</button>
-  </div>
-</div>
+
+<!-- ═══ LAYOUT ═══ -->
 <div class="layout">
-  <aside class="sidebar" aria-label="Section navigation">
-    <div class="sidebar-deco">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 18 C10 18 3 13 3 7 A7 7 0 0 1 17 7 C17 13 10 18 10 18Z" fill="#3a6b2a" opacity="0.7"/><line x1="10" y1="18" x2="10" y2="10" stroke="#2d5421" stroke-width="1.5"/></svg>
-      <span class="sidebar-section-label">Navigation</span>
+
+  <!-- SIDEBAR / TOC -->
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+  <aside class="sidebar" id="sidebar" aria-label="Table of contents">
+    <div class="toc-header">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M10 18 C10 18 3 13 3 7 A7 7 0 0 1 17 7 C17 13 10 18 10 18Z" fill="#3a6b2a" opacity="0.75"/>
+        <line x1="10" y1="18" x2="10" y2="10" stroke="#2d5421" stroke-width="1.5"/>
+      </svg>
+      <span class="toc-header-label">Contents</span>
     </div>
-    <div class="nav-day-label">Reference</div>
-    <button class="nav-item active" type="button" data-section="0" id="nav-0"><span class="nav-check">✓</span><span>Specs &amp; Dimensions</span></button>
-    <button class="nav-item" type="button" data-section="1" id="nav-1"><span class="nav-check">✓</span><span>Diagrams</span></button>
-    <button class="nav-item" type="button" data-section="2" id="nav-2"><span class="nav-check">✓</span><span>Materials</span></button>
-    <button class="nav-item" type="button" data-section="3" id="nav-3"><span class="nav-check">✓</span><span>Fastener Plan</span></button>
-    <div class="nav-day-label">Build — Day 1</div>
-    <button class="nav-item" type="button" data-section="4" id="nav-4"><span class="nav-check">✓</span><span>Layout &amp; Posts</span></button>
-    <button class="nav-item" type="button" data-section="5" id="nav-5"><span class="nav-check">✓</span><span>Lower Frame &amp; Wire</span></button>
-    <div class="nav-day-label">Build — Day 2</div>
-    <button class="nav-item" type="button" data-section="6" id="nav-6"><span class="nav-check">✓</span><span>Rear Trellis Wall</span></button>
-    <button class="nav-item" type="button" data-section="7" id="nav-7"><span class="nav-check">✓</span><span>Front Frame &amp; Doors</span></button>
-    <div class="nav-day-label">Build — Day 3</div>
-    <button class="nav-item" type="button" data-section="8" id="nav-8"><span class="nav-check">✓</span><span>Finish &amp; Close Out</span></button>
-    <div class="nav-day-label">Planting</div>
-    <button class="nav-item" type="button" data-section="9" id="nav-9"><span class="nav-check">✓</span><span>Planting by Zone</span></button>
+
+    <nav aria-label="Document sections">
+      <div class="toc-group-label">Reference</div>
+      <a class="toc-item active" href="#section-specs"   id="toc-specs"     role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Specs &amp; Dimensions</span></a>
+      <a class="toc-item"        href="#section-diagrams" id="toc-diagrams"  role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Diagrams</span></a>
+      <a class="toc-item"        href="#section-materials" id="toc-materials" role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Materials</span></a>
+      <a class="toc-item"        href="#section-fasteners" id="toc-fasteners" role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Fastener Plan</span></a>
+
+      <div class="toc-group-label">Build — Day 1</div>
+      <a class="toc-item" href="#section-layout"  id="toc-layout"  role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Layout &amp; Posts</span></a>
+      <a class="toc-item" href="#section-frame"   id="toc-frame"   role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Lower Frame &amp; Mesh</span></a>
+
+      <div class="toc-group-label">Build — Day 2</div>
+      <a class="toc-item" href="#section-arch"    id="toc-arch"    role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Cattle Panel Arch</span></a>
+      <a class="toc-item" href="#section-doors"   id="toc-doors"   role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Front Frame &amp; Doors</span></a>
+
+      <div class="toc-group-label">Build — Day 3</div>
+      <a class="toc-item" href="#section-finish"  id="toc-finish"  role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Finish &amp; Plant</span></a>
+    </nav>
+
+    <div class="toc-progress-wrap">
+      <div class="toc-progress-label">
+        <span>Build Progress</span>
+        <span id="tocPct">0%</span>
+      </div>
+      <div class="toc-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Build progress">
+        <div class="toc-fill" id="tocFill"></div>
+      </div>
+    </div>
   </aside>
-  <main class="main">
-    <div class="section active" id="section-0" data-search="specs dimensions final dimension table mom sanctuary harvest with love build profile assumption">
-      <div class="section-header"><div class="section-num">01</div><div class="section-title-block"><h2>Specs &amp; Dimensions</h2><div class="subtitle">Final dimension table — post this in the shop before cutting anything</div></div><div class="section-day-badge">Reference</div></div>
-      <div class="sanctuary-banner"><div class="sanctuary-signs"><span class="sanctuary-sign">🌿 Mom's Sanctuary</span><span class="sanctuary-sign">🌸 Harvest with Love</span></div><div class="sanctuary-note">Two signs mounted to the rear trellis posts at eye level. Painted or routed cedar. Screwed flush to the left and right posts.</div></div>
-      <div class="spec-box"><h3>Final Dimension Table</h3><table class="spec-table"><tr><td>Overall width</td><td>96"</td></tr><tr><td>Overall depth</td><td>48"</td></tr><tr><td>Total height (trellis peak)</td><td>72"</td></tr><tr><td>Lower wire barrier height</td><td>24" minimum</td></tr><tr><td>Rear trellis wall height</td><td>48" – 54" above bed top</td></tr><tr><td>Trellis lattice spacing</td><td>6" – 8" grid, cedar 1×3</td></tr><tr><td>Front door opening total</td><td>44" – 48"</td></tr><tr><td>Each door width</td><td>22" – 24"</td></tr><tr><td>Door height</td><td>48" – 54"</td></tr><tr><td>Total posts</td><td>5 – 6</td></tr></table></div>
-      <div class="verdict"><h3>Build Profile</h3><p>Vertical rear cedar trellis wall, 24" hardware cloth barrier on all four sides, wire-enclosed front section, double front doors on a center post. No cattle panel tunnel arch — simpler, lighter, easier to build solo, and true to the actual structure.</p></div>
-      <div class="note-box"><strong>Assumption:</strong> Two 4×4 raised beds already exist side by side, giving a combined footprint near 96" × 48". The enclosure sits flush with the outer bed edges. The rear trellis is anchored to the back posts screwed directly into the bed frame.</div>
-      <div class="nav-buttons"><button class="btn" disabled>← Prev</button><button class="btn primary" type="button" data-go="1">Next: Diagrams →</button></div>
-    </div>
-    <div class="section" id="section-1" data-search="diagrams front elevation side profile top view post layout trellis detail climbing zone protected zone front access">
-      <div class="section-header"><div class="section-num">02</div><div class="section-title-block"><h2>Diagrams</h2><div class="subtitle">Front elevation, side profile, top view, post layout, and trellis detail</div></div><div class="section-day-badge">Reference</div></div>
-      <div class="diagram-box"><h3>Front Elevation — 96&quot; wide × 72&quot; peak</h3><pre>
-              FRONT ELEVATION
-           overall width = 96"   peak = 72"
 
-     BACK  ╔══╤═╤═╤═╤═╤═╤═╤═╤═╤═╤═╗  cedar trellis lattice
-           ║  │ │ │ │ │ │ │ │ │ │ ║  (climbing zone behind plants)
-           ╚══╧═╧═╧═╧═╧═╧═╧═╧═╧═╧═╝
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="main-content" tabindex="-1">
 
-           ░░░░░░  plant canopy  ░░░░░░
+    <div class="ctrl-bar">
+      <div class="ctrl-bar-title">Operations Guide</div>
+      <div class="ctrl-bar-actions">
+        <button class="ctrl-btn" id="expandAll" aria-label="Expand all sections">Expand All</button>
+        <button class="ctrl-btn" id="collapseAll" aria-label="Collapse all sections">Collapse All</button>
+      </div>
+    </div>
 
-    FRONT  ┌────────────┬────────────┐
-           │  Door A    │   Door B   │  22–24" each
-           │  ½" mesh   │   ½" mesh  │  48–54" tall
-           ├────────────┤────────────┤  ← center post
-           │▓▓▓▓▓▓▓▓▓▓▓▓│▓▓▓▓▓▓▓▓▓▓▓▓│  ← 24" lower band
-           └────────────┴────────────┘  hardware cloth
-            └────── 44–48" opening ─┘</pre></div>
-      <div class="diagram-box"><h3>Side Profile — 48&quot; deep × 72&quot; peak</h3><pre>
-          SIDE PROFILE
-       overall depth = 48"   peak = 72"
+    <div id="no-results" class="no-results" role="status" aria-live="polite">
+      <span class="nr-emoji">🪴</span>
+      <strong>No results found</strong>
+      Try a different search — dimensions, materials, or task names work well.
+    </div>
 
-  BACK                             FRONT
-   |                                 |
-   ╔══════════════════╗              |
-   ║  cedar trellis   ║  ← tomatoes, beans,
-   ║  lattice wall    ║    cucumbers climb here
-   ║  ~72" tall       ║
-   ╠══════════════════╣              |
-   ║▓ 24" hw cloth  ▓ ║░░░░░░░░░░░░░│
-   ╚══════════════════╝    wire      │ 24"
-   +──────────────────────────────── ┘ mesh
-              raised beds below</pre></div>
-      <div class="diagram-box"><h3>Top View — Zone Layout</h3><pre>
-          TOP VIEW  —  96" × 48"
+    <!-- ═════════════════════════════════════════
+         SECTION 1: SPECS & DIMENSIONS
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-specs" aria-labelledby="toggle-specs-title">
+      <button class="section-toggle" id="toggle-specs" aria-expanded="true" aria-controls="body-specs">
+        <span class="section-toggle-num" aria-hidden="true">01</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-specs-title">Specs &amp; Dimensions</div>
+          <div class="section-toggle-sub">Final dimension table — post this in the shop before cutting anything</div>
+        </div>
+        <span class="section-badge">Reference</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-specs">
 
-   BACK EDGE  (rear trellis wall)
-   ┌─────────────────────────────────┐
-   │  ROW 1 — TRELLIS ZONE           │ ← tomatoes, cucumbers,
-   │  plants climb rear lattice      │   beans, peas
-   ├─────────────────────────────────┤
-   │  ROWS 2–3 — PROTECTED ZONE      │ ← basil, lettuce, herbs,
-   │  wire sides keep critters out   │   bok choy, cilantro
-   ├─────────────────────────────────┤
-   │  ROW 4 — FRONT ACCESS           │ ← radish, marigold,
-   │  easy harvest, closest to doors │   nasturtium
-   └─────────────────────────────────┘
-   FRONT EDGE  (double doors)</pre></div>
-      <div class="diagram-box"><h3>Post Layout — Recommended 6-Post</h3><pre>
-   FRONT:  [L post]  [Center post]  [R post]
-   BACK:   [BL post] [BC post]      [BR post]
+        <div class="spec-box">
+          <div class="spec-box-title">Final Dimension Table</div>
+          <table class="spec-table" aria-label="Build dimensions">
+            <thead class="sr-only"><tr><th>Component</th><th>Dimension</th></tr></thead>
+            <tbody>
+              <tr><td>Overall width</td><td>96"</td></tr>
+              <tr><td>Overall depth</td><td>48"</td></tr>
+              <tr><td>Peak height</td><td>72"</td></tr>
+              <tr><td>Lower critter barrier height</td><td>24"</td></tr>
+              <tr><td>Door opening total width</td><td>44" – 48"</td></tr>
+              <tr><td>Each door width</td><td>22" – 24"</td></tr>
+              <tr><td>Door height (to shoulder)</td><td>48" – 54"</td></tr>
+              <tr><td>Curved section above shoulder</td><td>12" – 18"</td></tr>
+              <tr><td>Number of arch ribs</td><td>3 (2 minimum)</td></tr>
+              <tr><td>Total posts</td><td>5 – 6</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-   Back-center post recommended:
-     → mounting point for "Mom's Sanctuary" sign
-     → better trellis rigidity
-     → cleaner symmetry across the 96" span</pre></div>
-      <div class="diagram-box"><h3>Rear Trellis Detail — Cedar Lattice</h3><pre>
-   TRELLIS WALL DETAIL
-   96" wide  ×  48"–54" tall
+        <div class="verdict">
+          <h3>Short Verdict</h3>
+          <p>Build the structure like a small farm tunnel with a critter-proof skirt — not like a decorative garden feature. Five to six posts, 24" hardware cloth band, three cattle panel ribs, two simple front doors, no fancy carpentry. This is the version most likely to work, look decent, stay within reason, and not become a cursed side quest.</p>
+        </div>
 
-   ┌─────────────────────────────────────┐  ← top rail (2×4 cedar)
-   │  │  │  │  │  │  │  │  │  │  │  │  │
-   │  │  │  │  │  │  │  │  │  │  │  │  │  verticals:
-   ├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤  1×3 cedar
-   │  │  │  │  │  │  │  │  │  │  │  │  │  spaced 6–8"
-   │  │  │  │  │  │  │  │  │  │  │  │  │
-   ├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤  horizontals:
-   │  │  │  │  │  │  │  │  │  │  │  │  │  1×3 cedar
-   │  │  │  │  │  │  │  │  │  │  │  │  │  at 12" intervals
-   └─────────────────────────────────────┘  ← lower rail
+        <div class="note-box">
+          <strong>Assumption:</strong> Two 4×4 raised beds already exist side by side, giving a combined footprint of roughly 96" wide × 48" deep. Structure sits flush with the outer edges of the beds.
+        </div>
 
-   OR: premade 4×8 cedar lattice panel — fastest option.</pre></div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="0">← Prev</button><button class="btn primary" type="button" data-go="2">Next: Materials →</button></div>
-    </div>
-    <div class="section" id="section-2" data-search="materials posts trellis frame lower wire frame door framing wire mesh hardware cedar stain sealant lattice panel hardware cloth chicken wire">
-      <div class="section-header"><div class="section-num">03</div><div class="section-title-block"><h2>Materials</h2><div class="subtitle">Cut logic and full breakdown by category</div></div><div class="section-day-badge">Reference</div></div>
-      <div class="material-grid">
-        <div class="material-card"><h4>Primary Posts</h4><div class="material-item"><span>Front L, Center, R posts</span><span>72" 2×4 PT</span></div><div class="material-item"><span>Back L, C, R posts</span><span>72" 2×4 PT</span></div><div class="material-item"><span>Back center</span><span>72" (opt)</span></div></div>
-        <div class="material-card"><h4>Rear Trellis Frame</h4><div class="material-item"><span>Top horizontal rail</span><span>96" 2×4 cedar</span></div><div class="material-item"><span>Mid horizontal rail</span><span>96" optional</span></div><div class="material-item"><span>Lattice verticals or panel</span><span>1×3 @ 6–8"</span></div><div class="material-item"><span>Or premade panel</span><span>4×8 cedar</span></div></div>
-        <div class="material-card"><h4>Lower Wire Frame</h4><div class="material-item"><span>Side rails (×2)</span><span>48" 2×2 or 2×3</span></div><div class="material-item"><span>Front rails (flanking doors)</span><span>2×2 or 2×3</span></div><div class="material-item"><span>Back lower rail</span><span>96" or split</span></div></div>
-        <div class="material-card"><h4>Door Framing (×2)</h4><div class="material-item"><span>Vertical stiles</span><span>2 per door</span></div><div class="material-item"><span>Top, mid, bottom rails</span><span>1 each per door</span></div><div class="material-item"><span>Material</span><span>2×2 or 1×3</span></div></div>
-        <div class="material-card"><h4>Wire Mesh</h4><div class="material-item"><span>½" hardware cloth</span><span>Lower 24" all sides</span></div><div class="material-item"><span>Chicken wire</span><span>Upper zone, sides</span></div><div class="material-item"><span>Gauge</span><span>16 ga or better</span></div></div>
-        <div class="material-card"><h4>Hardware</h4><div class="material-item"><span>Heavy hinges</span><span>2+ per door</span></div><div class="material-item"><span>Hook &amp; eye latch</span><span>1+ per door</span></div><div class="material-item"><span>Cane bolt (opt)</span><span>1 on one leaf</span></div><div class="material-item"><span>Cedar stain/seal</span><span>1 qt, exterior</span></div></div>
       </div>
-      <div class="note-box trellis-note"><strong>Trellis option:</strong> A premade cedar lattice panel (4×8 ft) is the fastest route. Stain before installing. Screwed to the rear frame rails, it takes about 2 hours total including the frame. Scratch-built gives more control over spacing.</div>
-      <div class="note-box"><strong>Mesh strategy:</strong> Hardware cloth only where it matters — lower 24" on all sides and lower half of doors. Chicken wire handles the upper side zones above 24". Do not overskin unless animals prove they deserve escalation.</div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="1">← Prev</button><button class="btn primary" type="button" data-go="3">Next: Fasteners →</button></div>
-    </div>
-    <div class="section" id="section-3" data-search="fastener plan exterior deck screws hardware cloth fender washers chicken wire staple washer trellis lattice hinges latch cane bolt">
-      <div class="section-header"><div class="section-num">04</div><div class="section-title-block"><h2>Fastener Plan</h2><div class="subtitle">What holds what, and what fails quietly over one season</div></div><div class="section-day-badge">Reference</div></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="fasteners-deck-screws"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Lumber connections — exterior deck screws throughout</div><div class="task-note">2½" to 3" exterior deck screws for all framing. Pre-drill near ends to avoid splitting 2×2 stock.</div><div class="task-tags"><span class="tag">Framing</span></div></div></label>
-        <label class="task-card" data-task-id="fasteners-cloth-washers"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Hardware cloth — staple first, then fender washers</div><div class="task-note">Staple to position and tension. Screw fender washers every 8–12" for real hold. Staples alone pull out within one season. Do not skip washers.</div><div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Don't skip washers</span></div></div></label>
-        <label class="task-card" data-task-id="fasteners-chicken-wire"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Chicken wire — same staple-and-washer method</div><div class="task-note">Lighter than hardware cloth but still needs washer reinforcement at all edges. Overlap hardware cloth joints by 2" minimum.</div><div class="task-tags"><span class="tag">Mesh</span></div></div></label>
-        <label class="task-card" data-task-id="fasteners-trellis-screws"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Trellis lattice — screwed at every rail crossing</div><div class="task-note">One 1½" screw per crossing point minimum. Pre-drill cedar to avoid splits. Stain or seal all lattice lumber before assembling.</div><div class="task-tags"><span class="tag trellis">Trellis</span><span class="tag warn">Stain before installing</span></div></div></label>
-        <label class="task-card" data-task-id="fasteners-door-hardware"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Door hardware — 2 heavy hinges and one latch per door</div><div class="task-note">Exterior-rated hinges. Hook-and-eye latch or gate latch. Cane bolt at the bottom of one leaf if it drifts or racks. Both doors should latch cleanly from outside without forcing.</div><div class="task-tags"><span class="tag">Doors</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 2: DIAGRAMS
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-diagrams" aria-labelledby="toggle-diagrams-title">
+      <button class="section-toggle" id="toggle-diagrams" aria-expanded="true" aria-controls="body-diagrams">
+        <span class="section-toggle-num" aria-hidden="true">02</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-diagrams-title">Diagrams</div>
+          <div class="section-toggle-sub">Front, side, top, post layout, and door reference</div>
+        </div>
+        <span class="section-badge">Reference</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-diagrams">
+
+        <div class="diagram-box">
+          <h3>Front Elevation — 96" wide × 72" peak</h3>
+          <pre aria-label="Front elevation ASCII diagram">
+                 FRONT ELEVATION
+              overall width = 96"
+              overall peak  = 72"
+
+                   cattle panel arch
+                ______________________
+             .-'                      '-.
+           .'                            '.
+          /                                \
+         /                                  \
+        |          center post (2x4)         |
+        |                 ↕                  |
+        |---door A (22-24")--||--door B (22-24")---|
+        |                    ||                    |
+        |    open mesh       ||    open mesh       |
+        |                    ||                    |
+        |--(24" mesh break)--||-(24" mesh break)---|
+        | hardware cloth ½"  || hardware cloth ½"  |
+        +--------------------++--------------------+
+        |           raised beds (8' × 4')          |
+        +-------------------------------------------+
+      ↑left post                          right post↑
+       (2x4, 72")                          (2x4, 72")</pre>
+        </div>
+
+        <div class="diagram-box">
+          <h3>Side Elevation — 48" deep × 72" peak</h3>
+          <pre aria-label="Side elevation ASCII diagram">
+              SIDE ELEVATION
+            overall depth = 48"
+            overall peak  = 72"
+
+            front                      back
+              |                          |
+              ↓                          ↓
+             ____________________________
+          .-'                            '-.
+        .'                                  '.
+       /         arch rise ≈ 48"              \
+      |                                        |
+      |                                        |
+      |----------------------------------------| ← 24" sidewall top
+      |         hardware cloth lower zone      |
+      +----------------------------------------+
+      |            raised bed below            |
+      +----------------------------------------+</pre>
+        </div>
+
+        <div class="diagram-box">
+          <h3>Top View — Rib Placement</h3>
+          <pre aria-label="Top view rib placement diagram">
+              TOP VIEW — 96" × 48"
+
+   front edge
+      ↓
+   +------[ door opening 44-48" ]------+
+   |                                   |
+   |  rib 1 (front)                    |
+   |    |   rib 2 (mid)                |
+   |    |     |   rib 3 (back)         |
+   |    |     |     |                  |
+   |                                   |
+   |--------bed divider----------------|
+   |                                   |
+   +-----------------------------------+
+                        ↑
+                     back edge
+
+   Tie ribs with galvanized wire or fence ties.
+   Zip ties OK for mockup — replace after.</pre>
+        </div>
+
+        <div class="diagram-box">
+          <h3>Post Layout (Recommended 6-Post)</h3>
+          <pre aria-label="Post layout diagram">
+   FRONT                              BACK
+   [L post] [Center post] [R post]   [BL post] [BC post] [BR post]
+
+   Use back-center post if you want:
+     → better cattle panel attachment
+     → cleaner symmetry
+     → less wobble</pre>
+        </div>
+
+        <div class="diagram-box">
+          <h3>Single Door — 22-24" wide × ~54" tall</h3>
+          <pre aria-label="Single door elevation diagram">
+            SINGLE DOOR ELEVATION
+           22" – 24" wide | ~54" tall
+
+              _________
+           .-'         '-.    ← slight curve at top (freehand it)
+         .'               '.
+        |                   |
+        |   upper open      |
+        |   mesh / wire     |
+        |                   |
+        |-------------------| ← middle rail
+        |  ½" hardware      |
+        |  cloth lower      |
+        |                   |
+        +-------------------+
+
+   Frame members per door:
+     · 2 vertical stiles
+     · top rail
+     · middle rail (splits mesh zones)
+     · bottom rail
+   Hinges: 2 minimum, heavy duty
+   Latch: hook-and-eye or gate latch</pre>
+        </div>
+
       </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="2">← Prev</button><button class="btn primary" type="button" data-go="4">Next: Day 1 →</button></div>
-    </div>
-    <div class="section" id="section-4" data-search="layout posts day 1 measure footprint mark cut 72 inches front posts rear posts plumb brace structure">
-      <div class="section-header"><div class="section-num">05</div><div class="section-title-block"><h2>Layout &amp; Posts</h2><div class="subtitle">Establish the footprint and set your posts</div></div><div class="section-day-badge">Day 1 · AM</div></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="day1-measure"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Measure actual outer dimensions of both beds</div><div class="task-note">Do not assume 96"×48". Measure before cutting anything. Mark your numbers on the sketch. DIY beds are rarely exactly on dimension.</div><div class="task-tags"><span class="tag warn">Measure first</span></div></div></label>
-        <label class="task-card" data-task-id="day1-mark"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Mark the final post footprint</div><div class="task-note">Chalk or stakes. Front: far left, center (door split), far right. Back: left, right, and center. Mark back center — it is worth the extra post for trellis rigidity and sign mounting.</div><div class="task-tags"><span class="tag">Layout</span></div></div></label>
-        <label class="task-card" data-task-id="day1-cut-posts"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Cut all posts to 72&quot;</div><div class="task-note">Front posts carry the wire frame and doors. Rear posts carry the trellis wall. If screwing to the bed frame sides, account for that in your cut length.</div><div class="task-tags"><span class="tag">Cut</span></div></div></label>
-        <label class="task-card" data-task-id="day1-front-posts"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Set and brace front posts</div><div class="task-note">Screw directly to bed sides. Check plumb on both axes before final screws. Temporary diagonal bracing holds while you continue.</div><div class="task-tags"><span class="tag">Structure</span></div></div></label>
-        <label class="task-card" data-task-id="day1-rear-posts"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Set rear posts at full height</div><div class="task-note">All rear posts at 72". These carry the trellis wall and need to be plumb and solid. A leaning rear post makes a leaning trellis.</div><div class="task-tags"><span class="tag">Structure</span><span class="tag good">Full height required</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 3: MATERIALS
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-materials" aria-labelledby="toggle-materials-title">
+      <button class="section-toggle" id="toggle-materials" aria-expanded="true" aria-controls="body-materials">
+        <span class="section-toggle-num" aria-hidden="true">03</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-materials-title">Materials</div>
+          <div class="section-toggle-sub">Cut logic and full breakdown by category</div>
+        </div>
+        <span class="section-badge">Reference</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-materials">
+
+        <div class="material-grid">
+          <div class="material-card">
+            <h4>Primary Structure</h4>
+            <div class="material-item"><span>Front left post (2x4)</span><span>72"</span></div>
+            <div class="material-item"><span>Front center post (2x4)</span><span>72"</span></div>
+            <div class="material-item"><span>Front right post (2x4)</span><span>72"</span></div>
+            <div class="material-item"><span>Back left post (2x4)</span><span>72"</span></div>
+            <div class="material-item"><span>Back center post (2x4)</span><span>72" (opt)</span></div>
+            <div class="material-item"><span>Back right post (2x4)</span><span>72"</span></div>
+          </div>
+          <div class="material-card">
+            <h4>Lower Frame Rails</h4>
+            <div class="material-item"><span>Front left section</span><span>2x2 or 2x3</span></div>
+            <div class="material-item"><span>Front right section</span><span>2x2 or 2x3</span></div>
+            <div class="material-item"><span>Side frame left</span><span>48"</span></div>
+            <div class="material-item"><span>Side frame right</span><span>48"</span></div>
+            <div class="material-item"><span>Back rail</span><span>96" or split</span></div>
+          </div>
+          <div class="material-card">
+            <h4>Door Framing (×2)</h4>
+            <div class="material-item"><span>Vertical stiles</span><span>2 per door</span></div>
+            <div class="material-item"><span>Top rail</span><span>1 per door</span></div>
+            <div class="material-item"><span>Middle rail</span><span>1 per door</span></div>
+            <div class="material-item"><span>Bottom rail</span><span>1 per door</span></div>
+            <div class="material-item"><span>Material</span><span>2x2 or 1x3</span></div>
+          </div>
+          <div class="material-card">
+            <h4>Mesh</h4>
+            <div class="material-item"><span>½" hardware cloth</span><span>Lower zones + doors</span></div>
+            <div class="material-item"><span>Cattle panel ribs</span><span>2 min / 3 preferred</span></div>
+            <div class="material-item"><span>Panel gauge</span><span>≥ 16 gauge</span></div>
+          </div>
+          <div class="material-card">
+            <h4>Door Hardware</h4>
+            <div class="material-item"><span>Heavy hinges</span><span>2+ per door</span></div>
+            <div class="material-item"><span>Hook &amp; eye latch</span><span>1+ per door</span></div>
+            <div class="material-item"><span>Bottom cane bolt</span><span>1, one leaf (opt)</span></div>
+          </div>
+          <div class="material-card">
+            <h4>Cattle Panel Ties</h4>
+            <div class="material-item"><span>Galvanized wire</span><span>Primary</span></div>
+            <div class="material-item"><span>Conduit clamps</span><span>Solid attachment</span></div>
+            <div class="material-item"><span>Fence ties</span><span>Secondary</span></div>
+            <div class="material-item"><span>Heavy zip ties</span><span>Mockup only</span></div>
+          </div>
+        </div>
+
+        <div class="note-box">
+          <strong>Mesh strategy:</strong> Hardware cloth only where it matters — lower 24" on all sides and lower half of doors. Do not overskin the whole structure unless animals prove they deserve escalation.
+        </div>
+
       </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="3">← Prev</button><button class="btn primary" type="button" data-go="5">Next: Wire Frame →</button></div>
-    </div>
-    <div class="section" id="section-5" data-search="lower frame wire sides day 1 hardware cloth chicken wire side rails back rail lower band 24 inches sharp edges safety">
-      <div class="section-header"><div class="section-num">06</div><div class="section-title-block"><h2>Lower Frame &amp; Wire Sides</h2><div class="subtitle">Build the critter-proof perimeter before the trellis goes up</div></div><div class="section-day-badge">Day 1 · PM</div></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="day1-side-rails"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Cut and attach lower side rails at 24&quot;</div><div class="task-note">One 2×2 or 2×3 rail on each long side at exactly 24" up from the bed top, running the full 48" depth front to back.</div><div class="task-tags"><span class="tag">Lower Frame</span></div></div></label>
-        <label class="task-card" data-task-id="day1-back-rail"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Cut and attach back lower rail at 24&quot;</div><div class="task-note">One 96" rail or two pieces meeting at the rear center post. Ties rear posts below the trellis zone and gives the hardware cloth a backing surface.</div><div class="task-tags"><span class="tag">Lower Frame</span></div></div></label>
-        <label class="task-card" data-task-id="day1-side-cloth"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Staple and screw hardware cloth — lower 24&quot; on both sides</div><div class="task-note">Cut ½" hardware cloth to fill the lower 24" on both sides. Staple under tension. Fender washers every 8–12" along all edges.</div><div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Fender washers required</span></div></div></label>
-        <label class="task-card" data-task-id="day1-side-chicken"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Attach chicken wire — upper side zones above 24&quot;</div><div class="task-note">From the 24" rail to the top of the side frame. Overlap the hardware cloth at the join by 2". Staple and washer with the same method.</div><div class="task-tags"><span class="tag">Mesh</span></div></div></label>
-        <label class="task-card" data-task-id="day1-back-cloth"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Staple and screw hardware cloth — back lower zone</div><div class="task-note">Lower 24" behind the beds. Skipped more often than any other panel and regretted every time. Do it now.</div><div class="task-tags"><span class="tag">Mesh</span></div></div></label>
-        <label class="task-card" data-task-id="day1-wire-safety"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Check all wire edges — clip and fold sharp ends</div><div class="task-note">Hardware cloth and chicken wire cut edges are razor sharp. Fold every exposed wire end with pliers before anything else goes near the structure.</div><div class="task-tags"><span class="tag warn">Safety — do this now</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 4: FASTENER PLAN
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-fasteners" aria-labelledby="toggle-fasteners-title">
+      <button class="section-toggle" id="toggle-fasteners" aria-expanded="true" aria-controls="body-fasteners">
+        <span class="section-toggle-num" aria-hidden="true">04</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-fasteners-title">Fastener Plan</div>
+          <div class="section-toggle-sub">What holds what, and how</div>
+        </div>
+        <span class="section-badge">Reference</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-fasteners">
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Lumber connections — exterior deck screws</div>
+              <div class="task-note">Use 2½" to 3" exterior deck screws for all framing connections. Pre-drill near ends to avoid splitting 2x2 stock.</div>
+              <div class="task-tags"><span class="tag">Framing</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Hardware cloth — staple first, then fender washers</div>
+              <div class="task-note">Staple to position and tension. Then add screws with fender washers every 8–12" for real hold. Staples alone pull out over time.</div>
+              <div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Don't skip washers</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Cattle panel — galvanized wire + conduit clamps</div>
+              <div class="task-note">Galvanized wire ties at each post contact point. Conduit clamps over the wire for a solid lock. Heavy zip ties only for mockup — replace before final.</div>
+              <div class="task-tags"><span class="tag">Arch</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Door hardware — 2 hinges minimum, one latch per door</div>
+              <div class="task-note">Heavy duty exterior hinges. Hook-and-eye latch or simple gate latch on each door. Add a cane bolt to one leaf at the bottom if needed to stop racking.</div>
+              <div class="task-tags"><span class="tag">Doors</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="4">← Prev</button><button class="btn primary" type="button" data-go="6">Next: Trellis →</button></div>
-    </div>
-    <div class="section" id="section-6" data-search="rear trellis wall day 2 stain seal top rail lattice premade cedar lattice panel scratch built rigidity signs push shake test">
-      <div class="section-header"><div class="section-num">07</div><div class="section-title-block"><h2>Rear Trellis Wall</h2><div class="subtitle">The structural and visual centerpiece of the build</div></div><div class="section-day-badge trellis-badge">Day 2 · AM</div></div>
-      <div class="verdict-trellis"><h3>Premade vs. Scratch-Built</h3><p>Premade cedar lattice: stain, cut to width if needed, screw to the rear frame. Scratch-built from 1×3 cedar gives more control over spacing. Either way, stain before you install. Cedar weathers fast without a finish.</p></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="day2-stain"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Stain or seal all trellis lumber before assembly</div><div class="task-note">Coat all surfaces before anything goes up. Exterior wood stain or sealer. Let dry fully before installing.</div><div class="task-tags"><span class="tag trellis">Trellis</span><span class="tag warn">Do before installing</span></div></div></label>
-        <label class="task-card" data-task-id="day2-top-rail"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Install the top horizontal rail across rear posts</div><div class="task-note">One 96" 2×4 cedar rail spanning the full width at the top of the rear posts. Check level. This defines the trellis height and is the primary structural member.</div><div class="task-tags"><span class="tag trellis">Trellis</span></div></div></label>
-        <label class="task-card" data-task-id="day2-lattice"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Attach the lattice — premade panel or scratch-built</div><div class="task-note">Premade: screw panel to top rail and rear post sides every 8–10". Scratch-built: install verticals first at 6–8" spacing, then cross-screw horizontals at every intersection.</div><div class="task-tags"><span class="tag trellis">Trellis</span></div></div></label>
-        <label class="task-card" data-task-id="day2-rigidity"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Push-and-shake test — check trellis rigidity</div><div class="task-note">A loaded trellis with tomatoes and beans can get heavy by August. Push firmly from both sides. If it flexes, add a mid rail.</div><div class="task-tags"><span class="tag trellis">Trellis</span></div></div></label>
-        <label class="task-card" data-task-id="day2-signs"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Mount the “Mom's Sanctuary” and “Harvest with Love” signs</div><div class="task-note">Screwed flat to the rear left and right posts at eye level. Painted or routed cedar stock. This is the visual signature of the build.</div><div class="task-tags"><span class="tag good">Personal touch</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 5: LAYOUT & POSTS — Day 1 AM
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-layout" aria-labelledby="toggle-layout-title">
+      <button class="section-toggle" id="toggle-layout" aria-expanded="true" aria-controls="body-layout">
+        <span class="section-toggle-num" aria-hidden="true">05</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-layout-title">Layout &amp; Posts</div>
+          <div class="section-toggle-sub">Establish the footprint and get your posts set</div>
+        </div>
+        <span class="section-badge day1">Day 1 · AM</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-layout">
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Measure actual outer dimensions of both beds</div>
+              <div class="task-note">Do not assume 96"×48". Measure before cutting anything. Mark your numbers on the sketch. Beds built DIY rarely hit exact dimensions.</div>
+              <div class="task-tags"><span class="tag warn">Measure first</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Mark the final post footprint</div>
+              <div class="task-note">Chalk or stakes. Front three posts: far left, center (door split), far right. Rear posts: at minimum left and right corners. Mark back center if using 6-post layout.</div>
+              <div class="task-tags"><span class="tag">Layout</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Cut front posts to 72"</div>
+              <div class="task-note">Three front posts at 72". These carry the arch and door frames. If setting into ground or bed sides, account for burial depth in your cut length.</div>
+              <div class="task-tags"><span class="tag">Cut</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Set and brace front posts</div>
+              <div class="task-note">Attach to bed sides or set alongside. Check plumb on both axes before screwing off. Temporary diagonal bracing helps while you work.</div>
+              <div class="task-tags"><span class="tag">Structure</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Set rear posts</div>
+              <div class="task-note">Minimum: rear left and rear right at full height (72"). Add rear center if using 6-post layout. Full-height rear corners produce a cleaner, more rigid structure.</div>
+              <div class="task-tags"><span class="tag">Structure</span><span class="tag good">Full height recommended</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="5">← Prev</button><button class="btn primary" type="button" data-go="7">Next: Doors →</button></div>
-    </div>
-    <div class="section" id="section-7" data-search="front frame doors day 2 door leaves hinges latches cane bolt lower front mesh swing gap center post">
-      <div class="section-header"><div class="section-num">08</div><div class="section-title-block"><h2>Front Frame &amp; Doors</h2><div class="subtitle">Frame the opening and hang two working doors on the center post</div></div><div class="section-day-badge">Day 2 · PM</div></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="day2-front-rails"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Install front lower rails flanking the door opening</div><div class="task-note">Two sections at 24" up, one on each side of the door opening. These carry the lower front mesh and define the opening clearly.</div><div class="task-tags"><span class="tag">Framing</span></div></div></label>
-        <label class="task-card" data-task-id="day2-front-mesh"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Apply hardware cloth to lower front zones</div><div class="task-note">Two small panels between the outer posts and door opening edges. Staple first, then fender washers. Fold bottom edges under the bed frame.</div><div class="task-tags"><span class="tag">Mesh</span></div></div></label>
-        <label class="task-card" data-task-id="day2-build-doors"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Build two identical door leaves flat on the ground</div><div class="task-note">Each door: two stiles, top rail, middle rail, bottom rail. 22–24" wide, 48–54" tall. Build both to identical dimensions.</div><div class="task-tags"><span class="tag">Doors</span></div></div></label>
-        <label class="task-card" data-task-id="day2-door-mesh"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Apply mesh to lower half of both doors</div><div class="task-note">Hardware cloth below the middle rail on each door. Upper half can stay open wire or add chicken wire for more protection.</div><div class="task-tags"><span class="tag">Mesh</span></div></div></label>
-        <label class="task-card" data-task-id="day2-hang-doors"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Hang doors with exterior hinges</div><div class="task-note">Two heavy duty exterior hinges per door. Leave a small swing gap. Test swing before final tightening.</div><div class="task-tags"><span class="tag">Doors</span><span class="tag warn">Leave swing gap</span></div></div></label>
-        <label class="task-card" data-task-id="day2-latches"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Install latches and optional cane bolt</div><div class="task-note">Hook and eye on each door. Cane bolt at the bottom of one leaf if it tends to blow open or drift.</div><div class="task-tags"><span class="tag">Doors</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 6: LOWER FRAME & MESH — Day 1 PM
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-frame" aria-labelledby="toggle-frame-title">
+      <button class="section-toggle" id="toggle-frame" aria-expanded="true" aria-controls="body-frame">
+        <span class="section-toggle-num" aria-hidden="true">06</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-frame-title">Lower Frame &amp; Mesh</div>
+          <div class="section-toggle-sub">Build the critter-proof skirt</div>
+        </div>
+        <span class="section-badge day1">Day 1 · PM</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-frame">
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Cut and attach lower side rails at 24"</div>
+              <div class="task-note">2x2 or 2x3 horizontal rails at exactly 24" up from the bed top. One on each long side, running the full 48" depth front to back.</div>
+              <div class="task-tags"><span class="tag">Lower Frame</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Cut and attach back lower rail at 24"</div>
+              <div class="task-note">One 96" back rail, or two shorter pieces meeting at the back center post. Ties rear posts together and gives the hardware cloth a surface to attach to.</div>
+              <div class="task-tags"><span class="tag">Lower Frame</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Staple and screw hardware cloth — side zones</div>
+              <div class="task-note">Cut ½" hardware cloth to fill the lower 24" on both sides. Staple under tension first. Then screw fender washers every 8–12" along all edges. Bend the bottom edge under the bed frame if possible for a ground seal.</div>
+              <div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Fender washers required</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Staple and screw hardware cloth — back zone</div>
+              <div class="task-note">Same process on the back lower 24". This section is often skipped and then regretted. Squirrels and rabbits will find it.</div>
+              <div class="task-tags"><span class="tag">Mesh</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Check all wire edges — clip and fold sharp ends</div>
+              <div class="task-note">Hardware cloth cut edges are sharp. Fold exposed wire ends with pliers or cover with wood strips. Do this before anything else goes near the structure.</div>
+              <div class="task-tags"><span class="tag warn">Safety</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="6">← Prev</button><button class="btn primary" type="button" data-go="8">Next: Finish →</button></div>
-    </div>
-    <div class="section" id="section-8" data-search="finish close out day 3 wire edge audit trellis screws bird netting test door operation build complete">
-      <div class="section-header"><div class="section-num">09</div><div class="section-title-block"><h2>Finish &amp; Close Out</h2><div class="subtitle">Every sharp edge, every latch — closed out before planting begins</div></div><div class="section-day-badge">Day 3</div></div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="day3-wire-audit"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Full wire edge audit — clip and fold all sharp ends</div><div class="task-note">Walk the whole structure. Every hardware cloth and chicken wire cut end gets clipped flush or bent back. You will eventually brush against all of them.</div><div class="task-tags"><span class="tag warn">Safety — do this</span></div></div></label>
-        <label class="task-card" data-task-id="day3-trellis-screws"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Check all trellis screws — tighten any that shifted</div><div class="task-note">Cedar shrinks slightly as it dries. Give every crossing point a quarter turn before loading the trellis with plants.</div><div class="task-tags"><span class="tag trellis">Trellis</span></div></div></label>
-        <label class="task-card" data-task-id="day3-bird-netting"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Add optional bird netting over the top opening</div><div class="task-note">Only necessary if birds are targeting the bed. Drape lightweight netting over the trellis top and tie at the edges.</div><div class="task-tags"><span class="tag">Optional</span></div></div></label>
-        <label class="task-card" data-task-id="day3-door-test"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Test door operation — both leaves, both latches</div><div class="task-note">Open and close fully. Look for racking, binding, or latch drift. Adjust hinge screws if needed. Doors should swing free and latch without forcing.</div><div class="task-tags"><span class="tag">QC</span></div></div></label>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 7: CATTLE PANEL ARCH — Day 2 AM
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-arch" aria-labelledby="toggle-arch-title">
+      <button class="section-toggle" id="toggle-arch" aria-expanded="true" aria-controls="body-arch">
+        <span class="section-toggle-num" aria-hidden="true">07</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-arch-title">Cattle Panel Arch</div>
+          <div class="section-toggle-sub">Bend, place, and tie the ribs</div>
+        </div>
+        <span class="section-badge day2">Day 2 · AM</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-arch">
+        <div class="note-box">
+          <strong>Cattle panel bending:</strong> A 16' cattle panel bent over a 4' span will reach about 72" at peak with a natural curve. Two people makes this significantly easier. Wear gloves — the cut ends are brutal.
+        </div>
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Dry-fit first cattle panel rib — front position</div>
+              <div class="task-note">Bend the panel over the full 48" depth. Check that the peak hits roughly 72". The panel will want to spring — have a helper hold while you check position and mark attachment points.</div>
+              <div class="task-tags"><span class="tag">Arch</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Secure front rib to front posts with galvanized wire</div>
+              <div class="task-note">Wire at each contact point on both front posts. Conduit clamps over the wire for a solid lock. Check peak alignment before fully tightening.</div>
+              <div class="task-tags"><span class="tag">Arch</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Place and secure middle rib</div>
+              <div class="task-note">Position at approximately the midpoint of the 48" depth. Tie to top of side rails or to connecting wire running front to back. Keep consistent with front rib peak.</div>
+              <div class="task-tags"><span class="tag">Arch</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Place and secure rear rib</div>
+              <div class="task-note">Rear rib sits at the back posts. Wire and clamp same as front. Three ribs creates a rigid tunnel — two is the minimum but three is noticeably better in wind.</div>
+              <div class="task-tags"><span class="tag">Arch</span><span class="tag good">3 ribs recommended</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Tie ribs together with connecting wire or rails</div>
+              <div class="task-note">Run galvanized wire or a horizontal fence rail along the peak and along the sides to connect all three ribs. This stops the arch from racking front-to-back.</div>
+              <div class="task-tags"><span class="tag">Arch</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Replace any temp zip ties with wire</div>
+              <div class="task-note">UV kills zip ties in one season. Replace all structural zip ties with galvanized wire before calling the arch done. Zip ties can stay on mockup points you plan to revisit.</div>
+              <div class="task-tags"><span class="tag warn">Replace zip ties</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="complete-banner" class="complete-banner"><span class="garden-emoji">🌿</span><h2>Build Complete</h2><p>Trellis is up and rigid, wire is safe, doors swing and latch. Mom's Sanctuary is ready. Now go plant.</p><button class="btn primary" id="resetAllBtn" type="button">Reset All Tasks</button></div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="7">← Prev</button><button class="btn primary" type="button" data-go="9">Next: Planting →</button></div>
-    </div>
-    <div class="section" id="section-9" data-search="planting by zone trellis row protected zone front access basil lettuce bok choy cilantro radish marigold nasturtium bush beans tomatoes cucumbers beans peas">
-      <div class="section-header"><div class="section-num">10</div><div class="section-title-block"><h2>Planting by Zone</h2><div class="subtitle">What goes where, and why — three zones, three strategies</div></div><div class="section-day-badge planting-badge">Planting</div></div>
-      <div class="note-box trellis-note"><strong>Zone logic:</strong> Climbers at the back against the trellis. Protected herbs and greens in the wire-enclosed middle. Low easy-harvest crops at the front near the doors.</div>
-      <div class="zone-header">🪴 Zone 1 — Rear Trellis Row</div>
-      <p style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);margin-bottom:14px;line-height:1.6;">Vining and tall crops planted directly at the base of the rear lattice. Plants find the verticals on their own — tie loosely only if they need early guidance.</p>
-      <div class="plant-grid">
-        <div class="plant-card"><div class="plant-card-zone zone-trellis">🪴 Trellis zone</div><h5>🍅 Cherry Tomato</h5><p>Sun Gold or Sweet Million. Tie to trellis verticals. Heavy producer by July. Use silicone clips, not wire.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-trellis">🪴 Trellis zone</div><h5>🥒 Beit Alpha Cucumber</h5><p>Vines wind up the lattice naturally. Harvest every 2–3 days at peak season or they go bitter fast.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-trellis">🪴 Trellis zone</div><h5>🫘 Pole Beans</h5><p>Fastest climbers on the trellis. Kentucky Wonder is reliable. No tying needed after the first week.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-trellis">🪴 Trellis zone</div><h5>🫛 Snap Peas</h5><p>Spring only. Use the trellis for peas first, then succession with beans when heat arrives.</p></div>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 8: FRONT FRAME & DOORS — Day 2 PM
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-doors" aria-labelledby="toggle-doors-title">
+      <button class="section-toggle" id="toggle-doors" aria-expanded="true" aria-controls="body-doors">
+        <span class="section-toggle-num" aria-hidden="true">08</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-doors-title">Front Frame &amp; Doors</div>
+          <div class="section-toggle-sub">Frame the opening and hang two working doors</div>
+        </div>
+        <span class="section-badge day2">Day 2 · PM</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-doors">
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Install front lower rails (left and right of door opening)</div>
+              <div class="task-note">Complete the lower front frame on each side of the door opening. These carry the lower hardware cloth on the front face and define the door opening clearly.</div>
+              <div class="task-tags"><span class="tag">Framing</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Apply hardware cloth to lower front zones</div>
+              <div class="task-note">The two small panels between the outer posts and the door opening edges. Same staple-first-then-washer method as the sides. Fold any bottom edges under.</div>
+              <div class="task-tags"><span class="tag">Mesh</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Build door frames — two identical leaves</div>
+              <div class="task-note">Each door: two vertical stiles, top rail, middle rail, bottom rail. Width 22–24". Build mostly rectangular — ease the top corners only if it's easy. Square and plumb is the goal.</div>
+              <div class="task-tags"><span class="tag">Doors</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Apply mesh to door panels</div>
+              <div class="task-note">Hardware cloth on the lower half (below middle rail). Upper half: leave open to wire or use welded wire if you want more protection. Staple and washer same as everywhere else.</div>
+              <div class="task-tags"><span class="tag">Mesh</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Hang doors with exterior hinges</div>
+              <div class="task-note">Two heavy-duty exterior hinges per door minimum. Screw to the center post and the outer posts on each side. Check swing before final tightening. Leave a little gap — wood moves.</div>
+              <div class="task-tags"><span class="tag">Doors</span><span class="tag warn">Leave swing gap</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Install latches — hook-and-eye or gate latch</div>
+              <div class="task-note">Hook-and-eye on each door. If one leaf tends to blow open, add a cane bolt at the bottom to pin it to the bed frame. Test that both doors latch reliably from outside.</div>
+              <div class="task-tags"><span class="tag">Doors</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="zone-header">🛡 Zone 2 — Protected Wire Enclosure</div>
-      <p style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);margin-bottom:14px;line-height:1.6;">Wire sides keep rabbits and squirrels out of these rows. Perfect for herbs and tender greens.</p>
-      <div class="plant-grid">
-        <div class="plant-card"><div class="plant-card-zone zone-protected">🛡 Protected zone</div><h5>🌿 Basil</h5><p>Mom's Basil. Genovese for pesto. Compact Globe for small squares. Thrives in the cage microclimate.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-protected">🛡 Protected zone</div><h5>🥬 Leaf Lettuce</h5><p>Salad Bowl or Red Sails. Harvest outer leaves and it regrows for weeks.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-protected">🛡 Protected zone</div><h5>🥬 Bok Choy</h5><p>Baby Bok Choy likes the partial shade from trellis crops. Succession every 3 weeks.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-protected">🛡 Protected zone</div><h5>🌿 Cilantro</h5><p>Slow bolt variety in the shadier corner. Succession every 2–3 weeks.</p></div>
+    </section>
+
+    <!-- ═════════════════════════════════════════
+         SECTION 9: FINISH & PLANT — Day 3
+    ═════════════════════════════════════════ -->
+    <section class="content-section open" id="section-finish" aria-labelledby="toggle-finish-title">
+      <button class="section-toggle" id="toggle-finish" aria-expanded="true" aria-controls="body-finish">
+        <span class="section-toggle-num" aria-hidden="true">09</span>
+        <div class="section-toggle-text">
+          <div class="section-toggle-title" id="toggle-finish-title">Finish &amp; Plant</div>
+          <div class="section-toggle-sub">Clean up, close up, and stop negotiating with squirrels</div>
+        </div>
+        <span class="section-badge day3">Day 3</span>
+        <span class="toggle-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-finish">
+        <div class="task-list">
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Full wire edge audit — clip and fold all sharp ends</div>
+              <div class="task-note">Walk the whole structure. Every cut cattle panel end and hardware cloth edge gets clipped flush or bent back. Do not skip this. You will hit these with your arm eventually.</div>
+              <div class="task-tags"><span class="tag warn">Safety — do this</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Add optional bird netting over arch</div>
+              <div class="task-note">If birds are a problem, drape lightweight bird netting over the cattle panel arch. Clip or tie at the edges. This is optional — if the enclosed structure is tight enough, birds usually won't get in.</div>
+              <div class="task-tags"><span class="tag opt">Optional</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Replace any remaining temporary zip ties</div>
+              <div class="task-note">Final check — anything you used zip ties on for mockup that didn't get replaced yet. Galvanized wire on all structural points before the structure is considered done.</div>
+              <div class="task-tags"><span class="tag warn">Replace zip ties</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Test door operation — both leaves, both latches</div>
+              <div class="task-note">Open and close both doors fully. Check that latches engage cleanly. Look for any racking or binding. Adjust hinge screws if needed. Doors should swing free and latch without forcing.</div>
+              <div class="task-tags"><span class="tag">QC</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Plant and set up seedling protection</div>
+              <div class="task-note">Basil, lettuce, and herbs in the front rows. Tomatoes and beans at the back where they'll climb the cattle panel. White mesh baskets or similar covers over small seedlings near the front.</div>
+              <div class="task-tags"><span class="tag good">Done</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="complete-banner" id="completeBanner" role="status" aria-live="polite">
+          <span class="garden-emoji" aria-hidden="true">🥬</span>
+          <h2>Build Complete</h2>
+          <p>Structure is up, wire is safe, doors are hung, latches work, squirrels are defeated. Plant your stuff and stop building.</p>
+          <button class="btn primary" onclick="resetAll()">Reset All Tasks</button>
+        </div>
+
       </div>
-      <div class="zone-header">✋ Zone 3 — Front Access Row</div>
-      <p style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--faded);margin-bottom:14px;line-height:1.6;">Closest to the doors. Low-maintenance crops you harvest frequently or want visible from the path.</p>
-      <div class="plant-grid">
-        <div class="plant-card"><div class="plant-card-zone zone-front">✋ Front access</div><h5>🌰 Radish</h5><p>24 day Cherry Belle. Fill gaps between other plants and re-sow continuously.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-front">✋ Front access</div><h5>🌼 Marigold</h5><p>French Marigold at the bed edges. Best pest deterrent and a visual anchor for the front row.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-front">✋ Front access</div><h5>🌸 Nasturtium</h5><p>Jewel Mix. Edible flowers, trap crop for aphids, beautiful all season with almost no effort.</p></div>
-        <div class="plant-card"><div class="plant-card-zone zone-front">✋ Front access</div><h5>🫘 Bush Beans</h5><p>Provider variety handles partial shade. Compact habit. Great succession crop with radish.</p></div>
-      </div>
-      <div class="task-list">
-        <label class="task-card" data-task-id="plant-trellis-row"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Plant trellis crops in Row 1 at the base of the rear wall</div><div class="task-note">Tomatoes, cucumbers, pole beans, or peas directly at the base of the trellis lattice. Usually about 1 plant per 2 sq ft for climbers.</div><div class="task-tags"><span class="tag trellis">Trellis row</span></div></div></label>
-        <label class="task-card" data-task-id="plant-protected-zone"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Plant herbs and greens in the protected middle rows</div><div class="task-note">Basil, lettuce, bok choy, cilantro in Rows 2–3. These are what rabbits and squirrels come for first.</div><div class="task-tags"><span class="tag good">Protected zone</span></div></div></label>
-        <label class="task-card" data-task-id="plant-front-row"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Plant the front access row</div><div class="task-note">Radish, marigold, nasturtium, or bush beans in Row 4. Anything you reach for daily or want visible from the path.</div><div class="task-tags"><span class="tag">Front row</span></div></div></label>
-        <label class="task-card" data-task-id="plant-tie-guidance"><input class="task-toggle" type="checkbox"><div class="task-body"><div class="task-title">Loosely tie any trellis crops that need early guidance</div><div class="task-note">Young tomatoes and cucumbers need help finding the first rung. Soft twine or silicone clips only.</div><div class="task-tags"><span class="tag trellis">Trellis</span><span class="tag good">Done</span></div></div></label>
-      </div>
-      <div class="nav-buttons"><button class="btn" type="button" data-go="8">← Prev</button><button class="btn" type="button" data-go="0">Back to Specs</button></div>
-    </div>
+    </section>
+
   </main>
 </div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
 <script>
-(() => {
-  const STORAGE_KEY = 'garden-cage-build-guide-fixed-v1';
-  const sections = [...document.querySelectorAll('.section')];
-  const navItems = [...document.querySelectorAll('.nav-item')];
-  const tasks = [...document.querySelectorAll('.task-card')];
-  const checkboxes = [...document.querySelectorAll('.task-toggle')];
-  const searchInput = document.getElementById('searchInput');
-  const clearSearchBtn = document.getElementById('clearSearchBtn');
-  const progressFill = document.getElementById('progressFill');
-  const progressPct = document.getElementById('progressPct');
-  const progressCopy = document.getElementById('progressCopy');
-  const completeBanner = document.getElementById('complete-banner');
-  const resetAllBtn = document.getElementById('resetAllBtn');
+'use strict';
 
-  const state = { currentSection: 0, search: '', tasks: {} };
+/* ── SECTION TOGGLE ── */
+document.querySelectorAll('.section-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const section = btn.closest('.content-section');
+    const isOpen  = section.classList.contains('open');
+    section.classList.toggle('open', !isOpen);
+    btn.setAttribute('aria-expanded', String(!isOpen));
+  });
+});
 
-  function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-  }
+/* ── EXPAND / COLLAPSE ALL ── */
+document.getElementById('expandAll').addEventListener('click', () => {
+  document.querySelectorAll('.content-section').forEach(s => {
+    s.classList.add('open');
+    s.querySelector('.section-toggle').setAttribute('aria-expanded', 'true');
+  });
+});
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      if (typeof saved.currentSection === 'number') state.currentSection = Math.max(0, Math.min(sections.length - 1, saved.currentSection));
-      if (typeof saved.search === 'string') state.search = saved.search;
-      if (saved.tasks && typeof saved.tasks === 'object') state.tasks = saved.tasks;
-    } catch (e) {}
-  }
+document.getElementById('collapseAll').addEventListener('click', () => {
+  document.querySelectorAll('.content-section').forEach(s => {
+    s.classList.remove('open');
+    s.querySelector('.section-toggle').setAttribute('aria-expanded', 'false');
+  });
+});
 
-  function prefersReducedMotion() {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }
+/* ── MOBILE SIDEBAR ── */
+const sidebar  = document.getElementById('sidebar');
+const overlay  = document.getElementById('sidebarOverlay');
+const menuBtn  = document.getElementById('menuToggle');
 
-  function showSection(idx, shouldScroll = true) {
-    sections.forEach((section, i) => section.classList.toggle('active', i === idx));
-    navItems.forEach((item, i) => {
-      item.classList.toggle('active', i === idx);
-      item.setAttribute('aria-current', i === idx ? 'page' : 'false');
-    });
-    state.currentSection = idx;
-    saveState();
-    if (shouldScroll) window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  }
+function openSidebar() {
+  sidebar.classList.add('open');
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden', 'false');
+  menuBtn.setAttribute('aria-expanded', 'true');
+}
 
-  function syncTaskCard(card, checked) {
-    card.classList.toggle('done', checked);
-  }
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  menuBtn.setAttribute('aria-expanded', 'false');
+}
 
-  function updateProgress() {
-    const total = checkboxes.length;
-    const done = checkboxes.filter(cb => cb.checked).length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    progressFill.style.width = pct + '%';
-    progressPct.textContent = pct + '%';
-    progressCopy.textContent = `${done} of ${total} tasks complete`;
-  }
+menuBtn.addEventListener('click', () => {
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
 
-  function updateNavCompletion() {
-    navItems.forEach((item, i) => {
-      const section = document.getElementById('section-' + i);
-      if (!section) return;
-      const sectionTasks = [...section.querySelectorAll('.task-toggle')];
-      const doneCount = sectionTasks.filter(cb => cb.checked).length;
-      item.classList.toggle('completed', sectionTasks.length > 0 && doneCount === sectionTasks.length);
-    });
-  }
+overlay.addEventListener('click', closeSidebar);
 
-  function updateCompletionBanner() {
-    const finishSection = document.getElementById('section-8');
-    const finishTasks = [...finishSection.querySelectorAll('.task-toggle')];
-    const allDone = finishTasks.length > 0 && finishTasks.every(cb => cb.checked);
-    completeBanner.classList.toggle('visible', allDone);
-  }
+/* Close sidebar on TOC link click (mobile) */
+sidebar.querySelectorAll('.toc-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 860) closeSidebar();
+  });
+});
 
-  function applySearch() {
-    const query = state.search.trim().toLowerCase();
-    if (!query) {
-      sections.forEach(section => section.classList.remove('search-hidden'));
-      navItems.forEach(item => item.classList.remove('search-hidden'));
-      return;
+/* ── TOC SMOOTH SCROLL ── */
+document.querySelectorAll('.toc-item').forEach(item => {
+  item.addEventListener('click', e => {
+    e.preventDefault();
+    const targetId = item.getAttribute('href').substring(1);
+    const target   = document.getElementById(targetId);
+    if (!target) return;
+
+    // Ensure section is open
+    target.classList.add('open');
+    target.querySelector('.section-toggle').setAttribute('aria-expanded', 'true');
+
+    const offset = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--header-h')) +
+      parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--search-h')) + 16;
+
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  });
+
+  item.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+  });
+});
+
+/* ── ACTIVE TOC HIGHLIGHTING (IntersectionObserver) ── */
+const tocMap = {
+  'section-specs':      'toc-specs',
+  'section-diagrams':   'toc-diagrams',
+  'section-materials':  'toc-materials',
+  'section-fasteners':  'toc-fasteners',
+  'section-layout':     'toc-layout',
+  'section-frame':      'toc-frame',
+  'section-arch':       'toc-arch',
+  'section-doors':      'toc-doors',
+  'section-finish':     'toc-finish',
+};
+
+const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) +
+                parseInt(getComputedStyle(document.documentElement).getPropertyValue('--search-h'));
+
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const tocId = tocMap[entry.target.id];
+    if (!tocId) return;
+    const tocEl = document.getElementById(tocId);
+    if (entry.isIntersecting) {
+      document.querySelectorAll('.toc-item').forEach(t => t.classList.remove('active'));
+      tocEl && tocEl.classList.add('active');
     }
-    sections.forEach((section, i) => {
-      const haystack = (section.dataset.search || section.textContent || '').toLowerCase();
-      const match = haystack.includes(query);
-      section.classList.toggle('search-hidden', !match);
-      navItems[i].classList.toggle('search-hidden', !match);
-    });
-    const activeVisible = !sections[state.currentSection].classList.contains('search-hidden');
-    if (!activeVisible) {
-      const firstVisibleIndex = sections.findIndex(section => !section.classList.contains('search-hidden'));
-      if (firstVisibleIndex >= 0) showSection(firstVisibleIndex, false);
-    }
-  }
+  });
+}, { rootMargin: `-${headerH + 10}px 0px -60% 0px`, threshold: 0 });
 
-  function onTaskChange(card, checkbox) {
-    const taskId = card.dataset.taskId;
-    if (!taskId) return;
-    state.tasks[taskId] = checkbox.checked;
-    syncTaskCard(card, checkbox.checked);
-    updateProgress();
-    updateNavCompletion();
-    updateCompletionBanner();
-    saveState();
-  }
+document.querySelectorAll('.content-section').forEach(s => sectionObserver.observe(s));
 
-  function resetAll() {
-    checkboxes.forEach(cb => {
-      cb.checked = false;
-      const card = cb.closest('.task-card');
-      syncTaskCard(card, false);
-      if (card?.dataset.taskId) state.tasks[card.dataset.taskId] = false;
-    });
-    updateProgress();
-    updateNavCompletion();
-    updateCompletionBanner();
-    saveState();
-  }
-
-  function bindEvents() {
-    navItems.forEach(item => {
-      item.addEventListener('click', () => showSection(Number(item.dataset.section)));
-    });
-    document.querySelectorAll('[data-go]').forEach(btn => {
-      btn.addEventListener('click', () => showSection(Number(btn.dataset.go)));
-    });
-    tasks.forEach(card => {
-      const checkbox = card.querySelector('.task-toggle');
-      checkbox.addEventListener('change', () => onTaskChange(card, checkbox));
-    });
-    searchInput.addEventListener('input', () => {
-      state.search = searchInput.value;
-      applySearch();
-      saveState();
-    });
-    clearSearchBtn.addEventListener('click', () => {
-      state.search = '';
-      searchInput.value = '';
-      applySearch();
-      saveState();
-      searchInput.focus();
-    });
-    resetAllBtn?.addEventListener('click', resetAll);
-  }
-
-  function restoreTasks() {
-    tasks.forEach(card => {
-      const taskId = card.dataset.taskId;
-      const checkbox = card.querySelector('.task-toggle');
-      const checked = Boolean(state.tasks[taskId]);
-      checkbox.checked = checked;
-      syncTaskCard(card, checked);
-    });
-  }
-
-  loadState();
-  bindEvents();
-  restoreTasks();
-  if (state.search) searchInput.value = state.search;
-  applySearch();
+/* ── TASK TOGGLE ── */
+function toggleTask(card) {
+  const isDone = card.classList.toggle('done');
+  card.setAttribute('aria-checked', String(isDone));
   updateProgress();
-  updateNavCompletion();
-  updateCompletionBanner();
-  showSection(state.currentSection, false);
+  checkFinishComplete();
+}
 
-  window.resetAll = resetAll;
-})();
+function handleTaskKey(e, card) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleTask(card);
+  }
+}
+
+/* ── PROGRESS ── */
+function updateProgress() {
+  const all  = document.querySelectorAll('.task-card');
+  const done = document.querySelectorAll('.task-card.done');
+  const pct  = all.length ? Math.round((done.length / all.length) * 100) : 0;
+
+  // TOC progress bar
+  document.getElementById('tocFill').style.width = pct + '%';
+  document.getElementById('tocPct').textContent  = pct + '%';
+
+  // TOC track ARIA
+  document.querySelector('.toc-track').setAttribute('aria-valuenow', pct);
+
+  // Header pill
+  document.getElementById('headerProgress').textContent = `${done.length} / ${all.length} tasks`;
+
+  // TOC section completion
+  updateTocCompletion();
+}
+
+function updateTocCompletion() {
+  const sectionToToc = {
+    'section-fasteners': 'toc-fasteners',
+    'section-layout':    'toc-layout',
+    'section-frame':     'toc-frame',
+    'section-arch':      'toc-arch',
+    'section-doors':     'toc-doors',
+    'section-finish':    'toc-finish',
+  };
+
+  Object.entries(sectionToToc).forEach(([sId, tId]) => {
+    const section = document.getElementById(sId);
+    const tasks   = section.querySelectorAll('.task-card');
+    const done    = section.querySelectorAll('.task-card.done');
+    const tocEl   = document.getElementById(tId);
+    if (!tocEl) return;
+    tocEl.classList.toggle('completed', tasks.length > 0 && done.length === tasks.length);
+  });
+}
+
+/* ── FINISH COMPLETE BANNER ── */
+function checkFinishComplete() {
+  const finishSection = document.getElementById('section-finish');
+  const tasks = finishSection.querySelectorAll('.task-card');
+  const done  = finishSection.querySelectorAll('.task-card.done');
+  const banner = document.getElementById('completeBanner');
+  banner.classList.toggle('visible', tasks.length > 0 && done.length === tasks.length);
+}
+
+/* ── RESET ── */
+function resetAll() {
+  document.querySelectorAll('.task-card.done').forEach(c => {
+    c.classList.remove('done');
+    c.setAttribute('aria-checked', 'false');
+  });
+  updateProgress();
+  document.getElementById('completeBanner').classList.remove('visible');
+}
+
+/* ── REAL-TIME SEARCH ── */
+const searchInput = document.getElementById('searchInput');
+const searchCount = document.getElementById('searchCount');
+const searchClear = document.getElementById('searchClear');
+const noResults   = document.getElementById('no-results');
+
+let searchTimeout;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(runSearch, 120);
+});
+
+searchClear.addEventListener('click', clearSearch);
+
+function clearSearch() {
+  searchInput.value = '';
+  runSearch();
+  searchInput.focus();
+}
+
+function runSearch() {
+  const raw   = searchInput.value.trim();
+  const query = raw.toLowerCase();
+
+  searchClear.classList.toggle('visible', raw.length > 0);
+
+  // Remove all previous highlights
+  document.querySelectorAll('mark.search-hl').forEach(m => {
+    m.outerHTML = m.innerHTML;
+  });
+
+  if (!query) {
+    // Reset — show all
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('hidden-by-search'));
+    document.querySelectorAll('.toc-item').forEach(t => t.classList.remove('hidden-by-search'));
+    searchCount.textContent = '';
+    noResults.classList.remove('visible');
+    return;
+  }
+
+  let visibleCount = 0;
+
+  document.querySelectorAll('.content-section').forEach(section => {
+    const bodyEl = section.querySelector('.section-body');
+    const toggleEl = section.querySelector('.section-toggle');
+    const sectionText = (toggleEl.textContent + (bodyEl ? bodyEl.textContent : '')).toLowerCase();
+    const matches = sectionText.includes(query);
+
+    section.classList.toggle('hidden-by-search', !matches);
+
+    // Sync TOC item
+    const tocId = 'toc-' + section.id.replace('section-', '');
+    const tocEl = document.getElementById(tocId);
+    if (tocEl) tocEl.classList.toggle('hidden-by-search', !matches);
+
+    if (matches) {
+      visibleCount++;
+      // Auto-open matched sections
+      section.classList.add('open');
+      section.querySelector('.section-toggle').setAttribute('aria-expanded', 'true');
+
+      // Highlight matches in searchable text nodes
+      if (bodyEl) highlightInElement(bodyEl, query);
+    }
+  });
+
+  searchCount.textContent = visibleCount === 0 ? '' : `${visibleCount} section${visibleCount !== 1 ? 's' : ''}`;
+  noResults.classList.toggle('visible', visibleCount === 0);
+}
+
+function highlightInElement(el, query) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: node => {
+      const skip = ['SCRIPT','STYLE','PRE'];
+      if (skip.includes(node.parentElement.tagName)) return NodeFilter.FILTER_REJECT;
+      return node.textContent.toLowerCase().includes(query)
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_SKIP;
+    }
+  });
+
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+
+  nodes.forEach(textNode => {
+    const parent = textNode.parentNode;
+    const text   = textNode.textContent;
+    const lower  = text.toLowerCase();
+    let result   = '';
+    let last     = 0;
+    let idx;
+
+    while ((idx = lower.indexOf(query, last)) !== -1) {
+      result += escapeHtml(text.slice(last, idx));
+      result += `<mark class="search-hl">${escapeHtml(text.slice(idx, idx + query.length))}</mark>`;
+      last = idx + query.length;
+    }
+    result += escapeHtml(text.slice(last));
+
+    const span = document.createElement('span');
+    span.innerHTML = result;
+    parent.replaceChild(span, textNode);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── KEYBOARD SHORTCUT: / to focus search ── */
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+  if (e.key === 'Escape') {
+    if (searchInput.value) clearSearch();
+    if (sidebar.classList.contains('open')) closeSidebar();
+  }
+});
+
+/* ── INIT ── */
+updateProgress();
 </script>
 </body>
 </html>

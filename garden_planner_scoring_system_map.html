@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Garden OS · Scoring System Map</title>
+  <style>
+    :root{
+      --soil:#5c3d1e;
+      --soil-mid:#7a5230;
+      --leaf:#3d7a4f;
+      --leaf-bright:#5aab6b;
+      --sun:#e8c84a;
+      --cream:#f7f2ea;
+      --cream-mid:#efe6d8;
+      --panel:#fffdf9;
+      --text:#1e110a;
+      --muted:#6c5848;
+      --border:#cfb899;
+      --border-soft:#e7dac7;
+      --warn:#d4651a;
+      --bad:#b02a1e;
+      --blue:#3a6abf;
+      --shadow:0 14px 36px rgba(44,27,11,.10);
+      --radius:18px;
+      --radius-sm:12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(90,171,107,.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(232,200,74,.14), transparent 22%),
+        linear-gradient(180deg, #fbf8f2 0%, var(--cream) 100%);
+    }
+    .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:var(--mono);font-size:.65rem;}
+    .os-nav a{color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;transition:color .15s;}
+    .os-nav a:hover{color:#f5ede0;}
+    .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter: blur(14px);
+      background:rgba(247,242,234,.78);
+      border-bottom:1px solid rgba(92,61,30,.12);
+    }
+    .topbar-inner{
+      max-width:1400px; margin:0 auto; padding:14px 22px;
+      display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    }
+    .brand{display:flex; align-items:center; gap:12px; min-width:0}
+    .brand-mark{
+      width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--soil),var(--leaf)); color:#fff7ea; font-size:20px;
+      box-shadow:var(--shadow);
+    }
+    .brand-copy h1{
+      margin:0; font-size:1.15rem; line-height:1; letter-spacing:-.02em;
+      font-family:var(--serif);
+    }
+    .brand-copy p{
+      margin:.2rem 0 0; font-size:.72rem; color:var(--muted);
+      font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em;
+    }
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    .toolbar button, .toolbar a{
+      appearance:none; border:1px solid var(--border); background:white; color:var(--soil);
+      border-radius:999px; padding:9px 12px; font:600 .72rem var(--mono);
+      text-transform:uppercase; letter-spacing:.08em; cursor:pointer; text-decoration:none;
+      transition:.18s ease;
+    }
+    .toolbar button:hover, .toolbar a:hover{transform:translateY(-1px); border-color:var(--soil); background:#fff7ea}
+    .shell{
+      max-width:1400px; margin:0 auto; padding:24px 22px 56px;
+      display:grid; grid-template-columns:280px minmax(0,1fr); gap:22px;
+    }
+    .side{
+      position:sticky; top:86px; align-self:start; max-height:calc(100vh - 108px); overflow:auto;
+      background:rgba(255,253,249,.82); border:1px solid var(--border-soft); border-radius:22px; box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .side h2{margin:0; font:700 1.15rem var(--serif); letter-spacing:-.02em}
+    .side p{margin:.45rem 0 1rem; color:var(--muted); font-size:.88rem; line-height:1.5}
+    .nav{display:grid; gap:8px}
+    .nav a{
+      text-decoration:none; color:inherit; background:white; border:1px solid var(--border-soft); border-radius:14px;
+      padding:12px 12px 12px 14px; display:grid; grid-template-columns:auto 1fr; gap:10px; transition:.16s ease;
+    }
+    .nav a:hover{border-color:var(--border); transform:translateX(2px)}
+    .nav-num{font:700 .68rem var(--mono); color:var(--soil-mid); padding-top:2px}
+    .nav-title{font-weight:700; font-size:.9rem}
+    .nav-meta{display:block; margin-top:4px; font:500 .63rem var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .main{display:grid; gap:22px}
+    .hero{
+      background:linear-gradient(135deg, rgba(92,61,30,.98), rgba(61,122,79,.96)); color:#fff7ea;
+      border-radius:28px; box-shadow:var(--shadow); overflow:hidden; position:relative;
+    }
+    .hero::before{
+      content:""; position:absolute; inset:0;
+      background:repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 34px);
+      pointer-events:none;
+    }
+    .hero-inner{position:relative; padding:28px}
+    .eyebrow{
+      display:inline-flex; gap:8px; align-items:center; padding:7px 10px; border-radius:999px;
+      background:rgba(255,255,255,.11); color:rgba(255,247,234,.86); font:600 .68rem var(--mono);
+      text-transform:uppercase; letter-spacing:.10em;
+    }
+    .hero h2{margin:14px 0 10px; font:700 clamp(2rem,4vw,3.25rem) var(--serif); line-height:.96; letter-spacing:-.04em}
+    .hero p{max-width:78ch; margin:0; color:rgba(255,247,234,.82); line-height:1.65}
+    .hero-grid{display:grid; grid-template-columns:1.4fr .9fr; gap:18px; margin-top:22px}
+    .hero-card{
+      background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:16px;
+    }
+    .hero-card h3{margin:0 0 10px; font:700 1rem var(--serif)}
+    .hero-card p,.hero-card li{font-size:.86rem; color:rgba(255,247,234,.82)}
+    .hero-card ul{margin:0; padding-left:18px; display:grid; gap:6px}
+    .hero-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    .hero-link{
+      display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:8px 11px;
+      background:rgba(255,255,255,.11); border:1px solid rgba(255,255,255,.14);
+      color:#fff7ea; text-decoration:none; font:700 .64rem var(--mono); text-transform:uppercase; letter-spacing:.08em;
+      transition:.18s ease;
+    }
+    .hero-link:hover{transform:translateY(-1px); background:rgba(255,255,255,.17)}
+    .section{
+      background:rgba(255,253,249,.88); border:1px solid var(--border-soft); border-radius:24px; box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .section-head{
+      padding:18px 20px; border-bottom:1px solid var(--border-soft); background:linear-gradient(180deg, rgba(239,230,216,.75), rgba(255,253,249,.4));
+      display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    }
+    .section-head h3{margin:0; font:700 1.35rem var(--serif); letter-spacing:-.02em}
+    .section-head p{margin:.35rem 0 0; color:var(--muted); max-width:76ch; line-height:1.55}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+      border-radius:999px; padding:8px 11px; background:white; border:1px solid var(--border);
+      font:700 .68rem var(--mono); color:var(--soil); text-transform:uppercase; letter-spacing:.08em;
+    }
+    .section-body{padding:18px 20px 22px}
+    .cards{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
+    .card{
+      background:white; border:1px solid var(--border-soft); border-radius:18px; padding:16px;
+      display:flex; flex-direction:column; gap:10px; min-height:100%;
+    }
+    .card h4{margin:0; font:700 1rem var(--serif)}
+    .card p{margin:0; color:var(--muted); line-height:1.55; font-size:.92rem}
+    .mini{
+      align-self:flex-start; border-radius:999px; padding:6px 8px; background:var(--cream-mid); color:var(--soil-mid);
+      font:700 .62rem var(--mono); text-transform:uppercase; letter-spacing:.08em;
+    }
+    .chip-row{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:5px 8px; border-radius:999px; font:700 .62rem var(--mono); text-transform:uppercase; letter-spacing:.08em; border:1px solid transparent}
+    .chip.soil{background:#f4e8d6; color:var(--soil)}
+    .chip.leaf{background:#e7f4ea; color:var(--leaf)}
+    .chip.sun{background:#fff3ca; color:#876600}
+    .chip.blue{background:#eaf0ff; color:var(--blue)}
+    .chip.warn{background:#fff0e6; color:var(--warn)}
+    .flow{
+      display:grid; gap:14px; margin-top:16px;
+    }
+    .flow-row{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; align-items:stretch}
+    .node{
+      position:relative; background:#ffffff; border:1px solid var(--border-soft); border-radius:18px; padding:16px;
+      min-height:145px; box-shadow:0 6px 18px rgba(44,27,11,.08); transition:.18s ease;
+    }
+    .node:hover{transform:translateY(-2px); border-color:var(--border)}
+    .node strong{display:block; font-size:.95rem; margin-bottom:8px}
+    .node p{margin:0; color:var(--muted); font-size:.88rem; line-height:1.5}
+    .node .node-k{display:block; margin-bottom:10px; font:700 .62rem var(--mono); color:var(--soil-mid); text-transform:uppercase; letter-spacing:.08em}
+    .arrow{
+      display:flex; align-items:center; justify-content:center; color:var(--soil-mid); font:700 1.35rem var(--mono);
+    }
+    .legend{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:16px}
+    .legend .card{padding:14px}
+    .matrix{overflow:auto; margin-top:16px; border:1px solid var(--border-soft); border-radius:18px}
+    table{width:100%; border-collapse:collapse; min-width:820px; background:white}
+    th,td{padding:12px 12px; border-bottom:1px solid var(--border-soft); vertical-align:top; text-align:left}
+    th{background:#faf4eb; color:var(--soil-mid); font:700 .66rem var(--mono); text-transform:uppercase; letter-spacing:.09em}
+    td{font-size:.9rem; line-height:1.48}
+    td strong{color:var(--text)}
+    .callout{
+      margin-top:16px; border:1px solid rgba(58,106,191,.16); background:#f5f8ff; border-radius:18px; padding:16px;
+    }
+    .callout h4{margin:0 0 8px; color:var(--blue); font:700 1rem var(--serif)}
+    .callout p{margin:0; color:#33507c; line-height:1.55}
+    .callout pre{
+      margin:10px 0 12px; padding:14px; background:rgba(58,106,191,.06); border-radius:12px;
+      font:500 .88rem var(--mono); color:var(--text); line-height:1.6; overflow-x:auto;
+    }
+    .score-stack{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+    .list{margin:0; padding-left:18px; display:grid; gap:8px}
+    .list li{color:var(--muted); line-height:1.55}
+    .list strong{color:var(--text)}
+    .footer{
+      padding:18px 6px 8px; color:var(--muted); font-size:.82rem; text-align:center;
+    }
+    @media (max-width:1180px){
+      .shell{grid-template-columns:1fr}
+      .side{position:relative; top:0; max-height:none}
+      .hero-grid,.cards,.legend,.score-stack,.flow-row{grid-template-columns:1fr 1fr}
+      .arrow{display:none}
+    }
+    @media (max-width:780px){
+      .hero-grid,.cards,.legend,.score-stack,.flow-row{grid-template-columns:1fr}
+      .topbar-inner,.shell{padding-left:14px; padding-right:14px}
+      .hero-inner{padding:22px}
+      .section-head,.section-body{padding-left:16px; padding-right:16px}
+    }
+  </style>
+</head>
+<body>
+<nav class="os-nav" aria-label="Garden OS">
+  <a href="index.html">Home</a>
+  <a href="garden-planner-v4.html">Planner</a>
+  <a href="garden-cage-build-guide.html">Build Guide</a>
+  <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_system_map.html" class="active">Scoring Map</a>
+</nav>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">🌱</div>
+        <div class="brand-copy">
+          <h1>Garden OS Scoring System Map</h1>
+          <p>Planner v4.3 · Raw config → traits → score → validity → UI</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <a href="#flow">Flow</a>
+        <a href="#layers">Layers</a>
+        <a href="#scoring">Scoring</a>
+        <a href="#funnel">Funnel</a>
+        <a href="#debug">Debug</a>
+        <button id="expandBtn" type="button">Expand all</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="side">
+      <h2>Map Index</h2>
+      <p>This is the planner intelligence stack, with the v4.3 derived trait model at the center.</p>
+      <nav class="nav">
+        <a href="#overview"><span class="nav-num">01</span><span><span class="nav-title">System overview</span><span class="nav-meta">What the planner is doing</span></span></a>
+        <a href="#flow"><span class="nav-num">02</span><span><span class="nav-title">Data flow</span><span class="nav-meta">From input to visible result</span></span></a>
+        <a href="#layers"><span class="nav-num">03</span><span><span class="nav-title">Architecture layers</span><span class="nav-meta">Where logic lives</span></span></a>
+        <a href="#traits"><span class="nav-num">04</span><span><span class="nav-title">Derived cell traits</span><span class="nav-meta">The intelligence seam</span></span></a>
+        <a href="#scoring"><span class="nav-num">05</span><span><span class="nav-title">Scoring + validity</span><span class="nav-meta">How fit gets decided</span></span></a>
+        <a href="#funnel"><span class="nav-num">06</span><span><span class="nav-title">Decision funnel</span><span class="nav-meta">Candidate → recommendation</span></span></a>
+        <a href="#surfaces"><span class="nav-num">07</span><span><span class="nav-title">Output surfaces</span><span class="nav-meta">Where users feel it</span></span></a>
+        <a href="#debug"><span class="nav-num">08</span><span><span class="nav-title">Debug checklist</span><span class="nav-meta">Diagnose scoring bugs</span></span></a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="hero" id="overview">
+        <div class="hero-inner">
+          <div class="eyebrow">Garden Planner Intelligence</div>
+          <h2>The planner does not score raw cage toggles anymore. It scores meaning.</h2>
+          <p>
+            In v4.3, the cage and bed configuration still define geometry and structure, but the scoring engine is meant to consume a cleaner layer of truth stamped onto each cell. That means render, auto fill, warnings, inspect, and crop validity all read the same structural facts instead of recomputing trellis logic in multiple places.
+          </p>
+          <div class="hero-actions">
+            <a class="hero-link" href="garden_planner_scoring_visualizer.html">Try it live</a>
+          </div>
+          <div class="hero-grid">
+            <div class="hero-card">
+              <h3>Core idea</h3>
+              <ul>
+                <li><strong>Raw config</strong> stores what the user turned on.</li>
+                <li><strong>Derived traits</strong> translate that into structural meaning per cell.</li>
+                <li><strong>Scoring and validity</strong> decide what fits, what fails, and what is merely suboptimal.</li>
+                <li><strong>UI surfaces</strong> explain the consequences clearly.</li>
+              </ul>
+            </div>
+            <div class="hero-card">
+              <h3>Why this matters</h3>
+              <ul>
+                <li>Less drift between score, render, and warnings.</li>
+                <li>Cleaner future work for multi bed, calendar, and explainability.</li>
+                <li>Much easier tuning of trellis, protection, and access logic.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="flow">
+        <div class="section-head">
+          <div>
+            <h3>End to End Flow</h3>
+            <p>The whole planner pipeline in one pass. This is the clean mental model for debugging, reviewing, or extending the scoring system.</p>
+          </div>
+          <div class="badge">Data Flow</div>
+        </div>
+        <div class="section-body">
+          <div class="flow">
+            <div class="flow-row">
+              <div class="node">
+                <span class="node-k">Step 1</span>
+                <strong>Inputs</strong>
+                <p>Bed size, wall side (locked to back in cage mode), season, trellis toggle, goal, crop library, cage config, and current planted state.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Step 2</span>
+                <strong>buildZoneMap(inputs)</strong>
+                <p>Computes zone facts once, including trellis row, protected cells, support availability, critter safety, and access priority.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Step 3</span>
+                <strong>applyZones(zones)</strong>
+                <p>Stamps those derived traits directly onto each cell so the rest of the app reads the same structural truth.</p>
+              </div>
+            </div>
+            <div class="flow-row">
+              <div class="node">
+                <span class="node-k">Step 4</span>
+                <strong>scoreCropInCell + adjScore</strong>
+                <p>Evaluates crop fit using cell traits, crop metadata, neighbors, season, and access rather than ad hoc cage checks.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Step 5</span>
+                <strong>cropValidity</strong>
+                <p>Separates hard failures from advisories. A crop can be structurally impossible, merely suboptimal, or fully valid.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Step 6</span>
+                <strong>Decision + UI</strong>
+                <p>Auto fill, manual paint feedback, warnings, issues, inspect badges, and zone classes all consume the same result.</p>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <h4>Design rule</h4>
+            <p>Only the zone derivation layer should interpret raw cage structure. Everything downstream should read <strong>cell traits</strong>, not re-decide what the cage means.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="layers">
+        <div class="section-head">
+          <div>
+            <h3>Architecture Layers</h3>
+            <p>Each layer has one job. That is what keeps the planner explainable instead of turning into a pile of overlapping conditionals.</p>
+          </div>
+          <div class="badge">Separation of Concerns</div>
+        </div>
+        <div class="section-body">
+          <div class="cards">
+            <article class="card">
+              <span class="mini">Layer 1</span>
+              <h4>Raw Config Layer</h4>
+              <p>Stores the literal user and app state: cage.enabled, rearTrellis, wireSides, bedW, bedH, wallSide (locked to "back" when cage is on), season, goal, and crop metadata.</p>
+              <div class="chip-row"><span class="chip soil">Persistence</span><span class="chip blue">UI state</span></div>
+            </article>
+            <article class="card">
+              <span class="mini">Layer 2</span>
+              <h4>Zone Derivation Layer</h4>
+              <p>Translates raw config into planner semantics. This is where structure becomes usable intelligence.</p>
+              <div class="chip-row"><span class="chip leaf">Computed once</span><span class="chip sun">Geometry aware</span></div>
+            </article>
+            <article class="card">
+              <span class="mini">Layer 3</span>
+              <h4>Cell State Layer</h4>
+              <p>Applies derived traits to each cell so score, render, warnings, and inspect all see the same facts.</p>
+              <div class="chip-row"><span class="chip blue">Shared truth</span><span class="chip leaf">Low drift</span></div>
+            </article>
+            <article class="card">
+              <span class="mini">Layer 4</span>
+              <h4>Rules Layer</h4>
+              <p>Uses crop metadata plus cell traits to compute numeric fit, adjacency fit, and structural validity.</p>
+              <div class="chip-row"><span class="chip warn">Fit logic</span><span class="chip blue">Failure logic</span></div>
+            </article>
+            <article class="card">
+              <span class="mini">Layer 5</span>
+              <h4>Decision Layer</h4>
+              <p>Auto fill and manual placement both route through the same scoring and validity logic, which means one planner brain instead of two.</p>
+              <div class="chip-row"><span class="chip soil">Autofill</span><span class="chip leaf">Manual paint</span></div>
+            </article>
+            <article class="card">
+              <span class="mini">Layer 6</span>
+              <h4>Output Layer</h4>
+              <p>Bed rendering, warning cards, inspect rows, issue icons, and score summaries visualize what the planner already knows.</p>
+              <div class="chip-row"><span class="chip sun">Explainable</span><span class="chip blue">Consistent UI</span></div>
+            </article>
+          </div>
+
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Owns</th>
+                  <th>Should know raw cage state?</th>
+                  <th>Should recompute trellis row?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Input</strong></td>
+                  <td>Storage, toggles, persistence, user settings</td>
+                  <td>Yes</td>
+                  <td>No</td>
+                </tr>
+                <tr>
+                  <td><strong>Zone derivation</strong></td>
+                  <td>Structural meaning per coordinate</td>
+                  <td>Yes</td>
+                  <td>Yes, once</td>
+                </tr>
+                <tr>
+                  <td><strong>Cell state</strong></td>
+                  <td>Trait stamping</td>
+                  <td>No</td>
+                  <td>No</td>
+                </tr>
+                <tr>
+                  <td><strong>Scoring</strong></td>
+                  <td>Suitability and fit</td>
+                  <td>No</td>
+                  <td>No</td>
+                </tr>
+                <tr>
+                  <td><strong>Validity</strong></td>
+                  <td>Hard fail vs advisory</td>
+                  <td>No</td>
+                  <td>No</td>
+                </tr>
+                <tr>
+                  <td><strong>UI</strong></td>
+                  <td>Classes, badges, notes, inspect</td>
+                  <td>No</td>
+                  <td>No</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="traits">
+        <div class="section-head">
+          <div>
+            <h3>Derived Cell Traits</h3>
+            <p>This is the key abstraction. Cells should know their own structural reality so the planner can stop looking sideways at UI state every time it needs to reason.</p>
+          </div>
+          <div class="badge">Trait Model</div>
+        </div>
+        <div class="section-body">
+          <div class="legend">
+            <article class="card">
+              <span class="mini">Trait</span>
+              <h4>cell.isTrellisRow</h4>
+              <p>True when the cell is on the dedicated climbing row (always row 0, since wall side is locked to "back" in cage mode).</p>
+            </article>
+            <article class="card">
+              <span class="mini">Trait</span>
+              <h4>cell.isProtected</h4>
+              <p>True when the cell sits in the wire enclosed interior rows, excluding the trellis row and the open front row. The front row is critter safe but not protected, because it is the primary access and harvest side.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Trait</span>
+              <h4>cell.hasVerticalSupport</h4>
+              <p>True when a crop can actually climb here, whether because it is the trellis row or because legacy support logic still allows it.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Trait</span>
+              <h4>cell.isCritterSafe</h4>
+              <p>True when wire protection exists for that structural zone, even if it is not necessarily the planner’s main protected crop zone.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Trait</span>
+              <h4>cell.accessPriority</h4>
+              <p>A normalized reachability score. Front row cells are easier to harvest often, so succession crops can get an access bonus.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Rule</span>
+              <h4>Computed once</h4>
+              <p>These values should be generated in one place, then reused everywhere else without reinterpretation.</p>
+            </article>
+          </div>
+          <div class="callout">
+            <h4>Most important distinction</h4>
+            <p><strong>Protected</strong> and <strong>critter safe</strong> are not the same thing. Protected means interior rows shielded by wire on all sides — it excludes the trellis row (row 0) and the open front row (last row). Critter safe is broader: any cell where wire mesh exists, including the front row. Keeping those separate avoids muddy scoring later.</p>
+          </div>
+          <div class="callout">
+            <h4>Example Cell State</h4>
+<pre>Cell: row 1, col 2 (8×4 bed, cage on)
+
+isTrellisRow:       false   (row 0 is trellis)
+isProtected:        true    (interior row, not open front row)
+hasVerticalSupport: false
+isCritterSafe:      true    (wire sides on)
+accessPriority:     0.67</pre>
+            <p>This single object should contain everything the scoring system needs. If scoring requires additional cage logic, the trait model is incomplete.</p>
+          </div>
+          <div class="callout">
+            <h4>wallSide constraint</h4>
+            <p>When cage mode is enabled, <strong>wallSide is locked to "back"</strong> and the select is disabled. The physical cage has its trellis panel bolted to the back wall — left, right, front, and none are structurally invalid in cage mode. This simplifies zone derivation: trellis row is always row 0, open front row is always the last row.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="scoring">
+        <div class="section-head">
+          <div>
+            <h3>Scoring, Validity, and Recommendation Logic</h3>
+            <p>The scoring engine now decides fit in two passes: one numeric and one structural. That gives the planner a better vocabulary than just “good” or “bad.”</p>
+          </div>
+          <div class="badge">Decision Engine</div>
+        </div>
+        <div class="section-body">
+          <div class="score-stack">
+            <article class="card">
+              <span class="mini">Numeric fit</span>
+              <h4>scoreCropInCell(ck, cell, inputs)</h4>
+              <ul class="list">
+                <li><strong>Base fit:</strong> light, season, crop type, goal alignment.</li>
+                <li><strong>Structural fit:</strong> trellis row bonus, no support penalties, protected zone bonus, critter safety bonus.</li>
+                <li><strong>Access fit:</strong> succession friendly crops gain value in easier reach cells.</li>
+                <li><strong>Adjacency fit:</strong> companion and conflict logic comes from neighboring crops.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <span class="mini">Validity pass</span>
+              <h4>cropValidity(ck, cell, inputs)</h4>
+              <ul class="list">
+                <li><strong>Hard invalid:</strong> crop fundamentally fails here. Example: pole beans with no vertical support.</li>
+                <li><strong>Advisory:</strong> crop can live here, but the placement wastes a better structural zone.</li>
+                <li><strong>UI effect:</strong> hard invalid gets a red border and blocker semantics, advisory gets a warning tone.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rule area</th>
+                  <th>Example input</th>
+                  <th>Outcome</th>
+                  <th>User facing effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Trellis reward</strong></td>
+                  <td>Cherry tomato in trellis row</td>
+                  <td>Structural bonus increases score</td>
+                  <td>Strong recommendation, green fit</td>
+                </tr>
+                <tr>
+                  <td><strong>No support penalty</strong></td>
+                  <td>Pole beans in non support cell</td>
+                  <td>Score tanks and validity becomes hard fail</td>
+                  <td>⛔ border, issue icon, warning text</td>
+                </tr>
+                <tr>
+                  <td><strong>Protected reward</strong></td>
+                  <td>Lettuce in interior row</td>
+                  <td>Protected zone bonus plus critter safety bonus</td>
+                  <td>Higher score, better sanctuary placement</td>
+                </tr>
+                <tr>
+                  <td><strong>Space waste advisory</strong></td>
+                  <td>Lettuce in trellis row</td>
+                  <td>Mild penalty, still plantable</td>
+                  <td>⚠ advisory: wasting prime climbing space</td>
+                </tr>
+                <tr>
+                  <td><strong>Access bonus</strong></td>
+                  <td>Radish near open front</td>
+                  <td>Small bonus for frequent harvest convenience</td>
+                  <td>Better sorting in auto fill and inspect</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Factor</th>
+                  <th>Weight</th>
+                  <th>Description</th>
+                  <th>Typical Impact</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Season fit</strong></td>
+                  <td>+40 / -80</td>
+                  <td>Crop matches active season window</td>
+                  <td>Hard filter if completely wrong season</td>
+                </tr>
+                <tr>
+                  <td><strong>Vertical support</strong></td>
+                  <td>+35 / -120</td>
+                  <td>Trellis crops must have support</td>
+                  <td>Hard invalid when missing</td>
+                </tr>
+                <tr>
+                  <td><strong>Protected zone</strong></td>
+                  <td>+15</td>
+                  <td>Greens and herbs in interior rows gain protection benefit</td>
+                  <td>Improves ranking for sanctuary crops</td>
+                </tr>
+                <tr>
+                  <td><strong>Critter safety</strong></td>
+                  <td>+10</td>
+                  <td>Wire protection reduces loss risk (all cage cells)</td>
+                  <td>Minor ranking improvement</td>
+                </tr>
+                <tr>
+                  <td><strong>Access priority</strong></td>
+                  <td>+5</td>
+                  <td>Frequent harvest crops prefer easy reach (front side)</td>
+                  <td>Minor optimization</td>
+                </tr>
+                <tr>
+                  <td><strong>Adjacency</strong></td>
+                  <td>±10</td>
+                  <td>Companion or conflict effects</td>
+                  <td>Small tuning adjustment</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout">
+            <h4>Auto fill should follow the same brain</h4>
+            <p>The recommendation builder should prioritize the ideal zone pool first, then fall back to generally valid crops, and skip hard invalid placements entirely. That keeps automated layouts realistic instead of forcing a zone theory that starves the rest of the bed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="surfaces">
+        <div class="section-head">
+          <div>
+            <h3>Where the Score Shows Up</h3>
+            <p>The planner feels smart only when the same logic is visible everywhere the user looks. These are the main surfaces that should consume the shared trait and validity model.</p>
+          </div>
+          <div class="badge">User Surfaces</div>
+        </div>
+        <div class="section-body">
+          <div class="cards">
+            <article class="card">
+              <span class="mini">Render</span>
+              <h4>Bed Grid</h4>
+              <p>Trellis and protected classes should come straight from <strong>cell.isTrellisRow</strong> and <strong>cell.isProtected</strong>. Hard invalid cells get the visual stop sign treatment.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Inspect</span>
+              <h4>Cell Detail Panel</h4>
+              <p>Shows trait badges, support status, critter protection, access cues, and validity reason so the score is legible, not mysterious.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Warnings</span>
+              <h4>Notes / Advisory Feed</h4>
+              <p>Aggregates hard failures and softer placement advice without repeating the same message three different ways.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Issues</span>
+              <h4>Per Cell Issue Icons</h4>
+              <p>Hard invalid gets ⛔. Advisory gets ⚠. This is the fast scan layer for spotting planner trouble across the whole bed.</p>
+            </article>
+            <article class="card">
+              <span class="mini">Autofill</span>
+              <h4>Recommendation Engine</h4>
+              <p>Zones, score, and validity should all push the automatic plan toward climbers in back, protection crops in interior rows, and frequent harvest crops near the front side.</p>
+            </article>
+            <article class="card">
+              <span class="mini">QA</span>
+              <h4>Regression Check</h4>
+              <p>If score, render, and warning surfaces disagree, the trait model is being bypassed somewhere. That is the first bug smell.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="funnel">
+        <div class="section-head">
+          <div>
+            <h3>Planner Decision Funnel</h3>
+            <p>The planner narrows from all possible crops down to one recommendation per cell. Each stage eliminates or reranks candidates.</p>
+          </div>
+          <div class="badge">Decision Funnel</div>
+        </div>
+        <div class="section-body">
+          <div class="flow">
+            <div class="flow-row">
+              <div class="node">
+                <span class="node-k">Candidate pool</span>
+                <strong>Crop Library</strong>
+                <p>All crops available for the season.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Filter</span>
+                <strong>Validity Gate</strong>
+                <p>Remove crops that structurally cannot grow in the cell. Hard invalid crops are eliminated here.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Score</span>
+                <strong>Fit Evaluation</strong>
+                <p>Compute numeric suitability based on traits and crop metadata.</p>
+              </div>
+              <div class="arrow">→</div>
+              <div class="node">
+                <span class="node-k">Rank</span>
+                <strong>Recommendation</strong>
+                <p>Sort remaining crops by best fit. Advisory flags surface but don't block.</p>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <h4>Funnel invariant</h4>
+            <p>Validity runs before scoring. A crop that is hard invalid should never appear in score results, even with a high base fit. The funnel only narrows — it never widens downstream.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="debug">
+        <div class="section-head">
+          <div>
+            <h3>Planner Debug Checklist</h3>
+            <p>When something looks wrong, start here. Each question points to the layer most likely responsible.</p>
+          </div>
+          <div class="badge">Diagnostics</div>
+        </div>
+        <div class="section-body">
+          <ul class="list">
+            <li><strong>Score incorrect?</strong> Check cell traits first — open inspect and verify isTrellisRow, isProtected, hasVerticalSupport match expectations for that row.</li>
+            <li><strong>Crop marked invalid?</strong> Inspect structural support flags. If hasVerticalSupport is false but the cell should have it, the zone derivation layer has a bug.</li>
+            <li><strong>Zone rendering wrong?</strong> Verify buildZoneMap output. Protected should only appear on interior rows (not row 0, not last row).</li>
+            <li><strong>Warnings inconsistent?</strong> UI may be bypassing trait model and reading raw cage state directly. Search for cage.enabled outside zone derivation.</li>
+            <li><strong>Autofill behaving oddly?</strong> Compare scoring vs validity pass. If hard invalid crops appear in recommendations, the funnel filter is being skipped.</li>
+            <li><strong>wallSide not locked?</strong> If cage is enabled but wallSide is not "back", syncCageUI or the toggle handler missed the constraint.</li>
+            <li><strong>Front row marked protected?</strong> isProtected should exclude the last row (front side). If it doesn't, the isFrontRow check in buildZoneMap is broken.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="footer">
+        Garden OS system map · Planner intelligence stack · Built around the v4.3 derived trait refactor
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('expandBtn')?.addEventListener('click',()=>{
+      document.querySelectorAll('section.section').forEach(s=>s.scrollMarginTop='90px');
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  </script>
+</body>
+</html>

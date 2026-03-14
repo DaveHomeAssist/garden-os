@@ -289,6 +289,7 @@
   <a href="garden-planner-v4.html" class="active">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
 </nav>
 <header>
   <div class="hd-left">
@@ -536,6 +537,8 @@ const VALID_TOOLS=['paint','erase'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
 const MAX_SHARE_PAYLOAD=50000;
+const CURRENT_SCHEMA = 1;
+const APP_VERSION = '4.3';
 
 const CROPS = {
   // ── CUCURBITS ──────────────────────────────────────────────────────────────
@@ -878,112 +881,316 @@ function updateUndoButtons(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PERSISTENCE
+// PERSISTENCE — load → validateRaw → migrate → validateWorkspace → save
 // ═══════════════════════════════════════════════════════════════════════════════
-const LS_KEY = 'gardenOS_v4';
-function saveState(){
-  try {
-    const payload = {
-      bedW, bedH,
-      bed: bed.map(c=>c.crop),
-      ui: { selectedCrop:ui.selectedCrop, tool:ui.tool, selCell:ui.selCell, catFilter:ui.catFilter },
-      settings: {
-        sunHours: document.getElementById('sunHours').value,
-        orientation: document.getElementById('orientation').value,
-        wallSide: document.getElementById('wallSide').value,
-        trellis: document.getElementById('trellisToggle').classList.contains('on'),
-        season: document.getElementById('season').value,
-        goal: document.getElementById('goal').value,
-        zone: document.getElementById('zone').value,
-        cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
-      }
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-  } catch(e){}
+const LS_KEY = 'gardenOS';
+const LS_KEY_LEGACY = 'gardenOS_v4';
+
+// -- Known v4.3 fixture for migration testing (console: _V4_FIXTURE) ----------
+const _V4_FIXTURE = Object.freeze({
+  bedW:8, bedH:4,
+  bed:['tomato','basil',null,null,'pepper','marigold',null,null,
+       null,null,null,null,null,null,null,null,
+       null,null,null,null,null,null,null,null,
+       'leaf_lettuce',null,null,null,null,null,null,'radish'],
+  settings:{sunHours:'6',orientation:'ew',wallSide:'left',trellis:true,season:'spring',
+    goal:'balanced',zone:'7',cage:{enabled:true,rearTrellis:true,wireSides:true,height:'24',doorStyle:'double'}},
+  ui:{selectedCrop:'tomato',tool:'paint',selCell:null,catFilter:'all'}
+});
+
+// -- validateRaw: lightweight structural gate ----------------------------------
+function validateRaw(raw){
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))
+    return {ok:false, errors:['payload is not a plain object']};
+  const isV1 = typeof raw.schemaVersion==='number';
+  const isLegacy = !isV1 && raw.bedW!=null && Array.isArray(raw.bed);
+  if(!isV1 && !isLegacy)
+    return {ok:false, errors:['unrecognized payload shape']};
+  return {ok:true, payload:raw};
 }
-function loadState(){
+
+// -- migrateFromV4: legacy → schema v1 ----------------------------------------
+function migrateFromV4(legacy){
+  const now = new Date().toISOString();
+  const w = Math.min(10, Math.max(2, Math.floor(+legacy.bedW)||8));
+  const h = Math.min(10, Math.max(2, Math.floor(+legacy.bedH)||4));
+  const expectedLen = w * h;
+  let cells = Array.isArray(legacy.bed)
+    ? legacy.bed.map(c=>(typeof c==='string'&&CROPS[c])?c:null)
+    : [];
+  // Pad or truncate to match dimensions
+  if(cells.length < expectedLen) cells = cells.concat(new Array(expectedLen - cells.length).fill(null));
+  else if(cells.length > expectedLen) cells = cells.slice(0, expectedLen);
+  const s = legacy.settings || {};
+  const sc = s.cage || {};
+  return {
+    schemaVersion: CURRENT_SCHEMA,
+    meta: { createdAt:now, updatedAt:now, appVersion:APP_VERSION },
+    selectedBedId: 'bed-0',
+    beds: [{
+      id: 'bed-0',
+      name: 'Main Bed',
+      width: w,
+      height: h,
+      cells,
+      settings: {
+        sunHours:    parseFloat(s.sunHours)||6,
+        orientation: VALID_ORIENTATIONS.includes(s.orientation) ? s.orientation : 'ew',
+        wallSide:    VALID_WALLS.includes(s.wallSide) ? s.wallSide : 'back',
+        trellis:     typeof s.trellis==='boolean' ? s.trellis : true,
+        season:      VALID_SEASONS.includes(s.season) ? s.season : 'spring',
+        goal:        VALID_GOALS.includes(s.goal) ? s.goal : 'balanced',
+        zone:        VALID_ZONES.includes(s.zone) ? s.zone : '',
+        cage: {
+          enabled:     typeof sc.enabled==='boolean' ? sc.enabled : false,
+          rearTrellis: typeof sc.rearTrellis==='boolean' ? sc.rearTrellis : true,
+          wireSides:   typeof sc.wireSides==='boolean' ? sc.wireSides : true,
+          height:      VALID_CAGE_HEIGHTS.includes(sc.height) ? sc.height : '24',
+          doorStyle:   VALID_DOOR_STYLES.includes(sc.doorStyle) ? sc.doorStyle : 'double'
+        }
+      }
+    }],
+    ui: legacy.ui ? {
+      selectedCrop: (typeof legacy.ui.selectedCrop==='string'&&CROPS[legacy.ui.selectedCrop]) ? legacy.ui.selectedCrop : null,
+      tool:         VALID_TOOLS.includes(legacy.ui.tool) ? legacy.ui.tool : 'paint',
+      selCell:      (typeof legacy.ui.selCell==='string'&&/^r\d+c\d+$/.test(legacy.ui.selCell)) ? legacy.ui.selCell : null,
+      catFilter:    typeof legacy.ui.catFilter==='string' ? legacy.ui.catFilter : 'all'
+    } : {}
+  };
+}
+
+// -- migrate: route to correct migration or pass through ----------------------
+function migrate(payload){
+  if(typeof payload.schemaVersion!=='number'){
+    return migrateFromV4(payload);
+  }
+  if(payload.schemaVersion > CURRENT_SCHEMA){
+    console.warn('[Garden OS] Schema version',payload.schemaVersion,'is newer than app supports (' + CURRENT_SCHEMA + '). Starting fresh.');
+    return null;
+  }
+  // schemaVersion === CURRENT_SCHEMA — pass through
+  // Future: chain 1→2, 2→3, etc.
+  return payload;
+}
+
+// -- validateWorkspace: full schema enforcement after migration ----------------
+function validateWorkspace(ws){
+  const errors = [];
+  if(!ws||typeof ws!=='object') return {ok:false, errors:['workspace is not an object']};
+  if(typeof ws.schemaVersion!=='number'||ws.schemaVersion<1)
+    return {ok:false, errors:['invalid schemaVersion']};
+  if(!Array.isArray(ws.beds)||ws.beds.length===0)
+    return {ok:false, errors:['beds array missing or empty']};
+  // Ensure meta
+  if(!ws.meta||typeof ws.meta!=='object') ws.meta = {};
+  const now = new Date().toISOString();
+  if(typeof ws.meta.createdAt!=='string') ws.meta.createdAt = now;
+  if(typeof ws.meta.appVersion!=='string') ws.meta.appVersion = APP_VERSION;
+  // Validate each bed
+  for(const b of ws.beds){
+    if(!b.id) b.id = 'bed-0';
+    if(!b.name) b.name = 'Main Bed';
+    b.width  = Math.min(10, Math.max(2, Math.floor(+b.width)||8));
+    b.height = Math.min(10, Math.max(2, Math.floor(+b.height)||4));
+    const expected = b.width * b.height;
+    if(!Array.isArray(b.cells)) b.cells = new Array(expected).fill(null);
+    // Pad or truncate cells
+    if(b.cells.length < expected) b.cells = b.cells.concat(new Array(expected - b.cells.length).fill(null));
+    else if(b.cells.length > expected) b.cells = b.cells.slice(0, expected);
+    // Sanitize crop keys
+    b.cells = b.cells.map(c=>(typeof c==='string'&&CROPS[c])?c:null);
+    // Settings defaults
+    if(!b.settings||typeof b.settings!=='object') b.settings = {};
+    const s = b.settings;
+    const sh = parseFloat(s.sunHours);
+    s.sunHours = (isFinite(sh)&&sh>=2&&sh<=10) ? sh : 6;
+    if(!VALID_ORIENTATIONS.includes(s.orientation)) s.orientation = 'ew';
+    if(!VALID_WALLS.includes(s.wallSide)) s.wallSide = 'back';
+    if(typeof s.trellis!=='boolean') s.trellis = true;
+    if(!VALID_SEASONS.includes(s.season)) s.season = 'spring';
+    if(!VALID_GOALS.includes(s.goal)) s.goal = 'balanced';
+    if(!VALID_ZONES.includes(s.zone)) s.zone = '';
+    if(!s.cage||typeof s.cage!=='object') s.cage = {};
+    const sc = s.cage;
+    if(typeof sc.enabled!=='boolean') sc.enabled = false;
+    if(typeof sc.rearTrellis!=='boolean') sc.rearTrellis = true;
+    if(typeof sc.wireSides!=='boolean') sc.wireSides = true;
+    if(!VALID_CAGE_HEIGHTS.includes(sc.height)) sc.height = '24';
+    if(!VALID_DOOR_STYLES.includes(sc.doorStyle)) sc.doorStyle = 'double';
+  }
+  // selectedBedId must point to an existing bed
+  if(!ws.beds.find(b=>b.id===ws.selectedBedId)) ws.selectedBedId = ws.beds[0].id;
+  if(errors.length) return {ok:false, errors};
+  return {ok:true, workspace:ws};
+}
+
+// -- load: source priority with fallback chain --------------------------------
+function load(){
+  let source = null;
+  let fromHash = false;
   try {
-    // Check URL share param first
     const urlParams = new URLSearchParams(window.location.hash.slice(1));
     if(urlParams.has('bed')){
-      const raw=urlParams.get('bed');
-      if(!raw||raw.length>MAX_SHARE_PAYLOAD) return false;
-      let decoded;
-      try{ decoded=decodeURIComponent(raw); }catch(e){ return false; }
-      const p=JSON.parse(decoded);
-      if(!p||typeof p!=='object'||Array.isArray(p)) return false;
-      Object.freeze(p);
-      applyLoadedState(p);
-      history.replaceState(null,'',window.location.pathname);
-      showShareBanner();
-      return true;
+      const raw = urlParams.get('bed');
+      if(raw && raw.length <= MAX_SHARE_PAYLOAD){
+        let decoded;
+        try{ decoded=decodeURIComponent(raw); }catch(e){ decoded=null; }
+        if(decoded){
+          try{ source=JSON.parse(decoded); fromHash=true; }catch(e){ source=null; }
+        }
+      }
+      if(!source) console.warn('[Garden OS] Malformed share URL — falling back to saved state.');
     }
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw||raw.length>MAX_SHARE_PAYLOAD) return false;
-    const p=JSON.parse(raw);
-    if(!p||typeof p!=='object'||Array.isArray(p)) return false;
-    applyLoadedState(p);
-    return true;
-  } catch(e){ return false; }
+  } catch(e){}
+  // Fallback: new key, then legacy key
+  if(!source){
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if(raw && raw.length <= MAX_SHARE_PAYLOAD) source = JSON.parse(raw);
+    } catch(e){}
+  }
+  if(!source){
+    try {
+      const raw = localStorage.getItem(LS_KEY_LEGACY);
+      if(raw && raw.length <= MAX_SHARE_PAYLOAD) source = JSON.parse(raw);
+    } catch(e){}
+  }
+  return { payload:source, fromHash };
 }
+
+// -- save: write workspace to canonical key -----------------------------------
+function saveWorkspace(ws){
+  try {
+    ws.meta.updatedAt = new Date().toISOString();
+    ws.meta.appVersion = APP_VERSION;
+    localStorage.setItem(LS_KEY, JSON.stringify(ws));
+    // One-time legacy cleanup
+    if(localStorage.getItem(LS_KEY_LEGACY)) localStorage.removeItem(LS_KEY_LEGACY);
+  } catch(e){}
+}
+
+// -- In-memory workspace reference --------------------------------------------
+let _workspace = null;
+
+// -- saveState: gather current UI into workspace, then persist ----------------
+function saveState(){
+  const b = _workspace ? _workspace.beds.find(x=>x.id===_workspace.selectedBedId) : null;
+  if(!b){ // No workspace yet — build a fresh one and save
+    _workspace = buildFreshWorkspace();
+    saveWorkspace(_workspace);
+    return;
+  }
+  b.width = bedW;
+  b.height = bedH;
+  b.cells = bed.map(c=>c.crop);
+  // Store the user's actual wallSide selection (not the effective override)
+  const wallEl = document.getElementById('wallSide');
+  b.settings.sunHours    = parseFloat(document.getElementById('sunHours').value)||6;
+  b.settings.orientation = document.getElementById('orientation').value;
+  b.settings.wallSide    = wallEl.disabled ? (b.settings.wallSide||'back') : wallEl.value;
+  b.settings.trellis     = document.getElementById('trellisToggle').classList.contains('on');
+  b.settings.season      = document.getElementById('season').value;
+  b.settings.goal        = document.getElementById('goal').value;
+  b.settings.zone        = document.getElementById('zone').value;
+  b.settings.cage = { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle };
+  _workspace.ui = { selectedCrop:ui.selectedCrop, tool:ui.tool, selCell:ui.selCell, catFilter:ui.catFilter };
+  saveWorkspace(_workspace);
+}
+
+// -- buildFreshWorkspace: default workspace for first-time users --------------
+function buildFreshWorkspace(){
+  const now = new Date().toISOString();
+  return {
+    schemaVersion: CURRENT_SCHEMA,
+    meta: { createdAt:now, updatedAt:now, appVersion:APP_VERSION },
+    selectedBedId: 'bed-0',
+    beds: [{
+      id: 'bed-0', name: 'Main Bed', width:bedW, height:bedH,
+      cells: bed.map(c=>c.crop),
+      settings: {
+        sunHours:parseFloat(document.getElementById('sunHours').value)||6,
+        orientation:document.getElementById('orientation').value,
+        wallSide:document.getElementById('wallSide').value,
+        trellis:document.getElementById('trellisToggle').classList.contains('on'),
+        season:document.getElementById('season').value,
+        goal:document.getElementById('goal').value,
+        zone:document.getElementById('zone').value,
+        cage:{ enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle }
+      }
+    }],
+    ui: {}
+  };
+}
+
+// -- loadState: full pipeline — load → validateRaw → migrate → validateWorkspace → save
+function loadState(){
+  const {payload, fromHash} = load();
+  if(!payload) return false;
+  const rawResult = validateRaw(payload);
+  if(!rawResult.ok){ console.warn('[Garden OS] validateRaw failed:', rawResult.errors); return false; }
+  const migrated = migrate(rawResult.payload);
+  if(!migrated) return false;
+  const wsResult = validateWorkspace(migrated);
+  if(!wsResult.ok){ console.warn('[Garden OS] validateWorkspace failed:', wsResult.errors); return false; }
+  _workspace = wsResult.workspace;
+  applyWorkspaceToUI(_workspace);
+  if(fromHash){
+    history.replaceState(null,'',window.location.pathname);
+    showShareBanner();
+  }
+  // Persist in new format (handles legacy migration)
+  saveWorkspace(_workspace);
+  return true;
+}
+
+// -- applyWorkspaceToUI: hydrate DOM + runtime state from workspace -----------
+function applyWorkspaceToUI(ws){
+  const b = ws.beds.find(x=>x.id===ws.selectedBedId) || ws.beds[0];
+  // Bed dimensions
+  bedW = b.width; bedH = b.height;
+  bed = createEmptyBed(bedW, bedH);
+  document.getElementById('bedW').value = bedW;
+  document.getElementById('bedH').value = bedH;
+  updatePresetButtons();
+  // Cells
+  if(b.cells && b.cells.length === bedW*bedH){
+    b.cells.forEach((crop,i)=>{ bed[i].crop = (typeof crop==='string'&&CROPS[crop]) ? crop : null; });
+  }
+  // UI state
+  if(ws.ui && typeof ws.ui==='object'){
+    if(typeof ws.ui.selectedCrop==='string'&&CROPS[ws.ui.selectedCrop]) ui.selectedCrop = ws.ui.selectedCrop;
+    if(typeof ws.ui.tool==='string'&&VALID_TOOLS.includes(ws.ui.tool)) ui.tool = ws.ui.tool;
+    if(typeof ws.ui.selCell==='string'&&/^r\d+c\d+$/.test(ws.ui.selCell)) ui.selCell = ws.ui.selCell;
+    if(typeof ws.ui.catFilter==='string') ui.catFilter = ws.ui.catFilter;
+  }
+  // Settings
+  const s = b.settings;
+  const sunVal = s.sunHours;
+  document.getElementById('sunHours').value = sunVal;
+  document.getElementById('sunVal').textContent = sunVal + ' hrs';
+  document.getElementById('orientation').value = s.orientation;
+  // Stored wallSide — runtime override applied by syncCageUI below
+  document.getElementById('wallSide').value = s.wallSide;
+  const tog = document.getElementById('trellisToggle');
+  s.trellis ? tog.classList.add('on') : tog.classList.remove('on');
+  document.getElementById('season').value = s.season;
+  document.getElementById('goal').value = s.goal;
+  document.getElementById('zone').value = s.zone;
+  // Cage
+  cage.enabled     = s.cage.enabled;
+  cage.rearTrellis = s.cage.rearTrellis;
+  cage.wireSides   = s.cage.wireSides;
+  cage.height      = s.cage.height;
+  cage.doorStyle   = s.cage.doorStyle;
+  syncCageUI(); // applies runtime wallSide override if cage is on
+}
+
 function showShareBanner(){
   const b=document.createElement('div');
   b.className='share-banner';
   b.textContent='Loaded from shared link';
   document.body.appendChild(b);
   setTimeout(()=>b.remove(),4000);
-}
-function applyLoadedState(p){
-  if(p.bedW && p.bedH){
-    const w=Math.min(10,Math.max(2,Math.floor(+p.bedW)||4));
-    const h=Math.min(10,Math.max(2,Math.floor(+p.bedH)||4));
-    bedW=w; bedH=h;
-    bed=createEmptyBed(bedW,bedH);
-    document.getElementById('bedW').value=bedW;
-    document.getElementById('bedH').value=bedH;
-    updatePresetButtons();
-  }
-  if(p.bed && Array.isArray(p.bed) && p.bed.length===bedW*bedH){
-    p.bed.forEach((crop,i)=>{ bed[i].crop=(typeof crop==='string'&&CROPS[crop])?crop:null; });
-  }
-  if(p.ui && typeof p.ui==='object'){
-    if(typeof p.ui.selectedCrop==='string'&&CROPS[p.ui.selectedCrop]) ui.selectedCrop=p.ui.selectedCrop;
-    if(typeof p.ui.tool==='string'&&VALID_TOOLS.includes(p.ui.tool)) ui.tool=p.ui.tool;
-    if(typeof p.ui.selCell==='string'&&/^r\d+c\d+$/.test(p.ui.selCell)) ui.selCell=p.ui.selCell;
-    if(typeof p.ui.catFilter==='string') ui.catFilter=p.ui.catFilter;
-  }
-  if(p.settings && typeof p.settings==='object'){
-    const s=p.settings;
-    if(s.sunHours!=null){
-      const sv=parseFloat(s.sunHours);
-      if(isFinite(sv)&&sv>=2&&sv<=10){
-        document.getElementById('sunHours').value=sv;
-        document.getElementById('sunVal').textContent=sv+' hrs';
-      }
-    }
-    if(typeof s.orientation==='string'&&VALID_ORIENTATIONS.includes(s.orientation))
-      document.getElementById('orientation').value=s.orientation;
-    if(typeof s.wallSide==='string'&&VALID_WALLS.includes(s.wallSide))
-      document.getElementById('wallSide').value=s.wallSide;
-    if(typeof s.trellis==='boolean'){
-      const tog=document.getElementById('trellisToggle');
-      s.trellis?tog.classList.add('on'):tog.classList.remove('on');
-    }
-    if(typeof s.season==='string'&&VALID_SEASONS.includes(s.season))
-      document.getElementById('season').value=s.season;
-    if(typeof s.goal==='string'&&VALID_GOALS.includes(s.goal))
-      document.getElementById('goal').value=s.goal;
-    if(typeof s.zone==='string'&&VALID_ZONES.includes(s.zone))
-      document.getElementById('zone').value=s.zone;
-    if(s.cage && typeof s.cage==='object'){
-      cage.enabled = typeof s.cage.enabled==='boolean' ? s.cage.enabled : false;
-      cage.rearTrellis = typeof s.cage.rearTrellis==='boolean' ? s.cage.rearTrellis : true;
-      cage.wireSides = typeof s.cage.wireSides==='boolean' ? s.cage.wireSides : true;
-      if(typeof s.cage.height==='string' && VALID_CAGE_HEIGHTS.includes(s.cage.height)) cage.height = s.cage.height;
-      if(typeof s.cage.doorStyle==='string' && VALID_DOOR_STYLES.includes(s.cage.doorStyle)) cage.doorStyle = s.cage.doorStyle;
-      syncCageUI();
-    }
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1000,16 +1207,30 @@ function syncCageUI(){
   const ds=document.getElementById('doorStyle');
   if(ch) ch.value=cage.height;
   if(ds) ds.value=cage.doorStyle;
+  // Runtime wallSide override: cage bolts to back wall.
+  // Stored wallSide is preserved in workspace; UI shows effective value.
+  const wallSel=document.getElementById('wallSide');
+  if(wallSel){
+    if(cage.enabled){ wallSel.value='back'; wallSel.disabled=true; }
+    else {
+      wallSel.disabled=false;
+      // Restore stored wallSide from workspace when cage is turned off
+      const b = _workspace && _workspace.beds.find(x=>x.id===_workspace.selectedBedId);
+      if(b && b.settings.wallSide) wallSel.value = b.settings.wallSide;
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INPUTS
 // ═══════════════════════════════════════════════════════════════════════════════
 function inp(){
+  // effectiveWallSide: cage physically bolts to back wall; stored wallSide preserved for cage-off
+  const effectiveWallSide = cage.enabled ? 'back' : document.getElementById('wallSide').value;
   return {
     sunHours:parseFloat(document.getElementById('sunHours').value),
     orientation:document.getElementById('orientation').value,
-    wallSide:document.getElementById('wallSide').value,
+    wallSide:effectiveWallSide,
     trellis:document.getElementById('trellisToggle').classList.contains('on'),
     season:document.getElementById('season').value,
     goal:document.getElementById('goal').value,
@@ -1088,13 +1309,15 @@ function buildZoneMap(i){
       // Derived cell traits (v4.3)
       const isTrellisRow = !!(i.cage&&i.cage.enabled&&i.cage.rearTrellis) && (
         (i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===i.bedH-1));
-      const isProtected = !!(i.cage&&i.cage.enabled&&i.cage.wireSides) && !isTrellisRow;
+      // Protected = enclosed by wire AND not trellis row AND not the open front row
+      const isFrontRow = r===i.bedH-1; // front is always last row (wallSide locked to 'back' in cage mode)
+      const isProtected = !!(i.cage&&i.cage.enabled&&i.cage.wireSides) && !isTrellisRow && !isFrontRow;
       const legacyTrellisAllowed = ta; // trellisAllowed from existing logic (cell is on trellis edge + trellis toggle on)
       const hasVerticalSupport = isTrellisRow || legacyTrellisAllowed;
       const isCritterSafe = !!(i.cage&&i.cage.enabled&&i.cage.wireSides);
-      const doorSide = (i.cage&&i.cage.enabled) ? (i.cage.doorSide||'front') : null;
+      // Front is always the access side (wallSide locked to 'back' in cage mode)
       let accessPriority = accessScore;
-      if(doorSide==='front'){
+      if(i.cage&&i.cage.enabled){
         accessPriority = i.bedH <= 1 ? 1 : Math.max(0, 1 - r/(i.bedH-1));
       }
 
@@ -1457,21 +1680,16 @@ function warnings(inputs,issues){
 // SHARING
 // ═══════════════════════════════════════════════════════════════════════════════
 function shareLayout(){
-  const payload={
-    bedW, bedH,
-    bed: bed.map(c=>c.crop),
-    settings:{
-      sunHours:document.getElementById('sunHours').value,
-      orientation:document.getElementById('orientation').value,
-      wallSide:document.getElementById('wallSide').value,
-      trellis:document.getElementById('trellisToggle').classList.contains('on'),
-      season:document.getElementById('season').value,
-      goal:document.getElementById('goal').value,
-      zone:document.getElementById('zone').value,
-      cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
-    }
+  // Share uses schema v1 envelope, stripped of transient/meta fields
+  if(!_workspace) return;
+  // Ensure current state is saved before sharing
+  saveState();
+  const stripped = {
+    schemaVersion: _workspace.schemaVersion,
+    selectedBedId: _workspace.selectedBedId,
+    beds: _workspace.beds
   };
-  const hash='#bed='+encodeURIComponent(JSON.stringify(payload));
+  const hash='#bed='+encodeURIComponent(JSON.stringify(stripped));
   const url=window.location.href.split('#')[0]+hash;
   navigator.clipboard.writeText(url).then(()=>{
     const btn=document.getElementById('shareBtn');
@@ -1785,7 +2003,9 @@ document.getElementById('zone').addEventListener('change',()=>onSite());
 
 // Cage controls
 document.getElementById('cageEnabled').addEventListener('click',function(){
-  this.classList.toggle('on'); cage.enabled=this.classList.contains('on'); onSite();
+  this.classList.toggle('on'); cage.enabled=this.classList.contains('on');
+  syncCageUI(); // applies runtime wallSide override
+  onSite();
 });
 document.getElementById('cageRearTrellis').addEventListener('click',function(){
   this.classList.toggle('on'); cage.rearTrellis=this.classList.contains('on'); onSite();

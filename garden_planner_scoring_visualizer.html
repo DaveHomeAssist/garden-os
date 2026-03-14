@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Garden OS · Scoring Visualizer</title>
+  <style>
+    :root{
+      --soil:#5c3d1e;
+      --soil-mid:#7a5230;
+      --leaf:#3d7a4f;
+      --leaf-bright:#5aab6b;
+      --sun:#e8c84a;
+      --cream:#f7f2ea;
+      --cream-mid:#efe6d8;
+      --panel:#fffdf9;
+      --text:#1e110a;
+      --muted:#6c5848;
+      --border:#cfb899;
+      --border-soft:#e7dac7;
+      --warn:#d4651a;
+      --bad:#b02a1e;
+      --blue:#3a6abf;
+      --good:#2f7a3d;
+      --shadow:0 14px 36px rgba(44,27,11,.10);
+      --radius:18px;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+      --sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --serif:Georgia,"Times New Roman",serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(90,171,107,.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(232,200,74,.14), transparent 22%),
+        linear-gradient(180deg, #fbf8f2 0%, var(--cream) 100%);
+    }
+    .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:var(--mono);font-size:.65rem;}
+    .os-nav a{color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;transition:color .15s;}
+    .os-nav a:hover{color:#f5ede0;}
+    .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
+    .topbar{
+      position:sticky; top:0; z-index:30;
+      backdrop-filter: blur(14px);
+      background:rgba(247,242,234,.82);
+      border-bottom:1px solid rgba(92,61,30,.12);
+    }
+    .topbar-inner{
+      max-width:1440px; margin:0 auto; padding:14px 22px;
+      display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .brand-mark{
+      width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--soil),var(--leaf)); color:#fff7ea; font-size:20px;
+      box-shadow:var(--shadow);
+    }
+    .brand-copy h1{margin:0; font:700 1.15rem var(--serif); letter-spacing:-.02em}
+    .brand-copy p{margin:.2rem 0 0; font:600 .72rem var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    .toolbar button{
+      appearance:none; border:1px solid var(--border); background:white; color:var(--soil);
+      border-radius:999px; padding:9px 12px; font:600 .72rem var(--mono);
+      text-transform:uppercase; letter-spacing:.08em; cursor:pointer; transition:.18s ease;
+    }
+    .toolbar button:hover{transform:translateY(-1px); border-color:var(--soil); background:#fff7ea}
+    .shell{
+      max-width:1440px; margin:0 auto; padding:22px;
+      display:grid; grid-template-columns:320px minmax(0,1fr) 390px; gap:18px;
+    }
+    .panel{
+      background:rgba(255,253,249,.90);
+      border:1px solid var(--border-soft);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .panel-head{
+      padding:18px 18px 16px;
+      border-bottom:1px solid var(--border-soft);
+      background:linear-gradient(180deg, rgba(239,230,216,.75), rgba(255,253,249,.4));
+    }
+    .panel-head h2{margin:0; font:700 1.2rem var(--serif); letter-spacing:-.02em}
+    .panel-head p{margin:.35rem 0 0; color:var(--muted); font-size:.86rem; line-height:1.5}
+    .panel-body{padding:16px 18px 18px}
+    .stack{display:grid; gap:14px}
+    .field label{
+      display:block; margin:0 0 7px; font:700 .66rem var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--soil-mid);
+    }
+    select,input[type="range"]{
+      width:100%; border:1px solid var(--border); background:white; color:var(--text);
+      border-radius:12px; padding:11px 12px; font:500 .92rem var(--sans);
+    }
+    select:disabled{opacity:.5; cursor:not-allowed}
+    .hint{margin-top:6px; color:var(--muted); font-size:.78rem; line-height:1.45}
+    .tog-row{display:grid; gap:10px}
+    .toggle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 13px; border:1px solid var(--border-soft); border-radius:14px; background:white;
+    }
+    .toggle strong{font-size:.9rem}
+    .toggle span{display:block; font-size:.76rem; color:var(--muted); margin-top:2px}
+    .switch{
+      width:44px; height:25px; border-radius:999px; background:#d9ccb9; position:relative; border:none; cursor:pointer; flex:0 0 auto;
+    }
+    .switch::after{
+      content:""; position:absolute; top:3px; left:3px; width:19px; height:19px; background:white; border-radius:50%; transition:.18s ease; box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .switch.on{background:var(--leaf)}
+    .switch.on::after{left:22px}
+    .bed-card{padding:16px}
+    .bed-header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+    .badge{display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:7px 10px; background:#fff; border:1px solid var(--border); font:700 .64rem var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--soil)}
+    .bed-wrap{background:#fff; border:1px solid var(--border-soft); border-radius:18px; padding:14px}
+    .bed-label{font:700 .62rem var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); text-align:center; margin-bottom:8px}
+    .grid-wrap{display:grid; gap:10px}
+    .bed-grid{display:grid; gap:6px}
+    .cell{
+      aspect-ratio:1; border-radius:14px; border:1px solid var(--border-soft); background:linear-gradient(180deg,#fff,#fbf8f1);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; position:relative; padding:4px; transition:.15s ease;
+      min-height:44px;
+    }
+    .cell:hover{transform:translateY(-1px); border-color:var(--border)}
+    .cell.active{border-color:var(--soil); box-shadow:0 0 0 3px rgba(92,61,30,.15)}
+    .cell.trellis{box-shadow:inset 0 0 0 1px rgba(212,160,23,.35); background:linear-gradient(180deg,#fffaf0,#fff6df)}
+    .cell.protected{box-shadow:inset 0 0 0 1px rgba(61,122,79,.22); background:linear-gradient(180deg,#fefefe,#f4fbf6)}
+    .cell.front-row{box-shadow:inset 0 0 0 1px rgba(58,106,191,.18); background:linear-gradient(180deg,#fefefe,#f0f4fb)}
+    .cell.bad{background:linear-gradient(180deg,#fff,#fceceb); border-color:rgba(176,42,30,.32)}
+    .cell-id{font:700 .62rem var(--mono); color:var(--soil-mid)}
+    .cell-sub{font-size:.65rem; color:var(--muted); margin-top:2px}
+    .zone-tag{position:absolute; top:4px; left:4px; font:700 .48rem var(--mono); text-transform:uppercase; letter-spacing:.06em; border-radius:999px; padding:2px 5px; background:rgba(255,255,255,.92)}
+    .zone-tag.trellis{color:#8b6914}
+    .zone-tag.protected{color:var(--leaf)}
+    .zone-tag.front{color:var(--blue)}
+    .legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    .legend span{display:inline-flex; align-items:center; gap:6px; font:700 .58rem var(--mono); text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+    .legend i{width:10px; height:10px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,.06)}
+    .score-hero{
+      background:linear-gradient(135deg, rgba(92,61,30,.98), rgba(61,122,79,.95)); color:#fff7ea; border-radius:18px; padding:18px; position:relative; overflow:hidden;
+    }
+    .score-hero::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 30px); pointer-events:none}
+    .score-hero-inner{position:relative}
+    .score-top{display:flex; align-items:flex-end; justify-content:space-between; gap:12px}
+    .score-num{font:700 3.3rem/.9 var(--serif); letter-spacing:-.05em}
+    .score-meta{text-align:right}
+    .score-meta div:first-child{font:700 .7rem var(--mono); text-transform:uppercase; letter-spacing:.08em; opacity:.78}
+    .status{margin-top:4px; font-size:.9rem; font-weight:700}
+    .subscore{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px}
+    .mini-card{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:10px}
+    .mini-card .k{font:700 .56rem var(--mono); text-transform:uppercase; letter-spacing:.08em; opacity:.74}
+    .mini-card .v{margin-top:4px; font:700 1.05rem var(--serif)}
+    .section-title{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:18px 0 10px}
+    .section-title h3{margin:0; font:700 1rem var(--serif)}
+    .pill{display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 9px; background:#fff; border:1px solid var(--border); font:700 .58rem var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--soil)}
+    .breakdown{display:grid; gap:10px}
+    .row{
+      background:white; border:1px solid var(--border-soft); border-radius:16px; padding:12px 12px 12px 14px; display:grid; grid-template-columns:minmax(0,1fr) 84px; gap:12px; align-items:center;
+    }
+    .row-left strong{display:block; font-size:.92rem}
+    .row-left p{margin:4px 0 0; color:var(--muted); font-size:.8rem; line-height:1.45}
+    .score-chip{
+      justify-self:end; min-width:72px; text-align:center; border-radius:999px; padding:8px 10px; font:700 .74rem var(--mono); letter-spacing:.03em; border:1px solid transparent;
+    }
+    .plus{background:#eaf7ee; color:var(--good); border-color:rgba(47,122,61,.18)}
+    .minus{background:#fff0eb; color:var(--bad); border-color:rgba(176,42,30,.18)}
+    .neutral{background:#f5f2ec; color:var(--soil-mid); border-color:rgba(122,82,48,.12)}
+    .callout{
+      margin-top:14px; border:1px solid rgba(58,106,191,.16); background:#f5f8ff; border-radius:18px; padding:14px;
+    }
+    .callout h4{margin:0 0 6px; color:var(--blue); font:700 .98rem var(--serif)}
+    .callout p{margin:0; color:#33507c; font-size:.84rem; line-height:1.55}
+    .codebox{
+      background:#fff; border:1px solid var(--border-soft); border-radius:16px; padding:14px; font:600 .76rem/1.55 var(--mono); color:var(--soil-mid); white-space:pre-wrap;
+    }
+    .traits{display:grid; gap:10px}
+    .trait{
+      background:white; border:1px solid var(--border-soft); border-radius:14px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .trait strong{font-size:.9rem}
+    .trait span{font:700 .64rem var(--mono); text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+    .trait .val{border-radius:999px; padding:7px 9px; font:700 .62rem var(--mono); text-transform:uppercase; letter-spacing:.08em}
+    .val.true{background:#eaf7ee; color:var(--good)}
+    .val.false{background:#f4f1eb; color:var(--soil-mid)}
+    .val.advisory{background:#eaf0ff; color:var(--blue)}
+    .val.hard{background:#fff0eb; color:var(--bad)}
+    .footer{max-width:1440px; margin:0 auto; padding:0 22px 26px; color:var(--muted); font-size:.8rem; text-align:center}
+    @media (max-width:1220px){
+      .shell{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      .topbar-inner,.shell,.footer{padding-left:14px; padding-right:14px}
+      .subscore{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      .score-chip{justify-self:start}
+    }
+  </style>
+</head>
+<body>
+  <nav class="os-nav" aria-label="Garden OS">
+    <a href="index.html">Home</a>
+    <a href="garden-planner-v4.html">Planner</a>
+    <a href="garden-cage-build-guide.html">Build Guide</a>
+    <a href="garden-cage-ops-guide.html">Ops Guide</a>
+    <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
+  </nav>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">🧪</div>
+        <div class="brand-copy">
+          <h1>Garden OS Scoring Visualizer</h1>
+          <p>Interactive fit debugger · crop × cell × structure</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="resetBtn" type="button">Reset</button>
+        <button id="bestBtn" type="button">Best Cell</button>
+        <button id="worstBtn" type="button">Worst Cell</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Scenario Controls</h2>
+        <p>Pick a crop, shape the bed, then inspect how one cell scores and why.</p>
+      </div>
+      <div class="panel-body stack">
+        <div class="field">
+          <label for="cropSelect">Crop</label>
+          <select id="cropSelect"></select>
+          <div class="hint">The visualizer uses representative planner traits, including trellis demand, protected zone preference, and access friendliness.</div>
+        </div>
+
+        <div class="field">
+          <label for="goalSelect">Goal profile</label>
+          <select id="goalSelect">
+            <option value="balanced">Balanced harvest</option>
+            <option value="yield">Highest yield</option>
+            <option value="easy">Low maintenance</option>
+            <option value="sanctuary">Mom's Sanctuary</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="seasonSelect">Season</label>
+          <select id="seasonSelect">
+            <option value="spring">Spring</option>
+            <option value="summer" selected>Early Summer</option>
+            <option value="latesummer">Late Summer</option>
+            <option value="fall">Fall</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="wallSideSelect">Trellis / wall side</label>
+          <select id="wallSideSelect">
+            <option value="back" selected>Back edge</option>
+            <option value="front">Front edge</option>
+            <option value="left">Left edge</option>
+            <option value="right">Right edge</option>
+          </select>
+          <div class="hint" id="wallSideHint"></div>
+        </div>
+
+        <div class="tog-row">
+          <div class="toggle">
+            <div><strong>Cage enabled</strong><span>Turn on structured trellis + protection zones</span></div>
+            <button class="switch on" id="cageToggle" type="button" aria-pressed="true"></button>
+          </div>
+          <div class="toggle">
+            <div><strong>Rear trellis wall</strong><span>Creates a dedicated climbing row or edge</span></div>
+            <button class="switch on" id="trellisToggle" type="button" aria-pressed="true"></button>
+          </div>
+          <div class="toggle">
+            <div><strong>Wire sides active</strong><span>Creates critter-safe enclosed zones</span></div>
+            <button class="switch on" id="wireToggle" type="button" aria-pressed="true"></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="harvestRange">Harvest frequency emphasis</label>
+          <input id="harvestRange" type="range" min="0" max="1" step="0.1" value="0.6" />
+          <div class="hint">Higher values favor easy-reach cells for succession friendly crops.</div>
+        </div>
+
+        <div class="callout">
+          <h4>How to use it</h4>
+          <p>Click any cell in the bed to compare structural traits, validity state, and numeric score. This page is meant to make planner tuning and regression review dramatically easier.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Bed + Cell Selector</h2>
+        <p>The back wall is always the trellis zone in cage mode. Interior rows are protected. Front row is open for access.</p>
+      </div>
+      <div class="bed-card">
+        <div class="bed-header">
+          <span class="badge" id="bedBadge">8 × 4 bed</span>
+          <span class="badge" id="selectionBadge">Selected: A1</span>
+        </div>
+        <div class="bed-wrap">
+          <div class="bed-label">Click a cell to inspect score breakdown</div>
+          <div class="grid-wrap">
+            <div class="bed-grid" id="bedGrid"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background:#fff6df"></i>Trellis zone</span>
+            <span><i style="background:#f4fbf6"></i>Protected zone</span>
+            <span><i style="background:#f0f4fb"></i>Front row (open)</span>
+            <span><i style="background:#fceceb"></i>Hard fail</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Score Breakdown</h2>
+        <p>One crop, one cell, fully explained. Numeric fit and validity are separated so you can see what is impossible versus merely suboptimal.</p>
+      </div>
+      <div class="panel-body">
+        <div class="score-hero">
+          <div class="score-hero-inner">
+            <div class="score-top">
+              <div>
+                <div class="score-num" id="scoreNum">87</div>
+                <div class="status" id="scoreStatus">Strong fit</div>
+              </div>
+              <div class="score-meta">
+                <div>Total score</div>
+                <div id="cropName">Cherry Tomato</div>
+              </div>
+            </div>
+            <div class="subscore">
+              <div class="mini-card"><div class="k">Validity</div><div class="v" id="validityMini">Valid</div></div>
+              <div class="mini-card"><div class="k">Zone fit</div><div class="v" id="zoneMini">Prime</div></div>
+              <div class="mini-card"><div class="k">Access</div><div class="v" id="accessMini">0.75</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <h3>Score contributions</h3>
+          <span class="pill" id="reasonCount">6 factors</span>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="section-title">
+          <h3>Derived cell traits</h3>
+          <span class="pill">Shared truth</span>
+        </div>
+        <div class="traits" id="traits"></div>
+
+        <div class="section-title">
+          <h3>Debug object</h3>
+          <span class="pill">Inspector</span>
+        </div>
+        <div class="codebox" id="debugBox"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">Garden OS scoring visualizer · built to make planner tuning, trait audits, and regression checks way more legible</div>
+
+  <script>
+    const CROPS = {
+      tomato:{name:'Cherry Tomato',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:8,sanctuary:4,easy:-2}},
+      polebeans:{name:'Pole Beans',trellisZone:true,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:7,sanctuary:1,easy:-4}},
+      cucumber:{name:'Cucumber',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:6,sanctuary:2,easy:-1}},
+      lettuce:{name:'Leaf Lettuce',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:8,easy:3}},
+      basil:{name:'Basil',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:false,goalBias:{yield:1,sanctuary:7,easy:2}},
+      radish:{name:'Radish',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:6,easy:4}},
+      bokchoy:{name:'Bok Choy',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:7,easy:1}},
+      kale:{name:'Kale',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:false,coolSeason:true,goalBias:{yield:4,sanctuary:5,easy:2}}
+    };
+
+    const state = {
+      crop:'tomato',
+      goal:'balanced',
+      season:'summer',
+      wallSide:'back',
+      cage:true,
+      rearTrellis:true,
+      wireSides:true,
+      harvestBias:0.6,
+      bedW:8,
+      bedH:4,
+      selected:{r:0,c:0}
+    };
+
+    const els = {
+      cropSelect: document.getElementById('cropSelect'),
+      goalSelect: document.getElementById('goalSelect'),
+      seasonSelect: document.getElementById('seasonSelect'),
+      wallSideSelect: document.getElementById('wallSideSelect'),
+      wallSideHint: document.getElementById('wallSideHint'),
+      cageToggle: document.getElementById('cageToggle'),
+      trellisToggle: document.getElementById('trellisToggle'),
+      wireToggle: document.getElementById('wireToggle'),
+      harvestRange: document.getElementById('harvestRange'),
+      bedGrid: document.getElementById('bedGrid'),
+      bedBadge: document.getElementById('bedBadge'),
+      selectionBadge: document.getElementById('selectionBadge'),
+      scoreNum: document.getElementById('scoreNum'),
+      scoreStatus: document.getElementById('scoreStatus'),
+      cropName: document.getElementById('cropName'),
+      validityMini: document.getElementById('validityMini'),
+      zoneMini: document.getElementById('zoneMini'),
+      accessMini: document.getElementById('accessMini'),
+      reasonCount: document.getElementById('reasonCount'),
+      breakdown: document.getElementById('breakdown'),
+      traits: document.getElementById('traits'),
+      debugBox: document.getElementById('debugBox'),
+      resetBtn: document.getElementById('resetBtn'),
+      bestBtn: document.getElementById('bestBtn'),
+      worstBtn: document.getElementById('worstBtn')
+    };
+
+    function rowLabel(r){ return String.fromCharCode(65 + r); }
+    function cellId(r,c){ return `${rowLabel(r)}${c+1}`; }
+
+    // Enforce wallSide constraint: cage mode locks to 'back'
+    function syncWallSideConstraint(){
+      if(state.cage){
+        state.wallSide = 'back';
+        els.wallSideSelect.value = 'back';
+        els.wallSideSelect.disabled = true;
+        els.wallSideHint.textContent = 'Locked to back — cage trellis panel bolts to the back wall.';
+      } else {
+        els.wallSideSelect.disabled = false;
+        els.wallSideHint.textContent = '';
+      }
+    }
+
+    function buildZoneMap(){
+      const zones = [];
+      for(let r=0;r<state.bedH;r++){
+        for(let c=0;c<state.bedW;c++){
+          const onTop = r===0, onBottom = r===state.bedH-1, onLeft = c===0, onRight = c===state.bedW-1;
+          const isTrellisRow = !!(state.cage && state.rearTrellis) && (
+            (state.wallSide==='back' && onTop) ||
+            (state.wallSide==='front' && onBottom) ||
+            (state.wallSide==='left' && onLeft) ||
+            (state.wallSide==='right' && onRight)
+          );
+          // Front row (open access side): always last row when wallSide is 'back' (locked in cage mode)
+          const isFrontRow = (state.wallSide==='back' && onBottom) ||
+                             (state.wallSide==='front' && onTop) ||
+                             (state.wallSide==='left' && onRight) ||
+                             (state.wallSide==='right' && onLeft);
+          // Protected = enclosed by wire, NOT trellis row, NOT front row (open access side)
+          const isProtected = !!(state.cage && state.wireSides) && !isTrellisRow && !isFrontRow;
+          // hasVerticalSupport = only cells actually on the trellis row
+          const hasVerticalSupport = isTrellisRow;
+          const isCritterSafe = !!(state.cage && state.wireSides);
+
+          let accessPriority = 0.5;
+          if(state.wallSide==='back') accessPriority = state.bedH <= 1 ? 1 : Math.max(0, 1 - r/(state.bedH - 1));
+          if(state.wallSide==='front') accessPriority = state.bedH <= 1 ? 1 : Math.max(0, r/(state.bedH - 1));
+          if(state.wallSide==='left') accessPriority = state.bedW <= 1 ? 1 : Math.max(0, 1 - c/(state.bedW - 1));
+          if(state.wallSide==='right') accessPriority = state.bedW <= 1 ? 1 : Math.max(0, c/(state.bedW - 1));
+
+          zones.push({r,c,id:cellId(r,c),isTrellisRow,isFrontRow,isProtected,hasVerticalSupport,isCritterSafe,accessPriority});
+        }
+      }
+      return zones;
+    }
+
+    function cropValidity(crop, zone){
+      if(crop.trellisRequired && !zone.hasVerticalSupport){
+        return {valid:false,severity:'hard',code:'NO_SUPPORT',reason:'Requires vertical support and none is available here.'};
+      }
+      if(crop.trellisZone && state.cage && !zone.isTrellisRow){
+        return {valid:true,severity:'advisory',code:'OFF_TRELLIS_ROW',reason:'This crop can grow here, but it scores much better in the trellis row.'};
+      }
+      if(crop.protectedZone && zone.isTrellisRow && state.cage){
+        return {valid:true,severity:'advisory',code:'WASTED_TRELLIS_SPACE',reason:'This uses prime climbing space for a crop that prefers protected rows.'};
+      }
+      if(crop.coolSeason && state.season==='latesummer'){
+        return {valid:true,severity:'advisory',code:'BOLT_RISK',reason:'Cool season crop in late summer. Expect more bolt risk and stress.'};
+      }
+      return {valid:true,severity:null,code:null,reason:'No structural conflict detected.'};
+    }
+
+    function computeScore(crop, zone){
+      const reasons = [];
+      let score = 50;
+
+      reasons.push({label:'Base fit',detail:'Neutral starting score before structure, season, and access adjustments.',value:50});
+
+      if(crop.trellisZone && zone.isTrellisRow){
+        score += 18;
+        reasons.push({label:'Prime trellis placement',detail:'Climbing crop is in the dedicated support row or edge.',value:18});
+      } else if(crop.trellisZone && !zone.hasVerticalSupport){
+        score -= 55;
+        reasons.push({label:'No support available',detail:'This crop wants vertical help but the selected cell cannot provide it.',value:-55});
+      } else if(crop.trellisZone){
+        score -= 12;
+        reasons.push({label:'Off-zone climber',detail:'Support exists somewhere in the system, but this is not the prime climbing row.',value:-12});
+      }
+
+      if(crop.protectedZone && zone.isProtected){
+        score += 12;
+        reasons.push({label:'Protected zone bonus',detail:'Good use of the enclosed interior zone for greens or vulnerable crops.',value:12});
+      }
+      if(crop.protectedZone && zone.isCritterSafe){
+        score += 6;
+        reasons.push({label:'Critter safety bonus',detail:'Wire protection reduces exposure for tender harvest crops.',value:6});
+      }
+      if(crop.protectedZone && zone.isTrellisRow){
+        score -= 10;
+        reasons.push({label:'Wasted trellis space',detail:'Protected crop is using valuable climbing real estate.',value:-10});
+      }
+
+      const goalBias = crop.goalBias[state.goal] || 0;
+      if(goalBias !== 0){
+        score += goalBias;
+        reasons.push({label:'Goal alignment',detail:`Selected goal profile is ${state.goal}.`,value:goalBias});
+      }
+
+      if(crop.successionFriendly){
+        const accessBoost = Math.round(zone.accessPriority * state.harvestBias * 12);
+        score += accessBoost;
+        reasons.push({label:'Access priority',detail:'Fast repeat-harvest crops benefit from easier reach cells.',value:accessBoost});
+      } else {
+        const accessTweak = Math.round((zone.accessPriority - 0.5) * 4);
+        score += accessTweak;
+        reasons.push({label:'Access effect',detail:'Non-succession crops still get a small reachability adjustment.',value:accessTweak});
+      }
+
+      if(crop.coolSeason && (state.season==='spring' || state.season==='fall')){
+        score += 10;
+        reasons.push({label:'Season fit',detail:'Cool season crop matches the selected planting window.',value:10});
+      } else if(crop.coolSeason && state.season==='latesummer'){
+        score -= 16;
+        reasons.push({label:'Bolt risk',detail:'Cool season crop is under hot-season stress.',value:-16});
+      } else if(!crop.coolSeason && state.season==='latesummer'){
+        score += 6;
+        reasons.push({label:'Heat tolerance fit',detail:'Warm season crop is comfortable in late summer conditions.',value:6});
+      } else {
+        reasons.push({label:'Season effect',detail:'Season is broadly acceptable for this crop.',value:0});
+      }
+
+      const validity = cropValidity(crop, zone);
+      if(validity.severity==='hard') score -= 30;
+      if(validity.severity==='advisory') score -= 6;
+
+      score = Math.max(0, Math.min(99, score));
+      return {score, reasons, validity};
+    }
+
+    function scoreStatus(score, validity){
+      if(validity.severity==='hard') return 'Hard fail';
+      if(score >= 82) return 'Strong fit';
+      if(score >= 68) return 'Good fit';
+      if(score >= 52) return 'Workable';
+      return 'Weak fit';
+    }
+
+    function zoneLabel(crop, zone, validity, score){
+      if(validity.severity==='hard') return 'Invalid';
+      if(crop.trellisZone && zone.isTrellisRow) return 'Prime';
+      if(crop.protectedZone && zone.isProtected) return 'Protected';
+      if(score >= 70) return 'Solid';
+      return 'Suboptimal';
+    }
+
+    function renderGrid(){
+      const zones = buildZoneMap();
+      els.bedGrid.innerHTML = '';
+      els.bedGrid.style.gridTemplateColumns = `repeat(${state.bedW}, minmax(0,1fr))`;
+      els.bedBadge.textContent = `${state.bedW} × ${state.bedH} bed`;
+      zones.forEach(zone => {
+        const crop = CROPS[state.crop];
+        const { validity } = computeScore(crop, zone);
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        if(zone.isTrellisRow) btn.classList.add('trellis');
+        else if(zone.isProtected) btn.classList.add('protected');
+        else if(zone.isFrontRow && state.cage) btn.classList.add('front-row');
+        if(validity.severity==='hard') btn.classList.add('bad');
+        if(zone.r===state.selected.r && zone.c===state.selected.c) btn.classList.add('active');
+        btn.type = 'button';
+        let tag = '';
+        if(zone.isTrellisRow) tag = '<span class="zone-tag trellis">T</span>';
+        else if(zone.isProtected) tag = '<span class="zone-tag protected">P</span>';
+        else if(zone.isFrontRow && state.cage) tag = '<span class="zone-tag front">F</span>';
+        btn.innerHTML = `${tag}<div class="cell-id">${zone.id}</div><div class="cell-sub">${zone.accessPriority.toFixed(2)}</div>`;
+        btn.addEventListener('click', ()=>{ state.selected = {r:zone.r,c:zone.c}; render(); });
+        els.bedGrid.appendChild(btn);
+      });
+    }
+
+    function renderBreakdown(){
+      const crop = CROPS[state.crop];
+      const zone = buildZoneMap().find(z => z.r===state.selected.r && z.c===state.selected.c);
+      const result = computeScore(crop, zone);
+      const { score, reasons, validity } = result;
+
+      els.selectionBadge.textContent = `Selected: ${zone.id}`;
+      els.cropName.textContent = crop.name;
+      els.scoreNum.textContent = score;
+      els.scoreStatus.textContent = scoreStatus(score, validity);
+      els.validityMini.textContent = validity.severity === 'hard' ? 'Hard fail' : validity.severity === 'advisory' ? 'Advisory' : 'Valid';
+      els.zoneMini.textContent = zoneLabel(crop, zone, validity, score);
+      els.accessMini.textContent = zone.accessPriority.toFixed(2);
+      els.reasonCount.textContent = `${reasons.length} factors`;
+
+      els.breakdown.innerHTML = '';
+      reasons.forEach(reason => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const cls = reason.value > 0 ? 'plus' : reason.value < 0 ? 'minus' : 'neutral';
+        const signed = reason.value > 0 ? `+${reason.value}` : `${reason.value}`;
+        row.innerHTML = `<div class="row-left"><strong>${reason.label}</strong><p>${reason.detail}</p></div><div class="score-chip ${cls}">${signed}</div>`;
+        els.breakdown.appendChild(row);
+      });
+
+      if(validity.reason){
+        const extra = document.createElement('div');
+        extra.className = 'callout';
+        extra.innerHTML = `<h4>Validity note</h4><p>${validity.reason}</p>`;
+        els.breakdown.appendChild(extra);
+      }
+
+      const traits = [
+        ['isTrellisRow', zone.isTrellisRow],
+        ['isProtected', zone.isProtected],
+        ['isFrontRow', zone.isFrontRow],
+        ['hasVerticalSupport', zone.hasVerticalSupport],
+        ['isCritterSafe', zone.isCritterSafe],
+        ['accessPriority', zone.accessPriority.toFixed(2)],
+        ['validity', validity.severity || 'valid']
+      ];
+      els.traits.innerHTML = '';
+      traits.forEach(([k,v]) => {
+        const item = document.createElement('div');
+        item.className = 'trait';
+        let cls = 'false';
+        let text = String(v);
+        if(v === true){ cls = 'true'; text = 'true'; }
+        else if(v === false){ cls = 'false'; text = 'false'; }
+        else if(v === 'advisory'){ cls = 'advisory'; text = 'advisory'; }
+        else if(v === 'hard'){ cls = 'hard'; text = 'hard fail'; }
+        else if(v === 'valid'){ cls = 'true'; text = 'valid'; }
+        item.innerHTML = `<div><strong>${k}</strong><span>Derived planner trait</span></div><div class="val ${cls}">${text}</div>`;
+        els.traits.appendChild(item);
+      });
+
+      const debug = {
+        crop: state.crop,
+        cropName: crop.name,
+        cell: zone.id,
+        state: { ...state },
+        zone,
+        validity,
+        score,
+        reasons
+      };
+      els.debugBox.textContent = JSON.stringify(debug, null, 2);
+    }
+
+    function bestOrWorst(mode){
+      const crop = CROPS[state.crop];
+      let target = null;
+      buildZoneMap().forEach(zone => {
+        const result = computeScore(crop, zone);
+        if(!target) target = { zone, result };
+        else {
+          if(mode==='best' && result.score > target.result.score) target = { zone, result };
+          if(mode==='worst' && result.score < target.result.score) target = { zone, result };
+        }
+      });
+      if(target){
+        state.selected = { r: target.zone.r, c: target.zone.c };
+        render();
+      }
+    }
+
+    function setSwitch(btn, on){
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    function bind(){
+      Object.entries(CROPS).forEach(([key,crop]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = crop.name;
+        els.cropSelect.appendChild(opt);
+      });
+      els.cropSelect.value = state.crop;
+      els.goalSelect.value = state.goal;
+      els.seasonSelect.value = state.season;
+      els.wallSideSelect.value = state.wallSide;
+      els.harvestRange.value = state.harvestBias;
+      setSwitch(els.cageToggle, state.cage);
+      setSwitch(els.trellisToggle, state.rearTrellis);
+      setSwitch(els.wireToggle, state.wireSides);
+      syncWallSideConstraint();
+
+      els.cropSelect.addEventListener('change', e => { state.crop = e.target.value; render(); });
+      els.goalSelect.addEventListener('change', e => { state.goal = e.target.value; render(); });
+      els.seasonSelect.addEventListener('change', e => { state.season = e.target.value; render(); });
+      els.wallSideSelect.addEventListener('change', e => { state.wallSide = e.target.value; render(); });
+      els.harvestRange.addEventListener('input', e => { state.harvestBias = Number(e.target.value); render(); });
+
+      els.cageToggle.addEventListener('click', () => {
+        state.cage = !state.cage;
+        setSwitch(els.cageToggle, state.cage);
+        syncWallSideConstraint();
+        render();
+      });
+      els.trellisToggle.addEventListener('click', () => { state.rearTrellis = !state.rearTrellis; setSwitch(els.trellisToggle, state.rearTrellis); render(); });
+      els.wireToggle.addEventListener('click', () => { state.wireSides = !state.wireSides; setSwitch(els.wireToggle, state.wireSides); render(); });
+
+      els.resetBtn.addEventListener('click', () => {
+        state.crop = 'tomato'; state.goal = 'balanced'; state.season = 'summer'; state.wallSide = 'back';
+        state.cage = true; state.rearTrellis = true; state.wireSides = true; state.harvestBias = 0.6; state.selected = {r:0,c:0};
+        els.cropSelect.value = state.crop; els.goalSelect.value = state.goal; els.seasonSelect.value = state.season; els.wallSideSelect.value = state.wallSide; els.harvestRange.value = state.harvestBias;
+        setSwitch(els.cageToggle, state.cage); setSwitch(els.trellisToggle, state.rearTrellis); setSwitch(els.wireToggle, state.wireSides);
+        syncWallSideConstraint();
+        render();
+      });
+      els.bestBtn.addEventListener('click', () => bestOrWorst('best'));
+      els.worstBtn.addEventListener('click', () => bestOrWorst('worst'));
+    }
+
+    function render(){
+      renderGrid();
+      renderBreakdown();
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

@@ -12,6 +12,7 @@
   :root {
     --soil:#2c1f0e;
     --cedar:#8b5e3c;
+    --cedar-lt:#c4915c;
     --leaf:#3a6b2a;
     --seedling:#6aab4a;
     --wire:#8a9a8a;
@@ -21,10 +22,10 @@
     --ink:#1e1608;
     --muted:#6f624f;
     --line:#d8cfbf;
-    --shadow:0 12px 28px rgba(44,31,14,0.08);
-    --radius:16px;
-    --radius-sm:12px;
-    --header-h:88px;
+    --shadow:0 8px 24px rgba(44,31,14,0.06);
+    --radius:14px;
+    --radius-sm:10px;
+    --focus:rgba(106,171,74,0.35);
   }
 
   * { box-sizing: border-box; }
@@ -33,288 +34,290 @@
     margin: 0;
     font-family: "DM Sans", sans-serif;
     color: var(--ink);
-    background:
-      radial-gradient(circle at 15% 10%, rgba(106,171,74,0.08), transparent 28%),
-      radial-gradient(circle at 85% 0%, rgba(139,94,60,0.08), transparent 24%),
-      linear-gradient(180deg, #fbf8f2 0%, var(--cream) 100%);
-    line-height: 1.65;
+    background: var(--cream);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(106,171,74,0.06), transparent 28%),
+      radial-gradient(circle at 85% 0%, rgba(139,94,60,0.06), transparent 24%);
+    line-height: 1.6;
   }
 
   a { color: inherit; }
   button, summary { font: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-  .shell {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 18px;
-    display: grid;
-    gap: 18px;
-  }
+  /* ── OS nav ── */
+  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:"DM Mono",monospace;font-size:11px;}
+  .os-nav a{color:rgba(255,248,240,0.6);text-decoration:none;padding:8px 14px;letter-spacing:.04em;transition:color .15s;}
+  .os-nav a:hover{color:#fff8f0;}
+  .os-nav a.active{color:#fff8f0;border-bottom:2px solid #e8c84a;}
 
+  /* ── Masthead — compact ── */
   .masthead {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.03), transparent 35%),
+      linear-gradient(135deg, #2c1f0e 0%, #3a2915 42%, #2d4b24 100%);
+    border-bottom: 3px solid var(--cedar);
     position: sticky;
     top: 0;
     z-index: 40;
-    border-radius: 22px;
-    overflow: hidden;
-    background:
-      linear-gradient(135deg, rgba(255,255,255,0.04), transparent 35%),
-      linear-gradient(135deg, #2c1f0e 0%, #3a2915 42%, #2d4b24 100%);
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .masthead::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      90deg,
-      rgba(255,255,255,0.02) 0,
-      rgba(255,255,255,0.02) 1px,
-      transparent 1px,
-      transparent 28px
-    );
-    pointer-events: none;
   }
 
   .masthead-inner {
-    position: relative;
-    min-height: var(--header-h);
-    padding: 18px 22px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 62px;
   }
 
-  .hero {
+  .masthead-left {
     display: flex;
-    gap: 16px;
     align-items: center;
+    gap: 14px;
     min-width: 0;
   }
 
-  .hero-mark {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
+  .masthead-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
     background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.1);
     display: grid;
     place-items: center;
     flex: 0 0 auto;
   }
 
-  .hero-mark svg { width: 40px; height: 40px; display: block; }
+  .masthead h1 {
+    margin: 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #fff7ea;
+    white-space: nowrap;
+  }
 
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
+  .masthead h1 em {
+    font-style: italic;
+    color: var(--cedar-lt);
+  }
+
+  .masthead-sub {
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-top: 2px;
+  }
+
+  .masthead-meta {
     font-family: "DM Mono", monospace;
     font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,248,240,0.74);
-    background: rgba(255,255,255,0.08);
-  }
-
-  .hero-copy h1 {
-    margin: 0;
-    font-family: "Fraunces", Georgia, serif;
-    font-size: clamp(28px, 3.7vw, 44px);
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    color: #fff7ea;
-  }
-
-  .hero-copy p {
-    margin: 10px 0 0;
-    max-width: 72ch;
-    font-size: 15px;
-    color: rgba(255,246,232,0.76);
-  }
-
-  .meta {
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,246,232,0.82);
-    font-family: "DM Mono", monospace;
-    font-size: 11px;
-    line-height: 1.8;
+    color: rgba(255,248,240,0.4);
     text-align: right;
+    line-height: 1.7;
+    flex-shrink: 0;
   }
 
-  .workspace {
+  /* ── Layout ── */
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(250px, 280px) minmax(0, 1fr);
-    gap: 18px;
-    align-items: start;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 100px);
   }
 
-  .side,
-  .main {
-    background: rgba(255,252,246,0.86);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(10px);
-  }
-
-  .side {
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--line);
+    padding: 18px 0;
     position: sticky;
-    top: calc(var(--header-h) + 30px);
-    padding: 18px;
-    display: grid;
-    gap: 18px;
+    top: 86px;
+    height: calc(100vh - 86px);
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--cream) 0%, #f0ece2 100%);
   }
 
-  .side h2,
-  .main-head h2 {
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+  .sidebar-head {
+    padding: 0 16px 14px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+
+  .sidebar-head h2 {
     margin: 0;
     font-family: "Fraunces", Georgia, serif;
-    font-size: 24px;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
+    font-size: 16px;
+    letter-spacing: -0.01em;
   }
 
-  .side p,
-  .main-head p {
-    margin: 8px 0 0;
+  .sidebar-head p {
+    margin: 4px 0 0;
+    font-size: 11px;
     color: var(--muted);
-    font-size: 14px;
+    line-height: 1.5;
   }
 
-  .nav-list {
-    display: grid;
-    gap: 8px;
+  .sidebar-toolbar {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
   }
 
-  .nav-btn {
+  .sidebar-toolbar button {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 0;
+    background: white;
+    color: var(--muted);
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 140ms ease;
+  }
+
+  .sidebar-toolbar button:hover {
+    background: rgba(58,107,42,0.06);
+    color: var(--ink);
+    border-color: rgba(58,107,42,0.2);
+  }
+
+  .nav-item {
     width: 100%;
-    border: 1px solid transparent;
-    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 0;
+    border-left: 3px solid transparent;
     background: transparent;
+    transition: all .16s ease;
+    font-size: 12.5px;
     color: var(--muted);
     text-align: left;
-    padding: 12px 12px 12px 14px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 10px;
-    cursor: pointer;
-    transition: 160ms ease;
   }
 
-  .nav-btn:hover,
-  .nav-btn:focus-visible,
-  .toolbar-btn:hover,
-  .toolbar-btn:focus-visible,
-  summary:focus-visible {
-    outline: none;
-    border-color: rgba(58,107,42,0.28);
-    background: rgba(58,107,42,0.08);
-  }
-
-  .nav-btn.active {
-    background: linear-gradient(135deg, rgba(58,107,42,0.10), rgba(139,94,60,0.10));
+  .nav-item:hover {
+    background: rgba(58,107,42,0.04);
     color: var(--ink);
-    border-color: rgba(139,94,60,0.22);
+    border-left-color: var(--line);
+  }
+
+  .nav-item.active {
+    background: rgba(58,107,42,0.07);
+    color: var(--ink);
+    border-left-color: var(--cedar);
+    font-weight: 600;
   }
 
   .nav-num {
     font-family: "DM Mono", monospace;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--cedar);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding-top: 3px;
+    letter-spacing: 0.1em;
+    width: 20px;
+    flex-shrink: 0;
   }
 
-  .nav-title {
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 1.3;
-  }
+  .nav-label { line-height: 1.3; }
 
   .nav-kicker {
     display: block;
-    margin-top: 4px;
+    margin-top: 1px;
     font-family: "DM Mono", monospace;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--wire);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
-  .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .toolbar-btn {
+  .sidebar-tips {
+    margin: 12px 16px 0;
+    padding: 12px;
     border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 8px 12px;
+    border-radius: 10px;
     background: white;
-    color: var(--cedar);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .sidebar-tips strong {
+    display: block;
     font-family: "DM Mono", monospace;
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    cursor: pointer;
-    transition: 160ms ease;
-  }
-
-  .status-card {
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 14px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,243,236,0.84));
-  }
-
-  .status-label {
-    font-family: "DM Mono", monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
     color: var(--cedar);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
-  .status-card ul {
+  .sidebar-tips ul {
     margin: 0;
-    padding-left: 18px;
-    color: var(--muted);
-    font-size: 13px;
+    padding-left: 14px;
   }
 
+  .sidebar-tips li + li { margin-top: 4px; }
+
+  /* ── Main ── */
   .main {
-    padding: 24px;
+    padding: 24px 32px;
     display: grid;
-    gap: 18px;
+    gap: 16px;
+    align-content: start;
   }
 
   .main-head {
-    padding-bottom: 18px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--line);
   }
 
+  .main-head h2 {
+    margin: 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+
+  .main-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 64ch;
+  }
+
+  /* ── Sections ── */
   details.section {
     border: 1px solid var(--line);
-    border-radius: 18px;
-    background: #fffdf9;
+    border-radius: var(--radius);
+    background: white;
     overflow: hidden;
+    transition: box-shadow .2s ease;
+  }
+
+  details.section:hover {
+    border-color: rgba(139,94,60,0.25);
   }
 
   details.section[open] {
-    box-shadow: 0 8px 22px rgba(44,31,14,0.05);
+    box-shadow: var(--shadow);
+    border-color: rgba(139,94,60,0.2);
   }
 
   summary.section-summary {
@@ -323,93 +326,116 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 18px 18px 16px;
+    padding: 16px 18px;
     cursor: pointer;
+    transition: background .15s ease;
+  }
+
+  summary.section-summary:hover {
+    background: rgba(247,243,236,0.6);
   }
 
   summary.section-summary::-webkit-details-marker { display: none; }
 
   .sum-left {
-    display: grid;
-    grid-template-columns: auto 1fr;
+    display: flex;
     gap: 14px;
-    align-items: start;
+    align-items: center;
     min-width: 0;
   }
 
   .sum-num {
     font-family: "Fraunces", Georgia, serif;
-    font-size: 42px;
-    line-height: 0.9;
+    font-size: 28px;
+    line-height: 1;
     letter-spacing: -0.04em;
-    color: #d4cab8;
+    color: var(--line);
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  details.section[open] .sum-num {
+    color: var(--cedar);
   }
 
   .sum-copy h3 {
     margin: 0;
     font-family: "Fraunces", Georgia, serif;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: -0.02em;
+    font-size: 18px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
   }
 
   .sum-copy p {
-    margin: 8px 0 0;
+    margin: 4px 0 0;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 12.5px;
+    line-height: 1.45;
   }
 
   .sum-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 6px;
+    margin-top: 6px;
   }
 
   .tag {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 4px;
+    padding: 3px 8px;
     border-radius: 999px;
     font-family: "DM Mono", monospace;
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    background: rgba(58,107,42,0.08);
+    letter-spacing: 0.06em;
+    background: rgba(58,107,42,0.07);
     color: var(--leaf);
-    border: 1px solid rgba(58,107,42,0.12);
+    border: 1px solid rgba(58,107,42,0.1);
   }
 
-  .tag.cedar { background: rgba(139,94,60,0.10); color: var(--cedar); border-color: rgba(139,94,60,0.14); }
-  .tag.rust { background: rgba(184,74,26,0.08); color: var(--rust); border-color: rgba(184,74,26,0.14); }
-  .tag.wire { background: rgba(138,154,138,0.12); color: #556455; border-color: rgba(138,154,138,0.18); }
+  .tag.cedar { background: rgba(139,94,60,0.08); color: var(--cedar); border-color: rgba(139,94,60,0.12); }
+  .tag.rust { background: rgba(184,74,26,0.06); color: var(--rust); border-color: rgba(184,74,26,0.1); }
+  .tag.wire { background: rgba(138,154,138,0.1); color: #556455; border-color: rgba(138,154,138,0.14); }
 
   .sum-caret {
-    width: 38px;
-    height: 38px;
+    width: 30px;
+    height: 30px;
     display: grid;
     place-items: center;
     border-radius: 999px;
-    background: rgba(58,107,42,0.08);
+    background: rgba(58,107,42,0.06);
     color: var(--leaf);
     font-family: "DM Mono", monospace;
+    font-size: 12px;
     flex: 0 0 auto;
-    transition: transform 180ms ease;
+    transition: transform .2s ease, background .15s ease;
   }
 
-  details[open] .sum-caret { transform: rotate(90deg); }
+  details.section[open] .sum-caret {
+    transform: rotate(90deg);
+    background: rgba(58,107,42,0.12);
+  }
 
   .section-body {
     padding: 0 18px 18px;
     display: grid;
-    gap: 16px;
+    gap: 14px;
+    animation: fadeIn .25s ease;
   }
 
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Content cards ── */
   .grid-2 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
   }
 
   .card,
@@ -417,19 +443,27 @@
   .timeline,
   .checklist {
     border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: rgba(247,243,236,0.55);
-    padding: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--cream);
+    padding: 14px 16px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+
+  .card:hover,
+  .diagram:hover,
+  .checklist:hover {
+    border-color: rgba(139,94,60,0.2);
+    box-shadow: 0 2px 8px rgba(44,31,14,0.04);
   }
 
   .card h4,
   .diagram h4,
   .timeline h4,
   .checklist h4 {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     font-family: "Fraunces", Georgia, serif;
-    font-size: 18px;
-    line-height: 1.1;
+    font-size: 15px;
+    line-height: 1.2;
   }
 
   .card p,
@@ -438,39 +472,37 @@
   .checklist p {
     margin: 0;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13px;
   }
 
-  .metric-list,
   .simple-list,
   .season-list,
   .checklist ul {
     margin: 0;
-    padding-left: 18px;
+    padding-left: 16px;
     display: grid;
-    gap: 8px;
+    gap: 6px;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13px;
   }
 
-  .metric-list strong,
   .simple-list strong,
   .season-list strong,
   .checklist strong {
     color: var(--ink);
   }
 
+  /* ── Quick table ── */
   .quick-table {
     width: 100%;
     border-collapse: collapse;
-    background: #fffdf9;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
   }
 
   .quick-table th,
   .quick-table td {
-    padding: 12px 12px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid var(--line);
     vertical-align: top;
@@ -478,30 +510,32 @@
 
   .quick-table th {
     font-family: "DM Mono", monospace;
-    font-size: 10px;
-    letter-spacing: 0.12em;
+    font-size: 9px;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--cedar);
-    background: rgba(139,94,60,0.06);
+    background: rgba(139,94,60,0.05);
   }
 
   .quick-table td {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--muted);
   }
 
   .quick-table td strong { color: var(--ink); }
 
+  /* ── Diagram ── */
   .diagram pre {
     margin: 0;
     white-space: pre;
     overflow: auto;
     font-family: "DM Mono", monospace;
     font-size: 11px;
-    line-height: 1.6;
+    line-height: 1.55;
     color: var(--ink);
   }
 
+  /* ── Zone cards ── */
   .zone-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -510,19 +544,25 @@
 
   .zone-card {
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: var(--radius-sm);
     background: white;
     padding: 14px;
+    transition: transform .15s, box-shadow .15s;
+  }
+
+  .zone-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44,31,14,0.06);
   }
 
   .zone-eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 5px;
+    margin-bottom: 6px;
     font-family: "DM Mono", monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
+    font-size: 9px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
@@ -531,24 +571,25 @@
   .zone-eyebrow.ops { color: var(--wire); }
 
   .zone-card h5 {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     font-family: "Fraunces", Georgia, serif;
-    font-size: 18px;
-    line-height: 1.1;
+    font-size: 16px;
+    line-height: 1.15;
   }
 
   .zone-card p {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--muted);
   }
 
+  /* ── Timeline ── */
   .timeline-track {
     position: relative;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .timeline-track::before {
@@ -556,7 +597,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 18px;
+    top: 16px;
     height: 2px;
     background: linear-gradient(90deg, var(--leaf), var(--seedling), var(--cedar), var(--rust));
     z-index: 0;
@@ -566,124 +607,95 @@
     position: relative;
     z-index: 1;
     border: 1px solid var(--line);
-    border-radius: 16px;
-    background: #fffdf9;
-    padding: 14px;
+    border-radius: var(--radius-sm);
+    background: white;
+    padding: 12px;
+    transition: transform .15s, box-shadow .15s;
+  }
+
+  .season-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(44,31,14,0.06);
   }
 
   .season-dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 999px;
     background: var(--leaf);
     border: 2px solid white;
-    box-shadow: 0 0 0 2px rgba(58,107,42,0.16);
-    margin-bottom: 12px;
+    box-shadow: 0 0 0 2px rgba(58,107,42,0.14);
+    margin-bottom: 10px;
   }
 
-  .season-card:nth-child(2) .season-dot { background: var(--seedling); box-shadow: 0 0 0 2px rgba(106,171,74,0.16); }
-  .season-card:nth-child(3) .season-dot { background: var(--cedar); box-shadow: 0 0 0 2px rgba(139,94,60,0.16); }
-  .season-card:nth-child(4) .season-dot { background: var(--rust); box-shadow: 0 0 0 2px rgba(184,74,26,0.16); }
+  .season-card:nth-child(2) .season-dot { background: var(--seedling); box-shadow: 0 0 0 2px rgba(106,171,74,0.14); }
+  .season-card:nth-child(3) .season-dot { background: var(--cedar); box-shadow: 0 0 0 2px rgba(139,94,60,0.14); }
+  .season-card:nth-child(4) .season-dot { background: var(--rust); box-shadow: 0 0 0 2px rgba(184,74,26,0.14); }
 
   .season-card h5 {
-    margin: 0 0 8px;
+    margin: 0 0 4px;
     font-family: "Fraunces", Georgia, serif;
-    font-size: 18px;
+    font-size: 15px;
   }
 
   .season-card p {
     margin: 0;
-    font-size: 14px;
+    font-size: 12px;
     color: var(--muted);
+    line-height: 1.5;
   }
 
+  /* ── Footer ── */
   .footer-note {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
     text-align: center;
-    padding: 8px 0 2px;
+    padding: 12px 16px 4px;
+    font-family: "DM Mono", monospace;
+    letter-spacing: 0.02em;
   }
 
+  /* ── Print ── */
   .print-only { display: none; }
-  .screen-only { display: inline-flex; }
 
-  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0 18px;display:flex;gap:0;justify-content:center;font-family:"DM Mono",monospace;font-size:11px;}
-  .os-nav a{color:rgba(255,248,240,0.6);text-decoration:none;padding:8px 14px;letter-spacing:.04em;transition:color .15s;}
-  .os-nav a:hover{color:#fff8f0;}
-  .os-nav a.active{color:#fff8f0;border-bottom:2px solid #e8c84a;}
-
-  @media (max-width: 920px) {
-    .workspace { grid-template-columns: 1fr; }
-    .side { position: static; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 0;
+    }
+    .main { padding: 20px 16px; }
     .grid-2,
     .timeline-track { grid-template-columns: 1fr; }
     .timeline-track::before { display: none; }
-    .meta { text-align: left; }
-    .masthead-inner { grid-template-columns: 1fr; }
+    .masthead-meta { display: none; }
   }
 
-  @media (max-width: 640px) {
-    .shell { padding: 10px; }
-    .main { padding: 16px; }
-    .side { padding: 14px; }
-    .sum-left { grid-template-columns: 1fr; }
-    .sum-num { font-size: 34px; }
-    .hero { align-items: flex-start; }
-    .hero-mark { width: 50px; height: 50px; }
+  @media (max-width: 560px) {
+    .zone-grid { grid-template-columns: 1fr; }
+    .sum-num { font-size: 22px; width: 28px; }
+    .masthead h1 { font-size: 18px; white-space: normal; }
   }
 
   @media print {
     @page { margin: 0.5in; }
-    body {
-      background: white;
-      color: black;
-      font-size: 11pt;
-    }
-    .shell {
-      max-width: none;
-      padding: 0;
-      gap: 0;
-    }
-    .masthead {
-      position: static;
-      box-shadow: none;
-      border: 0;
-      border-radius: 0;
-      margin-bottom: 16pt;
-    }
-    .workspace {
-      display: block;
-    }
-    .side,
-    .toolbar,
-    .screen-only,
-    .footer-note {
-      display: none !important;
-    }
-    .main {
-      box-shadow: none;
-      border: 0;
-      padding: 0;
-      background: white;
-    }
-    details.section {
-      break-inside: avoid;
-      border: 1px solid #ddd;
-      margin-bottom: 12pt;
-      box-shadow: none;
-    }
-    details.section > .section-body {
-      display: grid !important;
-    }
-    details.section[open] > .section-body,
-    details.section > .section-body {
-      padding-top: 0;
-    }
-    details.section summary {
-      cursor: default;
-    }
+    body { background: white; color: black; font-size: 11pt; }
+    .os-nav, .sidebar, .footer-note { display: none !important; }
+    .layout { display: block; }
+    .masthead { position: static; border: none; margin-bottom: 12pt; }
+    .main { box-shadow: none; border: 0; padding: 0; background: white; }
+    details.section { break-inside: avoid; border: 1px solid #ddd; margin-bottom: 10pt; box-shadow: none; }
+    details.section > .section-body { display: grid !important; }
     .sum-caret { display: none; }
     .print-only { display: block; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none !important; animation: none !important; }
   }
 </style>
 </head>
@@ -693,154 +705,127 @@
     <a href="garden-planner-v4.html">Planner</a>
     <a href="garden-cage-build-guide.html">Build Guide</a>
     <a href="garden-cage-ops-guide.html" class="active">Ops Guide</a>
+    <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
   </nav>
-  <div class="shell">
-    <header class="masthead">
-      <div class="masthead-inner">
-        <div class="hero">
-          <div class="hero-mark" aria-hidden="true">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="6" y="32" width="36" height="8" rx="2" fill="rgba(58,107,42,0.28)" stroke="#3a6b2a" stroke-width="1.4"/>
-              <line x1="8" y1="8" x2="8" y2="32" stroke="#c4915c" stroke-width="2.2" stroke-linecap="round"/>
-              <line x1="40" y1="8" x2="40" y2="32" stroke="#c4915c" stroke-width="2.2" stroke-linecap="round"/>
-              <line x1="8" y1="8" x2="40" y2="8" stroke="#c4915c" stroke-width="2" stroke-linecap="round"/>
-              <line x1="16" y1="8" x2="16" y2="32" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-              <line x1="24" y1="8" x2="24" y2="32" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-              <line x1="32" y1="8" x2="32" y2="32" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-              <line x1="8" y1="14" x2="40" y2="14" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-              <line x1="8" y1="20" x2="40" y2="20" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-              <line x1="8" y1="26" x2="40" y2="26" stroke="rgba(196,145,92,0.55)" stroke-width="1.2"/>
-            </svg>
-          </div>
-          <div class="hero-copy">
-            <div class="eyebrow">Daily Garden Operations</div>
-            <h1>Garden Cage Ops Guide — Mom's Sanctuary</h1>
-            <p>This guide is for using the cage now that it is already built and standing. Think of it as your daily and seasonal quick reference for planting, harvesting, maintenance, and keeping critters out.</p>
-          </div>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="masthead-left">
+        <div class="masthead-icon" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="22" width="24" height="6" rx="1.5" fill="rgba(58,107,42,0.28)" stroke="#3a6b2a" stroke-width="1"/>
+            <line x1="6" y1="6" x2="6" y2="22" stroke="#c4915c" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="6" x2="26" y2="22" stroke="#c4915c" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="6" y1="6" x2="26" y2="6" stroke="#c4915c" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="12" y1="6" x2="12" y2="22" stroke="rgba(196,145,92,0.4)" stroke-width="0.8"/>
+            <line x1="20" y1="6" x2="20" y2="22" stroke="rgba(196,145,92,0.4)" stroke-width="0.8"/>
+            <line x1="6" y1="11" x2="26" y2="11" stroke="rgba(196,145,92,0.4)" stroke-width="0.8"/>
+            <line x1="6" y1="17" x2="26" y2="17" stroke="rgba(196,145,92,0.4)" stroke-width="0.8"/>
+          </svg>
         </div>
-        <div class="meta">
-          8 × 4 ft footprint<br />
-          Rear trellis climbing zone<br />
-          Front protected greens zone<br />
-          Built for daily use
+        <div>
+          <h1>Cage <em>Ops Guide</em></h1>
+          <div class="masthead-sub">Daily operations · Mom's Sanctuary</div>
         </div>
       </div>
-    </header>
+      <div class="masthead-meta">8 × 4 ft · Rear trellis<br>Front protected · Daily use</div>
+    </div>
+  </header>
 
-    <div class="workspace">
-      <aside class="side screen-only">
-        <div>
-          <h2>Contents</h2>
-          <p>Use this like a field manual. Expand one section for quick work or open everything before printing.</p>
-        </div>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Guide navigation">
+      <div class="sidebar-head">
+        <h2>Contents</h2>
+        <p>Expand a section for quick work, or open everything before printing.</p>
+      </div>
 
-        <div class="toolbar" aria-label="Guide controls">
-          <button class="toolbar-btn" id="expandAllBtn" type="button">Expand all</button>
-          <button class="toolbar-btn" id="collapseAllBtn" type="button">Collapse all</button>
-          <button class="toolbar-btn" id="printBtn" type="button">Print guide</button>
-        </div>
+      <div class="sidebar-toolbar">
+        <button type="button" id="expandAllBtn">Expand all</button>
+        <button type="button" id="collapseAllBtn">Collapse</button>
+        <button type="button" id="printBtn">Print</button>
+      </div>
 
-        <nav class="nav-list" aria-label="Guide sections">
-          <button class="nav-btn active" type="button" data-target="overview">
-            <span class="nav-num">01</span>
-            <span>
-              <span class="nav-title">Structure Overview</span>
-              <span class="nav-kicker">Quick reference</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="zones">
-            <span class="nav-num">02</span>
-            <span>
-              <span class="nav-title">Planting Zones</span>
-              <span class="nav-kicker">What goes where</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="seasonal">
-            <span class="nav-num">03</span>
-            <span>
-              <span class="nav-title">Seasonal Playbook</span>
-              <span class="nav-kicker">Spring to fall</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="maintenance">
-            <span class="nav-num">04</span>
-            <span>
-              <span class="nav-title">Maintenance Checklists</span>
-              <span class="nav-kicker">Monthly and seasonal</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="defense">
-            <span class="nav-num">05</span>
-            <span>
-              <span class="nav-title">Critter Defense</span>
-              <span class="nav-kicker">What the cage stops</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="harvest">
-            <span class="nav-num">06</span>
-            <span>
-              <span class="nav-title">Harvest and Succession</span>
-              <span class="nav-kicker">Keep the bed productive</span>
-            </span>
-          </button>
-          <button class="nav-btn" type="button" data-target="shutdown">
-            <span class="nav-num">07</span>
-            <span>
-              <span class="nav-title">End of Season Shutdown</span>
-              <span class="nav-kicker">Closeout and winter prep</span>
-            </span>
-          </button>
-        </nav>
+      <nav aria-label="Guide sections">
+        <button class="nav-item active" type="button" data-target="overview">
+          <span class="nav-num">01</span>
+          <span><span class="nav-label">Structure Overview</span><span class="nav-kicker">Quick reference</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="zones">
+          <span class="nav-num">02</span>
+          <span><span class="nav-label">Planting Zones</span><span class="nav-kicker">What goes where</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="seasonal">
+          <span class="nav-num">03</span>
+          <span><span class="nav-label">Seasonal Playbook</span><span class="nav-kicker">Spring to fall</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="maintenance">
+          <span class="nav-num">04</span>
+          <span><span class="nav-label">Maintenance</span><span class="nav-kicker">Monthly checks</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="defense">
+          <span class="nav-num">05</span>
+          <span><span class="nav-label">Critter Defense</span><span class="nav-kicker">What the cage stops</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="harvest">
+          <span class="nav-num">06</span>
+          <span><span class="nav-label">Harvest &amp; Succession</span><span class="nav-kicker">Keep producing</span></span>
+        </button>
+        <button class="nav-item" type="button" data-target="shutdown">
+          <span class="nav-num">07</span>
+          <span><span class="nav-label">Season Shutdown</span><span class="nav-kicker">Winter prep</span></span>
+        </button>
+      </nav>
 
-        <div class="status-card">
-          <div class="status-label">Quick reminders</div>
-          <ul>
-            <li>Trellis crops live in the back row.</li>
-            <li>Leafy crops stay in the front protected area.</li>
-            <li>Check the wire and doors every month.</li>
-            <li>Radish, lettuce, and cilantro are your repeat sowing workhorses.</li>
-          </ul>
-        </div>
-      </aside>
+      <div class="sidebar-tips">
+        <strong>Quick reminders</strong>
+        <ul>
+          <li>Climbers in back, greens in front.</li>
+          <li>Latch both doors after every visit.</li>
+          <li>Check wire and doors monthly.</li>
+          <li>Radish, lettuce, cilantro — repeat sow.</li>
+        </ul>
+      </div>
+    </aside>
 
-      <main class="main">
-        <div class="main-head">
-          <h2>Operations Map</h2>
-          <p>Warm, simple, and practical. This is written for the person actually using the cage day to day: opening the doors, planting rows, checking wire, harvesting dinner, and resetting the bed for the next wave.</p>
-        </div>
+    <main class="main">
+      <div class="main-head">
+        <h2>Operations Map</h2>
+        <p>Written for the person actually using the cage day to day — opening doors, planting rows, checking wire, harvesting dinner, and resetting the bed for the next wave.</p>
+      </div>
 
-        <details class="section" id="overview" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">01</div>
-              <div class="sum-copy">
-                <h3>Structure Overview</h3>
-                <p>The cage is already built. This section is your quick reference for how it is laid out and how to use it without overthinking it.</p>
-                <div class="sum-tags">
-                  <span class="tag cedar">Quick reference</span>
-                  <span class="tag wire">Daily use</span>
-                </div>
+      <!-- 01 ── Structure Overview ── -->
+      <details class="section" id="overview" open>
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">01</div>
+            <div class="sum-copy">
+              <h3>Structure Overview</h3>
+              <p>Quick reference for how the cage is laid out and how to use it.</p>
+              <div class="sum-tags">
+                <span class="tag cedar">Quick ref</span>
+                <span class="tag wire">Daily use</span>
               </div>
             </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="grid-2">
-              <div class="card">
-                <h4>Key dimensions</h4>
-                <table class="quick-table">
-                  <tbody>
-                    <tr><td><strong>Overall footprint</strong></td><td>96 in wide × 48 in deep</td></tr>
-                    <tr><td><strong>Total height</strong></td><td>About 72 in at the trellis peak</td></tr>
-                    <tr><td><strong>Lower hardware cloth band</strong></td><td>24 in minimum</td></tr>
-                    <tr><td><strong>Rear trellis wall</strong></td><td>48 to 54 in above the bed top</td></tr>
-                    <tr><td><strong>Door opening</strong></td><td>44 to 48 in total, split into two leaves</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="diagram">
-                <h4>Zone layout at a glance</h4>
-                <pre>BACK EDGE
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="card">
+              <h4>Key dimensions</h4>
+              <table class="quick-table">
+                <tbody>
+                  <tr><td><strong>Footprint</strong></td><td>96 × 48 in</td></tr>
+                  <tr><td><strong>Total height</strong></td><td>~72 in at trellis peak</td></tr>
+                  <tr><td><strong>Hardware cloth band</strong></td><td>24 in minimum</td></tr>
+                  <tr><td><strong>Rear trellis wall</strong></td><td>48–54 in above bed</td></tr>
+                  <tr><td><strong>Door opening</strong></td><td>44–48 in total, two leaves</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="diagram">
+              <h4>Zone layout</h4>
+              <pre>BACK EDGE
 ┌──────────────────────────────┐
 │ TRELLIS WALL / CLIMBING ROW │
 │ tomatoes · beans · peas ·   │
@@ -851,417 +836,412 @@
 │ cilantro · radish · arugula │
 └──────────────────────────────┘
 FRONT DOORS</pre>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="card">
-                <h4>Door operation basics</h4>
-                <ul class="simple-list">
-                  <li>Open one door for quick harvesting. Open both when you want full reach across the bed.</li>
-                  <li>Close and latch both doors after every visit. A half-closed door is basically an invitation.</li>
-                  <li>If one leaf drags, check mulch buildup at the threshold first, then hinge screws.</li>
-                  <li>Do not force a sticky latch. Realign it now so it does not get worse later.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>How to think about the cage</h4>
-                <ul class="simple-list">
-                  <li><strong>Back row:</strong> the climbing wall. That is where the tall summer workhorses belong.</li>
-                  <li><strong>Front zone:</strong> the safe, easy harvest area. Greens and herbs live here because critters love them too.</li>
-                  <li><strong>Doors:</strong> your access lane. Use that convenience when you decide what gets planted closest to the front.</li>
-                </ul>
-              </div>
             </div>
           </div>
-        </details>
-
-        <details class="section" id="zones" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">02</div>
-              <div class="sum-copy">
-                <h3>Planting Zones and What Goes Where</h3>
-                <p>Use the structure the way it was designed. Climbers in the back. Low crops in the protected front. Frequent harvest crops closest to the doors.</p>
-                <div class="sum-tags">
-                  <span class="tag cedar">Planting map</span>
-                  <span class="tag">Companions</span>
-                </div>
-              </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="zone-grid">
-              <div class="zone-card">
-                <div class="zone-eyebrow trellis">🪴 Trellis zone</div>
-                <h5>Back row climbing crops</h5>
-                <p>Cherry tomatoes, pole beans, peas, and cucumbers belong here. These crops use the rear trellis wall for support and keep the rest of the bed open.</p>
-              </div>
-              <div class="zone-card">
-                <div class="zone-eyebrow protected">🛡 Protected zone</div>
-                <h5>Front protected crops</h5>
-                <p>Basil, lettuce, bok choy, cilantro, radish, and arugula thrive here. They stay easy to reach and benefit most from critter protection.</p>
-              </div>
-              <div class="zone-card">
-                <div class="zone-eyebrow ops">✋ Daily use logic</div>
-                <h5>Keep easy harvests up front</h5>
-                <p>Anything you snip often or re-sow often should stay near the doors so the cage feels convenient, not annoying.</p>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="card">
-                <h4>Companion planting notes</h4>
-                <ul class="simple-list">
-                  <li><strong>Beans + lettuce:</strong> a reliable pairing. Beans grow up, lettuce stays low, and the bed stays balanced.</li>
-                  <li><strong>Marigolds:</strong> tuck these near the front edge for visual structure and everyday pest pressure help.</li>
-                  <li><strong>Nasturtium:</strong> use as a trap crop and a pretty front-row filler. It also earns its keep by attracting attention away from more valuable crops.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>Spacing per square foot</h4>
-                <table class="quick-table">
-                  <thead>
-                    <tr><th>Crop</th><th>Guideline</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td><strong>Cherry tomato</strong></td><td>1 plant per 2 square feet</td></tr>
-                    <tr><td><strong>Pole beans / peas</strong></td><td>4 to 6 plants along a trellis square foot band</td></tr>
-                    <tr><td><strong>Cucumbers</strong></td><td>1 plant per 2 square feet</td></tr>
-                    <tr><td><strong>Basil</strong></td><td>2 plants per square foot</td></tr>
-                    <tr><td><strong>Lettuce / bok choy</strong></td><td>4 small plants or 1 to 2 heads per square foot</td></tr>
-                    <tr><td><strong>Cilantro / arugula</strong></td><td>Dense sowing, thin for airflow</td></tr>
-                    <tr><td><strong>Radish</strong></td><td>16 per square foot</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="section" id="seasonal" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">03</div>
-              <div class="sum-copy">
-                <h3>Seasonal Playbook</h3>
-                <p>What the cage wants from you across the year. Use this as the rhythm of the bed instead of reinventing the plan every month.</p>
-                <div class="sum-tags">
-                  <span class="tag">Spring to fall</span>
-                  <span class="tag rust">Timeline</span>
-                </div>
-              </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="timeline">
-              <h4>Seasonal timeline</h4>
-              <p>A simple year-round rhythm that matches how the cage actually gets used.</p>
-              <div class="timeline-track" aria-hidden="true">
-                <div class="season-card">
-                  <div class="season-dot"></div>
-                  <h5>Spring</h5>
-                  <p>Start cool crops and set the bed up for succession.</p>
-                </div>
-                <div class="season-card">
-                  <div class="season-dot"></div>
-                  <h5>Early summer</h5>
-                  <p>Shift into warm-season climbers and train the back row.</p>
-                </div>
-                <div class="season-card">
-                  <div class="season-dot"></div>
-                  <h5>Late summer</h5>
-                  <p>Manage heat, watch for bolting, and seed the fall reset.</p>
-                </div>
-                <div class="season-card">
-                  <div class="season-dot"></div>
-                  <h5>Fall</h5>
-                  <p>Bring the cool crops back and stretch the season.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="card">
-                <h4>Spring</h4>
-                <ul class="season-list">
-                  <li><strong>Plant first:</strong> peas, lettuce, arugula, bok choy, cilantro, and radish.</li>
-                  <li><strong>Succession pace:</strong> lettuce every 2 weeks, radish every 3 weeks, cilantro every 3 weeks.</li>
-                  <li><strong>Frost note:</strong> if a late cold snap threatens, throw row cover inside the cage instead of over the whole structure.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>Early summer</h4>
-                <ul class="season-list">
-                  <li><strong>Transition:</strong> pull tired cool crops as they fade and make room for basil and warm-season growth.</li>
-                  <li><strong>Back row:</strong> plant or train cherry tomatoes, cucumbers, and pole beans onto the trellis.</li>
-                  <li><strong>Trellis habit:</strong> check and guide climbers twice a week until they are clearly attached and moving up.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>Late summer</h4>
-                <ul class="season-list">
-                  <li><strong>Heat management:</strong> keep mulch in place and water deeply, not constantly.</li>
-                  <li><strong>Watch for bolting:</strong> cilantro, arugula, and lettuce will tell you when they are done. Believe them and re-seed later.</li>
-                  <li><strong>Fall setup:</strong> start new rounds of bok choy, lettuce, cilantro, and arugula as temperatures ease.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>Fall</h4>
-                <ul class="season-list">
-                  <li><strong>Cool crops return:</strong> this is the second great season for greens.</li>
-                  <li><strong>Season extension:</strong> row covers inside the cage help a lot and are easy to manage.</li>
-                  <li><strong>Front zone strength:</strong> the protected area becomes the star again once the summer climbers wind down.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="section" id="maintenance" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">04</div>
-              <div class="sum-copy">
-                <h3>Maintenance Checklists</h3>
-                <p>Small checks keep the cage reliable. Most problems are easy if you catch them early and annoying if you do not.</p>
-                <div class="sum-tags">
-                  <span class="tag wire">Monthly</span>
-                  <span class="tag cedar">Seasonal</span>
-                </div>
-              </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="grid-2">
-              <div class="checklist">
-                <h4>Monthly walk-through</h4>
-                <ul>
-                  <li><strong>Wire inspection:</strong> look for pulled staples, gaps, rust, or spots where the hardware cloth is starting to bow.</li>
-                  <li><strong>Door check:</strong> make sure hinges are tight, latches still line up, and the swing path is clear.</li>
-                  <li><strong>Trellis ties:</strong> replace degraded zip ties with wire or stronger ties and check the attachment points that carry the load.</li>
-                  <li><strong>Mesh audit:</strong> clip or fold any new sharp edges that show up after trimming or repair work.</li>
-                </ul>
-              </div>
-              <div class="checklist">
-                <h4>Soil and bed care</h4>
-                <ul>
-                  <li><strong>Top-dress compost:</strong> once in spring, once midseason if the bed is producing hard, and once before fall greens go in.</li>
-                  <li><strong>Mulch:</strong> keep a light mulch layer in place to steady moisture and reduce splashback onto the greens.</li>
-                  <li><strong>Harvest hygiene:</strong> pull yellowing leaves and spent plants before they become clutter and slug housing.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="section" id="defense" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">05</div>
-              <div class="sum-copy">
-                <h3>Critter Defense Protocol</h3>
-                <p>Know what the cage stops well, what it does not stop, and how to tell when something found a way in anyway.</p>
-                <div class="sum-tags">
-                  <span class="tag rust">Defense</span>
-                  <span class="tag wire">Escalation</span>
-                </div>
-              </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="grid-2">
-              <div class="card">
-                <h4>What the 24 inch hardware cloth band stops</h4>
-                <ul class="simple-list">
-                  <li>Rabbits</li>
-                  <li>Ground squirrels and similar low-entry pests</li>
-                  <li>Most casual chewing at ground level</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>What it does not stop on its own</h4>
-                <ul class="simple-list">
-                  <li>Deer if the top is open and they decide the bed is worth it</li>
-                  <li>Birds</li>
-                  <li>Insects</li>
-                  <li>Anything entering through a door that was left unlatched</li>
-                </ul>
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="card">
-                <h4>Signs of a breach</h4>
-                <ul class="simple-list">
-                  <li>Chewed leaves close to the soil line</li>
-                  <li>Fresh disturbed soil near the edge</li>
-                  <li>Droppings inside the protected zone</li>
-                  <li>A sudden clean haircut on tender greens</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>Escalation steps</h4>
-                <ul class="simple-list">
-                  <li><strong>Add bird netting</strong> if fruit or seedlings are getting pecked.</li>
-                  <li><strong>Add row covers inside the cage</strong> if insects or cold snaps become the issue.</li>
-                  <li><strong>Add extra mesh or repair banding</strong> if a repeated ground-level breach shows up in the same area.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="section" id="harvest" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">06</div>
-              <div class="sum-copy">
-                <h3>Harvest and Succession Guide</h3>
-                <p>Keep the cage productive by harvesting the right way and replanting before empty space turns into wasted time.</p>
-                <div class="sum-tags">
-                  <span class="tag">Harvest</span>
-                  <span class="tag cedar">Repeat sowing</span>
-                </div>
-              </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="grid-2">
-              <div class="card">
-                <h4>Cut-and-come-again crops</h4>
-                <ul class="simple-list">
-                  <li><strong>Lettuce and arugula:</strong> cut outer leaves first and leave the center growing.</li>
-                  <li><strong>Bok choy:</strong> harvest young whole plants or thin outer leaves if you want a longer run.</li>
-                  <li><strong>Cilantro:</strong> harvest lightly and often before it rushes to bolt in heat.</li>
-                </ul>
-              </div>
-              <div class="card">
-                <h4>When to pull and replant</h4>
-                <ul class="simple-list">
-                  <li>Pull spent plants once production clearly drops or bolting starts.</li>
-                  <li>Do not leave tired spring crops occupying prime front-zone space into hot weather.</li>
-                  <li>As soon as a square opens, decide whether it gets another fast sowing or waits for the next seasonal shift.</li>
-                </ul>
-              </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Door operation</h4>
+              <ul class="simple-list">
+                <li>Open one door for quick harvesting. Open both for full reach.</li>
+                <li>Close and latch both doors after every visit.</li>
+                <li>If a leaf drags, check mulch buildup first, then hinge screws.</li>
+                <li>Do not force a sticky latch. Realign it now.</li>
+              </ul>
             </div>
             <div class="card">
-              <h4>Simple succession calendar</h4>
+              <h4>How to think about it</h4>
+              <ul class="simple-list">
+                <li><strong>Back row:</strong> the climbing wall. Tall summer workhorses.</li>
+                <li><strong>Front zone:</strong> safe, easy harvest. Greens and herbs live here.</li>
+                <li><strong>Doors:</strong> your access lane. Plant frequent harvests closest to front.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 02 ── Planting Zones ── -->
+      <details class="section" id="zones">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">02</div>
+            <div class="sum-copy">
+              <h3>Planting Zones</h3>
+              <p>Climbers in the back. Low crops in the protected front. Frequent harvest closest to the doors.</p>
+              <div class="sum-tags">
+                <span class="tag cedar">Planting map</span>
+                <span class="tag">Companions</span>
+              </div>
+            </div>
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="zone-grid">
+            <div class="zone-card">
+              <div class="zone-eyebrow trellis">🪴 Trellis zone</div>
+              <h5>Back row climbers</h5>
+              <p>Cherry tomatoes, pole beans, peas, and cucumbers. They use the rear trellis wall and keep the rest of the bed open.</p>
+            </div>
+            <div class="zone-card">
+              <div class="zone-eyebrow protected">🛡 Protected zone</div>
+              <h5>Front protected crops</h5>
+              <p>Basil, lettuce, bok choy, cilantro, radish, arugula. Easy to reach, maximum critter protection.</p>
+            </div>
+            <div class="zone-card">
+              <div class="zone-eyebrow ops">✋ Access logic</div>
+              <h5>Easy harvests up front</h5>
+              <p>Anything you snip or re-sow often stays near the doors so the cage feels convenient.</p>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Companion planting</h4>
+              <ul class="simple-list">
+                <li><strong>Beans + lettuce:</strong> beans go up, lettuce stays low, bed stays balanced.</li>
+                <li><strong>Marigolds:</strong> tuck near the front edge for pest pressure help.</li>
+                <li><strong>Nasturtium:</strong> trap crop and pretty front-row filler.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Spacing per sq ft</h4>
               <table class="quick-table">
                 <thead>
-                  <tr><th>Crop</th><th>Repeat sowing rhythm</th><th>Best zone</th></tr>
+                  <tr><th>Crop</th><th>Guideline</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><strong>Lettuce</strong></td><td>Every 2 weeks</td><td>Protected front zone</td></tr>
-                  <tr><td><strong>Radish</strong></td><td>Every 3 weeks</td><td>Protected front zone</td></tr>
-                  <tr><td><strong>Cilantro</strong></td><td>Every 3 weeks</td><td>Protected front zone</td></tr>
-                  <tr><td><strong>Arugula</strong></td><td>Every 2 to 3 weeks in cool weather</td><td>Protected front zone</td></tr>
+                  <tr><td><strong>Cherry tomato</strong></td><td>1 per 2 sq ft</td></tr>
+                  <tr><td><strong>Pole beans / peas</strong></td><td>4–6 per trellis ft</td></tr>
+                  <tr><td><strong>Cucumbers</strong></td><td>1 per 2 sq ft</td></tr>
+                  <tr><td><strong>Basil</strong></td><td>2 per sq ft</td></tr>
+                  <tr><td><strong>Lettuce / bok choy</strong></td><td>4 small or 1–2 heads</td></tr>
+                  <tr><td><strong>Cilantro / arugula</strong></td><td>Dense sow, thin later</td></tr>
+                  <tr><td><strong>Radish</strong></td><td>16 per sq ft</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
-        </details>
+        </div>
+      </details>
 
-        <details class="section" id="shutdown" open>
-          <summary class="section-summary">
-            <div class="sum-left">
-              <div class="sum-num">07</div>
-              <div class="sum-copy">
-                <h3>End of Season Shutdown</h3>
-                <p>Close the season cleanly so spring starts from a strong position instead of a mess you have to negotiate with.</p>
-                <div class="sum-tags">
-                  <span class="tag rust">Shutdown</span>
-                  <span class="tag wire">Winter prep</span>
-                </div>
+      <!-- 03 ── Seasonal Playbook ── -->
+      <details class="section" id="seasonal">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">03</div>
+            <div class="sum-copy">
+              <h3>Seasonal Playbook</h3>
+              <p>What the cage wants from you across the year. The rhythm of the bed.</p>
+              <div class="sum-tags">
+                <span class="tag">Spring to fall</span>
+                <span class="tag rust">Timeline</span>
               </div>
-            </div>
-            <div class="sum-caret" aria-hidden="true">&gt;</div>
-          </summary>
-          <div class="section-body">
-            <div class="grid-2">
-              <div class="checklist">
-                <h4>Season closeout</h4>
-                <ul>
-                  <li><strong>Pull annuals:</strong> remove dead or exhausted warm-season plants from the trellis and front rows.</li>
-                  <li><strong>Cut back the trellis:</strong> clear dead vines and any ties that no longer belong there.</li>
-                  <li><strong>Clean wire and mesh:</strong> remove plant debris so moisture does not sit on the hardware all winter.</li>
-                </ul>
-              </div>
-              <div class="checklist">
-                <h4>Hardware and structure check</h4>
-                <ul>
-                  <li><strong>Oil hinges:</strong> a quick pass keeps the doors civilized.</li>
-                  <li><strong>Check post connections:</strong> tighten what loosened during the season.</li>
-                  <li><strong>Optional winter move:</strong> add season extension covers inside the cage if you want greens to keep going.</li>
-                </ul>
-              </div>
-            </div>
-            <div class="print-only card">
-              <h4>Print note</h4>
-              <p>All sections are expanded automatically for printing so this can live in a binder, by the back door, or out in the garden tote.</p>
             </div>
           </div>
-        </details>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="timeline">
+            <h4>Season rhythm</h4>
+            <div class="timeline-track" aria-hidden="true">
+              <div class="season-card">
+                <div class="season-dot"></div>
+                <h5>Spring</h5>
+                <p>Cool crops first. Set up succession sowing.</p>
+              </div>
+              <div class="season-card">
+                <div class="season-dot"></div>
+                <h5>Early summer</h5>
+                <p>Shift to warm climbers. Train the back row.</p>
+              </div>
+              <div class="season-card">
+                <div class="season-dot"></div>
+                <h5>Late summer</h5>
+                <p>Manage heat, watch bolting, seed the fall reset.</p>
+              </div>
+              <div class="season-card">
+                <div class="season-dot"></div>
+                <h5>Fall</h5>
+                <p>Cool crops return. Stretch the season.</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Spring</h4>
+              <ul class="season-list">
+                <li><strong>Plant first:</strong> peas, lettuce, arugula, bok choy, cilantro, radish.</li>
+                <li><strong>Succession:</strong> lettuce every 2 weeks, radish every 3, cilantro every 3.</li>
+                <li><strong>Frost:</strong> throw row cover inside the cage, not over the whole structure.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Early summer</h4>
+              <ul class="season-list">
+                <li><strong>Transition:</strong> pull tired cool crops, make room for basil and warm growth.</li>
+                <li><strong>Back row:</strong> plant or train cherry tomatoes, cucumbers, pole beans.</li>
+                <li><strong>Trellis:</strong> check and guide climbers twice a week until they grab on.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Late summer</h4>
+              <ul class="season-list">
+                <li><strong>Heat:</strong> keep mulch in place, water deeply not constantly.</li>
+                <li><strong>Bolting:</strong> cilantro, arugula, lettuce will tell you. Believe them and re-seed later.</li>
+                <li><strong>Fall setup:</strong> start new bok choy, lettuce, cilantro as temps ease.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Fall</h4>
+              <ul class="season-list">
+                <li><strong>Cool crops return:</strong> second great season for greens.</li>
+                <li><strong>Extension:</strong> row covers inside the cage help a lot.</li>
+                <li><strong>Front zone:</strong> becomes the star once summer climbers wind down.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
 
-        <div class="footer-note">Mom's Sanctuary is easiest to love when it stays simple: climbers in the back, greens in the front, doors latched, wire checked, and empty squares replanted fast.</div>
-      </main>
-    </div>
+      <!-- 04 ── Maintenance ── -->
+      <details class="section" id="maintenance">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">04</div>
+            <div class="sum-copy">
+              <h3>Maintenance Checklists</h3>
+              <p>Small checks keep the cage reliable. Catch things early.</p>
+              <div class="sum-tags">
+                <span class="tag wire">Monthly</span>
+                <span class="tag cedar">Seasonal</span>
+              </div>
+            </div>
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="checklist">
+              <h4>Monthly walk-through</h4>
+              <ul>
+                <li><strong>Wire:</strong> look for pulled staples, gaps, rust, bowing.</li>
+                <li><strong>Doors:</strong> hinges tight, latches align, swing path clear.</li>
+                <li><strong>Trellis ties:</strong> replace degraded ties, check load-bearing points.</li>
+                <li><strong>Mesh edges:</strong> clip or fold new sharp edges after any repairs.</li>
+              </ul>
+            </div>
+            <div class="checklist">
+              <h4>Soil and bed care</h4>
+              <ul>
+                <li><strong>Compost:</strong> top-dress in spring, midseason, and before fall greens.</li>
+                <li><strong>Mulch:</strong> light layer to steady moisture and reduce splashback.</li>
+                <li><strong>Hygiene:</strong> pull yellowing leaves and spent plants before they become slug housing.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 05 ── Critter Defense ── -->
+      <details class="section" id="defense">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">05</div>
+            <div class="sum-copy">
+              <h3>Critter Defense</h3>
+              <p>What the cage stops, what it doesn't, and how to tell when something got in.</p>
+              <div class="sum-tags">
+                <span class="tag rust">Defense</span>
+                <span class="tag wire">Escalation</span>
+              </div>
+            </div>
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="card">
+              <h4>What the 24&#x2033; band stops</h4>
+              <ul class="simple-list">
+                <li>Rabbits</li>
+                <li>Ground squirrels and low-entry pests</li>
+                <li>Most casual chewing at ground level</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>What it doesn't stop</h4>
+              <ul class="simple-list">
+                <li>Deer (if top is open and they try)</li>
+                <li>Birds</li>
+                <li>Insects</li>
+                <li>Anything entering through an unlatched door</li>
+              </ul>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Signs of a breach</h4>
+              <ul class="simple-list">
+                <li>Chewed leaves close to the soil line</li>
+                <li>Disturbed soil near the edge</li>
+                <li>Droppings inside the protected zone</li>
+                <li>Sudden clean haircut on tender greens</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Escalation steps</h4>
+              <ul class="simple-list">
+                <li><strong>Bird netting</strong> if fruit or seedlings are pecked.</li>
+                <li><strong>Row covers inside</strong> for insects or cold snaps.</li>
+                <li><strong>Extra mesh</strong> if ground-level breaches repeat in one spot.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 06 ── Harvest & Succession ── -->
+      <details class="section" id="harvest">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">06</div>
+            <div class="sum-copy">
+              <h3>Harvest &amp; Succession</h3>
+              <p>Keep the cage productive. Harvest right, replant before empty space wastes time.</p>
+              <div class="sum-tags">
+                <span class="tag">Harvest</span>
+                <span class="tag cedar">Repeat sowing</span>
+              </div>
+            </div>
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="card">
+              <h4>Cut-and-come-again</h4>
+              <ul class="simple-list">
+                <li><strong>Lettuce / arugula:</strong> cut outer leaves, leave center growing.</li>
+                <li><strong>Bok choy:</strong> harvest young whole or thin outer leaves.</li>
+                <li><strong>Cilantro:</strong> harvest lightly and often before it bolts.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>When to pull and replant</h4>
+              <ul class="simple-list">
+                <li>Pull once production drops or bolting starts.</li>
+                <li>Don't leave tired spring crops in prime space into hot weather.</li>
+                <li>As a square opens, decide: fast re-sow or wait for the seasonal shift.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Succession calendar</h4>
+            <table class="quick-table">
+              <thead>
+                <tr><th>Crop</th><th>Repeat rhythm</th><th>Best zone</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Lettuce</strong></td><td>Every 2 weeks</td><td>Protected front</td></tr>
+                <tr><td><strong>Radish</strong></td><td>Every 3 weeks</td><td>Protected front</td></tr>
+                <tr><td><strong>Cilantro</strong></td><td>Every 3 weeks</td><td>Protected front</td></tr>
+                <tr><td><strong>Arugula</strong></td><td>Every 2–3 weeks (cool weather)</td><td>Protected front</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <!-- 07 ── Shutdown ── -->
+      <details class="section" id="shutdown">
+        <summary class="section-summary">
+          <div class="sum-left">
+            <div class="sum-num">07</div>
+            <div class="sum-copy">
+              <h3>End of Season Shutdown</h3>
+              <p>Close the season cleanly so spring starts strong.</p>
+              <div class="sum-tags">
+                <span class="tag rust">Shutdown</span>
+                <span class="tag wire">Winter prep</span>
+              </div>
+            </div>
+          </div>
+          <div class="sum-caret" aria-hidden="true">&#x203a;</div>
+        </summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="checklist">
+              <h4>Season closeout</h4>
+              <ul>
+                <li><strong>Pull annuals:</strong> remove dead warm-season plants from trellis and front rows.</li>
+                <li><strong>Cut back trellis:</strong> clear dead vines and expired ties.</li>
+                <li><strong>Clean wire:</strong> remove debris so moisture doesn't sit on hardware all winter.</li>
+              </ul>
+            </div>
+            <div class="checklist">
+              <h4>Hardware check</h4>
+              <ul>
+                <li><strong>Oil hinges:</strong> quick pass keeps doors civilized.</li>
+                <li><strong>Check posts:</strong> tighten what loosened during the season.</li>
+                <li><strong>Optional:</strong> add season extension covers if you want winter greens.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="print-only card">
+            <h4>Print note</h4>
+            <p>All sections expanded for printing. Keep in a binder or out in the garden tote.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="footer-note">Climbers in back · Greens in front · Doors latched · Wire checked · Empty squares replanted fast</div>
+    </main>
   </div>
 
 <script>
 (() => {
-  const STORAGE_KEY = 'garden_cage_ops_guide_sections_v1';
-  const sectionEls = Array.from(document.querySelectorAll('details.section'));
-  const navBtns = Array.from(document.querySelectorAll('.nav-btn'));
-  const expandAllBtn = document.getElementById('expandAllBtn');
-  const collapseAllBtn = document.getElementById('collapseAllBtn');
+  const STORAGE_KEY = 'garden_cage_ops_guide_v2';
+  const sections = Array.from(document.querySelectorAll('details.section'));
+  const navBtns = Array.from(document.querySelectorAll('.nav-item'));
+  const expandBtn = document.getElementById('expandAllBtn');
+  const collapseBtn = document.getElementById('collapseAllBtn');
   const printBtn = document.getElementById('printBtn');
 
+  /* ── State persistence ── */
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return {};
+      if (!raw) return null;
       const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch {
-      return {};
-    }
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch { return null; }
   }
 
   function saveState() {
     const state = {};
-    sectionEls.forEach((section) => {
-      state[section.id] = section.open;
-    });
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Graceful degradation if storage is unavailable.
-    }
+    sections.forEach(s => { state[s.id] = s.open; });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
   }
 
   function applyState() {
     const state = loadState();
-    sectionEls.forEach((section, index) => {
-      if (Object.prototype.hasOwnProperty.call(state, section.id)) {
-        section.open = Boolean(state[section.id]);
+    sections.forEach((s, i) => {
+      if (state && Object.prototype.hasOwnProperty.call(state, s.id)) {
+        s.open = Boolean(state[s.id]);
       } else {
-        section.open = index < 2;
+        s.open = i === 0; // only first section open on first visit
       }
     });
   }
 
+  /* ── Nav sync ── */
   function setActiveNav(targetId) {
-    navBtns.forEach((btn) => {
+    navBtns.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.target === targetId);
     });
   }
 
-  navBtns.forEach((btn) => {
+  navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.dataset.target);
       if (!target) return;
@@ -1272,39 +1252,57 @@ FRONT DOORS</pre>
     });
   });
 
-  sectionEls.forEach((section) => {
-    section.addEventListener('toggle', () => {
+  sections.forEach(s => {
+    s.addEventListener('toggle', () => {
       saveState();
-      if (section.open) {
-        setActiveNav(section.id);
-      }
+      if (s.open) setActiveNav(s.id);
     });
   });
 
-  expandAllBtn.addEventListener('click', () => {
-    sectionEls.forEach((section) => {
-      section.open = true;
+  /* ── Scroll spy — highlight nav for visible open section ── */
+  let scrollTick = false;
+  function onScroll() {
+    if (scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(() => {
+      scrollTick = false;
+      let best = null;
+      let bestDist = Infinity;
+      sections.forEach(s => {
+        if (!s.open) return;
+        const rect = s.getBoundingClientRect();
+        const dist = Math.abs(rect.top - 90);
+        if (rect.top < window.innerHeight * 0.6 && dist < bestDist) {
+          bestDist = dist;
+          best = s.id;
+        }
+      });
+      if (best) setActiveNav(best);
     });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ── Toolbar ── */
+  expandBtn.addEventListener('click', () => {
+    sections.forEach(s => { s.open = true; });
     saveState();
   });
 
-  collapseAllBtn.addEventListener('click', () => {
-    sectionEls.forEach((section) => {
-      section.open = false;
-    });
+  collapseBtn.addEventListener('click', () => {
+    sections.forEach(s => { s.open = false; });
     saveState();
   });
 
   printBtn.addEventListener('click', () => {
-    sectionEls.forEach((section) => {
-      section.open = true;
-    });
+    sections.forEach(s => { s.open = true; });
     saveState();
     window.print();
   });
 
+  /* ── Init ── */
   applyState();
-  const firstOpen = sectionEls.find((section) => section.open) || sectionEls[0];
+  const firstOpen = sections.find(s => s.open) || sections[0];
   if (firstOpen) setActiveNav(firstOpen.id);
 })();
 </script>
