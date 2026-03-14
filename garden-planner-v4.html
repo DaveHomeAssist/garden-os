@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-<title>Garden OS · Raised Bed Planner v4.1</title>
+<title>Garden OS · Raised Bed Planner v4.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root {
@@ -36,7 +36,7 @@
   .hsub{font-size:.62rem;opacity:.55;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
 
   /* ═══ APP SHELL ═══ */
-  .app{display:grid;grid-template-columns:240px 1fr 268px;height:calc(100vh - 56px);}
+  .app{display:grid;grid-template-columns:240px 1fr 268px;height:calc(100vh - 56px - 24px);}
 
   /* ═══ SIDEBAR SHARED ═══ */
   .sl,.sr{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
@@ -137,6 +137,8 @@
   .bc.selc{border-color:var(--soil)!important;box-shadow:0 0 0 2px rgba(92,61,30,.25);}
   .bc.weak::after{content:'!';position:absolute;top:2px;right:3px;font-size:.48rem;
     font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;}
+  .bc.hard-invalid{border-color:var(--bad)!important;background:rgba(176,42,30,0.08)!important;}
+  .bc.hard-invalid::before{content:'⛔';position:absolute;top:1px;left:2px;font-size:.5rem;z-index:1;}
   .cemo{font-size:1rem;line-height:1;}
   .cname{font-size:.36rem;font-family:'DM Mono',monospace;color:var(--text-light);margin-top:1px;text-align:center;line-height:1.2;}
   .csbar{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:3px;border-radius:2px;}
@@ -240,8 +242,9 @@
   .cage-trellis-sign{font-size:.58rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
     color:#fff8e7;font-family:'DM Sans',sans-serif;padding:.08rem .32rem;border-radius:3px;}
 
-  .cage-wire-wrap{display:grid;grid-template-columns:10px 1fr 10px;gap:0;display:none;}
+  .cage-wire-wrap{display:none;grid-template-columns:10px 1fr 10px;gap:0;}
   .cage-wire-wrap.on{display:grid;}
+  .cage-wire-wrap.on-no-wire{display:grid;grid-template-columns:1fr;}
   .cage-wire-side{background:repeating-linear-gradient(
     45deg,#7a9e7e 0px,#7a9e7e 1px,transparent 1px,transparent 4px),
     repeating-linear-gradient(-45deg,#7a9e7e 0px,#7a9e7e 1px,transparent 1px,transparent 4px);
@@ -270,6 +273,10 @@
   .cage-bed-shortcuts{display:flex;gap:.25rem;margin-bottom:.4rem;}
   .cage-bed-shortcuts .preset-btn{flex:1;}
 
+  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:.6rem;}
+  .os-nav a{color:rgba(245,237,224,0.55);text-decoration:none;padding:.35rem .7rem;letter-spacing:.04em;transition:color .15s;}
+  .os-nav a:hover{color:#f5ede0;}
+  .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
   @media(max-width:900px){
     .app{grid-template-columns:1fr;}
     .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;}
@@ -277,10 +284,16 @@
 </style>
 </head>
 <body>
+<nav class="os-nav" aria-label="Garden OS">
+  <a href="index.html">Home</a>
+  <a href="garden-planner-v4.html" class="active">Planner</a>
+  <a href="garden-cage-build-guide.html">Build Guide</a>
+  <a href="garden-cage-ops-guide.html">Ops Guide</a>
+</nav>
 <header>
   <div class="hd-left">
     <h1>Garden OS</h1>
-    <span class="hv">v4.1</span>
+    <span class="hv">v4.3</span>
   </div>
   <p class="hsub">Raised Bed Planner · 44 crops · Variable beds · Cage-aware · Live scoring</p>
 </header>
@@ -1072,7 +1085,21 @@ function buildZoneMap(i){
       const accessDist = edges.length ? Math.min(...edges) : 0;
       const accessScore = Math.max(0, 1 - accessDist/2); // penalty for cells >2 from edge
 
-      z.push({row:r,col:c,effectiveLight:el,wallPenalty:wp,trellisAllowed:ta,accessScore});
+      // Derived cell traits (v4.3)
+      const isTrellisRow = !!(i.cage&&i.cage.enabled&&i.cage.rearTrellis) && (
+        (i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===i.bedH-1));
+      const isProtected = !!(i.cage&&i.cage.enabled&&i.cage.wireSides) && !isTrellisRow;
+      const legacyTrellisAllowed = ta; // trellisAllowed from existing logic (cell is on trellis edge + trellis toggle on)
+      const hasVerticalSupport = isTrellisRow || legacyTrellisAllowed;
+      const isCritterSafe = !!(i.cage&&i.cage.enabled&&i.cage.wireSides);
+      const doorSide = (i.cage&&i.cage.enabled) ? (i.cage.doorSide||'front') : null;
+      let accessPriority = accessScore;
+      if(doorSide==='front'){
+        accessPriority = i.bedH <= 1 ? 1 : Math.max(0, 1 - r/(i.bedH-1));
+      }
+
+      z.push({row:r,col:c,effectiveLight:el,wallPenalty:wp,trellisAllowed:ta,accessScore,
+        isTrellisRow,isProtected,hasVerticalSupport,isCritterSafe,accessPriority});
     }
   }
   return z;
@@ -1084,6 +1111,11 @@ function applyZones(zones){
       cell.wallPenalty=zones[i].wallPenalty;
       cell.trellisAllowed=zones[i].trellisAllowed;
       cell.accessScore=zones[i].accessScore;
+      cell.isTrellisRow=zones[i].isTrellisRow;
+      cell.isProtected=zones[i].isProtected;
+      cell.hasVerticalSupport=zones[i].hasVerticalSupport;
+      cell.isCritterSafe=zones[i].isCritterSafe;
+      cell.accessPriority=zones[i].accessPriority;
     }
   });
 }
@@ -1107,24 +1139,36 @@ function scoreCropInCell(ck, cell, inputs){
   let sunFit=l>=c.sunIdeal?5:l>=c.sunMin?3+2*(sunRange?((l-c.sunMin)/sunRange):1):1+Math.max(0,(l/Math.max(c.sunMin,.1))*2);
   sunFit=Math.min(5,Math.max(0,sunFit));
   let supFit=3;
-  if(c.habit==='vining') supFit=cell.trellisAllowed?5:(inputs.trellis?2:1);
-  if(c.trellisRequired) supFit=cell.trellisAllowed?5:1;
+  if(c.habit==='vining') supFit=cell.hasVerticalSupport?5:(inputs.trellis?2:1);
+  if(c.trellisRequired) supFit=cell.hasVerticalSupport?5:1;
   const shadeFit=l<c.sunMin?Math.max(1,c.shadeScore*.6):c.shadeScore;
   const accFit=(c.height==='low'||c.height==='very low')?3+(cell.accessScore||0)*2:3;
   let seaFit=5;
   if((inputs.season==='latesummer'||inputs.season==='summer')&&c.coolSeason) seaFit=inputs.season==='latesummer'?1:2;
   if(inputs.season==='spring'&&!c.coolSeason) seaFit=3;
-  if(inputs.season==='fall'&&c.coolSeason) seaFit=5; // fall is great for cool crops
+  if(inputs.season==='fall'&&c.coolSeason) seaFit=5;
   if(inputs.season==='fall'&&!c.coolSeason) seaFit=2;
-  let cageBonus=0;
-  if(inputs.cage&&inputs.cage.enabled&&inputs.cage.rearTrellis){
-    const cr=CROPS[ck];
-    const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
-    const inTR=trellisRow>=0&&cell.row===trellisRow;
-    if(cr.trellisZone) cageBonus+=inTR?1.0:-0.5;
-    if(cr.protectedZone) cageBonus+=inTR?-0.3:0.5;
-  }
-  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3+cageBonus));
+  // Structural bonus from derived cell traits (v4.3)
+  let structBonus=0;
+  if(cell.isTrellisRow && c.trellisZone) structBonus+=1.5;
+  else if(c.trellisZone && !cell.hasVerticalSupport) structBonus-=1.5;
+  else if(c.trellisZone) structBonus-=0.5;
+  if(cell.isProtected && c.protectedZone) structBonus+=0.8;
+  if(cell.isCritterSafe && c.protectedZone) structBonus+=0.3;
+  if(c.protectedZone && cell.isTrellisRow) structBonus-=0.5;
+  if(c.successionFriendly) structBonus+=(cell.accessPriority||0)*0.4;
+  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3+structBonus));
+}
+
+function cropValidity(ck, cell, inputs){
+  const c=CROPS[ck]; if(!c) return {valid:true,severity:null,code:null,reason:''};
+  if(c.trellisRequired && !cell.hasVerticalSupport)
+    return {valid:false,severity:'hard',code:'NO_SUPPORT',reason:c.short+' requires a trellis \u2014 none available here.'};
+  if(c.trellisZone && !cell.isTrellisRow && inputs.cage&&inputs.cage.enabled)
+    return {valid:true,severity:'advisory',code:'OFF_TRELLIS_ROW',reason:c.short+' is a climber \u2014 scores much better in the trellis row.'};
+  if(c.protectedZone && cell.isTrellisRow && inputs.cage&&inputs.cage.enabled)
+    return {valid:true,severity:'advisory',code:'WASTED_TRELLIS_SPACE',reason:c.short+' wastes prime trellis space \u2014 move to a protected row.'};
+  return {valid:true,severity:null,code:null,reason:''};
 }
 
 function neighbors(r,c){ return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCell(r+dr,c+dc)).filter(Boolean); }
@@ -1224,7 +1268,7 @@ function betterCropForCell(cell, inputs){
   if(!best) return null;
   const cur=CROPS[cell.crop], cnd=CROPS[best], light=cell.effectiveLight||0;
   if(cnd.sunMin<=light&&cur.sunMin>light) reasons.push('+light');
-  if(!cell.trellisAllowed&&cur.habit==='vining'&&cnd.habit!=='vining') reasons.push('+no-trellis');
+  if(!cell.hasVerticalSupport&&cur.habit==='vining'&&cnd.habit!=='vining') reasons.push('+no-trellis');
   const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
   if(nbrs.some(n=>cnd.companionTags.some(t=>CROPS[n.crop]&&CROPS[n.crop].category===t))) reasons.push('+companions');
   if(inputs.season==='latesummer'&&cur.coolSeason&&!cnd.coolSeason) reasons.push('+heat-ok');
@@ -1262,22 +1306,24 @@ function buildRec(inputs){
   const sortedZones=[...zones].map((z,i)=>({...z,idx:i}))
     .sort((a,b)=>b.effectiveLight-a.effectiveLight);
   const grid=Array(total).fill(null);
-  // Cage-aware: prioritize trellis zone crops in trellis row
-  if(inputs.cage&&inputs.cage.enabled&&inputs.cage.rearTrellis){
-    const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
-    if(trellisRow>=0){
-      const trCrops=cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].trellisZone);
-      const prCrops=cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].protectedZone);
-      sortedZones.forEach(z=>{
-        if(grid[z.idx]) return;
-        const pool=(z.row===trellisRow)?trCrops:prCrops;
-        if(!pool.length) return;
-        const ranked=pool.filter(ck=>used[ck]<cropCaps[ck])
-          .map(ck=>({ck,s:scoreCropInCell(ck,z,inputs)}))
-          .sort((a,b)=>b.s-a.s);
-        if(ranked.length){ grid[z.idx]=ranked[0].ck; used[ranked[0].ck]++; }
+  // Cage-aware: use derived traits to prioritize placement (v4.3)
+  const hasCageZones = zones.some(z=>z.isTrellisRow);
+  if(hasCageZones){
+    sortedZones.forEach(z=>{
+      if(grid[z.idx]) return;
+      let pool = z.isTrellisRow
+        ? cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].trellisZone)
+        : cropSet.filter(ck=>CROPS[ck]&&CROPS[ck].protectedZone);
+      if(!pool.length) pool = cropSet.filter(ck=>{
+        const v=cropValidity(ck,z,inputs);
+        return v.valid;
       });
-    }
+      if(!pool.length) return;
+      const ranked=pool.filter(ck=>used[ck]<cropCaps[ck])
+        .map(ck=>({ck,s:scoreCropInCell(ck,z,inputs)}))
+        .sort((a,b)=>b.s-a.s);
+      if(ranked.length){ grid[z.idx]=ranked[0].ck; used[ranked[0].ck]++; }
+    });
   }
   sortedZones.forEach(z=>{
     if(grid[z.idx]) return;
@@ -1326,8 +1372,14 @@ function cellIssues(inputs){
     if(!cell.crop) return;
     const c=CROPS[cell.crop]; const light=cell.effectiveLight||0;
     const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
-    if(c.habit==='vining'&&!cell.trellisAllowed)
+    if(c.habit==='vining'&&!cell.hasVerticalSupport)
       issues.push({cellId:cell.id,icon:'🪴',msg:`${c.short} is a vine but not in a trellis zone — yields will be lower.`});
+    // Trait-based validity issues (v4.3)
+    const v=cropValidity(cell.crop, cell, inputs);
+    if(v.severity==='hard')
+      issues.push({cellId:cell.id,icon:'⛔',msg:v.reason,code:v.code});
+    else if(v.severity==='advisory')
+      issues.push({cellId:cell.id,icon:'⚠',msg:v.reason,code:v.code});
     if(light<c.sunMin)
       issues.push({cellId:cell.id,icon:'☀',msg:`${c.short} needs ≥${c.sunMin} hrs; this cell gets ${light.toFixed(1)} hrs.`});
     if(c.height==='tall'&&nbrs.some(n=>CROPS[n.crop]&&CROPS[n.crop].height==='tall'&&n.crop!==cell.crop))
@@ -1376,6 +1428,16 @@ function warnings(inputs,issues){
   }
   if(inputs.goal==='sanctuary'&&!(inputs.cage&&inputs.cage.enabled))
     w.push({t:'tip',msg:'Mom\'s Sanctuary works best with the cage structure enabled — turn it on in the Cage tab.'});
+  // Trait-based validity warnings — aggregate by code (v4.3)
+  const vCounts={};
+  bed.forEach(cell=>{
+    if(!cell.crop) return;
+    const v=cropValidity(cell.crop, cell, inputs);
+    if(v.code) vCounts[v.code]=(vCounts[v.code]||0)+1;
+  });
+  if(vCounts.NO_SUPPORT) w.push({t:'warn',msg:vCounts.NO_SUPPORT+' crop(s) have no trellis support \u2014 move to trellis row or enable trellis.'});
+  if(vCounts.OFF_TRELLIS_ROW) w.push({t:'tip',msg:vCounts.OFF_TRELLIS_ROW+' climber(s) placed outside the trellis row.'});
+  if(vCounts.WASTED_TRELLIS_SPACE) w.push({t:'tip',msg:vCounts.WASTED_TRELLIS_SPACE+' protected crop(s) in trellis row \u2014 swap with a climber.'});
   weakestCells(inputs,2).forEach(({cell,score})=>{
     if(score<4){
       const b=betterCropForCell(cell,inputs);
@@ -1504,9 +1566,13 @@ function renderBed(inputs,issues){
   const gOther=document.getElementById(cageOn?'bedGridNoCage':'bedGrid');
   g.style.display='';
   gOther.style.display='none';
-  // Show/hide wire wrap
+  // Show/hide wire wrap — container must be visible whenever cage is on (grid lives inside it)
   const ww=document.getElementById('cageWireWrap');
-  if(ww){ww.classList.toggle('on',cageOn&&inputs.cage.wireSides);}
+  if(ww){
+    const wireOn=cageOn&&inputs.cage.wireSides;
+    ww.classList.toggle('on',wireOn);
+    ww.classList.toggle('on-no-wire',cageOn&&!inputs.cage.wireSides);
+  }
   g.style.gridTemplateColumns=`repeat(${bedW},1fr)`;
   g.innerHTML='';
   const issueMap={};
@@ -1524,14 +1590,13 @@ function renderBed(inputs,issues){
     const sbc=cs>=7?'#3d7a4f':cs>=4.5?'#e8c84a':'#d4651a';
     const issues=issueMap[cell.id]||[];
     const tipLines=c
-      ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,`Score: ${cs.toFixed(1)}/10`,cell.trellisAllowed?'🪴 Trellis':'',issues.length?issues.join(' '):'']
+      ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,`Score: ${cs.toFixed(1)}/10`,cell.hasVerticalSupport?'🪴 Trellis':'',cell.isCritterSafe?'🛡':'',issues.length?issues.join(' '):'']
       :[`Row ${cell.row+1} · Col ${cell.col+1}`,`☀ ${(cell.effectiveLight||0).toFixed(1)} hrs`,'Click to plant'];
     let zoneClass='';
-    if(inputs.cage&&inputs.cage.enabled){
-      const trellisRow=(inputs.wallSide==='back')?0:(inputs.wallSide==='front')?inputs.bedH-1:-1;
-      if(trellisRow>=0&&cell.row===trellisRow) zoneClass=' trellis-zone';
-      else if(trellisRow>=0) zoneClass=' protected-zone';
-    }
+    if(cell.isTrellisRow) zoneClass=' trellis-zone';
+    else if(cell.isProtected) zoneClass=' protected-zone';
+    const v = cell.crop ? cropValidity(cell.crop, cell, inputs) : null;
+    if(v && v.severity==='hard') zoneClass+=' hard-invalid';
     const el=document.createElement('div');
     el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
     el.style.background=bg; el.style.borderColor=bdc;
@@ -1644,7 +1709,7 @@ function renderRight(inputs,issues){
     const waterIcon={'low':'💧','medium':'💧💧','high':'💧💧💧'}[CROPS[ck].waterNeed]||'💧💧';
     inspHtml=`
       <div class="insp">
-        <div class="insph">${escapeHtml(CROPS[ck].emoji)} ${escapeHtml(CROPS[ck].name)} · ${escapeHtml(selCell.id)}${selCell.trellisAllowed?' 🪴':''}</div>
+        <div class="insph">${escapeHtml(CROPS[ck].emoji)} ${escapeHtml(CROPS[ck].name)} · ${escapeHtml(selCell.id)}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
         <div class="inspb">
           <div class="irow"><span class="ikey">Effective light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
           <div class="irow"><span class="ikey">Cell score</span>
@@ -1652,6 +1717,13 @@ function renderRight(inputs,issues){
           </div>
           <div class="irow"><span class="ikey">Water need</span><span class="ival">${waterIcon} ${CROPS[ck].waterNeed}</span></div>
           <div class="irow"><span class="ikey">Succession</span><span class="ival">${CROPS[ck].successionFriendly?'✓ yes':'—'}</span></div>
+          <div class="irow"><span class="ikey">Traits</span><span class="ival">${
+            selCell.isTrellisRow?'<span class="zone-badge trellis">TRELLIS ROW</span> ':''
+          }${selCell.isProtected?'<span class="zone-badge protected">PROTECTED</span> ':''
+          }${selCell.hasVerticalSupport?'🪴 ':''
+          }${selCell.isCritterSafe?'🛡 ':''
+          }${!(selCell.isTrellisRow||selCell.isProtected||selCell.hasVerticalSupport||selCell.isCritterSafe)?'—':''
+          }</span></div>
           ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">${btLabel}</span></div>`:''}
         </div>
       </div>
@@ -1660,7 +1732,7 @@ function renderRight(inputs,issues){
       </div>`;
   } else if(selCell){
     inspHtml=`<div class="insp">
-      <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.trellisAllowed?' 🪴':''}</div>
+      <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
       <div class="inspb">
         <div class="irow"><span class="ikey">Light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
         <div class="irow"><span class="ikey">Status</span><span class="ival" style="color:var(--text-light)">— Empty —</span></div>
@@ -1728,7 +1800,7 @@ document.getElementById('doorStyle').addEventListener('change',function(){
   cage.doorStyle=this.value; onSite();
 });
 document.getElementById('cageBed4x4').addEventListener('click',()=>setPreset(4,4));
-document.getElementById('cageBed4x8').addEventListener('click',()=>setPreset(4,8));
+document.getElementById('cageBed4x8').addEventListener('click',()=>setPreset(8,4));
 
 // Search
 document.getElementById('psearch').addEventListener('input',renderPalette);
