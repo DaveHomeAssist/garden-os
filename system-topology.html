@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Garden OS | System Topology</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+  <style>
+    :root {
+      --bg:      #080c09;
+      --surface: #0e1611;
+      --panel:   #141f18;
+      --panel-2: #1b2920;
+      --border:  rgba(255,255,255,0.08);
+      --muted:   #7ca08a;
+      --text:    #e8f3ec;
+
+      /* GOS Layer Colors */
+      --c-physical:   #818cf8; /* Physical/Hardware */
+      --c-engine:     #10b981; /* Core Logic */
+      --c-utility:    #0ea5e9; /* Mid-season Tools */
+      --c-engagement: #8b5cf6; /* Games/Retention */
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'DM Sans', sans-serif; overflow: hidden;
+    }
+
+    /* UI Overlay */
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+      padding: 24px; pointer-events: none;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .controls { pointer-events: auto; display: flex; gap: 10px; }
+    .btn {
+      background: var(--panel); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--panel-2); border-color: rgba(255,255,255,0.2); }
+
+    /* Graph Styles */
+    svg { width: 100vw; height: 100vh; cursor: grab; }
+    svg:active { cursor: grabbing; }
+
+    .node rect { stroke-width: 1.5; rx: 10; ry: 10; }
+    .node-label { font-size: 14px; font-weight: 700; fill: #fff; pointer-events: none; }
+    .node-type { font-size: 10px; font-weight: 500; fill: rgba(255,255,255,0.6); text-transform: uppercase; }
+
+    .edge path { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 1.5; }
+    .edge-label { font-size: 10px; fill: var(--muted); background: var(--bg); }
+
+    /* Node types specific colors */
+    .node[data-layer="Physical"] rect { fill: var(--surface); stroke: var(--c-physical); }
+    .node[data-layer="Engine"] rect { fill: var(--surface); stroke: var(--c-engine); }
+    .node[data-layer="Utility"] rect { fill: var(--surface); stroke: var(--c-utility); }
+    .node[data-layer="Engagement"] rect { fill: var(--surface); stroke: var(--c-engagement); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 style="margin:0; font-size:20px; letter-spacing:-0.5px;">GARDEN OS <span style="color:var(--muted); font-weight:400;">System Topology 2026</span></h1>
+    <p style="margin:5px 0 0; font-size:12px; color:var(--muted);">Visualizing biological/digital dependencies</p>
+  </div>
+  <div class="controls">
+    <button class="btn" id="resetBtn">Reset View</button>
+  </div>
+</header>
+
+<svg id="canvas"></svg>
+
+<script>
+const nodes = [
+  // ENGINE LAYER
+  { id: 'gos-schema', label: 'gos-schema.json', layer: 'Engine', type: 'Database', desc: 'Canonical data contract.' },
+  { id: 'planner-v4', label: 'Planner V4', layer: 'Engine', type: 'Software', desc: 'Core grid & scoring engine.' },
+  { id: 'score-logic', label: 'Scoring Engine', layer: 'Engine', type: 'Algorithm', desc: '5-factor biological logic.' },
+
+  // PHYSICAL LAYER
+  { id: 'raised-beds', label: 'Raised Beds', layer: 'Physical', type: 'Hub', desc: 'Physical growth environment.' },
+  { id: 'iot-sensors', label: 'IoT Sensors', layer: 'Physical', type: 'Hardware', desc: 'Soil moisture & light data.' },
+  { id: 'smart-irrigation', label: 'Irrigation Control', layer: 'Physical', type: 'Hardware', desc: 'Automated WebHook watering.' },
+
+  // UTILITY TOOLS
+  { id: 'garden-doctor', label: 'Garden Doctor', layer: 'Utility', type: 'App', desc: 'Symptom triage tool.' },
+  { id: 'yield-forecast', label: 'Yield Forecast', layer: 'Utility', type: 'Data', desc: 'Predictive harvest windows.' },
+  { id: 'ar-planner', label: 'AR Planner', layer: 'Utility', type: 'App', desc: 'Spatial layout viz.' },
+
+  // ENGAGEMENT LAYER
+  { id: 'garden-league', label: 'Garden League', layer: 'Engagement', type: 'Game', desc: 'Growth competition layer.' },
+  { id: 'strategy-sim', label: 'Strategy Sim', layer: 'Engagement', type: 'Game', desc: 'What-if mode simulator.' }
+];
+
+const edges = [
+  { from: 'raised-beds', to: 'iot-sensors', label: 'MONITORS' },
+  { from: 'iot-sensors', to: 'planner-v4', label: 'TELEMETRY' },
+  { from: 'gos-schema', to: 'planner-v4', label: 'VALIDATES' },
+  { from: 'planner-v4', to: 'score-logic', label: 'COMPUTES' },
+  { from: 'score-logic', to: 'yield-forecast', label: 'INPUT' },
+  { from: 'garden-doctor', to: 'score-logic', label: 'PENALTY' },
+  { from: 'planner-v4', to: 'strategy-sim', label: 'CLONES' },
+  { from: 'planner-v4', to: 'ar-planner', label: 'RENDERS' },
+  { from: 'score-logic', to: 'garden-league', label: 'RANKS' },
+  { from: 'smart-irrigation', to: 'raised-beds', label: 'ACTUATES' }
+];
+
+const svg = d3.select("#canvas");
+const gWrap = svg.append("g");
+
+const zoom = d3.zoom().on("zoom", (e) => gWrap.attr("transform", e.transform));
+svg.call(zoom);
+
+function render() {
+  gWrap.selectAll("*").remove();
+
+  const defs = gWrap.append("defs");
+  defs.append("marker")
+    .attr("id", "edge-arrow")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 9)
+    .attr("refY", 0)
+    .attr("markerWidth", 7)
+    .attr("markerHeight", 7)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M0,-5L10,0L0,5")
+    .attr("fill", "rgba(255,255,255,0.55)");
+
+  const g = new dagre.graphlib.Graph({ multigraph: true });
+  g.setGraph({ rankdir: 'TB', nodesep: 70, ranksep: 100 });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  nodes.forEach(n => {
+    g.setNode(n.id, { width: 180, height: 60, label: n.label, layer: n.layer, type: n.type, desc: n.desc });
+  });
+
+  edges.forEach(e => {
+    g.setEdge(e.from, e.to, { label: e.label });
+  });
+
+  dagre.layout(g);
+
+  // Draw Edges
+  const edgeWrap = gWrap.selectAll(".edge").data(g.edges()).enter().append("g").attr("class", "edge");
+  edgeWrap.append("path").attr("d", d => {
+    const e = g.edge(d);
+    return d3.line().curve(d3.curveBasis)(e.points.map(p => [p.x, p.y]));
+  }).attr("marker-end", "url(#edge-arrow)");
+
+  edgeWrap.append("text")
+    .attr("class", "edge-label")
+    .attr("x", d => g.edge(d).x)
+    .attr("y", d => g.edge(d).y)
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .text(d => g.edge(d).label);
+
+  // Draw Nodes
+  const nodeWrap = gWrap.selectAll(".node").data(g.nodes()).enter().append("g")
+    .attr("class", "node")
+    .attr("data-layer", d => g.node(d).layer)
+    .attr("transform", d => `translate(${g.node(d).x - 90}, ${g.node(d).y - 30})`);
+
+  nodeWrap.append("rect").attr("width", 180).attr("height", 60);
+  nodeWrap.append("title").text(d => g.node(d).desc);
+
+  nodeWrap.append("text").attr("class", "node-type").attr("x", 15).attr("y", 20).text(d => g.node(d).type);
+  nodeWrap.append("text").attr("class", "node-label").attr("x", 15).attr("y", 40).text(d => g.node(d).label);
+
+  // Initial Center
+  const bounds = g.graph();
+  const dx = window.innerWidth/2 - bounds.width/2;
+  const dy = window.innerHeight/2 - bounds.height/2;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(dx, dy));
+}
+
+document.getElementById('resetBtn').onclick = () => render();
+window.addEventListener("resize", () => render());
+render();
+</script>
+
+</body>
+</html>
