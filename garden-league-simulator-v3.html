@@ -17,8 +17,8 @@
   --ff-heading:'Fraunces','Palatino Linotype','Book Antiqua',Georgia,serif;
   --ff-body:'DM Sans','Segoe UI',system-ui,-apple-system,sans-serif;
   --ff-mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --type-label:0.625rem;--type-small:0.6875rem;--type-body:0.8125rem;
-  --type-subhead:1rem;--type-section:clamp(1.12rem,2vw,1.375rem);
+  --type-label:0.75rem;--type-small:0.8125rem;--type-body:0.9375rem;
+  --type-subhead:1.125rem;--type-section:clamp(1.25rem,2.2vw,1.5rem);
   --type-score:2rem;--type-title:clamp(1.32rem,2.8vw,2.2rem);
   --ease-expo-out:cubic-bezier(0.16,1,0.3,1);--ease-expo-in:cubic-bezier(0.7,0,0.84,0);
   --ease-out:cubic-bezier(0.33,1,0.68,1);--ease-back-out:cubic-bezier(0.34,1.56,0.64,1);
@@ -106,8 +106,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .cell.companion-buff{border-color:var(--char-onion);box-shadow:inset 0 0 0 2px rgba(201,141,34,0.2)}
 @keyframes pop-in{0%{transform:scale(0.85)}100%{transform:scale(1)}}
 .cell.just-planted{animation:pop-in 180ms var(--ease-back-out)}
-.cell .emoji{font-size:1.32rem;line-height:1}
-.cell .short{font-size:0.62rem;font-weight:700;color:var(--sf-muted);font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.03em}
+.cell .emoji{font-size:1.5rem;line-height:1}
+.cell .short{font-size:0.75rem;font-weight:700;color:var(--sf-muted);font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.03em}
 .cell .score-pip{position:absolute;bottom:1px;right:2px;font-family:var(--ff-mono);font-size:8px;font-weight:700;line-height:1;pointer-events:none}
 .cell .score-pip.pip-good{color:var(--sem-good)}.cell .score-pip.pip-warn{color:var(--sem-warn)}.cell .score-pip.pip-hard{color:var(--sem-hard)}
 .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%}
@@ -327,10 +327,10 @@ const HOWTO_SECTIONS=[
 const C={
 cherry_tom:{id:'cherry_tom',name:'Cherry Tomato',emoji:'\u{1F345}',short:'CT',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold'],conflicts:['broccoli'],chapterUnlock:1,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['pest-target','blight-prone','heat-tolerant'],sm:{spring:.5,summer:1,fall:.3}},
 pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:2,coolSeason:true,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['frost-hardy','wind-sensitive'],sm:{spring:.9,summer:.8,fall:.7}},
-peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:3,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce'],conflicts:['onion','pepper'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
+peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:4,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce','radish','spinach'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
 cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:['tomato_sandwich'],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
-radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:4,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.4,fall:.9}},
-lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],ev:['heat-sensitive','pest-target','frost-hardy'],sm:{spring:1,summer:.3,fall:1}},
+radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:['radish'],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy','pest-target'],sm:{spring:.9,summer:.4,fall:.85}},
+lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:3,sunIdeal:5,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish','onion','peas'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:1}},
 arugula:{id:'arugula',name:'Arugula',emoji:'\u{1F33F}',short:'ARU',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['dill','basil'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
 broccoli:{id:'broccoli',name:'Broccoli',emoji:'\u{1F966}',short:'BRC',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:true,water:3,companions:['onion','dill'],conflicts:['cherry_tom'],chapterUnlock:5,recipes:[],ev:['pest-target','heat-sensitive','frost-hardy'],sm:{spring:.9,summer:.3,fall:1}},
 kale:{id:'kale',name:'Kale',emoji:'\u{1F96C}',short:'KAL',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:4,coolSeason:true,tall:true,water:3,companions:['marigold'],conflicts:[],chapterUnlock:3,recipes:[],ev:['pest-target','frost-hardy'],sm:{spring:.9,summer:.4,fall:1}},
