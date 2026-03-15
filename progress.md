@@ -113,3 +113,33 @@ TODO / next-agent suggestions:
     - Rotation reset verified (`fatigue00` became 0 when family changed from climbers to roots).
     - Event memory applied to next season (`eventMod00=-0.4`) and expiration decremented to removal (`eventMemoryLen=0`).
 - Residual note (non-blocking but real): `eventLog` can exceed 3 entries in one season due duplicate logging when an event affects 0 cells and then logs again on advance.
+
+- Added initial How-to-Play framework to `garden-league-simulator-v3.html`:
+  - New header Help CTA (`How to Play`) visible in all states.
+  - New menu action button (`How to Play`) on main menu.
+  - Multi-section how-to overlay with tabs:
+    - Quick Start
+    - Season Flow
+    - Scoring
+    - Campaign
+  - Added section content model (`HOWTO_SECTIONS`) so copy/structure can be expanded without UI rewrites.
+  - Added keyboard shortcut support: `H` / `?` opens help; `Esc` closes active overlay.
+  - Added overlay backdrop click-to-close behavior.
+- Validation:
+  - Playwright client run against local server with screenshots:
+    - `output/web-game/howto-test/shot-0.png`
+    - `output/web-game/howto-test/shot-1.png`
+  - Direct Playwright flow check (menu -> chapter -> place crop -> open help -> close help):
+    - Result: `{ open: true, closed: true, phase: "PLANNING", planted: 1, errorCount: 0 }`
+    - Screenshot: `output/web-game/howto-test/flow-check.png`
+- Suggested next step:
+  - Add context-sensitive deep links (e.g., clicking `Support` factor opens How-to-Play at `Scoring` section).
+- Added global automation shims for compatibility with skill test loop:
+  - `window.render_game_to_text` now proxies to `window.gardenOS.render_game_to_text()`.
+  - `window.advanceTime` now proxies to `window.gardenOS.advanceTime()`.
+- Re-ran develop-web-game Playwright client after shim update:
+  - `output/web-game/howto-test/shot-0.png`
+  - `output/web-game/howto-test/shot-1.png`
+  - `output/web-game/howto-test/state-0.json`
+  - `output/web-game/howto-test/state-1.json`
+  - State export now present and readable.
