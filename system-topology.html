@@ -19,16 +19,17 @@
       --text:    #e8f3ec;
 
       /* GOS Layer Colors */
-      --c-physical:   #818cf8;
+      --c-ui:         #0ea5e9;
       --c-engine:     #10b981;
-      --c-utility:    #0ea5e9;
-      --c-engagement: #8b5cf6;
+      --c-knowledge:  #f59e0b;
+      --c-data:       #818cf8;
 
       /* Edge type colors */
       --e-data:      #10b981;
       --e-control:   #f59e0b;
       --e-actuation: #ef4444;
       --e-event:     #8b5cf6;
+      --e-reference: #6b7280;
 
       /* Criticality */
       --crit-p0: #ef4444;
@@ -75,10 +76,10 @@
     .edge-label { font-size: 10px; fill: var(--muted); font-family: 'DM Mono', monospace; }
 
     /* Node layer colors */
-    .node[data-layer="Physical"] rect { fill: var(--surface); stroke: var(--c-physical); }
+    .node[data-layer="UI"] rect { fill: var(--surface); stroke: var(--c-ui); }
     .node[data-layer="Engine"] rect { fill: var(--surface); stroke: var(--c-engine); }
-    .node[data-layer="Utility"] rect { fill: var(--surface); stroke: var(--c-utility); }
-    .node[data-layer="Engagement"] rect { fill: var(--surface); stroke: var(--c-engagement); }
+    .node[data-layer="Knowledge"] rect { fill: var(--surface); stroke: var(--c-knowledge); }
+    .node[data-layer="Data"] rect { fill: var(--surface); stroke: var(--c-data); }
 
     /* Detail mode extras */
     .detail-chip {
@@ -106,6 +107,7 @@
     .detail-active .edge[data-type="control"] path { stroke: var(--e-control); stroke-opacity: 0.6; }
     .detail-active .edge[data-type="actuation"] path { stroke: var(--e-actuation); stroke-opacity: 0.6; }
     .detail-active .edge[data-type="event"] path { stroke: var(--e-event); stroke-opacity: 0.6; }
+    .detail-active .edge[data-type="reference"] path { stroke: var(--e-reference); stroke-opacity: 0.4; stroke-dasharray: 6 4; }
 
     /* Trust zones */
     .trust-zone { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
@@ -171,7 +173,7 @@
 <header>
   <div>
     <h1 style="margin:0; font-size:20px; letter-spacing:-0.5px;">GARDEN OS <span style="color:var(--muted); font-weight:400;">System Topology 2026</span></h1>
-    <p style="margin:5px 0 0; font-size:12px; color:var(--muted);">Visualizing biological/digital dependencies</p>
+    <p style="margin:5px 0 0; font-size:12px; color:var(--muted);">Architecture of a browser-native horticultural reasoning engine</p>
   </div>
   <div class="controls">
     <button class="btn" id="detailBtn" aria-pressed="false">Detail Mode</button>
@@ -187,6 +189,7 @@
     <div class="legend-row"><span class="legend-swatch" style="background:var(--e-control)"></span> Control signal</div>
     <div class="legend-row"><span class="legend-swatch" style="background:var(--e-actuation)"></span> Actuation</div>
     <div class="legend-row"><span class="legend-swatch" style="background:var(--e-event)"></span> Event / feed</div>
+    <div class="legend-row"><span class="legend-swatch" style="background:var(--e-reference); opacity:0.6; border-top:1px dashed var(--e-reference);"></span> Reference / nav</div>
   </div>
   <div class="legend-section">
     <div class="legend-title">Criticality</div>
@@ -196,9 +199,10 @@
   </div>
   <div class="legend-section">
     <div class="legend-title">Trust Zone</div>
-    <div class="legend-row"><span class="legend-zone" style="background:rgba(129,140,248,0.06)"></span> Device / Physical</div>
-    <div class="legend-row"><span class="legend-zone" style="background:rgba(16,185,129,0.06)"></span> Core Engine</div>
-    <div class="legend-row"><span class="legend-zone" style="background:rgba(139,92,246,0.06)"></span> Apps / Engagement</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(14,165,233,0.06)"></span> User Interface</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(16,185,129,0.06)"></span> Reasoning Engine</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(245,158,11,0.06)"></span> Domain Knowledge</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(129,140,248,0.06)"></span> Data Layer</div>
   </div>
 </div>
 
@@ -207,120 +211,173 @@
 <script>
 /* ── Node metadata model ── */
 const nodes = [
-  { id: 'gos-schema', label: 'gos-schema.json', layer: 'Engine', type: 'Database',
-    desc: 'Canonical data contract — defines crop, cell, site, and scoring schemas.',
-    runtime: 'Repo / JSON contract', owner: 'Data Platform', criticality: 'P0',
-    sla: '99.9%', auth_scope: 'read-only public', observability: 'Schema lint CI' },
+  /* ── UI Layer ── */
+  { id: 'planner', label: 'Bed Planner', layer: 'UI', type: 'Application',
+    desc: 'Core 3-column grid planner with crop palette, interactive bed layout, and inspect panel. 3,398 lines.',
+    runtime: 'Single HTML file', owner: 'Core', criticality: 'P0',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'Console + error boundary' },
 
-  { id: 'planner-v4', label: 'Planner V4', layer: 'Engine', type: 'Software',
-    desc: 'Core grid layout and scoring engine — single-file web app.',
-    runtime: 'Browser SPA', owner: 'Planning', criticality: 'P0',
-    sla: '99.5%', auth_scope: 'local-storage auth', observability: 'Console + error boundary' },
+  { id: 'build-guide', label: 'Cage Build Guide', layer: 'UI', type: 'Application',
+    desc: 'Step-by-step interactive guide for 8×4 ft cattle panel cage assembly. 2,270 lines.',
+    runtime: 'Single HTML file', owner: 'Guides', criticality: 'P1',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'Step completion state' },
 
-  { id: 'score-logic', label: 'Scoring Engine', layer: 'Engine', type: 'Algorithm',
-    desc: '6-factor biological scoring: sun, support, shade, access, season, structure.',
-    runtime: 'In-browser compute', owner: 'Algorithms', criticality: 'P0',
-    sla: '99.5%', auth_scope: 'internal only', observability: 'Score breakdown panel' },
+  { id: 'ops-guide', label: 'Cage Ops Guide', layer: 'UI', type: 'Application',
+    desc: 'Operational checklist for planting zones, seasonal maintenance, critter defense. 1,313 lines.',
+    runtime: 'Single HTML file', owner: 'Guides', criticality: 'P1',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'Checklist state' },
 
-  { id: 'raised-beds', label: 'Raised Beds', layer: 'Physical', type: 'Hub',
-    desc: 'Physical 4×8 raised bed environment with soil sensors.',
-    runtime: 'Physical device', owner: 'Field Ops', criticality: 'P0',
-    sla: 'N/A', auth_scope: 'physical access', observability: 'Visual inspection' },
+  { id: 'score-map', label: 'Scoring Map', layer: 'UI', type: 'Reference',
+    desc: 'Static architecture reference for data flow, derived cell traits, and decision funnel. 845 lines.',
+    runtime: 'Single HTML file', owner: 'Documentation', criticality: 'P2',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'N/A' },
 
-  { id: 'iot-sensors', label: 'IoT Sensors', layer: 'Physical', type: 'Hardware',
-    desc: 'ESP32 soil moisture, temp, and light sensors — 5-min reporting cycle.',
-    runtime: 'Edge / ESP32', owner: 'Hardware', criticality: 'P1',
-    sla: '95%', auth_scope: 'device-cert TLS', observability: 'Heartbeat monitor' },
+  { id: 'score-viz', label: 'Score Visualizer', layer: 'UI', type: 'Tool',
+    desc: 'Interactive debug tool. Pick a crop, adjust site inputs, watch scores update in real time. 748 lines.',
+    runtime: 'Single HTML file', owner: 'Debug', criticality: 'P2',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'N/A' },
 
-  { id: 'smart-irrigation', label: 'Irrigation Control', layer: 'Physical', type: 'Hardware',
-    desc: 'Solenoid valve controller — webhook-triggered watering zones.',
-    runtime: 'Edge / RPi', owner: 'Hardware', criticality: 'P1',
-    sla: '95%', auth_scope: 'webhook HMAC', observability: 'Flow-rate log' },
+  { id: 'landing', label: 'Landing Page', layer: 'UI', type: 'Navigation',
+    desc: 'Entry point and tool hub. Card-based navigation to all Garden OS tools.',
+    runtime: 'Single HTML file', owner: 'Core', criticality: 'P1',
+    sla: 'Offline-capable', auth_scope: 'None (local)', observability: 'N/A' },
 
-  { id: 'garden-doctor', label: 'Garden Doctor', layer: 'Utility', type: 'App',
-    desc: 'Symptom triage tool — photo upload + rule-based diagnosis.',
-    runtime: 'Web app', owner: 'Product', criticality: 'P2',
-    sla: '99%', auth_scope: 'session token', observability: 'Usage analytics' },
+  /* ── Scoring Engine Layer ── */
+  { id: 'score-engine', label: 'Scoring Engine', layer: 'Engine', type: 'Algorithm',
+    desc: '5 weighted factors (sun 2x, support, shade, access, season) plus structural bonus; adjacency applied separately.',
+    runtime: 'In-browser compute', owner: 'Core', criticality: 'P0',
+    sla: 'Sync / frame-rate', auth_scope: 'Internal function', observability: 'Score breakdown panel' },
 
-  { id: 'yield-forecast', label: 'Yield Forecast', layer: 'Utility', type: 'Data',
-    desc: 'Predictive harvest windows using score history + degree-day model.',
-    runtime: 'Serverless function', owner: 'Algorithms', criticality: 'P1',
-    sla: '99%', auth_scope: 'API key', observability: 'Prediction accuracy log' },
+  { id: 'adjacency', label: 'Adjacency Analysis', layer: 'Engine', type: 'Algorithm',
+    desc: 'Neighbor cell analysis: companion benefits, conflict penalties, water compatibility, same-crop grouping.',
+    runtime: 'In-browser compute', owner: 'Core', criticality: 'P0',
+    sla: 'Sync / per-cell', auth_scope: 'Internal function', observability: 'Adjacency report in Inspect tab' },
 
-  { id: 'ar-planner', label: 'AR Planner', layer: 'Utility', type: 'App',
-    desc: 'Spatial AR overlay for bed layout visualization.',
-    runtime: 'Mobile WebXR', owner: 'Product', criticality: 'P2',
-    sla: '95%', auth_scope: 'session token', observability: 'Frame-rate monitor' },
+  { id: 'explainer', label: 'Score Explainer', layer: 'Engine', type: 'Algorithm',
+    desc: 'Liebig limiting factor analysis. Identifies the single constraint pulling each cell score down.',
+    runtime: 'In-browser compute', owner: 'Core', criticality: 'P0',
+    sla: 'Sync / on-inspect', auth_scope: 'Internal function', observability: '"Why this score?" panel' },
 
-  { id: 'garden-league', label: 'Garden League', layer: 'Engagement', type: 'Game',
-    desc: 'Growth competition layer — leaderboards and seasonal challenges.',
-    runtime: 'Web app', owner: 'Growth', criticality: 'P2',
-    sla: '99%', auth_scope: 'OAuth2', observability: 'DAU / engagement metrics' },
+  /* ── Horticulture Model Layer ── */
+  { id: 'crop-db', label: 'Crop Database', layer: 'Knowledge', type: 'Dataset',
+    desc: '38 crops across 8 categories with sun, shade, height, habit, trellis, water, season, companion/conflict tags.',
+    runtime: 'Compile-time constant', owner: 'Domain', criticality: 'P0',
+    sla: 'Immutable at runtime', auth_scope: 'Read-only', observability: 'Crop palette UI' },
 
-  { id: 'strategy-sim', label: 'Strategy Sim', layer: 'Engagement', type: 'Game',
-    desc: 'What-if mode — clone current layout and simulate alternate plans.',
-    runtime: 'In-browser sandbox', owner: 'Product', criticality: 'P2',
-    sla: '99%', auth_scope: 'local sandbox', observability: 'Sim run counter' }
+  { id: 'companion-rules', label: 'Companion Rules', layer: 'Knowledge', type: 'Ruleset',
+    desc: 'Companion and conflict tag pairs encoded as arrays per crop. Drives adjacency scoring.',
+    runtime: 'Compile-time constant', owner: 'Domain', criticality: 'P0',
+    sla: 'Immutable at runtime', auth_scope: 'Read-only', observability: 'Adjacency report' },
+
+  /* ── Data / Schema Layer ── */
+  { id: 'gos-schema', label: 'gos-schema.json', layer: 'Data', type: 'Contract',
+    desc: 'JSON Schema (draft 2020-12) defining workspace, bed, cage, site, and planner state structures. 489 lines.',
+    runtime: 'Static JSON file', owner: 'Data', criticality: 'P0',
+    sla: 'Versioned (v1)', auth_scope: 'Public', observability: 'Validation on import' },
+
+  { id: 'workspace', label: 'Workspace Store', layer: 'Data', type: 'Persistence',
+    desc: 'localStorage read/write at gardenOS_workspace key. Full workspace serialization on every state change.',
+    runtime: 'Browser localStorage', owner: 'Data', criticality: 'P0',
+    sla: 'Browser-bound', auth_scope: 'Origin-scoped', observability: 'Console logging' },
+
+  { id: 'file-io', label: 'File Import/Export', layer: 'Data', type: 'I/O',
+    desc: '.gos.json download via URL.createObjectURL, upload via File API. Schema validation + confirm-on-replace.',
+    runtime: 'Browser File API', owner: 'Data', criticality: 'P1',
+    sla: 'User-initiated', auth_scope: 'None (local file)', observability: 'Validation error alerts' },
+
+  { id: 'migration', label: 'Migration Pipeline', layer: 'Data', type: 'Process',
+    desc: 'loadWorkspace, migrateV0toV1, validateWorkspace, saveWorkspace. Clamps values, nullifies unknown crops.',
+    runtime: 'In-browser on load', owner: 'Data', criticality: 'P0',
+    sla: 'Fail-safe defaults', auth_scope: 'Internal function', observability: 'Console warnings' }
 ];
 
 /* ── Edge metadata model ── */
 const edges = [
-  { from: 'raised-beds', to: 'iot-sensors', label: 'MONITORS',
-    protocol: 'Wired / I2C', direction_type: 'data', frequency: 'Continuous',
-    payload: 'Analog sensor readings', reliability: 'Hardware redundancy' },
+  /* ── Core scoring flow ── */
+  { from: 'planner', to: 'score-engine', label: 'SCORES',
+    protocol: 'Internal fn call', direction_type: 'data', frequency: 'On cell paint / render',
+    payload: 'Cell index + crop key + site inputs', reliability: 'Sync / in-process' },
 
-  { from: 'iot-sensors', to: 'planner-v4', label: 'TELEMETRY',
-    protocol: 'MQTT → HTTPS', direction_type: 'data', frequency: 'Every 5 min',
-    payload: 'JSON sensor packet', reliability: 'Retry w/ exp. backoff' },
+  { from: 'score-engine', to: 'crop-db', label: 'READS',
+    protocol: 'Object lookup', direction_type: 'data', frequency: 'Per cell scored',
+    payload: 'Crop traits (sun, shade, height, habit, water)', reliability: 'Sync / constant' },
 
-  { from: 'gos-schema', to: 'planner-v4', label: 'VALIDATES',
-    protocol: 'Import / JSON Schema', direction_type: 'control', frequency: 'On load',
-    payload: 'Schema definition', reliability: 'Fail-closed validation' },
+  { from: 'score-engine', to: 'adjacency', label: 'ANALYZES',
+    protocol: 'Internal fn call', direction_type: 'data', frequency: 'Per cell scored',
+    payload: 'Cell position + neighbor crop keys', reliability: 'Sync / in-process' },
 
-  { from: 'planner-v4', to: 'score-logic', label: 'COMPUTES',
-    protocol: 'Internal fn call', direction_type: 'data', frequency: 'On render',
-    payload: 'Cell + crop + site inputs', reliability: 'Sync / in-process' },
+  { from: 'adjacency', to: 'companion-rules', label: 'MATCHES',
+    protocol: 'Tag comparison', direction_type: 'data', frequency: 'Per neighbor pair',
+    payload: 'companionTags + conflictTags arrays', reliability: 'Sync / constant' },
 
-  { from: 'score-logic', to: 'yield-forecast', label: 'INPUT',
-    protocol: 'REST API', direction_type: 'data', frequency: 'On demand',
-    payload: 'Score vector + history', reliability: 'Queue w/ retry' },
+  { from: 'score-engine', to: 'explainer', label: 'EXPLAINS',
+    protocol: 'Internal fn call', direction_type: 'data', frequency: 'On inspect',
+    payload: 'Score breakdown + factor weights', reliability: 'Sync / in-process' },
 
-  { from: 'garden-doctor', to: 'score-logic', label: 'PENALTY',
-    protocol: 'Event webhook', direction_type: 'event', frequency: 'On diagnosis',
-    payload: 'Health penalty modifier', reliability: 'At-least-once delivery' },
+  /* ── Persistence flow ── */
+  { from: 'planner', to: 'workspace', label: 'PERSISTS',
+    protocol: 'localStorage.setItem', direction_type: 'data', frequency: 'On every state change',
+    payload: 'Full workspace JSON', reliability: 'Browser storage quota' },
 
-  { from: 'planner-v4', to: 'strategy-sim', label: 'CLONES',
-    protocol: 'Deep copy / postMessage', direction_type: 'data', frequency: 'On action',
-    payload: 'Full grid state snapshot', reliability: 'Sync / in-process' },
+  { from: 'workspace', to: 'migration', label: 'MIGRATES',
+    protocol: 'Internal fn call', direction_type: 'control', frequency: 'On load',
+    payload: 'Raw JSON from storage', reliability: 'Fail-safe to defaults' },
 
-  { from: 'planner-v4', to: 'ar-planner', label: 'RENDERS',
-    protocol: 'JSON export', direction_type: 'data', frequency: 'On export',
-    payload: 'Layout geometry + crops', reliability: 'None (manual)' },
+  { from: 'migration', to: 'gos-schema', label: 'VALIDATES',
+    protocol: 'Schema enforcement', direction_type: 'control', frequency: 'On load / import',
+    payload: 'Workspace structure + enum constraints', reliability: 'Fail-closed validation' },
 
-  { from: 'score-logic', to: 'garden-league', label: 'RANKS',
-    protocol: 'Event feed', direction_type: 'event', frequency: 'Daily batch',
-    payload: 'Aggregate score + streak', reliability: 'Queue w/ dead-letter' },
+  { from: 'file-io', to: 'gos-schema', label: 'VALIDATES',
+    protocol: 'Schema enforcement', direction_type: 'control', frequency: 'On .gos.json import',
+    payload: 'Uploaded file contents', reliability: 'Reject on schema mismatch' },
 
-  { from: 'smart-irrigation', to: 'raised-beds', label: 'ACTUATES',
-    protocol: 'GPIO / relay', direction_type: 'actuation', frequency: 'On schedule',
-    payload: 'Zone + duration command', reliability: 'Watchdog timer + max-flow cutoff' }
+  { from: 'file-io', to: 'workspace', label: 'IMPORTS',
+    protocol: 'File API + confirm', direction_type: 'data', frequency: 'User-initiated',
+    payload: '.gos.json file contents', reliability: 'Confirm before replace' },
+
+  /* ── Tool data sharing ── */
+  { from: 'planner', to: 'file-io', label: 'EXPORTS',
+    protocol: 'URL.createObjectURL', direction_type: 'data', frequency: 'User-initiated',
+    payload: 'Full workspace as .gos.json', reliability: 'Browser download API' },
+
+  { from: 'score-viz', to: 'score-engine', label: 'VISUALIZES',
+    protocol: 'Shared scoring logic', direction_type: 'data', frequency: 'On input change',
+    payload: 'Crop + site inputs', reliability: 'Sync / in-process' },
+
+  { from: 'score-map', to: 'score-engine', label: 'DOCUMENTS',
+    protocol: 'Static reference', direction_type: 'reference', frequency: 'Read-only',
+    payload: 'Algorithm documentation', reliability: 'N/A' },
+
+  { from: 'landing', to: 'planner', label: 'NAVIGATES',
+    protocol: 'HTML anchor', direction_type: 'reference', frequency: 'On click',
+    payload: 'URL', reliability: 'Static link' },
+
+  { from: 'planner', to: 'crop-db', label: 'RENDERS',
+    protocol: 'Object iteration', direction_type: 'data', frequency: 'On palette render',
+    payload: 'Crop names, emojis, colors, categories', reliability: 'Sync / constant' }
 ];
 
 /* ── Critical path definition ── */
-const critPathNodes = new Set(['raised-beds','iot-sensors','planner-v4','score-logic','yield-forecast','garden-league']);
+const critPathNodes = new Set([
+  'planner', 'score-engine', 'adjacency', 'explainer',
+  'crop-db', 'companion-rules', 'workspace', 'gos-schema', 'migration'
+]);
 const critPathEdges = new Set([
-  'raised-beds→iot-sensors', 'iot-sensors→planner-v4', 'gos-schema→planner-v4',
-  'planner-v4→score-logic', 'score-logic→yield-forecast', 'score-logic→garden-league'
+  'planner→score-engine', 'score-engine→crop-db', 'score-engine→adjacency',
+  'adjacency→companion-rules', 'score-engine→explainer',
+  'planner→workspace', 'workspace→migration', 'migration→gos-schema'
 ]);
 
 /* ── Trust zone definitions ── */
 const trustZones = [
-  { id: 'physical', label: 'Device / Physical', color: 'rgba(129,140,248,0.06)', borderColor: 'rgba(129,140,248,0.15)', labelColor: 'rgba(129,140,248,0.35)',
-    members: ['raised-beds','iot-sensors','smart-irrigation'] },
-  { id: 'engine', label: 'Core Engine', color: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.15)', labelColor: 'rgba(16,185,129,0.35)',
-    members: ['gos-schema','planner-v4','score-logic'] },
-  { id: 'apps', label: 'Apps / Engagement', color: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.15)', labelColor: 'rgba(139,92,246,0.35)',
-    members: ['garden-doctor','yield-forecast','ar-planner','garden-league','strategy-sim'] }
+  { id: 'ui', label: 'User Interface', color: 'rgba(14,165,233,0.06)', borderColor: 'rgba(14,165,233,0.15)', labelColor: 'rgba(14,165,233,0.35)',
+    members: ['planner','build-guide','ops-guide','score-map','score-viz','landing'] },
+  { id: 'engine', label: 'Reasoning Engine', color: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.15)', labelColor: 'rgba(16,185,129,0.35)',
+    members: ['score-engine','adjacency','explainer'] },
+  { id: 'knowledge', label: 'Domain Knowledge', color: 'rgba(245,158,11,0.06)', borderColor: 'rgba(245,158,11,0.15)', labelColor: 'rgba(245,158,11,0.35)',
+    members: ['crop-db','companion-rules'] },
+  { id: 'data', label: 'Data Layer', color: 'rgba(129,140,248,0.06)', borderColor: 'rgba(129,140,248,0.15)', labelColor: 'rgba(129,140,248,0.35)',
+    members: ['gos-schema','workspace','file-io','migration'] }
 ];
 
 /* ── State ── */
@@ -361,6 +418,7 @@ function render({ preserveView = false } = {}) {
   addMarker("arrow-control", "rgba(245,158,11,0.7)");
   addMarker("arrow-actuation", "rgba(239,68,68,0.7)");
   addMarker("arrow-event", "rgba(139,92,246,0.7)");
+  addMarker("arrow-reference", "rgba(107,114,128,0.5)");
 
   /* Dagre layout */
   const g = new dagre.graphlib.Graph({ multigraph: true });
