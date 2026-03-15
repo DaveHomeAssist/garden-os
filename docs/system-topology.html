@@ -19,10 +19,21 @@
       --text:    #e8f3ec;
 
       /* GOS Layer Colors */
-      --c-physical:   #818cf8; /* Physical/Hardware */
-      --c-engine:     #10b981; /* Core Logic */
-      --c-utility:    #0ea5e9; /* Mid-season Tools */
-      --c-engagement: #8b5cf6; /* Games/Retention */
+      --c-physical:   #818cf8;
+      --c-engine:     #10b981;
+      --c-utility:    #0ea5e9;
+      --c-engagement: #8b5cf6;
+
+      /* Edge type colors */
+      --e-data:      #10b981;
+      --e-control:   #f59e0b;
+      --e-actuation: #ef4444;
+      --e-event:     #8b5cf6;
+
+      /* Criticality */
+      --crit-p0: #ef4444;
+      --crit-p1: #f59e0b;
+      --crit-p2: #6b7280;
     }
 
     * { box-sizing: border-box; }
@@ -41,26 +52,118 @@
     .btn {
       background: var(--panel); border: 1px solid var(--border); color: var(--text);
       padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
-      transition: all 0.2s;
+      font-family: inherit; transition: all 0.2s;
     }
     .btn:hover { background: var(--panel-2); border-color: rgba(255,255,255,0.2); }
+    .btn:focus-visible {
+      outline: 2px solid var(--c-engine); outline-offset: 2px;
+    }
+    .btn.active {
+      background: var(--panel-2); border-color: var(--c-engine);
+      color: #fff;
+    }
 
     /* Graph Styles */
     svg { width: 100vw; height: 100vh; cursor: grab; }
     svg:active { cursor: grabbing; }
 
-    .node rect { stroke-width: 1.5; rx: 10; ry: 10; }
+    .node rect { stroke-width: 1.5; rx: 10; ry: 10; transition: stroke-width 0.2s, filter 0.2s; }
     .node-label { font-size: 14px; font-weight: 700; fill: #fff; pointer-events: none; }
-    .node-type { font-size: 10px; font-weight: 500; fill: rgba(255,255,255,0.6); text-transform: uppercase; }
+    .node-type { font-size: 10px; font-weight: 500; fill: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .edge path { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 1.5; }
-    .edge-label { font-size: 10px; fill: var(--muted); background: var(--bg); }
+    .edge path { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 1.5; transition: stroke 0.2s, stroke-width 0.2s; }
+    .edge-label { font-size: 10px; fill: var(--muted); font-family: 'DM Mono', monospace; }
 
-    /* Node types specific colors */
+    /* Node layer colors */
     .node[data-layer="Physical"] rect { fill: var(--surface); stroke: var(--c-physical); }
     .node[data-layer="Engine"] rect { fill: var(--surface); stroke: var(--c-engine); }
     .node[data-layer="Utility"] rect { fill: var(--surface); stroke: var(--c-utility); }
     .node[data-layer="Engagement"] rect { fill: var(--surface); stroke: var(--c-engagement); }
+
+    /* Detail mode extras */
+    .detail-chip {
+      font-size: 9px; font-family: 'DM Mono', monospace;
+      fill: rgba(255,255,255,0.5); pointer-events: none;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .detail-active .detail-chip { opacity: 1; }
+
+    .crit-badge {
+      font-size: 8px; font-weight: 700; font-family: 'DM Mono', monospace;
+      pointer-events: none; opacity: 0; transition: opacity 0.3s;
+    }
+    .detail-active .crit-badge { opacity: 1; }
+
+    .edge-detail {
+      font-size: 8px; font-family: 'DM Mono', monospace;
+      fill: rgba(255,255,255,0.45);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .detail-active .edge-detail { opacity: 1; }
+
+    /* Edge type coloring in detail mode */
+    .detail-active .edge[data-type="data"] path { stroke: var(--e-data); stroke-opacity: 0.6; }
+    .detail-active .edge[data-type="control"] path { stroke: var(--e-control); stroke-opacity: 0.6; }
+    .detail-active .edge[data-type="actuation"] path { stroke: var(--e-actuation); stroke-opacity: 0.6; }
+    .detail-active .edge[data-type="event"] path { stroke: var(--e-event); stroke-opacity: 0.6; }
+
+    /* Trust zones */
+    .trust-zone { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .detail-active .trust-zone { opacity: 1; }
+    .trust-zone-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; pointer-events: none;
+    }
+
+    /* Critical path highlight */
+    .crit-path-active .node:not(.on-crit-path) rect { opacity: 0.25; }
+    .crit-path-active .node:not(.on-crit-path) text { opacity: 0.25; }
+    .crit-path-active .edge:not(.on-crit-path) path { opacity: 0.08; }
+    .crit-path-active .edge:not(.on-crit-path) text { opacity: 0.08; }
+    .crit-path-active .edge.on-crit-path path { stroke: var(--c-engine); stroke-width: 3; stroke-opacity: 1; }
+    .crit-path-active .node.on-crit-path rect { stroke-width: 2.5; filter: drop-shadow(0 0 8px rgba(16,185,129,0.4)); }
+
+    /* Legend Panel */
+    #legend {
+      position: absolute; bottom: 24px; left: 24px; z-index: 10;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 20px; font-size: 12px; min-width: 220px;
+      opacity: 0; pointer-events: none; transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    #legend.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .legend-title { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+    .legend-section { margin-bottom: 12px; }
+    .legend-section:last-child { margin-bottom: 0; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: rgba(255,255,255,0.7); font-size: 11px; }
+    .legend-swatch {
+      width: 20px; height: 3px; border-radius: 2px; flex-shrink: 0;
+    }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .legend-badge {
+      font-size: 9px; font-weight: 700; font-family: 'DM Mono', monospace;
+      padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
+    }
+    .legend-zone {
+      width: 20px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* Text halo for readability on crossing edges */
+    .edge-label,
+    .edge-detail {
+      paint-order: stroke;
+      stroke: rgba(8, 12, 9, 0.9);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+
+    /* Reduce edge-label clutter on narrower viewports */
+    @media (max-width: 1200px) {
+      .edge-label { font-size: 9px; }
+      .edge-detail { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -71,119 +174,411 @@
     <p style="margin:5px 0 0; font-size:12px; color:var(--muted);">Visualizing biological/digital dependencies</p>
   </div>
   <div class="controls">
+    <button class="btn" id="detailBtn" aria-pressed="false">Detail Mode</button>
+    <button class="btn" id="critPathBtn" aria-pressed="false">Critical Path</button>
     <button class="btn" id="resetBtn">Reset View</button>
   </div>
 </header>
 
+<div id="legend">
+  <div class="legend-section">
+    <div class="legend-title">Edge Type</div>
+    <div class="legend-row"><span class="legend-swatch" style="background:var(--e-data)"></span> Data flow</div>
+    <div class="legend-row"><span class="legend-swatch" style="background:var(--e-control)"></span> Control signal</div>
+    <div class="legend-row"><span class="legend-swatch" style="background:var(--e-actuation)"></span> Actuation</div>
+    <div class="legend-row"><span class="legend-swatch" style="background:var(--e-event)"></span> Event / feed</div>
+  </div>
+  <div class="legend-section">
+    <div class="legend-title">Criticality</div>
+    <div class="legend-row"><span class="legend-badge" style="background:var(--crit-p0); color:#fff;">P0</span> System-critical</div>
+    <div class="legend-row"><span class="legend-badge" style="background:var(--crit-p1); color:#000;">P1</span> Important</div>
+    <div class="legend-row"><span class="legend-badge" style="background:var(--crit-p2); color:#fff;">P2</span> Nice-to-have</div>
+  </div>
+  <div class="legend-section">
+    <div class="legend-title">Trust Zone</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(129,140,248,0.06)"></span> Device / Physical</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(16,185,129,0.06)"></span> Core Engine</div>
+    <div class="legend-row"><span class="legend-zone" style="background:rgba(139,92,246,0.06)"></span> Apps / Engagement</div>
+  </div>
+</div>
+
 <svg id="canvas"></svg>
 
 <script>
+/* ── Node metadata model ── */
 const nodes = [
-  // ENGINE LAYER
-  { id: 'gos-schema', label: 'gos-schema.json', layer: 'Engine', type: 'Database', desc: 'Canonical data contract.' },
-  { id: 'planner-v4', label: 'Planner V4', layer: 'Engine', type: 'Software', desc: 'Core grid & scoring engine.' },
-  { id: 'score-logic', label: 'Scoring Engine', layer: 'Engine', type: 'Algorithm', desc: '5-factor biological logic.' },
+  { id: 'gos-schema', label: 'gos-schema.json', layer: 'Engine', type: 'Database',
+    desc: 'Canonical data contract — defines crop, cell, site, and scoring schemas.',
+    runtime: 'Repo / JSON contract', owner: 'Data Platform', criticality: 'P0',
+    sla: '99.9%', auth_scope: 'read-only public', observability: 'Schema lint CI' },
 
-  // PHYSICAL LAYER
-  { id: 'raised-beds', label: 'Raised Beds', layer: 'Physical', type: 'Hub', desc: 'Physical growth environment.' },
-  { id: 'iot-sensors', label: 'IoT Sensors', layer: 'Physical', type: 'Hardware', desc: 'Soil moisture & light data.' },
-  { id: 'smart-irrigation', label: 'Irrigation Control', layer: 'Physical', type: 'Hardware', desc: 'Automated WebHook watering.' },
+  { id: 'planner-v4', label: 'Planner V4', layer: 'Engine', type: 'Software',
+    desc: 'Core grid layout and scoring engine — single-file web app.',
+    runtime: 'Browser SPA', owner: 'Planning', criticality: 'P0',
+    sla: '99.5%', auth_scope: 'local-storage auth', observability: 'Console + error boundary' },
 
-  // UTILITY TOOLS
-  { id: 'garden-doctor', label: 'Garden Doctor', layer: 'Utility', type: 'App', desc: 'Symptom triage tool.' },
-  { id: 'yield-forecast', label: 'Yield Forecast', layer: 'Utility', type: 'Data', desc: 'Predictive harvest windows.' },
-  { id: 'ar-planner', label: 'AR Planner', layer: 'Utility', type: 'App', desc: 'Spatial layout viz.' },
+  { id: 'score-logic', label: 'Scoring Engine', layer: 'Engine', type: 'Algorithm',
+    desc: '6-factor biological scoring: sun, support, shade, access, season, structure.',
+    runtime: 'In-browser compute', owner: 'Algorithms', criticality: 'P0',
+    sla: '99.5%', auth_scope: 'internal only', observability: 'Score breakdown panel' },
 
-  // ENGAGEMENT LAYER
-  { id: 'garden-league', label: 'Garden League', layer: 'Engagement', type: 'Game', desc: 'Growth competition layer.' },
-  { id: 'strategy-sim', label: 'Strategy Sim', layer: 'Engagement', type: 'Game', desc: 'What-if mode simulator.' }
+  { id: 'raised-beds', label: 'Raised Beds', layer: 'Physical', type: 'Hub',
+    desc: 'Physical 4×8 raised bed environment with soil sensors.',
+    runtime: 'Physical device', owner: 'Field Ops', criticality: 'P0',
+    sla: 'N/A', auth_scope: 'physical access', observability: 'Visual inspection' },
+
+  { id: 'iot-sensors', label: 'IoT Sensors', layer: 'Physical', type: 'Hardware',
+    desc: 'ESP32 soil moisture, temp, and light sensors — 5-min reporting cycle.',
+    runtime: 'Edge / ESP32', owner: 'Hardware', criticality: 'P1',
+    sla: '95%', auth_scope: 'device-cert TLS', observability: 'Heartbeat monitor' },
+
+  { id: 'smart-irrigation', label: 'Irrigation Control', layer: 'Physical', type: 'Hardware',
+    desc: 'Solenoid valve controller — webhook-triggered watering zones.',
+    runtime: 'Edge / RPi', owner: 'Hardware', criticality: 'P1',
+    sla: '95%', auth_scope: 'webhook HMAC', observability: 'Flow-rate log' },
+
+  { id: 'garden-doctor', label: 'Garden Doctor', layer: 'Utility', type: 'App',
+    desc: 'Symptom triage tool — photo upload + rule-based diagnosis.',
+    runtime: 'Web app', owner: 'Product', criticality: 'P2',
+    sla: '99%', auth_scope: 'session token', observability: 'Usage analytics' },
+
+  { id: 'yield-forecast', label: 'Yield Forecast', layer: 'Utility', type: 'Data',
+    desc: 'Predictive harvest windows using score history + degree-day model.',
+    runtime: 'Serverless function', owner: 'Algorithms', criticality: 'P1',
+    sla: '99%', auth_scope: 'API key', observability: 'Prediction accuracy log' },
+
+  { id: 'ar-planner', label: 'AR Planner', layer: 'Utility', type: 'App',
+    desc: 'Spatial AR overlay for bed layout visualization.',
+    runtime: 'Mobile WebXR', owner: 'Product', criticality: 'P2',
+    sla: '95%', auth_scope: 'session token', observability: 'Frame-rate monitor' },
+
+  { id: 'garden-league', label: 'Garden League', layer: 'Engagement', type: 'Game',
+    desc: 'Growth competition layer — leaderboards and seasonal challenges.',
+    runtime: 'Web app', owner: 'Growth', criticality: 'P2',
+    sla: '99%', auth_scope: 'OAuth2', observability: 'DAU / engagement metrics' },
+
+  { id: 'strategy-sim', label: 'Strategy Sim', layer: 'Engagement', type: 'Game',
+    desc: 'What-if mode — clone current layout and simulate alternate plans.',
+    runtime: 'In-browser sandbox', owner: 'Product', criticality: 'P2',
+    sla: '99%', auth_scope: 'local sandbox', observability: 'Sim run counter' }
 ];
 
+/* ── Edge metadata model ── */
 const edges = [
-  { from: 'raised-beds', to: 'iot-sensors', label: 'MONITORS' },
-  { from: 'iot-sensors', to: 'planner-v4', label: 'TELEMETRY' },
-  { from: 'gos-schema', to: 'planner-v4', label: 'VALIDATES' },
-  { from: 'planner-v4', to: 'score-logic', label: 'COMPUTES' },
-  { from: 'score-logic', to: 'yield-forecast', label: 'INPUT' },
-  { from: 'garden-doctor', to: 'score-logic', label: 'PENALTY' },
-  { from: 'planner-v4', to: 'strategy-sim', label: 'CLONES' },
-  { from: 'planner-v4', to: 'ar-planner', label: 'RENDERS' },
-  { from: 'score-logic', to: 'garden-league', label: 'RANKS' },
-  { from: 'smart-irrigation', to: 'raised-beds', label: 'ACTUATES' }
+  { from: 'raised-beds', to: 'iot-sensors', label: 'MONITORS',
+    protocol: 'Wired / I2C', direction_type: 'data', frequency: 'Continuous',
+    payload: 'Analog sensor readings', reliability: 'Hardware redundancy' },
+
+  { from: 'iot-sensors', to: 'planner-v4', label: 'TELEMETRY',
+    protocol: 'MQTT → HTTPS', direction_type: 'data', frequency: 'Every 5 min',
+    payload: 'JSON sensor packet', reliability: 'Retry w/ exp. backoff' },
+
+  { from: 'gos-schema', to: 'planner-v4', label: 'VALIDATES',
+    protocol: 'Import / JSON Schema', direction_type: 'control', frequency: 'On load',
+    payload: 'Schema definition', reliability: 'Fail-closed validation' },
+
+  { from: 'planner-v4', to: 'score-logic', label: 'COMPUTES',
+    protocol: 'Internal fn call', direction_type: 'data', frequency: 'On render',
+    payload: 'Cell + crop + site inputs', reliability: 'Sync / in-process' },
+
+  { from: 'score-logic', to: 'yield-forecast', label: 'INPUT',
+    protocol: 'REST API', direction_type: 'data', frequency: 'On demand',
+    payload: 'Score vector + history', reliability: 'Queue w/ retry' },
+
+  { from: 'garden-doctor', to: 'score-logic', label: 'PENALTY',
+    protocol: 'Event webhook', direction_type: 'event', frequency: 'On diagnosis',
+    payload: 'Health penalty modifier', reliability: 'At-least-once delivery' },
+
+  { from: 'planner-v4', to: 'strategy-sim', label: 'CLONES',
+    protocol: 'Deep copy / postMessage', direction_type: 'data', frequency: 'On action',
+    payload: 'Full grid state snapshot', reliability: 'Sync / in-process' },
+
+  { from: 'planner-v4', to: 'ar-planner', label: 'RENDERS',
+    protocol: 'JSON export', direction_type: 'data', frequency: 'On export',
+    payload: 'Layout geometry + crops', reliability: 'None (manual)' },
+
+  { from: 'score-logic', to: 'garden-league', label: 'RANKS',
+    protocol: 'Event feed', direction_type: 'event', frequency: 'Daily batch',
+    payload: 'Aggregate score + streak', reliability: 'Queue w/ dead-letter' },
+
+  { from: 'smart-irrigation', to: 'raised-beds', label: 'ACTUATES',
+    protocol: 'GPIO / relay', direction_type: 'actuation', frequency: 'On schedule',
+    payload: 'Zone + duration command', reliability: 'Watchdog timer + max-flow cutoff' }
 ];
 
+/* ── Critical path definition ── */
+const critPathNodes = new Set(['raised-beds','iot-sensors','planner-v4','score-logic','yield-forecast','garden-league']);
+const critPathEdges = new Set([
+  'raised-beds→iot-sensors', 'iot-sensors→planner-v4', 'gos-schema→planner-v4',
+  'planner-v4→score-logic', 'score-logic→yield-forecast', 'score-logic→garden-league'
+]);
+
+/* ── Trust zone definitions ── */
+const trustZones = [
+  { id: 'physical', label: 'Device / Physical', color: 'rgba(129,140,248,0.06)', borderColor: 'rgba(129,140,248,0.15)', labelColor: 'rgba(129,140,248,0.35)',
+    members: ['raised-beds','iot-sensors','smart-irrigation'] },
+  { id: 'engine', label: 'Core Engine', color: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.15)', labelColor: 'rgba(16,185,129,0.35)',
+    members: ['gos-schema','planner-v4','score-logic'] },
+  { id: 'apps', label: 'Apps / Engagement', color: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.15)', labelColor: 'rgba(139,92,246,0.35)',
+    members: ['garden-doctor','yield-forecast','ar-planner','garden-league','strategy-sim'] }
+];
+
+/* ── State ── */
+let detailMode = false;
+let critPathMode = false;
+
+/* ── D3 setup ── */
 const svg = d3.select("#canvas");
 const gWrap = svg.append("g");
-
-const zoom = d3.zoom().on("zoom", (e) => gWrap.attr("transform", e.transform));
+let lastTransform = d3.zoomIdentity;
+const zoom = d3.zoom().scaleExtent([0.3, 3]).on("zoom", (e) => {
+  lastTransform = e.transform;
+  gWrap.attr("transform", e.transform);
+});
 svg.call(zoom);
 
-function render() {
+/* ── Build node lookup ── */
+const nodeMap = {};
+nodes.forEach(n => { nodeMap[n.id] = n; });
+
+/* ── Render ── */
+function render({ preserveView = false } = {}) {
   gWrap.selectAll("*").remove();
 
+  /* Arrow markers — one default + one per edge type for detail mode */
   const defs = gWrap.append("defs");
-  defs.append("marker")
-    .attr("id", "edge-arrow")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 9)
-    .attr("refY", 0)
-    .attr("markerWidth", 7)
-    .attr("markerHeight", 7)
-    .attr("orient", "auto")
-    .append("path")
-    .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "rgba(255,255,255,0.55)");
 
+  function addMarker(id, color) {
+    defs.append("marker")
+      .attr("id", id).attr("viewBox", "0 -5 10 10")
+      .attr("refX", 9).attr("refY", 0)
+      .attr("markerWidth", 7).attr("markerHeight", 7)
+      .attr("orient", "auto")
+      .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", color);
+  }
+  addMarker("arrow-default", "rgba(255,255,255,0.55)");
+  addMarker("arrow-data", "rgba(16,185,129,0.7)");
+  addMarker("arrow-control", "rgba(245,158,11,0.7)");
+  addMarker("arrow-actuation", "rgba(239,68,68,0.7)");
+  addMarker("arrow-event", "rgba(139,92,246,0.7)");
+
+  /* Dagre layout */
   const g = new dagre.graphlib.Graph({ multigraph: true });
-  g.setGraph({ rankdir: 'TB', nodesep: 70, ranksep: 100 });
+  g.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 120 });
   g.setDefaultEdgeLabel(() => ({}));
 
+  const nodeH = detailMode ? 88 : 60;
   nodes.forEach(n => {
-    g.setNode(n.id, { width: 180, height: 60, label: n.label, layer: n.layer, type: n.type, desc: n.desc });
+    g.setNode(n.id, { width: 200, height: nodeH, ...n });
   });
-
   edges.forEach(e => {
-    g.setEdge(e.from, e.to, { label: e.label });
+    g.setEdge(e.from, e.to, { ...e });
   });
-
   dagre.layout(g);
 
-  // Draw Edges
-  const edgeWrap = gWrap.selectAll(".edge").data(g.edges()).enter().append("g").attr("class", "edge");
+  /* Trust zones (background bands) */
+  const zoneGroup = gWrap.append("g").attr("class", "trust-zones");
+  trustZones.forEach(zone => {
+    const memberNodes = zone.members.map(id => g.node(id)).filter(Boolean);
+    if (!memberNodes.length) return;
+    const pad = 30;
+    const x1 = d3.min(memberNodes, n => n.x - n.width/2) - pad;
+    const y1 = d3.min(memberNodes, n => n.y - n.height/2) - pad;
+    const x2 = d3.max(memberNodes, n => n.x + n.width/2) + pad;
+    const y2 = d3.max(memberNodes, n => n.y + n.height/2) + pad;
+
+    const zg = zoneGroup.append("g").attr("class", "trust-zone");
+    zg.append("rect")
+      .attr("x", x1).attr("y", y1)
+      .attr("width", x2-x1).attr("height", y2-y1)
+      .attr("rx", 16).attr("ry", 16)
+      .attr("fill", zone.color)
+      .attr("stroke", zone.borderColor)
+      .attr("stroke-width", 1);
+    zg.append("text")
+      .attr("class", "trust-zone-label")
+      .attr("x", x1 + 12).attr("y", y1 + 18)
+      .attr("fill", zone.labelColor)
+      .text(zone.label);
+  });
+
+  /* Draw edges */
+  const edgeWrap = gWrap.selectAll(".edge").data(g.edges()).enter().append("g")
+    .attr("class", "edge")
+    .attr("data-type", d => g.edge(d).direction_type || 'data');
+
+  const edgeKey = d => `${d.v}→${d.w}`;
+  const compactLabels = window.innerWidth <= 1200;
+  const edgeOffset = (d) => {
+    const key = `${d.v}→${d.w}`;
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) {
+      hash = (hash * 31 + key.charCodeAt(i)) % 997;
+    }
+    return ((hash % 5) - 2) * 4;
+  };
+
+  edgeWrap.each(function(d) {
+    const el = d3.select(this);
+    const isCrit = critPathEdges.has(edgeKey(d));
+    if (isCrit) el.classed("on-crit-path", true);
+  });
+
   edgeWrap.append("path").attr("d", d => {
     const e = g.edge(d);
     return d3.line().curve(d3.curveBasis)(e.points.map(p => [p.x, p.y]));
-  }).attr("marker-end", "url(#edge-arrow)");
+  }).attr("marker-end", d => {
+    if (!detailMode) return "url(#arrow-default)";
+    const t = g.edge(d).direction_type || 'data';
+    return `url(#arrow-${t})`;
+  });
 
+  /* Edge labels — primary */
   edgeWrap.append("text")
     .attr("class", "edge-label")
     .attr("x", d => g.edge(d).x)
-    .attr("y", d => g.edge(d).y)
+    .attr("y", d => g.edge(d).y - 6 + edgeOffset(d))
     .attr("text-anchor", "middle")
-    .attr("dy", "0.35em")
     .text(d => g.edge(d).label);
 
-  // Draw Nodes
+  /* Edge labels — detail (protocol + frequency) */
+  edgeWrap.append("text")
+    .attr("class", "edge-detail")
+    .attr("x", d => g.edge(d).x)
+    .attr("y", d => g.edge(d).y + 8 + edgeOffset(d))
+    .attr("text-anchor", "middle")
+    .text(d => {
+      if (compactLabels) return '';
+      const e = g.edge(d);
+      return `${e.protocol || ''}  ${e.frequency ? '@ ' + e.frequency : ''}`;
+    });
+
+  /* Edge tooltips */
+  edgeWrap.append("title").text(d => {
+    const e = g.edge(d);
+    return [
+      `${e.label} (${e.direction_type})`,
+      `Protocol: ${e.protocol}`,
+      `Frequency: ${e.frequency}`,
+      `Payload: ${e.payload}`,
+      `Reliability: ${e.reliability}`
+    ].join('\n');
+  });
+
+  /* Draw nodes */
+  const nW = 200;
   const nodeWrap = gWrap.selectAll(".node").data(g.nodes()).enter().append("g")
-    .attr("class", "node")
+    .attr("class", d => {
+      let c = "node";
+      if (critPathNodes.has(d)) c += " on-crit-path";
+      return c;
+    })
     .attr("data-layer", d => g.node(d).layer)
-    .attr("transform", d => `translate(${g.node(d).x - 90}, ${g.node(d).y - 30})`);
+    .attr("transform", d => `translate(${g.node(d).x - nW/2}, ${g.node(d).y - nodeH/2})`);
 
-  nodeWrap.append("rect").attr("width", 180).attr("height", 60);
-  nodeWrap.append("title").text(d => g.node(d).desc);
+  nodeWrap.append("rect").attr("width", nW).attr("height", nodeH);
 
-  nodeWrap.append("text").attr("class", "node-type").attr("x", 15).attr("y", 20).text(d => g.node(d).type);
-  nodeWrap.append("text").attr("class", "node-label").attr("x", 15).attr("y", 40).text(d => g.node(d).label);
+  /* Criticality badge (top-right) */
+  nodeWrap.append("text")
+    .attr("class", "crit-badge")
+    .attr("x", nW - 12).attr("y", 16)
+    .attr("text-anchor", "end")
+    .attr("fill", d => {
+      const c = nodeMap[d]?.criticality;
+      return c === 'P0' ? 'var(--crit-p0)' : c === 'P1' ? 'var(--crit-p1)' : 'var(--crit-p2)';
+    })
+    .text(d => nodeMap[d]?.criticality || '');
 
-  // Initial Center
+  /* Type label */
+  nodeWrap.append("text").attr("class", "node-type")
+    .attr("x", 14).attr("y", 18).text(d => g.node(d).type);
+
+  /* Name label */
+  nodeWrap.append("text").attr("class", "node-label")
+    .attr("x", 14).attr("y", 36).text(d => g.node(d).label);
+
+  /* Detail chips: runtime + owner (below main label) */
+  nodeWrap.append("text").attr("class", "detail-chip")
+    .attr("x", 14).attr("y", 54)
+    .text(d => {
+      const n = nodeMap[d];
+      return n ? `${n.runtime}` : '';
+    });
+  nodeWrap.append("text").attr("class", "detail-chip")
+    .attr("x", 14).attr("y", 67)
+    .text(d => {
+      const n = nodeMap[d];
+      return n ? `Owner: ${n.owner}  SLA: ${n.sla}` : '';
+    });
+
+  /* Full tooltip */
+  nodeWrap.append("title").text(d => {
+    const n = nodeMap[d];
+    if (!n) return d;
+    return [
+      n.label,
+      n.desc,
+      `Runtime: ${n.runtime}`,
+      `Owner: ${n.owner}`,
+      `Criticality: ${n.criticality}  SLA: ${n.sla}`,
+      `Auth: ${n.auth_scope}`,
+      `Observability: ${n.observability}`
+    ].join('\n');
+  });
+
+  /* Apply detail-active class for CSS transitions */
+  gWrap.classed("detail-active", detailMode);
+  gWrap.classed("crit-path-active", critPathMode);
+
+  /* Center view */
+  if (preserveView) {
+    svg.call(zoom.transform, lastTransform);
+    return;
+  }
+
   const bounds = g.graph();
   const dx = window.innerWidth/2 - bounds.width/2;
   const dy = window.innerHeight/2 - bounds.height/2;
-  svg.call(zoom.transform, d3.zoomIdentity.translate(dx, dy));
+  const nextTransform = d3.zoomIdentity.translate(dx, dy).scale(0.95);
+  lastTransform = nextTransform;
+  svg.call(zoom.transform, nextTransform);
 }
 
-document.getElementById('resetBtn').onclick = () => render();
-window.addEventListener("resize", () => render());
+/* ── Controls ── */
+document.getElementById('detailBtn').addEventListener('click', function() {
+  detailMode = !detailMode;
+  this.classList.toggle('active', detailMode);
+  this.setAttribute('aria-pressed', detailMode);
+  document.getElementById('legend').classList.toggle('visible', detailMode);
+  render({ preserveView: true });
+});
+
+document.getElementById('critPathBtn').addEventListener('click', function() {
+  critPathMode = !critPathMode;
+  this.classList.toggle('active', critPathMode);
+  this.setAttribute('aria-pressed', critPathMode);
+  /* Style-only toggle — no rerender needed */
+  gWrap.classed("crit-path-active", critPathMode);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  detailMode = false;
+  critPathMode = false;
+  document.getElementById('detailBtn').classList.remove('active');
+  document.getElementById('detailBtn').setAttribute('aria-pressed', 'false');
+  document.getElementById('critPathBtn').classList.remove('active');
+  document.getElementById('critPathBtn').setAttribute('aria-pressed', 'false');
+  document.getElementById('legend').classList.remove('visible');
+  gWrap.classed("crit-path-active", false);
+  render();
+});
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => render({ preserveView: true }), 150);
+});
+
 render();
 </script>
 
