@@ -4,6 +4,19 @@
 
 ## v4.3 (2026-03-14)
 
+### Quick Summary
+
+- Planner persistence now loads legacy `gardenOS_v4`, migrates it into schema v1, validates the workspace, and saves back under `gardenOS`.
+- The new schema envelope standardizes `schemaVersion`, `meta`, `selectedBedId`, `beds[]`, and `ui`.
+- URL hash payloads remain backward compatible and are routed through the same migration pipeline.
+- Cage-mode wall behavior now uses a runtime override instead of burning `'back'` into stored user settings.
+- The stored trellis toggle is preserved, but cage mode ignores it when deriving effective vertical support.
+- The shared nav now links `index.html`, `garden-planner-v4.html`, `garden-cage-build-guide.html`, `garden-cage-ops-guide.html`, and `garden_planner_scoring_system_map.html`.
+- The scoring visualizer is now linked as a live tool from the scoring map and the home hub.
+- `garden-cage-build-guide.html` is the canonical build guide; the stale fixed duplicate was retired.
+- The ops guide was replaced with the complete 7-section expandable version.
+- v4.3 is the release where navigation cleanup and persistence refresh landed together, not as separate patch lines.
+
 Architecture refactor: derived cell traits. The scoring engine no longer reads raw cage toggles — it reads structural meaning stamped onto each cell by a single zone derivation pass.
 
 ### New Architecture: Two-Layer Cage Model
