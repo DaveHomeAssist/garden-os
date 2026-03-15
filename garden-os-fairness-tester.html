@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — Fairness Tester</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
+<style>
+:root {
+  --soil:#5c3d1e;--soil-mid:#7a5230;--soil-light:#9a6b42;
+  --leaf:#3d7a4f;--leaf-bright:#5aab6b;--leaf-pale:#c8e6c9;
+  --sun:#e8c84a;--sun-pale:#fdf3c0;
+  --cream:#f7f2ea;--cream-dark:#ede5d8;--cream-mid:#f0e9de;
+  --text:#1e110a;--text-mid:#5a3e2b;--text-light:#7d5f45;
+  --border:#c8b090;--border-light:#ddd0b8;
+  --warn:#d4651a;--good:#3d7a4f;--bad:#b02a1e;--blue:#3a6abf;
+  --panel:#f0e9de;
+  --radius:8px;
+  --shadow:0 2px 12px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ═══ NAV ═══ */
+.os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:.65rem;flex-wrap:wrap;}
+.os-nav a{color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;transition:color .15s;min-height:44px;display:flex;align-items:center;}
+.os-nav a:hover{color:#f5ede0;}
+.os-nav a.active,.os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
+
+/* ═══ HEADER ═══ */
+header{background:var(--soil);color:#f5ede0;padding:1.5rem 1.5rem;border-bottom:3px solid var(--sun);text-align:center;}
+header h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.25rem;}
+header p{font-size:.7rem;font-family:'DM Mono',monospace;opacity:.78;text-transform:uppercase;letter-spacing:.1em;}
+
+/* ═══ LAYOUT ═══ */
+.container{max-width:1100px;margin:0 auto;padding:1rem 1.2rem 3rem;}
+
+/* ═══ SUMMARY CARD ═══ */
+.summary-card{background:white;border:2px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow);}
+.summary-card h2{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:1rem;}
+.summary-stats{display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:1rem;}
+.stat-box{background:var(--cream-mid);border-radius:var(--radius);padding:1rem 1.2rem;text-align:center;min-width:120px;}
+.stat-box .val{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;line-height:1.1;}
+.stat-box .label{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);margin-top:.25rem;}
+.outlier-list{font-size:.82rem;line-height:1.7;}
+.outlier-list .tag{display:inline-block;background:var(--sun-pale);border:1px solid var(--sun);border-radius:4px;padding:.1rem .4rem;margin:.15rem .2rem;font-family:'DM Mono',monospace;font-size:.72rem;}
+.run-btn{background:var(--soil);color:#f5ede0;border:none;border-radius:var(--radius);padding:.6rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;min-height:44px;margin-top:.5rem;transition:background .15s;}
+.run-btn:hover{background:var(--soil-mid);}
+
+/* ═══ TABS ═══ */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.2rem;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tab-bar button{background:none;border:none;border-bottom:3px solid transparent;padding:.6rem 1rem;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-mid);cursor:pointer;white-space:nowrap;min-height:44px;transition:color .15s,border-color .15s;}
+.tab-bar button:hover{color:var(--text);}
+.tab-bar button.active{color:var(--text);border-bottom-color:var(--sun);font-weight:500;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.tab-panel h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.75rem;}
+.tab-panel .desc{font-size:.78rem;color:var(--text-mid);margin-bottom:1rem;line-height:1.5;}
+
+/* ═══ BAR CHARTS ═══ */
+.bar-chart{display:flex;flex-direction:column;gap:4px;}
+.bar-row{display:flex;align-items:center;gap:.5rem;min-height:28px;cursor:pointer;}
+.bar-row:hover{background:var(--cream-dark);border-radius:4px;}
+.bar-label{width:160px;flex-shrink:0;font-size:.78rem;font-family:'DM Sans',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;background:var(--cream-dark);border-radius:4px;height:22px;position:relative;overflow:visible;}
+.bar-fill{height:100%;border-radius:4px;transition:width .3s;min-width:2px;position:relative;}
+.bar-val{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:.6rem;color:var(--text);white-space:nowrap;}
+.bar-fill .bar-val{color:white;mix-blend-mode:difference;}
+
+/* ═══ DIVERGING BARS ═══ */
+.div-chart{display:flex;flex-direction:column;gap:4px;}
+.div-row{display:flex;align-items:center;gap:.5rem;min-height:28px;cursor:pointer;}
+.div-row:hover{background:var(--cream-dark);border-radius:4px;}
+.div-label{width:160px;flex-shrink:0;font-size:.78rem;}
+.div-track{flex:1;display:flex;height:22px;position:relative;}
+.div-left{height:100%;background:var(--bad);border-radius:4px 0 0 4px;opacity:.7;margin-left:auto;}
+.div-right{height:100%;background:var(--good);border-radius:0 4px 4px 0;opacity:.7;}
+.div-center{width:2px;background:var(--text-mid);flex-shrink:0;}
+.div-half{flex:1;display:flex;position:relative;}
+.div-half.left{justify-content:flex-end;}
+.div-val{font-family:'DM Mono',monospace;font-size:.58rem;position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;}
+.div-val.lv{right:4px;color:var(--bad);}
+.div-val.rv{left:4px;color:var(--good);}
+
+/* ═══ TABLES ═══ */
+.data-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem;}
+.data-table th{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-mid);padding:.5rem .6rem;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;}
+.data-table td{padding:.4rem .6rem;border-bottom:1px solid var(--border-light);vertical-align:middle;}
+.data-table tr:hover{background:var(--cream-dark);}
+.data-table tr{cursor:pointer;}
+.cell-green{background:#c8e6c9;}
+.cell-yellow{background:var(--sun-pale);}
+.cell-red{background:#ffcdd2;}
+.flag{display:inline-block;background:#ffcdd2;color:var(--bad);font-family:'DM Mono',monospace;font-size:.6rem;padding:.1rem .35rem;border-radius:3px;margin-left:.3rem;}
+.flag.warn{background:var(--sun-pale);color:var(--warn);}
+.flag.good{background:var(--leaf-pale);color:var(--good);}
+
+/* ═══ DOT OVERLAY ═══ */
+.dot{width:8px;height:8px;border-radius:50%;position:absolute;top:50%;transform:translateY(-50%);border:1px solid white;z-index:2;}
+
+/* ═══ DETAIL PANEL ═══ */
+.detail-panel{background:white;border:2px solid var(--sun);border-radius:var(--radius);padding:1.2rem;margin-top:1.2rem;box-shadow:var(--shadow);display:none;}
+.detail-panel.visible{display:block;}
+.detail-panel h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.75rem;}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.75rem;}
+.detail-item{background:var(--cream-mid);border-radius:var(--radius);padding:.75rem;}
+.detail-item .di-title{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-mid);margin-bottom:.3rem;}
+.detail-item .di-val{font-size:.9rem;font-weight:500;}
+.detail-item .di-sub{font-size:.72rem;color:var(--text-mid);margin-top:.2rem;}
+
+/* ═══ NEW CROP FORM ═══ */
+.collapsible{margin-top:2rem;border:1.5px solid var(--border);border-radius:var(--radius);background:white;overflow:hidden;}
+.collapsible-header{background:var(--cream-mid);padding:.8rem 1.2rem;cursor:pointer;font-family:'Fraunces',serif;font-size:1rem;font-weight:600;display:flex;justify-content:space-between;align-items:center;min-height:44px;}
+.collapsible-header::after{content:'+ Expand';font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text-mid);}
+.collapsible.open .collapsible-header::after{content:'- Collapse';}
+.collapsible-body{display:none;padding:1.2rem;}
+.collapsible.open .collapsible-body{display:block;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;}
+.form-group{display:flex;flex-direction:column;gap:.25rem;}
+.form-group label{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-mid);}
+.form-group input,.form-group select{border:1.5px solid var(--border);border-radius:4px;padding:.4rem .5rem;font-family:'DM Sans',sans-serif;font-size:.85rem;background:white;min-height:44px;}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sun);box-shadow:0 0 0 2px var(--sun-pale);}
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:.4rem;}
+.checkbox-grid label{display:flex;align-items:center;gap:.3rem;font-size:.78rem;cursor:pointer;padding:.2rem .4rem;border:1px solid var(--border-light);border-radius:4px;min-height:44px;}
+.checkbox-grid input[type="checkbox"]{width:18px;height:18px;}
+.range-group{display:flex;flex-direction:column;gap:.2rem;}
+.range-group input[type="range"]{width:100%;min-height:44px;}
+.range-val{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-mid);}
+.form-actions{display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap;}
+.form-actions button{min-height:44px;padding:.5rem 1.2rem;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;border:1.5px solid var(--border);}
+.btn-primary{background:var(--soil);color:#f5ede0;border-color:var(--soil);}
+.btn-primary:hover{background:var(--soil-mid);}
+.btn-secondary{background:white;color:var(--text);}
+.btn-secondary:hover{background:var(--cream-mid);}
+.report-card{margin-top:1rem;}
+.alert-list{list-style:none;padding:0;margin-top:.5rem;}
+.alert-list li{background:#ffcdd2;border-left:3px solid var(--bad);padding:.4rem .6rem;margin-bottom:.3rem;font-size:.78rem;border-radius:0 4px 4px 0;}
+
+/* ═══ PRINT ═══ */
+@media print{
+  .os-nav,.run-btn,.tab-bar,.collapsible,.detail-panel{display:none!important;}
+  .tab-panel{display:block!important;page-break-inside:avoid;margin-bottom:2rem;}
+  body{background:white;}
+  .summary-card,.container{box-shadow:none;border:1px solid #ccc;}
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1199px){
+  .container{max-width:900px;}
+  .bar-label,.div-label{width:130px;}
+}
+@media(max-width:819px){
+  .summary-stats{flex-direction:column;}
+  .form-grid{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr 1fr;}
+  .bar-label,.div-label{width:110px;font-size:.72rem;}
+}
+@media(max-width:600px){
+  header h1{font-size:1.4rem;}
+  .tab-bar button{padding:.5rem .6rem;font-size:.6rem;}
+  .bar-label,.div-label{width:90px;font-size:.68rem;}
+  .detail-grid{grid-template-columns:1fr;}
+  .data-table{font-size:.7rem;}
+  .data-table th,.data-table td{padding:.3rem .4rem;}
+}
+</style>
+</head>
+<body>
+<nav class="os-nav" aria-label="Garden OS">
+  <a href="index.html">Home</a>
+  <a href="garden-league-simulator-v3.html">Play Game</a>
+  <a href="garden-planner-v4.html">Planner</a>
+  <a href="garden-cage-build-guide.html">Build Guide</a>
+  <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_visualizer.html">Scoring Visualizer</a>
+  <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
+  <a href="garden-os-system-map.html">System Map</a>
+  <a href="garden-os-fairness-tester.html" class="active" aria-current="page">Fairness Tester</a>
+</nav>
+<header>
+  <h1>Garden OS — Fairness Tester</h1>
+  <p>Crop balance analysis for Season Engine v3</p>
+</header>
+
+<main class="container">
+  <div class="summary-card" id="summaryCard">
+    <h2>Balance Summary</h2>
+    <div class="summary-stats" id="summaryStats"></div>
+    <div class="outlier-list" id="outlierList"></div>
+    <button class="run-btn" id="runBtn">Run All Tests</button>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <div id="tabPanels"></div>
+
+  <div class="detail-panel" id="detailPanel">
+    <h3 id="detailTitle"></h3>
+    <div class="detail-grid" id="detailGrid"></div>
+  </div>
+
+  <div class="collapsible" id="newCropSection">
+    <div class="collapsible-header" id="newCropToggle">Test a New Crop</div>
+    <div class="collapsible-body" id="newCropBody"></div>
+  </div>
+</main>
+
+<script>
+(()=>{
+'use strict';
+
+// ═══ DATA SYNC NOTICE ═══
+// Crop data (C) and scoring functions copied from garden-league-simulator-v3.html
+// Last synced: 2026-03-15
+// If you modify crop attributes or scoring in v3, update this file to match.
+// ═══════════════════════
+
+/* ===== CONSTANTS ===== */
+const COLS=8,ROWS=4,SIZE=32;
+const TRELLIS=new Set([0,1]);
+const SEASONS=['spring','summer','fall'];
+
+/* ===== CROPS ===== */
+const C={
+cherry_tom:{id:'cherry_tom',name:'Cherry Tomato',emoji:'\u{1F345}',short:'CT',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold'],conflicts:['broccoli'],chapterUnlock:1,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],sm:{spring:.5,summer:1,fall:.3}},
+pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:2,coolSeason:true,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion'],chapterUnlock:2,recipes:[],sm:{spring:.9,summer:.8,fall:.7}},
+peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:4,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce','radish','spinach'],conflicts:['onion'],chapterUnlock:2,recipes:[],sm:{spring:1,summer:.3,fall:.9}},
+cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:['tomato_sandwich'],sm:{spring:.4,summer:1,fall:.5}},
+radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:['radish'],chapterUnlock:1,recipes:[],sm:{spring:.9,summer:.4,fall:.85}},
+lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:3,sunIdeal:5,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish','onion','peas'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],sm:{spring:1,summer:.3,fall:1}},
+arugula:{id:'arugula',name:'Arugula',emoji:'\u{1F33F}',short:'ARU',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['dill','basil'],conflicts:[],chapterUnlock:1,recipes:[],sm:{spring:1,summer:.3,fall:.9}},
+broccoli:{id:'broccoli',name:'Broccoli',emoji:'\u{1F966}',short:'BRC',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:true,water:3,companions:['onion','dill'],conflicts:['cherry_tom'],chapterUnlock:5,recipes:[],sm:{spring:.9,summer:.3,fall:1}},
+kale:{id:'kale',name:'Kale',emoji:'\u{1F96C}',short:'KAL',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:4,coolSeason:true,tall:true,water:3,companions:['marigold'],conflicts:[],chapterUnlock:3,recipes:[],sm:{spring:.9,summer:.4,fall:1}},
+carrot:{id:'carrot',name:'Carrot',emoji:'\u{1F955}',short:'CAR',faction:'roots',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['lettuce','onion'],conflicts:['dill'],chapterUnlock:3,recipes:['moms_sauce'],sm:{spring:.9,summer:.6,fall:1}},
+onion:{id:'onion',name:'Onion',emoji:'\u{1F9C5}',short:'ONI',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:true,tall:false,water:2,companions:['carrot','pepper'],conflicts:['peas','pole_beans'],chapterUnlock:1,recipes:['weeknight_pasta','moms_sauce'],sm:{spring:.8,summer:.7,fall:.8}},
+beet:{id:'beet',name:'Beet',emoji:'\u{1FADA}',short:'BET',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['onion'],conflicts:[],chapterUnlock:3,recipes:[],sm:{spring:.9,summer:.5,fall:1}},
+spinach:{id:'spinach',name:'Spinach',emoji:'\u{1F343}',short:'SPI',faction:'greens',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['radish'],conflicts:[],chapterUnlock:1,recipes:[],sm:{spring:1,summer:.2,fall:1}},
+chard:{id:'chard',name:'Chard',emoji:'\u{1F331}',short:'CHD',faction:'greens',sunMin:5,sunIdeal:7,support:false,shadeScore:4,coolSeason:false,tall:false,water:3,companions:['onion'],conflicts:[],chapterUnlock:5,recipes:[],sm:{spring:.7,summer:1,fall:.7}},
+basil:{id:'basil',name:'Basil',emoji:'\u{1F33F}',short:'BAS',faction:'herbs',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:false,tall:false,water:3,companions:['cherry_tom','pepper'],conflicts:[],chapterUnlock:1,recipes:['herb_bowl','tomato_sandwich','weeknight_pasta','moms_sauce'],sm:{spring:.5,summer:1,fall:.4}},
+dill:{id:'dill',name:'Dill',emoji:'\u{1FAB4}',short:'DIL',faction:'herbs',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['broccoli'],conflicts:['cherry_tom','carrot'],chapterUnlock:5,recipes:['herb_bowl'],sm:{spring:1,summer:.5,fall:.8}},
+pepper:{id:'pepper',name:'Pepper',emoji:'\u{1F336}\uFE0F',short:'PEP',faction:'fruiting',sunMin:6,sunIdeal:8,support:false,shadeScore:1,coolSeason:false,tall:false,water:2,companions:['basil','onion'],conflicts:['peas'],chapterUnlock:1,recipes:['weeknight_pasta','moms_sauce'],sm:{spring:.4,summer:1,fall:.3}},
+zucchini:{id:'zucchini',name:'Zucchini',emoji:'\u{1F952}',short:'ZUC',faction:'fruiting',sunMin:6,sunIdeal:8,support:false,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['marigold'],conflicts:[],chapterUnlock:2,recipes:[],sm:{spring:.4,summer:1,fall:.3}},
+marigold:{id:'marigold',name:'Marigold',emoji:'\u{1F33C}',short:'MAR',faction:'companions',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:false,tall:false,water:2,companions:['cherry_tom','pepper','broccoli'],conflicts:[],chapterUnlock:1,recipes:[],sm:{spring:.6,summer:1,fall:.5}},
+nasturtium:{id:'nasturtium',name:'Nasturtium',emoji:'\u{1F338}',short:'NAS',faction:'companions',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:false,tall:false,water:2,companions:['zucchini'],conflicts:[],chapterUnlock:7,recipes:[],sm:{spring:.5,summer:1,fall:.4}}
+};
+
+const RECIPES={
+herb_bowl:{name:'Herb Bowl',crops:['basil','dill']},
+tomato_sandwich:{name:'Tomato Sandwich',crops:['cherry_tom','basil','lettuce']},
+weeknight_pasta:{name:'Weeknight Pasta',crops:['cherry_tom','basil','pepper','onion']},
+moms_sauce:{name:"Mom's Sauce",crops:['cherry_tom','basil','pepper','onion','carrot']}
+};
+
+const FACTIONS=[['climbers','Climbers'],['fast_cycles','Fast Cycles'],['brassicas','Brassicas'],['roots','Roots'],['greens','Greens'],['herbs','Herbs'],['fruiting','Fruiting'],['companions','Companions']];
+const GRADES=[['A+',90],['A',80],['B',70],['C',60],['D',50],['F',0]];
+
+/* ===== UTILITY ===== */
+function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n))}
+function rc(i){return{row:Math.floor(i/COLS),col:i%COLS}}
+function ri(r,c){return r*COLS+c}
+function nbs(i){const{row,col}=rc(i);const o=[];if(row>0)o.push(ri(row-1,col));if(row<ROWS-1)o.push(ri(row+1,col));if(col>0)o.push(ri(row,col-1));if(col<COLS-1)o.push(ri(row,col+1));return o}
+function grade(s){for(const[g,t]of GRADES)if(s>=t)return g;return'F'}
+
+/* ===== LIGHT MODEL ===== */
+const BASE_SUN=6;
+function effectiveLight(idx,grid,crops){
+  const cr=crops||C;
+  const{row,col}=rc(idx);
+  const rfw=row;
+  const shadow=Math.max(0,(2-rfw)*.75);
+  let L=Math.max(1,BASE_SUN-shadow);
+  if(row>0){const bi=ri(row-1,col);const bc=grid[bi];if(bc&&bc.cropId&&cr[bc.cropId]&&cr[bc.cropId].tall)L-=.5}
+  return Math.max(1,L);
+}
+
+/* ===== PLANNER SUN MODEL ===== */
+function sunDistanceRatio(dir,r,c,bedW,bedH){
+  const wSpan=Math.max(1,bedW-1),hSpan=Math.max(1,bedH-1);
+  if(dir==='east')return c/wSpan;
+  if(dir==='west')return(bedW-1-c)/wSpan;
+  if(dir==='south')return r/hSpan;
+  return(bedH-1-r)/hSpan;
+}
+function sunAxisForDirection(dir){return(dir==='east'||dir==='west')?'ew':'ns'}
+function effectiveLightPlanner(idx,grid,dir,crops){
+  const cr=crops||C;
+  const{row,col}=rc(idx);
+  const axisAligned=('ns'===sunAxisForDirection(dir));
+  const gradientMax=axisAligned?0.7:1.15;
+  const dist=sunDistanceRatio(dir,row,col,COLS,ROWS);
+  const gradientPenalty=dist*gradientMax;
+  let L=Math.max(0,BASE_SUN-gradientPenalty);
+  if(row>0){const bi=ri(row-1,col);const bc=grid[bi];if(bc&&bc.cropId&&cr[bc.cropId]&&cr[bc.cropId].tall)L-=.5}
+  return Math.max(1,L);
+}
+
+/* ===== SCORING ===== */
+function sunFit(crop,L){
+  if(L>=crop.sunIdeal)return 5;
+  const rng=Math.max(.01,crop.sunIdeal-crop.sunMin);
+  if(L>=crop.sunMin)return 3+2*((L-crop.sunMin)/rng);
+  return clamp(1+Math.max(0,(L/Math.max(.01,crop.sunMin))*2),0,5);
+}
+function supFit(crop,row){if(crop.support)return TRELLIS.has(row)?5:1;return 3}
+function shadeFit(crop,L){return L<crop.sunMin?Math.max(1,crop.shadeScore*.6):crop.shadeScore}
+function accFit(crop,row){const as=(ROWS-1-row)/(ROWS-1);return crop.tall?3:3+as*2}
+function seaFit(crop,season){
+  if(season==='spring')return crop.coolSeason?5:3;
+  if(season==='summer')return crop.coolSeason?2:5;
+  if(season==='fall')return crop.coolSeason?5:2;
+  return 3;
+}
+function adjScore(idx,cid,grid,crops){
+  const cr=crops||C;
+  const crop=cr[cid];let raw=0;
+  for(const ni of nbs(idx)){const nc=grid[ni];if(!nc||!nc.cropId)continue;const o=cr[nc.cropId];if(!o)continue;
+    if(crop.companions.includes(nc.cropId))raw+=.5;
+    if(crop.conflicts.includes(nc.cropId))raw-=1.2;
+    if(crop.tall&&o.tall)raw-=.75;
+    if(nc.cropId===cid)raw-=.2;
+    if(Math.abs(crop.water-o.water)>=2)raw-=.5;
+  }
+  return clamp(raw,-2,2);
+}
+
+function scoreCellSolo(idx,cid,season,crops,lightFn){
+  const cr=crops||C;
+  const crop=cr[cid];if(!crop)return 0;
+  const grid=new Array(SIZE).fill(null);
+  grid[idx]={cropId:cid};
+  const{row}=rc(idx);
+  const L=lightFn?lightFn(idx,grid,cr):effectiveLight(idx,grid,cr);
+  const sf=sunFit(crop,L),sp=supFit(crop,row),sh=shadeFit(crop,L),ac=accFit(crop,row),se=seaFit(crop,season);
+  const core=(sf*2+sp+sh+ac+se)/3;
+  const sm=crop.sm[season]||1;
+  return clamp(core*sm,0,10);
+}
+
+function scoreCell(idx,grid,season,crops,lightFn){
+  const cr=crops||C;
+  const cell=grid[idx];if(!cell||!cell.cropId)return null;
+  const crop=cr[cell.cropId];if(!crop)return null;
+  const{row}=rc(idx);
+  const L=lightFn?lightFn(idx,grid,cr):effectiveLight(idx,grid,cr);
+  const sf=sunFit(crop,L),sp=supFit(crop,row),sh=shadeFit(crop,L),ac=accFit(crop,row),se=seaFit(crop,season);
+  const adj=adjScore(idx,cell.cropId,grid,cr);
+  const core=(sf*2+sp+sh+ac+se)/3;
+  const sm=crop.sm[season]||1;
+  const preAdj=core*sm;
+  const cs=clamp(preAdj+adj,0,10);
+  const em=cell.eventModifier||0;
+  const mb=cell.interventionFlag==='mulched'?.5:0;
+  const cp=cell.interventionFlag==='companion_patched'?1:0;
+  const ft=cell.soilFatigue||0;
+  const fs=clamp(cs+em+mb+cp+ft,0,10);
+  return{index:idx,cropId:cell.cropId,finalScore:fs,factors:{sun:sf,support:sp,shade:sh,access:ac,season:se,adjacency:adj+2.5},light:L};
+}
+
+function bedScore(grid,season,crops){
+  const cr=crops||C;
+  const cs=[];for(let i=0;i<SIZE;i++){const s=scoreCell(i,grid,season,cr);if(s)cs.push(s)}
+  if(!cs.length)return{cellScores:cs,bedAverage:0,finalScore:0,grade:'F'};
+  const avg=cs.reduce((a,c)=>a+c.finalScore,0)/cs.length;
+  const uq=new Set(cs.map(c=>c.cropId));
+  let db=0;if(uq.size>=4)db=.7;else if(uq.size>=3)db=.5;else if(uq.size>=2)db=.3;
+  const tt=new Set(cs.filter(c=>cr[c.cropId].tall).map(c=>c.cropId));
+  const tp=tt.size>1?-.8:0;
+  const tr=new Set(cs.filter(c=>cr[c.cropId].support).map(c=>c.cropId));
+  const trp=tr.size>1?-.6:0;
+  let rb=0;
+  for(const[,rec]of Object.entries(RECIPES)){if(rec.crops.every(c=>uq.has(c)))rb+=.2}
+  const fr=cs.length/SIZE;const fp=(1-Math.sqrt(fr))*1.5;
+  let bs=clamp(avg+db+tp+trp-fp+rb,0,10);
+  const fs=clamp(bs*10,0,100);
+  const g=grade(fs);
+  return{cellScores:cs,bedAverage:bs,finalScore:fs,grade:g};
+}
+
+/* ===== HELPERS ===== */
+const cropIds=()=>Object.keys(C);
+const cropList=()=>Object.values(C);
+function mean(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0}
+function stdDev(arr){const m=mean(arr);return Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length)}
+function pct(v,max){return Math.min(100,Math.max(0,(v/max)*100))}
+function colorScore(v,med,range){
+  if(v>=med+range*.3)return'var(--good)';
+  if(v>=med-range*.3)return'var(--sun)';
+  return'var(--bad)';
+}
+function cellBg(v,lo,hi){
+  const t=clamp((v-lo)/(hi-lo||1),0,1);
+  if(t>.66)return'#c8e6c9';
+  if(t>.33)return'#fdf3c0';
+  return'#ffcdd2';
+}
+
+function el(tag,props,children){
+  const e=document.createElement(tag);
+  if(props){
+    for(const[k,v]of Object.entries(props)){
+      if(k==='style'&&typeof v==='object'){Object.assign(e.style,v)}
+      else if(k==='className')e.className=v;
+      else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);
+      else e.setAttribute(k,v);
+    }
+  }
+  if(children){
+    if(typeof children==='string')e.textContent=children;
+    else if(Array.isArray(children))children.forEach(c=>{if(c)e.appendChild(c)});
+    else e.appendChild(children);
+  }
+  return e;
+}
+
+/* ===== TEST RESULTS STORAGE ===== */
+let results={};
+let activeCrops=C;
+
+/* ===== TEST 1: SOLO PERFORMANCE ===== */
+function runSoloPerfTest(crops){
+  const cr=crops||C;
+  const data={};
+  for(const cid of Object.keys(cr)){
+    const scores=[];let bestScore=-1,bestPos='',bestSeason='',worstScore=11,worstPos='',worstSeason='';
+    for(const season of SEASONS){
+      for(let i=0;i<SIZE;i++){
+        const s=scoreCellSolo(i,cid,season,cr);
+        scores.push(s);
+        if(s>bestScore){bestScore=s;bestPos='R'+rc(i).row+'C'+rc(i).col;bestSeason=season}
+        if(s<worstScore){worstScore=s;worstPos='R'+rc(i).row+'C'+rc(i).col;worstSeason=season}
+      }
+    }
+    data[cid]={avg:mean(scores),scores,bestScore,bestPos,bestSeason,worstScore,worstPos,worstSeason};
+  }
+  return data;
+}
+
+/* ===== TEST 2: OPTIMAL CEILING ===== */
+function runCeilingTest(crops){
+  const cr=crops||C;
+  const data={};
+  for(const cid of Object.keys(cr)){
+    const perSeason={};
+    for(const season of SEASONS){
+      let best=0;
+      for(let i=0;i<SIZE;i++){
+        const s=scoreCellSolo(i,cid,season,cr);
+        if(s>best)best=s;
+      }
+      perSeason[season]=best;
+    }
+    data[cid]=perSeason;
+  }
+  const ceilings=Object.values(data).map(d=>mean(Object.values(d)));
+  const medCeil=mean(ceilings);
+  for(const cid of Object.keys(data)){
+    data[cid].avgCeiling=mean(Object.values(data[cid]).filter(v=>typeof v==='number'));
+    data[cid].gap=data[cid].avgCeiling-medCeil;
+  }
+  return{data,medCeil};
+}
+
+/* ===== TEST 3: ADJACENCY POWER ===== */
+function runAdjTest(crops){
+  const cr=crops||C;
+  const data={};
+  for(const cid of Object.keys(cr)){
+    const crop=cr[cid];
+    // Best case: center cell (r1,c4), all 4 neighbors are best companion
+    const bestCompanion=crop.companions[0]||null;
+    const worstConflict=crop.conflicts[0]||null;
+    // Compute best adj
+    const bestGrid=new Array(SIZE).fill(null);
+    const ci=ri(1,4);
+    bestGrid[ci]={cropId:cid};
+    if(bestCompanion){for(const ni of nbs(ci))bestGrid[ni]={cropId:bestCompanion}}
+    const bestAdj=adjScore(ci,cid,bestGrid,cr);
+    // Compute worst adj
+    const worstGrid=new Array(SIZE).fill(null);
+    worstGrid[ci]={cropId:cid};
+    if(worstConflict){for(const ni of nbs(ci))worstGrid[ni]={cropId:worstConflict}}
+    else{for(const ni of nbs(ci))worstGrid[ni]={cropId:cid}} // self-crowding
+    const worstAdj=adjScore(ci,cid,worstGrid,cr);
+    data[cid]={best:bestAdj,worst:worstAdj,swing:bestAdj-worstAdj,companions:crop.companions,conflicts:crop.conflicts,noConflicts:crop.conflicts.length===0};
+  }
+  return data;
+}
+
+/* ===== TEST 4: SEASON FLEXIBILITY ===== */
+function runFlexTest(crops){
+  const cr=crops||C;
+  const data={};
+  for(const cid of Object.keys(cr)){
+    const perSeason={};let flexCount=0;
+    for(const season of SEASONS){
+      let best=0;
+      for(let i=0;i<SIZE;i++){
+        const s=scoreCellSolo(i,cid,season,cr);
+        if(s>best)best=s;
+      }
+      perSeason[season]=best;
+      if(best>=5.0)flexCount++;
+    }
+    data[cid]={seasons:perSeason,flexCount};
+  }
+  return data;
+}
+
+/* ===== TEST 5: MONOCULTURE RESISTANCE ===== */
+function runMonoTest(crops){
+  const cr=crops||C;
+  const data={};
+  for(const cid of Object.keys(cr)){
+    const grid=new Array(SIZE).fill(null).map(()=>({cropId:cid}));
+    let bestFs=0;
+    for(const season of SEASONS){
+      const bs=bedScore(grid,season,cr);
+      if(bs.finalScore>bestFs)bestFs=bs.finalScore;
+    }
+    data[cid]={monoScore:bestFs};
+  }
+  return data;
+}
+
+/* ===== TEST 6: FACTION BALANCE ===== */
+function runFactionTest(soloData,crops){
+  const cr=crops||C;
+  const factionGroups={};
+  for(const[fid]of FACTIONS)factionGroups[fid]=[];
+  for(const cid of Object.keys(cr)){
+    const f=cr[cid].faction;
+    if(!factionGroups[f])factionGroups[f]=[];
+    factionGroups[f].push({id:cid,avg:soloData[cid].avg});
+  }
+  const factionAvgs={};
+  for(const[fid]of FACTIONS){
+    const crops2=factionGroups[fid]||[];
+    factionAvgs[fid]={avg:mean(crops2.map(c=>c.avg)),crops:crops2};
+  }
+  const allAvgs=Object.values(factionAvgs).map(f=>f.avg);
+  const fMean=mean(allAvgs);
+  return{factionAvgs,fMean};
+}
+
+/* ===== TEST 7: CHAPTER AVAILABILITY ===== */
+function runChapterTest(soloData,crops){
+  const cr=crops||C;
+  const chapters={};
+  for(const cid of Object.keys(cr)){
+    const ch=cr[cid].chapterUnlock;
+    if(!chapters[ch])chapters[ch]=[];
+    chapters[ch].push({id:cid,avg:soloData[cid].avg});
+  }
+  const chapterAvgs={};
+  for(const ch of Object.keys(chapters).sort((a,b)=>a-b)){
+    chapterAvgs[ch]={avg:mean(chapters[ch].map(c=>c.avg)),crops:chapters[ch]};
+  }
+  return chapterAvgs;
+}
+
+/* ===== TEST 8: RECIPE CONTRIBUTION ===== */
+function runRecipeTest(soloData,crops){
+  const cr=crops||C;
+  const recipeCrops=new Set();
+  for(const rec of Object.values(RECIPES))for(const c of rec.crops)recipeCrops.add(c);
+  const inRecipe=[],notInRecipe=[];
+  for(const cid of Object.keys(cr)){
+    if(recipeCrops.has(cid))inRecipe.push({id:cid,avg:soloData[cid].avg});
+    else notInRecipe.push({id:cid,avg:soloData[cid].avg});
+  }
+  return{inRecipe,notInRecipe,inAvg:mean(inRecipe.map(c=>c.avg)),outAvg:mean(notInRecipe.map(c=>c.avg)),gap:mean(inRecipe.map(c=>c.avg))-mean(notInRecipe.map(c=>c.avg))};
+}
+
+/* ===== TEST 9: SUN MODEL COMPARISON ===== */
+function runSunModelTest(crops){
+  const cr=crops||C;
+  const data={};
+  const configs=[
+    {name:'Game Default',fn:null},
+    {name:'South-facing',fn:(idx,grid,cr2)=>effectiveLightPlanner(idx,grid,'south',cr2)},
+    {name:'West-facing',fn:(idx,grid,cr2)=>effectiveLightPlanner(idx,grid,'west',cr2)},
+    {name:'East-facing',fn:(idx,grid,cr2)=>effectiveLightPlanner(idx,grid,'east',cr2)}
+  ];
+  for(const cid of Object.keys(cr)){
+    data[cid]={};
+    for(const cfg of configs){
+      const scores=[];
+      for(const season of SEASONS){
+        for(let i=0;i<SIZE;i++){
+          scores.push(scoreCellSolo(i,cid,season,cr,cfg.fn));
+        }
+      }
+      data[cid][cfg.name]=mean(scores);
+    }
+  }
+  return{data,configs:configs.map(c=>c.name)};
+}
+
+/* ===== RUN ALL ===== */
+function runAllTests(crops){
+  const cr=crops||C;
+  const solo=runSoloPerfTest(cr);
+  const ceiling=runCeilingTest(cr);
+  const adj=runAdjTest(cr);
+  const flex=runFlexTest(cr);
+  const mono=runMonoTest(cr);
+  const faction=runFactionTest(solo,cr);
+  const chapter=runChapterTest(solo,cr);
+  const recipe=runRecipeTest(solo,cr);
+  const sunModel=runSunModelTest(cr);
+  return{solo,ceiling,adj,flex,mono,faction,chapter,recipe,sunModel};
+}
+
+/* ===== RENDERING ===== */
+const TABS=[
+  {id:'solo',name:'1. Solo Performance'},
+  {id:'ceiling',name:'2. Optimal Ceiling'},
+  {id:'adj',name:'3. Adjacency Power'},
+  {id:'flex',name:'4. Season Flexibility'},
+  {id:'mono',name:'5. Monoculture'},
+  {id:'faction',name:'6. Faction Balance'},
+  {id:'chapter',name:'7. Chapter Avail.'},
+  {id:'recipe',name:'8. Recipe Contrib.'},
+  {id:'sunmodel',name:'9. Sun Models'}
+];
+
+function buildTabs(){
+  const bar=document.getElementById('tabBar');
+  const panels=document.getElementById('tabPanels');
+  bar.textContent='';
+  panels.textContent='';
+  TABS.forEach((t,i)=>{
+    const btn=el('button',{className:i===0?'active':'',onClick:()=>switchTab(t.id)},t.name);
+    btn.dataset.tab=t.id;
+    bar.appendChild(btn);
+    const panel=el('div',{id:'panel-'+t.id,className:'tab-panel'+(i===0?' active':'')});
+    panels.appendChild(panel);
+  });
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab-bar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+id));
+}
+
+function renderSummary(r){
+  const soloAvgs=Object.values(r.solo).map(d=>d.avg);
+  const sd=stdDev(soloAvgs);
+  const balanceScore=clamp(10-sd*3,0,10);
+  const m=mean(soloAvgs);
+  const outliers=Object.keys(r.solo).filter(cid=>Math.abs(r.solo[cid].avg-m)>sd);
+
+  // Count red flags
+  let flags=0;
+  flags+=outliers.length;
+  for(const cid of Object.keys(r.adj))if(r.adj[cid].noConflicts)flags++;
+  for(const cid of Object.keys(r.mono))if(r.mono[cid].monoScore>50)flags++;
+  for(const cid of Object.keys(r.flex))if(r.flex[cid].flexCount===3)flags++;
+  for(const cid of Object.keys(r.flex))if(r.flex[cid].flexCount===0)flags++;
+  for(const[fid,fd]of Object.entries(r.faction.factionAvgs))if(Math.abs(fd.avg-r.faction.fMean)>1)flags++;
+  if(Math.abs(r.recipe.gap)>1)flags++;
+
+  const stats=document.getElementById('summaryStats');
+  stats.textContent='';
+  const scoreColor=balanceScore>=7?'var(--good)':balanceScore>=4?'var(--warn)':'var(--bad)';
+  const s1=el('div',{className:'stat-box'},[el('div',{className:'val',style:{color:scoreColor}},balanceScore.toFixed(1)),el('div',{className:'label'},'Balance Score')]);
+  const s2=el('div',{className:'stat-box'},[el('div',{className:'val',style:{color:flags>5?'var(--bad)':flags>2?'var(--warn)':'var(--good)'}},String(flags)),el('div',{className:'label'},'Red Flags')]);
+  const s3=el('div',{className:'stat-box'},[el('div',{className:'val'},String(Object.keys(r.solo).length)),el('div',{className:'label'},'Crops Tested')]);
+  stats.appendChild(s1);stats.appendChild(s2);stats.appendChild(s3);
+
+  const ol=document.getElementById('outlierList');
+  ol.textContent='';
+  if(outliers.length){
+    const label=el('span',{},'Outlier crops (>1 std dev from mean): ');
+    ol.appendChild(label);
+    outliers.forEach(cid=>{
+      const cr=activeCrops[cid]||C[cid];
+      const tag=el('span',{className:'tag'},cr.emoji+' '+cr.name+' ('+r.solo[cid].avg.toFixed(2)+')');
+      ol.appendChild(tag);
+    });
+  }else{
+    ol.appendChild(el('span',{style:{color:'var(--good)'}},'No outlier crops detected. Good balance.'));
+  }
+}
+
+function renderSoloPerf(r){
+  const panel=document.getElementById('panel-solo');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 1: Solo Performance'));
+  panel.appendChild(el('div',{className:'desc'},'Each crop placed alone in each of 32 cells across 3 seasons (96 placements). Average score shown. Bars colored relative to median.'));
+
+  const sorted=Object.keys(r.solo).sort((a,b)=>r.solo[b].avg-r.solo[a].avg);
+  const maxVal=Math.max(...sorted.map(cid=>r.solo[cid].avg));
+  const med=mean(sorted.map(cid=>r.solo[cid].avg));
+  const range=stdDev(sorted.map(cid=>r.solo[cid].avg));
+
+  const chart=el('div',{className:'bar-chart'});
+  sorted.forEach(cid=>{
+    const d=r.solo[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const row=el('div',{className:'bar-row',onClick:()=>showDetail(cid)});
+    row.appendChild(el('div',{className:'bar-label'},cr.emoji+' '+cr.name));
+    const track=el('div',{className:'bar-track'});
+    const fill=el('div',{className:'bar-fill',style:{width:pct(d.avg,maxVal)+'%',background:colorScore(d.avg,med,range)}});
+    fill.appendChild(el('span',{className:'bar-val'},d.avg.toFixed(2)));
+    fill.title='Best: '+d.bestPos+' ('+d.bestSeason+') '+d.bestScore.toFixed(2)+' | Worst: '+d.worstPos+' ('+d.worstSeason+') '+d.worstScore.toFixed(2);
+    track.appendChild(fill);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+  panel.appendChild(chart);
+}
+
+function renderCeiling(r){
+  const panel=document.getElementById('panel-ceiling');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 2: Optimal Ceiling'));
+  panel.appendChild(el('div',{className:'desc'},'Best single-cell score per crop per season. Ceiling Gap = delta from median ceiling. Flagged if >1.5 above median.'));
+
+  const tbl=el('table',{className:'data-table'});
+  const thead=el('thead');
+  const hr=el('tr');
+  ['Crop','Spring','Summer','Fall','Avg Ceiling','Gap'].forEach(h=>hr.appendChild(el('th',{},h)));
+  thead.appendChild(hr);tbl.appendChild(thead);
+  const tbody=el('tbody');
+  const cids=Object.keys(r.ceiling.data).sort((a,b)=>r.ceiling.data[b].avgCeiling-r.ceiling.data[a].avgCeiling);
+  const allCeilings=cids.map(cid=>r.ceiling.data[cid].avgCeiling);
+  const cMin=Math.min(...allCeilings),cMax=Math.max(...allCeilings);
+  cids.forEach(cid=>{
+    const d=r.ceiling.data[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const tr=el('tr',{onClick:()=>showDetail(cid)});
+    tr.appendChild(el('td',{},cr.emoji+' '+cr.name));
+    SEASONS.forEach(s=>{
+      const td=el('td',{style:{background:cellBg(d[s],cMin,cMax),fontFamily:'DM Mono, monospace',fontSize:'.75rem'}},d[s].toFixed(2));
+      tr.appendChild(td);
+    });
+    tr.appendChild(el('td',{style:{fontFamily:'DM Mono, monospace',fontSize:'.75rem',fontWeight:'500'}},d.avgCeiling.toFixed(2)));
+    const gapTd=el('td',{style:{fontFamily:'DM Mono, monospace',fontSize:'.75rem'}});
+    gapTd.textContent=(d.gap>=0?'+':'')+d.gap.toFixed(2);
+    if(d.gap>1.5){const f=el('span',{className:'flag'},'HIGH');gapTd.appendChild(f)}
+    tr.appendChild(gapTd);
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);panel.appendChild(tbl);
+}
+
+function renderAdj(r){
+  const panel=document.getElementById('panel-adj');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 3: Adjacency Power'));
+  panel.appendChild(el('div',{className:'desc'},'Best-case (all companions) vs worst-case (all conflicts) adjacency score. Swing = range of adjacency influence. Crops with 0 conflicts flagged.'));
+
+  const sorted=Object.keys(r.adj).sort((a,b)=>r.adj[b].swing-r.adj[a].swing);
+  const maxAbs=Math.max(...sorted.map(cid=>Math.max(Math.abs(r.adj[cid].best),Math.abs(r.adj[cid].worst))),1);
+
+  const chart=el('div',{className:'div-chart'});
+  sorted.forEach(cid=>{
+    const d=r.adj[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const row=el('div',{className:'div-row',onClick:()=>showDetail(cid)});
+    row.appendChild(el('div',{className:'div-label'},cr.emoji+' '+cr.name+(d.noConflicts?' ':'')));
+    if(d.noConflicts){const f=el('span',{className:'flag warn'},'0 conflicts');row.querySelector('.div-label').appendChild(f)}
+    const track=el('div',{className:'div-track'});
+    const leftHalf=el('div',{className:'div-half left'});
+    const rightHalf=el('div',{className:'div-half'});
+    const center=el('div',{className:'div-center'});
+    const leftBar=el('div',{className:'div-left',style:{width:pct(Math.abs(d.worst),maxAbs)+'%'}});
+    const leftVal=el('span',{className:'div-val lv'},d.worst.toFixed(2));
+    leftHalf.appendChild(leftBar);
+    leftHalf.appendChild(leftVal);
+    const rightBar=el('div',{className:'div-right',style:{width:pct(Math.abs(d.best),maxAbs)+'%'}});
+    const rightVal=el('span',{className:'div-val rv'},'+'+d.best.toFixed(2));
+    rightHalf.appendChild(rightBar);
+    rightHalf.appendChild(rightVal);
+    track.appendChild(leftHalf);track.appendChild(center);track.appendChild(rightHalf);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+  panel.appendChild(chart);
+}
+
+function renderFlex(r){
+  const panel=document.getElementById('panel-flex');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 4: Season Flexibility'));
+  panel.appendChild(el('div',{className:'desc'},'Optimal placement score per season. Green if >=5.0, yellow if 3-5, red if <3. Flexibility = number of viable seasons.'));
+
+  const tbl=el('table',{className:'data-table'});
+  const thead=el('thead');
+  const hr=el('tr');
+  ['Crop','Spring','Summer','Fall','Flex'].forEach(h=>hr.appendChild(el('th',{},h)));
+  thead.appendChild(hr);tbl.appendChild(thead);
+  const tbody=el('tbody');
+  Object.keys(r.flex).sort((a,b)=>r.flex[b].flexCount-r.flex[a].flexCount).forEach(cid=>{
+    const d=r.flex[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const tr=el('tr',{onClick:()=>showDetail(cid)});
+    tr.appendChild(el('td',{},cr.emoji+' '+cr.name));
+    SEASONS.forEach(s=>{
+      const v=d.seasons[s];
+      const bg=v>=5?'#c8e6c9':v>=3?'#fdf3c0':'#ffcdd2';
+      tr.appendChild(el('td',{style:{background:bg,fontFamily:'DM Mono, monospace',fontSize:'.75rem'}},v.toFixed(2)));
+    });
+    const flexTd=el('td',{style:{fontFamily:'DM Mono, monospace',fontSize:'.75rem',fontWeight:'500'}},String(d.flexCount)+'/3');
+    if(d.flexCount===3){const f=el('span',{className:'flag warn'},'ALL');flexTd.appendChild(f)}
+    if(d.flexCount===0){const f=el('span',{className:'flag'},'NONE');flexTd.appendChild(f)}
+    tr.appendChild(flexTd);
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);panel.appendChild(tbl);
+}
+
+function renderMono(r){
+  const panel=document.getElementById('panel-mono');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 5: Monoculture Resistance'));
+  panel.appendChild(el('div',{className:'desc'},'Fill entire 32-cell bed with one crop, take best season score. Lower is better. Flagged if >50/100.'));
+
+  const sorted=Object.keys(r.mono).sort((a,b)=>r.mono[b].monoScore-r.mono[a].monoScore);
+  const maxVal=Math.max(...sorted.map(cid=>r.mono[cid].monoScore),1);
+  const chart=el('div',{className:'bar-chart'});
+  sorted.forEach(cid=>{
+    const d=r.mono[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const row=el('div',{className:'bar-row',onClick:()=>showDetail(cid)});
+    row.appendChild(el('div',{className:'bar-label'},cr.emoji+' '+cr.name));
+    const track=el('div',{className:'bar-track'});
+    const bg=d.monoScore>50?'var(--bad)':d.monoScore>35?'var(--warn)':'var(--good)';
+    const fill=el('div',{className:'bar-fill',style:{width:pct(d.monoScore,100)+'%',background:bg}});
+    const valStr=d.monoScore.toFixed(1);
+    fill.appendChild(el('span',{className:'bar-val'},valStr+(d.monoScore>50?' FLAG':'')));
+    track.appendChild(fill);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+  panel.appendChild(chart);
+}
+
+function renderFaction(r){
+  const panel=document.getElementById('panel-faction');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 6: Faction Balance'));
+  panel.appendChild(el('div',{className:'desc'},'Average solo performance grouped by faction. Dots show individual crops. Flagged if faction avg >1 point from overall mean.'));
+
+  const maxVal=Math.max(...Object.values(r.faction.factionAvgs).map(f=>f.avg),1);
+  const chart=el('div',{className:'bar-chart'});
+  FACTIONS.forEach(([fid,fname])=>{
+    const fd=r.faction.factionAvgs[fid];
+    if(!fd)return;
+    const row=el('div',{className:'bar-row'});
+    row.appendChild(el('div',{className:'bar-label'},fname));
+    const track=el('div',{className:'bar-track'});
+    const flagged=Math.abs(fd.avg-r.faction.fMean)>1;
+    const bg=flagged?'var(--bad)':'var(--leaf)';
+    const fill=el('div',{className:'bar-fill',style:{width:pct(fd.avg,maxVal*1.2)+'%',background:bg,opacity:'0.6'}});
+    fill.appendChild(el('span',{className:'bar-val'},fd.avg.toFixed(2)+(flagged?' FLAG':'')));
+    // Dot overlays for individual crops
+    fd.crops.forEach(c=>{
+      const dotLeft=pct(c.avg,maxVal*1.2);
+      const dot=el('div',{className:'dot',style:{left:dotLeft+'%',background:'var(--soil)'},title:(activeCrops[c.id]||C[c.id]).emoji+' '+(activeCrops[c.id]||C[c.id]).name+': '+c.avg.toFixed(2)});
+      track.appendChild(dot);
+    });
+    track.appendChild(fill);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+  // Mean line reference
+  const ref=el('div',{style:{fontSize:'.72rem',color:'var(--text-mid)',fontFamily:'DM Mono, monospace',marginTop:'.5rem'}},'Overall mean: '+r.faction.fMean.toFixed(2));
+  panel.appendChild(chart);panel.appendChild(ref);
+}
+
+function renderChapter(r){
+  const panel=document.getElementById('panel-chapter');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 7: Chapter Availability'));
+  panel.appendChild(el('div',{className:'desc'},'Average solo power per unlock chapter. Flagged if later chapters are strictly stronger (power creep).'));
+
+  const chapters=Object.keys(r.chapter).sort((a,b)=>Number(a)-Number(b));
+  const maxVal=Math.max(...chapters.map(ch=>r.chapter[ch].avg),1);
+  let powerCreep=true;
+  for(let i=1;i<chapters.length;i++){
+    if(r.chapter[chapters[i]].avg<=r.chapter[chapters[i-1]].avg)powerCreep=false;
+  }
+
+  const chart=el('div',{className:'bar-chart'});
+  chapters.forEach(ch=>{
+    const d=r.chapter[ch];
+    const row=el('div',{className:'bar-row'});
+    row.appendChild(el('div',{className:'bar-label'},'Chapter '+ch+' ('+d.crops.length+' crops)'));
+    const track=el('div',{className:'bar-track'});
+    const fill=el('div',{className:'bar-fill',style:{width:pct(d.avg,maxVal*1.2)+'%',background:'var(--leaf)'}});
+    fill.appendChild(el('span',{className:'bar-val'},d.avg.toFixed(2)));
+    // Dot overlays
+    d.crops.forEach(c=>{
+      const dotLeft=pct(c.avg,maxVal*1.2);
+      const dot=el('div',{className:'dot',style:{left:dotLeft+'%',background:'var(--soil)'},title:(activeCrops[c.id]||C[c.id]).emoji+' '+(activeCrops[c.id]||C[c.id]).name+': '+c.avg.toFixed(2)});
+      track.appendChild(dot);
+    });
+    track.appendChild(fill);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+  panel.appendChild(chart);
+  if(powerCreep){
+    panel.appendChild(el('div',{className:'flag',style:{marginTop:'.5rem',display:'inline-block'}},'POWER CREEP DETECTED: later chapters strictly stronger'));
+  }
+}
+
+function renderRecipe(r){
+  const panel=document.getElementById('panel-recipe');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 8: Recipe Contribution'));
+  panel.appendChild(el('div',{className:'desc'},'Solo power of recipe-participating crops vs non-recipe crops. Flagged if gap >1.0.'));
+
+  const maxVal=Math.max(r.recipe.inAvg,r.recipe.outAvg,1)*1.2;
+  const chart=el('div',{className:'bar-chart'});
+
+  // In-recipe bar
+  const row1=el('div',{className:'bar-row'});
+  row1.appendChild(el('div',{className:'bar-label'},'In Recipes ('+r.recipe.inRecipe.length+')'));
+  const track1=el('div',{className:'bar-track'});
+  const fill1=el('div',{className:'bar-fill',style:{width:pct(r.recipe.inAvg,maxVal)+'%',background:'var(--leaf)'}});
+  fill1.appendChild(el('span',{className:'bar-val'},r.recipe.inAvg.toFixed(2)));
+  r.recipe.inRecipe.forEach(c=>{
+    const dotLeft=pct(c.avg,maxVal);
+    const dot=el('div',{className:'dot',style:{left:dotLeft+'%',background:'var(--soil)'},title:(activeCrops[c.id]||C[c.id]).emoji+' '+(activeCrops[c.id]||C[c.id]).name+': '+c.avg.toFixed(2)});
+    track1.appendChild(dot);
+  });
+  track1.appendChild(fill1);row1.appendChild(track1);chart.appendChild(row1);
+
+  // Not in recipe bar
+  const row2=el('div',{className:'bar-row'});
+  row2.appendChild(el('div',{className:'bar-label'},'Not in Recipes ('+r.recipe.notInRecipe.length+')'));
+  const track2=el('div',{className:'bar-track'});
+  const fill2=el('div',{className:'bar-fill',style:{width:pct(r.recipe.outAvg,maxVal)+'%',background:'var(--warn)'}});
+  fill2.appendChild(el('span',{className:'bar-val'},r.recipe.outAvg.toFixed(2)));
+  r.recipe.notInRecipe.forEach(c=>{
+    const dotLeft=pct(c.avg,maxVal);
+    const dot=el('div',{className:'dot',style:{left:dotLeft+'%',background:'var(--soil)'},title:(activeCrops[c.id]||C[c.id]).emoji+' '+(activeCrops[c.id]||C[c.id]).name+': '+c.avg.toFixed(2)});
+    track2.appendChild(dot);
+  });
+  track2.appendChild(fill2);row2.appendChild(track2);chart.appendChild(row2);
+
+  panel.appendChild(chart);
+  const gapInfo=el('div',{style:{fontSize:'.78rem',marginTop:'.75rem',fontFamily:'DM Mono, monospace'}});
+  gapInfo.textContent='Gap: '+(r.recipe.gap>=0?'+':'')+r.recipe.gap.toFixed(2);
+  if(Math.abs(r.recipe.gap)>1){const f=el('span',{className:'flag'},'SIGNIFICANT');gapInfo.appendChild(f)}
+  panel.appendChild(gapInfo);
+}
+
+function renderSunModel(r){
+  const panel=document.getElementById('panel-sunmodel');
+  panel.textContent='';
+  panel.appendChild(el('h3',{},'Test 9: Sun Model Comparison'));
+  panel.appendChild(el('div',{className:'desc'},'Solo performance average under 4 sun configurations. Delta from game default shown. Highlights which crops gain/lose power under different sun models.'));
+
+  const tbl=el('table',{className:'data-table'});
+  const thead=el('thead');
+  const hr=el('tr');
+  ['Crop',...r.sunModel.configs].forEach(h=>hr.appendChild(el('th',{},h)));
+  thead.appendChild(hr);tbl.appendChild(thead);
+  const tbody=el('tbody');
+  const cids=Object.keys(r.sunModel.data).sort((a,b)=>{
+    const da=r.sunModel.data[a],db2=r.sunModel.data[b];
+    return db2['Game Default']-da['Game Default'];
+  });
+  cids.forEach(cid=>{
+    const d=r.sunModel.data[cid];
+    const cr=activeCrops[cid]||C[cid];
+    const tr2=el('tr',{onClick:()=>showDetail(cid)});
+    tr2.appendChild(el('td',{},cr.emoji+' '+cr.name));
+    const base=d['Game Default'];
+    r.sunModel.configs.forEach(cfg=>{
+      const v=d[cfg];
+      const delta=v-base;
+      const bg=cfg==='Game Default'?'transparent':cellBg(v,base-1,base+1);
+      const td=el('td',{style:{background:bg,fontFamily:'DM Mono, monospace',fontSize:'.72rem'}});
+      td.textContent=v.toFixed(2);
+      if(cfg!=='Game Default'&&Math.abs(delta)>.05){
+        const dSpan=el('span',{style:{fontSize:'.6rem',color:delta>0?'var(--good)':'var(--bad)',marginLeft:'.3rem'}},(delta>0?'+':'')+delta.toFixed(2));
+        td.appendChild(dSpan);
+      }
+      tr2.appendChild(td);
+    });
+    tbody.appendChild(tr2);
+  });
+  tbl.appendChild(tbody);panel.appendChild(tbl);
+}
+
+/* ===== DETAIL PANEL ===== */
+function showDetail(cid){
+  const dp=document.getElementById('detailPanel');
+  const cr=activeCrops[cid]||C[cid];
+  if(!cr||!results.solo)return;
+  dp.classList.add('visible');
+  document.getElementById('detailTitle').textContent=cr.emoji+' '+cr.name+' — Detail Report';
+  const grid=document.getElementById('detailGrid');
+  grid.textContent='';
+
+  const items=[
+    {title:'Solo Performance',val:results.solo[cid]?results.solo[cid].avg.toFixed(2):'N/A',sub:results.solo[cid]?'Best: '+results.solo[cid].bestPos+' ('+results.solo[cid].bestSeason+') '+results.solo[cid].bestScore.toFixed(2)+' | Worst: '+results.solo[cid].worstPos+' ('+results.solo[cid].worstSeason+') '+results.solo[cid].worstScore.toFixed(2):''},
+    {title:'Ceiling (per season)',val:results.ceiling&&results.ceiling.data[cid]?SEASONS.map(s=>s+': '+results.ceiling.data[cid][s].toFixed(2)).join(', '):'N/A',sub:results.ceiling&&results.ceiling.data[cid]?'Avg ceiling: '+results.ceiling.data[cid].avgCeiling.toFixed(2)+' (gap: '+(results.ceiling.data[cid].gap>=0?'+':'')+results.ceiling.data[cid].gap.toFixed(2)+')':''},
+    {title:'Adjacency',val:results.adj[cid]?'Best: +'+results.adj[cid].best.toFixed(2)+' | Worst: '+results.adj[cid].worst.toFixed(2)+' | Swing: '+results.adj[cid].swing.toFixed(2):'N/A',sub:'Companions: '+(cr.companions.length?cr.companions.join(', '):'none')+' | Conflicts: '+(cr.conflicts.length?cr.conflicts.join(', '):'none')},
+    {title:'Season Flexibility',val:results.flex[cid]?results.flex[cid].flexCount+'/3 seasons viable':'N/A',sub:results.flex[cid]?SEASONS.map(s=>s+': '+results.flex[cid].seasons[s].toFixed(2)).join(', '):''},
+    {title:'Monoculture Score',val:results.mono[cid]?results.mono[cid].monoScore.toFixed(1)+'/100':'N/A',sub:results.mono[cid]&&results.mono[cid].monoScore>50?'WARNING: High monoculture viability':'Lower is better'},
+    {title:'Faction',val:cr.faction+' — '+FACTIONS.find(f=>f[0]===cr.faction)?.[1],sub:results.faction?'Faction avg: '+results.faction.factionAvgs[cr.faction]?.avg.toFixed(2)+' | Overall mean: '+results.faction.fMean.toFixed(2):''},
+    {title:'Chapter Unlock',val:'Chapter '+cr.chapterUnlock,sub:results.chapter&&results.chapter[cr.chapterUnlock]?'Chapter avg: '+results.chapter[cr.chapterUnlock].avg.toFixed(2)+' ('+results.chapter[cr.chapterUnlock].crops.length+' crops)':''},
+    {title:'Recipes',val:cr.recipes&&cr.recipes.length?cr.recipes.length+' recipe(s)':'No recipes',sub:cr.recipes&&cr.recipes.length?cr.recipes.map(rid=>RECIPES[rid]?RECIPES[rid].name:rid).join(', '):'Does not participate in any recipe'}
+  ];
+
+  items.forEach(item=>{
+    const di=el('div',{className:'detail-item'},[
+      el('div',{className:'di-title'},item.title),
+      el('div',{className:'di-val'},item.val),
+      el('div',{className:'di-sub'},item.sub)
+    ]);
+    grid.appendChild(di);
+  });
+
+  dp.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ===== NEW CROP FORM ===== */
+function buildNewCropForm(){
+  const body=document.getElementById('newCropBody');
+  body.textContent='';
+  const allCropIds=cropIds();
+
+  const fields=[
+    {id:'nc_id',label:'ID',type:'text',placeholder:'my_crop'},
+    {id:'nc_name',label:'Name',type:'text',placeholder:'My Crop'},
+    {id:'nc_emoji',label:'Emoji',type:'text',placeholder:'\u{1F33F}'},
+    {id:'nc_short',label:'Short Code',type:'text',placeholder:'MC'},
+    {id:'nc_sunMin',label:'Sun Min',type:'number',min:3,max:6,value:4},
+    {id:'nc_sunIdeal',label:'Sun Ideal',type:'number',min:5,max:8,value:6},
+    {id:'nc_shadeScore',label:'Shade Score',type:'number',min:1,max:5,value:3},
+    {id:'nc_water',label:'Water',type:'number',min:2,max:3,value:2},
+    {id:'nc_chapterUnlock',label:'Chapter Unlock',type:'number',min:1,max:12,value:1}
+  ];
+
+  const grid=el('div',{className:'form-grid'});
+
+  fields.forEach(f=>{
+    const grp=el('div',{className:'form-group'});
+    grp.appendChild(el('label',{for:f.id},f.label));
+    const inp=el('input',{id:f.id,type:f.type});
+    if(f.placeholder)inp.placeholder=f.placeholder;
+    if(f.min!==undefined)inp.min=f.min;
+    if(f.max!==undefined)inp.max=f.max;
+    if(f.value!==undefined)inp.value=f.value;
+    grp.appendChild(inp);
+    grid.appendChild(grp);
+  });
+
+  // Faction select
+  const fGrp=el('div',{className:'form-group'});
+  fGrp.appendChild(el('label',{for:'nc_faction'},'Faction'));
+  const fSel=el('select',{id:'nc_faction'});
+  FACTIONS.forEach(([fid,fname])=>{
+    const opt=el('option',{value:fid},fname);
+    fSel.appendChild(opt);
+  });
+  fGrp.appendChild(fSel);
+  grid.appendChild(fGrp);
+
+  // Checkboxes
+  const bools=[
+    {id:'nc_support',label:'Needs Support (Trellis)'},
+    {id:'nc_coolSeason',label:'Cool Season'},
+    {id:'nc_tall',label:'Tall'}
+  ];
+  bools.forEach(b=>{
+    const grp=el('div',{className:'form-group'});
+    const lbl=el('label',{style:{display:'flex',alignItems:'center',gap:'.4rem',cursor:'pointer',minHeight:'44px'}});
+    const cb=el('input',{id:b.id,type:'checkbox'});
+    cb.style.width='18px';cb.style.height='18px';
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(b.label));
+    grp.appendChild(lbl);
+    grid.appendChild(grp);
+  });
+
+  body.appendChild(grid);
+
+  // Season multipliers
+  const smLabel=el('div',{style:{fontFamily:'DM Mono, monospace',fontSize:'.65rem',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--text-mid)',marginTop:'1rem',marginBottom:'.5rem'}},'Season Multipliers');
+  body.appendChild(smLabel);
+  const smGrid=el('div',{className:'form-grid'});
+  SEASONS.forEach(s=>{
+    const grp=el('div',{className:'form-group range-group'});
+    grp.appendChild(el('label',{for:'nc_sm_'+s},s));
+    const range=el('input',{id:'nc_sm_'+s,type:'range',min:'0.2',max:'1.0',step:'0.05',value:'0.7'});
+    const valSpan=el('span',{className:'range-val',id:'nc_sm_'+s+'_val'},'0.70');
+    range.addEventListener('input',()=>{valSpan.textContent=parseFloat(range.value).toFixed(2)});
+    grp.appendChild(range);grp.appendChild(valSpan);
+    smGrid.appendChild(grp);
+  });
+  body.appendChild(smGrid);
+
+  // Companions
+  const compLabel=el('div',{style:{fontFamily:'DM Mono, monospace',fontSize:'.65rem',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--text-mid)',marginTop:'1rem',marginBottom:'.5rem'}},'Companions');
+  body.appendChild(compLabel);
+  const compGrid=el('div',{className:'checkbox-grid'});
+  allCropIds.forEach(cid=>{
+    const cr=C[cid];
+    const lbl=el('label');
+    const cb=el('input',{type:'checkbox',value:cid,name:'nc_companions'});
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(cr.emoji+' '+cr.name));
+    compGrid.appendChild(lbl);
+  });
+  body.appendChild(compGrid);
+
+  // Conflicts
+  const confLabel=el('div',{style:{fontFamily:'DM Mono, monospace',fontSize:'.65rem',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--text-mid)',marginTop:'1rem',marginBottom:'.5rem'}},'Conflicts');
+  body.appendChild(confLabel);
+  const confGrid=el('div',{className:'checkbox-grid'});
+  const selfLbl=el('label');
+  const selfCb=el('input',{type:'checkbox',value:'self',name:'nc_conflicts'});
+  selfLbl.appendChild(selfCb);
+  selfLbl.appendChild(document.createTextNode('Self'));
+  confGrid.appendChild(selfLbl);
+  allCropIds.forEach(cid=>{
+    const cr=C[cid];
+    const lbl=el('label');
+    const cb=el('input',{type:'checkbox',value:cid,name:'nc_conflicts'});
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(cr.emoji+' '+cr.name));
+    confGrid.appendChild(lbl);
+  });
+  body.appendChild(confGrid);
+
+  // Actions
+  const actions=el('div',{className:'form-actions'});
+  const evalBtn=el('button',{className:'btn-primary',onClick:evaluateNewCrop},'Evaluate');
+  const exportBtn=el('button',{className:'btn-secondary',onClick:exportNewCrop},'Export JSON');
+  const resetBtn=el('button',{className:'btn-secondary',onClick:resetNewCropForm},'Reset');
+  actions.appendChild(evalBtn);actions.appendChild(exportBtn);actions.appendChild(resetBtn);
+  body.appendChild(actions);
+
+  // Report area
+  const report=el('div',{id:'newCropReport',className:'report-card'});
+  body.appendChild(report);
+}
+
+function getNewCropData(){
+  const id=document.getElementById('nc_id').value.trim();
+  const name=document.getElementById('nc_name').value.trim();
+  if(!id||!name)return null;
+  const companions=Array.from(document.querySelectorAll('input[name="nc_companions"]:checked')).map(cb=>cb.value);
+  const conflictsRaw=Array.from(document.querySelectorAll('input[name="nc_conflicts"]:checked')).map(cb=>cb.value);
+  const conflicts=conflictsRaw.map(c=>c==='self'?id:c);
+  return{
+    id,name,
+    emoji:document.getElementById('nc_emoji').value||'\u{1F33F}',
+    short:document.getElementById('nc_short').value||id.slice(0,3).toUpperCase(),
+    faction:document.getElementById('nc_faction').value,
+    sunMin:parseInt(document.getElementById('nc_sunMin').value)||4,
+    sunIdeal:parseInt(document.getElementById('nc_sunIdeal').value)||6,
+    support:document.getElementById('nc_support').checked,
+    shadeScore:parseInt(document.getElementById('nc_shadeScore').value)||3,
+    coolSeason:document.getElementById('nc_coolSeason').checked,
+    tall:document.getElementById('nc_tall').checked,
+    water:parseInt(document.getElementById('nc_water').value)||2,
+    companions,conflicts,
+    chapterUnlock:parseInt(document.getElementById('nc_chapterUnlock').value)||1,
+    recipes:[],
+    sm:{
+      spring:parseFloat(document.getElementById('nc_sm_spring').value),
+      summer:parseFloat(document.getElementById('nc_sm_summer').value),
+      fall:parseFloat(document.getElementById('nc_sm_fall').value)
+    }
+  };
+}
+
+function evaluateNewCrop(){
+  const crop=getNewCropData();
+  if(!crop){alert('ID and Name are required.');return}
+  const testCrops=Object.assign({},C);
+  testCrops[crop.id]=crop;
+  activeCrops=testCrops;
+  const r=runAllTests(testCrops);
+  results=r;
+
+  // Show full results
+  renderAll(r);
+
+  // Show report card for new crop
+  const report=document.getElementById('newCropReport');
+  report.textContent='';
+  report.appendChild(el('h3',{style:{fontFamily:'Fraunces, serif',marginBottom:'.75rem'}},crop.emoji+' '+crop.name+' — Report Card'));
+
+  // Rankings
+  const soloSorted=Object.keys(r.solo).sort((a,b)=>r.solo[b].avg-r.solo[a].avg);
+  const soloRank=soloSorted.indexOf(crop.id)+1;
+  const ceilingSorted=Object.keys(r.ceiling.data).sort((a,b)=>r.ceiling.data[b].avgCeiling-r.ceiling.data[a].avgCeiling);
+  const ceilingRank=ceilingSorted.indexOf(crop.id)+1;
+  const adjSorted=Object.keys(r.adj).sort((a,b)=>r.adj[b].swing-r.adj[a].swing);
+  const adjRank=adjSorted.indexOf(crop.id)+1;
+
+  const total=Object.keys(testCrops).length;
+  const rankGrid=el('div',{className:'detail-grid'});
+  rankGrid.appendChild(makeRankItem('Solo Rank',soloRank+'/'+total,r.solo[crop.id].avg.toFixed(2)+' avg'));
+  rankGrid.appendChild(makeRankItem('Ceiling Rank',ceilingRank+'/'+total,r.ceiling.data[crop.id].avgCeiling.toFixed(2)));
+  rankGrid.appendChild(makeRankItem('Adj Swing Rank',adjRank+'/'+total,'Swing: '+r.adj[crop.id].swing.toFixed(2)));
+  rankGrid.appendChild(makeRankItem('Flexibility',r.flex[crop.id].flexCount+'/3 seasons',''));
+  rankGrid.appendChild(makeRankItem('Monoculture',r.mono[crop.id].monoScore.toFixed(1)+'/100',''));
+  report.appendChild(rankGrid);
+
+  // Alerts
+  const alerts=[];
+  if(crop.conflicts.length===0)alerts.push('No conflicts. Consider adding at least one.');
+  if(r.mono[crop.id].monoScore>50)alerts.push('Monoculture >50. Needs self-crowding penalty.');
+  if(r.flex[crop.id].flexCount===3)alerts.push('3-season viable. Consider narrowing seasonal multipliers.');
+  // 90th percentile ceiling
+  const allCeilings=Object.values(r.ceiling.data).map(d=>d.avgCeiling).sort((a,b)=>a-b);
+  const p90=allCeilings[Math.floor(allCeilings.length*.9)];
+  if(r.ceiling.data[crop.id].avgCeiling>p90)alerts.push('Ceiling >90th percentile ('+p90.toFixed(2)+'). May be overpowered.');
+  if(crop.companions.length===0)alerts.push('0 companions. Will always have negative/neutral adjacency.');
+  // Faction outlier
+  const fAvg=r.faction.factionAvgs[crop.faction];
+  if(fAvg){
+    const peerAvgs=fAvg.crops.filter(c=>c.id!==crop.id).map(c=>c.avg);
+    if(peerAvgs.length&&Math.abs(r.solo[crop.id].avg-mean(peerAvgs))>1.5)alerts.push('Outperforms faction peers by >1.5. Faction outlier.');
+  }
+
+  if(alerts.length){
+    report.appendChild(el('div',{style:{fontFamily:'DM Mono, monospace',fontSize:'.65rem',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--bad)',marginTop:'1rem',marginBottom:'.5rem'}},'Red Flag Alerts'));
+    const ul=el('ul',{className:'alert-list'});
+    alerts.forEach(a=>ul.appendChild(el('li',{},a)));
+    report.appendChild(ul);
+  }else{
+    report.appendChild(el('div',{style:{color:'var(--good)',marginTop:'.75rem',fontSize:'.85rem'}},'No red flags detected. Crop appears balanced.'));
+  }
+}
+
+function makeRankItem(title,val,sub){
+  return el('div',{className:'detail-item'},[
+    el('div',{className:'di-title'},title),
+    el('div',{className:'di-val'},val),
+    el('div',{className:'di-sub'},sub)
+  ]);
+}
+
+function exportNewCrop(){
+  const crop=getNewCropData();
+  if(!crop){alert('ID and Name are required.');return}
+  const js=crop.id+':{id:\''+crop.id+'\',name:\''+crop.name+'\',emoji:\''+crop.emoji+'\',short:\''+crop.short+'\',faction:\''+crop.faction+'\',sunMin:'+crop.sunMin+',sunIdeal:'+crop.sunIdeal+',support:'+crop.support+',shadeScore:'+crop.shadeScore+',coolSeason:'+crop.coolSeason+',tall:'+crop.tall+',water:'+crop.water+',companions:['+crop.companions.map(c=>"'"+c+"'").join(',')+'],conflicts:['+crop.conflicts.map(c=>"'"+c+"'").join(',')+'],chapterUnlock:'+crop.chapterUnlock+',recipes:[],sm:{spring:'+crop.sm.spring+',summer:'+crop.sm.summer+',fall:'+crop.sm.fall+'}},';
+  const ta=el('textarea',{style:{width:'100%',height:'120px',fontFamily:'DM Mono, monospace',fontSize:'.75rem',marginTop:'.75rem',padding:'.5rem',border:'1.5px solid var(--border)',borderRadius:'4px'}});
+  ta.value=js;
+  const report=document.getElementById('newCropReport');
+  // Remove existing textarea if any
+  const existing=report.querySelector('textarea');
+  if(existing)existing.remove();
+  report.appendChild(ta);
+  ta.select();
+}
+
+function resetNewCropForm(){
+  document.getElementById('nc_id').value='';
+  document.getElementById('nc_name').value='';
+  document.getElementById('nc_emoji').value='';
+  document.getElementById('nc_short').value='';
+  document.getElementById('nc_sunMin').value='4';
+  document.getElementById('nc_sunIdeal').value='6';
+  document.getElementById('nc_shadeScore').value='3';
+  document.getElementById('nc_water').value='2';
+  document.getElementById('nc_chapterUnlock').value='1';
+  document.getElementById('nc_faction').value='climbers';
+  document.getElementById('nc_support').checked=false;
+  document.getElementById('nc_coolSeason').checked=false;
+  document.getElementById('nc_tall').checked=false;
+  SEASONS.forEach(s=>{
+    document.getElementById('nc_sm_'+s).value='0.7';
+    document.getElementById('nc_sm_'+s+'_val').textContent='0.70';
+  });
+  document.querySelectorAll('input[name="nc_companions"],input[name="nc_conflicts"]').forEach(cb=>{cb.checked=false});
+  document.getElementById('newCropReport').textContent='';
+  // Reset to base crops
+  activeCrops=C;
+  const r=runAllTests(C);
+  results=r;
+  renderAll(r);
+}
+
+/* ===== RENDER ALL ===== */
+function renderAll(r){
+  renderSummary(r);
+  renderSoloPerf(r);
+  renderCeiling(r);
+  renderAdj(r);
+  renderFlex(r);
+  renderMono(r);
+  renderFaction(r);
+  renderChapter(r);
+  renderRecipe(r);
+  renderSunModel(r);
+}
+
+/* ===== INIT ===== */
+function init(){
+  buildTabs();
+  buildNewCropForm();
+
+  // Collapsible toggle
+  document.getElementById('newCropToggle').addEventListener('click',()=>{
+    document.getElementById('newCropSection').classList.toggle('open');
+  });
+
+  // Run all button
+  document.getElementById('runBtn').addEventListener('click',()=>{
+    activeCrops=C;
+    results=runAllTests(C);
+    renderAll(results);
+    document.getElementById('detailPanel').classList.remove('visible');
+  });
+
+  // Auto-run on load
+  activeCrops=C;
+  results=runAllTests(C);
+  renderAll(results);
+}
+
+init();
+})();
+</script>
+</body>
+</html>
