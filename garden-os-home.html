@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<title>Garden OS — Your Raised Bed Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:        #faf6f0;
+  --cream-dark:   #f2ebe0;
+  --cream-deeper: #e8ddd0;
+  --soil:         #6b4226;
+  --soil-light:   #9b6644;
+  --soil-dim:     #c49a7a;
+  --sage:         #5a7a52;
+  --sage-light:   #7a9e70;
+  --sage-pale:    #d4e8ce;
+  --sage-wash:    #edf5ea;
+  --leaf:         #3d6b35;
+  --leaf-bright:  #4e8c44;
+  --terracotta:   #c4603a;
+  --terra-light:  #e8845e;
+  --terra-pale:   #f5d9cc;
+  --terra-wash:   #fdf0eb;
+  --sunflower:    #e8a020;
+  --sun-pale:     #fdf0d0;
+  --sky:          #5b9bc4;
+  --sky-pale:     #ddeef8;
+  --text-dark:    #2d1f0e;
+  --text-body:    #4a3520;
+  --text-soft:    #7a6050;
+  --text-muted:   #a89080;
+  --border:       #d8c8b8;
+  --border-soft:  #e8ddd0;
+  --shadow:       rgba(107,66,38,0.10);
+  --shadow-md:    rgba(107,66,38,0.16);
+  --r:            10px;
+  --r-lg:         18px;
+  --r-xl:         28px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--cream);
+  color: var(--text-body);
+  font-family: 'Nunito', 'Helvetica Neue', sans-serif;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -- NAV ----------------------------------------- */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,246,240,0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--border-soft);
+  padding: 0 2rem;
+  height: 64px;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  text-decoration: none; flex-shrink: 0;
+}
+.nav-brand-icon {
+  font-size: 1.6rem; line-height: 1;
+}
+.nav-brand-text {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--leaf);
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex; gap: 0.2rem; list-style: none;
+  overflow-x: auto; scrollbar-width: none; flex: 1;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a {
+  display: inline-block; padding: 0.35rem 0.8rem;
+  font-size: 0.9rem; font-weight: 600;
+  color: var(--text-soft); text-decoration: none;
+  border-radius: 20px;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.nav-links a:hover, .nav-links a:focus {
+  color: var(--leaf); background: var(--sage-wash);
+  outline: none;
+}
+.nav-links a:focus-visible { outline: 3px solid var(--sage); outline-offset: 2px; }
+
+.nav-cta {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1.2rem;
+  background: var(--leaf-bright); color: #fff;
+  font-size: 0.9rem; font-weight: 700;
+  border-radius: 24px; text-decoration: none;
+  transition: all 0.15s; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(78,140,68,0.3);
+}
+.nav-cta:hover { background: var(--leaf); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(78,140,68,0.35); }
+.nav-cta:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
+
+/* -- MOBILE NAV TOGGLE --------------------------- */
+.nav-toggle {
+  display: none;
+  background: none; border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 0.35rem 0.5rem;
+  cursor: pointer; color: var(--text-soft);
+  font-size: 1.2rem; line-height: 1;
+  flex-shrink: 0;
+}
+.nav-toggle:focus-visible { outline: 3px solid var(--sage); outline-offset: 2px; }
+
+/* -- SKIP LINK ----------------------------------- */
+.skip-link {
+  position: absolute; top: -40px; left: 0;
+  background: var(--leaf); color: #fff;
+  padding: 0.5rem 1rem; font-weight: 700;
+  z-index: 999; border-radius: 0 0 var(--r) 0;
+  text-decoration: none; transition: top 0.15s;
+}
+.skip-link:focus { top: 0; }
+
+/* -- WRAPPERS ------------------------------------ */
+.wrapper { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+section { padding: 5rem 0; scroll-margin-top: 72px; }
+
+/* -- SECTION HEADERS ----------------------------- */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--sage);
+  margin-bottom: 0.75rem;
+}
+h2 {
+  font-family: 'Lora', Georgia, serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700; color: var(--text-dark);
+  letter-spacing: -0.02em; line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+.section-intro {
+  font-size: 1.05rem; color: var(--text-soft);
+  max-width: 560px; line-height: 1.75;
+  margin-bottom: 3rem;
+}
+
+/* -- HERO ---------------------------------------- */
+#hero {
+  padding: 4rem 0 3rem;
+  background: linear-gradient(160deg, #f0f7ec 0%, var(--cream) 50%, #fdf3ea 100%);
+  border-bottom: 2px solid var(--border-soft);
+  position: relative; overflow: hidden;
+  scroll-margin-top: 0;
+}
+
+#hero::before {
+  content: '';
+  position: absolute; top: -60px; right: -80px;
+  width: 420px; height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(90,122,82,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+#hero::after {
+  content: '';
+  position: absolute; bottom: -100px; left: -60px;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,96,58,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3rem; align-items: center;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: var(--sage-wash); border: 1.5px solid var(--sage-pale);
+  border-radius: 24px; font-size: 0.85rem; font-weight: 700;
+  color: var(--sage); margin-bottom: 1.2rem;
+}
+
+h1 {
+  font-family: 'Lora', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 700; color: var(--text-dark);
+  letter-spacing: -0.03em; line-height: 1.1;
+  margin-bottom: 1rem;
+}
+h1 em { font-style: italic; color: var(--leaf); }
+
+.hero-sub {
+  font-size: 1.15rem; color: var(--text-soft);
+  line-height: 1.7; margin-bottom: 2rem; max-width: 480px;
+}
+
+.hero-actions {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+}
+
+.btn-big {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.6rem; font-size: 1rem; font-weight: 700;
+  border-radius: 28px; text-decoration: none; transition: all 0.15s;
+  cursor: pointer; border: 2px solid transparent;
+}
+.btn-green {
+  background: var(--leaf-bright); color: #fff;
+  box-shadow: 0 4px 18px rgba(78,140,68,0.3);
+}
+.btn-green:hover { background: var(--leaf); transform: translateY(-2px); box-shadow: 0 6px 22px rgba(61,107,53,0.35); }
+.btn-outline {
+  background: transparent; color: var(--soil);
+  border-color: var(--soil-dim);
+}
+.btn-outline:hover { background: var(--terra-wash); border-color: var(--soil-light); }
+.btn-big:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
+
+.hero-visual {
+  background: var(--sage-wash);
+  border: 2px solid var(--sage-pale);
+  border-radius: var(--r-xl);
+  padding: 2rem;
+  display: flex; flex-direction: column; gap: 1rem;
+  box-shadow: 0 8px 40px var(--shadow);
+}
+.hero-visual-title {
+  font-family: 'Lora', serif; font-size: 1rem; font-weight: 600;
+  color: var(--leaf); margin-bottom: 0.25rem;
+}
+.garden-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+.garden-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  background: var(--cream); border: 1.5px solid var(--border);
+  transition: transform 0.15s;
+  cursor: default;
+}
+.garden-cell:hover { transform: scale(1.1); }
+.garden-cell.filled { background: #e8f3e4; border-color: var(--sage-pale); }
+.garden-cell.warn   { background: #fff3e0; border-color: #f0c060; }
+
+.hero-score-bar {
+  background: var(--cream); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 0.75rem 1rem;
+}
+.score-label { font-size: 0.8rem; font-weight: 700; color: var(--text-soft); margin-bottom: 0.4rem; }
+.score-track {
+  height: 10px; background: var(--cream-dark);
+  border-radius: 5px; overflow: hidden;
+}
+.score-fill {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--sage-light), var(--leaf-bright));
+  width: 78%; transition: width 0.6s ease;
+}
+.score-note { font-size: 0.8rem; color: var(--sage); margin-top: 0.4rem; font-weight: 600; }
+
+/* -- WHAT IT DOES -------------------------------- */
+#features { background: #fff; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+.feature-card {
+  background: var(--cream);
+  border: 2px solid var(--border-soft);
+  border-radius: var(--r-lg); padding: 1.75rem;
+  transition: all 0.2s; position: relative;
+  overflow: hidden;
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px var(--shadow-md);
+  border-color: var(--border);
+}
+.feature-emoji {
+  font-size: 2.4rem; margin-bottom: 1rem; display: block; line-height: 1;
+}
+.feature-title {
+  font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 700;
+  color: var(--text-dark); margin-bottom: 0.5rem;
+}
+.feature-desc {
+  font-size: 0.9rem; color: var(--text-soft); line-height: 1.65;
+}
+
+/* -- HOW IT WORKS -------------------------------- */
+#how { background: var(--cream); }
+
+.steps { display: flex; flex-direction: column; gap: 0; max-width: 680px; }
+
+.step {
+  display: flex; gap: 1.5rem; position: relative;
+}
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute; left: 24px; top: 56px; bottom: -8px;
+  width: 3px; border-radius: 2px;
+  background: linear-gradient(to bottom, var(--sage-pale), transparent);
+}
+.step-num-wrap {
+  flex-shrink: 0;
+  width: 50px; height: 50px;
+  background: var(--sage-pale); border: 2px solid var(--sage-light);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 700;
+  color: var(--leaf); margin-top: 2px;
+}
+.step-body {
+  background: #fff;
+  border: 2px solid var(--border-soft);
+  border-radius: var(--r-lg); padding: 1.25rem 1.4rem;
+  margin-bottom: 1.25rem; flex: 1;
+  transition: border-color 0.2s;
+}
+.step-body:hover { border-color: var(--sage-pale); }
+.step-title {
+  font-family: 'Lora', serif; font-size: 1rem; font-weight: 700;
+  color: var(--text-dark); margin-bottom: 0.3rem;
+}
+.step-desc { font-size: 0.9rem; color: var(--text-soft); line-height: 1.65; }
+
+/* -- TOOLS --------------------------------------- */
+#tools { background: #fff; }
+
+.tools-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1.25rem;
+}
+.tool-card {
+  background: var(--cream);
+  border: 2px solid var(--border-soft);
+  border-radius: var(--r-lg); padding: 1.5rem;
+  display: grid; grid-template-rows: auto 1fr auto;
+  gap: 0.75rem; transition: all 0.2s;
+}
+.tool-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px var(--shadow);
+  border-color: var(--border);
+}
+.tool-header { display: flex; align-items: center; gap: 0.75rem; }
+.tool-icon {
+  font-size: 1.8rem; width: 52px; height: 52px;
+  background: var(--sage-wash); border: 2px solid var(--sage-pale);
+  border-radius: var(--r); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.tool-name {
+  font-family: 'Lora', serif; font-size: 1.05rem; font-weight: 700;
+  color: var(--text-dark);
+}
+.tool-tag {
+  display: inline-block; padding: 0.15rem 0.6rem;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; border-radius: 12px; margin-top: 0.2rem;
+}
+.tag-core    { background: var(--sage-wash); color: var(--sage); border: 1px solid var(--sage-pale); }
+.tag-guide   { background: var(--sky-pale);  color: var(--sky);  border: 1px solid #b8dcf0; }
+.tag-visual  { background: var(--sun-pale);  color: #b07010;    border: 1px solid #f0d090; }
+.tag-info    { background: var(--terra-wash);color: var(--terracotta); border: 1px solid #f0c0a8; }
+
+.tool-desc { font-size: 0.88rem; color: var(--text-soft); line-height: 1.65; }
+.tool-cta {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 1rem; background: var(--sage-wash);
+  border: 1.5px solid var(--sage-pale); border-radius: 20px;
+  font-size: 0.82rem; font-weight: 700; color: var(--leaf);
+  text-decoration: none; width: fit-content;
+  transition: all 0.15s;
+}
+.tool-cta:hover { background: var(--sage-pale); border-color: var(--sage-light); }
+.tool-cta:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+/* -- GOOD TO KNOW -------------------------------- */
+#goodtoknow { background: var(--cream); }
+
+.facts-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+.fact-card {
+  background: #fff; border: 2px solid var(--border-soft);
+  border-radius: var(--r-lg); padding: 1.5rem;
+  transition: all 0.2s;
+}
+.fact-card:hover { border-color: var(--border); transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); }
+.fact-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+.fact-title {
+  font-family: 'Lora', serif; font-size: 1rem; font-weight: 700;
+  color: var(--text-dark); margin-bottom: 0.35rem;
+}
+.fact-desc { font-size: 0.87rem; color: var(--text-soft); line-height: 1.6; }
+
+/* -- FOOTER -------------------------------------- */
+footer {
+  background: var(--text-dark);
+  color: rgba(255,255,255,0.75);
+  padding: 3.5rem 0 2.5rem;
+}
+.footer-inner {
+  display: flex; flex-wrap: wrap;
+  gap: 2rem; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 2rem;
+}
+.footer-brand { display: flex; flex-direction: column; gap: 0.4rem; }
+.footer-brand-name {
+  font-family: 'Lora', serif; font-size: 1.3rem; font-weight: 700;
+  color: #fff; display: flex; align-items: center; gap: 0.5rem;
+}
+.footer-tagline {
+  font-size: 0.85rem; color: rgba(255,255,255,0.5);
+  font-style: italic; max-width: 280px; line-height: 1.5;
+}
+.footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
+.footer-links a {
+  font-size: 0.88rem; color: rgba(255,255,255,0.6);
+  text-decoration: none; transition: color 0.15s;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.footer-links a:hover { color: #fff; }
+.footer-links a:focus-visible { outline: 2px solid var(--sage-light); outline-offset: 2px; border-radius: 2px; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 1.5rem;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  font-size: 0.8rem; color: rgba(255,255,255,0.35);
+}
+
+/* -- RESPONSIVE ---------------------------------- */
+@media (max-width: 760px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-visual { display: none; }
+  nav { gap: 1rem; flex-wrap: wrap; height: auto; min-height: 64px; padding: 0.75rem 1.5rem; }
+  .nav-toggle { display: block; }
+  .nav-links { display: none; width: 100%; order: 10; flex-direction: column; gap: 0.25rem; padding: 0.5rem 0; }
+  .nav-links.open { display: flex; }
+  .wrapper { padding: 0 1.2rem; }
+  section { padding: 3.5rem 0; }
+  h2 { font-size: 1.5rem; }
+}
+@media (min-width: 1200px) {
+  .features-grid { grid-template-columns: repeat(4, 1fr); }
+  .facts-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* -- REDUCED MOTION ------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<nav role="navigation" aria-label="Main navigation">
+  <a href="#hero" class="nav-brand" aria-label="Garden OS home">
+    <span class="nav-brand-icon" aria-hidden="true">🌱</span>
+    <span class="nav-brand-text">Garden OS</span>
+  </a>
+  <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Toggle navigation menu">☰</button>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="#features">What It Does</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#tools">The Tools</a></li>
+    <li><a href="#goodtoknow">Good to Know</a></li>
+  </ul>
+  <a href="garden-planner-v4.html" class="nav-cta" aria-label="Open the Garden OS planner">
+    Open Planner 🌿
+  </a>
+</nav>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section id="hero" aria-labelledby="hero-heading">
+    <div class="wrapper">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-badge" role="note">
+            <span aria-hidden="true">✨</span> Free · No account needed · Works offline
+          </div>
+          <h1 id="hero-heading">
+            Plan your <em>raised bed garden</em> the easy way.
+          </h1>
+          <p class="hero-sub">
+            Garden OS helps you figure out what to plant, where to plant it, and what grows well together — right in your browser. No apps to install, no accounts to create.
+          </p>
+          <div class="hero-actions">
+            <a href="garden-planner-v4.html" class="btn-big btn-green" aria-label="Start planning your garden">
+              Start Planning 🌱
+            </a>
+            <a href="#how" class="btn-big btn-outline">
+              See How It Works
+            </a>
+          </div>
+        </div>
+
+        <!-- Garden grid preview -->
+        <div class="hero-visual" role="img" aria-label="Preview of the garden planner layout showing tomatoes, basil, carrots, lettuce, peppers, and beans in a 6 by 4 grid">
+          <div class="hero-visual-title">Your raised bed preview</div>
+          <div class="garden-grid" aria-hidden="true">
+            <div class="garden-cell filled" title="Tomato">🍅</div>
+            <div class="garden-cell filled" title="Basil">🌿</div>
+            <div class="garden-cell filled" title="Carrot">🥕</div>
+            <div class="garden-cell filled" title="Lettuce">🥬</div>
+            <div class="garden-cell warn" title="Pepper (needs more sun)">🌶️</div>
+            <div class="garden-cell filled" title="Pepper">🫑</div>
+
+            <div class="garden-cell filled" title="Basil">🌿</div>
+            <div class="garden-cell filled" title="Lettuce">🥬</div>
+            <div class="garden-cell filled" title="Pepper">🫑</div>
+            <div class="garden-cell filled" title="Tomato">🍅</div>
+            <div class="garden-cell filled" title="Basil">🌿</div>
+            <div class="garden-cell filled" title="Carrot">🥕</div>
+
+            <div class="garden-cell filled" title="Carrot">🥕</div>
+            <div class="garden-cell filled" title="Tomato">🍅</div>
+            <div class="garden-cell" title="Empty cell"></div>
+            <div class="garden-cell" title="Empty cell"></div>
+            <div class="garden-cell filled" title="Lettuce">🥬</div>
+            <div class="garden-cell filled" title="Basil">🌿</div>
+
+            <div class="garden-cell filled" title="Lettuce">🥬</div>
+            <div class="garden-cell" title="Empty cell"></div>
+            <div class="garden-cell" title="Empty cell"></div>
+            <div class="garden-cell filled" title="Pepper">🫑</div>
+            <div class="garden-cell filled" title="Tomato">🍅</div>
+            <div class="garden-cell filled" title="Carrot">🥕</div>
+          </div>
+          <div class="hero-score-bar" aria-label="Layout quality score: 78 out of 100">
+            <div class="score-label">Layout quality score</div>
+            <div class="score-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100">
+              <div class="score-fill"></div>
+            </div>
+            <div class="score-note">✓ Good layout! Tomatoes and basil make great neighbors.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT IT DOES -->
+  <section id="features" aria-labelledby="features-heading">
+    <div class="wrapper">
+      <div class="eyebrow" aria-hidden="true">🌼 What It Does</div>
+      <h2 id="features-heading">Everything you need for a thriving garden</h2>
+      <p class="section-intro">
+        Garden OS handles the tricky parts of planning so you can focus on the fun part — growing things.
+      </p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-emoji" aria-hidden="true">🗺️</span>
+          <div class="feature-title">Plan your garden layout</div>
+          <div class="feature-desc">
+            Drag and drop vegetables into your raised bed grid. See your whole plan at a glance before you plant a single seed.
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-emoji" aria-hidden="true">📅</span>
+          <div class="feature-title">Know what to plant when</div>
+          <div class="feature-desc">
+            Get planting windows based on your hardiness zone. No more guessing whether it's too early or too late in the season.
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-emoji" aria-hidden="true">🤝</span>
+          <div class="feature-title">Find good plant neighbors</div>
+          <div class="feature-desc">
+            Some plants love growing near each other. Others don't get along at all. Garden OS tells you which is which — in plain English.
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-emoji" aria-hidden="true">🔨</span>
+          <div class="feature-title">Build your raised bed</div>
+          <div class="feature-desc">
+            Follow a step-by-step guide to build or set up your raised bed, including what you'll need for cages, stakes, and supports.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" aria-labelledby="how-heading">
+    <div class="wrapper">
+      <div class="eyebrow" aria-hidden="true">🌻 How It Works</div>
+      <h2 id="how-heading">From blank bed to full plan in four steps</h2>
+      <p class="section-intro">
+        You don't need to know anything about gardening software. Just follow along.
+      </p>
+      <div class="steps" role="list">
+
+        <div class="step" role="listitem">
+          <div class="step-num-wrap" aria-hidden="true">1</div>
+          <div class="step-body">
+            <div class="step-title">Open the Planner in your browser</div>
+            <div class="step-desc">
+              Click "Open Planner" and it loads right away — no downloading, no sign-up, no passwords. It works in Chrome, Safari, Firefox, and Edge.
+            </div>
+          </div>
+        </div>
+
+        <div class="step" role="listitem">
+          <div class="step-num-wrap" aria-hidden="true">2</div>
+          <div class="step-body">
+            <div class="step-title">Tell it about your garden</div>
+            <div class="step-desc">
+              Enter your raised bed size, where you live (for frost dates), and how much sun your garden gets. Takes about two minutes.
+            </div>
+          </div>
+        </div>
+
+        <div class="step" role="listitem">
+          <div class="step-num-wrap" aria-hidden="true">3</div>
+          <div class="step-body">
+            <div class="step-title">Add your vegetables</div>
+            <div class="step-desc">
+              Pick from a list of common vegetables and place them in your bed. The planner gives you a score and explains what's working well and what to adjust.
+            </div>
+          </div>
+        </div>
+
+        <div class="step" role="listitem">
+          <div class="step-num-wrap" aria-hidden="true">4</div>
+          <div class="step-body">
+            <div class="step-title">Save and print your plan</div>
+            <div class="step-desc">
+              Save your garden plan as a file you can open later, or print it out to keep by your raised bed all season. Your plan is yours — it never lives on anyone's server.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- THE TOOLS -->
+  <section id="tools" aria-labelledby="tools-heading">
+    <div class="wrapper">
+      <div class="eyebrow" aria-hidden="true">🧰 The Tools</div>
+      <h2 id="tools-heading">A small set of helpful tools</h2>
+      <p class="section-intro">
+        Each tool opens as its own page. You can use just the Planner, or explore the rest whenever you're ready.
+      </p>
+      <div class="tools-grid">
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon" aria-hidden="true">🌱</div>
+            <div>
+              <div class="tool-name">Garden Planner</div>
+              <span class="tool-tag tag-core">Start here</span>
+            </div>
+          </div>
+          <div class="tool-desc">
+            The main tool. Lay out your raised bed, add your vegetables, and get instant feedback on spacing, companions, and planting timing.
+          </div>
+          <a href="garden-planner-v4.html" class="tool-cta" aria-label="Open the Garden Planner">Open Planner →</a>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon" aria-hidden="true">🔨</div>
+            <div>
+              <div class="tool-name">Build Guide</div>
+              <span class="tool-tag tag-guide">Step-by-step</span>
+            </div>
+          </div>
+          <div class="tool-desc">
+            Everything you need to build or set up your raised bed — materials, dimensions, cage and stake recommendations, all tailored to your plan.
+          </div>
+          <a href="garden-cage-build-guide.html" class="tool-cta" aria-label="Open the Build Guide">Open Guide →</a>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon" aria-hidden="true">📋</div>
+            <div>
+              <div class="tool-name">Ops Guide</div>
+              <span class="tool-tag tag-guide">Seasonal</span>
+            </div>
+          </div>
+          <div class="tool-desc">
+            A personalized calendar for your garden — when to water, fertilize, harvest, and what to do each month based on your specific vegetables and location.
+          </div>
+          <a href="garden-cage-ops-guide.html" class="tool-cta" aria-label="Open the Ops Guide">Open Guide →</a>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon" aria-hidden="true">🗂️</div>
+            <div>
+              <div class="tool-name">Scoring Visualizer</div>
+              <span class="tool-tag tag-visual">Reference</span>
+            </div>
+          </div>
+          <div class="tool-desc">
+            A visual chart showing how placement scores are calculated — sun fit, companion bonuses, zone penalties, and the full scoring formula.
+          </div>
+          <a href="garden_planner_scoring_visualizer.html" class="tool-cta" aria-label="Open the Scoring Visualizer">Open Visualizer →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GOOD TO KNOW -->
+  <section id="goodtoknow" aria-labelledby="goodtoknow-heading">
+    <div class="wrapper">
+      <div class="eyebrow" aria-hidden="true">💡 Good to Know</div>
+      <h2 id="goodtoknow-heading">A few things that make Garden OS different</h2>
+      <p class="section-intro">
+        It was built to be simple, private, and long-lasting.
+      </p>
+      <div class="facts-grid">
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">🔒</span>
+          <div class="fact-title">Your data stays on your computer</div>
+          <div class="fact-desc">
+            Nothing you enter ever gets sent to a server. Your garden plan is saved locally on your device and belongs to you completely.
+          </div>
+        </div>
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">📡</span>
+          <div class="fact-title">Works without internet</div>
+          <div class="fact-desc">
+            Once you've opened it, Garden OS keeps working even if your Wi-Fi goes out. Perfect for using outside at the garden.
+          </div>
+        </div>
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">💸</span>
+          <div class="fact-title">Completely free</div>
+          <div class="fact-desc">
+            No subscription, no trial period, no "premium" features. Everything is free, forever. It's open source software.
+          </div>
+        </div>
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">💾</span>
+          <div class="fact-title">Save and come back anytime</div>
+          <div class="fact-desc">
+            Your plan saves automatically while you work. You can also save it as a file to your computer and open it again next season.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer role="contentinfo">
+  <div class="wrapper">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-name"><span aria-hidden="true">🌱</span> Garden OS</div>
+        <div class="footer-tagline">A simple, free tool for planning your raised bed garden.</div>
+      </div>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="garden-planner-v4.html">🌱 Open the Planner</a>
+        <a href="garden-cage-build-guide.html">🔨 Build Guide</a>
+        <a href="garden-cage-ops-guide.html">📋 Ops Guide</a>
+        <a href="garden-os-system-map.html">🗺️ System Map</a>
+      </div>
+      <div>
+        <p style="font-size:0.85rem; color:rgba(255,255,255,0.45); max-width:240px; line-height:1.6;">
+          No account needed. No ads. No tracking. Just a useful tool for growing things.
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT License — free and open source</span>
+      <span>Built for long-term usability with zero infrastructure.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll with nav offset
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' });
+    });
+  });
+
+  // Active nav highlight (also runs on load for hash navigation)
+  const sections = document.querySelectorAll('section[id]');
+  const navAs = document.querySelectorAll('.nav-links a');
+  function updateNav() {
+    const hash = location.hash.slice(1);
+    const y = window.scrollY + 100;
+    let cur = '';
+    sections.forEach(s => { if (s.offsetTop <= y) cur = s.id; });
+    if (!cur && hash) cur = hash;
+    navAs.forEach(a => {
+      const match = a.getAttribute('href') === '#' + cur;
+      a.style.color = match ? 'var(--leaf)' : '';
+      a.style.background = match ? 'var(--sage-wash)' : '';
+    });
+  }
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+
+  // Mobile nav toggle
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => {
+      const open = navLinks.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', open);
+    });
+    // Close mobile nav when a link is clicked
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  // Subtle entry animations on scroll (respects prefers-reduced-motion via CSS)
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .step-body, .tool-card, .fact-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

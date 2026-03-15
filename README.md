@@ -68,6 +68,7 @@ See:
 - `docs/garden-os-system-map.html`
 - `docs/garden-os-architecture-diagram.svg`
 - `docs/DOCUMENTATION_CATALOG.md`
+- `docs/game-timeline/README.md`
 
 ## Contribution Guidelines
 Contributions are welcome.

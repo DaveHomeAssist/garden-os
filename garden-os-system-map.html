@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — System Map</title>
+<style>
+  :root {
+    --bg-root:       #080c0a;
+    --bg-panel:      #0d1410;
+    --bg-card:       #111a14;
+    --bg-card-hover: #162019;
+    --bg-chip:       #0f1a11;
+    --border:        #1e3024;
+    --border-bright: #2a4432;
+    --green-1:       #4cff82;
+    --green-2:       #2ae860;
+    --green-3:       #1ab84c;
+    --green-dim:     #26663a;
+    --green-glow:    rgba(76,255,130,0.12);
+    --green-glow-sm: rgba(76,255,130,0.06);
+    --amber:         #f5c842;
+    --amber-dim:     rgba(245,200,66,0.15);
+    --blue:          #5ab4ff;
+    --blue-dim:      rgba(90,180,255,0.12);
+    --red-dim:       rgba(255,100,100,0.12);
+    --text-primary:  #e2f0e6;
+    --text-secondary:#8faa96;
+    --text-muted:    #4d6654;
+    --text-mono:     #6ddb96;
+    --radius:        6px;
+    --radius-lg:     10px;
+    --nav-h:         56px;
+    --font-sans:     system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono:     ui-monospace, 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; font-size: 15px; }
+
+  body {
+    background: var(--bg-root);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ────────────────────────────────────────────────── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--nav-h);
+    background: rgba(8,12,10,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    gap: 2rem;
+  }
+
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--green-1);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .nav-logo::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--green-1);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green-1);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform: scale(1); }
+    50%      { opacity:0.5; transform: scale(0.8); }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+
+  .nav-links::-webkit-scrollbar { display: none; }
+
+  .nav-links a {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius);
+    letter-spacing: 0.02em;
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+
+  .nav-links a:hover,
+  .nav-links a:focus {
+    color: var(--green-1);
+    background: var(--green-glow-sm);
+    outline: none;
+  }
+
+  .nav-links a:focus-visible {
+    outline: 2px solid var(--green-1);
+    outline-offset: 2px;
+  }
+
+  .nav-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.38rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary {
+    background: var(--green-3);
+    color: #040a06;
+    border-color: var(--green-3);
+  }
+
+  .btn-primary:hover {
+    background: var(--green-2);
+    border-color: var(--green-2);
+    box-shadow: 0 0 16px rgba(42,232,96,0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-bright);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--green-dim);
+    background: var(--green-glow-sm);
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--green-1);
+    outline-offset: 2px;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────────────── */
+  .wrapper {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section {
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--green-3);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-label::before {
+    content: '//';
+    color: var(--text-muted);
+  }
+
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .section-intro {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ────────────────────────────────────────────────── */
+  #hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 50%, rgba(26,184,76,0.04) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,48,36,0.25) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,48,36,0.25) 40px);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--green-3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-eyebrow span {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    background: rgba(26,184,76,0.12);
+    border: 1px solid var(--green-dim);
+    border-radius: 3px;
+    font-size: 0.65rem;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--green-1);
+    text-shadow: 0 0 40px rgba(76,255,130,0.25);
+  }
+
+  .hero-tagline {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.6rem;
+    font-weight: 300;
+    max-width: 560px;
+  }
+
+  .hero-summary {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 620px;
+    line-height: 1.75;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.4rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-3);
+    border-radius: var(--radius);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  /* ── EXECUTIVE SUMMARY ──────────────────────────────────── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--green-3), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .summary-card:hover {
+    border-color: var(--green-dim);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+
+  .summary-card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .card-body {
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  /* ── SYSTEM LAYERS ──────────────────────────────────────── */
+  .layers-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .layer {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .layer:hover { border-color: var(--border-bright); }
+
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.4rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+  }
+
+  .layer-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-ui      { background: rgba(90,180,255,0.12);  color: var(--blue);   border: 1px solid rgba(90,180,255,0.25); }
+  .badge-logic   { background: rgba(76,255,130,0.10);  color: var(--green-1);border: 1px solid var(--green-dim); }
+  .badge-data    { background: rgba(245,200,66,0.10);  color: var(--amber);  border: 1px solid rgba(245,200,66,0.25); }
+  .badge-persist { background: rgba(255,100,100,0.08); color: #ff8080;       border: 1px solid rgba(255,100,100,0.2); }
+
+  .layer-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+  }
+
+  .layer-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-family: var(--font-mono);
+  }
+
+  .layer-nodes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 1.4rem;
+    background: var(--bg-panel);
+  }
+
+  .node {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: var(--bg-chip);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    cursor: default;
+  }
+
+  .node:hover {
+    border-color: var(--green-dim);
+    color: var(--text-primary);
+    background: var(--bg-card);
+  }
+
+  .node-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-ui      { background: var(--blue); }
+  .dot-logic   { background: var(--green-1); }
+  .dot-data    { background: var(--amber); }
+  .dot-persist { background: #ff8080; }
+
+  /* ── DATA FLOW ──────────────────────────────────────────── */
+  .flow-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 640px;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 36px;
+    bottom: -12px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--green-dim), transparent);
+  }
+
+  .flow-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--green-3);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+
+  .flow-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    flex: 1;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .flow-content:hover {
+    border-color: var(--green-dim);
+    background: var(--bg-card-hover);
+  }
+
+  .flow-title {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--green-1);
+    margin-bottom: 0.2rem;
+  }
+
+  .flow-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* ── ENGINEERING PRINCIPLES ─────────────────────────────── */
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .principle-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .principle-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green-glow-sm);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .principle-card:hover {
+    border-color: var(--green-dim);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .principle-card:hover::after { opacity: 1; }
+
+  .principle-num {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--green-dim);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding-top: 0.15rem;
+    flex-shrink: 0;
+  }
+
+  .principle-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
+  }
+
+  .principle-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ── TOOL ECOSYSTEM ─────────────────────────────────────── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .tool-card:hover {
+    border-color: var(--green-dim);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 40px var(--green-glow-sm);
+  }
+
+  .tool-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .tool-name {
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+  }
+
+  .tool-type {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .type-core    { background: rgba(76,255,130,0.1); color: var(--green-1); border: 1px solid var(--green-dim); }
+  .type-guide   { background: rgba(90,180,255,0.1); color: var(--blue);   border: 1px solid rgba(90,180,255,0.25); }
+  .type-visual  { background: rgba(245,200,66,0.1); color: var(--amber);  border: 1px solid rgba(245,200,66,0.25); }
+  .type-meta    { background: rgba(180,100,255,0.1);color: #c084fc;       border: 1px solid rgba(180,100,255,0.25); }
+
+  .tool-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+  }
+
+  .tool-format {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .tool-format::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--green-dim);
+    border-radius: 50%;
+  }
+
+  /* ── ARCHITECTURE DIAGRAM ───────────────────────────────── */
+  .arch-diagram {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    overflow-x: auto;
+  }
+
+  .arch-inner {
+    min-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .arch-box {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 500;
+    border: 1px solid;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .arch-box:hover { transform: scale(1.03); }
+
+  .arch-box.ui      { background: rgba(90,180,255,0.07);  color: var(--blue);   border-color: rgba(90,180,255,0.25); }
+  .arch-box.logic   { background: rgba(76,255,130,0.07);  color: var(--green-1);border-color: var(--green-dim); }
+  .arch-box.data    { background: rgba(245,200,66,0.07);  color: var(--amber);  border-color: rgba(245,200,66,0.25); }
+  .arch-box.persist { background: rgba(255,100,100,0.07); color: #ff8080;       border-color: rgba(255,100,100,0.25); }
+
+  .arch-arrow {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    text-align: center;
+    user-select: none;
+  }
+
+  .arch-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ── FOOTER ─────────────────────────────────────────────── */
+  footer {
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    padding: 3rem 0;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .footer-brand-name {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--green-1);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-tagline {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .footer-links a {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .footer-links a:hover { color: var(--green-1); }
+
+  .footer-links a:focus-visible {
+    outline: 2px solid var(--green-1);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .footer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: right;
+  }
+
+  .footer-meta span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .footer-meta .license {
+    color: var(--green-dim);
+  }
+
+  /* ── DIVIDER ────────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    margin: 2rem 0;
+  }
+
+  /* ── INLINE CODE ────────────────────────────────────────── */
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    color: var(--text-mono);
+    background: rgba(76,255,130,0.06);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    border: 1px solid rgba(76,255,130,0.12);
+  }
+
+  /* ── RESPONSIVE ─────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    nav { padding: 0 1rem; gap: 1rem; }
+    .wrapper { padding: 0 1rem; }
+    .nav-links { display: none; }
+    .layer-desc { display: none; }
+    .footer-meta { text-align: left; }
+    h2 { font-size: 1.35rem; }
+    .hero-actions { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (min-width: 1400px) {
+    .summary-grid { grid-template-columns: repeat(4, 1fr); }
+    .principles-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ── FOCUS ──────────────────────────────────────────────── */
+  :focus-visible {
+    outline: 2px solid var(--green-1);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+  }
+
+  /* ── SCROLLBAR ──────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-root); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+  /* ── SKIP LINK ──────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--green-1);
+    color: #040a06;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 999;
+    border-radius: 0 0 var(--radius) 0;
+    text-decoration: none;
+    transition: top 0.15s;
+  }
+
+  .skip-link:focus { top: 0; }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- NAV -->
+<nav role="navigation" aria-label="Primary navigation">
+  <a href="#hero" class="nav-logo" aria-label="Garden OS home">
+    Garden OS
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="garden-planner-v4.html">Planner</a></li>
+    <li><a href="garden-cage-build-guide.html">Build Guide</a></li>
+    <li><a href="garden-cage-ops-guide.html">Ops Guide</a></li>
+    <li><a href="garden_planner_scoring_visualizer.html">Scoring Visualizer</a></li>
+    <li><a href="garden_planner_scoring_system_map.html">Scoring Map</a></li>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#layers">Layers</a></li>
+    <li><a href="#dataflow">Data Flow</a></li>
+    <li><a href="#principles">Principles</a></li>
+    <li><a href="#ecosystem">Ecosystem</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="https://github.com/DaveHomeAssist/garden-os" class="btn btn-ghost" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+      ↗ GitHub
+    </a>
+    <a href="https://davehomeassist.github.io/garden-os/" class="btn btn-primary" aria-label="Open live demo">
+      Live Demo
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- HERO -->
+  <section id="hero" aria-labelledby="hero-heading">
+    <div class="wrapper">
+      <div class="hero-eyebrow">
+        <span>v4 Architecture</span>
+        System Map
+      </div>
+      <h1 id="hero-heading">
+        <em>Garden OS</em><br>
+        System Map
+      </h1>
+      <p class="hero-tagline">
+        A zero-backend horticultural reasoning engine built entirely in the browser.
+      </p>
+      <div class="hero-summary" role="note">
+        Garden OS is an open-source raised bed planning system that runs as a collection of standalone single-file HTML tools with no server, no build step, and no cloud dependency. What began as a layout planner has evolved into a full horticultural reasoning engine — capable of evaluating crop placement, analyzing companion planting compatibility, modeling structural support requirements, and generating diagnostic explanations directly in the browser.
+      </div>
+      <div class="hero-actions">
+        <a href="https://davehomeassist.github.io/garden-os/" class="btn btn-primary" aria-label="Open Garden OS live demo">↗ Live Demo</a>
+        <a href="https://github.com/DaveHomeAssist/garden-os" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        <a href="index.html" class="btn btn-ghost" aria-label="Go to Garden OS project home">Garden OS Home</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section id="summary" aria-labelledby="summary-heading">
+    <div class="wrapper">
+      <div class="section-label">01</div>
+      <h2 id="summary-heading">Executive Summary</h2>
+      <p class="section-intro">
+        Garden OS is architected around four non-negotiable constraints: no backend, no build toolchain, no external data dependencies, and no required network connection after initial load.
+      </p>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">⬡</span>
+          <div class="card-title">Zero Backend</div>
+          <div class="card-body">
+            All computation runs in the browser. There is no server, no API endpoint, and no database. Every evaluation, score, and diagnostic is produced locally using JavaScript logic embedded in each tool file.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">▣</span>
+          <div class="card-title">Single-File Architecture</div>
+          <div class="card-body">
+            Every tool in the ecosystem is a self-contained <code>.html</code> file. Inline CSS, inline JavaScript, and embedded data. Download it, open it, use it — no installation or toolchain required.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◈</span>
+          <div class="card-title">Horticultural Reasoning Engine</div>
+          <div class="card-body">
+            The planner has evolved past a drag-and-drop layout tool into a reasoning system that models crop compatibility, seasonal windows, structural constraints, and limiting factors at the bed level.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">⟁</span>
+          <div class="card-title">Portable Workspace</div>
+          <div class="card-body">
+            The entire workspace state serializes to a human-readable <code>.gos.json</code> file. Workspaces are fully portable across machines, browsers, and time — no lock-in to any platform or service.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM LAYERS -->
+  <section id="layers" aria-labelledby="layers-heading">
+    <div class="wrapper">
+      <div class="section-label">02</div>
+      <h2 id="layers-heading">System Layers</h2>
+      <p class="section-intro">
+        Garden OS is organized into four vertical layers. Each layer has a clearly bounded responsibility and communicates with adjacent layers through defined interfaces rather than shared mutable state.
+      </p>
+
+      <div class="arch-diagram" aria-label="Architecture layer diagram" role="img">
+        <div class="arch-inner">
+          <div class="arch-label">user interface layer</div>
+          <div class="arch-row">
+            <div class="arch-box ui">Planner</div>
+            <div class="arch-box ui">Inspect Panel</div>
+            <div class="arch-box ui">Scoring Visualizer</div>
+            <div class="arch-box ui">Build Guide</div>
+            <div class="arch-box ui">Ops Guide</div>
+            <div class="arch-box ui">Landing Page</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">application logic layer</div>
+          <div class="arch-row">
+            <div class="arch-box logic">Crop Scoring Engine</div>
+            <div class="arch-box logic">Adjacency Analyzer</div>
+            <div class="arch-box logic">Season Evaluator</div>
+            <div class="arch-box logic">Structural Support Model</div>
+            <div class="arch-box logic">Limiting Factor Detector</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">data model layer</div>
+          <div class="arch-row">
+            <div class="arch-box data">Workspace Model</div>
+            <div class="arch-box data">Bed Layout Records</div>
+            <div class="arch-box data">Crop Database</div>
+            <div class="arch-box data">Cage Configuration</div>
+            <div class="arch-box data">Site Settings</div>
+            <div class="arch-box data">JSON Schema</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">persistence layer</div>
+          <div class="arch-row">
+            <div class="arch-box persist">localStorage</div>
+            <div class="arch-box persist">.gos.json Export</div>
+            <div class="arch-box persist">.gos.json Import</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 2rem;"></div>
+
+      <div class="layers-stack" role="list">
+
+        <!-- UI Layer -->
+        <div class="layer" role="listitem">
+          <div class="layer-header">
+            <span class="layer-badge badge-ui" aria-label="Layer type: User Interface">UI</span>
+            <span class="layer-name">User Interface Layer</span>
+            <span class="layer-desc" aria-hidden="true">presentation &amp; interaction</span>
+          </div>
+          <div class="layer-nodes" role="list" aria-label="User Interface Layer nodes">
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Planner</div>
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Inspect Panel</div>
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Scoring Visualizer</div>
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Build Guide</div>
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Ops Guide</div>
+            <div class="node" role="listitem"><span class="node-dot dot-ui" aria-hidden="true"></span>Landing Page</div>
+          </div>
+        </div>
+
+        <!-- Logic Layer -->
+        <div class="layer" role="listitem">
+          <div class="layer-header">
+            <span class="layer-badge badge-logic" aria-label="Layer type: Application Logic">Logic</span>
+            <span class="layer-name">Application Logic Layer</span>
+            <span class="layer-desc" aria-hidden="true">reasoning &amp; evaluation</span>
+          </div>
+          <div class="layer-nodes" role="list" aria-label="Application Logic Layer nodes">
+            <div class="node" role="listitem"><span class="node-dot dot-logic" aria-hidden="true"></span>Crop Scoring Engine</div>
+            <div class="node" role="listitem"><span class="node-dot dot-logic" aria-hidden="true"></span>Adjacency Analyzer</div>
+            <div class="node" role="listitem"><span class="node-dot dot-logic" aria-hidden="true"></span>Season Evaluator</div>
+            <div class="node" role="listitem"><span class="node-dot dot-logic" aria-hidden="true"></span>Structural Support Model</div>
+            <div class="node" role="listitem"><span class="node-dot dot-logic" aria-hidden="true"></span>Limiting Factor Detector</div>
+          </div>
+        </div>
+
+        <!-- Data Layer -->
+        <div class="layer" role="listitem">
+          <div class="layer-header">
+            <span class="layer-badge badge-data" aria-label="Layer type: Data Model">Data</span>
+            <span class="layer-name">Data Model Layer</span>
+            <span class="layer-desc" aria-hidden="true">schema &amp; records</span>
+          </div>
+          <div class="layer-nodes" role="list" aria-label="Data Model Layer nodes">
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>Workspace Model</div>
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>Bed Layout Records</div>
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>Crop Database</div>
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>Cage Configuration</div>
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>Site Settings</div>
+            <div class="node" role="listitem"><span class="node-dot dot-data" aria-hidden="true"></span>JSON Schema</div>
+          </div>
+        </div>
+
+        <!-- Persistence Layer -->
+        <div class="layer" role="listitem">
+          <div class="layer-header">
+            <span class="layer-badge badge-persist" aria-label="Layer type: Persistence">Persist</span>
+            <span class="layer-name">Persistence Layer</span>
+            <span class="layer-desc" aria-hidden="true">storage &amp; portability</span>
+          </div>
+          <div class="layer-nodes" role="list" aria-label="Persistence Layer nodes">
+            <div class="node" role="listitem"><span class="node-dot dot-persist" aria-hidden="true"></span>localStorage</div>
+            <div class="node" role="listitem"><span class="node-dot dot-persist" aria-hidden="true"></span>.gos.json Export</div>
+            <div class="node" role="listitem"><span class="node-dot dot-persist" aria-hidden="true"></span>.gos.json Import</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA FLOW -->
+  <section id="dataflow" aria-labelledby="dataflow-heading">
+    <div class="wrapper">
+      <div class="section-label">03</div>
+      <h2 id="dataflow-heading">Data Flow</h2>
+      <p class="section-intro">
+        Every user edit initiates a deterministic evaluation pipeline. No side effects, no asynchronous calls to external services, no hidden state. The full evaluation cycle runs synchronously in the browser.
+      </p>
+
+      <div class="flow-container" role="list" aria-label="Data flow sequence">
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">01</div>
+          <div class="flow-content">
+            <div class="flow-title">User Edits Layout</div>
+            <div class="flow-detail">The user places, moves, or removes a crop in the planner grid. The interaction is handled by the UI layer and dispatches a workspace mutation event.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">02</div>
+          <div class="flow-content">
+            <div class="flow-title">Workspace Updates</div>
+            <div class="flow-detail">The Workspace Model receives the mutation. Bed layout records are updated. The updated workspace state is passed downstream to the scoring pipeline.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">03</div>
+          <div class="flow-content">
+            <div class="flow-title">Scoring Engine Evaluates Crop Placement</div>
+            <div class="flow-detail">The Crop Scoring Engine runs against the full bed layout, consulting the Crop Database for compatibility data, spacing requirements, and yield profiles.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">04</div>
+          <div class="flow-content">
+            <div class="flow-title">Adjacency Analyzer Checks Neighbors</div>
+            <div class="flow-detail">Each cell in the layout is evaluated against its immediate neighbors. Companion planting relationships, root competition, and canopy interference are resolved.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">05</div>
+          <div class="flow-content">
+            <div class="flow-title">Limiting Factor Identified</div>
+            <div class="flow-detail">The Limiting Factor Detector determines the single highest-priority constraint blocking optimal placement — sun, spacing, antagonism, structural support, or season.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">06</div>
+          <div class="flow-content">
+            <div class="flow-title">Inspect Panel Explains Result</div>
+            <div class="flow-detail">The Inspect Panel surfaces the scored result and the identified limiting factor as a human-readable diagnostic. No codes, no jargon — plain operational language.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">07</div>
+          <div class="flow-content">
+            <div class="flow-title">Workspace Persists Locally</div>
+            <div class="flow-detail">The updated workspace state is serialized and written to <code>localStorage</code> automatically. No save button, no sync latency. State is durable across browser sessions.</div>
+          </div>
+        </div>
+
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">08</div>
+          <div class="flow-content">
+            <div class="flow-title">Optional Export Generates .gos.json</div>
+            <div class="flow-detail">On user request, the workspace model serializes to a fully portable <code>.gos.json</code> file. The file is human-readable, versionable, and loadable in any Garden OS tool instance.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ENGINEERING PRINCIPLES -->
+  <section id="principles" aria-labelledby="principles-heading">
+    <div class="wrapper">
+      <div class="section-label">04</div>
+      <h2 id="principles-heading">Engineering Principles</h2>
+      <p class="section-intro">
+        These principles are not aspirational — they are constraints enforced at the architecture level. A feature that violates any of them does not ship.
+      </p>
+
+      <div class="principles-grid">
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P1</div>
+          <div>
+            <div class="principle-name">Zero Backend</div>
+            <div class="principle-desc">No server receives user data, no API key is required, and no account is necessary. All computation happens on the user's machine. The system works fully offline after the initial file download.</div>
+          </div>
+        </div>
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P2</div>
+          <div>
+            <div class="principle-name">Offline First</div>
+            <div class="principle-desc">Garden OS is designed to function without a network connection. No CDN assets, no remote fonts on a cold load, no external service calls. The tool is the file. The file is enough.</div>
+          </div>
+        </div>
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P3</div>
+          <div>
+            <div class="principle-name">Deterministic Scoring</div>
+            <div class="principle-desc">Given identical input, the scoring engine always produces identical output. There is no randomness, no server-side ML inference, and no user-specific weighting that could produce divergent results.</div>
+          </div>
+        </div>
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P4</div>
+          <div>
+            <div class="principle-name">Portable Workspace Files</div>
+            <div class="principle-desc">The <code>.gos.json</code> format is the canonical workspace representation. It is version-controlled friendly, human-readable, and designed to remain loadable by future versions of any Garden OS tool.</div>
+          </div>
+        </div>
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P5</div>
+          <div>
+            <div class="principle-name">Single HTML Tool Architecture</div>
+            <div class="principle-desc">Every tool ships as one self-contained <code>.html</code> file. No build step, no dependency resolution, no bundler configuration. This is a deliberate constraint, not a shortcut.</div>
+          </div>
+        </div>
+
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">P6</div>
+          <div>
+            <div class="principle-name">Human Readable Diagnostics</div>
+            <div class="principle-desc">The system communicates in plain language. Scores are explained, limiting factors are named, and recommendations reference observable conditions in the garden — not numeric codes or internal identifiers.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOL ECOSYSTEM -->
+  <section id="ecosystem" aria-labelledby="ecosystem-heading">
+    <div class="wrapper">
+      <div class="section-label">05</div>
+      <h2 id="ecosystem-heading">Tool Ecosystem</h2>
+      <p class="section-intro">
+        Garden OS ships as a coordinated set of single-file tools, each with a bounded scope. Tools share the <code>.gos.json</code> workspace format as their common interface.
+      </p>
+
+      <div class="tools-grid">
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Planner</span>
+            <span class="tool-type type-core" aria-label="Tool type: Core">Core</span>
+          </div>
+          <div class="tool-desc">
+            The primary planning interface. Drag-and-drop crop placement, live scoring feedback, adjacency analysis, and bed configuration. The central tool in the ecosystem and the main entry point for users.
+          </div>
+          <div class="tool-format">planner.html — single file</div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Build Guide</span>
+            <span class="tool-type type-guide" aria-label="Tool type: Guide">Guide</span>
+          </div>
+          <div class="tool-desc">
+            Generates a context-aware bed construction guide based on the user's workspace configuration — dimensions, materials, structural requirements, and cage setup instructions.
+          </div>
+          <div class="tool-format">build-guide.html — single file</div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Ops Guide</span>
+            <span class="tool-type type-guide" aria-label="Tool type: Guide">Guide</span>
+          </div>
+          <div class="tool-desc">
+            Produces a season-specific operational guide for the loaded workspace: watering schedules, fertilization timing, crop succession notes, and maintenance tasks derived from the active bed layout.
+          </div>
+          <div class="tool-format">ops-guide.html — single file</div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Scoring Visualizer</span>
+            <span class="tool-type type-visual" aria-label="Tool type: Visual">Visual</span>
+          </div>
+          <div class="tool-desc">
+            An interactive heat map of the scoring engine's output. Renders placement scores, adjacency weights, and limiting factor overlays across the entire bed grid for visual diagnostics.
+          </div>
+          <div class="tool-format">scoring-visualizer.html — single file</div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Scoring System Map</span>
+            <span class="tool-type type-meta" aria-label="Tool type: Meta">Meta</span>
+          </div>
+          <div class="tool-desc">
+            Technical documentation of the scoring engine itself: rule weights, factor definitions, adjacency matrices, and algorithm behavior. Designed for contributors and advanced users extending the system.
+          </div>
+          <div class="tool-format">scoring-map.html — single file</div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Landing Page</span>
+            <span class="tool-type type-meta" aria-label="Tool type: Meta">Meta</span>
+          </div>
+          <div class="tool-desc">
+            Project overview, tool index, and quick-start guide. Links to all tools in the ecosystem, the GitHub repository, and the documentation set. Deployable as a static file with no server.
+          </div>
+          <div class="tool-format">index.html — single file</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer role="contentinfo">
+  <div class="wrapper">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-name">Garden OS</div>
+        <div class="footer-tagline">
+          "Built for long-term usability with zero infrastructure."
+        </div>
+      </div>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="https://github.com/DaveHomeAssist/garden-os" target="_blank" rel="noopener noreferrer">
+          ↗ GitHub Repository
+        </a>
+        <a href="index.html" aria-label="Garden OS project home">
+          ↗ Garden OS Home
+        </a>
+        <a href="https://davehomeassist.github.io/garden-os/" aria-label="Open live demo">
+          ↗ Live Demo
+        </a>
+      </div>
+      <div class="footer-meta" aria-label="Project metadata">
+        <span class="license">MIT License — Open Source</span>
+        <span>No server. No account. No lock-in.</span>
+        <span>Works in any modern browser.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll for nav links with offset for sticky nav
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      const offset = 72;
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
+
+  // Active nav link highlight on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+
+  function updateActive() {
+    const scrollY = window.scrollY + 100;
+    let current = '';
+    sections.forEach(sec => {
+      if (sec.offsetTop <= scrollY) current = sec.id;
+    });
+    navLinks.forEach(a => {
+      const href = a.getAttribute('href').replace('#', '');
+      if (href === current) {
+        a.style.color = 'var(--green-1)';
+        a.style.background = 'var(--green-glow-sm)';
+      } else {
+        a.style.color = '';
+        a.style.background = '';
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+</script>
+</body>
+</html>

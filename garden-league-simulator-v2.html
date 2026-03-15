@@ -1,0 +1,2018 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Garden OS: Plant Strategy Simulator v2</title>
+  <style>
+    :root {
+      --bg: #2a1c10;
+      --panel: #f5ecdc;
+      --panel-2: #efe3cd;
+      --ink: #22150b;
+      --muted: #5a4834;
+      --line: #c5ab86;
+      --accent: #5f8f45;
+      --accent-2: #c98d22;
+      --good: #3e9d63;
+      --warn: #c78623;
+      --bad: #c24d4d;
+      --focus: #2f73a8;
+      --shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
+      --radius: 16px;
+      --hard-bg: #f5dddd;
+      --warn-bg: #f5ead8;
+      --good-bg: #e1f2e5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 0%, #4c321f 0%, #2a1c10 52%),
+        linear-gradient(180deg, #2a1c10 0%, #1e140b 100%);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.25;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.2) 1px, transparent 0);
+      background-size: 20px 20px;
+      z-index: -1;
+    }
+
+    .app {
+      width: min(1280px, 96vw);
+      margin: 22px auto 38px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 320px 1fr 340px;
+    }
+
+    .panel {
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, #fff 8%) 0%, var(--panel) 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .head {
+      grid-column: 1 / -1;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--panel) 72%, #ecdfc6 28%) 0%, color-mix(in srgb, var(--panel) 80%, #e4d2b5 20%) 100%);
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      line-height: 1.1;
+      font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: clamp(1.32rem, 2.8vw, 2.2rem);
+      background: linear-gradient(90deg, #476b36 0%, #af7620 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .title-wrap p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 11px;
+      background: color-mix(in srgb, var(--panel) 72%, #e0d0b6 28%);
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .controls,
+    .board-wrap,
+    .results {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      min-height: 0;
+    }
+
+    .controls h2,
+    .board-wrap h2,
+    .results h2 {
+      margin: 0;
+      font-size: 1.12rem;
+      line-height: 1.2;
+      font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    .controls h2 { color: var(--accent-2); }
+
+    .season-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    select,
+    button {
+      font: inherit;
+      color: var(--ink);
+    }
+
+    select {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 84%, #dfc9a5 16%);
+      padding: 10px;
+    }
+
+    .crop-group {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px;
+      background: color-mix(in srgb, var(--panel-2) 89%, #fff 11%);
+      display: grid;
+      gap: 8px;
+    }
+
+    .crop-group h3 {
+      margin: 0;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .crop-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      max-height: 350px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .crop-btn {
+      text-align: left;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      padding: 9px 10px;
+      cursor: pointer;
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2px;
+      line-height: 1.2;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .crop-btn:hover {
+      transform: translateY(-1px);
+      border-color: #a98659;
+      box-shadow: 0 6px 14px rgba(85, 55, 22, 0.16);
+    }
+
+    .crop-btn.active {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--panel-2) 58%, #b8d39b 42%);
+    }
+
+    .crop-btn .meta-line {
+      display: block;
+      color: var(--muted);
+      font-size: 0.68rem;
+      margin-top: 0;
+      line-height: 1.2;
+    }
+
+    .crop-btn .name-line {
+      display: block;
+      font-size: 0.96rem;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+
+    .btn-row {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--panel) 82%, #dec39c 18%);
+      padding: 10px;
+      min-height: 44px;
+      cursor: pointer;
+      transition: filter 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.56;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #6ea64e 0%, #547f3a 100%);
+      border-color: #5f8f45;
+      font-weight: 700;
+      color: #f8f5ed;
+    }
+
+    .btn-danger {
+      background: linear-gradient(180deg, #c26759 0%, #a75248 100%);
+      border-color: #9d4b44;
+      color: #fff6f2;
+    }
+
+    .btn-secondary {
+      background: color-mix(in srgb, var(--panel) 80%, #dbc7a6 20%);
+      border-color: #b89569;
+    }
+
+    .challenge-strip {
+      border: 1px dashed #7f6b37;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f2e7cc 0%, #ebdfc1 100%);
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: #7a612e;
+    }
+
+    .board-wrap { gap: 10px; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .legend .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: baseline;
+    }
+    .dot.trellis { background: #f4b84a; }
+    .dot.access { background: #97c6ff; }
+    .dot.good { background: #7ecb4f; }
+    .dot.warn { background: #ffd166; }
+    .dot.bad { background: #ff7b7b; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 6px;
+      background:
+        linear-gradient(180deg, #3f2d1d 0%, #352617 100%);
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #6c4a2a;
+    }
+
+    .cell {
+      border-radius: 10px;
+      border: 1px solid #9f7d51;
+      min-height: 68px;
+      background:
+        radial-gradient(circle at 20% 24%, rgba(129, 99, 62, 0.22) 1px, transparent 2px),
+        radial-gradient(circle at 76% 68%, rgba(96, 71, 38, 0.16) 1px, transparent 2px),
+        linear-gradient(180deg, #f0e3ca 0%, #e6d5b6 100%);
+      background-size: 12px 12px, 14px 14px, 100% 100%;
+      cursor: pointer;
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 6px;
+      text-align: center;
+      transition: border-color 0.14s ease, transform 0.14s ease;
+    }
+
+    .cell:hover {
+      transform: translateY(-1px);
+      border-color: #ad7d44;
+      box-shadow: 0 5px 12px rgba(73, 45, 16, 0.25);
+    }
+
+    .cell.selected {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--focus), transparent 74%);
+    }
+
+    .cell.trellis::before,
+    .cell.access::before {
+      position: absolute;
+      left: 4px;
+      top: 3px;
+      font-size: 0.62rem;
+      opacity: 0.85;
+    }
+
+    .cell.trellis::before {
+      content: "T";
+      color: #b47919;
+    }
+    .cell.trellis {
+      background:
+        repeating-linear-gradient(90deg, rgba(200, 151, 74, 0.2) 0 2px, transparent 2px 7px),
+        linear-gradient(180deg, #edd9b7 0%, #dfc9a1 100%);
+    }
+
+    .cell.access::before {
+      content: "A";
+      color: #4a89bd;
+    }
+    .cell.access {
+      background:
+        repeating-linear-gradient(90deg, rgba(87, 145, 185, 0.18) 0 2px, transparent 2px 7px),
+        linear-gradient(180deg, #f4e9d0 0%, #eadab7 100%);
+    }
+
+    .cell.has-crop {
+      box-shadow: inset 0 0 0 2px rgba(92, 143, 69, 0.2);
+    }
+
+    .cell .emoji {
+      font-size: 1.32rem;
+      line-height: 1;
+    }
+
+    .cell .abbr {
+      font-size: 0.62rem;
+      color: #6f5b42;
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .cell.hard { border-color: var(--bad); background: color-mix(in oklab, var(--bad), #fff 74%); }
+    .cell.warn { border-color: var(--warn); background: color-mix(in oklab, var(--warn), #fff 78%); }
+    .cell.good {
+      border-color: var(--good);
+      background: color-mix(in oklab, var(--good), #fff 82%);
+      box-shadow: inset 0 0 0 2px rgba(62, 157, 99, 0.2);
+    }
+    .cell.just-planted {
+      animation: pop-in 180ms cubic-bezier(0.2, 0.9, 0.2, 1.2);
+    }
+
+    .axis {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-align: center;
+    }
+
+    .results { gap: 10px; }
+
+    .score-card,
+    .status-card,
+    .history-card {
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 89%, #fff 11%);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .score-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-ring {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .score-ring svg {
+      width: 84px;
+      height: 84px;
+      transform: rotate(-90deg);
+      position: absolute;
+      inset: 0;
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: #dbc39e;
+      stroke-width: 8;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke: var(--warn);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 264;
+      transition: stroke-dashoffset 0.55s ease-out, stroke 0.35s ease-out;
+    }
+
+    .score-value {
+      font-size: 2rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .score-cap {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .grade {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.67rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 7px;
+      color: var(--muted);
+    }
+
+    .grade.a { color: var(--good); border-color: color-mix(in oklab, var(--good), #000 44%); }
+    .grade.b { color: #7ab35a; border-color: #5f8742; }
+    .grade.c { color: var(--warn); border-color: #866d2f; }
+    .grade.d,
+    .grade.f { color: var(--bad); border-color: #8a4747; }
+
+    .score-main small { color: var(--muted); }
+
+    .counters {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .counter {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px;
+      text-align: center;
+      font-size: 0.73rem;
+      color: var(--muted);
+    }
+
+    .counter strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+
+    .counter.hard { background: var(--hard-bg); color: #8f3c3c; border-color: #ca8a8a; }
+    .counter.warn { background: var(--warn-bg); color: #8f6625; border-color: #d6bc88; }
+    .counter.good { background: var(--good-bg); color: #2f724a; border-color: #94c3a7; }
+
+    .bars {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 68px 1fr 42px;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+    }
+
+    .bar {
+      border-radius: 999px;
+      height: 8px;
+      background: #e5d4b5;
+      overflow: hidden;
+      border: 1px solid #c2a477;
+    }
+
+    .bar > .bar-fill {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--warn), var(--good));
+      transition: width 0.4s ease-out;
+    }
+
+    .narrator {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f1e6d2 0%, #ecddc3 100%);
+      padding: 10px;
+      color: #3f2e1c;
+      min-height: 90px;
+    }
+
+    .narrator strong { color: var(--accent-2); }
+
+    .event-log,
+    .history-list,
+    .violation-list {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: color-mix(in srgb, var(--panel-2) 89%, #fff 11%);
+      max-height: 190px;
+      overflow: auto;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: grid;
+      gap: 7px;
+    }
+
+    .history-list,
+    .violation-list { max-height: 140px; }
+
+    .line,
+    .hist,
+    .viol {
+      border-bottom: 1px dashed #be9f71;
+      padding-bottom: 6px;
+    }
+
+    .empty-state {
+      display: grid;
+      gap: 5px;
+      justify-items: start;
+      padding: 10px;
+      border: 1px dashed #cfb387;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--panel-2) 82%, #fff 18%);
+      color: #6c563d;
+      font-size: 0.76rem;
+      line-height: 1.35;
+    }
+
+    .empty-state .icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .empty-state .hint {
+      color: #846b4e;
+      font-size: 0.72rem;
+    }
+
+    @keyframes pop-in {
+      0% { transform: scale(0.78); }
+      100% { transform: scale(1); }
+    }
+
+    .line:last-child,
+    .hist:last-child,
+    .viol:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .kbd {
+      font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 2px 5px;
+      font-size: 0.72rem;
+      color: #3e301f;
+      background: #ead9ba;
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .board.eraser-mode .cell { cursor: crosshair; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    .overlay {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 31, 20, 0.72);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 180ms ease, visibility 180ms ease;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: min(520px, 96vw);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      background: linear-gradient(180deg, #f6eddd 0%, #f0e2c9 100%);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      transform: translateY(14px) scale(0.98);
+      transition: transform 200ms ease;
+    }
+
+    .overlay.active .modal { transform: translateY(0) scale(1); }
+
+    .modal h3 {
+      margin: 0;
+      font-size: 1.12rem;
+      color: var(--accent-2);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 1140px) {
+      .app { grid-template-columns: 300px 1fr; }
+      .results { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 960px) {
+      .app {
+        width: min(1020px, 97vw);
+        grid-template-columns: 280px 1fr;
+      }
+      .controls,
+      .board-wrap,
+      .results { padding: 12px; }
+      .title-wrap h1 { font-size: clamp(1.28rem, 3vw, 1.9rem); }
+    }
+
+    @media (max-width: 820px) {
+      .app { grid-template-columns: 1fr; }
+      .head { flex-direction: column; align-items: flex-start; }
+      .meta { justify-content: flex-start; }
+      .btn-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        width: min(100%, 98vw);
+        margin: 10px auto 20px;
+        gap: 10px;
+      }
+      .head { padding: 14px; }
+      .chip { font-size: 0.72rem; }
+      .controls h2,
+      .board-wrap h2,
+      .results h2 { font-size: 1rem; }
+      .board-wrap { overflow-x: auto; }
+      .board,
+      .axis { min-width: 430px; }
+      .cell { min-height: 56px; }
+      .cell .abbr { display: none; }
+      .cell .emoji { font-size: 1.2rem; }
+      .crop-grid { max-height: 250px; }
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        width: 100%;
+        margin: 8px auto 16px;
+        padding: 0 6px;
+      }
+      .title-wrap h1 { font-size: 1.22rem; }
+      .title-wrap p { font-size: 0.84rem; }
+      .meta { gap: 6px; }
+      .chip { font-size: 0.68rem; padding: 4px 8px; }
+      .btn-row { grid-template-columns: 1fr; }
+      .board,
+      .axis { min-width: 396px; }
+      .legend { font-size: 0.72rem; gap: 6px; }
+      .score-ring { width: 74px; height: 74px; }
+      .score-ring svg { width: 74px; height: 74px; }
+      .score-value { font-size: 1.65rem; }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      .app {
+        margin: 6px auto 10px;
+        gap: 8px;
+      }
+      .head { padding: 10px 12px; }
+      .controls,
+      .board-wrap,
+      .results { padding: 10px; gap: 8px; }
+      .crop-grid { max-height: 160px; }
+      .event-log { max-height: 120px; }
+      .history-list,
+      .violation-list { max-height: 94px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <header class="panel head" aria-label="Game header">
+      <div class="title-wrap">
+        <h1>Garden OS: Plant Strategy Simulator v2</h1>
+        <p>Plan Mom's 8x4 bed, simulate the season, then beat your own score.</p>
+      </div>
+      <div class="meta">
+        <span class="chip">Narrator: Garden GURL</span>
+        <span class="chip">Commentary: Onion Man</span>
+        <span class="chip">Loop: Place -> Simulate -> Improve (v2)</span>
+      </div>
+    </header>
+
+    <section class="panel controls" aria-label="Game controls">
+      <h2>1) Pick Crop</h2>
+      <div class="crop-group">
+        <h3>Roster</h3>
+        <div id="cropGrid" class="crop-grid" role="listbox" aria-label="Crop selector"></div>
+      </div>
+
+      <div class="season-row">
+        <label for="seasonSelect">Season</label>
+        <select id="seasonSelect" aria-label="Season selection">
+          <option value="spring">Spring</option>
+          <option value="summer" selected>Summer</option>
+          <option value="fall">Fall</option>
+        </select>
+      </div>
+
+      <div id="challengeStrip" class="challenge-strip">Challenge: Open Play</div>
+
+      <h2>2) Actions</h2>
+      <div class="btn-row">
+        <button id="simulateBtn" class="btn btn-primary" type="button">Run Season (R)</button>
+        <button id="clearBtn" class="btn btn-danger" type="button">Retry Layout</button>
+        <button id="autoFillBtn" class="btn btn-secondary" type="button">Auto-Fill</button>
+        <button id="challengeBtn" class="btn btn-secondary" type="button">New Challenge</button>
+      </div>
+      <p class="muted">Tip: click a bed cell to place selected crop. Use <span class="kbd">E</span> for eraser, <span class="kbd">R</span> to run sim, and arrow keys on the grid.</p>
+      <p id="statusText" class="muted" aria-live="polite">Ready. Place crops to begin.</p>
+    </section>
+
+    <section class="panel board-wrap" aria-label="Garden board">
+      <h2>3) Bed Layout (8x4)</h2>
+      <div class="legend">
+        <span><span class="dot trellis"></span>Trellis rows</span>
+        <span><span class="dot access"></span>Access rows</span>
+        <span><span class="dot good"></span>Good fit</span>
+        <span><span class="dot warn"></span>Advisory</span>
+        <span><span class="dot bad"></span>Hard issue</span>
+      </div>
+      <p id="legendDesc" class="visually-hidden">Trellis and access zones are indicated in each grid cell, and score quality uses good, advisory, and hard issue states.</p>
+      <div class="axis" id="xAxis"></div>
+      <div class="board" id="board" role="grid" aria-label="Raised bed grid" aria-describedby="legendDesc"></div>
+      <div class="axis" aria-hidden="true">
+        <span>Back trellis</span><span></span><span></span><span></span><span></span><span></span><span></span><span>Front access</span>
+      </div>
+    </section>
+
+    <aside class="panel results" aria-label="Simulation results">
+      <h2>4) Results</h2>
+      <article class="score-card">
+        <div class="score-main">
+          <div class="score-ring" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+              <circle id="scoreArc" class="ring-fill" cx="50" cy="50" r="42"></circle>
+            </svg>
+            <div id="scoreValue" class="score-value">--</div>
+          </div>
+          <small class="score-cap">/ 10 avg score</small>
+        </div>
+        <div id="scoreGrade" class="grade">--</div>
+        <div id="scoreSummary" class="muted">Run a simulation to see your season diagnosis.</div>
+        <div class="counters">
+          <div class="counter hard"><strong id="hardCount">0</strong>Hard</div>
+          <div class="counter warn"><strong id="warnCount">0</strong>Advisory</div>
+          <div class="counter good"><strong id="buffCount">0</strong>Buffs</div>
+        </div>
+        <div class="bars" id="factorBars"></div>
+      </article>
+
+      <article class="status-card">
+        <h2>Violations</h2>
+        <div id="violationList" class="violation-list" aria-label="Violation details"></div>
+      </article>
+
+      <article class="narrator" id="narratorBox" aria-live="polite">
+        <strong>Garden GURL:</strong> Lock in your rows. We optimize first, celebrate second.
+      </article>
+
+      <article class="history-card">
+        <h2>Score History</h2>
+        <div id="historyList" class="history-list" aria-label="Score history list"></div>
+      </article>
+
+      <div class="event-log" id="eventLog" aria-label="Event log"></div>
+    </aside>
+  </main>
+
+  <div id="challengeModal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="challengeTitle" aria-hidden="true" tabindex="-1">
+    <div class="modal" tabindex="-1">
+      <h3 id="challengeTitle">Challenge</h3>
+      <div id="challengeBody" class="muted"></div>
+      <div class="modal-actions">
+        <button id="acceptChallengeBtn" class="btn btn-primary" type="button">Accept</button>
+        <button id="closeChallengeBtn" class="btn btn-secondary" type="button">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const GRID_COLS = 8;
+      const GRID_ROWS = 4;
+      const TRELLIS_ROWS = new Set([0, 1]);
+      const ACCESS_ROWS = new Set([2, 3]);
+      const HISTORY_KEY = 'garden_strategy_scores_v1';
+
+      const CROPS = {
+        cherry_tom: { name: 'Cherry Tomato', emoji: '🍅', short: 'CT', faction: 'Climbers', sunMin: 6, sunIdeal: 8, support: true, shadeScore: 1, coolSeason: false, tall: true, water: 3, companions: ['basil', 'marigold'], conflicts: ['broccoli'] },
+        pole_beans: { name: 'Pole Beans', emoji: '🫘', short: 'PB', faction: 'Climbers', sunMin: 5, sunIdeal: 7, support: true, shadeScore: 3, coolSeason: true, tall: true, water: 2, companions: ['carrot', 'basil'], conflicts: ['onion'] },
+        peas: { name: 'Peas', emoji: '🫛', short: 'PEA', faction: 'Climbers', sunMin: 5, sunIdeal: 7, support: true, shadeScore: 3, coolSeason: true, tall: true, water: 2, companions: ['carrot', 'lettuce'], conflicts: ['onion', 'pepper'] },
+
+        radish: { name: 'Radish', emoji: '🌰', short: 'RAD', faction: 'Fast Cycles', sunMin: 4, sunIdeal: 6, support: false, shadeScore: 4, coolSeason: true, tall: false, water: 2, companions: ['carrot', 'lettuce'], conflicts: [] },
+        lettuce: { name: 'Lettuce', emoji: '🥬', short: 'LET', faction: 'Fast Cycles', sunMin: 4, sunIdeal: 6, support: false, shadeScore: 5, coolSeason: true, tall: false, water: 3, companions: ['carrot', 'radish'], conflicts: [] },
+        arugula: { name: 'Arugula', emoji: '🌿', short: 'ARU', faction: 'Fast Cycles', sunMin: 4, sunIdeal: 6, support: false, shadeScore: 4, coolSeason: true, tall: false, water: 3, companions: ['dill', 'basil'], conflicts: [] },
+
+        broccoli: { name: 'Broccoli', emoji: '🥦', short: 'BRC', faction: 'Brassicas', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 2, coolSeason: true, tall: true, water: 3, companions: ['onion', 'dill'], conflicts: ['cherry_tom'] },
+        kale: { name: 'Kale', emoji: '🥬', short: 'KAL', faction: 'Brassicas', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: true, tall: true, water: 3, companions: ['marigold'], conflicts: [] },
+
+        carrot: { name: 'Carrot', emoji: '🥕', short: 'CAR', faction: 'Roots', sunMin: 4, sunIdeal: 6, support: false, shadeScore: 4, coolSeason: true, tall: false, water: 2, companions: ['lettuce', 'onion'], conflicts: ['dill'] },
+        onion: { name: 'Onion', emoji: '🧅', short: 'ONI', faction: 'Roots', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: true, tall: false, water: 2, companions: ['carrot', 'pepper'], conflicts: ['peas', 'pole_beans'] },
+        beet: { name: 'Beet', emoji: '🫚', short: 'BET', faction: 'Roots', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: true, tall: false, water: 2, companions: ['onion'], conflicts: [] },
+
+        spinach: { name: 'Spinach', emoji: '🍃', short: 'SPI', faction: 'Greens', sunMin: 4, sunIdeal: 6, support: false, shadeScore: 5, coolSeason: true, tall: false, water: 3, companions: ['radish'], conflicts: [] },
+        chard: { name: 'Swiss Chard', emoji: '🌱', short: 'CHD', faction: 'Greens', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 4, coolSeason: false, tall: false, water: 3, companions: ['onion'], conflicts: [] },
+
+        basil: { name: 'Basil', emoji: '🌿', short: 'BAS', faction: 'Herbs', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: false, tall: false, water: 3, companions: ['cherry_tom', 'pepper'], conflicts: [] },
+        dill: { name: 'Dill', emoji: '🪴', short: 'DIL', faction: 'Herbs', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: true, tall: false, water: 2, companions: ['broccoli'], conflicts: ['cherry_tom', 'carrot'] },
+
+        pepper: { name: 'Pepper', emoji: '🌶️', short: 'PEP', faction: 'Fruiting', sunMin: 6, sunIdeal: 8, support: false, shadeScore: 2, coolSeason: false, tall: false, water: 2, companions: ['basil', 'onion'], conflicts: ['peas'] },
+        zucchini: { name: 'Zucchini', emoji: '🥒', short: 'ZUC', faction: 'Fruiting', sunMin: 6, sunIdeal: 8, support: false, shadeScore: 2, coolSeason: false, tall: true, water: 3, companions: ['marigold'], conflicts: [] },
+
+        marigold: { name: 'Marigold', emoji: '🌼', short: 'MAR', faction: 'Companions', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: false, tall: false, water: 2, companions: ['cherry_tom', 'pepper', 'broccoli'], conflicts: [] },
+        nasturtium: { name: 'Nasturtium', emoji: '🌸', short: 'NAS', faction: 'Companions', sunMin: 5, sunIdeal: 7, support: false, shadeScore: 3, coolSeason: false, tall: false, water: 2, companions: ['zucchini'], conflicts: [] }
+      };
+
+      const FACTOR_LABELS = [
+        ['sun', 'Sun'],
+        ['support', 'Support'],
+        ['shade', 'Shade'],
+        ['access', 'Access'],
+        ['season', 'Season'],
+        ['adjacency', 'Adjacency']
+      ];
+
+      const CHALLENGES = [
+        {
+          id: 'trellis-audit',
+          name: 'Trellis Compliance Audit',
+          desc: 'Have at least 4 support crops and all support crops must be in trellis rows.',
+          validate: (result) => {
+            const supportCrops = result.planted.filter((p) => CROPS[p.cropKey].support);
+            const badSupport = supportCrops.filter((p) => !TRELLIS_ROWS.has(cellToRowCol(p.index).row));
+            const pass = supportCrops.length >= 4 && badSupport.length === 0;
+            return {
+              pass,
+              message: pass ? 'Challenge passed. Trellis law enforced.' : 'Needs 4 support crops, and none can be off-trellis.'
+            };
+          }
+        },
+        {
+          id: 'diplomats',
+          name: 'Diplomatic Immunity Run',
+          desc: 'Place at least 3 companion crops and finish with avg score >= 6.5.',
+          validate: (result) => {
+            const companions = result.planted.filter((p) => CROPS[p.cropKey].faction === 'Companions').length;
+            const pass = companions >= 3 && result.avg >= 6.5;
+            return {
+              pass,
+              message: pass ? 'Challenge passed. Diplomacy secured the bed.' : `Need 3 companion crops and avg >= 6.5. Current companions: ${companions}.`
+            };
+          }
+        },
+        {
+          id: 'roots-front',
+          name: 'Roots Frontline',
+          desc: 'Fill the front row entirely with Roots crops. Keep avg score >= 5.0.',
+          validate: (result) => {
+            const frontRowIndexes = Array.from({ length: GRID_COLS }, (_, i) => (GRID_ROWS - 1) * GRID_COLS + i);
+            const passFront = frontRowIndexes.every((idx) => {
+              const key = state.grid[idx];
+              return key && CROPS[key].faction === 'Roots';
+            });
+            const pass = passFront && result.avg >= 5;
+            return {
+              pass,
+              message: pass ? 'Challenge passed. Underground Union approves.' : 'Front row must be all Roots and avg >= 5.0.'
+            };
+          }
+        }
+      ];
+
+      const state = {
+        selectedCrop: 'cherry_tom',
+        season: 'summer',
+        grid: Array(GRID_COLS * GRID_ROWS).fill(null),
+        selectedCell: 0,
+        lastResult: null,
+        log: ['Garden GURL: Draw your line, then trust the diagnosis.'],
+        mode: 'planning',
+        justPlacedCell: null,
+        challenge: null,
+        pendingChallenge: null,
+        scoreHistory: loadScoreHistory()
+      };
+      let modalRestoreFocusEl = null;
+      const FOCUSABLE_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=\"-1\"])';
+
+      const el = {
+        cropGrid: document.getElementById('cropGrid'),
+        seasonSelect: document.getElementById('seasonSelect'),
+        simulateBtn: document.getElementById('simulateBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        autoFillBtn: document.getElementById('autoFillBtn'),
+        challengeBtn: document.getElementById('challengeBtn'),
+        app: document.getElementById('app'),
+        board: document.getElementById('board'),
+        xAxis: document.getElementById('xAxis'),
+        scoreValue: document.getElementById('scoreValue'),
+        scoreArc: document.getElementById('scoreArc'),
+        scoreGrade: document.getElementById('scoreGrade'),
+        scoreSummary: document.getElementById('scoreSummary'),
+        factorBars: document.getElementById('factorBars'),
+        narratorBox: document.getElementById('narratorBox'),
+        eventLog: document.getElementById('eventLog'),
+        statusText: document.getElementById('statusText'),
+        challengeStrip: document.getElementById('challengeStrip'),
+        hardCount: document.getElementById('hardCount'),
+        warnCount: document.getElementById('warnCount'),
+        buffCount: document.getElementById('buffCount'),
+        violationList: document.getElementById('violationList'),
+        historyList: document.getElementById('historyList'),
+        challengeModal: document.getElementById('challengeModal'),
+        challengeTitle: document.getElementById('challengeTitle'),
+        challengeBody: document.getElementById('challengeBody'),
+        acceptChallengeBtn: document.getElementById('acceptChallengeBtn'),
+        closeChallengeBtn: document.getElementById('closeChallengeBtn')
+      };
+
+      function loadScoreHistory() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+          return Array.isArray(parsed) ? parsed.slice(-10) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveScoreHistory() {
+        try {
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(state.scoreHistory.slice(-10)));
+        } catch {
+          // Ignore storage failures in offline mode.
+        }
+      }
+
+      function pushHistory(entry) {
+        state.scoreHistory.push(entry);
+        if (state.scoreHistory.length > 10) state.scoreHistory = state.scoreHistory.slice(-10);
+        saveScoreHistory();
+      }
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function randomPick(items) {
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function prefersReducedMotion() {
+        return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+
+      function isModalOpen() {
+        return el.challengeModal.classList.contains('active');
+      }
+
+      function isEditableTarget(target) {
+        if (!target) return false;
+        if (target.isContentEditable) return true;
+        const tag = target.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+      }
+
+      function shouldIgnoreGlobalShortcuts(target) {
+        if (isModalOpen()) return true;
+        return isEditableTarget(target);
+      }
+
+      function trapModalTabKey(e) {
+        if (!isModalOpen() || e.key !== 'Tab') return false;
+        const focusables = Array.from(el.challengeModal.querySelectorAll(FOCUSABLE_SELECTOR))
+          .filter((node) => node.getClientRects().length > 0);
+        if (!focusables.length) return false;
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+
+        if (!el.challengeModal.contains(active)) {
+          e.preventDefault();
+          first.focus();
+          return true;
+        }
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+          return true;
+        }
+        if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+          return true;
+        }
+        return false;
+      }
+
+      function cellToRowCol(index) {
+        return { row: Math.floor(index / GRID_COLS), col: index % GRID_COLS };
+      }
+
+      function lightAt(index) {
+        const { row, col } = cellToRowCol(index);
+        return clamp(4.2 + col * 0.48 - row * 0.16, 2, 9);
+      }
+
+      function accessAt(index) {
+        const { row } = cellToRowCol(index);
+        return ACCESS_ROWS.has(row) ? 5 : 3.6;
+      }
+
+      function neighbors(index) {
+        const { row, col } = cellToRowCol(index);
+        const out = [];
+        const checks = [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]];
+        for (const [r, c] of checks) {
+          if (r < 0 || c < 0 || r >= GRID_ROWS || c >= GRID_COLS) continue;
+          out.push(r * GRID_COLS + c);
+        }
+        return out;
+      }
+
+      function computeSunFit(crop, light) {
+        if (light >= crop.sunIdeal) return 5;
+        if (light >= crop.sunMin) {
+          return 3 + ((light - crop.sunMin) / Math.max(0.1, crop.sunIdeal - crop.sunMin)) * 2;
+        }
+        return clamp(1 + (light / Math.max(0.1, crop.sunMin)) * 2, 0, 3);
+      }
+
+      function computeSupportFit(crop, row) {
+        const onTrellis = TRELLIS_ROWS.has(row);
+        if (crop.support && onTrellis) return 5;
+        if (crop.support && !onTrellis) return 1;
+        if (!crop.support && onTrellis) return 4;
+        return 5;
+      }
+
+      function computeShadeFit(crop, light) {
+        const penalty = light < crop.sunMin ? 1.6 : 0;
+        return clamp(crop.shadeScore - penalty, 0, 5);
+      }
+
+      function computeAccessFit(crop, access) {
+        if (crop.tall && access >= 5) return 3.1;
+        if (!crop.tall && access >= 5) return 5;
+        return crop.tall ? 4.1 : 4.6;
+      }
+
+      function computeSeasonFit(crop, season) {
+        const coolSeason = season === 'spring' || season === 'fall';
+        if (crop.coolSeason && coolSeason) return 5;
+        if (crop.coolSeason && !coolSeason) return 1.3;
+        if (!crop.coolSeason && season === 'summer') return 5;
+        return 3;
+      }
+
+      function computeAdjacency(index, cropKey) {
+        const crop = CROPS[cropKey];
+        let score = 0;
+        let companions = 0;
+        let conflicts = 0;
+        let waterMismatch = 0;
+        let sameCrowd = 0;
+
+        for (const n of neighbors(index)) {
+          const otherKey = state.grid[n];
+          if (!otherKey) continue;
+          const other = CROPS[otherKey];
+
+          if (crop.companions.includes(otherKey) || other.companions.includes(cropKey)) {
+            score += 0.6;
+            companions += 1;
+          }
+
+          if (crop.conflicts.includes(otherKey) || other.conflicts.includes(cropKey)) {
+            score -= 1.2;
+            conflicts += 1;
+          }
+
+          if (Math.abs((crop.water || 2) - (other.water || 2)) >= 2) {
+            score -= 0.5;
+            waterMismatch += 1;
+          }
+
+          if (crop.tall && other.tall) score -= 0.35;
+          if (otherKey === cropKey) {
+            score -= 0.2;
+            sameCrowd += 1;
+          }
+        }
+
+        return {
+          score: clamp(score, -2, 2),
+          companions,
+          conflicts,
+          waterMismatch,
+          sameCrowd
+        };
+      }
+
+      function scoreCell(index, cropKey, season) {
+        const crop = CROPS[cropKey];
+        const { row } = cellToRowCol(index);
+        const light = lightAt(index);
+        const access = accessAt(index);
+
+        const sun = computeSunFit(crop, light);
+        const support = computeSupportFit(crop, row);
+        const shade = computeShadeFit(crop, light);
+        const accessFit = computeAccessFit(crop, access);
+        const seasonFit = computeSeasonFit(crop, season);
+        const structure = (crop.support && TRELLIS_ROWS.has(row) ? 0.7 : 0) + (!crop.support && ACCESS_ROWS.has(row) ? 0.25 : 0);
+
+        const base = ((sun * 2) + support + shade + accessFit + seasonFit) / 3 + structure;
+        const adjacency = computeAdjacency(index, cropKey);
+        const finalScore = clamp(base + adjacency.score, 0, 10);
+
+        const issues = {
+          hard: 0,
+          warn: 0,
+          buff: 0,
+          details: []
+        };
+
+        if (crop.support && !TRELLIS_ROWS.has(row)) {
+          issues.hard += 1;
+          issues.details.push(`HARD ${crop.name} at ${formatCell(index)} is off-trellis.`);
+        }
+
+        if (!crop.support && TRELLIS_ROWS.has(row)) {
+          issues.warn += 1;
+          issues.details.push(`ADVISORY ${crop.name} at ${formatCell(index)} is using trellis space.`);
+        }
+
+        if (adjacency.conflicts > 0) {
+          issues.warn += adjacency.conflicts;
+          issues.details.push(`ADVISORY ${crop.name} has ${adjacency.conflicts} conflict neighbor(s).`);
+        }
+
+        if (adjacency.waterMismatch > 0) {
+          issues.warn += adjacency.waterMismatch;
+          issues.details.push(`ADVISORY ${crop.name} has ${adjacency.waterMismatch} water mismatch neighbor(s).`);
+        }
+
+        if (adjacency.companions > 0) {
+          issues.buff += adjacency.companions;
+          issues.details.push(`BUFF ${crop.name} gets ${adjacency.companions} companion bonus link(s).`);
+        }
+
+        if (adjacency.sameCrowd > 0 && crop.tall) {
+          issues.warn += adjacency.sameCrowd;
+          issues.details.push(`ADVISORY ${crop.name} crowding near same crop.`);
+        }
+
+        const factors = {
+          sun,
+          support,
+          shade,
+          access: accessFit,
+          season: seasonFit,
+          adjacency: adjacency.score + 2.5
+        };
+
+        return {
+          index,
+          cropKey,
+          cropName: crop.name,
+          score: finalScore,
+          factors,
+          details: {
+            light,
+            access,
+            structure,
+            adjacency,
+            issues
+          }
+        };
+      }
+
+      function simulateSeason() {
+        const planted = [];
+        for (let i = 0; i < state.grid.length; i += 1) {
+          if (!state.grid[i]) continue;
+          planted.push(scoreCell(i, state.grid[i], state.season));
+        }
+
+        if (!planted.length) return null;
+
+        const avg = planted.reduce((sum, p) => sum + p.score, 0) / planted.length;
+        const best = [...planted].sort((a, b) => b.score - a.score)[0];
+        const worst = [...planted].sort((a, b) => a.score - b.score)[0];
+
+        const factorAvg = { sun: 0, support: 0, shade: 0, access: 0, season: 0, adjacency: 0 };
+        const issueSummary = { hard: 0, warn: 0, buff: 0, details: [] };
+
+        for (const p of planted) {
+          factorAvg.sun += p.factors.sun;
+          factorAvg.support += p.factors.support;
+          factorAvg.shade += p.factors.shade;
+          factorAvg.access += p.factors.access;
+          factorAvg.season += p.factors.season;
+          factorAvg.adjacency += p.factors.adjacency;
+
+          issueSummary.hard += p.details.issues.hard;
+          issueSummary.warn += p.details.issues.warn;
+          issueSummary.buff += p.details.issues.buff;
+          issueSummary.details.push(...p.details.issues.details);
+        }
+
+        Object.keys(factorAvg).forEach((k) => {
+          factorAvg[k] /= planted.length;
+        });
+
+        const uniqueDetails = [...new Set(issueSummary.details)];
+
+        return {
+          avg,
+          plantedCount: planted.length,
+          best,
+          worst,
+          factorAvg,
+          planted,
+          issues: {
+            hard: issueSummary.hard,
+            warn: issueSummary.warn,
+            buff: issueSummary.buff,
+            details: uniqueDetails.slice(0, 14)
+          }
+        };
+      }
+
+      function getGrade(score) {
+        if (score >= 8.5) return { label: 'A - Exemplary', cls: 'a' };
+        if (score >= 7.0) return { label: 'B - Competent', cls: 'b' };
+        if (score >= 5.5) return { label: 'C - Functional', cls: 'c' };
+        if (score >= 4.0) return { label: 'D - Improve', cls: 'd' };
+        return { label: 'F - Rezone', cls: 'f' };
+      }
+
+      function pickNarrator(result) {
+        const avg = result.avg;
+        const worst = result.worst;
+        const adjacency = result.factorAvg.adjacency - 2.5;
+
+        const gurlHigh = [
+          'Garden GURL: This bed is disciplined. You are farming like zoning counsel.',
+          'Garden GURL: Strong layout. Violations are minimal and your logic is clean.'
+        ];
+        const gurlMid = [
+          'Garden GURL: Functional draft, but a few cells are tactical errors.',
+          'Garden GURL: You have a good base. Fix hard issues first, then tune adjacency.'
+        ];
+        const gurlLow = [
+          'Garden GURL: Score is a diagnosis, not a tragedy. We fix weak cells first.',
+          'Garden GURL: This bed is arguing with itself. Resolve conflicts row by row.'
+        ];
+
+        const onionHigh = [
+          'Onion Man: The companions are supporting each other. It is so beautiful.',
+          'Onion Man: Strong score. I am proud, and also emotional.'
+        ];
+        const onionMid = [
+          'Onion Man: We are close. One cleaner row and this turns around fast.',
+          'Onion Man: Respectable score. I will cry moderately.'
+        ];
+        const onionLow = [
+          `Onion Man: ${worst.cropName} at ${formatCell(worst.index)} is suffering, and now I am too.`,
+          'Onion Man: We can recover. The Phillies have done less with more.'
+        ];
+
+        let gurl;
+        if (avg >= 8.3) gurl = randomPick(gurlHigh);
+        else if (avg >= 6.7) gurl = randomPick(gurlMid);
+        else gurl = randomPick(gurlLow);
+
+        let onion;
+        if (adjacency > 0.8) onion = randomPick(onionHigh);
+        else if (avg >= 6.0) onion = randomPick(onionMid);
+        else onion = randomPick(onionLow);
+
+        return `<strong>Garden GURL:</strong> ${gurl.replace('Garden GURL: ', '')}<br><strong>Onion Man:</strong> ${onion.replace('Onion Man: ', '')}`;
+      }
+
+      function formatCell(index) {
+        const { row, col } = cellToRowCol(index);
+        return `${String.fromCharCode(65 + row)}${col + 1}`;
+      }
+
+      function scoreTone(n) {
+        if (n >= 8) return 'var(--good)';
+        if (n >= 6) return 'var(--warn)';
+        return 'var(--bad)';
+      }
+
+      function updateScoreArc(value) {
+        const circumference = 264;
+        const clamped = clamp(value, 0, 10);
+        const progress = clamped / 10;
+        const offset = circumference * (1 - progress);
+        el.scoreArc.style.strokeDashoffset = offset.toFixed(2);
+        el.scoreArc.style.stroke = scoreTone(clamped);
+      }
+
+      function animateScoreTo(target) {
+        const clamped = clamp(target, 0, 10);
+        if (prefersReducedMotion()) {
+          el.scoreValue.textContent = clamped.toFixed(1);
+          updateScoreArc(clamped);
+          return;
+        }
+
+        const start = Number.parseFloat(el.scoreValue.textContent);
+        const from = Number.isFinite(start) ? start : 0;
+        const duration = 520;
+        const t0 = performance.now();
+
+        function tick(now) {
+          const p = clamp((now - t0) / duration, 0, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          const value = from + ((clamped - from) * eased);
+          el.scoreValue.textContent = value.toFixed(1);
+          updateScoreArc(value);
+          if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function renderCropButtons() {
+        const entries = Object.entries(CROPS);
+        const grouped = new Map();
+        for (const [key, crop] of entries) {
+          if (!grouped.has(crop.faction)) grouped.set(crop.faction, []);
+          grouped.get(crop.faction).push([key, crop]);
+        }
+
+        const frag = document.createDocumentFragment();
+
+        const eraserBtn = document.createElement('button');
+        eraserBtn.type = 'button';
+        eraserBtn.className = 'crop-btn' + (state.selectedCrop === 'eraser' ? ' active' : '');
+        eraserBtn.dataset.crop = 'eraser';
+        eraserBtn.setAttribute('role', 'option');
+        eraserBtn.setAttribute('aria-selected', state.selectedCrop === 'eraser' ? 'true' : 'false');
+        eraserBtn.innerHTML = '<span class="name-line">🧽 Eraser</span><span class="meta-line">Utility</span>';
+        eraserBtn.addEventListener('click', () => {
+          state.selectedCrop = 'eraser';
+          state.mode = 'planning';
+          pushLog('Garden GURL: Eraser selected. Clear what does not belong.');
+          render();
+        });
+        frag.appendChild(eraserBtn);
+
+        for (const [faction, items] of grouped.entries()) {
+          const label = document.createElement('h3');
+          label.textContent = faction;
+          frag.appendChild(label);
+
+          for (const [key, crop] of items) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'crop-btn' + (state.selectedCrop === key ? ' active' : '');
+            b.dataset.crop = key;
+            b.setAttribute('role', 'option');
+            b.setAttribute('aria-selected', state.selectedCrop === key ? 'true' : 'false');
+            b.innerHTML = `<span class="name-line">${crop.emoji} ${crop.name}</span><span class="meta-line">${crop.support ? 'Trellis required' : 'Standard'} • ${crop.coolSeason ? 'Cool season' : 'Warm season'}</span>`;
+            b.addEventListener('click', () => {
+              state.selectedCrop = key;
+              state.mode = 'planning';
+              pushLog(`Garden GURL: Selected ${crop.name}. Keep your lane clean.`);
+              render();
+            });
+            frag.appendChild(b);
+          }
+        }
+
+        el.cropGrid.replaceChildren(frag);
+      }
+
+      function renderAxes() {
+        const frag = document.createDocumentFragment();
+        for (let i = 1; i <= GRID_COLS; i += 1) {
+          const s = document.createElement('span');
+          s.textContent = String(i);
+          frag.appendChild(s);
+        }
+        el.xAxis.replaceChildren(frag);
+      }
+
+      function getCellClassByScore(result, index) {
+        if (!result) return '';
+        const found = result.planted.find((p) => p.index === index);
+        if (!found) return '';
+        if (found.details.issues.hard > 0) return ' hard';
+        if (found.details.issues.warn > 0) return ' warn';
+        return ' good';
+      }
+
+      function focusSelectedCell() {
+        const selectedCellEl = el.board.querySelector(`.cell[data-index=\"${state.selectedCell}\"]`);
+        if (selectedCellEl) selectedCellEl.focus();
+      }
+
+      function moveSelection(deltaRow, deltaCol) {
+        const { row, col } = cellToRowCol(state.selectedCell);
+        const nextRow = clamp(row + deltaRow, 0, GRID_ROWS - 1);
+        const nextCol = clamp(col + deltaCol, 0, GRID_COLS - 1);
+        state.selectedCell = nextRow * GRID_COLS + nextCol;
+        renderBoard();
+        focusSelectedCell();
+      }
+
+      function placeAtCell(index) {
+        state.selectedCell = index;
+        if (state.selectedCrop === 'eraser') {
+          state.grid[index] = null;
+          state.justPlacedCell = null;
+          pushLog(`Garden GURL: Cleared ${formatCell(index)}.`);
+        } else if (state.selectedCrop && CROPS[state.selectedCrop]) {
+          state.grid[index] = state.selectedCrop;
+          state.justPlacedCell = index;
+          pushLog(`Placed ${CROPS[state.selectedCrop].name} at ${formatCell(index)}.`);
+          setTimeout(() => {
+            if (state.justPlacedCell === index) {
+              state.justPlacedCell = null;
+              renderBoard();
+            }
+          }, 220);
+        }
+        state.mode = 'planning';
+        state.lastResult = null;
+        render();
+      }
+
+      function handleGridKeydown(e, index) {
+        switch (e.key) {
+          case 'ArrowRight':
+            e.preventDefault();
+            moveSelection(0, 1);
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            moveSelection(0, -1);
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            moveSelection(1, 0);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            moveSelection(-1, 0);
+            break;
+          case 'Home':
+            e.preventDefault();
+            state.selectedCell = cellToRowCol(state.selectedCell).row * GRID_COLS;
+            renderBoard();
+            focusSelectedCell();
+            break;
+          case 'End':
+            e.preventDefault();
+            state.selectedCell = (cellToRowCol(state.selectedCell).row * GRID_COLS) + (GRID_COLS - 1);
+            renderBoard();
+            focusSelectedCell();
+            break;
+          case 'Enter':
+          case ' ':
+            e.preventDefault();
+            placeAtCell(index);
+            break;
+          default:
+            break;
+        }
+      }
+
+      function renderBoard() {
+        const frag = document.createDocumentFragment();
+        el.board.classList.toggle('eraser-mode', state.selectedCrop === 'eraser');
+
+        for (let i = 0; i < state.grid.length; i += 1) {
+          const cropKey = state.grid[i];
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          const { row } = cellToRowCol(i);
+
+          let className = 'cell';
+          if (cropKey) className += ' has-crop';
+          if (TRELLIS_ROWS.has(row)) className += ' trellis';
+          if (ACCESS_ROWS.has(row)) className += ' access';
+          if (state.selectedCell === i) className += ' selected';
+          if (state.justPlacedCell === i) className += ' just-planted';
+          className += getCellClassByScore(state.lastResult, i);
+          cell.className = className;
+          cell.setAttribute('role', 'gridcell');
+          cell.dataset.index = String(i);
+          cell.tabIndex = state.selectedCell === i ? 0 : -1;
+          cell.setAttribute('aria-selected', state.selectedCell === i ? 'true' : 'false');
+
+          if (cropKey) {
+            const crop = CROPS[cropKey];
+            cell.innerHTML = `<div><div class="emoji">${crop.emoji}</div><div class="abbr">${crop.short}</div></div>`;
+            cell.setAttribute('aria-label', `${formatCell(i)} ${crop.name}`);
+          } else {
+            cell.innerHTML = `<div><div class="abbr">${formatCell(i)}</div></div>`;
+            cell.setAttribute('aria-label', `${formatCell(i)} empty`);
+          }
+
+          cell.addEventListener('click', () => placeAtCell(i));
+          cell.addEventListener('keydown', (e) => handleGridKeydown(e, i));
+
+          frag.appendChild(cell);
+        }
+
+        el.board.replaceChildren(frag);
+      }
+
+      function renderViolations(result) {
+        const frag = document.createDocumentFragment();
+        if (!result || result.issues.details.length === 0) {
+          renderEmptyState(el.violationList, '✅', 'No violations logged yet.', 'Run a full bed simulation to see diagnostics.');
+          return;
+        }
+
+        for (const line of result.issues.details.slice(0, 12)) {
+          const div = document.createElement('div');
+          div.className = 'viol';
+          div.textContent = line;
+          frag.appendChild(div);
+        }
+
+        el.violationList.replaceChildren(frag);
+      }
+
+      function renderHistory() {
+        const frag = document.createDocumentFragment();
+        if (!state.scoreHistory.length) {
+          renderEmptyState(el.historyList, '📘', 'No simulations yet.', 'Run your first season to create history entries.');
+          return;
+        }
+
+        for (const item of [...state.scoreHistory].reverse()) {
+          const div = document.createElement('div');
+          div.className = 'hist';
+          const when = new Date(item.date).toLocaleString();
+          div.textContent = `${item.score.toFixed(1)} • ${item.season} • ${when}`;
+          frag.appendChild(div);
+        }
+
+        el.historyList.replaceChildren(frag);
+      }
+
+      function renderResults() {
+        const result = state.lastResult;
+        if (!result) {
+          el.scoreValue.textContent = '--';
+          el.scoreValue.style.color = 'var(--ink)';
+          updateScoreArc(0);
+          el.scoreGrade.textContent = '--';
+          el.scoreGrade.className = 'grade';
+          el.scoreSummary.textContent = 'Run a simulation to see your season diagnosis.';
+          el.factorBars.innerHTML = '';
+          el.narratorBox.innerHTML = '<strong>Garden GURL:</strong> Lock in your rows. We optimize first, celebrate second.';
+          el.hardCount.textContent = '0';
+          el.warnCount.textContent = '0';
+          el.buffCount.textContent = '0';
+          renderViolations(null);
+          return;
+        }
+
+        animateScoreTo(result.avg);
+        el.scoreValue.style.color = scoreTone(result.avg);
+        const grade = getGrade(result.avg);
+        el.scoreGrade.textContent = grade.label;
+        el.scoreGrade.className = `grade ${grade.cls}`;
+
+        el.scoreSummary.textContent = `${result.plantedCount} planted cells • best ${result.best.cropName} (${result.best.score.toFixed(1)}) • weakest ${result.worst.cropName} (${result.worst.score.toFixed(1)})`;
+
+        const bars = document.createDocumentFragment();
+        for (const [key, label] of FACTOR_LABELS) {
+          const value = result.factorAvg[key];
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          const pct = clamp((value / 5) * 100, 0, 100);
+          row.innerHTML = `<span>${label}</span><div class="bar"><span class="bar-fill" style="width:${pct.toFixed(1)}%" role="progressbar" aria-label="${label} factor" aria-valuemin="0" aria-valuemax="5" aria-valuenow="${value.toFixed(1)}"></span></div><span>${value.toFixed(1)}</span>`;
+          bars.appendChild(row);
+        }
+        el.factorBars.replaceChildren(bars);
+
+        el.hardCount.textContent = String(result.issues.hard);
+        el.warnCount.textContent = String(result.issues.warn);
+        el.buffCount.textContent = String(result.issues.buff);
+
+        el.narratorBox.innerHTML = pickNarrator(result);
+        renderViolations(result);
+      }
+
+      function renderLog() {
+        const frag = document.createDocumentFragment();
+        for (const line of state.log.slice(-14).reverse()) {
+          const div = document.createElement('div');
+          div.className = 'line';
+          div.textContent = line;
+          frag.appendChild(div);
+        }
+        el.eventLog.replaceChildren(frag);
+      }
+
+      function pushLog(message) {
+        state.log.push(message);
+      }
+
+      function setStatus(message) {
+        el.statusText.textContent = message;
+      }
+
+      function renderEmptyState(container, icon, title, hint) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `<div class="icon" aria-hidden="true">${icon}</div><div>${title}</div><div class="hint">${hint}</div>`;
+        container.replaceChildren(empty);
+      }
+
+      function plantedCount() {
+        return state.grid.reduce((sum, c) => sum + (c ? 1 : 0), 0);
+      }
+
+      function clearLayout() {
+        state.grid.fill(null);
+        state.lastResult = null;
+        state.mode = 'planning';
+        pushLog('Garden GURL: Bed reset. New round, cleaner decisions.');
+        setStatus('Layout reset. Place crops to begin again.');
+        render();
+      }
+
+      function autoFillLayout() {
+        const supportKeys = Object.keys(CROPS).filter((k) => CROPS[k].support);
+        const standardKeys = Object.keys(CROPS).filter((k) => !CROPS[k].support);
+
+        for (let i = 0; i < state.grid.length; i += 1) {
+          const { row } = cellToRowCol(i);
+          if (TRELLIS_ROWS.has(row)) {
+            state.grid[i] = randomPick(supportKeys);
+          } else {
+            state.grid[i] = randomPick(standardKeys);
+          }
+        }
+
+        state.lastResult = null;
+        state.mode = 'planning';
+        pushLog('Garden GURL: Auto-fill complete. Now clean up what the machine got wrong.');
+        setStatus('Auto-fill placed all 32 cells.');
+        render();
+      }
+
+      function runSimulation() {
+        if (state.mode === 'simulating') return;
+        const count = plantedCount();
+        if (!count) {
+          pushLog('Onion Man: We cannot score empty dirt. I am distressed.');
+          setStatus('Add at least one crop before simulating.');
+          renderLog();
+          return;
+        }
+
+        state.mode = 'simulating';
+        const originalText = el.simulateBtn.textContent;
+        el.simulateBtn.disabled = true;
+        el.simulateBtn.textContent = 'Simulating...';
+        setStatus(`Running simulation for ${count} planted cells...`);
+
+        const finalizeRun = () => {
+          const result = simulateSeason();
+          state.lastResult = result;
+          state.mode = 'results';
+          setStatus(`Simulation complete for ${count} cells in ${state.season}.`);
+          pushLog(`Simulation done: avg ${result.avg.toFixed(2)}. Weakest ${result.worst.cropName} at ${formatCell(result.worst.index)}.`);
+
+          let challengeLine = '';
+          if (state.challenge) {
+            const challengeOutcome = state.challenge.validate(result);
+            challengeLine = challengeOutcome.pass
+              ? `Challenge passed: ${state.challenge.name}. ${challengeOutcome.message}`
+              : `Challenge failed: ${state.challenge.name}. ${challengeOutcome.message}`;
+            pushLog(challengeLine);
+          }
+
+          pushHistory({
+            score: result.avg,
+            season: state.season,
+            date: new Date().toISOString()
+          });
+
+          render();
+          el.simulateBtn.disabled = false;
+          el.simulateBtn.textContent = originalText;
+
+          if (challengeLine) setStatus(challengeLine);
+        };
+
+        if (prefersReducedMotion()) finalizeRun();
+        else setTimeout(finalizeRun, 260);
+      }
+
+      function openChallengeModal(challenge) {
+        state.pendingChallenge = challenge;
+        el.challengeTitle.textContent = challenge.name;
+        el.challengeBody.textContent = challenge.desc;
+        el.challengeModal.classList.add('active');
+        el.challengeModal.setAttribute('aria-hidden', 'false');
+        el.app.setAttribute('aria-hidden', 'true');
+        modalRestoreFocusEl = document.activeElement;
+        requestAnimationFrame(() => {
+          el.acceptChallengeBtn.focus();
+        });
+      }
+
+      function closeChallengeModal() {
+        state.pendingChallenge = null;
+        el.challengeModal.classList.remove('active');
+        el.challengeModal.setAttribute('aria-hidden', 'true');
+        el.app.removeAttribute('aria-hidden');
+        if (modalRestoreFocusEl && typeof modalRestoreFocusEl.focus === 'function') {
+          modalRestoreFocusEl.focus();
+        }
+      }
+
+      function acceptChallenge() {
+        if (!state.pendingChallenge) return;
+        state.challenge = state.pendingChallenge;
+        state.pendingChallenge = null;
+        el.challengeModal.classList.remove('active');
+        el.challengeModal.setAttribute('aria-hidden', 'true');
+        el.app.removeAttribute('aria-hidden');
+        el.challengeStrip.textContent = `Challenge: ${state.challenge.name}`;
+        pushLog(`Garden GURL: Challenge locked. ${state.challenge.name}.`);
+        setStatus(`Challenge active: ${state.challenge.name}`);
+        renderLog();
+        if (modalRestoreFocusEl && typeof modalRestoreFocusEl.focus === 'function') {
+          modalRestoreFocusEl.focus();
+        }
+      }
+
+      function renderChallengeStrip() {
+        if (state.challenge) {
+          el.challengeStrip.textContent = `Challenge: ${state.challenge.name}`;
+        } else {
+          el.challengeStrip.textContent = 'Challenge: Open Play';
+        }
+      }
+
+      function bindEvents() {
+        el.seasonSelect.addEventListener('change', (e) => {
+          state.season = e.target.value;
+          state.mode = 'planning';
+          state.lastResult = null;
+          pushLog(`Season switched to ${state.season}.`);
+          setStatus(`Season set to ${state.season}.`);
+          render();
+        });
+
+        el.simulateBtn.addEventListener('click', runSimulation);
+        el.clearBtn.addEventListener('click', clearLayout);
+        el.autoFillBtn.addEventListener('click', autoFillLayout);
+        el.challengeBtn.addEventListener('click', () => {
+          openChallengeModal(randomPick(CHALLENGES));
+        });
+
+        el.acceptChallengeBtn.addEventListener('click', acceptChallenge);
+        el.closeChallengeBtn.addEventListener('click', closeChallengeModal);
+        el.challengeModal.addEventListener('click', (e) => {
+          if (e.target === el.challengeModal) closeChallengeModal();
+        });
+        el.challengeModal.addEventListener('keydown', (e) => {
+          if (!isModalOpen()) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeChallengeModal();
+            return;
+          }
+          if (e.key !== 'Tab') return;
+          const focusables = Array.from(el.challengeModal.querySelectorAll(FOCUSABLE_SELECTOR))
+            .filter((node) => node.offsetParent !== null);
+          if (!focusables.length) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          const active = document.activeElement;
+          if (e.shiftKey && active === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && active === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (trapModalTabKey(e)) return;
+          if (e.key === 'Escape' && isModalOpen()) {
+            e.preventDefault();
+            closeChallengeModal();
+            return;
+          }
+          if (shouldIgnoreGlobalShortcuts(e.target)) return;
+          const key = e.key.toLowerCase();
+          if (key === 'e') {
+            state.selectedCrop = 'eraser';
+            pushLog('Eraser selected via keyboard.');
+            render();
+          }
+          if (key === 'r') runSimulation();
+        });
+      }
+
+      function render() {
+        renderCropButtons();
+        renderBoard();
+        renderResults();
+        renderHistory();
+        renderLog();
+        renderChallengeStrip();
+      }
+
+      function init() {
+        renderAxes();
+        bindEvents();
+        render();
+      }
+
+      function renderGameToText() {
+        const occupied = [];
+        for (let i = 0; i < state.grid.length; i += 1) {
+          if (!state.grid[i]) continue;
+          const pos = cellToRowCol(i);
+          occupied.push({
+            idx: i,
+            row: pos.row,
+            col: pos.col,
+            cell: formatCell(i),
+            crop: state.grid[i]
+          });
+        }
+
+        const payload = {
+          coordinate_system: {
+            origin: 'top-left',
+            x_axis: 'increases left-to-right by column',
+            y_axis: 'increases top-to-bottom by row'
+          },
+          mode: state.mode,
+          season: state.season,
+          selected_crop: state.selectedCrop,
+          selected_cell: formatCell(state.selectedCell),
+          planted_cells: occupied.length,
+          occupied_cells: occupied,
+          score_avg: state.lastResult ? Number(state.lastResult.avg.toFixed(3)) : null,
+          weakest_cell: state.lastResult
+            ? {
+                crop: state.lastResult.worst.cropKey,
+                score: Number(state.lastResult.worst.score.toFixed(3)),
+                cell: formatCell(state.lastResult.worst.index)
+              }
+            : null,
+          issue_counts: state.lastResult
+            ? {
+                hard: state.lastResult.issues.hard,
+                warn: state.lastResult.issues.warn,
+                buff: state.lastResult.issues.buff
+              }
+            : { hard: 0, warn: 0, buff: 0 },
+          active_challenge: state.challenge ? state.challenge.id : null,
+          history_count: state.scoreHistory.length
+        };
+
+        return JSON.stringify(payload);
+      }
+
+      window.render_game_to_text = renderGameToText;
+      window.advanceTime = function advanceTime(ms) {
+        const ticks = Math.max(1, Math.round(ms / (1000 / 60)));
+        for (let i = 0; i < ticks; i += 1) {
+          // deterministic no-op tick for automation compatibility
+        }
+        return renderGameToText();
+      };
+
+      init();
+    })();
+  </script>
+</body>
+</html>

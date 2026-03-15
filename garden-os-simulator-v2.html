@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — Builder Mode v0.1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --soil:      #2b1d0e;
+    --loam:      #3e2a14;
+    --bark:      #5c3d1e;
+    --clay:      #8b5e3c;
+    --moss:      #4a7c59;
+    --sage:      #7aab72;
+    --leaf:      #a8d48a;
+    --sun:       #f2c94c;
+    --heat:      #e07a2f;
+    --warn:      #e8473f;
+    --frost:     #93c5d4;
+    --paper:     #f5f0e8;
+    --ink:       #1a1107;
+    --dim:       #6b5a3e;
+    --panel:     #231508;
+    --border:    #4a2e10;
+    --grid-bg:   #1e1208;
+    --score-hi:  #6fcf97;
+    --score-lo:  #eb5757;
+    --companion: #bb6bd9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--soil);
+    color: var(--paper);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  #app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 16px;
+  }
+
+  /* HEADER */
+  #header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 16px 0 8px;
+    border-bottom: 2px solid var(--bark);
+  }
+  #header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--sun);
+    text-transform: uppercase;
+  }
+  #header .subtitle {
+    font-size: 11px;
+    color: var(--clay);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  #header .version {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--bark);
+  }
+
+  /* TABS */
+  #mode-tabs { display: flex; gap: 4px; padding: 4px 0; }
+  .tab-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--clay);
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--sun);
+    color: var(--ink);
+    border-color: var(--sun);
+    font-weight: 700;
+  }
+  .tab-btn.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .tab-btn.locked::after { content: ' \1F512'; font-size: 9px; }
+
+  /* LAYOUT */
+  #main-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr 260px;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px;
+  }
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sun);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CROP PANEL */
+  #crop-panel { display: flex; flex-direction: column; gap: 4px; }
+  .faction-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--clay);
+    margin-top: 8px;
+    margin-bottom: 2px;
+  }
+  .crop-btn {
+    background: var(--loam);
+    border: 1px solid var(--border);
+    color: var(--paper);
+    padding: 5px 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.1s;
+    width: 100%;
+  }
+  .crop-btn:hover { background: var(--bark); border-color: var(--clay); }
+  .crop-btn.selected { background: var(--moss); border-color: var(--sage); }
+  .crop-emoji { font-size: 14px; }
+  .crop-name { flex: 1; font-size: 11px; }
+
+  #eraser-btn {
+    background: var(--loam);
+    border: 1px dashed var(--border);
+    color: var(--clay);
+    padding: 5px 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 8px;
+    transition: all 0.1s;
+  }
+  #eraser-btn:hover, #eraser-btn.selected {
+    background: var(--bark);
+    border-color: var(--warn);
+    color: var(--warn);
+  }
+
+  /* GRID */
+  #grid-container { display: flex; flex-direction: column; gap: 12px; }
+  #grid-board {
+    background: var(--grid-bg);
+    border: 2px solid var(--border);
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    width: 100%;
+  }
+  .grid-cell {
+    aspect-ratio: 1;
+    background: var(--loam);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.1s, background 0.1s;
+    user-select: none;
+  }
+  .grid-cell:hover { border-color: var(--clay); background: var(--bark); }
+  .grid-cell.has-crop { border-color: var(--moss); }
+  .grid-cell.violation-hard {
+    border-color: var(--warn) !important;
+    background: rgba(232,71,63,0.25) !important;
+    animation: pulse-hard 1s ease-in-out infinite;
+  }
+  .grid-cell.violation-advisory {
+    border-color: var(--heat) !important;
+    background: rgba(224,122,47,0.15) !important;
+  }
+  .grid-cell.companion-buff {
+    border-color: var(--companion) !important;
+    background: rgba(187,107,217,0.12) !important;
+  }
+  .grid-cell.score-high { border-color: var(--score-hi) !important; }
+  .grid-cell.score-low  { border-color: var(--score-lo) !important; }
+
+  @keyframes pulse-hard {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,71,63,0.4); }
+    50%       { box-shadow: 0 0 0 4px rgba(232,71,63,0); }
+  }
+
+  .cell-score-label {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-size: 8px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .cell-viol-icon {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 8px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* GRID CONTROLS */
+  #grid-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #simulate-btn {
+    background: var(--sun);
+    color: var(--ink);
+  }
+  #simulate-btn:hover {
+    background: #f7d96f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(242,201,76,0.3);
+  }
+  #simulate-btn:active { transform: translateY(0); }
+  #reset-btn {
+    background: transparent;
+    color: var(--clay);
+    border: 1px solid var(--border);
+  }
+  #reset-btn:hover { border-color: var(--clay); color: var(--paper); }
+
+  .season-select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--paper);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 7px 10px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .season-select option { background: var(--panel); }
+
+  /* RIGHT PANEL */
+  #right-panel { display: flex; flex-direction: column; gap: 12px; }
+
+  /* SCORE */
+  #score-display { text-align: center; }
+  .score-ring {
+    width: 80px;
+    height: 80px;
+    margin: 8px auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-ring svg {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+  }
+  .score-ring .track { fill: none; stroke: var(--border); stroke-width: 6; }
+  .score-ring .arc-fill {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 213;
+    stroke-dashoffset: 213;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s;
+  }
+  .score-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--sun);
+    position: relative;
+    z-index: 1;
+  }
+  .score-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--clay);
+    margin-top: 2px;
+  }
+  .score-breakdown { margin-top: 8px; text-align: left; }
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 2px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-row:last-child { border-bottom: none; }
+  .score-row .lbl { color: var(--clay); }
+  .score-row .val { font-weight: 700; }
+  .score-row .val.hi   { color: var(--score-hi); }
+  .score-row .val.lo   { color: var(--score-lo); }
+  .score-row .val.warn { color: var(--heat); }
+
+  /* NARRATOR */
+  .narrator-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .narrator-avatar { font-size: 22px; line-height: 1; }
+  .narrator-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sun);
+  }
+  .narrator-role {
+    font-size: 9px;
+    color: var(--clay);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .narrator-text {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--paper);
+    border-left: 2px solid var(--bark);
+    padding-left: 10px;
+    min-height: 60px;
+    transition: opacity 0.25s;
+  }
+  .narrator-text.fade { opacity: 0.3; }
+
+  /* VIOLATIONS */
+  .violation-item {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .violation-item:last-child { border-bottom: none; }
+  .viol-icon { font-size: 12px; flex-shrink: 0; }
+  .viol-msg  { color: var(--paper); }
+  .viol-cause { color: var(--clay); font-size: 10px; display: block; }
+  .no-items {
+    font-size: 11px;
+    color: var(--dim);
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  /* CHALLENGES */
+  .challenge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 11px;
+    border-bottom: 1px solid var(--border);
+  }
+  .challenge-item:last-child { border-bottom: none; }
+  .ch-check {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+  }
+  .ch-check.done { background: var(--moss); border-color: var(--sage); }
+  .ch-label { color: var(--clay); flex: 1; }
+  .ch-label.done { color: var(--score-hi); }
+
+  /* HISTORY */
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--clay);
+  }
+  .history-row:last-child { border-bottom: none; }
+  .h-score { font-weight: 700; font-size: 12px; }
+  .h-score.hi { color: var(--score-hi); }
+  .h-score.lo { color: var(--score-lo); }
+
+  /* STATUS BAR */
+  #status-bar {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    flex-wrap: wrap;
+  }
+  #status-bar span b { color: var(--clay); }
+
+  /* TOOLTIP */
+  #tooltip {
+    position: fixed;
+    background: var(--loam);
+    border: 1px solid var(--clay);
+    padding: 6px 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--paper);
+    pointer-events: none;
+    z-index: 500;
+    display: none;
+    max-width: 200px;
+    line-height: 1.5;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--sun);
+    color: var(--ink);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 20px;
+    z-index: 900;
+    transition: transform 0.3s ease;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* SIM OVERLAY */
+  #sim-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 800;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--sun);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  #sim-overlay.active { display: flex; }
+  .sim-dots span { animation: blink 1.2s infinite; display: inline-block; }
+  .sim-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .sim-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.1; }
+  }
+
+  /* MODE CONTENT */
+  .mode-content { display: none; }
+  .mode-content.active { display: block; }
+
+  .scaffold-notice {
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--clay);
+    font-size: 13px;
+    line-height: 2;
+  }
+  .scaffold-notice .big {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--bark);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 860px) {
+    #main-layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="header">
+    <h1>Garden OS</h1>
+    <span class="subtitle">Builder Mode</span>
+    <span class="version">v0.1-phase1</span>
+  </div>
+
+  <div id="mode-tabs">
+    <button class="tab-btn active" id="tab-simulator">Plant Strategy Simulator</button>
+    <button class="tab-btn locked" id="tab-rescue">Rescue Mission</button>
+    <button class="tab-btn locked" id="tab-draft">Garden League Draft</button>
+  </div>
+
+  <!-- MODE 1 -->
+  <div id="mode-simulator" class="mode-content active">
+    <div id="main-layout">
+
+      <div class="panel">
+        <div class="panel-title">Crop Roster</div>
+        <div id="crop-panel"></div>
+      </div>
+
+      <div id="grid-container">
+        <div id="grid-board"></div>
+        <div id="grid-controls">
+          <button class="action-btn" id="simulate-btn">&#9654; Simulate Season</button>
+          <button class="action-btn" id="reset-btn">&#8634; Reset</button>
+          <select class="season-select" id="season-select">
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="fall">Fall</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="right-panel">
+
+        <div class="panel" id="score-display">
+          <div class="panel-title">Season Score</div>
+          <div class="score-ring">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="34"/>
+              <circle class="arc-fill" id="score-arc" cx="40" cy="40" r="34"/>
+            </svg>
+            <div class="score-number" id="score-number">--</div>
+          </div>
+          <div class="score-label">overall yield index</div>
+          <div class="score-breakdown" id="score-breakdown"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Field Report</div>
+          <div class="narrator-header">
+            <div class="narrator-avatar" id="narrator-avatar">&#127807;</div>
+            <div>
+              <div class="narrator-name" id="narrator-name">Garden GURL</div>
+              <div class="narrator-role" id="narrator-role">Field Operations</div>
+            </div>
+          </div>
+          <div class="narrator-text" id="narrator-text">
+            Place crops in the grid, pick your season, then hit Simulate. I will tell you exactly what went wrong.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Violation Log</div>
+          <div id="violations-list"><div class="no-items">No violations yet. Grid is empty.</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Season Challenges</div>
+          <div id="challenge-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Season History</div>
+          <div id="history-list"><div class="no-items">No runs yet.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE 2 SCAFFOLD -->
+  <div id="mode-rescue" class="mode-content">
+    <div class="scaffold-notice">
+      <span class="big">RESCUE MISSION</span>
+      Pest Outbreak scenario engine is scheduled for Phase 2.<br>
+      Defeat aphid invasions. Save your kale. More soon.
+    </div>
+  </div>
+
+  <!-- MODE 3 SCAFFOLD -->
+  <div id="mode-draft" class="mode-content">
+    <div class="scaffold-notice">
+      <span class="big">GARDEN LEAGUE DRAFT</span>
+      Fantasy competition layer is scheduled for Phase 3.<br>
+      Draft crops. Build rosters. Beat your neighbors.
+    </div>
+  </div>
+
+  <div id="status-bar">
+    <span>GRID: <b id="sb-crops">0/32</b></span>
+    <span>SEASON: <b id="sb-season">Spring</b></span>
+    <span>LAST SCORE: <b id="sb-last">--</b></span>
+    <span>RUNS: <b id="sb-runs">0</b></span>
+  </div>
+
+</div>
+
+<div id="tooltip"></div>
+<div id="toast"></div>
+<div id="sim-overlay">Simulating<span class="sim-dots"><span>.</span><span>.</span><span>.</span></span></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── CONSTANTS ───────────────────────────────────────────────
+  var COLS = 8;
+  var ROWS = 4;
+  var TOTAL = COLS * ROWS; // 32
+
+  // ── CROP ROSTER ─────────────────────────────────────────────
+  var CROPS = [
+    { id:'tomato',     name:'Tomato',     emoji:'T',  sym:'\uD83C\uDF45', faction:'Fruiting',    space:2, water:'high', heat:'high', companion:['basil','carrot'],            enemy:['brassica'],         seasonal:{spring:0.6,summer:1.0,fall:0.5} },
+    { id:'cucumber',   name:'Cucumber',   emoji:'C',  sym:'\uD83E\uDD52', faction:'Climbers',    space:2, water:'high', heat:'high', companion:['dill','radish'],             enemy:[],                   seasonal:{spring:0.5,summer:1.0,fall:0.3} },
+    { id:'beans',      name:'Beans',      emoji:'B',  sym:'\uD83E\uDED8', faction:'Climbers',    space:1, water:'med',  heat:'med',  companion:['carrot','squash'],           enemy:['onion'],            seasonal:{spring:0.7,summer:1.0,fall:0.6} },
+    { id:'radish',     name:'Radish',     emoji:'R',  sym:'\uD83C\uDF30', faction:'FastCycles',  space:1, water:'low',  heat:'low',  companion:['carrot','spinach'],          enemy:[],                   seasonal:{spring:1.0,summer:0.5,fall:1.0} },
+    { id:'lettuce',    name:'Lettuce',    emoji:'L',  sym:'\uD83E\uDD6C', faction:'Greens',      space:1, water:'med',  heat:'low',  companion:['carrot','radish'],           enemy:[],                   seasonal:{spring:1.0,summer:0.3,fall:0.9} },
+    { id:'spinach',    name:'Spinach',    emoji:'Sp', sym:'\uD83C\uDF43', faction:'Greens',      space:1, water:'med',  heat:'low',  companion:['radish','strawberry'],       enemy:[],                   seasonal:{spring:1.0,summer:0.2,fall:1.0} },
+    { id:'brassica',   name:'Kale',       emoji:'K',  sym:'\uD83E\uDD66', faction:'Brassicas',   space:2, water:'med',  heat:'low',  companion:['dill'],                      enemy:['tomato','strawberry'], seasonal:{spring:0.8,summer:0.5,fall:1.0} },
+    { id:'broccoli',   name:'Broccoli',   emoji:'Br', sym:'\uD83E\uDD5C', faction:'Brassicas',   space:2, water:'med',  heat:'low',  companion:['dill'],                      enemy:['tomato'],            seasonal:{spring:0.9,summer:0.4,fall:1.0} },
+    { id:'carrot',     name:'Carrot',     emoji:'Ca', sym:'\uD83E\uDD55', faction:'Roots',       space:1, water:'low',  heat:'med',  companion:['tomato','lettuce'],          enemy:['dill'],             seasonal:{spring:1.0,summer:0.8,fall:0.9} },
+    { id:'onion',      name:'Onion',      emoji:'O',  sym:'\uD83E\uDDC5', faction:'Roots',       space:1, water:'low',  heat:'med',  companion:['carrot','beet'],             enemy:['beans'],            seasonal:{spring:1.0,summer:0.7,fall:0.8} },
+    { id:'beet',       name:'Beet',       emoji:'Be', sym:'\uD83E\uDEC0', faction:'Roots',       space:1, water:'low',  heat:'med',  companion:['onion'],                     enemy:[],                   seasonal:{spring:0.9,summer:0.7,fall:0.9} },
+    { id:'basil',      name:'Basil',      emoji:'Ba', sym:'\uD83C\uDF3F', faction:'Herbs',       space:1, water:'med',  heat:'high', companion:['tomato','pepper'],           enemy:[],                   seasonal:{spring:0.5,summer:1.0,fall:0.3} },
+    { id:'dill',       name:'Dill',       emoji:'D',  sym:'\uD83C\uDF3E', faction:'Herbs',       space:1, water:'low',  heat:'med',  companion:['cucumber','lettuce'],        enemy:['carrot'],           seasonal:{spring:0.8,summer:0.9,fall:0.5} },
+    { id:'pepper',     name:'Pepper',     emoji:'P',  sym:'\uD83C\uDF36', faction:'Fruiting',    space:1, water:'med',  heat:'high', companion:['basil','carrot'],            enemy:[],                   seasonal:{spring:0.4,summer:1.0,fall:0.5} },
+    { id:'squash',     name:'Squash',     emoji:'Sq', sym:'\uD83C\uDF83', faction:'Brassicas',   space:3, water:'high', heat:'high', companion:['beans'],                     enemy:[],                   seasonal:{spring:0.5,summer:1.0,fall:0.8} },
+    { id:'marigold',   name:'Marigold',   emoji:'M',  sym:'\uD83C\uDF3C', faction:'Companions',  space:1, water:'low',  heat:'med',  companion:['tomato','pepper','beans','cucumber'], enemy:[],          seasonal:{spring:0.7,summer:1.0,fall:0.6} },
+    { id:'strawberry', name:'Strawberry', emoji:'St', sym:'\uD83C\uDF53', faction:'Companions',  space:1, water:'med',  heat:'med',  companion:['spinach','lettuce'],         enemy:['brassica'],         seasonal:{spring:1.0,summer:0.9,fall:0.5} },
+  ];
+
+  // ── CHALLENGES ──────────────────────────────────────────────
+  var CHALLENGES = [
+    { id:'c1', label:'Place 3+ companion pairings', check: function(r){ return r.companionPairs >= 3; } },
+    { id:'c2', label:'Score above 70',              check: function(r){ return r.totalScore > 70; } },
+    { id:'c3', label:'No hard violations',          check: function(r){ return r.hardViolations === 0; } },
+    { id:'c4', label:'Use crops from 4+ factions',  check: function(r){ return r.factionsUsed >= 4; } },
+    { id:'c5', label:'Fill the grid 50%+',          check: function(r){ return r.cellsFilled >= 16; } },
+  ];
+
+  // ── NARRATOR LINES ──────────────────────────────────────────
+  var LINES = {
+    gurl: {
+      great: [
+        'Solid layout. Companion pairings are doing work. I would plant this.',
+        'This is what a functioning bed looks like. Everything has a reason to be here.',
+        'Score above 80. Almost impressed. Do not let it go to your head.',
+      ],
+      ok: [
+        'It is functional. Not inspired, but functional.',
+        'Mid-tier layout. The companions helped. The adjacency calls dragged it down.',
+        'You got away with it. This time.',
+      ],
+      bad: [
+        'Multiple violations. The plants are having a meeting about you.',
+        'Something in here hates something else in here. Check the violation log.',
+        'Score under 40. The soil is embarrassed.',
+      ],
+      hard: [
+        'Hard violation detected. These two crops are genuinely incompatible. Not just vibes. Chemistry.',
+        'You put enemies next to each other. Both yields drop. See the violation log.',
+        'That is a hard stop. Mutual antagonism. Move one of them.',
+      ],
+    },
+    onion: {
+      great: [
+        'The roots are pleased. Underground morale is high. I may have teared up.',
+        'A grid like this reminds me of simpler times. When we were all just seeds.',
+        'Beautiful. I am not crying. The onion is crying. Classic.',
+      ],
+      ok: [
+        'Not bad. The roots appreciate the thought. Even if the spacing feels rushed.',
+        'We are fine. Everything is fine. Some advisories, but fine.',
+      ],
+      bad: [
+        'The roots are staging a slowdown. Yield is suffering.',
+        'I watched the Phillies lose last night. This grid is not helping.',
+        'Something has gone wrong. The soil knows it. I know it. You know it.',
+      ],
+      hard: [
+        'Hard violation. The underground union is filing a grievance.',
+        'You put onion next to beans. Onion Man does not recommend this. Onion Man is upset.',
+      ],
+    },
+  };
+
+  // ── STATE ───────────────────────────────────────────────────
+  var grid         = new Array(TOTAL).fill(null);
+  var selectedCrop = null;
+  var erasing      = false;
+  var lastResult   = null;
+  var runCount     = 0;
+
+  // ── HELPERS ─────────────────────────────────────────────────
+  function getCrop(id) {
+    for (var i = 0; i < CROPS.length; i++) {
+      if (CROPS[i].id === id) return CROPS[i];
+    }
+    return null;
+  }
+
+  function isCompanion(a, b) {
+    var ca = getCrop(a), cb = getCrop(b);
+    if (!ca || !cb) return false;
+    return ca.companion.indexOf(b) !== -1 || cb.companion.indexOf(a) !== -1;
+  }
+
+  function isEnemy(a, b) {
+    var ca = getCrop(a), cb = getCrop(b);
+    if (!ca || !cb) return false;
+    return ca.enemy.indexOf(b) !== -1 || cb.enemy.indexOf(a) !== -1;
+  }
+
+  function isMutualEnemy(a, b) {
+    var ca = getCrop(a), cb = getCrop(b);
+    if (!ca || !cb) return false;
+    return ca.enemy.indexOf(b) !== -1 && cb.enemy.indexOf(a) !== -1;
+  }
+
+  function getNeighbors(idx) {
+    var row = Math.floor(idx / COLS);
+    var col = idx % COLS;
+    var nb = [];
+    if (col > 0)       nb.push(idx - 1);
+    if (col < COLS-1)  nb.push(idx + 1);
+    if (row > 0)       nb.push(idx - COLS);
+    if (row < ROWS-1)  nb.push(idx + COLS);
+    return nb;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // ── INIT ────────────────────────────────────────────────────
+  function init() {
+    buildCropPanel();
+    buildGrid();
+    renderChallenges(null);
+    loadHistory();
+    loadGridFromStorage();
+    updateStatusBar();
+
+    document.getElementById('simulate-btn').addEventListener('click', runSimulation);
+    document.getElementById('reset-btn').addEventListener('click', resetGrid);
+    document.getElementById('season-select').addEventListener('change', updateStatusBar);
+
+    document.getElementById('tab-simulator').addEventListener('click', function() {
+      switchMode('simulator', this);
+    });
+    document.getElementById('tab-rescue').addEventListener('click', function() {
+      showToast('Rescue Mission -- Phase 2. Not yet.');
+    });
+    document.getElementById('tab-draft').addEventListener('click', function() {
+      showToast('Garden League Draft -- Phase 3. Not yet.');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      var tip = document.getElementById('tooltip');
+      if (tip.style.display === 'block') {
+        tip.style.left = (e.clientX + 14) + 'px';
+        tip.style.top  = (e.clientY + 14) + 'px';
+      }
+    });
+  }
+
+  // ── CROP PANEL ──────────────────────────────────────────────
+  function buildCropPanel() {
+    var panel = document.getElementById('crop-panel');
+    panel.innerHTML = '';
+    var factions = [];
+    var seen = {};
+    for (var i = 0; i < CROPS.length; i++) {
+      if (!seen[CROPS[i].faction]) {
+        seen[CROPS[i].faction] = true;
+        factions.push(CROPS[i].faction);
+      }
+    }
+    for (var f = 0; f < factions.length; f++) {
+      var faction = factions[f];
+      var label = document.createElement('div');
+      label.className = 'faction-label';
+      label.textContent = faction;
+      panel.appendChild(label);
+      for (var c = 0; c < CROPS.length; c++) {
+        if (CROPS[c].faction !== faction) continue;
+        (function(crop) {
+          var btn = document.createElement('button');
+          btn.className = 'crop-btn';
+          btn.id = 'cropbtn-' + crop.id;
+          var sym = document.createElement('span');
+          sym.className = 'crop-emoji';
+          sym.textContent = crop.sym;
+          var nm = document.createElement('span');
+          nm.className = 'crop-name';
+          nm.textContent = crop.name;
+          btn.appendChild(sym);
+          btn.appendChild(nm);
+          btn.addEventListener('click', function() { selectCrop(crop.id); });
+          panel.appendChild(btn);
+        })(CROPS[c]);
+      }
+    }
+    var eraser = document.createElement('button');
+    eraser.id = 'eraser-btn';
+    eraser.innerHTML = '<span class="crop-emoji">X</span><span class="crop-name">Eraser</span>';
+    eraser.addEventListener('click', selectEraser);
+    panel.appendChild(eraser);
+  }
+
+  // ── GRID ────────────────────────────────────────────────────
+  function buildGrid() {
+    var board = document.getElementById('grid-board');
+    board.innerHTML = '';
+    for (var i = 0; i < TOTAL; i++) {
+      (function(idx) {
+        var cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.id = 'cell-' + idx;
+        cell.addEventListener('click', function() { handleCellClick(idx); });
+        cell.addEventListener('mouseenter', function(e) { showCellTooltip(e, idx); });
+        cell.addEventListener('mouseleave', hideCellTooltip);
+        board.appendChild(cell);
+      })(i);
+    }
+    renderGrid();
+  }
+
+  function renderGrid() {
+    for (var i = 0; i < TOTAL; i++) {
+      var cell = document.getElementById('cell-' + i);
+      var base = 'grid-cell';
+      if (grid[i]) base += ' has-crop';
+      cell.className = base;
+      cell.innerHTML = '';
+      if (grid[i]) {
+        var crop = getCrop(grid[i]);
+        if (crop) {
+          var em = document.createElement('span');
+          em.textContent = crop.sym;
+          em.style.fontSize = '16px';
+          cell.appendChild(em);
+        }
+      }
+    }
+    if (lastResult) applyVisualResult(lastResult);
+  }
+
+  // ── SELECTION ───────────────────────────────────────────────
+  function selectCrop(id) {
+    erasing = false;
+    selectedCrop = id;
+    document.querySelectorAll('.crop-btn').forEach(function(b) { b.classList.remove('selected'); });
+    var eb = document.getElementById('eraser-btn');
+    if (eb) eb.classList.remove('selected');
+    var btn = document.getElementById('cropbtn-' + id);
+    if (btn) btn.classList.add('selected');
+  }
+
+  function selectEraser() {
+    erasing = true;
+    selectedCrop = null;
+    document.querySelectorAll('.crop-btn').forEach(function(b) { b.classList.remove('selected'); });
+    var eb = document.getElementById('eraser-btn');
+    if (eb) eb.classList.add('selected');
+  }
+
+  function handleCellClick(idx) {
+    if (erasing) {
+      grid[idx] = null;
+    } else if (selectedCrop) {
+      grid[idx] = selectedCrop;
+    } else {
+      return;
+    }
+    renderGrid();
+    updateStatusBar();
+    saveGridToStorage();
+  }
+
+  // ── SIMULATION ENGINE ────────────────────────────────────────
+  function runSimulation() {
+    var season = document.getElementById('season-select').value;
+    var filled = 0;
+    for (var i = 0; i < TOTAL; i++) { if (grid[i]) filled++; }
+    if (filled === 0) {
+      setNarrator('gurl', 'The grid is empty. Plant something first. Anything. Even weeds have opinions.');
+      return;
+    }
+    document.getElementById('sim-overlay').classList.add('active');
+    setTimeout(function() {
+      var result = simulate(season);
+      lastResult = result;
+      runCount++;
+      document.getElementById('sim-overlay').classList.remove('active');
+      renderResult(result);
+      saveHistory(result, season);
+      loadHistory();
+      updateStatusBar();
+    }, 600);
+  }
+
+  function simulate(season) {
+    var result = {
+      totalScore: 0, cellScores: {}, violations: [],
+      companionPairs: 0, hardViolations: 0, factionsUsed: 0, cellsFilled: 0, season: season,
+    };
+    var factionSet = {};
+    var i, nb, n, a, b, ca, cb;
+    for (i = 0; i < TOTAL; i++) { if (grid[i]) result.cellsFilled++; }
+    for (i = 0; i < TOTAL; i++) {
+      if (!grid[i]) continue;
+      ca = getCrop(grid[i]);
+      if (!ca) continue;
+      factionSet[ca.faction] = true;
+      var mod = ca.seasonal[season] || 0.5;
+      var cs = Math.round(mod * 10);
+      if (season === 'summer' && ca.heat === 'low') {
+        cs = Math.max(1, cs - 3);
+        result.violations.push({ type: 'advisory', cell: i, crop: ca.name, msg: ca.name + ' is heat-shy. Summer stress reduces yield.', cause: ca.name + ' prefers cooler seasons.' });
+      }
+      result.cellScores[i] = cs;
+    }
+    var companionPairSet = {};
+    for (i = 0; i < TOTAL; i++) {
+      if (!grid[i]) continue;
+      nb = getNeighbors(i);
+      for (var ni = 0; ni < nb.length; ni++) {
+        n = nb[ni];
+        if (!grid[n]) continue;
+        a = grid[i]; b = grid[n];
+        if (isCompanion(a, b)) {
+          var pairKey = [a, b].sort().join('-') + '-' + Math.min(i, n) + '-' + Math.max(i, n);
+          if (!companionPairSet[pairKey]) {
+            companionPairSet[pairKey] = true;
+            result.companionPairs++;
+            result.cellScores[i] = Math.min(10, (result.cellScores[i] || 5) + 2);
+            result.cellScores[n] = Math.min(10, (result.cellScores[n] || 5) + 2);
+          }
+        }
+        if (i < n && isEnemy(a, b)) {
+          ca = getCrop(a); cb = getCrop(b);
+          if (isMutualEnemy(a, b)) {
+            result.violations.push({ type: 'hard', cell: i, crop: ca.name, msg: ca.name + ' and ' + cb.name + ' are incompatible neighbors.', cause: 'Mutual antagonism. Both plants suppress each other.' });
+            result.violations.push({ type: 'hard', cell: n, crop: cb.name, msg: cb.name + ' and ' + ca.name + ' are incompatible neighbors.', cause: 'Mutual antagonism. Both plants suppress each other.' });
+            result.hardViolations++;
+            result.cellScores[i] = Math.max(0, (result.cellScores[i] || 5) - 4);
+            result.cellScores[n] = Math.max(0, (result.cellScores[n] || 5) - 4);
+          } else {
+            var aggressor = ca.enemy.indexOf(b) !== -1 ? ca : cb;
+            var target = aggressor === ca ? cb : ca;
+            var aggressorCell = aggressor === ca ? i : n;
+            result.violations.push({ type: 'advisory', cell: aggressorCell, crop: aggressor.name, msg: aggressor.name + ' dislikes ' + target.name + ' next door.', cause: 'Allelopathic interference. Consider moving one.' });
+            result.cellScores[aggressorCell] = Math.max(0, (result.cellScores[aggressorCell] || 5) - 2);
+          }
+        }
+      }
+    }
+    for (i = 0; i < TOTAL; i++) {
+      if (!grid[i]) continue;
+      ca = getCrop(grid[i]);
+      if (!ca || ca.space <= 1) continue;
+      nb = getNeighbors(i);
+      var occupiedCount = 0;
+      for (var ni2 = 0; ni2 < nb.length; ni2++) { if (grid[nb[ni2]]) occupiedCount++; }
+      if (occupiedCount >= ca.space + 1) {
+        result.violations.push({ type: 'advisory', cell: i, crop: ca.name, msg: ca.name + ' is overcrowded (needs ' + ca.space + ' clear cells).', cause: 'Too many neighbors for a large plant.' });
+        result.cellScores[i] = Math.max(0, (result.cellScores[i] || 5) - 2);
+      }
+    }
+    var seenV = {};
+    var dedupedViols = [];
+    for (var vi = 0; vi < result.violations.length; vi++) {
+      var v = result.violations[vi];
+      var key = v.type + '-' + v.cell + '-' + v.crop;
+      if (!seenV[key]) { seenV[key] = true; dedupedViols.push(v); }
+    }
+    result.violations = dedupedViols;
+    var scoreVals = [];
+    for (var k in result.cellScores) {
+      if (Object.prototype.hasOwnProperty.call(result.cellScores, k)) scoreVals.push(result.cellScores[k]);
+    }
+    if (scoreVals.length > 0) {
+      var sum = 0;
+      for (var si = 0; si < scoreVals.length; si++) sum += scoreVals[si];
+      result.totalScore = Math.min(100, Math.round((sum / (scoreVals.length * 10)) * 100));
+    }
+    var fc = 0;
+    for (var fk in factionSet) { if (Object.prototype.hasOwnProperty.call(factionSet, fk)) fc++; }
+    result.factionsUsed = fc;
+    return result;
+  }
+
+  // ── RENDER RESULT ────────────────────────────────────────────
+  function renderResult(result) {
+    applyVisualResult(result);
+    renderScorePanel(result);
+    renderViolations(result);
+    renderNarrator(result);
+    renderChallenges(result);
+  }
+
+  function applyVisualResult(result) {
+    for (var i = 0; i < TOTAL; i++) {
+      var cell = document.getElementById('cell-' + i);
+      if (!cell) continue;
+      var base = 'grid-cell';
+      if (grid[i]) base += ' has-crop';
+      cell.className = base;
+      var old = cell.querySelectorAll('.cell-score-label, .cell-viol-icon');
+      for (var oi = 0; oi < old.length; oi++) old[oi].remove();
+      if (!grid[i]) continue;
+      var cs = result.cellScores[i];
+      var viols = [];
+      for (var vi = 0; vi < result.violations.length; vi++) {
+        if (result.violations[vi].cell === i) viols.push(result.violations[vi]);
+      }
+      var hardV = null, advV = null;
+      for (var vi2 = 0; vi2 < viols.length; vi2++) {
+        if (viols[vi2].type === 'hard' && !hardV) hardV = viols[vi2];
+        if (viols[vi2].type === 'advisory' && !advV) advV = viols[vi2];
+      }
+      var hasBuff = false;
+      var nbuf = getNeighbors(i);
+      for (var ni = 0; ni < nbuf.length; ni++) {
+        if (grid[nbuf[ni]] && isCompanion(grid[i], grid[nbuf[ni]])) { hasBuff = true; break; }
+      }
+      if (hardV) { cell.classList.add('violation-hard'); addCellOverlay(cell, 'cell-viol-icon', '!'); }
+      else if (advV) { cell.classList.add('violation-advisory'); addCellOverlay(cell, 'cell-viol-icon', '~'); }
+      else if (hasBuff) { cell.classList.add('companion-buff'); addCellOverlay(cell, 'cell-viol-icon', '+'); }
+      if (cs !== undefined) {
+        if (cs >= 8 && !hardV) cell.classList.add('score-high');
+        else if (cs <= 3) cell.classList.add('score-low');
+        var sl = document.createElement('div');
+        sl.className = 'cell-score-label';
+        sl.textContent = cs;
+        sl.style.color = cs >= 7 ? 'var(--score-hi)' : cs <= 3 ? 'var(--score-lo)' : 'var(--clay)';
+        cell.appendChild(sl);
+      }
+    }
+  }
+
+  function addCellOverlay(cell, cls, text) {
+    var el = document.createElement('div');
+    el.className = cls;
+    el.textContent = text;
+    cell.appendChild(el);
+  }
+
+  function renderScorePanel(result) {
+    var s = result.totalScore;
+    var numEl = document.getElementById('score-number');
+    var arcEl = document.getElementById('score-arc');
+    var bdEl = document.getElementById('score-breakdown');
+    numEl.textContent = s;
+    numEl.style.color = s >= 70 ? 'var(--score-hi)' : s >= 40 ? 'var(--sun)' : 'var(--score-lo)';
+    var circumference = 213;
+    var offset = circumference - (circumference * (s / 100));
+    arcEl.style.strokeDashoffset = offset;
+    arcEl.style.stroke = s >= 70 ? 'var(--score-hi)' : s >= 40 ? 'var(--sun)' : 'var(--score-lo)';
+    var advCount = 0;
+    for (var i = 0; i < result.violations.length; i++) { if (result.violations[i].type === 'advisory') advCount++; }
+    bdEl.innerHTML =
+      scoreRow('Cells scored', result.cellsFilled, '') +
+      scoreRow('Companion pairs', result.companionPairs, result.companionPairs > 0 ? 'hi' : '') +
+      scoreRow('Hard violations', result.hardViolations, result.hardViolations > 0 ? 'lo' : '') +
+      scoreRow('Advisories', advCount, advCount > 0 ? 'warn' : '') +
+      scoreRow('Factions used', result.factionsUsed, '');
+  }
+
+  function scoreRow(label, val, cls) {
+    return '<div class="score-row"><span class="lbl">' + label + '</span><span class="val ' + cls + '">' + val + '</span></div>';
+  }
+
+  function renderViolations(result) {
+    var list = document.getElementById('violations-list');
+    if (!result.violations.length) {
+      list.innerHTML = '<div class="no-items">Clean layout. No violations detected.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    for (var i = 0; i < result.violations.length; i++) {
+      var v = result.violations[i];
+      var item = document.createElement('div');
+      item.className = 'violation-item';
+      item.innerHTML = '<span class="viol-icon">' + (v.type === 'hard' ? '[!]' : '[~]') + '</span>' +
+        '<div class="viol-msg">' + v.msg + '<span class="viol-cause">' + v.cause + '</span></div>';
+      list.appendChild(item);
+    }
+  }
+
+  // ── NARRATOR ────────────────────────────────────────────────
+  function setNarrator(char, text) {
+    var avatar = document.getElementById('narrator-avatar');
+    var name = document.getElementById('narrator-name');
+    var role = document.getElementById('narrator-role');
+    var textEl = document.getElementById('narrator-text');
+    textEl.classList.add('fade');
+    setTimeout(function() {
+      if (char === 'onion') {
+        avatar.textContent = 'O';
+        name.textContent = 'Onion Man';
+        role.textContent = 'Roots Faction';
+      } else {
+        avatar.textContent = 'G';
+        name.textContent = 'Garden GURL';
+        role.textContent = 'Field Operations';
+      }
+      textEl.textContent = text;
+      textEl.classList.remove('fade');
+    }, 250);
+  }
+
+  function renderNarrator(result) {
+    var s = result.totalScore;
+    var hasHard = result.hardViolations > 0;
+    var char = (runCount % 4 === 0) ? 'onion' : 'gurl';
+    var lines = LINES[char];
+    var pool;
+    if (hasHard) pool = lines.hard;
+    else if (s >= 70) pool = lines.great;
+    else if (s >= 40) pool = lines.ok;
+    else pool = lines.bad;
+    setNarrator(char, pick(pool));
+  }
+
+  // ── CHALLENGES ──────────────────────────────────────────────
+  function renderChallenges(result) {
+    var list = document.getElementById('challenge-list');
+    list.innerHTML = '';
+    for (var i = 0; i < CHALLENGES.length; i++) {
+      var ch = CHALLENGES[i];
+      var done = result && typeof result.totalScore === 'number' && ch.check(result);
+      var item = document.createElement('div');
+      item.className = 'challenge-item';
+      item.innerHTML = '<div class="ch-check ' + (done ? 'done' : '') + '">' + (done ? 'v' : '') + '</div>' +
+        '<div class="ch-label ' + (done ? 'done' : '') + '">' + ch.label + '</div>';
+      list.appendChild(item);
+    }
+  }
+
+  // ── HISTORY ─────────────────────────────────────────────────
+  function saveHistory(result, season) {
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('garden-os-history') || '[]'); } catch(e) {}
+    history.unshift({ score: result.totalScore, season: season, cells: result.cellsFilled, hard: result.hardViolations, companions: result.companionPairs, ts: Date.now() });
+    history = history.slice(0, 10);
+    localStorage.setItem('garden-os-history', JSON.stringify(history));
+  }
+
+  function loadHistory() {
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('garden-os-history') || '[]'); } catch(e) {}
+    var list = document.getElementById('history-list');
+    if (!history.length) { list.innerHTML = '<div class="no-items">No runs yet.</div>'; return; }
+    list.innerHTML = '';
+    for (var i = 0; i < history.length; i++) {
+      var h = history[i];
+      var row = document.createElement('div');
+      row.className = 'history-row';
+      var sc = h.score >= 70 ? 'hi' : h.score < 40 ? 'lo' : '';
+      row.innerHTML = '<span>' + h.season + ' | ' + h.cells + ' cells | ' + h.companions + ' pairs</span>' +
+        '<span class="h-score ' + sc + '">' + h.score + '</span>';
+      list.appendChild(row);
+    }
+  }
+
+  // ── PERSISTENCE ──────────────────────────────────────────────
+  function saveGridToStorage() { localStorage.setItem('garden-os-grid', JSON.stringify(grid)); }
+
+  function loadGridFromStorage() {
+    try {
+      var saved = localStorage.getItem('garden-os-grid');
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === TOTAL) { grid = parsed; renderGrid(); }
+      }
+    } catch(e) {}
+  }
+
+  // ── RESET ────────────────────────────────────────────────────
+  function resetGrid() {
+    grid = new Array(TOTAL).fill(null);
+    lastResult = null;
+    renderGrid();
+    document.getElementById('score-number').textContent = '--';
+    document.getElementById('score-number').style.color = 'var(--sun)';
+    document.getElementById('score-breakdown').innerHTML = '';
+    document.getElementById('score-arc').style.strokeDashoffset = 213;
+    document.getElementById('score-arc').style.stroke = '';
+    document.getElementById('violations-list').innerHTML = '<div class="no-items">No violations yet. Grid is empty.</div>';
+    renderChallenges(null);
+    setNarrator('gurl', 'Grid cleared. Start fresh. No judgment. Well. Some judgment.');
+    updateStatusBar();
+    saveGridToStorage();
+  }
+
+  // ── STATUS BAR ───────────────────────────────────────────────
+  function updateStatusBar() {
+    var filled = 0;
+    for (var i = 0; i < TOTAL; i++) { if (grid[i]) filled++; }
+    document.getElementById('sb-crops').textContent = filled + '/32';
+    var season = document.getElementById('season-select').value;
+    document.getElementById('sb-season').textContent = season.charAt(0).toUpperCase() + season.slice(1);
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('garden-os-history') || '[]'); } catch(e) {}
+    document.getElementById('sb-last').textContent = history.length ? history[0].score : '--';
+    document.getElementById('sb-runs').textContent = history.length;
+  }
+
+  // ── TOOLTIP ──────────────────────────────────────────────────
+  function showCellTooltip(e, idx) {
+    if (!grid[idx]) return;
+    var crop = getCrop(grid[idx]);
+    if (!crop) return;
+    var tip = document.getElementById('tooltip');
+    var friends = crop.companion.join(', ') || 'none';
+    var enemies = crop.enemy.join(', ') || 'none';
+    tip.innerHTML = '<b>' + crop.sym + ' ' + crop.name + '</b><br>' +
+      'Faction: ' + crop.faction + '<br>Water: ' + crop.water + ' | Heat: ' + crop.heat + '<br>' +
+      'Space: ' + crop.space + '<br>Friends: ' + friends + '<br>Enemies: ' + enemies;
+    tip.style.display = 'block';
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  }
+
+  function hideCellTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+  // ── TOAST ────────────────────────────────────────────────────
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2200);
+  }
+
+  // ── MODE SWITCH ──────────────────────────────────────────────
+  function switchMode(mode, btn) {
+    var modes = document.querySelectorAll('.mode-content');
+    for (var i = 0; i < modes.length; i++) modes[i].classList.remove('active');
+    var tabs = document.querySelectorAll('.tab-btn');
+    for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+    var target = document.getElementById('mode-' + mode);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  // ── BOOT ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
