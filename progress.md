@@ -72,3 +72,22 @@ Responsive + typography/polish verification pass (v2):
 TODO / next-agent suggestions:
 - Optional visual follow-up: add explicit horizontal scroll hint on mobile board when axis overflows.
 - Optional UX follow-up: keep challenge modal from opening in automated viewport checks unless specifically testing modal behavior, to keep screenshots cleaner.
+
+- Round 2 non-overlap tasks completed while other agents run:
+  - Added `docs/README.md` as a master docs/spec index with one-line descriptions and status labels.
+  - Added `specs/V2_REUSE_AUDIT.md` mapping v2 functions/data/UI into reuse vs refactor vs rewrite for v3.
+  - Added `garden-league-simulator-v3.html` scaffold (HTML + Google Fonts + CSS custom properties only; no JS).
+
+Validation notes:
+- Confirmed v2 references used in the audit by function/line anchors.
+- Confirmed no JS was added to v3 scaffold (prompt 8-safe).
+- Current git status includes active-agent outputs landing in `specs/` (dialogue/event/UI specs) plus these new files.
+
+TODO / next-agent suggestions:
+- Reconcile `docs/README.md` statuses once active prompt rounds finish and all generated specs settle.
+- If desired, add a `specs/README.md` mirroring docs index style for agent-friendly discovery.
+- Wire v3 scaffold IDs/classes to final P8 engine contracts once those specs are final.
+- Ran develop-web-game Playwright smoke pass on v3 scaffold:
+  - URL: `garden-league-simulator-v3.html`
+  - Artifacts: `/tmp/garden-os-v3-smoke/shot-0.png`
+  - Expected outcome: screenshot captured; no `state-0.json` because scaffold intentionally has no JS hooks yet.
