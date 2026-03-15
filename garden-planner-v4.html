@@ -34,9 +34,33 @@
     position:sticky;top:0;z-index:100;
   }
   .hd-left{display:flex;align-items:baseline;gap:.6rem;}
+  .hd-right{display:flex;align-items:center;justify-content:flex-end;gap:.55rem;flex-wrap:wrap;margin-left:auto;}
   header h1{font-family:'Fraunces',serif;font-size:1.45rem;font-weight:600;letter-spacing:-.02em;line-height:1;}
   .hv{font-size:.65rem;font-family:'DM Mono',monospace;opacity:.5;text-transform:uppercase;letter-spacing:.1em;}
   .hsub{font-size:.62rem;opacity:.55;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+  .hd-actions{display:flex;gap:.35rem;align-items:center;}
+  .hd-btn{
+    border:1.5px solid rgba(255,255,255,.28);
+    border-radius:5px;
+    background:rgba(255,255,255,.06);
+    color:#f5ede0;
+    padding:.24rem .46rem;
+    cursor:pointer;
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    transition:background .12s, border-color .12s, color .12s;
+  }
+  .hd-btn:hover{
+    background:rgba(255,255,255,.13);
+    border-color:rgba(232,200,74,.7);
+    color:#fff7e2;
+  }
+  .hd-btn:focus-visible{
+    outline:2px solid var(--sun);
+    outline-offset:2px;
+  }
 
   /* ═══ APP SHELL ═══ */
   .app{display:grid;grid-template-columns:240px 1fr 268px;height:calc(100vh - 56px - 24px);}
@@ -602,6 +626,15 @@
   .os-nav a:hover{color:#f5ede0;}
   .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
   @media(max-width:900px){
+    .hd-right{
+      width:100%;
+      justify-content:space-between;
+      gap:.35rem;
+    }
+    .hsub{
+      font-size:.58rem;
+      letter-spacing:.06em;
+    }
     .app{grid-template-columns:1fr;}
     .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;}
   }
@@ -620,7 +653,14 @@
     <h1>Garden OS</h1>
     <span class="hv">v4.3</span>
   </div>
-  <p class="hsub">Raised Bed Planner · 44 crops · Variable beds · Cage-aware · Live scoring</p>
+  <div class="hd-right">
+    <p class="hsub">Raised Bed Planner · 44 crops · Variable beds · Cage-aware · Live scoring</p>
+    <div class="hd-actions" aria-label="Workspace file controls">
+      <button class="hd-btn" id="exportWorkspaceBtn" type="button" aria-label="Export workspace to GOS JSON file">Export</button>
+      <button class="hd-btn" id="importWorkspaceBtn" type="button" aria-label="Import workspace from GOS JSON file">Import</button>
+      <input id="importWorkspaceFile" type="file" accept=".gos.json,.json,application/json" hidden>
+    </div>
+  </div>
 </header>
 
 <div class="app">
@@ -893,6 +933,7 @@ const VALID_TOOLS=['paint','erase'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
 const MAX_SHARE_PAYLOAD=50000;
+const MAX_IMPORT_FILE_BYTES=500*1024;
 const WORKSPACE_VERSION = 1;
 const APP_VERSION = '4.3';
 
@@ -1902,10 +1943,10 @@ function applyWorkspaceToUI(ws){
   renderWorkspaceSwitcher();
 }
 
-function showShareBanner(){
+function showShareBanner(message='Loaded from shared link'){
   const b=document.createElement('div');
   b.className='share-banner';
-  b.textContent='Loaded from shared link';
+  b.textContent=message;
   document.body.appendChild(b);
   setTimeout(()=>b.remove(),4000);
 }
@@ -2561,6 +2602,109 @@ function warnings(inputs,issues){
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARING
 // ═══════════════════════════════════════════════════════════════════════════════
+function workspaceExportFileName(){
+  const active = activeBed();
+  const rawName = active && typeof active.name==='string' && active.name.trim()
+    ? active.name.trim()
+    : (_workspace && typeof _workspace.id==='string' ? _workspace.id : 'workspace');
+  const slug = rawName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'')
+    .slice(0,48) || 'workspace';
+  const day = new Date().toISOString().slice(0,10);
+  return `garden-os-${slug}-${day}.gos.json`;
+}
+
+function exportWorkspaceFile(){
+  saveState();
+  if(!_workspace){
+    alert('No workspace loaded to export.');
+    return;
+  }
+  const payload = JSON.parse(JSON.stringify(_workspace));
+  payload.beds = Array.isArray(payload.beds)
+    ? payload.beds.map(bedRecord=>{
+      const copy = { ...bedRecord };
+      delete copy.scoreSummaryCache;
+      return copy;
+    })
+    : [];
+  payload.exportedAt = new Date().toISOString();
+  payload.appVersion = APP_VERSION;
+  const fileName = workspaceExportFileName();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+  showShareBanner('Workspace exported');
+}
+
+function openWorkspaceImportPicker(){
+  const picker=document.getElementById('importWorkspaceFile');
+  if(!picker) return;
+  picker.value='';
+  picker.click();
+}
+
+async function handleWorkspaceImportFile(event){
+  const picker=event.target;
+  const file=picker && picker.files && picker.files[0] ? picker.files[0] : null;
+  if(!file) return;
+  if(file.size > MAX_IMPORT_FILE_BYTES){
+    const proceed=confirm('This file is larger than 500KB and may be invalid. Continue import?');
+    if(!proceed) return;
+  }
+  let text='';
+  try{
+    text = await file.text();
+  }catch(err){
+    alert('Unable to read file. Please try again.');
+    return;
+  }
+  if(!text || !text.trim()){
+    alert('Import failed: file is empty.');
+    return;
+  }
+  let parsed=null;
+  try{
+    parsed = JSON.parse(text);
+  }catch(err){
+    alert('Import failed: file is not valid JSON.');
+    return;
+  }
+  if(!parsed || typeof parsed!=='object' || Array.isArray(parsed)){
+    alert('Import failed: expected a workspace JSON object.');
+    return;
+  }
+  if(Number.isFinite(parsed.version) && parsed.version > WORKSPACE_VERSION){
+    alert(`Import failed: workspace version ${parsed.version} is newer than supported version ${WORKSPACE_VERSION}.`);
+    return;
+  }
+  const check = validateWorkspace(parsed);
+  if(!check.ok){
+    const reason = check.errors && check.errors.length ? check.errors.join('; ') : 'schema validation failed';
+    alert(`Import failed: ${reason}`);
+    return;
+  }
+  if(!confirm('This will replace your current workspace. Continue?')) return;
+  _workspace = check.workspace;
+  applyWorkspaceToUI(_workspace);
+  renderWorkspaceSwitcher();
+  undoStack=[];
+  redoStack=[];
+  updateUndoButtons();
+  saveWorkspace(_workspace);
+  renderPalette();
+  render();
+  showShareBanner('Workspace imported');
+}
+
 function shareLayout(){
   // Share uses workspace envelope, stripped of transient metadata.
   if(!_workspace) return;
@@ -3149,6 +3293,9 @@ document.getElementById('ltab-palette').addEventListener('click',()=>switchLTab(
 document.getElementById('bedSwitcher').addEventListener('change',e=>setActiveBed(e.target.value));
 document.getElementById('addBedBtn').addEventListener('click',openAddBedDialog);
 document.getElementById('duplicateBedBtn').addEventListener('click',handleDuplicateActiveBed);
+document.getElementById('exportWorkspaceBtn').addEventListener('click',exportWorkspaceFile);
+document.getElementById('importWorkspaceBtn').addEventListener('click',openWorkspaceImportPicker);
+document.getElementById('importWorkspaceFile').addEventListener('change',handleWorkspaceImportFile);
 document.getElementById('addBedCancelBtn').addEventListener('click',closeAddBedDialog);
 document.getElementById('addBedForm').addEventListener('submit',e=>{
   e.preventDefault();
