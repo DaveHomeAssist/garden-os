@@ -22,6 +22,7 @@ Purpose: single entry point for design docs and implementation specs.
 | [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Chapter-to-chapter and replay progression architecture without grind loops. | Committed |
 | [REPLAYABILITY.md](./REPLAYABILITY.md) | Retention/replay systems, challenge framing, fixed-vs-variable design policy. | Committed |
 | [SEASONAL_EVENT_SYSTEM.md](./SEASONAL_EVENT_SYSTEM.md) | Seasonal event taxonomy, triggers, effects, and commentary behavior. | Committed |
+| [UI_GRAPHICAL_IMPROVEMENT_AUDIT.md](./UI_GRAPHICAL_IMPROVEMENT_AUDIT.md) | Prioritized UI/graphics improvement backlog for v2-to-v3 transition polish. | Local draft |
 | [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice constraints, line style, and role boundaries for cast consistency. | Committed |
 | [DOCUMENTATION_CATALOG.md](./DOCUMENTATION_CATALOG.md) | Prior doc inventory and categorization index. | Committed |
 | [DOCUMENTATION_CATALOG.csv](./DOCUMENTATION_CATALOG.csv) | CSV export of the documentation catalog. | Committed |
