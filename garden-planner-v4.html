@@ -15,7 +15,7 @@
     --leaf:#3d7a4f;--leaf-bright:#5aab6b;--leaf-pale:#c8e6c9;
     --sun:#e8c84a;--sun-pale:#fdf3c0;
     --cream:#f7f2ea;--cream-dark:#ede5d8;--cream-mid:#f0e9de;
-    --text:#1e110a;--text-mid:#5a3e2b;--text-light:#8a6a50;
+    --text:#1e110a;--text-mid:#5a3e2b;--text-light:#7d5f45;
     --border:#c8b090;--border-light:#ddd0b8;
     --warn:#d4651a;--good:#3d7a4f;--bad:#b02a1e;--blue:#3a6abf;
     --panel:#f0e9de;
@@ -36,8 +36,8 @@
   .hd-left{display:flex;align-items:baseline;gap:.6rem;}
   .hd-right{display:flex;align-items:center;justify-content:flex-end;gap:.55rem;flex-wrap:wrap;margin-left:auto;}
   header h1{font-family:'Fraunces',serif;font-size:1.45rem;font-weight:600;letter-spacing:-.02em;line-height:1;}
-  .hv{font-size:.65rem;font-family:'DM Mono',monospace;opacity:.5;text-transform:uppercase;letter-spacing:.1em;}
-  .hsub{font-size:.62rem;opacity:.55;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+  .hv{font-size:.65rem;font-family:'DM Mono',monospace;opacity:.78;text-transform:uppercase;letter-spacing:.1em;}
+  .hsub{font-size:.62rem;opacity:.78;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
   .hd-actions{display:flex;gap:.35rem;align-items:center;}
   .hd-btn{
     border:1.5px solid rgba(255,255,255,.28);
@@ -93,6 +93,7 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%237a5230' d='M5 7L0 0h10z'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 7px center;}
   select:focus{outline:none;border-color:var(--soil);}
+  select:focus-visible{outline:2px solid var(--soil);outline-offset:1px;}
   .sun-row{display:flex;align-items:center;gap:.4rem;}
   .sun-row input[type=range]{flex:1;accent-color:var(--sun);}
   .sunv{font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;color:var(--soil);min-width:2.5rem;}
@@ -119,6 +120,7 @@
   .psearch{width:100%;padding:.34rem .5rem;border:1.5px solid var(--border);border-radius:5px;
     font-family:'DM Sans',sans-serif;font-size:.76rem;background:white;margin-bottom:.4rem;flex-shrink:0;}
   .psearch:focus{outline:none;border-color:var(--soil);}
+  .psearch:focus-visible{outline:2px solid var(--soil);outline-offset:1px;}
   .catf{display:flex;flex-wrap:wrap;gap:.22rem;margin-bottom:.45rem;flex-shrink:0;}
   .catb{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.06em;
     padding:.15rem .4rem;border-radius:3px;cursor:pointer;border:1px solid var(--border);
@@ -582,7 +584,7 @@
   .cage-zone-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;margin-top:3px;}
 
   .cage-trellis-bar{background:linear-gradient(90deg,#8b6914,#a07820,#8b6914);
-    border-radius:6px 6px 0 0;padding:.28rem .6rem;display:flex;align-items:center;justify-content:space-between;
+    border-radius:6px 6px 0 0;padding:.28rem .6rem;align-items:center;justify-content:space-between;
     border:2px solid #8b6914;border-bottom:none;margin-bottom:-2px;position:relative;z-index:1;display:none;}
   .cage-trellis-bar.on{display:flex;}
   .cage-trellis-label{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;
@@ -624,7 +626,8 @@
   .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:.6rem;}
   .os-nav a{color:rgba(245,237,224,0.55);text-decoration:none;padding:.35rem .7rem;letter-spacing:.04em;transition:color .15s;}
   .os-nav a:hover{color:#f5ede0;}
-  .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
+  .os-nav a.active,
+  .os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
   @media(max-width:900px){
     .hd-right{
       width:100%;
@@ -638,14 +641,38 @@
     .app{grid-template-columns:1fr;}
     .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;}
   }
+
+  /* ── Accessibility ── */
+  .skip-link{
+    position:absolute;top:-40px;left:0;z-index:300;
+    background:var(--soil);color:#f5ede0;padding:.5rem 1rem;
+    font-size:.75rem;font-family:'DM Mono',monospace;
+    text-decoration:none;transition:top .15s;
+  }
+  .skip-link:focus{top:0;}
+  *:focus-visible{outline:2px solid var(--soil);outline-offset:2px;}
+  .tog:focus-visible{outline-offset:3px;}
+  .bc:focus-visible{outline:2px solid #1f5fbf;outline-offset:1px;}
+
+  /* Zone patterns for colorblind accessibility */
+  .trellis-zone{background-image:repeating-linear-gradient(
+    45deg,transparent,transparent 3px,rgba(212,160,23,0.12) 3px,rgba(212,160,23,0.12) 5px)!important;}
+  .protected-zone{background-image:repeating-linear-gradient(
+    -45deg,transparent,transparent 3px,rgba(122,158,126,0.12) 3px,rgba(122,158,126,0.12) 5px)!important;}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important;}
+  }
 </style>
 </head>
 <body>
+<a href="#bedGrid" class="skip-link">Skip to garden grid</a>
 <nav class="os-nav" aria-label="Garden OS">
   <a href="index.html">Home</a>
-  <a href="garden-planner-v4.html" class="active">Planner</a>
+  <a href="garden-planner-v4.html" class="active" aria-current="page">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_visualizer.html">Scoring Visualizer</a>
   <a href="garden_planner_scoring_system_map.html">Scoring Map</a>
 </nav>
 <header>
@@ -654,7 +681,7 @@
     <span class="hv">v4.3</span>
   </div>
   <div class="hd-right">
-    <p class="hsub">Raised Bed Planner · 44 crops · Variable beds · Cage-aware · Live scoring</p>
+    <p class="hsub">Raised Bed Planner · 38 crops · Variable beds · Cage-aware · Live scoring</p>
     <div class="hd-actions" aria-label="Workspace file controls">
       <button class="hd-btn" id="exportWorkspaceBtn" type="button" aria-label="Export workspace to GOS JSON file">Export</button>
       <button class="hd-btn" id="importWorkspaceBtn" type="button" aria-label="Import workspace from GOS JSON file">Import</button>
@@ -666,14 +693,14 @@
 <div class="app">
 <!-- LEFT -->
 <aside class="sl">
-  <div class="tab-bar">
-    <button class="tab-btn active" id="ltab-site">Site</button>
-    <button class="tab-btn" id="ltab-cage">Cage</button>
-    <button class="tab-btn" id="ltab-palette">Crops</button>
+  <div class="tab-bar" role="tablist" aria-label="Settings panels">
+    <button class="tab-btn active" id="ltab-site" role="tab" aria-selected="true" aria-controls="lpane-site">Site</button>
+    <button class="tab-btn" id="ltab-cage" role="tab" aria-selected="false" aria-controls="lpane-cage">Cage</button>
+    <button class="tab-btn" id="ltab-palette" role="tab" aria-selected="false" aria-controls="lpane-palette">Crops</button>
   </div>
 
   <!-- SITE PANE -->
-  <div class="tab-pane on" id="lpane-site">
+  <div class="tab-pane on" id="lpane-site" role="tabpanel" aria-labelledby="ltab-site">
     <div>
       <div class="slabel">Bed Size</div>
       <div class="bed-presets" id="bed-presets"></div>
@@ -686,7 +713,7 @@
 
     <div class="slabel" style="margin-top:.2rem">Light & Position</div>
     <div class="fg">
-      <label>Sun Hours (direct)</label>
+      <label for="sunHours">Sun Hours (direct)</label>
       <div class="sun-row">
         <input type="range" id="sunHours" min="2" max="10" value="5" step=".5">
         <span class="sunv" id="sunVal">5 hrs</span>
@@ -711,7 +738,7 @@
     </div>
     <div class="fg">
       <div class="tog-row">
-        <button class="tog on" id="trellisToggle"></button>
+        <button class="tog on" id="trellisToggle" role="switch" aria-pressed="true" aria-label="Trellis available"></button>
         <span class="tog-lbl">Trellis available</span>
       </div>
     </div>
@@ -753,7 +780,7 @@
   </div>
 
   <!-- CAGE PANE -->
-  <div class="tab-pane" id="lpane-cage">
+  <div class="tab-pane" id="lpane-cage" role="tabpanel" aria-labelledby="ltab-cage">
     <div class="cage-info">
       <div class="cage-info-hdr">Cage Structure Zones</div>
       <div class="cage-zone-row">
@@ -775,19 +802,19 @@
     <div class="slabel">Cage Configuration</div>
     <div class="fg">
       <div class="tog-row">
-        <button class="tog" id="cageEnabled"></button>
+        <button class="tog" id="cageEnabled" role="switch" aria-pressed="false" aria-label="Cage structure present"></button>
         <span class="tog-lbl">Cage structure present</span>
       </div>
     </div>
     <div class="fg">
       <div class="tog-row">
-        <button class="tog on" id="cageRearTrellis"></button>
+        <button class="tog on" id="cageRearTrellis" role="switch" aria-pressed="true" aria-label="Rear trellis wall"></button>
         <span class="tog-lbl">Rear trellis wall</span>
       </div>
     </div>
     <div class="fg">
       <div class="tog-row">
-        <button class="tog on" id="cageWireSides"></button>
+        <button class="tog on" id="cageWireSides" role="switch" aria-pressed="true" aria-label="Wire sides critter protection"></button>
         <span class="tog-lbl">Wire sides (critter protection)</span>
       </div>
     </div>
@@ -818,8 +845,8 @@
   </div>
 
   <!-- PALETTE PANE -->
-  <div class="tab-pane" id="lpane-palette">
-    <input class="psearch" type="text" id="psearch" placeholder="Search 44 crops…" style="flex-shrink:0;margin-bottom:.35rem;">
+  <div class="tab-pane" id="lpane-palette" role="tabpanel" aria-labelledby="ltab-palette">
+    <input class="psearch" type="text" id="psearch" placeholder="Search 38 crops…" style="flex-shrink:0;margin-bottom:.35rem;">
     <div class="catf" id="catf" style="flex-shrink:0;"></div>
     <div class="pgrid" id="pgrid"></div>
   </div>
@@ -875,14 +902,14 @@
 
 <!-- RIGHT -->
 <aside class="sr">
-  <div class="tab-bar">
-    <button class="tab-btn active" id="rtab-score">Score</button>
-    <button class="tab-btn"        id="rtab-inspect">Inspect</button>
-    <button class="tab-btn"        id="rtab-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
+  <div class="tab-bar" role="tablist" aria-label="Analysis panels">
+    <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score</button>
+    <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
+    <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
   </div>
-  <div class="tab-pane on" id="rpane-score"></div>
-  <div class="tab-pane"    id="rpane-inspect"></div>
-  <div class="tab-pane"    id="rpane-notes"></div>
+  <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
+  <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
+  <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
 </aside>
 </div>
 
@@ -912,7 +939,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-// CROP DATABASE — 44 crops across 8 categories
+// CROP DATABASE — 38 crops across 8 categories
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY HELPERS
@@ -1739,6 +1766,7 @@ function loadWorkspace(){
   }
   return null;
 }
+let _saveTimer = null;
 function saveWorkspace(workspace){
   if(!workspace || typeof workspace!=='object') return;
   try{
@@ -1748,7 +1776,21 @@ function saveWorkspace(workspace){
     if(localStorage.getItem(LS_KEY_LEGACY_V4)) localStorage.removeItem(LS_KEY_LEGACY_V4);
   }catch(e){
     console.warn('[Garden OS] Failed to save workspace:', e);
+    showStorageWarning(e);
   }
+}
+function saveWorkspaceDebounced(workspace){
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(()=> saveWorkspace(workspace), 50);
+}
+function showStorageWarning(err){
+  if(document.querySelector('.storage-warning')) return;
+  const b = document.createElement('div');
+  b.className = 'share-banner storage-warning';
+  b.style.borderBottom = '2px solid var(--warn)';
+  b.textContent = 'Storage full — changes may not be saved. Try clearing old beds or exporting your workspace.';
+  document.body.appendChild(b);
+  setTimeout(()=> b.remove(), 8000);
 }
 function renderWorkspaceSwitcher(){
   const sel = document.getElementById('bedSwitcher');
@@ -1821,7 +1863,7 @@ function saveState(){
   _workspace.workspaceSettings.catFilter = ui.catFilter;
   _workspace.workspaceSettings.rightTab = ui.rTab;
   invalidateScoreCache(b.id);
-  saveWorkspace(_workspace);
+  saveWorkspaceDebounced(_workspace);
   renderWorkspaceSwitcher();
 }
 function showRecoveryBanner(){
@@ -1905,6 +1947,9 @@ function loadState(){
   return false;
 }
 function applyWorkspaceToUI(ws){
+  if(!ws.beds || !ws.beds.length){
+    ws.beds = [createBed('Bed 1',{cols:8,rows:4})];
+  }
   const b = ws.beds.find(x=>x.id===ws.activeBedId) || ws.beds[0];
   ws.activeBedId = b.id;
   bedW = b.size.cols;
@@ -2039,7 +2084,10 @@ function applyBedSize(){
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZONE MAP (variable bed size)
 // ═══════════════════════════════════════════════════════════════════════════════
+let _zoneCache = { key: null, result: null };
 function buildZoneMap(i, bedTraits){
+  const cacheKey = `${i.bedW},${i.bedH},${i.sunHours},${i.wallSide},${i.orientation},${i.trellis},${bedTraits ? JSON.stringify(bedTraits.capabilities) : ''}`;
+  if(_zoneCache.key === cacheKey) return _zoneCache.result;
   const z=[];
   const sun=i.sunHours;
   for(let r=0;r<i.bedH;r++){
@@ -2080,6 +2128,7 @@ function buildZoneMap(i, bedTraits){
         isTrellisRow,isProtected,hasVerticalSupport,isCritterSafe,accessPriority});
     }
   }
+  _zoneCache = { key: cacheKey, result: z };
   return z;
 }
 function applyZones(zones){
@@ -2912,20 +2961,25 @@ function renderPlacementStatus(){
     : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].short : 'select crop');
   el.textContent = `mode ${source} · tool ${toolLabel} · target ${cropLabel}`;
 }
+let _dialogTrigger = null;
 function openAddBedDialog(){
   const dlg = document.getElementById('addBedDialog');
   if(!dlg) return;
+  _dialogTrigger = document.activeElement;
   document.getElementById('addBedName').value = `Bed ${(_workspace?.beds?.length || 0) + 1}`;
   document.getElementById('addBedCols').value = String(bedW);
   document.getElementById('addBedRows').value = String(bedH);
   if(typeof dlg.showModal === 'function') dlg.showModal();
   else dlg.setAttribute('open','open');
+  document.getElementById('addBedName').focus();
 }
 function closeAddBedDialog(){
   const dlg = document.getElementById('addBedDialog');
   if(!dlg) return;
   if(typeof dlg.close === 'function') dlg.close();
   else dlg.removeAttribute('open');
+  if(_dialogTrigger && _dialogTrigger.focus) _dialogTrigger.focus();
+  _dialogTrigger = null;
 }
 function commitAddBed(name, cols, rows){
   if(!_workspace) _workspace = createMinimalWorkspace();
@@ -3017,6 +3071,8 @@ function renderBed(inputs,issues,opts={}){
     ww.classList.toggle('on-no-wire',cageOn&&!inputs.cage.wireSides);
   }
   g.style.gridTemplateColumns=`repeat(${bedW},1fr)`;
+  g.setAttribute('role','grid');
+  g.setAttribute('aria-label','Garden bed planting grid');
   g.innerHTML='';
   const issueMap={};
   issues.forEach(({cellId,icon})=>{
@@ -3049,6 +3105,11 @@ function renderBed(inputs,issues,opts={}){
     const el=document.createElement('div');
     el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
     el.dataset.cellId = cell.id;
+    el.setAttribute('role','gridcell');
+    el.setAttribute('tabindex', kbFocus ? '0' : '-1');
+    el.setAttribute('aria-label', c
+      ? `${c.name} at row ${cell.row+1}, column ${cell.col+1}, score ${skipScores?'pending':cs.toFixed(1)}`
+      : `Empty cell, row ${cell.row+1}, column ${cell.col+1}`);
     el.style.background=bg; el.style.borderColor=bdc;
     const issueIcon=issues.length?`<span class="cell-issue">${escapeHtml(issues[0])}</span>`:'';
     el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
@@ -3064,7 +3125,9 @@ function renderBed(inputs,issues,opts={}){
 
 function switchLTab(t){
   ['site','cage','palette'].forEach(id=>{
-    document.getElementById('ltab-'+id).classList.toggle('active',id===t);
+    const btn = document.getElementById('ltab-'+id);
+    btn.classList.toggle('active',id===t);
+    btn.setAttribute('aria-selected', id===t);
     document.getElementById('lpane-'+id).classList.toggle('on',id===t);
   });
 }
@@ -3076,7 +3139,9 @@ function switchRTab(t, persist=true){
     saveWorkspace(_workspace);
   }
   ['score','inspect','notes'].forEach(id=>{
-    document.getElementById('rtab-'+id).classList.toggle('active',id===t);
+    const btn = document.getElementById('rtab-'+id);
+    btn.classList.toggle('active',id===t);
+    btn.setAttribute('aria-selected', id===t);
     document.getElementById('rpane-'+id).classList.toggle('on',id===t);
   });
 }
@@ -3314,7 +3379,7 @@ document.getElementById('bedH').addEventListener('change',applyBedSize);
 document.getElementById('sunHours').addEventListener('input',function(){onSite(this);});
 document.getElementById('wallSide').addEventListener('change',()=>onSite());
 document.getElementById('orientation').addEventListener('change',()=>onSite());
-document.getElementById('trellisToggle').addEventListener('click',function(){this.classList.toggle('on');onSite();});
+document.getElementById('trellisToggle').addEventListener('click',function(){this.classList.toggle('on');this.setAttribute('aria-pressed',this.classList.contains('on'));onSite();});
 document.getElementById('season').addEventListener('change',()=>onSite());
 document.getElementById('goal').addEventListener('change',()=>onSite());
 document.getElementById('zone').addEventListener('change',()=>onSite());
@@ -3322,14 +3387,17 @@ document.getElementById('zone').addEventListener('change',()=>onSite());
 // Cage controls
 document.getElementById('cageEnabled').addEventListener('click',function(){
   this.classList.toggle('on'); cage.enabled=this.classList.contains('on');
-  syncCageUI(); // applies runtime wallSide override
+  this.setAttribute('aria-pressed',cage.enabled);
+  syncCageUI();
   onSite();
 });
 document.getElementById('cageRearTrellis').addEventListener('click',function(){
-  this.classList.toggle('on'); cage.rearTrellis=this.classList.contains('on'); onSite();
+  this.classList.toggle('on'); cage.rearTrellis=this.classList.contains('on');
+  this.setAttribute('aria-pressed',cage.rearTrellis); onSite();
 });
 document.getElementById('cageWireSides').addEventListener('click',function(){
-  this.classList.toggle('on'); cage.wireSides=this.classList.contains('on'); onSite();
+  this.classList.toggle('on'); cage.wireSides=this.classList.contains('on');
+  this.setAttribute('aria-pressed',cage.wireSides); onSite();
 });
 document.getElementById('cageHeight').addEventListener('change',function(){
   cage.height=this.value; onSite();
