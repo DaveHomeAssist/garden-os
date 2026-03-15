@@ -91,3 +91,25 @@ TODO / next-agent suggestions:
   - URL: `garden-league-simulator-v3.html`
   - Artifacts: `/tmp/garden-os-v3-smoke/shot-0.png`
   - Expected outcome: screenshot captured; no `state-0.json` because scaffold intentionally has no JS hooks yet.
+- Per user request, ran a parallel-safe UI/graphics analysis while other agents execute.
+- Added `docs/UI_GRAPHICAL_IMPROVEMENT_AUDIT.md` with:
+  - strengths, high-impact gaps, severity-ranked issues
+  - phased improvement plan (fast wins, identity pass, premium pass)
+  - v3 Prompt-8 readiness checklist and parallel execution order
+- Updated `docs/README.md` index to include the new UI audit doc.
+- Captured fresh visual smoke artifacts used for this pass:
+  - v2: `/tmp/garden-os-ui-audit/v2/shot-0.png` + `state-0.json`
+  - v3: `/tmp/garden-os-ui-audit/v3/shot-0.png`
+- Implemented 4 critical pre-P9 fixes in `garden-league-simulator-v3.html`:
+  1) Added missing 20th crop: `cucumber` (climber, support=true, Chapter 2 unlock).
+  2) Infrastructure carry-forward applied in `mkSeason()` with persistent mulch flag and compacted/enriched modifiers.
+  3) Soil fatigue reset logic added for crop rotation/empty cells using `lastFamilyMap`; fatigue now resets to 0 on family change or empty, accumulates only on repeated heavy-feeder family use.
+  4) Event memory is now applied in `mkSeason()` and decremented there; memory records now persist affected cell positions.
+- Validation run:
+  - Static checks: crop count=20, event count=40, `lastFamilyMap` present, event-memory apply/decrement code present.
+  - Runtime checks via Playwright:
+    - Hooks present under `window.gardenOS`.
+    - Phase progression reaches HARVEST/REVIEW.
+    - Rotation reset verified (`fatigue00` became 0 when family changed from climbers to roots).
+    - Event memory applied to next season (`eventMod00=-0.4`) and expiration decremented to removal (`eventMemoryLen=0`).
+- Residual note (non-blocking but real): `eventLog` can exceed 3 entries in one season due duplicate logging when an event affects 0 cells and then logs again on advance.

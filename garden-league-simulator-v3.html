@@ -1,342 +1,778 @@
 <!doctype html>
-<html lang="en" data-season="spring">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Garden OS: Plant Strategy Simulator v3</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Bebas+Neue&family=IBM+Plex+Mono:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <style>
-    :root {
-      --font-display: "Bebas Neue", "Alegreya", serif;
-      --font-ui: "Source Sans 3", "Alegreya", ui-sans-serif, sans-serif;
-      --font-data: "IBM Plex Mono", ui-monospace, monospace;
-
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 24px;
-      --space-6: 32px;
-      --space-7: 48px;
-
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-
-      --line-soft: rgba(255, 255, 255, 0.18);
-      --line-hard: rgba(0, 0, 0, 0.34);
-      --grain-opacity: 0.2;
-      --paper-opacity: 0.9;
-
-      --ink-strong: #17130f;
-      --ink-body: #2a2219;
-      --ink-muted: #5f5345;
-      --ink-faint: #8b7f70;
-
-      --ui-good: #4f8f53;
-      --ui-warn: #b8832f;
-      --ui-bad: #b24e42;
-      --ui-focus: #4e86b9;
-
-      --surface-paper: #efe7d8;
-      --surface-paper-2: #e4dac8;
-      --surface-panel: #d8c6a8;
-      --surface-panel-2: #cab28d;
-      --surface-board-frame: #6a4f37;
-
-      --season-ground: #6d6558;
-      --season-growth: #8ea75a;
-      --season-sky: #b8c0c4;
-      --season-accent: #6f8a4d;
-      --season-heat: #b58646;
-      --season-shadow: rgba(17, 12, 8, 0.45);
-      --season-glow: rgba(255, 238, 203, 0.35);
-
-      --board-cell: #ded1b9;
-      --board-cell-trellis: #d9c29b;
-      --board-cell-access: #d4decf;
-      --board-cell-selected: #dae7f3;
-      --board-cell-hover: #e7dcc8;
-
-      --elevation-1: 0 2px 6px rgba(0, 0, 0, 0.2);
-      --elevation-2: 0 8px 24px rgba(0, 0, 0, 0.24);
-      --elevation-3: 0 16px 42px rgba(0, 0, 0, 0.32);
-    }
-
-    :root[data-season="spring"] {
-      --season-ground: #6f6a60;
-      --season-growth: #92aa64;
-      --season-sky: #b9c1c4;
-      --season-accent: #688051;
-      --season-heat: #ac8247;
-    }
-
-    :root[data-season="summer"] {
-      --season-ground: #796b57;
-      --season-growth: #3f6a3f;
-      --season-sky: #d1c8b8;
-      --season-accent: #55703d;
-      --season-heat: #b56a34;
-    }
-
-    :root[data-season="fall"] {
-      --season-ground: #62584a;
-      --season-growth: #85734f;
-      --season-sky: #9ea2ab;
-      --season-accent: #756244;
-      --season-heat: #9f5b37;
-    }
-
-    :root[data-season="winter"] {
-      --season-ground: #55524d;
-      --season-growth: #8f8778;
-      --season-sky: #8894a1;
-      --season-accent: #6f7986;
-      --season-heat: #7f6750;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--font-ui);
-      color: var(--ink-body);
-      background:
-        radial-gradient(130% 80% at 10% 0%, color-mix(in srgb, var(--season-sky) 45%, #fff 55%) 0%, transparent 55%),
-        linear-gradient(160deg, color-mix(in srgb, var(--season-ground) 75%, #000 25%) 0%, color-mix(in srgb, var(--season-ground) 45%, #000 55%) 100%);
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: var(--grain-opacity);
-      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.28) 1px, transparent 0);
-      background-size: 18px 18px;
-    }
-
-    .app {
-      width: min(1320px, 96vw);
-      margin: var(--space-5) auto var(--space-7);
-      display: grid;
-      gap: var(--space-4);
-      grid-template-columns: 320px 1fr 360px;
-    }
-
-    .panel {
-      border-radius: var(--radius-md);
-      border: 1px solid var(--line-soft);
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--surface-paper) 88%, #fff 12%) 0%, var(--surface-paper) 100%);
-      box-shadow: var(--elevation-2);
-      backdrop-filter: blur(1px);
-    }
-
-    .header {
-      grid-column: 1 / -1;
-      padding: var(--space-4) var(--space-5);
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: var(--space-4);
-      flex-wrap: wrap;
-    }
-
-    .title {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 6vw, 3.4rem);
-      letter-spacing: 0.03em;
-      color: var(--ink-strong);
-    }
-
-    .subtitle {
-      margin: 0;
-      color: var(--ink-muted);
-      font-size: 1rem;
-    }
-
-    .chips {
-      display: flex;
-      gap: var(--space-2);
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line-hard);
-      background: color-mix(in srgb, var(--surface-paper-2) 80%, #fff 20%);
-      color: var(--ink-muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.02em;
-    }
-
-    .controls,
-    .board-stage,
-    .results {
-      min-height: 620px;
-      padding: var(--space-4);
-      display: grid;
-      align-content: start;
-      gap: var(--space-3);
-    }
-
-    .section-title {
-      margin: 0;
-      font-family: var(--font-display);
-      letter-spacing: 0.04em;
-      color: var(--ink-strong);
-      font-size: 1.35rem;
-    }
-
-    .paper-block {
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--line-hard);
-      background: color-mix(in srgb, var(--surface-paper) 86%, #fff 14%);
-      padding: var(--space-3);
-      box-shadow: var(--elevation-1);
-    }
-
-    .board-shell {
-      border: 1px solid color-mix(in srgb, var(--surface-board-frame) 70%, #000 30%);
-      border-radius: var(--radius-md);
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--season-ground) 62%, #281b11 38%) 0%, color-mix(in srgb, var(--season-ground) 55%, #20140c 45%) 100%);
-      padding: var(--space-3);
-    }
-
-    .bed-grid {
-      display: grid;
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-      gap: var(--space-2);
-    }
-
-    .cell {
-      min-height: 68px;
-      border-radius: 10px;
-      border: 1px solid color-mix(in srgb, var(--surface-panel-2) 70%, #000 30%);
-      background: var(--board-cell);
-    }
-
-    .cell.trellis { background: var(--board-cell-trellis); }
-    .cell.access { background: var(--board-cell-access); }
-
-    .mono {
-      font-family: var(--font-data);
-      font-size: 0.86rem;
-      color: var(--ink-faint);
-    }
-
-    .placeholder-list {
-      margin: 0;
-      padding-left: 1rem;
-      color: var(--ink-muted);
-      display: grid;
-      gap: 4px;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      place-items: center;
-      background: rgba(18, 12, 8, 0.62);
-    }
-
-    .overlay .card {
-      width: min(540px, 94vw);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--line-hard);
-      background: var(--surface-paper);
-      padding: var(--space-4);
-      box-shadow: var(--elevation-3);
-    }
-
-    @media (max-width: 1100px) {
-      .app { grid-template-columns: 290px 1fr; }
-      .results { grid-column: 1 / -1; min-height: auto; }
-    }
-
-    @media (max-width: 820px) {
-      .app { grid-template-columns: 1fr; }
-      .controls,
-      .board-stage,
-      .results { min-height: auto; }
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Garden OS v3 — Season Engine</title>
+<style>
+:root{--bg:#2a1c10;--panel:#f5ecdc;--panel-2:#efe3cd;--ink:#22150b;--muted:#5a4834;--line:#c5ab86;--accent:#5f8f45;--accent-2:#c98d22;--good:#3e9d63;--warn:#c78623;--bad:#c24d4d;--focus:#2f73a8;--radius:10px}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Trebuchet MS",system-ui,sans-serif;font-size:13px;color:var(--ink);background:var(--bg);min-height:100vh}
+.app{width:min(1340px,98vw);margin:10px auto;display:grid;gap:10px;grid-template-columns:250px 1fr 290px;grid-template-rows:auto 1fr}
+.head{grid-column:1/-1;background:var(--panel);border-radius:var(--radius);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.head h1{font-size:1.3rem;font-family:Georgia,serif;color:var(--accent)}
+.meta{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:99px;border:1px solid var(--line);padding:4px 10px;background:var(--panel-2);color:var(--muted);font-size:.75rem;white-space:nowrap}
+.chip.phase{background:var(--accent);color:#fff;font-weight:700}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;overflow-y:auto}
+.controls{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 80px)}
+h2{font-size:1rem;font-family:Georgia,serif;margin:0 0 4px}
+h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0 2px}
+.crop-group{border:1px solid var(--line);border-radius:8px;padding:5px;background:var(--panel-2)}
+.crop-grid{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.crop-btn{text-align:left;border-radius:6px;border:1px solid var(--line);background:var(--panel);padding:4px 6px;cursor:pointer;font:inherit;display:flex;align-items:center;gap:5px;line-height:1.2}
+.crop-btn:hover{border-color:var(--accent)}
+.crop-btn.selected{border-color:var(--accent);background:#e0f0d6;box-shadow:0 0 0 2px var(--accent)}
+.crop-btn.locked{opacity:.4;cursor:not-allowed}
+.crop-btn .emoji{font-size:1rem}
+.crop-btn .name{font-size:.78rem;font-weight:600}
+.crop-btn .tags{font-size:.62rem;color:var(--muted)}
+.eraser-btn{width:100%;padding:5px;border-radius:6px;border:1px solid var(--line);background:#fde;cursor:pointer;font:inherit;font-weight:700;font-size:.8rem}
+.eraser-btn.selected{background:#f9b;border-color:var(--bad)}
+.board-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
+.beat-indicator{display:flex;gap:6px;font-size:.8rem}
+.beat-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:var(--muted)}
+.beat-dot.active{border-color:var(--accent);background:#e0f0d6;color:var(--accent)}
+.beat-dot.done{border-color:var(--good);background:var(--good);color:#fff}
+.zone-label{font-size:.62rem;color:var(--muted);width:100%;text-align:left;padding:2px 0}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;width:100%}
+.cell{aspect-ratio:1;border-radius:6px;border:2px solid var(--line);background:var(--panel-2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;min-width:0;transition:border-color .1s}
+.cell:hover{border-color:var(--accent)}
+.cell.selected-cell{border-color:var(--focus);box-shadow:0 0 0 2px var(--focus)}
+.cell.trellis{border-style:dashed}
+.cell.locked{opacity:.85;cursor:default}
+.cell.locked::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 6px);border-radius:4px;pointer-events:none}
+.cell.event-hit{box-shadow:inset 0 0 0 2px var(--bad)}
+.cell.protected-cell{box-shadow:inset 0 0 0 2px var(--good)}
+.cell.mulched-cell{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell .emoji{font-size:1.2rem;line-height:1}
+.cell .short{font-size:.58rem;font-weight:700;color:var(--muted)}
+.cell .score-pip{position:absolute;bottom:1px;right:2px;font-size:.5rem;color:var(--muted)}
+.toolbar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;width:100%}
+.btn{padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font:inherit;font-weight:600;font-size:.78rem}
+.btn:hover:not(:disabled){background:#e0f0d6}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover:not(:disabled){background:#4a7a38}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+.results{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 80px);overflow-y:auto}
+.score-ring{text-align:center;padding:8px}
+.score-ring .big{font-size:2.2rem;font-weight:700;font-family:Georgia,serif}
+.score-ring .grade{font-size:1.4rem;font-weight:700;margin-left:6px}
+.grade-A{color:var(--good)}.grade-B{color:var(--accent)}.grade-C{color:var(--warn)}.grade-D{color:var(--bad)}.grade-F{color:#888}
+.factor-bar{display:flex;align-items:center;gap:4px;font-size:.72rem}
+.factor-bar .label{width:56px;text-align:right;color:var(--muted)}
+.factor-bar .track{flex:1;height:8px;background:#ddd;border-radius:4px;overflow:hidden}
+.factor-bar .fill{height:100%;border-radius:4px}
+.factor-bar .val{width:26px;font-weight:600;font-size:.68rem}
+.event-card{border:2px solid var(--warn);border-radius:8px;padding:8px;background:#fffbf0}
+.event-card h3{color:var(--warn);text-transform:none;letter-spacing:0;font-size:.82rem;margin:0 0 4px}
+.event-card .desc{font-size:.72rem;margin-bottom:5px;line-height:1.35}
+.event-card .effect{font-size:.68rem;color:var(--bad);font-weight:600}
+.event-card.positive{border-color:var(--good)}.event-card.positive .effect{color:var(--good)}
+.event-card.neutral{border-color:var(--muted)}.event-card.neutral .effect{color:var(--muted)}
+.status-bar{font-size:.72rem;color:var(--muted);padding:4px 0;border-top:1px solid var(--line)}
+.history-entry{font-size:.68rem;padding:2px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100}
+.confirm-overlay.active{display:flex}
+.confirm-box{background:var(--panel);border-radius:var(--radius);padding:20px;max-width:400px;width:90%}
+.confirm-box h2{margin-bottom:8px}
+.confirm-box p{font-size:.85rem;margin-bottom:12px;line-height:1.4}
+.confirm-box .btns{display:flex;gap:8px;justify-content:flex-end}
+.swap-highlight{border-color:var(--accent-2)!important;box-shadow:0 0 0 3px var(--accent-2)!important}
+</style>
 </head>
 <body>
-  <main class="app" id="app">
-    <header class="panel header" aria-label="v3 header">
-      <div>
-        <h1 class="title">Garden OS v3</h1>
-        <p class="subtitle">Narrative strategy in one 8x4 South Philly raised bed.</p>
-      </div>
-      <div class="chips" aria-label="system chips">
-        <span class="chip">Phase Engine</span>
-        <span class="chip">Event Deck</span>
-        <span class="chip">Dialogue Layer</span>
-      </div>
-    </header>
+<div class="app" id="app">
+  <div class="head">
+    <h1>Garden OS v3</h1>
+    <div class="meta" id="metaChips"></div>
+  </div>
+  <div class="panel controls" id="controlsPanel"></div>
+  <div class="panel board-wrap" id="boardPanel"></div>
+  <div class="panel results" id="resultsPanel"></div>
+</div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box" id="confirmBox"></div>
+</div>
+<script>
+(()=>{
+'use strict';
 
-    <section class="panel controls" aria-label="left controls rail">
-      <h2 class="section-title">Planner Rail</h2>
-      <article class="paper-block">
-        <p class="mono">Placeholder: crop roster, season selector, chapter brief, commit controls.</p>
-      </article>
-      <article class="paper-block">
-        <p class="mono">Placeholder: intervention tray and event forecast panel.</p>
-      </article>
-      <article class="paper-block">
-        <ul class="placeholder-list">
-          <li>Character portrait dock</li>
-          <li>Challenge modifiers</li>
-          <li>Chapter objective block</li>
-        </ul>
-      </article>
-    </section>
+/* ===== CONSTANTS ===== */
+const COLS=8,ROWS=4,SIZE=32,MIN_PLANTED=8;
+const TRELLIS=new Set([0,1]);
+const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
+const SKEY='garden_os_v3_state',HKEY='garden_os_v3_hist';
+const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
+const SEASONS=['spring','summer','fall','winter'];
 
-    <section class="panel board-stage" aria-label="board stage">
-      <h2 class="section-title">Raised Bed Stage</h2>
-      <div class="board-shell">
-        <div class="bed-grid" aria-label="8x4 bed scaffold">
-          <div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div>
-          <div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div><div class="cell trellis"></div>
-          <div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div>
-          <div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div><div class="cell access"></div>
-        </div>
-      </div>
-      <article class="paper-block">
-        <p class="mono">Placeholder: beat timeline, event card, and in-board diagnostics overlays.</p>
-      </article>
-    </section>
+/* ===== CROPS ===== */
+const C={
+cherry_tom:{id:'cherry_tom',name:'Cherry Tomato',emoji:'\u{1F345}',short:'CT',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold'],conflicts:['broccoli'],chapterUnlock:2,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['pest-target','blight-prone','heat-tolerant'],sm:{spring:.5,summer:1,fall:.3}},
+pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:2,coolSeason:true,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['frost-hardy','wind-sensitive'],sm:{spring:.9,summer:.8,fall:.7}},
+peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:3,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce'],conflicts:['onion','pepper'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
+cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:['tomato_sandwich'],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
+radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:4,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.4,fall:.9}},
+lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],ev:['heat-sensitive','pest-target','frost-hardy'],sm:{spring:1,summer:.3,fall:1}},
+arugula:{id:'arugula',name:'Arugula',emoji:'\u{1F33F}',short:'ARU',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['dill','basil'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
+broccoli:{id:'broccoli',name:'Broccoli',emoji:'\u{1F966}',short:'BRC',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:true,water:3,companions:['onion','dill'],conflicts:['cherry_tom'],chapterUnlock:5,recipes:[],ev:['pest-target','heat-sensitive','frost-hardy'],sm:{spring:.9,summer:.3,fall:1}},
+kale:{id:'kale',name:'Kale',emoji:'\u{1F96C}',short:'KAL',faction:'brassicas',sunMin:5,sunIdeal:7,support:false,shadeScore:4,coolSeason:true,tall:true,water:3,companions:['marigold'],conflicts:[],chapterUnlock:5,recipes:[],ev:['pest-target','frost-hardy'],sm:{spring:.9,summer:.4,fall:1}},
+carrot:{id:'carrot',name:'Carrot',emoji:'\u{1F955}',short:'CAR',faction:'roots',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['lettuce','onion'],conflicts:['dill'],chapterUnlock:3,recipes:['moms_sauce'],ev:['frost-hardy'],sm:{spring:.9,summer:.6,fall:1}},
+onion:{id:'onion',name:'Onion',emoji:'\u{1F9C5}',short:'ONI',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:true,tall:false,water:2,companions:['carrot','pepper'],conflicts:['peas','pole_beans'],chapterUnlock:3,recipes:['weeknight_pasta','moms_sauce'],ev:['frost-hardy','heat-tolerant'],sm:{spring:.8,summer:.7,fall:.8}},
+beet:{id:'beet',name:'Beet',emoji:'\u{1FADA}',short:'BET',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['onion'],conflicts:[],chapterUnlock:3,recipes:[],ev:['frost-hardy'],sm:{spring:.9,summer:.5,fall:1}},
+spinach:{id:'spinach',name:'Spinach',emoji:'\u{1F343}',short:'SPI',faction:'greens',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['radish'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.2,fall:1}},
+chard:{id:'chard',name:'Chard',emoji:'\u{1F331}',short:'CHD',faction:'greens',sunMin:5,sunIdeal:7,support:false,shadeScore:4,coolSeason:false,tall:false,water:3,companions:['onion'],conflicts:[],chapterUnlock:9,recipes:[],ev:['heat-tolerant'],sm:{spring:.7,summer:1,fall:.7}},
+basil:{id:'basil',name:'Basil',emoji:'\u{1F33F}',short:'BAS',faction:'herbs',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:false,tall:false,water:3,companions:['cherry_tom','pepper'],conflicts:[],chapterUnlock:1,recipes:['herb_bowl','tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['frost-sensitive','heat-tolerant'],sm:{spring:.5,summer:1,fall:.4}},
+dill:{id:'dill',name:'Dill',emoji:'\u{1FAB4}',short:'DIL',faction:'herbs',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['broccoli'],conflicts:['cherry_tom','carrot'],chapterUnlock:5,recipes:['herb_bowl'],ev:['heat-sensitive','wind-sensitive'],sm:{spring:1,summer:.5,fall:.8}},
+pepper:{id:'pepper',name:'Pepper',emoji:'\u{1F336}\uFE0F',short:'PEP',faction:'fruiting',sunMin:6,sunIdeal:8,support:false,shadeScore:1,coolSeason:false,tall:false,water:2,companions:['basil','onion'],conflicts:['peas'],chapterUnlock:6,recipes:['weeknight_pasta','moms_sauce'],ev:['frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.3}},
+zucchini:{id:'zucchini',name:'Zucchini',emoji:'\u{1F952}',short:'ZUC',faction:'fruiting',sunMin:6,sunIdeal:8,support:false,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['marigold'],conflicts:[],chapterUnlock:6,recipes:[],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.3}},
+marigold:{id:'marigold',name:'Marigold',emoji:'\u{1F33C}',short:'MAR',faction:'companions',sunMin:5,sunIdeal:7,support:false,shadeScore:2,coolSeason:false,tall:false,water:2,companions:['cherry_tom','pepper','broccoli'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-tolerant','pest-repellent'],sm:{spring:.6,summer:1,fall:.5}},
+nasturtium:{id:'nasturtium',name:'Nasturtium',emoji:'\u{1F338}',short:'NAS',faction:'companions',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:false,tall:false,water:2,companions:['zucchini'],conflicts:[],chapterUnlock:9,recipes:[],ev:['frost-sensitive','pest-decoy'],sm:{spring:.5,summer:1,fall:.4}}
+};
 
-    <aside class="panel results" aria-label="right results rail">
-      <h2 class="section-title">Review Rail</h2>
-      <article class="paper-block">
-        <p class="mono">Placeholder: score ring, factor bars, violations, and harvest tally.</p>
-      </article>
-      <article class="paper-block">
-        <p class="mono">Placeholder: chapter outcome, unlocks, pantry/recipe updates, carry-forward notes.</p>
-      </article>
-      <article class="paper-block">
-        <p class="mono">Placeholder: event log + character commentary feed.</p>
-      </article>
-    </aside>
-  </main>
+const RECIPES={
+herb_bowl:{name:'Herb Bowl',crops:['basil','dill']},
+tomato_sandwich:{name:'Tomato Sandwich',crops:['cherry_tom','basil','lettuce']},
+weeknight_pasta:{name:'Weeknight Pasta',crops:['cherry_tom','basil','pepper','onion']},
+moms_sauce:{name:"Mom's Sauce",crops:['cherry_tom','basil','pepper','onion','carrot']}
+};
 
-  <section class="overlay" aria-hidden="true">
-    <div class="card">
-      <h2 class="section-title">Modal Scaffold</h2>
-      <p class="mono">Reserved for commit confirmation, event decisions, and chapter transitions.</p>
-    </div>
-  </section>
+/* ===== EVENT DECK ===== */
+const ED=[
+{id:"S01",title:"Late Frost Advisory",season:"spring",valence:"negative",description:"Temperature drops to 28\u00b0. Frost-sensitive crops take the hit.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"frost-sensitive",max:null},mod:-2,dur:"beat"},io:["protect","mulch","swap","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1.2},
+{id:"S02",title:"Phillies Home Opener Energy",season:"spring",valence:"positive",description:"Neighbor drops off composted horse manure. Row 3 gets enriched.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-3",max:null},mod:1,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"S03",title:"Cabbage Moth Arrival",season:"spring",valence:"negative",description:"White butterflies laying eggs on brassicas. Pest hit.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"brassicas",max:null},mod:-1.5,dur:"beat"},io:["protect","prune","companion_patch","accept_loss"],cf:null,ca:[5,6,7,8,9,10,11,12],dw:1},
+{id:"S04",title:"Block Party Planning",season:"spring",valence:"mixed",description:"Mrs. Gonzalez wants herbs for the cookout. Herb faction loses yield.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"herbs",max:3},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"S05",title:"Spring Rain Streak",season:"spring",valence:"positive",description:"Five days of rain. Crops with water >= 3 get a boost.",me:{ch:"cell_buff",tgt:{type:"crop_filter",filter:"water>=3",max:null},mod:.75,dur:"beat"},io:["mulch","companion_patch","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1},
+{id:"S06",title:"Alley Cat Patrol",season:"spring",valence:"negative",description:"The tabby uses your bed as a litter box. Two front-row cells compacted.",me:{ch:"cell_penalty",tgt:{type:"random_cells",filter:"row-3",max:2},mod:-1,dur:"season"},io:["protect","mulch","prune","accept_loss"],cf:{eff:"compacted"},ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:.9},
+{id:"S07",title:"Seed Swap on Passyunk",season:"spring",valence:"positive",description:"Garden club had extra seedlings. Two random cells get vigor buff.",me:{ch:"cell_buff",tgt:{type:"random_cells",filter:"planted",max:2},mod:1,dur:"season"},io:["companion_patch","mulch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"S08",title:"Windy Week",season:"spring",valence:"negative",description:"25mph winds. Wind-sensitive crops get battered.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"wind-sensitive",max:null},mod:-1,dur:"beat"},io:["protect","swap","prune","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:.8},
+{id:"S09",title:"Mom's Trowel Turns Up",season:"spring",valence:"neutral",description:"You find her old trowel. Column 3 gets a buff.",me:{ch:"cell_buff",tgt:{type:"column",filter:"col-3",max:null},mod:.5,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"narrative_flag"},ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:.7},
+{id:"S10",title:"Slugs After Rain",season:"spring",valence:"mixed",description:"Slugs eat greens. But activity aerates soil for roots.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"greens",max:3},mod:-1,dur:"beat"},io:["protect","prune","mulch","accept_loss"],cf:null,ca:[3,4,5,6,7,8,9,10,11,12],dw:1},
+{id:"U01",title:"Heat Dome",season:"summer",valence:"negative",description:"Heat index 108\u00b0. Cool-season crops wilt.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"heat-sensitive",max:null},mod:-1.5,dur:"beat"},io:["protect","mulch","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1.3},
+{id:"U02",title:"Tomato Hornworm",season:"summer",valence:"negative",description:"Hornworms found. Pest-target crops under attack.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"pest-target",max:4},mod:-1.5,dur:"beat"},io:["protect","prune","companion_patch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1.1},
+{id:"U03",title:"Phillies Win Streak",season:"summer",valence:"positive",description:"Seven straight wins. Front row morale buff.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-3",max:null},mod:.75,dur:"beat"},io:["companion_patch","mulch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U04",title:"Afternoon Thunderstorm",season:"summer",valence:"mixed",description:"Three inches in forty minutes. Fast-cycle crops waterlogged.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"fast_cycles",max:3},mod:-1,dur:"beat"},io:["protect","swap","mulch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U05",title:"Neighbor's Hose Donation",season:"summer",valence:"positive",description:"Mr. Kim waters back row on the hottest day.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-0",max:null},mod:1,dur:"beat"},io:["mulch","companion_patch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U06",title:"Squash Vine Borer",season:"summer",valence:"negative",description:"Vine borers. Fruiting crops take internal damage.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"fruiting",max:3},mod:-1.5,dur:"season"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U07",title:"Sidewalk Sale Foot Traffic",season:"summer",valence:"negative",description:"Yard sale compacts soil in front row.",me:{ch:"cell_penalty",tgt:{type:"row",filter:"row-3",max:null},mod:-.75,dur:"season"},io:["mulch","protect","accept_loss"],cf:{eff:"compacted"},ca:[6,7,8,9,10,11,12],dw:.9},
+{id:"U08",title:"Compost Delivery",season:"summer",valence:"neutral",description:"Co-op drops off compost. Column 0 enriched.",me:{ch:"cell_buff",tgt:{type:"column",filter:"col-0",max:null},mod:.75,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U09",title:"Blight Warning",season:"summer",valence:"negative",description:"Humidity + heat = blight. Blight-prone crops hit.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"blight-prone",max:null},mod:-1.5,dur:"season"},io:["prune","protect","swap","accept_loss"],cf:{eff:"compacted"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"U10",title:"Marigold Wall",season:"summer",valence:"mixed",description:"Marigolds exploded. Pest-repellent radiates but they crowd themselves.",me:{ch:"cell_buff",tgt:{type:"faction",filter:"companions",max:null},mod:-.5,dur:"beat"},io:["prune","protect","companion_patch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:.9},
+{id:"F01",title:"First Frost Scare",season:"fall",valence:"negative",description:"October 14th. 33\u00b0 forecast. Frost-sensitive crops stressed.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"frost-sensitive",max:null},mod:-1.5,dur:"beat"},io:["protect","mulch","swap","accept_loss"],cf:null,ca:[3,4,5,6,7,8,9,10,11,12],dw:1.2},
+{id:"F02",title:"Phillies October Baseball",season:"fall",valence:"mixed",description:"Playoffs. Fireworks rattle trellis. Climbers shaken.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"climbers",max:null},mod:-.75,dur:"beat"},io:["protect","swap","accept_loss"],cf:null,ca:[7,8,9,10,11,12],dw:1},
+{id:"F03",title:"Leaf Mulch Windfall",season:"fall",valence:"positive",description:"Neighbor's oak dropped everything. Back rows get free mulch.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-0",max:null},mod:1,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"enriched"},ca:[3,4,5,6,7,8,9,10,11,12],dw:1},
+{id:"F04",title:"Aphid Resurgence",season:"fall",valence:"negative",description:"Cool weather brought aphids. Pest-target crops hit.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"pest-target",max:4},mod:-1,dur:"beat"},io:["protect","prune","companion_patch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"F05",title:"Neighborhood Potluck Demand",season:"fall",valence:"mixed",description:"Three neighbors want garden contributions. Root crops harvested early.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"roots",max:2},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"F06",title:"Raccoon Night Raid",season:"fall",valence:"negative",description:"Raccoons dug up front row. Three cells disturbed.",me:{ch:"cell_penalty",tgt:{type:"random_cells",filter:"row-3",max:3},mod:-1.5,dur:"beat"},io:["protect","mulch","prune","accept_loss"],cf:{eff:"compacted"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"F07",title:"Extended Warm Spell",season:"fall",valence:"positive",description:"Indian summer. 72\u00b0 in October. Frost-hardy crops get extra time.",me:{ch:"cell_buff",tgt:{type:"crop_filter",filter:"frost-hardy",max:null},mod:.75,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:null,ca:[3,4,5,6,7,8,9,10,11,12],dw:1},
+{id:"F08",title:"Downspout Overflow",season:"fall",valence:"negative",description:"Clogged gutters dump water into col 7. Crops waterlogged.",me:{ch:"cell_penalty",tgt:{type:"column",filter:"col-7",max:null},mod:-1,dur:"season"},io:["swap","mulch","protect","accept_loss"],cf:{eff:"compacted"},ca:[6,7,8,9,10,11,12],dw:.9},
+{id:"F09",title:"Dad Visits the Bed",season:"fall",valence:"neutral",description:"Onion Man stands at the bed. Says the back row looks like it used to.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-0",max:null},mod:.5,dur:"beat"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"narrative_flag"},ca:[7,8,9,10,11,12],dw:.8},
+{id:"F10",title:"Cover Crop Window",season:"fall",valence:"neutral",description:"Season ending. Empty cells can get cover crop for soil health.",me:{ch:"carry_forward",tgt:{type:"crop_filter",filter:"empty_cells",max:null},mod:.5,dur:"carry"},io:["mulch","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
+{id:"W01",title:"Frozen Pipe Scare",season:"winter",valence:"negative",description:"Outdoor spigot froze. Row 3 damaged.",me:{ch:"carry_forward",tgt:{type:"row",filter:"row-3",max:null},mod:-.5,dur:"carry"},io:["accept_loss"],cf:{eff:"compacted"},ca:[4,8,12],dw:1},
+{id:"W02",title:"Phillies Hot Stove",season:"winter",valence:"positive",description:"Onion Man winterizes bed frame. Trellis tightened.",me:{ch:"carry_forward",tgt:{type:"row",filter:"row-0",max:null},mod:.5,dur:"carry"},io:["accept_loss"],cf:{eff:"enriched"},ca:[4,8,12],dw:1},
+{id:"W03",title:"Seed Catalog Arrives",season:"winter",valence:"positive",description:"Catalog arrives addressed to Mom. Pages open to tomatoes.",me:{ch:"carry_forward",tgt:{type:"crop_filter",filter:"cherry_tom",max:null},mod:.3,dur:"carry"},io:["accept_loss"],cf:{eff:"enriched"},ca:[4,8,12],dw:1},
+{id:"W04",title:"January Thaw",season:"winter",valence:"mixed",description:"55\u00b0 for three days. Soil thaws and refreezes.",me:{ch:"carry_forward",tgt:{type:"zone",filter:"full_bed",max:null},mod:0,dur:"carry"},io:["accept_loss"],cf:{eff:"narrative_flag"},ca:[4,8,12],dw:1},
+{id:"W05",title:"Neighbor Moves Away",season:"winter",valence:"negative",description:"Family three doors down sold the house.",me:{ch:"carry_forward",tgt:{type:"column",filter:"col-7",max:null},mod:-.3,dur:"carry"},io:["accept_loss"],cf:{eff:"compacted"},ca:[4,8,12],dw:1},
+{id:"W06",title:"Snow Insulation",season:"winter",valence:"positive",description:"Six inches of snow. Soil biology protected.",me:{ch:"carry_forward",tgt:{type:"zone",filter:"full_bed",max:null},mod:.3,dur:"carry"},io:["accept_loss"],cf:{eff:"enriched"},ca:[4,8,12],dw:1},
+{id:"W07",title:"Planning at Kitchen Table",season:"winter",valence:"neutral",description:"February night. Seed catalog. Graph paper. The bed drawn from memory.",me:{ch:"carry_forward",tgt:{type:"zone",filter:"full_bed",max:null},mod:0,dur:"carry"},io:["accept_loss"],cf:{eff:"narrative_flag"},ca:[4,8,12],dw:.9},
+{id:"W08",title:"Ice Storm Damage",season:"winter",valence:"negative",description:"Freezing rain. Trellis wire snaps in row 0.",me:{ch:"carry_forward",tgt:{type:"row",filter:"row-0",max:null},mod:-.75,dur:"carry"},io:["accept_loss"],cf:{eff:"compacted"},ca:[4,8,12],dw:1},
+{id:"W09",title:"New Neighbor",season:"winter",valence:"neutral",description:"New owner knocks. She saw the bed from the alley. She gardens.",me:{ch:"carry_forward",tgt:{type:"column",filter:"col-7",max:null},mod:.3,dur:"carry"},io:["accept_loss"],cf:{eff:"enriched"},ca:[8,12],dw:.8},
+{id:"W10",title:"The Bed in Snow",season:"winter",valence:"neutral",description:"Standing at the back door looking at the bed under snow.",me:{ch:"carry_forward",tgt:{type:"zone",filter:"full_bed",max:null},mod:0,dur:"carry"},io:["accept_loss"],cf:{eff:"narrative_flag"},ca:[4,8,12],dw:.7}
+];
+
+const FACTIONS=[['climbers','Climbers'],['fast_cycles','Fast Cycles'],['brassicas','Brassicas'],['roots','Roots'],['greens','Greens'],['herbs','Herbs'],['fruiting','Fruiting'],['companions','Companions']];
+const GRADES=[['A+',90],['A',80],['B',70],['C',60],['D',50],['F',0]];
+
+/* ===== UTILITY ===== */
+function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n))}
+function rc(i){return{row:Math.floor(i/COLS),col:i%COLS}}
+function ri(r,c){return r*COLS+c}
+function fmt(i){const p=rc(i);return'R'+p.row+'C'+p.col}
+function dc(o){return JSON.parse(JSON.stringify(o))}
+function nbs(i){const{row,col}=rc(i);const o=[];if(row>0)o.push(ri(row-1,col));if(row<ROWS-1)o.push(ri(row+1,col));if(col>0)o.push(ri(row,col-1));if(col<COLS-1)o.push(ri(row,col+1));return o}
+function wRand(items,wf){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);if(t<=0)return items[Math.floor(Math.random()*items.length)];let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
+function seasonFor(ch){return SEASONS[(ch-1)%4]}
+function isWinter(ch){return seasonFor(ch)==='winter'}
+function grade(s){for(const[g,t]of GRADES)if(s>=t)return g;return'F'}
+function countPlanted(g){return g.filter(c=>c&&c.cropId).length}
+
+/* ===== LIGHT MODEL ===== */
+const BASE_SUN=6;
+function effectiveLight(idx,grid){
+  const{row,col}=rc(idx);
+  const rfw=row; // wall=back, row0 at wall
+  const shadow=Math.max(0,(2-rfw)*.75);
+  let L=Math.max(1,BASE_SUN-shadow);
+  if(row>0){const bi=ri(row-1,col);const bc=grid[bi];if(bc&&bc.cropId&&C[bc.cropId]&&C[bc.cropId].tall)L-=.5}
+  return Math.max(1,L);
+}
+
+/* ===== SCORING ===== */
+function sunFit(crop,L){
+  if(L>=crop.sunIdeal)return 5;
+  const rng=Math.max(.01,crop.sunIdeal-crop.sunMin);
+  if(L>=crop.sunMin)return 3+2*((L-crop.sunMin)/rng);
+  return clamp(1+Math.max(0,(L/Math.max(.01,crop.sunMin))*2),0,5);
+}
+function supFit(crop,row){if(crop.support)return TRELLIS.has(row)?5:1;return 3}
+function shadeFit(crop,L){return L<crop.sunMin?Math.max(1,crop.shadeScore*.6):crop.shadeScore}
+function accFit(crop,row){const as=(ROWS-1-row)/(ROWS-1);return crop.tall?3:3+as*2}
+function seaFit(crop,season){
+  if(season==='spring')return crop.coolSeason?5:3;
+  if(season==='summer')return crop.coolSeason?2:5;
+  if(season==='fall')return crop.coolSeason?5:2;
+  return 3;
+}
+function adjScore(idx,cid,grid){
+  const crop=C[cid];let raw=0;
+  for(const ni of nbs(idx)){const nc=grid[ni];if(!nc||!nc.cropId)continue;const o=C[nc.cropId];if(!o)continue;
+    if(crop.companions.includes(nc.cropId))raw+=.5;
+    if(crop.conflicts.includes(nc.cropId))raw-=1.2;
+    if(crop.tall&&o.tall)raw-=.75;
+    if(nc.cropId===cid)raw-=.2;
+    if(Math.abs(crop.water-o.water)>=2)raw-=.5;
+  }
+  return clamp(raw,-2,2);
+}
+
+function scoreCell(idx,grid,season){
+  const cell=grid[idx];if(!cell||!cell.cropId)return null;
+  const crop=C[cell.cropId];if(!crop)return null;
+  const{row}=rc(idx);const L=effectiveLight(idx,grid);
+  const sf=sunFit(crop,L),sp=supFit(crop,row),sh=shadeFit(crop,L),ac=accFit(crop,row),se=seaFit(crop,season);
+  const adj=adjScore(idx,cell.cropId,grid);
+  const core=(sf*2+sp+sh+ac+se)/3;
+  const sm=crop.sm[season]||1;
+  const preAdj=core*sm;
+  const cs=clamp(preAdj+adj,0,10);
+  const em=cell.eventModifier||0;
+  const mb=cell.interventionFlag==='mulched'?.5:0;
+  const cp=cell.interventionFlag==='companion_patched'?1:0;
+  const ft=cell.soilFatigue||0;
+  const fs=clamp(cs+em+mb+cp+ft,0,10);
+  return{index:idx,cropId:cell.cropId,finalScore:fs,factors:{sun:sf,support:sp,shade:sh,access:ac,season:se,adjacency:adj+2.5},light:L};
+}
+
+function bedScore(grid,season){
+  const cs=[];for(let i=0;i<SIZE;i++){const s=scoreCell(i,grid,season);if(s)cs.push(s)}
+  if(!cs.length)return{cellScores:cs,bedAverage:0,finalScore:0,grade:'F',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
+  const avg=cs.reduce((a,c)=>a+c.finalScore,0)/cs.length;
+  const fr=cs.length/SIZE;const fp=(1-Math.sqrt(fr))*1.5;
+  const uq=new Set(cs.map(c=>c.cropId));
+  let db=0;if(uq.size>=4)db=.7;else if(uq.size>=3)db=.5;else if(uq.size>=2)db=.3;
+  const tt=new Set(cs.filter(c=>C[c.cropId].tall).map(c=>c.cropId));
+  const tp=tt.size>1?-.8:0;
+  const tr=new Set(cs.filter(c=>C[c.cropId].support).map(c=>c.cropId));
+  const trp=tr.size>1?-.6:0;
+  let rb=0;const rm=[];
+  for(const[,rec]of Object.entries(RECIPES)){if(rec.crops.every(c=>uq.has(c))){rb+=.2;rm.push(rec.name)}}
+  let bs=clamp(avg+db+tp+trp-fp+rb,0,10);
+  const fs=clamp(bs*10,0,100);
+  const g=grade(fs);
+  const fsum={sun:0,support:0,shade:0,access:0,season:0,adjacency:0};
+  for(const s of cs)for(const k of Object.keys(fsum))fsum[k]+=s.factors[k];
+  for(const k of Object.keys(fsum))fsum[k]/=cs.length;
+  return{cellScores:cs,bedAverage:bs,finalScore:fs,grade:g,yieldList:[...uq],recipeMatches:rm,factorSummary:fsum};
+}
+
+/* ===== EVENT ENGINE ===== */
+function eventPool(season){return ED.filter(e=>e.season===season)}
+
+function drawEvent(pool,st){
+  let el=pool.filter(e=>!st.drawnEventIds.includes(e.id)&&e.ca.includes(st.chapter));
+  if(!el.length){console.warn('No eligible events');return null}
+  if(st.beatIndex===2){
+    const prev=st.eventLog.map(l=>{const ev=ED.find(e=>e.id===l.eventId);return ev?ev.valence:null});
+    if(prev.length&&prev.every(v=>v==='negative'||v==='mixed')){const f=el.filter(e=>e.valence==='positive'||e.valence==='neutral');if(f.length)el=f}
+    if(prev.length&&prev.every(v=>v==='positive'||v==='neutral')){const f=el.filter(e=>e.valence==='negative'||e.valence==='mixed');if(f.length)el=f}
+  }
+  const cs=st.chapter<=3?.7:st.chapter<=8?1:1.3;
+  const planted=st.grid.filter(c=>c&&c.cropId).map(c=>c.cropId);
+  function ew(ev){
+    let w=ev.dw*cs;
+    const tgt=ev.me.tgt;
+    if(tgt.type==='crop_filter'){
+      const has=planted.some(cid=>{const cr=C[cid];if(!cr)return false;if(cr.ev.includes(tgt.filter))return true;if(tgt.filter==='water>=3'&&cr.water>=3)return true;if(tgt.filter===cid)return true;return false});
+      if(has)w*=1.5;
+    }else if(tgt.type==='faction'){if(planted.some(cid=>C[cid]&&C[cid].faction===tgt.filter))w*=1.5}
+    return w;
+  }
+  const chosen=wRand(el,ew);
+  st.drawnEventIds.push(chosen.id);
+  return chosen;
+}
+
+function resolveTargets(ev,grid){
+  const t=ev.me.tgt;let cands=[];
+  if(t.type==='crop_filter'){
+    for(let i=0;i<SIZE;i++){const c=grid[i];if(!c)continue;
+      if(t.filter==='empty_cells'){if(!c.cropId)cands.push(i);continue}
+      if(!c.cropId)continue;const cr=C[c.cropId];if(!cr)continue;
+      if(t.filter==='planted'){cands.push(i);continue}
+      if(t.filter==='water>=3'&&cr.water>=3){cands.push(i);continue}
+      if(cr.ev.includes(t.filter)){cands.push(i);continue}
+      if(t.filter===c.cropId){cands.push(i);continue}
+    }
+  }else if(t.type==='row'){const rn=parseInt(t.filter.split('-')[1]);for(let c=0;c<COLS;c++)cands.push(ri(rn,c))}
+  else if(t.type==='column'){const cn=parseInt(t.filter.split('-')[1]);for(let r=0;r<ROWS;r++)cands.push(ri(r,cn))}
+  else if(t.type==='zone'){for(let i=0;i<SIZE;i++)cands.push(i)}
+  else if(t.type==='faction'){for(let i=0;i<SIZE;i++){const c=grid[i];if(c&&c.cropId&&C[c.cropId]&&C[c.cropId].faction===t.filter)cands.push(i)}}
+  else if(t.type==='random_cells'){
+    const f=t.filter;
+    if(f.startsWith('row-')){const rn=parseInt(f.split('-')[1]);for(let c=0;c<COLS;c++){const idx=ri(rn,c);if(grid[idx]&&grid[idx].cropId)cands.push(idx)}}
+    else{for(let i=0;i<SIZE;i++)if(grid[i]&&grid[i].cropId)cands.push(i)}
+  }
+  if(t.max&&cands.length>t.max){cands=[...cands].sort(()=>Math.random()-.5).slice(0,t.max)}
+  return cands;
+}
+
+function applyEvent(ev,grid){
+  const tgts=resolveTargets(ev,grid);const aff=[];
+  for(const idx of tgts){const c=grid[idx];if(!c)continue;if(c.interventionFlag==='protected')continue;c.eventModifier=(c.eventModifier||0)+ev.me.mod;aff.push(idx)}
+  return aff;
+}
+
+/* ===== STATE ===== */
+function mkCell(r,c){return{cropId:null,row:r,col:c,locked:false,eventModifier:0,interventionFlag:null,soilFatigue:0}}
+function mkGrid(){const g=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)g.push(mkCell(r,c));return g}
+function mkCF(){return{soilFatigueMap:{},lastFamilyMap:{},infrastructureMap:{},recipePantry:[],eventMemory:[],seasonHistory:[]}}
+
+function mkSeason(ch,cf){
+  const season=seasonFor(ch);const grid=mkGrid();
+  if(cf){
+    if(cf.infrastructureMap)for(const[k,flags]of Object.entries(cf.infrastructureMap)){
+      const[r,c]=k.split(',').map(Number);const idx=ri(r,c);if(grid[idx])for(const f of flags){
+        if(f==='mulched')grid[idx].interventionFlag='mulched';else if(f==='compacted')grid[idx].eventModifier-=.5;else if(f==='enriched')grid[idx].eventModifier+=.5;
+      }
+    }
+    if(cf.soilFatigueMap)for(const[k,v]of Object.entries(cf.soilFatigueMap)){
+      const[r,c]=k.split(',').map(Number);const idx=ri(r,c);if(grid[idx])grid[idx].soilFatigue=v;
+    }
+    if(Array.isArray(cf.eventMemory)&&cf.eventMemory.length){
+      const nextMemory=[];
+      for(const mem of cf.eventMemory){
+        if(mem.effectType==='infrastructure'&&mem.expiresAfter>0&&Array.isArray(mem.affectedCells)){
+          for(const pos of mem.affectedCells){
+            if(!pos)continue;
+            const idx=ri(pos.row,pos.col);
+            if(grid[idx])grid[idx].eventModifier=(grid[idx].eventModifier||0)+(mem.modifier||0);
+          }
+        }
+        if(mem.expiresAfter===0){nextMemory.push(mem);continue}
+        if(typeof mem.expiresAfter==='number'){
+          const rem=mem.expiresAfter-1;
+          if(rem>0)nextMemory.push({...mem,expiresAfter:rem});
+        }
+      }
+      cf.eventMemory=nextMemory;
+    }
+  }
+  return{phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
+}
+
+let S=null;
+
+/* ===== PERSISTENCE ===== */
+function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return p}}catch(e){}return null}
+function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-10)}catch(e){return[]}}
+function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-10)))}catch(e){}}
+
+/* ===== DOM ===== */
+const $=id=>document.getElementById(id);
+const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),overlay:$('confirmOverlay'),cbox:$('confirmBox')};
+
+function h(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+
+/* ===== RENDER: LEFT ===== */
+function renderCtrl(){
+  const f=document.createDocumentFragment();
+  f.appendChild(h('h2',null,'Crops'));
+  const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
+  eb.disabled=S.phase!=='PLANNING';
+  eb.onclick=()=>{S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()};
+  f.appendChild(eb);
+
+  for(const[fid,fname]of FACTIONS){
+    const crops=Object.values(C).filter(c=>c.faction===fid);if(!crops.length)continue;
+    const grp=h('div','crop-group');grp.appendChild(h('h3',null,fname));
+    const cg=h('div','crop-grid');
+    for(const crop of crops){
+      const locked=crop.chapterUnlock>S.chapter;
+      const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
+      btn.disabled=S.phase!=='PLANNING'||locked;
+      const em=h('span','emoji',crop.emoji);
+      const tw=h('div');
+      tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
+      tw.appendChild(h('span','tags',crop.short+(crop.support?' trellis':'')+(crop.tall?' tall':'')));
+      btn.appendChild(em);btn.appendChild(tw);
+      if(!locked)btn.onclick=()=>{S.selectedCrop=crop.id;S.eraserMode=false;render()};
+      cg.appendChild(btn);
+    }
+    grp.appendChild(cg);f.appendChild(grp);
+  }
+  el.ctrl.replaceChildren(f);
+}
+
+/* ===== RENDER: CENTER ===== */
+function renderBoard(){
+  const f=document.createDocumentFragment();
+  // Beat dots
+  const br=h('div','beat-indicator');
+  ['E','M','L'].forEach((l,b)=>{
+    const d=h('div','beat-dot',l);
+    const isBeat=BEAT_PHASES.includes(S.phase);
+    if(isBeat&&S.beatIndex===b)d.classList.add('active');
+    if((isBeat&&b<S.beatIndex)||S.phase==='HARVEST'||S.phase==='REVIEW'||S.phase==='TRANSITION')d.classList.add('done');
+    br.appendChild(d);
+  });
+  f.appendChild(br);
+  f.appendChild(h('div','zone-label','TRELLIS (rows 0\u20131, dashed) \u2502 ACCESS (rows 2\u20133)'));
+
+  const preview=S.phase==='PLANNING'?bedScore(S.grid,S.season):null;
+  const gd=h('div','grid');
+  for(let i=0;i<SIZE;i++){
+    const cell=S.grid[i];const{row}=rc(i);
+    const d=h('div','cell');
+    if(TRELLIS.has(row))d.classList.add('trellis');
+    if(cell.locked)d.classList.add('locked');
+    if(S.selectedCell===i)d.classList.add('selected-cell');
+    if(S.eventAffectedCells&&S.eventAffectedCells.includes(i))d.classList.add('event-hit');
+    if(cell.interventionFlag==='protected')d.classList.add('protected-cell');
+    if(cell.interventionFlag==='mulched')d.classList.add('mulched-cell');
+    if(S.interventionMode==='swap'&&S.swapFirstCell===i)d.classList.add('swap-highlight');
+    d.tabIndex=i===0?0:-1;
+    if(cell.cropId&&C[cell.cropId]){
+      const cr=C[cell.cropId];
+      d.appendChild(h('span','emoji',cr.emoji));
+      d.appendChild(h('span','short',cr.short));
+      const src=S.harvestResult||preview;
+      if(src){const cs=src.cellScores.find(s=>s.index===i);if(cs)d.appendChild(h('span','score-pip',cs.finalScore.toFixed(1)))}
+    }
+    d.onclick=()=>cellClick(i);
+    gd.appendChild(d);
+  }
+  f.appendChild(gd);
+
+  // Toolbar
+  const tb=h('div','toolbar');
+  if(S.phase==='PLANNING'){
+    const cb=h('button','btn primary','Commit Layout');cb.disabled=countPlanted(S.grid)<MIN_PLANTED;cb.onclick=showCommitConfirm;tb.appendChild(cb);
+    const clr=h('button','btn','Clear');clr.onclick=()=>{S.grid=mkGrid();render()};tb.appendChild(clr);
+    tb.appendChild(h('span','chip',countPlanted(S.grid)+'/32'));
+  }
+  if(BEAT_PHASES.includes(S.phase)){
+    if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
+      const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept'};
+      for(const it of S.currentEvent.io){const b=h('button','btn',labels[it]||it);b.onclick=()=>startIntervention(it);tb.appendChild(b)}
+    }
+    if(S.interventionMode){
+      const cb=h('button','btn danger','Cancel (Esc)');cb.onclick=()=>{S.interventionMode=null;S.swapFirstCell=null;render()};tb.appendChild(cb);
+      tb.appendChild(h('span','chip phase','Target: '+S.interventionMode));
+    }
+    if(!S.beatTokenAvailable||!S.currentEvent){
+      const ab=h('button','btn primary',S.beatIndex>=2?'Harvest (R)':'Advance (R)');ab.onclick=advanceBeat;tb.appendChild(ab);
+    }
+  }
+  if(S.phase==='HARVEST'){const b=h('button','btn primary','View Review');b.onclick=()=>{S.phase='REVIEW';save();render()};tb.appendChild(b)}
+  if(S.phase==='REVIEW'){const b=h('button','btn primary','Continue');b.onclick=doTransition;tb.appendChild(b)}
+  f.appendChild(tb);
+
+  // Status
+  const st=h('div','status-bar',statusText());
+  f.appendChild(st);
+  el.board.replaceChildren(f);
+}
+
+function statusText(){
+  const p=S.phase;
+  if(p==='PLANNING')return'Place crops. '+countPlanted(S.grid)+'/'+MIN_PLANTED+' min.';
+  if(BEAT_PHASES.includes(p)){const bn=['Early','Mid','Late'][S.beatIndex];
+    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose intervention or accept.';
+    if(S.currentEvent)return bn+': Event resolved. Advance when ready.';
+    return bn+': No event. Advance when ready.';}
+  if(p==='HARVEST')return'Harvest complete.';
+  if(p==='REVIEW')return'Season summary.';
+  return'';
+}
+
+/* ===== RENDER: RIGHT ===== */
+function renderRes(){
+  const f=document.createDocumentFragment();
+  const sd=S.harvestResult||bedScore(S.grid,S.season);
+
+  // Score
+  const ring=h('div','score-ring');
+  ring.appendChild(h('span','big',sd.finalScore.toFixed(1)));
+  const gs=h('span','grade grade-'+sd.grade[0],sd.grade);
+  ring.appendChild(gs);f.appendChild(ring);
+
+  // Factors
+  const fnames=[['sun','Sun(x2)'],['support','Support'],['shade','Shade'],['access','Access'],['season','Season'],['adjacency','Adj']];
+  for(const[k,label]of fnames){
+    const bar=h('div','factor-bar');
+    bar.appendChild(h('span','label',label));
+    const track=h('span','track');const fill=h('span','fill');
+    const v=sd.factorSummary[k]||0;
+    fill.style.width=(v/5*100)+'%';
+    fill.style.background=v>=3.5?'var(--good)':v>=2.5?'var(--warn)':'var(--bad)';
+    track.appendChild(fill);bar.appendChild(track);
+    bar.appendChild(h('span','val',v.toFixed(1)));
+    f.appendChild(bar);
+  }
+
+  // Event card
+  if(S.currentEvent&&BEAT_PHASES.includes(S.phase)){
+    const card=h('div','event-card'+(S.currentEvent.valence==='positive'?' positive':S.currentEvent.valence==='neutral'?' neutral':''));
+    card.appendChild(h('h3',null,S.currentEvent.title));
+    card.appendChild(h('div','desc',S.currentEvent.description));
+    const mod=S.currentEvent.me.mod;
+    card.appendChild(h('div','effect','Effect: '+(mod>=0?'+':'')+mod.toFixed(1)));
+    f.appendChild(card);
+  }
+
+  // Yield
+  if(sd.yieldList.length){
+    f.appendChild(h('h3',null,'Yield'));
+    f.appendChild(h('div',null,sd.yieldList.map(c=>C[c]?C[c].name:c).join(', ')));
+  }
+  if(sd.recipeMatches.length){
+    f.appendChild(h('h3',null,'Recipes'));
+    f.appendChild(h('div',null,sd.recipeMatches.join(', ')));
+  }
+
+  // Event log
+  if(S.eventLog.length){
+    f.appendChild(h('h3',null,'Events'));
+    for(const en of S.eventLog){
+      const ev=ED.find(e=>e.id===en.eventId);
+      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' (Beat '+(en.beatIndex+1)+') '+en.affectedCells.length+' cells'));
+    }
+  }
+  if(S.interventionLog.length){
+    f.appendChild(h('h3',null,'Interventions'));
+    for(const en of S.interventionLog)f.appendChild(h('div',null,'Beat '+(en.beatIndex+1)+': '+en.type));
+  }
+
+  // Pantry
+  const pantry=S.carryForward.recipePantry;
+  if(pantry.length){f.appendChild(h('h3',null,'Pantry'));f.appendChild(h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', ')))}
+
+  // History
+  const hist=loadH();
+  if(hist.length){
+    f.appendChild(h('h3',null,'History'));
+    for(const en of hist.slice().reverse()){
+      const d=h('div','history-entry');
+      d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
+      d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
+      f.appendChild(d);
+    }
+  }
+  el.res.replaceChildren(f);
+}
+
+/* ===== MAIN RENDER ===== */
+function render(){
+  el.meta.replaceChildren();
+  el.meta.appendChild(h('span','chip','Ch '+S.chapter));
+  el.meta.appendChild(h('span','chip',S.season[0].toUpperCase()+S.season.slice(1)));
+  el.meta.appendChild(h('span','chip phase',S.phase.replace(/_/g,' ')));
+  renderCtrl();renderBoard();renderRes();
+}
+
+/* ===== CELL CLICK ===== */
+function cellClick(i){
+  if(S.interventionMode){execIntervention(i);return}
+  if(S.phase==='PLANNING'){
+    if(S.eraserMode)S.grid[i].cropId=null;
+    else if(S.selectedCrop)S.grid[i].cropId=S.selectedCrop;
+    S.selectedCell=i;save();render();return;
+  }
+  S.selectedCell=i;render();
+}
+
+/* ===== COMMIT ===== */
+function showCommitConfirm(){
+  const planted=countPlanted(S.grid);if(planted<MIN_PLANTED)return;
+  el.cbox.replaceChildren();
+  el.cbox.appendChild(h('h2',null,'Commit Layout?'));
+  el.cbox.appendChild(h('p',null,planted+' cells planted. Placements lock after this. You cannot freely rearrange.'));
+  const btns=h('div','btns');
+  const cancel=h('button','btn','Cancel');cancel.onclick=()=>el.overlay.classList.remove('active');
+  const confirm=h('button','btn primary','Confirm');confirm.onclick=()=>{el.overlay.classList.remove('active');doCommit()};
+  btns.appendChild(cancel);btns.appendChild(confirm);el.cbox.appendChild(btns);
+  el.overlay.classList.add('active');
+}
+
+function doCommit(){
+  for(const c of S.grid)c.locked=true;
+  S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];S.eventAffectedCells=[];
+  S.phase='EARLY_SEASON';
+  startBeat();save();render();
+}
+
+/* ===== BEAT ===== */
+function startBeat(){
+  S.beatTokenAvailable=true;S.interventionMode=null;S.swapFirstCell=null;
+  for(const c of S.grid)if(c.interventionFlag==='protected'||c.interventionFlag==='companion_patched')c.interventionFlag=null;
+  const pool=eventPool(S.season);
+  S.currentEvent=drawEvent(pool,S);
+  S.eventAffectedCells=[];
+}
+
+function advanceBeat(){
+  if(S.beatTokenAvailable&&S.currentEvent)doAcceptLoss();
+  if(S.currentEvent&&!S.eventAffectedCells.length){
+    const aff=applyEvent(S.currentEvent,S.grid);
+    S.eventAffectedCells=aff;
+    S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
+  }
+  S.beatTokenAvailable=false;S.currentEvent=null;S.eventAffectedCells=[];
+  if(S.beatIndex<2){S.beatIndex++;S.phase=BEAT_PHASES[S.beatIndex];startBeat()}
+  else{S.phase='HARVEST';S.harvestResult=bedScore(S.grid,S.season)}
+  save();render();
+}
+
+/* ===== INTERVENTION ===== */
+function startIntervention(type){
+  if(!S.beatTokenAvailable)return;
+  if(type==='accept_loss'){doAcceptLoss();return}
+  S.interventionMode=type;S.swapFirstCell=null;render();
+}
+
+function doAcceptLoss(){
+  S.interventionLog.push({beatIndex:S.beatIndex,type:'accept_loss',targetCells:[],timestamp:new Date().toISOString()});
+  S.beatTokenAvailable=false;
+  if(S.currentEvent){
+    const aff=applyEvent(S.currentEvent,S.grid);S.eventAffectedCells=aff;
+    S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
+  }
+  S.interventionMode=null;save();render();
+}
+
+function execIntervention(i){
+  const cell=S.grid[i];const mode=S.interventionMode;
+  if(mode==='protect'){if(!cell.cropId)return;cell.interventionFlag='protected';finishInt([{row:cell.row,col:cell.col}])}
+  else if(mode==='mulch'){if(!cell.cropId)return;cell.interventionFlag='mulched';finishInt([{row:cell.row,col:cell.col}])}
+  else if(mode==='companion_patch'){if(!cell.cropId)return;cell.interventionFlag='companion_patched';finishInt([{row:cell.row,col:cell.col}])}
+  else if(mode==='prune'){if(!cell.cropId)return;cell.cropId=null;finishInt([{row:cell.row,col:cell.col}])}
+  else if(mode==='swap'){
+    if(!cell.cropId)return;
+    if(S.swapFirstCell===null){S.swapFirstCell=i;render();return}
+    const fi=S.swapFirstCell;if(fi===i){S.swapFirstCell=null;render();return}
+    if(!nbs(fi).includes(i)){S.swapFirstCell=null;render();return}
+    const fc=S.grid[fi];if(!fc.cropId){S.swapFirstCell=null;render();return}
+    const tmp=fc.cropId;fc.cropId=cell.cropId;cell.cropId=tmp;
+    S.swapFirstCell=null;finishInt([{row:fc.row,col:fc.col},{row:cell.row,col:cell.col}]);
+  }
+}
+
+function finishInt(targets){
+  S.interventionLog.push({beatIndex:S.beatIndex,type:S.interventionMode,targetCells:targets,timestamp:new Date().toISOString()});
+  S.beatTokenAvailable=false;S.interventionMode=null;
+  if(S.currentEvent){
+    const aff=applyEvent(S.currentEvent,S.grid);S.eventAffectedCells=aff;
+    S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:true});
+  }
+  save();render();
+}
+
+/* ===== TRANSITION ===== */
+function doTransition(){
+  const cf=S.carryForward||mkCF();
+  // Pantry
+  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
+  // History
+  cf.seasonHistory.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
+  const hist=loadH();hist.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F'});saveH(hist);
+  // Soil fatigue
+  const nfm={};
+  const nff={};
+  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
+    const prev=cf.soilFatigueMap[k]||0;
+    const prevFam=cf.lastFamilyMap[k]||null;
+    if(!c.cropId){nfm[k]=0;continue}
+    const fam=C[c.cropId]?C[c.cropId].faction:null;
+    if(fam)nff[k]=fam;
+    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
+    if(HEAVY.includes(c.cropId)){
+      if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);
+      else nfm[k]=-.3;
+    }else nfm[k]=prev<0?prev:0;
+  }
+  cf.soilFatigueMap=nfm;
+  cf.lastFamilyMap=nff;
+  // Infrastructure
+  cf.infrastructureMap={};
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
+  }
+  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
+  // Event memory (applied + decremented on next season load in mkSeason)
+  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
+  for(const en of S.eventLog){
+    const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf)cf.eventMemory.push({
+      eventId:ev.id,
+      chapter:S.chapter,
+      effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',
+      modifier:ev.me.mod,
+      affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),
+      expiresAfter:ev.cf.eff==='narrative_flag'?0:1
+    });
+  }
+
+  const next=S.chapter+1;
+  if(next>12){S.phase='REVIEW';save();render();return}
+  if(isWinter(next)){
+    S=mkSeason(next,cf);S.phase='REVIEW';
+    S.harvestResult={cellScores:[],bedAverage:0,finalScore:0,grade:'-',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
+    save();render();return;
+  }
+  S=mkSeason(next,cf);save();render();
+}
+
+/* ===== KEYBOARD ===== */
+document.addEventListener('keydown',e=>{
+  if(el.overlay.classList.contains('active'))return;
+  const t=e.target.tagName;if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;
+  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()}}
+  if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
+  if(e.key==='Escape'){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;render()}
+});
+document.addEventListener('keydown',e=>{
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+  const grid=el.board.querySelector('.grid');if(!grid)return;
+  const cells=grid.querySelectorAll('.cell');const foc=document.activeElement;const idx=Array.from(cells).indexOf(foc);if(idx<0)return;
+  e.preventDefault();const{row,col}=rc(idx);let nr=row,nc=col;
+  if(e.key==='ArrowUp')nr=Math.max(0,row-1);if(e.key==='ArrowDown')nr=Math.min(ROWS-1,row+1);
+  if(e.key==='ArrowLeft')nc=Math.max(0,col-1);if(e.key==='ArrowRight')nc=Math.min(COLS-1,col+1);
+  const ni=ri(nr,nc);if(cells[ni]){cells[ni].focus();cells[ni].tabIndex=0;foc.tabIndex=-1}
+});
+
+/* ===== TEST HOOKS ===== */
+window.gardenOS={
+  getState:()=>S,
+  resetGame:()=>{try{localStorage.removeItem(SKEY);localStorage.removeItem(HKEY)}catch(e){}S=mkSeason(1,mkCF());save();render()},
+  render_game_to_text:()=>{
+    const lines=['Chapter '+S.chapter+' | '+S.season+' | '+S.phase];
+    for(let r=0;r<ROWS;r++){let row='';for(let c=0;c<COLS;c++){const cell=S.grid[ri(r,c)];row+=(cell.cropId?C[cell.cropId].short:'..').padEnd(4)}lines.push(row)}
+    const s=bedScore(S.grid,S.season);lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
+    return lines.join('\n');
+  },
+  advanceTime:()=>{if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase==='HARVEST'){S.phase='REVIEW';save();render()}else if(S.phase==='REVIEW')doTransition()}
+};
+
+/* ===== BOOT ===== */
+const saved=load();
+if(saved&&saved.phase&&saved.grid){S=saved;if(!S.eventAffectedCells)S.eventAffectedCells=[];if(!S.carryForward)S.carryForward=mkCF();if(S.beatTokenAvailable===undefined)S.beatTokenAvailable=false}
+else S=mkSeason(1,mkCF());
+render();
+
+})();
+</script>
 </body>
 </html>
