@@ -111,6 +111,51 @@
   .center{display:flex;flex-direction:column;gap:.75rem;align-items:center;padding:1rem 1.2rem;overflow-y:auto;}
 
   /* Toolbar */
+  .workspace-bar{
+    width:100%;
+    max-width:480px;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.45rem .55rem;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    background:white;
+  }
+  .workspace-label{
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    color:var(--text-light);
+    white-space:nowrap;
+  }
+  .workspace-select{
+    flex:1;
+    min-width:0;
+    padding:.28rem .4rem;
+    border:1.5px solid var(--border);
+    border-radius:5px;
+    background:white;
+    font-size:.72rem;
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+  }
+  .workspace-btn{
+    padding:.25rem .46rem;
+    border-radius:5px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    cursor:pointer;
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-light);
+  }
+  .workspace-btn:hover{ background:#f0e4d0; }
+  .workspace-btn:disabled{ opacity:.5; cursor:default; }
+
   .cbar{display:flex;align-items:center;gap:.25rem;width:100%;max-width:480px;}
   .cbar-btn{padding:.28rem .52rem;border-radius:5px;border:1.5px solid var(--border);background:white;
     font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.05em;
@@ -133,6 +178,10 @@
   .bc{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;
     justify-content:center;cursor:pointer;border:2px solid transparent;transition:transform .1s, border-color .1s;
     position:relative;min-height:0;user-select:none;}
+  .bc.kb-focus{
+    border-color:#1f5fbf !important;
+    box-shadow:0 0 0 2px rgba(31,95,191,.28);
+  }
   .bc:hover{transform:scale(1.06);z-index:2;}
   .bc.selc{border-color:var(--soil)!important;box-shadow:0 0 0 2px rgba(92,61,30,.25);}
   .bc.weak::after{content:'!';position:absolute;top:2px;right:3px;font-size:.48rem;
@@ -152,6 +201,39 @@
     color:var(--text-light);text-align:center;margin-top:.3rem;}
   .chint{font-size:.67rem;color:var(--text-light);text-align:center;font-style:italic;margin-top:.15rem;}
   .cell-issue{position:absolute;top:1px;left:2px;font-size:.46rem;line-height:1;pointer-events:none;}
+  .hover-preview{
+    position:absolute;
+    right:3px;
+    bottom:2px;
+    font-size:.6rem;
+    line-height:1;
+    opacity:0;
+    transform:translateY(1px);
+    transition:opacity .08s ease, transform .08s ease;
+    pointer-events:none;
+  }
+  .bc:hover .hover-preview{
+    opacity:.9;
+    transform:translateY(0);
+  }
+  .bc.preview-erase .hover-preview{
+    color:#b02a1e;
+    font-weight:700;
+  }
+  .bc.preview-paint .hover-preview{
+    color:#1e110a;
+  }
+  .placement-status{
+    width:100%;
+    max-width:480px;
+    font-size:.62rem;
+    font-family:'DM Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-light);
+    text-align:center;
+    padding:.2rem .35rem;
+  }
 
   /* ═══ RIGHT PANE ═══ */
   .score-hero{display:flex;align-items:center;gap:.8rem;background:white;
@@ -212,6 +294,118 @@
     background:var(--soil);color:#f5ede0;padding:.45rem 1.2rem;border-radius:0 0 8px 8px;
     font-size:.72rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;
     box-shadow:0 4px 16px rgba(0,0,0,.3);animation:fadeIn .3s ease;
+  }
+  .recovery-banner{
+    position:fixed;
+    top:60px;
+    right:14px;
+    z-index:220;
+    max-width:360px;
+    background:white;
+    border:2px solid var(--warn);
+    border-radius:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+    padding:.7rem .8rem;
+  }
+  .recovery-title{
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--warn);
+    margin-bottom:.35rem;
+  }
+  .recovery-text{
+    font-size:.7rem;
+    color:var(--text-mid);
+    line-height:1.45;
+  }
+  .recovery-actions{
+    display:flex;
+    gap:.35rem;
+    margin-top:.55rem;
+  }
+  .recovery-actions button{
+    border:1.5px solid var(--border);
+    background:#fff;
+    color:var(--text);
+    border-radius:4px;
+    padding:.24rem .45rem;
+    font-size:.58rem;
+    font-family:'DM Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    cursor:pointer;
+  }
+  .recovery-actions button.primary{
+    border-color:var(--soil);
+    background:var(--soil);
+    color:var(--sun);
+  }
+
+  .add-bed-dialog{
+    border:none;
+    border-radius:10px;
+    padding:0;
+    box-shadow:0 10px 36px rgba(0,0,0,.32);
+    width:min(420px,92vw);
+    background:#fff;
+  }
+  .add-bed-dialog::backdrop{ background:rgba(0,0,0,.35); }
+  .add-bed-wrap{ padding:.8rem .9rem; }
+  .add-bed-title{
+    font-family:'DM Mono',monospace;
+    font-size:.62rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--soil);
+    margin-bottom:.5rem;
+  }
+  .add-bed-row{
+    display:grid;
+    grid-template-columns:1fr 72px 72px;
+    gap:.5rem;
+    align-items:end;
+    margin-bottom:.5rem;
+  }
+  .add-bed-field label{
+    display:block;
+    font-size:.64rem;
+    color:var(--text-light);
+    margin-bottom:.16rem;
+    font-family:'DM Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .add-bed-field input{
+    width:100%;
+    border:1.5px solid var(--border);
+    border-radius:5px;
+    padding:.28rem .36rem;
+    font-size:.74rem;
+    font-family:'DM Sans',sans-serif;
+  }
+  .add-bed-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:.35rem;
+    margin-top:.3rem;
+  }
+  .add-bed-actions button{
+    border:1.5px solid var(--border);
+    background:#fff;
+    border-radius:5px;
+    padding:.28rem .48rem;
+    font-size:.56rem;
+    font-family:'DM Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    cursor:pointer;
+  }
+  .add-bed-actions button.primary{
+    border-color:var(--soil);
+    background:var(--soil);
+    color:var(--sun);
   }
   .share-fallback{
     display:flex;gap:.4rem;align-items:center;margin-top:.35rem;
@@ -463,6 +657,13 @@
 
 <!-- CENTER -->
 <main class="center">
+  <div class="workspace-bar">
+    <span class="workspace-label">Workspace</span>
+    <select id="bedSwitcher" class="workspace-select" aria-label="Active bed"></select>
+    <button class="workspace-btn" id="addBedBtn" title="Add a bed">+ Bed</button>
+    <button class="workspace-btn" id="duplicateBedBtn" title="Duplicate active bed">Duplicate</button>
+  </div>
+
   <div class="cbar">
     <button class="cbar-btn act-leaf" id="autoFillBtn">✦ Auto-fill</button>
     <button class="cbar-btn danger" id="clearBtn">✕ Clear</button>
@@ -475,6 +676,7 @@
     <div class="cbar-gap"></div>
     <button class="cbar-btn" id="shareBtn" title="Copy shareable link">⬆ Share</button>
   </div>
+  <div id="placementStatus" class="placement-status" role="status" aria-live="polite"></div>
 
   <div class="bwrap">
     <div id="cageTrellisBar" class="cage-trellis-bar">
@@ -514,6 +716,30 @@
 </aside>
 </div>
 
+<dialog id="addBedDialog" class="add-bed-dialog">
+  <form method="dialog" class="add-bed-wrap" id="addBedForm">
+    <div class="add-bed-title">Create Bed</div>
+    <div class="add-bed-row">
+      <div class="add-bed-field">
+        <label for="addBedName">Name</label>
+        <input id="addBedName" name="name" type="text" maxlength="64" required>
+      </div>
+      <div class="add-bed-field">
+        <label for="addBedCols">Cols</label>
+        <input id="addBedCols" name="cols" type="number" min="2" max="10" step="1" required>
+      </div>
+      <div class="add-bed-field">
+        <label for="addBedRows">Rows</label>
+        <input id="addBedRows" name="rows" type="number" min="2" max="10" step="1" required>
+      </div>
+    </div>
+    <div class="add-bed-actions">
+      <button type="button" id="addBedCancelBtn">Cancel</button>
+      <button type="submit" class="primary">Create</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
 // CROP DATABASE — 44 crops across 8 categories
@@ -537,7 +763,7 @@ const VALID_TOOLS=['paint','erase'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
 const MAX_SHARE_PAYLOAD=50000;
-const CURRENT_SCHEMA = 1;
+const WORKSPACE_VERSION = 1;
 const APP_VERSION = '4.3';
 
 const CROPS = {
@@ -854,6 +1080,15 @@ let bed = createEmptyBed(bedW, bedH);
 let ui = { selectedCrop:'leaf_lettuce', tool:'paint', selCell:null, catFilter:'all', rTab:'score' };
 let undoStack = [], redoStack = [];
 let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
+let interaction = {
+  pointerActive:false,
+  pointerId:null,
+  dragChanged:false,
+  visitedCellIds:new Set(),
+  framePending:false,
+  keyboardMode:false,
+  focusCellId:'r0c0'
+};
 const MAX_HISTORY = 40;
 
 function createEmptyBed(w, h){
@@ -881,308 +1116,660 @@ function updateUndoButtons(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PERSISTENCE — load → validateRaw → migrate → validateWorkspace → save
+// PERSISTENCE — workspace schema + migration + recovery
 // ═══════════════════════════════════════════════════════════════════════════════
-const LS_KEY = 'gardenOS';
-const LS_KEY_LEGACY = 'gardenOS_v4';
+const LS_KEY = 'gardenOS_workspace';
+const LS_KEY_LEGACY = 'gardenOS';
+const LS_KEY_LEGACY_V4 = 'gardenOS_v4';
+let _workspace = null;
+let _activeBedTraits = null;
+let _recoveryPayload = null;
+let _recoveryBanner = null;
+let _pendingLoadFromHash = false;
 
-// -- Known v4.3 fixture for migration testing (console: _V4_FIXTURE) ----------
-const _V4_FIXTURE = Object.freeze({
-  bedW:8, bedH:4,
-  bed:['tomato','basil',null,null,'pepper','marigold',null,null,
-       null,null,null,null,null,null,null,null,
-       null,null,null,null,null,null,null,null,
-       'leaf_lettuce',null,null,null,null,null,null,'radish'],
-  settings:{sunHours:'6',orientation:'ew',wallSide:'left',trellis:true,season:'spring',
-    goal:'balanced',zone:'7',cage:{enabled:true,rearTrellis:true,wireSides:true,height:'24',doorStyle:'double'}},
-  ui:{selectedCrop:'tomato',tool:'paint',selCell:null,catFilter:'all'}
-});
-
-// -- validateRaw: lightweight structural gate ----------------------------------
-function validateRaw(raw){
-  if(!raw||typeof raw!=='object'||Array.isArray(raw))
-    return {ok:false, errors:['payload is not a plain object']};
-  const isV1 = typeof raw.schemaVersion==='number';
-  const isLegacy = !isV1 && raw.bedW!=null && Array.isArray(raw.bed);
-  if(!isV1 && !isLegacy)
-    return {ok:false, errors:['unrecognized payload shape']};
-  return {ok:true, payload:raw};
+function clampInt(n, min, max, fallback){
+  const v = Math.floor(+n);
+  if(!Number.isFinite(v)) return fallback;
+  return Math.max(min, Math.min(max, v));
 }
-
-// -- migrateFromV4: legacy → schema v1 ----------------------------------------
-function migrateFromV4(legacy){
-  const now = new Date().toISOString();
-  const w = Math.min(10, Math.max(2, Math.floor(+legacy.bedW)||8));
-  const h = Math.min(10, Math.max(2, Math.floor(+legacy.bedH)||4));
-  const expectedLen = w * h;
-  let cells = Array.isArray(legacy.bed)
-    ? legacy.bed.map(c=>(typeof c==='string'&&CROPS[c])?c:null)
-    : [];
-  // Pad or truncate to match dimensions
-  if(cells.length < expectedLen) cells = cells.concat(new Array(expectedLen - cells.length).fill(null));
-  else if(cells.length > expectedLen) cells = cells.slice(0, expectedLen);
-  const s = legacy.settings || {};
-  const sc = s.cage || {};
+function uniqueId(prefix){
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+}
+function normalizeSiteSettings(site){
+  const s = site && typeof site==='object' ? site : {};
+  const sun = parseFloat(s.sunHours);
   return {
-    schemaVersion: CURRENT_SCHEMA,
-    meta: { createdAt:now, updatedAt:now, appVersion:APP_VERSION },
-    selectedBedId: 'bed-0',
-    beds: [{
-      id: 'bed-0',
-      name: 'Main Bed',
-      width: w,
-      height: h,
-      cells,
-      settings: {
-        sunHours:    parseFloat(s.sunHours)||6,
-        orientation: VALID_ORIENTATIONS.includes(s.orientation) ? s.orientation : 'ew',
-        wallSide:    VALID_WALLS.includes(s.wallSide) ? s.wallSide : 'back',
-        trellis:     typeof s.trellis==='boolean' ? s.trellis : true,
-        season:      VALID_SEASONS.includes(s.season) ? s.season : 'spring',
-        goal:        VALID_GOALS.includes(s.goal) ? s.goal : 'balanced',
-        zone:        VALID_ZONES.includes(s.zone) ? s.zone : '',
-        cage: {
-          enabled:     typeof sc.enabled==='boolean' ? sc.enabled : false,
-          rearTrellis: typeof sc.rearTrellis==='boolean' ? sc.rearTrellis : true,
-          wireSides:   typeof sc.wireSides==='boolean' ? sc.wireSides : true,
-          height:      VALID_CAGE_HEIGHTS.includes(sc.height) ? sc.height : '24',
-          doorStyle:   VALID_DOOR_STYLES.includes(sc.doorStyle) ? sc.doorStyle : 'double'
-        }
-      }
-    }],
-    ui: legacy.ui ? {
-      selectedCrop: (typeof legacy.ui.selectedCrop==='string'&&CROPS[legacy.ui.selectedCrop]) ? legacy.ui.selectedCrop : null,
-      tool:         VALID_TOOLS.includes(legacy.ui.tool) ? legacy.ui.tool : 'paint',
-      selCell:      (typeof legacy.ui.selCell==='string'&&/^r\d+c\d+$/.test(legacy.ui.selCell)) ? legacy.ui.selCell : null,
-      catFilter:    typeof legacy.ui.catFilter==='string' ? legacy.ui.catFilter : 'all'
-    } : {}
+    sunHours: (Number.isFinite(sun) && sun >= 2 && sun <= 10) ? sun : 6,
+    orientation: VALID_ORIENTATIONS.includes(s.orientation) ? s.orientation : 'ew',
+    wallSide: VALID_WALLS.includes(s.wallSide) ? s.wallSide : 'back',
+    trellis: typeof s.trellis==='boolean' ? s.trellis : true,
+    season: VALID_SEASONS.includes(s.season) ? s.season : 'summer',
+    goal: VALID_GOALS.includes(s.goal) ? s.goal : 'balanced',
+    zone: VALID_ZONES.includes(s.zone) ? s.zone : ''
   };
 }
-
-// -- migrate: route to correct migration or pass through ----------------------
-function migrate(payload){
-  if(typeof payload.schemaVersion!=='number'){
-    return migrateFromV4(payload);
+function defaultSiteSettingsFromUI(){
+  const sunEl = document.getElementById('sunHours');
+  return normalizeSiteSettings({
+    sunHours: sunEl ? parseFloat(sunEl.value) : 6,
+    orientation: document.getElementById('orientation') ? document.getElementById('orientation').value : 'ew',
+    wallSide: document.getElementById('wallSide') ? document.getElementById('wallSide').value : 'back',
+    trellis: document.getElementById('trellisToggle') ? document.getElementById('trellisToggle').classList.contains('on') : true,
+    season: document.getElementById('season') ? document.getElementById('season').value : 'summer',
+    goal: document.getElementById('goal') ? document.getElementById('goal').value : 'balanced',
+    zone: document.getElementById('zone') ? document.getElementById('zone').value : ''
+  });
+}
+function normalizeCellArray(cells, cols, rows){
+  const expected = cols * rows;
+  const source = Array.isArray(cells) ? cells : [];
+  const normalized = source
+    .slice(0, expected)
+    .map(c=>(typeof c==='string' && CROPS[c]) ? c : null);
+  if(normalized.length < expected){
+    normalized.push(...new Array(expected - normalized.length).fill(null));
   }
-  if(payload.schemaVersion > CURRENT_SCHEMA){
-    console.warn('[Garden OS] Schema version',payload.schemaVersion,'is newer than app supports (' + CURRENT_SCHEMA + '). Starting fresh.');
+  return normalized;
+}
+function rowLabelList(rows){
+  const out = [];
+  for(let i=1;i<=rows;i++) out.push(`row-${i}`);
+  return out;
+}
+function normalizeRowZones(zones, rows){
+  const validRows = new Set(rowLabelList(rows));
+  const out = [];
+  (Array.isArray(zones) ? zones : []).forEach(z=>{
+    if(typeof z!=='string') return;
+    const clean = z.trim().toLowerCase();
+    if(validRows.has(clean) && !out.includes(clean)) out.push(clean);
+  });
+  return out;
+}
+function defaultClimbZones(rows){
+  return rows >= 1 ? ['row-1'] : [];
+}
+function defaultProtectedZones(rows){
+  const out = [];
+  for(let i=2;i<=rows-1;i++) out.push(`row-${i}`);
+  return out;
+}
+function toRawCageConfigFromLegacy(legacyCage, rows){
+  const lc = legacyCage && typeof legacyCage==='object' ? legacyCage : {};
+  return {
+    enabled: typeof lc.enabled==='boolean' ? lc.enabled : false,
+    trellis: {
+      enabled: typeof lc.rearTrellis==='boolean' ? lc.rearTrellis : true,
+      side: 'back',
+      heightIn: 54,
+      climbZones: (typeof lc.rearTrellis==='boolean' ? lc.rearTrellis : true) ? defaultClimbZones(rows) : []
+    },
+    protection: {
+      enabled: typeof lc.wireSides==='boolean' ? lc.wireSides : true,
+      wireSides: typeof lc.wireSides==='boolean' ? lc.wireSides : true,
+      lowerBandHeightIn: clampInt(lc.height, 0, 120, 24),
+      protectedZones: (typeof lc.wireSides==='boolean' ? lc.wireSides : true) ? defaultProtectedZones(rows) : []
+    },
+    doors: {
+      enabled: (typeof lc.doorStyle==='string' ? lc.doorStyle : 'double') !== 'none',
+      side: 'front',
+      style: VALID_DOOR_STYLES.includes(lc.doorStyle) ? lc.doorStyle : 'double'
+    }
+  };
+}
+function normalizeCageConfig(cageConfig, rows){
+  const c = cageConfig && typeof cageConfig==='object' ? cageConfig : {};
+  const t = c.trellis && typeof c.trellis==='object' ? c.trellis : {};
+  const p = c.protection && typeof c.protection==='object' ? c.protection : {};
+  const d = c.doors && typeof c.doors==='object' ? c.doors : {};
+  const trellisEnabled = typeof t.enabled==='boolean' ? t.enabled : true;
+  const protectionEnabled = typeof p.enabled==='boolean' ? p.enabled : true;
+  const wireSides = typeof p.wireSides==='boolean' ? p.wireSides : true;
+  const doorStyle = VALID_DOOR_STYLES.includes(d.style) ? d.style : 'double';
+  return {
+    enabled: typeof c.enabled==='boolean' ? c.enabled : false,
+    trellis: {
+      enabled: trellisEnabled,
+      side: VALID_WALLS.includes(t.side) ? t.side : 'back',
+      heightIn: clampInt(t.heightIn, 0, 120, 54),
+      climbZones: trellisEnabled
+        ? normalizeRowZones(t.climbZones, rows).length
+          ? normalizeRowZones(t.climbZones, rows)
+          : defaultClimbZones(rows)
+        : []
+    },
+    protection: {
+      enabled: protectionEnabled,
+      wireSides,
+      lowerBandHeightIn: clampInt(p.lowerBandHeightIn, 0, 120, 24),
+      protectedZones: protectionEnabled && wireSides
+        ? normalizeRowZones(p.protectedZones, rows).length
+          ? normalizeRowZones(p.protectedZones, rows)
+          : defaultProtectedZones(rows)
+        : []
+    },
+    doors: {
+      enabled: typeof d.enabled==='boolean' ? d.enabled : doorStyle !== 'none',
+      side: VALID_WALLS.includes(d.side) ? d.side : 'front',
+      style: doorStyle
+    }
+  };
+}
+function runtimeCageToRaw(rows){
+  return normalizeCageConfig({
+    enabled: cage.enabled,
+    trellis: {
+      enabled: cage.rearTrellis,
+      side: 'back',
+      heightIn: 54,
+      climbZones: cage.rearTrellis ? defaultClimbZones(rows) : []
+    },
+    protection: {
+      enabled: cage.wireSides,
+      wireSides: cage.wireSides,
+      lowerBandHeightIn: clampInt(cage.height, 0, 120, 24),
+      protectedZones: cage.wireSides ? defaultProtectedZones(rows) : []
+    },
+    doors: {
+      enabled: cage.doorStyle !== 'none',
+      side: 'front',
+      style: VALID_DOOR_STYLES.includes(cage.doorStyle) ? cage.doorStyle : 'double'
+    }
+  }, rows);
+}
+function mergeRuntimeCageWithExisting(existingCage, rows){
+  const cfg = normalizeCageConfig(existingCage, rows);
+  cfg.enabled = cage.enabled;
+  cfg.trellis.enabled = cage.rearTrellis;
+  cfg.protection.enabled = cage.wireSides;
+  cfg.protection.wireSides = cage.wireSides;
+  cfg.protection.lowerBandHeightIn = clampInt(cage.height, 0, 120, 24);
+  cfg.doors.style = VALID_DOOR_STYLES.includes(cage.doorStyle) ? cage.doorStyle : 'double';
+  cfg.doors.enabled = cfg.doors.style !== 'none';
+  if(!cfg.trellis.enabled){
+    cfg.trellis.climbZones = [];
+  } else if(!cfg.trellis.climbZones.length){
+    cfg.trellis.climbZones = defaultClimbZones(rows);
+  }
+  if(!cfg.protection.enabled || !cfg.protection.wireSides){
+    cfg.protection.protectedZones = [];
+  } else if(!cfg.protection.protectedZones.length){
+    cfg.protection.protectedZones = defaultProtectedZones(rows);
+  }
+  return cfg;
+}
+function rawCageToRuntime(raw){
+  const cfg = normalizeCageConfig(raw, bedH || 4);
+  return {
+    enabled: !!cfg.enabled,
+    rearTrellis: !!cfg.trellis.enabled,
+    wireSides: !!cfg.protection.wireSides && !!cfg.protection.enabled,
+    height: String(clampInt(cfg.protection.lowerBandHeightIn, 18, 36, 24)),
+    doorStyle: VALID_DOOR_STYLES.includes(cfg.doors.style) ? cfg.doors.style : 'double'
+  };
+}
+function deriveBedTraits(bedRecord){
+  const rows = clampInt(bedRecord?.size?.rows, 2, 10, 4);
+  const cols = clampInt(bedRecord?.size?.cols, 2, 10, 8);
+  const cageCfg = normalizeCageConfig(bedRecord?.cage, rows);
+  const trellisRows = new Set();
+  const protectedRows = new Set();
+  if(cageCfg.enabled && cageCfg.trellis.enabled){
+    normalizeRowZones(cageCfg.trellis.climbZones, rows).forEach(r=>trellisRows.add(r));
+  }
+  if(cageCfg.enabled && cageCfg.protection.enabled && cageCfg.protection.wireSides){
+    normalizeRowZones(cageCfg.protection.protectedZones, rows).forEach(r=>protectedRows.add(r));
+  }
+  const perCell = {};
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const rowKey = `row-${r+1}`;
+      const isTrellisRow = trellisRows.has(rowKey);
+      const isProtected = protectedRows.has(rowKey) && !isTrellisRow;
+      const frontDistance = rows <= 1 ? 0 : (rows - 1 - r);
+      const accessPriority = Math.max(0, 1 - (frontDistance / Math.max(1, rows - 1)));
+      perCell[`${r},${c}`] = {
+        isTrellisRow,
+        isProtected,
+        hasVerticalSupport: isTrellisRow,
+        accessPriority
+      };
+    }
+  }
+  return {
+    zones: { trellisRows, protectedRows },
+    perCell,
+    capabilities: {
+      hasVerticalSupport: cageCfg.enabled && cageCfg.trellis.enabled && trellisRows.size > 0,
+      hasCritterProtection: cageCfg.enabled && cageCfg.protection.enabled && cageCfg.protection.wireSides,
+      hasEasyAccessFront: !(cageCfg.enabled && cageCfg.doors.enabled && cageCfg.doors.style === 'none')
+    }
+  };
+}
+function createBed(name, size, cageConfig){
+  const cols = clampInt(size?.cols, 2, 10, 8);
+  const rows = clampInt(size?.rows, 2, 10, 4);
+  const now = new Date().toISOString();
+  return {
+    id: uniqueId('bed'),
+    name: (typeof name==='string' && name.trim()) ? name.trim() : 'New Bed',
+    createdAt: now,
+    updatedAt: now,
+    size: { cols, rows },
+    cage: normalizeCageConfig(cageConfig || runtimeCageToRaw(rows), rows),
+    plannerState: {
+      cells: new Array(cols * rows).fill(null),
+      selectedCrop: ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'leaf_lettuce',
+      activeTool: VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint',
+      site: defaultSiteSettingsFromUI()
+    },
+    scoreSummaryCache: { invalidatedAt: now },
+    notes: ''
+  };
+}
+function duplicateBed(bedId){
+  if(!_workspace) return null;
+  const source = _workspace.beds.find(b=>b.id===bedId);
+  if(!source) return null;
+  const clone = JSON.parse(JSON.stringify(source));
+  const now = new Date().toISOString();
+  clone.id = uniqueId('bed');
+  clone.name = `${source.name} Copy`;
+  clone.createdAt = now;
+  clone.updatedAt = now;
+  clone.scoreSummaryCache = { invalidatedAt: now };
+  return clone;
+}
+function invalidateScoreCache(bedId){
+  if(!_workspace) return;
+  const b = _workspace.beds.find(x=>x.id===bedId);
+  if(!b) return;
+  const now = new Date().toISOString();
+  b.scoreSummaryCache = { ...(b.scoreSummaryCache || {}), invalidatedAt: now };
+}
+function activeBed(){
+  if(!_workspace || !Array.isArray(_workspace.beds)) return null;
+  return _workspace.beds.find(b=>b.id===_workspace.activeBedId) || _workspace.beds[0] || null;
+}
+function normalizeBedRecord(rawBed, index){
+  const now = new Date().toISOString();
+  const cols = clampInt(rawBed?.size?.cols ?? rawBed?.width, 2, 10, 8);
+  const rows = clampInt(rawBed?.size?.rows ?? rawBed?.height, 2, 10, 4);
+  const planner = rawBed?.plannerState && typeof rawBed.plannerState==='object' ? rawBed.plannerState : {};
+  const legacySettings = rawBed?.settings && typeof rawBed.settings==='object' ? rawBed.settings : {};
+  const selectedCrop = (typeof planner.selectedCrop==='string' && CROPS[planner.selectedCrop])
+    ? planner.selectedCrop
+    : 'leaf_lettuce';
+  const activeTool = VALID_TOOLS.includes(planner.activeTool) ? planner.activeTool : 'paint';
+  const site = normalizeSiteSettings(planner.site || legacySettings);
+  const cells = normalizeCellArray(planner.cells || rawBed?.cells, cols, rows);
+  const rawCage = rawBed?.cage
+    ? normalizeCageConfig(rawBed.cage, rows)
+    : toRawCageConfigFromLegacy(legacySettings.cage, rows);
+  return {
+    id: typeof rawBed?.id==='string' && rawBed.id ? rawBed.id : uniqueId('bed'),
+    name: (typeof rawBed?.name==='string' && rawBed.name.trim()) ? rawBed.name.trim() : `Bed ${index + 1}`,
+    createdAt: typeof rawBed?.createdAt==='string' ? rawBed.createdAt : now,
+    updatedAt: now,
+    size: { cols, rows },
+    cage: rawCage,
+    plannerState: { cells, selectedCrop, activeTool, site },
+    scoreSummaryCache: rawBed?.scoreSummaryCache && typeof rawBed.scoreSummaryCache==='object'
+      ? rawBed.scoreSummaryCache
+      : { invalidatedAt: now },
+    notes: typeof rawBed?.notes==='string' ? rawBed.notes : ''
+  };
+}
+function createMinimalWorkspace(){
+  const now = new Date().toISOString();
+  const starter = createBed('Main Bed', { cols:8, rows:4 }, runtimeCageToRaw(4));
+  starter.createdAt = now;
+  starter.updatedAt = now;
+  return {
+    id: uniqueId('workspace'),
+    version: WORKSPACE_VERSION,
+    createdAt: now,
+    updatedAt: now,
+    activeBedId: starter.id,
+    workspaceSettings: { catFilter:'all', rightTab:'score' },
+    beds: [starter],
+    guideProgress: []
+  };
+}
+function validateWorkspace(ws){
+  if(!ws || typeof ws!=='object' || Array.isArray(ws)){
+    return { ok:false, errors:['workspace is not an object'] };
+  }
+  const now = new Date().toISOString();
+  const normalized = {
+    id: typeof ws.id==='string' && ws.id ? ws.id : uniqueId('workspace'),
+    version: clampInt(ws.version, 1, WORKSPACE_VERSION, WORKSPACE_VERSION),
+    createdAt: typeof ws.createdAt==='string' ? ws.createdAt : now,
+    updatedAt: now,
+    activeBedId: typeof ws.activeBedId==='string' ? ws.activeBedId : '',
+    workspaceSettings: ws.workspaceSettings && typeof ws.workspaceSettings==='object' ? ws.workspaceSettings : {},
+    beds: [],
+    guideProgress: Array.isArray(ws.guideProgress) ? ws.guideProgress : []
+  };
+  if(!Array.isArray(ws.beds) || !ws.beds.length){
+    return { ok:false, errors:['beds array missing or empty'] };
+  }
+  normalized.workspaceSettings = {
+    catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
+    rightTab: ['score','inspect','notes'].includes(normalized.workspaceSettings.rightTab)
+      ? normalized.workspaceSettings.rightTab
+      : 'score'
+  };
+  normalized.beds = ws.beds.map((b, i)=>normalizeBedRecord(b, i));
+  if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
+    normalized.activeBedId = normalized.beds[0].id;
+  }
+  return { ok:true, workspace:normalized };
+}
+function migrateV0toV1(legacyState){
+  const now = new Date().toISOString();
+  if(legacyState && Array.isArray(legacyState.beds)){
+    const migrated = {
+      id: typeof legacyState.id==='string' ? legacyState.id : uniqueId('workspace'),
+      version: WORKSPACE_VERSION,
+      createdAt: legacyState.meta?.createdAt || legacyState.createdAt || now,
+      updatedAt: now,
+      activeBedId: legacyState.activeBedId || legacyState.selectedBedId || '',
+      workspaceSettings: {
+        catFilter: legacyState.workspaceSettings?.catFilter || legacyState.ui?.catFilter || 'all',
+        rightTab: legacyState.workspaceSettings?.rightTab || legacyState.ui?.rTab || 'score'
+      },
+      beds: legacyState.beds.map((b, i)=>normalizeBedRecord(b, i)),
+      guideProgress: Array.isArray(legacyState.guideProgress) ? legacyState.guideProgress : []
+    };
+    if(!migrated.beds.find(b=>b.id===migrated.activeBedId)) migrated.activeBedId = migrated.beds[0]?.id || '';
+    return migrated;
+  }
+  const w = clampInt(legacyState?.bedW, 2, 10, 8);
+  const h = clampInt(legacyState?.bedH, 2, 10, 4);
+  const legacySettings = legacyState?.settings && typeof legacyState.settings==='object' ? legacyState.settings : {};
+  const legacyUi = legacyState?.ui && typeof legacyState.ui==='object' ? legacyState.ui : {};
+  const bedRecord = {
+    id: uniqueId('bed'),
+    name: 'Main Bed',
+    createdAt: now,
+    updatedAt: now,
+    size: { cols:w, rows:h },
+    cage: toRawCageConfigFromLegacy(legacySettings.cage, h),
+    plannerState: {
+      cells: normalizeCellArray(legacyState?.bed, w, h),
+      selectedCrop: (typeof legacyUi.selectedCrop==='string' && CROPS[legacyUi.selectedCrop]) ? legacyUi.selectedCrop : 'leaf_lettuce',
+      activeTool: VALID_TOOLS.includes(legacyUi.tool) ? legacyUi.tool : 'paint',
+      site: normalizeSiteSettings(legacySettings)
+    },
+    scoreSummaryCache: { invalidatedAt: now },
+    notes: ''
+  };
+  return {
+    id: uniqueId('workspace'),
+    version: WORKSPACE_VERSION,
+    createdAt: now,
+    updatedAt: now,
+    activeBedId: bedRecord.id,
+    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score' },
+    beds: [bedRecord],
+    guideProgress: []
+  };
+}
+function parseShareHashWorkspace(){
+  try{
+    const urlParams = new URLSearchParams(window.location.hash.slice(1));
+    if(!urlParams.has('bed')) return null;
+    const raw = urlParams.get('bed');
+    if(!raw || raw.length > MAX_SHARE_PAYLOAD) return null;
+    const decoded = decodeURIComponent(raw);
+    const parsed = JSON.parse(decoded);
+    _pendingLoadFromHash = true;
+    return parsed;
+  }catch(e){
     return null;
   }
-  // schemaVersion === CURRENT_SCHEMA — pass through
-  // Future: chain 1→2, 2→3, etc.
-  return payload;
 }
-
-// -- validateWorkspace: full schema enforcement after migration ----------------
-function validateWorkspace(ws){
-  const errors = [];
-  if(!ws||typeof ws!=='object') return {ok:false, errors:['workspace is not an object']};
-  if(typeof ws.schemaVersion!=='number'||ws.schemaVersion<1)
-    return {ok:false, errors:['invalid schemaVersion']};
-  if(!Array.isArray(ws.beds)||ws.beds.length===0)
-    return {ok:false, errors:['beds array missing or empty']};
-  // Ensure meta
-  if(!ws.meta||typeof ws.meta!=='object') ws.meta = {};
-  const now = new Date().toISOString();
-  if(typeof ws.meta.createdAt!=='string') ws.meta.createdAt = now;
-  if(typeof ws.meta.appVersion!=='string') ws.meta.appVersion = APP_VERSION;
-  // Validate each bed
-  for(const b of ws.beds){
-    if(!b.id) b.id = 'bed-0';
-    if(!b.name) b.name = 'Main Bed';
-    b.width  = Math.min(10, Math.max(2, Math.floor(+b.width)||8));
-    b.height = Math.min(10, Math.max(2, Math.floor(+b.height)||4));
-    const expected = b.width * b.height;
-    if(!Array.isArray(b.cells)) b.cells = new Array(expected).fill(null);
-    // Pad or truncate cells
-    if(b.cells.length < expected) b.cells = b.cells.concat(new Array(expected - b.cells.length).fill(null));
-    else if(b.cells.length > expected) b.cells = b.cells.slice(0, expected);
-    // Sanitize crop keys
-    b.cells = b.cells.map(c=>(typeof c==='string'&&CROPS[c])?c:null);
-    // Settings defaults
-    if(!b.settings||typeof b.settings!=='object') b.settings = {};
-    const s = b.settings;
-    const sh = parseFloat(s.sunHours);
-    s.sunHours = (isFinite(sh)&&sh>=2&&sh<=10) ? sh : 6;
-    if(!VALID_ORIENTATIONS.includes(s.orientation)) s.orientation = 'ew';
-    if(!VALID_WALLS.includes(s.wallSide)) s.wallSide = 'back';
-    if(typeof s.trellis!=='boolean') s.trellis = true;
-    if(!VALID_SEASONS.includes(s.season)) s.season = 'spring';
-    if(!VALID_GOALS.includes(s.goal)) s.goal = 'balanced';
-    if(!VALID_ZONES.includes(s.zone)) s.zone = '';
-    if(!s.cage||typeof s.cage!=='object') s.cage = {};
-    const sc = s.cage;
-    if(typeof sc.enabled!=='boolean') sc.enabled = false;
-    if(typeof sc.rearTrellis!=='boolean') sc.rearTrellis = true;
-    if(typeof sc.wireSides!=='boolean') sc.wireSides = true;
-    if(!VALID_CAGE_HEIGHTS.includes(sc.height)) sc.height = '24';
-    if(!VALID_DOOR_STYLES.includes(sc.doorStyle)) sc.doorStyle = 'double';
+function parseLocalStorageJSON(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw || raw.length > MAX_SHARE_PAYLOAD) return null;
+    return { raw, parsed: JSON.parse(raw) };
+  }catch(e){
+    return null;
   }
-  // selectedBedId must point to an existing bed
-  if(!ws.beds.find(b=>b.id===ws.selectedBedId)) ws.selectedBedId = ws.beds[0].id;
-  if(errors.length) return {ok:false, errors};
-  return {ok:true, workspace:ws};
 }
-
-// -- load: source priority with fallback chain --------------------------------
-function load(){
-  let source = null;
-  let fromHash = false;
-  try {
-    const urlParams = new URLSearchParams(window.location.hash.slice(1));
-    if(urlParams.has('bed')){
-      const raw = urlParams.get('bed');
-      if(raw && raw.length <= MAX_SHARE_PAYLOAD){
-        let decoded;
-        try{ decoded=decodeURIComponent(raw); }catch(e){ decoded=null; }
-        if(decoded){
-          try{ source=JSON.parse(decoded); fromHash=true; }catch(e){ source=null; }
-        }
-      }
-      if(!source) console.warn('[Garden OS] Malformed share URL — falling back to saved state.');
-    }
-  } catch(e){}
-  // Fallback: new key, then legacy key
-  if(!source){
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if(raw && raw.length <= MAX_SHARE_PAYLOAD) source = JSON.parse(raw);
-    } catch(e){}
+function loadWorkspace(){
+  _recoveryPayload = null;
+  _pendingLoadFromHash = false;
+  const fromHash = parseShareHashWorkspace();
+  if(fromHash){
+    const migrated = migrateV0toV1(fromHash);
+    const check = validateWorkspace(migrated);
+    if(check.ok) return check.workspace;
   }
-  if(!source){
-    try {
-      const raw = localStorage.getItem(LS_KEY_LEGACY);
-      if(raw && raw.length <= MAX_SHARE_PAYLOAD) source = JSON.parse(raw);
-    } catch(e){}
+  const current = parseLocalStorageJSON(LS_KEY);
+  if(current){
+    const check = validateWorkspace(current.parsed);
+    if(check.ok) return check.workspace;
+    _recoveryPayload = { raw: current.raw, source: LS_KEY };
   }
-  return { payload:source, fromHash };
+  const legacyA = parseLocalStorageJSON(LS_KEY_LEGACY);
+  if(legacyA){
+    const migrated = migrateV0toV1(legacyA.parsed);
+    const check = validateWorkspace(migrated);
+    if(check.ok) return check.workspace;
+  }
+  const legacyB = parseLocalStorageJSON(LS_KEY_LEGACY_V4);
+  if(legacyB){
+    const migrated = migrateV0toV1(legacyB.parsed);
+    const check = validateWorkspace(migrated);
+    if(check.ok) return check.workspace;
+  }
+  return null;
 }
-
-// -- save: write workspace to canonical key -----------------------------------
-function saveWorkspace(ws){
-  try {
-    ws.meta.updatedAt = new Date().toISOString();
-    ws.meta.appVersion = APP_VERSION;
-    localStorage.setItem(LS_KEY, JSON.stringify(ws));
-    // One-time legacy cleanup
+function saveWorkspace(workspace){
+  if(!workspace || typeof workspace!=='object') return;
+  try{
+    workspace.updatedAt = new Date().toISOString();
+    localStorage.setItem(LS_KEY, JSON.stringify(workspace));
     if(localStorage.getItem(LS_KEY_LEGACY)) localStorage.removeItem(LS_KEY_LEGACY);
-  } catch(e){}
+    if(localStorage.getItem(LS_KEY_LEGACY_V4)) localStorage.removeItem(LS_KEY_LEGACY_V4);
+  }catch(e){
+    console.warn('[Garden OS] Failed to save workspace:', e);
+  }
 }
-
-// -- In-memory workspace reference --------------------------------------------
-let _workspace = null;
-
-// -- saveState: gather current UI into workspace, then persist ----------------
-function saveState(){
-  const b = _workspace ? _workspace.beds.find(x=>x.id===_workspace.selectedBedId) : null;
-  if(!b){ // No workspace yet — build a fresh one and save
-    _workspace = buildFreshWorkspace();
-    saveWorkspace(_workspace);
+function renderWorkspaceSwitcher(){
+  const sel = document.getElementById('bedSwitcher');
+  const dup = document.getElementById('duplicateBedBtn');
+  if(!sel) return;
+  if(!_workspace || !_workspace.beds.length){
+    sel.innerHTML = '';
+    if(dup) dup.disabled = true;
     return;
   }
-  b.width = bedW;
-  b.height = bedH;
-  b.cells = bed.map(c=>c.crop);
-  // Store the user's actual wallSide selection (not the effective override)
-  const wallEl = document.getElementById('wallSide');
-  b.settings.sunHours    = parseFloat(document.getElementById('sunHours').value)||6;
-  b.settings.orientation = document.getElementById('orientation').value;
-  b.settings.wallSide    = wallEl.disabled ? (b.settings.wallSide||'back') : wallEl.value;
-  b.settings.trellis     = document.getElementById('trellisToggle').classList.contains('on');
-  b.settings.season      = document.getElementById('season').value;
-  b.settings.goal        = document.getElementById('goal').value;
-  b.settings.zone        = document.getElementById('zone').value;
-  b.settings.cage = { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle };
-  _workspace.ui = { selectedCrop:ui.selectedCrop, tool:ui.tool, selCell:ui.selCell, catFilter:ui.catFilter };
-  saveWorkspace(_workspace);
+  sel.innerHTML = _workspace.beds.map((b, idx)=>{
+    const score = b.scoreSummaryCache && Number.isFinite(b.scoreSummaryCache.scoreTotal)
+      ? ` · ${Math.round(b.scoreSummaryCache.scoreTotal)}/100`
+      : '';
+    return `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)} · ${b.size.cols}×${b.size.rows}${score || ''}</option>`;
+  }).join('');
+  sel.value = _workspace.activeBedId;
+  if(dup) dup.disabled = !_workspace.beds.length;
 }
-
-// -- buildFreshWorkspace: default workspace for first-time users --------------
-function buildFreshWorkspace(){
-  const now = new Date().toISOString();
-  return {
-    schemaVersion: CURRENT_SCHEMA,
-    meta: { createdAt:now, updatedAt:now, appVersion:APP_VERSION },
-    selectedBedId: 'bed-0',
-    beds: [{
-      id: 'bed-0', name: 'Main Bed', width:bedW, height:bedH,
-      cells: bed.map(c=>c.crop),
-      settings: {
-        sunHours:parseFloat(document.getElementById('sunHours').value)||6,
-        orientation:document.getElementById('orientation').value,
-        wallSide:document.getElementById('wallSide').value,
-        trellis:document.getElementById('trellisToggle').classList.contains('on'),
-        season:document.getElementById('season').value,
-        goal:document.getElementById('goal').value,
-        zone:document.getElementById('zone').value,
-        cage:{ enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle }
-      }
-    }],
-    ui: {}
-  };
-}
-
-// -- loadState: full pipeline — load → validateRaw → migrate → validateWorkspace → save
-function loadState(){
-  const {payload, fromHash} = load();
-  if(!payload) return false;
-  const rawResult = validateRaw(payload);
-  if(!rawResult.ok){ console.warn('[Garden OS] validateRaw failed:', rawResult.errors); return false; }
-  const migrated = migrate(rawResult.payload);
-  if(!migrated) return false;
-  const wsResult = validateWorkspace(migrated);
-  if(!wsResult.ok){ console.warn('[Garden OS] validateWorkspace failed:', wsResult.errors); return false; }
-  _workspace = wsResult.workspace;
+function setActiveBed(bedId){
+  if(!_workspace || !bedId || _workspace.activeBedId===bedId) return;
+  const target = _workspace.beds.find(b=>b.id===bedId);
+  if(!target) return;
+  saveState();
+  _workspace.activeBedId = target.id;
   applyWorkspaceToUI(_workspace);
-  if(fromHash){
-    history.replaceState(null,'',window.location.pathname);
-    showShareBanner();
-  }
-  // Persist in new format (handles legacy migration)
+  undoStack = [];
+  redoStack = [];
+  updateUndoButtons();
+  renderWorkspaceSwitcher();
   saveWorkspace(_workspace);
-  return true;
+  render();
 }
-
-// -- applyWorkspaceToUI: hydrate DOM + runtime state from workspace -----------
+function updateActiveBedScoreCache(scoreTotal){
+  const b = activeBed();
+  if(!b) return;
+  b.scoreSummaryCache = {
+    scoreTotal,
+    filledCells: bed.filter(c=>!!c.crop).length,
+    totalCells: bed.length,
+    updatedAt: new Date().toISOString()
+  };
+  renderWorkspaceSwitcher();
+}
+function saveState(){
+  if(!_workspace){
+    _workspace = createMinimalWorkspace();
+  }
+  const b = activeBed();
+  if(!b) return;
+  b.updatedAt = new Date().toISOString();
+  b.size.cols = bedW;
+  b.size.rows = bedH;
+  b.plannerState = b.plannerState || {};
+  b.plannerState.cells = bed.map(c=>c.crop);
+  b.plannerState.selectedCrop = ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'leaf_lettuce';
+  b.plannerState.activeTool = VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint';
+  const wallEl = document.getElementById('wallSide');
+  b.plannerState.site = normalizeSiteSettings({
+    sunHours: parseFloat(document.getElementById('sunHours').value) || 6,
+    orientation: document.getElementById('orientation').value,
+    wallSide: wallEl.disabled ? ((b.plannerState.site && b.plannerState.site.wallSide) || 'back') : wallEl.value,
+    trellis: document.getElementById('trellisToggle').classList.contains('on'),
+    season: document.getElementById('season').value,
+    goal: document.getElementById('goal').value,
+    zone: document.getElementById('zone').value
+  });
+  b.cage = mergeRuntimeCageWithExisting(b.cage, b.size.rows);
+  _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+  _workspace.workspaceSettings.catFilter = ui.catFilter;
+  _workspace.workspaceSettings.rightTab = ui.rTab;
+  invalidateScoreCache(b.id);
+  saveWorkspace(_workspace);
+  renderWorkspaceSwitcher();
+}
+function showRecoveryBanner(){
+  if(_recoveryBanner || !_recoveryPayload) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'recovery-banner';
+  wrap.innerHTML = `
+    <div class="recovery-title">Recovery Mode</div>
+    <div class="recovery-text">
+      Saved workspace data could not be parsed cleanly. Garden OS loaded a safe empty workspace.
+    </div>
+    <div class="recovery-actions">
+      <button type="button" class="primary" id="recoverTryBtn">Try to recover</button>
+      <button type="button" id="recoverResetBtn">Reset</button>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+  _recoveryBanner = wrap;
+  const resetBtn = document.getElementById('recoverResetBtn');
+  const recoverBtn = document.getElementById('recoverTryBtn');
+  if(resetBtn){
+    resetBtn.addEventListener('click',()=>{
+      try{
+        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEY_LEGACY);
+        localStorage.removeItem(LS_KEY_LEGACY_V4);
+      }catch(e){}
+      _workspace = createMinimalWorkspace();
+      applyWorkspaceToUI(_workspace);
+      renderWorkspaceSwitcher();
+      saveWorkspace(_workspace);
+      render();
+      if(_recoveryBanner) _recoveryBanner.remove();
+      _recoveryBanner = null;
+      _recoveryPayload = null;
+    });
+  }
+  if(recoverBtn){
+    recoverBtn.addEventListener('click',()=>{
+      try{
+        const parsed = JSON.parse(_recoveryPayload.raw);
+        const migrated = migrateV0toV1(parsed);
+        const check = validateWorkspace(migrated);
+        if(!check.ok) throw new Error('Recovered payload failed validation');
+        _workspace = check.workspace;
+        applyWorkspaceToUI(_workspace);
+        renderWorkspaceSwitcher();
+        saveWorkspace(_workspace);
+        render();
+        if(_recoveryBanner) _recoveryBanner.remove();
+        _recoveryBanner = null;
+        _recoveryPayload = null;
+      }catch(e){
+        const text = wrap.querySelector('.recovery-text');
+        if(text) text.textContent = 'Recovery failed. You can keep using the empty workspace or click Reset.';
+      }
+    });
+  }
+}
+function loadState(){
+  const loaded = loadWorkspace();
+  if(loaded){
+    _workspace = loaded;
+    applyWorkspaceToUI(_workspace);
+    renderWorkspaceSwitcher();
+    saveWorkspace(_workspace);
+    if(_pendingLoadFromHash){
+      history.replaceState(null,'',window.location.pathname);
+      showShareBanner();
+      _pendingLoadFromHash = false;
+    }
+    return true;
+  }
+  if(_recoveryPayload){
+    _workspace = createMinimalWorkspace();
+    applyWorkspaceToUI(_workspace);
+    renderWorkspaceSwitcher();
+    showRecoveryBanner();
+    return true;
+  }
+  return false;
+}
 function applyWorkspaceToUI(ws){
-  const b = ws.beds.find(x=>x.id===ws.selectedBedId) || ws.beds[0];
-  // Bed dimensions
-  bedW = b.width; bedH = b.height;
+  const b = ws.beds.find(x=>x.id===ws.activeBedId) || ws.beds[0];
+  ws.activeBedId = b.id;
+  bedW = b.size.cols;
+  bedH = b.size.rows;
   bed = createEmptyBed(bedW, bedH);
   document.getElementById('bedW').value = bedW;
   document.getElementById('bedH').value = bedH;
   updatePresetButtons();
-  // Cells
-  if(b.cells && b.cells.length === bedW*bedH){
-    b.cells.forEach((crop,i)=>{ bed[i].crop = (typeof crop==='string'&&CROPS[crop]) ? crop : null; });
+  const p = b.plannerState || {};
+  const site = normalizeSiteSettings(p.site);
+  const cells = normalizeCellArray(p.cells, bedW, bedH);
+  cells.forEach((crop, i)=>{ bed[i].crop = crop; });
+  interaction.focusCellId = bed[0] ? bed[0].id : null;
+  interaction.keyboardMode = false;
+  ui.selectedCrop = (typeof p.selectedCrop==='string' && CROPS[p.selectedCrop]) ? p.selectedCrop : ui.selectedCrop;
+  ui.tool = VALID_TOOLS.includes(p.activeTool) ? p.activeTool : ui.tool;
+  ui.selCell = null;
+  document.getElementById('toolPaint').classList.toggle('active', ui.tool==='paint');
+  document.getElementById('toolErase').classList.toggle('active', ui.tool==='erase');
+  if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
+    if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
+    if(['score','inspect','notes'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
   }
-  // UI state
-  if(ws.ui && typeof ws.ui==='object'){
-    if(typeof ws.ui.selectedCrop==='string'&&CROPS[ws.ui.selectedCrop]) ui.selectedCrop = ws.ui.selectedCrop;
-    if(typeof ws.ui.tool==='string'&&VALID_TOOLS.includes(ws.ui.tool)) ui.tool = ws.ui.tool;
-    if(typeof ws.ui.selCell==='string'&&/^r\d+c\d+$/.test(ws.ui.selCell)) ui.selCell = ws.ui.selCell;
-    if(typeof ws.ui.catFilter==='string') ui.catFilter = ws.ui.catFilter;
-  }
-  // Settings
-  const s = b.settings;
-  const sunVal = s.sunHours;
-  document.getElementById('sunHours').value = sunVal;
-  document.getElementById('sunVal').textContent = sunVal + ' hrs';
-  document.getElementById('orientation').value = s.orientation;
-  // Stored wallSide — runtime override applied by syncCageUI below
-  document.getElementById('wallSide').value = s.wallSide;
-  const tog = document.getElementById('trellisToggle');
-  s.trellis ? tog.classList.add('on') : tog.classList.remove('on');
-  document.getElementById('season').value = s.season;
-  document.getElementById('goal').value = s.goal;
-  document.getElementById('zone').value = s.zone;
-  // Cage
-  cage.enabled     = s.cage.enabled;
-  cage.rearTrellis = s.cage.rearTrellis;
-  cage.wireSides   = s.cage.wireSides;
-  cage.height      = s.cage.height;
-  cage.doorStyle   = s.cage.doorStyle;
-  syncCageUI(); // applies runtime wallSide override if cage is on
+  document.getElementById('sunHours').value = site.sunHours;
+  document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
+  document.getElementById('orientation').value = site.orientation;
+  document.getElementById('wallSide').value = site.wallSide;
+  const trellisTog = document.getElementById('trellisToggle');
+  site.trellis ? trellisTog.classList.add('on') : trellisTog.classList.remove('on');
+  document.getElementById('season').value = site.season;
+  document.getElementById('goal').value = site.goal;
+  document.getElementById('zone').value = site.zone;
+  cage = rawCageToRuntime(b.cage);
+  syncCageUI();
+  switchRTab(ui.rTab || 'score', false);
+  renderWorkspaceSwitcher();
 }
 
 function showShareBanner(){
@@ -1214,9 +1801,10 @@ function syncCageUI(){
     if(cage.enabled){ wallSel.value='back'; wallSel.disabled=true; }
     else {
       wallSel.disabled=false;
-      // Restore stored wallSide from workspace when cage is turned off
-      const b = _workspace && _workspace.beds.find(x=>x.id===_workspace.selectedBedId);
-      if(b && b.settings.wallSide) wallSel.value = b.settings.wallSide;
+      // Restore stored wallSide from active bed when cage is turned off
+      const b = activeBed();
+      const site = b && b.plannerState && b.plannerState.site;
+      if(site && site.wallSide) wallSel.value = site.wallSide;
     }
   }
 }
@@ -1269,6 +1857,7 @@ function applyBedSize(){
   const h=Math.min(10,Math.max(2,+document.getElementById('bedH').value||4));
   bedW=w; bedH=h;
   bed=createEmptyBed(w,h);
+  interaction.focusCellId = bed[0] ? bed[0].id : null;
   ui.selCell=null;
   undoStack=[]; redoStack=[];
   updateUndoButtons();
@@ -1279,7 +1868,7 @@ function applyBedSize(){
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZONE MAP (variable bed size)
 // ═══════════════════════════════════════════════════════════════════════════════
-function buildZoneMap(i){
+function buildZoneMap(i, bedTraits){
   const z=[];
   const sun=i.sunHours;
   for(let r=0;r<i.bedH;r++){
@@ -1306,20 +1895,15 @@ function buildZoneMap(i){
       const accessDist = edges.length ? Math.min(...edges) : 0;
       const accessScore = Math.max(0, 1 - accessDist/2); // penalty for cells >2 from edge
 
-      // Derived cell traits (v4.3)
-      const isTrellisRow = !!(i.cage&&i.cage.enabled&&i.cage.rearTrellis) && (
-        (i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===i.bedH-1));
-      // Protected = enclosed by wire AND not trellis row AND not the open front row
-      const isFrontRow = r===i.bedH-1; // front is always last row (wallSide locked to 'back' in cage mode)
-      const isProtected = !!(i.cage&&i.cage.enabled&&i.cage.wireSides) && !isTrellisRow && !isFrontRow;
-      const legacyTrellisAllowed = ta; // trellisAllowed from existing logic (cell is on trellis edge + trellis toggle on)
-      const hasVerticalSupport = isTrellisRow || legacyTrellisAllowed;
-      const isCritterSafe = !!(i.cage&&i.cage.enabled&&i.cage.wireSides);
-      // Front is always the access side (wallSide locked to 'back' in cage mode)
-      let accessPriority = accessScore;
-      if(i.cage&&i.cage.enabled){
-        accessPriority = i.bedH <= 1 ? 1 : Math.max(0, 1 - r/(i.bedH-1));
-      }
+      // Derived cell traits come from deriveBedTraits(activeBed), not raw cage payload.
+      const cellTrait = bedTraits && bedTraits.perCell ? bedTraits.perCell[`${r},${c}`] : null;
+      const isTrellisRow = !!(cellTrait && cellTrait.isTrellisRow);
+      const isProtected = !!(cellTrait && cellTrait.isProtected);
+      const hasVerticalSupport = !!(cellTrait && cellTrait.hasVerticalSupport);
+      const isCritterSafe = !!(bedTraits && bedTraits.capabilities && bedTraits.capabilities.hasCritterProtection);
+      const accessPriority = cellTrait && Number.isFinite(cellTrait.accessPriority)
+        ? cellTrait.accessPriority
+        : accessScore;
 
       z.push({row:r,col:c,effectiveLight:el,wallPenalty:wp,trellisAllowed:ta,accessScore,
         isTrellisRow,isProtected,hasVerticalSupport,isCritterSafe,accessPriority});
@@ -1511,7 +2095,9 @@ function subs(inputs){
 }
 
 function buildRec(inputs){
-  const zones=buildZoneMap(inputs);
+  const b = activeBed();
+  const traits = b ? deriveBedTraits(b) : _activeBedTraits;
+  const zones=buildZoneMap(inputs, traits);
   const GOAL_SETS = {
     salad:    [['leaf_lettuce',8],['arugula',4],['radish',4],['mizuna',4]],
     pickling: [['beit_cucumber',6],['leaf_lettuce',6],['bush_beans',4]],
@@ -1680,13 +2266,14 @@ function warnings(inputs,issues){
 // SHARING
 // ═══════════════════════════════════════════════════════════════════════════════
 function shareLayout(){
-  // Share uses schema v1 envelope, stripped of transient/meta fields
+  // Share uses workspace envelope, stripped of transient metadata.
   if(!_workspace) return;
-  // Ensure current state is saved before sharing
   saveState();
   const stripped = {
-    schemaVersion: _workspace.schemaVersion,
-    selectedBedId: _workspace.selectedBedId,
+    id: _workspace.id,
+    version: _workspace.version,
+    activeBedId: _workspace.activeBedId,
+    workspaceSettings: _workspace.workspaceSettings,
     beds: _workspace.beds
   };
   const hash='#bed='+encodeURIComponent(JSON.stringify(stripped));
@@ -1734,23 +2321,219 @@ function setTool(t){
   document.getElementById('toolPaint').classList.toggle('active',t==='paint');
   document.getElementById('toolErase').classList.toggle('active',t==='erase');
   saveState();
+  renderPlacementStatus();
+  renderBedFrame();
 }
-function clickCell(id){
-  const cell=bed.find(c=>c.id===id); if(!cell) return;
-  pushUndo(); ui.selCell=id;
-  if(ui.tool==='erase') cell.crop=null;
-  else cell.crop=ui.selectedCrop;
-  switchRTab('inspect'); saveState(); render();
+function setKeyboardMode(enabled){
+  if(interaction.keyboardMode===enabled) return;
+  interaction.keyboardMode = enabled;
+  renderBedFrame();
+}
+function parseCellId(id){
+  const m = /^r(\d+)c(\d+)$/.exec(id || '');
+  if(!m) return null;
+  return { row: Number(m[1]), col: Number(m[2]) };
+}
+function cellIdFromRowCol(row, col){
+  return `r${row}c${col}`;
+}
+function getFocusedCellId(){
+  if(interaction.focusCellId && bed.some(c=>c.id===interaction.focusCellId)){
+    return interaction.focusCellId;
+  }
+  return bed[0] ? bed[0].id : null;
+}
+function nextPlacementCrop(){
+  if(ui.tool==='erase') return null;
+  if(typeof ui.selectedCrop==='string' && CROPS[ui.selectedCrop]) return ui.selectedCrop;
+  return undefined;
+}
+function placeCropInCell(cellId, opts={}){
+  const cell = bed.find(c=>c.id===cellId);
+  if(!cell) return { changed:false, reason:'missing' };
+  const nextCrop = nextPlacementCrop();
+  if(nextCrop===undefined) return { changed:false, reason:'no-selection' };
+  if(cell.crop===nextCrop){
+    ui.selCell = cell.id;
+    interaction.focusCellId = cell.id;
+    return { changed:false, reason:'same' };
+  }
+  if(opts.withUndo) pushUndo();
+  cell.crop = nextCrop;
+  ui.selCell = cell.id;
+  interaction.focusCellId = cell.id;
+  return { changed:true, reason:'updated' };
+}
+function beginPointerPlacement(cellId, pointerId){
+  interaction.pointerActive = true;
+  interaction.pointerId = pointerId;
+  interaction.dragChanged = false;
+  interaction.visitedCellIds.clear();
+  setKeyboardMode(false);
+  interaction.focusCellId = cellId;
+}
+function applyPointerPlacement(cellId){
+  if(!interaction.pointerActive || interaction.visitedCellIds.has(cellId)) return;
+  interaction.visitedCellIds.add(cellId);
+  if(!interaction.dragChanged){
+    const cell = bed.find(c=>c.id===cellId);
+    const nextCrop = nextPlacementCrop();
+    if(!cell || nextCrop===undefined || cell.crop===nextCrop) return;
+    pushUndo(); // snapshot before first drag mutation
+    interaction.dragChanged = true;
+  }
+  const result = placeCropInCell(cellId, { withUndo:false });
+  if(!result.changed) return;
+  scheduleInteractionFrame();
+}
+function endPointerPlacement(){
+  if(!interaction.pointerActive) return;
+  const touchedCount = interaction.visitedCellIds.size;
+  interaction.pointerActive = false;
+  interaction.pointerId = null;
+  interaction.visitedCellIds.clear();
+  const hadChanges = interaction.dragChanged;
+  interaction.dragChanged = false;
+  if(hadChanges){
+    if(touchedCount===1) switchRTab('inspect');
+    saveState();
+    render();
+  } else {
+    renderBedFrame();
+  }
+}
+function cancelPointerPlacement(){
+  if(!interaction.pointerActive) return;
+  interaction.pointerActive = false;
+  interaction.pointerId = null;
+  interaction.visitedCellIds.clear();
+  interaction.dragChanged = false;
+  renderBedFrame();
+}
+function handleCellPointerDown(e, cellId){
+  if(e.button!==0) return;
+  e.preventDefault();
+  beginPointerPlacement(cellId, e.pointerId);
+  applyPointerPlacement(cellId);
+  const target = e.currentTarget;
+  if(target && typeof target.setPointerCapture==='function'){
+    try{ target.setPointerCapture(e.pointerId); }catch(err){}
+  }
+}
+function moveKeyboardFocus(dRow, dCol){
+  const current = parseCellId(getFocusedCellId());
+  if(!current) return false;
+  const nr = Math.max(0, Math.min(bedH - 1, current.row + dRow));
+  const nc = Math.max(0, Math.min(bedW - 1, current.col + dCol));
+  const nextId = cellIdFromRowCol(nr, nc);
+  if(nextId===interaction.focusCellId) return false;
+  interaction.focusCellId = nextId;
+  ui.selCell = nextId;
+  return true;
+}
+function applyKeyboardPlacement(){
+  const id = getFocusedCellId();
+  if(!id) return false;
+  const result = placeCropInCell(id, { withUndo:true });
+  if(result.changed){
+    saveState();
+    render();
+    return true;
+  }
+  renderBedFrame();
+  return false;
+}
+function scheduleInteractionFrame(){
+  if(interaction.framePending) return;
+  interaction.framePending = true;
+  requestAnimationFrame(()=>{
+    interaction.framePending = false;
+    renderBedFrame({ skipScores:true });
+  });
+}
+function renderBedFrame(opts={}){
+  const skipScores = !!opts.skipScores;
+  const inputs = inp();
+  const b = activeBed();
+  _activeBedTraits = b ? deriveBedTraits(b) : null;
+  const zones = buildZoneMap(inputs, _activeBedTraits);
+  applyZones(zones);
+  const frameIssues = skipScores ? [] : cellIssues(inputs);
+  renderBed(inputs, frameIssues, { skipScores });
+  renderPlacementStatus();
+}
+function renderPlacementStatus(){
+  const el = document.getElementById('placementStatus');
+  if(!el) return;
+  const source = interaction.pointerActive ? 'drag' : (interaction.keyboardMode ? 'keyboard' : 'pointer');
+  const toolLabel = ui.tool==='erase' ? 'erase' : 'paint';
+  const cropLabel = ui.tool==='erase'
+    ? 'clear'
+    : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].short : 'select crop');
+  el.textContent = `mode ${source} · tool ${toolLabel} · target ${cropLabel}`;
+}
+function openAddBedDialog(){
+  const dlg = document.getElementById('addBedDialog');
+  if(!dlg) return;
+  document.getElementById('addBedName').value = `Bed ${(_workspace?.beds?.length || 0) + 1}`;
+  document.getElementById('addBedCols').value = String(bedW);
+  document.getElementById('addBedRows').value = String(bedH);
+  if(typeof dlg.showModal === 'function') dlg.showModal();
+  else dlg.setAttribute('open','open');
+}
+function closeAddBedDialog(){
+  const dlg = document.getElementById('addBedDialog');
+  if(!dlg) return;
+  if(typeof dlg.close === 'function') dlg.close();
+  else dlg.removeAttribute('open');
+}
+function commitAddBed(name, cols, rows){
+  if(!_workspace) _workspace = createMinimalWorkspace();
+  saveState();
+  const created = createBed(name, { cols, rows }, runtimeCageToRaw(rows));
+  _workspace.beds.push(created);
+  _workspace.activeBedId = created.id;
+  applyWorkspaceToUI(_workspace);
+  undoStack = [];
+  redoStack = [];
+  updateUndoButtons();
+  saveWorkspace(_workspace);
+  renderWorkspaceSwitcher();
+  render();
+}
+function handleDuplicateActiveBed(){
+  if(!_workspace) return;
+  saveState();
+  const copy = duplicateBed(_workspace.activeBedId);
+  if(!copy) return;
+  _workspace.beds.push(copy);
+  _workspace.activeBedId = copy.id;
+  applyWorkspaceToUI(_workspace);
+  undoStack = [];
+  redoStack = [];
+  updateUndoButtons();
+  saveWorkspace(_workspace);
+  renderWorkspaceSwitcher();
+  render();
 }
 function clearBed(){ pushUndo(); bed.forEach(c=>c.crop=null); saveState(); render(); }
-function selectCrop(ck){ ui.selectedCrop=ck; ui.tool='paint'; setTool('paint'); saveState(); renderPalette(); }
+function selectCrop(ck){
+  ui.selectedCrop=ck;
+  ui.tool='paint';
+  setTool('paint');
+  saveState();
+  renderPalette();
+  render();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
 function render(){
   const inputs=inp();
-  const zones=buildZoneMap(inputs);
+  const b = activeBed();
+  _activeBedTraits = b ? deriveBedTraits(b) : null;
+  const zones=buildZoneMap(inputs, _activeBedTraits);
   applyZones(zones);
   const issues=cellIssues(inputs);
   renderBed(inputs,issues);
@@ -1776,9 +2559,11 @@ function render(){
   const fill=bed.filter(c=>c.crop).length/(bedW*bedH);
   const fb=document.getElementById('fillbar-fill');
   if(fb) fb.style.width=Math.round(fill*100)+'%';
+  renderPlacementStatus();
 }
 
-function renderBed(inputs,issues){
+function renderBed(inputs,issues,opts={}){
+  const skipScores = !!opts.skipScores;
   const cageOn=inputs.cage&&inputs.cage.enabled;
   const g=document.getElementById(cageOn?'bedGrid':'bedGridNoCage');
   const gOther=document.getElementById(cageOn?'bedGridNoCage':'bedGrid');
@@ -1799,32 +2584,40 @@ function renderBed(inputs,issues){
     issueMap[cellId].push(icon);
   });
   bed.forEach(cell=>{
-    const cs=scoreCell(cell,inputs);
-    const weak=cell.crop&&cs<4;
+    const cs=skipScores ? 5 : scoreCell(cell,inputs);
+    const weak=!skipScores && cell.crop&&cs<4;
     const sel=cell.id===ui.selCell;
+    const kbFocus = interaction.keyboardMode && cell.id===getFocusedCellId();
     const c=cell.crop?CROPS[cell.crop]:null;
     const bg=c?c.color+'28':'#f2ebe0';
     const bdc=c?c.color+'88':'#c8b090';
-    const sbc=cs>=7?'#3d7a4f':cs>=4.5?'#e8c84a':'#d4651a';
+    const sbc=skipScores ? '#8a6a50' : (cs>=7?'#3d7a4f':cs>=4.5?'#e8c84a':'#d4651a');
     const issues=issueMap[cell.id]||[];
     const tipLines=c
-      ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,`Score: ${cs.toFixed(1)}/10`,cell.hasVerticalSupport?'🪴 Trellis':'',cell.isCritterSafe?'🛡':'',issues.length?issues.join(' '):'']
+      ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,skipScores?'Scoring updates on drag end':`Score: ${cs.toFixed(1)}/10`,cell.hasVerticalSupport?'🪴 Trellis':'',cell.isCritterSafe?'🛡':'',issues.length?issues.join(' '):'']
       :[`Row ${cell.row+1} · Col ${cell.col+1}`,`☀ ${(cell.effectiveLight||0).toFixed(1)} hrs`,'Click to plant'];
     let zoneClass='';
     if(cell.isTrellisRow) zoneClass=' trellis-zone';
     else if(cell.isProtected) zoneClass=' protected-zone';
+    if(kbFocus) zoneClass += ' kb-focus';
+    zoneClass += ui.tool==='erase' ? ' preview-erase' : ' preview-paint';
     const v = cell.crop ? cropValidity(cell.crop, cell, inputs) : null;
     if(v && v.severity==='hard') zoneClass+=' hard-invalid';
+    const previewGlyph = ui.tool==='erase'
+      ? '✕'
+      : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].emoji : '•');
     const el=document.createElement('div');
     el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
+    el.dataset.cellId = cell.id;
     el.style.background=bg; el.style.borderColor=bdc;
     const issueIcon=issues.length?`<span class="cell-issue">${escapeHtml(issues[0])}</span>`:'';
     el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
       ${issueIcon}
       <span class="cemo">${c?escapeHtml(c.emoji):''}</span>
       ${c?`<span class="cname">${escapeHtml(c.short)}</span>`:''}
+      <span class="hover-preview" aria-hidden="true">${escapeHtml(previewGlyph)}</span>
       ${c?`<div class="csbar" style="background:${sbc}"></div>`:''}`;
-    el.addEventListener('click',()=>clickCell(cell.id));
+    el.addEventListener('pointerdown',ev=>handleCellPointerDown(ev, cell.id));
     g.appendChild(el);
   });
 }
@@ -1835,8 +2628,13 @@ function switchLTab(t){
     document.getElementById('lpane-'+id).classList.toggle('on',id===t);
   });
 }
-function switchRTab(t){
+function switchRTab(t, persist=true){
   ui.rTab=t;
+  if(persist && _workspace){
+    _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+    _workspace.workspaceSettings.rightTab = t;
+    saveWorkspace(_workspace);
+  }
   ['score','inspect','notes'].forEach(id=>{
     document.getElementById('rtab-'+id).classList.toggle('active',id===t);
     document.getElementById('rpane-'+id).classList.toggle('on',id===t);
@@ -1868,6 +2666,7 @@ function renderRight(inputs,issues){
   const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
   const counts=getCounts();
   const bs=scoreBed(inputs);
+  updateActiveBedScoreCache(bs);
   const ws=warnings(inputs,issues);
   const warnCount=ws.filter(w=>w.t==='warn').length;
   const sc=bs>=75?'#3d7a4f':bs>=55?'#b07820':'#b02a1e';
@@ -1979,14 +2778,89 @@ function renderRight(inputs,issues){
 // ═══════════════════════════════════════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
   const mod=e.ctrlKey||e.metaKey;
-  if(mod&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
-  if(mod&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
+  const target=e.target;
+  const inField=target && (
+    target.tagName==='INPUT' || target.tagName==='TEXTAREA' ||
+    target.tagName==='SELECT' || target.isContentEditable
+  );
+  if(mod&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();return;}
+  if(mod&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();return;}
+  if(inField) return;
+
+  if(e.key==='Escape'){
+    e.preventDefault();
+    if(interaction.pointerActive){ cancelPointerPlacement(); return; }
+    ui.selCell=null;
+    setKeyboardMode(true);
+    renderBedFrame();
+    return;
+  }
+
+  if(e.key==='ArrowUp' || e.key==='ArrowDown' || e.key==='ArrowLeft' || e.key==='ArrowRight'){
+    e.preventDefault();
+    setKeyboardMode(true);
+    let moved=false;
+    if(e.key==='ArrowUp') moved=moveKeyboardFocus(-1,0);
+    if(e.key==='ArrowDown') moved=moveKeyboardFocus(1,0);
+    if(e.key==='ArrowLeft') moved=moveKeyboardFocus(0,-1);
+    if(e.key==='ArrowRight') moved=moveKeyboardFocus(0,1);
+    if(moved) renderBedFrame();
+    return;
+  }
+
+  if(e.key==='Enter' || e.key===' '){
+    e.preventDefault();
+    setKeyboardMode(true);
+    applyKeyboardPlacement();
+    return;
+  }
+});
+document.addEventListener('pointermove',e=>{
+  if(interaction.keyboardMode && !interaction.pointerActive && e.pointerType!=='touch'){
+    setKeyboardMode(false);
+  }
+  if(!interaction.pointerActive) return;
+  if(interaction.pointerId!=null && e.pointerId!==interaction.pointerId) return;
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const cellEl = under && under.closest ? under.closest('.bc[data-cell-id]') : null;
+  if(cellEl && cellEl.dataset && cellEl.dataset.cellId){
+    applyPointerPlacement(cellEl.dataset.cellId);
+  }
+});
+document.addEventListener('pointerdown',e=>{
+  if(interaction.keyboardMode && !interaction.pointerActive && e.pointerType!=='touch'){
+    setKeyboardMode(false);
+  }
+});
+document.addEventListener('pointerup',e=>{
+  if(!interaction.pointerActive) return;
+  if(interaction.pointerId!=null && e.pointerId!==interaction.pointerId) return;
+  endPointerPlacement();
+});
+document.addEventListener('pointercancel',e=>{
+  if(!interaction.pointerActive) return;
+  if(interaction.pointerId!=null && e.pointerId!==interaction.pointerId) return;
+  endPointerPlacement();
 });
 
 // Left tab bar
 document.getElementById('ltab-site').addEventListener('click',()=>switchLTab('site'));
 document.getElementById('ltab-cage').addEventListener('click',()=>switchLTab('cage'));
 document.getElementById('ltab-palette').addEventListener('click',()=>switchLTab('palette'));
+
+// Workspace controls
+document.getElementById('bedSwitcher').addEventListener('change',e=>setActiveBed(e.target.value));
+document.getElementById('addBedBtn').addEventListener('click',openAddBedDialog);
+document.getElementById('duplicateBedBtn').addEventListener('click',handleDuplicateActiveBed);
+document.getElementById('addBedCancelBtn').addEventListener('click',closeAddBedDialog);
+document.getElementById('addBedForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name = document.getElementById('addBedName').value.trim() || `Bed ${(_workspace?.beds?.length || 0) + 1}`;
+  const cols = clampInt(document.getElementById('addBedCols').value, 2, 10, bedW);
+  const rows = clampInt(document.getElementById('addBedRows').value, 2, 10, bedH);
+  closeAddBedDialog();
+  commitAddBed(name, cols, rows);
+});
 
 // Bed size
 document.getElementById('bedW').addEventListener('change',applyBedSize);
@@ -2048,7 +2922,15 @@ document.getElementById('bed-presets').addEventListener('click',e=>{
 // Event delegation: category filter (dynamic buttons)
 document.getElementById('catf').addEventListener('click',e=>{
   const btn=e.target.closest('[data-cat]');
-  if(btn){ ui.catFilter=btn.dataset.cat; renderPalette(); }
+  if(btn){
+    ui.catFilter=btn.dataset.cat;
+    if(_workspace){
+      _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+      _workspace.workspaceSettings.catFilter = ui.catFilter;
+      saveWorkspace(_workspace);
+    }
+    renderPalette();
+  }
 });
 
 // Event delegation: crop palette (dynamic items)
@@ -2064,7 +2946,8 @@ renderBedPresets();
 renderPalette();
 const hadSaved=loadState();
 if(!hadSaved){ loadRec(true); }
-else { setTool(ui.tool); renderPalette(); renderBedPresets(); render(); }
+else { renderPalette(); renderBedPresets(); render(); }
+renderWorkspaceSwitcher();
 updateUndoButtons();
 </script>
 </body>

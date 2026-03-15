@@ -42,7 +42,8 @@
     .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:var(--mono);font-size:.65rem;}
     .os-nav a{color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;transition:color .15s;}
     .os-nav a:hover{color:#f5ede0;}
-    .os-nav a.active{color:#f5ede0;border-bottom:2px solid var(--sun);}
+    .os-nav a.active,
+    .os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
     .topbar{
       position:sticky; top:0; z-index:20;
       backdrop-filter: blur(14px);
@@ -75,6 +76,7 @@
       transition:.18s ease;
     }
     .toolbar button:hover, .toolbar a:hover{transform:translateY(-1px); border-color:var(--soil); background:#fff7ea}
+    .toolbar a[aria-current="location"]{background:var(--cream-mid); border-color:var(--soil); color:var(--soil)}
     .shell{
       max-width:1400px; margin:0 auto; padding:24px 22px 56px;
       display:grid; grid-template-columns:280px minmax(0,1fr); gap:22px;
@@ -92,6 +94,9 @@
       padding:12px 12px 12px 14px; display:grid; grid-template-columns:auto 1fr; gap:10px; transition:.16s ease;
     }
     .nav a:hover{border-color:var(--border); transform:translateX(2px)}
+    .nav a[aria-current="location"]{border-color:var(--soil); background:var(--cream-mid)}
+    .nav a[aria-current="location"] .nav-num,
+    .nav a[aria-current="location"] .nav-title{color:var(--soil)}
     .nav-num{font:700 .68rem var(--mono); color:var(--soil-mid); padding-top:2px}
     .nav-title{font-weight:700; font-size:.9rem}
     .nav-meta{display:block; margin-top:4px; font:500 .63rem var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
@@ -159,9 +164,9 @@
     .chip{padding:5px 8px; border-radius:999px; font:700 .62rem var(--mono); text-transform:uppercase; letter-spacing:.08em; border:1px solid transparent}
     .chip.soil{background:#f4e8d6; color:var(--soil)}
     .chip.leaf{background:#e7f4ea; color:var(--leaf)}
-    .chip.sun{background:#fff3ca; color:#876600}
+    .chip.sun{background:#fff3ca; color:#5b4500}
     .chip.blue{background:#eaf0ff; color:var(--blue)}
-    .chip.warn{background:#fff0e6; color:var(--warn)}
+    .chip.warn{background:#fff0e6; color:#7a2f00}
     .flow{
       display:grid; gap:14px; margin-top:16px;
     }
@@ -221,7 +226,7 @@
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
-  <a href="garden_planner_scoring_system_map.html" class="active">Scoring Map</a>
+  <a href="garden_planner_scoring_system_map.html" class="active" aria-current="page">Scoring Map</a>
 </nav>
   <div class="topbar">
     <div class="topbar-inner">
@@ -247,7 +252,7 @@
     <aside class="side">
       <h2>Map Index</h2>
       <p>This is the planner intelligence stack, with the v4.3 derived trait model at the center.</p>
-      <nav class="nav">
+      <nav class="nav" aria-label="Scoring map sections">
         <a href="#overview"><span class="nav-num">01</span><span><span class="nav-title">System overview</span><span class="nav-meta">What the planner is doing</span></span></a>
         <a href="#flow"><span class="nav-num">02</span><span><span class="nav-title">Data flow</span><span class="nav-meta">From input to visible result</span></span></a>
         <a href="#layers"><span class="nav-num">03</span><span><span class="nav-title">Architecture layers</span><span class="nav-meta">Where logic lives</span></span></a>
@@ -493,6 +498,50 @@
           <div class="callout">
             <h4>Most important distinction</h4>
             <p><strong>Protected</strong> and <strong>critter safe</strong> are not the same thing. Protected means interior rows shielded by wire on all sides — it excludes the trellis row (row 0) and the open front row (last row). Critter safe is broader: any cell where wire mesh exists, including the front row. Keeping those separate avoids muddy scoring later.</p>
+          </div>
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Trait</th>
+                  <th>Type</th>
+                  <th>Allowed values</th>
+                  <th>Contract</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>isTrellisRow</strong></td>
+                  <td>boolean</td>
+                  <td><code>true</code> | <code>false</code></td>
+                  <td>True only for the effective trellis row after runtime wall-side override.</td>
+                </tr>
+                <tr>
+                  <td><strong>isProtected</strong></td>
+                  <td>boolean</td>
+                  <td><code>true</code> | <code>false</code></td>
+                  <td>True only for interior protected rows. Never true on row 0 or the front row.</td>
+                </tr>
+                <tr>
+                  <td><strong>hasVerticalSupport</strong></td>
+                  <td>boolean</td>
+                  <td><code>true</code> | <code>false</code></td>
+                  <td>Derived support capability. May reflect stored trellis state when cage mode is off.</td>
+                </tr>
+                <tr>
+                  <td><strong>isCritterSafe</strong></td>
+                  <td>boolean</td>
+                  <td><code>true</code> | <code>false</code></td>
+                  <td>True where wire protection exists, even if the cell is not fully protected.</td>
+                </tr>
+                <tr>
+                  <td><strong>accessPriority</strong></td>
+                  <td>number</td>
+                  <td><code>0.0</code> to <code>1.0</code></td>
+                  <td>Normalized reachability score. Higher means easier harvest access from the front side.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="callout">
             <h4>Example Cell State</h4>
@@ -765,6 +814,29 @@ accessPriority:     0.67</pre>
       document.querySelectorAll('section.section').forEach(s=>s.scrollMarginTop='90px');
       window.scrollTo({top:0,behavior:'smooth'});
     });
+
+    const sectionLinks = [...document.querySelectorAll('.nav a, .toolbar a[href^="#"]')];
+    const sectionTargets = sectionLinks
+      .map((link) => document.querySelector(link.getAttribute('href')))
+      .filter(Boolean);
+
+    const setActiveSection = (id) => {
+      sectionLinks.forEach((link) => {
+        const isActive = link.getAttribute('href') === `#${id}`;
+        if (isActive) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible?.target?.id) setActiveSection(visible.target.id);
+    }, { rootMargin: '-20% 0px -55% 0px', threshold: [0.2, 0.4, 0.6] });
+
+    sectionTargets.forEach((section) => observer.observe(section));
+    setActiveSection('overview');
   </script>
 </body>
 </html>

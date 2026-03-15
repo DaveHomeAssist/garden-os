@@ -731,6 +731,51 @@ mark.search-hl {
 }
 
 /* ═══════════════════════════════════════════════
+   IMAGE GALLERY
+═══════════════════════════════════════════════ */
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.image-gallery figure {
+  margin: 0;
+  background: var(--parchment);
+  border: 1px solid var(--wire-lt);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+}
+
+.image-gallery figure::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cedar), var(--leaf));
+  border-radius: var(--radius) var(--radius) 0 0;
+  z-index: 1;
+}
+
+.image-gallery img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-gallery figcaption {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cedar);
+  padding: 10px 14px;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════
    MATERIAL GRID
 ═══════════════════════════════════════════════ */
 .material-grid {
@@ -1084,19 +1129,31 @@ mark.search-hl {
         ☰
       </button>
       <svg class="masthead-icon" width="44" height="38" viewBox="0 0 48 40" fill="none" aria-hidden="true">
-        <path d="M4 38 Q4 4 24 4 Q44 4 44 38" stroke="#c4915c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <path d="M10 38 Q10 12 24 12 Q38 12 38 38" stroke="#c4915c" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="3 3"/>
-        <line x1="4" y1="22" x2="44" y2="22" stroke="rgba(196,145,92,0.4)" stroke-width="1"/>
-        <line x1="6" y1="30" x2="42" y2="30" stroke="rgba(196,145,92,0.4)" stroke-width="1"/>
-        <rect x="2" y="30" width="44" height="8" rx="1" fill="rgba(58,107,42,0.25)" stroke="#3a6b2a" stroke-width="1"/>
+        <!-- Raised bed -->
+        <rect x="2" y="28" width="44" height="10" rx="1.5" fill="rgba(139,94,60,0.2)" stroke="#c4915c" stroke-width="1.5"/>
+        <!-- Short front posts -->
+        <line x1="6" y1="28" x2="6" y2="18" stroke="#c4915c" stroke-width="2"/>
+        <line x1="42" y1="28" x2="42" y2="18" stroke="#c4915c" stroke-width="2"/>
+        <!-- Front top rail -->
+        <line x1="6" y1="18" x2="42" y2="18" stroke="#c4915c" stroke-width="1.5"/>
+        <!-- Wire mesh (front) -->
+        <line x1="6" y1="22" x2="42" y2="22" stroke="rgba(138,154,138,0.5)" stroke-width="0.7" stroke-dasharray="2 2"/>
+        <line x1="6" y1="25" x2="42" y2="25" stroke="rgba(138,154,138,0.5)" stroke-width="0.7" stroke-dasharray="2 2"/>
+        <!-- Tall rear trellis (behind, taller) -->
+        <rect x="8" y="4" width="32" height="24" rx="1" fill="none" stroke="#3a6b2a" stroke-width="1.5"/>
+        <line x1="16" y1="4" x2="16" y2="28" stroke="#3a6b2a" stroke-width="0.8"/>
+        <line x1="24" y1="4" x2="24" y2="28" stroke="#3a6b2a" stroke-width="0.8"/>
+        <line x1="32" y1="4" x2="32" y2="28" stroke="#3a6b2a" stroke-width="0.8"/>
+        <line x1="8" y1="12" x2="40" y2="12" stroke="#3a6b2a" stroke-width="0.8"/>
+        <line x1="8" y1="20" x2="40" y2="20" stroke="#3a6b2a" stroke-width="0.8"/>
       </svg>
       <div class="masthead-title">
         <h1>Garden Cage <em>Build Guide</em></h1>
-        <div class="masthead-sub">8 × 4 ft · Cattle Panel Tunnel · Critter-Proof Enclosure</div>
+        <div class="masthead-sub">8 × 4 ft · Rear Trellis · Wire Cage · Critter-Proof Enclosure</div>
       </div>
     </div>
     <div class="masthead-right">
-      <div class="header-progress" id="headerProgress" aria-live="polite">0 / 25 tasks</div>
+      <div class="header-progress" id="headerProgress" aria-live="polite">0 / 27 tasks</div>
     </div>
   </div>
 </header>
@@ -1144,11 +1201,12 @@ mark.search-hl {
       <a class="toc-item" href="#section-frame"   id="toc-frame"   role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Lower Frame &amp; Mesh</span></a>
 
       <div class="toc-group-label">Build — Day 2</div>
-      <a class="toc-item" href="#section-arch"    id="toc-arch"    role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Cattle Panel Arch</span></a>
-      <a class="toc-item" href="#section-doors"   id="toc-doors"   role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Front Frame &amp; Doors</span></a>
+      <a class="toc-item" href="#section-trellis" id="toc-trellis" role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Rear Trellis Wall</span></a>
+      <a class="toc-item" href="#section-doors"   id="toc-doors"   role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Front Access &amp; Doors</span></a>
 
       <div class="toc-group-label">Build — Day 3</div>
       <a class="toc-item" href="#section-finish"  id="toc-finish"  role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>Finish &amp; Plant</span></a>
+      <a class="toc-item" href="#section-qc"      id="toc-qc"      role="link" tabindex="0"><div class="toc-check" aria-hidden="true">✓</div><span>QC Checklist</span></a>
     </nav>
 
     <div class="toc-progress-wrap">
@@ -1166,7 +1224,7 @@ mark.search-hl {
   <main class="main-content" id="main-content" tabindex="-1">
 
     <div class="ctrl-bar">
-      <div class="ctrl-bar-title">Operations Guide</div>
+      <div class="ctrl-bar-title">Build Guide</div>
       <div class="ctrl-bar-actions">
         <button class="ctrl-btn" id="expandAll" aria-label="Expand all sections">Expand All</button>
         <button class="ctrl-btn" id="collapseAll" aria-label="Collapse all sections">Collapse All</button>
@@ -1199,27 +1257,26 @@ mark.search-hl {
           <table class="spec-table" aria-label="Build dimensions">
             <thead class="sr-only"><tr><th>Component</th><th>Dimension</th></tr></thead>
             <tbody>
-              <tr><td>Overall width</td><td>96"</td></tr>
-              <tr><td>Overall depth</td><td>48"</td></tr>
-              <tr><td>Peak height</td><td>72"</td></tr>
-              <tr><td>Lower critter barrier height</td><td>24"</td></tr>
-              <tr><td>Door opening total width</td><td>44" – 48"</td></tr>
-              <tr><td>Each door width</td><td>22" – 24"</td></tr>
-              <tr><td>Door height (to shoulder)</td><td>48" – 54"</td></tr>
-              <tr><td>Curved section above shoulder</td><td>12" – 18"</td></tr>
-              <tr><td>Number of arch ribs</td><td>3 (2 minimum)</td></tr>
-              <tr><td>Total posts</td><td>5 – 6</td></tr>
+              <tr><td>Overall width</td><td>96" (8 ft)</td></tr>
+              <tr><td>Overall depth</td><td>48" (4 ft)</td></tr>
+              <tr><td>Corner posts above bed</td><td>24"</td></tr>
+              <tr><td>Rear trellis posts above bed</td><td>48" – 54"</td></tr>
+              <tr><td>Wire cage height (sides + front)</td><td>24"</td></tr>
+              <tr><td>Trellis panel (back wall)</td><td>48" – 54" × 96" wide</td></tr>
+              <tr><td>Wire mesh type</td><td>½" hardware cloth or chicken wire</td></tr>
+              <tr><td>Front access</td><td>Hinged panel or lift-off, full width</td></tr>
+              <tr><td>Total corner posts</td><td>4 (+ 2 tall rear trellis posts)</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="verdict">
           <h3>Short Verdict</h3>
-          <p>Build the structure like a small farm tunnel with a critter-proof skirt — not like a decorative garden feature. Five to six posts, 24" hardware cloth band, three cattle panel ribs, two simple front doors, no fancy carpentry. This is the version most likely to work, look decent, stay within reason, and not become a cursed side quest.</p>
+          <p>A rectangular raised bed cage with a tall wooden lattice trellis on the back wall and low wire panels on the front and sides. Climbers go up the back, greens stay protected in the front. No arch, no tunnel, no fancy carpentry. Cedar frame, wire mesh, a trellis panel, and some screws.</p>
         </div>
 
         <div class="note-box">
-          <strong>Assumption:</strong> Two 4×4 raised beds already exist side by side, giving a combined footprint of roughly 96" wide × 48" deep. Structure sits flush with the outer edges of the beds.
+          <strong>Assumption:</strong> An 8×4 ft raised bed already exists. The cage and trellis mount directly to the bed frame or sit flush against its outer edges.
         </div>
 
       </div>
@@ -1241,118 +1298,158 @@ mark.search-hl {
       <div class="section-body" id="body-diagrams">
 
         <div class="diagram-box">
-          <h3>Front Elevation — 96" wide × 72" peak</h3>
+          <h3>Front Elevation — 96" wide</h3>
           <pre aria-label="Front elevation ASCII diagram">
-                 FRONT ELEVATION
-              overall width = 96"
-              overall peak  = 72"
+               FRONT ELEVATION
+            overall width = 96"
 
-                   cattle panel arch
-                ______________________
-             .-'                      '-.
-           .'                            '.
-          /                                \
-         /                                  \
-        |          center post (2x4)         |
-        |                 ↕                  |
-        |---door A (22-24")--||--door B (22-24")---|
-        |                    ||                    |
-        |    open mesh       ||    open mesh       |
-        |                    ||                    |
-        |--(24" mesh break)--||-(24" mesh break)---|
-        | hardware cloth ½"  || hardware cloth ½"  |
-        +--------------------++--------------------+
-        |           raised beds (8' × 4')          |
-        +-------------------------------------------+
-      ↑left post                          right post↑
-       (2x4, 72")                          (2x4, 72")</pre>
+   ← ——————————— 96" (8 ft) ——————————— →
+
+   [post]                          [post]
+      |                              |
+      |   wire mesh (hardware cloth  |
+      |   or chicken wire)           |  24" above
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  bed top
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+      +---------- bed frame ----------+
+      |      raised bed (8 × 4 ft)   |
+      +-------------------------------+
+
+   Front panel: hinged at bottom or
+   lift-off for full-width access.
+
+   Trellis rises behind — see side view.</pre>
         </div>
 
         <div class="diagram-box">
-          <h3>Side Elevation — 48" deep × 72" peak</h3>
+          <h3>Side Elevation — 48" deep</h3>
           <pre aria-label="Side elevation ASCII diagram">
-              SIDE ELEVATION
+               SIDE ELEVATION
             overall depth = 48"
-            overall peak  = 72"
 
-            front                      back
-              |                          |
-              ↓                          ↓
-             ____________________________
-          .-'                            '-.
-        .'                                  '.
-       /         arch rise ≈ 48"              \
-      |                                        |
-      |                                        |
-      |----------------------------------------| ← 24" sidewall top
-      |         hardware cloth lower zone      |
-      +----------------------------------------+
-      |            raised bed below            |
-      +----------------------------------------+</pre>
+   front                             back
+     |                                 |
+     ↓                                 ↓
+                              [tall post 48-54"]
+                                 |          |
+                                 | trellis  |
+                                 | lattice  |
+                                 | panel    |
+   [short post 24"]              |          |
+      |                          |          |
+      | wire mesh 24"            | trellis  |
+      |~~~~~~~~~~~~~~~~~~~~~~~~~~|          |
+      +---------- bed frame -----+----------+
+      |       raised bed         |
+      +--------------------------+
+
+   Short posts (front corners): 24" above bed
+   Tall posts (rear): 48–54" above bed
+   Trellis bolts flat to rear posts</pre>
         </div>
 
         <div class="diagram-box">
-          <h3>Top View — Rib Placement</h3>
-          <pre aria-label="Top view rib placement diagram">
-              TOP VIEW — 96" × 48"
+          <h3>Rear Elevation — Trellis Wall</h3>
+          <pre aria-label="Rear trellis wall diagram">
+               REAR ELEVATION
+            trellis wall = 96" wide
 
-   front edge
+   ← ——————————— 96" (8 ft) ——————————— →
+
+   [tall post]                  [tall post]
+      |  ┌─┬─┬─┬─┬─┬─┬─┬─┐       |
+      |  │ │ │ │ │ │ │ │ │       |  48–54"
+      |  ├─┼─┼─┼─┼─┼─┼─┼─┤       |  above
+      |  │ │ │ │ │ │ │ │ │       |  bed
+      |  ├─┼─┼─┼─┼─┼─┼─┼─┤       |
+      |  │ │ │ │ │ │ │ │ │       |
+      |  └─┴─┴─┴─┴─┴─┴─┴─┘       |
+      +---------- bed frame -------+
+
+   Lattice panel (cedar or treated)
+   screwed to rear posts.
+   Climbers: tomatoes, beans, peas, cukes.</pre>
+        </div>
+
+        <div class="diagram-box">
+          <h3>Top View — Zone Layout</h3>
+          <pre aria-label="Top view zone layout diagram">
+               TOP VIEW — 96" × 48"
+
+   FRONT (access side)
       ↓
-   +------[ door opening 44-48" ]------+
-   |                                   |
-   |  rib 1 (front)                    |
-   |    |   rib 2 (mid)                |
-   |    |     |   rib 3 (back)         |
-   |    |     |     |                  |
-   |                                   |
-   |--------bed divider----------------|
-   |                                   |
-   +-----------------------------------+
-                        ↑
-                     back edge
+   +-------------------------------+
+   |  ~~~ wire mesh front panel ~~~|  ← hinged
+   |                               |
+   |  PROTECTED FRONT ZONE         |
+   |  lettuce · basil · herbs      |
+   |  radish · arugula · bok choy  |
+   |                               |
+   |-------------------------------|
+   |  TRELLIS ROW (back edge)      |
+   |  tomatoes · beans · peas      |
+   |  cucumbers trained upward     |
+   +-------------------------------+
+      ↑
+   BACK (trellis wall)
 
-   Tie ribs with galvanized wire or fence ties.
-   Zip ties OK for mockup — replace after.</pre>
+   Wire mesh on front + both sides (24" tall).
+   Trellis panel spans full back wall.</pre>
         </div>
 
         <div class="diagram-box">
-          <h3>Post Layout (Recommended 6-Post)</h3>
+          <h3>Post Layout — 6 Posts</h3>
           <pre aria-label="Post layout diagram">
-   FRONT                              BACK
-   [L post] [Center post] [R post]   [BL post] [BC post] [BR post]
+   FRONT                               BACK
 
-   Use back-center post if you want:
-     → better cattle panel attachment
-     → cleaner symmetry
-     → less wobble</pre>
+   [FL 24"]  [optional FC 24"]  [FR 24"]
+      ·              ·              ·
+      ·              ·              ·
+   [BL 54"]  [optional BC 54"]  [BR 54"]
+
+   Front posts: 24" above bed top
+   Back posts:  48–54" above bed top
+   Center posts optional — add if bed
+   is wider than 6 ft or for rigidity.
+
+   All posts: 2×4 or 4×4 cedar/treated.</pre>
         </div>
 
-        <div class="diagram-box">
-          <h3>Single Door — 22-24" wide × ~54" tall</h3>
-          <pre aria-label="Single door elevation diagram">
-            SINGLE DOOR ELEVATION
-           22" – 24" wide | ~54" tall
-
-              _________
-           .-'         '-.    ← slight curve at top (freehand it)
-         .'               '.
-        |                   |
-        |   upper open      |
-        |   mesh / wire     |
-        |                   |
-        |-------------------| ← middle rail
-        |  ½" hardware      |
-        |  cloth lower      |
-        |                   |
-        +-------------------+
-
-   Frame members per door:
-     · 2 vertical stiles
-     · top rail
-     · middle rail (splits mesh zones)
-     · bottom rail
-   Hinges: 2 minimum, heavy duty
-   Latch: hook-and-eye or gate latch</pre>
+        <!-- ── Construction Drawing Sheets ── -->
+        <h3 style="margin-top:2rem;">Construction Drawings</h3>
+        <div class="image-gallery">
+          <figure>
+            <img src="images/sheet1-cover.png" alt="Finished garden cage with trellis, planted with tomatoes, basil, lettuce, and climbing vines — Mom's Sanctuary" loading="lazy">
+            <figcaption>Sheet 1 — Cover: Vision &amp; Final Assembly</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet2-exploded-assembly.png" alt="Exploded assembly diagram showing raised bed, corner posts, side mesh panels, rear trellis panel, and front hinged door" loading="lazy">
+            <figcaption>Sheet 2 — Exploded Assembly</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet4-hardware-cloth-cutting.png" alt="Hardware cloth roll 36 by 84 inches with cut lines marking front panel 36 inches, two side panels 24 inches each, and optional 8-inch door reinforcement strips" loading="lazy">
+            <figcaption>Sheet 4 — Hardware Cloth Cutting Layout</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet5-post-attachment.png" alt="Corner bracket detail showing vertical cedar post attached to raised bed boards with metal corner bracket and structural screws" loading="lazy">
+            <figcaption>Sheet 5a — Post Attachment Detail</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet5-hardware-cloth-fastening.png" alt="Hardware cloth corner fastening detail showing silver hardware cloth wrapped around cedar corner post secured with fender washers and screws at 8-inch center-to-center spacing" loading="lazy">
+            <figcaption>Sheet 5b — Hardware Cloth Fastening Detail</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet6-trellis-mounting.png" alt="Rear trellis elevation showing horizontal support rails, pre-made 4 by 8 foot cedar lattice trimmed to fit between rear posts, metal angle brackets, 2.5-inch exterior wood screws, and 1-inch standoff from raised bed back wall" loading="lazy">
+            <figcaption>Sheet 6 — Rear Trellis &amp; Rail Mounting</figcaption>
+          </figure>
+          <figure>
+            <img src="images/sheet7-door-post-top.png" alt="Three-panel detail sheet showing door frame joinery with barn-style hinges and hook-and-eye latch, post height diagram with rear posts at 71.5 inches and trellis height 67 inches and mesh height 24 inches, and top cage frame with hardware cloth lid secured by 2.5-inch exterior wood screws" loading="lazy">
+            <figcaption>Sheet 7 — Door, Post Heights &amp; Top Frame</figcaption>
+          </figure>
+          <figure>
+            <img src="images/exploded-1.png" alt="Alternate exploded assembly view" loading="lazy">
+            <figcaption>Alternate — Exploded View (concept)</figcaption>
+          </figure>
         </div>
 
       </div>
@@ -1373,55 +1470,52 @@ mark.search-hl {
       </button>
       <div class="section-body" id="body-materials">
 
-        <div class="material-grid">
-          <div class="material-card">
-            <h4>Primary Structure</h4>
-            <div class="material-item"><span>Front left post (2x4)</span><span>72"</span></div>
-            <div class="material-item"><span>Front center post (2x4)</span><span>72"</span></div>
-            <div class="material-item"><span>Front right post (2x4)</span><span>72"</span></div>
-            <div class="material-item"><span>Back left post (2x4)</span><span>72"</span></div>
-            <div class="material-item"><span>Back center post (2x4)</span><span>72" (opt)</span></div>
-            <div class="material-item"><span>Back right post (2x4)</span><span>72"</span></div>
-          </div>
-          <div class="material-card">
-            <h4>Lower Frame Rails</h4>
-            <div class="material-item"><span>Front left section</span><span>2x2 or 2x3</span></div>
-            <div class="material-item"><span>Front right section</span><span>2x2 or 2x3</span></div>
-            <div class="material-item"><span>Side frame left</span><span>48"</span></div>
-            <div class="material-item"><span>Side frame right</span><span>48"</span></div>
-            <div class="material-item"><span>Back rail</span><span>96" or split</span></div>
-          </div>
-          <div class="material-card">
-            <h4>Door Framing (×2)</h4>
-            <div class="material-item"><span>Vertical stiles</span><span>2 per door</span></div>
-            <div class="material-item"><span>Top rail</span><span>1 per door</span></div>
-            <div class="material-item"><span>Middle rail</span><span>1 per door</span></div>
-            <div class="material-item"><span>Bottom rail</span><span>1 per door</span></div>
-            <div class="material-item"><span>Material</span><span>2x2 or 1x3</span></div>
-          </div>
-          <div class="material-card">
-            <h4>Mesh</h4>
-            <div class="material-item"><span>½" hardware cloth</span><span>Lower zones + doors</span></div>
-            <div class="material-item"><span>Cattle panel ribs</span><span>2 min / 3 preferred</span></div>
-            <div class="material-item"><span>Panel gauge</span><span>≥ 16 gauge</span></div>
-          </div>
-          <div class="material-card">
-            <h4>Door Hardware</h4>
-            <div class="material-item"><span>Heavy hinges</span><span>2+ per door</span></div>
-            <div class="material-item"><span>Hook &amp; eye latch</span><span>1+ per door</span></div>
-            <div class="material-item"><span>Bottom cane bolt</span><span>1, one leaf (opt)</span></div>
-          </div>
-          <div class="material-card">
-            <h4>Cattle Panel Ties</h4>
-            <div class="material-item"><span>Galvanized wire</span><span>Primary</span></div>
-            <div class="material-item"><span>Conduit clamps</span><span>Solid attachment</span></div>
-            <div class="material-item"><span>Fence ties</span><span>Secondary</span></div>
-            <div class="material-item"><span>Heavy zip ties</span><span>Mockup only</span></div>
-          </div>
-        </div>
+        <h4>Lumber Cut List</h4>
+        <table class="spec-table" aria-label="Lumber cut list">
+          <thead>
+            <tr>
+              <th>Part ID</th>
+              <th>Description</th>
+              <th>Material</th>
+              <th>Nominal Size</th>
+              <th>Cut Length</th>
+              <th>Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>P1</td><td>Front posts</td><td>Cedar 2&times;4</td><td>1.5"&times;3.5"</td><td>24" above bed</td><td>2</td></tr>
+            <tr><td>P2</td><td>Rear posts</td><td>Cedar 2&times;4</td><td>1.5"&times;3.5"</td><td>48"&ndash;54" above bed</td><td>2</td></tr>
+            <tr><td>R1</td><td>Front/back top rails</td><td>Cedar 2&times;2</td><td>1.5"&times;1.5"</td><td>96"</td><td>2</td></tr>
+            <tr><td>R2</td><td>Side top rails</td><td>Cedar 2&times;2</td><td>1.5"&times;1.5"</td><td>45"</td><td>2</td></tr>
+            <tr><td>R3</td><td>Trellis support rails</td><td>Cedar 2&times;2</td><td>1.5"&times;1.5"</td><td>96"</td><td>2</td></tr>
+            <tr><td>D1</td><td>Door frame pieces</td><td>Cedar 2&times;2</td><td>1.5"&times;1.5"</td><td>96" (cut to fit)</td><td>2</td></tr>
+            <tr><td>T1</td><td>Lattice panel</td><td>Cedar lattice</td><td>4&times;8 ft</td><td>Trim to fit</td><td>1</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:1.25rem;">Hardware</h4>
+        <table class="spec-table" aria-label="Hardware list">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Specification</th>
+              <th>Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Metal corner brackets</td><td>3" galvanized</td><td>4&ndash;6</td></tr>
+            <tr><td>Structural screws</td><td>2.5" exterior grade</td><td>40</td></tr>
+            <tr><td>Wood screws</td><td>1.25" exterior</td><td>24</td></tr>
+            <tr><td>Fender washers</td><td>1" galvanized</td><td>20</td></tr>
+            <tr><td>Hardware cloth</td><td>&frac12;" mesh, 36"&times;84" roll</td><td>1</td></tr>
+            <tr><td>Barn-style hinges</td><td>1.25"</td><td>2&ndash;3</td></tr>
+            <tr><td>Hook &amp; eye latch</td><td>Galvanized</td><td>1&ndash;2</td></tr>
+            <tr><td>Metal angle brackets</td><td>For trellis rail</td><td>4</td></tr>
+          </tbody>
+        </table>
 
         <div class="note-box">
-          <strong>Mesh strategy:</strong> Hardware cloth only where it matters — lower 24" on all sides and lower half of doors. Do not overskin the whole structure unless animals prove they deserve escalation.
+          <strong>Mesh strategy:</strong> Wire mesh covers the front and both sides to 24" height. The back is covered by the trellis panel — no mesh needed there. Hardware cloth is more critter-proof; chicken wire is lighter and easier to work with.
         </div>
 
       </div>
@@ -1446,32 +1540,32 @@ mark.search-hl {
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
               <div class="task-title">Lumber connections — exterior deck screws</div>
-              <div class="task-note">Use 2½" to 3" exterior deck screws for all framing connections. Pre-drill near ends to avoid splitting 2x2 stock.</div>
+              <div class="task-note">Use 2½" to 3" exterior deck screws for all post-to-rail and post-to-bed connections. Pre-drill near ends to avoid splitting.</div>
               <div class="task-tags"><span class="tag">Framing</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Hardware cloth — staple first, then fender washers</div>
-              <div class="task-note">Staple to position and tension. Then add screws with fender washers every 8–12" for real hold. Staples alone pull out over time.</div>
+              <div class="task-title">Wire mesh — staple first, then fender washers</div>
+              <div class="task-note">Staple to position and tension. Then add screws with fender washers every 8–12" along all edges. Staples alone pull out over time.</div>
               <div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Don't skip washers</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Cattle panel — galvanized wire + conduit clamps</div>
-              <div class="task-note">Galvanized wire ties at each post contact point. Conduit clamps over the wire for a solid lock. Heavy zip ties only for mockup — replace before final.</div>
-              <div class="task-tags"><span class="tag">Arch</span></div>
+              <div class="task-title">Trellis panel — screwed to rear posts</div>
+              <div class="task-note">Lattice panel screws directly to the inside face of the rear posts with 2½" exterior screws. Pre-drill the lattice to prevent splitting. Check plumb before final fastening.</div>
+              <div class="task-tags"><span class="tag">Trellis</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Door hardware — 2 hinges minimum, one latch per door</div>
-              <div class="task-note">Heavy duty exterior hinges. Hook-and-eye latch or simple gate latch on each door. Add a cane bolt to one leaf at the bottom if needed to stop racking.</div>
-              <div class="task-tags"><span class="tag">Doors</span></div>
+              <div class="task-title">Front panel hardware — hinges + latch</div>
+              <div class="task-note">2–3 exterior hinges along the bottom edge of the front wire panel (hinge at bed frame for drop-down access). Hook-and-eye latch at top to hold panel closed.</div>
+              <div class="task-tags"><span class="tag">Access</span></div>
             </div>
           </div>
         </div>
@@ -1496,41 +1590,41 @@ mark.search-hl {
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Measure actual outer dimensions of both beds</div>
-              <div class="task-note">Do not assume 96"×48". Measure before cutting anything. Mark your numbers on the sketch. Beds built DIY rarely hit exact dimensions.</div>
+              <div class="task-title">Measure actual outer dimensions of the bed</div>
+              <div class="task-note">Do not assume 96"×48". Measure before cutting anything. Mark your numbers on the sketch. DIY beds rarely hit exact dimensions.</div>
               <div class="task-tags"><span class="tag warn">Measure first</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Mark the final post footprint</div>
-              <div class="task-note">Chalk or stakes. Front three posts: far left, center (door split), far right. Rear posts: at minimum left and right corners. Mark back center if using 6-post layout.</div>
-              <div class="task-tags"><span class="tag">Layout</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Cut front posts to 72"</div>
-              <div class="task-note">Three front posts at 72". These carry the arch and door frames. If setting into ground or bed sides, account for burial depth in your cut length.</div>
+              <div class="task-title">Cut front corner posts — 24" above bed top</div>
+              <div class="task-note">Two front posts at 24" above the bed frame. If bolting to the inside or outside of the bed, add the bed wall thickness to your cut length.</div>
               <div class="task-tags"><span class="tag">Cut</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Set and brace front posts</div>
-              <div class="task-note">Attach to bed sides or set alongside. Check plumb on both axes before screwing off. Temporary diagonal bracing helps while you work.</div>
+              <div class="task-title">Cut rear trellis posts — 48–54" above bed top</div>
+              <div class="task-note">Two rear posts, tall enough for the trellis panel. These are the tallest pieces in the structure. Account for any burial or bolt-through depth.</div>
+              <div class="task-tags"><span class="tag">Cut</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
+              <div class="task-title">Set and brace all four corner posts</div>
+              <div class="task-note">Bolt or screw to the bed frame. Check plumb on both axes before final fastening. Front posts sit at the front corners, rear posts at the back corners. Temporary diagonal bracing helps while you work.</div>
               <div class="task-tags"><span class="tag">Structure</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Set rear posts</div>
-              <div class="task-note">Minimum: rear left and rear right at full height (72"). Add rear center if using 6-post layout. Full-height rear corners produce a cleaner, more rigid structure.</div>
-              <div class="task-tags"><span class="tag">Structure</span><span class="tag good">Full height recommended</span></div>
+              <div class="task-title">Install horizontal top rails — front and both sides</div>
+              <div class="task-note">Connect the tops of the front and side posts with horizontal rails. Front rail runs 96". Side rails run 48" from front post to rear post. These define the top edge of the wire mesh panels.</div>
+              <div class="task-tags"><span class="tag">Structure</span></div>
             </div>
           </div>
         </div>
@@ -1555,40 +1649,32 @@ mark.search-hl {
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Cut and attach lower side rails at 24"</div>
-              <div class="task-note">2x2 or 2x3 horizontal rails at exactly 24" up from the bed top. One on each long side, running the full 48" depth front to back.</div>
-              <div class="task-tags"><span class="tag">Lower Frame</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Cut and attach back lower rail at 24"</div>
-              <div class="task-note">One 96" back rail, or two shorter pieces meeting at the back center post. Ties rear posts together and gives the hardware cloth a surface to attach to.</div>
-              <div class="task-tags"><span class="tag">Lower Frame</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Staple and screw hardware cloth — side zones</div>
-              <div class="task-note">Cut ½" hardware cloth to fill the lower 24" on both sides. Staple under tension first. Then screw fender washers every 8–12" along all edges. Bend the bottom edge under the bed frame if possible for a ground seal.</div>
+              <div class="task-title">Attach wire mesh to both side panels</div>
+              <div class="task-note">Cut wire mesh (hardware cloth or chicken wire) to fill the 24" tall × 48" deep side panels. Staple under tension first, then screw fender washers every 8–12" along all edges for real hold.</div>
               <div class="task-tags"><span class="tag">Mesh</span><span class="tag warn">Fender washers required</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Staple and screw hardware cloth — back zone</div>
-              <div class="task-note">Same process on the back lower 24". This section is often skipped and then regretted. Squirrels and rabbits will find it.</div>
+              <div class="task-title">Build the front wire panel as a separate frame</div>
+              <div class="task-note">Build a rectangular frame (96" × 24") from 1×3 or 2×2 stock. Stretch wire mesh across it and staple + washer. This panel will hinge at the bed frame for access.</div>
               <div class="task-tags"><span class="tag">Mesh</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
+              <div class="task-title">Hinge front panel to bed frame</div>
+              <div class="task-note">Attach 2–3 exterior hinges along the bottom edge of the front panel. The panel drops down for full-width access. Add a hook-and-eye latch at the top to hold it closed.</div>
+              <div class="task-tags"><span class="tag">Access</span></div>
+            </div>
+          </div>
+          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+            <div class="task-cb" aria-hidden="true">✓</div>
+            <div class="task-body">
               <div class="task-title">Check all wire edges — clip and fold sharp ends</div>
-              <div class="task-note">Hardware cloth cut edges are sharp. Fold exposed wire ends with pliers or cover with wood strips. Do this before anything else goes near the structure.</div>
+              <div class="task-note">Wire mesh cut edges are sharp. Fold exposed wire ends with pliers or cover with wood strips. Do this before anything else goes near the structure.</div>
               <div class="task-tags"><span class="tag warn">Safety</span></div>
             </div>
           </div>
@@ -1597,69 +1683,61 @@ mark.search-hl {
     </section>
 
     <!-- ═════════════════════════════════════════
-         SECTION 7: CATTLE PANEL ARCH — Day 2 AM
+         SECTION 7: REAR TRELLIS WALL — Day 2 AM
     ═════════════════════════════════════════ -->
-    <section class="content-section open" id="section-arch" aria-labelledby="toggle-arch-title">
-      <button class="section-toggle" id="toggle-arch" aria-expanded="true" aria-controls="body-arch">
+    <section class="content-section open" id="section-trellis" aria-labelledby="toggle-trellis-title">
+      <button class="section-toggle" id="toggle-trellis" aria-expanded="true" aria-controls="body-trellis">
         <span class="section-toggle-num" aria-hidden="true">07</span>
         <div class="section-toggle-text">
-          <div class="section-toggle-title" id="toggle-arch-title">Cattle Panel Arch</div>
-          <div class="section-toggle-sub">Bend, place, and tie the ribs</div>
+          <div class="section-toggle-title" id="toggle-trellis-title">Rear Trellis Wall</div>
+          <div class="section-toggle-sub">Mount the lattice panel for climbing crops</div>
         </div>
         <span class="section-badge day2">Day 2 · AM</span>
         <span class="toggle-chevron" aria-hidden="true">▼</span>
       </button>
-      <div class="section-body" id="body-arch">
+      <div class="section-body" id="body-trellis">
         <div class="note-box">
-          <strong>Cattle panel bending:</strong> A 16' cattle panel bent over a 4' span will reach about 72" at peak with a natural curve. Two people makes this significantly easier. Wear gloves — the cut ends are brutal.
+          <strong>Trellis options:</strong> A pre-made cedar lattice panel is the fastest route. Alternatively, build a grid from 1×2 lath strips screwed together. Either way, the panel bolts flat to the inside face of the rear posts.
         </div>
         <div class="task-list">
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Dry-fit first cattle panel rib — front position</div>
-              <div class="task-note">Bend the panel over the full 48" depth. Check that the peak hits roughly 72". The panel will want to spring — have a helper hold while you check position and mark attachment points.</div>
-              <div class="task-tags"><span class="tag">Arch</span></div>
+              <div class="task-title">Measure the opening between rear posts</div>
+              <div class="task-note">Measure the inside face-to-face distance between the two rear posts. The trellis panel should fit snug between them or overlap slightly onto the post faces.</div>
+              <div class="task-tags"><span class="tag">Trellis</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Secure front rib to front posts with galvanized wire</div>
-              <div class="task-note">Wire at each contact point on both front posts. Conduit clamps over the wire for a solid lock. Check peak alignment before fully tightening.</div>
-              <div class="task-tags"><span class="tag">Arch</span></div>
+              <div class="task-title">Cut or trim lattice panel to fit</div>
+              <div class="task-note">If using a store-bought 4×8 lattice, cut to match the opening width (~96") and the post height above the bed (48–54"). Sand or seal any cut edges.</div>
+              <div class="task-tags"><span class="tag">Cut</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Place and secure middle rib</div>
-              <div class="task-note">Position at approximately the midpoint of the 48" depth. Tie to top of side rails or to connecting wire running front to back. Keep consistent with front rib peak.</div>
-              <div class="task-tags"><span class="tag">Arch</span></div>
+              <div class="task-title">Screw trellis panel to rear posts</div>
+              <div class="task-note">Pre-drill and screw the lattice panel to the inside face of both rear posts using 2½" exterior screws. Space fasteners every 12–16". Panel should sit flush against the posts with the bottom edge resting on or just above the bed frame.</div>
+              <div class="task-tags"><span class="tag">Trellis</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Place and secure rear rib</div>
-              <div class="task-note">Rear rib sits at the back posts. Wire and clamp same as front. Three ribs creates a rigid tunnel — two is the minimum but three is noticeably better in wind.</div>
-              <div class="task-tags"><span class="tag">Arch</span><span class="tag good">3 ribs recommended</span></div>
+              <div class="task-title">Add a horizontal top rail across the rear posts</div>
+              <div class="task-note">A 1×3 or 2×2 rail across the top of the rear posts ties them together and caps the trellis panel. This also prevents racking. Screw into the top of each post.</div>
+              <div class="task-tags"><span class="tag">Structure</span><span class="tag good">Prevents racking</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Tie ribs together with connecting wire or rails</div>
-              <div class="task-note">Run galvanized wire or a horizontal fence rail along the peak and along the sides to connect all three ribs. This stops the arch from racking front-to-back.</div>
-              <div class="task-tags"><span class="tag">Arch</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Replace any temp zip ties with wire</div>
-              <div class="task-note">UV kills zip ties in one season. Replace all structural zip ties with galvanized wire before calling the arch done. Zip ties can stay on mockup points you plan to revisit.</div>
-              <div class="task-tags"><span class="tag warn">Replace zip ties</span></div>
+              <div class="task-title">Check trellis is plumb and rigid</div>
+              <div class="task-note">Push on the top of the trellis — it should not flex more than an inch. If it wobbles, add a diagonal brace from the top of each rear post down to the bed frame on the sides.</div>
+              <div class="task-tags"><span class="tag">QC</span></div>
             </div>
           </div>
         </div>
@@ -1667,14 +1745,14 @@ mark.search-hl {
     </section>
 
     <!-- ═════════════════════════════════════════
-         SECTION 8: FRONT FRAME & DOORS — Day 2 PM
+         SECTION 8: FRONT ACCESS & QC — Day 2 PM
     ═════════════════════════════════════════ -->
     <section class="content-section open" id="section-doors" aria-labelledby="toggle-doors-title">
       <button class="section-toggle" id="toggle-doors" aria-expanded="true" aria-controls="body-doors">
         <span class="section-toggle-num" aria-hidden="true">08</span>
         <div class="section-toggle-text">
-          <div class="section-toggle-title" id="toggle-doors-title">Front Frame &amp; Doors</div>
-          <div class="section-toggle-sub">Frame the opening and hang two working doors</div>
+          <div class="section-toggle-title" id="toggle-doors-title">Front Access &amp; Doors</div>
+          <div class="section-toggle-sub">Verify the front panel works and tighten everything up</div>
         </div>
         <span class="section-badge day2">Day 2 · PM</span>
         <span class="toggle-chevron" aria-hidden="true">▼</span>
@@ -1684,49 +1762,41 @@ mark.search-hl {
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Install front lower rails (left and right of door opening)</div>
-              <div class="task-note">Complete the lower front frame on each side of the door opening. These carry the lower hardware cloth on the front face and define the door opening clearly.</div>
-              <div class="task-tags"><span class="tag">Framing</span></div>
+              <div class="task-title">Test front panel hinge operation</div>
+              <div class="task-note">Open and close the front panel fully. It should drop down or swing out without binding. Check that the latch engages cleanly from outside. Adjust hinge screws if needed.</div>
+              <div class="task-tags"><span class="tag">QC</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Apply hardware cloth to lower front zones</div>
-              <div class="task-note">The two small panels between the outer posts and the door opening edges. Same staple-first-then-washer method as the sides. Fold any bottom edges under.</div>
-              <div class="task-tags"><span class="tag">Mesh</span></div>
+              <div class="task-title">Check for gaps between panels and bed frame</div>
+              <div class="task-note">Walk the full perimeter. Look for any gap larger than ½" between the wire mesh and the bed frame. Rabbits and squirrels will find gaps. Fill with extra mesh, a wood strip, or foam backer rod.</div>
+              <div class="task-tags"><span class="tag warn">Critter check</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Build door frames — two identical leaves</div>
-              <div class="task-note">Each door: two vertical stiles, top rail, middle rail, bottom rail. Width 22–24". Build mostly rectangular — ease the top corners only if it's easy. Square and plumb is the goal.</div>
-              <div class="task-tags"><span class="tag">Doors</span></div>
+              <div class="task-title">Verify trellis is secure and plumb</div>
+              <div class="task-note">Grab the top of the trellis and push. It should feel solid. If it flexes, add a diagonal brace from each rear post top down to the bed frame on the sides.</div>
+              <div class="task-tags"><span class="tag">Structure</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Apply mesh to door panels</div>
-              <div class="task-note">Hardware cloth on the lower half (below middle rail). Upper half: leave open to wire or use welded wire if you want more protection. Staple and washer same as everywhere else.</div>
-              <div class="task-tags"><span class="tag">Mesh</span></div>
+              <div class="task-title">Final wire edge audit — clip and fold all sharp ends</div>
+              <div class="task-note">Walk the whole structure. Every cut wire end gets clipped flush or bent back with pliers. Do not skip this. You will hit these with your arm eventually.</div>
+              <div class="task-tags"><span class="tag warn">Safety — do this</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Hang doors with exterior hinges</div>
-              <div class="task-note">Two heavy-duty exterior hinges per door minimum. Screw to the center post and the outer posts on each side. Check swing before final tightening. Leave a little gap — wood moves.</div>
-              <div class="task-tags"><span class="tag">Doors</span><span class="tag warn">Leave swing gap</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Install latches — hook-and-eye or gate latch</div>
-              <div class="task-note">Hook-and-eye on each door. If one leaf tends to blow open, add a cane bolt at the bottom to pin it to the bed frame. Test that both doors latch reliably from outside.</div>
-              <div class="task-tags"><span class="tag">Doors</span></div>
+              <div class="task-title">Tighten all screws and check for loose connections</div>
+              <div class="task-note">Go through every screw connection — posts to bed, rails to posts, mesh washers. Snug anything that feels loose. Re-check plumb on corner posts after tightening.</div>
+              <div class="task-tags"><span class="tag">QC</span></div>
             </div>
           </div>
         </div>
@@ -1751,49 +1821,117 @@ mark.search-hl {
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Full wire edge audit — clip and fold all sharp ends</div>
-              <div class="task-note">Walk the whole structure. Every cut cattle panel end and hardware cloth edge gets clipped flush or bent back. Do not skip this. You will hit these with your arm eventually.</div>
-              <div class="task-tags"><span class="tag warn">Safety — do this</span></div>
-            </div>
-          </div>
-          <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
-            <div class="task-cb" aria-hidden="true">✓</div>
-            <div class="task-body">
-              <div class="task-title">Add optional bird netting over arch</div>
-              <div class="task-note">If birds are a problem, drape lightweight bird netting over the cattle panel arch. Clip or tie at the edges. This is optional — if the enclosed structure is tight enough, birds usually won't get in.</div>
+              <div class="task-title">Optional: add bird netting across the top</div>
+              <div class="task-note">If birds are a problem, drape lightweight bird netting from the trellis top rail forward to the front post rail. Clip or tie at the edges. This is optional — the wire sides already stop ground critters.</div>
               <div class="task-tags"><span class="tag opt">Optional</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Replace any remaining temporary zip ties</div>
-              <div class="task-note">Final check — anything you used zip ties on for mockup that didn't get replaced yet. Galvanized wire on all structural points before the structure is considered done.</div>
-              <div class="task-tags"><span class="tag warn">Replace zip ties</span></div>
+              <div class="task-title">Optional: stain or seal exposed wood</div>
+              <div class="task-note">If using untreated cedar, a clear exterior sealant or light stain extends life. If using pressure-treated lumber, skip this — it's already weather-resistant. Do this before planting to avoid drip on soil.</div>
+              <div class="task-tags"><span class="tag opt">Optional</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Test door operation — both leaves, both latches</div>
-              <div class="task-note">Open and close both doors fully. Check that latches engage cleanly. Look for any racking or binding. Adjust hinge screws if needed. Doors should swing free and latch without forcing.</div>
-              <div class="task-tags"><span class="tag">QC</span></div>
+              <div class="task-title">Train climbing crops onto the trellis</div>
+              <div class="task-note">Tomatoes, pole beans, peas, and cucumbers go in the back row. Loosely tie seedling stems to the lattice with twine or soft plant ties. They'll grab the grid within a week or two.</div>
+              <div class="task-tags"><span class="tag">Planting</span></div>
             </div>
           </div>
           <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
             <div class="task-cb" aria-hidden="true">✓</div>
             <div class="task-body">
-              <div class="task-title">Plant and set up seedling protection</div>
-              <div class="task-note">Basil, lettuce, and herbs in the front rows. Tomatoes and beans at the back where they'll climb the cattle panel. White mesh baskets or similar covers over small seedlings near the front.</div>
+              <div class="task-title">Plant protected front zone</div>
+              <div class="task-note">Basil, lettuce, herbs, radish, and arugula go in the front rows behind the wire mesh. These stay low and benefit from critter protection. White mesh baskets over small seedlings if squirrels are aggressive early.</div>
               <div class="task-tags"><span class="tag good">Done</span></div>
             </div>
           </div>
         </div>
 
+        <!-- ═════════════════════════════════════════
+             SECTION 10: QC CHECKLIST
+        ═════════════════════════════════════════ -->
+        <section class="content-section open" id="section-qc" aria-labelledby="toggle-qc-title" style="margin-top:1.25rem;">
+          <button class="section-toggle" id="toggle-qc" aria-expanded="true" aria-controls="body-qc">
+            <span class="section-toggle-num" aria-hidden="true">10</span>
+            <div class="section-toggle-text">
+              <div class="section-toggle-title" id="toggle-qc-title">QC Checklist</div>
+              <div class="section-toggle-sub">Pre-build and post-build verification</div>
+            </div>
+            <span class="section-badge">QC</span>
+            <span class="toggle-chevron" aria-hidden="true">▼</span>
+          </button>
+          <div class="section-body" id="body-qc">
+            <h4>Pre-Build</h4>
+            <div class="task-list">
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">All lumber cut to spec per Table 1</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Hardware cloth cut per Sheet 4 layout</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">All hardware on hand per Table 2</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Raised bed is level and square (diagonal measurement)</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Post positions marked on bed frame</div></div>
+              </div>
+            </div>
+
+            <h4 style="margin-top:1rem;">Post-Build</h4>
+            <div class="task-list">
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">All posts plumb (check with level)</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Frame is square (diagonal check on top rails)</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Hinge alignment — door swings freely without binding</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Latch engages cleanly from outside</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Mesh tension — no gaps &gt;&frac12;" at edges or corners</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">All screw heads flush, no protrusions</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">Trellis panel secure, no racking under hand pressure</div></div>
+              </div>
+              <div class="task-card" role="checkbox" aria-checked="false" tabindex="0" onclick="toggleTask(this)" onkeydown="handleTaskKey(event,this)">
+                <div class="task-cb" aria-hidden="true">✓</div>
+                <div class="task-body"><div class="task-title">1" airflow gap confirmed at bottom</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="complete-banner" id="completeBanner" role="status" aria-live="polite">
           <span class="garden-emoji" aria-hidden="true">🥬</span>
           <h2>Build Complete</h2>
-          <p>Structure is up, wire is safe, doors are hung, latches work, squirrels are defeated. Plant your stuff and stop building.</p>
+          <p>Trellis is up, wire is tight, front panel latches, critters are locked out. Plant your stuff and stop building.</p>
           <button class="btn primary" onclick="resetAll()">Reset All Tasks</button>
         </div>
 
@@ -1900,9 +2038,10 @@ const tocMap = {
   'section-fasteners':  'toc-fasteners',
   'section-layout':     'toc-layout',
   'section-frame':      'toc-frame',
-  'section-arch':       'toc-arch',
+  'section-trellis':    'toc-trellis',
   'section-doors':      'toc-doors',
   'section-finish':     'toc-finish',
+  'section-qc':         'toc-qc',
 };
 
 const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) +
@@ -1965,6 +2104,7 @@ function updateTocCompletion() {
     'section-arch':      'toc-arch',
     'section-doors':     'toc-doors',
     'section-finish':    'toc-finish',
+    'section-qc':        'toc-qc',
   };
 
   Object.entries(sectionToToc).forEach(([sId, tId]) => {
