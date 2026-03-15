@@ -221,14 +221,18 @@
       .hero-inner{padding:22px}
       .section-head,.section-body{padding-left:16px; padding-right:16px}
     }
+  .skip-link{position:absolute;top:-40px;left:0;background:var(--soil);color:#f5ede0;padding:.5rem 1rem;z-index:100;font-size:.8rem;transition:top .15s;}
+  .skip-link:focus{top:0;}
   </style>
 </head>
 <body>
+<a href="#overview" class="skip-link">Skip to main content</a>
 <nav class="os-nav" aria-label="Garden OS">
   <a href="index.html">Home</a>
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="garden_planner_scoring_visualizer.html">Scoring Visualizer</a>
   <a href="garden_planner_scoring_system_map.html" class="active" aria-current="page">Scoring Map</a>
 </nav>
   <div class="topbar">
@@ -813,9 +817,32 @@ accessPriority:     0.67</pre>
   </div>
 
   <script>
-    document.getElementById('expandBtn')?.addEventListener('click',()=>{
-      document.querySelectorAll('section.section').forEach(s=>s.scrollMarginTop='90px');
-      window.scrollTo({top:0,behavior:'smooth'});
+    const expandBtn = document.getElementById('expandBtn');
+    const sections = [...document.querySelectorAll('section.section')];
+    const sectionBodies = sections
+      .map((section) => section.querySelector('.section-body'))
+      .filter(Boolean);
+    sections.forEach((section) => { section.scrollMarginTop = '90px'; });
+
+    const setAllSectionsCollapsed = (collapsed) => {
+      sectionBodies.forEach((body) => {
+        body.hidden = collapsed;
+        body.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+      });
+      if (expandBtn) {
+        expandBtn.dataset.collapsed = collapsed ? 'true' : 'false';
+        expandBtn.setAttribute('aria-pressed', collapsed ? 'false' : 'true');
+        expandBtn.textContent = collapsed ? 'Expand all' : 'Collapse all';
+      }
+    };
+
+    setAllSectionsCollapsed(false);
+    expandBtn?.addEventListener('click', () => {
+      const currentlyCollapsed = expandBtn.dataset.collapsed === 'true';
+      setAllSectionsCollapsed(!currentlyCollapsed);
+      if (currentlyCollapsed) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
 
     const sectionLinks = [...document.querySelectorAll('.nav a, .toolbar a[href^="#"]')];
