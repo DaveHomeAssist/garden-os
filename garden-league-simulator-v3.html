@@ -76,9 +76,10 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .crop-btn:hover:not(.locked){border-color:var(--char-gurl);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .crop-btn.selected{border-color:var(--char-gurl);background:var(--char-gurl-bg);box-shadow:0 0 0 2px var(--char-gurl)}
 .crop-btn.locked{opacity:.4;cursor:not-allowed}
-.crop-btn .emoji{font-size:1.1rem;flex-shrink:0}
-.crop-btn .name{font-size:0.82rem;font-weight:600;font-family:var(--ff-body)}
-.crop-btn .tags{font-size:var(--type-small);color:var(--sf-muted);font-family:var(--ff-mono)}
+.crop-btn .emoji{font-size:1.3rem;flex-shrink:0}
+.crop-btn .crop-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.crop-btn .name{font-size:var(--type-body);font-weight:600;font-family:var(--ff-body);line-height:1.2}
+.crop-btn .tags{font-size:var(--type-label);color:var(--sf-muted);font-family:var(--ff-mono);letter-spacing:0.02em;opacity:0.75}
 .eraser-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--sf-line);background:var(--sem-hard-bg);cursor:pointer;font-family:var(--ff-body);font-weight:700;font-size:var(--type-body);min-height:44px;transition:border-color 140ms var(--ease-out)}
 .eraser-btn.selected{background:#f5b8b8;border-color:var(--sem-hard)}
 .beat-indicator{display:flex;gap:6px;font-family:var(--ff-mono);font-size:var(--type-label)}
@@ -1230,9 +1231,9 @@ function renderCtrl(){
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
       btn.disabled=S.phase!=='PLANNING'||locked;
       const em=h('span','emoji',crop.emoji);
-      const tw=h('div');
+      const tw=h('div','crop-text');
       tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
-      tw.appendChild(h('span','tags',crop.short+(crop.support?' trellis':'')+(crop.tall?' tall':'')));
+      tw.appendChild(h('span','tags',crop.short+(crop.support?' \u00b7 trellis':'')+(crop.tall?' \u00b7 tall':'')));
       btn.appendChild(em);btn.appendChild(tw);
       if(!locked)btn.onclick=()=>{S.selectedCrop=crop.id;S.eraserMode=false;render()};
       cg.appendChild(btn);
