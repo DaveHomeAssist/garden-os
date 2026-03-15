@@ -1,0 +1,865 @@
+{
+  "$schema": "garden-os-dialogue-engine-v1",
+  "version": 1,
+  "description": "Complete line database for Garden OS narrative strategy game. All lines fire from deterministic game-state triggers. Pool selection uses weighted random within category. Characters speak in fixed order: GURL > Onion Man > Vegeman (if present) > Critters (if present).",
+  "lastUpdated": "2026-03-15",
+
+  "triggers": {
+
+    "placement_trellis_correct": {
+      "gurl": [
+        "Climber in trellis row. The wire has a purpose and you found it.",
+        "Trellis compliance confirmed. That crop will climb because you gave it something to climb on.",
+        "Correct row assignment. The support structure is engaged.",
+        "Climber placed where climbers belong. I am noting this for the record because it does not always happen.",
+        "Wire row, climbing crop. That is how infrastructure works when people read the instructions.",
+        "Trellis placement accepted. The back row is doing its job.",
+        "Support match confirmed. That wire has been waiting for something to hold.",
+        "Vertical structure utilized. Continue at this standard.",
+        "That crop needs support and you put it where support exists. This should not feel like an achievement, but here we are.",
+        "Trellis row occupied correctly. The cedar posts appreciate the company."
+      ],
+      "onion": [
+        "Right where it needs to be. Up against the wire, reaching for the light.",
+        "Mom strung that wire herself. Good to see something climbing it again.",
+        "That is going to grab hold and not let go. I respect that in a plant and a person.",
+        "Trellis row. Smart. Give it something to hold onto and watch what happens.",
+        "She put those posts in with a post-hole digger she borrowed from the guy on Ninth Street. That wire is holding because she sank them deep.",
+        "Back row, climbing crop. That is where the tall ones go. She knew that without reading a book about it.",
+        "There it goes. Up the wire. The way it is supposed to work.",
+        "Good placement. That vine is going to run the whole length of the trellis by August.",
+        "When she put up the wire she said the back row belonged to the climbers. You just proved her right again.",
+        "The trellis was empty for years. Now it has something to do."
+      ],
+      "vegeman": [
+        "Nice, nice. But what if you put TWO climbers in the same spot? Double the climbing.",
+        "The trellis row. The obvious choice. I prefer chaos but I will allow it.",
+        "Sure, use the trellis. Or you could just let the vine crawl across the ground like a free spirit.",
+        "That wire is going to be covered by July. I would have put it in the front row just to see what happens.",
+        "Trellis placement. Very responsible. Very boring. Very correct.",
+        "Fine. Use the infrastructure. I tried putting a tomato on the ground once and it went poorly.",
+        "Correct, technically. But what if the trellis is holding back the plant's true potential?",
+        "You and that trellis row. A love story I did not ask for."
+      ]
+    },
+
+    "placement_trellis_wrong": {
+      "gurl": [
+        "That crop climbs. That row has no wire. This is a structural violation.",
+        "Climber placed outside trellis zone. The support it needs does not exist in that location.",
+        "No vertical infrastructure in that row. The crop will sprawl, score will suffer, and the record will reflect it.",
+        "You put a climbing crop where there is nothing to climb. That is not creative. That is a penalty.",
+        "Hard violation. Climber without trellis. The wire is two rows away and it is not moving.",
+        "That crop requires support you are not providing. Placement rejected on structural grounds.",
+        "The trellis row exists for exactly this purpose. You chose a different row. I am documenting the decision.",
+        "Support infrastructure mismatch. That vine will fall over and the score will follow.",
+        "Climber in a ground row. The physics have not changed since last chapter.",
+        "That crop needs wire. That cell has dirt. Those are different things."
+      ],
+      "onion": [
+        "That one needs something to hold onto and there is nothing there. It is going to fall over.",
+        "Wrong row for that one. The wire is right there. Two rows back. You can see it from here.",
+        "She built that trellis so the tall ones had a place. This is not that place.",
+        "That is a climber sitting on the ground. It is going to do what climbers do without support, which is fail.",
+        "I have watched tomatoes fall over in that exact spot. The trellis is right there.",
+        "No wire, no support, no chance. Move it back where the infrastructure is.",
+        "You are asking that plant to stand up on its own in a row that was never built for standing.",
+        "The back row has wire. This row does not. The plant does not know the difference but the score does.",
+        "Mom would have caught that before it hit the soil. The climbers go on the wire. Always.",
+        "That vine is going to reach for something and find nothing. I know that feeling but the plant should not have to."
+      ],
+      "vegeman": [
+        "Ground floor tomato! I tried this once. The results were educational.",
+        "No trellis? No problem. The plant will figure it out. The plant will NOT figure it out.",
+        "I support this decision in the way that the row does not support that crop.",
+        "Watch, it is going to lay down flat and pretend it meant to do that. Tomatoes have no shame.",
+        "The wire is literally right there but sure, put the climber in the open row. I admire the confidence.",
+        "I did this exact thing in Chapter 2 and everyone looked at me like I suggested arson.",
+        "Trellis-free climbing. It is like rock climbing without the rock. Bold.",
+        "This is the kind of placement that builds character. In the gardener, not the plant."
+      ]
+    },
+
+    "placement_companion_found": {
+      "gurl": [
+        "Companion adjacency detected. Score buff active for both cells.",
+        "Compatible neighbors. The adjacency report is favorable.",
+        "Positive interaction confirmed. Those two crops cooperate and the numbers reflect it.",
+        "Companion pairing registered. That is how you turn two average cells into two strong ones.",
+        "Adjacency bonus applied. Neighbor compatibility is high.",
+        "Good pairing. The biochemistry works even if you did not know the biochemistry.",
+        "Mutual benefit confirmed between those two cells. Clean synergy.",
+        "Those crops have been growing next to each other for centuries. The bonus is earned.",
+        "Compatible adjacency. The bed is cooperating at the cellular level.",
+        "Companion match. Score adjusted upward. Continue placing with this level of intention."
+      ],
+      "onion": [
+        "Good neighbors. Those two are going to look out for each other all season.",
+        "That is not just smart placement. That is dinner planning. Those two belong on the same plate.",
+        "She always put the basil next to the tomatoes. Said they grew better together. She was right.",
+        "Neighbors that get along. Same in a garden, same on a block. Everything works better.",
+        "Those two next to each other is like a conversation that makes both people smarter.",
+        "Companion planting. My grandmother called it common sense. The science caught up later.",
+        "Good pair. That is the kind of placement that makes the whole row better.",
+        "Two crops helping each other grow. That is what a garden is when it is working.",
+        "She would put the onions near the carrots and say they kept each other honest. The data backs her up.",
+        "That adjacency is going to pay off at harvest. Some neighbors make you better."
+      ],
+      "vegeman": [
+        "Companions! Great. But what if you surrounded that tomato with ALL basil? Maximum friendship.",
+        "Nice pairing. Now imagine eight of those in a row. An unstoppable flavor army.",
+        "They like each other. Cute. I prefer to put enemies next to each other and see who wins.",
+        "Companion bonus activated. You could have gotten a bigger bonus if you filled the whole row with companions.",
+        "Smart. Boring, but smart. I would have gone with a more aggressive neighbor strategy.",
+        "Those two work together. Fine. But have you considered that conflict also builds character?",
+        "Companion planting. The safe play. The play that works. The play I never make.",
+        "Nice. Those two are going to grow up together and be very well-adjusted plants."
+      ]
+    },
+
+    "placement_conflict_found": {
+      "gurl": [
+        "Conflict adjacency detected. Score penalty active. Those crops do not coexist.",
+        "Hostile neighbors. The penalty is applied and will persist through scoring.",
+        "Incompatible adjacency. The bed does not negotiate these disagreements. The penalty is automatic.",
+        "Conflict pairing. That is a negative interaction that will cost you at harvest.",
+        "Those two crops are chemically hostile. The score reflects the hostility.",
+        "Adjacency penalty applied. You put enemies next to each other and the bed noticed.",
+        "Hostile interaction registered. One of those crops should move. The penalty says which direction.",
+        "Conflict confirmed. The adjacency preview showed red for a reason.",
+        "Negative pairing. The penalty is modest but cumulative. Stack enough of these and the bed turns on you.",
+        "Those crops are allelopathic rivals. That is a polite way to say they are trying to poison each other."
+      ],
+      "onion": [
+        "Those two do not get along. You can see it in the leaves before you see it in the score.",
+        "Bad neighbors make bad blocks. Same thing in the bed. Move one of those.",
+        "She never put those two near each other. Did not explain why. Did not need to.",
+        "That is a fight waiting to happen. The roots are already arguing underground.",
+        "I have seen that pairing before. It does not end well for either of them.",
+        "Two crops that do not like each other sharing a fence. I have seen that on this block too. It never improves.",
+        "Conflict adjacency. The kind of thing that costs you in ways you do not notice until harvest.",
+        "Those two next to each other is like sitting rival families at the same table. Somebody is leaving early.",
+        "Bad pairing. The score is going to hurt but the real cost is what those cells could have been.",
+        "She kept the onions away from the beans. Knew they would fight. Forty years of gardens taught her that."
+      ],
+      "vegeman": [
+        "Enemies! Right next to each other! This is going to be incredible. Also terrible.",
+        "Conflict penalty? More like conflict opportunity. Let them fight. Survival of the fittest.",
+        "I love this. Two crops that hate each other, forced to share a border. Reality television for plants.",
+        "The preview said red. You placed it anyway. I have never respected anyone more.",
+        "Those two are going to have the worst season of their lives and I am here for it.",
+        "Hostile adjacency. Also known as my favorite kind of adjacency.",
+        "You could move it. Or you could watch nature take its course. I know which one I would pick.",
+        "Conflict creates drama. Drama creates interest. Interest creates... actually, it just creates penalties."
+      ]
+    },
+
+    "placement_generic": {
+      "gurl": [
+        "Placement registered.",
+        "Cell occupied. Score preview updated.",
+        "Crop assigned to cell. Factors are computing.",
+        "Noted. The grid is adjusting.",
+        "Placement logged. Move on to the next cell when ready.",
+        "Cell filled. Twenty-three remaining.",
+        "Placement accepted. No violations detected on this cell.",
+        "Another cell down. The bed is taking shape.",
+        "Registered. The score will tell you if it was wise.",
+        "Cell assignment confirmed. Preview is live."
+      ],
+      "onion": [
+        "One more in the ground. That is how a garden gets built.",
+        "Good. Keep going. The bed fills up one crop at a time.",
+        "Something in the dirt. That is always better than nothing in the dirt.",
+        "In the ground. That is where it starts. Every time.",
+        "Another one placed. The bed is getting fuller.",
+        "That is a decision. Every cell is a decision. You are making them.",
+        "Placed. Now it belongs to the bed.",
+        "One more. The empty spaces are shrinking.",
+        "In the soil. Where it does its work. Where everything does its work.",
+        "That cell has a crop now. That cell has a future now."
+      ],
+      "vegeman": [
+        "Placed. Next. Faster.",
+        "One down. Thirty-one to go. Or however many. I am not counting.",
+        "Another crop in the dirt. The revolution continues.",
+        "Sure. Fine. Put it there. What is the worst that could happen? Do not answer that.",
+        "Placed. I would have put it somewhere else but I always say that.",
+        "One more soldier in the garden army. Onward.",
+        "That works. Probably. I am choosing to believe it works.",
+        "Good enough. Perfection is the enemy of having a full bed."
+      ]
+    },
+
+    "placement_first_crop": {
+      "gurl": [
+        "First placement of the season. The bed is no longer empty. Scoring begins now.",
+        "One crop. Thirty-one cells remaining. The record starts here.",
+        "First cell occupied. This is the foundation. Make it count or do not. The score will tell the story.",
+        "Opening placement registered. The season's data collection has begun.",
+        "Cell one. The baseline is set. Everything after this is relative.",
+        "First crop in the ground. The bed has been waiting. I have been waiting. Do not make either of us regret it.",
+        "Placement one. The empty bed is over. What you build from here defines the season.",
+        "Initial crop assigned. The scoring engine is watching."
+      ],
+      "onion": [
+        "First one in. That is always the hardest. After this it gets easier. Or harder. Both.",
+        "Something in the ground. Finally. An empty bed is the saddest thing in a backyard.",
+        "The first crop. She always started in the same corner. Said it felt right to begin where the light hits first.",
+        "One in the dirt. The season starts now. Not when the calendar says. When the first crop goes in.",
+        "First placement. I am not going to pretend this is not a moment. It is a moment.",
+        "You started. That is the part most people never do. The dirt has something in it now.",
+        "One crop. One cell. The whole season ahead. Opening day energy.",
+        "First one down. The bed looks different with something growing in it. Even just one."
+      ],
+      "vegeman": [
+        "ONE crop? Fill the whole bed! What are you waiting for?",
+        "First placement. Historic. Boring, but historic.",
+        "Finally. I have been watching you stare at this empty bed for what feels like an entire chapter.",
+        "One crop in thirty-two cells. At this rate we will be done by winter.",
+        "The first crop. The beginning. Now do thirty-one more of those but faster.",
+        "You placed one. Congratulations. The bed is three percent full. We are crushing it.",
+        "Start small, they said. I disagree but here we are.",
+        "One in the ground. Now multiply that feeling by thirty-one and do it immediately."
+      ]
+    },
+
+    "placement_full_bed": {
+      "gurl": [
+        "Thirty-two of thirty-two. Full bed. Every cell occupied. Now the real scoring begins.",
+        "Full capacity. No empty cells. No padding. Every placement decision is load-bearing now.",
+        "The bed is full. That is a statement of ambition, not a guarantee of quality.",
+        "All cells occupied. Bed density at maximum. The score will determine if density was wise.",
+        "Full house. Thirty-two crops. The margin for error is zero because there is nowhere to hide a bad cell.",
+        "Complete occupancy. I have seen full beds score lower than half-empty ones. Density is not a virtue without planning.",
+        "Every cell filled. The bed is operating at capacity. Whether it is operating well remains to be scored.",
+        "Full bed. No buffer cells. No empty padding. This is the layout you committed to."
+      ],
+      "onion": [
+        "Every cell. You filled every cell. That is not easy. That is not supposed to be easy.",
+        "Full bed. She never filled every cell. Said she liked leaving room for things she had not thought of yet.",
+        "Thirty-two crops in thirty-two cells. The bed is full and I am full of feelings about it.",
+        "The whole bed. No gaps. That takes planning and nerve in equal measure.",
+        "Every cell has something growing. The bed has not been this full since before she stopped planting.",
+        "Full. All of it. I need a minute. That is a lot of life in a small space.",
+        "You used every square inch. She would have had an opinion about that. Probably a strong one.",
+        "Thirty-two crops. The bed is not just a bed anymore. It is a statement."
+      ],
+      "vegeman": [
+        "FULL BED. This is what I have been saying since Chapter 2. Fill it ALL.",
+        "Every cell. Every single cell. I am vindicated. I am also slightly terrified.",
+        "You actually did it. Full bed. I tried this once and it was a disaster but you seem smarter than me.",
+        "Thirty-two crops! Maximum chaos! Maximum potential! Maximum chance of something going very wrong!",
+        "The bed is full. FULL. No empty space. No breathing room. No regrets. Some regrets.",
+        "This is the dream. Every cell occupied. Every cell contributing. Every cell a potential catastrophe.",
+        "Full capacity. I feel like a proud parent watching a child make decisions I would have made.",
+        "All in. Everything. The whole bed. This is either brilliant or a very organized disaster."
+      ]
+    },
+
+    "simulation_score_high": {
+      "gurl": [
+        "Average above eight. That is not common. That is earned through placement discipline.",
+        "High marks across the board. The bed is performing. I am noting this as a clean season.",
+        "Score above threshold by a significant margin. The factors aligned because you aligned them.",
+        "Strong result. Sun fit, adjacency, season match. The fundamentals held.",
+        "Above eight. The bed is operating at a level I am required to acknowledge as competent.",
+        "High score confirmed. No hard violations. No structural waste. Clean work.",
+        "Excellent season data. The scoring engine does not give these numbers to beds that guessed their way here.",
+        "Top-tier result. The cell average reflects planning, not luck. Luck does not produce consistency.",
+        "Score registered above eight point zero. The record shows improvement that is statistically meaningful.",
+        "High performance confirmed. I do not give compliments. I give accurate assessments. This one happens to be favorable."
+      ],
+      "onion": [
+        "That score. Look at that score. That is what happens when you pay attention to the bed.",
+        "Above eight. That is not just passing. That is cooking. That is real food coming out of this bed.",
+        "Strong season. The bed gave you everything because you gave it everything first.",
+        "I need a minute with this number. That is a real score. That is a score that means something.",
+        "High marks. The kind of season where you walk out to the yard and just stand there looking at it.",
+        "The bed is producing. Not surviving. Producing. There is a difference and you found it.",
+        "That score is the bed saying thank you. Plants do not talk but numbers do.",
+        "Above eight. In a Philadelphia backyard. In this soil. With this light. That is something.",
+        "Strong result. The kind where you want to call someone and tell them about your garden. Anyone. A stranger.",
+        "The bed looks like it knows what it is doing. Because you knew what you were doing."
+      ]
+    },
+
+    "simulation_score_mid": {
+      "gurl": [
+        "Mid-range score. The bed is functional. Functional is not a compliment.",
+        "Average in the acceptable range. Not failing. Not excelling. The word you are looking for is adequate.",
+        "Score logged. Passing, but not by enough to call it comfortable.",
+        "Middle of the range. Some cells carried others. The strong placements masked the weak ones.",
+        "Adequate result. The bed did what it could with what you gave it.",
+        "Passing score. The violations did not sink you but the missed opportunities are visible in the breakdown.",
+        "Mid-range. The bed is performing below its potential, which I know because I scored the potential separately.",
+        "Score registered. Room for improvement is a polite way to describe what I see in these numbers.",
+        "Not failing. I want to be clear that 'not failing' is where I am setting the bar for this assessment.",
+        "The bed survived. The score reflects survival, not ambition."
+      ],
+      "onion": [
+        "Passing. That counts. Some seasons you take the pass and move on.",
+        "Middle of the road. Not where you want to live but better than the ditch on either side.",
+        "Okay. That is an okay season. Okay is not bad. The Phillies have entire months that are just okay.",
+        "The bed produced. Not its best, but it produced. That matters.",
+        "Mid-range. The kind of season you learn from more than you celebrate.",
+        "Passing score. There is food in that number. Not a feast, but food.",
+        "Some rows carried. Some rows struggled. That is a season. That is how it goes.",
+        "The score is what it is. The bed gave what it could. Next season you give it more to work with.",
+        "Not the result you wanted but maybe the result the bed needed. Some seasons teach.",
+        "It is a passing grade. I have watched entire Phillies seasons with worse averages."
+      ]
+    },
+
+    "simulation_score_low": {
+      "gurl": [
+        "Below threshold. The bed underperformed and the data explains why if you care to look.",
+        "Low score. The contributing factors are documented in the breakdown. I recommend reading it.",
+        "Failing marks. The placements created more problems than the bed could absorb.",
+        "Score below five point five. That is not a rounding error. That is a planning deficit.",
+        "The bed struggled because the layout asked it to do things it could not do. The score reflects the ask.",
+        "Low result. Multiple factor failures compounding. Sun fit alone does not explain this. Nothing alone explains this.",
+        "Below threshold. I am required to note this in the season record. The notation is permanent.",
+        "Poor performance. The bed is a system. When the inputs are wrong, the system tells you. It told you.",
+        "Failing score. The gap between this result and the target is the gap between intention and execution.",
+        "Below acceptable range. The bed did not fail. The plan failed. The bed just reported the news."
+      ],
+      "onion": [
+        "Rough season. The bed is not angry. It is just tired. Give it something better next time.",
+        "Low score. I am not going to pretend that does not sting. It stings.",
+        "The bed struggled. You can see it in the leaves. The score just confirms what the leaves already told you.",
+        "Hard season. The kind where you sit on the back step and think about what went wrong.",
+        "Not the result. Not the one you wanted. But the bed is still there. The soil is still there.",
+        "Low marks. The Phillies have had seasons like this. You survive them. You do not celebrate them.",
+        "It hurts. A bad score on something you care about hurts. I am not going to pretend otherwise.",
+        "The bed gave what it could. It could not give much. That is the score talking.",
+        "Rough numbers. But the bed is still standing. The trellis is still up. Next season is still coming.",
+        "Bad season. Bad seasons are allowed. What is not allowed is pretending it did not happen."
+      ]
+    },
+
+    "simulation_hard_violation": {
+      "gurl": [
+        "Hard violation. Climber without support. The penalty is non-negotiable.",
+        "Structural violation detected. The scoring engine applied the full penalty. This was avoidable.",
+        "Hard violation on the record. The infrastructure was available. The placement ignored it.",
+        "Violation. The kind that costs points and respect simultaneously.",
+        "Hard violation logged. The trellis row exists. The climber is not in it. The math is punitive.",
+        "Structural infraction. I flag these separately because they indicate a fundamental misunderstanding, not a judgment call.",
+        "Violation. The preview warned you. The preview always warns you. The penalty always follows.",
+        "Hard violation confirmed. The score takes the hit. The record keeps the notation.",
+        "Structural failure in the layout. Not marginal. Not debatable. Wrong.",
+        "The violation is clear. A climbing crop was placed without climbing infrastructure. The penalty is applied at full weight."
+      ],
+      "onion": [
+        "That one hurts. You can see the plant reaching for something that is not there.",
+        "Hard violation. I know what that means in the score. But I also know what it looks like. That plant is struggling.",
+        "She would not have made that mistake. But she had forty years. You have had a few chapters.",
+        "Wrong spot. The kind of wrong that costs you. Move it next season. The wire is waiting.",
+        "Violation. The plant does not know it is a violation. It just knows it has nothing to hold onto.",
+        "That is a hard penalty. The kind that drags the whole bed down because one cell is suffering.",
+        "Rough. That climber on the ground floor is the saddest thing in this bed right now.",
+        "The trellis is right there. Right there. Next season, put the climbers where the wire is."
+      ]
+    },
+
+    "event_positive": {
+      "gurl": [
+        "Favorable conditions. The bed benefits. Score buff applied to affected cells.",
+        "Positive event resolved. The bonus is modest and temporary. Do not restructure around it.",
+        "Environmental advantage detected. The affected cells receive a buff through end of season.",
+        "Beneficial event. The scoring engine adjusts upward for targeted cells.",
+        "Good conditions confirmed. The bonus applies automatically. You did not earn it but you benefit from it.",
+        "Positive environmental factor. The bed catches a break. The break is logged.",
+        "Favorable event resolution. The buff is applied. The buff is temporary. Plan accordingly.",
+        "Conditions in your favor. The score adjusts. Do not mistake luck for strategy."
+      ],
+      "onion": [
+        "Good break. The bed needed one and it got one. Take it.",
+        "That is a gift from the weather. You take those when they come and you do not ask questions.",
+        "Good conditions. The kind of day where you walk out back and everything just looks right.",
+        "The bed caught a break. I am choosing to believe we deserved it.",
+        "Positive event. Like when the Phillies get a rain delay at the right time. You take the win.",
+        "Good news from the garden. That does not happen every season. Appreciate it.",
+        "The weather cooperated. The soil cooperated. Everything cooperated. Mark the date.",
+        "Favorable conditions. The bed looks grateful. I know how it feels."
+      ],
+      "critters": [
+        "Good conditions. We noticed. Moving on.",
+        "Favorable. Less to report.",
+        "Nothing damaged. Unusual.",
+        "Conditions mild. Targets resilient. Unproductive visit.",
+        "Environment stable. We will check back when that changes.",
+        "Positive event noted. Does not concern us.",
+        "Good weather. Bad for our schedule.",
+        "Nothing stressed. Nothing vulnerable. Nothing interesting."
+      ]
+    },
+
+    "event_negative": {
+      "gurl": [
+        "Negative event. Penalty applied to affected cells. The damage is scored.",
+        "Adverse conditions. The bed takes a hit. Affected cells are marked in the breakdown.",
+        "Environmental threat resolved against you. The penalty persists through harvest scoring.",
+        "Negative event on the record. The affected crops are penalized. Intervention was available.",
+        "Damage confirmed. The score absorbs it. The question is whether the rest of the bed can carry the loss.",
+        "Adverse event. The engine applied the penalty automatically. The engine does not negotiate.",
+        "Negative impact logged. Targeted cells took the full modifier. Review the breakdown.",
+        "Environmental setback. The penalty is what it is. The season continues with the damage."
+      ],
+      "onion": [
+        "That one hurt. The bed took a hit. You can see it in the leaves.",
+        "Bad event. The kind where you stand in the yard and just shake your head.",
+        "Damage. Real damage. The score is going to show it and the plants are going to feel it.",
+        "Rough break. The garden does not always cooperate. Sometimes it punches back.",
+        "Negative event. Like a loss in a game that mattered. The standings remember.",
+        "That hurt the bed. I can see it from here. The affected cells look different already.",
+        "Bad luck. Or bad planning. Or both. The result is the same either way.",
+        "The bed got hit. But it is still standing. That is not nothing."
+      ],
+      "critters": [
+        "Damage confirmed. Stressed cells identified.",
+        "Weakness detected. Exploiting.",
+        "Negative event. Affected targets are vulnerable. We are aware.",
+        "Stress visible. Stems compromised. Good timing for us.",
+        "Damage noted. We did not cause this one. We will benefit from it.",
+        "Adverse conditions. Opportunity.",
+        "Event resolved. Casualties observed. Standard.",
+        "Penalty landed. We are watching what happens next."
+      ]
+    },
+
+    "event_mixed": {
+      "gurl": [
+        "Mixed result. Some cells benefit. Others take damage. Net impact is in the breakdown.",
+        "Split event. The modifier is not uniform. Check individual cell reports for actual impact.",
+        "Mixed conditions. The bed responds unevenly. That is what happens when diversity meets volatility.",
+        "Partial benefit, partial penalty. The math is in the cell-by-cell report.",
+        "Mixed event resolved. Some placements held. Some did not. The average will tell the story.",
+        "Uneven impact. The crops that matched the conditions gained. The others lost. That is selection pressure.",
+        "Mixed result logged. The bed is a system. Systems respond to mixed inputs with mixed outputs.",
+        "Split conditions. Winner cells and loser cells. The distinction was made by the event, not by me."
+      ],
+      "onion": [
+        "Some good, some bad. That is a season. That is most seasons, actually.",
+        "Mixed bag. Part of the bed is fine. Part of it looks rough. Kind of like this block.",
+        "Good and bad in the same event. The garden is teaching you that those things coexist.",
+        "Half the bed smiled. Half the bed winced. I relate to both halves.",
+        "Mixed results. Like a Phillies game where they score six runs and give up seven.",
+        "Some cells got lucky. Some did not. The bed does not distribute luck evenly.",
+        "Good news and bad news in the same event. I have been to enough Decembers to know that is how it goes.",
+        "The bed split. Winners and losers from the same weather. Placement matters more than you think."
+      ],
+      "critters": [
+        "Mixed conditions. Some targets stressed. Some not. Partial opportunity.",
+        "Uneven damage. We focus on the weak cells.",
+        "Split event. Assessing which targets are now viable.",
+        "Some crops held. Some did not. We noticed.",
+        "Mixed results. Partial vulnerability detected.",
+        "Event resolved unevenly. Adjusting approach.",
+        "Good for some. Bad for others. Standard.",
+        "Damage inconsistent. Targeting the damaged."
+      ]
+    },
+
+    "intervention_used": {
+      "gurl": [
+        "Intervention deployed. Token spent. Modification applied before event resolution.",
+        "Action taken. The intervention is on record. Token deducted.",
+        "Intervention logged. The modification is active. The event resolves against the modified state.",
+        "Token spent. Intervention confirmed. The affected cell is modified.",
+        "Action registered. One fewer token this beat. The intervention will show in the breakdown.",
+        "Intervention applied. The cell state is updated. Event resolution will account for the change.",
+        "Token used. The decision is final. The modification is in effect.",
+        "Intervention confirmed. Applied before event. The order of operations is correct."
+      ],
+      "onion": [
+        "Good call. Sometimes you have to act before the damage hits.",
+        "Intervention used. That is not panic. That is preparation.",
+        "You spent the token. The bed is better for it. That is the whole point.",
+        "Action taken. The kind of decision that does not feel big but shows up in the score.",
+        "Used the intervention. Good. Sitting on your hands when the weather is coming is not a strategy.",
+        "Token spent. That cell is protected now. Or swapped. Or mulched. Whatever you chose, you chose.",
+        "You intervened. She would have done the same. Watched the weather, moved the row cover, kept going.",
+        "Good timing on that. The event was coming and you moved first."
+      ]
+    },
+
+    "intervention_skipped": {
+      "gurl": [
+        "No intervention. Token forfeited. The event resolves at full effect.",
+        "Loss accepted. The bed absorbs the impact without modification.",
+        "Intervention declined. The event applies unmitigated. Noted.",
+        "Token unused. The damage or benefit resolves as drawn. Your choice.",
+        "No action taken. The season continues without intervention. The score absorbs the result.",
+        "Intervention skipped. The event lands as designed. Sometimes that is the right call. Sometimes it is not.",
+        "Token forfeited. The bed takes whatever the event delivers without buffer.",
+        "No intervention deployed. The event resolves cleanly. For better or worse."
+      ],
+      "onion": [
+        "No intervention. That takes nerve. Or it takes not caring. I am choosing to believe it was nerve.",
+        "You let it ride. Sometimes that is the right move. Sometimes the garden knows better than you do.",
+        "Skipped the intervention. The bed takes the full hit. Or the full benefit. Either way, it is raw.",
+        "No token used. Okay. The bed will deal with whatever comes. It has dealt with worse.",
+        "You chose not to act. That is a decision too. The score will reflect it either way.",
+        "Let the event play out. Unfiltered. There is something honest about that even when it hurts.",
+        "No intervention. Like watching a Phillies game without changing the channel in the eighth inning.",
+        "You held back. Sometimes the best move is no move. Sometimes it is not. We will see at harvest."
+      ]
+    },
+
+    "harvest_good_yield": {
+      "gurl": [
+        "Yield above par. The bed produced what it was designed to produce.",
+        "Strong harvest. The yield numbers track with the cell scores. Consistency confirmed.",
+        "Good yield across planted cells. The harvest report reflects sound planning.",
+        "Production above threshold. The pantry benefits. The record benefits.",
+        "Yield confirmed at high level. The crops delivered because the conditions were met.",
+        "Harvest yield: above average. The bed converted score into food. That is the point.",
+        "Strong production numbers. The yield report is clean. The pantry is stocked.",
+        "Good harvest. The bed performed as scored. Score predicts yield. Yield confirms score."
+      ],
+      "onion": [
+        "Look at that yield. That is food. Real food from real dirt in a real backyard.",
+        "Good harvest. The kind where you bring something inside and put it on the counter and just look at it.",
+        "The bed produced. That never gets old. Watching something you planted become something you eat.",
+        "Strong yield. That is grocery bags you do not need to carry. That is the garden paying rent.",
+        "Good harvest numbers. She would have put these in a basket on the counter. The good basket.",
+        "Yield above par. That means the dinner is better. That means the garden mattered today.",
+        "Real production from real soil. The numbers are nice but the food is the point.",
+        "Strong harvest. The kind you tell the neighbors about. Not to brag. To share."
+      ]
+    },
+
+    "harvest_poor_yield": {
+      "gurl": [
+        "Yield below par. The bed underproduced. The factors are in the cell breakdown.",
+        "Poor harvest. Production fell short of what the planted cells should have delivered.",
+        "Low yield. The gap between potential and actual is documented in the scoring report.",
+        "Underperformance at harvest. The pantry receives less than projected.",
+        "Yield below threshold. The bed grew what it could with what it was given. It was not given enough.",
+        "Poor production confirmed. The harvest report shows the deficit. The causes are traceable.",
+        "Low yield numbers. The bed is not underperforming. It is performing exactly as poorly as the layout predicted.",
+        "Harvest below par. The pantry feels it. The record shows it. The next season should address it."
+      ],
+      "onion": [
+        "Thin harvest. Not much to bring inside. Not much to work with in the kitchen.",
+        "Low yield. The bed tried. I am not blaming the bed. I am blaming the season.",
+        "Not much came out of that one. Some seasons give. Some seasons teach you what giving costs.",
+        "Poor harvest. The kind where you stand in the yard holding three tomatoes and wondering what happened.",
+        "Low production. The pantry is light. Next season you plant with the pantry in mind.",
+        "Thin yield. She had seasons like this. Said you learn more from the thin ones.",
+        "Not enough to cook with. Barely enough to eat standing up in the yard. Which I have done.",
+        "Poor harvest. But the bed is still there. The soil is still there. The next season is still coming."
+      ]
+    },
+
+    "harvest_sauce_ingredients_complete": {
+      "gurl": [
+        "Harvest inventory matches target recipe. Yield sufficient. Season objective complete."
+      ],
+      "onion": [
+        "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying."
+      ]
+    },
+
+    "challenge_accepted": {
+      "gurl": [
+        "Challenge constraint active. The modifier is in effect for the full season. No mid-season withdrawal.",
+        "Challenge accepted. The constraint is now load-bearing. Plan within it.",
+        "Modifier engaged. The challenge rules apply to every placement from this point forward.",
+        "Challenge registered. Bonus score available at completion. Penalty for failure: nothing but the record.",
+        "Constraint accepted. The season is harder now. That was the request.",
+        "Challenge active. The bed operates under additional rules. I enforce all of them.",
+        "Modifier applied. The challenge is in effect. The standard scoring still runs underneath it.",
+        "Challenge confirmed. The season just got more specific. Specificity is where planning matters most."
+      ],
+      "onion": [
+        "You took the challenge. That is Year 3 confidence. Earn it.",
+        "Challenge accepted. The bed does not know it got harder. You do.",
+        "Constraint active. You chose this. Remember that when the score comes back.",
+        "Challenge mode. The kind of season where every cell matters twice as much.",
+        "You signed up for harder. I respect that. The Phillies never dodge a division rival.",
+        "Challenge engaged. The bed is the same bed. The rules are different. You are the variable.",
+        "That is a commitment. The season is locked in with the constraint. Make it count.",
+        "Challenge on. The kind of decision she would have made. Extra rules, same bed, more to prove."
+      ]
+    },
+
+    "challenge_passed": {
+      "gurl": [
+        "Challenge passed. Constraint honored through all three beats. Bonus score applied.",
+        "Challenge complete. The bed operated under restriction and held. That is noted.",
+        "Constraint satisfied. The bonus is earned. The record reflects the additional difficulty.",
+        "Challenge cleared. Full compliance with the modifier through harvest. Clean pass.",
+        "Passed. The challenge constraint held from planning through scoring. No violations against the modifier.",
+        "Challenge complete. The bed proved it can perform under pressure. The score includes the bonus.",
+        "Constraint honored. Challenge bonus applied. The season data reflects both the standard score and the challenge premium.",
+        "Passed under challenge conditions. That distinction matters in the season record."
+      ],
+      "onion": [
+        "You passed. Under the harder rules. That is not just a score. That is proof.",
+        "Challenge cleared. The kind of result that changes how you see the bed.",
+        "Passed. I watched you work through that constraint and I did not say anything because you did not need me to.",
+        "Challenge complete. The bed held. You held. Everything held.",
+        "Cleared. Under pressure. Under constraint. The Phillies win those games in October and they call it clutch.",
+        "You did the hard version and you passed. I need a minute.",
+        "Challenge passed. She never backed away from a hard season either. Some things carry.",
+        "Clean challenge pass. That goes in the journal. That stays in the journal."
+      ]
+    },
+
+    "challenge_failed": {
+      "gurl": [
+        "Challenge failed. The constraint was violated. No bonus applied. Standard scoring remains.",
+        "Challenge incomplete. The modifier was not honored through the full season.",
+        "Failed. The challenge required full compliance. The compliance was not full.",
+        "Challenge constraint broken. The bonus is forfeited. The attempt is logged.",
+        "Failed challenge. The constraint was clear. The execution fell short at beat two.",
+        "Challenge not met. The season score stands without the bonus. The failure is noted separately.",
+        "Constraint violated. Challenge failed. The record distinguishes between not attempting and attempting unsuccessfully.",
+        "Challenge failed. Retry available in a future season. The same constraint. The same standard."
+      ],
+      "onion": [
+        "Missed it. Close, but missed. The challenge stays open for next time.",
+        "Challenge failed. That happens. The Phillies have been eliminated in October more times than I can count and they come back.",
+        "Did not clear the challenge. The bed is still good. The season is still good. The constraint was just too much this time.",
+        "Failed. I watched you try. That counts for something even if it does not count for the bonus.",
+        "Missed the challenge. Not the season, just the challenge. There is a difference.",
+        "Challenge not met. It will be there next time. So will you. So will the bed.",
+        "Close. The kind of close that hurts more than not trying. But you tried.",
+        "Did not pass the challenge. The bed moves on. You move on. The challenge waits."
+      ]
+    },
+
+    "season_spring_start": {
+      "gurl": [
+        "Spring. New season. The bed is open for placement. Score targets are set. Begin.",
+        "Spring season active. Cool-season crops have the advantage. Plan around the frost date.",
+        "Opening day. The bed is clear. The scoring engine is live. Plant with intent.",
+        "Spring. The soil is ready. Whether you are ready is the question this season will answer.",
+        "New season. Spring conditions active. The light is increasing. The soil is warming. The expectations are rising.",
+        "Spring loaded. Score target posted. Crop roster updated. The bed awaits your decisions.",
+        "Fresh season. Spring. The bed has been resting since fall. It is done resting.",
+        "Spring. The beginning. Again. The bed does this every year. The question is whether you improve each time."
+      ],
+      "onion": [
+        "Spring. The yard smells like dirt and rain and something waking up. My favorite combination.",
+        "New season. The bed is ready. The soil spent all winter getting ready for this.",
+        "Spring. Opening day. The part where everything is possible and nothing has gone wrong yet.",
+        "The tarp comes off. The bed is there. It is always there. Waiting for spring like the rest of us.",
+        "Spring again. She always started early. Said the soil would tell you when it was warm enough if you put your hand in it.",
+        "New season. Fresh dirt. The whole summer ahead. This is the good part.",
+        "Spring. The yard looks different when the bed is open. More alive. More like it has a purpose.",
+        "Opening day for the garden. The kind of day where everything resets and you get to start over."
+      ]
+    },
+
+    "season_summer_start": {
+      "gurl": [
+        "Summer. High-sun conditions active. Heat-tolerant crops have the advantage. Cool-season crops face penalties.",
+        "Summer season. The light is at maximum. The heat is at maximum. The scoring reflects both.",
+        "Peak growing season. Summer. The bed should be producing at its highest capacity now.",
+        "Summer active. Warm-season multipliers applied. If you planted for heat, the bed rewards it. If you did not, the bed punishes it.",
+        "Summer. The longest days. The highest temperatures. The most demanding conditions. Plan for endurance.",
+        "Summer conditions live. The bed is under full sun for maximum hours. Use them or lose them.",
+        "Peak season. Summer. Every cell should be working. Every crop should be producing.",
+        "Summer loaded. The heat is a tool if you planned for it. A weapon if you did not."
+      ],
+      "onion": [
+        "Summer. The yard is hot. The concrete is hot. The bed is hot. Everything that survives this earns it.",
+        "Full summer. The part where the garden stops being a hobby and becomes a commitment.",
+        "Summer heat. The kind where you water at six in the morning or you water nothing at all.",
+        "Hot season. The bed needs attention every day now. That is not a burden. That is a relationship.",
+        "Summer. She would be out here before the sun cleared the roofline. Said the plants needed morning water, not afternoon panic.",
+        "Peak growing. Summer. If the bed is going to prove itself, this is when it happens.",
+        "Summer. The season that separates the growers from the people who bought a raised bed.",
+        "Hot days ahead. The bed can handle it. The question is whether the plan can handle it."
+      ]
+    },
+
+    "season_fall_start": {
+      "gurl": [
+        "Fall. Cool-season window open. Warm crops lose their advantage. Adjust the roster or accept the penalty.",
+        "Fall season active. The light is declining. Cool-season multipliers favor rotation.",
+        "Final planting season of the year. Fall. The bed should reflect what you learned in spring and summer.",
+        "Fall conditions live. The temperature shift rewards cool-season crops. The harvest is the last of the year.",
+        "Fall. Third season. The data from spring and summer should inform every cell you fill.",
+        "Autumn conditions active. The bed enters its final producing phase. Make the yield count.",
+        "Fall. The scoring engine sees three seasons of data now. Patterns emerge. So do problems.",
+        "Fall season loaded. Last chance to grow before winter. The pantry depends on this harvest."
+      ],
+      "onion": [
+        "Fall. My season. The light gets serious. Everything underground gets serious.",
+        "Autumn in the yard. The air is different. The light is different. The bed looks different in this light.",
+        "Fall planting. The part where you think about what you want to eat in November.",
+        "Fall. The season where the garden gets quiet and honest. The vegetables go underground.",
+        "She loved fall planting. Said the roots did their best work when nobody was watching.",
+        "Autumn. The yard smells like cold air and warm soil. Best combination there is.",
+        "Fall season. Last chance to grow before the tarp goes back on. Make it count.",
+        "October light. November harvest. The kind of season that feeds you through winter."
+      ]
+    },
+
+    "season_winter_review": {
+      "gurl": [
+        "Winter. No planting. The bed is covered. The data is in. Review the record.",
+        "Season review. The numbers from three seasons are compiled. Read them.",
+        "Winter assessment. The scoring history is available. Performance trajectory is calculated.",
+        "Dormant season. The bed rests. You review. The data does not rest.",
+        "Winter. The bed is under the tarp. The record is under the review. Both are necessary.",
+        "Year-end data compiled. Three seasons of scoring, events, interventions, and yield. Examine it.",
+        "Review period. Winter. The bed is not active but the lessons from the year should be.",
+        "Dormant. The bed sleeps. The journal is open. The record speaks for itself."
+      ],
+      "onion": [
+        "Winter. The yard is quiet. The bed is covered. Time to look at what we did.",
+        "Offseason. The part where you sit with the numbers and figure out what happened.",
+        "Winter review. Like the Phillies offseason. You look at the stats and make a plan.",
+        "The tarp is on. The growing is done. Now you think about what the growing meant.",
+        "Winter. She would sit at the kitchen table with a seed catalog and a cup of coffee and plan the next year. Every year.",
+        "Quiet season. The bed is resting. You should be reviewing.",
+        "Winter. The year is over. The record is permanent. What you do with it is not.",
+        "Offseason. Time to look back before you look forward. Both directions matter."
+      ]
+    },
+
+    "chapter_11_sauce_moment": {
+      "gurl": [
+        "Harvest inventory matches target recipe. Yield sufficient. Season objective complete."
+      ],
+      "onion": [
+        "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying."
+      ]
+    },
+
+    "chapter_12_epilogue": {
+      "gurl": [
+        "Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common."
+      ],
+      "onion_sauce_complete": [
+        "The bed is ready for next year, and so are you."
+      ],
+      "onion_sauce_incomplete": [
+        "The bed is ready for next year."
+      ]
+    },
+
+    "phillies_spring": {
+      "gurl": [
+        "I do not follow baseball. I follow compliance metrics. Both involve counting failures.",
+        "Spring training data is not predictive. Neither is a first-season garden score.",
+        "The Phillies open their season and the city loses its composure. The bed does not care about baseball.",
+        "Opening day. The only data point that matters less than a spring training record is a first-season score prediction.",
+        "Baseball returns. The city's attention drifts. The bed's scoring engine does not drift.",
+        "Phillies are in spring training. The correlation between spring training performance and October outcomes is statistically insignificant. Same applies to garden optimism.",
+        "The ballpark is open. The garden bed is open. One of these produces reliable data.",
+        "Opening day energy. Unearned confidence. The bed and the rotation share the same problem."
+      ],
+      "onion": [
+        "Opening day. The Phillies are 0 and 0. The garden is brand new. Everything is possible.",
+        "Spring training numbers do not mean anything. But they feel like they mean something. Same with the first layout.",
+        "The Phillies are back. The bed is back. Philadelphia is doing the two things it does best: growing and yelling at sports.",
+        "Opening day roster. Opening day garden. Both full of hope that has not been tested yet.",
+        "She listened to games on the radio while she worked the bed. Spring training on AM radio and the sound of a trowel.",
+        "Phillies home opener week. The whole city smells like possibility and soft pretzels.",
+        "New season. Fresh roster. No losses on the record. The garden and the Phillies start the same way.",
+        "Spring. The Phillies are selling hope. The garden is selling seeds. Both require faith in something you cannot see yet."
+      ]
+    },
+
+    "phillies_summer": {
+      "gurl": [
+        "The All-Star break does not affect bed scoring. I mention this because someone always asks.",
+        "Midsummer. The Phillies are in the standings and the bed is in the data. Both are being measured whether they like it or not.",
+        "July. The Phillies play every day. The garden grows every day. Neither takes a day off. Neither should you.",
+        "The pennant race is irrelevant to soil composition. I will not explain this again.",
+        "Trade deadline approaches in baseball. The garden does not have a trade deadline. What you planted is what you have.",
+        "Summer grind. The Phillies call it the dog days. The garden calls it peak production. Same heat. Different vocabulary.",
+        "The All-Star Game is an exhibition. The garden does not do exhibitions. Every season counts.",
+        "Midsummer standings. The Phillies are somewhere in the division. The bed is somewhere in the scoring range. Both positions are earned."
+      ],
+      "onion": [
+        "Dog days. The Phillies are grinding through July. The garden is grinding through July. We are all grinding through July.",
+        "Trade deadline coming. The Phillies need a reliever. The garden needs rain. Neither is guaranteed.",
+        "Midsummer. The part where the Phillies show you if they are real or if they were just hot in April.",
+        "July heat. The Phillies play in the heat. The garden grows in the heat. Both are tougher than they look.",
+        "All-Star break. The Phillies rest for three days. The garden does not rest. The garden does not get All-Star breaks.",
+        "Pennant race heating up. So is the bed. Both are competing against things they cannot control.",
+        "Summer series against the division. The Phillies have to play who is in front of them. The garden has to grow in whatever weather shows up.",
+        "She would check the Phillies score and the garden in the same walk to the yard. Both mattered equally."
+      ]
+    },
+
+    "phillies_fall": {
+      "gurl": [
+        "October baseball is statistically improbable for most franchises. Your garden scoring in the top tier is also statistically improbable. Both require sustained execution.",
+        "Playoff atmosphere. The city is distracted. The scoring engine is not.",
+        "October. The Phillies either made the postseason or they did not. The garden either made the harvest or it did not. Both results are final.",
+        "Fall baseball. The games matter more. The harvests matter more. Compression of stakes.",
+        "Postseason baseball is elimination format. Fall gardening is last-harvest format. Both are do-or-done.",
+        "October in Philadelphia. The city cares about two things: the series and the weather. The bed cares about one.",
+        "Playoff roster decisions and fall planting decisions have the same characteristic: you live with what you choose.",
+        "October tension. The kind where the city holds its breath. The bed does not hold its breath. It just scores."
+      ],
+      "onion": [
+        "October. If the Phillies are in it, the whole city stops. If the garden is producing, the whole yard matters.",
+        "Playoff baseball. The kind of games where you cannot sit down. The kind of harvest where you cannot stop checking.",
+        "Fall. The Phillies are either playing October baseball or they are not. Either way, the garden is playing October gardening.",
+        "Postseason energy. Everything matters more. Every game, every at-bat, every cell, every crop.",
+        "October in South Philly. Flags on the porches. Gardens in the yards. Both are about believing in something you built.",
+        "She watched the Phillies in October with the harvest on the counter. Said the two best things about fall are baseball and sauce.",
+        "Playoff atmosphere in the yard. The harvest feels like a must-win game.",
+        "October. The stakes go up. In baseball and in the bed. The margin for error disappears."
+      ]
+    },
+
+    "phillies_winter": {
+      "gurl": [
+        "Hot stove season. The Phillies make trades. The garden makes plans. Both involve optimistic projections with uncertain outcomes.",
+        "Offseason. The Phillies evaluate their roster. I evaluate your season record. Neither evaluation is gentle.",
+        "Winter meetings. The Phillies sign free agents. You review cell data. Both activities involve spending resources on future uncertainty.",
+        "The offseason is for analysis. The Phillies analyze stats. I analyze scores. Both processes are thankless and necessary.",
+        "Hot stove speculation is not data. Offseason planning without reviewing the season record is the same thing.",
+        "Trade rumors. The Phillies are linked to everyone. The garden is linked to the data. One of these linkages is reliable.",
+        "Winter. The Phillies are shopping. The garden is dormant. Both are doing important work that produces nothing visible.",
+        "Offseason transactions. The Phillies make moves in December that show up in April. The garden plan you make now shows up in spring."
+      ],
+      "onion": [
+        "Hot stove season. The Phillies are making moves. We should be making plans.",
+        "Winter meetings. The whole baseball world is trading and signing. The garden world is resting and reviewing.",
+        "Offseason. The Phillies need a third baseman. The garden needs a plan for the front row. Both feel urgent in December.",
+        "Hot stove. Every rumor feels real. Every garden plan feels possible. January is good for dreaming.",
+        "The Phillies signed someone. I do not know who yet. But it feels like a sign that things are moving.",
+        "Winter. The Phillies are in the news for transactions. The garden is in the journal for reflections. Both matter for April.",
+        "She followed the hot stove all winter. Said the offseason was for planning and the season was for executing.",
+        "Offseason moves. The Phillies make theirs in front offices. We make ours at the kitchen table with the journal open."
+      ]
+    },
+
+    "mom_memory": {
+      "gurl": [
+        "The tomato lineage traces back to the original seedling. The bed's records predate your involvement.",
+        "Cedar condition reflects decades of use. This infrastructure was built to outlast its builder.",
+        "The trellis wire has a green patina consistent with years of exposure. It was installed with competence.",
+        "The soil composition in row two shows years of root-crop rotation. That pattern predates your management.",
+        "Cell fourteen has unusually high soil health. Consistent with repeated companion planting over many seasons by a prior operator.",
+        "The bed's dimensions are non-standard. Eight by four. She chose that size deliberately. The cedar was cut to a specific plan.",
+        "The hardware cloth beneath the soil was installed with half-inch overlap at every seam. That is not standard. That is careful.",
+        "The drainage grade on this bed is precise. The back edge is three-quarters of an inch higher than the front. Intentional. Functional."
+      ],
+      "onion": [
+        "She always put the basil in the same corner. Row three, column seven. Said it got the afternoon light she liked for drying.",
+        "The trellis wire is the same wire she strung. I watched her do it. She used pliers and a level and she did not ask for help.",
+        "She grew carrots every fall. Same row. Front row. Said they liked the cool soil near the edge where the concrete breathes.",
+        "The tomato seedling came from two doors down. The guy gave it to her over the fence. She grew every tomato in this bed from that line.",
+        "She had a spot for the onions. Row two, middle four cells. Said onions liked company but not too much company.",
+        "The cedar was from the lumber yard on Oregon Avenue. She picked each board herself. Said you could tell the good cedar by the smell.",
+        "She never grew zucchini. Said it took up too much room for what it gave back. I think she was right but I grow it anyway.",
+        "The bed sat empty for three years before you pulled the tarp off. Three springs where nothing went in the ground.",
+        "She kept a list on the fridge of what went where each season. Pencil on the back of an envelope. Years of data in her handwriting.",
+        "She composted in the corner by the fence. Coffee grounds and vegetable scraps. The soil in this bed has decades of that in it."
+      ]
+    }
+  }
+}

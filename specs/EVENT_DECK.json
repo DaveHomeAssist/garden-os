@@ -1,0 +1,1188 @@
+[
+  {
+    "id": "S01",
+    "title": "Late Frost Advisory",
+    "season": "spring",
+    "category": "weather",
+    "valence": "negative",
+    "description": "Temperature drops to 28 degrees overnight. The forecast was right there on your phone. Frost-sensitive crops in the front two rows take the hit.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "frost-sensitive",
+        "maxCells": null
+      },
+      "modifier": -2.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "mulch", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Frost warning was issued at 4pm. Compliance with forecast advisories is not optional.",
+      "onion": "I covered my car mirrors with bags and forgot the garden. I forgot the garden.",
+      "vegeman": "Rip it out. Start over. Frost means war.",
+      "critters": "Cold night. Low activity. Some stems did not make it."
+    },
+    "chapterAvailability": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.2
+  },
+  {
+    "id": "S02",
+    "title": "Phillies Home Opener Energy",
+    "season": "spring",
+    "category": "neighbor",
+    "valence": "positive",
+    "description": "The whole block is in a good mood. Neighbor two doors down drops off a bag of composted horse manure from the stadium parking lot. Row closest to the fence gets enriched soil.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "row",
+        "filter": "row-3",
+        "maxCells": null
+      },
+      "modifier": 1.0,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": {
+      "effect": "Enriched soil persists in row 3. +0.3 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Unsolicited organic amendment received. Nutrient content unverified but the pH looks reasonable.",
+      "onion": "Opening Day compost. That is the best kind. The hope is literally in the dirt.",
+      "vegeman": "Dump the whole bag. More is more. Science has not disproven this.",
+      "critters": "New material detected in row 3. Investigating."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "S03",
+    "title": "Cabbage Moth Arrival",
+    "season": "spring",
+    "category": "critter",
+    "valence": "negative",
+    "description": "White butterflies are not romantic. They are laying eggs on every brassica in the bed. Broccoli and kale cells take a pest hit.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "brassicas",
+        "maxCells": null
+      },
+      "modifier": -1.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Pieris rapae confirmed. Brassica faction is under siege. Protective netting was available at planning.",
+      "onion": "They look so pretty flying around. They are destroying everything. Nature is dishonest.",
+      "vegeman": "Get the hose. Full blast. Butterfly funeral.",
+      "critters": "White wings spotted. We are not involved. This is between them and the kale."
+    },
+    "chapterAvailability": [5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "S04",
+    "title": "Block Party Planning Committee",
+    "season": "spring",
+    "category": "neighbor",
+    "valence": "mixed",
+    "description": "Mrs. Gonzalez from across the street wants herbs for the block party cookout. She is taking cuttings whether you agree or not. Herb faction loses yield but the whole bed gets a neighborhood morale buff.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "herbs",
+        "maxCells": 3
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Unauthorized harvest by a third party. The herbs will recover. The precedent is concerning.",
+      "onion": "She makes the best rice on the block. If she needs basil she gets basil. That is the law.",
+      "vegeman": "Tell her to grow her own. Then sell her a starter kit. Profit.",
+      "critters": "Herb stems cut. Less cover for us. Noted."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "S05",
+    "title": "Spring Rain Streak",
+    "season": "spring",
+    "category": "weather",
+    "valence": "positive",
+    "description": "Five straight days of steady rain. No watering needed. Every crop with water requirement 3 gets a boost from the deep soak. The bed looks greener than it has any right to.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "crop_filter",
+        "filter": "water >= 3",
+        "maxCells": null
+      },
+      "modifier": 0.75,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Precipitation exceeded weekly average by 40%. High-water crops are responding favorably.",
+      "onion": "Rain for a week. The bed is drinking. I am also drinking. Different context.",
+      "vegeman": "Rain is free water. Free water is the only good thing about spring.",
+      "critters": "Moisture levels elevated. Slug conditions favorable. Standing by."
+    },
+    "chapterAvailability": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "S06",
+    "title": "Alley Cat Patrol",
+    "season": "spring",
+    "category": "critter",
+    "valence": "negative",
+    "description": "The orange tabby from the alley has decided your bed is a litter box. Two random cells in the front row are compacted and disturbed. Roots faction takes the worst of it.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "random_cells",
+        "filter": "row-3",
+        "maxCells": 2
+      },
+      "modifier": -1.0,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["protect", "mulch", "prune", "accept_loss"],
+    "carryForward": {
+      "effect": "Compacted soil in affected cells. -0.5 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Feline intrusion documented. Soil structure compromised in two cells. This is a zoning violation.",
+      "onion": "That cat has been here longer than I have. He does not care about your carrots.",
+      "vegeman": "Chicken wire. Six inches high. Problem solved permanently.",
+      "critters": "Large predator in the bed. Critter operations paused. Awaiting departure."
+    },
+    "chapterAvailability": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.9
+  },
+  {
+    "id": "S07",
+    "title": "Seed Swap on Passyunk",
+    "season": "spring",
+    "category": "neighbor",
+    "valence": "positive",
+    "description": "The garden club at the rec center had extra seedlings. A neighbor brought back starts that are already hardened off. Two random planted cells get a vigor buff from the stronger stock.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "random_cells",
+        "filter": "planted",
+        "maxCells": 2
+      },
+      "modifier": 1.0,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["companion_patch", "mulch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Supplemental seedling stock acquired. Genetic diversity is within acceptable parameters.",
+      "onion": "Free plants from the rec center. That is community. That is what a block does.",
+      "vegeman": "Free stuff. Take everything. Go back for more. Wear a different hat.",
+      "critters": "New growth. Same location. Monitoring."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "S08",
+    "title": "Windy Week",
+    "season": "spring",
+    "category": "weather",
+    "valence": "negative",
+    "description": "Sustained 25mph winds funnel down the alley between the rowhomes. Tall crops in the trellis rows get battered. Wind-sensitive crops take the worst of it.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "wind-sensitive",
+        "maxCells": null
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "swap", "prune", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Wind advisory in effect. Structural exposure on trellis-row crops exceeds tolerance.",
+      "onion": "The wind comes down the alley like it has somewhere to be. The beans do not stand a chance.",
+      "vegeman": "Stake everything. Zip ties. Duct tape. Whatever it takes.",
+      "critters": "High wind. Holding position behind the raised bed wall."
+    },
+    "chapterAvailability": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.8
+  },
+  {
+    "id": "S09",
+    "title": "Mom's Trowel Turns Up",
+    "season": "spring",
+    "category": "family",
+    "valence": "neutral",
+    "description": "Digging in cell row-0, col-3, the trowel hits something metal. It is her old trowel, buried handle-deep from years ago. The soil in that column feels different after you find it.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "column",
+        "filter": "col-3",
+        "maxCells": null
+      },
+      "modifier": 0.5,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": {
+      "effect": "Narrative flag: Mom's Trowel found. Permanent keepsake.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Foreign object recovered from subsurface. Catalogued. The soil disturbance is minor.",
+      "onion": "That is her trowel. I know because the handle is wrapped in electrical tape. She did that to everything.",
+      "vegeman": "Old tools are better than new tools. That is not nostalgia. That is metallurgy.",
+      "critters": "Metal object surfaced. Not food. Disregard."
+    },
+    "chapterAvailability": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.7
+  },
+  {
+    "id": "S10",
+    "title": "Slugs After Rain",
+    "season": "spring",
+    "category": "critter",
+    "valence": "mixed",
+    "description": "The rain brought slugs. They are methodical and they are hungry. Greens and fast-cycle crops in the front rows take damage, but the slug activity aerates the soil for roots.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "greens",
+        "maxCells": 3
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "mulch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Gastropod activity detected in greens sector. Damage is cosmetic but scoring impact is real.",
+      "onion": "Slugs. Every spring. They eat the lettuce like it is their lettuce. It is not their lettuce.",
+      "vegeman": "Beer traps. Shallow dishes. They drink and they drown. Circle of life.",
+      "critters": "Slug division has mobilized. We have no jurisdiction over slugs."
+    },
+    "chapterAvailability": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U01",
+    "title": "Heat Dome",
+    "season": "summer",
+    "category": "weather",
+    "valence": "negative",
+    "description": "Heat index hits 108. The concrete radiates until midnight. Cool-season crops wilt in real time. Heat-tolerant crops hold steady because they were built for this.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "heat-sensitive",
+        "maxCells": null
+      },
+      "modifier": -1.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "mulch", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Excessive heat warning. Cool-season crops are non-compliant with current conditions. This was predictable.",
+      "onion": "108 degrees and the lettuce is translucent. I am also translucent. We are all suffering.",
+      "vegeman": "Shade cloth. Right now. Throw a bedsheet over it if you have to.",
+      "critters": "Too hot. Operations suspended. Reassessing at dusk."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.3
+  },
+  {
+    "id": "U02",
+    "title": "Tomato Hornworm",
+    "season": "summer",
+    "category": "critter",
+    "valence": "negative",
+    "description": "One hornworm can strip a tomato plant overnight. You found three. Fruiting and climber crops with the pest-target tag are under attack.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "pest-target",
+        "maxCells": 4
+      },
+      "modifier": -1.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Manduca quinquemaculata identified on four cells. Manual removal recommended before defoliation completes.",
+      "onion": "They are the size of my thumb and they eat like teenagers. I found one on the basil and I screamed.",
+      "vegeman": "Pick them off by hand. Drop them in soapy water. Do not think about it too hard.",
+      "critters": "Large caterpillar units active. They outrank us. We are staying clear."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.1
+  },
+  {
+    "id": "U03",
+    "title": "Phillies Win Streak",
+    "season": "summer",
+    "category": "neighbor",
+    "valence": "positive",
+    "description": "Seven straight wins. The block is electric. Your neighbor is grilling every night and the smoke drifts over the bed like a blessing. General morale buff to the whole front row.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "row",
+        "filter": "row-3",
+        "maxCells": null
+      },
+      "modifier": 0.75,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["companion_patch", "mulch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Neighborhood activity levels elevated. Correlation with crop performance is not causal but is noted.",
+      "onion": "Seven in a row. SEVEN. The garden is growing and the Phillies are winning and everything is possible.",
+      "vegeman": "Winning energy is real energy. I will not be taking questions.",
+      "critters": "Increased human foot traffic near the bed. Grill scraps available. Morale high."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U04",
+    "title": "Afternoon Thunderstorm",
+    "season": "summer",
+    "category": "weather",
+    "valence": "mixed",
+    "description": "Three inches in forty minutes. The bed floods briefly. Deep-rooted crops ride it out fine. Shallow-rooted fast-cycle crops in low spots get waterlogged.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "fast_cycles",
+        "maxCells": 3
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "swap", "mulch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Flash flood event. Drainage in raised bed is adequate but shallow-root crops took saturation damage.",
+      "onion": "The sky opened up and the radishes floated. Actual radishes actually floating. In a raised bed.",
+      "vegeman": "Drill more drainage holes. The bed should leak like a sieve.",
+      "critters": "Flood event. Emergency protocols. All units to high ground."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U05",
+    "title": "Neighbor's Hose Donation",
+    "season": "summer",
+    "category": "neighbor",
+    "valence": "positive",
+    "description": "Mr. Kim next door hooks his soaker hose over the fence while you are at work. The back row gets a deep watering on the hottest day of the week. Roots and greens recover.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "row",
+        "filter": "row-0",
+        "maxCells": null
+      },
+      "modifier": 1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Unauthorized irrigation from adjacent property. Results are beneficial. Logging the anomaly.",
+      "onion": "Mr. Kim does not say much but he waters the back row when it is 95 degrees. That is a whole conversation.",
+      "vegeman": "Accept all free water. Ask no questions. Water bill is real.",
+      "critters": "Moisture detected in back row. Source: external. Acceptable."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U06",
+    "title": "Squash Vine Borer",
+    "season": "summer",
+    "category": "critter",
+    "valence": "negative",
+    "description": "The telltale sawdust at the base of the zucchini stem. Vine borers tunneled in overnight. Fruiting crops in the trellis-adjacent zone take internal damage.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "fruiting",
+        "maxCells": 3
+      },
+      "modifier": -1.5,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["protect", "prune", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Melittia cucurbitae confirmed. Internal stem damage is irreversible without intervention. Act now or accept loss.",
+      "onion": "The zucchini was fine yesterday. Today it is collapsing from the inside. This is a metaphor I do not want.",
+      "vegeman": "Slit the stem. Find the worm. Remove it with tweezers. Surgery in the backyard.",
+      "critters": "Borer activity confirmed. Not our department. We handle surface operations only."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U07",
+    "title": "Sidewalk Sale Foot Traffic",
+    "season": "summer",
+    "category": "infrastructure",
+    "valence": "negative",
+    "description": "The block is having a yard sale. Foot traffic through the alley compacts the soil along the front row. People lean on the bed frame to look at furniture. The cedar holds but the soil does not.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "row",
+        "filter": "row-3",
+        "maxCells": null
+      },
+      "modifier": -0.75,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "protect", "accept_loss"],
+    "carryForward": {
+      "effect": "Compacted soil in row 3. -0.5 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Soil compaction from pedestrian activity. Load-bearing capacity of cedar frame is not the issue. The soil is.",
+      "onion": "Somebody put a boombox on the edge of the bed. A boombox. On the bed. I did not recover.",
+      "vegeman": "Caution tape. Around the whole bed. Crime scene energy keeps people away.",
+      "critters": "High traffic volume. Retreating to sub-bed tunnels."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.9
+  },
+  {
+    "id": "U08",
+    "title": "Compost Delivery",
+    "season": "summer",
+    "category": "infrastructure",
+    "valence": "neutral",
+    "description": "The community garden co-op drops off a bucket of finished compost. Not enough for the whole bed but enough for one column. You choose where to apply it. Column closest to the gate gets it.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "column",
+        "filter": "col-0",
+        "maxCells": null
+      },
+      "modifier": 0.75,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": {
+      "effect": "Enriched soil in column 0. +0.3 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Organic amendment applied to column zero. Nutrient profile adequate. Distribution could be more equitable.",
+      "onion": "Free dirt that used to be food. The circle of life is disgusting and beautiful.",
+      "vegeman": "One bucket? Call them back. Tell them you need four.",
+      "critters": "Rich material in column 0. Earthworm division is mobilizing."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U09",
+    "title": "Blight Warning",
+    "season": "summer",
+    "category": "weather",
+    "valence": "negative",
+    "description": "Humidity plus heat equals blight. Brown spots appear on the lower leaves of blight-prone crops. The tomatoes are nervous and so are you.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "blight-prone",
+        "maxCells": null
+      },
+      "modifier": -1.5,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["prune", "protect", "swap", "accept_loss"],
+    "carryForward": {
+      "effect": "Blight spores persist in soil. Blight-prone crops in same cells get -0.5 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Phytophthora indicators present. Blight-prone crops are compromised. Prune affected foliage immediately or accept systemic loss.",
+      "onion": "The tomatoes have spots. The tomatoes from the seedling line have spots. I cannot handle this right now.",
+      "vegeman": "Cut the bad leaves. Cut them all. The plant will figure it out or it will not.",
+      "critters": "Discoloration noted on lower canopy. Not our problem. Tastes the same."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "U10",
+    "title": "Marigold Wall",
+    "season": "summer",
+    "category": "critter",
+    "valence": "mixed",
+    "description": "The marigolds exploded this week. Pest-repellent effect is radiating to adjacent cells, but the marigolds themselves are crowding their neighbors. Companion faction buffs adjacent crops but takes a self-penalty.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "faction",
+        "filter": "companions",
+        "maxCells": null
+      },
+      "modifier": -0.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["prune", "protect", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Companion faction is exceeding allocated space. Adjacent pest suppression confirmed but crowding penalty is active.",
+      "onion": "The marigolds are doing their job too well. They are protecting everything and suffocating themselves. Heroes.",
+      "vegeman": "Cut them back to half height. Marigolds do not have feelings.",
+      "critters": "Marigold perimeter expanding. Chemical deterrent levels increasing. Retreat authorized."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.9
+  },
+  {
+    "id": "F01",
+    "title": "First Frost Scare",
+    "season": "fall",
+    "category": "weather",
+    "valence": "negative",
+    "description": "October 14th. The forecast says 33 degrees. Not quite frost but close enough to stress anything frost-sensitive still in the bed. The basil knows. The basil always knows first.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "frost-sensitive",
+        "maxCells": null
+      },
+      "modifier": -1.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "mulch", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Frost advisory pending. Frost-sensitive crops remain in the bed at operator's risk. You were warned in planning.",
+      "onion": "October 14th. Every year. The basil goes first. Every single year I am not ready.",
+      "vegeman": "Tarp the whole thing. Extension cords. Space heater. Whatever it takes.",
+      "critters": "Temperature dropping. Adjusting underground position. Some surface crops look bad."
+    },
+    "chapterAvailability": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.2
+  },
+  {
+    "id": "F02",
+    "title": "Phillies October Baseball",
+    "season": "fall",
+    "category": "neighbor",
+    "valence": "mixed",
+    "description": "The Phillies are in the playoffs. Nobody on the block is sleeping. Fireworks after every win rattle the trellis wire and the whole yard vibrates. Climbers get shaken but the general energy buffs everything else.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "climbers",
+        "maxCells": null
+      },
+      "modifier": -0.75,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "swap", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Vibration damage on trellis infrastructure from unsanctioned pyrotechnics. Filing a notation.",
+      "onion": "October baseball is a religious experience. The beans will understand. The beans have to understand.",
+      "vegeman": "If the Phillies win the World Series I will eat every vegetable in this bed raw. On camera.",
+      "critters": "Loud noises. Bright lights. Retreating to secondary positions."
+    },
+    "chapterAvailability": [7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F03",
+    "title": "Leaf Mulch Windfall",
+    "season": "fall",
+    "category": "weather",
+    "valence": "positive",
+    "description": "The neighbor's oak dropped everything overnight. Leaves piled against the fence and drifted into the bed. Free mulch. The back two rows are insulated and the worms are thrilled.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "row",
+        "filter": "row-0",
+        "maxCells": null
+      },
+      "modifier": 1.0,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": {
+      "effect": "Decomposing leaf mulch enriches back row. +0.3 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Arboreal debris accumulated along rear perimeter. Functioning as organic mulch layer. Acceptable.",
+      "onion": "The oak gave us leaves. For free. The oak does not even know we exist. Generosity without awareness.",
+      "vegeman": "Rake more in. Fill the whole bed. Leaves are nature's blanket.",
+      "critters": "Leaf cover established. Overwintering conditions improved significantly."
+    },
+    "chapterAvailability": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F04",
+    "title": "Aphid Resurgence",
+    "season": "fall",
+    "category": "critter",
+    "valence": "negative",
+    "description": "The cool weather brought the aphids back. They cluster on the undersides of brassica and greens leaves like tiny green landlords. Pest-target crops take a hit.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "crop_filter",
+        "filter": "pest-target",
+        "maxCells": 4
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Aphid population exceeds threshold on four cells. Pest-repellent companions would have mitigated. They were available at planning.",
+      "onion": "They are so small and there are so many of them. It is an army of tiny green nightmares.",
+      "vegeman": "Blast them with water. High pressure. Aphid eviction notice.",
+      "critters": "Aphid presence confirmed. They are competitors, not allies. Monitoring."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F05",
+    "title": "Neighborhood Potluck Demand",
+    "season": "fall",
+    "category": "neighbor",
+    "valence": "mixed",
+    "description": "The block potluck is Saturday and three neighbors asked for contributions from the garden. Root crops and herbs get harvested early, but the social capital returns as a general bed buff next season.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "faction",
+        "filter": "roots",
+        "maxCells": 2
+      },
+      "modifier": -1.0,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "prune", "swap", "accept_loss"],
+    "carryForward": {
+      "effect": "Neighborhood goodwill. Random positive event weight +0.3 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Early harvest requested for community event. Yield reduction in root faction noted. Social ROI is not my department.",
+      "onion": "They asked for carrots for the potluck. I said yes before thinking. That is how community works.",
+      "vegeman": "Charge them. Market rate. You grew those carrots. They did not.",
+      "critters": "Root crops being removed early. Tunnel network disrupted."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F06",
+    "title": "Raccoon Night Raid",
+    "season": "fall",
+    "category": "critter",
+    "valence": "negative",
+    "description": "The raccoons found the bed. They dug up the front row looking for grubs and left three cells looking like a crime scene. Random front-row cells are disturbed and compacted.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "random_cells",
+        "filter": "row-3",
+        "maxCells": 3
+      },
+      "modifier": -1.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["protect", "mulch", "prune", "accept_loss"],
+    "carryForward": {
+      "effect": "Disturbed soil in affected cells. -0.3 next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Nocturnal wildlife breach. Three cells excavated. Structural damage to plantings confirmed.",
+      "onion": "They have hands. Actual hands. They opened the row like they were looking for something personal.",
+      "vegeman": "Motion-activated sprinkler. Raccoon deterrent. Also deters the mailman. Bonus.",
+      "critters": "Raccoon incursion documented. They do not respect borders. We have filed a complaint."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F07",
+    "title": "Extended Warm Spell",
+    "season": "fall",
+    "category": "weather",
+    "valence": "positive",
+    "description": "Indian summer hits South Philly. 72 degrees in late October. The growing season extends. Every cool-season crop gets extra time and the bed looks better than it did in August.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "crop_filter",
+        "filter": "frost-hardy",
+        "maxCells": null
+      },
+      "modifier": 0.75,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": null,
+    "commentary": {
+      "gurl": "Unseasonable warmth extending productive window. Cool-season crops are outperforming projections.",
+      "onion": "October and it feels like June. The kale is thriving. I am thriving. Everything is fine for once.",
+      "vegeman": "Do not celebrate. The frost is coming. It is always coming.",
+      "critters": "Extended warm period. Foraging window expanded. Stockpiling."
+    },
+    "chapterAvailability": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "F08",
+    "title": "Downspout Overflow",
+    "season": "fall",
+    "category": "infrastructure",
+    "valence": "negative",
+    "description": "Heavy rain plus clogged gutters equals the downspout dumping directly into column 7. The corner of the bed gets waterlogged. Crops in that column take saturation damage.",
+    "mechanicalEffect": {
+      "channel": "cell_penalty",
+      "target": {
+        "type": "column",
+        "filter": "col-7",
+        "maxCells": null
+      },
+      "modifier": -1.0,
+      "duration": "rest_of_season"
+    },
+    "interventionOptions": ["swap", "mulch", "protect", "accept_loss"],
+    "carryForward": {
+      "effect": "Waterlogged soil in column 7. -0.5 next season unless addressed.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Infrastructure failure. Downspout drainage routed directly into growing area. This is a code violation on the building, not the bed.",
+      "onion": "The gutter has been loose since March. I said I would fix it. I did not fix it. The bed paid the price.",
+      "vegeman": "Redirect the downspout. Bend it with your hands. Plumbing is a suggestion.",
+      "critters": "Column 7 flooding. Evacuating to higher ground. Worm casualties expected."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.9
+  },
+  {
+    "id": "F09",
+    "title": "Dad Visits the Bed",
+    "season": "fall",
+    "category": "family",
+    "valence": "neutral",
+    "description": "Onion Man stands at the bed for a long time. Does not touch anything. Says the back row looks like it used to. The back row gets a small buff because sometimes attention is enough.",
+    "mechanicalEffect": {
+      "channel": "cell_buff",
+      "target": {
+        "type": "row",
+        "filter": "row-0",
+        "maxCells": null
+      },
+      "modifier": 0.5,
+      "duration": "current_beat"
+    },
+    "interventionOptions": ["mulch", "companion_patch", "accept_loss"],
+    "carryForward": {
+      "effect": "Narrative flag: Onion Man remembers the layout.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "No physical intervention observed. Emotional survey of back row noted. No scoring impact beyond the attention itself.",
+      "onion": "The back row. She always started with the back row. I do not know why I remember that right now.",
+      "vegeman": "Standing around looking at dirt is not gardening. But I was not going to say anything.",
+      "critters": "Human stationary at perimeter. No threat. No food. Disregard."
+    },
+    "chapterAvailability": [7, 8, 9, 10, 11, 12],
+    "drawWeight": 0.8
+  },
+  {
+    "id": "F10",
+    "title": "Cover Crop Window",
+    "season": "fall",
+    "category": "infrastructure",
+    "valence": "neutral",
+    "description": "The season is ending and there is a narrow window to plant cover crop in empty cells. Unused cells get a soil health boost that carries into spring. Planted cells are unaffected.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "crop_filter",
+        "filter": "empty_cells",
+        "maxCells": null
+      },
+      "modifier": 0.5,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["mulch", "accept_loss"],
+    "carryForward": {
+      "effect": "Empty cells gain +0.5 soil health for next season from cover crop decomposition.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Cover crop window is open. Vacant cells can be amended for next season. This is standard procedure.",
+      "onion": "Planting something you never harvest. Just to make the dirt better for later. That is the most gardening thing there is.",
+      "vegeman": "Skip it. You will forget about it by spring and it will be in the way.",
+      "critters": "Cover crop germination would provide winter habitat. We are in favor."
+    },
+    "chapterAvailability": [6, 7, 8, 9, 10, 11, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W01",
+    "title": "Frozen Pipe Scare",
+    "season": "winter",
+    "category": "infrastructure",
+    "valence": "negative",
+    "description": "The outdoor spigot froze overnight. When it thaws, water pools at the base of the bed frame. The cedar is soaking in standing water for three days before anyone notices.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "row",
+        "filter": "row-3",
+        "maxCells": null
+      },
+      "modifier": -0.5,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Row 3 frame integrity reduced. -0.5 soil health in row 3 next spring.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Infrastructure damage from freeze-thaw cycle. Cedar frame moisture absorption logged. Spring inspection required.",
+      "onion": "The pipe froze and the bed got wet and I did not notice for three days. I was watching football.",
+      "vegeman": "Wrap the pipe in foam. Hardware store. Four dollars. Prevention.",
+      "critters": "Standing water detected. Ice formation. Winter dormancy continues."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W02",
+    "title": "Phillies Hot Stove Speculation",
+    "season": "winter",
+    "category": "neighbor",
+    "valence": "positive",
+    "description": "The Phillies are rumored to be signing a big free agent. Onion Man has been in a good mood for a week. He winterizes the bed frame without being asked. Trellis gets tightened. Cedar gets sealed.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "row",
+        "filter": "row-0",
+        "maxCells": null
+      },
+      "modifier": 0.5,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Trellis row maintenance complete. +0.5 support fit bonus in back row next spring.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Voluntary infrastructure maintenance performed by third party. Trellis tension restored to specification.",
+      "onion": "They might sign him. If they sign him I will fix the whole bed. I already started. Do not tell anyone.",
+      "vegeman": "He tightened the wire because of baseball rumors. That is insane. I respect it completely.",
+      "critters": "Trellis wire vibration pattern changed. Recalibrating navigation routes."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W03",
+    "title": "Seed Catalog Arrives",
+    "season": "winter",
+    "category": "family",
+    "valence": "positive",
+    "description": "The seed catalog shows up in the mail addressed to Mom. Nobody changed the mailing list. The pages fall open to tomatoes because the spine was cracked there from years of looking.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "crop_filter",
+        "filter": "cherry_tom",
+        "maxCells": null
+      },
+      "modifier": 0.3,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Narrative flag: Seed catalog received. Tomato crops get +0.3 bonus next spring from premium seed selection.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Mail received for previous resident. Seed catalog. Botanical content is current year. No action required.",
+      "onion": "It still comes. Every January. Her name on the label. I do not change it. I will not change it.",
+      "vegeman": "Order from it. Use her account. She would want the garden to have good seeds.",
+      "critters": "Paper material detected in mailbox. Not relevant to operations."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W04",
+    "title": "January Thaw",
+    "season": "winter",
+    "category": "weather",
+    "valence": "mixed",
+    "description": "Three days of 55-degree weather in January. The soil thaws and refreezes. Good for breaking up compaction. Bad for any cover crop that thought spring came early.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "zone",
+        "filter": "full_bed",
+        "maxCells": null
+      },
+      "modifier": 0.0,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Freeze-thaw cycle improves soil tilth. Compacted cells lose compaction flag. Cover-cropped cells lose cover crop benefit.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Anomalous thaw event. Soil structure modification in progress. Mixed outcome projected for spring.",
+      "onion": "Three warm days in January is a trick. The weather is lying. I do not trust it but I went outside anyway.",
+      "vegeman": "Fifty-five degrees. Get out there. Turn the soil. Do not wait.",
+      "critters": "Brief surface activity possible. False spring. Remaining in dormancy."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W05",
+    "title": "Neighbor Moves Away",
+    "season": "winter",
+    "category": "neighbor",
+    "valence": "negative",
+    "description": "The family three doors down sold the house. They had been here since before you were born. Their absence changes the light on the alley side and the block feels different.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "column",
+        "filter": "col-7",
+        "maxCells": null
+      },
+      "modifier": -0.3,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Block dynamics shifted. Column 7 loses neighborly microclimate protection. -0.3 to edge column next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Adjacent property status changed. Microclimate model for alley-side column requires recalculation.",
+      "onion": "They were here forty years. Now there is a dumpster in the driveway and a For Sale sign. That is how it goes.",
+      "vegeman": "New neighbors might be worse. Or better. Probably worse. Prepare accordingly.",
+      "critters": "Adjacent property vacated. New territory assessment pending."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W06",
+    "title": "Snow Insulation",
+    "season": "winter",
+    "category": "weather",
+    "valence": "positive",
+    "description": "Six inches of snow sits on the bed for two weeks. Under the white blanket, the soil temperature stays steady at 32 degrees. The roots and overwintering organisms are protected from the real cold above.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "zone",
+        "filter": "full_bed",
+        "maxCells": null
+      },
+      "modifier": 0.3,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Snow insulation preserved soil biology. All cells get +0.3 soil health next spring.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Snow cover duration sufficient for soil temperature stabilization. Beneficial outcome for subsurface ecology.",
+      "onion": "Snow on the bed looks like a quilt somebody tucked in. I am not being sentimental. I am being accurate.",
+      "vegeman": "Do not shovel the bed. I repeat. Do not shovel the bed.",
+      "critters": "Snow cover confirmed. Insulation adequate. Dormancy conditions optimal."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W07",
+    "title": "Planning at the Kitchen Table",
+    "season": "winter",
+    "category": "family",
+    "valence": "neutral",
+    "description": "February night. The seed catalog is open on the kitchen table. Graph paper. A pencil. The bed layout drawn from memory, eight columns by four rows. This is what planning looks like when no one is watching.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "zone",
+        "filter": "full_bed",
+        "maxCells": null
+      },
+      "modifier": 0.0,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Narrative flag: Winter planning session. Player sees bed preview with carry-forward state before spring PLANNING phase.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Pre-season planning documented. Layout draft on file. This is how professionals operate.",
+      "onion": "She used to do this too. Same table. Different pencil. Same graph paper from the dollar store.",
+      "vegeman": "Plans are for people who are afraid of improvising. But fine. Plan.",
+      "critters": "No field activity. Indoor operations beyond our surveillance range."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 0.9
+  },
+  {
+    "id": "W08",
+    "title": "Ice Storm Damage",
+    "season": "winter",
+    "category": "weather",
+    "valence": "negative",
+    "description": "Freezing rain coats everything in a quarter inch of ice. The trellis wire sags under the weight. One section snaps. The ice is beautiful and it is breaking things.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "row",
+        "filter": "row-0",
+        "maxCells": null
+      },
+      "modifier": -0.75,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Trellis damage in row 0. Support fit penalty -0.75 in back row until repaired at next between-season choice.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Ice accumulation exceeded trellis wire load capacity. Section failure in row zero. Repair required before spring commit.",
+      "onion": "Mom's wire. She put that up herself. And the ice just snapped it like it was nothing.",
+      "vegeman": "New wire. Heavier gauge. This time use turnbuckles for tension.",
+      "critters": "Ice coating on all surfaces. Full lockdown. Nothing is moving."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 1.0
+  },
+  {
+    "id": "W09",
+    "title": "New Neighbor Introduces Herself",
+    "season": "winter",
+    "category": "neighbor",
+    "valence": "neutral",
+    "description": "The new owner of the house three doors down knocks in February. She saw the bed from the alley. She used to garden at her old place. She has questions about the soil.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "column",
+        "filter": "col-7",
+        "maxCells": null
+      },
+      "modifier": 0.3,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "New neighbor connection established. Column 7 regains microclimate support. +0.3 edge column next season.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "New adjacent resident contact initiated. Gardening competence unverified but interest is documented.",
+      "onion": "She asked about the soil. Not the house. Not the block. The soil. She might be alright.",
+      "vegeman": "Ask her what she grows. If she says tomatoes, you have an ally. If she says lawn, you have a problem.",
+      "critters": "New human detected in adjacent territory. Reconnaissance in progress."
+    },
+    "chapterAvailability": [8, 12],
+    "drawWeight": 0.8
+  },
+  {
+    "id": "W10",
+    "title": "The Bed in Snow",
+    "season": "winter",
+    "category": "family",
+    "valence": "neutral",
+    "description": "Standing at the back door looking at the bed under snow. The cedar frame is darker when it is wet. The shape is the same shape it has always been. Eight by four. Nothing grows and nothing needs to.",
+    "mechanicalEffect": {
+      "channel": "carry_forward",
+      "target": {
+        "type": "zone",
+        "filter": "full_bed",
+        "maxCells": null
+      },
+      "modifier": 0.0,
+      "duration": "carry_forward"
+    },
+    "interventionOptions": ["accept_loss"],
+    "carryForward": {
+      "effect": "Narrative flag: Winter reflection. Journal entry generated. No mechanical effect.",
+      "duration": "next_season"
+    },
+    "commentary": {
+      "gurl": "Visual inspection complete. Cedar frame intact under snow load. No action items.",
+      "onion": "It looks smaller in winter. Or maybe I look at it differently when nothing is growing. I do not know which.",
+      "vegeman": "It is a box of dirt with snow on it. Come inside. There is coffee.",
+      "critters": "Bed dormant. Frame integrity confirmed. End of season report filed."
+    },
+    "chapterAvailability": [4, 8, 12],
+    "drawWeight": 0.7
+  }
+]
