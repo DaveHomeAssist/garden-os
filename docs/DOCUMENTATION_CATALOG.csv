@@ -1,0 +1,10 @@
+surface,path,type,audience,status,notes
+Garden OS Hub,index.html,Landing/Navigation,General users,Live,Entry point for tool suite
+Planner,garden-planner-v4.html,Application,Garden builders and power users,Live,Core planning and scoring surface
+Build Guide,garden-cage-build-guide.html,Guide,DIY builders,Live,Step-by-step cage construction
+Ops Guide,garden-cage-ops-guide.html,Guide,Garden operators,Live,Seasonal operations and maintenance
+Scoring System Map,garden_planner_scoring_system_map.html,Technical reference,Developers,Live,Scoring architecture and flow
+Scoring Visualizer,garden_planner_scoring_visualizer.html,Debug tool,Developers and advanced users,Live,Factor-level scoring debugger
+System Topology,system-topology.html,Technical map,Developers,Live,Ecosystem and flow overview
+Canonical Schema,gos-schema.json,JSON Schema,Developers,Active,Runtime data contract
+Schema Guide,SCHEMA.md,Human doc,Developers,Active,Model explanation and conventions
