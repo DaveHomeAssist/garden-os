@@ -2425,6 +2425,7 @@ function completeChapter(){
   const score=S.harvestResult?S.harvestResult.finalScore:0;
   if(!CAM.bestScores[ch]||score>CAM.bestScores[ch])CAM.bestScores[ch]=score;
   if(!CAM.completedChapters.includes(ch))CAM.completedChapters.push(ch);
+  if(ch<12)CAM.currentChapter=ch+1;
 
   // Update pantry
   if(S.harvestResult){
