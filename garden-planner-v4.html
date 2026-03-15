@@ -731,10 +731,19 @@
       </select>
     </div>
     <div class="fg">
-      <label>Bed Orientation</label>
+      <label>Bed Orientation (long axis)</label>
       <select id="orientation">
-        <option value="ew">East–West (parallel to wall)</option>
-        <option value="ns">North–South (perpendicular)</option>
+        <option value="ew">East–West</option>
+        <option value="ns">North–South</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Sun Direction</label>
+      <select id="sunDirection">
+        <option value="south">From South (front edge) — most common</option>
+        <option value="west">From West (right edge) — afternoon sun</option>
+        <option value="east">From East (left edge) — morning sun</option>
+        <option value="north">From North (back edge)</option>
       </select>
     </div>
     <div class="fg">
@@ -953,6 +962,7 @@ function escapeHtml(str){
 
 // Allowlists for settings validation
 const VALID_ORIENTATIONS=['ew','ns'];
+const VALID_SUN_DIRECTIONS=['south','west','east','north'];
 const VALID_WALLS=['back','front','left','right','none'];
 const VALID_SEASONS=['spring','summer','latesummer','fall'];
 const VALID_GOALS=['balanced','yield','easy','salad','pickling','herbs','sanctuary'];
@@ -1340,6 +1350,7 @@ function normalizeSiteSettings(site){
   return {
     sunHours: (Number.isFinite(sun) && sun >= 2 && sun <= 10) ? sun : 6,
     orientation: VALID_ORIENTATIONS.includes(s.orientation) ? s.orientation : 'ew',
+    sunDirection: VALID_SUN_DIRECTIONS.includes(s.sunDirection) ? s.sunDirection : 'south',
     wallSide: VALID_WALLS.includes(s.wallSide) ? s.wallSide : 'back',
     trellis: typeof s.trellis==='boolean' ? s.trellis : true,
     season: VALID_SEASONS.includes(s.season) ? s.season : 'summer',
@@ -1352,6 +1363,7 @@ function defaultSiteSettingsFromUI(){
   return normalizeSiteSettings({
     sunHours: sunEl ? parseFloat(sunEl.value) : 6,
     orientation: document.getElementById('orientation') ? document.getElementById('orientation').value : 'ew',
+    sunDirection: document.getElementById('sunDirection') ? document.getElementById('sunDirection').value : 'south',
     wallSide: document.getElementById('wallSide') ? document.getElementById('wallSide').value : 'back',
     trellis: document.getElementById('trellisToggle') ? document.getElementById('trellisToggle').classList.contains('on') : true,
     season: document.getElementById('season') ? document.getElementById('season').value : 'summer',
@@ -1977,6 +1989,7 @@ function applyWorkspaceToUI(ws){
   document.getElementById('sunHours').value = site.sunHours;
   document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
   document.getElementById('orientation').value = site.orientation;
+  document.getElementById('sunDirection').value = site.sunDirection || 'south';
   document.getElementById('wallSide').value = site.wallSide;
   const trellisTog = document.getElementById('trellisToggle');
   site.trellis ? trellisTog.classList.add('on') : trellisTog.classList.remove('on');
@@ -2035,6 +2048,7 @@ function inp(){
   return {
     sunHours:parseFloat(document.getElementById('sunHours').value),
     orientation:document.getElementById('orientation').value,
+    sunDirection:document.getElementById('sunDirection').value,
     wallSide:effectiveWallSide,
     trellis:document.getElementById('trellisToggle').classList.contains('on'),
     season:document.getElementById('season').value,
@@ -2085,23 +2099,45 @@ function applyBedSize(){
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZONE MAP (variable bed size)
 // ═══════════════════════════════════════════════════════════════════════════════
+// Sun gradient helpers
+function sunDistanceRatio(dir, r, c, bedW, bedH){
+  const wSpan=Math.max(1,bedW-1), hSpan=Math.max(1,bedH-1);
+  if(dir==='east')  return c/wSpan;            // 0=east edge, 1=west edge
+  if(dir==='west')  return (bedW-1-c)/wSpan;   // 0=west edge, 1=east edge
+  if(dir==='south') return r/hSpan;            // 0=front(south), 1=back(north) — row 0 is back
+  return (bedH-1-r)/hSpan;                     // north: 0=back(north), 1=front(south)
+}
+function sunAxisForDirection(dir){
+  return (dir==='east'||dir==='west') ? 'ew' : 'ns';
+}
+function isWallOnSunSide(wallSide, sunDir){
+  return (sunDir==='south'&&wallSide==='front')||(sunDir==='north'&&wallSide==='back')||
+         (sunDir==='east'&&wallSide==='left')  ||(sunDir==='west'&&wallSide==='right');
+}
+
 let _zoneCache = { key: null, result: null };
 function buildZoneMap(i, bedTraits){
-  const cacheKey = `${i.bedW},${i.bedH},${i.sunHours},${i.wallSide},${i.orientation},${i.trellis},${bedTraits ? JSON.stringify(bedTraits.capabilities) : ''}`;
+  const cacheKey = `${i.bedW},${i.bedH},${i.sunHours},${i.wallSide},${i.orientation},${i.sunDirection||'south'},${i.trellis},${bedTraits ? JSON.stringify(bedTraits.capabilities) : ''}`;
   if(_zoneCache.key === cacheKey) return _zoneCache.result;
   const z=[];
   const sun=i.sunHours;
+  const dir=i.sunDirection||'south';
+  const axisAligned=i.orientation===sunAxisForDirection(dir);
+  // Max gradient penalty: stronger when bed is perpendicular to sun path
+  const gradientMax=axisAligned ? 0.7 : 1.15;
   for(let r=0;r<i.bedH;r++){
     for(let c=0;c<i.bedW;c++){
+      // Wall penalty: varies based on whether wall blocks the sun
       let wp=0;
-      if(i.wallSide==='back'  &&r===0)         wp=1.5;
-      if(i.wallSide==='front' &&r===i.bedH-1)  wp=1.5;
-      if(i.wallSide==='left'  &&c===0)         wp=1.5;
-      if(i.wallSide==='right' &&c===i.bedW-1)  wp=1.5;
-      const mid=Math.floor(i.bedW/2);
-      const isMiddle=i.bedW<=2?false:(i.bedW%2===1?(c===mid):(c===mid||c===mid-1));
-      const op=(i.orientation==='ns'&&isMiddle)?.4:0;
-      const el=Math.max(0,sun-wp-op);
+      const isWallCell=(i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===i.bedH-1)||
+                       (i.wallSide==='left'&&c===0)||(i.wallSide==='right'&&c===i.bedW-1);
+      if(isWallCell){
+        wp=isWallOnSunSide(i.wallSide,dir) ? 2.0 : 0.8;
+      }
+      // Sun gradient: cells farther from sun-facing edge get less light
+      const dist=sunDistanceRatio(dir,r,c,i.bedW,i.bedH);
+      const gradientPenalty=dist*gradientMax;
+      const el=Math.max(0,sun-wp-gradientPenalty);
       const ta=i.trellis&&(
         (i.wallSide==='back'&&r===0)||(i.wallSide==='front'&&r===i.bedH-1)||
         (i.wallSide==='left'&&c===0)||(i.wallSide==='right'&&c===i.bedW-1));
@@ -3047,9 +3083,10 @@ function render(){
     if(cageOn) db.textContent=inputs.cage.doorStyle==='double'?'Double Door — Front Access':inputs.cage.doorStyle==='single'?'Single Door — Front Access':'Open Front — No Doors';
   }
   if(zl) zl.style.display=cageOn?'flex':'none';
-  document.getElementById('chint').textContent=inputs.orientation==='ew'
-    ?'East–West orientation · morning sun from the east'
-    :'North–South orientation · western edge gets afternoon sun';
+  const _sunLabels={south:'south (front)',north:'north (back)',east:'east (left)',west:'west (right)'};
+  const _sd=inputs.sunDirection||'south';
+  document.getElementById('chint').textContent=
+    `${inputs.orientation==='ew'?'East–West':'North–South'} bed · sun from ${_sunLabels[_sd]} · ${inputs.orientation===sunAxisForDirection(_sd)?'even spread':'strong gradient across bed'}`;
   // Fill bar
   const fill=bed.filter(c=>c.crop).length/(bedW*bedH);
   const fb=document.getElementById('fillbar-fill');
@@ -3380,6 +3417,7 @@ document.getElementById('bedH').addEventListener('change',applyBedSize);
 document.getElementById('sunHours').addEventListener('input',function(){onSite(this);});
 document.getElementById('wallSide').addEventListener('change',()=>onSite());
 document.getElementById('orientation').addEventListener('change',()=>onSite());
+document.getElementById('sunDirection').addEventListener('change',()=>onSite());
 document.getElementById('trellisToggle').addEventListener('click',function(){this.classList.toggle('on');this.setAttribute('aria-pressed',this.classList.contains('on'));onSite();});
 document.getElementById('season').addEventListener('change',()=>onSite());
 document.getElementById('goal').addEventListener('change',()=>onSite());

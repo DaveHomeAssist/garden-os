@@ -379,19 +379,61 @@
   <div class="footer">Garden OS scoring visualizer · built to make planner tuning, trait audits, and regression checks way more legible</div>
 
   <script>
+    // All 38 crops from garden-planner-v4.html
+    // goalBias derived from: yield = sun demand + vigor + trellis affinity,
+    //   sanctuary = shade tolerance + protection + cool season + compact habit,
+    //   easy = succession + low water - trellis required + shade tolerance
     const CROPS = {
-      tomato:{name:'Cherry Tomato',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:8,sanctuary:4,easy:-2}},
-      polebeans:{name:'Pole Beans',trellisZone:true,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:7,sanctuary:1,easy:-4}},
-      cucumber:{name:'Cucumber',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:6,sanctuary:2,easy:-1}},
-      lettuce:{name:'Leaf Lettuce',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:8,easy:3}},
-      basil:{name:'Basil',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:false,goalBias:{yield:1,sanctuary:7,easy:2}},
-      radish:{name:'Radish',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:6,easy:4}},
-      bokchoy:{name:'Bok Choy',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:7,easy:1}},
-      kale:{name:'Kale',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:false,coolSeason:true,goalBias:{yield:4,sanctuary:5,easy:2}}
+      // ── Cucurbits ──
+      beit_cucumber:{name:'Beit Alpha Cucumber',category:'cucurbit',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:6,sanctuary:2,easy:-1}},
+      slicing_cucumber:{name:'Slicing Cucumber',category:'cucurbit',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:8,sanctuary:1,easy:-2}},
+      bush_cucumber:{name:'Bush Pickle Cucumber',category:'cucurbit',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:5,sanctuary:3,easy:2}},
+      // ── Greens ──
+      leaf_lettuce:{name:'Leaf Lettuce',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:8,easy:3}},
+      head_lettuce:{name:'Head Lettuce',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:false,coolSeason:true,goalBias:{yield:2,sanctuary:7,easy:1}},
+      spinach:{name:'Spinach',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:8,easy:3}},
+      kale:{name:'Kale',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:false,coolSeason:true,goalBias:{yield:4,sanctuary:5,easy:2}},
+      arugula:{name:'Arugula',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:8,easy:4}},
+      swiss_chard:{name:'Swiss Chard',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:4,sanctuary:5,easy:3}},
+      bok_choy:{name:'Bok Choy',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:7,easy:1}},
+      mustard_greens:{name:'Mustard Greens',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:7,easy:2}},
+      tatsoi:{name:'Tatsoi',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:8,easy:3}},
+      mizuna:{name:'Mizuna',category:'greens',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:7,easy:3}},
+      // ── Legumes ──
+      bush_beans:{name:'Bush Green Beans',category:'legume',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:true,coolSeason:false,goalBias:{yield:5,sanctuary:3,easy:3}},
+      pole_beans:{name:'Pole Beans',category:'legume',trellisZone:true,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:7,sanctuary:1,easy:-4}},
+      peas:{name:'Peas',category:'legume',trellisZone:true,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:5,sanctuary:3,easy:-2}},
+      // ── Roots ──
+      radish:{name:'Radish',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:6,easy:4}},
+      carrots:{name:'Carrots',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:3,sanctuary:5,easy:2}},
+      scallions:{name:'Scallions',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:6,easy:4}},
+      beets:{name:'Beets',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:3,sanctuary:5,easy:2}},
+      turnips:{name:'Turnips',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:2,sanctuary:6,easy:3}},
+      onions:{name:'Onions',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:4,sanctuary:2,easy:1}},
+      garlic:{name:'Garlic',category:'roots',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:3,sanctuary:3,easy:3}},
+      // ── Herbs ──
+      basil:{name:'Basil',category:'herbs',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:false,goalBias:{yield:1,sanctuary:7,easy:2}},
+      cilantro:{name:'Cilantro',category:'herbs',trellisZone:false,trellisRequired:false,protectedZone:true,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:7,easy:3}},
+      parsley:{name:'Parsley',category:'herbs',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:6,easy:3}},
+      dill:{name:'Dill',category:'herbs',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:true,coolSeason:true,goalBias:{yield:1,sanctuary:5,easy:4}},
+      chives:{name:'Chives',category:'herbs',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:1,sanctuary:6,easy:4}},
+      // ── Fruiting ──
+      peppers:{name:'Peppers',category:'fruiting',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:7,sanctuary:1,easy:1}},
+      compact_tomato:{name:'Compact Tomato',category:'fruiting',trellisZone:true,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:8,sanctuary:1,easy:0}},
+      cherry_tomato:{name:'Cherry Tomato (climbing)',category:'fruiting',trellisZone:true,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:8,sanctuary:1,easy:-3}},
+      eggplant:{name:'Eggplant',category:'fruiting',trellisZone:false,trellisRequired:true,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:6,sanctuary:1,easy:-2}},
+      zucchini:{name:'Zucchini',category:'fruiting',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:7,sanctuary:1,easy:0}},
+      // ── Brassica ──
+      compact_cabbage:{name:'Compact Cabbage',category:'brassica',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:4,sanctuary:4,easy:1}},
+      broccoli:{name:'Broccoli',category:'brassica',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:true,goalBias:{yield:5,sanctuary:3,easy:0}},
+      kohlrabi:{name:'Kohlrabi',category:'brassica',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:true,coolSeason:true,goalBias:{yield:3,sanctuary:4,easy:2}},
+      // ── Companion ──
+      marigold:{name:'Marigold',category:'companion',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:false,coolSeason:false,goalBias:{yield:0,sanctuary:5,easy:5}},
+      nasturtium:{name:'Nasturtium',category:'companion',trellisZone:false,trellisRequired:false,protectedZone:false,successionFriendly:true,coolSeason:false,goalBias:{yield:0,sanctuary:6,easy:5}}
     };
 
     const state = {
-      crop:'tomato',
+      crop:'cherry_tomato',
       goal:'balanced',
       season:'summer',
       wallSide:'back',
@@ -699,11 +741,19 @@
     }
 
     function bind(){
+      const catLabels={cucurbit:'Cucurbits',greens:'Greens',legume:'Legumes',roots:'Roots',herbs:'Herbs',fruiting:'Fruiting',brassica:'Brassicas',companion:'Companions'};
+      const groups={};
       Object.entries(CROPS).forEach(([key,crop]) => {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = crop.name;
-        els.cropSelect.appendChild(opt);
+        const cat=crop.category||'other';
+        if(!groups[cat]){
+          groups[cat]=document.createElement('optgroup');
+          groups[cat].label=catLabels[cat]||cat;
+          els.cropSelect.appendChild(groups[cat]);
+        }
+        const opt=document.createElement('option');
+        opt.value=key;
+        opt.textContent=crop.name;
+        groups[cat].appendChild(opt);
       });
       els.cropSelect.value = state.crop;
       els.goalSelect.value = state.goal;
@@ -731,7 +781,7 @@
       els.wireToggle.addEventListener('click', () => { state.wireSides = !state.wireSides; setSwitch(els.wireToggle, state.wireSides); render(); });
 
       els.resetBtn.addEventListener('click', () => {
-        state.crop = 'tomato'; state.goal = 'balanced'; state.season = 'summer'; state.wallSide = 'back';
+        state.crop = 'cherry_tomato'; state.goal = 'balanced'; state.season = 'summer'; state.wallSide = 'back';
         state.cage = true; state.rearTrellis = true; state.wireSides = true; state.harvestBias = 0.6; state.selected = {r:0,c:0};
         els.cropSelect.value = state.crop; els.goalSelect.value = state.goal; els.seasonSelect.value = state.season; els.wallSideSelect.value = state.wallSide; els.harvestRange.value = state.harvestBias;
         setSwitch(els.cageToggle, state.cage); setSwitch(els.trellisToggle, state.rearTrellis); setSwitch(els.wireToggle, state.wireSides);
