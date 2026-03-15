@@ -1,0 +1,489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://davehomeassist.github.io/garden-os/gos-schema.json",
+  "title": "Garden OS Workspace",
+  "description": "Canonical schema for Garden OS workspace data. Version 1. Used by Planner, Visualizer, Scoring Map, and Export/Import.",
+  "type": "object",
+  "required": ["id", "version", "createdAt", "updatedAt", "activeBedId", "workspaceSettings", "beds"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^workspace-[a-z0-9]+$",
+      "description": "Unique workspace identifier, generated via uniqueId('workspace')"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Current: 1. Increment on breaking changes."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of workspace creation"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of last save"
+    },
+    "activeBedId": {
+      "type": "string",
+      "description": "ID of the currently selected bed. Must match a bed in the beds array."
+    },
+    "workspaceSettings": {
+      "$ref": "#/$defs/WorkspaceSettings"
+    },
+    "beds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Bed"
+      },
+      "description": "One or more bed records. At least one is required."
+    },
+    "guideProgress": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "IDs of completed onboarding guide steps"
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Present only in exported .gos.json files. ISO-8601 timestamp of export."
+    },
+    "appVersion": {
+      "type": "string",
+      "description": "Present only in exported .gos.json files. APP_VERSION at time of export."
+    }
+  },
+
+  "$defs": {
+    "WorkspaceSettings": {
+      "type": "object",
+      "required": ["catFilter", "rightTab"],
+      "additionalProperties": false,
+      "properties": {
+        "catFilter": {
+          "type": "string",
+          "enum": ["all", "cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "flowers"],
+          "default": "all",
+          "description": "Active crop category filter in the left sidebar"
+        },
+        "rightTab": {
+          "type": "string",
+          "enum": ["score", "inspect", "notes"],
+          "default": "score",
+          "description": "Active tab in the right sidebar"
+        }
+      }
+    },
+
+    "Bed": {
+      "type": "object",
+      "required": ["id", "name", "createdAt", "updatedAt", "size", "cage", "plannerState"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^bed-[a-z0-9]+$",
+          "description": "Unique bed identifier, generated via uniqueId('bed')"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "User-assigned bed name"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "size": {
+          "$ref": "#/$defs/BedSize"
+        },
+        "cage": {
+          "$ref": "#/$defs/CageConfig"
+        },
+        "plannerState": {
+          "$ref": "#/$defs/PlannerState"
+        },
+        "scoreSummaryCache": {
+          "$ref": "#/$defs/ScoreSummaryCache",
+          "description": "Cached score data. Regenerated on load; stripped on export."
+        },
+        "notes": {
+          "type": "string",
+          "default": "",
+          "description": "Free-text notes for this bed"
+        }
+      }
+    },
+
+    "BedSize": {
+      "type": "object",
+      "required": ["cols", "rows"],
+      "additionalProperties": false,
+      "properties": {
+        "cols": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 8,
+          "description": "Number of columns (width in grid squares)"
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 4,
+          "description": "Number of rows (depth in grid squares)"
+        }
+      }
+    },
+
+    "CageConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the cage structure is active for this bed"
+        },
+        "trellis": {
+          "$ref": "#/$defs/TrellisConfig"
+        },
+        "protection": {
+          "$ref": "#/$defs/ProtectionConfig"
+        },
+        "doors": {
+          "$ref": "#/$defs/DoorConfig"
+        }
+      }
+    },
+
+    "TrellisConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether trellis is enabled on this cage"
+        },
+        "side": {
+          "type": "string",
+          "enum": ["back", "front", "left", "right", "none"],
+          "default": "back",
+          "description": "Which side the trellis is on"
+        },
+        "heightIn": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "default": 54,
+          "description": "Trellis height in inches"
+        },
+        "climbZones": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^row-[0-9]+$"
+          },
+          "default": ["row-1"],
+          "description": "Row labels designated as climb zones (vining crops get a bonus here)"
+        }
+      }
+    },
+
+    "ProtectionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "wireSides": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether hardware cloth sides are present"
+        },
+        "lowerBandHeightIn": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "default": 24,
+          "description": "Height of the lower protection band in inches"
+        },
+        "protectedZones": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^row-[0-9]+$"
+          },
+          "description": "Row labels designated as protected zones (shade-tolerant and vulnerable crops get a bonus here). Default: interior rows (row-2 through row-(n-1))."
+        }
+      }
+    },
+
+    "DoorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "side": {
+          "type": "string",
+          "enum": ["back", "front", "left", "right", "none"],
+          "default": "front"
+        },
+        "style": {
+          "type": "string",
+          "enum": ["double", "single", "none"],
+          "default": "double"
+        }
+      }
+    },
+
+    "PlannerState": {
+      "type": "object",
+      "required": ["cells", "selectedCrop", "activeTool", "site"],
+      "additionalProperties": false,
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "A crop key from the CROPS database (e.g., 'leaf_lettuce', 'bush_beans')"
+              },
+              {
+                "type": "null",
+                "description": "Empty cell"
+              }
+            ]
+          },
+          "description": "Flat array of crop keys or null, length = cols × rows, row-major order"
+        },
+        "selectedCrop": {
+          "type": "string",
+          "default": "leaf_lettuce",
+          "description": "Currently selected crop key in the palette"
+        },
+        "activeTool": {
+          "type": "string",
+          "enum": ["paint", "erase"],
+          "default": "paint"
+        },
+        "site": {
+          "$ref": "#/$defs/SiteSettings"
+        }
+      }
+    },
+
+    "SiteSettings": {
+      "type": "object",
+      "required": ["sunHours", "orientation", "wallSide", "trellis", "season", "goal", "zone"],
+      "additionalProperties": false,
+      "properties": {
+        "sunHours": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 6,
+          "description": "Average daily sun hours for this bed's location"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["ew", "ns"],
+          "default": "ew",
+          "description": "Bed orientation: east-west or north-south"
+        },
+        "wallSide": {
+          "type": "string",
+          "enum": ["back", "front", "left", "right", "none"],
+          "default": "back",
+          "description": "Which side (if any) is against a wall or fence"
+        },
+        "trellis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether a trellis is available on the wall side"
+        },
+        "season": {
+          "type": "string",
+          "enum": ["spring", "summer", "latesummer", "fall"],
+          "default": "summer",
+          "description": "Current planting season"
+        },
+        "goal": {
+          "type": "string",
+          "enum": ["balanced", "yield", "easy", "salad", "pickling", "herbs", "sanctuary"],
+          "default": "balanced",
+          "description": "Garden goal — influences goal bonus scoring"
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["", "5", "6", "7", "8", "9", "10"],
+          "default": "",
+          "description": "USDA hardiness zone (optional)"
+        }
+      }
+    },
+
+    "ScoreSummaryCache": {
+      "type": "object",
+      "description": "Cached aggregate score for display in bed switcher. Regenerated at runtime; may be stripped on export.",
+      "properties": {
+        "scoreTotal": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Aggregate bed score (0–100)"
+        },
+        "filledCells": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of cells with a crop planted"
+        },
+        "totalCells": {
+          "type": "integer",
+          "minimum": 4,
+          "description": "Total cells in the bed (cols × rows)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "invalidatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Set when score needs recalculation"
+        }
+      }
+    },
+
+    "CropKey": {
+      "type": "string",
+      "description": "Key into the CROPS database object. See CropRecord for the full shape.",
+      "enum": [
+        "beit_cucumber", "slicing_cucumber", "bush_cucumber",
+        "leaf_lettuce", "head_lettuce", "spinach", "kale", "arugula", "swiss_chard",
+        "bok_choy", "mustard_greens", "tatsoi", "mizuna",
+        "bush_beans", "pole_beans", "peas",
+        "radish", "carrots", "scallions", "beets", "turnips", "onions", "garlic",
+        "basil", "cilantro", "parsley", "dill", "chives",
+        "peppers", "compact_tomato", "cherry_tomato", "zucchini", "summer_squash",
+        "eggplant", "okra",
+        "nasturtium", "marigold", "sunflower",
+        "broccoli", "cauliflower", "cabbage", "kohlrabi", "brussels_sprouts",
+        "sweet_potato"
+      ]
+    },
+
+    "CropRecord": {
+      "type": "object",
+      "description": "Shape of each entry in the CROPS database object. Read-only reference — not stored in workspace.",
+      "required": [
+        "name", "short", "emoji", "color", "category",
+        "sunMin", "sunIdeal", "height", "habit",
+        "trellisRequired", "trellisZone", "protectedZone",
+        "shadeScore", "spacingPerSqFt", "coolSeason",
+        "heatTolerance", "waterNeed",
+        "companionTags", "conflictTags", "replacementCategory",
+        "successionFriendly", "varieties"
+      ],
+      "properties": {
+        "name": { "type": "string", "description": "Full display name" },
+        "short": { "type": "string", "description": "Short label for compact UI" },
+        "emoji": { "type": "string" },
+        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Hex color for grid rendering" },
+        "category": {
+          "type": "string",
+          "enum": ["cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "flowers"],
+          "description": "Crop category — used for filtering, companion/conflict logic, and goal scoring"
+        },
+        "sunMin": { "type": "number", "minimum": 0, "maximum": 12, "description": "Minimum viable sun hours" },
+        "sunIdeal": { "type": "number", "minimum": 0, "maximum": 12, "description": "Ideal sun hours for max sun fit score" },
+        "height": {
+          "type": "string",
+          "enum": ["very low", "low", "medium", "tall"],
+          "description": "Plant height class — affects access fit and tall-tall adjacency penalty"
+        },
+        "habit": {
+          "type": "string",
+          "enum": ["vining", "bush", "rosette", "upright", "compact", "root", "sprawling"],
+          "description": "Growth habit — determines support fit scoring"
+        },
+        "trellisRequired": { "type": "boolean", "description": "Hard requirement: must have vertical support or score = 1" },
+        "trellisZone": { "type": "boolean", "description": "Soft preference: benefits from being in a trellis row" },
+        "protectedZone": { "type": "boolean", "description": "Benefits from being in a protected (interior) row" },
+        "shadeScore": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Shade tolerance: 1=needs full sun, 5=thrives in shade" },
+        "spacingPerSqFt": { "type": "number", "minimum": 0, "description": "Plants per square foot (SFG-style)" },
+        "coolSeason": { "type": "boolean", "description": "True = cool-season crop, penalized in summer/late summer" },
+        "heatTolerance": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "waterNeed": { "type": "string", "enum": ["low", "medium", "high"] },
+        "companionTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Category tags of beneficial neighbors"
+        },
+        "conflictTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Category tags or name fragments of harmful neighbors"
+        },
+        "replacementCategory": { "type": "string", "description": "Category to suggest if this crop is removed" },
+        "successionFriendly": { "type": "boolean", "description": "True if this crop benefits from staggered plantings" },
+        "varieties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "desc"],
+            "properties": {
+              "name": { "type": "string" },
+              "desc": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "ScoringFormula": {
+      "type": "object",
+      "description": "Reference documentation of the scoring algorithm. Not stored in data — purely for schema readers.",
+      "properties": {
+        "cellScore": {
+          "type": "string",
+          "const": "min(10, max(0, (sunFit×2 + supFit + shadeFit + accFit + seaFit) / 3 + structBonus + adjScore))"
+        },
+        "bedScore": {
+          "type": "string",
+          "const": "mean(cellScores) × 10 + goalBonus"
+        },
+        "factors": {
+          "type": "object",
+          "properties": {
+            "sunFit": { "const": "0–5, weight 2x. Maps effectiveLight against sunMin/sunIdeal." },
+            "supFit": { "const": "1–5, weight 1x. Checks hasVerticalSupport vs habit/trellisRequired." },
+            "shadeFit": { "const": "0–5, weight 1x. Crop shadeScore, reduced if light < sunMin." },
+            "accFit": { "const": "3–5, weight 1x. Low/very-low crops get access bonus from cell position." },
+            "seaFit": { "const": "1–5, weight 1x. Season × coolSeason cross-reference." },
+            "structBonus": { "const": "Additive -2 to +3. Trellis row, protected zone, critter-safe, succession." },
+            "adjScore": { "const": "Additive -2 to +2. Companion, conflict, same-crop, tall-tall, water mismatch." }
+          }
+        }
+      }
+    }
+  }
+}
