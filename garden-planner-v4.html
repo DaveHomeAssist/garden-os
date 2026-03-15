@@ -283,6 +283,133 @@
     flex:1;gap:.45rem;opacity:.4;padding:1.5rem 1rem;text-align:center;}
   .inspect-empty span{font-size:1.8rem;}
   .inspect-empty p{font-size:.72rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);}
+  .score-explain{
+    margin-top:.65rem;
+    border-top:1px solid var(--border-light);
+    padding-top:.65rem;
+    display:flex;
+    flex-direction:column;
+    gap:.5rem;
+  }
+  .score-explain-h{
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--soil);
+    font-weight:600;
+  }
+  .factor-list{display:flex;flex-direction:column;gap:.35rem;}
+  .factor-row{
+    background:white;
+    border:1px solid var(--border-light);
+    border-radius:6px;
+    padding:.42rem .5rem;
+  }
+  .factor-row.limiting{
+    border-color:rgba(212,101,26,.5);
+    box-shadow:inset 0 0 0 1px rgba(212,101,26,.2);
+  }
+  .factor-head{display:flex;align-items:center;justify-content:space-between;gap:.45rem;}
+  .factor-name{
+    font-size:.66rem;
+    font-weight:600;
+    color:var(--text-mid);
+  }
+  .factor-value{
+    font-family:'DM Mono',monospace;
+    font-size:.62rem;
+    color:var(--soil);
+    white-space:nowrap;
+  }
+  .factor-note{
+    margin-top:.2rem;
+    font-size:.62rem;
+    color:var(--text-light);
+    line-height:1.35;
+  }
+  .factor-bar{
+    margin-top:.24rem;
+    height:5px;
+    border-radius:4px;
+    background:#efe6d8;
+    overflow:hidden;
+  }
+  .factor-fill{
+    height:100%;
+    border-radius:4px;
+    transition:width .2s ease;
+    background:var(--sun);
+  }
+  .factor-fill.good{background:var(--good);}
+  .factor-fill.mid{background:var(--sun);}
+  .factor-fill.low{background:var(--warn);}
+  .adj-wrap{
+    border:1px solid var(--border-light);
+    border-radius:6px;
+    padding:.45rem .5rem;
+    background:white;
+  }
+  .adj-net{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.45rem;
+    margin-bottom:.25rem;
+    font-size:.64rem;
+  }
+  .adj-net .adj-val{
+    font-family:'DM Mono',monospace;
+    font-size:.64rem;
+    font-weight:600;
+  }
+  .adj-net .adj-val.good{color:var(--good);}
+  .adj-net .adj-val.mid{color:var(--soil-mid);}
+  .adj-net .adj-val.bad{color:var(--bad);}
+  .adj-item{
+    border-top:1px dashed #e5d9c7;
+    padding-top:.28rem;
+    margin-top:.28rem;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.45rem;
+  }
+  .adj-item:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+  .adj-label{font-size:.62rem;color:var(--text-mid);line-height:1.3;}
+  .adj-label small{display:block;color:var(--text-light);font-size:.58rem;margin-top:.1rem;}
+  .adj-delta{
+    font-family:'DM Mono',monospace;
+    font-size:.6rem;
+    white-space:nowrap;
+    color:var(--text-light);
+  }
+  .score-formula{
+    border:1px solid var(--border-light);
+    border-radius:6px;
+    padding:.45rem .5rem;
+    background:white;
+  }
+  .formula-k{
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+  }
+  .formula-v{
+    margin-top:.16rem;
+    font-family:'DM Mono',monospace;
+    font-size:.6rem;
+    color:var(--soil-mid);
+    line-height:1.45;
+  }
+  .formula-final{
+    margin-top:.24rem;
+    font-family:'Fraunces',serif;
+    font-size:1.02rem;
+    font-weight:600;
+  }
 
   /* Succession badge */
   .succ-badge{font-size:.5rem;background:#e8f5ea;color:#2a5a35;padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;margin-left:.3rem;}
@@ -1942,32 +2069,64 @@ function companionWeight(cat1, cat2){
   return COMPANION_WEIGHTS[`${cat1}-${cat2}`] || COMPANION_WEIGHTS[`${cat2}-${cat1}`] || 0.5;
 }
 
-function scoreCropInCell(ck, cell, inputs){
-  if(!ck||ck==='none') return 0;
-  const c=CROPS[ck]; const l=cell.effectiveLight||0;
+function clamp(n, min, max){
+  return Math.min(max, Math.max(min, n));
+}
+
+function computeScoreBreakdown(ck, cell, inputs){
+  if(!ck || ck==='none' || !CROPS[ck]) return null;
+  const c=CROPS[ck];
+  const l=Number(cell.effectiveLight||0);
   const sunRange=c.sunIdeal-c.sunMin;
-  let sunFit=l>=c.sunIdeal?5:l>=c.sunMin?3+2*(sunRange?((l-c.sunMin)/sunRange):1):1+Math.max(0,(l/Math.max(c.sunMin,.1))*2);
-  sunFit=Math.min(5,Math.max(0,sunFit));
+  let sunFit=l>=c.sunIdeal
+    ?5
+    :l>=c.sunMin
+      ?3+2*(sunRange?((l-c.sunMin)/sunRange):1)
+      :1+Math.max(0,(l/Math.max(c.sunMin,.1))*2);
+  sunFit=clamp(sunFit,0,5);
+
   let supFit=3;
   if(c.habit==='vining') supFit=cell.hasVerticalSupport?5:(inputs.trellis?2:1);
   if(c.trellisRequired) supFit=cell.hasVerticalSupport?5:1;
+
   const shadeFit=l<c.sunMin?Math.max(1,c.shadeScore*.6):c.shadeScore;
   const accFit=(c.height==='low'||c.height==='very low')?3+(cell.accessScore||0)*2:3;
+
   let seaFit=5;
   if((inputs.season==='latesummer'||inputs.season==='summer')&&c.coolSeason) seaFit=inputs.season==='latesummer'?1:2;
   if(inputs.season==='spring'&&!c.coolSeason) seaFit=3;
   if(inputs.season==='fall'&&c.coolSeason) seaFit=5;
   if(inputs.season==='fall'&&!c.coolSeason) seaFit=2;
-  // Structural bonus from derived cell traits (v4.3)
+
   let structBonus=0;
-  if(cell.isTrellisRow && c.trellisZone) structBonus+=1.5;
-  else if(c.trellisZone && !cell.hasVerticalSupport) structBonus-=1.5;
-  else if(c.trellisZone) structBonus-=0.5;
-  if(cell.isProtected && c.protectedZone) structBonus+=0.8;
-  if(cell.isCritterSafe && c.protectedZone) structBonus+=0.3;
-  if(c.protectedZone && cell.isTrellisRow) structBonus-=0.5;
-  if(c.successionFriendly) structBonus+=(cell.accessPriority||0)*0.4;
-  return Math.min(10,Math.max(0,(sunFit*2+supFit+shadeFit+accFit+seaFit)/3+structBonus));
+  const structContrib=[];
+  if(cell.isTrellisRow && c.trellisZone){ structBonus+=1.5; structContrib.push({label:'Trellis row match', delta:1.5}); }
+  else if(c.trellisZone && !cell.hasVerticalSupport){ structBonus-=1.5; structContrib.push({label:'Climber without support', delta:-1.5}); }
+  else if(c.trellisZone){ structBonus-=0.5; structContrib.push({label:'Climber off trellis row', delta:-0.5}); }
+
+  if(cell.isProtected && c.protectedZone){ structBonus+=0.8; structContrib.push({label:'Protected-zone match', delta:0.8}); }
+  if(cell.isCritterSafe && c.protectedZone){ structBonus+=0.3; structContrib.push({label:'Critter-safe bonus', delta:0.3}); }
+  if(c.protectedZone && cell.isTrellisRow){ structBonus-=0.5; structContrib.push({label:'Protected crop in trellis row', delta:-0.5}); }
+  if(c.successionFriendly){
+    const succBonus=(cell.accessPriority||0)*0.4;
+    structBonus+=succBonus;
+    if(succBonus!==0) structContrib.push({label:'Succession access bonus', delta:succBonus});
+  }
+
+  const weightedCore=(sunFit*2+supFit+shadeFit+accFit+seaFit)/3;
+  const preAdjRaw=weightedCore+structBonus;
+  const baseScore=clamp(preAdjRaw,0,10);
+  return {
+    crop:c, lightHours:l,
+    sunFit, supFit, shadeFit, accFit, seaFit,
+    structBonus, structContrib,
+    weightedCore, preAdjRaw, baseScore
+  };
+}
+
+function scoreCropInCell(ck, cell, inputs){
+  const detail=computeScoreBreakdown(ck, cell, inputs);
+  return detail ? detail.baseScore : 0;
 }
 
 function cropValidity(ck, cell, inputs){
@@ -1983,25 +2142,48 @@ function cropValidity(ck, cell, inputs){
 
 function neighbors(r,c){ return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCell(r+dr,c+dc)).filter(Boolean); }
 
-function adjScore(cell){
-  if(!cell.crop) return 0;
-  const c=CROPS[cell.crop]; let b=0;
+function computeAdjacencyBreakdown(cell){
+  if(!cell||!cell.crop||!CROPS[cell.crop]) return {raw:0,clamped:0,interactions:[]};
+  const c=CROPS[cell.crop];
+  const waterMap={low:0,medium:1,high:2};
+  const interactions=[];
+  let raw=0;
   neighbors(cell.row,cell.col).forEach(n=>{
-    if(!n.crop) return;
+    if(!n.crop||!CROPS[n.crop]) return;
     const nc=CROPS[n.crop];
+    let delta=0;
+    const contributions=[];
     if(c.companionTags.some(t=>nc.category===t)){
       const w=companionWeight(c.category, nc.category);
-      b+=0.5*w;
+      const bonus=0.5*w;
+      delta+=bonus;
+      contributions.push({label:'Companion match', delta:bonus});
     }
-    if(c.conflictTags.some(t=>nc.category===t||nc.name.toLowerCase().includes(t))) b-=1.2;
-    if(nc.height==='tall'&&c.height==='tall') b-=.75;
-    if(n.crop===cell.crop) b-=.2;
-    // Water incompatibility penalty
-    const waterMap={low:0,medium:1,high:2};
+    if(c.conflictTags.some(t=>nc.category===t||nc.name.toLowerCase().includes(t))){
+      delta-=1.2;
+      contributions.push({label:'Conflict tag', delta:-1.2});
+    }
+    if(nc.height==='tall'&&c.height==='tall'){
+      delta-=0.75;
+      contributions.push({label:'Tall × tall shade risk', delta:-0.75});
+    }
+    if(n.crop===cell.crop){
+      delta-=0.2;
+      contributions.push({label:'Same crop adjacency', delta:-0.2});
+    }
     const wd=Math.abs((waterMap[c.waterNeed]||1)-(waterMap[nc.waterNeed]||1));
-    if(wd>=2) b-=0.5;
+    if(wd>=2){
+      delta-=0.5;
+      contributions.push({label:'Water mismatch', delta:-0.5});
+    }
+    raw+=delta;
+    interactions.push({neighbor:n,crop:nc,delta,contributions});
   });
-  return Math.max(-2,Math.min(2,b));
+  return {raw,clamped:clamp(raw,-2,2),interactions};
+}
+
+function adjScore(cell){
+  return computeAdjacencyBreakdown(cell).clamped;
 }
 
 function scoreCell(cell, inputs){
@@ -2175,6 +2357,117 @@ function rankVar(ck, inputs){
       if(lc.includes('raised bed')||lc.includes('small')||lc.includes('compact'))s+=1;
       return s;}
     return vs(b)-vs(a);});
+}
+
+function formatSigned(value, digits=2){
+  const n=Number(value)||0;
+  return `${n>=0?'+':''}${n.toFixed(digits)}`;
+}
+
+function scoreBandByRatio(ratio){
+  if(ratio>=0.7) return 'good';
+  if(ratio>=0.45) return 'mid';
+  return 'low';
+}
+
+function renderScoreExplanation(cell, inputs){
+  if(!cell||!cell.crop) return '';
+  const detail=computeScoreBreakdown(cell.crop, cell, inputs);
+  if(!detail) return '';
+  const adjacency=computeAdjacencyBreakdown(cell);
+  const final=clamp(detail.baseScore+adjacency.clamped,0,10);
+  const crop=detail.crop;
+
+  const lightVsMin=detail.lightHours-crop.sunMin;
+  const sunMsg=lightVsMin>=0
+    ? `${detail.lightHours.toFixed(1)} hrs sun vs ${crop.sunMin.toFixed(1)} hr minimum.`
+    : `${detail.lightHours.toFixed(1)} hrs sun is ${Math.abs(lightVsMin).toFixed(1)} hrs under minimum.`;
+  const supportMsg=crop.trellisRequired
+    ? (cell.hasVerticalSupport?'Required support is present.':'Missing required support for this crop.')
+    : (crop.habit==='vining'
+      ? (cell.hasVerticalSupport?'Vining crop has vertical support.':'Vining crop without dedicated support.')
+      : 'Crop does not depend on vertical support.');
+  const shadeMsg=detail.lightHours<crop.sunMin
+    ? `Low light triggered a shade fallback from ${crop.shadeScore.toFixed(1)} to ${detail.shadeFit.toFixed(1)}.`
+    : `Shade tolerance stays at full value (${detail.shadeFit.toFixed(1)}).`;
+  const accessMsg=(crop.height==='low'||crop.height==='very low')
+    ? `Low profile crop gains access bonus from cell access score ${(cell.accessScore||0).toFixed(2)}.`
+    : 'Taller crop uses baseline access score.';
+  const seasonMsg=`${inputs.season} season ${crop.coolSeason?'cool-season':'warm-season'} fit.`;
+  const structMsg=detail.structContrib.length
+    ? detail.structContrib.map(item=>`${item.label} ${formatSigned(item.delta,2)}`).join(' · ')
+    : 'No structural bonus or penalty in this cell.';
+
+  const factors=[
+    {key:'sun',name:'Sun Fit ×2',value:detail.sunFit,max:5,note:sunMsg,display:`${detail.sunFit.toFixed(2)} / 5`},
+    {key:'support',name:'Support Fit',value:detail.supFit,max:5,note:supportMsg,display:`${detail.supFit.toFixed(2)} / 5`},
+    {key:'shade',name:'Shade Tolerance',value:detail.shadeFit,max:5,note:shadeMsg,display:`${detail.shadeFit.toFixed(2)} / 5`},
+    {key:'access',name:'Access Fit',value:detail.accFit,max:5,note:accessMsg,display:`${detail.accFit.toFixed(2)} / 5`},
+    {key:'season',name:'Season Fit',value:detail.seaFit,max:5,note:seasonMsg,display:`${detail.seaFit.toFixed(2)} / 5`},
+    {
+      key:'structure',
+      name:'Structural Bonus',
+      value:detail.structBonus+2,
+      max:5,
+      note:structMsg,
+      display:formatSigned(detail.structBonus,2)
+    }
+  ];
+
+  let limitingIndex=0;
+  let limitingRatio=Infinity;
+  factors.forEach((factor,idx)=>{
+    const ratio=factor.max?clamp(factor.value/factor.max,0,1):0;
+    if(ratio<limitingRatio){
+      limitingRatio=ratio;
+      limitingIndex=idx;
+    }
+  });
+
+  const factorHtml=factors.map((factor,idx)=>{
+    const ratio=factor.max?clamp(factor.value/factor.max,0,1):0;
+    const band=scoreBandByRatio(ratio);
+    return `<div class="factor-row ${idx===limitingIndex?'limiting':''}">
+      <div class="factor-head">
+        <span class="factor-name">${escapeHtml(factor.name)}${idx===limitingIndex?' ⚠':''}</span>
+        <span class="factor-value">${escapeHtml(factor.display)}</span>
+      </div>
+      <div class="factor-bar"><div class="factor-fill ${band}" style="width:${Math.round(ratio*100)}%"></div></div>
+      <div class="factor-note">${escapeHtml(factor.note)}</div>
+    </div>`;
+  }).join('');
+
+  const adjRows=adjacency.interactions.length
+    ? adjacency.interactions.map(entry=>{
+      const notes=entry.contributions.length
+        ? entry.contributions.map(item=>`${item.label} ${formatSigned(item.delta,2)}`).join(' · ')
+        : 'No direct companion/conflict/water effect.';
+      return `<div class="adj-item">
+        <span class="adj-label">${escapeHtml(entry.crop.short)} (${escapeHtml(entry.neighbor.id)})<small>${escapeHtml(notes)}</small></span>
+        <span class="adj-delta">${formatSigned(entry.delta,2)}</span>
+      </div>`;
+    }).join('')
+    : `<div class="adj-item"><span class="adj-label">No adjacent crops contributing to adjacency score.</span><span class="adj-delta">+0.00</span></div>`;
+
+  const adjClass=adjacency.clamped>0?'good':adjacency.clamped<0?'bad':'mid';
+  const finalColor=final>=7?'#3d7a4f':final>=4?'#b07820':'#b02a1e';
+
+  return `<div class="score-explain">
+    <div class="score-explain-h">Why this score?</div>
+    <div class="factor-list">${factorHtml}</div>
+    <div class="adj-wrap">
+      <div class="adj-net">
+        <span>Adjacency net</span>
+        <span class="adj-val ${adjClass}">${formatSigned(adjacency.clamped,2)} / ±2</span>
+      </div>
+      ${adjRows}
+    </div>
+    <div class="score-formula">
+      <div class="formula-k">Formula</div>
+      <div class="formula-v">(${detail.sunFit.toFixed(2)}×2 + ${detail.supFit.toFixed(2)} + ${detail.shadeFit.toFixed(2)} + ${detail.accFit.toFixed(2)} + ${detail.seaFit.toFixed(2)}) / 3 + ${formatSigned(detail.structBonus,2)} + ${formatSigned(adjacency.clamped,2)}</div>
+      <div class="formula-final" style="color:${finalColor}">Final: ${final.toFixed(1)} / 10</div>
+    </div>
+  </div>`;
 }
 
 // Per-cell issues
@@ -2727,7 +3020,7 @@ function renderRight(inputs,issues){
       <span class="vdesc">${escapeHtml(v.desc)}</span>
     </div>`).join('');
     const waterIcon={'low':'💧','medium':'💧💧','high':'💧💧💧'}[CROPS[ck].waterNeed]||'💧💧';
-    inspHtml=`
+      inspHtml=`
       <div class="insp">
         <div class="insph">${escapeHtml(CROPS[ck].emoji)} ${escapeHtml(CROPS[ck].name)} · ${escapeHtml(selCell.id)}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
         <div class="inspb">
@@ -2747,6 +3040,7 @@ function renderRight(inputs,issues){
           ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">${btLabel}</span></div>`:''}
         </div>
       </div>
+      ${renderScoreExplanation(selCell, inputs)}
       <div class="icard"><div class="ichdr">Varieties · ranked for your site</div>
         <div class="icbody">${vhtml||'<em style="font-size:.7rem;color:var(--text-light)">No varieties listed.</em>'}</div>
       </div>`;
