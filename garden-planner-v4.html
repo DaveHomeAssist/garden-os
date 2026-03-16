@@ -717,6 +717,79 @@
     border-bottom: 1px solid var(--border-light); }
   .companion-empty { font-size: .72rem; color: var(--text-light); text-align: center; padding: 1.5rem .5rem;
     font-style: italic; }
+
+  /* ═══ PLANTING CALENDAR ═══ */
+  .calendar-panel { padding: 8px; overflow-x: auto; }
+  .calendar-zone { margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .calendar-zone label { font-family: 'DM Mono', monospace; font-size: .62rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--text-mid); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 0; }
+  .calendar-zone select { font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 8px;
+    border: 1.5px solid var(--border); border-radius: 4px; background: white; color: var(--text); }
+  .calendar-grid { display: grid; gap: 1px; min-width: 500px; position: relative; }
+  .calendar-header { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-light);
+    text-align: center; padding: 2px; background: var(--cream-dark); border-radius: 2px; }
+  .calendar-crop { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text-mid);
+    padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
+  .calendar-bar { height: 14px; border-radius: 3px; min-width: 2px; }
+  .calendar-indoor { background: var(--leaf); opacity: 0.6; }
+  .calendar-transplant { background: var(--sun); }
+  .calendar-harvest { background: var(--warn); }
+  .calendar-frost-line { border-left: 2px dashed #3a6abf; position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 2; opacity: 0.5; }
+  .calendar-frost-label { position: absolute; top: -1px; font-family: 'DM Mono', monospace; font-size: 7px;
+    color: #3a6abf; white-space: nowrap; transform: translateX(-50%); }
+  .calendar-legend { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .calendar-legend-item { display: flex; align-items: center; gap: 3px; font-family: 'DM Mono', monospace;
+    font-size: .5rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-light); }
+  .calendar-legend-swatch { width: 12px; height: 8px; border-radius: 2px; }
+  .calendar-empty { font-size: .72rem; color: var(--text-light); text-align: center; padding: 1.5rem .5rem;
+    font-style: italic; }
+  .calendar-note { font-family: 'DM Mono', monospace; font-size: .5rem; color: var(--text-light);
+    text-align: center; margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ═══ PRINT BUTTON ═══ */
+  .btn-print {
+    border: 1.5px solid rgba(255,255,255,.28);
+    border-radius: 5px;
+    background: rgba(255,255,255,.06);
+    color: #f5ede0;
+    padding: .24rem .46rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: .56rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    transition: background .12s, border-color .12s, color .12s;
+  }
+  .btn-print:hover {
+    background: rgba(255,255,255,.13);
+    border-color: rgba(232,200,74,.7);
+    color: #fff7e2;
+  }
+
+  /* ═══ PRINT LAYOUT (hidden by default) ═══ */
+  .print-layout { display: none; }
+
+  @media print {
+    body > *:not(.print-layout) { display: none !important; }
+    .print-layout { display: block !important; padding: 0.5in; }
+    .print-title { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 18pt; color: var(--soil); margin-bottom: 2pt; }
+    .print-subtitle { font-family: 'DM Sans', sans-serif; font-size: 10pt; color: var(--text-mid); margin-bottom: 12pt; }
+    .print-grid-table { border-collapse: collapse; width: 100%; max-width: 7in; margin: 0 auto; }
+    .print-grid-table td { border: 1px solid var(--soil); width: 0.85in; height: 0.85in; text-align: center;
+      vertical-align: middle; font-size: 9pt; padding: 4px; }
+    .print-grid-table .print-cell-emoji { font-size: 16pt; display: block; line-height: 1.2; }
+    .print-grid-table .print-cell-label { font-family: 'DM Mono', monospace; font-size: 8pt; color: var(--text-mid); display: block; }
+    .print-grid-table .print-cell-score { font-family: 'DM Mono', monospace; font-size: 7pt; color: var(--text-light); display: block; }
+    .print-legend { margin-top: 12pt; font-family: 'DM Sans', sans-serif; font-size: 9pt; color: var(--text-mid); }
+    .print-legend-item { display: inline-block; margin-right: 14pt; white-space: nowrap; }
+    .print-settings { font-family: 'DM Mono', monospace; font-size: 8pt; color: var(--text-light); margin-top: 8pt; }
+    .print-notes { border-top: 1px solid var(--border); margin-top: 12pt; padding-top: 8pt; min-height: 1in; }
+    .print-notes-label { font-family: 'DM Mono', monospace; font-size: 8pt; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4pt; }
+    .print-notes-line { border-bottom: 1px solid var(--border-light); height: 20pt; }
+    .print-footer { font-family: 'DM Mono', monospace; font-size: 7pt; color: var(--text-light); margin-top: 12pt; }
+    @page { margin: 0.5in; size: landscape; }
+  }
 </style>
 </head>
 <body>
@@ -741,6 +814,7 @@
       <button class="hd-btn" id="exportWorkspaceBtn" type="button" aria-label="Export workspace to GOS JSON file">Export</button>
       <button class="hd-btn" id="importWorkspaceBtn" type="button" aria-label="Import workspace from GOS JSON file">Import</button>
       <input id="importWorkspaceFile" type="file" accept=".gos.json,.json,application/json" hidden>
+      <button class="btn-print" id="printPlanBtn" type="button" title="Print garden plan" aria-label="Print garden plan">Print</button>
     </div>
   </div>
 </header>
@@ -972,11 +1046,13 @@
     <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
     <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
     <button class="tab-btn"        id="rtab-companions" role="tab" aria-selected="false" aria-controls="rpane-companions">Companions</button>
+    <button class="tab-btn"        id="rtab-calendar" role="tab" aria-selected="false" aria-controls="rpane-calendar">Calendar</button>
   </div>
   <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
   <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
   <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
   <div class="tab-pane"    id="rpane-companions" role="tabpanel" aria-labelledby="rtab-companions"></div>
+  <div class="tab-pane"    id="rpane-calendar" role="tabpanel" aria-labelledby="rtab-calendar"></div>
 </aside>
 </div>
 
@@ -3308,13 +3384,14 @@ function switchRTab(t, persist=true){
     _workspace.workspaceSettings.rightTab = t;
     saveWorkspace(_workspace);
   }
-  ['score','inspect','notes','companions'].forEach(id=>{
+  ['score','inspect','notes','companions','calendar'].forEach(id=>{
     const btn = document.getElementById('rtab-'+id);
     btn.classList.toggle('active',id===t);
     btn.setAttribute('aria-selected', id===t);
     document.getElementById('rpane-'+id).classList.toggle('on',id===t);
   });
   if(t==='companions') renderCompanionPanel();
+  if(t==='calendar') renderCalendarPanel();
 }
 
 function renderPalette(){
@@ -3445,6 +3522,9 @@ function renderRight(inputs,issues){
     `<div class="icard"><div class="icbody">${whtml||
       '<em style="font-size:.7rem;color:var(--text-light)">Paint crops to see feedback.</em>'
     }</div></div>`;
+
+  // CALENDAR pane — re-render if active
+  if(ui.rTab==='calendar') renderCalendarPanel();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3601,6 +3681,10 @@ document.getElementById('rtab-score').addEventListener('click',()=>switchRTab('s
 document.getElementById('rtab-inspect').addEventListener('click',()=>switchRTab('inspect'));
 document.getElementById('rtab-notes').addEventListener('click',()=>switchRTab('notes'));
 document.getElementById('rtab-companions').addEventListener('click',()=>switchRTab('companions'));
+document.getElementById('rtab-calendar').addEventListener('click',()=>switchRTab('calendar'));
+
+// Print button
+document.getElementById('printPlanBtn').addEventListener('click',printGardenPlan);
 
 // Event delegation: bed presets (dynamic buttons)
 document.getElementById('bed-presets').addEventListener('click',e=>{
@@ -3627,6 +3711,381 @@ document.getElementById('pgrid').addEventListener('click',e=>{
   const item=e.target.closest('[data-crop]');
   if(item) selectCrop(item.dataset.crop);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANTING CALENDAR — Frost dates + crop timing + Gantt rendering
+// ═══════════════════════════════════════════════════════════════════════════════
+var FROST_DATES = {
+  3:  { lastFrost: 'May 15',  firstFrost: 'Sep 15' },
+  4:  { lastFrost: 'May 10',  firstFrost: 'Sep 25' },
+  5:  { lastFrost: 'Apr 25',  firstFrost: 'Oct 10' },
+  6:  { lastFrost: 'Apr 15',  firstFrost: 'Oct 20' },
+  7:  { lastFrost: 'Apr 5',   firstFrost: 'Nov 1' },
+  8:  { lastFrost: 'Mar 20',  firstFrost: 'Nov 10' },
+  9:  { lastFrost: 'Feb 15',  firstFrost: 'Dec 1' },
+  10: { lastFrost: 'Jan 30',  firstFrost: 'Dec 15' }
+};
+
+// Weeks relative to last frost date. Negative = before frost, positive = after.
+// indoorWeeks: when to start seeds indoors (null if not applicable)
+// transplantWeeks: when to transplant outdoors (null if direct sow only)
+// directSow: true if can be direct sown outdoors
+// harvestWeeks: weeks after transplant/sow to first harvest
+var CROP_TIMING = {
+  // Cucurbits
+  beit_cucumber:      { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 8 },
+  slicing_cucumber:   { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 9 },
+  bush_cucumber:      { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 8 },
+  // Greens
+  leaf_lettuce:       { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 6 },
+  head_lettuce:       { indoorWeeks: -6, transplantWeeks: -2, directSow: false, harvestWeeks: 10 },
+  spinach:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 6 },
+  kale:               { indoorWeeks: -6, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
+  arugula:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 4 },
+  swiss_chard:        { indoorWeeks: -4, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
+  bok_choy:           { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 6 },
+  mustard_greens:     { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 5 },
+  tatsoi:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 6 },
+  mizuna:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 5 },
+  // Legumes
+  bush_beans:         { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
+  pole_beans:         { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 9 },
+  peas:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 9 },
+  // Roots
+  radish:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 4 },
+  carrots:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 10 },
+  scallions:          { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
+  beets:              { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
+  turnips:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 7 },
+  onions:             { indoorWeeks: -10, transplantWeeks: -2, directSow: false, harvestWeeks: 14 },
+  garlic:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 20 },
+  // Herbs
+  basil:              { indoorWeeks: -6, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
+  cilantro:           { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 5 },
+  parsley:            { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 10 },
+  dill:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
+  chives:             { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 10 },
+  // Fruiting
+  peppers:            { indoorWeeks: -8, transplantWeeks: 2,  directSow: false, harvestWeeks: 10 },
+  compact_tomato:     { indoorWeeks: -6, transplantWeeks: 0,  directSow: false, harvestWeeks: 10 },
+  cherry_tomato:      { indoorWeeks: -8, transplantWeeks: 0,  directSow: false, harvestWeeks: 10 },
+  eggplant:           { indoorWeeks: -8, transplantWeeks: 2,  directSow: false, harvestWeeks: 12 },
+  zucchini:           { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 7 },
+  // Brassica
+  compact_cabbage:    { indoorWeeks: -6, transplantWeeks: -2, directSow: false, harvestWeeks: 10 },
+  broccoli:           { indoorWeeks: -6, transplantWeeks: -2, directSow: false, harvestWeeks: 10 },
+  kohlrabi:           { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 7 },
+  // Companion
+  marigold:           { indoorWeeks: -4, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
+  nasturtium:         { indoorWeeks: -3, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 }
+};
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseFrostDate(dateStr){
+  // e.g. "Apr 15" → Date object in current year
+  const parts = dateStr.split(' ');
+  const monthIdx = MONTH_NAMES.indexOf(parts[0].substring(0,3));
+  const day = parseInt(parts[1], 10);
+  return new Date(new Date().getFullYear(), monthIdx, day);
+}
+
+function weekToMonth(weekOffset, lastFrostDate){
+  // Returns fractional month index (0=Jan 1, 11.99=Dec 31)
+  const d = new Date(lastFrostDate.getTime());
+  d.setDate(d.getDate() + weekOffset * 7);
+  return d.getMonth() + d.getDate() / 31;
+}
+
+function getCalendarZone(){
+  if(_workspace && _workspace.workspaceSettings && _workspace.workspaceSettings.zone){
+    return _workspace.workspaceSettings.zone;
+  }
+  return 6; // default
+}
+
+function setCalendarZone(z){
+  if(_workspace){
+    _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+    _workspace.workspaceSettings.zone = z;
+    saveWorkspace(_workspace);
+  }
+}
+
+function renderCalendarPanel(){
+  const pane = document.getElementById('rpane-calendar');
+  if(!pane) return;
+
+  const zone = getCalendarZone();
+  const frost = FROST_DATES[zone];
+  if(!frost){
+    pane.innerHTML = '<div class="calendar-empty">Select a valid USDA zone (3-10).</div>';
+    return;
+  }
+
+  const lastFrostDate = parseFrostDate(frost.lastFrost);
+  const firstFrostDate = parseFrostDate(frost.firstFrost);
+
+  // Unique crops on the grid
+  const cropsOnGrid = [...new Set(bed.map(c=>c.crop).filter(Boolean))];
+
+  // Build zone selector
+  let html = '<div class="calendar-panel">';
+  html += '<div class="calendar-zone"><label>USDA Zone <select id="calendarZoneSelect">';
+  for(let z=3; z<=10; z++){
+    html += '<option value="'+z+'"'+(z==zone?' selected':'')+'>Zone '+z+'</option>';
+  }
+  html += '</select></label></div>';
+
+  if(!cropsOnGrid.length){
+    html += '<div class="calendar-empty">Place crops to see your planting calendar</div></div>';
+    pane.innerHTML = html;
+    bindCalendarZoneSelect();
+    return;
+  }
+
+  // Calendar range: show Feb through Nov for most zones
+  const startMonth = 1; // Feb
+  const endMonth = 11;  // Nov (inclusive)
+  const monthCount = endMonth - startMonth + 1;
+  const colCount = monthCount + 1; // +1 for crop label column
+
+  html += '<div class="calendar-grid" style="grid-template-columns: 80px repeat('+monthCount+', 1fr); position: relative;">';
+
+  // Header row: crop label + months
+  html += '<div class="calendar-header"></div>';
+  for(let m = startMonth; m <= endMonth; m++){
+    html += '<div class="calendar-header">'+MONTH_NAMES[m]+'</div>';
+  }
+
+  // One row per crop
+  cropsOnGrid.forEach(ck => {
+    const crop = CROPS[ck];
+    const timing = CROP_TIMING[ck];
+    if(!crop || !timing) return;
+
+    html += '<div class="calendar-crop" title="'+escapeHtml(crop.name)+'">'+escapeHtml(crop.emoji)+' '+escapeHtml(crop.short)+'</div>';
+
+    // Build bar segments
+    // Each month column is one cell; we render bars spanning across columns using a single row of cells
+    // We'll use a sub-grid approach: one cell per month that contains colored spans
+
+    for(let m = startMonth; m <= endMonth; m++){
+      let cellContent = '';
+      const monthStart = m;
+      const monthEnd = m + 1;
+
+      // Check if any phase falls within this month
+      // Indoor start phase
+      if(timing.indoorWeeks !== null && timing.transplantWeeks !== null){
+        const indoorStart = weekToMonth(timing.indoorWeeks, lastFrostDate);
+        const indoorEnd = weekToMonth(timing.transplantWeeks, lastFrostDate);
+        if(indoorStart < monthEnd && indoorEnd > monthStart){
+          const left = Math.max(0, (indoorStart - monthStart)) * 100;
+          const right = Math.min(1, (indoorEnd - monthStart)) * 100;
+          const w = right - left;
+          if(w > 0) cellContent += '<div class="calendar-bar calendar-indoor" style="width:'+Math.max(w,8)+'%;margin-left:'+left+'%"></div>';
+        }
+      }
+
+      // Transplant/direct sow phase
+      const sowStart = timing.transplantWeeks !== null
+        ? weekToMonth(timing.transplantWeeks, lastFrostDate)
+        : (timing.directSow ? weekToMonth(timing.indoorWeeks !== null ? timing.indoorWeeks : -2, lastFrostDate) : null);
+      const harvestStart = timing.transplantWeeks !== null
+        ? weekToMonth(timing.transplantWeeks + timing.harvestWeeks, lastFrostDate)
+        : (timing.directSow ? weekToMonth((timing.indoorWeeks !== null ? timing.transplantWeeks||0 : -2) + timing.harvestWeeks, lastFrostDate) : null);
+
+      // For direct sow crops, transplant phase is the sow window (2 weeks around frost)
+      let tpStart, tpEnd;
+      if(timing.transplantWeeks !== null){
+        tpStart = weekToMonth(timing.transplantWeeks, lastFrostDate);
+        tpEnd = weekToMonth(timing.transplantWeeks + 2, lastFrostDate);
+      } else if(timing.directSow){
+        const sowWeek = timing.indoorWeeks !== null ? 0 : -2;
+        tpStart = weekToMonth(sowWeek, lastFrostDate);
+        tpEnd = weekToMonth(sowWeek + 3, lastFrostDate);
+      }
+
+      if(tpStart !== undefined && tpEnd !== undefined){
+        if(tpStart < monthEnd && tpEnd > monthStart){
+          const left = Math.max(0, (tpStart - monthStart)) * 100;
+          const right = Math.min(1, (tpEnd - monthStart)) * 100;
+          const w = right - left;
+          if(w > 0) cellContent += '<div class="calendar-bar calendar-transplant" style="width:'+Math.max(w,8)+'%;margin-left:'+left+'%"></div>';
+        }
+      }
+
+      // Harvest phase
+      let hvStart, hvEnd;
+      if(timing.transplantWeeks !== null){
+        hvStart = weekToMonth(timing.transplantWeeks + Math.max(timing.harvestWeeks - 4, 2), lastFrostDate);
+        hvEnd = weekToMonth(timing.transplantWeeks + timing.harvestWeeks + 2, lastFrostDate);
+      } else if(timing.directSow){
+        const sowWeek = timing.indoorWeeks !== null ? 0 : -2;
+        hvStart = weekToMonth(sowWeek + Math.max(timing.harvestWeeks - 4, 2), lastFrostDate);
+        hvEnd = weekToMonth(sowWeek + timing.harvestWeeks + 2, lastFrostDate);
+      }
+
+      if(hvStart !== undefined && hvEnd !== undefined){
+        if(hvStart < monthEnd && hvEnd > monthStart){
+          const left = Math.max(0, (hvStart - monthStart)) * 100;
+          const right = Math.min(1, (hvEnd - monthStart)) * 100;
+          const w = right - left;
+          if(w > 0) cellContent += '<div class="calendar-bar calendar-harvest" style="width:'+Math.max(w,8)+'%;margin-left:'+left+'%"></div>';
+        }
+      }
+
+      html += '<div style="position:relative;display:flex;flex-direction:column;gap:1px;justify-content:center;padding:1px 0;">' + cellContent + '</div>';
+    }
+  });
+
+  html += '</div>';
+
+  // Frost date markers (overlay)
+  const lastFrostMonth = lastFrostDate.getMonth() + lastFrostDate.getDate()/31;
+  const firstFrostMonth = firstFrostDate.getMonth() + firstFrostDate.getDate()/31;
+
+  // Legend
+  html += '<div class="calendar-legend">';
+  html += '<div class="calendar-legend-item"><div class="calendar-legend-swatch" style="background:var(--leaf);opacity:0.6"></div> Indoor start</div>';
+  html += '<div class="calendar-legend-item"><div class="calendar-legend-swatch" style="background:var(--sun)"></div> Transplant / sow</div>';
+  html += '<div class="calendar-legend-item"><div class="calendar-legend-swatch" style="background:var(--warn)"></div> Harvest</div>';
+  html += '</div>';
+
+  html += '<div class="calendar-note">Zone '+zone+' · Last frost: '+escapeHtml(frost.lastFrost)+' · First frost: '+escapeHtml(frost.firstFrost)+' · Dates are estimated averages</div>';
+
+  html += '</div>';
+  pane.innerHTML = html;
+
+  // Add frost date lines as overlays
+  const gridEl = pane.querySelector('.calendar-grid');
+  if(gridEl){
+    addFrostLine(gridEl, lastFrostMonth, startMonth, monthCount, 'Last frost');
+    addFrostLine(gridEl, firstFrostMonth, startMonth, monthCount, 'First frost');
+  }
+
+  bindCalendarZoneSelect();
+}
+
+function addFrostLine(gridEl, frostMonth, startMonth, monthCount, label){
+  if(frostMonth < startMonth || frostMonth > startMonth + monthCount) return;
+  const pct = ((frostMonth - startMonth) / monthCount) * 100;
+  // Offset for the label column (80px)
+  const labelColPct = 80; // approximate px
+  const line = document.createElement('div');
+  line.className = 'calendar-frost-line';
+  line.style.left = 'calc(80px + ' + pct + '% * (100% - 80px) / 100%)';
+  // Simpler approach: use percentage of the grid area after the label column
+  line.style.left = 'calc(80px + (100% - 80px) * ' + (pct/100) + ')';
+  const lbl = document.createElement('div');
+  lbl.className = 'calendar-frost-label';
+  lbl.textContent = label;
+  lbl.style.left = line.style.left;
+  gridEl.appendChild(line);
+  gridEl.appendChild(lbl);
+}
+
+function bindCalendarZoneSelect(){
+  const sel = document.getElementById('calendarZoneSelect');
+  if(sel){
+    sel.addEventListener('change', function(){
+      setCalendarZone(parseInt(this.value, 10));
+      renderCalendarPanel();
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GARDEN PLAN PRINT LAYOUT
+// ═══════════════════════════════════════════════════════════════════════════════
+function printGardenPlan(){
+  // Build print layout
+  const inputs = inp();
+  const b = activeBed();
+  const bedName = b ? (b.name || 'Unnamed Bed') : 'Garden Bed';
+  const workspaceName = _workspace ? (_workspace.name || 'Garden OS') : 'Garden OS';
+  const bs = scoreBed(inputs);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Unique crops on grid for legend
+  const cropsOnGrid = [...new Set(bed.map(c=>c.crop).filter(Boolean))];
+
+  // Build grid table
+  let tableHtml = '<table class="print-grid-table"><tbody>';
+  for(let r = 0; r < bedH; r++){
+    tableHtml += '<tr>';
+    for(let c = 0; c < bedW; c++){
+      const cell = getCell(r, c);
+      const crop = cell && cell.crop ? CROPS[cell.crop] : null;
+      const cs = cell && cell.crop ? scoreCell(cell, inputs) : 0;
+      const bgColor = crop ? crop.color + '33' : '#f7f2ea';
+      tableHtml += '<td style="background:' + bgColor + '">';
+      if(crop){
+        tableHtml += '<span class="print-cell-emoji">' + escapeHtml(crop.emoji) + '</span>';
+        tableHtml += '<span class="print-cell-label">' + escapeHtml(crop.short) + '</span>';
+        tableHtml += '<span class="print-cell-score">' + cs.toFixed(1) + '</span>';
+      }
+      tableHtml += '</td>';
+    }
+    tableHtml += '</tr>';
+  }
+  tableHtml += '</tbody></table>';
+
+  // Build legend
+  let legendHtml = '<div class="print-legend"><strong>Legend: </strong>';
+  cropsOnGrid.forEach(ck => {
+    const crop = CROPS[ck];
+    if(crop){
+      legendHtml += '<span class="print-legend-item">' + escapeHtml(crop.emoji) + ' ' + escapeHtml(crop.short) + ' &mdash; ' + escapeHtml(crop.name) + '</span>';
+    }
+  });
+  if(!cropsOnGrid.length) legendHtml += '<em>No crops placed</em>';
+  legendHtml += '</div>';
+
+  // Build settings
+  const orient = inputs.orientation === 'ew' ? 'East-West' : 'North-South';
+  const wallLabel = {back:'Back (Row 1)',front:'Front (Last row)',left:'Left (Col 1)',right:'Right (Last col)',none:'No wall'}[inputs.wallSide] || inputs.wallSide;
+  const cageOn = inputs.cage && inputs.cage.enabled;
+  let settingsHtml = '<div class="print-settings">';
+  settingsHtml += bedW + '×' + bedH + ' ft &middot; ' + orient + ' &middot; Wall: ' + wallLabel;
+  settingsHtml += ' &middot; Sun: ' + inputs.sunHours + ' hrs';
+  settingsHtml += ' &middot; Trellis: ' + (inputs.trellis ? 'Yes' : 'No');
+  if(cageOn) settingsHtml += ' &middot; Cage: Yes';
+  settingsHtml += '</div>';
+
+  // Assemble layout
+  const layout = document.createElement('div');
+  layout.className = 'print-layout';
+  layout.innerHTML =
+    '<div class="print-title">' + escapeHtml(workspaceName) + '</div>' +
+    '<div class="print-subtitle">' + escapeHtml(bedName) + ' &middot; Grid Score: ' + bs + ' / 100</div>' +
+    tableHtml +
+    legendHtml +
+    settingsHtml +
+    '<div class="print-notes"><div class="print-notes-label">Notes</div>' +
+    '<div class="print-notes-line"></div><div class="print-notes-line"></div><div class="print-notes-line"></div></div>' +
+    '<div class="print-footer">Generated: ' + escapeHtml(dateStr) + ' &middot; Garden OS Raised Bed Planner v' + APP_VERSION + '</div>';
+
+  document.body.appendChild(layout);
+
+  // Use onafterprint to clean up, with setTimeout fallback
+  let cleaned = false;
+  function cleanup(){
+    if(cleaned) return;
+    cleaned = true;
+    if(layout.parentNode) layout.parentNode.removeChild(layout);
+  }
+  window.addEventListener('afterprint', cleanup, { once: true });
+
+  // Trigger print
+  setTimeout(function(){
+    window.print();
+    // Fallback cleanup after 3 seconds in case afterprint doesn't fire
+    setTimeout(cleanup, 3000);
+  }, 100);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPANION PLANTING REFERENCE

@@ -43,7 +43,6 @@
 .season-summer{--s-ground-deep:#4c321f;--s-ground-mid:#6b4a2a;--s-ground-light:#b89b72;--s-growth-primary:#3d7a2e;--s-growth-accent:#c24433;--s-growth-muted:#8b6b2f;--s-sky-wash:#f0e6d0;--s-sky-light:#f5ecdc;--s-sky-highlight:#e8b44a}
 .season-fall{--s-ground-deep:#3a2810;--s-ground-mid:#5e4020;--s-ground-light:#8a6b40;--s-growth-primary:#6b7a44;--s-growth-accent:#a83c2e;--s-growth-muted:#8b5a30;--s-sky-wash:#d4c5a8;--s-sky-light:#e0d4ba;--s-sky-highlight:#c9963a}
 .season-winter{--s-ground-deep:#2e2e30;--s-ground-mid:#4a4a4c;--s-ground-light:#6e6e6b;--s-growth-primary:#5a6858;--s-growth-accent:#8a7a5e;--s-growth-muted:#6b6b60;--s-sky-wash:#c8c4b8;--s-sky-light:#e8e2d4;--s-sky-highlight:#c9963a}
-@media(prefers-color-scheme:dark){:root{--sf-bg:#f2ead8;--sf-panel:#ffffff;--sf-panel-2:#f8f4eb;--sf-card:#ffffff;--sf-field:#f0e8d6;--sf-ink:#1a1208;--sf-muted:#6b5d48;--sf-line:#d4c4a8;--sf-overlay:rgba(44,31,20,0.52);--shadow:0 4px 16px rgba(42,28,16,0.08)}}
 *{box-sizing:border-box;margin:0}
 body{font-family:var(--ff-body);font-size:13px;line-height:1.6;color:var(--sf-ink);background:var(--sf-bg);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background-color 0.8s ease-in-out}
 h1{font-family:var(--ff-heading);font-size:var(--type-title);font-weight:800;line-height:1.1;letter-spacing:-0.01em}
@@ -104,7 +103,6 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .cell.score-good{background-color:var(--sem-good-bg);border-color:var(--sem-good)}
 .cell.score-warn{background-color:var(--sem-warn-bg);border-color:var(--sem-warn)}
 .cell.score-hard{background-color:var(--sem-hard-bg);border-color:var(--sem-hard)}
-.cell.companion-buff{border-color:var(--char-onion);box-shadow:inset 0 0 0 2px rgba(201,141,34,0.2)}
 @keyframes pop-in{0%{transform:scale(0.85)}100%{transform:scale(1)}}
 .cell.just-planted{animation:pop-in 180ms var(--ease-back-out)}
 .cell .emoji{font-size:1.5rem;line-height:1}
@@ -216,8 +214,6 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .mastery-badge{text-align:center;padding:16px;background:var(--sf-panel-2);border-radius:var(--radius);margin:10px 0}
 .mastery-badge .rank-title{font-family:var(--ff-heading);font-size:1.2rem;font-weight:800;color:var(--char-gurl)}
 .mastery-badge .rank-sub{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--sf-muted)}
-.fill-counter{position:fixed;top:10px;right:10px;background:var(--char-gurl);color:#fff;padding:4px 12px;border-radius:99px;font-weight:700;font-size:var(--type-body);z-index:50;display:none}
-.fill-counter.active{display:block}
 .harvest-checklist{background:var(--sf-panel-2);border-radius:8px;padding:10px;margin-bottom:8px}
 .harvest-checklist .hc-item{font-size:var(--type-small);padding:3px 0;display:flex;align-items:center;gap:4px;font-family:var(--ff-body)}
 .harvest-checklist .hc-item.checked{color:var(--sem-good);font-weight:600}
@@ -225,8 +221,6 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .row-objective{background:rgba(95,143,69,.1);border:1px solid var(--char-gurl);border-radius:8px;padding:10px;margin-bottom:8px;font-size:var(--type-small);font-family:var(--ff-body)}
 .faction-counter{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--sf-muted);padding:3px 0}
 *:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-@keyframes sim-blink{0%,100%{opacity:1}50%{opacity:0.1}}
-.sim-dot{animation:sim-blink 1.2s ease infinite}.sim-dot:nth-child(2){animation-delay:0.2s}.sim-dot:nth-child(3){animation-delay:0.4s}
 @keyframes harvest-pulse{0%{opacity:1;transform:scale(1)}40%{opacity:0.3;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
 .cell.harvesting{animation:harvest-pulse 280ms var(--ease-expo-out) forwards}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms;animation-iteration-count:1;transition-duration:0.15s;scroll-behavior:auto}.cell.just-planted,.cell.harvesting,.cell.event-hit{animation:none}.cell.event-hit{box-shadow:inset 0 0 0 2px var(--sem-hard)}.event-card.entering{opacity:1;transform:translateY(0)}.chapter-card{animation:none}.grade.reveal{animation:none;opacity:1;transform:scale(1)}.narrator-slot,.sauce-item{transition-duration:0.15s}.ring-fill{transition-duration:0.01ms}.factor-bar .fill{transition-duration:0.15s}}
@@ -703,7 +697,6 @@ const DIALOGUE_DB={
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n))}
 function rc(i){return{row:Math.floor(i/COLS),col:i%COLS}}
 function ri(r,c){return r*COLS+c}
-function fmt(i){const p=rc(i);return'R'+p.row+'C'+p.col}
 function dc(o){return JSON.parse(JSON.stringify(o))}
 function nbs(i){const{row,col}=rc(i);const o=[];if(row>0)o.push(ri(row-1,col));if(row<ROWS-1)o.push(ri(row+1,col));if(col>0)o.push(ri(row,col-1));if(col<COLS-1)o.push(ri(row,col+1));return o}
 function wRand(items,wf){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);if(t<=0)return items[Math.floor(Math.random()*items.length)];let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
@@ -838,11 +831,12 @@ function resolveTargets(ev,grid){
     if(f.startsWith('row-')){const rn=parseInt(f.split('-')[1]);for(let c=0;c<COLS;c++){const idx=ri(rn,c);if(grid[idx]&&grid[idx].cropId)cands.push(idx)}}
     else{for(let i=0;i<SIZE;i++)if(grid[i]&&grid[i].cropId)cands.push(i)}
   }
-  if(t.max&&cands.length>t.max){cands=[...cands].sort(()=>Math.random()-.5).slice(0,t.max)}
+  if(t.max&&cands.length>t.max){cands=cands.slice(0,t.max)}
   return cands;
 }
 
 function applyEvent(ev,grid){
+  if(S)S._cachedBedScore=null;
   const tgts=resolveTargets(ev,grid);const aff=[];
   for(const idx of tgts){const c=grid[idx];if(!c)continue;if(c.interventionFlag==='protected')continue;c.eventModifier=(c.eventModifier||0)+ev.me.mod;aff.push(idx)}
   return aff;
@@ -974,6 +968,28 @@ function mkCell(r,c){return{cropId:null,row:r,col:c,locked:false,eventModifier:0
 function mkGrid(){const g=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)g.push(mkCell(r,c));return g}
 function mkCF(){return{soilFatigueMap:{},lastFamilyMap:{},infrastructureMap:{},recipePantry:[],eventMemory:[],seasonHistory:[]}}
 
+function buildCarryForward(S,cf){
+  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
+  cf.seasonHistory.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
+  const nfm={};const nff={};
+  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
+    const prev=cf.soilFatigueMap[k]||0;const prevFam=cf.lastFamilyMap[k]||null;
+    if(!c.cropId){nfm[k]=0;continue}
+    const fam=C[c.cropId]?C[c.cropId].faction:null;if(fam)nff[k]=fam;
+    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
+    if(HEAVY.includes(c.cropId)){if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);else nfm[k]=-.3}else nfm[k]=prev<0?prev:0;
+  }
+  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
+  cf.infrastructureMap={};
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
+  }
+  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
+  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:S.chapter,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1})}
+  return cf;
+}
+
 function mkSeason(ch,cf){
   const season=seasonFor(ch);const grid=mkGrid();
   if(cf){
@@ -1004,14 +1020,29 @@ function mkSeason(ch,cf){
       cf.eventMemory=nextMemory;
     }
   }
-  return{phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
+  return{_version:3,phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
 }
 
 let S=null;
 
 /* ===== PERSISTENCE ===== */
-function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
-function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return p}}catch(e){}return null}
+function showSaveWarning(){
+  let w=document.getElementById('save-warning');
+  if(!w){w=document.createElement('div');w.id='save-warning';w.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--sem-hard);color:#fff;padding:8px 16px;border-radius:8px;font-family:var(--ff-body);font-size:var(--type-body);font-weight:600;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,0.2)';w.textContent='Save failed — localStorage may be full or unavailable.';document.body.appendChild(w)}
+  w.style.display='block';setTimeout(()=>{if(w)w.style.display='none'},5000);
+}
+function migrateState(s){
+  if(!s)return s;
+  if(!s._version||s._version<3){
+    if(!s.eventAffectedCells)s.eventAffectedCells=[];
+    if(!s.carryForward)s.carryForward=mkCF();
+    if(s.beatTokenAvailable===undefined)s.beatTokenAvailable=false;
+    s._version=3;
+  }
+  return s;
+}
+function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){console.warn('Save failed:',e);showSaveWarning()}}
+function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return migrateState(p)}}catch(e){}return null}
 function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-12)}catch(e){return[]}}
 function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-12)))}catch(e){}}
 
@@ -1205,7 +1236,7 @@ function startChapter(ch){
 
   // Phillies 1-in-3
   const philliesKey='phillies_'+S.season;
-  if(DIALOGUE_DB[philliesKey]&&Math.random()<0.333){
+  if(DIALOGUE_DB[philliesKey]&&S.chapter%3===0){
     setTimeout(()=>fireDialogue(philliesKey),2500);
   }
 
@@ -1229,6 +1260,7 @@ function renderCtrl(){
     for(const crop of crops){
       const locked=crop.chapterUnlock>chap;
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
+      btn.setAttribute('aria-label',crop.name+(locked?' (locked)':''));
       btn.disabled=S.phase!=='PLANNING'||locked;
       const em=h('span','emoji',crop.emoji);
       const tw=h('div','crop-text');
@@ -1299,6 +1331,7 @@ function renderBoard(){
   }
 
   const preview=S.phase==='PLANNING'?bedScore(S.grid,S.season):null;
+  S._cachedBedScore=preview;
   const gd=h('div','grid');
   gd.setAttribute('role','grid');
   gd.setAttribute('aria-label','8 by 4 raised bed');
@@ -1325,7 +1358,8 @@ function renderBoard(){
       ariaLabel+=', '+cr.name+' planted';
       const src=S.harvestResult||preview;
       if(src){const cs=src.cellScores.find(s=>s.index===i);if(cs){
-        const pip=h('span','score-pip',cs.finalScore.toFixed(1));
+        const indicator=cs.finalScore>=7?'\u2713':cs.finalScore>=4.5?'~':'!';
+        const pip=h('span','score-pip',indicator+cs.finalScore.toFixed(1));
         if(cs.finalScore>=7){pip.classList.add('pip-good');d.classList.add('score-good')}
         else if(cs.finalScore>=5){pip.classList.add('pip-warn');d.classList.add('score-warn')}
         else{pip.classList.add('pip-hard');d.classList.add('score-hard')}
@@ -1407,7 +1441,7 @@ function renderRes(){
   if(CAM&&(CAM.mode==='menu'||CAM.mode==='chapter_start'||CAM.mode==='chapter_end'||CAM.mode==='sauce_sequence'||CAM.mode==='epilogue'||CAM.mode==='winter_review'))return;
 
   const f=document.createDocumentFragment();
-  const sd=S.harvestResult||bedScore(S.grid,S.season);
+  const sd=S.harvestResult||S._cachedBedScore||bedScore(S.grid,S.season);
 
   // Score with SVG ring gauge
   const ringWrap=h('div','score-ring-wrap');
@@ -2051,7 +2085,7 @@ function renderEpilogue(){
   const nb=h('button','btn primary','Continue to Free Play');
   nb.onclick=()=>{
     CAM.freePlayUnlocked=true;
-    CAM.completedChapters.push(12);
+    if(!CAM.completedChapters.includes(12))CAM.completedChapters.push(12);
     CAM.mode='menu';
     saveCampaign();
     render();
@@ -2084,7 +2118,7 @@ function showHowToOverlay(sectionId){
   if(sectionId)howToSection=sectionId;
   if(!HOWTO_SECTIONS.some(s=>s.id===howToSection))howToSection=HOWTO_SECTIONS[0].id;
   renderHowToOverlay();
-  el.overlay.classList.add('active');
+  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
 }
 
 function renderHowToOverlay(){
@@ -2184,7 +2218,7 @@ function showJournalOverlay(){
   cb.onclick=()=>el.overlay.classList.remove('active');
   btns.appendChild(cb);
   el.cbox.appendChild(btns);
-  el.overlay.classList.add('active');
+  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
 }
 
 /* ===== MAIN RENDER ===== */
@@ -2221,6 +2255,7 @@ function render(){
 
 /* ===== CELL CLICK ===== */
 function cellClick(i){
+  S._cachedBedScore=null;
   if(S.interventionMode){execIntervention(i);return}
   if(S.phase==='PLANNING'){
     const prevCropId=S.grid[i].cropId;
@@ -2277,10 +2312,11 @@ function showCommitConfirm(){
   const cancel=h('button','btn','Cancel');cancel.onclick=()=>el.overlay.classList.remove('active');
   const confirm=h('button','btn primary','Confirm');confirm.onclick=()=>{el.overlay.classList.remove('active');doCommit()};
   btns.appendChild(cancel);btns.appendChild(confirm);el.cbox.appendChild(btns);
-  el.overlay.classList.add('active');
+  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
 }
 
 function doCommit(){
+  S._cachedBedScore=null;
   for(const c of S.grid)c.locked=true;
   S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];S.eventAffectedCells=[];
   S.phase='EARLY_SEASON';
@@ -2332,11 +2368,15 @@ function startBeat(){
 }
 
 function advanceBeat(){
-  if(S.beatTokenAvailable&&S.currentEvent)doAcceptLoss();
+  if(S.beatTokenAvailable&&S.currentEvent){doAcceptLoss();S.currentEvent=null;}
   if(S.currentEvent&&!S.eventAffectedCells.length){
     const aff=applyEvent(S.currentEvent,S.grid);
     S.eventAffectedCells=aff;
     S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
+    // Keepsake: first_frost_marker on surviving a frost event
+    if(CAM&&!CAM.keepsakes.first_frost_marker&&S.currentEvent.title&&/frost|freeze/i.test(S.currentEvent.title)){
+      CAM.keepsakes.first_frost_marker={earnedCh:S.chapter,timestamp:Date.now()};saveCampaign();
+    }
   }
   S.beatTokenAvailable=false;S.currentEvent=null;S.eventAffectedCells=[];
   if(S.beatIndex<2){S.beatIndex++;S.phase=BEAT_PHASES[S.beatIndex];startBeat()}
@@ -2348,6 +2388,11 @@ function advanceBeat(){
       const scoreTrigger=avg>=8?'simulation_score_high':avg>=5.5?'simulation_score_mid':'simulation_score_low';
       setTimeout(()=>fireDialogue(scoreTrigger),500);
 
+      // Keepsake: onion_scorecard on first perfect adjacency
+      if(!CAM.keepsakes.onion_scorecard&&S.harvestResult.cellScores.some(cs=>{const f=cs.factors;return f&&(f.adjacency-2.5)>=1.5})){
+        CAM.keepsakes.onion_scorecard={earnedCh:S.chapter,timestamp:Date.now()};saveCampaign();
+      }
+
       // Check for hard violations
       const hasViolation=S.grid.some(c=>{
         if(!c.cropId)return false;
@@ -2357,6 +2402,10 @@ function advanceBeat(){
       if(hasViolation){
         setTimeout(()=>fireDialogue('simulation_hard_violation'),1800);
       }
+
+      // Harvest yield dialogue
+      if(avg>=7.5)setTimeout(()=>fireDialogue('harvest_good_yield'),1200);
+      else if(avg<4.0)setTimeout(()=>fireDialogue('harvest_poor_yield'),1200);
 
       // Mom memory (Ch3-11, once per chapter, at harvest)
       const ch=S.chapter;
@@ -2444,6 +2493,11 @@ function completeChapter(){
     }
   }
 
+  // Keepsake: block_party_plate on completing all 4 recipes
+  if(!CAM.keepsakes.block_party_plate&&CAM.recipesCompleted.length>=RECIPE_LADDER.length){
+    CAM.keepsakes.block_party_plate={earnedCh:ch,timestamp:Date.now()};
+  }
+
   // Journal entry
   const narratorHighlight=CAM.lastNarratorLines.gurl||CAM.lastNarratorLines.onion||'';
   CAM.journal[ch]={
@@ -2460,35 +2514,7 @@ function completeChapter(){
   saveH(hist);
 
   // Carry forward
-  const cf=S.carryForward||mkCF();
-  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
-  cf.seasonHistory.push({chapter:ch,season:S.season,finalScore:score,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
-  // Soil fatigue
-  const nfm={};const nff={};
-  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
-    const prev=cf.soilFatigueMap[k]||0;
-    const prevFam=cf.lastFamilyMap[k]||null;
-    if(!c.cropId){nfm[k]=0;continue}
-    const fam=C[c.cropId]?C[c.cropId].faction:null;
-    if(fam)nff[k]=fam;
-    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
-    if(HEAVY.includes(c.cropId)){
-      if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);
-      else nfm[k]=-.3;
-    }else nfm[k]=prev<0?prev:0;
-  }
-  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
-  // Infrastructure
-  cf.infrastructureMap={};
-  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
-    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
-  }
-  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
-  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
-  for(const en of S.eventLog){
-    const ev=ED.find(e=>e.id===en.eventId);
-    if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:ch,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1});
-  }
+  const cf=buildCarryForward(S,S.carryForward||mkCF());
 
   // Prepare next season state
   if(ch<12){
@@ -2508,26 +2534,8 @@ function completeChapter(){
 
 /* ===== TRANSITION (free play) ===== */
 function doTransition(){
-  const cf=S.carryForward||mkCF();
-  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
-  cf.seasonHistory.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
+  const cf=buildCarryForward(S,S.carryForward||mkCF());
   const hist=loadH();hist.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F'});saveH(hist);
-  const nfm={};const nff={};
-  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
-    const prev=cf.soilFatigueMap[k]||0;const prevFam=cf.lastFamilyMap[k]||null;
-    if(!c.cropId){nfm[k]=0;continue}
-    const fam=C[c.cropId]?C[c.cropId].faction:null;if(fam)nff[k]=fam;
-    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
-    if(HEAVY.includes(c.cropId)){if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);else nfm[k]=-.3}else nfm[k]=prev<0?prev:0;
-  }
-  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
-  cf.infrastructureMap={};
-  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
-    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
-  }
-  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
-  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
-  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:S.chapter,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1})}
   const next=S.chapter+1;
   if(next>12){
     // Free play wraps back to ch1 season cycle
@@ -2614,9 +2622,6 @@ if(!CAM){
   const saved=load();
   if(saved&&saved.phase&&saved.grid){
     S=saved;
-    if(!S.eventAffectedCells)S.eventAffectedCells=[];
-    if(!S.carryForward)S.carryForward=mkCF();
-    if(S.beatTokenAvailable===undefined)S.beatTokenAvailable=false;
     CAM.mode='campaign';
     CAM.currentChapter=S.chapter;
     saveCampaign();
@@ -2626,9 +2631,6 @@ if(!CAM){
   const saved=load();
   if(saved&&saved.phase&&saved.grid){
     S=saved;
-    if(!S.eventAffectedCells)S.eventAffectedCells=[];
-    if(!S.carryForward)S.carryForward=mkCF();
-    if(S.beatTokenAvailable===undefined)S.beatTokenAvailable=false;
   }else if(CAM.mode==='campaign'||CAM.mode==='freeplay'){
     S=mkSeason(CAM.currentChapter,mkCF());
     save();
