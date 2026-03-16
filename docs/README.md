@@ -1,59 +1,82 @@
 # Garden OS Docs Index
 
-Status snapshot: 2026-03-15  
-Purpose: single entry point for design docs and implementation specs.
+Status snapshot: 2026-03-16
+Purpose: single entry point for design docs, implementation specs, and canonical source-of-truth references.
 
 ## Status Legend
-- `Committed`: tracked in git and ready for team reference.
-- `Local draft`: present locally but not committed yet.
-- `In progress`: expected to change while active prompt rounds finish.
+- `Canonical`: source of truth — if code and doc disagree, the doc wins.
+- `Committed`: tracked in git and ready for reference.
+- `Active`: under active development or maintenance.
+- `Scaffolding`: prompt-runner or planning framework, not a final deliverable.
+- `Historical`: reference only, not actively maintained.
+
+## Source-of-Truth Documents
+
+These are canonical. Do not duplicate their content elsewhere — point to them.
+
+| Document | Domain | Location |
+|---|---|---|
+| [CLAUDE.md](../CLAUDE.md) | Agent behavior & constraints | Root |
+| [gos-schema.json](../gos-schema.json) + [SCHEMA.md](../SCHEMA.md) | Data model | Root |
+| [SCORING_RULES.md](../specs/SCORING_RULES.md) | Scoring algorithm | specs/ |
+| [SEASON_ENGINE_SPEC.md](../specs/SEASON_ENGINE_SPEC.md) | Season engine state machine | specs/ |
+| [CROP_SCORING_DATA.json](../specs/CROP_SCORING_DATA.json) | Crop definitions & factions | specs/ |
+| [DIALOGUE_ENGINE.json](../specs/DIALOGUE_ENGINE.json) | Character dialogue triggers | specs/ |
+| [EVENT_DECK.json](../specs/EVENT_DECK.json) | Event card definitions | specs/ |
+| [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice & tone | docs/ |
+| [HANDOFF.md](./HANDOFF.md) | AI project intake (full context) | docs/ |
 
 ## Core Design Docs (`docs/`)
+
 | Document | One-line description | Status |
 |---|---|---|
-| [ART_DIRECTION.md](./ART_DIRECTION.md) | Visual language, rendering rules, seasonal color/texture system, and direction selection. | Committed |
-| [CAMPAIGN_DESIGN.md](./CAMPAIGN_DESIGN.md) | 12-chapter campaign structure tying mechanics, score targets, beats, and unlock cadence. | Committed |
-| [CONCEPT_BOARD_COHESION.md](./CONCEPT_BOARD_COHESION.md) | Cohesion pass for art pillars and concept-board alignment with approved style direction. | Committed |
-| [GAME_DESIGN_ANALYSIS.md](./GAME_DESIGN_ANALYSIS.md) | Strategic analysis of core loop, systems density, and product viability framing. | Committed |
+| [ART_DIRECTION.md](./ART_DIRECTION.md) | Visual language, rendering rules, seasonal color/texture system. | Committed |
+| [CAMPAIGN_DESIGN.md](./CAMPAIGN_DESIGN.md) | 12-chapter campaign structure tying mechanics, score targets, and beats. | Committed |
+| [CONCEPT_BOARD_COHESION.md](./CONCEPT_BOARD_COHESION.md) | Cohesion pass for art pillars and concept-board alignment. | Committed |
+| [GAME_DESIGN_ANALYSIS.md](./GAME_DESIGN_ANALYSIS.md) | Strategic analysis of core loop, systems density, and viability. | Committed |
 | [GAME_DESIGN_CRITIQUE.md](./GAME_DESIGN_CRITIQUE.md) | Brutal risk audit with anti-boring redesign recommendations. | Committed |
-| [GAME_FEEL.md](./GAME_FEEL.md) | Feedback/motion/audio/microinteraction spec for tasteful “juice” and accessibility. | Committed |
-| [GARDEN_OS_STORY_BIBLE_PROMPT.md](./GARDEN_OS_STORY_BIBLE_PROMPT.md) | Story-bible prompt scaffolding for narrative iteration workflows. | Committed |
-| [MARKETING_STRATEGY.md](./MARKETING_STRATEGY.md) | Steam/trailer/store-facing framing, tags, hooks, and messaging controls. | Committed |
-| [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Chapter-to-chapter and replay progression architecture without grind loops. | Committed |
-| [REPLAYABILITY.md](./REPLAYABILITY.md) | Retention/replay systems, challenge framing, fixed-vs-variable design policy. | Committed |
-| [SEASONAL_EVENT_SYSTEM.md](./SEASONAL_EVENT_SYSTEM.md) | Seasonal event taxonomy, triggers, effects, and commentary behavior. | Committed |
-| [UI_GRAPHICAL_IMPROVEMENT_AUDIT.md](./UI_GRAPHICAL_IMPROVEMENT_AUDIT.md) | Prioritized UI/graphics improvement backlog for v2-to-v3 transition polish. | Local draft |
-| [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice constraints, line style, and role boundaries for cast consistency. | Committed |
-| [DOCUMENTATION_CATALOG.md](./DOCUMENTATION_CATALOG.md) | Prior doc inventory and categorization index. | Committed |
-| [DOCUMENTATION_CATALOG.csv](./DOCUMENTATION_CATALOG.csv) | CSV export of the documentation catalog. | Committed |
-| [MIGRATION-CONTRACT.md](./MIGRATION-CONTRACT.md) | Contract/migration expectations for data or system evolution. | Committed |
-| [WORKSPACE-SCHEMA.md](./WORKSPACE-SCHEMA.md) | Workspace-level schema conventions and model references. | Committed |
+| [GAME_FEEL.md](./GAME_FEEL.md) | Feedback/motion/microinteraction spec for tasteful juice. | Committed |
+| [MARKETING_STRATEGY.md](./MARKETING_STRATEGY.md) | Steam/trailer/store-facing framing, tags, hooks. | Committed |
+| [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Progression architecture without grind loops. | Committed |
+| [REPLAYABILITY.md](./REPLAYABILITY.md) | Retention/replay systems and challenge framing. | Committed |
+| [SEASONAL_EVENT_SYSTEM.md](./SEASONAL_EVENT_SYSTEM.md) | Seasonal event taxonomy, triggers, effects, and commentary. | Committed |
+| [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice constraints and role boundaries. | Canonical |
+| [MIGRATION-CONTRACT.md](./MIGRATION-CONTRACT.md) | Schema migration contract and forward-compat policy. | Committed |
+| [UI_GRAPHICAL_IMPROVEMENT_AUDIT.md](./UI_GRAPHICAL_IMPROVEMENT_AUDIT.md) | Prioritized UI/graphics improvement backlog. | Active |
+| [HANDOFF.md](./HANDOFF.md) | Comprehensive AI handoff document. | Canonical |
+| [active-hosted-urls.md](./active-hosted-urls.md) | Live deployment audit — all URLs, nav structure. | Active |
+| [DOCUMENTATION_AUDIT_2026-03-16.md](./DOCUMENTATION_AUDIT_2026-03-16.md) | Documentation synthesis and source-of-truth audit. | Committed |
 
 ## Design Subfolders
+
 | Path | One-line description | Status |
 |---|---|---|
-| [garden-os-writers-room/README.md](./garden-os-writers-room/README.md) | Prompt-runner kit for creative/system passes (01–16). | Committed |
-| [game-timeline/](./game-timeline/) | Time-based planning artifacts and sequencing references. | Committed |
-| [launch-pack/](./launch-pack/) | External-facing launch prep docs and assets. | Committed |
-| [garden-os-system-map.html](./garden-os-system-map.html) | Visual system map reference for architecture communication. | Committed |
-| [garden-os-architecture-diagram.svg](./garden-os-architecture-diagram.svg) | Diagram of component relationships and data flow. | Committed |
-| [system-topology.html](./system-topology.html) | Broader topology reference for stack/system understanding. | Committed |
+| [garden-os-writers-room/](./garden-os-writers-room/) | Prompt-runner kit for creative/system passes (01–16). | Scaffolding |
+| [game-timeline/](./game-timeline/) | Time-based planning artifacts and sprint scaffolding. | Scaffolding |
+| [launch-pack/](./launch-pack/) | External-facing launch prep (HN, Reddit, diagram spec). | Committed |
+| [garden-os-architecture-diagram.svg](./garden-os-architecture-diagram.svg) | Component relationships and data flow diagram. | Committed |
 
 ## Canonical Specs (`specs/`)
+
 | Spec | One-line description | Status |
 |---|---|---|
-| [PROMPT_CHAIN.md](../specs/PROMPT_CHAIN.md) | 10-prompt execution chain and round order for parallel agent production. | Committed |
-| [NARRATIVE_SPEC.md](../specs/NARRATIVE_SPEC.md) | Chapter-by-chapter narrative implementation spec with trigger-tied beats. | Committed |
-| [SEASON_ENGINE_SPEC.md](../specs/SEASON_ENGINE_SPEC.md) | Season state machine, interventions, draw rules, and carry-forward mechanics. | Committed |
-| [CROP_SCORING_DATA.json](../specs/CROP_SCORING_DATA.json) | Data payload for crop identities, constraints, and scoring parameters. | Committed |
-| [SCORING_RULES.md](../specs/SCORING_RULES.md) | Deterministic scoring model, factor weights, and formula definitions. | Local draft |
-| [PROGRESSION_SPEC.md](../specs/PROGRESSION_SPEC.md) | Full progression matrix across chapters, unlocks, and persistence systems. | Local draft |
-| [CLAUDE-G1-workspace-schema.md](../specs/CLAUDE-G1-workspace-schema.md) | Workspace schema reference generated in earlier architecture phase. | Committed |
-| [CLAUDE-G2-export-schema.md](../specs/CLAUDE-G2-export-schema.md) | Export schema reference for serialized workspace/season data. | Committed |
-| [CLAUDE-G3-guide-engine.md](../specs/CLAUDE-G3-guide-engine.md) | Guide engine reference for tutorial/hint architecture. | Committed |
-| [CLAUDE-G4-seasonal-tasks.md](../specs/CLAUDE-G4-seasonal-tasks.md) | Seasonal task framework and operational logic notes. | Committed |
-| [V2_REUSE_AUDIT.md](../specs/V2_REUSE_AUDIT.md) | v2 prototype reuse vs rewrite audit for v3 build planning. | Local draft |
+| [SCORING_RULES.md](../specs/SCORING_RULES.md) | Deterministic scoring model, factor weights, and formulas. | Canonical |
+| [SEASON_ENGINE_SPEC.md](../specs/SEASON_ENGINE_SPEC.md) | Season state machine, interventions, draw rules, carry-forward. | Canonical |
+| [NARRATIVE_SPEC.md](../specs/NARRATIVE_SPEC.md) | Chapter-by-chapter narrative with trigger-tied beats. | Canonical |
+| [CROP_SCORING_DATA.json](../specs/CROP_SCORING_DATA.json) | Crop identities, constraints, and scoring parameters. | Canonical |
+| [DIALOGUE_ENGINE.json](../specs/DIALOGUE_ENGINE.json) | Character lines keyed by trigger ID (80+ triggers). | Canonical |
+| [DIALOGUE_SYSTEM.md](../specs/DIALOGUE_SYSTEM.md) | Dialogue orchestration, speaking order, timing rules. | Committed |
+| [EVENT_DECK.json](../specs/EVENT_DECK.json) | 40+ event cards with modifiers and conditions. | Canonical |
+| [PROGRESSION_SPEC.md](../specs/PROGRESSION_SPEC.md) | Progression matrix across chapters, unlocks, persistence. | Committed |
+| [UI_SPEC.md](../specs/UI_SPEC.md) | Complete UI layout, components, and interaction model. | Committed |
+| [PROMPT_CHAIN.md](../specs/PROMPT_CHAIN.md) | 10-prompt execution chain for parallel agent production. | Scaffolding |
+| [V2_REUSE_AUDIT.md](../specs/V2_REUSE_AUDIT.md) | v2 prototype reuse vs rewrite audit for v3 planning. | Historical |
+| [CLAUDE-G1–G4](../specs/) | Earlier schema/engine generation artifacts. | Historical |
 
-## Working Notes
-- Active rounds currently running in parallel can update some specs after this snapshot.
-- When Round 2+ outputs land, refresh this index status column first before merging.
+## Other
+
+| Path | One-line description | Status |
+|---|---|---|
+| [audit/validate-before-commit.md](../audit/validate-before-commit.md) | Pre-commit QA checklist for v4.3. | Active |
+| [codex-prompts/](../codex-prompts/) | Implementation task specs for Phase 1B, 1C, system map, diagram. | Committed |
+| [archive/](../archive/) | Versioned HTML snapshots (v1–v7) and obsolete planning docs. | Historical |
