@@ -221,6 +221,109 @@
     letter-spacing: 0.06em;
   }
 
+  /* ── Submission Form ── */
+  .form-wrap {
+    margin-top: 2rem;
+  }
+
+  .form-header {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+
+  .form-panel {
+    background: var(--panel);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(44, 27, 11, 0.06);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .form-field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 0.3rem;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    color: var(--text);
+    background: var(--cream);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  .form-field input:focus,
+  .form-field select:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--leaf-bright);
+    box-shadow: 0 0 0 2.5px rgba(78, 140, 60, 0.15);
+  }
+
+  .form-field textarea { resize: vertical; min-height: 60px; }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+  }
+
+  .btn-submit {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--leaf-bright);
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .btn-submit:hover { background: var(--leaf); transform: translateY(-1px); }
+
+  .form-msg {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--leaf-bright);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .form-msg.visible { opacity: 1; }
+
+  .user-row td { background: rgba(212, 168, 32, 0.04); }
+
+  @media (max-width: 800px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+  }
+
   @media (max-width: 800px) {
     body { padding: 1rem 0.75rem 3rem; }
     .table-wrap { overflow-x: auto; }
@@ -443,7 +546,131 @@
     </table>
   </div>
 
+  <!-- ═══ SUBMISSION FORM ═══ -->
+  <div class="form-wrap">
+    <div class="form-header">Submit an Issue</div>
+    <div class="form-panel">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="f-area">Area</label>
+          <select id="f-area">
+            <option value="">Select...</option>
+            <option>Language</option>
+            <option>Clarity</option>
+            <option>Mode safety</option>
+            <option>Tool parity</option>
+            <option>Interaction</option>
+            <option>Resource clarity</option>
+            <option>Goals</option>
+            <option>UI bug</option>
+            <option>Copy</option>
+            <option>Discoverability</option>
+            <option>Keyboard</option>
+            <option>Feedback</option>
+            <option>Resilience</option>
+            <option>Accessibility</option>
+            <option>Code quality</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="f-location">Location</label>
+          <input id="f-location" type="text" placeholder="e.g. Season Engine toolbar">
+        </div>
+        <div class="form-field full">
+          <label for="f-issue">Issue</label>
+          <input id="f-issue" type="text" placeholder="Describe the issue clearly">
+        </div>
+        <div class="form-field full">
+          <label for="f-impact">Impact on User</label>
+          <textarea id="f-impact" rows="2" placeholder="How does this affect the user experience?"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-submit" id="submitBtn">Add Issue</button>
+        <span class="form-msg" id="formMsg">Issue added</span>
+      </div>
+    </div>
+  </div>
+
   <footer>Garden OS · UI Audit · Last updated 2026-03-16 · Covers Planner v4 + Season Engine v3</footer>
 </div>
+
+<script>
+(function(){
+  const SKEY = 'gos-ui-issues-user';
+  const tbody = document.querySelector('tbody');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('formMsg');
+
+  function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function load(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'[]'); }catch(e){ return []; } }
+  function save(list){ try{ localStorage.setItem(SKEY,JSON.stringify(list)); }catch(e){} }
+
+  function renderUserRows(){
+    document.querySelectorAll('.user-row').forEach(r=>r.remove());
+    const items = load();
+    if(!items.length) return;
+
+    // Find or create user section
+    let userBreak = document.getElementById('user-section-break');
+    if(!userBreak){
+      userBreak = document.createElement('tr');
+      userBreak.id = 'user-section-break';
+      userBreak.className = 'section-break';
+      userBreak.innerHTML = '<td colspan="5">User Submitted ('+items.length+')</td>';
+      tbody.appendChild(userBreak);
+    } else {
+      userBreak.innerHTML = '<td colspan="5">User Submitted ('+items.length+')</td>';
+    }
+
+    items.forEach(function(item, i){
+      const tr = document.createElement('tr');
+      tr.className = 'user-row';
+      tr.innerHTML =
+        '<td class="area">'+esc(item.area)+'</td>'+
+        '<td class="issue">'+esc(item.issue)+'</td>'+
+        '<td class="impact">'+esc(item.impact)+'</td>'+
+        '<td><span class="status status-open">Open</span></td>'+
+        '<td class="location">'+esc(item.location)+'</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  btn.addEventListener('click', function(){
+    const area = document.getElementById('f-area').value.trim();
+    const issue = document.getElementById('f-issue').value.trim();
+    const impact = document.getElementById('f-impact').value.trim();
+    const location = document.getElementById('f-location').value.trim();
+
+    if(!area || !issue){
+      msg.textContent = 'Area and issue are required';
+      msg.style.color = 'var(--rust)';
+      msg.classList.add('visible');
+      setTimeout(function(){ msg.classList.remove('visible'); }, 2500);
+      return;
+    }
+
+    const items = load();
+    items.push({ area:area, issue:issue, impact:impact||'Not specified', location:location||'Not specified', date:new Date().toISOString().split('T')[0] });
+    save(items);
+
+    document.getElementById('f-area').value = '';
+    document.getElementById('f-issue').value = '';
+    document.getElementById('f-impact').value = '';
+    document.getElementById('f-location').value = '';
+
+    msg.textContent = 'Issue added';
+    msg.style.color = 'var(--leaf-bright)';
+    msg.classList.add('visible');
+    setTimeout(function(){ msg.classList.remove('visible'); }, 2500);
+
+    renderUserRows();
+  });
+
+  renderUserRows();
+})();
+</script>
 </body>
 </html>
