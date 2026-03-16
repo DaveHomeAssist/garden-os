@@ -837,13 +837,205 @@
     .print-footer { font-family: 'DM Mono', monospace; font-size: 7pt; color: var(--text-light); margin-top: 12pt; }
     @page { margin: 0.5in; size: landscape; }
   }
+
+  /* ═══ COACH LAYER (tutorial + future explain/suggest) ═══ */
+  .coach-overlay{position:fixed;inset:0;background:rgba(10,8,6,0.55);z-index:2000;pointer-events:all;transition:opacity .3s ease}
+  .coach-target{position:relative;z-index:2001;pointer-events:auto;box-shadow:0 0 0 4px var(--sun,#e8c84a),0 0 20px rgba(232,200,74,0.3);border-radius:8px;animation:coach-pulse 1.5s ease-in-out infinite}
+  @keyframes coach-pulse{0%,100%{box-shadow:0 0 0 4px var(--sun),0 0 20px rgba(232,200,74,0.3)}50%{box-shadow:0 0 0 6px var(--sun),0 0 30px rgba(232,200,74,0.4)}}
+  .coach-bubble{position:fixed;z-index:2002;max-width:240px;background:#fffdf8;border:1.5px solid #c8b090;border-radius:14px;padding:14px 16px 12px;box-shadow:0 8px 28px rgba(42,28,16,0.18);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.55;color:#1e110a;animation:bubble-pop .25s cubic-bezier(0.34,1.56,0.64,1) forwards}
+  @keyframes bubble-pop{0%{opacity:0;transform:scale(0.9) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+  .coach-bubble .cb-char{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .coach-bubble .cb-text{font-size:14px;line-height:1.55}
+  .coach-bubble .cb-hint{font-family:'DM Mono',monospace;font-size:10px;color:#8a7b6b;margin-top:8px;letter-spacing:.04em}
+  .coach-bubble .cb-skip{font-family:'DM Mono',monospace;font-size:10px;color:#8a7b6b;margin-top:10px;cursor:pointer;opacity:.6;border:none;background:none;padding:0}
+  .coach-bubble .cb-skip:hover{opacity:1;color:#c0392b}
+  /* bubble tails */
+  .coach-bubble[data-tail="down"]::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#fffdf8;border-bottom:0}
+  .coach-bubble[data-tail="down"]::before{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top-color:#c8b090;border-bottom:0}
+  .coach-bubble[data-tail="up"]::after{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-bottom-color:#fffdf8;border-top:0}
+  .coach-bubble[data-tail="up"]::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-bottom-color:#c8b090;border-top:0}
+  .coach-bubble[data-tail="left"]::after{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-right-color:#fffdf8;border-left:0}
+  .coach-bubble[data-tail="left"]::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-right-color:#c8b090;border-left:0}
+  .coach-bubble[data-tail="right"]::after{content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-left-color:#fffdf8;border-right:0}
+  .coach-bubble[data-tail="right"]::before{content:'';position:absolute;right:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-left-color:#c8b090;border-right:0}
+  @media(prefers-reduced-motion:reduce){.coach-target{animation:none}.coach-bubble{animation:none;opacity:1;transform:none}}
+
+  /* ═══ SETTINGS MENU ═══ */
+  .menu-gear{
+    border:1.5px solid rgba(255,255,255,.28);
+    border-radius:5px;
+    background:rgba(255,255,255,.06);
+    color:#f5ede0;
+    padding:.24rem .46rem;
+    cursor:pointer;
+    font-size:.82rem;
+    line-height:1;
+    transition:background .12s, border-color .12s;
+  }
+  .menu-gear:hover{
+    background:rgba(255,255,255,.13);
+    border-color:rgba(232,200,74,.7);
+  }
+  .menu-gear:focus-visible{
+    outline:2px solid var(--sun);
+    outline-offset:2px;
+  }
+  .menu-overlay{
+    position:fixed;inset:0;
+    background:rgba(44,31,20,0.3);
+    z-index:150;
+    display:none;
+  }
+  .menu-overlay[data-open]{display:block;}
+  .menu-panel{
+    position:fixed;top:52px;right:16px;
+    width:260px;max-height:calc(100vh - 70px);
+    overflow-y:auto;
+    background:var(--cream);
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+    z-index:151;
+    display:none;
+  }
+  .menu-panel[data-open]{display:block;}
+  .menu-header{
+    padding:10px 14px 8px;
+    border-bottom:1px solid var(--border-light);
+  }
+  .menu-title{
+    font-family:'DM Sans',sans-serif;
+    font-size:.82rem;
+    font-weight:500;
+    color:var(--text);
+  }
+  .menu-subtitle{
+    font-size:.62rem;
+    font-family:'DM Mono',monospace;
+    color:var(--text-light);
+    margin-top:2px;
+  }
+  .menu-section-label{
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--soil-mid);
+    padding:8px 14px 4px;
+  }
+  .menu-divider{
+    height:1px;
+    background:var(--border-light);
+    margin:0;
+  }
+  .menu-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 14px;
+    font-size:.75rem;
+    font-family:'DM Sans',sans-serif;
+    color:var(--text);
+    cursor:pointer;
+    border:none;
+    background:none;
+    width:100%;
+    text-align:left;
+    transition:background .1s;
+  }
+  .menu-row:hover{background:var(--cream-dark);}
+  .menu-row:focus-visible{outline:2px solid var(--soil);outline-offset:-2px;}
+  .menu-row-icon{
+    width:14px;height:14px;
+    border-radius:3px;
+    flex-shrink:0;
+  }
+  .menu-row-sub{
+    font-size:.62rem;
+    font-family:'DM Mono',monospace;
+    color:var(--text-light);
+    margin-left:auto;
+    white-space:nowrap;
+  }
+  .menu-row.danger{color:var(--bad);}
+  .menu-row.danger:hover{background:#faeae8;}
+  .menu-badge{
+    display:inline-block;
+    font-size:.52rem;
+    font-family:'DM Mono',monospace;
+    font-weight:500;
+    padding:1px 6px;
+    border-radius:10px;
+    margin-left:auto;
+  }
+  .menu-badge-green{
+    background:#e8f5ea;
+    color:#2a5a35;
+  }
+
+  /* Confirm dialog */
+  .confirm-dialog{
+    border:none;
+    border-radius:10px;
+    padding:0;
+    box-shadow:0 10px 36px rgba(0,0,0,.32);
+    width:min(360px,90vw);
+    background:#fff;
+  }
+  .confirm-dialog::backdrop{background:rgba(0,0,0,.35);}
+  .confirm-wrap{padding:.8rem .9rem;}
+  .confirm-title{
+    font-family:'DM Mono',monospace;
+    font-size:.62rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--bad);
+    margin-bottom:.35rem;
+  }
+  .confirm-msg{
+    font-size:.76rem;
+    color:var(--text-mid);
+    line-height:1.5;
+    margin-bottom:.6rem;
+  }
+  .confirm-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:.35rem;
+  }
+  .confirm-actions button{
+    border:1.5px solid var(--border);
+    background:#fff;
+    border-radius:5px;
+    padding:.28rem .48rem;
+    font-size:.56rem;
+    font-family:'DM Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    cursor:pointer;
+  }
+  .confirm-actions .confirm-danger{
+    border-color:var(--bad);
+    background:var(--bad);
+    color:#fff;
+  }
+
+  @media(max-width:600px){
+    .menu-panel{
+      top:auto;right:0;bottom:0;left:0;
+      width:100%;
+      border-radius:14px 14px 0 0;
+      max-height:70vh;
+    }
+  }
 </style>
 </head>
 <body>
 <a href="#bedGrid" class="skip-link">Skip to garden grid</a>
 <nav class="os-nav" aria-label="Garden OS">
   <a href="index.html">Home</a>
-  <a href="garden-league-simulator-v3.html">Play Game</a>
+  <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html" class="active" aria-current="page">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
@@ -862,6 +1054,7 @@
       <button class="hd-btn" id="importWorkspaceBtn" type="button" aria-label="Import workspace from GOS JSON file">Import</button>
       <input id="importWorkspaceFile" type="file" accept=".gos.json,.json,application/json" hidden>
       <button class="btn-print" id="printPlanBtn" type="button" title="Print garden plan" aria-label="Print garden plan">Print</button>
+      <button class="menu-gear" id="menuGearBtn" type="button" title="Settings menu" aria-label="Open settings menu" aria-haspopup="true" aria-expanded="false">&#9881;</button>
     </div>
   </div>
 </header>
@@ -1050,9 +1243,9 @@
     <button class="cbar-btn act-leaf" id="autoFillBtn">✦ Auto-fill</button>
     <button class="cbar-btn danger" id="clearBtn">✕ Clear</button>
     <div class="cbar-sep"></div>
-    <button class="cbar-btn active" id="toolPaint">🖌 Paint</button>
+    <button class="cbar-btn" id="toolPaint">🖌 Paint</button>
     <button class="cbar-btn" id="toolErase">✕ Erase</button>
-    <button class="cbar-btn" id="toolInspect">🔍 Inspect</button>
+    <button class="cbar-btn active" id="toolInspect">🔍 Inspect</button>
     <div class="cbar-sep"></div>
     <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩</button>
     <button class="cbar-btn" id="redoBtn" disabled title="Ctrl+Y">↪</button>
@@ -1127,6 +1320,87 @@
       <button type="submit" class="primary">Create</button>
     </div>
   </form>
+</dialog>
+
+<!-- ═══ SETTINGS MENU ═══ -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="menu-panel" id="menuPanel" role="dialog" aria-label="Settings menu">
+  <div class="menu-header">
+    <div class="menu-title">Garden Planner</div>
+    <div class="menu-subtitle" id="menuSubtitle">Bed 1</div>
+  </div>
+
+  <div class="menu-section-label">SAVE &amp; RESTORE</div>
+  <button class="menu-row" id="menuSave">
+    <span class="menu-row-icon" style="background:#e8f5ea"></span>
+    Save plan
+    <span class="menu-badge menu-badge-green" id="menuAutoSaveBadge">auto</span>
+  </button>
+  <button class="menu-row" id="menuExport">
+    <span class="menu-row-icon" style="background:#e8f0fe"></span>
+    Export plan (.gos.json)
+    <span class="menu-row-sub">&darr;</span>
+  </button>
+  <button class="menu-row" id="menuImport">
+    <span class="menu-row-icon" style="background:#e8f0fe"></span>
+    Import plan
+    <span class="menu-row-sub">&uarr;</span>
+  </button>
+  <div class="menu-divider"></div>
+
+  <div class="menu-section-label">LEARN</div>
+  <button class="menu-row" id="menuTutorial">
+    <span class="menu-row-icon" style="background:#EAF3DE"></span>
+    Start tutorial
+  </button>
+  <button class="menu-row" id="menuHowScoring">
+    <span class="menu-row-icon" style="background:#EAF3DE"></span>
+    How scoring works &rarr;
+  </button>
+  <button class="menu-row" id="menuHowItThinks">
+    <span class="menu-row-icon" style="background:#EAF3DE"></span>
+    How It Thinks &rarr;
+  </button>
+  <div class="menu-divider"></div>
+
+  <div class="menu-section-label">BED SETTINGS</div>
+  <button class="menu-row" id="menuBedSize">
+    <span class="menu-row-icon" style="background:var(--cream-dark)"></span>
+    Bed size &amp; orientation
+    <span class="menu-row-sub" id="menuBedSizeVal"></span>
+  </button>
+  <button class="menu-row" id="menuTrellisCage">
+    <span class="menu-row-icon" style="background:var(--cream-dark)"></span>
+    Trellis &amp; cage
+    <span class="menu-row-sub" id="menuTrellisCageVal"></span>
+  </button>
+  <button class="menu-row" id="menuZone">
+    <span class="menu-row-icon" style="background:var(--cream-dark)"></span>
+    Zone &amp; frost dates
+    <span class="menu-row-sub" id="menuZoneVal"></span>
+  </button>
+  <div class="menu-divider"></div>
+
+  <div class="menu-section-label">DANGER ZONE</div>
+  <button class="menu-row danger" id="menuClearCrops">
+    <span class="menu-row-icon" style="background:#faeae8"></span>
+    Clear all crops
+  </button>
+  <button class="menu-row danger" id="menuResetBed">
+    <span class="menu-row-icon" style="background:#faeae8"></span>
+    Reset bed to defaults
+  </button>
+</div>
+
+<dialog id="confirmDialog" class="confirm-dialog">
+  <div class="confirm-wrap">
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button type="button" id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="confirm-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
 </dialog>
 
 <script>
@@ -1468,7 +1742,7 @@ const SUBS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
-let ui = { selectedCrop:'leaf_lettuce', tool:'paint', selCell:null, catFilter:'all', rTab:'score' };
+let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'score' };
 let undoStack = [], redoStack = [];
 let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
 let interaction = {
@@ -3247,14 +3521,17 @@ function renderBedFrame(opts={}){
 function renderPlacementStatus(){
   const el = document.getElementById('placementStatus');
   if(!el) return;
-  const source = interaction.pointerActive ? 'drag' : (interaction.keyboardMode ? 'keyboard' : 'pointer');
-  const toolLabel = ui.tool==='inspect' ? 'inspect' : ui.tool==='erase' ? 'erase' : 'paint';
-  const cropLabel = ui.tool==='inspect'
-    ? 'click cell to inspect'
-    : ui.tool==='erase'
-    ? 'clear'
-    : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].short : 'select crop');
-  el.textContent = `mode ${source} · tool ${toolLabel} · target ${cropLabel}`;
+  if(ui.tool==='inspect'){
+    el.textContent = '\uD83D\uDD0D Inspect mode \u2014 click any cell to view details. Press P to paint.';
+    el.style.color='';
+  }else if(ui.tool==='erase'){
+    el.textContent = '\u2716 Erase mode \u2014 click or drag to remove crops. Press Esc to stop.';
+    el.style.color='var(--sem-hard,#c24d4d)';
+  }else{
+    const cn = ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].name : 'no crop selected';
+    el.textContent = '\uD83D\uDD8C Editing: ' + cn + ' \u2014 click or drag to place. Press Esc to stop.';
+    el.style.color='var(--char-gurl,#3d7a4f)';
+  }
 }
 let _dialogTrigger = null;
 function openAddBedDialog(){
@@ -3622,11 +3899,15 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     e.preventDefault();
     if(interaction.pointerActive){ cancelPointerPlacement(); return; }
+    setTool('inspect');
     ui.selCell=null;
     setKeyboardMode(true);
     renderBedFrame();
     return;
   }
+  if(e.key==='p'||e.key==='P'){setTool('paint');return}
+  if(e.key==='e'||e.key==='E'){setTool('erase');return}
+  if(e.key==='i'||e.key==='I'){setTool('inspect');return}
 
   if(e.key==='ArrowUp' || e.key==='ArrowDown' || e.key==='ArrowLeft' || e.key==='ArrowRight'){
     e.preventDefault();
@@ -4503,6 +4784,279 @@ function renderHarvestForm(cell){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COACH LAYER (reusable: tutorial, explain, suggest)
+// ═══════════════════════════════════════════════════════════════════════════════
+const COACH_CHARS={
+  gurl:{emoji:'\u{1F33F}',name:'GURL',color:'#3d7a4f'},
+  onion:{emoji:'\u{1F9C5}',name:'Onion Man',color:'#b8860b'}
+};
+
+function coachShowOverlay(){
+  if(document.getElementById('coachOverlay'))return;
+  const ov=document.createElement('div');ov.id='coachOverlay';ov.className='coach-overlay';
+  document.body.appendChild(ov);
+}
+function coachHideOverlay(){const ov=document.getElementById('coachOverlay');if(ov)ov.remove()}
+
+function coachHighlight(el){
+  coachClearHighlight();
+  if(!el)return;
+  el.classList.add('coach-target');
+  el.dataset.coachTarget='1';
+}
+function coachClearHighlight(){
+  document.querySelectorAll('.coach-target').forEach(e=>{e.classList.remove('coach-target');delete e.dataset.coachTarget});
+}
+
+function coachShowBubble(opts){
+  coachHideBubble();
+  const{char,text,hint,tail,targetEl,onSkip}=opts;
+  const cd=COACH_CHARS[char]||COACH_CHARS.gurl;
+  const b=document.createElement('div');b.id='coachBubble';b.className='coach-bubble';
+  b.setAttribute('data-tail',tail||'down');
+
+  const ch=document.createElement('div');ch.className='cb-char';ch.style.color=cd.color;
+  ch.textContent=cd.emoji+' '+cd.name;b.appendChild(ch);
+
+  const tx=document.createElement('div');tx.className='cb-text';tx.textContent=text;b.appendChild(tx);
+
+  if(hint){const ht=document.createElement('div');ht.className='cb-hint';ht.textContent=hint;b.appendChild(ht)}
+
+  if(onSkip){const sk=document.createElement('button');sk.className='cb-skip';sk.textContent='skip tutorial \u2192';sk.onclick=onSkip;b.appendChild(sk)}
+
+  document.body.appendChild(b);
+
+  // Position near target
+  if(targetEl){
+    requestAnimationFrame(()=>{
+      const tr=targetEl.getBoundingClientRect();
+      const br=b.getBoundingClientRect();
+      let top,left;
+      if(tail==='down'){top=tr.top-br.height-14;left=tr.left+tr.width/2-br.width/2}
+      else if(tail==='up'){top=tr.bottom+14;left=tr.left+tr.width/2-br.width/2}
+      else if(tail==='right'){top=tr.top+tr.height/2-br.height/2;left=tr.left-br.width-14}
+      else{top=tr.top+tr.height/2-br.height/2;left=tr.right+14}
+      top=Math.max(8,Math.min(window.innerHeight-br.height-8,top));
+      left=Math.max(8,Math.min(window.innerWidth-br.width-8,left));
+      b.style.top=top+'px';b.style.left=left+'px';
+    });
+  }
+}
+function coachHideBubble(){const b=document.getElementById('coachBubble');if(b)b.remove()}
+
+function coachTeardown(){coachHideBubble();coachHideOverlay();coachClearHighlight()}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUTORIAL V1
+// ═══════════════════════════════════════════════════════════════════════════════
+const TUTORIAL_KEY='gardenOS_tutorialDone';
+let tutorial={active:false,step:0};
+
+// Find a trellis cell for tomato placement
+function tutorialTargetCell(){
+  for(const c of bed){if(c.row<=1&&!c.crop)return c}
+  return bed[0];
+}
+// Find cell adjacent to a given cell that's empty
+function tutorialAdjacentEmpty(refId){
+  const ref=bed.find(c=>c.id===refId);if(!ref)return bed[1];
+  const adj=bed.filter(c=>!c.crop&&Math.abs(c.row-ref.row)+Math.abs(c.col-ref.col)===1);
+  return adj[0]||bed.find(c=>!c.crop&&c.id!==refId)||bed[1];
+}
+
+let _tutTarget=null;
+let _tutBasilTarget=null;
+
+const TUTORIAL_STEPS=[
+  {
+    id:'select_crop',char:'gurl',
+    text:'Start here \u2014 tap the tomato to select it.',
+    hint:'scroll the palette, then click',
+    tail:'left',
+    target:()=>document.querySelector('[data-crop="cherry_tom"]'),
+    setup:()=>{setTool('inspect');_tutTarget=tutorialTargetCell()},
+    check:()=>ui.selectedCrop==='cherry_tom',
+    onComplete:{char:'gurl',line:'Tomato selected. Now it needs somewhere to grow.'}
+  },
+  {
+    id:'place_crop',char:'gurl',
+    text:'Click this cell to plant your tomato.',
+    hint:'the highlighted cell has good sun for tomatoes',
+    tail:'down',
+    target:()=>{if(!_tutTarget)return null;return document.getElementById(_tutTarget.id)},
+    setup:()=>{setTool('paint')},
+    check:()=>_tutTarget&&_tutTarget.crop==='cherry_tom',
+    onComplete:{char:'onion',line:'One in the dirt. That is where it starts.'}
+  },
+  {
+    id:'notice_score',char:'gurl',
+    text:'Your tomato has a score \u2014 check the Score panel on the right.',
+    hint:'each factor (sun, support, shade...) affects the score',
+    tail:'left',
+    target:()=>document.getElementById('rtab-score')||document.getElementById('rpane-score'),
+    setup:()=>{switchRTab('score')},
+    check:()=>true,
+    autoAdvanceMs:2500,
+    onComplete:{char:'gurl',line:'The scoring engine is live. Every placement changes the numbers.'}
+  },
+  {
+    id:'plant_companion',char:'onion',
+    text:'Now plant basil next to the tomato.',
+    hint:'basil and tomato are companions \u2014 they help each other',
+    tail:'down',
+    target:()=>{
+      if(!_tutTarget)return null;
+      _tutBasilTarget=tutorialAdjacentEmpty(_tutTarget.id);
+      return _tutBasilTarget?document.getElementById(_tutBasilTarget.id):null;
+    },
+    setup:()=>{ui.selectedCrop='basil';setTool('paint');renderPalette()},
+    check:()=>_tutBasilTarget&&_tutBasilTarget.crop==='basil',
+    onComplete:{char:'onion',line:'She always put the basil next to the tomatoes. Said they grew better together. She was right.'}
+  },
+  {
+    id:'companion_effect',char:'gurl',
+    text:'The tomato score went up \u2014 basil is helping it grow.',
+    hint:'the green outline means companion bonus',
+    tail:'down',
+    target:()=>_tutTarget?document.getElementById(_tutTarget.id):null,
+    setup:()=>{},
+    check:()=>true,
+    autoAdvanceMs:3000,
+    onComplete:{char:'gurl',line:'Companion adjacency confirmed. The scoring engine rewards good neighbors.'}
+  },
+  {
+    id:'activate_eraser',char:'gurl',
+    text:'Tools change what clicking does. Try the eraser.',
+    hint:'press E or click the eraser button',
+    tail:'up',
+    target:()=>document.getElementById('toolErase'),
+    setup:()=>{},
+    check:()=>ui.tool==='erase',
+    onComplete:null
+  },
+  {
+    id:'erase_basil',char:'gurl',
+    text:'Click the basil to remove it.',
+    hint:'notice what happens to the tomato score',
+    tail:'down',
+    target:()=>_tutBasilTarget?document.getElementById(_tutBasilTarget.id):null,
+    setup:()=>{},
+    check:()=>_tutBasilTarget&&!_tutBasilTarget.crop,
+    onComplete:{char:'gurl',line:'Cell cleared. The tomato lost its companion bonus.'}
+  },
+  {
+    id:'return_inspect',char:'onion',
+    text:'Press Esc to return to Inspect mode.',
+    hint:'in Inspect mode, clicking shows details \u2014 nothing changes',
+    tail:'up',
+    target:()=>document.getElementById('toolInspect'),
+    setup:()=>{},
+    check:()=>ui.tool==='inspect',
+    onComplete:{char:'onion',line:'The bed is still there. The soil is still there.'}
+  },
+  {
+    id:'release',char:'gurl',
+    text:'You\u2019re ready. The garden is yours.',
+    hint:'P to paint, E to erase, I or Esc to inspect',
+    tail:'down',
+    target:()=>document.querySelector('.bed-frame')||document.querySelector('.bc'),
+    setup:()=>{},
+    check:()=>true,
+    autoAdvanceMs:2500,
+    onComplete:{char:'gurl',line:'The grid is open. Score preview is live. Place with intention.'}
+  }
+];
+
+function startTutorial(){
+  tutorial.active=true;tutorial.step=0;
+  runTutorialStep();
+}
+
+function endTutorial(){
+  tutorial.active=false;tutorial.step=0;
+  coachTeardown();
+  try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){}
+  renderPlacementStatus();
+}
+
+function runTutorialStep(){
+  if(!tutorial.active||tutorial.step>=TUTORIAL_STEPS.length){endTutorial();return}
+  const s=TUTORIAL_STEPS[tutorial.step];
+  if(s.setup)s.setup();
+
+  // Small delay for DOM to settle after setup
+  requestAnimationFrame(()=>{
+    const targetEl=s.target?s.target():null;
+    coachShowOverlay();
+    if(targetEl)coachHighlight(targetEl);
+
+    coachShowBubble({
+      char:s.char,text:s.text,hint:s.hint,tail:s.tail,
+      targetEl:targetEl,onSkip:endTutorial
+    });
+
+    if(s.autoAdvanceMs){
+      setTimeout(()=>{
+        if(!tutorial.active||tutorial.step>=TUTORIAL_STEPS.length)return;
+        const cur=TUTORIAL_STEPS[tutorial.step];
+        if(cur.id===s.id)advanceTutorialStep(s);
+      },s.autoAdvanceMs);
+    }
+  });
+}
+
+function advanceTutorialStep(completedStep){
+  // Show completion narrator line
+  if(completedStep&&completedStep.onComplete){
+    const oc=completedStep.onComplete;
+    const cd=COACH_CHARS[oc.char]||COACH_CHARS.gurl;
+    // Flash the completion in the placement status bar
+    const ps=document.getElementById('placementStatus');
+    if(ps){ps.textContent=cd.emoji+' '+oc.line;ps.style.color=cd.color}
+  }
+  tutorial.step++;
+  if(tutorial.step>=TUTORIAL_STEPS.length){endTutorial();return}
+  // Brief pause between steps
+  coachHideBubble();coachClearHighlight();
+  setTimeout(runTutorialStep,600);
+}
+
+function checkTutorialCondition(){
+  if(!tutorial.active)return;
+  const s=TUTORIAL_STEPS[tutorial.step];
+  if(!s)return;
+  if(s.autoAdvanceMs)return; // auto-advance steps handle themselves
+  if(s.check&&s.check()){advanceTutorialStep(s)}
+}
+
+// Hook into key interaction points
+const _origSetTool=setTool;
+setTool=function(t){_origSetTool(t);checkTutorialCondition()};
+
+// Patch palette click to check tutorial
+const _origPaletteClick=document.getElementById('pgrid');
+if(_origPaletteClick){
+  _origPaletteClick.addEventListener('click',()=>setTimeout(checkTutorialCondition,50),true);
+}
+
+// Patch cell interactions via render cycle
+const _origRender=typeof render==='function'?render:null;
+if(_origRender){
+  // We can't easily wrap render, so we'll check after each placement instead
+}
+
+// Check tutorial after any cell click (via existing cellClick pipeline)
+const _origPlaceCrop=typeof placeCropInCell==='function'?placeCropInCell:null;
+if(_origPlaceCrop){
+  const _wrappedPlace=placeCropInCell;
+  placeCropInCell=function(){const r=_wrappedPlace.apply(this,arguments);setTimeout(checkTutorialCondition,50);return r};
+}
+
+// Check after handleCellPointerDown inspect path
+const _origHandleCell=handleCellPointerDown;
+handleCellPointerDown=function(e,cellId){_origHandleCell(e,cellId);setTimeout(checkTutorialCondition,50)};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════════════════════════
 renderBedPresets();
@@ -4512,6 +5066,221 @@ if(!hadSaved){ loadRec(true); }
 else { renderPalette(); renderBedPresets(); render(); }
 renderWorkspaceSwitcher();
 updateUndoButtons();
+
+// Tutorial: offer on first launch
+if(!localStorage.getItem(TUTORIAL_KEY)&&!hadSaved){
+  setTimeout(()=>{
+    if(confirm('Welcome to Garden OS! Would you like a quick guided tour? (About 90 seconds)')){
+      startTutorial();
+    }else{
+      try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){}
+    }
+  },500);
+}
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTINGS MENU
+// ═══════════════════════════════════════════════════════════════════════════════
+function toggleMenu(){
+  const ov=document.getElementById('menuOverlay');
+  const pn=document.getElementById('menuPanel');
+  const btn=document.getElementById('menuGearBtn');
+  if(!ov||!pn) return;
+  const opening=!pn.hasAttribute('data-open');
+  if(opening){
+    updateMenuValues();
+    ov.setAttribute('data-open','');
+    pn.setAttribute('data-open','');
+    if(btn) btn.setAttribute('aria-expanded','true');
+  } else {
+    ov.removeAttribute('data-open');
+    pn.removeAttribute('data-open');
+    if(btn) btn.setAttribute('aria-expanded','false');
+  }
+}
+function closeMenu(){
+  const ov=document.getElementById('menuOverlay');
+  const pn=document.getElementById('menuPanel');
+  const btn=document.getElementById('menuGearBtn');
+  if(ov) ov.removeAttribute('data-open');
+  if(pn) pn.removeAttribute('data-open');
+  if(btn) btn.setAttribute('aria-expanded','false');
+}
+function updateMenuValues(){
+  // Subtitle
+  const sub=document.getElementById('menuSubtitle');
+  if(sub){
+    const ab=typeof activeBed==='function'?activeBed():null;
+    const name=ab?ab.name:'Bed 1';
+    const ts=_workspace&&_workspace.updatedAt?timeSince(_workspace.updatedAt):'';
+    sub.textContent=name+(ts?' \u00b7 saved '+ts:'');
+  }
+  // Bed size
+  const bsv=document.getElementById('menuBedSizeVal');
+  if(bsv) bsv.textContent=bedW+'\u00d7'+bedH;
+  // Trellis & cage
+  const tcv=document.getElementById('menuTrellisCageVal');
+  if(tcv){
+    const tOn=document.getElementById('trellisToggle');
+    const cOn=document.getElementById('cageEnabled');
+    const parts=[];
+    if(tOn&&tOn.classList.contains('on')) parts.push('trellis');
+    if(cOn&&cOn.classList.contains('on')) parts.push('cage');
+    tcv.textContent=parts.length?parts.join('+'):'off';
+  }
+  // Zone
+  const zv=document.getElementById('menuZoneVal');
+  if(zv){
+    const zsel=document.getElementById('zone');
+    zv.textContent=zsel&&zsel.value?'Zone '+zsel.value:'\u2014';
+  }
+}
+function timeSince(iso){
+  try{
+    const diff=Date.now()-new Date(iso).getTime();
+    if(diff<0) return '';
+    const sec=Math.floor(diff/1000);
+    if(sec<60) return 'just now';
+    const min=Math.floor(sec/60);
+    if(min<60) return min+' min ago';
+    const hr=Math.floor(min/60);
+    if(hr<24) return hr+' hr ago';
+    return Math.floor(hr/24)+' d ago';
+  }catch(e){return '';}
+}
+
+// Confirm dialog helper
+let _confirmCallback=null;
+function confirmAction(title,message,onConfirm){
+  const dlg=document.getElementById('confirmDialog');
+  if(!dlg) return;
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=message;
+  _confirmCallback=onConfirm;
+  dlg.showModal();
+}
+document.getElementById('confirmOkBtn').addEventListener('click',function(){
+  const dlg=document.getElementById('confirmDialog');
+  if(dlg) dlg.close();
+  if(typeof _confirmCallback==='function') _confirmCallback();
+  _confirmCallback=null;
+});
+document.getElementById('confirmCancelBtn').addEventListener('click',function(){
+  const dlg=document.getElementById('confirmDialog');
+  if(dlg) dlg.close();
+  _confirmCallback=null;
+});
+
+// Menu event bindings
+document.getElementById('menuGearBtn').addEventListener('click',toggleMenu);
+document.getElementById('menuOverlay').addEventListener('click',closeMenu);
+
+// Save & Restore
+document.getElementById('menuSave').addEventListener('click',function(){
+  closeMenu();
+  saveState();
+  if(_workspace) saveWorkspace(_workspace);
+  showShareBanner('Plan saved');
+});
+document.getElementById('menuExport').addEventListener('click',function(){
+  closeMenu();
+  exportWorkspaceFile();
+});
+document.getElementById('menuImport').addEventListener('click',function(){
+  closeMenu();
+  openWorkspaceImportPicker();
+});
+
+// Learn
+document.getElementById('menuTutorial').addEventListener('click',function(){
+  closeMenu();
+  if(typeof startTutorial==='function') startTutorial();
+});
+document.getElementById('menuHowScoring').addEventListener('click',function(){
+  closeMenu();
+  window.open('how-it-thinks.html','_blank');
+});
+document.getElementById('menuHowItThinks').addEventListener('click',function(){
+  closeMenu();
+  window.open('how-it-thinks.html','_blank');
+});
+
+// Bed Settings
+document.getElementById('menuBedSize').addEventListener('click',function(){
+  closeMenu();
+  switchLTab('site');
+  const el=document.getElementById('lpane-site');
+  if(el) el.scrollTo({top:0,behavior:'smooth'});
+});
+document.getElementById('menuTrellisCage').addEventListener('click',function(){
+  closeMenu();
+  switchLTab('cage');
+});
+document.getElementById('menuZone').addEventListener('click',function(){
+  closeMenu();
+  switchLTab('site');
+  const el=document.getElementById('zone');
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.focus();}
+});
+
+// Danger Zone
+document.getElementById('menuClearCrops').addEventListener('click',function(){
+  closeMenu();
+  confirmAction('Clear all crops','This will remove every crop from the current bed. This cannot be undone.',function(){
+    clearBed();
+  });
+});
+document.getElementById('menuResetBed').addEventListener('click',function(){
+  closeMenu();
+  confirmAction('Reset bed to defaults','This will clear all crops, reset bed size to 8\u00d74, and reset cage settings. This cannot be undone.',function(){
+    pushUndo();
+    setPreset(8,4);
+    bed.forEach(function(c){c.crop=null;});
+    // Reset cage toggles
+    var ce=document.getElementById('cageEnabled');
+    if(ce&&ce.classList.contains('on')){ce.classList.remove('on');ce.setAttribute('aria-pressed','false');}
+    var ct=document.getElementById('cageRearTrellis');
+    if(ct&&!ct.classList.contains('on')){ct.classList.add('on');ct.setAttribute('aria-pressed','true');}
+    var cw=document.getElementById('cageWireSides');
+    if(cw&&!cw.classList.contains('on')){cw.classList.add('on');cw.setAttribute('aria-pressed','true');}
+    document.getElementById('cageHeight').value='24';
+    document.getElementById('doorStyle').value='double';
+    // Reset site settings
+    document.getElementById('sunHours').value='5';
+    document.getElementById('sunVal').textContent='5 hrs';
+    document.getElementById('wallSide').value='back';
+    document.getElementById('orientation').value='ew';
+    document.getElementById('season').value='summer';
+    document.getElementById('goal').value='balanced';
+    document.getElementById('zone').value='';
+    var tt=document.getElementById('trellisToggle');
+    if(tt&&!tt.classList.contains('on')){tt.classList.add('on');tt.setAttribute('aria-pressed','true');}
+    saveState();
+    if(_workspace) saveWorkspace(_workspace);
+    render();
+  });
+});
+
+// Escape key closes menu
+(function(){
+  const _origKeydown=document.onkeydown;
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      const pn=document.getElementById('menuPanel');
+      if(pn&&pn.hasAttribute('data-open')){
+        e.preventDefault();
+        e.stopPropagation();
+        closeMenu();
+        return;
+      }
+      const dlg=document.getElementById('confirmDialog');
+      if(dlg&&dlg.open){
+        dlg.close();
+        _confirmCallback=null;
+        return;
+      }
+    }
+  },true);
+})();
 </script>
 </body>
 </html>
