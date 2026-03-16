@@ -252,6 +252,15 @@
   .bc.preview-paint .hover-preview{
     color:#1e110a;
   }
+  .bc.preview-inspect .hover-preview{
+    color:var(--blue, #3a6abf);
+    font-size:.55rem;
+  }
+  .bc.preview-inspect{cursor:help;}
+  .bc.preview-inspect.selc{
+    outline:2px solid var(--blue, #3a6abf);
+    outline-offset:-1px;
+  }
   .placement-status{
     width:100%;
     max-width:480px;
@@ -663,6 +672,51 @@
   @media(prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important;}
   }
+
+  /* ═══ COMPANION REFERENCE PANEL ═══ */
+  .companion-panel { padding: 4px 0; }
+  .companion-search { width: 100%; padding: 7px 8px; border: 1.5px solid var(--border); border-radius: 5px;
+    font-size: .76rem; font-family: 'DM Sans', sans-serif; color: var(--text); background: white;
+    margin-bottom: 6px; }
+  .companion-search:focus { outline: none; border-color: var(--soil); }
+  .companion-select { width: 100%; padding: 7px 8px; border: 1.5px solid var(--border); border-radius: 5px;
+    font-size: .76rem; font-family: 'DM Sans', sans-serif; color: var(--text); background: white;
+    margin-bottom: 8px; cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%237a5230' d='M5 7L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 7px center; }
+  .companion-select:focus { outline: none; border-color: var(--soil); }
+  .companion-crop-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-bottom: 4px;
+    border-bottom: 1.5px solid var(--border); }
+  .companion-crop-emoji { font-size: 1.1rem; }
+  .companion-crop-name { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: .82rem; color: var(--text); }
+  .companion-crop-cat { font-family: 'DM Mono', monospace; font-size: .55rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--text-light); background: var(--cream-dark); padding: 1px 6px;
+    border-radius: 3px; margin-left: auto; }
+  .companion-row { display: flex; align-items: center; gap: 6px; padding: 5px 4px;
+    border-bottom: 1px solid rgba(0,0,0,.04); font-size: .72rem; }
+  .companion-row:last-child { border-bottom: none; }
+  .companion-icon { width: 16px; text-align: center; font-size: .7rem; flex-shrink: 0; }
+  .companion-emoji { font-size: .82rem; width: 18px; text-align: center; flex-shrink: 0; }
+  .companion-name { flex: 1; font-family: 'DM Sans', sans-serif; color: var(--text-mid); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .companion-bonus { font-family: 'DM Mono', monospace; font-size: .62rem; min-width: 36px;
+    text-align: right; flex-shrink: 0; }
+  .companion-reason { font-size: .58rem; color: var(--text-light); font-style: italic; max-width: 90px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .companion-good .companion-icon { color: var(--leaf); }
+  .companion-good .companion-name { color: var(--leaf); font-weight: 500; }
+  .companion-good .companion-bonus { color: var(--leaf); }
+  .companion-bad .companion-icon { color: #b02a1e; }
+  .companion-bad .companion-name { color: #b02a1e; font-weight: 500; }
+  .companion-bad .companion-bonus { color: #b02a1e; }
+  .companion-neutral { opacity: 0.45; }
+  .companion-neutral:hover { opacity: 0.7; }
+  .companion-section-label { font-family: 'DM Mono', monospace; font-size: .5rem; text-transform: uppercase;
+    letter-spacing: .12em; color: var(--soil-mid); font-weight: 600; margin: 6px 0 2px; padding-bottom: 2px;
+    border-bottom: 1px solid var(--border-light); }
+  .companion-empty { font-size: .72rem; color: var(--text-light); text-align: center; padding: 1.5rem .5rem;
+    font-style: italic; }
 </style>
 </head>
 <body>
@@ -877,6 +931,7 @@
     <div class="cbar-sep"></div>
     <button class="cbar-btn active" id="toolPaint">🖌 Paint</button>
     <button class="cbar-btn" id="toolErase">✕ Erase</button>
+    <button class="cbar-btn" id="toolInspect">🔍 Inspect</button>
     <div class="cbar-sep"></div>
     <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩</button>
     <button class="cbar-btn" id="redoBtn" disabled title="Ctrl+Y">↪</button>
@@ -916,10 +971,12 @@
     <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score</button>
     <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
     <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
+    <button class="tab-btn"        id="rtab-companions" role="tab" aria-selected="false" aria-controls="rpane-companions">Companions</button>
   </div>
   <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
   <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
   <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
+  <div class="tab-pane"    id="rpane-companions" role="tabpanel" aria-labelledby="rtab-companions"></div>
 </aside>
 </div>
 
@@ -967,7 +1024,7 @@ const VALID_WALLS=['back','front','left','right','none'];
 const VALID_SEASONS=['spring','summer','latesummer','fall'];
 const VALID_GOALS=['balanced','yield','easy','salad','pickling','herbs','sanctuary'];
 const VALID_ZONES=['','5','6','7','8','9','10'];
-const VALID_TOOLS=['paint','erase'];
+const VALID_TOOLS=['paint','erase','inspect'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
 const MAX_SHARE_PAYLOAD=50000;
@@ -1982,6 +2039,7 @@ function applyWorkspaceToUI(ws){
   ui.selCell = null;
   document.getElementById('toolPaint').classList.toggle('active', ui.tool==='paint');
   document.getElementById('toolErase').classList.toggle('active', ui.tool==='erase');
+  document.getElementById('toolInspect').classList.toggle('active', ui.tool==='inspect');
   if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
     if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
     if(['score','inspect','notes'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
@@ -2486,6 +2544,54 @@ function rankVar(ck, inputs){
     return vs(b)-vs(a);});
 }
 
+/* ── getScoreBreakdown: public API for score explainer (Feature 1) ──
+   Returns an array of factor objects for a planted cell, or null if empty.
+   Uses the exact same scoring logic as computeScoreBreakdown + computeAdjacencyBreakdown. */
+function getScoreBreakdown(cell, inputs){
+  if(!cell || !cell.crop) return null;
+  const detail = computeScoreBreakdown(cell.crop, cell, inputs);
+  if(!detail) return null;
+  const adj = computeAdjacencyBreakdown(cell);
+  const crop = detail.crop;
+
+  const lightVsMin = detail.lightHours - crop.sunMin;
+  const sunDesc = lightVsMin >= 0
+    ? `${detail.lightHours.toFixed(1)} hrs / ${crop.sunIdeal.toFixed(1)} hrs ideal`
+    : `${detail.lightHours.toFixed(1)} hrs — ${Math.abs(lightVsMin).toFixed(1)} hrs under minimum`;
+  const supDesc = crop.trellisRequired
+    ? (cell.hasVerticalSupport ? 'Required support present' : 'Missing required support')
+    : (crop.habit === 'vining'
+      ? (cell.hasVerticalSupport ? 'Vining crop with support' : 'Vining crop without support')
+      : 'No support needed');
+  const shadeDesc = detail.lightHours < crop.sunMin
+    ? `Shade fallback: ${crop.shadeScore.toFixed(1)} reduced to ${detail.shadeFit.toFixed(1)}`
+    : `Shade tolerance ${detail.shadeFit.toFixed(1)}/5`;
+  const accDesc = (crop.height === 'low' || crop.height === 'very low')
+    ? `Low crop, access score ${(cell.accessScore || 0).toFixed(2)}`
+    : 'Tall crop — neutral access';
+  const seaDesc = `${inputs.season} — ${crop.coolSeason ? 'cool' : 'warm'}-season crop`;
+  const adjDesc = adj.interactions.length
+    ? adj.interactions.map(e => `${e.crop.short}: ${formatSigned(e.delta, 1)}`).join(', ')
+    : 'No adjacent crops';
+
+  const factors = [
+    { label: 'Sun Fit',          value: detail.sunFit,   weight: 2,    weighted: detail.sunFit * 2,   description: sunDesc },
+    { label: 'Support Fit',      value: detail.supFit,   weight: 1,    weighted: detail.supFit,       description: supDesc },
+    { label: 'Shade Tolerance',  value: detail.shadeFit, weight: 1,    weighted: detail.shadeFit,     description: shadeDesc },
+    { label: 'Access Fit',       value: detail.accFit,   weight: 1,    weighted: detail.accFit,       description: accDesc },
+    { label: 'Season Fit',       value: detail.seaFit,   weight: 1,    weighted: detail.seaFit,       description: seaDesc },
+    { label: 'Adjacency',        value: adj.clamped,     weight: null, weighted: adj.clamped,         description: adjDesc }
+  ];
+
+  if(detail.structBonus !== 0){
+    const structDesc = detail.structContrib.map(s => `${s.label} ${formatSigned(s.delta, 1)}`).join(', ');
+    factors.push({ label: 'Structural', value: detail.structBonus, weight: null, weighted: detail.structBonus, description: structDesc });
+  }
+
+  const total = clamp(detail.baseScore + adj.clamped, 0, 10);
+  return { factors, total, detail, adjacency: adj };
+}
+
 function formatSigned(value, digits=2){
   const n=Number(value)||0;
   return `${n>=0?'+':''}${n.toFixed(digits)}`;
@@ -2846,6 +2952,7 @@ function setTool(t){
   ui.tool=t;
   document.getElementById('toolPaint').classList.toggle('active',t==='paint');
   document.getElementById('toolErase').classList.toggle('active',t==='erase');
+  document.getElementById('toolInspect').classList.toggle('active',t==='inspect');
   saveState();
   renderPlacementStatus();
   renderBedFrame();
@@ -2925,7 +3032,14 @@ function endPointerPlacement(){
     saveState();
     render();
   } else {
-    renderBedFrame();
+    // No crop change — still update inspect pane if a planted cell was clicked
+    const clickedCell = ui.selCell ? bed.find(c=>c.id===ui.selCell) : null;
+    if(clickedCell && clickedCell.crop && touchedCount===1){
+      switchRTab('inspect');
+      render();
+    } else {
+      renderBedFrame();
+    }
   }
 }
 function cancelPointerPlacement(){
@@ -2939,6 +3053,14 @@ function cancelPointerPlacement(){
 function handleCellPointerDown(e, cellId){
   if(e.button!==0) return;
   e.preventDefault();
+  if(ui.tool==='inspect'){
+    setKeyboardMode(false);
+    ui.selCell = cellId;
+    interaction.focusCellId = cellId;
+    switchRTab('inspect');
+    render();
+    return;
+  }
   beginPointerPlacement(cellId, e.pointerId);
   applyPointerPlacement(cellId);
   const target = e.currentTarget;
@@ -2960,6 +3082,12 @@ function moveKeyboardFocus(dRow, dCol){
 function applyKeyboardPlacement(){
   const id = getFocusedCellId();
   if(!id) return false;
+  if(ui.tool==='inspect'){
+    ui.selCell = id;
+    switchRTab('inspect');
+    render();
+    return true;
+  }
   const result = placeCropInCell(id, { withUndo:true });
   if(result.changed){
     saveState();
@@ -2992,8 +3120,10 @@ function renderPlacementStatus(){
   const el = document.getElementById('placementStatus');
   if(!el) return;
   const source = interaction.pointerActive ? 'drag' : (interaction.keyboardMode ? 'keyboard' : 'pointer');
-  const toolLabel = ui.tool==='erase' ? 'erase' : 'paint';
-  const cropLabel = ui.tool==='erase'
+  const toolLabel = ui.tool==='inspect' ? 'inspect' : ui.tool==='erase' ? 'erase' : 'paint';
+  const cropLabel = ui.tool==='inspect'
+    ? 'click cell to inspect'
+    : ui.tool==='erase'
     ? 'clear'
     : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].short : 'select crop');
   el.textContent = `mode ${source} · tool ${toolLabel} · target ${cropLabel}`;
@@ -3134,11 +3264,13 @@ function renderBed(inputs,issues,opts={}){
     if(cell.isTrellisRow) zoneClass=' trellis-zone';
     else if(cell.isProtected) zoneClass=' protected-zone';
     if(kbFocus) zoneClass += ' kb-focus';
-    zoneClass += ui.tool==='erase' ? ' preview-erase' : ' preview-paint';
+    zoneClass += ui.tool==='erase' ? ' preview-erase' : ui.tool==='inspect' ? ' preview-inspect' : ' preview-paint';
     const v = cell.crop ? cropValidity(cell.crop, cell, inputs) : null;
     if(v && v.severity==='hard') zoneClass+=' hard-invalid';
     const previewGlyph = ui.tool==='erase'
       ? '✕'
+      : ui.tool==='inspect'
+      ? '🔍'
       : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].emoji : '•');
     const el=document.createElement('div');
     el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
@@ -3176,12 +3308,13 @@ function switchRTab(t, persist=true){
     _workspace.workspaceSettings.rightTab = t;
     saveWorkspace(_workspace);
   }
-  ['score','inspect','notes'].forEach(id=>{
+  ['score','inspect','notes','companions'].forEach(id=>{
     const btn = document.getElementById('rtab-'+id);
     btn.classList.toggle('active',id===t);
     btn.setAttribute('aria-selected', id===t);
     document.getElementById('rpane-'+id).classList.toggle('on',id===t);
   });
+  if(t==='companions') renderCompanionPanel();
 }
 
 function renderPalette(){
@@ -3348,7 +3481,10 @@ document.addEventListener('keydown',e=>{
     if(e.key==='ArrowDown') moved=moveKeyboardFocus(1,0);
     if(e.key==='ArrowLeft') moved=moveKeyboardFocus(0,-1);
     if(e.key==='ArrowRight') moved=moveKeyboardFocus(0,1);
-    if(moved) renderBedFrame();
+    if(moved){
+      if(ui.tool==='inspect') render();
+      else renderBedFrame();
+    }
     return;
   }
 
@@ -3455,6 +3591,7 @@ document.getElementById('autoFillBtn').addEventListener('click',()=>loadRec());
 document.getElementById('clearBtn').addEventListener('click',clearBed);
 document.getElementById('toolPaint').addEventListener('click',()=>setTool('paint'));
 document.getElementById('toolErase').addEventListener('click',()=>setTool('erase'));
+document.getElementById('toolInspect').addEventListener('click',()=>setTool('inspect'));
 document.getElementById('undoBtn').addEventListener('click',undo);
 document.getElementById('redoBtn').addEventListener('click',redo);
 document.getElementById('shareBtn').addEventListener('click',shareLayout);
@@ -3463,6 +3600,7 @@ document.getElementById('shareBtn').addEventListener('click',shareLayout);
 document.getElementById('rtab-score').addEventListener('click',()=>switchRTab('score'));
 document.getElementById('rtab-inspect').addEventListener('click',()=>switchRTab('inspect'));
 document.getElementById('rtab-notes').addEventListener('click',()=>switchRTab('notes'));
+document.getElementById('rtab-companions').addEventListener('click',()=>switchRTab('companions'));
 
 // Event delegation: bed presets (dynamic buttons)
 document.getElementById('bed-presets').addEventListener('click',e=>{
@@ -3489,6 +3627,166 @@ document.getElementById('pgrid').addEventListener('click',e=>{
   const item=e.target.closest('[data-crop]');
   if(item) selectCrop(item.dataset.crop);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPANION PLANTING REFERENCE
+// ═══════════════════════════════════════════════════════════════════════════════
+let _companionSelectedCrop = null;
+let _companionFilter = '';
+
+function getCompanionRelationships(cropKey){
+  const crop = CROPS[cropKey];
+  if(!crop) return [];
+  const results = [];
+  Object.entries(CROPS).forEach(([otherKey, other])=>{
+    if(otherKey === cropKey) return;
+    // Check if this crop considers the other a companion (our tags match their category)
+    const isCompanion = crop.companionTags.some(t => other.category === t);
+    // Check if the other crop also considers us a companion (bidirectional)
+    const isMutualCompanion = other.companionTags.some(t => crop.category === t);
+    // Check conflicts (our conflict tags match their category or name fragment)
+    const isConflict = crop.conflictTags.some(t => other.category === t || other.name.toLowerCase().includes(t));
+    // Check if the other crop conflicts with us
+    const isMutualConflict = other.conflictTags.some(t => crop.category === t || crop.name.toLowerCase().includes(t));
+
+    let type = 'neutral';
+    let bonus = 0;
+    let reason = '';
+
+    if(isConflict || isMutualConflict){
+      type = 'conflict';
+      bonus = -1.2;
+      if(isConflict && isMutualConflict) reason = 'Mutual conflict';
+      else if(isConflict) reason = crop.name + ' conflicts with ' + other.category;
+      else reason = other.name + ' conflicts with ' + crop.category;
+    } else if(isCompanion || isMutualCompanion){
+      type = 'companion';
+      const w = companionWeight(crop.category, other.category);
+      bonus = +(0.5 * w).toFixed(2);
+      if(isCompanion && isMutualCompanion) reason = 'Mutual companion benefit';
+      else if(isCompanion) reason = crop.companionTags.find(t => other.category === t) + ' synergy';
+      else reason = other.companionTags.find(t => crop.category === t) + ' synergy';
+    }
+
+    results.push({ key: otherKey, crop: other, type, bonus, reason });
+  });
+
+  // Sort: companions first, then conflicts, then neutral; within groups alphabetical
+  const order = { companion: 0, conflict: 1, neutral: 2 };
+  results.sort((a, b) => (order[a.type] - order[b.type]) || a.crop.name.localeCompare(b.crop.name));
+  return results;
+}
+
+function renderCompanionPanel(){
+  const pane = document.getElementById('rpane-companions');
+  if(!pane) return;
+
+  const cropEntries = Object.entries(CROPS);
+  const filterLower = _companionFilter.toLowerCase();
+
+  // Build dropdown options filtered by search
+  const filtered = filterLower
+    ? cropEntries.filter(([k,c]) => c.name.toLowerCase().includes(filterLower) || c.short.toLowerCase().includes(filterLower) || c.category.toLowerCase().includes(filterLower))
+    : cropEntries;
+
+  // Auto-select first if no selection or selection is filtered out
+  if(!_companionSelectedCrop || !CROPS[_companionSelectedCrop] || (filterLower && !filtered.some(([k])=>k===_companionSelectedCrop))){
+    _companionSelectedCrop = filtered.length ? filtered[0][0] : null;
+  }
+
+  let html = '<div class="companion-panel">';
+
+  // Search input
+  html += `<input type="text" class="companion-search" id="companionSearch" placeholder="Filter crops\u2026" value="${escapeHtml(_companionFilter)}">`;
+
+  // Crop selector dropdown
+  html += '<select class="companion-select" id="companionCropSelect">';
+  filtered.forEach(([key, crop]) => {
+    const sel = key === _companionSelectedCrop ? ' selected' : '';
+    html += `<option value="${escapeHtml(key)}"${sel}>${crop.emoji} ${escapeHtml(crop.name)}</option>`;
+  });
+  html += '</select>';
+
+  if(_companionSelectedCrop && CROPS[_companionSelectedCrop]){
+    const crop = CROPS[_companionSelectedCrop];
+    const rels = getCompanionRelationships(_companionSelectedCrop);
+
+    // Header
+    html += `<div class="companion-crop-header">
+      <span class="companion-crop-emoji">${crop.emoji}</span>
+      <span class="companion-crop-name">${escapeHtml(crop.name)}</span>
+      <span class="companion-crop-cat">${escapeHtml(crop.category)}</span>
+    </div>`;
+
+    // Companion tags info
+    if(crop.companionTags.length){
+      html += `<div style="font-size:.58rem;color:var(--text-light);margin-bottom:4px;font-family:'DM Mono',monospace;">Likes: ${crop.companionTags.join(', ')}${crop.conflictTags.length ? ' · Avoids: ' + crop.conflictTags.join(', ') : ''}</div>`;
+    }
+
+    const companions = rels.filter(r => r.type === 'companion');
+    const conflicts = rels.filter(r => r.type === 'conflict');
+    const neutrals = rels.filter(r => r.type === 'neutral');
+
+    // Check which crops are on the grid
+    const cropsOnGrid = new Set();
+    if(bed){
+      bed.forEach(row => row.forEach(cell => { if(cell.crop) cropsOnGrid.add(cell.crop); }));
+    }
+
+    function renderRow(r){
+      const typeClass = r.type === 'companion' ? 'companion-good' : r.type === 'conflict' ? 'companion-bad' : 'companion-neutral';
+      const icon = r.type === 'companion' ? '✓' : r.type === 'conflict' ? '✗' : '—';
+      const bonusStr = r.bonus > 0 ? '+' + r.bonus.toFixed(1) : r.bonus < 0 ? r.bonus.toFixed(1) : '0';
+      const onGrid = cropsOnGrid.has(r.key) ? ' style="font-weight:600;"' : '';
+      return `<div class="companion-row ${typeClass}">
+        <span class="companion-icon">${icon}</span>
+        <span class="companion-emoji">${r.crop.emoji}</span>
+        <span class="companion-name"${onGrid}>${escapeHtml(r.crop.name)}</span>
+        <span class="companion-bonus">${bonusStr}</span>
+      </div>`;
+    }
+
+    if(companions.length){
+      html += '<div class="companion-section-label">Companions (' + companions.length + ')</div>';
+      html += companions.map(renderRow).join('');
+    }
+    if(conflicts.length){
+      html += '<div class="companion-section-label">Conflicts (' + conflicts.length + ')</div>';
+      html += conflicts.map(renderRow).join('');
+    }
+    if(neutrals.length){
+      html += '<div class="companion-section-label">Neutral (' + neutrals.length + ')</div>';
+      html += neutrals.map(renderRow).join('');
+    }
+    if(!rels.length){
+      html += '<div class="companion-empty">No other crops to compare.</div>';
+    }
+  } else {
+    html += '<div class="companion-empty">No crops match your filter.</div>';
+  }
+
+  html += '</div>';
+  pane.innerHTML = html;
+
+  // Bind events
+  const searchEl = document.getElementById('companionSearch');
+  if(searchEl){
+    searchEl.addEventListener('input', e => {
+      _companionFilter = e.target.value;
+      renderCompanionPanel();
+      // Re-focus and restore cursor
+      const newSearch = document.getElementById('companionSearch');
+      if(newSearch){ newSearch.focus(); newSearch.selectionStart = newSearch.selectionEnd = newSearch.value.length; }
+    });
+  }
+  const selectEl = document.getElementById('companionCropSelect');
+  if(selectEl){
+    selectEl.addEventListener('change', e => {
+      _companionSelectedCrop = e.target.value;
+      renderCompanionPanel();
+    });
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BOOT
