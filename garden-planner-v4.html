@@ -746,6 +746,53 @@
   .calendar-note { font-family: 'DM Mono', monospace; font-size: .5rem; color: var(--text-light);
     text-align: center; margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
 
+  /* ═══ HARVEST TRACKER ═══ */
+  .harvest-tab { }
+  .harvest-summary { padding: 8px; border-bottom: 1px solid var(--border-light); }
+  .harvest-summary-stat { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-mid); margin: 4px 0; }
+  .harvest-list { }
+  .harvest-entry { padding: 8px; border-bottom: 1px solid var(--border-light); }
+  .harvest-entry-header { display: flex; justify-content: space-between; align-items: center; }
+  .harvest-entry-crop { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; }
+  .harvest-entry-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-light); }
+  .harvest-entry-amount { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-mid); }
+  .harvest-quality { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+  .harvest-quality-excellent { background: var(--leaf-pale); color: var(--leaf); }
+  .harvest-quality-good { background: var(--sun-pale); color: var(--soil); }
+  .harvest-quality-fair { background: #f2e8d8; color: var(--soil-mid); }
+  .harvest-quality-poor { background: #faeae8; color: var(--bad); }
+  .harvest-entry-note { font-size: 11px; color: var(--text-light); margin-top: 2px; font-style: italic; }
+  .harvest-entry-actions { margin-top: 4px; }
+  .harvest-delete-btn { background: none; border: none; font-size: 10px; color: var(--text-light); cursor: pointer;
+    font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .05em; padding: 2px 4px; }
+  .harvest-delete-btn:hover { color: var(--bad); }
+  .harvest-form { padding: 8px; background: var(--cream-mid); border-radius: 6px; margin: 8px; }
+  .harvest-form label { display: block; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-light);
+    margin-top: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .harvest-form input, .harvest-form select, .harvest-form textarea { width: 100%; padding: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: 4px;
+    background: white; margin-top: 2px; box-sizing: border-box; }
+  .harvest-form textarea { resize: vertical; min-height: 40px; }
+  .harvest-form-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .harvest-form-actions button { padding: 5px 12px; border-radius: 4px; border: 1.5px solid var(--border);
+    background: white; font-family: 'DM Mono', monospace; font-size: .56rem; text-transform: uppercase;
+    letter-spacing: .05em; cursor: pointer; }
+  .harvest-form-actions button.primary { border-color: var(--soil); background: var(--soil); color: var(--sun); }
+  .harvest-quality-pills { display: flex; gap: 4px; margin-top: 2px; }
+  .harvest-quality-pill { padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border); background: white;
+    font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer; text-transform: capitalize; }
+  .harvest-quality-pill.active { border-color: var(--soil); background: var(--soil); color: var(--sun); }
+  .harvest-badge { position: absolute; top: 2px; right: 2px; font-family: 'DM Mono', monospace; font-size: 8px;
+    background: var(--warn); color: white; border-radius: 50%; width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 3; pointer-events: none; }
+  .harvest-empty { font-size: 12px; color: var(--text-light); text-align: center; padding: 16px 8px; font-style: italic; }
+  .harvest-form-title { font-family: 'DM Mono', monospace; font-size: .56rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--soil); font-weight: 600; margin-bottom: 4px; }
+  .harvest-log-btn { padding: 4px 10px; border-radius: 4px; border: 1.5px solid var(--leaf); background: var(--leaf-pale);
+    color: var(--leaf); font-family: 'DM Mono', monospace; font-size: .54rem; text-transform: uppercase;
+    letter-spacing: .05em; cursor: pointer; margin-top: 6px; width: 100%; }
+  .harvest-log-btn:hover { background: var(--leaf); color: white; }
+
   /* ═══ PRINT BUTTON ═══ */
   .btn-print {
     border: 1.5px solid rgba(255,255,255,.28);
@@ -1047,12 +1094,14 @@
     <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
     <button class="tab-btn"        id="rtab-companions" role="tab" aria-selected="false" aria-controls="rpane-companions">Companions</button>
     <button class="tab-btn"        id="rtab-calendar" role="tab" aria-selected="false" aria-controls="rpane-calendar">Calendar</button>
+    <button class="tab-btn"        id="rtab-harvest" role="tab" aria-selected="false" aria-controls="rpane-harvest">Harvest</button>
   </div>
   <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
   <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
   <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
   <div class="tab-pane"    id="rpane-companions" role="tabpanel" aria-labelledby="rtab-companions"></div>
   <div class="tab-pane"    id="rpane-calendar" role="tabpanel" aria-labelledby="rtab-calendar"></div>
+  <div class="tab-pane"    id="rpane-harvest" role="tabpanel" aria-labelledby="rtab-harvest"></div>
 </aside>
 </div>
 
@@ -1777,7 +1826,8 @@ function createMinimalWorkspace(){
     activeBedId: starter.id,
     workspaceSettings: { catFilter:'all', rightTab:'score' },
     beds: [starter],
-    guideProgress: []
+    guideProgress: [],
+    harvests: []
   };
 }
 function validateWorkspace(ws){
@@ -1793,14 +1843,15 @@ function validateWorkspace(ws){
     activeBedId: typeof ws.activeBedId==='string' ? ws.activeBedId : '',
     workspaceSettings: ws.workspaceSettings && typeof ws.workspaceSettings==='object' ? ws.workspaceSettings : {},
     beds: [],
-    guideProgress: Array.isArray(ws.guideProgress) ? ws.guideProgress : []
+    guideProgress: Array.isArray(ws.guideProgress) ? ws.guideProgress : [],
+    harvests: Array.isArray(ws.harvests) ? ws.harvests : []
   };
   if(!Array.isArray(ws.beds) || !ws.beds.length){
     return { ok:false, errors:['beds array missing or empty'] };
   }
   normalized.workspaceSettings = {
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
-    rightTab: ['score','inspect','notes'].includes(normalized.workspaceSettings.rightTab)
+    rightTab: ['score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
       : 'score'
   };
@@ -1824,7 +1875,8 @@ function migrateV0toV1(legacyState){
         rightTab: legacyState.workspaceSettings?.rightTab || legacyState.ui?.rTab || 'score'
       },
       beds: legacyState.beds.map((b, i)=>normalizeBedRecord(b, i)),
-      guideProgress: Array.isArray(legacyState.guideProgress) ? legacyState.guideProgress : []
+      guideProgress: Array.isArray(legacyState.guideProgress) ? legacyState.guideProgress : [],
+      harvests: Array.isArray(legacyState.harvests) ? legacyState.harvests : []
     };
     if(!migrated.beds.find(b=>b.id===migrated.activeBedId)) migrated.activeBedId = migrated.beds[0]?.id || '';
     return migrated;
@@ -3364,6 +3416,15 @@ function renderBed(inputs,issues,opts={}){
       ${c?`<span class="cname">${escapeHtml(c.short)}</span>`:''}
       <span class="hover-preview" aria-hidden="true">${escapeHtml(previewGlyph)}</span>
       ${c?`<div class="csbar" style="background:${sbc}"></div>`:''}`;
+    // Harvest badge
+    const cellHarvests = getHarvestsForCell(cell.id);
+    if(cellHarvests.length > 0){
+      const badge = document.createElement('span');
+      badge.className = 'harvest-badge';
+      badge.textContent = cellHarvests.length;
+      badge.title = cellHarvests.length + ' harvest' + (cellHarvests.length > 1 ? 's' : '');
+      el.appendChild(badge);
+    }
     el.addEventListener('pointerdown',ev=>handleCellPointerDown(ev, cell.id));
     g.appendChild(el);
   });
@@ -3384,7 +3445,7 @@ function switchRTab(t, persist=true){
     _workspace.workspaceSettings.rightTab = t;
     saveWorkspace(_workspace);
   }
-  ['score','inspect','notes','companions','calendar'].forEach(id=>{
+  ['score','inspect','notes','companions','calendar','harvest'].forEach(id=>{
     const btn = document.getElementById('rtab-'+id);
     btn.classList.toggle('active',id===t);
     btn.setAttribute('aria-selected', id===t);
@@ -3392,6 +3453,7 @@ function switchRTab(t, persist=true){
   });
   if(t==='companions') renderCompanionPanel();
   if(t==='calendar') renderCalendarPanel();
+  if(t==='harvest') renderHarvestTab();
 }
 
 function renderPalette(){
@@ -3500,7 +3562,9 @@ function renderRight(inputs,issues){
       ${renderScoreExplanation(selCell, inputs)}
       <div class="icard"><div class="ichdr">Varieties · ranked for your site</div>
         <div class="icbody">${vhtml||'<em style="font-size:.7rem;color:var(--text-light)">No varieties listed.</em>'}</div>
-      </div>`;
+      </div>
+      <button class="harvest-log-btn" id="inspectHarvestBtn">🌾 Log Harvest</button>
+      <div id="inspectHarvestForm"></div>`;
   } else if(selCell){
     inspHtml=`<div class="insp">
       <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
@@ -3512,6 +3576,14 @@ function renderRight(inputs,issues){
     inspHtml=`<div class="inspect-empty"><span>👆</span><p>Click any cell to inspect</p></div>`;
   }
   document.getElementById('rpane-inspect').innerHTML=inspHtml;
+
+  // Bind harvest button in inspect pane
+  const harvestBtn = document.getElementById('inspectHarvestBtn');
+  if(harvestBtn && selCell && selCell.crop){
+    harvestBtn.addEventListener('click', () => {
+      renderHarvestForm(selCell);
+    });
+  }
 
   // NOTES pane
   const whtml=ws.map(w=>`<div class="wi ${escapeHtml(w.t)}">
@@ -3525,6 +3597,9 @@ function renderRight(inputs,issues){
 
   // CALENDAR pane — re-render if active
   if(ui.rTab==='calendar') renderCalendarPanel();
+
+  // HARVEST pane — re-render if active
+  if(ui.rTab==='harvest') renderHarvestTab();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3682,6 +3757,7 @@ document.getElementById('rtab-inspect').addEventListener('click',()=>switchRTab(
 document.getElementById('rtab-notes').addEventListener('click',()=>switchRTab('notes'));
 document.getElementById('rtab-companions').addEventListener('click',()=>switchRTab('companions'));
 document.getElementById('rtab-calendar').addEventListener('click',()=>switchRTab('calendar'));
+document.getElementById('rtab-harvest').addEventListener('click',()=>switchRTab('harvest'));
 
 // Print button
 document.getElementById('printPlanBtn').addEventListener('click',printGardenPlan);
@@ -4245,6 +4321,185 @@ function renderCompanionPanel(){
       renderCompanionPanel();
     });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HARVEST TRACKER
+// ═══════════════════════════════════════════════════════════════════════════════
+function getHarvests(){
+  if(!_workspace) return [];
+  _workspace.harvests = _workspace.harvests || [];
+  return _workspace.harvests;
+}
+function getHarvestsForCell(cellId){
+  return getHarvests().filter(h => h.cellId === cellId);
+}
+function getHarvestsByCrop(cropKey){
+  return getHarvests().filter(h => h.crop === cropKey);
+}
+function saveHarvest(entry){
+  if(!_workspace) return;
+  _workspace.harvests = _workspace.harvests || [];
+  _workspace.harvests.push(entry);
+  saveState();
+}
+function deleteHarvest(id){
+  if(!_workspace || !_workspace.harvests) return;
+  _workspace.harvests = _workspace.harvests.filter(h => h.id !== id);
+  saveState();
+}
+function getHarvestSummary(){
+  const harvests = getHarvests();
+  const byCrop = {};
+  const byCell = {};
+  harvests.forEach(h => {
+    if(!byCrop[h.crop]) byCrop[h.crop] = { count:0, amounts:{} };
+    byCrop[h.crop].count++;
+    if(!byCrop[h.crop].amounts[h.unit]) byCrop[h.crop].amounts[h.unit] = 0;
+    byCrop[h.crop].amounts[h.unit] += h.amount;
+
+    if(!byCell[h.cellId]) byCell[h.cellId] = 0;
+    byCell[h.cellId]++;
+  });
+  let bestCell = null;
+  let bestCount = 0;
+  Object.entries(byCell).forEach(([cellId, count]) => {
+    if(count > bestCount){ bestCount = count; bestCell = cellId; }
+  });
+  return { total: harvests.length, byCrop, byCell, bestCell, bestCount };
+}
+function renderHarvestTab(){
+  const pane = document.getElementById('rpane-harvest');
+  if(!pane) return;
+  const harvests = getHarvests();
+  if(harvests.length === 0){
+    pane.innerHTML = '<div class="harvest-empty">No harvests yet — click a planted cell to log one</div>';
+    return;
+  }
+  const summary = getHarvestSummary();
+  // Summary stats
+  let summaryHtml = '<div class="harvest-summary">';
+  summaryHtml += '<div class="harvest-summary-stat">Total harvests: <strong>' + summary.total + '</strong></div>';
+  // Per crop totals
+  Object.entries(summary.byCrop).forEach(([cropKey, data]) => {
+    const crop = CROPS[cropKey];
+    if(!crop) return;
+    const amounts = Object.entries(data.amounts).map(([unit, amt]) => amt + ' ' + unit).join(', ');
+    summaryHtml += '<div class="harvest-summary-stat">' + escapeHtml(crop.emoji) + ' ' + escapeHtml(crop.name) + ': ' + escapeHtml(amounts) + '</div>';
+  });
+  if(summary.bestCell){
+    const bestCellObj = bed.find(c => c.id === summary.bestCell);
+    const bestCrop = bestCellObj && bestCellObj.crop ? CROPS[bestCellObj.crop] : null;
+    summaryHtml += '<div class="harvest-summary-stat">Best cell: ' + escapeHtml(summary.bestCell) +
+      (bestCrop ? ' (' + escapeHtml(bestCrop.emoji) + ' ' + escapeHtml(bestCrop.name) + ')' : '') +
+      ' — ' + summary.bestCount + ' harvest' + (summary.bestCount > 1 ? 's' : '') + '</div>';
+  }
+  summaryHtml += '</div>';
+
+  // Recent harvests list (newest first)
+  const sorted = [...harvests].sort((a,b) => (b.date||'').localeCompare(a.date||'') || b.id.localeCompare(a.id));
+  let listHtml = '<div class="harvest-list">';
+  sorted.forEach(h => {
+    const crop = CROPS[h.crop];
+    const qualityClass = 'harvest-quality harvest-quality-' + (h.quality || 'good');
+    listHtml += '<div class="harvest-entry">' +
+      '<div class="harvest-entry-header">' +
+        '<span class="harvest-entry-crop">' + (crop ? escapeHtml(crop.emoji) + ' ' + escapeHtml(crop.name) : escapeHtml(h.crop)) + ' <small>(' + escapeHtml(h.cellId) + ')</small></span>' +
+        '<span class="harvest-entry-date">' + escapeHtml(h.date || '') + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">' +
+        '<span class="harvest-entry-amount">' + escapeHtml(String(h.amount)) + ' ' + escapeHtml(h.unit || '') + '</span>' +
+        '<span class="' + qualityClass + '">' + escapeHtml(h.quality || '') + '</span>' +
+      '</div>' +
+      (h.note ? '<div class="harvest-entry-note">' + escapeHtml(h.note) + '</div>' : '') +
+      '<div class="harvest-entry-actions"><button class="harvest-delete-btn" data-harvest-id="' + escapeHtml(h.id) + '">delete</button></div>' +
+    '</div>';
+  });
+  listHtml += '</div>';
+
+  pane.innerHTML = summaryHtml + listHtml;
+
+  // Bind delete buttons
+  pane.querySelectorAll('.harvest-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const hid = btn.dataset.harvestId;
+      if(hid){
+        deleteHarvest(hid);
+        renderHarvestTab();
+        render();
+      }
+    });
+  });
+}
+function renderHarvestForm(cell){
+  if(!cell || !cell.crop) return;
+  const crop = CROPS[cell.crop];
+  if(!crop) return;
+  const formContainer = document.getElementById('inspectHarvestForm');
+  if(!formContainer) return;
+  const today = new Date().toISOString().slice(0, 10);
+  formContainer.innerHTML =
+    '<div class="harvest-form">' +
+      '<div class="harvest-form-title">Log Harvest — ' + escapeHtml(crop.emoji) + ' ' + escapeHtml(crop.name) + ' (' + escapeHtml(cell.id) + ')</div>' +
+      '<label>Date</label>' +
+      '<input type="date" id="harvestDate" value="' + today + '">' +
+      '<label>Amount</label>' +
+      '<input type="number" id="harvestAmount" value="1" min="0" step="0.1">' +
+      '<label>Unit</label>' +
+      '<select id="harvestUnit">' +
+        '<option value="lb">lb</option>' +
+        '<option value="oz">oz</option>' +
+        '<option value="count">count</option>' +
+        '<option value="bunch">bunch</option>' +
+        '<option value="basket">basket</option>' +
+      '</select>' +
+      '<label>Quality</label>' +
+      '<div class="harvest-quality-pills" id="harvestQualityPills">' +
+        '<button class="harvest-quality-pill active" data-quality="excellent">excellent</button>' +
+        '<button class="harvest-quality-pill" data-quality="good">good</button>' +
+        '<button class="harvest-quality-pill" data-quality="fair">fair</button>' +
+        '<button class="harvest-quality-pill" data-quality="poor">poor</button>' +
+      '</div>' +
+      '<label>Note</label>' +
+      '<textarea id="harvestNote" placeholder="Optional note..."></textarea>' +
+      '<div class="harvest-form-actions">' +
+        '<button class="primary" id="harvestSaveBtn">Save</button>' +
+        '<button id="harvestCancelBtn">Cancel</button>' +
+      '</div>' +
+    '</div>';
+
+  // Quality pill selection
+  let selectedQuality = 'excellent';
+  formContainer.querySelectorAll('.harvest-quality-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      formContainer.querySelectorAll('.harvest-quality-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedQuality = pill.dataset.quality;
+    });
+  });
+
+  // Save
+  document.getElementById('harvestSaveBtn').addEventListener('click', () => {
+    const entry = {
+      id: 'h-' + Date.now(),
+      cellId: cell.id,
+      crop: cell.crop,
+      date: document.getElementById('harvestDate').value || today,
+      amount: parseFloat(document.getElementById('harvestAmount').value) || 0,
+      unit: document.getElementById('harvestUnit').value || 'lb',
+      quality: selectedQuality,
+      note: (document.getElementById('harvestNote').value || '').trim()
+    };
+    saveHarvest(entry);
+    formContainer.innerHTML = '';
+    if(ui.rTab === 'harvest') renderHarvestTab();
+    render();
+  });
+
+  // Cancel
+  document.getElementById('harvestCancelBtn').addEventListener('click', () => {
+    formContainer.innerHTML = '';
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
