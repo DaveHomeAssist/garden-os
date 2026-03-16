@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self';">
 <title>Garden OS — Your Raised Bed Planner</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
@@ -106,28 +106,25 @@ h2 {
 /* -- HERO ---------------------------------------- */
 #hero {
   padding: 4rem 0 3rem;
-  background: linear-gradient(160deg, #f0f1ec 0%, var(--cream) 50%, #fdf3ea 100%);
+  background: var(--soil);
   border-bottom: 1.5px solid var(--border-soft);
   position: relative; overflow: hidden;
   scroll-margin-top: 0;
 }
+.hero-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.hero-video-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, rgba(30,17,10,0.65) 0%, rgba(92,61,30,0.55) 50%, rgba(30,17,10,0.7) 100%);
+  pointer-events: none;
+}
 
-#hero::before {
-  content: '';
-  position: absolute; top: -60px; right: -80px;
-  width: 420px; height: 420px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(61,122,79,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-#hero::after {
-  content: '';
-  position: absolute; bottom: -100px; left: -60px;
-  width: 340px; height: 340px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(196,96,58,0.06) 0%, transparent 70%);
-  pointer-events: none;
-}
+/* radial accents removed — video bg replaces them */
 
 .hero-inner {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -137,23 +134,23 @@ h2 {
 .hero-badge {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.3rem 0.85rem;
-  background: var(--sage-wash); border: 1.5px solid var(--sage-pale);
+  background: rgba(90,171,107,0.15); border: 1.5px solid rgba(90,171,107,0.3);
   border-radius: 24px; font-size: 0.78rem; font-weight: 500;
   font-family: 'DM Mono', monospace;
-  color: var(--leaf); margin-bottom: 1.2rem;
+  color: var(--leaf-bright); margin-bottom: 1.2rem;
 }
 
 .hero-h1 {
   font-family: 'Fraunces', serif;
   font-size: clamp(2rem, 5vw, 3.4rem);
-  font-weight: 600; color: var(--text);
+  font-weight: 600; color: #f5ede0;
   letter-spacing: -0.03em; line-height: 1.1;
   margin-bottom: 1rem;
 }
-.hero-h1 em { font-style: italic; color: var(--leaf); }
+.hero-h1 em { font-style: italic; color: var(--sun); }
 
 .hero-sub {
-  font-size: 1.1rem; color: var(--text-light);
+  font-size: 1.1rem; color: rgba(245,237,224,0.8);
   line-height: 1.7; margin-bottom: 2rem; max-width: 480px;
 }
 
@@ -174,23 +171,24 @@ h2 {
 }
 .btn-green:hover { background: var(--leaf); transform: translateY(-2px); box-shadow: 0 6px 22px rgba(61,122,79,0.35); }
 .btn-outline {
-  background: transparent; color: var(--soil);
-  border-color: var(--border);
+  background: transparent; color: #f5ede0;
+  border-color: rgba(245,237,224,0.3);
 }
-.btn-outline:hover { background: var(--terra-wash); border-color: var(--soil-light); }
+.btn-outline:hover { background: rgba(245,237,224,0.1); border-color: rgba(245,237,224,0.5); }
 .btn-big:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
 
 .hero-visual {
-  background: var(--sage-wash);
-  border: 1.5px solid var(--sage-pale);
+  background: rgba(30,17,10,0.5);
+  border: 1.5px solid rgba(245,237,224,0.12);
   border-radius: var(--r-lg);
   padding: 2rem;
   display: flex; flex-direction: column; gap: 1rem;
-  box-shadow: 0 8px 40px var(--shadow);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
 }
 .hero-visual-title {
   font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 600;
-  color: var(--leaf); margin-bottom: 0.25rem;
+  color: var(--sun); margin-bottom: 0.25rem;
 }
 .garden-grid {
   display: grid; grid-template-columns: repeat(6, 1fr);
@@ -201,29 +199,29 @@ h2 {
   border-radius: var(--r);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
-  background: var(--cream); border: 1.5px solid var(--border);
+  background: rgba(245,237,224,0.08); border: 1.5px solid rgba(245,237,224,0.15);
   transition: transform 0.15s;
   cursor: default;
 }
 .garden-cell:hover { transform: scale(1.1); }
-.garden-cell.filled { background: #e8f3e4; border-color: var(--sage-pale); }
-.garden-cell.warn   { background: #fff3e0; border-color: #f0c060; }
+.garden-cell.filled { background: rgba(90,171,107,0.2); border-color: rgba(90,171,107,0.35); }
+.garden-cell.warn   { background: rgba(232,200,74,0.15); border-color: rgba(232,200,74,0.3); }
 
 .hero-score-bar {
-  background: var(--cream); border: 1.5px solid var(--border);
+  background: rgba(245,237,224,0.08); border: 1.5px solid rgba(245,237,224,0.15);
   border-radius: var(--r); padding: 0.75rem 1rem;
 }
-.score-label { font-size: 0.7rem; font-weight: 500; color: var(--text-light); margin-bottom: 0.4rem; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
+.score-label { font-size: 0.7rem; font-weight: 500; color: rgba(245,237,224,0.6); margin-bottom: 0.4rem; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
 .score-track {
-  height: 10px; background: var(--cream-dark);
+  height: 10px; background: rgba(245,237,224,0.12);
   border-radius: 5px; overflow: hidden;
 }
 .score-fill {
   height: 100%; border-radius: 5px;
-  background: linear-gradient(90deg, var(--sage-light), var(--leaf-bright));
+  background: linear-gradient(90deg, var(--leaf), var(--leaf-bright));
   width: 78%; transition: width 0.6s ease;
 }
-.score-note { font-size: 0.8rem; color: var(--leaf); margin-top: 0.4rem; font-weight: 500; }
+.score-note { font-size: 0.8rem; color: var(--leaf-bright); margin-top: 0.4rem; font-weight: 500; }
 
 /* -- WHAT IT DOES -------------------------------- */
 #features { background: #fff; }
@@ -451,6 +449,10 @@ footer {
 
   <!-- HERO -->
   <section id="hero" aria-labelledby="hero-heading">
+    <video class="hero-video" autoplay muted loop playsinline aria-hidden="true">
+      <source src="assets/hero-video.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"></div>
     <div class="wrapper">
       <div class="hero-inner">
         <div>
