@@ -1,8 +1,8 @@
 # Active Hosted URLs — DaveHomeAssist GitHub Pages
 
 > **Account:** [github.com/DaveHomeAssist](https://github.com/DaveHomeAssist)
-> **Total repos:** 15 | **Pages enabled:** 12 | **Archived:** 2 | **No Pages:** 3
-> **Last audited:** 2026-03-15
+> **Total repos:** 15 | **Pages enabled:** 14 | **Archived:** 2 | **No Pages:** 1
+> **Last audited:** 2026-03-16
 
 ---
 
@@ -37,6 +37,8 @@ Sub-paths served from this repo:
 | [/sdlc-tool-stack-map](https://davehomeassist.github.io/sdlc-tool-stack-map/) | sdlc-tool-stack-map | `main` `/` | 2026-03-14 | 2026-03-15 | Live |
 | [/elysium-landing](https://davehomeassist.github.io/elysium-landing/) | elysium-landing | `main` `/` | 2026-03-15 | 2026-03-15 | Live |
 | [/shieldbox-security-event-quote-request-v4-gold-master.html](https://davehomeassist.github.io/shieldbox-security-event-quote-request-v4-gold-master.html/) | shieldbox-security-event-quote-request-v4-gold-master.html | `main` `/` | 2026-03-15 | 2026-03-15 | Live |
+| [/freelance](https://davehomeassist.github.io/freelance/) | freelance | `main` `/` | 2026-03-15 | 2026-03-15 | Live (newly enabled) |
+| [/contractor](https://davehomeassist.github.io/contractor/) | contractor | `main` `/` | 2026-03-15 | 2026-03-15 | Live (newly enabled) |
 
 ---
 
@@ -89,9 +91,14 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
 | Repo | Created | Last Pushed | Visibility | Notes |
 |------|---------|-------------|------------|-------|
-| freelance | 2026-03-13 | 2026-03-15 | Private | No GitHub Pages enabled, no description |
-| contractor | 2026-03-13 | 2026-03-15 | Private | No GitHub Pages enabled, no description |
-| DaveLLM | 2025-11-29 | 2025-11-29 | Public | No GitHub Pages enabled — "DaveLLM" |
+| DaveLLM | 2025-11-29 | 2025-11-29 | Public | No GitHub Pages enabled — only contains `dave_llm.rtf`, needs an index.html |
+
+---
+
+## Registry
+
+A master project registry is maintained in Notion:
+[Project Registry (Notion DB)](https://www.notion.so/e6b9ac46dea54c7bad45dc693ff46938?v=325255fc8f4480ecbc68000c52f514ec)
 
 ---
 
@@ -99,6 +106,7 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
 - **Garden OS uses a two-track nav** — user track (6 items) and dev track (5 items) with bridge links between them.
 - **All filenames are now kebab-case.** Snake_case duplicates have been removed.
-- **2 live sites missing from root index:** Elysium Landing and Shieldbox are deployed but not listed on the index page.
+- **All live projects are listed on the root index.** Freelance, Contractor, Elysium, and Shieldbox added 2026-03-16.
 - **Elysium duplication:** Both the standalone `elysium-landing` repo and a subfolder in `DaveHomeAssist.github.io` serve to the same path. The standalone repo takes precedence.
 - **2 archived repos still serving:** `garden-cage-build-guide` and `garden-planner` are archived but their Pages remain live and accessible.
+- **Orphaned docs/ HTML removed:** `docs/garden-os-system-map.html` and `docs/system-topology.html` deleted 2026-03-16 (stale copies of root files).
