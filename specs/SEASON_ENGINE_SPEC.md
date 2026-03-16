@@ -1,8 +1,14 @@
-# Season Engine Specification
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3, Schema v1, Season Engine v3
+Owner: Dave Robertson
+Last Updated: 2026-03-16
+Artifact Class: Spec
+---
 
-**Status:** Implementation-ready
-**Date:** 2026-03-15
-**Depends on:** SCHEMA.md (workspace/bed/cell model), CLAUDE-G1 (workspace schema v2), CLAUDE-G4 (crop lifecycle)
+# Season Engine Specification
+**Depends on:** SCHEMA.md (workspace/bed/cell model), CLAUDE-G1 (workspace schema v1), CLAUDE-G4 (crop lifecycle)
 **Consumed by:** Prompt 6 (Event Deck), Prompt 8 (Core Engine Build)
 
 ---

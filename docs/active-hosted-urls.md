@@ -61,7 +61,7 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page (Mom's Sanctuary) |
 | [`/home.html`](https://davehomeassist.github.io/garden-os/home.html) | Marketing home page (test) |
 | [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.3 |
-| [`/garden-league-simulator-v3.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v3.html) | Season Engine v3 (12-chapter narrative game) |
+| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Season Engine v4 (12-chapter narrative game, brand-aligned) |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
 | [`/how-it-thinks.html`](https://davehomeassist.github.io/garden-os/how-it-thinks.html) | How the planner thinks |
@@ -81,9 +81,8 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | Path | Description |
 |------|-------------|
 | [`/garden-os-home.html`](https://davehomeassist.github.io/garden-os/garden-os-home.html) | Original marketing home (pre-redesign) |
-| [`/garden-league-simulator-v2.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v2.html) | Season Engine v2 |
-| [`/garden-league-simulator.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator.html) | Season Engine v1 |
-| [`/garden-os-simulator-v2.html`](https://davehomeassist.github.io/garden-os/garden-os-simulator-v2.html) | OS simulator v2 |
+| [`/garden-league-simulator-v3.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v3.html) | Season Engine v3 (archived, superseded by v4) |
+| [`/garden-league-simulator.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator.html) | Season Engine v1 (archived) |
 
 ---
 

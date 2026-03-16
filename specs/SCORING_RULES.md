@@ -1,6 +1,14 @@
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3, Season Engine v3
+Owner: Dave Robertson
+Last Updated: 2026-03-16
+Artifact Class: Spec
+---
+
 # Garden OS — Scoring Rules Specification
 
-Version: 1.0 · Last updated: 2026-03-15
 Determinism is sacred. Same inputs = same outputs. No hidden modifiers. No randomness.
 
 ---

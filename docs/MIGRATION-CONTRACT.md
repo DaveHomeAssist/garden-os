@@ -1,3 +1,12 @@
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Schema v1, Garden OS v4.3
+Owner: Dave Robertson
+Last Updated: 2026-03-16
+Artifact Class: Spec
+---
+
 # Garden OS — Migration Contract
 
 > Rules for the persistence API and how legacy state becomes schema v1.

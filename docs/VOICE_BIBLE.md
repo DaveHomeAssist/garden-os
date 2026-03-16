@@ -1,3 +1,12 @@
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3, Season Engine v3
+Owner: Dave Robertson
+Last Updated: 2026-03-16
+Artifact Class: Ref
+---
+
 # Garden OS: Voice Bible
 
 > Working reference for keeping the cast cleanly separated on the page and in play.

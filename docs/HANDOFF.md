@@ -1,9 +1,16 @@
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3, Schema v1, Season Engine v3
+Owner: Dave Robertson
+Last Updated: 2026-03-16
+Artifact Class: Ref
+---
+
 # Garden OS — AI Handoff Document
 
 > **Repository:** [github.com/DaveHomeAssist/garden-os](https://github.com/DaveHomeAssist/garden-os)
 > **Live:** [davehomeassist.github.io/garden-os/](https://davehomeassist.github.io/garden-os/)
-> **Last updated:** 2026-03-16
-> **Status:** Phase 1 complete, Phase 2-3 roadmapped
 
 ---
 
