@@ -23,6 +23,7 @@
     --shadow:0 2px 12px rgba(0,0,0,.1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
   /* ═══ HEADER ═══ */
@@ -637,6 +638,12 @@
   .os-nav a:hover{color:#f5ede0;}
   .os-nav a.active,
   .os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
+  .sidebar-toggle{
+    display:none;width:100%;padding:.35rem;border:none;border-bottom:1.5px solid var(--border);
+    background:var(--panel);cursor:pointer;font-family:'DM Mono',monospace;font-size:.6rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--text-mid);text-align:center;
+  }
+  .sidebar-toggle:focus-visible{outline:2px solid var(--soil);outline-offset:2px;}
   @media(max-width:900px){
     .hd-right{
       width:100%;
@@ -648,7 +655,11 @@
       letter-spacing:.06em;
     }
     .app{grid-template-columns:1fr;}
-    .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;}
+    .sl,.sr{border:none;border-bottom:1.5px solid var(--border);max-height:40vh;overflow:hidden;}
+    .sidebar-toggle{display:block;}
+    .sl.collapsed .tab-bar,.sl.collapsed .tab-pane,
+    .sr.collapsed .tab-bar,.sr.collapsed .tab-pane{display:none;}
+    .sl.collapsed,.sr.collapsed{max-height:none;overflow:visible;}
   }
 
   /* ── Accessibility ── */
@@ -1061,7 +1072,8 @@
 
 <div class="app">
 <!-- LEFT -->
-<aside class="sl">
+<aside class="sl collapsed">
+  <button class="sidebar-toggle" id="toggleLeft" aria-expanded="false" aria-label="Toggle left panel">&#9662; Site &amp; Crops</button>
   <div class="tab-bar" role="tablist" aria-label="Settings panels">
     <button class="tab-btn active" id="ltab-site" role="tab" aria-selected="true" aria-controls="lpane-site">Site</button>
     <button class="tab-btn" id="ltab-cage" role="tab" aria-selected="false" aria-controls="lpane-cage">Cage</button>
@@ -1075,8 +1087,10 @@
       <div class="bed-presets" id="bed-presets"></div>
       <div class="bed-custom">
         <span>Custom:</span>
-        <input type="number" id="bedW" min="2" max="10" value="8"> W
-        <input type="number" id="bedH" min="2" max="10" value="4"> H
+        <label for="bedW" class="visually-hidden">Bed width (columns)</label>
+        <input type="number" id="bedW" min="2" max="10" value="8" aria-label="Bed width (columns)"> W
+        <label for="bedH" class="visually-hidden">Bed height (rows)</label>
+        <input type="number" id="bedH" min="2" max="10" value="4" aria-label="Bed height (rows)"> H
       </div>
     </div>
 
@@ -1224,7 +1238,7 @@
 
   <!-- PALETTE PANE -->
   <div class="tab-pane" id="lpane-palette" role="tabpanel" aria-labelledby="ltab-palette">
-    <input class="psearch" type="text" id="psearch" placeholder="Search 38 crops…" style="flex-shrink:0;margin-bottom:.35rem;">
+    <input class="psearch" type="text" id="psearch" placeholder="Search 38 crops…" aria-label="Search crops" style="flex-shrink:0;margin-bottom:.35rem;">
     <div class="catf" id="catf" style="flex-shrink:0;"></div>
     <div class="pgrid" id="pgrid"></div>
   </div>
@@ -1240,12 +1254,12 @@
   </div>
 
   <div class="cbar">
-    <button class="cbar-btn act-leaf" id="autoFillBtn">✦ Auto-fill</button>
-    <button class="cbar-btn danger" id="clearBtn">✕ Clear</button>
+    <button class="cbar-btn act-leaf" id="autoFillBtn" aria-label="Auto-fill bed with recommended crops">✦ Auto-fill</button>
+    <button class="cbar-btn danger" id="clearBtn" aria-label="Clear all crops from bed">✕ Clear</button>
     <div class="cbar-sep"></div>
-    <button class="cbar-btn" id="toolPaint">🖌 Paint</button>
-    <button class="cbar-btn" id="toolErase">✕ Erase</button>
-    <button class="cbar-btn active" id="toolInspect">🔍 Inspect</button>
+    <button class="cbar-btn" id="toolPaint" aria-label="Paint tool (P)" aria-pressed="false">🖌 Paint</button>
+    <button class="cbar-btn" id="toolErase" aria-label="Erase tool (E)" aria-pressed="false">✕ Erase</button>
+    <button class="cbar-btn active" id="toolInspect" aria-label="Inspect tool (I)" aria-pressed="true">🔍 Inspect</button>
     <div class="cbar-sep"></div>
     <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩</button>
     <button class="cbar-btn" id="redoBtn" disabled title="Ctrl+Y">↪</button>
@@ -1280,11 +1294,12 @@
 </main>
 
 <!-- RIGHT -->
-<aside class="sr">
+<aside class="sr collapsed">
+  <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle right panel">&#9662; Score &amp; Analysis</button>
   <div class="tab-bar" role="tablist" aria-label="Analysis panels">
     <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score</button>
     <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
-    <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none"></span></button>
+    <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
     <button class="tab-btn"        id="rtab-companions" role="tab" aria-selected="false" aria-controls="rpane-companions">Companions</button>
     <button class="tab-btn"        id="rtab-calendar" role="tab" aria-selected="false" aria-controls="rpane-calendar">Calendar</button>
     <button class="tab-btn"        id="rtab-harvest" role="tab" aria-selected="false" aria-controls="rpane-harvest">Harvest</button>
@@ -1389,6 +1404,10 @@
   <button class="menu-row danger" id="menuResetBed">
     <span class="menu-row-icon" style="background:#faeae8"></span>
     Reset bed to defaults
+  </button>
+  <button class="menu-row danger" id="menuDeleteBed">
+    <span class="menu-row-icon" style="background:#faeae8"></span>
+    Delete this bed
   </button>
 </div>
 
@@ -2444,7 +2463,7 @@ function applyWorkspaceToUI(ws){
   document.getElementById('toolInspect').classList.toggle('active', ui.tool==='inspect');
   if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
     if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
-    if(['score','inspect','notes'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
+    if(['score','inspect','notes','companions','calendar','harvest'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
   }
   document.getElementById('sunHours').value = site.sunHours;
   document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
@@ -3352,9 +3371,10 @@ function showShareFallback(url){
 // ═══════════════════════════════════════════════════════════════════════════════
 function setTool(t){
   ui.tool=t;
-  document.getElementById('toolPaint').classList.toggle('active',t==='paint');
-  document.getElementById('toolErase').classList.toggle('active',t==='erase');
-  document.getElementById('toolInspect').classList.toggle('active',t==='inspect');
+  ['paint','erase','inspect'].forEach(m=>{
+    const btn=document.getElementById('tool'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(btn){btn.classList.toggle('active',t===m);btn.setAttribute('aria-pressed',t===m);}
+  });
   saveState();
   renderPlacementStatus();
   renderBedFrame();
@@ -3679,6 +3699,7 @@ function renderBed(inputs,issues,opts={}){
       : (ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].emoji : '•');
     const el=document.createElement('div');
     el.className='bc'+(weak?' weak':'')+(sel?' selc':'')+zoneClass;
+    el.id = cell.id;
     el.dataset.cellId = cell.id;
     el.setAttribute('role','gridcell');
     el.setAttribute('tabindex', kbFocus ? '0' : '-1');
@@ -3737,15 +3758,17 @@ function renderPalette(){
   const f=ui.catFilter;
   const q=(document.getElementById('psearch').value||'').toLowerCase();
   const cats=['all',...new Set(Object.values(CROPS).map(c=>c.category).filter(Boolean))];
+  document.getElementById('catf').setAttribute('role','radiogroup');
+  document.getElementById('catf').setAttribute('aria-label','Filter by crop category');
   document.getElementById('catf').innerHTML=cats.map(cat=>
-    `<button class="catb ${f===cat?'active':''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`).join('');
+    `<button class="catb ${f===cat?'active':''}" data-cat="${escapeHtml(cat)}" role="radio" aria-checked="${f===cat}">${escapeHtml(cat)}</button>`).join('');
   const vis=Object.entries(CROPS).filter(([k,c])=>{
     if(f!=='all'&&c.category!==f) return false;
     if(q&&!c.name.toLowerCase().includes(q)&&!c.short.toLowerCase().includes(q)&&!c.category.toLowerCase().includes(q)) return false;
     return true;
   });
   document.getElementById('pgrid').innerHTML=vis.map(([k,c])=>
-    `<div class="pitem ${ui.selectedCrop===k?'sel':''}" data-crop="${escapeHtml(k)}">
+    `<div class="pitem ${ui.selectedCrop===k?'sel':''}" data-crop="${escapeHtml(k)}" role="button" tabindex="0" aria-pressed="${ui.selectedCrop===k}" aria-label="${escapeHtml(c.name)}${c.trellisZone?' (trellis)':''}${c.protectedZone?' (protected)':''}">
       <div class="pdot" style="background:${c.color}"></div>
       <span class="pname">${escapeHtml(c.name)}</span>
       <span class="pcat">${escapeHtml(c.category)}</span>
@@ -3959,6 +3982,18 @@ document.addEventListener('pointercancel',e=>{
   endPointerPlacement();
 });
 
+// Sidebar collapse toggles (mobile)
+['Left','Right'].forEach(side=>{
+  const btn=document.getElementById('toggle'+side);
+  if(!btn) return;
+  const panel=btn.closest('.sl,.sr');
+  btn.addEventListener('click',()=>{
+    const collapsed=panel.classList.toggle('collapsed');
+    btn.setAttribute('aria-expanded',!collapsed);
+    btn.innerHTML=(collapsed?'&#9662; ':'&#9652; ')+btn.innerHTML.replace(/^[▸▾▴▵\u25B8\u25BE\u25B4\u25B5&#9652;&#9662;]+\s*/,'');
+  });
+});
+
 // Left tab bar
 document.getElementById('ltab-site').addEventListener('click',()=>switchLTab('site'));
 document.getElementById('ltab-cage').addEventListener('click',()=>switchLTab('cage'));
@@ -4017,7 +4052,7 @@ document.getElementById('doorStyle').addEventListener('change',function(){
   cage.doorStyle=this.value; onSite();
 });
 document.getElementById('cageBed4x4').addEventListener('click',()=>setPreset(4,4));
-document.getElementById('cageBed4x8').addEventListener('click',()=>setPreset(8,4));
+document.getElementById('cageBed4x8').addEventListener('click',()=>setPreset(4,8));
 
 // Search
 document.getElementById('psearch').addEventListener('input',renderPalette);
@@ -4546,7 +4581,7 @@ function renderCompanionPanel(){
     // Check which crops are on the grid
     const cropsOnGrid = new Set();
     if(bed){
-      bed.forEach(row => row.forEach(cell => { if(cell.crop) cropsOnGrid.add(cell.crop); }));
+      bed.forEach(cell => { if(cell.crop) cropsOnGrid.add(cell.crop); });
     }
 
     function renderRow(r){
@@ -4873,9 +4908,9 @@ const TUTORIAL_STEPS=[
     text:'Start here \u2014 tap the tomato to select it.',
     hint:'scroll the palette, then click',
     tail:'left',
-    target:()=>document.querySelector('[data-crop="cherry_tom"]'),
+    target:()=>document.querySelector('[data-crop="cherry_tomato"]'),
     setup:()=>{setTool('inspect');_tutTarget=tutorialTargetCell()},
-    check:()=>ui.selectedCrop==='cherry_tom',
+    check:()=>ui.selectedCrop==='cherry_tomato',
     onComplete:{char:'gurl',line:'Tomato selected. Now it needs somewhere to grow.'}
   },
   {
@@ -4885,7 +4920,7 @@ const TUTORIAL_STEPS=[
     tail:'down',
     target:()=>{if(!_tutTarget)return null;return document.getElementById(_tutTarget.id)},
     setup:()=>{setTool('paint')},
-    check:()=>_tutTarget&&_tutTarget.crop==='cherry_tom',
+    check:()=>_tutTarget&&_tutTarget.crop==='cherry_tomato',
     onComplete:{char:'onion',line:'One in the dirt. That is where it starts.'}
   },
   {
@@ -5256,6 +5291,24 @@ document.getElementById('menuResetBed').addEventListener('click',function(){
     if(tt&&!tt.classList.contains('on')){tt.classList.add('on');tt.setAttribute('aria-pressed','true');}
     saveState();
     if(_workspace) saveWorkspace(_workspace);
+    render();
+  });
+});
+document.getElementById('menuDeleteBed').addEventListener('click',function(){
+  closeMenu();
+  if(!_workspace||_workspace.beds.length<2){
+    confirmAction('Cannot delete','You need at least one bed in your workspace.',function(){});
+    return;
+  }
+  const b=activeBed();
+  const name=b?b.name:'this bed';
+  confirmAction('Delete "'+name+'"','This will permanently remove this bed and all its data. This cannot be undone.',function(){
+    const idx=_workspace.beds.findIndex(x=>x.id===_workspace.activeBedId);
+    if(idx===-1) return;
+    _workspace.beds.splice(idx,1);
+    _workspace.activeBedId=_workspace.beds[0].id;
+    saveWorkspace(_workspace);
+    applyWorkspaceToUI(_workspace);
     render();
   });
 });

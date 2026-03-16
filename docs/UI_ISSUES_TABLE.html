@@ -31,8 +31,6 @@
                 var(--cream);
     min-height: 100vh;
   }
-
-  /* ── Skip link ── */
   .skip-link {
     position: absolute; top: -48px; left: 0; background: var(--leaf); color: #fff;
     padding: .5rem 1.2rem; font-size: .85rem; font-weight: 600; z-index: 9999;
@@ -40,7 +38,6 @@
   }
   .skip-link:focus { top: 0; }
 
-  /* ── Nav ── */
   .os-nav {
     position: sticky; top: 0; z-index: 20;
     background: var(--soil); border-bottom: 3px solid var(--sun);
@@ -55,7 +52,6 @@
   .os-nav a.active { color: #f5ede0; border-bottom: 2px solid var(--sun); }
   .os-nav .bridge { margin-left: auto; opacity: .55; }
 
-  /* ── Layout ── */
   .wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 1rem; }
   header { margin-bottom: 1.75rem; }
   .eyebrow {
@@ -77,61 +73,125 @@
   .dot-partial { background: var(--sun); }
   .dot-open { background: var(--rust); }
 
-  /* ── Table ── */
-  .table-wrap {
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex; gap: .4rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar .label {
+    font-family: var(--mono); font-size: .65rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--text-muted); margin-right: .25rem;
+  }
+  .fbtn {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .04em;
+    padding: .3rem .7rem; border-radius: 999px; border: 1.5px solid var(--border-soft);
+    background: var(--panel); color: var(--text-soft); cursor: pointer;
+    transition: all .15s;
+  }
+  .fbtn:hover { border-color: var(--border); color: var(--text); }
+  .fbtn.active { background: var(--soil); color: var(--sun); border-color: var(--soil); }
+  .fbtn:focus-visible { outline: 2.5px solid var(--leaf-bright); outline-offset: 2px; }
+  .fbtn .cnt {
+    font-size: .6rem; opacity: .7; margin-left: .2rem;
+  }
+
+  /* ── Collapsible sections ── */
+  .issue-group {
     background: var(--panel); border: 1.5px solid var(--border-soft);
-    border-radius: 8px; overflow: hidden;
+    border-radius: 8px; overflow: hidden; margin-bottom: 1rem;
     box-shadow: 0 2px 8px rgba(44,27,11,.06);
   }
-  .scroll-hint {
-    display: none; font-family: var(--mono); font-size: .65rem;
-    color: var(--text-muted); text-align: right; padding: .35rem .75rem;
-    background: var(--cream-mid); border-bottom: 1px solid var(--border-soft);
+  .issue-group.is-hidden { display: none; }
+  .group-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: .65rem 1rem; border: none; background: var(--cream-mid);
+    cursor: pointer; font-family: var(--serif); font-size: .9rem; font-weight: 600;
+    color: var(--soil-mid); text-align: left; transition: background .15s;
   }
-  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-  thead { background: var(--soil); color: rgba(245,237,224,.85); }
-  th {
+  .group-toggle:hover { background: var(--cream); }
+  .group-toggle:focus-visible { outline: 2.5px solid var(--leaf-bright); outline-offset: -2px; }
+  .group-toggle .badge {
     font-family: var(--mono); font-size: .68rem; font-weight: 500;
-    letter-spacing: .1em; text-transform: uppercase; text-align: left;
-    padding: .75rem .85rem; border-bottom: 2px solid var(--soil-mid); white-space: nowrap;
+    padding: .15rem .5rem; border-radius: 999px; letter-spacing: .06em;
   }
-  td {
-    padding: .7rem .85rem; border-bottom: 1px solid var(--border-soft);
-    vertical-align: top; line-height: 1.55;
+  .badge-done { background: var(--leaf-wash); color: var(--leaf); border: 1px solid var(--leaf-pale); }
+  .badge-partial { background: var(--sun-wash); color: #a08520; border: 1px solid var(--sun-pale); }
+  .badge-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
+  .group-toggle .chev {
+    font-size: .8rem; color: var(--text-muted); transition: transform .2s;
   }
-  tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: rgba(61,122,79,.03); }
-  .area {
-    font-family: var(--mono); font-size: .72rem; font-weight: 500;
-    letter-spacing: .06em; text-transform: uppercase; color: var(--soil-mid); white-space: nowrap;
+  .issue-group.open .chev { transform: rotate(90deg); }
+  .group-body { display: none; padding: .5rem; }
+  .issue-group.open .group-body { display: block; }
+
+  /* ── Card grid ── */
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: .6rem;
   }
-  .issue { font-weight: 500; }
-  .impact { color: var(--text-soft); font-size: .84rem; }
-  .location { color: var(--text-muted); font-size: .82rem; font-family: var(--mono); }
+  .issue-card {
+    background: var(--cream); border: 1px solid var(--border-soft);
+    border-radius: 6px; padding: .65rem .85rem; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+    display: flex; flex-direction: column; gap: .3rem;
+  }
+  .issue-card:hover { border-color: var(--border); box-shadow: 0 2px 6px rgba(44,27,11,.08); }
+  .issue-card:focus-visible { outline: 2.5px solid var(--leaf-bright); outline-offset: 2px; }
+  .card-top {
+    display: flex; align-items: center; gap: .5rem; justify-content: space-between;
+  }
+  .card-area {
+    font-family: var(--mono); font-size: .65rem; font-weight: 500;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--soil-mid);
+  }
+  .card-sev {
+    font-family: var(--mono); font-size: .6rem; letter-spacing: .06em;
+    text-transform: uppercase; padding: .1rem .4rem; border-radius: 999px;
+  }
+  .card-sev-crit { color: #fff; background: var(--rust); }
+  .card-sev-med { color: #a08520; background: var(--sun-wash); border: 1px solid var(--sun-pale); }
+  .card-sev-low { color: var(--text-muted); background: var(--cream-mid); border: 1px solid var(--border-soft); }
+  .card-title {
+    font-size: .88rem; font-weight: 500; line-height: 1.4;
+  }
+  .card-detail {
+    display: none; margin-top: .4rem; padding-top: .4rem;
+    border-top: 1px solid var(--border-soft); font-size: .82rem;
+  }
+  .issue-card.expanded .card-detail { display: block; }
+  .card-detail dt {
+    font-family: var(--mono); font-size: .65rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted); margin-top: .3rem;
+  }
+  .card-detail dt:first-child { margin-top: 0; }
+  .card-detail dd { color: var(--text-soft); margin-left: 0; }
+  .card-detail code {
+    font-family: var(--mono); font-size: .78rem; background: rgba(0,0,0,.04);
+    padding: .1rem .3rem; border-radius: 3px;
+  }
+  .card-expand-hint {
+    font-family: var(--mono); font-size: .6rem; color: var(--text-muted);
+    letter-spacing: .04em; margin-top: .15rem;
+  }
+  .issue-card.expanded .card-expand-hint { display: none; }
+
+  /* ── Status badges on cards ── */
   .status {
     display: inline-flex; align-items: center; gap: .35rem;
-    font-family: var(--mono); font-size: .68rem; font-weight: 500;
+    font-family: var(--mono); font-size: .62rem; font-weight: 500;
     letter-spacing: .08em; text-transform: uppercase;
-    padding: .2rem .6rem; border-radius: 999px; white-space: nowrap;
+    padding: .15rem .5rem; border-radius: 999px; white-space: nowrap;
   }
   .status-done { background: var(--leaf-wash); color: var(--leaf); border: 1px solid var(--leaf-pale); }
   .status-partial { background: var(--sun-wash); color: #a08520; border: 1px solid var(--sun-pale); }
   .status-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
-  .section-break td {
-    background: var(--cream-mid); padding: .5rem .85rem;
-    font-family: var(--serif); font-size: .85rem; font-weight: 600;
-    color: var(--soil-mid); border-bottom: 1px solid var(--border);
-  }
-  .note { font-size: .78rem; color: var(--text-muted); font-style: italic; margin-top: .25rem; }
-  .user-row td { background: rgba(232,200,74,.04); }
 
   /* ── Form ── */
-  .form-wrap { margin-top: 2rem; }
+  .form-wrap { margin-top: 1.5rem; }
   .form-header {
     font-family: var(--serif); font-size: 1.15rem; font-weight: 600; margin-bottom: .75rem;
     display: flex; align-items: center; gap: .5rem;
   }
-  .form-header .icon { font-size: 1.3rem; }
   .form-panel {
     background: var(--panel); border: 1.5px solid var(--border-soft);
     border-radius: 8px; padding: 1.25rem;
@@ -161,11 +221,8 @@
   }
   .btn-submit:hover { background: var(--leaf); transform: translateY(-1px); }
   .btn-submit:focus-visible { outline: 3px solid var(--leaf-bright); outline-offset: 3px; }
-  .form-msg {
-    font-family: var(--mono); font-size: .72rem; opacity: 0; transition: opacity .2s;
-  }
+  .form-msg { font-family: var(--mono); font-size: .72rem; opacity: 0; transition: opacity .2s; }
   .form-msg.visible { opacity: 1; }
-
   .del-btn {
     background: none; border: none; color: var(--rust); cursor: pointer;
     font-size: .75rem; padding: .15rem .4rem; border-radius: 4px; font-family: var(--mono);
@@ -173,7 +230,6 @@
   }
   .del-btn:hover { background: var(--rust-wash); }
 
-  /* ── Footer ── */
   .os-footer {
     background: var(--soil); color: rgba(245,237,224,.5); text-align: center;
     padding: 1.25rem 1rem; font-family: var(--mono); font-size: .65rem;
@@ -182,18 +238,14 @@
   .os-footer a { color: rgba(245,237,224,.7); text-decoration: none; }
   .os-footer a:hover { color: #f5ede0; }
 
-  /* ── Responsive ── */
-  @media (max-width: 800px) {
+  @media (max-width: 700px) {
     body { font-size: .9rem; }
     .wrap { padding: 1rem .75rem .75rem; }
-    .table-wrap { overflow-x: auto; }
-    .scroll-hint { display: block; }
-    table { min-width: 900px; }
+    .card-grid { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .full { grid-column: 1; }
     .os-nav { font-size: .58rem; overflow-x: auto; justify-content: flex-start; }
   }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
@@ -201,7 +253,6 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-
 <nav class="os-nav" aria-label="Garden OS">
   <a href="../index.html">Home</a>
   <a href="../garden-league-simulator-v3.html">Play Game</a>
@@ -215,241 +266,294 @@
 <main id="main">
 <div class="wrap">
   <header>
-    <div class="eyebrow">Garden OS · UI Audit · Updated 2026-03-16</div>
+    <div class="eyebrow">Garden OS &middot; UI Audit &middot; Updated 2026-03-16</div>
     <h1>Issues Tracker</h1>
-    <p class="subtitle">All identified UX issues across Planner v4 and Season Engine v3. Submit new issues below.</p>
-    <div class="stats">
-      <div class="stat"><span class="stat-dot dot-done"></span> 11 resolved</div>
-      <div class="stat"><span class="stat-dot dot-partial"></span> 4 partial</div>
-      <div class="stat"><span class="stat-dot dot-open"></span> 8 open</div>
-      <div class="stat" style="color:var(--text-muted)">23 tracked</div>
+    <p class="subtitle">Full interactive element audit across Planner v4 and Season Engine v3. Click any card to expand details.</p>
+    <div class="stats" id="stats">
+      <div class="stat"><span class="stat-dot dot-done"></span> <span id="stat-done">0</span> resolved</div>
+      <div class="stat"><span class="stat-dot dot-partial"></span> <span id="stat-partial">0</span> partial</div>
+      <div class="stat"><span class="stat-dot dot-open"></span> <span id="stat-open">0</span> open</div>
+      <div class="stat" style="color:var(--text-muted)"><span id="stat-total">0</span> tracked</div>
     </div>
   </header>
 
-  <div class="table-wrap">
-    <div class="scroll-hint">Scroll sideways to see all columns &rarr;</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Area</th>
-          <th>Issue</th>
-          <th>Impact</th>
-          <th>Status</th>
-          <th>Location</th>
-        </tr>
-      </thead>
-      <tbody id="issueBody">
-
-        <tr class="section-break"><td colspan="5">Resolved (11)</td></tr>
-        <tr>
-          <td class="area">Language</td>
-          <td class="issue">Jargon: "faction" is undefined and blocks comprehension</td>
-          <td class="impact">Players cannot follow instructions, disengage from mechanics</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Season Engine dialogue, chapter metadata, UI labels</td>
-        </tr>
-        <tr>
-          <td class="area">Language</td>
-          <td class="issue">Jargon: "beat" and "token" feel gamey and unclear</td>
-          <td class="impact">Rules comprehension fails early, users do not form a mental model</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">HOWTO strings, dialogue lines, shortcut labels</td>
-        </tr>
-        <tr>
-          <td class="area">Clarity, state</td>
-          <td class="issue">"Exactly 1 action per phase" is not surfaced at decision time</td>
-          <td class="impact">Choices feel arbitrary, users miss the constraint</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Season Engine planning phases, toolbar messaging</td>
-        </tr>
-        <tr>
-          <td class="area">Clarity, scoring</td>
-          <td class="issue">Factor bars are visible but meanings are not explained in-context</td>
-          <td class="impact">Users cannot interpret why a crop scored poorly</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Score tab factor bars (Sun, Support, Shade, Access, Season, Adjacency)</td>
-        </tr>
-        <tr>
-          <td class="area">Clarity, reference</td>
-          <td class="issue">No path from "why did this score happen" to an explanation</td>
-          <td class="impact">Confusion persists, users cannot self-serve answers</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">"How scoring works" link under factor bars, Learn More in How to Play</td>
-        </tr>
-        <tr>
-          <td class="area">Clarity, reference</td>
-          <td class="issue">Loop: score to explanation to back to score not connected</td>
-          <td class="impact">Confusion persists, users cannot self-serve answers</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">"How scoring works" link under factor bars, Learn More in How to Play</td>
-        </tr>
-        <tr>
-          <td class="area">Mode safety</td>
-          <td class="issue">Inspect intent, placement result — inspect click modifies grid</td>
-          <td class="impact">Trust breaker, discourages exploration and clicking</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — three explicit tool modes (paint, erase, inspect)<div class="note">Season Engine still lacks inspect mode — tracked separately</div></td>
-        </tr>
-        <tr>
-          <td class="area">Mode safety</td>
-          <td class="issue">No neutral "just look" default cursor state</td>
-          <td class="impact">Users cannot safely navigate without accidental edits</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — inspect is default tool, Esc returns to it<div class="note">Season Engine still defaults to placement — tracked separately</div></td>
-        </tr>
-        <tr>
-          <td class="area">Tool parity</td>
-          <td class="issue">Eraser exists in Season Engine but not in Planner</td>
-          <td class="impact">Mismatch creates friction for users switching contexts</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 toolbar — eraser with drag support and shortcut E</td>
-        </tr>
-        <tr>
-          <td class="area">UI bug</td>
-          <td class="issue">Notes panel does not scroll</td>
-          <td class="impact">Content becomes inaccessible below the fold</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — tab-pane and panel have overflow-y: auto</td>
-        </tr>
-        <tr>
-          <td class="area">UI bug</td>
-          <td class="issue">Harvest log button intermittently unresponsive</td>
-          <td class="impact">Users lose confidence, repeated clicks</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — button binding fixed inline after innerHTML</td>
-        </tr>
-        <tr>
-          <td class="area">Copy</td>
-          <td class="issue">Last frost marker is not labeled clearly</td>
-          <td class="impact">Users misread calendar cue</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — explicit "Last frost" / "First frost" labels + zone footer</td>
-        </tr>
-        <tr>
-          <td class="area">Discoverability</td>
-          <td class="issue">Inspect panel entry point not obvious</td>
-          <td class="impact">Core feature is missed on first pass</td>
-          <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — toolbar inspect button, tab bar, empty-state prompt<div class="note">Season Engine still lacks inspect affordance — tracked separately</div></td>
-        </tr>
-
-        <tr class="section-break"><td colspan="5">Partially Fixed (4)</td></tr>
-        <tr>
-          <td class="area">Interaction</td>
-          <td class="issue">Mulch and protect are per-cell only, no drag paint</td>
-          <td class="impact">Actions feel tedious, zone edits are painful</td>
-          <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — shift+click multi-select added, but no drag-paint</td>
-        </tr>
-        <tr>
-          <td class="area">Interaction</td>
-          <td class="issue">No multi-cell selection, no batch actions</td>
-          <td class="impact">Common workflows (rows, zones) are slow</td>
-          <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — shift+click batch for interventions only</td>
-        </tr>
-        <tr>
-          <td class="area">Resource clarity</td>
-          <td class="issue">Token or resource economy is opaque (totals, regen, costs)</td>
-          <td class="impact">Strategy collapses, users cannot plan</td>
-          <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — "Action available (X/3 used)" shown but rules not explained</td>
-        </tr>
-        <tr>
-          <td class="area">Goals</td>
-          <td class="issue">No objective clarity and scoreboard prominence</td>
-          <td class="impact">Users do not know how to win, low engagement</td>
-          <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — target in results panel, not persistent in header HUD</td>
-        </tr>
-
-        <tr class="section-break"><td colspan="5">Open (8)</td></tr>
-        <tr>
-          <td class="area">Mode safety</td>
-          <td class="issue">Season Engine has no inspect mode — clicking always places if crop selected</td>
-          <td class="impact">Trust breaker in Season Engine, fixed in Planner but inconsistent</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine cellClick()</td>
-        </tr>
-        <tr>
-          <td class="area">Discoverability</td>
-          <td class="issue">Season Engine has no visible inspect button or panel affordance</td>
-          <td class="impact">Cell detail inspection is hidden — users must discover by clicking</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine toolbar</td>
-        </tr>
-        <tr>
-          <td class="area">Keyboard</td>
-          <td class="issue">Season Engine has no keyboard shortcut for inspect or neutral mode</td>
-          <td class="impact">Power users cannot switch modes efficiently</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine — Esc clears but does not enter named mode</td>
-        </tr>
-        <tr>
-          <td class="area">Feedback</td>
-          <td class="issue">No visible feedback when no eligible events exist for a beat</td>
-          <td class="impact">Beat phase may appear stuck — console.warn only</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine startBeat()</td>
-        </tr>
-        <tr>
-          <td class="area">Resilience</td>
-          <td class="issue">localStorage save failure shows warning but offers no recovery</td>
-          <td class="impact">If storage full, progress silently lost — no export prompt</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine + Planner save functions</td>
-        </tr>
-        <tr>
-          <td class="area">Accessibility</td>
-          <td class="issue">Intervention HUD has no aria-live region for status changes</td>
-          <td class="impact">Screen readers do not announce token availability changes</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine .int-hud</td>
-        </tr>
-        <tr>
-          <td class="area">Accessibility</td>
-          <td class="issue">Grid cells lack aria-roledescription for placement targets</td>
-          <td class="impact">Screen reader users may inadvertently place crops while exploring</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine grid cells</td>
-        </tr>
-        <tr>
-          <td class="area">Code quality</td>
-          <td class="issue">Planner frost line CSS has dead assignment (left set twice)</td>
-          <td class="impact">Confusing code — first assignment immediately overwritten</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner addFrostLine()</td>
-        </tr>
-
-      </tbody>
-    </table>
+  <div class="filter-bar" role="group" aria-label="Filter issues">
+    <span class="label">Show:</span>
+    <button class="fbtn active" data-filter="all">All</button>
+    <button class="fbtn" data-filter="open">Open</button>
+    <button class="fbtn" data-filter="partial">Partial</button>
+    <button class="fbtn" data-filter="done">Resolved</button>
+    <button class="fbtn" data-filter="planner">Planner</button>
+    <button class="fbtn" data-filter="engine">Engine</button>
   </div>
 
-  <!-- ═══ SUBMISSION FORM ═══ -->
+  <!-- ═══ RESOLVED ═══ -->
+  <section class="issue-group" data-status="done">
+    <button class="group-toggle" type="button" aria-expanded="false">
+      <span>Resolved (<span class="g-count">14</span>)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-done g-count-badge">14</span><span class="chev">&rsaquo;</span></span>
+    </button>
+    <div class="group-body">
+      <div class="card-grid">
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Tutorial</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Replay tutorial button added to settings</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Users who skipped can now re-trigger</dd><dt>Location</dt><dd>Planner settings menu L1352 &mdash; wired at L5194</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Language</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Jargon &ldquo;faction&rdquo; removed from all UI labels</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Players no longer blocked by undefined terminology</dd><dt>Location</dt><dd>Season Engine dialogue, chapter metadata, UI labels</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Language</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Jargon &ldquo;beat&rdquo; and &ldquo;token&rdquo; clarified</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Rules comprehension improved</dd><dt>Location</dt><dd>HOWTO strings, dialogue lines, shortcut labels</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
+          <div class="card-title">&ldquo;1 action per phase&rdquo; now surfaced at decision time</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Choices no longer feel arbitrary</dd><dt>Location</dt><dd>Season Engine planning phases, toolbar messaging</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Factor bars explained in-context</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Users can now interpret crop scores</dd><dt>Location</dt><dd>Score tab factor bars</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Score-to-explanation path connected</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Users can self-serve scoring answers</dd><dt>Location</dt><dd>&ldquo;How scoring works&rdquo; link, Learn More</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Inspect click no longer modifies grid</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Trust restored &mdash; safe to explore</dd><dt>Location</dt><dd>Planner v4 three tool modes</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Neutral &ldquo;just look&rdquo; default cursor</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>No accidental edits on load</dd><dt>Location</dt><dd>Planner v4 &mdash; inspect is default tool</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Tool parity</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Eraser added to Planner</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Context-switching friction eliminated</dd><dt>Location</dt><dd>Planner v4 toolbar &mdash; eraser with drag + shortcut E</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Notes panel now scrolls</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Content below fold now accessible</dd><dt>Location</dt><dd>Planner v4 &mdash; overflow-y: auto</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Harvest log button binding fixed</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>No longer intermittently unresponsive</dd><dt>Location</dt><dd>Planner v4 event binding</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Copy</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Frost line clearly labeled</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Calendar no longer misread</dd><dt>Location</dt><dd>Planner v4 &mdash; explicit labels + zone footer</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Discoverability</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Inspect panel entry point made obvious</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Core feature no longer missed</dd><dt>Location</dt><dd>Planner v4 &mdash; toolbar button, tab bar, empty-state prompt</dd></dl>
+        </div>
+        <!-- Newly resolved from this patch -->
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Companion panel fixed &mdash; flat array iteration <span class="card-sev card-sev-crit">was CRIT</span></div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd><code>bed.forEach(row => row.forEach(...))</code> &rarr; <code>bed.forEach(cell => ...)</code></dd><dt>Location</dt><dd>Planner L4549</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Tutorial</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Tutorial crop key fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd><code>cherry_tom</code> &rarr; <code>cherry_tomato</code> across 3 references</dd><dt>Location</dt><dd>Planner L4876/4878/4888</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Settings score NaN fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd><code>._cachedBedScore.toFixed(1)</code> &rarr; <code>._cachedBedScore.finalScore.toFixed(1)</code></dd><dt>Location</dt><dd>Season Engine L2716</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Cage 4x8 preset dimension swap fixed</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd><code>setPreset(8,4)</code> &rarr; <code>setPreset(4,8)</code></dd><dt>Location</dt><dd>Planner L4020</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Right tab restore now includes all 6 tabs</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Added companions, calendar, harvest to restore whitelist</dd><dt>Location</dt><dd>Planner L2447</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Feature</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Bed delete added with confirmation dialog</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>New &ldquo;Delete this bed&rdquo; in danger zone, minimum-1-bed guard</dd><dt>Location</dt><dd>Planner settings menu</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Responsive</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Mobile sidebar collapse toggles added</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Sidebars start collapsed on mobile, toggle buttons with aria-expanded</dd><dt>Location</dt><dd>Planner @900px breakpoint</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Settings panel dialog role + focus trap</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Added <code>role="dialog"</code>, <code>aria-modal</code>, focus trap, Escape handling</dd><dt>Location</dt><dd>Season Engine settings panel</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
+          <div class="card-title">ARIA pass: labels, roles, and pressed states</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Bed inputs labeled, crop search aria-label, palette items role=button, category filters radiogroup, tool buttons aria-pressed, warn badge role=status</dd><dt>Location</dt><dd>Planner: bed inputs, palette, toolbar, notes badge</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Engine ARIA: eraser, beats, interventions, skip-nav</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Eraser aria-pressed, beat dots labeled, intervention buttons aria-label, skip-nav text fixed, duplicate rules link fixed, dead CSS removed</dd><dt>Location</dt><dd>Season Engine: eraser, HUD, interventions, settings, skip-nav</dd></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PARTIAL ═══ -->
+  <section class="issue-group open" data-status="partial">
+    <button class="group-toggle" type="button" aria-expanded="true">
+      <span>Partially Fixed (<span class="g-count">4</span>)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-partial g-count-badge">4</span><span class="chev">&rsaquo;</span></span>
+    </button>
+    <div class="group-body">
+      <div class="card-grid">
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Partial</span></div>
+          <div class="card-title">Mulch/protect is per-cell only, no drag paint</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Zone edits are painful</dd><dt>Current state</dt><dd>Shift+click multi-select works, drag not implemented</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Partial</span></div>
+          <div class="card-title">No multi-cell selection or batch actions</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Row/zone workflows slow</dd><dt>Current state</dt><dd>Interventions only, not general-purpose</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Resource</span><span class="status status-partial">Partial</span></div>
+          <div class="card-title">Token economy is opaque</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Strategy collapses, users cannot plan</dd><dt>Current state</dt><dd>Count shown but rules not explained</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Goals</span><span class="status status-partial">Partial</span></div>
+          <div class="card-title">No persistent scoreboard / objective HUD</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Users do not know how to win</dd><dt>Current state</dt><dd>Target in results panel, scrolls away</dd></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OPEN ═══ -->
+  <section class="issue-group open" data-status="open">
+    <button class="group-toggle" type="button" aria-expanded="true">
+      <span>Open (<span class="g-count">7</span>)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-open g-count-badge">7</span><span class="chev">&rsaquo;</span></span>
+    </button>
+    <div class="group-body">
+      <div class="card-grid">
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="card-sev card-sev-med">MED</span></div>
+          <div class="card-title">Full-screen story modes lack landmark roles</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Screen readers get no context that view changed (chapter end, epilogue, sauce)</dd><dt>Location</dt><dd>Season Engine chapter/winter/sauce/epilogue screens</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Mode safety</span><span class="card-sev card-sev-med">MED</span></div>
+          <div class="card-title">Season Engine has no inspect mode</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Clicking places if crop selected &mdash; trust breaker, inconsistent with Planner</dd><dt>Location</dt><dd>Season Engine cellClick()</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Discoverability</span><span class="card-sev card-sev-med">MED</span></div>
+          <div class="card-title">No visible inspect button or panel in Engine</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Cell inspection hidden, users must discover by clicking</dd><dt>Location</dt><dd>Season Engine toolbar</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Layout</span><span class="card-sev card-sev-med">MED</span></div>
+          <div class="card-title">Results panel info below scroll fold</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Factor bars, event details, narrator text can be invisible without scrolling</dd><dt>Location</dt><dd>Season Engine right panel</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Tutorial</span><span class="card-sev card-sev-med">MED</span></div>
+          <div class="card-title">Steps 2 &amp; 4 do not lock clicks to target cell</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>User places crops in wrong cells, breaks narrative and subsequent steps</dd><dt>Location</dt><dd>Planner TUTORIAL_STEPS[1] and [3]</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Tutorial</span><span class="card-sev card-sev-low">LOW</span></div>
+          <div class="card-title">First-run prompt uses raw browser confirm()</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Breaks warm aesthetic, feels like system error</dd><dt>Location</dt><dd>Planner boot sequence</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Keyboard</span><span class="card-sev card-sev-low">LOW</span></div>
+          <div class="card-title">No keyboard shortcut for inspect/neutral mode</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Impact</dt><dd>Power users cannot switch modes via keyboard</dd><dt>Location</dt><dd>Season Engine</dd></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ USER SUBMITTED ═══ -->
+  <section class="issue-group" id="userGroup" style="display:none" data-status="open">
+    <button class="group-toggle" type="button" aria-expanded="false">
+      <span id="userGroupTitle">User Submitted (0)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-open" id="userBadge">0</span><span class="chev">&rsaquo;</span></span>
+    </button>
+    <div class="group-body">
+      <div class="card-grid" id="userBody"></div>
+    </div>
+  </section>
+
+  <!-- ═══ FORM ═══ -->
   <div class="form-wrap">
-    <div class="form-header"><span class="icon">&#x1F4DD;</span> Report a Bug</div>
+    <div class="form-header">&#x1F4DD; Report a Bug</div>
     <form class="form-panel" id="issueForm">
       <div class="form-grid">
         <div class="form-field">
           <label for="f-area">Area</label>
           <select id="f-area" required>
             <option value="">Select...</option>
-            <option>Language</option>
-            <option>Clarity</option>
-            <option>Mode safety</option>
-            <option>Tool parity</option>
-            <option>Interaction</option>
-            <option>Resource clarity</option>
-            <option>Goals</option>
-            <option>UI bug</option>
-            <option>Copy</option>
-            <option>Discoverability</option>
-            <option>Keyboard</option>
-            <option>Feedback</option>
-            <option>Resilience</option>
-            <option>Accessibility</option>
-            <option>Code quality</option>
-            <option>Other</option>
+            <option>Language</option><option>Clarity</option><option>Mode safety</option>
+            <option>Tool parity</option><option>Interaction</option><option>Resource clarity</option>
+            <option>Goals</option><option>UI bug</option><option>Copy</option>
+            <option>Discoverability</option><option>Keyboard</option><option>Feedback</option>
+            <option>Resilience</option><option>Accessibility</option><option>Code quality</option>
+            <option>Tutorial</option><option>Layout</option><option>Other</option>
           </select>
         </div>
         <div class="form-field">
@@ -475,58 +579,118 @@
 </main>
 
 <footer class="os-footer">
-  Garden OS &middot; UI Issues Tracker &middot; Last updated 2026-03-16 &middot;
+  Garden OS &middot; UI Issues Tracker &middot; Updated 2026-03-16 &middot;
   <a href="../index.html">Back to Garden OS</a>
 </footer>
 
 <script>
 (function(){
+  // Collapsible sections
+  document.querySelectorAll('.group-toggle').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var g=btn.closest('.issue-group');
+      var open=g.classList.toggle('open');
+      btn.setAttribute('aria-expanded',String(open));
+    });
+  });
+
+  // Card expand/collapse
+  document.querySelectorAll('.issue-card').forEach(function(card){
+    card.addEventListener('click',function(){card.classList.toggle('expanded')});
+    card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();card.classList.toggle('expanded')}});
+  });
+
+  // Filter bar
+  var activeFilter='all';
+  document.querySelectorAll('.fbtn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active')});
+      btn.classList.add('active');
+      activeFilter=btn.getAttribute('data-filter');
+      applyFilter();
+    });
+  });
+
+  function applyFilter(){
+    document.querySelectorAll('.issue-group').forEach(function(g){
+      var status=g.getAttribute('data-status');
+      if(!status)return;
+      var show=activeFilter==='all'||activeFilter===status;
+      // Tool filters
+      if(activeFilter==='planner'||activeFilter==='engine'){
+        show=false;
+        var cards=g.querySelectorAll('.issue-card');
+        var anyVisible=false;
+        cards.forEach(function(c){
+          var tool=c.getAttribute('data-tool')||'';
+          var vis=tool===activeFilter;
+          c.style.display=vis?'':'none';
+          if(vis)anyVisible=true;
+        });
+        show=anyVisible;
+        if(show){
+          // Show cards that match
+          cards.forEach(function(c){
+            if(!c.getAttribute('data-tool'))c.style.display='';
+          });
+        }
+      }else{
+        // Show all cards in matching groups
+        g.querySelectorAll('.issue-card').forEach(function(c){c.style.display=''});
+      }
+      g.classList.toggle('is-hidden',!show);
+    });
+  }
+
+  // Stats
+  var done=document.querySelectorAll('[data-status="done"] .issue-card').length;
+  var partial=document.querySelectorAll('[data-status="partial"] .issue-card').length;
+  var open=document.querySelectorAll('[data-status="open"] .issue-card').length;
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-partial').textContent=partial;
+  document.getElementById('stat-open').textContent=open;
+  document.getElementById('stat-total').textContent=done+partial+open;
+
+  // User submissions
   var SKEY='gos-ui-issues-user';
-  var tbody=document.getElementById('issueBody');
+  var userGroup=document.getElementById('userGroup');
+  var userBody=document.getElementById('userBody');
   var form=document.getElementById('issueForm');
-  var msg=document.getElementById('formMsg');
+  var msgEl=document.getElementById('formMsg');
 
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function load(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch(e){return[]}}
   function save(list){try{localStorage.setItem(SKEY,JSON.stringify(list))}catch(e){}}
-
   function flash(text,color){
-    msg.textContent=text;msg.style.color=color||'var(--leaf-bright)';
-    msg.classList.add('visible');
-    setTimeout(function(){msg.classList.remove('visible')},2500);
+    msgEl.textContent=text;msgEl.style.color=color||'var(--leaf-bright)';
+    msgEl.classList.add('visible');setTimeout(function(){msgEl.classList.remove('visible')},2500);
   }
 
   function renderUserRows(){
-    document.querySelectorAll('.user-row,.user-break').forEach(function(r){r.remove()});
+    userBody.innerHTML='';
     var items=load();
-    if(!items.length)return;
-
-    var br=document.createElement('tr');
-    br.className='section-break user-break';
-    br.innerHTML='<td colspan="5">User Submitted ('+items.length+')</td>';
-    tbody.appendChild(br);
-
+    if(!items.length){userGroup.style.display='none';return}
+    userGroup.style.display='';
+    document.getElementById('userGroupTitle').textContent='User Submitted ('+items.length+')';
+    document.getElementById('userBadge').textContent=items.length;
     items.forEach(function(item,i){
-      var tr=document.createElement('tr');
-      tr.className='user-row';
-      tr.innerHTML=
-        '<td class="area">'+esc(item.area)+'</td>'+
-        '<td class="issue">'+esc(item.issue)+'</td>'+
-        '<td class="impact">'+esc(item.impact)+'</td>'+
-        '<td><span class="status status-open">Open</span></td>'+
-        '<td class="location">'+esc(item.location)+
-        ' <button class="del-btn" data-idx="'+i+'" title="Remove this issue">&times;</button></td>';
-      tbody.appendChild(tr);
+      var card=document.createElement('div');
+      card.className='issue-card';card.tabIndex=0;card.setAttribute('data-tool','planner');
+      card.innerHTML=
+        '<div class="card-top"><span class="card-area">'+esc(item.area)+'</span><span class="status status-open">Open</span></div>'+
+        '<div class="card-title">'+esc(item.issue)+'</div>'+
+        '<div class="card-expand-hint">click to expand</div>'+
+        '<dl class="card-detail"><dt>Impact</dt><dd>'+esc(item.impact)+'</dd><dt>Location</dt><dd>'+esc(item.location)+
+        '</dd></dl><button class="del-btn" data-idx="'+i+'" title="Remove">&times; Remove</button>';
+      card.addEventListener('click',function(e){if(!e.target.closest('.del-btn'))card.classList.toggle('expanded')});
+      userBody.appendChild(card);
     });
-
-    document.querySelectorAll('.del-btn').forEach(function(btn){
-      btn.addEventListener('click',function(){
+    document.querySelectorAll('#userBody .del-btn').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
         var idx=parseInt(this.getAttribute('data-idx'));
-        var items=load();
-        var removed=items.splice(idx,1)[0];
-        save(items);
-        flash('Removed: '+removed.area,'var(--rust)');
-        renderUserRows();
+        var items=load();var removed=items.splice(idx,1)[0];save(items);
+        flash('Removed: '+removed.area,'var(--rust)');renderUserRows();
       });
     });
   }
@@ -537,17 +701,14 @@
     var issue=document.getElementById('f-issue').value.trim();
     var impact=document.getElementById('f-impact').value.trim();
     var location=document.getElementById('f-location').value.trim();
-
     if(!area||!issue){flash('Area and issue are required','var(--rust)');return}
-
     var items=load();
     items.push({area:area,issue:issue,impact:impact||'Not specified',location:location||'Not specified',date:new Date().toISOString().split('T')[0]});
-    save(items);
-    form.reset();
-    flash('Added: '+area+' issue');
+    save(items);form.reset();flash('Added: '+area+' issue');
     renderUserRows();
+    userGroup.classList.add('open');
+    userGroup.querySelector('.group-toggle').setAttribute('aria-expanded','true');
   });
-
   renderUserRows();
 })();
 </script>

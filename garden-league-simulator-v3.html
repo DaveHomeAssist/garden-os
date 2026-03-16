@@ -105,7 +105,6 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .cell.int-selected{outline:2px solid var(--sem-good);outline-offset:-2px;background-color:rgba(95,143,69,0.18)!important}
 .int-hud{display:flex;gap:8px;align-items:center;font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);width:100%;padding:4px 0}
 .int-hud .hud-beat{padding:3px 8px;border-radius:4px;font-weight:700}
-.int-hud .hud-beat.available{background:var(--sem-good-bg);color:var(--sem-good)}
 .int-hud .hud-beat.used{background:var(--sem-hard-bg);color:var(--sem-hard);text-decoration:line-through}
 .int-hud .hud-beat.current{background:var(--char-gurl);color:#fff}
 .int-hud .hud-status{margin-left:auto;font-weight:600}
@@ -266,7 +265,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 </style>
 </head>
 <body class="season-spring">
-<a href="#boardPanel" class="skip-nav">Skip to garden bed</a>
+<a href="#boardPanel" class="skip-nav">Skip to main content</a>
 <div class="app" id="app">
   <div class="head" role="banner">
     <a href="https://davehomeassist.github.io/" style="text-decoration:none;color:inherit"><h1>Garden OS</h1></a>
@@ -1292,6 +1291,8 @@ function renderCtrl(){
   const f=document.createDocumentFragment();
   f.appendChild(h('h2',null,'Crops'));
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
+  eb.setAttribute('aria-pressed',S.eraserMode);
+  eb.setAttribute('aria-label','Eraser tool (E)');
   eb.disabled=S.phase!=='PLANNING';
   eb.onclick=()=>{S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()};
   f.appendChild(eb);
@@ -1434,7 +1435,9 @@ function renderBoard(){
     const hud=h('div','int-hud');
     const beatNames=['Early','Mid','Late'];
     for(let b=0;b<3;b++){
-      const dot=h('span','hud-beat','Beat '+(b+1));
+      const state=b<S.beatIndex?'used':b===S.beatIndex?'current':'upcoming';
+      const dot=h('span','hud-beat',beatNames[b]+' beat');
+      dot.setAttribute('aria-label',beatNames[b]+' beat — '+state);
       if(b<S.beatIndex)dot.classList.add('used');
       else if(b===S.beatIndex)dot.classList.add('current');
       hud.appendChild(dot);
@@ -1453,6 +1456,7 @@ function renderBoard(){
       for(const it of S.currentEvent.io){
         const b=h('button','btn',labels[it]||it);
         b.title=hints[it]||'';
+        b.setAttribute('aria-label',(labels[it]||it)+' — '+(hints[it]||''));
         b.onclick=()=>startIntervention(it);
         tb.appendChild(b);
       }
@@ -2694,11 +2698,26 @@ function toggleSettings(){
   if(isOpen){
     panel.removeAttribute('data-open');
     overlay.removeAttribute('data-open');
+    document.removeEventListener('keydown',_settingsTrap);
   }else{
     renderSettingsPanel();
     panel.setAttribute('data-open','');
     overlay.setAttribute('data-open','');
+    const first=panel.querySelector('button');
+    if(first) first.focus();
+    document.addEventListener('keydown',_settingsTrap);
   }
+}
+function _settingsTrap(e){
+  if(e.key==='Escape'){toggleSettings();return;}
+  if(e.key!=='Tab')return;
+  const panel=document.getElementById('settingsPanel');
+  if(!panel)return;
+  const focusable=panel.querySelectorAll('button,input,select,[tabindex]:not([tabindex="-1"])');
+  if(!focusable.length)return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
 }
 window._toggleSettings=toggleSettings;
 
@@ -2713,7 +2732,7 @@ function renderSettingsPanel(){
   const chNum=S?S.chapter:1;
   const chMeta=CHAPTERS[chNum];
   const seasonName=S?S.season:'spring';
-  const score=S&&S.harvestResult?S.harvestResult.finalScore.toFixed(1):(S&&S._cachedBedScore?S._cachedBedScore.toFixed(1):'\u2014');
+  const score=S&&S.harvestResult?S.harvestResult.finalScore.toFixed(1):(S&&S._cachedBedScore?S._cachedBedScore.finalScore.toFixed(1):'\u2014');
   header.appendChild(h('div','settings-sub','Chapter '+chNum+' of 12 \u00b7 '+seasonName.charAt(0).toUpperCase()+seasonName.slice(1)+' \u00b7 Score '+score));
   panel.appendChild(header);
 
@@ -2757,8 +2776,8 @@ function renderSettingsPanel(){
   panel.appendChild(scoringRow);
 
   const rulesRow=h('button','settings-row');
-  rulesRow.innerHTML='&#x1F4D0; Season Engine rules \u2192';
-  rulesRow.onclick=()=>window.open('how-it-thinks.html','_blank');
+  rulesRow.innerHTML='&#x1F4D0; Season Engine spec \u2192';
+  rulesRow.onclick=()=>window.open('specs/SEASON_ENGINE_SPEC.md','_blank');
   panel.appendChild(rulesRow);
 
   panel.appendChild(h('div','settings-divider'));
@@ -2994,6 +3013,6 @@ render();
 </script>
 <button class="settings-btn" onclick="window._toggleSettings()" aria-label="Settings" title="Settings">&#9881;</button>
 <div class="settings-overlay" id="settingsOverlay" onclick="window._toggleSettings()"></div>
-<div class="settings-panel" id="settingsPanel"></div>
+<div class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Settings"></div>
 </body>
 </html>
