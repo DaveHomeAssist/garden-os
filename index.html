@@ -56,13 +56,13 @@
     color: rgba(245, 237, 224, 0.5);
   }
 
-  /* Hero photo */
-  .hero-photo {
+  /* Hero video */
+  .hero-video-wrap {
     max-width: 740px;
     margin: 2rem auto 0;
     padding: 0 1.25rem;
   }
-  .hero-photo img {
+  .hero-video-wrap video {
     width: 100%;
     border-radius: var(--radius-lg);
     border: 2px solid var(--border-soft);
@@ -213,14 +213,11 @@
   <p class="site-masthead-sub">Mom's Sanctuary &nbsp;·&nbsp; Raised Bed Planner &amp; Build Guides</p>
 </header>
 
-<!-- Hero photo -->
-<div class="hero-photo">
-  <img
-    src="images/gos-full-scene.png"
-    width="1376" height="768"
-    alt="Mom's Sanctuary — raised bed garden with trellis, wire cage, and companion plantings"
-    loading="eager"
-  >
+<!-- Hero video -->
+<div class="hero-video-wrap">
+  <video autoplay muted loop playsinline aria-label="Garden OS character animation">
+    <source src="assets/garden-os-man.mp4" type="video/mp4">
+  </video>
 </div>
 
 <!-- Hub label -->
