@@ -391,7 +391,7 @@ const ED=[
 {id:"S01",title:"Late Frost Advisory",season:"spring",valence:"negative",description:"Temperature drops to 28\u00b0. Frost-sensitive crops take the hit.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"frost-sensitive",max:null},mod:-2,dur:"beat"},io:["protect","mulch","swap","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1.2},
 {id:"S02",title:"Phillies Home Opener Energy",season:"spring",valence:"positive",description:"Neighbor drops off composted horse manure. Row 3 gets enriched.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-3",max:null},mod:1,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
 {id:"S03",title:"Cabbage Moth Arrival",season:"spring",valence:"negative",description:"White butterflies laying eggs on brassicas. Pest hit.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"brassicas",max:null},mod:-1.5,dur:"beat"},io:["protect","prune","companion_patch","accept_loss"],cf:null,ca:[5,6,7,8,9,10,11,12],dw:1},
-{id:"S04",title:"Block Party Planning",season:"spring",valence:"mixed",description:"Mrs. Gonzalez wants herbs for the cookout. Herb faction loses yield.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"herbs",max:3},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"S04",title:"Block Party Planning",season:"spring",valence:"mixed",description:"Mrs. Gonzalez wants herbs for the cookout. Herb crops lose yield.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"herbs",max:3},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
 {id:"S05",title:"Spring Rain Streak",season:"spring",valence:"positive",description:"Five days of rain. Crops with water >= 3 get a boost.",me:{ch:"cell_buff",tgt:{type:"crop_filter",filter:"water>=3",max:null},mod:.75,dur:"beat"},io:["mulch","companion_patch","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1},
 {id:"S06",title:"Alley Cat Patrol",season:"spring",valence:"negative",description:"The tabby uses your bed as a litter box. Two front-row cells compacted.",me:{ch:"cell_penalty",tgt:{type:"random_cells",filter:"row-3",max:2},mod:-1,dur:"season"},io:["protect","mulch","prune","accept_loss"],cf:{eff:"compacted"},ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:.9},
 {id:"S07",title:"Seed Swap on Passyunk",season:"spring",valence:"positive",description:"Garden club had extra seedlings. Two random cells get vigor buff.",me:{ch:"cell_buff",tgt:{type:"random_cells",filter:"planted",max:2},mod:1,dur:"season"},io:["companion_patch","mulch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
@@ -496,11 +496,11 @@ const CHAPTERS={
   failOnion:'We did not plan for August. August noticed.',
   transition:'Fall. My season. The part where things go underground and get serious.',
   unlock:'Event Forecast panel unlocked.'},
-7:{name:'Underground',year:2,season:'fall',scoreTarget:5.5,mechanic:'Row Objectives',mechanicHint:'Row 3 must be 100% Roots faction. Eight cells. No exceptions.',
-  opening:'The front row is highlighted. Row Objective: Front row must be 100% Roots faction. Onion Man is looking at the front row like it owes him something.',
-  gurlIntro:'Row objective is active. Row three requires complete Roots faction occupancy. Eight cells. No exceptions.',
+7:{name:'Underground',year:2,season:'fall',scoreTarget:5.5,mechanic:'Row Objectives',mechanicHint:'Row 3 must be 100% Roots crops. Eight cells. No exceptions.',
+  opening:'The front row is highlighted. Row Objective: Front row must be 100% Roots crops. Onion Man is looking at the front row like it owes him something.',
+  gurlIntro:'Row objective is active. Row three requires complete Roots crop occupancy. Eight cells. No exceptions.',
   onionIntro:'The front row. All roots. Carrots, beets, radish, turnips. The things that do their work underground where nobody sees. I relate to this more than I should.',
-  successGurl:'Row objective complete. Roots faction occupancy confirmed. Clean compliance.',
+  successGurl:'Row objective complete. Roots crop occupancy confirmed. Clean compliance.',
   successOnion:'All roots. Front row. Underground union is pleased. I may have cried a little. It is biologically ambiguous.',
   failGurl:'Row objective failed. Three of eight cells are non-compliant.',
   failOnion:'The front row needed roots and it got chaos. I am not angry. I am disappointed. Those are different and both are happening.',
@@ -650,6 +650,11 @@ const DIALOGUE_DB={
 "gurl":["Mixed result. Some cells benefit. Others take damage.","Split event. The modifier is not uniform.","Mixed conditions. The bed responds unevenly.","Partial benefit, partial penalty. The math is in the cell-by-cell report.","Mixed event resolved. Some placements held. Some did not.","Uneven impact. The crops that matched the conditions gained.","Mixed result logged. The bed is a system.","Split conditions. Winner cells and loser cells."],
 "onion":["Some good, some bad. That is a season.","Mixed bag. Part of the bed is fine. Part of it looks rough.","Good and bad in the same event. The garden is teaching you that those things coexist.","Half the bed smiled. Half the bed winced. I relate to both halves.","Mixed results. Like a Phillies game where they score six runs and give up seven.","Some cells got lucky. Some did not.","Good news and bad news in the same event.","The bed split. Winners and losers from the same weather."],
 "critters":["Mixed conditions. Some targets stressed. Some not.","Uneven damage. We focus on the weak cells.","Split event. Assessing which targets are now viable.","Some crops held. Some did not. We noticed.","Mixed results. Partial vulnerability detected.","Event resolved unevenly. Adjusting approach.","Good for some. Bad for others. Standard.","Damage inconsistent. Targeting the damaged."]
+},
+"event_neutral":{
+"gurl":["Neutral event. No modifier applied. The bed state is unchanged.","Event logged. No scoring impact. The grid remains as-is.","Neutral conditions. The bed continues without modification.","No effect on cells. The event is informational only.","Neutral event resolved. No action required.","Conditions unchanged. The bed holds steady.","Event noted. No impact on the current layout.","Neutral. The season moves forward without adjustment."],
+"onion":["Nothing happened. Which in a garden is sometimes the best thing that can happen.","Neutral event. The bed stays the same. That is not boring. That is stability.","No damage. No bonus. Just a day in the garden.","The event came and went. The bed did not notice.","Nothing changed. Sometimes the garden just sits there and grows.","Neutral. Like a Tuesday. Nothing wrong with a Tuesday.","No impact. The bed keeps doing what it was doing.","Event with no effect. The garden equivalent of a rain delay with no rain."],
+"critters":["No change detected. Status quo maintained.","Neutral conditions. No targets affected.","Event resolved. No vulnerability shift.","No modifier applied. Grid unchanged.","Neutral. We continue observing.","No impact. Positions unchanged.","Status maintained. No action needed.","Neutral event. Standard monitoring continues."]
 },
 "intervention_used":{
 "gurl":["Intervention deployed. Token spent.","Action taken. The intervention is on record.","Intervention logged. The modification is active.","Token spent. Intervention confirmed.","Action registered. One fewer token this beat.","Intervention applied. The cell state is updated.","Token used. The decision is final.","Intervention confirmed. Applied before event."],
@@ -1427,7 +1432,7 @@ function renderBoard(){
   const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
   if(S.phase==='PLANNING'){
     const cb=h('button','btn primary','Commit Layout');cb.disabled=countPlanted(S.grid)<minPlanted;cb.onclick=showCommitConfirm;tb.appendChild(cb);
-    const clr=h('button','btn','Clear');clr.onclick=()=>{S.grid=mkGrid();render()};tb.appendChild(clr);
+    const clr=h('button','btn','Clear');clr.onclick=()=>{S.grid=mkGrid();save();render()};tb.appendChild(clr);
     tb.appendChild(h('span','chip',countPlanted(S.grid)+'/32'+(S.chapter===10?' (all required)':'')));
   }
   if(BEAT_PHASES.includes(S.phase)){
@@ -1625,12 +1630,12 @@ function renderRes(){
     f.appendChild(h('h3',null,'Events'));
     for(const en of S.eventLog){
       const ev=ED.find(e=>e.id===en.eventId);
-      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' (Beat '+(en.beatIndex+1)+') '+en.affectedCells.length+' cells'));
+      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+') '+en.affectedCells.length+' cells'));
     }
   }
   if(S.interventionLog.length){
     f.appendChild(h('h3',null,'Interventions'));
-    for(const en of S.interventionLog)f.appendChild(h('div',null,'Beat '+(en.beatIndex+1)+': '+en.type));
+    for(const en of S.interventionLog)f.appendChild(h('div',null,['Early','Mid','Late'][en.beatIndex]+': '+en.type));
   }
 
   // Pantry
