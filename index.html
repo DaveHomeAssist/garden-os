@@ -8,56 +8,195 @@
 <meta property="og:description" content="Zero-backend raised bed planner, season game, and build guides. All in your browser.">
 <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 <meta property="og:type" content="website">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
+
+<!-- Shared theme — tokens, nav, cards, badges, base styles -->
+<link rel="stylesheet" href="garden-os-theme.css">
+
 <style>
-  :root {
-    --soil:#5c3d1e;--soil-mid:#7a5230;--soil-light:#9a6b42;
-    --leaf:#3d7a4f;--leaf-bright:#5aab6b;--leaf-pale:#c8e6c9;
-    --sun:#e8c84a;--sun-pale:#fdf3c0;
-    --cream:#f7f2ea;--cream-dark:#ede5d8;
-    --text:#1e110a;--text-mid:#5a3e2b;--text-light:#7d5f45;
-    --border:#c8b090;
-    --radius:8px;
+  /* ── index.html only ─────────────────────────────────────
+     Everything here is unique to this page.
+     Shared styles live in garden-os-theme.css.
+  ──────────────────────────────────────────────────────── */
+
+  /* Masthead — centered layout for the home page */
+  .site-masthead {
+    background: var(--soil);
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,0.015) 0px,
+        rgba(255,255,255,0.015) 1px,
+        transparent 1px,
+        transparent 40px
+      );
+    border-bottom: 3px solid var(--sun-bright);
+    color: #f5ede0;
+    padding: 2rem 1.5rem 1.75rem;
+    text-align: center;
   }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
-  header{background:var(--soil);color:#f5ede0;padding:1.5rem 1.5rem;border-bottom:3px solid var(--sun);text-align:center;}
-  header h1{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.25rem;}
-  header p{font-size:.7rem;font-family:'DM Mono',monospace;opacity:.78;text-transform:uppercase;letter-spacing:.1em;}
-  .hub{max-width:720px;margin:2rem auto;padding:0 1.2rem;display:flex;flex-direction:column;gap:1rem;}
-  .card{background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;
-    text-decoration:none;color:var(--text);transition:transform .12s,box-shadow .12s;display:flex;gap:1rem;align-items:center;}
-  .card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
-  .card-icon{font-size:2rem;flex-shrink:0;width:48px;text-align:center;}
-  .card-body{flex:1;}
-  .card h2{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;margin-bottom:.2rem;}
-  .card p{font-size:.78rem;color:var(--text-mid);line-height:1.5;}
-  .card .badge{display:inline-block;font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;
-    letter-spacing:.06em;padding:.15rem .4rem;border-radius:3px;margin-top:.35rem;}
-  .badge.game{background:#1e110a;color:#f5ede0;}
-  .badge.planner{background:var(--sun-pale);color:var(--soil);}
-  .badge.build{background:var(--leaf-pale);color:#1a4a28;}
-  .badge.ops{background:#e8e0f0;color:#4a3060;}
-  .section-label{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-light);padding:.5rem 0 .25rem;border-bottom:1px solid var(--border);margin-bottom:.25rem;}
-  .card.game-card{border-color:var(--soil);border-width:2px;background:linear-gradient(135deg,#fdf8f0 0%,#f0e8d6 100%);}
-  .card.game-card:hover{box-shadow:0 6px 24px rgba(92,61,30,.15);}
-  .footer{text-align:center;padding:2rem 1rem;font-size:.65rem;color:var(--text-light);font-family:'DM Mono',monospace;}
-  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:.65rem;}
-  .os-nav a{color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;transition:color .15s;}
-  .os-nav a:hover{color:#f5ede0;}
-  .os-nav a.active,
-  .os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
-  .skip-link{position:absolute;top:-40px;left:0;background:var(--soil);color:#f5ede0;padding:.5rem 1rem;z-index:100;font-size:.8rem;transition:top .15s;}
-  .skip-link:focus{top:0;}
-  @media(max-width:500px){.card{flex-direction:column;text-align:center;}.card-icon{width:auto;}}
+
+  .site-masthead h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 600;
+    color: #f5ede0;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 0.35rem;
+  }
+
+  .site-masthead-sub {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(245, 237, 224, 0.5);
+  }
+
+  /* Hero photo */
+  .hero-photo {
+    max-width: 740px;
+    margin: 2rem auto 0;
+    padding: 0 1.25rem;
+  }
+  .hero-photo img {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-soft);
+    display: block;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Section header above the hub */
+  .hub-header {
+    max-width: 740px;
+    margin: 2.5rem auto 0.75rem;
+    padding: 0 1.25rem;
+  }
+  .hub-header-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+  }
+  .hub-header-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  /* Hub grid */
+  .hub {
+    max-width: 740px;
+    margin: 0 auto 3rem;
+    padding: 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  /* Tool cards — extend .os-card */
+  .tool-card {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--panel);
+    border: 1.5px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    transition: transform var(--ease-out), box-shadow var(--ease-out), border-color var(--ease);
+  }
+  .tool-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border);
+    text-decoration: none;
+  }
+  .tool-card:focus-visible {
+    outline: 3px solid var(--leaf-bright);
+    outline-offset: 3px;
+  }
+
+  .tool-card-icon {
+    font-size: 1.9rem;
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .tool-card-body { flex: 1; min-width: 0; }
+
+  .tool-card-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  .tool-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    line-height: 1.55;
+    margin-bottom: 0.45rem;
+  }
+
+  /* Chevron arrow */
+  .tool-card-arrow {
+    font-size: 1rem;
+    color: var(--border);
+    flex-shrink: 0;
+    transition: color var(--ease), transform var(--ease);
+  }
+  .tool-card:hover .tool-card-arrow {
+    color: var(--leaf-bright);
+    transform: translateX(3px);
+  }
+
+  /* Divider between tool groups */
+  .hub-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+  .hub-divider::before,
+  .hub-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+
+  @media (max-width: 500px) {
+    .tool-card { flex-direction: column; text-align: center; }
+    .tool-card-icon { width: auto; }
+    .tool-card-arrow { display: none; }
+  }
 </style>
 </head>
 <body>
+
 <a href="#hub" class="skip-link">Skip to tools</a>
-<nav class="os-nav" aria-label="Garden OS">
+
+<!-- Shared nav -->
+<nav class="os-nav" aria-label="Garden OS tools">
   <a href="index.html" class="active" aria-current="page">Home</a>
   <a href="garden-league-simulator-v3.html">Play Game</a>
   <a href="garden-planner-v4.html">Planner</a>
@@ -66,71 +205,141 @@
   <a href="how-it-thinks.html">How It Thinks</a>
   <a href="scoring-visualizer.html" style="margin-left:auto;opacity:.55">Dev Tools →</a>
 </nav>
-<header>
+
+<!-- Masthead -->
+<header class="site-masthead" role="banner">
   <img src="images/gos-logo-mark.png" alt="Garden OS logo" width="56" height="56" style="border-radius:8px;margin-bottom:0.5rem">
   <h1>Garden OS</h1>
-  <p>Mom's Sanctuary — Raised Bed Planner &amp; Build Guides</p>
+  <p class="site-masthead-sub">Mom's Sanctuary &nbsp;·&nbsp; Raised Bed Planner &amp; Build Guides</p>
 </header>
-<main class="hub" id="hub">
-  <div class="section-label">Game</div>
-  <a class="card game-card" href="garden-league-simulator-v3.html">
-    <div class="card-icon">🌿</div>
-    <div class="card-body">
-      <h2>Garden OS — Season Engine v3</h2>
-      <p>12-chapter narrative strategy game. Inherit Mom's 8x4 raised bed, plan layouts, survive seasonal events, earn interventions, and harvest toward her sauce recipe. 20 crops, 40 events, deterministic scoring.</p>
-      <span class="badge game">Play Now</span>
+
+<!-- Hero photo -->
+<div class="hero-photo">
+  <img
+    src="images/gos-full-scene.png"
+    width="1376" height="768"
+    alt="Mom's Sanctuary — raised bed garden with trellis, wire cage, and companion plantings"
+    loading="eager"
+  >
+</div>
+
+<!-- Hub label -->
+<div class="hub-header" aria-hidden="true">
+  <div class="hub-header-label">Your tools</div>
+  <div class="hub-header-title">Pick a tool to get started</div>
+</div>
+
+<!-- Tool hub -->
+<main class="hub" id="hub" aria-label="Garden OS tools">
+
+  <!-- PRIMARY TOOLS -->
+  <a class="tool-card" href="garden-league-simulator-v3.html">
+    <div class="tool-card-icon" aria-hidden="true">🌿</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Season Engine v3</div>
+      <div class="tool-card-desc">12-chapter narrative strategy game. Inherit Mom's 8×4 raised bed, plan layouts, survive seasonal events, and harvest toward her sauce recipe.</div>
+      <span class="os-badge os-badge--planner">Play Now</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <div class="section-label">Planner &amp; Tools</div>
-  <a class="card" href="garden-planner-v4.html">
-    <div class="card-icon">🌱</div>
-    <div class="card-body">
-      <h2>Garden Planner v4.3</h2>
-      <p>Derived cell traits, crop validity, trait-based scoring, cage-aware auto-fill with fallback pools, and per-cell advisory system. 8x4 default bed.</p>
-      <span class="badge planner">Planner</span>
+
+  <a class="tool-card" href="garden-planner-v4.html">
+    <div class="tool-card-icon" aria-hidden="true">🌱</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Garden Planner</div>
+      <div class="tool-card-desc">Plan your raised bed layout, place your crops, and get instant feedback on spacing, companions, and planting timing.</div>
+      <span class="os-badge os-badge--planner">Planner · v4.3</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <a class="card" href="garden-cage-build-guide.html">
-    <div class="card-icon">🔨</div>
-    <div class="card-body">
-      <h2>Cage Build Guide</h2>
-      <p>Step-by-step interactive guide for building the 8x4 ft cattle panel garden cage — lumber cuts, hardware, assembly sequence, and trellis installation.</p>
-      <span class="badge build">Build Guide</span>
+
+  <a class="tool-card" href="garden-cage-build-guide.html">
+    <div class="tool-card-icon" aria-hidden="true">🔨</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Cage Build Guide</div>
+      <div class="tool-card-desc">Step-by-step guide for building the 8×4 ft cattle panel cage — lumber cuts, hardware list, assembly sequence, and trellis setup.</div>
+      <span class="os-badge os-badge--build">Build Guide</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <a class="card" href="garden-cage-ops-guide.html">
-    <div class="card-icon">📋</div>
-    <div class="card-body">
-      <h2>Cage Ops Guide</h2>
-      <p>Operational checklist for the completed cage — planting zones, seasonal maintenance, critter defense, and harvest tracking.</p>
-      <span class="badge ops">Ops Guide</span>
+
+  <a class="tool-card" href="garden-cage-ops-guide.html">
+    <div class="tool-card-icon" aria-hidden="true">📋</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Cage Ops Guide</div>
+      <div class="tool-card-desc">Seasonal checklists for the finished cage — planting zones, critter defense, maintenance schedule, and harvest tracking.</div>
+      <span class="os-badge os-badge--ops">Ops Guide</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <a class="card" href="how-it-thinks.html">
-    <div class="card-icon">🧠</div>
-    <div class="card-body">
-      <h2>How the Planner Thinks</h2>
-      <p>Visual walkthrough of the planner's decision-making process — how it scores, ranks, and places crops in each cell.</p>
-      <span class="badge planner">Reference</span>
+
+  <a class="tool-card" href="how-it-thinks.html">
+    <div class="tool-card-icon" aria-hidden="true">🧠</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">How It Thinks</div>
+      <div class="tool-card-desc">Learn how the planner scores your layout — sun fit, support, shade tolerance, access, season fit, and adjacency bonuses explained.</div>
+      <span class="os-badge os-badge--ref">Explainer</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <a class="card" href="scoring-visualizer.html">
-    <div class="card-icon">🔬</div>
-    <div class="card-body">
-      <h2>Scoring Visualizer</h2>
-      <p>Interactive debug tool — pick a crop, adjust site inputs, and watch scores update in real time across the grid.</p>
-      <span class="badge planner">Tool</span>
+
+  <div class="hub-divider" aria-hidden="true">Developer tools</div>
+
+  <a class="tool-card" href="scoring-visualizer.html">
+    <div class="tool-card-icon" aria-hidden="true">🔬</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Scoring Visualizer</div>
+      <div class="tool-card-desc">Interactive debug tool — pick a crop, adjust site inputs, and watch scores update across the grid in real time.</div>
+      <span class="os-badge os-badge--ref">Tool</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-  <a class="card" href="system-map.html">
-    <div class="card-icon">🗺️</div>
-    <div class="card-body">
-      <h2>System Map</h2>
-      <p>Full architecture reference — system layers, data flow, engineering principles, and the complete tool ecosystem.</p>
-      <span class="badge ops">Reference</span>
+
+  <a class="tool-card" href="scoring-map.html">
+    <div class="tool-card-icon" aria-hidden="true">🧮</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Scoring System Map</div>
+      <div class="tool-card-desc">Architecture reference for the planner's trait-based scoring engine — data flow, derived cell traits, and the decision funnel.</div>
+      <span class="os-badge os-badge--ref">Reference</span>
     </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
+
+  <a class="tool-card" href="system-map.html">
+    <div class="tool-card-icon" aria-hidden="true">🗺️</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">System Map</div>
+      <div class="tool-card-desc">Full architecture reference — system layers, data flow, engineering principles, and the complete tool ecosystem.</div>
+      <span class="os-badge os-badge--ref">Reference</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
+  <a class="tool-card" href="fairness-tester.html">
+    <div class="tool-card-icon" aria-hidden="true">⚖️</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Fairness Tester</div>
+      <div class="tool-card-desc">Validate the scoring algorithm — run crops through all positions and check for bias, outliers, and edge cases.</div>
+      <span class="os-badge os-badge--ref">Tool</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
+  <a class="tool-card" href="system-topology.html">
+    <div class="tool-card-icon" aria-hidden="true">🔗</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">System Topology</div>
+      <div class="tool-card-desc">Network diagram showing how all Garden OS components connect — data dependencies, shared schemas, and page relationships.</div>
+      <span class="os-badge os-badge--ref">Reference</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
 </main>
-<footer class="footer">Garden OS &middot; Zero-backend single-file tools &middot; GitHub Pages</footer>
+
+<footer class="os-footer">
+  Garden OS &middot; Zero-backend single-file tools &middot; GitHub Pages
+</footer>
+
 </body>
 </html>
