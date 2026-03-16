@@ -19,6 +19,7 @@
     --sun: #d4a820;
     --sun-bright: #e8c84a;
     --sun-pale: #faf0c0;
+    --sun-wash: #fdf8e8;
     --rust: #b84a1a;
     --rust-light: #d4651a;
     --rust-pale: #f5d8c8;
@@ -104,6 +105,7 @@
   }
 
   .dot-done { background: var(--leaf-bright); }
+  .dot-partial { background: var(--sun-bright); }
   .dot-open { background: var(--rust-light); }
 
   .table-wrap {
@@ -182,6 +184,12 @@
     border: 1px solid var(--leaf-pale);
   }
 
+  .status-partial {
+    background: var(--sun-wash);
+    color: var(--sun);
+    border: 1px solid var(--sun-pale);
+  }
+
   .status-open {
     background: var(--rust-wash);
     color: var(--rust);
@@ -196,6 +204,13 @@
     font-weight: 600;
     color: var(--soil-mid);
     border-bottom: 1px solid var(--border);
+  }
+
+  .note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 0.25rem;
   }
 
   footer {
@@ -216,12 +231,14 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Garden OS · UI Audit</div>
+    <div class="eyebrow">Garden OS · UI Audit · Updated 2026-03-16</div>
     <h1>Issues Table</h1>
-    <p class="subtitle">All identified UX issues from the v4 graphical improvement audit, grouped by resolution status.</p>
+    <p class="subtitle">All identified UX issues across Planner v4 and Season Engine v3, tracked from the v4 graphical improvement audit forward.</p>
     <div class="stats">
-      <div class="stat"><span class="stat-dot dot-done"></span> 6 resolved in v4</div>
-      <div class="stat"><span class="stat-dot dot-open"></span> 10 open</div>
+      <div class="stat"><span class="stat-dot dot-done"></span> 11 resolved</div>
+      <div class="stat"><span class="stat-dot dot-partial"></span> 4 partial</div>
+      <div class="stat"><span class="stat-dot dot-open"></span> 8 open</div>
+      <div class="stat" style="color:var(--text-muted)">23 total</div>
     </div>
   </header>
 
@@ -237,7 +254,9 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="section-break"><td colspan="5">Resolved in v4</td></tr>
+
+        <!-- ═══ RESOLVED ═══ -->
+        <tr class="section-break"><td colspan="5">Resolved (11)</td></tr>
         <tr>
           <td class="area">Language</td>
           <td class="issue">Jargon: "faction" is undefined and blocks comprehension</td>
@@ -275,95 +294,156 @@
         </tr>
         <tr>
           <td class="area">Clarity, reference</td>
-          <td class="issue">Loop: score → explanation → back to score not connected</td>
+          <td class="issue">Loop: score to explanation to back to score not connected</td>
           <td class="impact">Confusion persists, users cannot self-serve answers</td>
           <td><span class="status status-done">Done</span></td>
           <td class="location">"How scoring works" link under factor bars, Learn More in How to Play</td>
         </tr>
-
-        <tr class="section-break"><td colspan="5">Open</td></tr>
         <tr>
           <td class="area">Mode safety</td>
           <td class="issue">Inspect intent, placement result — inspect click modifies grid</td>
           <td class="impact">Trust breaker, discourages exploration and clicking</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — three explicit tool modes (paint, erase, inspect)<div class="note">Season Engine still lacks inspect mode — tracked as new issue</div></td>
         </tr>
         <tr>
           <td class="area">Mode safety</td>
           <td class="issue">No neutral "just look" default cursor state</td>
           <td class="impact">Users cannot safely navigate without accidental edits</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — inspect is default tool, Esc returns to it<div class="note">Season Engine still defaults to placement — tracked as new issue</div></td>
         </tr>
         <tr>
           <td class="area">Tool parity</td>
           <td class="issue">Eraser exists in Season Engine but not in Planner</td>
           <td class="impact">Mismatch creates friction for users switching contexts</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner toolbar</td>
-        </tr>
-        <tr>
-          <td class="area">Interaction</td>
-          <td class="issue">Mulch and protect are per-cell only, no drag paint</td>
-          <td class="impact">Actions feel tedious, zone edits are painful</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner grid interactions</td>
-        </tr>
-        <tr>
-          <td class="area">Interaction</td>
-          <td class="issue">No multi-cell selection, no batch actions</td>
-          <td class="impact">Common workflows (rows, zones) are slow</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner</td>
-        </tr>
-        <tr>
-          <td class="area">Resource clarity</td>
-          <td class="issue">Token or resource economy is opaque (totals, regen, costs)</td>
-          <td class="impact">Strategy collapses, users cannot plan</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner modifiers HUD, action cost preview</td>
-        </tr>
-        <tr>
-          <td class="area">Goals</td>
-          <td class="issue">No objective clarity and scoreboard prominence</td>
-          <td class="impact">Users do not know how to win, low engagement</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine chapter intro and persistent HUD</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 toolbar — eraser with drag support and shortcut E</td>
         </tr>
         <tr>
           <td class="area">UI bug</td>
           <td class="issue">Notes panel does not scroll</td>
           <td class="impact">Content becomes inaccessible below the fold</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner notes panel CSS overflow</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — tab-pane and panel have overflow-y: auto</td>
         </tr>
         <tr>
           <td class="area">UI bug</td>
           <td class="issue">Harvest log button intermittently unresponsive</td>
           <td class="impact">Users lose confidence, repeated clicks</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner harvest log interaction, possible CSS overlay or event binding</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — button binding fixed inline after innerHTML assignment</td>
         </tr>
         <tr>
           <td class="area">Copy</td>
           <td class="issue">Last frost marker is not labeled clearly</td>
           <td class="impact">Users misread calendar cue</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner calendar UI</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — explicit "Last frost" / "First frost" labels + zone footer</td>
         </tr>
         <tr>
           <td class="area">Discoverability</td>
           <td class="issue">Inspect panel entry point not obvious</td>
           <td class="impact">Core feature is missed on first pass</td>
-          <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner sidebar and toolbar</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Planner v4 — toolbar inspect button, tab bar, empty-state prompt<div class="note">Season Engine still lacks inspect affordance — tracked as new issue</div></td>
         </tr>
+
+        <!-- ═══ PARTIAL ═══ -->
+        <tr class="section-break"><td colspan="5">Partially Fixed (4)</td></tr>
+        <tr>
+          <td class="area">Interaction</td>
+          <td class="issue">Mulch and protect are per-cell only, no drag paint</td>
+          <td class="impact">Actions feel tedious, zone edits are painful</td>
+          <td><span class="status status-partial">Partial</span></td>
+          <td class="location">Season Engine — shift+click multi-select added, but no drag-paint<div class="note">Planner has drag-paint for crops but interventions are Season Engine only</div></td>
+        </tr>
+        <tr>
+          <td class="area">Interaction</td>
+          <td class="issue">No multi-cell selection, no batch actions</td>
+          <td class="impact">Common workflows (rows, zones) are slow</td>
+          <td><span class="status status-partial">Partial</span></td>
+          <td class="location">Season Engine — shift+click batch for interventions only<div class="note">No row-fill, zone-fill, or batch placement in either tool</div></td>
+        </tr>
+        <tr>
+          <td class="area">Resource clarity</td>
+          <td class="issue">Token or resource economy is opaque (totals, regen, costs)</td>
+          <td class="impact">Strategy collapses, users cannot plan</td>
+          <td><span class="status status-partial">Partial</span></td>
+          <td class="location">Season Engine — "Action available (X/3 used)" shown in int-hud<div class="note">Underlying economy (1 per beat, use-or-lose, no accumulation) not explained</div></td>
+        </tr>
+        <tr>
+          <td class="area">Goals</td>
+          <td class="issue">No objective clarity and scoreboard prominence</td>
+          <td class="impact">Users do not know how to win, low engagement</td>
+          <td><span class="status status-partial">Partial</span></td>
+          <td class="location">Season Engine — target shown in results panel and chapter start<div class="note">Not persistent in header HUD, can scroll away during gameplay</div></td>
+        </tr>
+
+        <!-- ═══ OPEN ═══ -->
+        <tr class="section-break"><td colspan="5">Open (8)</td></tr>
+        <tr>
+          <td class="area">Mode safety</td>
+          <td class="issue">Season Engine has no inspect mode — clicking always places if crop selected</td>
+          <td class="impact">Trust breaker in Season Engine, fixed in Planner but inconsistent</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine cellClick() — no inspect tool, no neutral cursor</td>
+        </tr>
+        <tr>
+          <td class="area">Discoverability</td>
+          <td class="issue">Season Engine has no visible inspect button or panel affordance</td>
+          <td class="impact">Cell detail inspection is hidden — users must discover it by clicking</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine toolbar — no inspect button exists</td>
+        </tr>
+        <tr>
+          <td class="area">Keyboard</td>
+          <td class="issue">Season Engine has no keyboard shortcut for inspect or neutral mode</td>
+          <td class="impact">Power users cannot switch modes efficiently</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine — Esc clears selection but does not enter a named mode</td>
+        </tr>
+        <tr>
+          <td class="area">Feedback</td>
+          <td class="issue">No visible feedback when no eligible events exist for a beat</td>
+          <td class="impact">Beat phase may appear stuck — console.warn fires but user sees nothing</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine startBeat() — console.warn('No eligible events') only</td>
+        </tr>
+        <tr>
+          <td class="area">Resilience</td>
+          <td class="issue">localStorage save failure shows warning but offers no recovery action</td>
+          <td class="impact">If storage is full, progress is silently lost — no export prompt or fallback</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine save() and Planner save — showSaveWarning() is toast only</td>
+        </tr>
+        <tr>
+          <td class="area">Accessibility</td>
+          <td class="issue">Intervention HUD has no aria-live region for status changes</td>
+          <td class="impact">Screen readers do not announce when actions become available or tokens are spent</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine .int-hud — narrator has aria-live but toolbar does not</td>
+        </tr>
+        <tr>
+          <td class="area">Accessibility</td>
+          <td class="issue">Grid cells lack aria-roledescription for placement targets</td>
+          <td class="impact">Screen reader users may inadvertently place crops while exploring the grid</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine grid cells — have role="gridcell" but no roledescription</td>
+        </tr>
+        <tr>
+          <td class="area">Code quality</td>
+          <td class="issue">Planner frost line CSS has dead assignment (left set twice)</td>
+          <td class="impact">Confusing code — first assignment is immediately overwritten</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner addFrostLine() — line.style.left assigned twice</td>
+        </tr>
+
       </tbody>
     </table>
   </div>
 
-  <footer>Garden OS · UI Graphical Improvement Audit · 2026-03-16</footer>
+  <footer>Garden OS · UI Audit · Last updated 2026-03-16 · Covers Planner v4 + Season Engine v3</footer>
 </div>
 </body>
 </html>
