@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — UI Issues Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #3a2510;
+    --soil-mid: #52331a;
+    --cedar: #8b5e3c;
+    --cedar-light: #b07d55;
+    --cedar-pale: #e0c8a8;
+    --leaf: #3a6b2a;
+    --leaf-bright: #4e8c3c;
+    --leaf-pale: #c8e6c0;
+    --leaf-wash: #edf5e8;
+    --sun: #d4a820;
+    --sun-bright: #e8c84a;
+    --sun-pale: #faf0c0;
+    --rust: #b84a1a;
+    --rust-light: #d4651a;
+    --rust-pale: #f5d8c8;
+    --rust-wash: #fdf0e8;
+    --cream: #f7f3ec;
+    --cream-mid: #ede5d8;
+    --panel: #fffdf9;
+    --text: #1e1208;
+    --text-mid: #4a3018;
+    --text-soft: #6f5840;
+    --text-muted: #9a8068;
+    --border: #c8b090;
+    --border-soft: #dfd0b8;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--leaf-bright);
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+  }
+
+  .subtitle {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    max-width: 600px;
+  }
+
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+
+  .stat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-done { background: var(--leaf-bright); }
+  .dot-open { background: var(--rust-light); }
+
+  .table-wrap {
+    background: var(--panel);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44, 27, 11, 0.06);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  thead {
+    background: var(--soil);
+    color: rgba(245, 237, 224, 0.85);
+  }
+
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 2px solid var(--cedar);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover { background: rgba(58, 107, 42, 0.03); }
+
+  .area {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cedar);
+    white-space: nowrap;
+  }
+
+  .issue { font-weight: 500; color: var(--text); }
+  .impact { color: var(--text-soft); font-size: 0.84rem; }
+  .location { color: var(--text-muted); font-size: 0.82rem; font-family: var(--font-mono); }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .status-done {
+    background: var(--leaf-wash);
+    color: var(--leaf);
+    border: 1px solid var(--leaf-pale);
+  }
+
+  .status-open {
+    background: var(--rust-wash);
+    color: var(--rust);
+    border: 1px solid var(--rust-pale);
+  }
+
+  .section-break td {
+    background: var(--cream-mid);
+    padding: 0.5rem 0.85rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--soil-mid);
+    border-bottom: 1px solid var(--border);
+  }
+
+  footer {
+    margin-top: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 800px) {
+    body { padding: 1rem 0.75rem 3rem; }
+    .table-wrap { overflow-x: auto; }
+    table { min-width: 900px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Garden OS · UI Audit</div>
+    <h1>Issues Table</h1>
+    <p class="subtitle">All identified UX issues from the v4 graphical improvement audit, grouped by resolution status.</p>
+    <div class="stats">
+      <div class="stat"><span class="stat-dot dot-done"></span> 6 resolved in v4</div>
+      <div class="stat"><span class="stat-dot dot-open"></span> 10 open</div>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Issue</th>
+          <th>Impact</th>
+          <th>Status</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="section-break"><td colspan="5">Resolved in v4</td></tr>
+        <tr>
+          <td class="area">Language</td>
+          <td class="issue">Jargon: "faction" is undefined and blocks comprehension</td>
+          <td class="impact">Players cannot follow instructions, disengage from mechanics</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Season Engine dialogue, chapter metadata, UI labels</td>
+        </tr>
+        <tr>
+          <td class="area">Language</td>
+          <td class="issue">Jargon: "beat" and "token" feel gamey and unclear</td>
+          <td class="impact">Rules comprehension fails early, users do not form a mental model</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">HOWTO strings, dialogue lines, shortcut labels</td>
+        </tr>
+        <tr>
+          <td class="area">Clarity, state</td>
+          <td class="issue">"Exactly 1 action per phase" is not surfaced at decision time</td>
+          <td class="impact">Choices feel arbitrary, users miss the constraint</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Season Engine planning phases, toolbar messaging</td>
+        </tr>
+        <tr>
+          <td class="area">Clarity, scoring</td>
+          <td class="issue">Factor bars are visible but meanings are not explained in-context</td>
+          <td class="impact">Users cannot interpret why a crop scored poorly</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">Score tab factor bars (Sun, Support, Shade, Access, Season, Adjacency)</td>
+        </tr>
+        <tr>
+          <td class="area">Clarity, reference</td>
+          <td class="issue">No path from "why did this score happen" to an explanation</td>
+          <td class="impact">Confusion persists, users cannot self-serve answers</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">"How scoring works" link under factor bars, Learn More in How to Play</td>
+        </tr>
+        <tr>
+          <td class="area">Clarity, reference</td>
+          <td class="issue">Loop: score → explanation → back to score not connected</td>
+          <td class="impact">Confusion persists, users cannot self-serve answers</td>
+          <td><span class="status status-done">Done</span></td>
+          <td class="location">"How scoring works" link under factor bars, Learn More in How to Play</td>
+        </tr>
+
+        <tr class="section-break"><td colspan="5">Open</td></tr>
+        <tr>
+          <td class="area">Mode safety</td>
+          <td class="issue">Inspect intent, placement result — inspect click modifies grid</td>
+          <td class="impact">Trust breaker, discourages exploration and clicking</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner</td>
+        </tr>
+        <tr>
+          <td class="area">Mode safety</td>
+          <td class="issue">No neutral "just look" default cursor state</td>
+          <td class="impact">Users cannot safely navigate without accidental edits</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner</td>
+        </tr>
+        <tr>
+          <td class="area">Tool parity</td>
+          <td class="issue">Eraser exists in Season Engine but not in Planner</td>
+          <td class="impact">Mismatch creates friction for users switching contexts</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner toolbar</td>
+        </tr>
+        <tr>
+          <td class="area">Interaction</td>
+          <td class="issue">Mulch and protect are per-cell only, no drag paint</td>
+          <td class="impact">Actions feel tedious, zone edits are painful</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner grid interactions</td>
+        </tr>
+        <tr>
+          <td class="area">Interaction</td>
+          <td class="issue">No multi-cell selection, no batch actions</td>
+          <td class="impact">Common workflows (rows, zones) are slow</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner</td>
+        </tr>
+        <tr>
+          <td class="area">Resource clarity</td>
+          <td class="issue">Token or resource economy is opaque (totals, regen, costs)</td>
+          <td class="impact">Strategy collapses, users cannot plan</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner modifiers HUD, action cost preview</td>
+        </tr>
+        <tr>
+          <td class="area">Goals</td>
+          <td class="issue">No objective clarity and scoreboard prominence</td>
+          <td class="impact">Users do not know how to win, low engagement</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Season Engine chapter intro and persistent HUD</td>
+        </tr>
+        <tr>
+          <td class="area">UI bug</td>
+          <td class="issue">Notes panel does not scroll</td>
+          <td class="impact">Content becomes inaccessible below the fold</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner notes panel CSS overflow</td>
+        </tr>
+        <tr>
+          <td class="area">UI bug</td>
+          <td class="issue">Harvest log button intermittently unresponsive</td>
+          <td class="impact">Users lose confidence, repeated clicks</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner harvest log interaction, possible CSS overlay or event binding</td>
+        </tr>
+        <tr>
+          <td class="area">Copy</td>
+          <td class="issue">Last frost marker is not labeled clearly</td>
+          <td class="impact">Users misread calendar cue</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner calendar UI</td>
+        </tr>
+        <tr>
+          <td class="area">Discoverability</td>
+          <td class="issue">Inspect panel entry point not obvious</td>
+          <td class="impact">Core feature is missed on first pass</td>
+          <td><span class="status status-open">Open</span></td>
+          <td class="location">Planner sidebar and toolbar</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Garden OS · UI Graphical Improvement Audit · 2026-03-16</footer>
+</div>
+</body>
+</html>
