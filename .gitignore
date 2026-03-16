@@ -10,5 +10,6 @@ Garden Os Production Process.pdf
 audit/
 handoff-pack/
 
-# Video assets (too large for GitHub)
-assets/*.mp4
+# Video assets (large — only track what's needed for live site)
+assets/hero-video.mp4
+assets/garden-os-man.mp4
