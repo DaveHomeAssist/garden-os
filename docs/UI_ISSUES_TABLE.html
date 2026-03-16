@@ -3,349 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Garden OS — UI Issues Table</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/icons/favicon/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/favicon/apple-touch-icon.png">
+<title>Garden OS — UI Issues Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --soil: #3a2510;
-    --soil-mid: #52331a;
-    --cedar: #8b5e3c;
-    --cedar-light: #b07d55;
-    --cedar-pale: #e0c8a8;
-    --leaf: #3a6b2a;
-    --leaf-bright: #4e8c3c;
-    --leaf-pale: #c8e6c0;
-    --leaf-wash: #edf5e8;
-    --sun: #d4a820;
-    --sun-bright: #e8c84a;
-    --sun-pale: #faf0c0;
-    --sun-wash: #fdf8e8;
-    --rust: #b84a1a;
-    --rust-light: #d4651a;
-    --rust-pale: #f5d8c8;
-    --rust-wash: #fdf0e8;
-    --cream: #f7f3ec;
-    --cream-mid: #ede5d8;
+    --soil: #5c3d1e; --soil-mid: #7a5230;
+    --leaf: #3d7a4f; --leaf-bright: #5aab6b; --leaf-pale: #c8e6c0; --leaf-wash: #edf5e8;
+    --sun: #e8c84a; --sun-pale: #faf0c0; --sun-wash: #fdf8e8;
+    --rust: #b84a1a; --rust-pale: #f5d8c8; --rust-wash: #fdf0e8;
+    --cream: #f7f2ea; --cream-mid: #efe6d8;
     --panel: #fffdf9;
-    --text: #1e1208;
-    --text-mid: #4a3018;
-    --text-soft: #6f5840;
-    --text-muted: #9a8068;
-    --border: #c8b090;
-    --border-soft: #dfd0b8;
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-sans: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --text: #1e110a; --text-soft: #6c5848; --text-muted: #9a8068;
+    --border: #cfb899; --border-soft: #e7dac7;
+    --sans: 'DM Sans', system-ui, sans-serif;
+    --serif: 'Fraunces', Georgia, serif;
+    --mono: 'DM Mono', ui-monospace, monospace;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+  html { scroll-behavior: smooth; }
   body {
-    font-family: var(--font-sans);
-    background: var(--cream);
-    color: var(--text);
-    line-height: 1.5;
-    padding: 2rem 1.5rem 4rem;
+    font-family: var(--sans); color: var(--text); line-height: 1.6;
+    background: radial-gradient(circle at top left, rgba(90,171,107,.08), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(139,94,60,.06), transparent 28%),
+                var(--cream);
+    min-height: 100vh;
   }
 
-  .wrap {
-    max-width: 1200px;
-    margin: 0 auto;
+  /* ── Skip link ── */
+  .skip-link {
+    position: absolute; top: -48px; left: 0; background: var(--leaf); color: #fff;
+    padding: .5rem 1.2rem; font-size: .85rem; font-weight: 600; z-index: 9999;
+    border-radius: 0 0 8px 0; text-decoration: none; transition: top .15s;
   }
+  .skip-link:focus { top: 0; }
 
-  header {
-    margin-bottom: 2rem;
+  /* ── Nav ── */
+  .os-nav {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--soil); border-bottom: 3px solid var(--sun);
+    display: flex; gap: 0; justify-content: center; padding: 0;
+    font-family: var(--mono); font-size: .65rem;
   }
+  .os-nav a {
+    color: rgba(245,237,224,0.6); text-decoration: none; padding: .5rem .8rem;
+    letter-spacing: .04em; transition: color .15s; white-space: nowrap;
+  }
+  .os-nav a:hover { color: #f5ede0; }
+  .os-nav a.active { color: #f5ede0; border-bottom: 2px solid var(--sun); }
+  .os-nav .bridge { margin-left: auto; opacity: .55; }
 
+  /* ── Layout ── */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 1rem; }
+  header { margin-bottom: 1.75rem; }
   .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--leaf-bright);
-    margin-bottom: 0.5rem;
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--leaf-bright); margin-bottom: .5rem;
   }
-
   h1 {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
+    font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 600; letter-spacing: -.02em; margin-bottom: .4rem;
   }
-
-  .subtitle {
-    color: var(--text-soft);
-    font-size: 0.95rem;
-    max-width: 600px;
-  }
-
-  .stats {
-    display: flex;
-    gap: 1.5rem;
-    margin-top: 1.25rem;
-    flex-wrap: wrap;
-  }
-
+  .subtitle { color: var(--text-soft); font-size: .95rem; max-width: 600px; }
+  .stats { display: flex; gap: 1.5rem; margin-top: 1.25rem; flex-wrap: wrap; }
   .stat {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: .5rem;
+    font-family: var(--mono); font-size: .75rem; letter-spacing: .04em;
   }
-
-  .stat-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
+  .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .dot-done { background: var(--leaf-bright); }
-  .dot-partial { background: var(--sun-bright); }
-  .dot-open { background: var(--rust-light); }
+  .dot-partial { background: var(--sun); }
+  .dot-open { background: var(--rust); }
 
+  /* ── Table ── */
   .table-wrap {
-    background: var(--panel);
-    border: 1.5px solid var(--border-soft);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(44, 27, 11, 0.06);
+    background: var(--panel); border: 1.5px solid var(--border-soft);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44,27,11,.06);
   }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
+  .scroll-hint {
+    display: none; font-family: var(--mono); font-size: .65rem;
+    color: var(--text-muted); text-align: right; padding: .35rem .75rem;
+    background: var(--cream-mid); border-bottom: 1px solid var(--border-soft);
   }
-
-  thead {
-    background: var(--soil);
-    color: rgba(245, 237, 224, 0.85);
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  thead { background: var(--soil); color: rgba(245,237,224,.85); }
   th {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-align: left;
-    padding: 0.75rem 0.85rem;
-    border-bottom: 2px solid var(--cedar);
-    white-space: nowrap;
+    font-family: var(--mono); font-size: .68rem; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase; text-align: left;
+    padding: .75rem .85rem; border-bottom: 2px solid var(--soil-mid); white-space: nowrap;
   }
-
   td {
-    padding: 0.7rem 0.85rem;
-    border-bottom: 1px solid var(--border-soft);
-    vertical-align: top;
-    line-height: 1.55;
+    padding: .7rem .85rem; border-bottom: 1px solid var(--border-soft);
+    vertical-align: top; line-height: 1.55;
   }
-
   tr:last-child td { border-bottom: none; }
-
-  tbody tr:hover { background: rgba(58, 107, 42, 0.03); }
-
+  tbody tr:hover { background: rgba(61,122,79,.03); }
   .area {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--cedar);
-    white-space: nowrap;
+    font-family: var(--mono); font-size: .72rem; font-weight: 500;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--soil-mid); white-space: nowrap;
   }
-
-  .issue { font-weight: 500; color: var(--text); }
-  .impact { color: var(--text-soft); font-size: 0.84rem; }
-  .location { color: var(--text-muted); font-size: 0.82rem; font-family: var(--font-mono); }
-
+  .issue { font-weight: 500; }
+  .impact { color: var(--text-soft); font-size: .84rem; }
+  .location { color: var(--text-muted); font-size: .82rem; font-family: var(--mono); }
   .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-family: var(--mono); font-size: .68rem; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: .2rem .6rem; border-radius: 999px; white-space: nowrap;
   }
-
-  .status-done {
-    background: var(--leaf-wash);
-    color: var(--leaf);
-    border: 1px solid var(--leaf-pale);
-  }
-
-  .status-partial {
-    background: var(--sun-wash);
-    color: var(--sun);
-    border: 1px solid var(--sun-pale);
-  }
-
-  .status-open {
-    background: var(--rust-wash);
-    color: var(--rust);
-    border: 1px solid var(--rust-pale);
-  }
-
+  .status-done { background: var(--leaf-wash); color: var(--leaf); border: 1px solid var(--leaf-pale); }
+  .status-partial { background: var(--sun-wash); color: #a08520; border: 1px solid var(--sun-pale); }
+  .status-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
   .section-break td {
-    background: var(--cream-mid);
-    padding: 0.5rem 0.85rem;
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--soil-mid);
-    border-bottom: 1px solid var(--border);
+    background: var(--cream-mid); padding: .5rem .85rem;
+    font-family: var(--serif); font-size: .85rem; font-weight: 600;
+    color: var(--soil-mid); border-bottom: 1px solid var(--border);
   }
+  .note { font-size: .78rem; color: var(--text-muted); font-style: italic; margin-top: .25rem; }
+  .user-row td { background: rgba(232,200,74,.04); }
 
-  .note {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: 0.25rem;
-  }
-
-  footer {
-    margin-top: 1.5rem;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
-  }
-
-  /* ── Submission Form ── */
-  .form-wrap {
-    margin-top: 2rem;
-  }
-
+  /* ── Form ── */
+  .form-wrap { margin-top: 2rem; }
   .form-header {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.75rem;
+    font-family: var(--serif); font-size: 1.15rem; font-weight: 600; margin-bottom: .75rem;
+    display: flex; align-items: center; gap: .5rem;
   }
-
+  .form-header .icon { font-size: 1.3rem; }
   .form-panel {
-    background: var(--panel);
-    border: 1.5px solid var(--border-soft);
-    border-radius: 10px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(44, 27, 11, 0.06);
+    background: var(--panel); border: 1.5px solid var(--border-soft);
+    border-radius: 8px; padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(44,27,11,.06);
   }
-
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-  }
-
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
   .form-grid .full { grid-column: 1 / -1; }
-
   .form-field label {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-    margin-bottom: 0.3rem;
+    display: block; font-family: var(--mono); font-size: .68rem; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); margin-bottom: .3rem;
   }
-
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
-    width: 100%;
-    font-family: var(--font-sans);
-    font-size: 0.88rem;
-    color: var(--text);
-    background: var(--cream);
-    border: 1.5px solid var(--border-soft);
-    border-radius: 6px;
-    padding: 0.5rem 0.65rem;
-    transition: border-color 0.15s;
+  .form-field input, .form-field select, .form-field textarea {
+    width: 100%; font-family: var(--sans); font-size: .88rem; color: var(--text);
+    background: var(--cream); border: 1.5px solid var(--border-soft); border-radius: 6px;
+    padding: .5rem .65rem; transition: border-color .15s;
   }
-
-  .form-field input:focus,
-  .form-field select:focus,
-  .form-field textarea:focus {
-    outline: none;
-    border-color: var(--leaf-bright);
-    box-shadow: 0 0 0 2.5px rgba(78, 140, 60, 0.15);
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+    outline: none; border-color: var(--leaf-bright);
+    box-shadow: 0 0 0 2.5px rgba(90,171,107,.15);
   }
-
   .form-field textarea { resize: vertical; min-height: 60px; }
-
-  .form-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 0.85rem;
-  }
-
+  .form-actions { display: flex; align-items: center; gap: .75rem; margin-top: .85rem; }
   .btn-submit {
-    font-family: var(--font-sans);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #fff;
-    background: var(--leaf-bright);
-    border: none;
-    border-radius: 999px;
-    padding: 0.5rem 1.25rem;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    font-family: var(--sans); font-size: .88rem; font-weight: 600; color: #fff;
+    background: var(--leaf-bright); border: none; border-radius: 999px;
+    padding: .5rem 1.25rem; cursor: pointer; transition: background .15s, transform .1s;
   }
-
   .btn-submit:hover { background: var(--leaf); transform: translateY(-1px); }
-
+  .btn-submit:focus-visible { outline: 3px solid var(--leaf-bright); outline-offset: 3px; }
   .form-msg {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--leaf-bright);
-    opacity: 0;
-    transition: opacity 0.2s;
+    font-family: var(--mono); font-size: .72rem; opacity: 0; transition: opacity .2s;
   }
-
   .form-msg.visible { opacity: 1; }
 
-  .user-row td { background: rgba(212, 168, 32, 0.04); }
+  .del-btn {
+    background: none; border: none; color: var(--rust); cursor: pointer;
+    font-size: .75rem; padding: .15rem .4rem; border-radius: 4px; font-family: var(--mono);
+    transition: background .15s;
+  }
+  .del-btn:hover { background: var(--rust-wash); }
 
+  /* ── Footer ── */
+  .os-footer {
+    background: var(--soil); color: rgba(245,237,224,.5); text-align: center;
+    padding: 1.25rem 1rem; font-family: var(--mono); font-size: .65rem;
+    letter-spacing: .06em; border-top: 2px solid var(--soil-mid); margin-top: 2.5rem;
+  }
+  .os-footer a { color: rgba(245,237,224,.7); text-decoration: none; }
+  .os-footer a:hover { color: #f5ede0; }
+
+  /* ── Responsive ── */
   @media (max-width: 800px) {
+    body { font-size: .9rem; }
+    .wrap { padding: 1rem .75rem .75rem; }
+    .table-wrap { overflow-x: auto; }
+    .scroll-hint { display: block; }
+    table { min-width: 900px; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .full { grid-column: 1; }
+    .os-nav { font-size: .58rem; overflow-x: auto; justify-content: flex-start; }
   }
 
-  @media (max-width: 800px) {
-    body { padding: 1rem 0.75rem 3rem; }
-    .table-wrap { overflow-x: auto; }
-    table { min-width: 900px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="os-nav" aria-label="Garden OS">
+  <a href="../index.html">Home</a>
+  <a href="../garden-league-simulator-v3.html">Play Game</a>
+  <a href="../garden-planner-v4.html">Planner</a>
+  <a href="../garden-cage-build-guide.html">Build Guide</a>
+  <a href="../garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="../how-it-thinks.html">How It Thinks</a>
+  <a href="../scoring-visualizer.html" class="bridge">Dev Tools &rarr;</a>
+</nav>
+
+<main id="main">
 <div class="wrap">
   <header>
     <div class="eyebrow">Garden OS · UI Audit · Updated 2026-03-16</div>
-    <h1>Issues Table</h1>
-    <p class="subtitle">All identified UX issues across Planner v4 and Season Engine v3, tracked from the v4 graphical improvement audit forward.</p>
+    <h1>Issues Tracker</h1>
+    <p class="subtitle">All identified UX issues across Planner v4 and Season Engine v3. Submit new issues below.</p>
     <div class="stats">
       <div class="stat"><span class="stat-dot dot-done"></span> 11 resolved</div>
       <div class="stat"><span class="stat-dot dot-partial"></span> 4 partial</div>
       <div class="stat"><span class="stat-dot dot-open"></span> 8 open</div>
-      <div class="stat" style="color:var(--text-muted)">23 total</div>
+      <div class="stat" style="color:var(--text-muted)">23 tracked</div>
     </div>
   </header>
 
   <div class="table-wrap">
+    <div class="scroll-hint">Scroll sideways to see all columns &rarr;</div>
     <table>
       <thead>
         <tr>
@@ -356,9 +238,8 @@
           <th>Location</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="issueBody">
 
-        <!-- ═══ RESOLVED ═══ -->
         <tr class="section-break"><td colspan="5">Resolved (11)</td></tr>
         <tr>
           <td class="area">Language</td>
@@ -407,14 +288,14 @@
           <td class="issue">Inspect intent, placement result — inspect click modifies grid</td>
           <td class="impact">Trust breaker, discourages exploration and clicking</td>
           <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — three explicit tool modes (paint, erase, inspect)<div class="note">Season Engine still lacks inspect mode — tracked as new issue</div></td>
+          <td class="location">Planner v4 — three explicit tool modes (paint, erase, inspect)<div class="note">Season Engine still lacks inspect mode — tracked separately</div></td>
         </tr>
         <tr>
           <td class="area">Mode safety</td>
           <td class="issue">No neutral "just look" default cursor state</td>
           <td class="impact">Users cannot safely navigate without accidental edits</td>
           <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — inspect is default tool, Esc returns to it<div class="note">Season Engine still defaults to placement — tracked as new issue</div></td>
+          <td class="location">Planner v4 — inspect is default tool, Esc returns to it<div class="note">Season Engine still defaults to placement — tracked separately</div></td>
         </tr>
         <tr>
           <td class="area">Tool parity</td>
@@ -435,7 +316,7 @@
           <td class="issue">Harvest log button intermittently unresponsive</td>
           <td class="impact">Users lose confidence, repeated clicks</td>
           <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — button binding fixed inline after innerHTML assignment</td>
+          <td class="location">Planner v4 — button binding fixed inline after innerHTML</td>
         </tr>
         <tr>
           <td class="area">Copy</td>
@@ -449,97 +330,95 @@
           <td class="issue">Inspect panel entry point not obvious</td>
           <td class="impact">Core feature is missed on first pass</td>
           <td><span class="status status-done">Done</span></td>
-          <td class="location">Planner v4 — toolbar inspect button, tab bar, empty-state prompt<div class="note">Season Engine still lacks inspect affordance — tracked as new issue</div></td>
+          <td class="location">Planner v4 — toolbar inspect button, tab bar, empty-state prompt<div class="note">Season Engine still lacks inspect affordance — tracked separately</div></td>
         </tr>
 
-        <!-- ═══ PARTIAL ═══ -->
         <tr class="section-break"><td colspan="5">Partially Fixed (4)</td></tr>
         <tr>
           <td class="area">Interaction</td>
           <td class="issue">Mulch and protect are per-cell only, no drag paint</td>
           <td class="impact">Actions feel tedious, zone edits are painful</td>
           <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — shift+click multi-select added, but no drag-paint<div class="note">Planner has drag-paint for crops but interventions are Season Engine only</div></td>
+          <td class="location">Season Engine — shift+click multi-select added, but no drag-paint</td>
         </tr>
         <tr>
           <td class="area">Interaction</td>
           <td class="issue">No multi-cell selection, no batch actions</td>
           <td class="impact">Common workflows (rows, zones) are slow</td>
           <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — shift+click batch for interventions only<div class="note">No row-fill, zone-fill, or batch placement in either tool</div></td>
+          <td class="location">Season Engine — shift+click batch for interventions only</td>
         </tr>
         <tr>
           <td class="area">Resource clarity</td>
           <td class="issue">Token or resource economy is opaque (totals, regen, costs)</td>
           <td class="impact">Strategy collapses, users cannot plan</td>
           <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — "Action available (X/3 used)" shown in int-hud<div class="note">Underlying economy (1 per beat, use-or-lose, no accumulation) not explained</div></td>
+          <td class="location">Season Engine — "Action available (X/3 used)" shown but rules not explained</td>
         </tr>
         <tr>
           <td class="area">Goals</td>
           <td class="issue">No objective clarity and scoreboard prominence</td>
           <td class="impact">Users do not know how to win, low engagement</td>
           <td><span class="status status-partial">Partial</span></td>
-          <td class="location">Season Engine — target shown in results panel and chapter start<div class="note">Not persistent in header HUD, can scroll away during gameplay</div></td>
+          <td class="location">Season Engine — target in results panel, not persistent in header HUD</td>
         </tr>
 
-        <!-- ═══ OPEN ═══ -->
         <tr class="section-break"><td colspan="5">Open (8)</td></tr>
         <tr>
           <td class="area">Mode safety</td>
           <td class="issue">Season Engine has no inspect mode — clicking always places if crop selected</td>
           <td class="impact">Trust breaker in Season Engine, fixed in Planner but inconsistent</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine cellClick() — no inspect tool, no neutral cursor</td>
+          <td class="location">Season Engine cellClick()</td>
         </tr>
         <tr>
           <td class="area">Discoverability</td>
           <td class="issue">Season Engine has no visible inspect button or panel affordance</td>
-          <td class="impact">Cell detail inspection is hidden — users must discover it by clicking</td>
+          <td class="impact">Cell detail inspection is hidden — users must discover by clicking</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine toolbar — no inspect button exists</td>
+          <td class="location">Season Engine toolbar</td>
         </tr>
         <tr>
           <td class="area">Keyboard</td>
           <td class="issue">Season Engine has no keyboard shortcut for inspect or neutral mode</td>
           <td class="impact">Power users cannot switch modes efficiently</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine — Esc clears selection but does not enter a named mode</td>
+          <td class="location">Season Engine — Esc clears but does not enter named mode</td>
         </tr>
         <tr>
           <td class="area">Feedback</td>
           <td class="issue">No visible feedback when no eligible events exist for a beat</td>
-          <td class="impact">Beat phase may appear stuck — console.warn fires but user sees nothing</td>
+          <td class="impact">Beat phase may appear stuck — console.warn only</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine startBeat() — console.warn('No eligible events') only</td>
+          <td class="location">Season Engine startBeat()</td>
         </tr>
         <tr>
           <td class="area">Resilience</td>
-          <td class="issue">localStorage save failure shows warning but offers no recovery action</td>
-          <td class="impact">If storage is full, progress is silently lost — no export prompt or fallback</td>
+          <td class="issue">localStorage save failure shows warning but offers no recovery</td>
+          <td class="impact">If storage full, progress silently lost — no export prompt</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine save() and Planner save — showSaveWarning() is toast only</td>
+          <td class="location">Season Engine + Planner save functions</td>
         </tr>
         <tr>
           <td class="area">Accessibility</td>
           <td class="issue">Intervention HUD has no aria-live region for status changes</td>
-          <td class="impact">Screen readers do not announce when actions become available or tokens are spent</td>
+          <td class="impact">Screen readers do not announce token availability changes</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine .int-hud — narrator has aria-live but toolbar does not</td>
+          <td class="location">Season Engine .int-hud</td>
         </tr>
         <tr>
           <td class="area">Accessibility</td>
           <td class="issue">Grid cells lack aria-roledescription for placement targets</td>
-          <td class="impact">Screen reader users may inadvertently place crops while exploring the grid</td>
+          <td class="impact">Screen reader users may inadvertently place crops while exploring</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Season Engine grid cells — have role="gridcell" but no roledescription</td>
+          <td class="location">Season Engine grid cells</td>
         </tr>
         <tr>
           <td class="area">Code quality</td>
           <td class="issue">Planner frost line CSS has dead assignment (left set twice)</td>
-          <td class="impact">Confusing code — first assignment is immediately overwritten</td>
+          <td class="impact">Confusing code — first assignment immediately overwritten</td>
           <td><span class="status status-open">Open</span></td>
-          <td class="location">Planner addFrostLine() — line.style.left assigned twice</td>
+          <td class="location">Planner addFrostLine()</td>
         </tr>
 
       </tbody>
@@ -548,12 +427,12 @@
 
   <!-- ═══ SUBMISSION FORM ═══ -->
   <div class="form-wrap">
-    <div class="form-header">Submit an Issue</div>
-    <div class="form-panel">
+    <div class="form-header"><span class="icon">&#x1F4DD;</span> Report a Bug</div>
+    <form class="form-panel" id="issueForm">
       <div class="form-grid">
         <div class="form-field">
           <label for="f-area">Area</label>
-          <select id="f-area">
+          <select id="f-area" required>
             <option value="">Select...</option>
             <option>Language</option>
             <option>Clarity</option>
@@ -579,7 +458,7 @@
         </div>
         <div class="form-field full">
           <label for="f-issue">Issue</label>
-          <input id="f-issue" type="text" placeholder="Describe the issue clearly">
+          <input id="f-issue" type="text" placeholder="Describe the issue clearly" required>
         </div>
         <div class="form-field full">
           <label for="f-impact">Impact on User</label>
@@ -587,85 +466,85 @@
         </div>
       </div>
       <div class="form-actions">
-        <button class="btn-submit" id="submitBtn">Add Issue</button>
-        <span class="form-msg" id="formMsg">Issue added</span>
+        <button type="submit" class="btn-submit">Add Issue</button>
+        <span class="form-msg" id="formMsg"></span>
       </div>
-    </div>
+    </form>
   </div>
-
-  <footer>Garden OS · UI Audit · Last updated 2026-03-16 · Covers Planner v4 + Season Engine v3</footer>
 </div>
+</main>
+
+<footer class="os-footer">
+  Garden OS &middot; UI Issues Tracker &middot; Last updated 2026-03-16 &middot;
+  <a href="../index.html">Back to Garden OS</a>
+</footer>
 
 <script>
 (function(){
-  const SKEY = 'gos-ui-issues-user';
-  const tbody = document.querySelector('tbody');
-  const btn = document.getElementById('submitBtn');
-  const msg = document.getElementById('formMsg');
+  var SKEY='gos-ui-issues-user';
+  var tbody=document.getElementById('issueBody');
+  var form=document.getElementById('issueForm');
+  var msg=document.getElementById('formMsg');
 
-  function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function load(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch(e){return[]}}
+  function save(list){try{localStorage.setItem(SKEY,JSON.stringify(list))}catch(e){}}
 
-  function load(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'[]'); }catch(e){ return []; } }
-  function save(list){ try{ localStorage.setItem(SKEY,JSON.stringify(list)); }catch(e){} }
+  function flash(text,color){
+    msg.textContent=text;msg.style.color=color||'var(--leaf-bright)';
+    msg.classList.add('visible');
+    setTimeout(function(){msg.classList.remove('visible')},2500);
+  }
 
   function renderUserRows(){
-    document.querySelectorAll('.user-row').forEach(r=>r.remove());
-    const items = load();
-    if(!items.length) return;
+    document.querySelectorAll('.user-row,.user-break').forEach(function(r){r.remove()});
+    var items=load();
+    if(!items.length)return;
 
-    // Find or create user section
-    let userBreak = document.getElementById('user-section-break');
-    if(!userBreak){
-      userBreak = document.createElement('tr');
-      userBreak.id = 'user-section-break';
-      userBreak.className = 'section-break';
-      userBreak.innerHTML = '<td colspan="5">User Submitted ('+items.length+')</td>';
-      tbody.appendChild(userBreak);
-    } else {
-      userBreak.innerHTML = '<td colspan="5">User Submitted ('+items.length+')</td>';
-    }
+    var br=document.createElement('tr');
+    br.className='section-break user-break';
+    br.innerHTML='<td colspan="5">User Submitted ('+items.length+')</td>';
+    tbody.appendChild(br);
 
-    items.forEach(function(item, i){
-      const tr = document.createElement('tr');
-      tr.className = 'user-row';
-      tr.innerHTML =
+    items.forEach(function(item,i){
+      var tr=document.createElement('tr');
+      tr.className='user-row';
+      tr.innerHTML=
         '<td class="area">'+esc(item.area)+'</td>'+
         '<td class="issue">'+esc(item.issue)+'</td>'+
         '<td class="impact">'+esc(item.impact)+'</td>'+
         '<td><span class="status status-open">Open</span></td>'+
-        '<td class="location">'+esc(item.location)+'</td>';
+        '<td class="location">'+esc(item.location)+
+        ' <button class="del-btn" data-idx="'+i+'" title="Remove this issue">&times;</button></td>';
       tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.del-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-idx'));
+        var items=load();
+        var removed=items.splice(idx,1)[0];
+        save(items);
+        flash('Removed: '+removed.area,'var(--rust)');
+        renderUserRows();
+      });
     });
   }
 
-  btn.addEventListener('click', function(){
-    const area = document.getElementById('f-area').value.trim();
-    const issue = document.getElementById('f-issue').value.trim();
-    const impact = document.getElementById('f-impact').value.trim();
-    const location = document.getElementById('f-location').value.trim();
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var area=document.getElementById('f-area').value.trim();
+    var issue=document.getElementById('f-issue').value.trim();
+    var impact=document.getElementById('f-impact').value.trim();
+    var location=document.getElementById('f-location').value.trim();
 
-    if(!area || !issue){
-      msg.textContent = 'Area and issue are required';
-      msg.style.color = 'var(--rust)';
-      msg.classList.add('visible');
-      setTimeout(function(){ msg.classList.remove('visible'); }, 2500);
-      return;
-    }
+    if(!area||!issue){flash('Area and issue are required','var(--rust)');return}
 
-    const items = load();
-    items.push({ area:area, issue:issue, impact:impact||'Not specified', location:location||'Not specified', date:new Date().toISOString().split('T')[0] });
+    var items=load();
+    items.push({area:area,issue:issue,impact:impact||'Not specified',location:location||'Not specified',date:new Date().toISOString().split('T')[0]});
     save(items);
-
-    document.getElementById('f-area').value = '';
-    document.getElementById('f-issue').value = '';
-    document.getElementById('f-impact').value = '';
-    document.getElementById('f-location').value = '';
-
-    msg.textContent = 'Issue added';
-    msg.style.color = 'var(--leaf-bright)';
-    msg.classList.add('visible');
-    setTimeout(function(){ msg.classList.remove('visible'); }, 2500);
-
+    form.reset();
+    flash('Added: '+area+' issue');
     renderUserRows();
   });
 
