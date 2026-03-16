@@ -100,6 +100,18 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 @keyframes event-pulse{0%,100%{box-shadow:inset 0 0 0 2px var(--sem-hard)}50%{box-shadow:inset 0 0 0 3px var(--sem-hard),0 0 8px rgba(194,77,77,0.25)}}
 .cell.protected-cell{box-shadow:inset 0 0 0 2px var(--sem-good);border-style:double}
 .cell.mulched-cell{box-shadow:inset 0 0 0 2px var(--sem-warn)}
+.cell.int-eligible{outline:2px dashed var(--char-gurl);outline-offset:-2px;cursor:crosshair}
+.cell.int-eligible:hover{outline-color:var(--sem-good);background-color:rgba(95,143,69,0.12)!important}
+.cell.int-selected{outline:2px solid var(--sem-good);outline-offset:-2px;background-color:rgba(95,143,69,0.18)!important}
+.int-hud{display:flex;gap:8px;align-items:center;font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);width:100%;padding:4px 0}
+.int-hud .hud-beat{padding:3px 8px;border-radius:4px;font-weight:700}
+.int-hud .hud-beat.available{background:var(--sem-good-bg);color:var(--sem-good)}
+.int-hud .hud-beat.used{background:var(--sem-hard-bg);color:var(--sem-hard);text-decoration:line-through}
+.int-hud .hud-beat.current{background:var(--char-gurl);color:#fff}
+.int-hud .hud-status{margin-left:auto;font-weight:600}
+.int-hud .hud-status.ready{color:var(--sem-good)}
+.int-hud .hud-status.spent{color:var(--sem-hard)}
+.int-preview{font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);padding:2px 6px;background:var(--sf-panel-2);border-radius:4px;text-align:center}
 .cell.score-good{background-color:var(--sem-good-bg);border-color:var(--sem-good)}
 .cell.score-warn{background-color:var(--sem-warn-bg);border-color:var(--sem-warn)}
 .cell.score-hard{background-color:var(--sem-hard-bg);border-color:var(--sem-hard)}
@@ -224,7 +236,33 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 @keyframes harvest-pulse{0%{opacity:1;transform:scale(1)}40%{opacity:0.3;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
 .cell.harvesting{animation:harvest-pulse 280ms var(--ease-expo-out) forwards}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms;animation-iteration-count:1;transition-duration:0.15s;scroll-behavior:auto}.cell.just-planted,.cell.harvesting,.cell.event-hit{animation:none}.cell.event-hit{box-shadow:inset 0 0 0 2px var(--sem-hard)}.event-card.entering{opacity:1;transform:translateY(0)}.chapter-card{animation:none}.grade.reveal{animation:none;opacity:1;transform:scale(1)}.narrator-slot,.sauce-item{transition-duration:0.15s}.ring-fill{transition-duration:0.01ms}.factor-bar .fill{transition-duration:0.15s}}
-@media print{.controls,.toolbar,.event-card,.narrator-area,.beat-indicator,.confirm-overlay,button,select,.skip-nav,.fill-counter{display:none !important}body{background:white !important;color:#1a1a1a !important}.app{display:block !important;width:100% !important;margin:0 !important;box-shadow:none !important}.panel{background:white !important;border:1px solid #ccc !important;box-shadow:none !important;break-inside:avoid;margin-bottom:12px !important}.grid{background:#f0f0f0 !important;border:1px solid #999 !important;gap:3px !important}.cell{background:#fafafa !important;border:1px solid #bbb !important;min-height:40px !important}.cell.score-good{background:#e8f5e8 !important}.cell.score-warn{background:#fdf4e4 !important}.cell.score-hard{background:#fce8e8 !important}.ring-fill{transition:none !important}.results{max-height:none !important;overflow:visible !important}@page{margin:14mm}h1::after{content:" — Season Recap";font-weight:400;font-size:0.6em}}
+@media print{.controls,.toolbar,.event-card,.narrator-area,.beat-indicator,.confirm-overlay,button,select,.skip-nav,.settings-btn,.settings-overlay,.settings-panel{display:none !important}body{background:white !important;color:#1a1a1a !important}.app{display:block !important;width:100% !important;margin:0 !important;box-shadow:none !important}.panel{background:white !important;border:1px solid #ccc !important;box-shadow:none !important;break-inside:avoid;margin-bottom:12px !important}.grid{background:#f0f0f0 !important;border:1px solid #999 !important;gap:3px !important}.cell{background:#fafafa !important;border:1px solid #bbb !important;min-height:40px !important}.cell.score-good{background:#e8f5e8 !important}.cell.score-warn{background:#fdf4e4 !important}.cell.score-hard{background:#fce8e8 !important}.ring-fill{transition:none !important}.results{max-height:none !important;overflow:visible !important}@page{margin:14mm}h1::after{content:" — Season Recap";font-weight:400;font-size:0.6em}}
+.settings-btn{position:fixed;top:10px;right:14px;z-index:120;width:36px;height:36px;border-radius:8px;border:1px solid var(--sf-line);background:var(--sf-panel);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:filter 140ms}
+.settings-btn:hover{filter:brightness(1.08)}
+.settings-btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
+.settings-overlay{position:fixed;inset:0;background:var(--sf-overlay);z-index:140;display:none}
+.settings-overlay[data-open]{display:block}
+.settings-panel{position:fixed;top:52px;right:14px;width:280px;max-height:calc(100vh - 70px);overflow-y:auto;background:var(--sf-card);border:1px solid var(--sf-line);border-radius:var(--radius);box-shadow:var(--shadow);z-index:141;display:none}
+.settings-panel[data-open]{display:block;animation:pop-in 180ms var(--ease-back-out)}
+.settings-panel::-webkit-scrollbar{width:6px}.settings-panel::-webkit-scrollbar-track{background:transparent}.settings-panel::-webkit-scrollbar-thumb{background:var(--sf-line);border-radius:3px}
+.settings-header{padding:10px 14px;border-bottom:1px solid var(--sf-line)}
+.settings-title{font-family:var(--ff-heading);font-size:1rem;font-weight:600}
+.settings-sub{font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);margin-top:2px}
+.settings-section{font-family:var(--ff-mono);font-size:var(--type-label);text-transform:uppercase;letter-spacing:0.1em;color:var(--sf-muted);padding:8px 14px 4px;font-weight:600}
+.settings-row{display:flex;align-items:center;gap:8px;padding:8px 14px;font-family:var(--ff-body);font-size:var(--type-small);color:var(--sf-ink);cursor:pointer;transition:background 0.1s;border:none;background:none;width:100%;text-align:left}
+.settings-row:hover{background:var(--sf-panel-2)}
+.settings-row:focus-visible{outline:2px solid var(--char-gurl);outline-offset:-2px}
+.settings-row.danger{color:var(--sem-hard)}
+.settings-row.danger:hover{background:var(--sem-hard-bg)}
+.settings-divider{height:1px;background:var(--sf-line);margin:4px 14px}
+.settings-badge{font-family:var(--ff-mono);font-size:var(--type-label);padding:1px 6px;border-radius:10px;margin-left:auto}
+.settings-badge-good{background:var(--sem-good-bg);color:var(--sem-good)}
+.settings-badge-warn{background:var(--sem-warn-bg);color:var(--sem-warn)}
+.settings-row-sub{font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);margin-left:auto}
+.settings-toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--sem-good);color:#fff;padding:8px 18px;border-radius:8px;font-family:var(--ff-body);font-size:var(--type-body);font-weight:600;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:pop-in 180ms var(--ease-back-out)}
+.settings-summary{padding:8px 14px;font-family:var(--ff-mono);font-size:var(--type-label);color:var(--sf-muted);line-height:1.6}
+.settings-summary strong{color:var(--sf-ink);font-weight:600}
+@media(max-width:600px){.settings-panel[data-open]{top:auto;bottom:0;right:0;left:0;width:100%;max-height:70vh;border-radius:var(--radius) var(--radius) 0 0}}
 </style>
 </head>
 <body class="season-spring">
@@ -865,8 +903,14 @@ function mkCampaign(){return{
 
 let CAM=null;
 
-function saveCampaign(){try{localStorage.setItem(CKEY,JSON.stringify(CAM))}catch(e){}}
-function loadCampaign(){try{const r=localStorage.getItem(CKEY);if(r){const p=JSON.parse(r);if(p&&p.mode)return p}}catch(e){}return null}
+function saveCampaign(){try{localStorage.setItem(CKEY,JSON.stringify(CAM))}catch(e){console.warn('Campaign save failed:',e);showSaveWarning()}}
+function migrateCampaign(c){
+  if(!c)return c;
+  const d=mkCampaign();
+  for(const k of Object.keys(d)){if(c[k]===undefined)c[k]=d[k]}
+  return c;
+}
+function loadCampaign(){try{const r=localStorage.getItem(CKEY);if(r){const p=JSON.parse(r);if(p&&p.mode)return migrateCampaign(p)}}catch(e){}return null}
 
 /* ===== DIALOGUE SYSTEM ===== */
 function selectLine(pool,triggerKey,charKey){
@@ -915,7 +959,7 @@ function determinePlacementTrigger(idx,cropId){
 
 function getCharAvailability(chapter){
   const chars=['gurl','onion'];
-  if(chapter===2||chapter===10)chars.push('vegeman');
+  if(chapter>=2)chars.push('vegeman');
   return chars;
 }
 
@@ -1348,6 +1392,10 @@ function renderBoard(){
     if(cell.interventionFlag==='protected')d.classList.add('protected-cell');
     if(cell.interventionFlag==='mulched')d.classList.add('mulched-cell');
     if(S.interventionMode==='swap'&&S.swapFirstCell===i)d.classList.add('swap-highlight');
+    if(S.interventionMode&&S.interventionMode!=='swap'&&S.interventionMode!=='accept_loss'){
+      if(cell.cropId&&!cell.interventionFlag)d.classList.add('int-eligible');
+      if(S._multiSelect&&S._multiSelect.has(i))d.classList.add('int-selected');
+    }
     d.tabIndex=(S.selectedCell===i||(S.selectedCell===null&&i===0))?0:-1;
     let ariaLabel='Row '+row+', Column '+col+', '+zone+' zone';
     if(cell.cropId&&C[cell.cropId]){
@@ -1368,7 +1416,7 @@ function renderBoard(){
       }}
     }else{ariaLabel+=', empty'}
     d.setAttribute('aria-label',ariaLabel);
-    d.onclick=()=>cellClick(i);
+    d.onclick=(e)=>cellClick(i,e);
     gd.appendChild(d);
   }
   f.appendChild(gd);
@@ -1382,13 +1430,56 @@ function renderBoard(){
     tb.appendChild(h('span','chip',countPlanted(S.grid)+'/32'+(S.chapter===10?' (all required)':'')));
   }
   if(BEAT_PHASES.includes(S.phase)){
+    // Intervention budget HUD
+    const hud=h('div','int-hud');
+    const beatNames=['Early','Mid','Late'];
+    for(let b=0;b<3;b++){
+      const dot=h('span','hud-beat','Beat '+(b+1));
+      if(b<S.beatIndex)dot.classList.add('used');
+      else if(b===S.beatIndex)dot.classList.add('current');
+      hud.appendChild(dot);
+    }
+    const usedCount=S.interventionLog.filter(l=>l.type!=='accept_loss').length;
+    const st=h('span','hud-status');
+    if(S.beatTokenAvailable&&S.currentEvent){st.textContent='Action available ('+usedCount+'/3 used)';st.classList.add('ready')}
+    else if(S.beatIndex<2){st.textContent=usedCount+'/3 used';st.classList.add(usedCount>0?'spent':'ready')}
+    else{st.textContent=usedCount+'/3 used \u2014 final beat';st.classList.add('spent')}
+    hud.appendChild(st);
+    tb.appendChild(hud);
+
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
       const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept'};
-      for(const it of S.currentEvent.io){const b=h('button','btn',labels[it]||it);b.onclick=()=>startIntervention(it);tb.appendChild(b)}
+      const hints={swap:'Pick two adjacent cells to swap crops',prune:'Remove a crop from a cell',protect:'Shield a cell from the event',mulch:'Add mulch bonus (+0.5) to a cell',companion_patch:'Add companion bonus (+1) to a cell',accept_loss:'Skip intervention \u2014 event hits at full effect'};
+      for(const it of S.currentEvent.io){
+        const b=h('button','btn',labels[it]||it);
+        b.title=hints[it]||'';
+        b.onclick=()=>startIntervention(it);
+        tb.appendChild(b);
+      }
     }
     if(S.interventionMode){
-      const cb=h('button','btn danger','Cancel (Esc)');cb.onclick=()=>{S.interventionMode=null;S.swapFirstCell=null;render()};tb.appendChild(cb);
-      tb.appendChild(h('span','chip phase','Target: '+S.interventionMode));
+      const cb=h('button','btn danger','Cancel (Esc)');cb.onclick=()=>{S.interventionMode=null;S.swapFirstCell=null;S._multiSelect=null;render()};tb.appendChild(cb);
+      const modeLabel=S.interventionMode.replace('_',' ');
+      // Multi-select support for protect/mulch/companion_patch
+      if(['protect','mulch','companion_patch'].includes(S.interventionMode)){
+        const selCount=S._multiSelect?S._multiSelect.size:0;
+        const eligible=S.grid.filter(c=>c.cropId&&!c.interventionFlag).length;
+        tb.appendChild(h('span','chip phase',modeLabel+': Shift+click cells ('+selCount+' selected / '+eligible+' eligible)'));
+        if(selCount>0){
+          const apply=h('button','btn primary','Apply to '+selCount+' cell'+(selCount>1?'s':''));
+          apply.onclick=()=>applyMultiIntervention();
+          tb.appendChild(apply);
+        }
+      }else{
+        tb.appendChild(h('span','chip phase','Target: '+modeLabel));
+      }
+      // Preview text
+      if(S.currentEvent){
+        const prev=h('div','int-preview');
+        const mod=S.currentEvent.me.mod;
+        prev.textContent='Event: '+(mod>=0?'+':'')+mod.toFixed(1)+' per cell \u2014 '+S.currentEvent.title;
+        tb.appendChild(prev);
+      }
     }
     if(!S.beatTokenAvailable||!S.currentEvent){
       const ab=h('button','btn primary',S.beatIndex>=2?'Harvest (R)':'Advance (R)');ab.onclick=advanceBeat;tb.appendChild(ab);
@@ -1428,7 +1519,12 @@ function statusText(){
   const p=S.phase;
   if(p==='PLANNING')return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
   if(BEAT_PHASES.includes(p)){const bn=['Early','Mid','Late'][S.beatIndex];
-    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose intervention or accept.';
+    if(S.interventionMode&&['protect','mulch','companion_patch'].includes(S.interventionMode)){
+      return bn+': Shift+click cells to select, then click Apply. Plain click applies to one cell.';
+    }
+    if(S.interventionMode==='swap')return bn+': Click first cell, then an adjacent cell to swap.';
+    if(S.interventionMode==='prune')return bn+': Click a planted cell to remove its crop.';
+    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose intervention or accept. Hover buttons for details.';
     if(S.currentEvent)return bn+': Event resolved. Advance when ready.';
     return bn+': No event. Advance when ready.';}
   if(p==='HARVEST')return'Harvest complete.';
@@ -2254,9 +2350,26 @@ function render(){
 }
 
 /* ===== CELL CLICK ===== */
-function cellClick(i){
+function cellClick(i,e){
   S._cachedBedScore=null;
-  if(S.interventionMode){execIntervention(i);return}
+  if(S.interventionMode){
+    // Shift+click multi-select for protect/mulch/companion_patch
+    if(e&&e.shiftKey&&['protect','mulch','companion_patch'].includes(S.interventionMode)){
+      const cell=S.grid[i];
+      if(!cell.cropId||cell.interventionFlag)return;
+      if(!S._multiSelect)S._multiSelect=new Set();
+      if(S._multiSelect.has(i))S._multiSelect.delete(i);else S._multiSelect.add(i);
+      render();return;
+    }
+    // Single-click in multi-select mode: if we have selections, apply; otherwise legacy behavior
+    if(S._multiSelect&&S._multiSelect.size>0&&['protect','mulch','companion_patch'].includes(S.interventionMode)){
+      // Click on eligible cell without shift adds it and applies
+      const cell=S.grid[i];
+      if(cell.cropId&&!cell.interventionFlag){S._multiSelect.add(i)}
+      applyMultiIntervention();return;
+    }
+    execIntervention(i);return;
+  }
   if(S.phase==='PLANNING'){
     const prevCropId=S.grid[i].cropId;
     if(S.eraserMode){
@@ -2368,7 +2481,7 @@ function startBeat(){
 }
 
 function advanceBeat(){
-  if(S.beatTokenAvailable&&S.currentEvent){doAcceptLoss();S.currentEvent=null;}
+  if(S.beatTokenAvailable&&S.currentEvent){doAcceptLoss();}
   if(S.currentEvent&&!S.eventAffectedCells.length){
     const aff=applyEvent(S.currentEvent,S.grid);
     S.eventAffectedCells=aff;
@@ -2421,7 +2534,28 @@ function advanceBeat(){
 function startIntervention(type){
   if(!S.beatTokenAvailable)return;
   if(type==='accept_loss'){doAcceptLoss();return}
-  S.interventionMode=type;S.swapFirstCell=null;render();
+  S.interventionMode=type;S.swapFirstCell=null;S._multiSelect=null;render();
+}
+
+function applyMultiIntervention(){
+  if(!S._multiSelect||!S._multiSelect.size||!S.interventionMode)return;
+  const mode=S.interventionMode;const targets=[];
+  for(const i of S._multiSelect){
+    const cell=S.grid[i];if(!cell||!cell.cropId||cell.interventionFlag)continue;
+    if(mode==='protect')cell.interventionFlag='protected';
+    else if(mode==='mulch')cell.interventionFlag='mulched';
+    else if(mode==='companion_patch')cell.interventionFlag='companion_patched';
+    targets.push({row:cell.row,col:cell.col});
+  }
+  if(!targets.length){S._multiSelect=null;render();return}
+  S.interventionLog.push({beatIndex:S.beatIndex,type:mode,targetCells:targets,timestamp:new Date().toISOString()});
+  S.beatTokenAvailable=false;S.interventionMode=null;S._multiSelect=null;
+  if(S.currentEvent){
+    const aff=applyEvent(S.currentEvent,S.grid);S.eventAffectedCells=aff;
+    S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:true});
+  }
+  if(CAM)setTimeout(()=>fireDialogue('intervention_used'),400);
+  save();render();
 }
 
 function doAcceptLoss(){
@@ -2431,6 +2565,7 @@ function doAcceptLoss(){
     const aff=applyEvent(S.currentEvent,S.grid);S.eventAffectedCells=aff;
     S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
   }
+  S.currentEvent=null;
   // Fire intervention_skipped dialogue
   if(CAM)setTimeout(()=>fireDialogue('intervention_skipped'),400);
   S.interventionMode=null;save();render();
@@ -2449,6 +2584,7 @@ function execIntervention(i){
     if(!nbs(fi).includes(i)){S.swapFirstCell=null;render();return}
     const fc=S.grid[fi];if(!fc.cropId){S.swapFirstCell=null;render();return}
     const tmp=fc.cropId;fc.cropId=cell.cropId;cell.cropId=tmp;
+    const tmpEm=fc.eventModifier;fc.eventModifier=cell.eventModifier;cell.eventModifier=tmpEm;
     S.swapFirstCell=null;finishInt([{row:fc.row,col:fc.col},{row:cell.row,col:cell.col}]);
   }
 }
@@ -2549,8 +2685,216 @@ function doTransition(){
   save();render();
 }
 
+/* ===== SETTINGS PANEL ===== */
+function toggleSettings(){
+  const panel=document.getElementById('settingsPanel');
+  const overlay=document.getElementById('settingsOverlay');
+  if(!panel||!overlay)return;
+  const isOpen=panel.hasAttribute('data-open');
+  if(isOpen){
+    panel.removeAttribute('data-open');
+    overlay.removeAttribute('data-open');
+  }else{
+    renderSettingsPanel();
+    panel.setAttribute('data-open','');
+    overlay.setAttribute('data-open','');
+  }
+}
+window._toggleSettings=toggleSettings;
+
+function renderSettingsPanel(){
+  const panel=document.getElementById('settingsPanel');
+  if(!panel)return;
+  panel.replaceChildren();
+
+  // Header
+  const header=h('div','settings-header');
+  header.appendChild(h('div','settings-title','Garden League'));
+  const chNum=S?S.chapter:1;
+  const chMeta=CHAPTERS[chNum];
+  const seasonName=S?S.season:'spring';
+  const score=S&&S.harvestResult?S.harvestResult.finalScore.toFixed(1):(S&&S._cachedBedScore?S._cachedBedScore.toFixed(1):'\u2014');
+  header.appendChild(h('div','settings-sub','Chapter '+chNum+' of 12 \u00b7 '+seasonName.charAt(0).toUpperCase()+seasonName.slice(1)+' \u00b7 Score '+score));
+  panel.appendChild(header);
+
+  // PROGRESS section
+  panel.appendChild(h('div','settings-section','PROGRESS'));
+
+  const viewSave=h('button','settings-row');
+  viewSave.innerHTML='&#x1F4CB; View save summary';
+  viewSave.onclick=()=>{toggleSettings();showSaveSummary()};
+  panel.appendChild(viewSave);
+
+  const hist=loadH();
+  const chHistory=h('button','settings-row');
+  chHistory.innerHTML='&#x1F4D6; Chapter history';
+  const chHistSub=h('span','settings-row-sub',hist.length?'Ch 1\u2013'+hist[hist.length-1].chapter:'none');
+  chHistory.appendChild(chHistSub);
+  chHistory.onclick=()=>{toggleSettings();showChapterHistory()};
+  panel.appendChild(chHistory);
+
+  const keepsakeCount=CAM&&CAM.keepsakes?Object.keys(CAM.keepsakes).length:0;
+  const keepsakeRow=h('button','settings-row');
+  keepsakeRow.innerHTML='&#x1F3C6; Keepsakes & recipes';
+  const kBadge=h('span','settings-badge '+(keepsakeCount>0?'settings-badge-warn':'settings-badge-good'),keepsakeCount+' earned');
+  keepsakeRow.appendChild(kBadge);
+  keepsakeRow.onclick=()=>{toggleSettings();showJournalOverlay()};
+  panel.appendChild(keepsakeRow);
+
+  panel.appendChild(h('div','settings-divider'));
+
+  // LEARN section
+  panel.appendChild(h('div','settings-section','LEARN'));
+
+  const tutRow=h('button','settings-row');
+  tutRow.innerHTML='&#x1F393; Replay tutorial';
+  tutRow.onclick=()=>{toggleSettings();showHowToOverlay('quickstart')};
+  panel.appendChild(tutRow);
+
+  const scoringRow=h('button','settings-row');
+  scoringRow.innerHTML='&#x1F4CA; How scoring works \u2192';
+  scoringRow.onclick=()=>window.open('how-it-thinks.html','_blank');
+  panel.appendChild(scoringRow);
+
+  const rulesRow=h('button','settings-row');
+  rulesRow.innerHTML='&#x1F4D0; Season Engine rules \u2192';
+  rulesRow.onclick=()=>window.open('how-it-thinks.html','_blank');
+  panel.appendChild(rulesRow);
+
+  panel.appendChild(h('div','settings-divider'));
+
+  // SESSION section
+  panel.appendChild(h('div','settings-section','SESSION'));
+
+  const saveRow=h('button','settings-row');
+  saveRow.innerHTML='&#x1F4BE; Save & continue later';
+  saveRow.onclick=()=>{save();saveCampaign();toggleSettings();showSettingsToast('Progress saved.')};
+  panel.appendChild(saveRow);
+
+  const exportRow=h('button','settings-row');
+  exportRow.innerHTML='&#x1F4E6; Export campaign (.json)';
+  exportRow.onclick=()=>{exportCampaign();toggleSettings()};
+  panel.appendChild(exportRow);
+
+  panel.appendChild(h('div','settings-divider'));
+
+  // DANGER ZONE
+  panel.appendChild(h('div','settings-section','DANGER ZONE'));
+
+  const restartRow=h('button','settings-row danger');
+  restartRow.innerHTML='&#x26A0;&#xFE0F; Restart this chapter';
+  restartRow.onclick=()=>settingsConfirm('Restart Chapter?','This resets the current chapter. Your carry-forward state is preserved.',()=>{
+    S=mkSeason(S.chapter,S.carryForward||mkCF());save();render()
+  });
+  panel.appendChild(restartRow);
+
+  const newCampaignRow=h('button','settings-row danger');
+  newCampaignRow.innerHTML='&#x1F6A8; Start new campaign';
+  newCampaignRow.onclick=()=>settingsConfirm('Start New Campaign?','This erases all progress, keepsakes, and recipes. You will begin at Chapter 1.',()=>{
+    CAM=mkCampaign();S=mkSeason(1,mkCF());save();saveCampaign();render()
+  });
+  panel.appendChild(newCampaignRow);
+}
+
+function showSaveSummary(){
+  el.cbox.replaceChildren();
+  el.cbox.appendChild(h('h2',null,'Save Summary'));
+  const cf=S?S.carryForward:null;
+  const chMeta=S?CHAPTERS[S.chapter]:null;
+  const lines=[];
+  lines.push('<strong>Chapter:</strong> '+(S?S.chapter:'?')+' of 12'+(chMeta?' \u2014 "'+chMeta.name+'"':''));
+  lines.push('<strong>Season:</strong> '+(S?S.season:'?'));
+  lines.push('<strong>Phase:</strong> '+(S?S.phase:'?'));
+  if(S&&S.harvestResult)lines.push('<strong>Last score:</strong> '+S.harvestResult.finalScore.toFixed(1)+' ('+S.harvestResult.grade+')');
+  if(cf){
+    const fatigueCount=Object.values(cf.soilFatigueMap||{}).filter(v=>v<0).length;
+    lines.push('<strong>Soil fatigue cells:</strong> '+fatigueCount);
+    const infraCount=Object.keys(cf.infrastructureMap||{}).length;
+    lines.push('<strong>Infrastructure effects:</strong> '+infraCount+' cells');
+    lines.push('<strong>Pantry crops:</strong> '+(cf.recipePantry||[]).length);
+  }
+  const recipesCompleted=CAM&&CAM.recipesCompleted?CAM.recipesCompleted.length:0;
+  lines.push('<strong>Recipes completed:</strong> '+recipesCompleted+' of '+RECIPE_LADDER.length);
+  const keepsakeCount=CAM&&CAM.keepsakes?Object.keys(CAM.keepsakes).length:0;
+  lines.push('<strong>Keepsakes earned:</strong> '+keepsakeCount+' of '+Object.keys(KEEPSAKES).length);
+  const summary=h('div','settings-summary');
+  summary.innerHTML=lines.join('<br>');
+  el.cbox.appendChild(summary);
+  const btns=h('div','btns');
+  const close=h('button','btn','Close');
+  close.onclick=()=>el.overlay.classList.remove('active');
+  btns.appendChild(close);
+  el.cbox.appendChild(btns);
+  el.overlay.classList.add('active');
+  requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+}
+
+function showChapterHistory(){
+  el.cbox.replaceChildren();
+  el.cbox.appendChild(h('h2',null,'Chapter History'));
+  const hist=loadH();
+  if(!hist.length){
+    el.cbox.appendChild(h('p',null,'No chapters completed yet.'));
+  }else{
+    for(const en of hist){
+      const chMeta=CHAPTERS[en.chapter];
+      const jc=h('div','journal-card');
+      jc.appendChild(h('div','jc-title','Ch '+en.chapter+': '+(chMeta?'"'+chMeta.name+'"':'')+' \u2014 '+en.season));
+      jc.appendChild(h('div','jc-score','Score: '+en.finalScore.toFixed(1)+' \u2014 Grade: '+en.grade));
+      el.cbox.appendChild(jc);
+    }
+  }
+  const btns=h('div','btns');
+  const close=h('button','btn','Close');
+  close.onclick=()=>el.overlay.classList.remove('active');
+  btns.appendChild(close);
+  el.cbox.appendChild(btns);
+  el.overlay.classList.add('active');
+  requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+}
+
+function settingsConfirm(title,msg,onConfirm){
+  toggleSettings();
+  el.cbox.replaceChildren();
+  el.cbox.appendChild(h('h2',null,title));
+  el.cbox.appendChild(h('p',null,msg));
+  const btns=h('div','btns');
+  const cancel=h('button','btn','Cancel');
+  cancel.onclick=()=>el.overlay.classList.remove('active');
+  const confirm=h('button','btn danger','Confirm');
+  confirm.onclick=()=>{el.overlay.classList.remove('active');onConfirm()};
+  btns.appendChild(cancel);btns.appendChild(confirm);
+  el.cbox.appendChild(btns);
+  el.overlay.classList.add('active');
+  requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+}
+
+function exportCampaign(){
+  const data={campaign:CAM,state:S,history:loadH(),exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='garden-os-campaign-ch'+(S?S.chapter:'unknown')+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function showSettingsToast(msg){
+  let t=document.getElementById('settings-toast');
+  if(t)t.remove();
+  t=document.createElement('div');
+  t.id='settings-toast';
+  t.className='settings-toast';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{if(t)t.remove()},2500);
+}
+
 /* ===== KEYBOARD ===== */
 document.addEventListener('keydown',e=>{
+  // Close settings panel on Escape
+  const sp=document.getElementById('settingsPanel');
+  if(sp&&sp.hasAttribute('data-open')){if(e.key==='Escape'){toggleSettings();return}return}
   if(el.overlay.classList.contains('active')){
     if(e.key==='Escape'){el.overlay.classList.remove('active');return}
     // Focus trap in modal
@@ -2575,7 +2919,7 @@ document.addEventListener('keydown',e=>{
   if(!S)return;
   if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
-  if(e.key==='Escape'){if(S){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;render()}}
+  if(e.key==='Escape'){if(S){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;S._multiSelect=null;render()}}
 });
 document.addEventListener('keydown',e=>{
   if(!S)return;
@@ -2648,5 +2992,8 @@ render();
 
 })();
 </script>
+<button class="settings-btn" onclick="window._toggleSettings()" aria-label="Settings" title="Settings">&#9881;</button>
+<div class="settings-overlay" id="settingsOverlay" onclick="window._toggleSettings()"></div>
+<div class="settings-panel" id="settingsPanel"></div>
 </body>
 </html>
