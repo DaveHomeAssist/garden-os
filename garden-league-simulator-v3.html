@@ -1346,15 +1346,23 @@ function renderBoard(){
   el.app.classList.remove('menu-mode');
   el.ctrl.style.display='';
   el.res.style.display='';
+  el.board.setAttribute('aria-label','Garden bed');
 
   const f=document.createDocumentFragment();
   // Beat dots
   const br=h('div','beat-indicator');
+  br.setAttribute('role','group');
+  br.setAttribute('aria-label','Season beats');
+  const beatNames=['Early','Mid','Late'];
   ['E','M','L'].forEach((l,b)=>{
     const d=h('div','beat-dot',l);
     const isBeat=BEAT_PHASES.includes(S.phase);
-    if(isBeat&&S.beatIndex===b)d.classList.add('active');
-    if((isBeat&&b<S.beatIndex)||S.phase==='HARVEST'||S.phase==='REVIEW'||S.phase==='TRANSITION')d.classList.add('done');
+    const isActive=isBeat&&S.beatIndex===b;
+    const isDone=(isBeat&&b<S.beatIndex)||S.phase==='HARVEST'||S.phase==='REVIEW'||S.phase==='TRANSITION';
+    if(isActive)d.classList.add('active');
+    if(isDone)d.classList.add('done');
+    d.setAttribute('role','img');
+    d.setAttribute('aria-label',beatNames[b]+' beat'+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
     br.appendChild(d);
   });
   f.appendChild(br);
@@ -1716,6 +1724,7 @@ function renderChapterEnd(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
+  el.board.setAttribute('aria-label','Chapter end screen');
 
   const ch=CAM.currentChapter;
   const meta=CHAPTERS[ch];
@@ -1977,6 +1986,7 @@ function renderSauceSequence(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
+  el.board.setAttribute('aria-label','Sauce recipe sequence');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 11'));
@@ -2091,6 +2101,7 @@ function renderEpilogue(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
+  el.board.setAttribute('aria-label','Epilogue');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 12'));
