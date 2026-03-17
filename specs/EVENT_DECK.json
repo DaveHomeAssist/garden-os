@@ -1,4 +1,9 @@
-[
+{
+  "$schema": "garden-os-event-deck-v1",
+  "version": 1,
+  "description": "Season Engine event deck. Deterministic draw pool with chapter availability, intervention options, and character commentary.",
+  "lastUpdated": "2026-03-16",
+  "events": [
   {
     "id": "S01",
     "title": "Late Frost Advisory",
@@ -1185,4 +1190,5 @@
     "chapterAvailability": [4, 8, 12],
     "drawWeight": 0.7
   }
-]
+  ]
+}

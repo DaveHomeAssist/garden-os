@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Garden OS — Season Engine</title>
+<title>Garden OS — Season Engine v4.0</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
@@ -328,6 +328,7 @@ const COLS=8,ROWS=4,SIZE=32,MIN_PLANTED=8;
 const TRELLIS=new Set([0,1]);
 const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
 const SKEY='garden_os_v4_state',HKEY='garden_os_v4_hist',CKEY='garden_os_v4_campaign';
+const APP_VERSION='4.0';
 const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
 const SEASONS=['spring','summer','fall','winter'];
 const HOWTO_SECTIONS=[
@@ -398,7 +399,7 @@ const C={
 cherry_tom:{id:'cherry_tom',name:'Cherry Tomato',emoji:'\u{1F345}',short:'CT',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold'],conflicts:['broccoli'],chapterUnlock:1,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['pest-target','blight-prone','heat-tolerant'],sm:{spring:.5,summer:1,fall:.3}},
 pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:2,coolSeason:true,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['frost-hardy','wind-sensitive'],sm:{spring:.9,summer:.8,fall:.7}},
 peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:4,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce','radish','spinach'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
-cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:['tomato_sandwich'],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
+cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:[],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
 radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:['radish'],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy','pest-target'],sm:{spring:.9,summer:.4,fall:.85}},
 lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:3,sunIdeal:5,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish','onion','peas'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:1}},
 arugula:{id:'arugula',name:'Arugula',emoji:'\u{1F33F}',short:'ARU',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['dill','basil'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
@@ -710,22 +711,6 @@ const DIALOGUE_DB={
 "gurl":["Yield below par. The bed underproduced.","Poor harvest. Production fell short.","Low yield. The gap between potential and actual is documented.","Underperformance at harvest. The pantry receives less than projected.","Yield below threshold.","Poor production confirmed. The harvest report shows the deficit.","Low yield numbers.","Harvest below par. The pantry feels it."],
 "onion":["Thin harvest. Not much to bring inside.","Low yield. The bed tried. I am not blaming the bed.","Not much came out of that one.","Poor harvest. The kind where you stand in the yard holding three tomatoes and wondering.","Low production. The pantry is light.","Thin yield. She had seasons like this. Said you learn more from the thin ones.","Not enough to cook with. Barely enough to eat standing up in the yard.","Poor harvest. But the bed is still there. The soil is still there."]
 },
-"harvest_sauce_ingredients_complete":{
-"gurl":["Harvest inventory matches target recipe. Yield sufficient. Season objective complete."],
-"onion":["Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying."]
-},
-"challenge_accepted":{
-"gurl":["Challenge constraint active. The modifier is in effect for the full season.","Challenge accepted. The constraint is now load-bearing.","Modifier engaged. The challenge rules apply to every placement.","Challenge registered. Bonus score available at completion.","Constraint accepted. The season is harder now.","Challenge active. The bed operates under additional rules.","Modifier applied. The challenge is in effect.","Challenge confirmed. The season just got more specific."],
-"onion":["You took the challenge. That is Year 3 confidence. Earn it.","Challenge accepted. The bed does not know it got harder. You do.","Constraint active. You chose this. Remember that when the score comes back.","Challenge mode. The kind of season where every cell matters twice as much.","You signed up for harder. I respect that.","Challenge engaged. The bed is the same bed. The rules are different.","That is a commitment. Make it count.","Challenge on. The kind of decision she would have made."]
-},
-"challenge_passed":{
-"gurl":["Challenge passed. Constraint honored through all three beats. Bonus score applied.","Challenge complete. The bed operated under restriction and held.","Constraint satisfied. The bonus is earned.","Challenge cleared. Full compliance with the modifier.","Passed. The challenge constraint held from planning through scoring.","Challenge complete. The bed proved it can perform under pressure.","Constraint honored. Challenge bonus applied.","Passed under challenge conditions. That distinction matters."],
-"onion":["You passed. Under the harder rules. That is not just a score. That is proof.","Challenge cleared. The kind of result that changes how you see the bed.","Passed. I watched you work through that constraint and I did not say anything.","Challenge complete. The bed held. You held. Everything held.","Cleared. Under pressure. Under constraint.","You did the hard version and you passed. I need a minute.","Challenge passed. She never backed away from a hard season either.","Clean challenge pass. That goes in the journal. That stays in the journal."]
-},
-"challenge_failed":{
-"gurl":["Challenge failed. The constraint was violated. No bonus applied.","Challenge incomplete. The modifier was not honored.","Failed. The challenge required full compliance.","Challenge constraint broken. The bonus is forfeited.","Failed challenge. The constraint was clear.","Challenge not met. The season score stands without the bonus.","Constraint violated. Challenge failed.","Challenge failed. Retry available in a future season."],
-"onion":["Missed it. Close, but missed.","Challenge failed. That happens. The Phillies have been eliminated in October more times than I can count.","Did not clear the challenge. The bed is still good.","Failed. I watched you try. That counts for something.","Missed the challenge. Not the season, just the challenge.","Challenge not met. It will be there next time.","Close. The kind of close that hurts more than not trying.","Did not pass the challenge. The bed moves on. You move on."]
-},
 "season_spring_start":{
 "gurl":["Spring. New season. The bed is open for placement. Begin.","Spring season active. Cool-season crops have the advantage.","Opening day. The bed is clear. The scoring engine is live.","Spring. The soil is ready. Whether you are ready is the question.","New season. Spring conditions active. The light is increasing.","Spring loaded. Score target posted. Crop roster updated.","Fresh season. Spring. The bed has been resting since fall.","Spring. The beginning. Again."],
 "onion":["Spring. The yard smells like dirt and rain and something waking up.","New season. The bed is ready.","Spring. Opening day. The part where everything is possible.","The tarp comes off. The bed is there. It is always there.","Spring again. She always started early.","New season. Fresh dirt. The whole summer ahead.","Spring. The yard looks different when the bed is open.","Opening day for the garden."]
@@ -748,8 +733,7 @@ const DIALOGUE_DB={
 },
 "chapter_12_epilogue":{
 "gurl":["Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common."],
-"onion_sauce_complete":["The bed is ready for next year, and so are you."],
-"onion_sauce_incomplete":["The bed is ready for next year."]
+"onion":["The bed is ready for next year.","The bed is ready for next year, and so are you."]
 },
 "phillies_spring":{
 "gurl":["I do not follow baseball. I follow compliance metrics. Both involve counting failures.","Spring training data is not predictive. Neither is a first-season garden score.","The Phillies open their season and the city loses its composure.","Opening day. The only data point that matters less than a spring training record is a first-season score prediction.","Baseball returns. The city's attention drifts. The bed's scoring engine does not drift.","The ballpark is open. The garden bed is open. One of these produces reliable data."],
@@ -810,7 +794,7 @@ function sunFit(crop,L){
 }
 function supFit(crop,row){if(crop.support)return TRELLIS.has(row)?5:1;return 3}
 function shadeFit(crop,L){return L<crop.sunMin?Math.max(1,crop.shadeScore*.6):crop.shadeScore}
-function accFit(crop,row){const as=(ROWS-1-row)/(ROWS-1);return crop.tall?3:3+as*2}
+function accFit(crop,row){const as=row/(ROWS-1);return crop.tall?3:3+as*2}
 function seaFit(crop,season){
   if(season==='spring')return crop.coolSeason?5:3;
   if(season==='summer')return crop.coolSeason?2:5;
@@ -958,7 +942,13 @@ function migrateCampaign(c){
   for(const k of Object.keys(d)){if(c[k]===undefined)c[k]=d[k]}
   return c;
 }
-function loadCampaign(){try{const r=localStorage.getItem(CKEY);if(r){const p=JSON.parse(r);if(p&&p.mode)return migrateCampaign(p)}}catch(e){}return null}
+function loadCampaign(){
+  const parsed = safeParseStorageJSON(CKEY, null);
+  if(parsed && typeof parsed==='object' && !Array.isArray(parsed) && parsed.mode){
+    return migrateCampaign(parsed);
+  }
+  return null;
+}
 
 /* ===== DIALOGUE SYSTEM ===== */
 function selectLine(pool,triggerKey,charKey){
@@ -968,8 +958,12 @@ function selectLine(pool,triggerKey,charKey){
   if(!CAM.dialogueHistory[hk])CAM.dialogueHistory[hk]=[];
   const recent=CAM.dialogueHistory[hk];
   let filtered=pool.filter(l=>!recent.includes(l));
-  if(!filtered.length){CAM.dialogueHistory[hk]=[];filtered=pool}
-  const chosen=filtered[Math.floor(Math.random()*filtered.length)];
+  if(!filtered.length){recent.length=0;filtered=pool}
+  let seed=((S?S.chapter:(CAM.currentChapter||0))*1000+recent.length*97)|0;
+  const sk=triggerKey+'|'+charKey;
+  for(let i=0;i<sk.length;i++)seed=(seed*31+sk.charCodeAt(i))|0;
+  const pick=seedRng(seed||1);
+  const chosen=filtered[Math.floor(pick()*filtered.length)];
   recent.push(chosen);
   if(recent.length>3)recent.shift();
   return chosen;
@@ -1069,7 +1063,9 @@ function buildCarryForward(S,cf){
     if(!c.cropId){nfm[k]=0;continue}
     const fam=C[c.cropId]?C[c.cropId].faction:null;if(fam)nff[k]=fam;
     if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
-    if(HEAVY.includes(c.cropId)){if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);else nfm[k]=-.3}else nfm[k]=prev<0?prev:0;
+    if(prevFam===fam){nfm[k]=Math.max(-1.5,(prev<0?prev:0)-(HEAVY.includes(c.cropId)?.3:.15))}
+    else if(HEAVY.includes(c.cropId))nfm[k]=-.3;
+    else nfm[k]=0;
   }
   cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
   cf.infrastructureMap={};
@@ -1112,6 +1108,7 @@ function mkSeason(ch,cf){
       cf.eventMemory=nextMemory;
     }
   }
+  // _version tracks save-state schema (v3), not product version (APP_VERSION). v4 reuses the v3 save format.
   return{_version:3,phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
 }
 
@@ -1141,10 +1138,48 @@ function migrateState(s){
   }
   return s;
 }
+function safeParseStorageJSON(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return fallback;
+    return JSON.parse(raw);
+  }catch(e){
+    return fallback;
+  }
+}
+// Persisted engine state can be partial or stale; normalize before boot/render.
+function normalizeLoadedState(state){
+  if(!state || typeof state!=='object' || Array.isArray(state)) return null;
+  const next = migrateState(state);
+  if(!Array.isArray(next.grid) || next.grid.length!==SIZE) return null;
+  if(next.selectedCrop && !C[next.selectedCrop]) next.selectedCrop = null;
+  next.selectedCell = Number.isInteger(next.selectedCell) && next.selectedCell >= 0 && next.selectedCell < next.grid.length
+    ? next.selectedCell
+    : null;
+  next.eraserMode = !!next.eraserMode;
+  if(!Array.isArray(next.eventLog)) next.eventLog = [];
+  if(!Array.isArray(next.interventionLog)) next.interventionLog = [];
+  if(!Array.isArray(next.eventAffectedCells)) next.eventAffectedCells = [];
+  if(next.phase!=='PLANNING'){
+    next.selectedCrop = null;
+    next.eraserMode = false;
+  }
+  return next;
+}
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){console.warn('Save failed:',e);showSaveWarning()}}
-function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return migrateState(p)}}catch(e){}return null}
-function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-12)}catch(e){return[]}}
-function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-12)))}catch(e){}}
+function load(){
+  const parsed = safeParseStorageJSON(SKEY, null);
+  if(parsed && parsed.phase) return normalizeLoadedState(parsed);
+  return null;
+}
+function loadH(){
+  const parsed = safeParseStorageJSON(HKEY, []);
+  return Array.isArray(parsed) ? parsed.slice(-12) : [];
+}
+function saveH(h){
+  const history = Array.isArray(h) ? h.slice(-12) : [];
+  try{localStorage.setItem(HKEY,JSON.stringify(history))}catch(e){}
+}
 
 // Centralized score source — eliminates NaN risk from partial objects
 function safeScore(){
@@ -1161,6 +1196,23 @@ function clearTransientState(){
   S.swapFirstCell=null;
   S.eventAffectedCells=[];
   S._cachedBedScore=null;
+}
+function setInspectMode(){
+  if(!S) return;
+  S.selectedCrop = null;
+  S.eraserMode = false;
+  S.interventionMode = null;
+  S.swapFirstCell = null;
+}
+function setSelectedCropTool(cropId){
+  if(!S || !C[cropId]) return;
+  S.selectedCrop = cropId;
+  S.eraserMode = false;
+}
+function toggleEraserTool(){
+  if(!S || S.phase!=='PLANNING') return;
+  S.eraserMode = !S.eraserMode;
+  S.selectedCrop = null;
 }
 
 /* ===== DOM ===== */
@@ -1368,7 +1420,8 @@ function renderCtrl(){
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
   eb.disabled=S.phase!=='PLANNING';
   eb.setAttribute('aria-pressed',S.eraserMode?'true':'false');
-  eb.onclick=()=>{S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()};
+  eb.setAttribute('aria-label','Eraser tool (E)');
+  eb.onclick=()=>{toggleEraserTool();render()};
   f.appendChild(eb);
 
   const chap=CAM&&CAM.mode==='freeplay'?99:S.chapter;
@@ -1380,13 +1433,14 @@ function renderCtrl(){
       const locked=crop.chapterUnlock>chap;
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
       btn.setAttribute('aria-label',crop.name+(locked?' (locked)':''));
+      btn.setAttribute('aria-pressed',S.selectedCrop===crop.id?'true':'false');
       btn.disabled=S.phase!=='PLANNING'||locked;
       const em=h('span','emoji',crop.emoji);
       const tw=h('div','crop-text');
       tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
       tw.appendChild(h('span','tags',crop.short+(crop.support?' \u00b7 trellis':'')+(crop.tall?' \u00b7 tall':'')));
       btn.appendChild(em);btn.appendChild(tw);
-      if(!locked)btn.onclick=()=>{S.selectedCrop=crop.id;S.eraserMode=false;render()};
+      if(!locked)btn.onclick=()=>{setSelectedCropTool(crop.id);render()};
       cg.appendChild(btn);
     }
     grp.appendChild(cg);f.appendChild(grp);
@@ -1429,11 +1483,11 @@ function renderBoard(){
   el.board.setAttribute('aria-label','Garden bed');
 
   const f=document.createDocumentFragment();
-  // Beat dots
+  // Phase dots
   const br=h('div','beat-indicator');
   br.setAttribute('role','group');
-  br.setAttribute('aria-label','Season beats');
-  const beatNames=['Early','Mid','Late'];
+  br.setAttribute('aria-label','Season phases');
+  const phaseNames=['Early','Mid','Late'];
   ['E','M','L'].forEach((l,b)=>{
     const d=h('div','beat-dot',l);
     const isBeat=BEAT_PHASES.includes(S.phase);
@@ -1442,7 +1496,7 @@ function renderBoard(){
     if(isActive)d.classList.add('active');
     if(isDone)d.classList.add('done');
     d.setAttribute('role','img');
-    d.setAttribute('aria-label',beatNames[b]+' beat'+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
+    d.setAttribute('aria-label',phaseNames[b]+' phase'+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
     br.appendChild(d);
   });
   f.appendChild(br);
@@ -1741,12 +1795,12 @@ function renderRes(){
     f.appendChild(h('h3',null,'Events'));
     for(const en of S.eventLog){
       const ev=ED.find(e=>e.id===en.eventId);
-      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+') '+en.affectedCells.length+' cells'));
+      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+' phase) '+en.affectedCells.length+' cells'));
     }
   }
   if(S.interventionLog.length){
     f.appendChild(h('h3',null,'Interventions'));
-    for(const en of S.interventionLog)f.appendChild(h('div',null,['Early','Mid','Late'][en.beatIndex]+': '+en.type));
+    for(const en of S.interventionLog)f.appendChild(h('div',null,['Early','Mid','Late'][en.beatIndex]+' phase: '+en.type));
   }
 
   // Pantry
@@ -2065,6 +2119,7 @@ function handleChapter11Harvest(){
     CAM.sauceComplete=true;
     CAM.keepsakes.sauce_card={earnedCh:11,timestamp:Date.now()};
     CAM.mode='sauce_sequence';
+    if(DIALOGUE_DB.chapter_11_sauce_moment)setTimeout(()=>fireDialogue('chapter_11_sauce_moment'),500);
     saveCampaign();
     render();
   }else{
@@ -2119,6 +2174,7 @@ function renderSauceSequence(){
   card.appendChild(sr);
 
   // GURL line (appears after items)
+  const sauceMoment=DIALOGUE_DB.chapter_11_sauce_moment||{};
   const gurlSlot=h('div','narrator-slot char-gurl-slot');
   gurlSlot.id='sauce-gurl';
   const gh=h('div','char-head');
@@ -2126,7 +2182,7 @@ function renderSauceSequence(){
   const gnEl=h('span','char-name','GURL');gnEl.style.color='var(--char-gurl)';
   gh.appendChild(gnEl);
   gurlSlot.appendChild(gh);
-  gurlSlot.appendChild(h('div','char-line','Harvest inventory matches target recipe. Yield sufficient. Season objective complete.'));
+  gurlSlot.appendChild(h('div','char-line',(sauceMoment.gurl&&sauceMoment.gurl[0])||'Harvest inventory matches target recipe. Yield sufficient. Season objective complete.'));
   card.appendChild(gurlSlot);
 
   // Onion Man line (appears after GURL)
@@ -2137,7 +2193,7 @@ function renderSauceSequence(){
   const onEl=h('span','char-name','Onion Man');onEl.style.color='var(--char-onion)';
   oh.appendChild(onEl);
   onionSlot.appendChild(oh);
-  const sauceLine=h('div','char-line sauce-onion-line','Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying.');
+  const sauceLine=h('div','char-line sauce-onion-line',(sauceMoment.onion&&sauceMoment.onion[0])||'Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying.');
   onionSlot.appendChild(sauceLine);
   card.appendChild(onionSlot);
 
@@ -2276,13 +2332,14 @@ function renderEpilogue(){
   card.appendChild(sec4);
 
   // GURL final assessment
+  const epilogueMoment=DIALOGUE_DB.chapter_12_epilogue||{};
   const na=h('div','narrator-area');
   const gurlSlot=h('div','narrator-slot visible');
   const gh=h('div','char-head');
   gh.appendChild(h('span','char-emoji','\u{1F33F}'));
   gh.appendChild(h('span','char-name','GURL'));
   gurlSlot.appendChild(gh);
-  gurlSlot.appendChild(h('div','char-line','Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.'));
+  gurlSlot.appendChild(h('div','char-line',(epilogueMoment.gurl&&epilogueMoment.gurl[0])||'Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.'));
   na.appendChild(gurlSlot);
 
   // Onion Man final line
@@ -2291,9 +2348,10 @@ function renderEpilogue(){
   oh.appendChild(h('span','char-emoji','\u{1F9C5}'));
   oh.appendChild(h('span','char-name','Onion Man'));
   onionSlot.appendChild(oh);
+  const onionPool=epilogueMoment.onion||[];
   const onionLine=CAM.sauceComplete?
-    'The bed is ready for next year, and so are you.':
-    'The bed is ready for next year.';
+    (onionPool[1]||onionPool[0]||'The bed is ready for next year, and so are you.'):
+    (onionPool[0]||'The bed is ready for next year.');
   onionSlot.appendChild(h('div','char-line',onionLine));
   na.appendChild(onionSlot);
   card.appendChild(na);
@@ -2497,13 +2555,21 @@ function cellClick(i){
   S._cachedBedScore=null;
   if(S.interventionMode){execIntervention(i);return}
   if(S.phase==='PLANNING'){
-    pushUndo();
     const prevCropId=S.grid[i].cropId;
+    let changed=false;
     if(S.eraserMode){
-      S.grid[i].cropId=null;
+      if(prevCropId){
+        pushUndo();
+        S.grid[i].cropId=null;
+        changed=true;
+      }
     }else if(S.selectedCrop){
-      S.grid[i].cropId=S.selectedCrop;
-      if(CAM){
+      if(prevCropId!==S.selectedCrop){
+        pushUndo();
+        S.grid[i].cropId=S.selectedCrop;
+        changed=true;
+      }
+      if(changed&&CAM){
         CAM.placementCount++;
         // Trigger dialogue
         const trigger=determinePlacementTrigger(i,S.selectedCrop);
@@ -2521,7 +2587,9 @@ function cellClick(i){
         saveCampaign();
       }
     }
-    S.selectedCell=i;save();render();
+    S.selectedCell=i;
+    if(!changed){ render(); return; }
+    save();render();
     // Plant bounce animation
     if(S.selectedCrop&&!S.eraserMode){
       const grid=el.board.querySelector('.grid');
@@ -2566,6 +2634,7 @@ function doCommit(){
 /* ===== BEAT ===== */
 function startBeat(){
   S.beatTokenAvailable=true;S.interventionMode=null;S.swapFirstCell=null;
+  // Mulch is intentionally persistent: it carries through the season and into carry-forward infrastructure.
   for(const c of S.grid)if(c.interventionFlag==='protected'||c.interventionFlag==='companion_patched')c.interventionFlag=null;
 
   // Events only fire in Ch6+ for campaign (or always in freeplay)
@@ -2607,9 +2676,13 @@ function startBeat(){
   }
 }
 
+function hasLoggedCurrentEventForBeat(){
+  return !!(S&&S.currentEvent&&S.eventLog.some(en=>en.eventId===S.currentEvent.id&&en.beatIndex===S.beatIndex));
+}
+
 function advanceBeat(){
   if(S.beatTokenAvailable&&S.currentEvent){doAcceptLoss();S.currentEvent=null;}
-  if(S.currentEvent&&!S.eventAffectedCells.length){
+  if(S.currentEvent&&!hasLoggedCurrentEventForBeat()){
     const aff=applyEvent(S.currentEvent,S.grid);
     S.eventAffectedCells=aff;
     S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
@@ -2817,9 +2890,9 @@ document.addEventListener('keydown',e=>{
   if(inField)return;
   if(!S)return;
   if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo();return}
-  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()}}
+  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){toggleEraserTool();render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
-  if(e.key==='Escape'){if(S){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;render()}}
+  if(e.key==='Escape'){if(S){setInspectMode();render()}}
 });
 document.addEventListener('keydown',e=>{
   if(!S)return;

@@ -58,7 +58,7 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 
 | Domain | Canonical Source |
 |--------|-----------------|
-| Data model | `gos-schema.json` + `SCHEMA.md` |
+| Data model | `gos-schema.json` |
 | Scoring algorithm | `specs/SCORING_RULES.md` |
 | Season engine | `specs/SEASON_ENGINE_SPEC.md` |
 | Crop definitions | `specs/CROP_SCORING_DATA.json` |

@@ -290,8 +290,8 @@
   <!-- ═══ RESOLVED ═══ -->
   <section class="issue-group" data-status="done">
     <button class="group-toggle" type="button" aria-expanded="false">
-      <span>Resolved (<span class="g-count">14</span>)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-done g-count-badge">14</span><span class="chev">&rsaquo;</span></span>
+      <span>Resolved (<span class="g-count">27</span>)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-done g-count-badge">27</span><span class="chev">&rsaquo;</span></span>
     </button>
     <div class="group-body">
       <div class="card-grid">
@@ -396,7 +396,7 @@
           <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
           <div class="card-title">Cage 4x8 preset dimension swap fixed</div>
           <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd><code>setPreset(8,4)</code> &rarr; <code>setPreset(4,8)</code></dd><dt>Location</dt><dd>Planner L4020</dd></dl>
+          <dl class="card-detail"><dt>Fix</dt><dd><code>setPreset(8,4)</code> &rarr; <code>setPreset(4,8)</code></dd><dt>Location</dt><dd>Planner L5418 (danger-zone reset)</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="planner">
           <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
@@ -427,6 +427,30 @@
           <div class="card-title">ARIA pass: labels, roles, and pressed states</div>
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Fix</dt><dd>Bed inputs labeled, crop search aria-label, palette items role=button, category filters radiogroup, tool buttons aria-pressed, warn badge role=status</dd><dt>Location</dt><dd>Planner: bed inputs, palette, toolbar, notes badge</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Planner reload path now survives malformed storage and stale restore state</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Snapshot restore validates shape, workspace restore clears transient pointer state, selection/focus normalize, and <code>sunDirection</code> now persists through save/load without changing the storage schema.</dd><dt>Location</dt><dd>Planner persistence, restore, tutorial targets</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Responsive</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Planner shell now gives the board priority at medium and mobile widths</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Side rails shrink before the board, mobile stacks the board first, and collapsed sidebars keep a stable toggle height instead of stretching the page.</dd><dt>Location</dt><dd>Planner app shell and sidebar breakpoints</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="planner">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Planner menu and confirm dialogs now open with focus and return it on close</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Settings menu focuses the first row, traps Tab while open, and restores focus to the trigger. Confirm dialog now focuses an action button and returns focus when dismissed.</dd><dt>Location</dt><dd>Planner settings menu and confirm dialog</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
+          <div class="card-title">Season Engine planning clicks no longer masquerade as edits when nothing changes</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Fix</dt><dd>Neutral clicks inspect/select only, same-crop clicks no longer fake-save, empty eraser clicks are harmless, and <code>Escape</code> returns to neutral inspect behavior in v3/v4.</dd><dt>Location</dt><dd>Season Engine v3/v4 planning interaction flow</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="engine">
           <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>

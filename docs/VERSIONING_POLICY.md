@@ -117,19 +117,19 @@ Current state as of 2026-03-16:
 |----------|----------------|-----------------|--------|
 | Home hub (index.html) | v1.0 | Garden OS v4.3+ | Active |
 | Planner (garden-planner-v4.html) | v4.3 | Schema v1, current product | Active |
-| Season Engine (garden-league-simulator-v3.html) | v3 | Standalone (own localStorage) | Active |
-| Season Engine v4 (brand refactor) | v4 | v3 game engine + brand tokens | Draft |
+| Season Engine (garden-league-simulator-v3.html) | APP_VERSION 3.0 | Standalone (own localStorage) | Active |
+| Season Engine v4 (garden-league-simulator-v4.html) | APP_VERSION 4.0 | v3 game engine + brand tokens | Draft |
 | Build Guide | Doc v1.0 | Physical cage system | Active |
 | Ops Guide | Doc v1.0 | Cage system, Planner v4.3+ | Active |
 | gos-schema.json | Schema v1 | Garden OS v4.3+ | Active |
 | SCORING_RULES.md | Spec v1.0 | Planner v4.3, Season Engine v3 | Active |
 | CROP_SCORING_DATA.json | Data v1 | Planner v4.3, Season Engine v3 | Active |
 | DIALOGUE_ENGINE.json | Data v1 | Season Engine v3 | Active |
-| EVENT_DECK.json | **Unversioned** | Season Engine v3 | Active (needs header) |
+| EVENT_DECK.json | v1 | Season Engine v3, v4 | Active |
 | SEASON_ENGINE_SPEC.md | Doc v1.0 | Season Engine v3 | Active |
-| VOICE_BIBLE.md | **Unversioned** | Season Engine v3, Planner v4.3 | Active (needs header) |
-| MIGRATION-CONTRACT.md | **Unversioned** | Schema v1 | Active (needs header) |
-| HANDOFF.md | **Unversioned** | Phase 1 complete | Active (needs header) |
+| VOICE_BIBLE.md | Doc v1.0 | Season Engine v3, Planner v4.3 | Active |
+| MIGRATION-CONTRACT.md | Doc v1.0 | Schema v1 | Active |
+| HANDOFF.md | Doc v1.0 | Phase 1 complete | Active |
 | CLAUDE.md | **Unversioned** | All tools | Active |
 
 ---
@@ -138,12 +138,12 @@ Current state as of 2026-03-16:
 
 | Issue | Location | Resolution |
 |-------|----------|------------|
-| SCHEMA.md conflates app version and schema version | Line 3: "Version: 1 · App: v4.3" | Separate: "Schema Version: 1" and "Compatible With: Garden OS v4.3" |
+| SCHEMA.md conflates app version and schema version | Removed | Resolved — removed SCHEMA.md, CLAUDE.md updated to reference gos-schema.json only |
 | SEASON_ENGINE_SPEC.md references "schema v2" | Line 5 depends-on block | Fix to "schema v1" — v2 does not exist |
-| EVENT_DECK.json has no version wrapper | Bare array, no metadata | Wrap in object with `$schema`, `version`, `description` |
-| VOICE_BIBLE.md lacks metadata header | No frontmatter | Add standard header |
-| MIGRATION-CONTRACT.md lacks metadata header | No frontmatter | Add standard header |
-| HANDOFF.md lacks formal version field | Has date but no version | Add standard header |
+| EVENT_DECK.json has no version wrapper | `specs/EVENT_DECK.json` | Resolved — wrapped in versioned object with `$schema`, `version`, `description` |
+| VOICE_BIBLE.md lacks metadata header | `docs/VOICE_BIBLE.md` | Resolved — header added |
+| MIGRATION-CONTRACT.md lacks metadata header | `docs/MIGRATION-CONTRACT.md` | Resolved — header added |
+| HANDOFF.md lacks formal version field | `docs/HANDOFF.md` | Resolved — header added |
 | CLAUDE.md has no self-version | References other versions but not its own | Add comment header or keep unversioned (agent instructions are living docs) |
 | 5 doc files lack any metadata | Various in docs/ | Add headers progressively |
 
@@ -154,7 +154,7 @@ Current state as of 2026-03-16:
 Label every change with one of these:
 
 | Type | When to use | Examples |
-|------|-------------|---------|
+`|------|-------------|---------|
 | **Patch** | No logic change | Typo fix, copy edit, CSS polish |
 | **Minor** | New content or behavior, backward compatible | New crop field, new doc section, new UI panel |
 | **Major** | Logic change, data migration, guide rewrite | Scoring formula change, schema v2, guide restructure |

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Garden OS — Season Engine</title>
+<title>Garden OS — Season Engine v3.0</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
@@ -290,6 +290,7 @@ const COLS=8,ROWS=4,SIZE=32,MIN_PLANTED=8;
 const TRELLIS=new Set([0,1]);
 const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
 const SKEY='garden_os_v3_state',HKEY='garden_os_v3_hist',CKEY='garden_os_v3_campaign';
+const APP_VERSION='3.0';
 const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
 const SEASONS=['spring','summer','fall','winter'];
 const HOWTO_SECTIONS=[
@@ -914,7 +915,13 @@ function migrateCampaign(c){
   for(const k of Object.keys(d)){if(c[k]===undefined)c[k]=d[k]}
   return c;
 }
-function loadCampaign(){try{const r=localStorage.getItem(CKEY);if(r){const p=JSON.parse(r);if(p&&p.mode)return migrateCampaign(p)}}catch(e){}return null}
+function loadCampaign(){
+  const parsed = safeParseStorageJSON(CKEY, null);
+  if(parsed && typeof parsed==='object' && !Array.isArray(parsed) && parsed.mode){
+    return migrateCampaign(parsed);
+  }
+  return null;
+}
 
 /* ===== DIALOGUE SYSTEM ===== */
 function selectLine(pool,triggerKey,charKey){
@@ -1120,10 +1127,49 @@ function migrateState(s){
   }
   return s;
 }
+function safeParseStorageJSON(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return fallback;
+    return JSON.parse(raw);
+  }catch(e){
+    return fallback;
+  }
+}
+// Persisted engine state can be partial or stale; normalize before boot/render.
+function normalizeLoadedState(state){
+  if(!state || typeof state!=='object' || Array.isArray(state)) return null;
+  const next = migrateState(state);
+  if(!Array.isArray(next.grid) || next.grid.length!==SIZE) return null;
+  if(next.selectedCrop && !C[next.selectedCrop]) next.selectedCrop = null;
+  next.selectedCell = Number.isInteger(next.selectedCell) && next.selectedCell >= 0 && next.selectedCell < next.grid.length
+    ? next.selectedCell
+    : null;
+  next.eraserMode = !!next.eraserMode;
+  if(!Array.isArray(next.eventLog)) next.eventLog = [];
+  if(!Array.isArray(next.interventionLog)) next.interventionLog = [];
+  if(!Array.isArray(next.eventAffectedCells)) next.eventAffectedCells = [];
+  if(next.phase!=='PLANNING'){
+    next.selectedCrop = null;
+    next.eraserMode = false;
+  }
+  next._multiSelect = null;
+  return next;
+}
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){console.warn('Save failed:',e);showSaveWarning()}}
-function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return migrateState(p)}}catch(e){}return null}
-function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-12)}catch(e){return[]}}
-function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-12)))}catch(e){}}
+function load(){
+  const parsed = safeParseStorageJSON(SKEY, null);
+  if(parsed && parsed.phase) return normalizeLoadedState(parsed);
+  return null;
+}
+function loadH(){
+  const parsed = safeParseStorageJSON(HKEY, []);
+  return Array.isArray(parsed) ? parsed.slice(-12) : [];
+}
+function saveH(h){
+  const history = Array.isArray(h) ? h.slice(-12) : [];
+  try{localStorage.setItem(HKEY,JSON.stringify(history))}catch(e){}
+}
 
 // Centralized score source — eliminates NaN risk from partial objects
 function safeScore(){
@@ -1141,6 +1187,26 @@ function clearTransientState(){
   S.swapFirstCell=null;
   S.eventAffectedCells=[];
   S._cachedBedScore=null;
+}
+function setInspectMode(){
+  if(!S) return;
+  S.selectedCrop = null;
+  S.eraserMode = false;
+  S.interventionMode = null;
+  S.swapFirstCell = null;
+  S._multiSelect = null;
+}
+function setSelectedCropTool(cropId){
+  if(!S || !C[cropId]) return;
+  S.selectedCrop = cropId;
+  S.eraserMode = false;
+  S._multiSelect = null;
+}
+function toggleEraserTool(){
+  if(!S || S.phase!=='PLANNING') return;
+  S.eraserMode = !S.eraserMode;
+  S.selectedCrop = null;
+  S._multiSelect = null;
 }
 
 /* ===== DOM ===== */
@@ -1345,10 +1411,10 @@ function renderCtrl(){
   const f=document.createDocumentFragment();
   f.appendChild(h('h2',null,'Crops'));
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
-  eb.setAttribute('aria-pressed',S.eraserMode);
+  eb.setAttribute('aria-pressed',S.eraserMode?'true':'false');
   eb.setAttribute('aria-label','Eraser tool (E)');
   eb.disabled=S.phase!=='PLANNING';
-  eb.onclick=()=>{S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()};
+  eb.onclick=()=>{toggleEraserTool();render()};
   f.appendChild(eb);
 
   const chap=CAM&&CAM.mode==='freeplay'?99:S.chapter;
@@ -1360,13 +1426,14 @@ function renderCtrl(){
       const locked=crop.chapterUnlock>chap;
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
       btn.setAttribute('aria-label',crop.name+(locked?' (locked)':''));
+      btn.setAttribute('aria-pressed',S.selectedCrop===crop.id?'true':'false');
       btn.disabled=S.phase!=='PLANNING'||locked;
       const em=h('span','emoji',crop.emoji);
       const tw=h('div','crop-text');
       tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
       tw.appendChild(h('span','tags',crop.short+(crop.support?' \u00b7 trellis':'')+(crop.tall?' \u00b7 tall':'')));
       btn.appendChild(em);btn.appendChild(tw);
-      if(!locked)btn.onclick=()=>{S.selectedCrop=crop.id;S.eraserMode=false;render()};
+      if(!locked)btn.onclick=()=>{setSelectedCropTool(crop.id);render()};
       cg.appendChild(btn);
     }
     grp.appendChild(cg);f.appendChild(grp);
@@ -2441,11 +2508,18 @@ function cellClick(i,e){
   }
   if(S.phase==='PLANNING'){
     const prevCropId=S.grid[i].cropId;
+    let changed=false;
     if(S.eraserMode){
-      S.grid[i].cropId=null;
+      if(prevCropId){
+        S.grid[i].cropId=null;
+        changed=true;
+      }
     }else if(S.selectedCrop){
-      S.grid[i].cropId=S.selectedCrop;
-      if(CAM){
+      if(prevCropId!==S.selectedCrop){
+        S.grid[i].cropId=S.selectedCrop;
+        changed=true;
+      }
+      if(changed&&CAM){
         CAM.placementCount++;
         // Trigger dialogue
         const trigger=determinePlacementTrigger(i,S.selectedCrop);
@@ -2463,7 +2537,9 @@ function cellClick(i,e){
         saveCampaign();
       }
     }
-    S.selectedCell=i;save();render();
+    S.selectedCell=i;
+    if(!changed){ render(); return; }
+    save();render();
     // Plant bounce animation
     if(S.selectedCrop&&!S.eraserMode){
       const grid=el.board.querySelector('.grid');
@@ -3002,9 +3078,9 @@ document.addEventListener('keydown',e=>{
   }
   if(inField)return;
   if(!S)return;
-  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()}}
+  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){toggleEraserTool();render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
-  if(e.key==='Escape'){if(S){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;S._multiSelect=null;render()}}
+  if(e.key==='Escape'){if(S){setInspectMode();render()}}
 });
 document.addEventListener('keydown',e=>{
   if(!S)return;
