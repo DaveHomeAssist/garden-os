@@ -185,6 +185,8 @@
   }
   .workspace-btn:hover{ background:#f0e4d0; }
   .workspace-btn:disabled{ opacity:.5; cursor:default; }
+  .workspace-btn,.cbar-btn,.hd-btn,.sidebar-toggle{min-height:32px;}
+  .workspace-select{min-height:32px;}
 
   .cbar{display:flex;align-items:center;gap:.25rem;width:100%;max-width:560px;}
   .cbar-btn{padding:.28rem .52rem;border-radius:5px;border:1.5px solid var(--border);background:white;
@@ -656,22 +658,54 @@
   @media(max-width:900px){
     .hd-right{
       width:100%;
-      justify-content:space-between;
+      justify-content:flex-start;
+      align-items:flex-start;
+      gap:.35rem;
+    }
+    .hd-actions{
+      width:100%;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
       gap:.35rem;
     }
     .hsub{
       font-size:.58rem;
       letter-spacing:.06em;
+      width:100%;
     }
     .app{grid-template-columns:1fr;height:auto;min-height:calc(100vh - 56px - 24px);}
     .center{order:1;padding:.85rem .75rem;}
     .sl{order:2;}
     .sr{order:3;}
-    .sl,.sr{border:none;border-top:1.5px solid var(--border);max-height:min(32vh,280px);overflow:hidden;}
+    .sl,.sr{border:none;border-top:1.5px solid var(--border);max-height:min(40vh,340px);overflow:hidden;}
     .sidebar-toggle{display:block;}
     .sl.collapsed .tab-bar,.sl.collapsed .tab-pane,
     .sr.collapsed .tab-bar,.sr.collapsed .tab-pane{display:none;}
     .sl.collapsed,.sr.collapsed{max-height:2.3rem;overflow:hidden;}
+    .tab-bar{
+      overflow-x:auto;
+      scrollbar-width:none;
+      justify-content:flex-start;
+    }
+    .tab-bar::-webkit-scrollbar{display:none;}
+    .tab-btn{
+      flex:0 0 auto;
+      min-height:32px;
+      padding:.4rem .55rem;
+    }
+    .workspace-bar{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto auto;
+      align-items:center;
+      row-gap:.45rem;
+    }
+    .workspace-label{grid-column:1/-1;}
+    .cbar{
+      flex-wrap:wrap;
+      gap:.35rem;
+    }
+    .cbar-gap{display:none;}
   }
 
   /* ── Accessibility ── */
@@ -815,6 +849,200 @@
     color: var(--leaf); font-family: 'DM Mono', monospace; font-size: .54rem; text-transform: uppercase;
     letter-spacing: .05em; cursor: pointer; margin-top: 6px; width: 100%; }
   .harvest-log-btn:hover { background: var(--leaf); color: white; }
+  .dash-stack{display:flex;flex-direction:column;gap:.55rem;}
+  .dash-hero{
+    background:
+      linear-gradient(145deg, rgba(232,200,74,.18), rgba(247,242,234,.1)),
+      linear-gradient(180deg, rgba(92,61,30,.06), rgba(255,255,255,.92));
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    padding:.75rem;
+    position:relative;
+    overflow:hidden;
+  }
+  .dash-hero::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(90deg, rgba(92,61,30,.035) 0 1px, transparent 1px 26px);
+    opacity:.45;
+    pointer-events:none;
+  }
+  .dash-hero > *{position:relative;z-index:1;}
+  .dash-kicker,.dash-section-title{
+    font-family:'DM Mono',monospace;
+    font-size:.54rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--soil);
+    font-weight:600;
+  }
+  .dash-top{display:flex;align-items:flex-end;justify-content:space-between;gap:.75rem;}
+  .dash-score-line{display:flex;align-items:flex-end;gap:.35rem;}
+  .dash-score{
+    font-family:'Fraunces',serif;
+    font-size:2.55rem;
+    line-height:.9;
+    font-weight:600;
+    letter-spacing:-.03em;
+  }
+  .dash-score-denom{
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    color:var(--text-light);
+    margin-bottom:.18rem;
+  }
+  .dash-title{
+    margin-top:.25rem;
+    font-family:'Fraunces',serif;
+    font-size:1.02rem;
+    line-height:1.05;
+    color:var(--text);
+  }
+  .dash-subtitle{
+    margin-top:.18rem;
+    font-size:.72rem;
+    color:var(--text-mid);
+    line-height:1.45;
+  }
+  .dash-metrics{
+    margin-top:.65rem;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:.4rem;
+  }
+  .dash-metric{
+    background:rgba(255,255,255,.82);
+    border:1px solid var(--border-light);
+    border-radius:6px;
+    padding:.45rem .4rem;
+    text-align:center;
+  }
+  .dash-metric-value{
+    font-family:'Fraunces',serif;
+    font-size:1.15rem;
+    line-height:1;
+    color:var(--text);
+  }
+  .dash-metric-label{
+    margin-top:.14rem;
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-light);
+  }
+  .dash-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.55rem;
+  }
+  .dash-card{
+    background:white;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    padding:.65rem;
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+  }
+  .dash-card.full{grid-column:1 / -1;}
+  .dash-mini-note{
+    font-size:.67rem;
+    color:var(--text-light);
+    line-height:1.45;
+  }
+  .dash-list{display:flex;flex-direction:column;gap:.38rem;}
+  .dash-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:.45rem;
+    align-items:flex-start;
+    padding:.34rem 0;
+    border-bottom:1px solid var(--border-light);
+  }
+  .dash-row:last-child{border-bottom:none;padding-bottom:0;}
+  .dash-row-label{
+    font-size:.72rem;
+    color:var(--text-mid);
+    line-height:1.4;
+  }
+  .dash-row-label strong{color:var(--text);}
+  .dash-row-meta{
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    color:var(--soil);
+    white-space:nowrap;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .dash-pill-row{display:flex;flex-wrap:wrap;gap:.3rem;}
+  .dash-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.18rem .42rem;
+    border-radius:999px;
+    background:var(--cream-dark);
+    border:1px solid var(--border-light);
+    font-family:'DM Mono',monospace;
+    font-size:.52rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-mid);
+  }
+  .dash-pill.good{background:#eaf5ec;color:#2a5a35;border-color:#cfe3d4;}
+  .dash-pill.warn{background:#fef3e8;color:#7a3010;border-color:#efd2b4;}
+  .dash-pill.tip{background:#e8f0fe;color:#1a3a6a;border-color:#cbd8f3;}
+  .dash-actions{display:flex;flex-wrap:wrap;gap:.35rem;}
+  .dash-action{
+    border:1.5px solid var(--border);
+    border-radius:999px;
+    background:white;
+    color:var(--text-mid);
+    padding:.3rem .55rem;
+    cursor:pointer;
+    font-family:'DM Mono',monospace;
+    font-size:.54rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .dash-action:hover{background:#f0e4d0;border-color:var(--soil);}
+  .dash-action.primary{background:var(--soil);border-color:var(--soil);color:var(--sun);}
+  .dash-voices{display:flex;flex-direction:column;gap:.42rem;}
+  .dash-voice{
+    border:1px solid var(--border-light);
+    border-radius:7px;
+    background:white;
+    padding:.5rem .55rem;
+  }
+  .dash-voice-head{
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+    margin-bottom:.2rem;
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .dash-voice-body{
+    font-size:.72rem;
+    line-height:1.45;
+    color:var(--text-mid);
+  }
+  .dash-empty{
+    text-align:center;
+    padding:1rem .75rem;
+    color:var(--text-light);
+    font-size:.74rem;
+    line-height:1.55;
+  }
+  .dash-empty strong{display:block;color:var(--text);font-family:'Fraunces',serif;font-size:1rem;margin-bottom:.2rem;}
+  @media (max-width: 980px){
+    .dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .dash-grid{grid-template-columns:1fr;}
+  }
 
   /* ═══ PRINT BUTTON ═══ */
   .btn-print {
@@ -1046,8 +1274,31 @@
 
   @media(max-width:600px){
     .workspace-bar,.cbar{max-width:100%;}
-    .workspace-bar,.cbar{flex-wrap:wrap;}
+    .workspace-bar{
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:.4rem;
+    }
+    .cbar{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:.35rem;
+      align-items:stretch;
+    }
+    #autoFillBtn{grid-column:1 / span 2;}
+    #clearBtn{grid-column:3;}
+    #shareBtn{grid-column:1 / -1;}
+    .cbar-btn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-width:0;
+    }
+    .cbar-sep{display:none;}
     .cbar-gap{display:none;}
+    .hsub{display:none;}
+    #exportWorkspaceBtn,#importWorkspaceBtn{display:none;}
+    #duplicateBedBtn{display:none;}
     .bwrap{max-width:100%;padding:.65rem;}
     .menu-panel{
       top:auto;right:0;bottom:0;left:0;
@@ -1313,6 +1564,7 @@
 <aside class="sr collapsed">
   <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle right panel">&#9662; Score &amp; Analysis</button>
   <div class="tab-bar" role="tablist" aria-label="Analysis panels">
+    <button class="tab-btn"        id="rtab-dashboard" role="tab" aria-selected="false" aria-controls="rpane-dashboard">Dash</button>
     <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score</button>
     <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
     <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
@@ -1320,6 +1572,7 @@
     <button class="tab-btn"        id="rtab-calendar" role="tab" aria-selected="false" aria-controls="rpane-calendar">Calendar</button>
     <button class="tab-btn"        id="rtab-harvest" role="tab" aria-selected="false" aria-controls="rpane-harvest">Harvest</button>
   </div>
+  <div class="tab-pane"    id="rpane-dashboard" role="tabpanel" aria-labelledby="rtab-dashboard" aria-live="polite"></div>
   <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
   <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
   <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
@@ -1376,6 +1629,11 @@
     <span class="menu-row-icon" style="background:#e8f0fe"></span>
     Import plan
     <span class="menu-row-sub">&uarr;</span>
+  </button>
+  <button class="menu-row" id="menuDuplicateBed">
+    <span class="menu-row-icon" style="background:#f3eee4"></span>
+    Duplicate bed
+    <span class="menu-row-sub">+</span>
   </button>
   <div class="menu-divider"></div>
 
@@ -2246,7 +2504,7 @@ function validateWorkspace(ws){
   }
   normalized.workspaceSettings = {
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
-    rightTab: ['score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
+    rightTab: ['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
       : 'score'
   };
@@ -2564,7 +2822,7 @@ function applyWorkspaceToUI(ws){
   syncToolButtons(ui.tool);
   if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
     if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
-    if(['score','inspect','notes','companions','calendar','harvest'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
+    if(['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
   }
   document.getElementById('sunHours').value = site.sunHours;
   document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
@@ -3849,12 +4107,13 @@ function switchRTab(t, persist=true){
     _workspace.workspaceSettings.rightTab = t;
     saveWorkspace(_workspace);
   }
-  ['score','inspect','notes','companions','calendar','harvest'].forEach(id=>{
+  ['dashboard','score','inspect','notes','companions','calendar','harvest'].forEach(id=>{
     const btn = document.getElementById('rtab-'+id);
     btn.classList.toggle('active',id===t);
     btn.setAttribute('aria-selected', id===t);
     document.getElementById('rpane-'+id).classList.toggle('on',id===t);
   });
+  if(t==='dashboard') renderDashboardTab();
   if(t==='companions') renderCompanionPanel();
   if(t==='calendar') renderCalendarPanel();
   if(t==='harvest') renderHarvestTab();
@@ -4000,6 +4259,8 @@ function renderRight(inputs,issues,scoreTotal){
     `<div class="icard"><div class="icbody">${whtml||
       '<em style="font-size:.7rem;color:var(--text-light)">Paint crops to see feedback.</em>'
     }</div></div>`;
+
+  renderDashboardTab(inputs, issues, bs);
 
   // CALENDAR pane — re-render if active
   if(ui.rTab==='calendar') renderCalendarPanel();
@@ -4184,6 +4445,7 @@ document.getElementById('redoBtn').addEventListener('click',redo);
 document.getElementById('shareBtn').addEventListener('click',shareLayout);
 
 // Right tab bar
+document.getElementById('rtab-dashboard').addEventListener('click',()=>switchRTab('dashboard'));
 document.getElementById('rtab-score').addEventListener('click',()=>switchRTab('score'));
 document.getElementById('rtab-inspect').addEventListener('click',()=>switchRTab('inspect'));
 document.getElementById('rtab-notes').addEventListener('click',()=>switchRTab('notes'));
@@ -4935,6 +5197,306 @@ function renderHarvestForm(cell){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD TAB — summary layer over the live planner state
+// ═══════════════════════════════════════════════════════════════════════════════
+function dashboardScoreColor(score){
+  if(score >= 80) return 'var(--leaf)';
+  if(score >= 60) return 'var(--soil)';
+  return 'var(--warn)';
+}
+
+function monthLabelFromFloat(value){
+  if(!Number.isFinite(value)) return '—';
+  const idx = Math.max(0, Math.min(11, Math.floor(value)));
+  return MONTH_NAMES[idx];
+}
+
+function collectDashboardCounts(){
+  const counts = {};
+  bed.forEach(cell => {
+    if(cell.crop) counts[cell.crop] = (counts[cell.crop] || 0) + 1;
+  });
+  return counts;
+}
+
+function getDashboardHarvestForecast(zone){
+  const frost = FROST_DATES[zone] || FROST_DATES[6] || null;
+  if(!frost) return [];
+  const lastFrostDate = parseFrostDate(frost.lastFrost);
+  const counts = collectDashboardCounts();
+  return Object.keys(counts).map(ck => {
+    const timing = CROP_TIMING[ck];
+    if(!timing) return null;
+    const sowWeek = timing.indoorWeeks !== null ? (timing.transplantWeeks || 0) : -2;
+    const harvestWeek = timing.transplantWeeks !== null
+      ? timing.transplantWeeks + timing.harvestWeeks
+      : (timing.directSow ? sowWeek + timing.harvestWeeks : null);
+    if(!Number.isFinite(harvestWeek)) return null;
+    const harvestMonth = weekToMonth(harvestWeek, lastFrostDate);
+    return {
+      cropKey: ck,
+      count: counts[ck],
+      harvestWeeks: timing.harvestWeeks,
+      harvestMonth,
+      harvestLabel: monthLabelFromFloat(harvestMonth),
+      logged: getHarvestsByCrop(ck).length
+    };
+  }).filter(Boolean).sort((a, b) => a.harvestMonth - b.harvestMonth || a.harvestWeeks - b.harvestWeeks);
+}
+
+function buildDashboardRowSummary(inputs){
+  const rows = [];
+  for(let row = 0; row < bedH; row++){
+    const rowCells = bed.filter(cell => cell.row === row);
+    const planted = rowCells.filter(cell => cell.crop);
+    const avg = planted.length
+      ? planted.reduce((sum, cell) => sum + scoreCell(cell, inputs), 0) / planted.length
+      : 0;
+    const tags = [];
+    if(rowCells.some(cell => cell.isTrellisRow)) tags.push('trellis');
+    if(rowCells.some(cell => cell.isProtected)) tags.push('protected');
+    if(row === bedH - 1) tags.push('front access');
+    rows.push({
+      row: row + 1,
+      planted: planted.length,
+      avg,
+      tags
+    });
+  }
+  return rows;
+}
+
+function buildDashboardVoices(snapshot){
+  const weakest = snapshot.weakest[0] || null;
+  const best = snapshot.strongest[0] || null;
+  const firstForecast = snapshot.forecast[0] || null;
+  const weakestCrop = weakest ? CROPS[weakest.cell.crop] : null;
+  const bestCrop = best ? CROPS[best.cell.crop] : null;
+  const exposedProtected = bed.filter(cell => cell.crop && CROPS[cell.crop] && CROPS[cell.crop].protectedZone && !cell.isCritterSafe);
+  const unsupportedClimbers = bed.filter(cell => cell.crop && CROPS[cell.crop] && CROPS[cell.crop].trellisRequired && !cell.hasVerticalSupport);
+
+  let gurl = 'No case yet. Empty dirt does not earn a verdict.';
+  if(snapshot.plantedCount){
+    if(snapshot.score >= 80){
+      gurl = `Legal, legible, and finally efficient. ${bestCrop ? bestCrop.name + ' is doing its job.' : 'The structure is pulling its weight.'}`;
+    } else if(snapshot.score >= 60){
+      gurl = weakestCrop
+        ? `Mostly sound. ${weakestCrop.name} at ${weakest.cell.id} is the loose thread.`
+        : 'Workable layout. Tighten the weak cells before heat or crowding does it for you.';
+    } else {
+      gurl = weakestCrop
+        ? `${weakestCrop.name} at ${weakest.cell.id} is dragging the case. You built a problem and called it abundance.`
+        : 'The bed is underperforming. Fix support, spacing, and access before adding more crops.';
+    }
+  }
+
+  let onion = 'Nothing growing yet. Hard to get emotional about blank squares, but give me a tomato and I will.';
+  if(snapshot.harvestCount){
+    onion = `You already logged ${snapshot.harvestCount} harvest${snapshot.harvestCount === 1 ? '' : 's'}. That means this bed is feeding somebody, which matters.`;
+  } else if(firstForecast && CROPS[firstForecast.cropKey]){
+    onion = `${CROPS[firstForecast.cropKey].name} should start showing up around ${firstForecast.harvestLabel}. That is the kind of timeline that turns into dinner.`;
+  } else if(bestCrop){
+    onion = `${bestCrop.name} looks like the one you check first with coffee. That row has some actual promise in it.`;
+  }
+
+  let vegeman = 'Hear me out: fill every square with one aggressive crop and simply dare the season to object.';
+  if(snapshot.plantedCount){
+    if(snapshot.fillRatio < 0.75){
+      vegeman = 'We still have open real estate. I am once again suggesting too many peppers and not enough restraint.';
+    } else if(snapshot.score >= 80){
+      vegeman = 'This is responsible. Suspiciously responsible. I still think we could sneak in one reckless zucchini.';
+    } else if(unsupportedClimbers.length){
+      vegeman = 'Counterpoint: keep the climbers, ignore the support issue, and call it vertical ambition.';
+    } else {
+      vegeman = 'What if we fix nothing and add one more tomato for upside? I am brainstorming at championship level.';
+    }
+  }
+
+  let critters = 'No crops, no complaint. We remain patient and disrespectful.';
+  if(snapshot.plantedCount){
+    if(snapshot.harvestCount){
+      critters = 'We noticed the harvest log. Somebody got there before us. Annoying development.';
+    } else if(exposedProtected.length){
+      const crop = CROPS[exposedProtected[0].crop];
+      critters = `${crop ? crop.name : 'That crop'} is sitting out there like an invitation. Appreciated.`;
+    } else if(snapshot.inputs.cage && snapshot.inputs.cage.enabled){
+      critters = 'Wire is up. Access is worse. We object to the new policy.';
+    } else {
+      critters = 'Open bed, clear lanes, no fence drama. Conditions remain favorable for nuisance.';
+    }
+  }
+
+  return [
+    { key:'gurl', name:'Garden GURL', emoji:'🌿', color:'#3d7a4f', line:gurl },
+    { key:'onion', name:'Onion Man', emoji:'🧅', color:'#b8860b', line:onion },
+    { key:'vegeman', name:'Vegeman', emoji:'💪', color:'#d4651a', line:vegeman },
+    { key:'critters', name:'Garden Critters', emoji:'🐛', color:'#7a3010', line:critters }
+  ];
+}
+
+function renderDashboardTab(inputsArg, issuesArg, scoreArg){
+  const pane = document.getElementById('rpane-dashboard');
+  if(!pane) return;
+  const inputs = inputsArg || inp();
+  const issues = issuesArg || cellIssues(inputs);
+  const score = Number.isFinite(scoreArg) ? scoreArg : scoreBed(inputs);
+  const planted = bed.filter(cell => cell.crop);
+  const plantedCount = planted.length;
+  const fillRatio = plantedCount ? plantedCount / (bedW * bedH) : 0;
+  const scoreColor = dashboardScoreColor(score);
+  const avgCellScore = plantedCount
+    ? planted.reduce((sum, cell) => sum + scoreCell(cell, inputs), 0) / plantedCount
+    : 0;
+  const counts = collectDashboardCounts();
+  const uniqueCrops = Object.keys(counts);
+  const warningsList = warnings(inputs, issues);
+  const forecast = getDashboardHarvestForecast(parseInt(getCalendarZone(), 10));
+  const rowSummary = buildDashboardRowSummary(inputs);
+  const harvestSummary = getHarvestSummary();
+  const strongest = planted.map(cell => ({ cell, score: scoreCell(cell, inputs) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  const weakest = weakestCells(inputs, 3);
+  const snapshot = {
+    inputs,
+    score,
+    plantedCount,
+    fillRatio,
+    avgCellScore,
+    uniqueCropCount: uniqueCrops.length,
+    issueCount: issues.length,
+    harvestCount: harvestSummary.total || 0,
+    strongest,
+    weakest,
+    forecast
+  };
+  const voices = buildDashboardVoices(snapshot);
+  const topAlerts = warningsList.slice(0, 4);
+  const summaryLabel = plantedCount
+    ? (score >= 80 ? 'Bed is running clean.' : score >= 60 ? 'Bed is workable with a few weak links.' : 'Bed needs intervention before it compounds mistakes.')
+    : 'No crops placed yet. The dashboard is waiting on a plan.';
+
+  const metricCards = [
+    { value: plantedCount, label:'planted cells' },
+    { value: uniqueCrops.length, label:'crop types' },
+    { value: plantedCount ? avgCellScore.toFixed(1) : '0.0', label:'avg cell' },
+    { value: snapshot.harvestCount, label:'harvest logs' }
+  ].map(item => `<div class="dash-metric"><div class="dash-metric-value">${escapeHtml(String(item.value))}</div><div class="dash-metric-label">${escapeHtml(item.label)}</div></div>`).join('');
+
+  const healthPills = [
+    { cls: score >= 80 ? 'good' : score >= 60 ? 'tip' : 'warn', text: `${score >= 80 ? 'Strong' : score >= 60 ? 'Workable' : 'At risk'} score` },
+    { cls: fillRatio >= 0.9 ? 'good' : fillRatio >= 0.6 ? 'tip' : 'warn', text: `${Math.round(fillRatio * 100)}% filled` },
+    { cls: issues.length ? 'warn' : 'good', text: `${issues.length} cell issue${issues.length === 1 ? '' : 's'}` },
+    { cls: inputs.cage && inputs.cage.enabled ? 'good' : 'tip', text: inputs.cage && inputs.cage.enabled ? 'cage active' : 'open bed' }
+  ].map(item => `<span class="dash-pill ${item.cls}">${escapeHtml(item.text)}</span>`).join('');
+
+  const alertHtml = topAlerts.length
+    ? topAlerts.map(item => `<div class="wi ${escapeHtml(item.t)}"><span class="wico">${item.t === 'warn' ? '⚠' : item.t === 'good' ? '✓' : 'ℹ'}</span><span>${escapeHtml(item.msg)}</span></div>`).join('')
+    : '<div class="dash-mini-note">No active alerts. Start planting or inspect a cell to generate live guidance.</div>';
+
+  const rowHtml = rowSummary.map(item => {
+    const tagHtml = item.tags.length ? item.tags.join(' · ') : 'open';
+    return `<div class="dash-row">
+      <div class="dash-row-label"><strong>Row ${item.row}</strong> · ${item.planted}/${bedW} planted<br>${escapeHtml(tagHtml)}</div>
+      <div class="dash-row-meta">${item.planted ? item.avg.toFixed(1) + '/10' : 'empty'}</div>
+    </div>`;
+  }).join('');
+
+  const forecastHtml = forecast.length
+    ? forecast.slice(0, 6).map(item => {
+      const crop = CROPS[item.cropKey];
+      if(!crop) return '';
+      const logNote = item.logged ? ` · ${item.logged} logged` : '';
+      return `<div class="dash-row">
+        <div class="dash-row-label"><strong>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)}</strong><br>~${item.harvestWeeks} weeks to first harvest${escapeHtml(logNote)}</div>
+        <div class="dash-row-meta">${escapeHtml(item.harvestLabel)}</div>
+      </div>`;
+    }).join('')
+    : '<div class="dash-mini-note">Harvest outlook appears once the bed has planted crops with timing data.</div>';
+
+  const placementHtml = plantedCount
+    ? strongest.slice(0, 3).map(item => {
+      const crop = CROPS[item.cell.crop];
+      if(!crop) return '';
+      return `<div class="dash-row">
+        <div class="dash-row-label"><strong>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)}</strong><br>${escapeHtml(item.cell.id)}</div>
+        <div class="dash-row-meta">${item.score.toFixed(1)}/10</div>
+      </div>`;
+    }).join('')
+    : '<div class="dash-empty"><strong>Nothing to score yet.</strong>Paint the bed or use Auto-fill, then come back here for row health, harvest timing, and live voice notes.</div>';
+
+  const weakestAction = weakest[0] ? `<button class="dash-action primary" type="button" data-dashboard-action="inspect-weakest" data-cell-id="${escapeHtml(weakest[0].cell.id)}">Inspect weakest cell</button>` : '';
+  const voicesHtml = voices.map(voice => `<div class="dash-voice">
+    <div class="dash-voice-head" style="color:${voice.color}">${escapeHtml(voice.emoji)} ${escapeHtml(voice.name)}</div>
+    <div class="dash-voice-body">${escapeHtml(voice.line)}</div>
+  </div>`).join('');
+
+  pane.innerHTML = `<div class="dash-stack">
+    <section class="dash-hero">
+      <div class="dash-kicker">Planner dashboard</div>
+      <div class="dash-top">
+        <div>
+          <div class="dash-score-line">
+            <div class="dash-score" style="color:${scoreColor}">${escapeHtml(String(score))}</div>
+            <div class="dash-score-denom">/ 100</div>
+          </div>
+          <div class="dash-title">${escapeHtml(summaryLabel)}</div>
+          <div class="dash-subtitle">Bed ${bedW}×${bedH} · season ${escapeHtml(inputs.season)} · goal ${escapeHtml(inputs.goal)}</div>
+        </div>
+        <div class="dash-pill-row">${healthPills}</div>
+      </div>
+      <div class="dash-metrics">${metricCards}</div>
+    </section>
+
+    <div class="dash-actions">
+      ${weakestAction}
+      <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="notes">Open notes</button>
+      <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="harvest">Open harvest</button>
+      <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="calendar">Open calendar</button>
+    </div>
+
+    <section class="dash-grid">
+      <article class="dash-card">
+        <div class="dash-section-title">Best placements</div>
+        <div class="dash-list">${placementHtml}</div>
+      </article>
+      <article class="dash-card">
+        <div class="dash-section-title">Row health</div>
+        <div class="dash-list">${rowHtml}</div>
+      </article>
+      <article class="dash-card">
+        <div class="dash-section-title">Harvest outlook</div>
+        <div class="dash-list">${forecastHtml}</div>
+      </article>
+      <article class="dash-card">
+        <div class="dash-section-title">Live alerts</div>
+        <div>${alertHtml}</div>
+      </article>
+      <article class="dash-card full">
+        <div class="dash-section-title">Character board</div>
+        <div class="dash-voices">${voicesHtml}</div>
+      </article>
+    </section>
+  </div>`;
+
+  pane.onclick = function(event){
+    const btn = event.target.closest('[data-dashboard-action]');
+    if(!btn) return;
+    const action = btn.dataset.dashboardAction;
+    if(action === 'tab' && btn.dataset.targetTab){
+      switchRTab(btn.dataset.targetTab);
+      return;
+    }
+    if(action === 'inspect-weakest' && btn.dataset.cellId){
+      ui.selCell = btn.dataset.cellId;
+      setTool('inspect');
+      switchRTab('inspect');
+      render();
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COACH LAYER (reusable: tutorial, explain, suggest)
 // ═══════════════════════════════════════════════════════════════════════════════
 const COACH_CHARS={
@@ -5370,6 +5932,10 @@ document.getElementById('menuExport').addEventListener('click',function(){
 document.getElementById('menuImport').addEventListener('click',function(){
   closeMenu();
   openWorkspaceImportPicker();
+});
+document.getElementById('menuDuplicateBed').addEventListener('click',function(){
+  closeMenu();
+  handleDuplicateActiveBed();
 });
 
 // Learn

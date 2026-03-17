@@ -93,8 +93,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .board-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
 .results{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 100px);overflow-y:auto}
 @media(max-width:1199px){.app{grid-template-columns:240px 1fr}.results{max-height:none}}
-@media(max-width:819px){.app{grid-template-columns:1fr;width:min(100%,98vw);margin:10px auto 20px;gap:10px}.controls,.results{max-height:none}}
-@media(max-width:600px){.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}}
+@media(max-width:819px){.app{grid-template-columns:1fr;width:min(100%,98vw);margin:10px auto 20px;gap:10px}.head{padding:12px 14px}.head-right{width:100%;justify-content:flex-start;gap:6px}.controls,.results{max-height:none}.board-wrap{order:1}.results{order:2}.controls{order:3}}
+@media(max-width:600px){.head{padding:10px 12px}.head-right{align-items:stretch}.head-right .btn{flex:1 1 160px}.meta-strip{padding:0 12px}.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}.controls,.results{padding:10px}}
 @media(max-width:480px){.app{width:100%;margin:8px auto 16px;padding:0 6px}.chip{font-size:0.56rem;padding:3px 7px}}
 @media(max-height:500px) and (orientation:landscape){.app{margin:6px auto 10px;gap:8px}.controls,.board-wrap,.results{padding:10px;gap:8px}.crop-grid{max-height:160px}}
 .crop-group{border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--cream-dark);transition:border-color 0.8s ease-in-out}
@@ -216,6 +216,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .confirm-box h2{margin-bottom:10px}
 .confirm-box p{font-size:var(--type-body);margin-bottom:12px;line-height:1.5}
 .confirm-box .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+@media(max-width:600px){.confirm-box{padding:18px;width:min(96vw,560px)}.confirm-box .btns{justify-content:stretch}.confirm-box .btns .btn{flex:1 1 100%}}
 .swap-highlight{border-color:var(--char-onion);box-shadow:0 0 0 3px var(--char-onion)}
 .howto-layout{display:grid;gap:10px}
 .howto-tab-row{display:flex;gap:6px;flex-wrap:wrap}
