@@ -143,3 +143,42 @@ TODO / next-agent suggestions:
   - `output/web-game/howto-test/state-0.json`
   - `output/web-game/howto-test/state-1.json`
   - State export now present and readable.
+
+- 2026-03-16 stability refactor in progress for planner + season engines.
+- Planner phase work so far:
+  - Hardened snapshot restore and selection normalization.
+  - Added storage-safe legacy cleanup and restored `sunDirection` persistence on save.
+  - Centralized planner render context for zone/issue/score reuse.
+  - Reset transient interaction state during workspace restore.
+  - Replaced manual tool-button syncing with shared sync path.
+  - Tutorial targets now track live cell ids instead of stale object refs.
+  - Layout shell updated for medium widths and mobile board-first ordering.
+  - Settings menu and confirm dialog now focus the first actionable control and restore focus on close.
+- Season Engine v3/v4 phase work so far:
+  - Added safe JSON parse helpers and normalized restore guards for state/history/campaign payloads.
+  - Standardized inspect/paint/erase helper flows.
+  - Planning clicks now save only on real grid mutations; same-crop/empty-erase clicks inspect without fake edits.
+  - Added `aria-pressed` parity on crop buttons.
+- Next:
+  - update docs/UI issue tracker with completed hardening items
+  - add compact smoke checklist
+  - run Playwright/browser smoke checks and capture any regressions
+- Validation 2026-03-16:
+  - Planner Playwright client pass: `output/web-game/planner-stability/shot-0.png`, `state-0.json`.
+  - Engine v3 Playwright client pass: `output/web-game/engine-v3-stability/shot-0.png`, `state-0.json`.
+  - Engine v4 Playwright client pass: `output/web-game/engine-v4-stability/shot-0.png`, `state-0.json`.
+  - Planner direct checks passed: settings menu initial focus `menuSave`, focus restore `menuGearBtn`, mobile viewport stacks board before side rails, no console/page errors.
+  - Planner malformed localStorage JSON fallback stayed non-crashing with no console/page errors.
+  - Engine direct checks passed in v3/v4: neutral click after `Escape` changed selection only, did not mutate grid or rewrite saved state; `E` enabled eraser and `Escape` returned to neutral inspect mode.
+- Docs updated:
+  - `docs/UI_ISSUES_TABLE.html` updated with newly completed stability/layout/focus items.
+  - `README.md` updated with compact smoke checklist.
+
+- 2026-03-16 targeted patch pass:
+  - Fixed planner reset-bed action to restore the 4×8 preset instead of 8×4 and aligned the confirmation copy.
+  - Review result: planner companion-panel flat-bed iteration fix and tutorial `cherry_tomato` references were already present in the active file; no code change needed there.
+  - Review result: season-engine `bedScore.finalScore.toFixed(...)` crash pattern was not present in active v3/v4 files; no code change needed there.
+- 2026-03-16 follow-up quality pass:
+  - Added shared focus-visible outline/offset handling and reduced-motion `.pulse` fallback in `DaveHomeAssist.github.io/assets/css/base.css`.
+  - Tightened shared muted text tokens in `DaveHomeAssist.github.io/assets/css/tokens.css` for better low-contrast copy legibility.
+  - Added `tests/planner-reset-regression.mjs` to assert the planner reset flow restores `bedW=4` and `bedH=8`.
