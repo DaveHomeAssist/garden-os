@@ -182,3 +182,43 @@ TODO / next-agent suggestions:
   - Added shared focus-visible outline/offset handling and reduced-motion `.pulse` fallback in `DaveHomeAssist.github.io/assets/css/base.css`.
   - Tightened shared muted text tokens in `DaveHomeAssist.github.io/assets/css/tokens.css` for better low-contrast copy legibility.
   - Added `tests/planner-reset-regression.mjs` to assert the planner reset flow restores `bedW=4` and `bedH=8`.
+
+- 2026-03-17 engine diagnostics pass:
+  - Rebuilt `docs/engine-console-tests.js` as a working browser-console harness for `garden-league-simulator-v4.html`.
+  - Important implementation detail: v4 engine internals live inside an IIFE, so the harness now builds a private test bridge from the page source instead of assuming direct global access to `bedScore`, `mkSeason`, `C`, etc.
+  - Expanded coverage to 36 tests across:
+    - P0 scoring/light/event determinism
+    - P1 factor ranges, event safety, intervention transitions, dialogue trigger behavior
+    - P2 utilities, crop data integrity, bed-score aggregation, carry-forward logic, persistence round-trips
+    - P3 dialogue/HOWTO copy scans
+  - Validation:
+    - `node --check docs/engine-console-tests.js`
+    - develop-web-game Playwright client run against `garden-league-simulator-v4.html`
+      - `output/web-game/engine-v4-console-tests-rerun/shot-0.png`
+      - `output/web-game/engine-v4-console-tests-rerun/shot-1.png`
+      - `output/web-game/engine-v4-console-tests-rerun/state-0.json`
+      - `output/web-game/engine-v4-console-tests-rerun/state-1.json`
+    - direct Playwright execution of `runAllTests()` after loading the harness via script tag:
+      - result: `36/36 passed, 0 failed`
+      - screenshot: `output/web-game/engine-v4-console-tests/final-screen.png`
+      - console/page errors: none
+
+TODO / next-agent suggestions:
+- If the engine is ever modularized, replace the source-bridge approach with direct module imports or exported debug hooks.
+- If `docs/ENGINE_TEST_PLAN.md` is still intended to reflect exact executable coverage, update the test count from the original 26-test draft to the current 36-test harness.
+
+- 2026-03-17 engine console harness update:
+  - Patched `docs/engine-console-tests.js` so the console suite can run against the IIFE-scoped v4 engine by booting a hidden `srcdoc` harness with injected read-only test hooks.
+  - Isolated harness persistence from live app data by rewriting test iframe storage keys with an `__engine_test_*` suffix.
+  - Added explicit `accFit` regression coverage and updated usage/logging to `await runAllTests()`.
+  - Validation: served `garden-league-simulator-v4.html`, injected the updated console script in a headless browser, and confirmed `78/78` tests passed with no page errors.
+
+- 2026-03-17 event log duplication fix:
+  - Patched `garden-league-simulator-v4.html` to prevent `advanceBeat()` from re-applying/re-logging an event that was already resolved earlier in the same beat with zero affected cells.
+  - Added `hasLoggedCurrentEventForBeat()` guard instead of changing intervention/event architecture.
+  - Validation:
+    - Console diagnostic suite still passed after the patch.
+    - Targeted headless regression reproduced the old risk path (`protect` -> zero affected cells -> advance) and confirmed `eventLog.length` stayed at `1` after phase advance.
+
+TODO / next-agent suggestions:
+- If the engine export surface changes again, update the injected `__engineTestHooks` block in `docs/engine-console-tests.js` instead of widening `window.gardenOS`.
