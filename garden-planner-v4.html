@@ -1757,7 +1757,38 @@ const SUBS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STATE
+// STATE MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Mutable top-level state:
+//   bedW, bedH        — current bed dimensions (2-10 each)
+//   bed[]             — flat array of {id, row, col, crop} cells
+//   ui                — {selectedCrop, tool, selCell, catFilter, rTab}
+//   undoStack[]       — bed snapshots (max 40)
+//   redoStack[]       — bed snapshots for redo
+//   cage              — {enabled, rearTrellis, wireSides, height, doorStyle}
+//   interaction       — pointer/keyboard tracking (pointerActive, focusCellId, etc.)
+//   _workspace        — full workspace object with all beds and settings
+//   _activeBedTraits  — cached derived bed traits
+//   tutorial          — {active, step}
+//   _tutTarget        — tutorial target cell ref
+//   _tutBasilTarget   — tutorial basil target ref
+//   _companionSelectedCrop, _companionFilter — companion panel state
+//   _recoveryPayload  — failed localStorage payload for recovery UI
+//   _saveTimer        — debounce timer ID
+//
+// localStorage keys:
+//   gardenOS_workspace   (LS_KEY)        — current workspace (v1 schema)
+//   gardenOS             (LS_KEY_LEGACY) — legacy v0, migrated then removed
+//   gardenOS_v4          (LS_KEY_LEGACY_V4) — legacy v4, migrated then removed
+//   gardenOS_tutorialDone (TUTORIAL_KEY) — boolean tutorial completion flag
+//
+// Boot order: loadWorkspace() → applyWorkspaceToUI() → render()
+//   Restore priority: URL hash → LS_KEY → LS_KEY_LEGACY → LS_KEY_LEGACY_V4 → fresh
+//   Each path: parse → migrate → validate → apply → render → focus repair
+//
+// Save pattern: saveState() → saveWorkspaceDebounced(50ms) → saveWorkspace()
+//   All JSON.parse and localStorage.setItem calls are try/catch wrapped.
 // ═══════════════════════════════════════════════════════════════════════════════
 let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
@@ -5307,6 +5338,7 @@ document.getElementById('menuDeleteBed').addEventListener('click',function(){
     if(idx===-1) return;
     _workspace.beds.splice(idx,1);
     _workspace.activeBedId=_workspace.beds[0].id;
+    undoStack=[];redoStack=[];updateUndoButtons();
     saveWorkspace(_workspace);
     applyWorkspaceToUI(_workspace);
     render();

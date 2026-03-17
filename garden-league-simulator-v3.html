@@ -1073,6 +1073,37 @@ function mkSeason(ch,cf){
 
 let S=null;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Mutable top-level state:
+//   CAM              — campaign object (mode, currentChapter, completedChapters,
+//                      bestScores, journal, keepsakes, recipesCompleted, pantry,
+//                      sauceComplete, freePlayUnlocked, dialogueHistory,
+//                      placementCount, narratorQueue, lastNarratorLines, masteryRank)
+//   S                — season/engine state (phase, season, chapter, beatIndex, grid,
+//                      committedGrid, currentEvent, beatTokenAvailable, interventionMode,
+//                      swapFirstCell, eventAffectedCells, harvestResult, carryForward,
+//                      selectedCrop, eraserMode, selectedCell, _cachedBedScore)
+//   howToSection      — current help tab section string
+//
+// localStorage keys:
+//   garden_os_v3_state    (SKEY) — current season engine state
+//   garden_os_v3_hist     (HKEY) — rolling last-12-seasons history
+//   garden_os_v3_campaign (CKEY) — campaign state
+//
+// Score source priority (for rendering):
+//   PLANNING:  S._cachedBedScore (set in renderBoard, cleared on grid mutation)
+//   BEAT:      S._cachedBedScore (cleared by applyEvent)
+//   HARVEST+:  S.harvestResult (set when advancing to HARVEST)
+//   Fallback:  bedScore(S.grid, S.season) — live recalculation
+//   Render:    sd = S.harvestResult || S._cachedBedScore || bedScore(S.grid, S.season)
+//
+// Boot order: loadCampaign() → load() → migrateState() → mkSeason fallback → render()
+// Save pattern: save() / saveCampaign() / saveH() — all try/catch wrapped.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /* ===== PERSISTENCE ===== */
 function showSaveWarning(){
   let w=document.getElementById('save-warning');
@@ -1093,6 +1124,24 @@ function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){consol
 function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return migrateState(p)}}catch(e){}return null}
 function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-12)}catch(e){return[]}}
 function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-12)))}catch(e){}}
+
+// Centralized score source — eliminates NaN risk from partial objects
+function safeScore(){
+  const src=S.harvestResult||S._cachedBedScore;
+  if(src&&typeof src.finalScore==='number'&&isFinite(src.finalScore))return src;
+  // Live recalculation fallback
+  try{return bedScore(S.grid,S.season)}catch(e){return{finalScore:0,grade:'-',cellScores:[],bedAverage:0,yieldList:[]}}
+}
+
+// Clear transient state that must not leak across phase boundaries
+function clearTransientState(){
+  S.currentEvent=null;
+  S.beatTokenAvailable=false;
+  S.interventionMode=null;
+  S.swapFirstCell=null;
+  S.eventAffectedCells=[];
+  S._cachedBedScore=null;
+}
 
 /* ===== DOM ===== */
 const $=id=>document.getElementById(id);
@@ -1554,7 +1603,7 @@ function renderRes(){
   if(CAM&&(CAM.mode==='menu'||CAM.mode==='chapter_start'||CAM.mode==='chapter_end'||CAM.mode==='sauce_sequence'||CAM.mode==='epilogue'||CAM.mode==='winter_review'))return;
 
   const f=document.createDocumentFragment();
-  const sd=S.harvestResult||S._cachedBedScore||bedScore(S.grid,S.season);
+  const sd=safeScore();
 
   // Score with SVG ring gauge
   const ringWrap=h('div','score-ring-wrap');
@@ -2449,9 +2498,9 @@ function showCommitConfirm(){
 }
 
 function doCommit(){
-  S._cachedBedScore=null;
+  clearTransientState();
   for(const c of S.grid)c.locked=true;
-  S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];S.eventAffectedCells=[];
+  S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];
   S.phase='EARLY_SEASON';
   startBeat();save();render();
 }
@@ -2514,6 +2563,7 @@ function advanceBeat(){
   S.beatTokenAvailable=false;S.currentEvent=null;S.eventAffectedCells=[];
   if(S.beatIndex<2){S.beatIndex++;S.phase=BEAT_PHASES[S.beatIndex];startBeat()}
   else{
+    clearTransientState();
     S.phase='HARVEST';S.harvestResult=bedScore(S.grid,S.season);
     // Fire score dialogue
     if(CAM){
@@ -2748,7 +2798,7 @@ function renderSettingsPanel(){
   const chNum=S?S.chapter:1;
   const chMeta=CHAPTERS[chNum];
   const seasonName=S?S.season:'spring';
-  const score=S&&S.harvestResult?S.harvestResult.finalScore.toFixed(1):(S&&S._cachedBedScore?S._cachedBedScore.finalScore.toFixed(1):'\u2014');
+  const score=S?safeScore().finalScore.toFixed(1):'\u2014';
   header.appendChild(h('div','settings-sub','Chapter '+chNum+' of 12 \u00b7 '+seasonName.charAt(0).toUpperCase()+seasonName.slice(1)+' \u00b7 Score '+score));
   panel.appendChild(header);
 
@@ -2983,7 +3033,7 @@ window.gardenOS={
     if(!S)return'No active season';
     const lines=['Chapter '+S.chapter+' | '+S.season+' | '+S.phase];
     for(let r=0;r<ROWS;r++){let row='';for(let c=0;c<COLS;c++){const cell=S.grid[ri(r,c)];row+=(cell.cropId?C[cell.cropId].short:'..').padEnd(4)}lines.push(row)}
-    const s=bedScore(S.grid,S.season);lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
+    const s=safeScore();lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
     return lines.join('\n');
   },
   advanceTime:()=>{if(!S)return;if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase==='HARVEST'){S.phase='REVIEW';save();render()}else if(S.phase==='REVIEW'){if(CAM&&CAM.mode==='campaign')completeChapter();else doTransition()}},
