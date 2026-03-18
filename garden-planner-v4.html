@@ -1307,12 +1307,335 @@
       max-height:70vh;
     }
   }
+
+  /* ═══ PLANNER SHELL v5 — Section 1 Refactor ═══ */
+  .planner-shell{display:flex;flex-direction:column;min-height:calc(100vh - 24px);}
+
+  .planner-header{
+    background:var(--soil);color:#f5ede0;
+    padding:.75rem 1.25rem;
+    border-bottom:3px solid var(--sun);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+    position:sticky;top:0;z-index:100;
+  }
+  .planner-brand{display:flex;align-items:baseline;gap:.6rem;}
+  .planner-status{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-left:auto;margin-right:.75rem;}
+  .planner-manage-btn{
+    border:1.5px solid rgba(232,200,74,.5);
+    border-radius:5px;
+    background:rgba(232,200,74,.12);
+    color:var(--sun);
+    padding:.28rem .6rem;
+    cursor:pointer;
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:600;
+    transition:background .12s, border-color .12s;
+    min-height:32px;
+  }
+  .planner-manage-btn:hover{background:rgba(232,200,74,.22);border-color:var(--sun);}
+  .planner-manage-btn:focus-visible{outline:2px solid var(--sun);outline-offset:2px;}
+
+  .planner-taskbar{
+    display:flex;align-items:center;gap:.3rem;
+    padding:.35rem .75rem;
+    background:var(--cream-dark);
+    border-bottom:1px solid var(--border-light);
+    flex-shrink:0;
+    flex-wrap:wrap;
+  }
+  .planner-taskbar .tool-group{display:flex;gap:.25rem;align-items:center;}
+  .planner-taskbar .task-primary-slot{display:flex;gap:.25rem;align-items:center;margin-left:.5rem;}
+  .planner-taskbar .task-shortcuts{display:flex;gap:.25rem;align-items:center;margin-left:auto;}
+  .planner-state-strip{
+    display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+    padding:.65rem .85rem;
+    background:#fff;
+    border-bottom:1px solid var(--border-light);
+    flex-wrap:wrap;
+  }
+  .planner-state-card{
+    display:flex;flex-direction:column;gap:.22rem;min-width:240px;flex:1;
+  }
+  .planner-state-kicker{
+    font-family:'DM Mono',monospace;
+    font-size:.56rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+  }
+  .planner-state-title{
+    font-family:'Fraunces',serif;
+    font-size:1rem;
+    color:var(--soil);
+    line-height:1.2;
+  }
+  .planner-state-copy{
+    font-size:.72rem;
+    color:var(--text-mid);
+    line-height:1.5;
+    max-width:58ch;
+  }
+  .planner-state-actions{
+    display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+  }
+  .planner-state-btn{
+    border:1.5px solid var(--border);
+    border-radius:5px;
+    background:#fff;
+    color:var(--soil);
+    padding:.35rem .6rem;
+    cursor:pointer;
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    min-height:36px;
+  }
+  .planner-state-btn.primary{
+    background:var(--leaf);
+    border-color:var(--leaf);
+    color:#fff;
+  }
+  .planner-state-btn.warn{
+    background:var(--sun-pale);
+    border-color:rgba(232,200,74,.5);
+  }
+  .planner-state-chip{
+    display:inline-flex;align-items:center;gap:.25rem;
+    padding:.22rem .45rem;border-radius:999px;
+    background:var(--cream-dark);
+    color:var(--text-mid);
+    font-family:'DM Mono',monospace;
+    font-size:.55rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .planner-state-chip.state-empty{background:#f3eee4;color:var(--soil);}
+  .planner-state-chip.state-active{background:#eaf3de;color:var(--leaf);}
+  .planner-state-chip.state-complete{background:#e8f5ea;color:var(--leaf);}
+  .planner-state-chip.state-error{background:#faeae8;color:var(--bad);}
+
+  .planner-main{
+    display:grid;
+    grid-template-columns:clamp(216px,18vw,240px) minmax(0,1fr) clamp(228px,20vw,268px);
+    flex:1;
+    min-height:0;
+  }
+
+  /* Plan panel (left) */
+  .plan-panel{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;border-right:1.5px solid var(--border);}
+  .plan-panel-tabs{display:flex;gap:2px;background:rgba(0,0,0,.08);border-radius:6px;padding:3px;margin:.6rem;flex-shrink:0;}
+
+  /* Workspace panel (center) */
+  .workspace-panel{display:flex;flex-direction:column;gap:.75rem;align-items:center;padding:1rem clamp(.8rem,1.6vw,1.2rem);overflow-y:auto;min-width:0;}
+  .board-stage{width:100%;max-width:560px;}
+  .board-feedback{width:100%;max-width:480px;text-align:center;}
+
+  /* Insight panel (right) */
+  .insight-panel{
+    background:var(--panel);display:flex;flex-direction:column;
+    overflow-y:auto;border-left:1.5px solid var(--border);
+  }
+  .insight-block{border-bottom:1px solid var(--border-light);}
+  .insight-block:last-child{border-bottom:none;}
+  .insight-header{
+    display:flex;align-items:center;justify-content:space-between;
+    width:100%;padding:.5rem .65rem;border:none;background:transparent;
+    cursor:pointer;font-family:'DM Mono',monospace;font-size:.58rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--soil);
+    font-weight:600;text-align:left;
+  }
+  .insight-header::after{content:'▾';font-size:.7rem;margin-left:.3rem;color:var(--text-light);}
+  .insight-header.is-collapsed::after{content:'▸';}
+  .insight-content{padding:.5rem .65rem;display:flex;flex-direction:column;gap:.5rem;}
+  .insight-content[hidden]{display:none;}
+  .insight-badge{
+    display:inline-block;width:5px;height:5px;background:var(--warn);border-radius:50%;
+    margin-left:5px;vertical-align:middle;position:relative;top:-1px;
+  }
+  .reasoning-card{display:flex;flex-direction:column;gap:.55rem;}
+  .reasoning-target{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-family:'Fraunces',serif;font-size:.9rem;color:var(--soil);}
+  .reasoning-score{font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);}
+  .reasoning-row{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;padding:.45rem .55rem;border:1px solid var(--border-light);border-radius:.7rem;background:rgba(255,255,255,.55);}
+  .reasoning-copy{display:flex;flex-direction:column;gap:.2rem;min-width:0;}
+  .reasoning-label{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);}
+  .reasoning-text{font-size:.74rem;line-height:1.45;color:var(--text);}
+  .reasoning-badge{display:inline-flex;align-items:center;justify-content:center;padding:.16rem .42rem;border-radius:999px;font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
+  .reasoning-badge.critical{background:#f4d7d3;color:#7d2419;}
+  .reasoning-badge.medium{background:#f6ecd0;color:#7a5612;}
+  .reasoning-badge.low{background:#e0f0e4;color:#2f6a41;}
+  .reasoning-facts{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.1rem;}
+  .reasoning-fact{
+    display:inline-flex;align-items:center;gap:.25rem;padding:.16rem .4rem;border-radius:999px;
+    border:1px solid var(--border-light);background:rgba(255,255,255,.72);
+    font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.04em;color:var(--text-mid);
+  }
+  .reasoning-stack{display:flex;flex-direction:column;gap:.38rem;}
+  .reasoning-stack-item{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;
+    padding:.38rem .45rem;border-radius:.62rem;background:rgba(247,242,230,.72);border:1px dashed var(--border-light);
+  }
+  .reasoning-stack-copy{display:flex;flex-direction:column;gap:.14rem;min-width:0;}
+  .reasoning-stack-copy strong{font-size:.68rem;color:var(--soil);}
+  .reasoning-stack-copy span{font-size:.68rem;line-height:1.4;color:var(--text-mid);}
+  .reasoning-actions{display:flex;flex-wrap:wrap;gap:.45rem;}
+  .reasoning-btn{
+    border:1px solid var(--border);background:var(--cream);color:var(--soil);border-radius:999px;
+    min-height:36px;padding:.48rem .8rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;
+  }
+  .reasoning-btn.primary{background:var(--leaf);color:#fff;border-color:var(--leaf);}
+  .reasoning-empty{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem;text-align:center;opacity:.7;}
+  .reasoning-empty p{margin:0;font-size:.74rem;line-height:1.45;color:var(--text);}
+  .issue-strip{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.45rem .65rem;border:1px solid var(--border-light);border-radius:999px;background:rgba(255,255,255,.72);margin-top:.55rem;}
+  .issue-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;border-radius:999px;font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--border-light);}
+  .issue-pill.critical{background:#f4d7d3;color:#7d2419;}
+  .issue-pill.medium{background:#f6ecd0;color:#7a5612;}
+  .issue-pill.low{background:#e0f0e4;color:#2f6a41;}
+  .inspect-severity-row{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;}
+  .inspect-risk-list{display:flex;flex-direction:column;gap:.35rem;padding-top:.2rem;}
+  .inspect-risk-item{display:flex;align-items:flex-start;gap:.45rem;font-size:.72rem;line-height:1.45;color:var(--text);}
+  .inspect-next-actions{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.55rem;}
+  .inspect-action-btn{border:1px solid var(--border);background:var(--cream);color:var(--soil);border-radius:999px;padding:.45rem .75rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;min-height:36px;}
+  .inspect-action-btn.primary{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+
+  /* Manage panel (right-side drawer) */
+  .manage-panel{
+    position:fixed;top:0;right:0;bottom:0;width:clamp(280px,24vw,340px);
+    background:var(--panel);border-left:2px solid var(--border);
+    z-index:200;overflow-y:auto;
+    box-shadow:-4px 0 20px rgba(0,0,0,.15);
+    transform:translateX(100%);transition:transform .2s ease;
+  }
+  .manage-panel[data-open]{transform:translateX(0);}
+  .manage-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:199;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  .manage-overlay[data-open]{opacity:1;pointer-events:auto;}
+
+  /* Action banner */
+  #actionBannerMount{
+    position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:150;
+    pointer-events:none;
+  }
+  #actionBannerMount:not(:empty){pointer-events:auto;}
+  .action-banner{
+    display:flex;align-items:center;gap:.75rem;
+    background:var(--soil);color:#f5ede0;padding:.55rem 1rem;
+    border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);
+    font-size:.72rem;font-family:'DM Mono',monospace;
+    white-space:nowrap;
+  }
+  .action-banner-btn{
+    background:var(--sun);color:var(--soil);border:none;
+    padding:.3rem .65rem;border-radius:5px;cursor:pointer;
+    font-family:'DM Mono',monospace;font-size:.62rem;
+    font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  }
+  .action-banner-btn:hover{filter:brightness(1.08);}
+  .shortcut-overlay{
+    position:fixed;inset:0;z-index:240;background:rgba(0,0,0,.38);
+    display:none;align-items:center;justify-content:center;padding:1rem;
+  }
+  .shortcut-overlay[data-open]{display:flex;}
+  .shortcut-panel{
+    width:min(560px,100%);
+    background:var(--panel);
+    border:2px solid var(--border);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    padding:1rem 1rem .9rem;
+  }
+  .shortcut-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.75rem;
+  }
+  .shortcut-title{
+    font-family:'Fraunces',serif;font-size:1.05rem;color:var(--soil);line-height:1.2;
+  }
+  .shortcut-copy{
+    font-size:.72rem;color:var(--text-mid);line-height:1.5;margin-top:.2rem;
+  }
+  .shortcut-close{
+    border:1.5px solid var(--border);background:#fff;border-radius:5px;
+    min-height:34px;padding:.25rem .5rem;cursor:pointer;
+    font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;
+  }
+  .shortcut-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;
+  }
+  .shortcut-item{
+    border:1px solid var(--border-light);border-radius:8px;background:#fff;padding:.6rem .7rem;
+  }
+  .shortcut-item kbd{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:1.9rem;min-height:1.6rem;padding:0 .35rem;border-radius:6px;
+    border:1px solid var(--border);background:var(--cream-dark);
+    font-family:'DM Mono',monospace;font-size:.62rem;color:var(--soil);margin-right:.45rem;
+  }
+  .shortcut-item strong{font-size:.72rem;color:var(--soil);}
+  .shortcut-item span{display:block;font-size:.66rem;color:var(--text-mid);margin-top:.35rem;line-height:1.45;}
+
+  /* ═══ PLANNER SHELL v5 — Responsive ═══ */
+  @media(max-width:1180px){
+    .planner-main{grid-template-columns:216px minmax(0,1fr) 232px;}
+  }
+  @media(max-width:1040px){
+    .planner-main{grid-template-columns:198px minmax(0,1fr) 214px;}
+    .workspace-panel{padding:.95rem .75rem;}
+  }
+  @media(max-width:900px){
+    .planner-main{grid-template-columns:1fr;min-height:auto;}
+    .workspace-panel{order:1;padding:.85rem .75rem;}
+    .plan-panel{order:2;border-right:none;border-top:1.5px solid var(--border);max-height:min(40vh,340px);overflow:hidden;}
+    .insight-panel{order:3;border-left:none;border-top:1.5px solid var(--border);max-height:min(50vh,400px);}
+    .plan-panel .sidebar-toggle{display:block;}
+    .plan-panel.collapsed .plan-panel-tabs,.plan-panel.collapsed .tab-pane{display:none;}
+    .plan-panel.collapsed{max-height:2.3rem;overflow:hidden;}
+    .insight-panel .sidebar-toggle{display:block;}
+    .insight-panel.collapsed .insight-block{display:none;}
+    .insight-panel.collapsed{max-height:2.3rem;overflow:hidden;}
+    .planner-taskbar{padding:.35rem .5rem;gap:.2rem;}
+    .manage-panel{width:100%;border-radius:14px 14px 0 0;top:auto;bottom:0;max-height:70vh;}
+  }
+  @media(max-width:600px){
+    .planner-taskbar .task-primary-slot{margin-left:.25rem;}
+    .planner-taskbar .cbar-btn{padding:.24rem .36rem;font-size:.52rem;}
+    .planner-state-strip{padding:.55rem .6rem;}
+    .shortcut-grid{grid-template-columns:1fr;}
+  }
+
+  /* ═══ UNDO TOAST ═══ */
+  .undo-toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:300;background:var(--soil);color:var(--cream);padding:.5rem 1rem;border-radius:8px;display:flex;align-items:center;gap:.75rem;font-family:'DM Sans',sans-serif;font-size:.8rem;box-shadow:0 4px 20px rgba(0,0,0,.25);animation:toastIn .2s ease-out;}
+  .undo-toast-btn{background:var(--sun);color:var(--soil);border:none;border-radius:4px;padding:.25rem .6rem;font-family:'DM Mono',monospace;font-size:.7rem;font-weight:600;cursor:pointer;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+  /* ═══ STATE ACTION BUTTONS ═══ */
+  .state-action{display:inline-block;margin-top:.5rem;background:var(--leaf);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;cursor:pointer;}
+  .state-action:hover{background:var(--leaf-bright);}
+
+  /* ═══ KBD HINTS ON TOOL BUTTONS ═══ */
+  .cbar-btn kbd{font-family:'DM Mono',monospace;font-size:.55rem;background:rgba(0,0,0,.1);padding:1px 4px;border-radius:3px;margin-left:2px;opacity:.6;}
+  .cbar-btn.active kbd{background:rgba(255,255,255,.15);color:var(--sun);}
+
+  /* ═══ HELP DIALOG ═══ */
+  .help-dialog{border:none;border-radius:12px;padding:0;box-shadow:0 8px 40px rgba(0,0,0,.3);max-width:400px;}
+  .help-dialog::backdrop{background:rgba(0,0,0,.4);}
+  .help-wrap{padding:1.2rem;}
+  .help-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;color:var(--soil);margin-bottom:.8rem;}
+  .help-grid{display:flex;flex-direction:column;gap:.8rem;}
+  .help-group-title{font-family:'DM Mono',monospace;font-size:.55rem;text-transform:uppercase;letter-spacing:.1em;color:var(--soil-mid);font-weight:600;margin-bottom:.3rem;}
+  .help-row{font-size:.76rem;color:var(--text);padding:.15rem 0;display:flex;align-items:center;gap:.4rem;}
+  .help-row kbd{font-family:'DM Mono',monospace;font-size:.62rem;background:var(--cream-dark);padding:2px 6px;border-radius:3px;border:1px solid var(--border);min-width:1.4rem;text-align:center;}
+  .help-close{display:block;margin:1rem auto 0;background:var(--soil);color:var(--cream);border:none;border-radius:6px;padding:.4rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;}
 </style>
 </head>
 <body>
 <a href="#bedGrid" class="skip-link">Skip to garden grid</a>
 <nav class="os-nav" aria-label="Garden OS">
-  <a href="index.html">Home</a>
+  <a href="index.html">Hub</a>
   <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html" class="active" aria-current="page">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
@@ -1320,31 +1643,55 @@
   <a href="how-it-thinks.html">How It Thinks</a>
   <a href="scoring-visualizer.html" style="margin-left:auto;opacity:.55">Dev Tools →</a>
 </nav>
-<header>
-  <div class="hd-left">
+<div class="planner-shell">
+<header class="planner-header">
+  <div class="planner-brand">
     <h1>Garden OS</h1>
     <span class="hv">v4.3</span>
   </div>
-  <div class="hd-right">
+  <div class="planner-status">
     <p class="hsub">Raised Bed Planner · 38 crops · Variable beds · Cage-aware · Live scoring</p>
-    <div class="hd-actions" aria-label="Workspace file controls">
-      <button class="hd-btn" id="exportWorkspaceBtn" type="button" aria-label="Export workspace to GOS JSON file">Export</button>
-      <button class="hd-btn" id="importWorkspaceBtn" type="button" aria-label="Import workspace from GOS JSON file">Import</button>
-      <input id="importWorkspaceFile" type="file" accept=".gos.json,.json,application/json" hidden>
-      <button class="btn-print" id="printPlanBtn" type="button" title="Print garden plan" aria-label="Print garden plan">Print</button>
-      <button class="menu-gear" id="menuGearBtn" type="button" title="Settings menu" aria-label="Open settings menu" aria-haspopup="true" aria-expanded="false">&#9881;</button>
-    </div>
+    <button class="hd-btn btn-print" id="printPlanBtn" type="button" title="Print garden plan" aria-label="Print garden plan">Print</button>
   </div>
+  <button id="openManagePanel" class="planner-manage-btn" type="button" aria-label="Open manage panel" aria-haspopup="true" aria-expanded="false">Manage</button>
+  <input id="importWorkspaceFile" type="file" accept=".gos.json,.json,application/json" hidden>
 </header>
 
-<div class="app">
-<!-- LEFT -->
-<aside class="sl collapsed">
-  <button class="sidebar-toggle" id="toggleLeft" aria-expanded="false" aria-label="Toggle left panel">&#9662; Site &amp; Crops</button>
-  <div class="tab-bar" role="tablist" aria-label="Settings panels">
-    <button class="tab-btn active" id="ltab-site" role="tab" aria-selected="true" aria-controls="lpane-site">Site</button>
-    <button class="tab-btn" id="ltab-cage" role="tab" aria-selected="false" aria-controls="lpane-cage">Cage</button>
+<div class="planner-taskbar" aria-label="Primary planner actions">
+  <div class="tool-group" role="toolbar" aria-label="Plan tools">
+    <button class="cbar-btn" id="toolPaint" aria-label="Paint tool (P)" aria-pressed="false">🖌 Paint <kbd>P</kbd></button>
+    <button class="cbar-btn" id="toolErase" aria-label="Erase tool (E)" aria-pressed="false">✕ Erase <kbd>E</kbd></button>
+    <button class="cbar-btn active" id="toolInspect" aria-label="Inspect tool (I)" aria-pressed="true">🔍 Inspect <kbd>I</kbd></button>
+  </div>
+  <div class="task-primary-slot">
+    <button class="cbar-btn act-leaf" id="autoFillBtn" aria-label="Auto-fill bed with recommended crops">✦ Auto-fill</button>
+    <button class="cbar-btn danger" id="clearBtn" aria-label="Clear all crops from bed">✕ Clear</button>
+  </div>
+  <div class="task-shortcuts">
+    <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩ Undo</button>
+    <button class="cbar-btn" id="redoBtn" disabled title="Ctrl+Y">↪ Redo</button>
+    <button class="cbar-btn" id="shareBtn" title="Copy shareable link">⬆ Share</button>
+    <button class="cbar-btn" id="shortcutHelpBtn" title="Show keyboard shortcuts">? Shortcuts</button>
+  </div>
+</div>
+
+<div class="planner-state-strip" aria-live="polite">
+  <div class="planner-state-card" id="plannerStateStrip"></div>
+  <div class="planner-state-actions">
+    <span class="planner-state-chip state-active" id="plannerModeChip">Inspect</span>
+    <button class="planner-state-btn" id="focusInspectBtn" type="button">Inspect weakest</button>
+    <button class="planner-state-btn" id="focusManageBtn" type="button">Manage</button>
+  </div>
+</div>
+
+<div class="planner-main">
+<!-- LEFT: Plan Panel -->
+<aside class="plan-panel sl collapsed" aria-label="Plan">
+  <button class="sidebar-toggle" id="toggleLeft" aria-expanded="false" aria-label="Toggle plan panel">&#9662; Plan</button>
+  <div class="plan-panel-tabs tab-bar" role="tablist" aria-label="Plan panels">
     <button class="tab-btn" id="ltab-palette" role="tab" aria-selected="false" aria-controls="lpane-palette">Crops</button>
+    <button class="tab-btn active" id="ltab-site" role="tab" aria-selected="true" aria-controls="lpane-site">Site</button>
+    <button class="tab-btn" id="ltab-cage" role="tab" aria-selected="false" aria-controls="lpane-cage">Structure</button>
   </div>
 
   <!-- SITE PANE -->
@@ -1511,8 +1858,8 @@
   </div>
 </aside>
 
-<!-- CENTER -->
-<main class="center" aria-label="Planner workspace">
+<!-- CENTER: Workspace Panel -->
+<main class="workspace-panel center" aria-label="Planner workspace">
   <div class="workspace-bar">
     <span class="workspace-label">Workspace</span>
     <select id="bedSwitcher" class="workspace-select" aria-label="Active bed"></select>
@@ -1520,67 +1867,79 @@
     <button class="workspace-btn" id="duplicateBedBtn" title="Duplicate active bed">Duplicate</button>
   </div>
 
-  <div class="cbar">
-    <button class="cbar-btn act-leaf" id="autoFillBtn" aria-label="Auto-fill bed with recommended crops">✦ Auto-fill</button>
-    <button class="cbar-btn danger" id="clearBtn" aria-label="Clear all crops from bed">✕ Clear</button>
-    <div class="cbar-sep"></div>
-    <button class="cbar-btn" id="toolPaint" aria-label="Paint tool (P)" aria-pressed="false">🖌 Paint</button>
-    <button class="cbar-btn" id="toolErase" aria-label="Erase tool (E)" aria-pressed="false">✕ Erase</button>
-    <button class="cbar-btn active" id="toolInspect" aria-label="Inspect tool (I)" aria-pressed="true">🔍 Inspect</button>
-    <div class="cbar-sep"></div>
-    <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩</button>
-    <button class="cbar-btn" id="redoBtn" disabled title="Ctrl+Y">↪</button>
-    <div class="cbar-gap"></div>
-    <button class="cbar-btn" id="shareBtn" title="Copy shareable link">⬆ Share</button>
+  <div class="board-stage">
+    <div id="placementStatus" class="placement-status" role="status" aria-live="polite"></div>
+    <div class="bwrap">
+      <div id="cageTrellisBar" class="cage-trellis-bar">
+        <span class="cage-trellis-label">Rear Trellis Wall — Climbing Zone</span>
+        <span class="cage-trellis-sign">Mom's Sanctuary</span>
+      </div>
+      <div class="wlbl" id="wtop">▲ Wall / Trellis Zone</div>
+      <div id="cageWireWrap" class="cage-wire-wrap">
+        <div class="cage-wire-side left"></div>
+        <div class="bedge" id="bedGrid" role="grid" aria-label="Garden bed planting grid"></div>
+        <div class="cage-wire-side right"></div>
+      </div>
+      <div class="bedge" id="bedGridNoCage" role="grid" aria-label="Garden bed planting grid" style="display:none"></div>
+      <div id="cageDoorBar" class="cage-door-bar">Double Door — Front Access</div>
+      <div class="flbl">▼ Front (access side)</div>
+      <div class="chint" id="chint"></div>
+      <div class="fillbar"><div class="fillbar-fill" id="fillbar-fill" style="width:0%"></div></div>
+      <div class="zone-legend" id="zoneLegend" style="display:none">
+        <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
+        <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
+        <span class="zleg"><span class="zleg-dot" style="background:#d4651a"></span>Score &lt; 4.5</span>
+        <span class="zleg"><span class="zleg-dot" style="background:#3d7a4f"></span>Score &ge; 7</span>
+      </div>
+    </div>
+    <div id="issueSummaryStrip" class="issue-strip" aria-live="polite"></div>
   </div>
-  <div id="placementStatus" class="placement-status" role="status" aria-live="polite"></div>
-
-  <div class="bwrap">
-    <div id="cageTrellisBar" class="cage-trellis-bar">
-      <span class="cage-trellis-label">Rear Trellis Wall — Climbing Zone</span>
-      <span class="cage-trellis-sign">Mom's Sanctuary</span>
-    </div>
-    <div class="wlbl" id="wtop">▲ Wall / Trellis Zone</div>
-    <div id="cageWireWrap" class="cage-wire-wrap">
-      <div class="cage-wire-side left"></div>
-      <div class="bedge" id="bedGrid"></div>
-      <div class="cage-wire-side right"></div>
-    </div>
-    <div class="bedge" id="bedGridNoCage" style="display:none"></div>
-    <div id="cageDoorBar" class="cage-door-bar">Double Door — Front Access</div>
-    <div class="flbl">▼ Front (access side)</div>
-    <div class="chint" id="chint"></div>
-    <div class="fillbar"><div class="fillbar-fill" id="fillbar-fill" style="width:0%"></div></div>
-    <div class="zone-legend" id="zoneLegend" style="display:none">
-      <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
-      <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
-      <span class="zleg"><span class="zleg-dot" style="background:#d4651a"></span>Score &lt; 4.5</span>
-      <span class="zleg"><span class="zleg-dot" style="background:#3d7a4f"></span>Score &ge; 7</span>
-    </div>
-  </div>
+  <div class="board-feedback"></div>
 </main>
 
-<!-- RIGHT -->
-<aside class="sr collapsed">
-  <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle right panel">&#9662; Score &amp; Analysis</button>
-  <div class="tab-bar" role="tablist" aria-label="Analysis panels">
-    <button class="tab-btn"        id="rtab-dashboard" role="tab" aria-selected="false" aria-controls="rpane-dashboard">Dash</button>
-    <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score</button>
-    <button class="tab-btn"        id="rtab-inspect" role="tab" aria-selected="false" aria-controls="rpane-inspect">Inspect</button>
-    <button class="tab-btn"        id="rtab-notes" role="tab" aria-selected="false" aria-controls="rpane-notes">Notes<span class="tab-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
-    <button class="tab-btn"        id="rtab-companions" role="tab" aria-selected="false" aria-controls="rpane-companions">Companions</button>
-    <button class="tab-btn"        id="rtab-calendar" role="tab" aria-selected="false" aria-controls="rpane-calendar">Calendar</button>
-    <button class="tab-btn"        id="rtab-harvest" role="tab" aria-selected="false" aria-controls="rpane-harvest">Harvest</button>
-  </div>
-  <div class="tab-pane"    id="rpane-dashboard" role="tabpanel" aria-labelledby="rtab-dashboard" aria-live="polite"></div>
-  <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score" aria-live="polite"></div>
-  <div class="tab-pane"    id="rpane-inspect" role="tabpanel" aria-labelledby="rtab-inspect"></div>
-  <div class="tab-pane"    id="rpane-notes" role="tabpanel" aria-labelledby="rtab-notes"></div>
-  <div class="tab-pane"    id="rpane-companions" role="tabpanel" aria-labelledby="rtab-companions"></div>
-  <div class="tab-pane"    id="rpane-calendar" role="tabpanel" aria-labelledby="rtab-calendar"></div>
-  <div class="tab-pane"    id="rpane-harvest" role="tabpanel" aria-labelledby="rtab-harvest"></div>
+<!-- RIGHT: Insight Panel -->
+<aside class="insight-panel sr collapsed" aria-label="Inspect and review">
+  <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle insight panel">&#9662; Insight</button>
+
+  <section class="insight-block" id="insightSummary">
+    <button class="insight-header" aria-expanded="true" data-section="summary">Summary</button>
+    <div class="insight-content" aria-live="polite">
+      <div id="rpane-score"></div>
+      <div id="rpane-reasoning"></div>
+      <div id="rpane-dashboard"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightInspect">
+    <button class="insight-header" aria-expanded="true" data-section="inspect">Inspect</button>
+    <div class="insight-content">
+      <div id="rpane-inspect"></div>
+      <div id="rpane-companions"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightCalendar">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="calendar">Calendar</button>
+    <div class="insight-content" hidden>
+      <div id="rpane-calendar"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightHarvest">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest</button>
+    <div class="insight-content" hidden>
+      <div id="rpane-harvest"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightNotes">
+    <button class="insight-header" aria-expanded="true" data-section="notes">Notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
+    <div class="insight-content">
+      <div id="rpane-notes"></div>
+    </div>
+  </section>
 </aside>
-</div>
+</div><!-- /planner-main -->
 
 <dialog id="addBedDialog" class="add-bed-dialog">
   <form method="dialog" class="add-bed-wrap" id="addBedForm">
@@ -1606,18 +1965,18 @@
   </form>
 </dialog>
 
-<!-- ═══ SETTINGS MENU ═══ -->
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="menu-panel" id="menuPanel" role="dialog" aria-modal="true" aria-labelledby="menuHeading" tabindex="-1">
+<!-- ═══ MANAGE PANEL ═══ -->
+<div class="manage-overlay menu-overlay" id="menuOverlay"></div>
+<aside class="manage-panel menu-panel" id="managePanel" role="dialog" aria-modal="true" aria-labelledby="manageTitle" tabindex="-1">
   <div class="menu-header">
-    <div class="menu-title" id="menuHeading">Garden Planner</div>
+    <div class="menu-title" id="manageTitle">Manage</div>
     <div class="menu-subtitle" id="menuSubtitle">Bed 1</div>
   </div>
 
   <div class="menu-section-label">SAVE &amp; RESTORE</div>
   <button class="menu-row" id="menuSave">
     <span class="menu-row-icon" style="background:#e8f5ea"></span>
-    Save plan
+    Save snapshot
     <span class="menu-badge menu-badge-green" id="menuAutoSaveBadge">auto</span>
   </button>
   <button class="menu-row" id="menuExport">
@@ -1683,7 +2042,10 @@
     <span class="menu-row-icon" style="background:#faeae8"></span>
     Delete this bed
   </button>
-</div>
+</aside>
+
+<div id="actionBannerMount"></div>
+</div><!-- /planner-shell -->
 
 <dialog id="confirmDialog" class="confirm-dialog">
   <div class="confirm-wrap">
@@ -1695,6 +2057,31 @@
     </div>
   </div>
 </dialog>
+
+<div class="shortcut-overlay" id="shortcutOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutTitle" hidden>
+  <div class="shortcut-panel">
+    <div class="shortcut-head">
+      <div>
+        <div class="shortcut-title" id="shortcutTitle">Planner shortcuts</div>
+        <div class="shortcut-copy">Move faster without leaving the current bed.</div>
+      </div>
+      <button class="shortcut-close" id="shortcutCloseBtn" type="button">Close</button>
+    </div>
+    <div class="shortcut-grid">
+      <div class="shortcut-item"><strong><kbd>P</kbd>Paint</strong><span>Switch to placement mode</span></div>
+      <div class="shortcut-item"><strong><kbd>E</kbd>Erase</strong><span>Remove crops from focused cells</span></div>
+      <div class="shortcut-item"><strong><kbd>I</kbd>Inspect</strong><span>Read score and harvest context</span></div>
+      <div class="shortcut-item"><strong><kbd>M</kbd>Manage</strong><span>Open save, import, export, and recovery actions</span></div>
+      <div class="shortcut-item"><strong><kbd>[</kbd> <kbd>]</kbd>Switch beds</strong><span>Move to the previous or next bed</span></div>
+      <div class="shortcut-item"><strong><kbd>/</kbd>Crop search</strong><span>Jump into the crop palette filter</span></div>
+      <div class="shortcut-item"><strong><kbd>⌘/Ctrl</kbd> <kbd>Z</kbd>Undo</strong><span>Restore crop placement (settings and bed size are not undoable)</span></div>
+      <div class="shortcut-item"><strong><kbd>⌘/Ctrl</kbd> <kbd>Y</kbd>Redo</strong><span>Reapply the last undone crop change</span></div>
+      <div class="shortcut-item"><strong><kbd>Arrow keys</kbd>Move focus</strong><span>Navigate between grid cells</span></div>
+      <div class="shortcut-item"><strong><kbd>Enter</kbd> / <kbd>Space</kbd>Place or inspect</strong><span>Apply the current tool on the focused cell</span></div>
+      <div class="shortcut-item"><strong><kbd>Esc</kbd>Reset focus</strong><span>Return to Inspect and close transient UI</span></div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2066,7 +2453,7 @@ const SUBS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
-let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'score' };
+let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'dashboard' };
 let undoStack = [], redoStack = [];
 let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
 let interaction = {
@@ -2165,11 +2552,23 @@ function updateUndoButtons(){
 const LS_KEY = 'gardenOS_workspace';
 const LS_KEY_LEGACY = 'gardenOS';
 const LS_KEY_LEGACY_V4 = 'gardenOS_v4';
+const LS_KEY_RESTORE = 'gardenOS_workspace_restore_v1';
 let _workspace = null;
 let _activeBedTraits = null;
 let _recoveryPayload = null;
 let _recoveryBanner = null;
 let _pendingLoadFromHash = false;
+let _plannerNotice = null;
+let _plannerNoticeTimer = null;
+let _actionBannerTimer = null;
+let _shortcutTrigger = null;
+
+function cloneData(value){
+  try{
+    if(typeof structuredClone === 'function') return structuredClone(value);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(value));
+}
 
 function clampInt(n, min, max, fallback){
   const v = Math.floor(+n);
@@ -2477,7 +2876,7 @@ function createMinimalWorkspace(){
     createdAt: now,
     updatedAt: now,
     activeBedId: starter.id,
-    workspaceSettings: { catFilter:'all', rightTab:'score' },
+    workspaceSettings: { catFilter:'all', rightTab:'dashboard' },
     beds: [starter],
     guideProgress: [],
     harvests: []
@@ -2506,7 +2905,7 @@ function validateWorkspace(ws){
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
     rightTab: ['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
-      : 'score'
+      : 'dashboard'
   };
   normalized.beds = ws.beds.map((b, i)=>normalizeBedRecord(b, i));
   if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
@@ -2560,7 +2959,7 @@ function migrateV0toV1(legacyState){
     createdAt: now,
     updatedAt: now,
     activeBedId: bedRecord.id,
-    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score' },
+    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'dashboard' },
     beds: [bedRecord],
     guideProgress: []
   };
@@ -2726,10 +3125,11 @@ function showRecoveryBanner(){
   wrap.innerHTML = `
     <div class="recovery-title">Recovery Mode</div>
     <div class="recovery-text">
-      Saved workspace data could not be parsed cleanly. Garden OS loaded a safe empty workspace.
+      Saved workspace data could not be parsed. Your browser storage is intact &mdash; Garden OS loaded a safe empty workspace so you can keep working.
     </div>
     <div class="recovery-actions">
       <button type="button" class="primary" id="recoverTryBtn">Try to recover</button>
+      <button type="button" id="recoverImportBtn">Import backup</button>
       <button type="button" id="recoverResetBtn">Reset</button>
     </div>
   `;
@@ -2752,6 +3152,14 @@ function showRecoveryBanner(){
       if(_recoveryBanner) _recoveryBanner.remove();
       _recoveryBanner = null;
       _recoveryPayload = null;
+    });
+  }
+  const importBtn = document.getElementById('recoverImportBtn');
+  if(importBtn){
+    importBtn.addEventListener('click',()=>{
+      if(_recoveryBanner) _recoveryBanner.remove();
+      _recoveryBanner = null;
+      openWorkspaceImportPicker();
     });
   }
   if(recoverBtn){
@@ -2838,7 +3246,7 @@ function applyWorkspaceToUI(ws){
   cage = rawCageToRuntime(b.cage);
   syncCageUI();
   normalizeSelectionState();
-  switchRTab(ui.rTab || 'score', false);
+  switchRTab(ui.rTab || 'dashboard', false);
   renderPlacementStatus();
   renderWorkspaceSwitcher();
 }
@@ -2849,6 +3257,177 @@ function showShareBanner(message='Loaded from shared link'){
   b.textContent=message;
   document.body.appendChild(b);
   setTimeout(()=>b.remove(),4000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UNDO TOAST — reversible destructive flows
+// ═══════════════════════════════════════════════════════════════════════════════
+function showUndoToast(message, onUndo, duration=5000){
+  const existing = document.querySelector('.undo-toast');
+  if(existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'undo-toast';
+  toast.innerHTML = '<span>' + escapeHtml(message) + '</span><button type="button" class="undo-toast-btn">Undo</button>';
+  document.body.appendChild(toast);
+  const btn = toast.querySelector('.undo-toast-btn');
+  const timer = setTimeout(function(){ toast.remove(); }, duration);
+  btn.addEventListener('click', function(){
+    clearTimeout(timer);
+    toast.remove();
+    if(typeof onUndo === 'function') onUndo();
+  });
+}
+
+function clearActionBanner(){
+  clearTimeout(_actionBannerTimer);
+  const mount=document.getElementById('actionBannerMount');
+  if(mount) mount.innerHTML='';
+}
+function showActionBanner(message, actionLabel='', onAction=null, duration=12000){
+  const mount=document.getElementById('actionBannerMount');
+  if(!mount) return;
+  clearActionBanner();
+  const actionHtml = actionLabel ? `<button type="button" class="action-banner-btn" id="actionBannerBtn">${escapeHtml(actionLabel)}</button>` : '';
+  mount.innerHTML = `<div class="action-banner" role="status" aria-live="polite"><span>${escapeHtml(message)}</span>${actionHtml}</div>`;
+  if(actionLabel && typeof onAction==='function'){
+    const btn=document.getElementById('actionBannerBtn');
+    if(btn){
+      btn.addEventListener('click',()=>{
+        onAction();
+        clearActionBanner();
+      });
+    }
+  }
+  _actionBannerTimer = setTimeout(clearActionBanner, duration);
+}
+function saveRestoreSnapshot(label='Restore point'){
+  if(!_workspace) return null;
+  const snapshot = {
+    label,
+    savedAt:new Date().toISOString(),
+    workspace:cloneData(_workspace)
+  };
+  try{ localStorage.setItem(LS_KEY_RESTORE, JSON.stringify(snapshot)); }catch(e){}
+  return snapshot;
+}
+function restoreSnapshotFromData(snapshot){
+  if(!snapshot || !snapshot.workspace) return false;
+  const check = validateWorkspace(snapshot.workspace);
+  if(!check.ok) return false;
+  _workspace = check.workspace;
+  applyWorkspaceToUI(_workspace);
+  renderWorkspaceSwitcher();
+  undoStack = [];
+  redoStack = [];
+  updateUndoButtons();
+  saveWorkspace(_workspace);
+  renderPalette();
+  render();
+  return true;
+}
+function setPlannerNotice(kind, title, copy, actions=[]){
+  clearTimeout(_plannerNoticeTimer);
+  _plannerNotice = { kind, title, copy, actions };
+  renderPlannerState();
+  if(kind==='complete' || kind==='error'){
+    _plannerNoticeTimer = setTimeout(()=>{
+      _plannerNotice = null;
+      renderPlannerState();
+    }, 7000);
+  }
+}
+function renderPlannerState(){
+  const mount=document.getElementById('plannerStateStrip');
+  const chip=document.getElementById('plannerModeChip');
+  const inspectBtn=document.getElementById('focusInspectBtn');
+  if(!mount || !chip) return;
+  const plantedCount = bed.filter(c=>!!c.crop).length;
+  let state = null;
+  if(_plannerNotice){
+    state = _plannerNotice;
+  }else if(!plantedCount){
+    state = {
+      kind:'empty',
+      title:'Start with a crop or draft a layout',
+      copy:'Use Auto fill for a quick first pass or switch to Paint and place crops manually.',
+      actions:[
+        { id:'stateAutofill', label:'Auto fill', cls:'primary' },
+        { id:'statePalette', label:'Open crops' }
+      ]
+    };
+  }else{
+    const selected = ui.selCell ? bed.find(c=>c.id===ui.selCell) : null;
+    const currentTool = ui.tool === 'paint' ? 'Plan' : ui.tool === 'erase' ? 'Manage' : 'Inspect';
+    state = {
+      kind:'active',
+      title:`${currentTool} is active`,
+      copy:selected
+        ? (selected.crop ? `Selected ${selected.id}. Inspect score, harvest history, and better placements.` : `Selected ${selected.id}. Place a crop or inspect the cell score context.`)
+        : 'Keep one current task visible. Use Inspect for score details, Plan for placement, and Manage for save, import, and restore.',
+      actions:[
+        { id:'stateInspect', label:'Inspect weakest', cls:'warn' },
+        { id:'stateManage', label:'Open manage' }
+      ]
+    };
+  }
+  chip.textContent = state.kind === 'empty' ? 'Start' : state.kind === 'complete' ? 'Done' : state.kind === 'error' ? 'Recover' : (ui.tool === 'paint' ? 'Plan' : ui.tool === 'erase' ? 'Manage' : 'Inspect');
+  chip.className = `planner-state-chip state-${state.kind}`;
+  mount.innerHTML = `
+    <div class="planner-state-kicker">${escapeHtml(state.kind)}</div>
+    <div class="planner-state-title">${escapeHtml(state.title)}</div>
+    <div class="planner-state-copy">${escapeHtml(state.copy)}</div>
+    <div class="planner-state-actions">
+      ${state.actions.map(action=>`<button type="button" class="planner-state-btn ${action.cls || ''}" data-state-action="${escapeHtml(action.id)}">${escapeHtml(action.label)}</button>`).join('')}
+    </div>
+  `;
+  mount.querySelectorAll('[data-state-action]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.getAttribute('data-state-action');
+      const action=(state.actions || []).find(item=>item.id===id);
+      if(action && typeof action.action === 'function'){
+        action.action();
+        return;
+      }
+      if(id==='stateAutofill') loadRec();
+      if(id==='statePalette'){ switchLTab('palette'); const search=document.getElementById('psearch'); if(search) search.focus(); }
+      if(id==='stateInspect') focusWeakestCell();
+      if(id==='stateManage') toggleMenu();
+    });
+  });
+  if(inspectBtn) inspectBtn.disabled = !plantedCount;
+}
+function focusWeakestCell(){
+  const inputs = inp();
+  const weakest = weakestCells(inputs, 1)[0];
+  if(!weakest) return;
+  ui.selCell = weakest.cell.id;
+  setTool('inspect');
+  render();
+  const el=document.getElementById(weakest.cell.id);
+  if(el) el.focus();
+}
+function openShortcutOverlay(){
+  const ov=document.getElementById('shortcutOverlay');
+  if(!ov) return;
+  _shortcutTrigger = document.activeElement;
+  ov.hidden = false;
+  ov.setAttribute('data-open','');
+  const closeBtn=document.getElementById('shortcutCloseBtn');
+  if(closeBtn) closeBtn.focus();
+}
+function closeShortcutOverlay(){
+  const ov=document.getElementById('shortcutOverlay');
+  if(!ov) return;
+  ov.hidden = true;
+  ov.removeAttribute('data-open');
+  if(_shortcutTrigger && _shortcutTrigger.focus) _shortcutTrigger.focus();
+  _shortcutTrigger = null;
+}
+function cycleBeds(step){
+  if(!_workspace || !_workspace.beds.length) return;
+  const idx = _workspace.beds.findIndex(b=>b.id===_workspace.activeBedId);
+  const next = _workspace.beds[(idx + step + _workspace.beds.length) % _workspace.beds.length];
+  if(next) setActiveBed(next.id);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3392,6 +3971,14 @@ function formatSigned(value, digits=2){
   return `${n>=0?'+':''}${n.toFixed(digits)}`;
 }
 
+function isFrontAccessCell(cell){
+  return !!(cell && Number.isFinite(cell.row) && cell.row===bedH-1);
+}
+
+function isTallCrop(crop){
+  return !!(crop && crop.height==='tall');
+}
+
 function scoreBandByRatio(ratio){
   if(ratio>=0.7) return 'good';
   if(ratio>=0.45) return 'mid';
@@ -3505,20 +4092,26 @@ function cellIssues(inputs){
     if(!cell.crop) return;
     const c=CROPS[cell.crop]; const light=cell.effectiveLight||0;
     const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
+    const frontAccessCell=isFrontAccessCell(cell);
+    const highAccessCell=(cell.accessPriority||0)>=0.75;
     if(c.habit==='vining'&&!cell.hasVerticalSupport)
-      issues.push({cellId:cell.id,icon:'🪴',msg:`${c.short} is a vine but not in a trellis zone — yields will be lower.`});
+      issues.push({cellId:cell.id,icon:'🪴',msg:`${c.short} is a vine but not in a trellis zone — yields will be lower.`,code:'UNSUPPORTED_CLIMBER',severity:'critical'});
     // Trait-based validity issues (v4.3)
     const v=cropValidity(cell.crop, cell, inputs);
     if(v.severity==='hard')
-      issues.push({cellId:cell.id,icon:'⛔',msg:v.reason,code:v.code});
+      issues.push({cellId:cell.id,icon:'⛔',msg:v.reason,code:v.code,severity:'critical'});
     else if(v.severity==='advisory')
-      issues.push({cellId:cell.id,icon:'⚠',msg:v.reason,code:v.code});
+      issues.push({cellId:cell.id,icon:'⚠',msg:v.reason,code:v.code,severity:'medium'});
+    if(isTallCrop(c) && frontAccessCell && !cell.isTrellisRow)
+      issues.push({cellId:cell.id,icon:'🚧',msg:`${c.short} is tall in the front access row — it throws shade behind it and blocks your easiest reach lane.`,code:'FRONT_ACCESS_SHADE',severity:'critical'});
+    else if(isTallCrop(c) && highAccessCell && !cell.isTrellisRow)
+      issues.push({cellId:cell.id,icon:'🚧',msg:`${c.short} is occupying a high-access lane — keep front access cells for low crops, succession, or quick harvest work.`,code:'ACCESS_BLOCK',severity:'medium'});
     if(light<c.sunMin)
-      issues.push({cellId:cell.id,icon:'☀',msg:`${c.short} needs ≥${c.sunMin} hrs; this cell gets ${light.toFixed(1)} hrs.`});
+      issues.push({cellId:cell.id,icon:'☀',msg:`${c.short} needs ≥${c.sunMin} hrs; this cell gets ${light.toFixed(1)} hrs.`,severity:'medium'});
     if(c.height==='tall'&&nbrs.some(n=>CROPS[n.crop]&&CROPS[n.crop].height==='tall'&&n.crop!==cell.crop))
-      issues.push({cellId:cell.id,icon:'↕',msg:`Tall crop next to another tall crop — mutual shading.`});
+      issues.push({cellId:cell.id,icon:'↕',msg:`Tall crop next to another tall crop — advisory crowding note only, but it can still build a shade wall.`,code:'CROWDING_SHADE',severity:'low'});
     if(c.coolSeason&&(inputs.season==='latesummer'||inputs.season==='summer'))
-      issues.push({cellId:cell.id,icon:'🌡',msg:`${c.short} will bolt in ${inputs.season==='latesummer'?'late-summer':'summer'} heat.`});
+      issues.push({cellId:cell.id,icon:'🌡',msg:`${c.short} will bolt in ${inputs.season==='latesummer'?'late-summer':'summer'} heat.`,severity:'medium'});
     // Water mismatch (only emit from the cell with the lower id to avoid A↔B duplicates)
     const waterMap={low:0,medium:1,high:2};
     nbrs.forEach(n=>{
@@ -3527,11 +4120,197 @@ function cellIssues(inputs){
       const wd=Math.abs((waterMap[c.waterNeed]||1)-(waterMap[CROPS[n.crop].waterNeed]||1));
       if(wd>=2){
         const pair=[c.short,CROPS[n.crop].short].sort();
-        issues.push({cellId:cell.id,icon:'💧',msg:`${pair[0]} and ${pair[1]} have very different water needs.`});
+        issues.push({cellId:cell.id,icon:'💧',msg:`${pair[0]} and ${pair[1]} have very different water needs.`,severity:'low'});
       }
     });
   });
   return issues;
+}
+
+function issueSeverityRank(issue){
+  const severityBase={critical:0,medium:100,low:200};
+  const codeRank={
+    UNSUPPORTED_CLIMBER:0,
+    NO_SUPPORT:1,
+    FRONT_ACCESS_SHADE:2,
+    ACCESS_BLOCK:3,
+    OFF_TRELLIS_ROW:10,
+    WASTED_TRELLIS_SPACE:11,
+    CROWDING_SHADE:20
+  };
+  const base=severityBase[issue&&issue.severity] ?? 300;
+  const codeWeight=codeRank[issue&&issue.code] ?? 50;
+  return base+codeWeight;
+}
+
+function issueSeverityLabel(issue){
+  if(!issue) return 'low';
+  return issue.severity||'low';
+}
+
+function reasonFix(issue, cell, inputs){
+  const crop=cell&&cell.crop&&CROPS[cell.crop]?CROPS[cell.crop]:null;
+  if(!issue) return 'Inspect the weakest cell and compare the better fit suggestion before moving crops.';
+  if(issue.code==='UNSUPPORTED_CLIMBER'||issue.code==='NO_SUPPORT'||issue.code==='OFF_TRELLIS_ROW')
+    return 'Move this climber to the back trellis row or switch to a compact non climber.';
+  if(issue.code==='FRONT_ACCESS_SHADE')
+    return 'Pull this tall crop out of the front access row so light and reach return to the rest of the bed.';
+  if(issue.code==='ACCESS_BLOCK')
+    return 'Reserve this high-access lane for low crops, succession sowing, or quick harvest work instead of a tall blocker.';
+  if(issue.code==='WASTED_TRELLIS_SPACE')
+    return 'Free the trellis row for a climber and move this crop into a protected front or middle cell.';
+  if(issue.code==='CROWDING_SHADE')
+    return 'Treat this as a crowding advisory: separate one tall crop before it turns into a larger shade wall.';
+  if(issue.icon==='☀')
+    return crop&&crop.coolSeason
+      ? 'Shift this crop into a cooler lower stress cell or replace it with a more heat tolerant crop.'
+      : 'Move this crop into a brighter cell or swap in a crop that handles lower light.';
+  if(issue.icon==='↕')
+    return 'Break up tall crops so they do not form a shade wall across the bed.';
+  if(issue.icon==='🌡')
+    return 'Rotate this cool season crop out before heat compounds the score penalty.';
+  if(issue.icon==='💧')
+    return 'Separate high and low water demand crops so irrigation stays consistent.';
+  return 'Inspect this cell and follow the strongest better fit suggestion.';
+}
+
+function cellScoreDelta(cell, inputs){
+  if(!cell||!cell.crop) return null;
+  const current=scoreCell(cell,inputs);
+  const better=betterCropForCell(cell,inputs);
+  if(!better||!Number.isFinite(better.score)) return null;
+  return {
+    current,
+    betterCropKey: better.cropKey,
+    betterScore: better.score,
+    gain: better.score-current,
+    reasons: Array.isArray(better.reasons)?better.reasons:[]
+  };
+}
+
+function selectBestFit(cellId, cropKey){
+  const cell=bed.find(c=>c.id===cellId);
+  if(!cell||!cropKey||!CROPS[cropKey]) return;
+  ui.selCell=cellId;
+  interaction.focusCellId=cellId;
+  selectCrop(cropKey);
+  render();
+  const target=document.getElementById(cellId);
+  if(target) target.focus();
+}
+
+function issueCountsBySeverity(issues){
+  const counts={critical:0,medium:0,low:0};
+  (issues||[]).forEach(issue=>{
+    const key=issueSeverityLabel(issue);
+    if(counts[key]===undefined) counts[key]=0;
+    counts[key]+=1;
+  });
+  return counts;
+}
+
+function renderIssueSummaryStrip(issues){
+  const strip=document.getElementById('issueSummaryStrip');
+  if(!strip) return;
+  const planted=bed.filter(c=>c.crop).length;
+  const ranked=[...(issues||[])].sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
+  const counts=issueCountsBySeverity(ranked);
+  if(!planted){
+    strip.innerHTML='<span class="issue-pill low">empty bed</span><span class="issue-pill low">place crops to score</span>';
+    return;
+  }
+  const pills=[];
+  if(counts.critical) pills.push(`<span class="issue-pill critical">${escapeHtml(String(counts.critical))} critical</span>`);
+  if(counts.medium) pills.push(`<span class="issue-pill medium">${escapeHtml(String(counts.medium))} medium</span>`);
+  if(counts.low) pills.push(`<span class="issue-pill low">${escapeHtml(String(counts.low))} advisory</span>`);
+  if(!ranked.length){
+    pills.push('<span class="issue-pill low">clear layout</span>');
+    pills.push(`<span class="issue-pill low">${escapeHtml(String(planted))} planted</span>`);
+  }else{
+    pills.push(`<span class="issue-pill ${escapeHtml(issueSeverityLabel(ranked[0]))}">${escapeHtml(ranked[0].msg)}</span>`);
+  }
+  strip.innerHTML=pills.join('');
+}
+
+function buildReasoningSurface(inputs, issues){
+  const pane=document.getElementById('rpane-reasoning');
+  if(!pane) return;
+  const selected=ui.selCell?bed.find(c=>c.id===ui.selCell):null;
+  const planted=bed.filter(c=>c.crop);
+  const weakest=weakestCells(inputs,1)[0];
+  const target=(selected&&selected.crop)?selected:(weakest?weakest.cell:(planted[0]||null));
+  if(!target||!target.crop){
+    pane.innerHTML=`<div class="icard reasoning-card"><div class="ichdr">Reasoning surface</div><div class="reasoning-empty"><span>🧭</span><p>Select a planted cell to see score drivers, top risk, and the next best move in one place.</p><button class="reasoning-btn primary state-action" type="button" data-action="switch-inspect">Switch to Inspect</button></div></div>`;
+    return;
+  }
+  const crop=CROPS[target.crop];
+  const breakdown=getScoreBreakdown(target,inputs);
+  const targetIssues=(issues||[]).filter(issue=>issue.cellId===target.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
+  const primaryIssue=targetIssues[0]||null;
+  const factorRows=breakdown&&Array.isArray(breakdown.factors)?breakdown.factors:[];
+  const scoredFactors=factorRows
+    .filter(f=>typeof f.value==='number'&&typeof f.weight==='number')
+    .map(f=>({label:f.label,ratio:Math.max(0,Math.min(1,f.value/5)),description:f.description}))
+    .sort((a,b)=>a.ratio-b.ratio);
+  const weakestFactor=scoredFactors[0]||null;
+  const strongestFactor=[...scoredFactors].sort((a,b)=>b.ratio-a.ratio)[0]||null;
+  const score=breakdown?breakdown.total:scoreCell(target,inputs);
+  const delta=cellScoreDelta(target,inputs);
+  const supportFact=target.hasVerticalSupport
+    ? 'support ready'
+    : crop.trellisRequired
+      ? 'support missing'
+      : 'no support needed';
+  const cellFacts=[
+    `${(target.effectiveLight||0).toFixed(1)} hrs sun`,
+    isFrontAccessCell(target)?'front access row':(target.isTrellisRow?'trellis row':'interior row'),
+    supportFact
+  ];
+  const scoreDirection=score>=7
+    ? 'Stable. The current placement is working, but one weak factor still limits upside.'
+    : score>=4
+      ? 'Mixed. This cell is workable, but one structural or environmental penalty is dragging it down.'
+      : 'At risk. This placement is losing points fast and should be corrected before it compounds.';
+  const tradeoff=primaryIssue
+    ? `${primaryIssue.msg} ${reasonFix(primaryIssue,target,inputs)}`
+    : weakestFactor&&strongestFactor&&weakestFactor.label!==strongestFactor.label
+      ? `${strongestFactor.label} is carrying this cell, but ${weakestFactor.label} is limiting the score.`
+      : 'No major violation is active. Use the score breakdown to fine tune the placement.';
+  const nextMove=reasonFix(primaryIssue,target,inputs);
+  const scoreTone=score>=7?'Stable score':score>=4?'Mixed score':'At risk score';
+  const severity=issueSeverityLabel(primaryIssue);
+  const issueHtml=primaryIssue
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Top risk</span><span class="reasoning-text">${escapeHtml(primaryIssue.msg)}</span></div><span class="reasoning-badge ${escapeHtml(severity)}">${escapeHtml(severity)}</span></div>`
+    : `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Top risk</span><span class="reasoning-text">No hard violation is active on this cell. Focus on score tuning and harvest timing.</span></div><span class="reasoning-badge low">clear</span></div>`;
+  const factsHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Cell facts</span><div class="reasoning-facts">${cellFacts.map(fact=>`<span class="reasoning-fact">${escapeHtml(fact)}</span>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(target.id)}</span></div>`;
+  const factorHtml=weakestFactor
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Weakest factor</span><span class="reasoning-text">${escapeHtml(weakestFactor.label)}. ${escapeHtml(weakestFactor.description||'')}</span></div><span class="reasoning-score">${escapeHtml(scoreTone)}</span></div>`
+    : '';
+  const stackHtml=targetIssues.length>1
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Ordered issues</span><div class="reasoning-stack">${targetIssues.slice(0,3).map(issue=>`<div class="reasoning-stack-item"><div class="reasoning-stack-copy"><strong>${escapeHtml(issue.msg)}</strong><span>${escapeHtml(reasonFix(issue,target,inputs))}</span></div><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span></div>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(targetIssues.length+' risks')}</span></div>`
+    : '';
+  const tradeHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Tradeoff</span><span class="reasoning-text">${escapeHtml(tradeoff)}</span></div><span class="reasoning-score">${escapeHtml(target.id)}</span></div>`;
+  const deltaHtml=delta&&delta.gain>0.15
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score delta</span><span class="reasoning-text">Switching to ${escapeHtml(CROPS[delta.betterCropKey].name)} could raise this cell from ${escapeHtml(delta.current.toFixed(1))} to about ${escapeHtml(delta.betterScore.toFixed(1))}.</span></div><span class="reasoning-score">+${escapeHtml(delta.gain.toFixed(1))}</span></div>`
+    : '';
+  const nextHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Next move</span><span class="reasoning-text">${escapeHtml(nextMove)}</span></div><span class="reasoning-score">${escapeHtml(crop.short)}</span></div>`;
+  pane.innerHTML=`<div class="icard reasoning-card">
+    <div class="ichdr">Reasoning surface</div>
+    <div class="reasoning-target"><span>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)} · ${escapeHtml(target.id)}</span><span class="reasoning-score">${escapeHtml(score.toFixed(1))}/10</span></div>
+    <div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score direction</span><span class="reasoning-text">${escapeHtml(scoreDirection)}</span></div><span class="reasoning-score">${escapeHtml(ui.selCell===target.id?'selected':'focus')}</span></div>
+    ${factsHtml}
+    ${issueHtml}
+    ${factorHtml}
+    ${stackHtml}
+    ${tradeHtml}
+    ${deltaHtml}
+    ${nextHtml}
+    <div class="reasoning-actions">
+      <button class="reasoning-btn primary" type="button" data-reasoning-action="focus-cell" data-cell-id="${escapeHtml(target.id)}">Inspect this cell</button>
+      ${delta&&delta.gain>0.15?`<button class="reasoning-btn" type="button" data-reasoning-action="best-fit" data-cell-id="${escapeHtml(target.id)}" data-crop-key="${escapeHtml(delta.betterCropKey)}">Queue best fit</button>`:''}
+      <button class="reasoning-btn" type="button" data-reasoning-action="open-notes">Open notes</button>
+    </div>
+  </div>`;
 }
 
 // Warnings
@@ -3586,6 +4365,16 @@ function warnings(inputs,issues){
   return w;
 }
 
+function issueCountsBySeverity(issues){
+  const counts={critical:0,medium:0,low:0};
+  (issues||[]).forEach(issue=>{
+    const key=issueSeverityLabel(issue);
+    if(counts[key]===undefined) counts[key]=0;
+    counts[key]+=1;
+  });
+  return counts;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARING
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3606,7 +4395,7 @@ function workspaceExportFileName(){
 function exportWorkspaceFile(){
   saveState();
   if(!_workspace){
-    alert('No workspace loaded to export.');
+    setPlannerNotice('error','Nothing to export','Create or import a workspace before exporting.');
     return;
   }
   const payload = JSON.parse(JSON.stringify(_workspace));
@@ -3644,42 +4433,41 @@ async function handleWorkspaceImportFile(event){
   const file=picker && picker.files && picker.files[0] ? picker.files[0] : null;
   if(!file) return;
   if(file.size > MAX_IMPORT_FILE_BYTES){
-    const proceed=confirm('This file is larger than 500KB and may be invalid. Continue import?');
-    if(!proceed) return;
+    showActionBanner('Large import file detected. Garden OS will validate before replacing your workspace.');
   }
   let text='';
   try{
     text = await file.text();
   }catch(err){
-    alert('Unable to read file. Please try again.');
+    setPlannerNotice('error','Import failed','Garden OS could not read that file. Try the export again or choose a different file.');
     return;
   }
   if(!text || !text.trim()){
-    alert('Import failed: file is empty.');
+    setPlannerNotice('error','Import failed','The selected file is empty.');
     return;
   }
   let parsed=null;
   try{
     parsed = JSON.parse(text);
   }catch(err){
-    alert('Import failed: file is not valid JSON.');
+    setPlannerNotice('error','Import failed','The selected file is not valid JSON.');
     return;
   }
   if(!parsed || typeof parsed!=='object' || Array.isArray(parsed)){
-    alert('Import failed: expected a workspace JSON object.');
+    setPlannerNotice('error','Import failed','Expected a Garden OS workspace object.');
     return;
   }
   if(Number.isFinite(parsed.version) && parsed.version > WORKSPACE_VERSION){
-    alert(`Import failed: workspace version ${parsed.version} is newer than supported version ${WORKSPACE_VERSION}.`);
+    setPlannerNotice('error','Import failed',`Workspace version ${parsed.version} is newer than this planner supports.`);
     return;
   }
   const check = validateWorkspace(parsed);
   if(!check.ok){
     const reason = check.errors && check.errors.length ? check.errors.join('; ') : 'schema validation failed';
-    alert(`Import failed: ${reason}`);
+    setPlannerNotice('error','Import failed',reason);
     return;
   }
-  if(!confirm('This will replace your current workspace. Continue?')) return;
+  const snapshot = saveRestoreSnapshot('Import replace');
   _workspace = check.workspace;
   applyWorkspaceToUI(_workspace);
   renderWorkspaceSwitcher();
@@ -3689,13 +4477,33 @@ async function handleWorkspaceImportFile(event){
   saveWorkspace(_workspace);
   renderPalette();
   render();
-  showShareBanner('Workspace imported');
+  setPlannerNotice('complete','Workspace imported','The imported workspace replaced the current one. Restore is available if you need the previous state.',[
+    {
+      id:'stateRestoreImport',
+      label:'Restore previous',
+      cls:'primary',
+      action:()=>{
+        if(snapshot && restoreSnapshotFromData(snapshot)){
+          setPlannerNotice('complete','Workspace restored','The pre import workspace is back.');
+          showActionBanner('Workspace restored');
+        }
+      }
+    }
+  ]);
+  showActionBanner('Workspace imported', 'Restore previous', ()=>{
+    if(snapshot && restoreSnapshotFromData(snapshot)){
+      setPlannerNotice('complete','Workspace restored','The pre import workspace is back.');
+      showActionBanner('Workspace restored');
+    }
+  });
 }
 
+let _lastShareSnapshot = null;
 function shareLayout(){
   // Share uses workspace envelope, stripped of transient metadata.
   if(!_workspace) return;
   saveState();
+  _lastShareSnapshot = JSON.stringify(bed.map(c=>c.crop));
   const stripped = {
     id: _workspace.id,
     version: _workspace.version,
@@ -3708,8 +4516,19 @@ function shareLayout(){
   navigator.clipboard.writeText(url).then(()=>{
     const btn=document.getElementById('shareBtn');
     btn.textContent='✓ Copied!';
-    setTimeout(()=>btn.textContent='⬆ Share',2000);
+    setTimeout(()=>{ btn.textContent='⬆ Share'; syncShareStaleness(); },2000);
   }).catch(()=>{ showShareFallback(url); });
+}
+function syncShareStaleness(){
+  const btn=document.getElementById('shareBtn');
+  if(!btn || !_lastShareSnapshot) return;
+  const current = JSON.stringify(bed.map(c=>c.crop));
+  if(current !== _lastShareSnapshot){
+    btn.textContent='⬆ Share ·';
+    btn.title='Bed changed since last share — link may be stale';
+  } else {
+    btn.title='Copy shareable link';
+  }
 }
 function showShareFallback(url){
   const existing=document.querySelector('.share-fallback-wrap');
@@ -3969,7 +4788,121 @@ function handleDuplicateActiveBed(){
   renderWorkspaceSwitcher();
   render();
 }
-function clearBed(){ pushUndo(); bed.forEach(c=>c.crop=null); saveState(); render(); }
+function clearBed(opts={}){
+  const snapshot = bedSnapshot();
+  pushUndo();
+  bed.forEach(c=>c.crop=null);
+  saveState();
+  render();
+  if(opts.showUndo!==false){
+    setPlannerNotice('complete','Bed cleared','All crops were removed from the active bed. Undo is available right now.',[
+      {
+        id:'stateUndoClear',
+        label:'Undo clear',
+        cls:'primary',
+        action:()=>{
+          restoreSnapshot(snapshot);
+          saveState();
+          render();
+          setPlannerNotice('complete','Clear undone','The previous bed layout has been restored.');
+        }
+      }
+    ]);
+    showActionBanner('Bed cleared', 'Undo', ()=>{
+      restoreSnapshot(snapshot);
+      saveState();
+      render();
+      setPlannerNotice('complete','Clear undone','The previous bed layout has been restored.');
+    });
+  }
+}
+function resetBedToDefaults(){
+  const snapshot = saveRestoreSnapshot('Reset bed');
+  pushUndo();
+  setPreset(4,8);
+  bed.forEach(c=>{c.crop=null;});
+  const ce=document.getElementById('cageEnabled');
+  if(ce&&ce.classList.contains('on')){ce.classList.remove('on');ce.setAttribute('aria-pressed','false');}
+  const ct=document.getElementById('cageRearTrellis');
+  if(ct&&!ct.classList.contains('on')){ct.classList.add('on');ct.setAttribute('aria-pressed','true');}
+  const cw=document.getElementById('cageWireSides');
+  if(cw&&!cw.classList.contains('on')){cw.classList.add('on');cw.setAttribute('aria-pressed','true');}
+  document.getElementById('cageHeight').value='24';
+  document.getElementById('doorStyle').value='double';
+  document.getElementById('sunHours').value='5';
+  document.getElementById('sunVal').textContent='5 hrs';
+  document.getElementById('wallSide').value='back';
+  document.getElementById('orientation').value='ew';
+  document.getElementById('season').value='summer';
+  document.getElementById('goal').value='balanced';
+  document.getElementById('zone').value='';
+  const tt=document.getElementById('trellisToggle');
+  if(tt&&!tt.classList.contains('on')){tt.classList.add('on');tt.setAttribute('aria-pressed','true');}
+  saveState();
+  if(_workspace) saveWorkspace(_workspace);
+  render();
+  setPlannerNotice('complete','Bed reset','Default bed size, structure, and site values are active. Restore is available.',[
+    {
+      id:'stateRestoreReset',
+      label:'Restore bed',
+      cls:'primary',
+      action:()=>{
+        if(snapshot && restoreSnapshotFromData(snapshot)){
+          setPlannerNotice('complete','Reset undone','The previous bed state is back.');
+          showActionBanner('Bed restored');
+        }
+      }
+    }
+  ]);
+  showActionBanner('Bed reset to defaults', 'Restore', ()=>{
+    if(snapshot && restoreSnapshotFromData(snapshot)){
+      setPlannerNotice('complete','Reset undone','The previous bed state is back.');
+      showActionBanner('Bed restored');
+    }
+  });
+}
+function softDeleteActiveBed(){
+  if(!_workspace) return;
+  if(_workspace.beds.length<2){
+    setPlannerNotice('error','Keep one bed available','Delete is disabled while the workspace only has one bed.');
+    showActionBanner('At least one bed is required');
+    return;
+  }
+  const snapshot = saveRestoreSnapshot('Delete bed');
+  const activeId = _workspace.activeBedId;
+  const idx=_workspace.beds.findIndex(x=>x.id===activeId);
+  if(idx===-1) return;
+  const deleted=_workspace.beds.splice(idx,1)[0];
+  _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+  _workspace.workspaceSettings.trashBeds = Array.isArray(_workspace.workspaceSettings.trashBeds) ? _workspace.workspaceSettings.trashBeds : [];
+  _workspace.workspaceSettings.trashBeds.unshift({
+    deletedAt:new Date().toISOString(),
+    bed:cloneData(deleted)
+  });
+  _workspace.workspaceSettings.trashBeds = _workspace.workspaceSettings.trashBeds.slice(0,8);
+  _workspace.activeBedId=_workspace.beds[0].id;
+  undoStack=[];redoStack=[];updateUndoButtons();
+  saveWorkspace(_workspace);
+  applyWorkspaceToUI(_workspace);
+  render();
+  setPlannerNotice('complete',`Removed ${deleted.name}`,'The bed moved to recent recovery. Restore is available right now.',[
+    {
+      id:'stateRestoreDelete',
+      label:'Restore bed',
+      cls:'primary',
+      action:()=>{
+        if(snapshot && restoreSnapshotFromData(snapshot)){
+          setPlannerNotice('complete',`${deleted.name} restored`,'The deleted bed is active again.');
+        }
+      }
+    }
+  ]);
+  showActionBanner(`${deleted.name} removed`, 'Undo', ()=>{
+    if(snapshot && restoreSnapshotFromData(snapshot)){
+      setPlannerNotice('complete',`${deleted.name} restored`,'The deleted bed is active again.');
+    }
+  });
+}
 function selectCrop(ck){
   if(!CROPS[ck]) return;
   ui.selectedCrop = ck;
@@ -3988,6 +4921,8 @@ function render(){
   const inputs = ctx.inputs;
   renderBed(inputs,ctx.issues);
   renderRight(inputs,ctx.issues,ctx.scoreTotal);
+  renderIssueSummaryStrip(ctx.issues);
+  renderPlannerState();
   // Wall label
   const lm={back:'▲ Wall / Trellis Zone (Row 1)',front:'▼ Wall / Trellis Zone (last row)',left:'◀ Wall (Col 1)',right:'▶ Wall (last col)',none:'○ No wall'};
   document.getElementById('wtop').textContent=lm[inputs.wallSide]||'▲ Wall';
@@ -4011,6 +4946,7 @@ function render(){
   const fb=document.getElementById('fillbar-fill');
   if(fb) fb.style.width=Math.round(fill*100)+'%';
   renderPlacementStatus();
+  syncShareStaleness();
 }
 
 function renderBed(inputs,issues,opts={}){
@@ -4067,6 +5003,7 @@ function renderBed(inputs,issues,opts={}){
     el.dataset.cellId = cell.id;
     el.setAttribute('role','gridcell');
     el.setAttribute('tabindex', kbFocus ? '0' : '-1');
+    if(sel) el.setAttribute('aria-selected','true');
     el.setAttribute('aria-label', c
       ? `${c.name} at row ${cell.row+1}, column ${cell.col+1}, score ${skipScores?'pending':cs.toFixed(1)}`
       : `Empty cell, row ${cell.row+1}, column ${cell.col+1}`);
@@ -4100,6 +5037,14 @@ function switchLTab(t){
     document.getElementById('lpane-'+id).classList.toggle('on',id===t);
   });
 }
+// Insight section map: old tab names → section IDs
+const INSIGHT_SECTION_MAP = {
+  dashboard:'insightSummary', score:'insightSummary',
+  inspect:'insightInspect', companions:'insightInspect',
+  calendar:'insightCalendar', harvest:'insightHarvest',
+  notes:'insightNotes'
+};
+
 function switchRTab(t, persist=true){
   ui.rTab=t;
   if(persist && _workspace){
@@ -4107,16 +5052,35 @@ function switchRTab(t, persist=true){
     _workspace.workspaceSettings.rightTab = t;
     saveWorkspace(_workspace);
   }
-  ['dashboard','score','inspect','notes','companions','calendar','harvest'].forEach(id=>{
-    const btn = document.getElementById('rtab-'+id);
-    btn.classList.toggle('active',id===t);
-    btn.setAttribute('aria-selected', id===t);
-    document.getElementById('rpane-'+id).classList.toggle('on',id===t);
-  });
+  // Expand the target insight section if collapsed
+  const sectionId = INSIGHT_SECTION_MAP[t];
+  if(sectionId){
+    const section = document.getElementById(sectionId);
+    if(section){
+      const hdr = section.querySelector('.insight-header');
+      const content = section.querySelector('.insight-content');
+      if(hdr && content && content.hidden){
+        content.hidden = false;
+        hdr.classList.remove('is-collapsed');
+        hdr.setAttribute('aria-expanded','true');
+      }
+      section.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
   if(t==='dashboard') renderDashboardTab();
   if(t==='companions') renderCompanionPanel();
   if(t==='calendar') renderCalendarPanel();
   if(t==='harvest') renderHarvestTab();
+}
+
+function toggleInsightSection(sectionEl){
+  const hdr = sectionEl.querySelector('.insight-header');
+  const content = sectionEl.querySelector('.insight-content');
+  if(!hdr || !content) return;
+  const expanding = content.hidden;
+  content.hidden = !expanding;
+  hdr.classList.toggle('is-collapsed', !expanding);
+  hdr.setAttribute('aria-expanded', String(expanding));
 }
 
 function renderPalette(){
@@ -4192,6 +5156,9 @@ function renderRight(inputs,issues,scoreTotal){
   if(selCell&&selCell.crop){
     const cs=scoreCell(selCell,inputs);
     const bt=betterCropForCell(selCell,inputs);
+    const targetIssues=(issues||[]).filter(issue=>issue.cellId===selCell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
+    const primaryIssue=targetIssues[0]||null;
+    const delta=cellScoreDelta(selCell,inputs);
     const btLabel=bt?`${escapeHtml(CROPS[bt.cropKey].name)} (~${bt.score.toFixed(1)})${bt.reasons&&bt.reasons.length
       ?' <span style="font-size:.58rem;color:#3d7a4f;font-family:\'DM Mono\',monospace">['+escapeHtml(bt.reasons.join(' '))+']</span>':''}`:'';
     const ck=selCell.crop;
@@ -4221,10 +5188,31 @@ function renderRight(inputs,issues,scoreTotal){
           }${selCell.isCritterSafe?'🛡 ':''
           }${!(selCell.isTrellisRow||selCell.isProtected||selCell.hasVerticalSupport||selCell.isCritterSafe)?'—':''
           }</span></div>
+          ${delta&&delta.gain>0.15?`<div class="irow"><span class="ikey">Score delta</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">+${escapeHtml(delta.gain.toFixed(1))} with ${escapeHtml(CROPS[delta.betterCropKey].name)}</span></div>`:''}
           ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">${btLabel}</span></div>`:''}
         </div>
       </div>
       ${renderScoreExplanation(selCell, inputs)}
+      <div class="icard">
+        <div class="ichdr">Priority risks</div>
+        <div class="icbody">
+          <div class="inspect-severity-row">
+            ${targetIssues.length
+              ? targetIssues.slice(0,3).map(issue=>`<span class="issue-pill ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span>`).join('')
+              : '<span class="issue-pill low">clear layout</span>'}
+          </div>
+          <div class="inspect-risk-list">
+            ${targetIssues.length
+              ? targetIssues.slice(0,3).map(issue=>`<div class="inspect-risk-item"><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span><div><strong>${escapeHtml(issue.msg)}</strong><div>${escapeHtml(reasonFix(issue,selCell,inputs))}</div></div></div>`).join('')
+              : '<div class="inspect-risk-item"><span class="reasoning-badge low">clear</span><div><strong>No active structural violation</strong><div>This cell is stable. Use the score explanation to fine tune variety and harvest timing.</div></div></div>'}
+          </div>
+          <div class="inspect-next-actions">
+            ${delta&&delta.gain>0.15?`<button class="inspect-action-btn primary" type="button" data-reasoning-action="best-fit" data-cell-id="${escapeHtml(selCell.id)}" data-crop-key="${escapeHtml(delta.betterCropKey)}">Queue best fit</button>`:''}
+            <button class="inspect-action-btn" type="button" data-reasoning-action="open-notes">Review notes</button>
+            ${primaryIssue?`<button class="inspect-action-btn" type="button" data-reasoning-action="focus-cell" data-cell-id="${escapeHtml(selCell.id)}">Keep focus here</button>`:''}
+          </div>
+        </div>
+      </div>
       <div class="icard"><div class="ichdr">Varieties · ranked for your site</div>
         <div class="icbody">${vhtml||'<em style="font-size:.7rem;color:var(--text-light)">No varieties listed.</em>'}</div>
       </div>
@@ -4238,7 +5226,7 @@ function renderRight(inputs,issues,scoreTotal){
         <div class="irow"><span class="ikey">Status</span><span class="ival" style="color:var(--text-light)">— Empty —</span></div>
       </div></div>`;
   } else {
-    inspHtml=`<div class="inspect-empty"><span>👆</span><p>Click any cell to inspect</p></div>`;
+    inspHtml=`<div class="inspect-empty"><span>🔍</span><p>Select a cell to see its score, light, and traits</p><button class="state-action" data-action="switch-inspect">Switch to Inspect tool</button></div>`;
   }
   document.getElementById('rpane-inspect').innerHTML=inspHtml;
 
@@ -4257,9 +5245,10 @@ function renderRight(inputs,issues,scoreTotal){
   </div>`).join('');
   document.getElementById('rpane-notes').innerHTML=
     `<div class="icard"><div class="icbody">${whtml||
-      '<em style="font-size:.7rem;color:var(--text-light)">Paint crops to see feedback.</em>'
+      '<div class="notes-empty" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem;text-align:center;opacity:.5;"><span style="font-size:1.6rem;">📋</span><p style="font-size:.72rem;font-family:\'DM Mono\',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light)">Place crops to see warnings, tips, and companion notes</p></div>'
     }</div></div>`;
 
+  buildReasoningSurface(inputs, issues);
   renderDashboardTab(inputs, issues, bs);
 
   // CALENDAR pane — re-render if active
@@ -4288,6 +5277,11 @@ document.addEventListener('keydown',e=>{
 
   if(e.key==='Escape'){
     e.preventDefault();
+    const shortcutOverlay=document.getElementById('shortcutOverlay');
+    if(shortcutOverlay && !shortcutOverlay.hidden){
+      closeShortcutOverlay();
+      return;
+    }
     if(interaction.pointerActive){ cancelPointerPlacement(); return; }
     setTool('inspect');
     ui.selCell=null;
@@ -4295,6 +5289,11 @@ document.addEventListener('keydown',e=>{
     renderBedFrame();
     return;
   }
+  if(e.key==='m'||e.key==='M'){e.preventDefault();toggleMenu();return}
+  if(e.key==='/' ){e.preventDefault();switchLTab('palette');const search=document.getElementById('psearch');if(search) search.focus();return}
+  if(e.key==='['){e.preventDefault();cycleBeds(-1);return}
+  if(e.key===']'){e.preventDefault();cycleBeds(1);return}
+  if(e.key==='?'){e.preventDefault();openShortcutOverlay();return}
   if(e.key==='p'||e.key==='P'){setTool('paint');return}
   if(e.key==='e'||e.key==='E'){setTool('erase');return}
   if(e.key==='i'||e.key==='I'){setTool('inspect');return}
@@ -4351,8 +5350,8 @@ document.addEventListener('pointercancel',e=>{
 
 // Sidebar collapse toggles (mobile)
 const SIDEBAR_TOGGLE_LABELS = {
-  toggleLeft:'Site & Crops',
-  toggleRight:'Score & Analysis'
+  toggleLeft:'Plan',
+  toggleRight:'Insight'
 };
 function syncSidebarToggleButton(btn, panel){
   if(!btn || !panel) return;
@@ -4363,7 +5362,7 @@ function syncSidebarToggleButton(btn, panel){
 ['Left','Right'].forEach(side=>{
   const btn=document.getElementById('toggle'+side);
   if(!btn) return;
-  const panel=btn.closest('.sl,.sr');
+  const panel=btn.closest('.sl,.sr,.plan-panel,.insight-panel');
   syncSidebarToggleButton(btn, panel);
   btn.addEventListener('click',()=>{
     panel.classList.toggle('collapsed');
@@ -4380,8 +5379,7 @@ document.getElementById('ltab-palette').addEventListener('click',()=>switchLTab(
 document.getElementById('bedSwitcher').addEventListener('change',e=>setActiveBed(e.target.value));
 document.getElementById('addBedBtn').addEventListener('click',openAddBedDialog);
 document.getElementById('duplicateBedBtn').addEventListener('click',handleDuplicateActiveBed);
-document.getElementById('exportWorkspaceBtn').addEventListener('click',exportWorkspaceFile);
-document.getElementById('importWorkspaceBtn').addEventListener('click',openWorkspaceImportPicker);
+// Export/Import buttons moved to Manage panel (menuExport, menuImport)
 document.getElementById('importWorkspaceFile').addEventListener('change',handleWorkspaceImportFile);
 document.getElementById('addBedCancelBtn').addEventListener('click',closeAddBedDialog);
 document.getElementById('addBedForm').addEventListener('submit',e=>{
@@ -4443,15 +5441,61 @@ document.getElementById('toolInspect').addEventListener('click',()=>setTool('ins
 document.getElementById('undoBtn').addEventListener('click',undo);
 document.getElementById('redoBtn').addEventListener('click',redo);
 document.getElementById('shareBtn').addEventListener('click',shareLayout);
+document.getElementById('shortcutHelpBtn').addEventListener('click',openShortcutOverlay);
+document.getElementById('focusInspectBtn').addEventListener('click',focusWeakestCell);
+document.getElementById('focusManageBtn').addEventListener('click',toggleMenu);
+document.getElementById('shortcutCloseBtn').addEventListener('click',closeShortcutOverlay);
+document.getElementById('shortcutOverlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) closeShortcutOverlay();
+});
 
-// Right tab bar
-document.getElementById('rtab-dashboard').addEventListener('click',()=>switchRTab('dashboard'));
-document.getElementById('rtab-score').addEventListener('click',()=>switchRTab('score'));
-document.getElementById('rtab-inspect').addEventListener('click',()=>switchRTab('inspect'));
-document.getElementById('rtab-notes').addEventListener('click',()=>switchRTab('notes'));
-document.getElementById('rtab-companions').addEventListener('click',()=>switchRTab('companions'));
-document.getElementById('rtab-calendar').addEventListener('click',()=>switchRTab('calendar'));
-document.getElementById('rtab-harvest').addEventListener('click',()=>switchRTab('harvest'));
+// Insight section collapse/expand handlers
+document.querySelectorAll('.insight-header').forEach(hdr=>{
+  hdr.addEventListener('click',()=>{
+    const section = hdr.closest('.insight-block');
+    if(section) toggleInsightSection(section);
+    const key = hdr.getAttribute('data-section');
+    if(key==='summary') switchRTab('dashboard', false);
+    if(key==='inspect') switchRTab('inspect', false);
+    if(key==='notes') switchRTab('notes', false);
+    if(key==='calendar') switchRTab('calendar', false);
+    if(key==='harvest') switchRTab('harvest', false);
+  });
+});
+
+// Event delegation: state-action buttons in insight/dashboard panels
+document.querySelector('.insight-panel').addEventListener('click',function(ev){
+  const reasoningBtn=ev.target.closest('[data-reasoning-action]');
+  if(reasoningBtn){
+    const action=reasoningBtn.dataset.reasoningAction;
+    if(action==='focus-cell'&&reasoningBtn.dataset.cellId){
+      ui.selCell=reasoningBtn.dataset.cellId;
+      setTool('inspect');
+      switchRTab('inspect');
+      render();
+    }else if(action==='best-fit'&&reasoningBtn.dataset.cellId&&reasoningBtn.dataset.cropKey){
+      selectBestFit(reasoningBtn.dataset.cellId, reasoningBtn.dataset.cropKey);
+      setPlannerNotice('active','Best fit queued','Paint mode is ready with the suggested crop for this cell.');
+    }else if(action==='open-notes'){
+      switchRTab('notes');
+      render();
+    }
+    return;
+  }
+  const btn = ev.target.closest('.state-action');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  if(action==='switch-inspect') setTool('inspect');
+  else if(action==='open-zone'){
+    switchLTab('site');
+    const zoneEl = document.getElementById('zone');
+    if(zoneEl) zoneEl.focus();
+  }
+  else if(action==='auto-fill'){
+    const afBtn = document.getElementById('autoFillBtn');
+    if(afBtn) afBtn.click();
+  }
+});
 
 // Print button
 document.getElementById('printPlanBtn').addEventListener('click',printGardenPlan);
@@ -4589,7 +5633,7 @@ function renderCalendarPanel(){
   const zone = getCalendarZone();
   const frost = FROST_DATES[zone];
   if(!frost){
-    pane.innerHTML = '<div class="calendar-empty">Select a valid USDA zone (3-10).</div>';
+    pane.innerHTML = '<div class="calendar-empty"><span style="font-size:1.6rem;display:block;margin-bottom:.3rem;">📅</span>Set your USDA zone to see frost dates and planting windows<br><button class="state-action" data-action="open-zone">Set zone</button></div>';
     return;
   }
 
@@ -4608,7 +5652,7 @@ function renderCalendarPanel(){
   html += '</select></label></div>';
 
   if(!cropsOnGrid.length){
-    html += '<div class="calendar-empty">Place crops to see your planting calendar</div></div>';
+    html += '<div class="calendar-empty"><span style="font-size:1.6rem;display:block;margin-bottom:.3rem;">📅</span>Place crops to see your planting calendar<br><button class="state-action" data-action="auto-fill">Auto-fill bed</button></div></div>';
     pane.innerHTML = html;
     bindCalendarZoneSelect();
     return;
@@ -5039,8 +6083,19 @@ function saveHarvest(entry){
 }
 function deleteHarvest(id){
   if(!_workspace || !_workspace.harvests) return;
+  const removed = _workspace.harvests.find(h => h.id === id);
   _workspace.harvests = _workspace.harvests.filter(h => h.id !== id);
   saveState();
+  if(removed){
+    showActionBanner('Harvest entry removed', 'Undo', ()=>{
+      _workspace.harvests = _workspace.harvests || [];
+      _workspace.harvests.push(removed);
+      saveState();
+      if(ui.rTab === 'harvest') renderHarvestTab();
+      render();
+      setPlannerNotice('complete','Harvest restored','The removed harvest log is back.');
+    });
+  }
 }
 function getHarvestSummary(){
   const harvests = getHarvests();
@@ -5067,7 +6122,7 @@ function renderHarvestTab(){
   if(!pane) return;
   const harvests = getHarvests();
   if(harvests.length === 0){
-    pane.innerHTML = '<div class="harvest-empty">No harvests yet — click a planted cell to log one</div>';
+    pane.innerHTML = '<div class="harvest-empty">No harvests yet. Select a planted cell in Inspect, then log the first harvest.</div>';
     return;
   }
   const summary = getHarvestSummary();
@@ -5423,7 +6478,7 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
         <div class="dash-row-meta">${item.score.toFixed(1)}/10</div>
       </div>`;
     }).join('')
-    : '<div class="dash-empty"><strong>Nothing to score yet.</strong>Paint the bed or use Auto-fill, then come back here for row health, harvest timing, and live voice notes.</div>';
+    : '<div class="dash-empty"><strong>Nothing to score yet.</strong> Paint the bed or use Auto-fill to unlock row health, harvest timing, and live voice notes.<br><button class="state-action" data-action="auto-fill">Auto-fill bed</button></div>';
 
   const weakestAction = weakest[0] ? `<button class="dash-action primary" type="button" data-dashboard-action="inspect-weakest" data-cell-id="${escapeHtml(weakest[0].cell.id)}">Inspect weakest cell</button>` : '';
   const voicesHtml = voices.map(voice => `<div class="dash-voice">
@@ -5572,6 +6627,23 @@ function clearTutorialTargets(){
   _tutTargetId = null;
   _tutBasilTargetId = null;
 }
+function ensurePlanPanelVisible(){
+  const panel=document.querySelector('.plan-panel');
+  if(panel && panel.classList.contains('collapsed')) panel.classList.remove('collapsed');
+  const btn=document.getElementById('toggleLeft');
+  if(btn && panel) syncSidebarToggleButton(btn, panel);
+}
+function primeTutorialPalette(cropId){
+  ensurePlanPanelVisible();
+  switchLTab('palette');
+  const search=document.getElementById('psearch');
+  if(search) search.value='';
+  renderPalette();
+  requestAnimationFrame(()=>{
+    const cropEl=document.querySelector(`[data-crop="${cropId}"]`);
+    if(cropEl) cropEl.scrollIntoView({block:'center',behavior:'smooth'});
+  });
+}
 // Find a trellis cell for tomato placement
 function tutorialTargetCell(){
   const target = bed.find(c=>c.row<=1&&!c.crop) || bed.find(c=>!c.crop) || null;
@@ -5595,7 +6667,7 @@ const TUTORIAL_STEPS=[
     hint:'scroll the palette, then click',
     tail:'left',
     target:()=>document.querySelector('[data-crop="cherry_tomato"]'),
-    setup:()=>{setTool('inspect');_tutTargetId=tutorialTargetCell()},
+    setup:()=>{setTool('inspect');_tutTargetId=tutorialTargetCell();primeTutorialPalette('cherry_tomato')},
     check:()=>ui.selectedCrop==='cherry_tomato',
     onComplete:{char:'gurl',line:'Tomato selected. Now it needs somewhere to grow.'}
   },
@@ -5614,8 +6686,8 @@ const TUTORIAL_STEPS=[
     text:'Your tomato has a score \u2014 check the Score panel on the right.',
     hint:'each factor (sun, support, shade...) affects the score',
     tail:'left',
-    target:()=>document.getElementById('rtab-score')||document.getElementById('rpane-score'),
-    setup:()=>{switchRTab('score')},
+    target:()=>document.getElementById('insightSummary')||document.getElementById('rpane-score'),
+    setup:()=>{switchRTab('dashboard')},
     check:()=>true,
     autoAdvanceMs:2500,
     onComplete:{char:'gurl',line:'The scoring engine is live. Every placement changes the numbers.'}
@@ -5797,11 +6869,19 @@ if(!localStorage.getItem(TUTORIAL_KEY)&&!hadSaved){
       try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){}
       return;
     }
-    if(confirm('Welcome to Garden OS! Would you like a quick guided tour? (About 90 seconds)')){
-      startTutorial();
-    }else{
-      try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){}
-    }
+    setPlannerNotice('empty','Welcome to Garden OS','Start with a quick tour or begin placing crops right away.',[
+      {
+        id:'stateStartTour',
+        label:'Start tour',
+        cls:'primary',
+        action:()=>{ try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){} startTutorial(); }
+      },
+      {
+        id:'stateSkipTour',
+        label:'Skip tour',
+        action:()=>{ try{localStorage.setItem(TUTORIAL_KEY,'1')}catch(e){} _plannerNotice=null; renderPlannerState(); }
+      }
+    ]);
   },500);
 }
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5809,8 +6889,8 @@ if(!localStorage.getItem(TUTORIAL_KEY)&&!hadSaved){
 // ═══════════════════════════════════════════════════════════════════════════════
 function toggleMenu(){
   const ov=document.getElementById('menuOverlay');
-  const pn=document.getElementById('menuPanel');
-  const btn=document.getElementById('menuGearBtn');
+  const pn=document.getElementById('managePanel');
+  const btn=document.getElementById('openManagePanel');
   if(!ov||!pn) return;
   const opening=!pn.hasAttribute('data-open');
   if(opening){
@@ -5831,8 +6911,8 @@ function toggleMenu(){
 function closeMenu(opts={}){
   const restoreFocus = opts.restoreFocus!==false;
   const ov=document.getElementById('menuOverlay');
-  const pn=document.getElementById('menuPanel');
-  const btn=document.getElementById('menuGearBtn');
+  const pn=document.getElementById('managePanel');
+  const btn=document.getElementById('openManagePanel');
   if(ov) ov.removeAttribute('data-open');
   if(pn) pn.removeAttribute('data-open');
   if(btn) btn.setAttribute('aria-expanded','false');
@@ -5915,7 +6995,7 @@ document.getElementById('confirmCancelBtn').addEventListener('click',function(){
 });
 
 // Menu event bindings
-document.getElementById('menuGearBtn').addEventListener('click',toggleMenu);
+document.getElementById('openManagePanel').addEventListener('click',toggleMenu);
 document.getElementById('menuOverlay').addEventListener('click',closeMenu);
 
 // Save & Restore
@@ -5973,64 +7053,21 @@ document.getElementById('menuZone').addEventListener('click',function(){
 // Danger Zone
 document.getElementById('menuClearCrops').addEventListener('click',function(){
   closeMenu();
-  confirmAction('Clear all crops','This will remove every crop from the current bed. This cannot be undone.',function(){
-    clearBed();
-  });
+  clearBed();
 });
 document.getElementById('menuResetBed').addEventListener('click',function(){
   closeMenu();
-  confirmAction('Reset bed to defaults','This will clear all crops, reset bed size to 4\u00d78, and reset cage settings. This cannot be undone.',function(){
-    pushUndo();
-    setPreset(4,8);
-    bed.forEach(function(c){c.crop=null;});
-    // Reset cage toggles
-    var ce=document.getElementById('cageEnabled');
-    if(ce&&ce.classList.contains('on')){ce.classList.remove('on');ce.setAttribute('aria-pressed','false');}
-    var ct=document.getElementById('cageRearTrellis');
-    if(ct&&!ct.classList.contains('on')){ct.classList.add('on');ct.setAttribute('aria-pressed','true');}
-    var cw=document.getElementById('cageWireSides');
-    if(cw&&!cw.classList.contains('on')){cw.classList.add('on');cw.setAttribute('aria-pressed','true');}
-    document.getElementById('cageHeight').value='24';
-    document.getElementById('doorStyle').value='double';
-    // Reset site settings
-    document.getElementById('sunHours').value='5';
-    document.getElementById('sunVal').textContent='5 hrs';
-    document.getElementById('wallSide').value='back';
-    document.getElementById('orientation').value='ew';
-    document.getElementById('season').value='summer';
-    document.getElementById('goal').value='balanced';
-    document.getElementById('zone').value='';
-    var tt=document.getElementById('trellisToggle');
-    if(tt&&!tt.classList.contains('on')){tt.classList.add('on');tt.setAttribute('aria-pressed','true');}
-    saveState();
-    if(_workspace) saveWorkspace(_workspace);
-    render();
-  });
+  resetBedToDefaults();
 });
 document.getElementById('menuDeleteBed').addEventListener('click',function(){
   closeMenu();
-  if(!_workspace||_workspace.beds.length<2){
-    confirmAction('Cannot delete','You need at least one bed in your workspace.',function(){});
-    return;
-  }
-  const b=activeBed();
-  const name=b?b.name:'this bed';
-  confirmAction('Delete "'+name+'"','This will permanently remove this bed and all its data. This cannot be undone.',function(){
-    const idx=_workspace.beds.findIndex(x=>x.id===_workspace.activeBedId);
-    if(idx===-1) return;
-    _workspace.beds.splice(idx,1);
-    _workspace.activeBedId=_workspace.beds[0].id;
-    undoStack=[];redoStack=[];updateUndoButtons();
-    saveWorkspace(_workspace);
-    applyWorkspaceToUI(_workspace);
-    render();
-  });
+  softDeleteActiveBed();
 });
 
 // Escape key closes menu
 (function(){
   document.addEventListener('keydown',function(e){
-    const pn=document.getElementById('menuPanel');
+    const pn=document.getElementById('managePanel');
     if(pn&&pn.hasAttribute('data-open')&&e.key==='Tab'){
       const focusable=pn.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])');
       if(focusable.length){
