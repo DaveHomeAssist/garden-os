@@ -8,6 +8,8 @@
       <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#5c3d1e">
 <style>
     :root{
       --soil:#5c3d1e;
@@ -800,5 +802,6 @@
     bind();
     render();
   </script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>

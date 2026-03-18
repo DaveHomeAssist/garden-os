@@ -8,6 +8,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#5c3d1e">
 <link rel="icon" href="assets/icons/favicon/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3157,5 +3159,6 @@ render();
 <button class="settings-btn" onclick="window._toggleSettings()" aria-label="Settings" title="Settings">&#9881;</button>
 <div class="settings-overlay" id="settingsOverlay" onclick="window._toggleSettings()"></div>
 <div class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Settings"></div>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>

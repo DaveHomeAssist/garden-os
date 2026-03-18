@@ -1,0 +1,32 @@
+{
+  "name": "Garden OS — Raised Bed Planner & Season Engine",
+  "short_name": "Garden OS",
+  "description": "Local-first raised bed garden planner with deterministic scoring, a 12-chapter season game, and interactive build guides. Zero backend. Works offline.",
+  "start_url": "/garden-os/home.html",
+  "scope": "/garden-os/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#5c3d1e",
+  "background_color": "#f7f2ea",
+  "categories": ["lifestyle", "education"],
+  "icons": [
+    { "src": "assets/icons/favicon/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "assets/icons/favicon/favicon-16.png", "type": "image/png", "sizes": "16x16" },
+    { "src": "assets/icons/favicon/favicon-32.png", "type": "image/png", "sizes": "32x32" },
+    { "src": "assets/icons/favicon/android-chrome-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "assets/icons/favicon/android-chrome-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "assets/icons/favicon/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Planner",
+      "url": "/garden-os/garden-planner-v4.html",
+      "icons": [{ "src": "assets/icons/favicon/garden-planner.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Play Season Engine",
+      "url": "/garden-os/garden-league-simulator-v4.html",
+      "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}
