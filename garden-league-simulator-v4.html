@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Garden OS — Season Engine v4.0</title>
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
@@ -79,6 +80,43 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .meta-strip{grid-column:1/-1;display:flex;align-items:center;padding:0 20px;min-height:0}
 .meta-strip .meta{display:flex;gap:6px;flex-wrap:wrap}
 .app.menu-mode .meta-strip{padding:0 20px}
+.objective-strip{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow)
+}
+.objective-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.objective-kicker{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)}
+.objective-title{font-family:var(--ff-heading);font-size:1rem;font-weight:800;color:var(--text);line-height:1.15}
+.objective-note{font-size:var(--type-small);color:var(--text-muted);line-height:1.45}
+.objective-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.objective-btn{border-radius:999px}
+.menu-overlay{
+  position:fixed;inset:0;background:rgba(30,17,10,0.28);z-index:190;
+  opacity:0;pointer-events:none;transition:opacity 140ms ease
+}
+.menu-overlay[data-open]{opacity:1;pointer-events:auto}
+.menu-panel{
+  position:fixed;top:16px;right:16px;z-index:200;width:min(340px,calc(100vw - 24px));
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:0 18px 44px rgba(0,0,0,0.24);padding:14px;display:none
+}
+.menu-panel[data-open]{display:block}
+.menu-header{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.menu-title{font-family:var(--ff-heading);font-size:1rem;font-weight:800;color:var(--text)}
+.menu-subtitle{font-size:var(--type-small);color:var(--text-muted);line-height:1.45}
+.menu-section-label{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin:12px 0 8px}
+.menu-row{
+  width:100%;display:flex;align-items:center;gap:10px;text-align:left;
+  border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;
+  padding:10px 12px;cursor:pointer;font-size:var(--type-small);margin-bottom:8px
+}
+.menu-row:hover{background:var(--cream-dark)}
+.menu-row-icon{
+  width:18px;height:18px;border-radius:999px;background:var(--cream-dark);flex:0 0 auto
+}
+.menu-row-sub{margin-left:auto;color:var(--text-muted);font-family:var(--ff-mono);font-size:var(--type-label)}
+.menu-divider{height:1px;background:var(--border);margin:10px 0}
 @media(max-width:480px){
   .meta-strip{position:sticky;top:0;z-index:99;background:var(--cream);border-bottom:1px solid var(--border);padding:6px 12px;box-shadow:0 2px 8px rgba(42,28,16,0.08)}
   .meta-strip .meta{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -94,7 +132,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .results{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 100px);overflow-y:auto}
 @media(max-width:1199px){.app{grid-template-columns:240px 1fr}.results{max-height:none}}
 @media(max-width:819px){.app{grid-template-columns:1fr;width:min(100%,98vw);margin:10px auto 20px;gap:10px}.head{padding:12px 14px}.head-right{width:100%;justify-content:flex-start;gap:6px}.controls,.results{max-height:none}.board-wrap{order:1}.results{order:2}.controls{order:3}}
-@media(max-width:600px){.head{padding:10px 12px}.head-right{align-items:stretch}.head-right .btn{flex:1 1 160px}.meta-strip{padding:0 12px}.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}.controls,.results{padding:10px}}
+@media(max-width:600px){.head{padding:10px 12px}.head-right{align-items:stretch}.head-right .btn{flex:1 1 160px}.meta-strip{padding:0 12px}.objective-strip{padding:10px 12px;align-items:flex-start;flex-direction:column}.menu-panel{top:auto;right:12px;left:12px;bottom:12px;width:auto;max-height:70vh;overflow:auto}.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}.controls,.results{padding:10px}}
 @media(max-width:480px){.app{width:100%;margin:8px auto 16px;padding:0 6px}.chip{font-size:0.56rem;padding:3px 7px}}
 @media(max-height:500px) and (orientation:landscape){.app{margin:6px auto 10px;gap:8px}.controls,.board-wrap,.results{padding:10px;gap:8px}.crop-grid{max-height:160px}}
 .crop-group{border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--cream-dark);transition:border-color 0.8s ease-in-out}
@@ -192,6 +230,13 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .event-card h3{color:var(--text);text-transform:none;letter-spacing:0;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;margin:0 0 6px}
 .event-card .desc{font-size:var(--type-small);margin-bottom:6px;line-height:1.45;color:var(--text-muted)}
 .event-card .effect{font-size:var(--type-small);font-weight:600;font-family:var(--ff-mono)}
+.event-outcome{border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff8ec 0%,#f7edd8 100%);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.event-outcome-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.event-outcome-title{font-family:var(--ff-heading);font-size:var(--type-body);font-weight:700;color:var(--text)}
+.event-outcome-meta{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;color:var(--text-muted);text-transform:uppercase}
+.event-outcome-copy{font-size:var(--type-small);line-height:1.5;color:var(--text-muted)}
+.event-outcome-impact{display:flex;flex-wrap:wrap;gap:6px}
+.event-impact-chip{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:var(--cream-dark);border:1px solid var(--border);font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.05em}
 .event-card.positive{border-color:var(--char-onion);border-left-color:var(--char-onion)}.event-card.positive .effect{color:var(--leaf-bright)}
 .event-card.neutral{border-color:var(--text-muted);border-left-color:var(--text-muted)}.event-card.neutral .effect{color:var(--text-muted)}
 .event-card:not(.positive):not(.neutral){border-left-color:var(--char-critter)}.event-card:not(.positive):not(.neutral) .effect{color:var(--danger)}
@@ -276,6 +321,13 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 @keyframes harvest-pulse{0%{opacity:1;transform:scale(1)}40%{opacity:0.3;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
 .cell.harvesting{animation:harvest-pulse 280ms var(--ease-expo-out) forwards}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms;animation-iteration-count:1;transition-duration:0.15s;scroll-behavior:auto}.cell.just-planted,.cell.harvesting,.cell.event-hit{animation:none}.cell.event-hit{box-shadow:inset 0 0 0 2px var(--danger)}.event-card.entering{opacity:1;transform:translateY(0)}.chapter-card{animation:none}.grade.reveal{animation:none;opacity:1;transform:scale(1)}.narrator-slot,.sauce-item{transition-duration:0.15s}.ring-fill{transition-duration:0.01ms}.factor-bar .fill{transition-duration:0.15s}}
+/* Utility accordion — collapsible sections */
+.acc-section{border-top:1px solid var(--border);margin-top:6px;padding-top:2px}
+.acc-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:none;background:transparent;cursor:pointer;padding:4px 0;font-family:var(--ff-body);font-size:var(--type-small);font-weight:600;color:var(--text);text-align:left}
+.acc-toggle::after{content:'▾';font-size:.7rem;color:var(--text-muted);margin-left:4px;transition:transform .15s}
+.acc-toggle.is-collapsed::after{transform:rotate(-90deg)}
+.acc-body{overflow:hidden;transition:max-height .2s ease}
+.acc-body[hidden]{display:none}
 @media print{.controls,.toolbar,.event-card,.narrator-area,.beat-indicator,.confirm-overlay,button,select,.skip-nav{display:none !important}body{background:white !important;color:#1a1a1a !important}.app{display:block !important;width:100% !important;margin:0 !important;box-shadow:none !important}.panel{background:white !important;border:1px solid #ccc !important;box-shadow:none !important;break-inside:avoid;margin-bottom:12px !important}.grid{background:#f0f0f0 !important;border:1px solid #999 !important;gap:3px !important}.cell{background:#fafafa !important;border:1px solid #bbb !important;min-height:40px !important}.cell.score-good{background:#e8f5e8 !important}.cell.score-warn{background:#fdf4e4 !important}.cell.score-hard{background:#fce8e8 !important}.ring-fill{transition:none !important}.results{max-height:none !important;overflow:visible !important}@page{margin:14mm}h1::after{content:" — Season Recap";font-weight:400;font-size:0.6em}}
 </style>
 </head>
@@ -307,12 +359,14 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
       </div>
     </a>
     <div class="head-right">
+      <button class="btn" id="gameManageBtn" type="button" aria-label="Open manage menu" aria-haspopup="true" aria-expanded="false">Manage</button>
       <button class="btn help-btn" id="howToBtn" type="button" aria-label="How to play">How to Play</button>
     </div>
   </div>
   <div class="meta-strip" id="metaStrip" aria-label="Game status">
     <div class="meta" id="metaChips"></div>
   </div>
+  <div class="objective-strip" id="objectiveStrip" aria-live="polite"></div>
   <div class="panel controls" id="controlsPanel" role="complementary" aria-label="Crop selection"></div>
   <div class="panel board-wrap" id="boardPanel" role="main" aria-label="Garden bed"></div>
   <div class="panel results" id="resultsPanel" role="complementary" aria-label="Results and narrators"></div>
@@ -320,6 +374,27 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 <div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-label="Confirmation">
   <div class="confirm-box" id="confirmBox"></div>
 </div>
+<div class="menu-overlay" id="gameMenuOverlay"></div>
+<aside class="menu-panel" id="gameManagePanel" role="dialog" aria-modal="true" aria-labelledby="gameManageTitle" tabindex="-1">
+  <div class="menu-header">
+    <div class="menu-title" id="gameManageTitle">Manage</div>
+    <div class="menu-subtitle" id="gameManageSubtitle">Season Engine v4</div>
+  </div>
+
+  <div class="menu-section-label">Navigate</div>
+  <button class="menu-row" id="gameMenuPlanner"><span class="menu-row-icon"></span>Open planner<span class="menu-row-sub">→</span></button>
+  <button class="menu-row" id="gameMenuHome"><span class="menu-row-icon"></span>Open overview<span class="menu-row-sub">→</span></button>
+  <button class="menu-row" id="gameMenuHub"><span class="menu-row-icon"></span>Open tool hub<span class="menu-row-sub">→</span></button>
+
+  <div class="menu-divider"></div>
+  <div class="menu-section-label">Learn</div>
+  <button class="menu-row" id="gameMenuHowTo"><span class="menu-row-icon"></span>How to play<span class="menu-row-sub">?</span></button>
+  <button class="menu-row" id="gameMenuHowItThinks"><span class="menu-row-icon"></span>How it thinks<span class="menu-row-sub">→</span></button>
+
+  <div class="menu-divider"></div>
+  <div class="menu-section-label">Session</div>
+  <button class="menu-row" id="gameMenuRestart"><span class="menu-row-icon"></span>Restart chapter<span class="menu-row-sub">↺</span></button>
+</aside>
 <script>
 (()=>{
 'use strict';
@@ -331,6 +406,16 @@ const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
 const SKEY='garden_os_v4_state',HKEY='garden_os_v4_hist',CKEY='garden_os_v4_campaign';
 const APP_VERSION='4.0';
 const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
+const PHASES = Object.freeze({
+  PLANNING: 'PLANNING',
+  EARLY_SEASON: 'EARLY_SEASON',
+  MID_SEASON: 'MID_SEASON',
+  LATE_SEASON: 'LATE_SEASON',
+  HARVEST: 'HARVEST',
+  HARVEST_REVIEW: 'HARVEST_REVIEW',
+  WINTER_REVIEW: 'WINTER_REVIEW',
+});
+const VALID_PHASES = new Set(Object.values(PHASES));
 const SEASONS=['spring','summer','fall','winter'];
 const HOWTO_SECTIONS=[
   {
@@ -348,13 +433,13 @@ const HOWTO_SECTIONS=[
   {
     id:'loop',
     name:'Season Flow',
-    summary:'Plan \u2192 Commit \u2192 Early / Mid / Late Season \u2192 Harvest \u2192 Review.',
+    summary:'Plan \u2192 Commit \u2192 Early / Mid / Late Season \u2192 Harvest \u2192 Harvest Review.',
     bullets:[
       'Planning: place crops, check chapter objective, and validate row requirements.',
       'Early / Mid / Late Season: weather and events test your layout.',
       'Interventions: Swap, Prune, Protect, Mulch, or Companion Patch when offered.',
       'Harvest: score final layout + event outcomes; recipes and chapter goals resolve.',
-      'Review: inspect factors, event log, and transition effects that carry forward.'
+      'Harvest Review: inspect factors, event log, and carry-forward effects before advancing.'
     ]
   },
   {
@@ -764,12 +849,26 @@ function rc(i){return{row:Math.floor(i/COLS),col:i%COLS}}
 function ri(r,c){return r*COLS+c}
 function dc(o){return JSON.parse(JSON.stringify(o))}
 function nbs(i){const{row,col}=rc(i);const o=[];if(row>0)o.push(ri(row-1,col));if(row<ROWS-1)o.push(ri(row+1,col));if(col>0)o.push(ri(row,col-1));if(col<COLS-1)o.push(ri(row,col+1));return o}
+function normalizeSeed(seed){const n=Number(seed);return((Number.isFinite(n)?n:Date.now())>>>0)||1}
 /* seeded PRNG (mulberry32) — deterministic event selection */
-function seedRng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function mulberry32Step(state){let a=normalizeSeed(state);a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return{state:a,value:((t^t>>>14)>>>0)/4294967296}}
+function seedRng(a){a=normalizeSeed(a);return function(){const step=mulberry32Step(a);a=step.state;return step.value}}
 function gridHash(grid){let h=0;for(let i=0;i<grid.length;i++){const c=grid[i];if(c&&c.cropId){for(let j=0;j<c.cropId.length;j++)h=(h*31+c.cropId.charCodeAt(j))|0}}return h}
-let _seededRng=null;
-function seedEventRng(st){_seededRng=seedRng((st.chapter*1000+st.beatIndex*100+gridHash(st.grid))|0)}
-function wRand(items,wf){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);const rng=_seededRng||Math.random;if(t<=0)return items[Math.floor(rng()*items.length)];let r=rng()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
+function ensureStateSeed(st,seed=Date.now()){
+  if(!st)return normalizeSeed(seed);
+  if(!Number.isFinite(st.seed))st.seed=normalizeSeed(seed);
+  if(!Number.isFinite(st.rngState))st.rngState=normalizeSeed(st.seed);
+  return st.seed;
+}
+function nextSeededRand(st,seed=Date.now()){
+  if(!st)return seedRng(seed)();
+  ensureStateSeed(st,seed);
+  const step=mulberry32Step(st.rngState);
+  st.rngState=step.state;
+  return step.value;
+}
+function seedEventRng(st,seed=Date.now()){ensureStateSeed(st,seed);return st.seed}
+function wRand(items,wf,seed=Date.now()){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);const rand=()=>nextSeededRand(S,seed);if(t<=0)return items[Math.floor(rand()*items.length)];let r=rand()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
 function seasonFor(ch){return SEASONS[(ch-1)%4]}
 function isWinter(ch){return seasonFor(ch)==='winter'}
 function grade(s){for(const[g,t]of GRADES)if(s>=t)return g;return'F'}
@@ -1079,8 +1178,8 @@ function buildCarryForward(S,cf){
   return cf;
 }
 
-function mkSeason(ch,cf){
-  const season=seasonFor(ch);const grid=mkGrid();
+function mkSeason(ch,cf,seed=Date.now()){
+  const season=seasonFor(ch);const grid=mkGrid();const seasonSeed=normalizeSeed(seed);
   if(cf){
     if(cf.infrastructureMap)for(const[k,flags]of Object.entries(cf.infrastructureMap)){
       const[r,c]=k.split(',').map(Number);const idx=ri(r,c);if(grid[idx])for(const f of flags){
@@ -1110,7 +1209,7 @@ function mkSeason(ch,cf){
     }
   }
   // _version tracks save-state schema (v3), not product version (APP_VERSION). v4 reuses the v3 save format.
-  return{_version:3,phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
+  return{_version:3,phase:PHASES.PLANNING,season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[],seed:seasonSeed,rngState:seasonSeed};
 }
 
 let S=null;
@@ -1131,6 +1230,9 @@ function showSaveWarning(){
 }
 function migrateState(s){
   if(!s)return s;
+  if(s.phase==='REVIEW'){
+    s.phase=isWinter(s.chapter)?PHASES.WINTER_REVIEW:PHASES.HARVEST_REVIEW;
+  }
   if(!s._version||s._version<3){
     if(!s.eventAffectedCells)s.eventAffectedCells=[];
     if(!s.carryForward)s.carryForward=mkCF();
@@ -1153,6 +1255,11 @@ function normalizeLoadedState(state){
   if(!state || typeof state!=='object' || Array.isArray(state)) return null;
   const next = migrateState(state);
   if(!Array.isArray(next.grid) || next.grid.length!==SIZE) return null;
+  if(!VALID_PHASES.has(next.phase)) return null;
+  if(next.phase===PHASES.WINTER_REVIEW && !isWinter(next.chapter)) return null;
+  if(next.phase===PHASES.HARVEST_REVIEW && isWinter(next.chapter)) return null;
+  next.seed = normalizeSeed(next.seed);
+  next.rngState = Number.isFinite(next.rngState) ? normalizeSeed(next.rngState) : next.seed;
   if(next.selectedCrop && !C[next.selectedCrop]) next.selectedCrop = null;
   next.selectedCell = Number.isInteger(next.selectedCell) && next.selectedCell >= 0 && next.selectedCell < next.grid.length
     ? next.selectedCell
@@ -1161,7 +1268,7 @@ function normalizeLoadedState(state){
   if(!Array.isArray(next.eventLog)) next.eventLog = [];
   if(!Array.isArray(next.interventionLog)) next.interventionLog = [];
   if(!Array.isArray(next.eventAffectedCells)) next.eventAffectedCells = [];
-  if(next.phase!=='PLANNING'){
+  if(next.phase!==PHASES.PLANNING){
     next.selectedCrop = null;
     next.eraserMode = false;
   }
@@ -1170,7 +1277,14 @@ function normalizeLoadedState(state){
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){console.warn('Save failed:',e);showSaveWarning()}}
 function load(){
   const parsed = safeParseStorageJSON(SKEY, null);
-  if(parsed && parsed.phase) return normalizeLoadedState(parsed);
+  if(parsed && parsed.phase){
+    const storedPhase = parsed.phase;
+    const normalized = normalizeLoadedState(parsed);
+    if(normalized && normalized.phase!==storedPhase){
+      try{localStorage.setItem(SKEY,JSON.stringify(normalized))}catch(e){}
+    }
+    return normalized;
+  }
   return null;
 }
 function loadH(){
@@ -1211,19 +1325,69 @@ function setSelectedCropTool(cropId){
   S.eraserMode = false;
 }
 function toggleEraserTool(){
-  if(!S || S.phase!=='PLANNING') return;
+  if(!S || S.phase!==PHASES.PLANNING) return;
   S.eraserMode = !S.eraserMode;
   S.selectedCrop = null;
 }
 
 /* ===== DOM ===== */
 const $=id=>document.getElementById(id);
-const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn')};
+const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),objective:$('objectiveStrip'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn'),gameMenuBtn:$('gameManageBtn'),gameMenuOverlay:$('gameMenuOverlay'),gameMenuPanel:$('gameManagePanel')};
 let howToSection='quickstart';
 let gridView='score'; // score | sun | water
 
 function h(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+function accSection(title, children, startCollapsed){
+  const sec=h('div','acc-section');
+  const btn=h('button','acc-toggle'+(startCollapsed?' is-collapsed':''));
+  btn.textContent=title;
+  btn.setAttribute('aria-expanded', startCollapsed?'false':'true');
+  sec.appendChild(btn);
+  const body=h('div','acc-body');
+  if(startCollapsed) body.hidden=true;
+  for(const c of children) body.appendChild(c);
+  sec.appendChild(body);
+  btn.addEventListener('click',()=>{
+    const hiding=!body.hidden;
+    body.hidden=hiding;
+    btn.classList.toggle('is-collapsed',hiding);
+    btn.setAttribute('aria-expanded',String(!hiding));
+  });
+  return sec;
+}
 if(el.howToBtn)el.howToBtn.onclick=()=>showHowToOverlay('quickstart');
+let gameMenuTrigger=null;
+function updateGameMenuSubtitle(){
+  const sub=$('gameManageSubtitle');
+  if(!sub) return;
+  if(!S){ sub.textContent='Season Engine v4'; return; }
+  const chapter=S.chapter||1;
+  const meta=CHAPTERS[chapter];
+  sub.textContent=`Chapter ${chapter}${meta?' · '+meta.name:''} · ${S.phase.replace(/_/g,' ')}`;
+}
+function toggleGameMenu(forceOpen){
+  const open=typeof forceOpen==='boolean'?forceOpen:!el.gameMenuPanel.hasAttribute('data-open');
+  if(open){
+    gameMenuTrigger=document.activeElement;
+    updateGameMenuSubtitle();
+    el.gameMenuOverlay.setAttribute('data-open','');
+    el.gameMenuPanel.setAttribute('data-open','');
+    if(el.gameMenuBtn) el.gameMenuBtn.setAttribute('aria-expanded','true');
+    requestAnimationFrame(()=>{
+      const first=el.gameMenuPanel.querySelector('.menu-row');
+      if(first) first.focus();
+    });
+    return;
+  }
+  closeGameMenu();
+}
+function closeGameMenu(){
+  if(el.gameMenuOverlay) el.gameMenuOverlay.removeAttribute('data-open');
+  if(el.gameMenuPanel) el.gameMenuPanel.removeAttribute('data-open');
+  if(el.gameMenuBtn) el.gameMenuBtn.setAttribute('aria-expanded','false');
+  if(gameMenuTrigger && gameMenuTrigger.focus) gameMenuTrigger.focus();
+  gameMenuTrigger=null;
+}
 if(el.overlay)el.overlay.addEventListener('click',e=>{if(e.target===el.overlay)el.overlay.classList.remove('active')});
 
 /* ===== RENDER: MENU ===== */
@@ -1387,7 +1551,7 @@ function startChapter(ch){
   }
 
   if(isWinter(ch)){
-    S.phase='REVIEW';
+    S.phase=PHASES.WINTER_REVIEW;
     S.harvestResult={cellScores:[],bedAverage:0,finalScore:0,grade:'-',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
     if(ch===12){
       CAM.mode='epilogue';
@@ -1419,7 +1583,7 @@ function renderCtrl(){
   const f=document.createDocumentFragment();
   f.appendChild(h('h2',null,'Crops'));
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
-  eb.disabled=S.phase!=='PLANNING';
+  eb.disabled=S.phase!==PHASES.PLANNING;
   eb.setAttribute('aria-pressed',S.eraserMode?'true':'false');
   eb.setAttribute('aria-label','Eraser tool (E)');
   eb.onclick=()=>{toggleEraserTool();render()};
@@ -1435,7 +1599,7 @@ function renderCtrl(){
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
       btn.setAttribute('aria-label',crop.name+(locked?' (locked)':''));
       btn.setAttribute('aria-pressed',S.selectedCrop===crop.id?'true':'false');
-      btn.disabled=S.phase!=='PLANNING'||locked;
+      btn.disabled=S.phase!==PHASES.PLANNING||locked;
       const em=h('span','emoji',crop.emoji);
       const tw=h('div','crop-text');
       tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
@@ -1448,7 +1612,7 @@ function renderCtrl(){
   }
 
   // Faction counter for Ch5+
-  if(chap>=5&&S.phase==='PLANNING'){
+  if(chap>=5&&S.phase===PHASES.PLANNING){
     const factions=new Set();
     for(const cell of S.grid){if(cell&&cell.cropId&&C[cell.cropId])factions.add(C[cell.cropId].faction)}
     const fc=h('div','faction-counter','Crop types: '+factions.size+'/8'+(factions.size>=4?' \u2714':''));
@@ -1493,7 +1657,7 @@ function renderBoard(){
     const d=h('div','beat-dot',l);
     const isBeat=BEAT_PHASES.includes(S.phase);
     const isActive=isBeat&&S.beatIndex===b;
-    const isDone=(isBeat&&b<S.beatIndex)||S.phase==='HARVEST'||S.phase==='REVIEW'||S.phase==='TRANSITION';
+    const isDone=(isBeat&&b<S.beatIndex)||S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
     if(isActive)d.classList.add('active');
     if(isDone)d.classList.add('done');
     d.setAttribute('role','img');
@@ -1504,14 +1668,14 @@ function renderBoard(){
   f.appendChild(h('div','zone-label','Back rows \u2014 Trellis (climbers go here) \u2502 Front rows \u2014 Access (short crops)'));
 
   // Ch7 row objective
-  if(CAM&&CAM.mode==='campaign'&&S.chapter===7&&S.phase==='PLANNING'){
+  if(CAM&&CAM.mode==='campaign'&&S.chapter===7&&S.phase===PHASES.PLANNING){
     const rootCount=S.grid.filter((c,i)=>rc(i).row===3&&c.cropId&&C[c.cropId]&&C[c.cropId].faction==='roots').length;
     const ro=h('div','row-objective','Row Objective: Front row (row 3) must be 100% Roots \u2014 '+rootCount+'/8');
     f.appendChild(ro);
   }
 
   // Ch11 harvest checklist
-  if(CAM&&CAM.mode==='campaign'&&S.chapter===11&&S.phase==='PLANNING'){
+  if(CAM&&CAM.mode==='campaign'&&S.chapter===11&&S.phase===PHASES.PLANNING){
     const cl=h('div','harvest-checklist');
     cl.appendChild(h('h3',null,'Harvest Checklist'));
     const planted=new Set(S.grid.filter(c=>c&&c.cropId).map(c=>c.cropId));
@@ -1523,7 +1687,7 @@ function renderBoard(){
     f.appendChild(cl);
   }
 
-  const preview=S.phase==='PLANNING'?bedScore(S.grid,S.season):null;
+  const preview=S.phase===PHASES.PLANNING?bedScore(S.grid,S.season):null;
   S._cachedBedScore=preview;
   const gd=h('div','grid');
   gd.setAttribute('role','grid');
@@ -1542,7 +1706,7 @@ function renderBoard(){
     if(cell.interventionFlag==='mulched')d.classList.add('mulched-cell');
     if(S.interventionMode==='swap'&&S.swapFirstCell===i)d.classList.add('swap-highlight');
     // Companion overlay: highlight cells with companion/conflict adjacency
-    if(S.phase==='PLANNING'&&cell.cropId&&C[cell.cropId]&&gridView==='score'){
+    if(S.phase===PHASES.PLANNING&&cell.cropId&&C[cell.cropId]&&gridView==='score'){
       const crop=C[cell.cropId];let hasBuff=false,hasConflict=false;
       for(const ni of nbs(i)){const nc=S.grid[ni];if(!nc||!nc.cropId)continue;if(crop.companions.includes(nc.cropId))hasBuff=true;if(crop.conflicts.includes(nc.cropId))hasConflict=true}
       if(hasConflict)d.style.outline='2px solid var(--danger)';
@@ -1554,10 +1718,10 @@ function renderBoard(){
       const cr=C[cell.cropId];
       d.classList.add('has-crop');
       // View overlay tints
-      if(S.phase==='PLANNING'&&gridView==='sun'){
+      if(S.phase===PHASES.PLANNING&&gridView==='sun'){
         const sl=cr.sunIdeal>=7?'high':cr.sunIdeal>=5?'mid':'low';
         d.classList.add('view-sun-'+sl);
-      }else if(S.phase==='PLANNING'&&gridView==='water'){
+      }else if(S.phase===PHASES.PLANNING&&gridView==='water'){
         const wl=cr.water>=3?'high':cr.water>=2?'mid':'low';
         d.classList.add('view-water-'+wl);
       }
@@ -1582,7 +1746,7 @@ function renderBoard(){
     }else{
       ariaLabel+=', empty';
       // hover preview ghost during planning
-      if(S.phase==='PLANNING'&&S.selectedCrop&&C[S.selectedCrop]){
+      if(S.phase===PHASES.PLANNING&&S.selectedCrop&&C[S.selectedCrop]){
         d.setAttribute('data-preview',C[S.selectedCrop].emoji);
       }
     }
@@ -1595,7 +1759,7 @@ function renderBoard(){
   // Toolbar
   const tb=h('div','toolbar');
   const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
-  if(S.phase==='PLANNING'){
+  if(S.phase===PHASES.PLANNING){
     const cb=h('button','btn primary','Commit Layout');cb.disabled=countPlanted(S.grid)<minPlanted;cb.onclick=showCommitConfirm;tb.appendChild(cb);
     const clr=h('button','btn','Clear');clr.onclick=()=>{undoStack=[];S.grid=mkGrid();save();render()};tb.appendChild(clr);
     tb.appendChild(h('span','chip',countPlanted(S.grid)+'/32'+(S.chapter===10?' (all required)':'')));
@@ -1612,12 +1776,17 @@ function renderBoard(){
   if(BEAT_PHASES.includes(S.phase)){
     // Action indicator
     const ai=h('div','action-indicator '+(S.beatTokenAvailable&&S.currentEvent?'available':'used'));
-    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose how to respond':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
+    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve this phase':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
     tb.appendChild(ai);
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
-      const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept'};
-      const descs={swap:'Swap two crops on the grid',prune:'Prune a crop to reduce damage',protect:'Shield a cell from the event',mulch:'Add mulch to protect soil',companion_patch:'Patch a companion planting',accept_loss:'Accept the event damage'};
-      for(const it of S.currentEvent.io){const b=h('button','btn',labels[it]||it);b.setAttribute('aria-label',descs[it]||labels[it]||it);b.onclick=()=>startIntervention(it);tb.appendChild(b)}
+      const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept Loss'};
+      const descs={swap:'Swap two crops on the grid',prune:'Prune a crop to reduce damage',protect:'Shield a cell from the event',mulch:'Add mulch to protect soil',companion_patch:'Patch a companion planting',accept_loss:'Accept the event damage and resolve this phase'};
+      for(const it of S.currentEvent.io){
+        const b=h('button',it==='accept_loss'?'btn danger':'btn',labels[it]||it);
+        b.setAttribute('aria-label',descs[it]||labels[it]||it);
+        b.onclick=()=>startIntervention(it);
+        tb.appendChild(b);
+      }
     }
     if(S.interventionMode){
       const cb=h('button','btn danger','Cancel (Esc)');cb.onclick=()=>{S.interventionMode=null;S.swapFirstCell=null;render()};tb.appendChild(cb);
@@ -1627,10 +1796,10 @@ function renderBoard(){
       const ab=h('button','btn primary',S.beatIndex>=2?'Harvest (R)':'Advance (R)');ab.onclick=advanceBeat;tb.appendChild(ab);
     }
   }
-  if(S.phase==='HARVEST'){
+  if(S.phase===PHASES.HARVEST){
     const b=h('button','btn primary','View Review');
     b.onclick=()=>{
-      S.phase='REVIEW';save();
+      S.phase=PHASES.HARVEST_REVIEW;save();
       // Check for sauce sequence in ch11
       if(CAM&&CAM.mode==='campaign'&&S.chapter===11){
         handleChapter11Harvest();
@@ -1640,7 +1809,7 @@ function renderBoard(){
     };
     tb.appendChild(b);
   }
-  if(S.phase==='REVIEW'){
+  if(S.phase===PHASES.HARVEST_REVIEW){
     if(CAM&&CAM.mode==='campaign'){
       const b=h('button','btn primary','Complete Chapter');
       b.onclick=completeChapter;
@@ -1659,14 +1828,129 @@ function renderBoard(){
 
 function statusText(){
   const p=S.phase;
-  if(p==='PLANNING')return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
+  if(p===PHASES.PLANNING)return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
   if(BEAT_PHASES.includes(p)){const bn=['Early','Mid','Late'][S.beatIndex];
-    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose intervention or accept.';
+    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose a response or press Accept Loss to resolve the event.';
     if(S.currentEvent)return bn+': Event resolved. Advance when ready.';
     return bn+': No event. Advance when ready.';}
-  if(p==='HARVEST')return'Harvest complete.';
-  if(p==='REVIEW')return'Season summary.';
+  if(p===PHASES.HARVEST)return'Harvest complete.';
+  if(p===PHASES.HARVEST_REVIEW)return'Harvest review summary.';
+  if(p===PHASES.WINTER_REVIEW)return'Winter review.';
   return'';
+}
+function objectiveMeta(){
+  if(!S) return { kicker:'Garden OS', title:'Start a season', note:'Choose a chapter or continue the current run.' };
+  if(CAM&&CAM.mode==='menu') return { kicker:'Menu', title:'Choose a chapter', note:'Free Play and campaign both resume from here.' };
+  const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
+  if(S.phase===PHASES.PLANNING){
+    return {
+      kicker:'Plan',
+      title:'Lock a layout that can survive the season',
+      note:`${countPlanted(S.grid)}/${minPlanted} planted. Trellis rows belong in the back. Keep the front reachable.`,
+      actionLabel:'Commit Layout',
+      disabled:countPlanted(S.grid)<minPlanted,
+      action:showCommitConfirm
+    };
+  }
+  if(BEAT_PHASES.includes(S.phase)){
+    if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
+      const consequence=describeEventConsequence(S.currentEvent,S);
+      return {
+        kicker:'Respond',
+        title:'Resolve the event before you advance',
+        note:'Choose one response in the toolbar, or use Accept Loss if you want the event to land and move on. '+consequence,
+        actionLabel:'Accept Loss',
+        action:doAcceptLoss
+      };
+    }
+    return {
+      kicker:'Advance',
+      title:S.beatIndex>=2?'Harvest this season':'Move to the next phase',
+      note:statusText(),
+      actionLabel:S.beatIndex>=2?'Harvest':'Advance',
+      action:advanceBeat
+    };
+  }
+  if(S.phase===PHASES.HARVEST){
+    return {
+      kicker:'Harvest',
+      title:'Review the final score for this season',
+      note:'The bed is locked. Move into review to see yield, factors, and chapter outcome.',
+      actionLabel:'View Review',
+      action:()=>{
+        S.phase=PHASES.HARVEST_REVIEW;save();
+        if(CAM&&CAM.mode==='campaign'&&S.chapter===11){handleChapter11Harvest();return;}
+        render();
+      }
+    };
+  }
+  if(S.phase===PHASES.HARVEST_REVIEW){
+    return {
+      kicker:'Harvest Review',
+      title:'Carry this season forward',
+      note:'Complete the chapter or continue into the next chapter state.',
+      actionLabel:CAM&&CAM.mode==='campaign'?'Complete Chapter':'Continue',
+      action:CAM&&CAM.mode==='campaign'?completeChapter:doTransition
+    };
+  }
+  if(S.phase===PHASES.WINTER_REVIEW){
+    return {
+      kicker:'Winter Review',
+      title:'Review carry-forward state before the next growing chapter',
+      note:'Winter chapters are review-only states. Use the winter review screen to inspect memory, journal, and progression.',
+    };
+  }
+  return { kicker:'Season', title:'Stay with the current objective', note:statusText() };
+}
+
+function describeEventConsequence(event,state){
+  if(!event||!event.me) return 'No event consequence is available.';
+  const mod=Number(event.me.mod)||0;
+  const dir=mod<0?'Penalty':'Buff';
+  const dur=event.me.dur==='season'?'season long':event.me.dur==='carry'?'carry forward':'this phase';
+  const max=event.me.tgt&&Number.isFinite(event.me.tgt.max)?event.me.tgt.max:null;
+  const scope=max?`up to ${max} target cells`:'all matching targets';
+  return `${dir} ${mod>=0?'+':''}${mod.toFixed(1)} on ${scope} for ${dur}.`;
+}
+
+function latestEventOutcome(){
+  if(!S||!Array.isArray(S.eventLog)||!S.eventLog.length) return null;
+  const entry=S.eventLog[S.eventLog.length-1];
+  const event=ED.find(e=>e.id===entry.eventId)||null;
+  return { entry, event };
+}
+
+function renderObjectiveStrip(){
+  if(!el.objective) return;
+  const meta=objectiveMeta();
+  el.objective.innerHTML='';
+  const copy=h('div','objective-copy');
+  copy.appendChild(h('div','objective-kicker',meta.kicker));
+  copy.appendChild(h('div','objective-title',meta.title));
+  copy.appendChild(h('div','objective-note',meta.note||''));
+  el.objective.appendChild(copy);
+  const actions=h('div','objective-actions');
+  if(meta.actionLabel&&typeof meta.action==='function'){
+    const btn=h('button','btn primary objective-btn',meta.actionLabel);
+    if(meta.disabled) btn.disabled=true;
+    btn.onclick=meta.action;
+    actions.appendChild(btn);
+  }
+  const help=h('button','btn objective-btn','How to Play');
+  help.onclick=renderHowToOverlay;
+  actions.appendChild(help);
+  el.objective.appendChild(actions);
+}
+if(el.gameMenuBtn) el.gameMenuBtn.onclick=()=>toggleGameMenu(true);
+if(el.gameMenuOverlay) el.gameMenuOverlay.onclick=()=>closeGameMenu();
+if($('gameMenuPlanner')) $('gameMenuPlanner').onclick=()=>{location.href='garden-planner-v4.html'};
+if($('gameMenuHome')) $('gameMenuHome').onclick=()=>{location.href='home.html'};
+if($('gameMenuHub')) $('gameMenuHub').onclick=()=>{location.href='index.html'};
+if($('gameMenuHowTo')) $('gameMenuHowTo').onclick=()=>{closeGameMenu();showHowToOverlay(howToSection||'quickstart')};
+if($('gameMenuHowItThinks')) $('gameMenuHowItThinks').onclick=()=>{window.open('how-it-thinks.html','_blank')};
+if($('gameMenuRestart')) $('gameMenuRestart').onclick=()=>{
+  closeGameMenu();
+  if(S) startChapter(S.chapter||1);
 }
 
 /* ===== RENDER: RIGHT ===== */
@@ -1764,6 +2048,27 @@ function renderRes(){
     // Animate entry
     requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.remove('entering')));
   }
+  const latestOutcome=latestEventOutcome();
+  if(latestOutcome && (!S.currentEvent || !S.beatTokenAvailable)){
+    const { entry, event } = latestOutcome;
+    const summary=h('div','event-outcome');
+    const head=h('div','event-outcome-head');
+    head.appendChild(h('div','event-outcome-title',event?event.title:'Event resolved'));
+    head.appendChild(h('div','event-outcome-meta',(['Early','Mid','Late'][entry.beatIndex]||'Season')+' resolved'));
+    summary.appendChild(head);
+    const net=Number(entry.netModifier)||0;
+    const affected=Array.isArray(entry.affectedCells)?entry.affectedCells.length:0;
+    const outcomeCopy=entry.wasInterventionUsed
+      ? `Intervention used. ${affected} cell${affected===1?'':'s'} changed before the phase resolved.`
+      : `No intervention blocked the event. ${affected} cell${affected===1?'':'s'} absorbed the full hit.`;
+    summary.appendChild(h('div','event-outcome-copy',outcomeCopy));
+    const impact=h('div','event-outcome-impact');
+    impact.appendChild(h('span','event-impact-chip','Cells '+affected));
+    impact.appendChild(h('span','event-impact-chip','Net '+(net>=0?'+':'')+net.toFixed(1)));
+    impact.appendChild(h('span','event-impact-chip',entry.wasInterventionUsed?'Intervention used':'Accept Loss or no response'));
+    summary.appendChild(impact);
+    f.appendChild(summary);
+  }
 
   // Yield / Harvest Timeline
   if(sd.yieldList.length){
@@ -1786,30 +2091,33 @@ function renderRes(){
       f.appendChild(row);
     }
   }
+  // ── Utility accordion: collapsible secondary sections ──
   if(sd.recipeMatches.length){
-    f.appendChild(h('h3',null,'Recipes'));
-    f.appendChild(h('div',null,sd.recipeMatches.join(', ')));
+    f.appendChild(accSection('Recipes',[h('div',null,sd.recipeMatches.join(', '))],false));
   }
 
   // Event log
   if(S.eventLog.length){
-    f.appendChild(h('h3',null,'Events'));
+    const evItems=[];
     for(const en of S.eventLog){
       const ev=ED.find(e=>e.id===en.eventId);
-      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+' phase) '+en.affectedCells.length+' cells'));
+      evItems.push(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+' phase) '+en.affectedCells.length+' cells'));
     }
+    f.appendChild(accSection('Events ('+S.eventLog.length+')',evItems,true));
   }
   if(S.interventionLog.length){
-    f.appendChild(h('h3',null,'Interventions'));
-    for(const en of S.interventionLog)f.appendChild(h('div',null,['Early','Mid','Late'][en.beatIndex]+' phase: '+en.type));
+    const intItems=[];
+    for(const en of S.interventionLog) intItems.push(h('div',null,['Early','Mid','Late'][en.beatIndex]+' phase: '+en.type));
+    f.appendChild(accSection('Interventions ('+S.interventionLog.length+')',intItems,true));
   }
 
   // Pantry
   const pantry=S.carryForward.recipePantry;
-  if(pantry.length){f.appendChild(h('h3',null,'Pantry'));f.appendChild(h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', ')))}
+  if(pantry.length){
+    f.appendChild(accSection('Pantry',[h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', '))],true));
+  }
 
   // Narrator Area
-  f.appendChild(h('h3',null,'Narrators'));
   const na=h('div','narrator-area');
   na.id='narratorArea';
   na.setAttribute('aria-live','polite');
@@ -1831,18 +2139,19 @@ function renderRes(){
       na.appendChild(slot);
     }
   }
-  f.appendChild(na);
+  f.appendChild(accSection('Narrators',[na],false));
 
   // History
   const hist=loadH();
   if(hist.length){
-    f.appendChild(h('h3',null,'History'));
+    const histItems=[];
     for(const en of hist.slice().reverse()){
       const d=h('div','history-entry');
       d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
       d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
-      f.appendChild(d);
+      histItems.push(d);
     }
+    f.appendChild(accSection('History ('+hist.length+')',histItems,true));
   }
   el.res.replaceChildren(f);
 
@@ -1989,7 +2298,7 @@ function renderWinterReview(){
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter '+ch));
   el.meta.appendChild(h('span','chip season-winter-pill','Year '+meta.year+' Winter'));
-  el.meta.appendChild(h('span','chip phase','REVIEW'));
+  el.meta.appendChild(h('span','chip phase','WINTER REVIEW'));
 
   const f=document.createDocumentFragment();
   const card=h('div','chapter-card');
@@ -2542,20 +2851,21 @@ function render(){
   }
   el.meta.appendChild(h('span','chip season-'+S.season+'-pill',S.season[0].toUpperCase()+S.season.slice(1)));
   el.meta.appendChild(h('span','chip phase',S.phase.replace(/_/g,' ')));
+  renderObjectiveStrip();
   renderCtrl();renderBoard();renderRes();
 }
 
 /* ===== UNDO STACK (planning phase only) ===== */
 const UNDO_MAX=20;
 let undoStack=[];
-function pushUndo(){if(S&&S.phase==='PLANNING'){undoStack.push(S.grid.map(c=>c.cropId));if(undoStack.length>UNDO_MAX)undoStack.shift()}}
-function doUndo(){if(!S||S.phase!=='PLANNING'||!undoStack.length)return;const prev=undoStack.pop();for(let i=0;i<SIZE;i++)S.grid[i].cropId=prev[i]||null;S._cachedBedScore=null;save();render()}
+function pushUndo(){if(S&&S.phase===PHASES.PLANNING){undoStack.push(S.grid.map(c=>c.cropId));if(undoStack.length>UNDO_MAX)undoStack.shift()}}
+function doUndo(){if(!S||S.phase!==PHASES.PLANNING||!undoStack.length)return;const prev=undoStack.pop();for(let i=0;i<SIZE;i++)S.grid[i].cropId=prev[i]||null;S._cachedBedScore=null;save();render()}
 
 /* ===== CELL CLICK ===== */
 function cellClick(i){
   S._cachedBedScore=null;
   if(S.interventionMode){execIntervention(i);return}
-  if(S.phase==='PLANNING'){
+  if(S.phase===PHASES.PLANNING){
     const prevCropId=S.grid[i].cropId;
     let changed=false;
     if(S.eraserMode){
@@ -2628,7 +2938,7 @@ function doCommit(){
   clearTransientState();
   for(const c of S.grid)c.locked=true;
   S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];
-  S.phase='EARLY_SEASON';
+  S.phase=PHASES.EARLY_SEASON;
   startBeat();save();render();
 }
 
@@ -2681,8 +2991,12 @@ function hasLoggedCurrentEventForBeat(){
   return !!(S&&S.currentEvent&&S.eventLog.some(en=>en.eventId===S.currentEvent.id&&en.beatIndex===S.beatIndex));
 }
 
+function hasPendingBeatDecision(){
+  return !!(S && BEAT_PHASES.includes(S.phase) && S.currentEvent && S.beatTokenAvailable);
+}
+
 function advanceBeat(){
-  if(S.beatTokenAvailable&&S.currentEvent){doAcceptLoss();S.currentEvent=null;}
+  if(hasPendingBeatDecision()) return false;
   if(S.currentEvent&&!hasLoggedCurrentEventForBeat()){
     const aff=applyEvent(S.currentEvent,S.grid);
     S.eventAffectedCells=aff;
@@ -2696,7 +3010,7 @@ function advanceBeat(){
   if(S.beatIndex<2){S.beatIndex++;S.phase=BEAT_PHASES[S.beatIndex];startBeat()}
   else{
     clearTransientState();
-    S.phase='HARVEST';S.harvestResult=bedScore(S.grid,S.season);
+    S.phase=PHASES.HARVEST;S.harvestResult=bedScore(S.grid,S.season);
     // Fire score dialogue
     if(CAM){
       const avg=S.harvestResult.bedAverage;
@@ -2730,6 +3044,7 @@ function advanceBeat(){
     }
   }
   save();render();
+  return true;
 }
 
 /* ===== INTERVENTION ===== */
@@ -2858,7 +3173,7 @@ function doTransition(){
     // Free play wraps back to ch1 season cycle
     S=mkSeason(1,cf);S.chapter=99;
   }else if(isWinter(next)){
-    S=mkSeason(next,cf);S.phase='REVIEW';
+    S=mkSeason(next,cf);S.phase=PHASES.WINTER_REVIEW;
     S.harvestResult={cellScores:[],bedAverage:0,finalScore:0,grade:'-',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
   }else{
     S=mkSeason(next,cf);
@@ -2881,8 +3196,25 @@ document.addEventListener('keydown',e=>{
     }
     return;
   }
+  if(el.gameMenuPanel && el.gameMenuPanel.hasAttribute('data-open')){
+    if(e.key==='Escape'){closeGameMenu();return}
+    if(e.key==='Tab'){
+      const focusable=el.gameMenuPanel.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])');
+      if(focusable.length){
+        const first=focusable[0],last=focusable[focusable.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+      }
+    }
+    return;
+  }
   const t=e.target.tagName;
   const inField=t==='INPUT'||t==='SELECT'||t==='TEXTAREA';
+  if(!inField&&(e.key==='m'||e.key==='M')){
+    e.preventDefault();
+    toggleGameMenu(true);
+    return;
+  }
   if(!inField&&(e.key==='h'||e.key==='H'||e.key==='?'||(e.key==='/'&&e.shiftKey))){
     e.preventDefault();
     showHowToOverlay(howToSection||'quickstart');
@@ -2891,7 +3223,7 @@ document.addEventListener('keydown',e=>{
   if(inField)return;
   if(!S)return;
   if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo();return}
-  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){toggleEraserTool();render()}}
+  if(e.key==='e'||e.key==='E'){if(S.phase===PHASES.PLANNING){toggleEraserTool();render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
   if(e.key==='Escape'){if(S){setInspectMode();render()}}
 });
@@ -2917,6 +3249,12 @@ document.addEventListener('keydown',e=>{
 window.gardenOS={
   getState:()=>S,
   getCampaign:()=>CAM,
+  getPhaseContract:()=>({
+    phase:S?S.phase:null,
+    valid:!!(S&&VALID_PHASES.has(S.phase)),
+    pendingDecision:hasPendingBeatDecision(),
+    reviewPhases:[PHASES.HARVEST_REVIEW,PHASES.WINTER_REVIEW]
+  }),
   resetGame:()=>{try{localStorage.removeItem(SKEY);localStorage.removeItem(HKEY);localStorage.removeItem(CKEY)}catch(e){}CAM=mkCampaign();S=mkSeason(1,mkCF());save();saveCampaign();render()},
   render_game_to_text:()=>{
     if(!S)return'No active season';
@@ -2925,7 +3263,7 @@ window.gardenOS={
     const s=safeScore();lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
     return lines.join('\n');
   },
-  advanceTime:()=>{if(!S)return;if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase==='HARVEST'){S.phase='REVIEW';save();render()}else if(S.phase==='REVIEW'){if(CAM&&CAM.mode==='campaign')completeChapter();else doTransition()}},
+  advanceTime:()=>{if(!S)return;if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase===PHASES.HARVEST){S.phase=PHASES.HARVEST_REVIEW;save();render()}else if(S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW){if(CAM&&CAM.mode==='campaign'&&S.phase===PHASES.HARVEST_REVIEW)completeChapter();else doTransition()}},
   skipToChapter:(ch)=>{if(!CAM)CAM=mkCampaign();CAM.currentChapter=ch;for(let i=1;i<ch;i++)if(!CAM.completedChapters.includes(i))CAM.completedChapters.push(i);CAM.mode='chapter_start';S=mkSeason(ch,mkCF());save();saveCampaign();render()},
   goToMenu:()=>{if(!CAM)CAM=mkCampaign();CAM.mode='menu';saveCampaign();render()}
 };
@@ -2963,6 +3301,19 @@ if(!CAM.mode||CAM.mode==='menu'||(!S&&CAM.mode!=='chapter_start'&&CAM.mode!=='ch
 }
 
 render();
+
+/*
+const _testItems=['a','b','c','d'];
+const _testWeights=()=>1;
+const _runSeededReplay=(seed)=>{
+  const prev=S;
+  S={seed:normalizeSeed(seed),rngState:normalizeSeed(seed)};
+  const out=[wRand(_testItems,_testWeights,seed),wRand(_testItems,_testWeights,seed),wRand(_testItems,_testWeights,seed)].join(',');
+  S=prev;
+  return out;
+};
+console.assert(_runSeededReplay(12345)===_runSeededReplay(12345),'Seeded wRand should replay deterministically');
+*/
 
 })();
 </script>
