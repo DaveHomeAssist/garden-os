@@ -1,0 +1,138 @@
+GARDEN OS
+Your Raised Bed. Your Rules. Your Browser.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ABOUT THIS GAME
+
+Garden OS is a local-first raised bed garden planning system and narrative strategy game — built entirely in your browser with zero accounts, zero servers, and zero installs.
+
+It started with a real 4×8 raised bed in a backyard sanctuary. The question was simple: where should each crop go and why? The answer became a full scoring engine, a 12-chapter season game, and a set of interactive build guides — all running from a single browser tab.
+
+Plan your bed. Learn why each placement scores the way it does. Survive a full growing season of weather events, pest pressure, and resource constraints. Harvest toward a recipe. Do it all offline.
+
+No cloud. No login. No tracking. Just dirt, data, and decisions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE PLANNER
+
+The core tool. A drag-and-drop raised bed designer with live scoring.
+
+— 38 crops across 8 categories: cucurbits, nightshades, greens, alliums, legumes, roots, herbs, flowers
+— Variable bed sizes from 2×2 to 10×10
+— Cage-aware layout engine: trellis zones, protected zones, critter barriers, double-door front access
+— 6-factor deterministic scoring: sun fit (2× weight), support fit, shade tolerance, access fit, season fit, adjacency
+— Live companion and conflict detection with visual adjacency feedback
+— Auto-fill mode with 7 goal presets: balanced, yield, easy, salad, pickling, herbs, sanctuary
+— USDA zone-aware planting calendar with frost date integration
+— Harvest tracker with per-cell logging, quality rating, and season outlook
+— Full undo/redo history (40 levels)
+— Score reasoning panel showing factor-by-factor breakdowns with severity badges
+— Shareable layouts via URL hash encoding
+— Workspace import/export as .gos.json files
+— Multi-bed workspaces with per-bed scoring cache
+— Keyboard-first navigation: P/E/I for tools, arrow keys for grid, Enter/Space to place, ? for shortcut overlay
+— Full ARIA grid roles and screen reader support
+— Works offline. Saves to localStorage. No backend required.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE SEASON ENGINE
+
+A 12-chapter narrative strategy game. Inherit a raised bed. Survive a full growing season. Harvest a recipe.
+
+Each chapter plays as a 3-beat season: Early, Mid, and Late. You commit a crop layout at the start of each season, then the engine throws events at you — drought, pest swarms, early frost, supply shortages — and you respond with interventions earned from previous harvests.
+
+The game carries state forward. What you plant in Chapter 1 affects what you can afford in Chapter 4. A bad harvest compounds. A smart companion planting pays dividends three seasons later.
+
+— 12 chapters with escalating difficulty and narrative progression
+— Deterministic event deck: every playthrough on the same seed produces the same events
+— Intervention system: spend earned resources to mitigate, redirect, or prevent damage
+— Pantry and supply carry-forward between seasons
+— Recipe objectives: harvest the right crops in the right quantities to complete seasonal recipes
+— Character narrators with fixed voice and speaking order
+— Phase-locked state machine: PLANNING → COMMIT → EARLY → MID → LATE → HARVEST → REVIEW → TRANSITION
+— No backward transitions after commit. Every decision is permanent.
+— Collapsible results panel with accordion sections for events, interventions, pantry, history
+— Full keyboard and screen reader support
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BUILD GUIDES
+
+Two interactive reference tools for the physical infrastructure:
+
+— Cage Build Guide: step-by-step construction specs for a 4×8 trellis cage with hardware cloth, arch ribs, and double-door front access. Material lists, cut diagrams, and assembly sequence.
+— Ops Guide: seasonal maintenance checklist for an active raised bed with cage. Spring prep through winter shutdown.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOW IT THINKS
+
+A plain-English walkthrough of the scoring engine. No jargon. Shows you exactly how sun fit, support fit, shade tolerance, access, season, and adjacency combine into a single score per cell and a composite score per bed.
+
+Covers the structural bonuses (trellis row placement, protected zone synergy, succession access) and the penalties (tall×tall shading, cool-season in summer, water mismatch) with real examples from the crop database.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEVELOPER TOOLS
+
+For contributors and the curious:
+
+— Scoring Visualizer: interactive per-cell factor breakdown with live sliders
+— Scoring Map: full scoring engine architecture as a reference diagram
+— Fairness Tester: crop balance analysis across all 8 categories
+— System Map: complete ecosystem architecture overview
+— System Topology: D3-powered interactive graph of tool relationships and data flow
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+KEY FEATURES
+
+FEATURE                         DETAIL
+──────────────────────────────  ──────────────────────────────────────────────
+Local First                     All data stays in your browser. No server, no sync, no account.
+Explainable Scoring             Every score shows exactly why — factor by factor, cell by cell.
+Works Offline                   Load once. Works forever. No network dependency after first visit.
+Deterministic Engine            Same inputs always produce the same scores. No hidden randomness.
+Single-File Architecture        Each tool is one self-contained HTML file. No build step. No framework.
+Reversible Actions              Clear, reset, and delete all offer undo. Deleted beds go to trash.
+Keyboard Native                 Every primary action has a keyboard shortcut. Grid is fully navigable.
+Screen Reader Ready             ARIA grid roles, descriptive cell labels, live region announcements.
+Multi-Bed Workspaces            Create, duplicate, and switch between beds. Import/export as JSON.
+File-Based Sharing              Export .gos.json files. Share layouts via URL. No account required.
+Schema Validated                All data validated against gos-schema.json on load and import.
+Cage-Aware Placement            Trellis zones, protected zones, and access scoring adapt to your cage configuration.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SYSTEM REQUIREMENTS
+
+— Any modern browser (Chrome, Firefox, Safari, Edge)
+— JavaScript enabled
+— ~2MB localStorage available
+— No server, no install, no account, no internet after first load
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESIGN
+
+Typography: Fraunces (headings), DM Sans (body), DM Mono (labels and data)
+Palette: Soil brown, leaf green, sun gold, cream white
+Aesthetic: Warm, grounded, organic. Reads like a garden journal, not a SaaS dashboard.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERSION
+
+Planner v4.3 · Season Engine v4.0 · Schema v1
+Live at: davehomeassist.github.io/garden-os/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ORIGIN STORY
+
+This started as a conversation about Mom's 4×4 raised bed. "Where should the tomatoes go?" turned into a scoring engine. The scoring engine needed a way to test fairness, so the season game was born. The season game needed characters, so four narrators showed up. The narrators needed a cage to protect their crops, so the build guides followed. And then someone said "can I use this offline?" — so the whole thing became a set of self-contained HTML files that run from a single browser tab with no backend, no install, and no excuses.
+
+Garden OS is what happens when you take a real garden seriously enough to build tools for it, but not so seriously that you forget it's supposed to be fun.

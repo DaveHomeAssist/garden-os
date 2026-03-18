@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="../assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/favicon/apple-touch-icon.png">
@@ -72,6 +73,7 @@
   .dot-done { background: var(--leaf-bright); }
   .dot-partial { background: var(--sun); }
   .dot-open { background: var(--rust); }
+  .dot-deferred { background: var(--text-muted); }
 
   /* ── Filter bar ── */
   .filter-bar {
@@ -117,6 +119,7 @@
   .badge-done { background: var(--leaf-wash); color: var(--leaf); border: 1px solid var(--leaf-pale); }
   .badge-partial { background: var(--sun-wash); color: #a08520; border: 1px solid var(--sun-pale); }
   .badge-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
+  .badge-deferred { background: var(--cream-mid); color: var(--text-soft); border: 1px solid var(--border-soft); }
   .group-toggle .chev {
     font-size: .8rem; color: var(--text-muted); transition: transform .2s;
   }
@@ -185,6 +188,7 @@
   .status-done { background: var(--leaf-wash); color: var(--leaf); border: 1px solid var(--leaf-pale); }
   .status-partial { background: var(--sun-wash); color: #a08520; border: 1px solid var(--sun-pale); }
   .status-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
+  .status-deferred { background: var(--cream-mid); color: var(--text-soft); border: 1px solid var(--border-soft); }
 
   /* ── Form ── */
   .form-wrap { margin-top: 1.5rem; }
@@ -266,13 +270,14 @@
 <main id="main">
 <div class="wrap">
   <header>
-    <div class="eyebrow">Garden OS &middot; UI Audit &middot; Updated 2026-03-16</div>
+    <div class="eyebrow">Garden OS &middot; UI Audit Refresh &middot; Updated 2026-03-17</div>
     <h1>Issues Tracker</h1>
-    <p class="subtitle">Full interactive element audit across Planner v4 and Season Engine v3. Click any card to expand details.</p>
+    <p class="subtitle">Repo-state tracker for Planner v4 and Season Engine v3/v4. Verified fixes are closed against the current codebase, open items are still actionable, and deferred items are backlog work rather than live regressions.</p>
     <div class="stats" id="stats">
-      <div class="stat"><span class="stat-dot dot-done"></span> <span id="stat-done">0</span> resolved</div>
-      <div class="stat"><span class="stat-dot dot-partial"></span> <span id="stat-partial">0</span> partial</div>
+      <div class="stat"><span class="stat-dot dot-done"></span> <span id="stat-done">0</span> verified fixed</div>
+      <div class="stat"><span class="stat-dot dot-partial"></span> <span id="stat-partial">0</span> follow-up</div>
       <div class="stat"><span class="stat-dot dot-open"></span> <span id="stat-open">0</span> open</div>
+      <div class="stat"><span class="stat-dot dot-deferred"></span> <span id="stat-deferred">0</span> deferred</div>
       <div class="stat" style="color:var(--text-muted)"><span id="stat-total">0</span> tracked</div>
     </div>
   </header>
@@ -281,8 +286,9 @@
     <span class="label">Show:</span>
     <button class="fbtn active" data-filter="all">All</button>
     <button class="fbtn" data-filter="open">Open</button>
-    <button class="fbtn" data-filter="partial">Partial</button>
-    <button class="fbtn" data-filter="done">Resolved</button>
+    <button class="fbtn" data-filter="partial">Follow-up</button>
+    <button class="fbtn" data-filter="done">Verified fixed</button>
+    <button class="fbtn" data-filter="deferred">Deferred</button>
     <button class="fbtn" data-filter="planner">Planner</button>
     <button class="fbtn" data-filter="engine">Engine</button>
   </div>
@@ -290,7 +296,7 @@
   <!-- ═══ RESOLVED ═══ -->
   <section class="issue-group" data-status="done">
     <button class="group-toggle" type="button" aria-expanded="false">
-      <span>Resolved (<span class="g-count">27</span>)</span>
+      <span>Verified Fixed (<span class="g-count">27</span>)</span>
       <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-done g-count-badge">27</span><span class="chev">&rsaquo;</span></span>
     </button>
     <div class="group-body">
@@ -373,30 +379,30 @@
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Impact</dt><dd>Core feature no longer missed</dd><dt>Location</dt><dd>Planner v4 &mdash; toolbar button, tab bar, empty-state prompt</dd></dl>
         </div>
-        <!-- Newly resolved from this patch -->
+        <!-- Verified against current repo state -->
         <div class="issue-card" tabindex="0" data-tool="planner">
           <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
           <div class="card-title">Companion panel fixed &mdash; flat array iteration <span class="card-sev card-sev-crit">was CRIT</span></div>
           <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd><code>bed.forEach(row => row.forEach(...))</code> &rarr; <code>bed.forEach(cell => ...)</code></dd><dt>Location</dt><dd>Planner L4549</dd></dl>
+          <dl class="card-detail"><dt>Verification</dt><dd>Current planner companion collection already iterates the flat bed array safely. This was a stale audit item, not a remaining bug.</dd><dt>Location</dt><dd>Planner companion panel crop collection path</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="planner">
           <div class="card-top"><span class="card-area">Tutorial</span><span class="status status-done">Done</span></div>
           <div class="card-title">Tutorial crop key fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
           <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd><code>cherry_tom</code> &rarr; <code>cherry_tomato</code> across 3 references</dd><dt>Location</dt><dd>Planner L4876/4878/4888</dd></dl>
+          <dl class="card-detail"><dt>Verification</dt><dd>The current planner tutorial already uses <code>cherry_tomato</code> for the guided flow references.</dd><dt>Location</dt><dd>Planner tutorial seed data</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="engine">
           <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
           <div class="card-title">Settings score NaN fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
           <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd><code>._cachedBedScore.toFixed(1)</code> &rarr; <code>._cachedBedScore.finalScore.toFixed(1)</code></dd><dt>Location</dt><dd>Season Engine L2716</dd></dl>
+          <dl class="card-detail"><dt>Verification</dt><dd>Current engine score rendering reads the numeric final score safely. The object <code>.toFixed()</code> crash path is already closed in the active engine.</dd><dt>Location</dt><dd>Season Engine settings score render path</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="planner">
           <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
           <div class="card-title">Cage 4x8 preset dimension swap fixed</div>
           <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd><code>setPreset(8,4)</code> &rarr; <code>setPreset(4,8)</code></dd><dt>Location</dt><dd>Planner L5418 (danger-zone reset)</dd></dl>
+          <dl class="card-detail"><dt>Verification</dt><dd>The current cage preset button already uses <code>setPreset(4,8)</code>. The remaining <code>setPreset(8,4)</code> path is the default-bed reset and is intentional.</dd><dt>Location</dt><dd>Planner cage preset controls</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="planner">
           <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
@@ -465,34 +471,82 @@
   <!-- ═══ PARTIAL ═══ -->
   <section class="issue-group open" data-status="partial">
     <button class="group-toggle" type="button" aria-expanded="true">
-      <span>Partially Fixed (<span class="g-count">4</span>)</span>
+      <span>Needs Verification / Follow-up (<span class="g-count">4</span>)</span>
       <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-partial g-count-badge">4</span><span class="chev">&rsaquo;</span></span>
     </button>
     <div class="group-body">
       <div class="card-grid">
         <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Partial</span></div>
+          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Follow-up</span></div>
           <div class="card-title">Mulch/protect is per-cell only, no drag paint</div>
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Impact</dt><dd>Zone edits are painful</dd><dt>Current state</dt><dd>Shift+click multi-select works, drag not implemented</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Partial</span></div>
+          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Follow-up</span></div>
           <div class="card-title">No multi-cell selection or batch actions</div>
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Impact</dt><dd>Row/zone workflows slow</dd><dt>Current state</dt><dd>Interventions only, not general-purpose</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Resource</span><span class="status status-partial">Partial</span></div>
+          <div class="card-top"><span class="card-area">Resource</span><span class="status status-partial">Follow-up</span></div>
           <div class="card-title">Token economy is opaque</div>
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Impact</dt><dd>Strategy collapses, users cannot plan</dd><dt>Current state</dt><dd>Count shown but rules not explained</dd></dl>
         </div>
         <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Goals</span><span class="status status-partial">Partial</span></div>
+          <div class="card-top"><span class="card-area">Goals</span><span class="status status-partial">Follow-up</span></div>
           <div class="card-title">No persistent scoreboard / objective HUD</div>
           <div class="card-expand-hint">click to expand</div>
           <dl class="card-detail"><dt>Impact</dt><dd>Users do not know how to win</dd><dt>Current state</dt><dd>Target in results panel, scrolls away</dd></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ DEFERRED ═══ -->
+  <section class="issue-group" data-status="deferred">
+    <button class="group-toggle" type="button" aria-expanded="false">
+      <span>Deferred / Planned (<span class="g-count">6</span>)</span>
+      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-deferred g-count-badge">6</span><span class="chev">&rsaquo;</span></span>
+    </button>
+    <div class="group-body">
+      <div class="card-grid">
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">State</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Extract <code>buildCarryForward()</code> and deduplicate chapter transition logic</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Code quality / maintainability pass, not a live user-facing break.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 2A</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">State</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Add saved-state versioning and migration guardrails</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Hardening work with good ROI, but lower urgency than open interaction and accessibility gaps.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 2B/2C</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Resilience</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Expose save failures instead of silent catches</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Useful state-hardening improvement, but not currently verified as a live break in normal play.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 3A</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Add color-blind-safe score indicators beyond hue alone</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Still worth doing, but this is a polish pass after current interaction gaps are closed.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 3D</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Content</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Wire orphaned keepsakes, harvest yield dialogue, and chapter 11/12 dialogue pools</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Feature activation backlog. Existing content is half-built but not on the critical bug path.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 4A-4C</dd></dl>
+        </div>
+        <div class="issue-card" tabindex="0" data-tool="engine">
+          <div class="card-top"><span class="card-area">Performance</span><span class="status status-deferred">Deferred</span></div>
+          <div class="card-title">Cache <code>bedScore()</code> during planning and reuse it in render</div>
+          <div class="card-expand-hint">click to expand</div>
+          <dl class="card-detail"><dt>Why deferred</dt><dd>Performance optimization is sequenced after correctness, interaction safety, and content wiring.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 4D</dd></dl>
         </div>
       </div>
     </div>
@@ -603,7 +657,7 @@
 </main>
 
 <footer class="os-footer">
-  Garden OS &middot; UI Issues Tracker &middot; Updated 2026-03-16 &middot;
+  Garden OS &middot; UI Issues Tracker &middot; Updated 2026-03-17 &middot;
   <a href="../index.html">Back to Garden OS</a>
 </footer>
 
@@ -670,10 +724,12 @@
   var done=document.querySelectorAll('[data-status="done"] .issue-card').length;
   var partial=document.querySelectorAll('[data-status="partial"] .issue-card').length;
   var open=document.querySelectorAll('[data-status="open"] .issue-card').length;
+  var deferred=document.querySelectorAll('[data-status="deferred"] .issue-card').length;
   document.getElementById('stat-done').textContent=done;
   document.getElementById('stat-partial').textContent=partial;
   document.getElementById('stat-open').textContent=open;
-  document.getElementById('stat-total').textContent=done+partial+open;
+  document.getElementById('stat-deferred').textContent=deferred;
+  document.getElementById('stat-total').textContent=done+partial+open+deferred;
 
   // User submissions
   var SKEY='gos-ui-issues-user';

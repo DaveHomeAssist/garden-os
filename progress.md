@@ -178,6 +178,22 @@ TODO / next-agent suggestions:
   - Fixed planner reset-bed action to restore the 4×8 preset instead of 8×4 and aligned the confirmation copy.
   - Review result: planner companion-panel flat-bed iteration fix and tutorial `cherry_tomato` references were already present in the active file; no code change needed there.
   - Review result: season-engine `bedScore.finalScore.toFixed(...)` crash pattern was not present in active v3/v4 files; no code change needed there.
+
+[2026-03-18] [GardenOS] [feat] Replace planner confirmations with undo and restore
+[2026-03-18] [GardenOS] [refactor] Split home and hub entry roles
+[2026-03-18] [GardenOS] [feat] Add simulator objective strip
+[2026-03-18] [GardenOS] [feat] Share manage menu pattern with Season Engine
+[2026-03-18] [GardenOS] [fix] Open crop palette before tutorial tomato step
+[2026-03-18] [GardenOS] [feat] Add deterministic scenario harness prompts
+[2026-03-18] [GardenOS] [feat] Unify planner reasoning into one surface
+[2026-03-18] [GardenOS] [fix] Normalize legacy simulator review saves
+[2026-03-18] [GardenOS] [refactor] Split simulator review copy by phase
+[2026-03-18] [GardenOS] [feat] Surface Accept Loss in simulator beat UI
+[2026-03-18] [GardenOS] [feat] Add deterministic scenario harness prompts
+[2026-03-18] [GardenOS] [feat] Unify planner reasoning into one surface
+[2026-03-18] [GardenOS] [feat] Add planner severity summary and inspect next moves
+[2026-03-18] [GardenOS] [feat] Add deterministic scenario pack and regression clauses
+[2026-03-18] [GardenOS] [test] Add phase and reasoning smoke script
 - 2026-03-16 follow-up quality pass:
   - Added shared focus-visible outline/offset handling and reduced-motion `.pulse` fallback in `DaveHomeAssist.github.io/assets/css/base.css`.
   - Tightened shared muted text tokens in `DaveHomeAssist.github.io/assets/css/tokens.css` for better low-contrast copy legibility.
@@ -218,7 +234,22 @@ TODO / next-agent suggestions:
   - Added `hasLoggedCurrentEventForBeat()` guard instead of changing intervention/event architecture.
   - Validation:
     - Console diagnostic suite still passed after the patch.
+
+- 2026-03-18 seeded RNG fix:
+  - Patched `garden-league-simulator-v4.html` so `wRand()` uses a seeded mulberry32 PRNG instead of falling back to `Math.random()`.
+  - Added `seed` and `rngState` to season state, with load normalization for older saves.
+  - Added a commented deterministic replay proof block at the bottom of the file.
+  - Validation:
+    - develop-web-game smoke run: `/tmp/garden-v4-seed-fix/shot-0.png`, `/tmp/garden-v4-seed-fix/state-0.json`
+    - direct RNG extraction check passed with identical same-seed output: `d,b,b,d`
     - Targeted headless regression reproduced the old risk path (`protect` -> zero affected cells -> advance) and confirmed `eventLog.length` stayed at `1` after phase advance.
 
 TODO / next-agent suggestions:
 - If the engine export surface changes again, update the injected `__engineTestHooks` block in `docs/engine-console-tests.js` instead of widening `window.gardenOS`.
+
+- 2026-03-18 continued Garden OS patch sequence:
+  - Planner: added explicit issue codes and ordering for unsupported climbers, front-access tall blockers, access-lane blockers, and advisory crowding.
+  - Planner: upgraded reasoning surface with cell facts and ordered issue stack.
+  - Simulator: exposed `window.gardenOS.getPhaseContract()` for regression-safe phase checks.
+  - Added deterministic prompt/spec docs: `garden-os-mode-contract.txt`, `garden-os-scenario-spec.txt`, `garden-os-mode-regression.txt`.
+  - Validation in progress: extracted JS syntax checks + Playwright/browser smoke pass for planner/simulator.

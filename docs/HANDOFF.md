@@ -1,7 +1,7 @@
 ---
 Status: Active
 Document Version: 1.0
-Compatible With: Garden OS v4.3, Schema v1, Season Engine v3
+Compatible With: Garden OS v4.3, Schema v1, Season Engine v4
 Owner: Dave Robertson
 Last Updated: 2026-03-16
 Artifact Class: Ref
@@ -28,10 +28,10 @@ Garden OS is a local-first, browser-native raised-bed garden planning system. Ze
 
 | Tool | File | Lines | Purpose |
 |------|------|-------|---------|
-| Hub | `index.html` | 131 | Navigation hub (Mom's Sanctuary) |
-| Marketing Home | `home.html` | ~450 | Alternate landing page (test) |
-| Planner v4.3 | `garden-planner-v4.html` | 3,505 | Core placement UI, scoring breakdown, export/import |
-| Season Engine v3 | `garden-league-simulator-v3.html` | 2,650 | 12-chapter narrative campaign with events, interventions, carry-forward |
+| Hub | `index.html` | 355 | Navigation hub (Mom's Sanctuary) |
+| Marketing Home | `home.html` | 823 | Primary marketing landing page |
+| Planner v4.3 | `garden-planner-v4.html` | 6,076 | Core placement UI, scoring breakdown, export/import |
+| Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | 12-chapter narrative strategy game with events, interventions, carry-forward, and chapter progression |
 | Build Guide | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |
 | Ops Guide | `garden-cage-ops-guide.html` | 1,313 | Seasonal maintenance checklist |
 | How It Thinks | `how-it-thinks.html` | ~500 | Plain-English scoring walkthrough |
@@ -353,7 +353,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 - `CROPS` object — full crop roster
 - `SCORING_CONSTANTS` — weights, shadow penalties, clamps
 
-### Season Engine (`garden-league-simulator-v3.html`)
+### Season Engine (`garden-league-simulator-v4.html`)
 
 - `mkSeason()` — creates a new season state
 - Phase transition functions: `commitGrid()`, `advancePhase()`, `resolveEvent()`, `calculateHarvest()`
@@ -380,5 +380,5 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 ## Legacy / Unlinked Files (safe to ignore)
 
 - `garden-os-home.html` — original marketing page (superseded by `home.html`)
-- `garden-league-simulator.html`, `garden-league-simulator-v2.html`, `garden-os-simulator-v2.html` — old game versions
+- `garden-league-simulator.html`, `garden-league-simulator-v2.html`, `garden-league-simulator-v3.html`, `garden-os-simulator-v2.html` — old game versions
 - `archive/` folder — versioned HTML snapshots (v1-v7)
