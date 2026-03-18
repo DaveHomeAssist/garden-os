@@ -1,0 +1,86 @@
+Garden OS Mode Regression
+Version: 1
+Purpose: regression checks for simulator phase integrity, explicit transition behavior, planner severity ordering, and scenario guarantees.
+
+Simulator checks
+
+REG-01 Invalid phase rejection
+- Surface: garden-league-simulator-v4.html
+- Preconditions: saved payload contains phase TRANSITION or UNKNOWN
+- Action: load normalization
+- Expected Result: payload rejected as invalid; runtime phase contract remains valid
+- Failure Meaning: corrupted saves can enter illegal runtime states
+
+REG-02 Legacy review normalization
+- Surface: garden-league-simulator-v4.html
+- Preconditions: saved payload contains REVIEW
+- Action: load winter and non-winter chapters
+- Expected Result: winter chapter normalizes to WINTER_REVIEW; non-winter chapter normalizes to HARVEST_REVIEW
+- Failure Meaning: semantic review collision remains in save/load flow
+
+REG-03 Explicit accept flow
+- Surface: garden-league-simulator-v4.html
+- Preconditions: beat phase active, event unresolved, beat token available
+- Action: press advance or call advanceBeat()
+- Expected Result: no advance occurs until intervention or explicit Accept Loss
+- Failure Meaning: hidden loss acceptance still exists
+
+REG-04 Review split integrity
+- Surface: garden-league-simulator-v4.html
+- Preconditions: harvest complete in normal chapter; winter chapter start
+- Action: progress naturally
+- Expected Result: harvest path enters HARVEST_REVIEW only; winter path enters WINTER_REVIEW only
+- Failure Meaning: review states are still semantically overloaded
+
+REG-05 Contract hook parity
+- Surface: garden-league-simulator-v4.html
+- Preconditions: simulator booted
+- Action: inspect window.gardenOS.getPhaseContract()
+- Expected Result: valid=true for live states, reviewPhases contains HARVEST_REVIEW and WINTER_REVIEW, pendingDecision reflects unresolved beat status
+- Failure Meaning: regression harness cannot verify the phase contract safely
+
+Planner checks
+
+REG-06 Severity ordering
+- Surface: garden-planner-v4.html
+- Preconditions: one cell has unsupported climber, another has crowding advisory
+- Action: render reasoning and issue ordering
+- Expected Result: unsupported climber ranks above crowding every time
+- Failure Meaning: the user sees advisory noise before real blockers
+
+REG-07 Front access blocker priority
+- Surface: garden-planner-v4.html
+- Preconditions: tall crop in front access row and a separate advisory issue elsewhere
+- Action: select the tall crop
+- Expected Result: front access shade blocker is critical and outranks advisory crowding
+- Failure Meaning: planner underweights bed-wide shade/access damage
+
+REG-08 Access blocker priority
+- Surface: garden-planner-v4.html
+- Preconditions: tall crop in high-access lane plus low-severity water mismatch
+- Action: inspect selected cell
+- Expected Result: access blocker ranks above water mismatch and crowding notes
+- Failure Meaning: harvest/access friction is hidden behind low-value warnings
+
+REG-09 Single-surface reasoning completeness
+- Surface: garden-planner-v4.html
+- Preconditions: selected planted cell with at least one issue and one better-fit alternative
+- Action: open reasoning surface
+- Expected Result: score direction, cell facts, top risk, ordered issues, tradeoff, score delta, and next move all appear in one card
+- Failure Meaning: cause/effect is still fragmented across inspect, score, and notes surfaces
+
+Scenario guarantee checks
+
+REG-10 Canonical scenario pack
+- Surface: garden-os-scenario-spec.txt
+- Preconditions: fixed scenarios SCN-01 through SCN-10
+- Action: run scenario review against planner/guide/simulator behavior
+- Expected Result: each scenario preserves its Expected Score Direction and Required System Behavior
+- Failure Meaning: scenario outputs are descriptive but not deterministic
+
+REG-11 Mode contract alignment
+- Surface: garden-os-mode-contract.txt
+- Preconditions: current planner, guide, and season-engine build
+- Action: compare live behavior to mode contract
+- Expected Result: allowed actions, phase contract, and deterministic guarantees match the live product
+- Failure Meaning: prompt system and shipped game loop have drifted apart

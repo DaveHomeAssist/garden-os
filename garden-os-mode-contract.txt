@@ -1,0 +1,93 @@
+Garden OS Mode Contract
+Version: 1
+Purpose: formalize deterministic loop behavior for Planner mode, Guide mode, and the Season Engine.
+
+1. Mode Definitions
+
+Planner Mode
+- Player goal: build a viable bed layout that maximizes explainable score without violating structure, light, or access constraints.
+- Primary loop: inspect site -> place crops -> review score and issues -> adjust weak cells -> save/share/export.
+- Dominant action: place or move a crop.
+- Deterministic output: identical inputs and identical grid state must produce identical score, issue ordering, and reasoning guidance.
+
+Guide Mode
+- Player goal: operate an already-built bed through season-specific decisions, maintenance, and recovery.
+- Primary loop: inspect current condition -> identify pressure -> choose corrective action -> verify next move.
+- Dominant action: resolve the next operational issue with the least structural disruption.
+- Deterministic output: identical scenario inputs must produce the same diagnosis, same primary risk ordering, and same next-step recommendation.
+
+Season Engine Mode
+- Player goal: complete a chapter by surviving all beats, harvesting, and advancing with explicit state transitions.
+- Primary loop: planning -> early season -> mid season -> late season -> harvest -> review -> next chapter.
+- Dominant action: one intervention or explicit Accept Loss per beat.
+- Deterministic output: identical save state, chapter seed, and intervention sequence must produce the same event resolution and final review state.
+
+2. Phase Contract
+
+Allowed simulator phases
+- PLANNING
+- EARLY_SEASON
+- MID_SEASON
+- LATE_SEASON
+- HARVEST
+- HARVEST_REVIEW
+- WINTER_REVIEW
+
+Rules
+- Invalid stored phases must be rejected on load normalization.
+- HARVEST_REVIEW is valid only for non-winter chapters.
+- WINTER_REVIEW is valid only for winter chapters.
+- REVIEW is legacy input only and must normalize to the correct explicit review phase.
+- TRANSITION is not a valid runtime phase.
+
+3. Allowed Actions by Phase
+
+Planner
+- Allowed: paint, erase, inspect, select crop, auto-fill, undo, save, restore, export, import.
+- Blocked: season-engine beat advancement.
+
+Season Engine PLANNING
+- Allowed: select crop, paint, erase, inspect, undo, commit plan.
+- Blocked: beat advancement without commit.
+
+Season Engine beat phases
+- Allowed: inspect event, choose one intervention, accept loss, advance after resolution.
+- Blocked: silent resolution, second intervention before phase resolves.
+
+HARVEST
+- Allowed: harvest and review.
+- Blocked: new interventions.
+
+HARVEST_REVIEW / WINTER_REVIEW
+- Allowed: inspect results, continue to next chapter/state.
+- Blocked: returning to unresolved beat actions.
+
+4. Deterministic Guarantees
+
+- Score direction must be stable for the same planner input.
+- Issue ordering must be severity-first, then code-priority.
+- Unsupported climbers and missing support outrank all advisory placement issues.
+- Front access row tall blockers outrank advisory crowding notes.
+- Access blockers outrank advisory crowding notes.
+- Beat advancement must never auto-accept a loss.
+- Review state must be explicit and semantically split.
+
+5. Output Schema Requirements
+
+Scenario output must include:
+- Scenario ID
+- Mode
+- Inputs
+- Expected Score Direction
+- Required System Behavior
+- Primary Risks
+- Recommended Next Move
+
+Regression output must include:
+- Check ID
+- Surface
+- Preconditions
+- Action
+- Expected Result
+- Failure Meaning
+

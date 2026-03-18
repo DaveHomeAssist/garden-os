@@ -1,0 +1,150 @@
+Garden OS Scenario Spec
+Version: 1
+Purpose: define deterministic scenario inputs and required system guarantees for mode testing.
+
+Required scenario fields
+- Scenario ID
+- Mode: planner | guide | season-engine
+- Season
+- Bed State
+- Structure State
+- Active Pressures
+- Player Objective
+- Constraints
+- Expected Score Direction
+- Required System Behavior
+- Expected Primary Risk
+- Expected Next Move
+
+Canonical regression scenarios
+
+1. SCN-01 Unsupported climber
+- Mode: planner
+- Season: spring
+- Bed State: cucumber painted in non-trellis interior cell
+- Structure State: cage enabled, rear trellis available
+- Active Pressures: none
+- Player Objective: maximize score without structural violations
+- Constraints: keep cucumber in bed
+- Expected Score Direction: down
+- Required System Behavior: system must flag unsupported climber as critical, prioritize trellis relocation, and surface it above any crowding note
+- Expected Primary Risk: missing support / unsupported climber
+- Expected Next Move: move cucumber to back trellis row
+
+2. SCN-02 Front-row tall blocker
+- Mode: planner
+- Season: summer
+- Bed State: tall tomato in front access row with lower crops behind it
+- Structure State: open bed
+- Active Pressures: shade loss
+- Player Objective: keep front access usable
+- Constraints: preserve tomato somewhere in bed
+- Expected Score Direction: down
+- Required System Behavior: system must flag front-row tall placement as critical and describe both shade and reach impact
+- Expected Primary Risk: front access shade blocker
+- Expected Next Move: move tall crop off front access row
+
+3. SCN-03 Access lane blocker
+- Mode: planner
+- Season: spring
+- Bed State: tall crop in high-access lane but not literal front row
+- Structure State: raised bed with frequent succession harvest
+- Active Pressures: harvest friction
+- Player Objective: preserve easy access
+- Constraints: no structural change
+- Expected Score Direction: down
+- Required System Behavior: system must mark access blocking above advisory crowding and recommend reserving high-access cells for low crops or succession
+- Expected Primary Risk: access blocker
+- Expected Next Move: free the lane for low-profile crops
+
+4. SCN-04 Advisory crowding only
+- Mode: planner
+- Season: spring
+- Bed State: two tall crops adjacent in a non-front row
+- Structure State: trellis available elsewhere
+- Active Pressures: mild shade competition
+- Player Objective: refine layout without overreacting
+- Constraints: both crops remain planted
+- Expected Score Direction: slightly down
+- Required System Behavior: system must label this as advisory or low severity, not critical
+- Expected Primary Risk: crowding shade advisory
+- Expected Next Move: separate one tall crop if a better cell exists
+
+5. SCN-05 Late-summer bolting risk
+- Mode: guide
+- Season: late summer
+- Bed State: cool-season greens still planted in heat
+- Structure State: cage enabled
+- Active Pressures: heat, bolting
+- Player Objective: protect harvest quality
+- Constraints: no full bed reset
+- Expected Score Direction: down
+- Required System Behavior: system must identify heat/bolting risk and recommend rotation, shade mitigation, or replacement
+- Expected Primary Risk: late-summer bolt risk
+- Expected Next Move: rotate cool crops out before heat compounds penalties
+
+6. SCN-06 Water mismatch pair
+- Mode: planner
+- Season: summer
+- Bed State: high-water and low-water crops adjacent
+- Structure State: open bed
+- Active Pressures: irrigation mismatch
+- Player Objective: stabilize watering
+- Constraints: keep both crop types
+- Expected Score Direction: slightly down
+- Required System Behavior: system must surface water mismatch as low severity and avoid outranking critical support or access issues
+- Expected Primary Risk: water mismatch advisory
+- Expected Next Move: separate irrigation-conflicting crops
+
+7. SCN-07 Beat phase unresolved
+- Mode: season-engine
+- Season: mid season
+- Bed State: current event active, beat token available
+- Structure State: chapter in progress
+- Active Pressures: unresolved beat event
+- Player Objective: progress fairly
+- Constraints: no hidden resolution
+- Expected Score Direction: unchanged until explicit action
+- Required System Behavior: engine must block advancement until an intervention or Accept Loss is chosen
+- Expected Primary Risk: unresolved event
+- Expected Next Move: choose intervention or explicit Accept Loss
+
+8. SCN-08 Legacy review load
+- Mode: season-engine
+- Season: winter
+- Bed State: saved state contains legacy REVIEW phase
+- Structure State: load normalization path
+- Active Pressures: stale save data
+- Player Objective: restore valid state only
+- Constraints: preserve chapter semantics
+- Expected Score Direction: unchanged
+- Required System Behavior: engine must normalize REVIEW to WINTER_REVIEW for winter chapters and HARVEST_REVIEW otherwise
+- Expected Primary Risk: invalid legacy phase
+- Expected Next Move: continue from normalized review state
+
+9. SCN-09 Invalid phase corruption
+- Mode: season-engine
+- Season: any
+- Bed State: saved state contains TRANSITION or unknown phase
+- Structure State: load normalization path
+- Active Pressures: corrupted state
+- Player Objective: prevent non-repro bugs
+- Constraints: no invalid runtime state allowed
+- Expected Score Direction: unchanged because load must fail or reset safely
+- Required System Behavior: engine must reject invalid phase values during normalization
+- Expected Primary Risk: corrupted phase contract
+- Expected Next Move: fall back to safe boot or reject restore
+
+10. SCN-10 Single-surface reasoning
+- Mode: planner
+- Season: spring
+- Bed State: selected cell has one critical issue, one advisory issue, and a better-fit alternative
+- Structure State: normal planner view
+- Active Pressures: user needs cause/effect quickly
+- Player Objective: correct the weakest cell with minimal friction
+- Constraints: no multi-panel hunting
+- Expected Score Direction: up after correction
+- Required System Behavior: reasoning surface must show score direction, ordered issue stack, cell facts, score delta, and next move in one place
+- Expected Primary Risk: highest-severity issue on selected cell
+- Expected Next Move: follow the surfaced best-fit or fix guidance
+
