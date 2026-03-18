@@ -1,0 +1,17 @@
+{
+  "basePoints": 1,
+  "hardViolation": {
+    "penalty": 3,
+    "message": "Illegal placement"
+  },
+  "advisoryPenalty": {
+    "penalty": 1,
+    "message": "Inefficient placement"
+  },
+  "companionBuff": {
+    "bonus": 2,
+    "pairs": [
+      ["Tomato", "Basil"]
+    ]
+  }
+}

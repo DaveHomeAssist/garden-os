@@ -1,0 +1,13 @@
+{
+  "id": "pest-outbreak-1",
+  "initialLayout": [
+    ["Tomato", "Basil", "", "", "", "", "", ""],
+    ["", "", "Corn", "", "", "", "", ""],
+    ["", "", "", "", "Lettuce", "", "", ""],
+    ["", "", "", "", "", "", "", ""]
+  ],
+  "pests": [
+    { "type": "aphid", "r": 0, "c": 2 }
+  ],
+  "objective": "Survive 4 seasons against pests"
+}

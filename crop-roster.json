@@ -1,0 +1,9 @@
+{
+  "crops": [
+    { "id": "Tomato", "category": "Fruiting", "botanical": "Solanum" },
+    { "id": "Basil", "category": "Herb", "botanical": "Ocimum" },
+    { "id": "Corn", "category": "Climber", "botanical": "Zea" },
+    { "id": "Lettuce", "category": "Greens", "botanical": "Lactuca" },
+    { "id": "Carrot", "category": "Root", "botanical": "Daucus" }
+  ]
+}

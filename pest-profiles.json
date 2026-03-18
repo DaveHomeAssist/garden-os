@@ -1,0 +1,6 @@
+{
+  "pests": [
+    { "id": "aphid", "damage": 2, "spread": 0.3 },
+    { "id": "beetle", "damage": 3, "spread": 0.1 }
+  ]
+}

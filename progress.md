@@ -219,6 +219,35 @@ TODO / next-agent suggestions:
       - screenshot: `output/web-game/engine-v4-console-tests/final-screen.png`
       - console/page errors: none
 
+- 2026-03-18 builder-mode simulator artifact pass:
+  - Added new single-file prototype: `garden-os-simulator.html`.
+  - Scope is intentionally smaller than the league/season engine files:
+    - 8x4 deterministic builder board
+    - crop palette + erase + simulate + reset
+    - diagnostic scoring with hard/advisory/buff reasons
+    - Garden Gurl / Onion Man narration
+    - local-first persistence for current board, last report, and score history
+    - automation hooks: `window.render_game_to_text` and `window.advanceTime()`
+  - Added seed/config placeholders at repo root:
+    - `game-voice-guide.md`
+    - `scoring-api.json`
+    - `scenario-schema.json`
+    - `pest-profiles.json`
+    - `crop-roster.json`
+    - `achievement-registry.json`
+    - `league-config.json`
+  - Validation:
+    - develop-web-game Playwright client smoke run against `http://127.0.0.1:4173/garden-os-simulator.html`
+      - artifacts: `/tmp/garden-os-simulator-smoke/shot-0.png`, `shot-1.png`, `state-0.json`, `state-1.json`
+      - smoke state confirmed empty deterministic board with hooks present
+    - direct Playwright interaction pass:
+      - flow: select Tomato -> place, select Basil -> place adjacent, select Corn -> place off trellis, simulate
+      - result: `score=2`, `hardCount=1`, `buffCount=1`, `historyCount=1`, `errors=[]`
+      - screenshot: `/tmp/garden-os-simulator-smoke/manual-flow.png`
+  - Notes:
+    - `node --check` does not apply directly to `.html`, so browser validation is the source of truth for this artifact.
+    - Current artifact is intentionally standalone and not yet linked from repo navigation.
+
 TODO / next-agent suggestions:
 - If the engine is ever modularized, replace the source-bridge approach with direct module imports or exported debug hooks.
 - If `docs/ENGINE_TEST_PLAN.md` is still intended to reflect exact executable coverage, update the test count from the original 26-test draft to the current 36-test harness.

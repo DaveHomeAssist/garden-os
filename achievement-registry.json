@@ -1,0 +1,6 @@
+{
+  "achievements": [
+    { "id": "first-plant", "name": "Green Thumb", "condition": "Place your first crop" },
+    { "id": "no-violations", "name": "Perfect Planner", "condition": "Complete a garden with no violations" }
+  ]
+}

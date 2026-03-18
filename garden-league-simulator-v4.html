@@ -8,6 +8,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#5c3d1e">
 <link rel="icon" href="assets/icons/favicon/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -240,8 +242,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .event-card.positive{border-color:var(--char-onion);border-left-color:var(--char-onion)}.event-card.positive .effect{color:var(--leaf-bright)}
 .event-card.neutral{border-color:var(--text-muted);border-left-color:var(--text-muted)}.event-card.neutral .effect{color:var(--text-muted)}
 .event-card:not(.positive):not(.neutral){border-left-color:var(--char-critter)}.event-card:not(.positive):not(.neutral) .effect{color:var(--danger)}
-.narrator-area{border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
-.narrator-slot{margin-bottom:10px;opacity:0;transform:translateY(12px);transition:opacity 200ms ease,transform 200ms ease;padding-left:4px;border-left:3px solid transparent}
+.narrator-area{border-top:1px solid var(--border);padding:10px 8px 4px;margin-top:8px;background:rgba(95,143,69,.06);border-radius:8px}
+.narrator-slot{margin-bottom:10px;opacity:0;transform:translateY(12px);transition:opacity 400ms ease,transform 400ms ease;padding-left:4px;border-left:3px solid transparent}
 .narrator-slot.visible{opacity:1;transform:translateY(0)}
 .narrator-slot.char-gurl-slot{border-left-color:var(--char-gurl)}
 .narrator-slot.char-onion-slot{border-left-color:var(--char-onion)}
@@ -1125,21 +1127,39 @@ function fireDialogue(triggerKey,extraChars){
   if(lines.length)queueNarratorLines(lines);
 }
 
+const NARRATOR_MIN_DISPLAY=2800; // ms — minimum time a narrator message stays visible
+let _narratorPending=[];       // buffered message sets waiting to display
+let _narratorBusy=false;       // true while a message set is holding the floor
+let _narratorTimer=null;       // setTimeout id for current hold
+
 function queueNarratorLines(lines){
-  CAM.narratorQueue=lines;
-  displayNarratorQueue();
+  _narratorPending.push(lines);
+  _drainNarrator();
 }
 
-function displayNarratorQueue(){
-  if(!CAM.narratorQueue||!CAM.narratorQueue.length)return;
-  const lines=CAM.narratorQueue;
-  CAM.narratorQueue=[];
+function _drainNarrator(){
+  if(_narratorBusy||!_narratorPending.length||!CAM)return;
+  _narratorBusy=true;
+  const lines=_narratorPending.shift();
   // Store as last lines for persistent display
   for(const l of lines){
     CAM.lastNarratorLines[l.character]=l.line;
   }
+  CAM.narratorQueue=[];
   saveCampaign();
   renderNarratorArea();
+  _narratorTimer=setTimeout(()=>{
+    _narratorBusy=false;
+    _narratorTimer=null;
+    _drainNarrator();
+  },NARRATOR_MIN_DISPLAY);
+}
+
+function displayNarratorQueue(){
+  // Legacy compat — redirect through the queue
+  if(!CAM||!CAM.narratorQueue||!CAM.narratorQueue.length)return;
+  queueNarratorLines(CAM.narratorQueue.slice());
+  CAM.narratorQueue=[];
 }
 
 const CHAR_DISPLAY={
@@ -1984,6 +2004,9 @@ function renderRes(){
   // Animate ring fill after render
   requestAnimationFrame(()=>requestAnimationFrame(()=>{fill.style.strokeDashoffset=offset}));
 
+  // Narrator Area — prominent placement right below score
+  f.appendChild(_buildNarratorArea());
+
   // Weakest-factor callout
   if(sd.factorSummary){
     const fnames={sun:'Sun Fit',support:'Support',shade:'Shade',access:'Access',season:'Season Fit',adjacency:'Adjacency'};
@@ -2117,7 +2140,30 @@ function renderRes(){
     f.appendChild(accSection('Pantry',[h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', '))],true));
   }
 
-  // Narrator Area
+
+
+  // History
+  const hist=loadH();
+  if(hist.length){
+    const histItems=[];
+    for(const en of hist.slice().reverse()){
+      const d=h('div','history-entry');
+      d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
+      d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
+      histItems.push(d);
+    }
+    f.appendChild(accSection('History ('+hist.length+')',histItems,true));
+  }
+  el.res.replaceChildren(f);
+
+  // Animate factor bar fills after DOM update
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const fills=el.res.querySelectorAll('.factor-bar .fill');
+    fills.forEach(f=>{if(f.dataset.target)f.style.width=f.dataset.target+'%'});
+  }));
+}
+
+function _buildNarratorArea(){
   const na=h('div','narrator-area');
   na.id='narratorArea';
   na.setAttribute('aria-live','polite');
@@ -2139,27 +2185,7 @@ function renderRes(){
       na.appendChild(slot);
     }
   }
-  f.appendChild(accSection('Narrators',[na],false));
-
-  // History
-  const hist=loadH();
-  if(hist.length){
-    const histItems=[];
-    for(const en of hist.slice().reverse()){
-      const d=h('div','history-entry');
-      d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
-      d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
-      histItems.push(d);
-    }
-    f.appendChild(accSection('History ('+hist.length+')',histItems,true));
-  }
-  el.res.replaceChildren(f);
-
-  // Animate factor bar fills after DOM update
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const fills=el.res.querySelectorAll('.factor-bar .fill');
-    fills.forEach(f=>{if(f.dataset.target)f.style.width=f.dataset.target+'%'});
-  }));
+  return na;
 }
 
 function renderNarratorArea(){
@@ -3317,5 +3343,6 @@ console.assert(_runSeededReplay(12345)===_runSeededReplay(12345),'Seeded wRand s
 
 })();
 </script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>
