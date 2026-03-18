@@ -8,16 +8,12 @@
 <meta property="og:description" content="Zero-backend raised bed planner, season game, and build guides. All in your browser.">
 <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://davehomeassist.github.io/garden-os/home.html">
-<link rel="canonical" href="https://davehomeassist.github.io/garden-os/home.html">
-<meta http-equiv="refresh" content="0; url=home.html">
+<meta property="og:url" content="https://davehomeassist.github.io/garden-os/index.html">
+<link rel="canonical" href="https://davehomeassist.github.io/garden-os/index.html">
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
-<script>
-  location.replace('home.html' + location.search + location.hash);
-</script>
-
 <!-- Shared theme — tokens, nav, cards, badges, base styles -->
 <link rel="stylesheet" href="garden-os-theme.css">
 
@@ -198,18 +194,13 @@
 </style>
 </head>
 <body>
-<noscript>
-  <p style="padding:1rem 1.25rem;font-family:system-ui,sans-serif;background:#f7f2ea;color:#1e110a;">
-    Garden OS now starts at <a href="home.html">home.html</a>.
-  </p>
-</noscript>
-
 <a href="#hub" class="skip-link">Skip to tools</a>
 
 <!-- Shared nav -->
 <nav class="os-nav" aria-label="Garden OS tools">
   <a href="https://davehomeassist.github.io/" style="color:rgba(0,0,0,0.35);text-decoration:none;font-size:.7rem;letter-spacing:.04em;margin-right:.5rem;transition:color .15s;" onmouseover="this.style.color='currentColor'" onmouseout="this.style.color='rgba(0,0,0,0.35)'">&larr; All Projects</a>
-  <a href="index.html" class="active" aria-current="page">Home</a>
+  <a href="home.html">Overview</a>
+  <a href="index.html" class="active" aria-current="page">Hub</a>
   <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
@@ -234,23 +225,15 @@
 
 <!-- Hub label -->
 <div class="hub-header" aria-hidden="true">
-  <div class="hub-header-label">Your tools</div>
-  <div class="hub-header-title">Pick a tool to get started</div>
+  <div class="hub-header-label">Tool launcher</div>
+  <div class="hub-header-title">Open the right Garden OS surface fast</div>
 </div>
 
 <!-- Tool hub -->
 <main class="hub" id="hub" aria-label="Garden OS tools">
 
-  <!-- PRIMARY TOOLS -->
-  <a class="tool-card" href="garden-league-simulator-v4.html">
-    <div class="tool-card-icon" aria-hidden="true">🌿</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Season Engine v3</div>
-      <div class="tool-card-desc">12-chapter narrative strategy game. Inherit Mom's 8×4 raised bed, plan layouts, survive seasonal events, and harvest toward her sauce recipe.</div>
-      <span class="os-badge os-badge--planner">Play Now</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  <!-- GROUP 1: Start here -->
+  <div class="hub-divider" aria-hidden="true">Start here</div>
 
   <a class="tool-card" href="garden-planner-v4.html">
     <div class="tool-card-icon" aria-hidden="true">🌱</div>
@@ -261,6 +244,19 @@
     </div>
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
+
+  <a class="tool-card" href="garden-league-simulator-v4.html">
+    <div class="tool-card-icon" aria-hidden="true">🌿</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Season Engine v4.0</div>
+      <div class="tool-card-desc">12-chapter narrative strategy game. Inherit Mom's 8×4 raised bed, plan layouts, survive seasonal events, and harvest toward her sauce recipe.</div>
+      <span class="os-badge os-badge--planner">Play Now</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
+  <!-- GROUP 2: Build & operate -->
+  <div class="hub-divider" aria-hidden="true">Build & operate</div>
 
   <a class="tool-card" href="garden-cage-build-guide.html">
     <div class="tool-card-icon" aria-hidden="true">🔨</div>
@@ -282,6 +278,9 @@
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
 
+  <!-- GROUP 3: Learn & inspect -->
+  <div class="hub-divider" aria-hidden="true">Learn & inspect</div>
+
   <a class="tool-card" href="how-it-thinks.html">
     <div class="tool-card-icon" aria-hidden="true">🧠</div>
     <div class="tool-card-body">
@@ -291,8 +290,6 @@
     </div>
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
-
-  <div class="hub-divider" aria-hidden="true">Developer tools</div>
 
   <a class="tool-card" href="scoring-visualizer.html">
     <div class="tool-card-icon" aria-hidden="true">🔬</div>
@@ -314,15 +311,8 @@
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>
 
-  <a class="tool-card" href="system-map.html">
-    <div class="tool-card-icon" aria-hidden="true">🗺️</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">System Map</div>
-      <div class="tool-card-desc">Full architecture reference — system layers, data flow, engineering principles, and the complete tool ecosystem.</div>
-      <span class="os-badge os-badge--ref">Reference</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  <!-- GROUP 4: Developer references -->
+  <div class="hub-divider" aria-hidden="true">Developer references</div>
 
   <a class="tool-card" href="fairness-tester.html">
     <div class="tool-card-icon" aria-hidden="true">⚖️</div>
@@ -330,6 +320,16 @@
       <div class="tool-card-title">Fairness Tester</div>
       <div class="tool-card-desc">Validate the scoring algorithm — run crops through all positions and check for bias, outliers, and edge cases.</div>
       <span class="os-badge os-badge--ref">Tool</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
+  <a class="tool-card" href="system-map.html">
+    <div class="tool-card-icon" aria-hidden="true">🗺️</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">System Map</div>
+      <div class="tool-card-desc">Full architecture reference — system layers, data flow, engineering principles, and the complete tool ecosystem.</div>
+      <span class="os-badge os-badge--ref">Reference</span>
     </div>
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>

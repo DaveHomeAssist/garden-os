@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
@@ -146,6 +147,11 @@
     .icon-card .ic{font-size:2rem; margin-bottom:8px}
     .icon-card h4{font:700 .95rem var(--serif); margin-bottom:4px}
     .icon-card p{color:var(--muted); font-size:.85rem}
+
+    /* ── focus accessibility ── */
+    a:focus-visible{
+      outline:2px solid var(--leaf); outline-offset:2px; border-radius:var(--radius);
+    }
 
     .footer{padding:20px 6px 10px; color:var(--muted); font-size:.82rem; text-align:center}
 
@@ -402,6 +408,5 @@
     </div>
 
   </div>
-
 </body>
 </html>

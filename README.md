@@ -55,8 +55,8 @@ No install step, no build step, no runtime services.
 - Planner recovers to a safe empty workspace if localStorage JSON is malformed.
 - Planner tool state stays in sync across click, keyboard, reload, and bed switching.
 - Planner mobile shell shows the board before side panels and sidebar toggles still work.
-- Season Engine v3/v4 neutral clicks inspect/select without mutating the grid.
-- Season Engine v3/v4 `E` toggles eraser and `Escape` returns to neutral inspect behavior.
+- Season Engine v4 neutral clicks inspect/select without mutating the grid.
+- Season Engine v4 `E` toggles eraser and `Escape` returns to neutral inspect behavior.
 - Menus and dialogs open with focus on an action, trap Tab where expected, and close on `Escape`.
 
 ## Technical Stack

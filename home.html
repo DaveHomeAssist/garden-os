@@ -11,6 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davehomeassist.github.io/garden-os/home.html">
 <link rel="canonical" href="https://davehomeassist.github.io/garden-os/home.html">
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
@@ -437,7 +438,8 @@ footer {
 <a href="#main" class="skip-link">Skip to main content</a>
 
 <nav class="os-nav" aria-label="Garden OS">
-  <a href="index.html">Home</a>
+  <a href="home.html" class="active" aria-current="page">Home</a>
+  <a href="index.html">All Tools</a>
   <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
@@ -476,8 +478,8 @@ footer {
             <a href="garden-planner-v4.html" class="btn-big btn-green" aria-label="Start planning your garden">
               Start Planning
             </a>
-            <a href="#how" class="btn-big btn-outline">
-              See How It Works
+            <a href="garden-league-simulator-v4.html" class="btn-big btn-outline">
+              Play Season Engine
             </a>
           </div>
         </div>
@@ -529,38 +531,31 @@ footer {
   <!-- WHAT IT DOES -->
   <section id="features" aria-labelledby="features-heading">
     <div class="wrapper">
-      <div class="eyebrow" aria-hidden="true">What It Does</div>
-      <h2 id="features-heading">Everything you need for a thriving garden</h2>
+      <div class="eyebrow" aria-hidden="true">Why It's Different</div>
+      <h2 id="features-heading">Built to be simple, private, and transparent</h2>
       <p class="section-intro">
-        Garden OS handles the tricky parts of planning so you can focus on the fun part — growing things.
+        Garden OS does things differently than most garden planning tools.
       </p>
-      <div class="features-grid">
+      <div class="features-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="feature-card">
-          <span class="feature-emoji" aria-hidden="true">🗺️</span>
-          <div class="feature-title">Plan your garden layout</div>
+          <span class="feature-emoji" aria-hidden="true">🔒</span>
+          <div class="feature-title">Local first</div>
           <div class="feature-desc">
-            Drag and drop vegetables into your raised bed grid. See your whole plan at a glance before you plant a single seed.
+            Your data never leaves your browser. No accounts, no cloud sync, no tracking. Save your plan as a file you own, or print it.
           </div>
         </div>
         <div class="feature-card">
-          <span class="feature-emoji" aria-hidden="true">📅</span>
-          <div class="feature-title">Know what to plant when</div>
+          <span class="feature-emoji" aria-hidden="true">🧠</span>
+          <div class="feature-title">Explainable scoring</div>
           <div class="feature-desc">
-            Get planting windows based on your hardiness zone. No more guessing whether it's too early or too late in the season.
+            Every score is based on six factors you can inspect. No black boxes — click any cell to see exactly why it scored the way it did.
           </div>
         </div>
         <div class="feature-card">
-          <span class="feature-emoji" aria-hidden="true">🤝</span>
-          <div class="feature-title">Find good plant neighbors</div>
+          <span class="feature-emoji" aria-hidden="true">📡</span>
+          <div class="feature-title">Works offline</div>
           <div class="feature-desc">
-            Some plants love growing near each other. Others don't get along at all. Garden OS tells you which is which — in plain English.
-          </div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-emoji" aria-hidden="true">🔨</span>
-          <div class="feature-title">Build your raised bed</div>
-          <div class="feature-desc">
-            Follow a step-by-step guide to build or set up your raised bed, including what you'll need for cages, stakes, and supports.
+            Once loaded, everything works without an internet connection. Take your laptop to the garden and plan on the spot.
           </div>
         </div>
       </div>
@@ -571,7 +566,7 @@ footer {
   <section id="how" aria-labelledby="how-heading">
     <div class="wrapper">
       <div class="eyebrow" aria-hidden="true">How It Works</div>
-      <h2 id="how-heading">From blank bed to full plan in four steps</h2>
+      <h2 id="how-heading">Three steps to a better garden</h2>
       <p class="section-intro">
         You don't need to know anything about gardening software. Just follow along.
       </p>
@@ -580,9 +575,9 @@ footer {
         <div class="step" role="listitem">
           <div class="step-num-wrap" aria-hidden="true">1</div>
           <div class="step-body">
-            <div class="step-title">Open the Planner in your browser</div>
+            <div class="step-title">Plan</div>
             <div class="step-desc">
-              Click "Open Planner" and it loads right away — no downloading, no sign-up, no passwords. It works in Chrome, Safari, Firefox, and Edge.
+              Open the Planner, set your bed size and sun hours, then place crops. The scoring engine tells you what's working and what to adjust — live, as you build.
             </div>
           </div>
         </div>
@@ -590,9 +585,9 @@ footer {
         <div class="step" role="listitem">
           <div class="step-num-wrap" aria-hidden="true">2</div>
           <div class="step-body">
-            <div class="step-title">Tell it about your garden</div>
+            <div class="step-title">Learn</div>
             <div class="step-desc">
-              Enter your raised bed size, where you live (for frost dates), and how much sun your garden gets. Takes about two minutes.
+              Inspect any cell to see exactly why it scored the way it did. Explore companion pairings, variety rankings, and planting calendars built for your zone.
             </div>
           </div>
         </div>
@@ -600,19 +595,9 @@ footer {
         <div class="step" role="listitem">
           <div class="step-num-wrap" aria-hidden="true">3</div>
           <div class="step-body">
-            <div class="step-title">Add your vegetables</div>
+            <div class="step-title">Grow</div>
             <div class="step-desc">
-              Pick from a list of common vegetables and place them in your bed. The planner gives you a score and explains what's working well and what to adjust.
-            </div>
-          </div>
-        </div>
-
-        <div class="step" role="listitem">
-          <div class="step-num-wrap" aria-hidden="true">4</div>
-          <div class="step-body">
-            <div class="step-title">Save and print your plan</div>
-            <div class="step-desc">
-              Save your garden plan as a file you can open later, or print it out to keep by your raised bed all season. Your plan is yours — it never lives on anyone's server.
+              Save your plan, print it, or export it as a file. Track harvests right inside the planner. Come back next season and your layout is still there.
             </div>
           </div>
         </div>
@@ -633,20 +618,6 @@ footer {
 
         <div class="tool-card">
           <div class="tool-header">
-            <div class="tool-icon" aria-hidden="true">🌿</div>
-            <div>
-              <div class="tool-name">Season Engine v3</div>
-              <span class="tool-tag tag-core">Play Now</span>
-            </div>
-          </div>
-          <div class="tool-desc">
-            12-chapter narrative strategy game. Inherit a raised bed, plan layouts, survive seasonal events, earn interventions, and harvest toward a full sauce recipe.
-          </div>
-          <a href="garden-league-simulator-v4.html" class="tool-cta" aria-label="Play the Season Engine game">Play Game →</a>
-        </div>
-
-        <div class="tool-card">
-          <div class="tool-header">
             <div class="tool-icon" aria-hidden="true">🌱</div>
             <div>
               <div class="tool-name">Garden Planner v4.3</div>
@@ -657,6 +628,20 @@ footer {
             The main tool. Lay out your raised bed, add your vegetables, and get instant feedback on spacing, companions, and planting timing.
           </div>
           <a href="garden-planner-v4.html" class="tool-cta" aria-label="Open the Garden Planner">Open Planner →</a>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon" aria-hidden="true">🌿</div>
+            <div>
+              <div class="tool-name">Season Engine v4.0</div>
+              <span class="tool-tag tag-core">Play Now</span>
+            </div>
+          </div>
+          <div class="tool-desc">
+            12-chapter narrative strategy game. Inherit a raised bed, plan layouts, survive seasonal events, earn interventions, and harvest toward a full sauce recipe.
+          </div>
+          <a href="garden-league-simulator-v4.html" class="tool-cta" aria-label="Play the Season Engine game">Play Game →</a>
         </div>
 
         <div class="tool-card">
@@ -722,41 +707,43 @@ footer {
   <!-- GOOD TO KNOW -->
   <section id="goodtoknow" aria-labelledby="goodtoknow-heading">
     <div class="wrapper">
-      <div class="eyebrow" aria-hidden="true">Good to Know</div>
-      <h2 id="goodtoknow-heading">A few things that make Garden OS different</h2>
+      <div class="eyebrow" aria-hidden="true">Proof</div>
+      <h2 id="goodtoknow-heading">Your data, your way</h2>
       <p class="section-intro">
-        It was built to be simple, private, and long-lasting.
+        No accounts. No servers. No catch.
       </p>
-      <div class="facts-grid">
-        <div class="fact-card">
-          <span class="fact-icon" aria-hidden="true">🔒</span>
-          <div class="fact-title">Your data stays on your computer</div>
-          <div class="fact-desc">
-            Nothing you enter ever gets sent to a server. Your garden plan is saved locally on your device and belongs to you completely.
-          </div>
-        </div>
-        <div class="fact-card">
-          <span class="fact-icon" aria-hidden="true">📡</span>
-          <div class="fact-title">Works without internet</div>
-          <div class="fact-desc">
-            Once you've opened it, Garden OS keeps working even if your Wi-Fi goes out. Perfect for using outside at the garden.
-          </div>
-        </div>
-        <div class="fact-card">
-          <span class="fact-icon" aria-hidden="true">💸</span>
-          <div class="fact-title">Completely free</div>
-          <div class="fact-desc">
-            No subscription, no trial period, no "premium" features. Everything is free, forever. It's open source software.
-          </div>
-        </div>
+      <div class="facts-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="fact-card">
           <span class="fact-icon" aria-hidden="true">💾</span>
-          <div class="fact-title">Save and come back anytime</div>
+          <div class="fact-title">Local save</div>
           <div class="fact-desc">
-            Your plan saves automatically while you work. You can also save it as a file to your computer and open it again next season.
+            Your plan saves automatically to your browser. Come back tomorrow or next season — it's still there.
+          </div>
+        </div>
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">📁</span>
+          <div class="fact-title">File export</div>
+          <div class="fact-desc">
+            Export your plan as a .gos.json file you own. Print it, email it, or share it with someone else.
+          </div>
+        </div>
+        <div class="fact-card">
+          <span class="fact-icon" aria-hidden="true">🚫</span>
+          <div class="fact-title">No account</div>
+          <div class="fact-desc">
+            No sign-up, no email, no password. Open the page and start. It's free, open source software.
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section id="cta-final" style="background:var(--soil);padding:3.5rem 1.25rem;text-align:center;">
+    <div class="wrapper">
+      <h2 style="font-family:'Fraunces',serif;font-weight:600;color:#f5ede0;font-size:1.8rem;margin-bottom:0.5rem;">Ready to plan your garden?</h2>
+      <p style="font-family:'DM Sans',sans-serif;color:rgba(245,237,224,0.7);font-size:0.95rem;margin-bottom:1.5rem;">Open the planner and start placing crops. It takes about two minutes.</p>
+      <a href="garden-planner-v4.html" class="btn-big btn-green" style="display:inline-block;" aria-label="Open the Garden Planner">Open Planner</a>
     </div>
   </section>
 
