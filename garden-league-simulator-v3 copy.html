@@ -3,13 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Garden OS — Season Engine v4.0</title>
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
+<title>Garden OS — Season Engine</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5c3d1e">
 <link rel="icon" href="assets/icons/favicon/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,18 +23,18 @@
   --ease-expo-out:cubic-bezier(0.16,1,0.3,1);--ease-expo-in:cubic-bezier(0.7,0,0.84,0);
   --ease-out:cubic-bezier(0.33,1,0.68,1);--ease-back-out:cubic-bezier(0.34,1.56,0.64,1);
   --radius:16px;--shadow:0 8px 24px rgba(42,28,16,0.12);
-  --cream:#f7f2ea;--surface:#fffdf8;--cream-dark:#ede5d8;--soil:#5c3d1e;
-  --sf-overlay:rgba(44,31,20,0.52);
-  --text:#1e110a;--text-muted:#8a7b6b;--border:#c8b090;
-  --leaf-bright:#5aab6b;--synergy-bg:#e6f4ec;--sun:#e8c84a;--warn-bg:#fef8e8;
-  --danger:#c0392b;--conflict-bg:#fceaea;--sem-companion:#bb6bd9;
-  --sem-companion-bg:rgba(187,107,217,0.12);--rain:#5b9bd5;
-  --char-gurl:#3d7a4f;--char-gurl-bg:#e6f4ec;--char-onion:#e8c84a;--char-onion-bg:#fef8e8;
-  --char-vegeman:#5aab6b;--char-vegeman-bg:#edf6f0;--char-critter:#d4854a;--char-critter-bg:#faeee6;
-  --bg:var(--cream);--panel:var(--surface);--panel-2:var(--cream-dark);
-  --ink:var(--text);--muted:var(--text-muted);--line:var(--border);
+  --sf-bg:#e8dcc8;--sf-panel:#f5ecdc;--sf-panel-2:#efe3cd;--sf-card:#f8f1e3;
+  --sf-field:#ead9ba;--sf-overlay:rgba(44,31,20,0.52);
+  --sf-ink:#22150b;--sf-muted:#5a4834;--sf-line:#c5ab86;
+  --sem-good:#3e9d63;--sem-good-bg:#e1f2e5;--sem-warn:#c78623;--sem-warn-bg:#f5ead8;
+  --sem-hard:#c24d4d;--sem-hard-bg:#f5dddd;--sem-companion:#bb6bd9;
+  --sem-companion-bg:rgba(187,107,217,0.12);--sem-focus:#2f73a8;
+  --char-gurl:#5f8f45;--char-gurl-bg:#e4f0dc;--char-onion:#c98d22;--char-onion-bg:#f5ead0;
+  --char-vegeman:#38b249;--char-vegeman-bg:#ddf5e0;--char-critter:#b8654a;--char-critter-bg:#f5e0d8;
+  --bg:var(--sf-bg);--panel:var(--sf-panel);--panel-2:var(--sf-panel-2);
+  --ink:var(--sf-ink);--muted:var(--sf-muted);--line:var(--sf-line);
   --accent:var(--char-gurl);--accent-2:var(--char-onion);
-  --good:var(--leaf-bright);--warn:var(--sun);--bad:var(--danger);--focus:var(--rain);
+  --good:var(--sem-good);--warn:var(--sem-warn);--bad:var(--sem-hard);--focus:var(--sem-focus);
   --s-ground-deep:#3e2a14;--s-ground-mid:#5c3d1e;--s-ground-light:#8b7355;
   --s-growth-primary:#6b9a5b;--s-growth-accent:#a3c78a;--s-growth-muted:#7a8b6e;
   --s-sky-wash:#c8cfc2;--s-sky-light:#dde3d6;--s-sky-highlight:#e8eddf;
@@ -46,174 +43,84 @@
 .season-summer{--s-ground-deep:#4c321f;--s-ground-mid:#6b4a2a;--s-ground-light:#b89b72;--s-growth-primary:#3d7a2e;--s-growth-accent:#c24433;--s-growth-muted:#8b6b2f;--s-sky-wash:#f0e6d0;--s-sky-light:#f5ecdc;--s-sky-highlight:#e8b44a}
 .season-fall{--s-ground-deep:#3a2810;--s-ground-mid:#5e4020;--s-ground-light:#8a6b40;--s-growth-primary:#6b7a44;--s-growth-accent:#a83c2e;--s-growth-muted:#8b5a30;--s-sky-wash:#d4c5a8;--s-sky-light:#e0d4ba;--s-sky-highlight:#c9963a}
 .season-winter{--s-ground-deep:#2e2e30;--s-ground-mid:#4a4a4c;--s-ground-light:#6e6e6b;--s-growth-primary:#5a6858;--s-growth-accent:#8a7a5e;--s-growth-muted:#6b6b60;--s-sky-wash:#c8c4b8;--s-sky-light:#e8e2d4;--s-sky-highlight:#c9963a}
+@media(prefers-color-scheme:dark){:root{--sf-bg:#f2ead8;--sf-panel:#ffffff;--sf-panel-2:#f8f4eb;--sf-card:#ffffff;--sf-field:#f0e8d6;--sf-ink:#1a1208;--sf-muted:#6b5d48;--sf-line:#d4c4a8;--sf-overlay:rgba(44,31,20,0.52);--shadow:0 4px 16px rgba(42,28,16,0.08)}}
 *{box-sizing:border-box;margin:0}
-/* ── BRAND LAYER: paper grain overlay ── */
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px}
-/* ── BRAND LAYER: sanctuary label ── */
-.sanctuary-label{font-family:var(--ff-mono);font-size:0.625rem;color:rgba(200,176,144,0.85);letter-spacing:0.12em;white-space:nowrap}
-/* ── BRAND LAYER: season pill colours ── */
-.chip.season-spring-pill{background:#7cc576;color:#1a4a18;border-color:#5aab6b}
-.chip.season-summer-pill{background:#e8c84a;color:#5c3d1e;border-color:#c8a830}
-.chip.season-fall-pill{background:#d4854a;color:#3a1c08;border-color:#b86c38}
-.chip.season-winter-pill{background:#8fa3b8;color:#1e2e3e;border-color:#6a8aaa}
-/* ── BRAND LAYER: trellis arch above grid ── */
-.trellis-arch-label{font-family:var(--ff-mono);font-size:0.56rem;letter-spacing:0.1em;color:var(--text-muted);text-align:center;margin-bottom:4px;opacity:0.7}
-.board-wrap::before{content:'';display:block;width:92%;margin:0 auto 6px;height:28px;background:radial-gradient(ellipse 92% 100% at 50% 100%, transparent 59%, #5aab6b 60%, #5aab6b 62%, transparent 63%)}
-body{font-family:var(--ff-body);font-size:13px;line-height:1.6;color:var(--text);background:var(--cream);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background-color 0.8s ease-in-out}
-/* ── TYPE SCALE (1.25 Major Third) ── */
-:root{--fs-xs:0.64rem;--fs-sm:0.8rem;--fs-base:1rem;--fs-md:1.25rem;--fs-lg:1.563rem;--fs-xl:1.953rem;--fs-2xl:2.441rem}
-h1{font-family:var(--ff-heading);font-size:var(--type-title);font-weight:800;line-height:1.1;letter-spacing:-0.01em;font-variation-settings:'SOFT' 60,'WONK' 1}
-h2{font-family:var(--ff-heading);font-size:var(--type-section);font-weight:700;line-height:1.2;margin:0 0 4px;font-variation-settings:'SOFT' 60,'WONK' 1}
-h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin:6px 0 2px}
-.skip-nav{position:absolute;top:-100%;left:8px;background:var(--surface);color:var(--text);padding:8px 16px;border-radius:0 0 var(--radius) var(--radius);font-family:var(--ff-body);font-weight:600;font-size:var(--type-body);z-index:1000;text-decoration:none;transition:top 0.15s ease}
-.skip-nav:focus{top:0;outline:2px solid var(--rain);outline-offset:2px}
+body{font-family:var(--ff-body);font-size:13px;line-height:1.6;color:var(--sf-ink);background:var(--sf-bg);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background-color 0.8s ease-in-out}
+h1{font-family:var(--ff-heading);font-size:var(--type-title);font-weight:800;line-height:1.1;letter-spacing:-0.01em}
+h2{font-family:var(--ff-heading);font-size:var(--type-section);font-weight:700;line-height:1.2;margin:0 0 4px}
+h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--sf-muted);margin:6px 0 2px}
+.skip-nav{position:absolute;top:-100%;left:8px;background:var(--sf-panel);color:var(--sf-ink);padding:8px 16px;border-radius:0 0 var(--radius) var(--radius);font-family:var(--ff-body);font-weight:600;font-size:var(--type-body);z-index:1000;text-decoration:none;transition:top 0.15s ease}
+.skip-nav:focus{top:0;outline:2px solid var(--sem-focus);outline-offset:2px}
 .app{width:min(1280px,96vw);margin:22px auto 38px;display:grid;gap:16px;grid-template-columns:240px 1fr 320px;grid-template-rows:auto 1fr;box-shadow:0 4px 24px rgba(0,0,0,0.15)}
 .app.menu-mode{grid-template-columns:1fr;max-width:600px}
 .app.menu-mode .panel{max-height:none}
-.head{grid-column:1/-1;background:var(--soil,#5c3d1e);border:1px solid rgba(44,28,10,0.6);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
-.head h1,.head h1 a,.head h1 *{color:var(--cream,#f7f2ea)}
-.head .btn,.head .chip{border-color:rgba(200,176,144,0.4);color:var(--cream);background:rgba(255,255,255,0.1)}
-.head .btn:hover{background:rgba(255,255,255,0.18)}
+.head{grid-column:1/-1;background:var(--sf-panel);border:1px solid var(--sf-line);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
+.head h1{color:var(--char-gurl)}
 .head-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .meta{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border-radius:99px;border:1px solid var(--border);padding:4px 10px;background:var(--cream-dark);color:var(--text-muted);font-family:var(--ff-mono);font-size:var(--type-label);font-weight:500;white-space:nowrap;transition:background-color 0.8s ease-in-out}
+.chip{border-radius:99px;border:1px solid var(--sf-line);padding:4px 10px;background:var(--sf-panel-2);color:var(--sf-muted);font-family:var(--ff-mono);font-size:var(--type-label);font-weight:500;white-space:nowrap;transition:background-color 0.8s ease-in-out}
 .chip.phase{background:var(--char-gurl);color:#fff;font-weight:700}
-/* ── META STRIP (Option C: separate chip bar) ── */
-.meta-strip{grid-column:1/-1;display:flex;align-items:center;padding:0 20px;min-height:0}
-.meta-strip .meta{display:flex;gap:6px;flex-wrap:wrap}
-.app.menu-mode .meta-strip{padding:0 20px}
-.objective-strip{
-  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:10px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  box-shadow:var(--shadow)
-}
-.objective-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
-.objective-kicker{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)}
-.objective-title{font-family:var(--ff-heading);font-size:1rem;font-weight:800;color:var(--text);line-height:1.15}
-.objective-note{font-size:var(--type-small);color:var(--text-muted);line-height:1.45}
-.objective-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.objective-btn{border-radius:999px}
-.menu-overlay{
-  position:fixed;inset:0;background:rgba(30,17,10,0.28);z-index:190;
-  opacity:0;pointer-events:none;transition:opacity 140ms ease
-}
-.menu-overlay[data-open]{opacity:1;pointer-events:auto}
-.menu-panel{
-  position:fixed;top:16px;right:16px;z-index:200;width:min(340px,calc(100vw - 24px));
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  box-shadow:0 18px 44px rgba(0,0,0,0.24);padding:14px;display:none
-}
-.menu-panel[data-open]{display:block}
-.menu-header{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
-.menu-title{font-family:var(--ff-heading);font-size:1rem;font-weight:800;color:var(--text)}
-.menu-subtitle{font-size:var(--type-small);color:var(--text-muted);line-height:1.45}
-.menu-section-label{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin:12px 0 8px}
-.menu-row{
-  width:100%;display:flex;align-items:center;gap:10px;text-align:left;
-  border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;
-  padding:10px 12px;cursor:pointer;font-size:var(--type-small);margin-bottom:8px
-}
-.menu-row:hover{background:var(--cream-dark)}
-.menu-row:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.menu-row-icon{
-  width:18px;height:18px;border-radius:999px;background:var(--cream-dark);flex:0 0 auto
-}
-.menu-row-sub{margin-left:auto;color:var(--text-muted);font-family:var(--ff-mono);font-size:var(--type-label)}
-.menu-divider{height:1px;background:var(--border);margin:10px 0}
-@media(max-width:480px){
-  .meta-strip{position:sticky;top:0;z-index:99;background:var(--cream);border-bottom:1px solid var(--border);padding:6px 12px;box-shadow:0 2px 8px rgba(42,28,16,0.08)}
-  .meta-strip .meta{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .meta-strip .meta::-webkit-scrollbar{display:none}
-  .meta-strip .chip{flex:0 0 auto}
-  .head{position:sticky;top:0;z-index:100}
-  .sanctuary-label{display:none}
-}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow-y:auto;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
-.panel::-webkit-scrollbar{width:6px}.panel::-webkit-scrollbar-track{background:transparent}.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.panel{background:var(--sf-panel);border:1px solid var(--sf-line);border-radius:var(--radius);padding:12px;overflow-y:auto;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
+.panel::-webkit-scrollbar{width:6px}.panel::-webkit-scrollbar-track{background:transparent}.panel::-webkit-scrollbar-thumb{background:var(--sf-line);border-radius:3px}
 .controls{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 100px)}
 .board-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
 .results{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 100px);overflow-y:auto}
 @media(max-width:1199px){.app{grid-template-columns:240px 1fr}.results{max-height:none}}
-@media(max-width:819px){.app{grid-template-columns:1fr;width:min(100%,98vw);margin:10px auto 20px;gap:10px}.head{padding:12px 14px}.head-right{width:100%;justify-content:flex-start;gap:6px}.controls,.results{max-height:none}.board-wrap{order:1}.results{order:2}.controls{order:3}}
-@media(max-width:600px){.head{padding:10px 12px}.head-right{align-items:stretch}.head-right .btn{flex:1 1 160px}.meta-strip{padding:0 12px}.objective-strip{padding:10px 12px;align-items:flex-start;flex-direction:column}.menu-panel{top:auto;right:12px;left:12px;bottom:12px;width:auto;max-height:70vh;overflow:auto}.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}.controls,.results{padding:10px}}
-@media(max-width:480px){.app{width:100%;margin:8px auto 16px;padding:0 6px}.chip{font-size:0.625rem;padding:3px 7px}}
+@media(max-width:819px){.app{grid-template-columns:1fr;width:min(100%,98vw);margin:10px auto 20px;gap:10px}.controls,.results{max-height:none}}
+@media(max-width:600px){.board-wrap{overflow-x:auto}.grid,.axis{min-width:430px}}
+@media(max-width:480px){.app{width:100%;margin:8px auto 16px;padding:0 6px}.chip{font-size:0.56rem;padding:3px 7px}}
 @media(max-height:500px) and (orientation:landscape){.app{margin:6px auto 10px;gap:8px}.controls,.board-wrap,.results{padding:10px;gap:8px}.crop-grid{max-height:160px}}
-.crop-group{border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--cream-dark);transition:border-color 0.8s ease-in-out}
+.crop-group{border:1px solid var(--sf-line);border-radius:8px;padding:6px;background:var(--sf-panel-2);transition:border-color 0.8s ease-in-out}
 .crop-grid{display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto}
-.crop-btn{text-align:left;border-radius:8px;border:1px solid var(--border);background:var(--surface);padding:6px 8px;cursor:pointer;font-family:var(--ff-body);font-size:var(--type-body);display:flex;align-items:center;gap:6px;line-height:1.3;min-height:44px;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out)}
+.crop-btn{text-align:left;border-radius:8px;border:1px solid var(--sf-line);background:var(--sf-panel);padding:6px 8px;cursor:pointer;font-family:var(--ff-body);font-size:var(--type-body);display:flex;align-items:center;gap:6px;line-height:1.3;min-height:44px;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out)}
 .crop-btn:hover:not(.locked){border-color:var(--char-gurl);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .crop-btn.selected{border-color:var(--char-gurl);background:var(--char-gurl-bg);box-shadow:0 0 0 2px var(--char-gurl)}
 .crop-btn.locked{opacity:.4;cursor:not-allowed}
 .crop-btn .emoji{font-size:1.3rem;flex-shrink:0}
 .crop-btn .crop-text{display:flex;flex-direction:column;gap:1px;min-width:0}
 .crop-btn .name{font-size:var(--type-body);font-weight:600;font-family:var(--ff-body);line-height:1.2}
-.crop-btn .tags{font-size:var(--type-label);color:var(--text-muted);font-family:var(--ff-mono);letter-spacing:0.02em;opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.eraser-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--conflict-bg);cursor:pointer;font-family:var(--ff-body);font-weight:700;font-size:var(--type-body);min-height:44px;transition:border-color 140ms var(--ease-out)}
-.eraser-btn:hover{opacity:0.8}
-.eraser-btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.eraser-btn.selected{background:#f5b8b8;border-color:var(--danger)}
+.crop-btn .tags{font-size:var(--type-label);color:var(--sf-muted);font-family:var(--ff-mono);letter-spacing:0.02em;opacity:0.75}
+.eraser-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--sf-line);background:var(--sem-hard-bg);cursor:pointer;font-family:var(--ff-body);font-weight:700;font-size:var(--type-body);min-height:44px;transition:border-color 140ms var(--ease-out)}
+.eraser-btn.selected{background:#f5b8b8;border-color:var(--sem-hard)}
 .beat-indicator{display:flex;gap:6px;font-family:var(--ff-mono);font-size:var(--type-label)}
-.beat-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--text-muted);transition:all 200ms var(--ease-out)}
+.beat-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--sf-line);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--sf-muted);transition:all 200ms var(--ease-out)}
 .beat-dot.active{border-color:var(--char-gurl);background:var(--char-gurl-bg);color:var(--char-gurl)}
-.beat-dot.done{border-color:var(--leaf-bright);background:var(--leaf-bright);color:#fff}
-.zone-label{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);width:100%;text-align:left;padding:2px 0}
-.grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;background:linear-gradient(180deg,var(--s-ground-mid) 0%,var(--s-ground-deep) 100%);padding:8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--s-ground-light) 60%,var(--border) 40%);transition:background 0.8s ease-in-out,border-color 0.8s ease-in-out}
-.cell{aspect-ratio:1;border-radius:6px;border:2px solid var(--border);background:radial-gradient(circle at 20% 24%,rgba(129,99,62,0.22) 1px,transparent 2px),radial-gradient(circle at 76% 68%,rgba(96,71,38,0.16) 1px,transparent 2px),linear-gradient(180deg,#f0e3ca 0%,#e6d5b6 100%);background-size:12px 12px,14px 14px,100% 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;min-width:0;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out),background-color 0.8s ease-in-out}
+.beat-dot.done{border-color:var(--sem-good);background:var(--sem-good);color:#fff}
+.zone-label{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--sf-muted);width:100%;text-align:left;padding:2px 0}
+.grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;background:linear-gradient(180deg,var(--s-ground-mid) 0%,var(--s-ground-deep) 100%);padding:8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--s-ground-light) 60%,var(--sf-line) 40%);transition:background 0.8s ease-in-out,border-color 0.8s ease-in-out}
+.cell{aspect-ratio:1;border-radius:6px;border:2px solid var(--sf-line);background:radial-gradient(circle at 20% 24%,rgba(129,99,62,0.22) 1px,transparent 2px),radial-gradient(circle at 76% 68%,rgba(96,71,38,0.16) 1px,transparent 2px),linear-gradient(180deg,#f0e3ca 0%,#e6d5b6 100%);background-size:12px 12px,14px 14px,100% 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;min-width:0;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out),background-color 0.8s ease-in-out}
 .cell:hover{border-color:var(--s-growth-primary);transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.1)}
-/* active press: "pressing into soil" */
-.cell:active:not(.locked){transform:scale(0.96);box-shadow:inset 0 2px 4px rgba(0,0,0,0.15)}
-/* hover preview ghost for planning */
-.cell[data-preview]::after{content:attr(data-preview);position:absolute;font-size:1.4rem;opacity:0.3;pointer-events:none}
 .cell:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.cell.selected-cell{border-color:var(--rain);box-shadow:0 0 0 2px var(--rain)}
+.cell.selected-cell{border-color:var(--sem-focus);box-shadow:0 0 0 2px var(--sem-focus)}
 .cell.trellis{background:repeating-linear-gradient(90deg,rgba(200,151,74,0.2) 0 2px,transparent 2px 7px),linear-gradient(180deg,#edd9b7 0%,#dfc9a1 100%);border-left:3px solid rgba(180,121,25,0.4)}
 .cell.access-zone{background:radial-gradient(circle at 20% 24%,rgba(129,99,62,0.14) 1px,transparent 2px),radial-gradient(circle at 76% 68%,rgba(96,71,38,0.1) 1px,transparent 2px),linear-gradient(180deg,#f4e9d0 0%,#eadab7 100%);background-size:12px 12px,14px 14px,100% 100%}
 .cell.has-crop{box-shadow:inset 0 0 0 2px rgba(95,143,69,0.15)}
 .cell.locked{opacity:.92;cursor:default}
 .cell.locked::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 6px);border-radius:4px;pointer-events:none}
-.cell.event-hit{box-shadow:inset 0 0 0 2px var(--danger);animation:event-pulse 2s ease-in-out infinite}
-@keyframes event-pulse{0%,100%{box-shadow:inset 0 0 0 2px var(--danger)}50%{box-shadow:inset 0 0 0 3px var(--danger),0 0 8px rgba(194,77,77,0.25)}}
-.cell.protected-cell{box-shadow:inset 0 0 0 2px var(--leaf-bright);border-style:double}
-.cell.mulched-cell{box-shadow:inset 0 0 0 2px var(--sun)}
-.cell.score-good{background-color:var(--synergy-bg);border-color:var(--leaf-bright)}
-.cell.score-warn{background-color:var(--warn-bg);border-color:var(--sun)}
-.cell.score-hard{background-color:var(--conflict-bg);border-color:var(--danger)}
+.cell.event-hit{box-shadow:inset 0 0 0 2px var(--sem-hard);animation:event-pulse 2s ease-in-out infinite}
+@keyframes event-pulse{0%,100%{box-shadow:inset 0 0 0 2px var(--sem-hard)}50%{box-shadow:inset 0 0 0 3px var(--sem-hard),0 0 8px rgba(194,77,77,0.25)}}
+.cell.protected-cell{box-shadow:inset 0 0 0 2px var(--sem-good);border-style:double}
+.cell.mulched-cell{box-shadow:inset 0 0 0 2px var(--sem-warn)}
+.cell.score-good{background-color:var(--sem-good-bg);border-color:var(--sem-good)}
+.cell.score-warn{background-color:var(--sem-warn-bg);border-color:var(--sem-warn)}
+.cell.score-hard{background-color:var(--sem-hard-bg);border-color:var(--sem-hard)}
+.cell.companion-buff{border-color:var(--char-onion);box-shadow:inset 0 0 0 2px rgba(201,141,34,0.2)}
 @keyframes pop-in{0%{transform:scale(0.85)}100%{transform:scale(1)}}
 .cell.just-planted{animation:pop-in 180ms var(--ease-back-out)}
 .cell .emoji{font-size:1.5rem;line-height:1}
-.cell .short{font-size:0.75rem;font-weight:700;color:var(--text-muted);font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.03em}
+.cell .short{font-size:0.75rem;font-weight:700;color:var(--sf-muted);font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.03em}
 .cell .score-pip{position:absolute;bottom:1px;right:2px;font-family:var(--ff-mono);font-size:8px;font-weight:700;line-height:1;pointer-events:none}
-.cell .score-pip.pip-good{color:var(--leaf-bright)}.cell .score-pip.pip-warn{color:var(--sun)}.cell .score-pip.pip-hard{color:var(--danger)}
-/* color-blind: shape indicator on score pips */
-.cell .score-pip.pip-good::before{content:'▲ ';font-size:6px}.cell .score-pip.pip-warn::before{content:'● ';font-size:6px}.cell .score-pip.pip-hard::before{content:'▼ ';font-size:6px}
-/* mini-bar score indicator at cell base */
-.cell .score-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 4px 4px;pointer-events:none;opacity:0.7}
-/* view overlay tints */
-.cell.view-sun-high{background-color:#fff8d6 !important;border-color:#e8c84a !important}
-.cell.view-sun-mid{background-color:#fffaeb !important;border-color:#c8b090 !important}
-.cell.view-sun-low{background-color:#f7f4ec !important;border-color:#d0caba !important}
-.cell.view-water-high{background-color:#deeefa !important;border-color:#5b9bd5 !important}
-.cell.view-water-mid{background-color:#eef5fc !important;border-color:#8ab8dc !important}
-.cell.view-water-low{background-color:#f5f8fc !important;border-color:#b0c8dc !important}
-/* view toggle buttons */
-.view-toggle{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text-muted);cursor:pointer;transition:all 0.12s}
-.view-toggle:hover{background:var(--cream-dark)}
-.view-toggle:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.view-toggle.active{background:var(--soil,#5c3d1e);color:var(--cream);border-color:var(--soil)}
-/* action indicator */
-.action-indicator{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;padding:4px 10px;border-radius:4px;width:100%;text-align:center;margin-top:4px;border:1px solid transparent}
-.action-indicator.available{background:var(--synergy-bg);color:var(--char-gurl);border:1px solid var(--leaf-bright)}
-.action-indicator.used{background:var(--cream-dark);color:var(--text-muted);border:1px solid var(--border)}
+.cell .score-pip.pip-good{color:var(--sem-good)}.cell .score-pip.pip-warn{color:var(--sem-warn)}.cell .score-pip.pip-hard{color:var(--sem-hard)}
 .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%}
-.btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--ff-body);font-weight:600;font-size:var(--type-body);min-height:44px;display:inline-flex;align-items:center;justify-content:center;transition:filter 140ms var(--ease-out),transform 140ms var(--ease-out),border-color 140ms var(--ease-out)}
-.btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);border-color:var(--text-muted)}
+.btn{padding:8px 14px;border-radius:8px;border:1px solid var(--sf-line);background:var(--sf-panel);cursor:pointer;font-family:var(--ff-body);font-weight:600;font-size:var(--type-body);min-height:44px;display:inline-flex;align-items:center;justify-content:center;transition:filter 140ms var(--ease-out),transform 140ms var(--ease-out),border-color 140ms var(--ease-out)}
+.btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);border-color:var(--sf-muted)}
 .btn:active:not(:disabled){transform:translateY(0)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
 .btn.primary{background:linear-gradient(180deg,#6ea64e 0%,#547f3a 100%);color:#f8f5ed;border-color:#5f8f45}
 .btn.primary:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
 .btn.danger{background:linear-gradient(180deg,#c26759 0%,#a75248 100%);color:#fff6f2;border-color:#9d4b44}
-.help-btn{background:var(--cream-dark);border-color:var(--border)}
+.help-btn{background:var(--sf-panel-2);border-color:var(--sf-line)}
 .help-btn:hover{filter:brightness(1.05)}
 .score-ring-wrap{text-align:center;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .score-ring{position:relative;width:84px;height:84px;display:grid;place-items:center;flex-shrink:0}
@@ -223,31 +130,24 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .score-value{font-family:var(--ff-heading);font-size:var(--type-score);font-weight:800;line-height:1;letter-spacing:-0.02em;position:relative;z-index:1}
 .score-ring .big{font-family:var(--ff-heading);font-size:var(--type-score);font-weight:800}
 .grade{font-family:var(--ff-body);font-size:0.67rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;display:inline-block;border-radius:999px;padding:2px 7px;border:1px solid}
-.grade-A{color:var(--leaf-bright);border-color:var(--leaf-bright)}.grade-B{color:#6b8f4e;border-color:#6b8f4e}.grade-C{color:var(--sun);border-color:var(--sun)}.grade-D{color:var(--danger);border-color:var(--danger)}.grade-F{color:#888;border-color:#888}
+.grade-A{color:var(--sem-good);border-color:var(--sem-good)}.grade-B{color:#6b8f4e;border-color:#6b8f4e}.grade-C{color:var(--sem-warn);border-color:var(--sem-warn)}.grade-D{color:var(--sem-hard);border-color:var(--sem-hard)}.grade-F{color:#888;border-color:#888}
 @keyframes grade-bounce{0%{transform:scale(0.6);opacity:0}100%{transform:scale(1);opacity:1}}
 .grade.reveal{animation:grade-bounce 350ms var(--ease-back-out) forwards}
 .factor-bar{display:flex;align-items:center;gap:4px;font-size:var(--type-small);font-family:var(--ff-body)}
-.factor-bar .label{width:68px;text-align:right;color:var(--text-muted);font-family:var(--ff-mono);font-size:var(--type-label)}
-.factor-bar .track{flex:1;height:8px;background:var(--cream-dark);border-radius:4px;overflow:hidden}
+.factor-bar .label{width:68px;text-align:right;color:var(--sf-muted);font-family:var(--ff-mono);font-size:var(--type-label)}
+.factor-bar .track{flex:1;height:8px;background:var(--sf-panel-2);border-radius:4px;overflow:hidden}
 .factor-bar .fill{height:100%;border-radius:4px;transition:width 400ms var(--ease-out);width:0}
 .factor-bar .val{width:42px;font-weight:600;font-size:var(--type-small);font-family:var(--ff-mono)}
-.event-card{border-radius:12px;padding:12px;background:var(--surface);border:2px solid var(--sun);border-left-width:4px;opacity:1;transform:translateY(0);transition:opacity 300ms var(--ease-out),transform 500ms var(--ease-expo-out)}
+.event-card{border-radius:12px;padding:12px;background:var(--sf-card);border:2px solid var(--sem-warn);border-left-width:4px;opacity:1;transform:translateY(0);transition:opacity 300ms var(--ease-out),transform 500ms var(--ease-expo-out)}
 .event-card.entering{opacity:0;transform:translateY(60px)}
-.event-card h3{color:var(--text);text-transform:none;letter-spacing:0;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;margin:0 0 6px}
-.event-card .desc{font-size:var(--type-small);margin-bottom:6px;line-height:1.45;color:var(--text-muted)}
+.event-card h3{color:var(--sf-ink);text-transform:none;letter-spacing:0;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;margin:0 0 6px}
+.event-card .desc{font-size:var(--type-small);margin-bottom:6px;line-height:1.45;color:var(--sf-muted)}
 .event-card .effect{font-size:var(--type-small);font-weight:600;font-family:var(--ff-mono)}
-.event-outcome{border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff8ec 0%,#f7edd8 100%);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
-.event-outcome-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.event-outcome-title{font-family:var(--ff-heading);font-size:var(--type-body);font-weight:700;color:var(--text)}
-.event-outcome-meta{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;color:var(--text-muted);text-transform:uppercase}
-.event-outcome-copy{font-size:var(--type-small);line-height:1.5;color:var(--text-muted)}
-.event-outcome-impact{display:flex;flex-wrap:wrap;gap:6px}
-.event-impact-chip{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:var(--cream-dark);border:1px solid var(--border);font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.05em}
-.event-card.positive{border-color:var(--char-onion);border-left-color:var(--char-onion)}.event-card.positive .effect{color:var(--leaf-bright)}
-.event-card.neutral{border-color:var(--text-muted);border-left-color:var(--text-muted)}.event-card.neutral .effect{color:var(--text-muted)}
-.event-card:not(.positive):not(.neutral){border-left-color:var(--char-critter)}.event-card:not(.positive):not(.neutral) .effect{color:var(--danger)}
-.narrator-area{border-top:1px solid var(--border);padding:10px 8px 4px;margin-top:8px;background:rgba(95,143,69,.06);border-radius:8px}
-.narrator-slot{margin-bottom:10px;opacity:0;transform:translateY(12px);transition:opacity 400ms ease,transform 400ms ease;padding-left:4px;border-left:3px solid transparent}
+.event-card.positive{border-color:var(--char-onion);border-left-color:var(--char-onion)}.event-card.positive .effect{color:var(--sem-good)}
+.event-card.neutral{border-color:var(--sf-muted);border-left-color:var(--sf-muted)}.event-card.neutral .effect{color:var(--sf-muted)}
+.event-card:not(.positive):not(.neutral){border-left-color:var(--char-critter)}.event-card:not(.positive):not(.neutral) .effect{color:var(--sem-hard)}
+.narrator-area{border-top:1px solid var(--sf-line);padding-top:8px;margin-top:4px}
+.narrator-slot{margin-bottom:10px;opacity:0;transform:translateY(12px);transition:opacity 200ms ease,transform 200ms ease;padding-left:4px;border-left:3px solid transparent}
 .narrator-slot.visible{opacity:1;transform:translateY(0)}
 .narrator-slot.char-gurl-slot{border-left-color:var(--char-gurl)}
 .narrator-slot.char-onion-slot{border-left-color:var(--char-onion)}
@@ -256,127 +156,93 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .narrator-slot .char-head{display:flex;align-items:center;gap:5px;margin-bottom:2px}
 .narrator-slot .char-emoji{font-size:1.1rem}
 .narrator-slot .char-name{font-size:var(--type-label);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--ff-body)}
-.narrator-slot .char-role{font-size:var(--type-label);font-weight:500;font-variant:small-caps;color:var(--text-muted)}
-.narrator-slot .char-line{font-size:var(--type-body);line-height:1.5;color:var(--text);padding:4px 0 2px 24px;font-family:var(--ff-body)}
+.narrator-slot .char-role{font-size:var(--type-label);font-weight:500;font-variant:small-caps;color:var(--sf-muted)}
+.narrator-slot .char-line{font-size:var(--type-body);line-height:1.5;color:var(--sf-ink);padding:4px 0 2px 24px;font-family:var(--ff-body)}
 .narrator-slot.char-critters-slot .char-line{font-family:var(--ff-mono);font-size:var(--type-small)}
-.status-bar{font-size:var(--type-label);font-family:var(--ff-mono);font-weight:500;color:var(--text-muted);padding:6px 8px;border-top:1px solid var(--border);transition:color 0.8s ease-in-out}
-.history-entry{font-size:var(--type-small);font-family:var(--ff-mono);padding:3px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;min-width:0}
+.status-bar{font-size:var(--type-label);font-family:var(--ff-mono);font-weight:500;color:var(--sf-muted);padding:6px 8px;border-top:1px solid var(--sf-line);transition:color 0.8s ease-in-out}
+.history-entry{font-size:var(--type-small);font-family:var(--ff-mono);padding:3px 0;border-bottom:1px dashed var(--sf-line);display:flex;justify-content:space-between}
 .confirm-overlay{position:fixed;inset:0;background:var(--sf-overlay);display:none;align-items:center;justify-content:center;z-index:100}
 .confirm-overlay.active{display:flex}
-.confirm-box{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:600px;width:92%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.3)}
+.confirm-box{background:var(--sf-panel);border-radius:var(--radius);padding:24px;max-width:600px;width:92%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.3)}
 .confirm-box h2{margin-bottom:10px}
 .confirm-box p{font-size:var(--type-body);margin-bottom:12px;line-height:1.5}
-.confirm-box .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
-@media(max-width:600px){.confirm-box{padding:18px;width:min(96vw,560px)}.confirm-box .btns{justify-content:stretch}.confirm-box .btns .btn{flex:1 1 100%}}
+.confirm-box .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--sf-line)}
 .swap-highlight{border-color:var(--char-onion);box-shadow:0 0 0 3px var(--char-onion)}
 .howto-layout{display:grid;gap:10px}
 .howto-tab-row{display:flex;gap:6px;flex-wrap:wrap}
-.howto-tab{font-size:var(--type-small);font-family:var(--ff-body);padding:5px 10px;border-radius:99px;border:1px solid var(--border);background:var(--cream-dark);cursor:pointer;min-height:36px;transition:all 140ms var(--ease-out)}
-.howto-tab:hover{opacity:0.85}
-.howto-tab:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
+.howto-tab{font-size:var(--type-small);font-family:var(--ff-body);padding:5px 10px;border-radius:99px;border:1px solid var(--sf-line);background:var(--sf-panel-2);cursor:pointer;min-height:36px;transition:all 140ms var(--ease-out)}
 .howto-tab.active{background:var(--char-gurl);color:#fff;border-color:var(--char-gurl);font-weight:700}
-.howto-card{border:1px solid var(--border);border-radius:8px;background:var(--cream-dark);padding:12px}
-.howto-card h3{margin:0 0 6px;text-transform:none;letter-spacing:0;color:var(--text);font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700}
-.howto-card .muted{font-size:var(--type-small);color:var(--text-muted)}
+.howto-card{border:1px solid var(--sf-line);border-radius:8px;background:var(--sf-panel-2);padding:12px}
+.howto-card h3{margin:0 0 6px;text-transform:none;letter-spacing:0;color:var(--sf-ink);font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700}
+.howto-card .muted{font-size:var(--type-small);color:var(--sf-muted)}
 .howto-list{margin:6px 0 0 14px;display:grid;gap:3px}
 .howto-list li{font-size:var(--type-body);line-height:1.4}
 .howto-legend{display:grid;gap:4px}
-.howto-legend .row{display:flex;align-items:center;justify-content:space-between;font-size:var(--type-small);border-bottom:1px dotted var(--border);padding-bottom:2px}
-.howto-kbd{font-family:var(--ff-mono);background:var(--cream-dark);border:1px solid var(--border);border-radius:6px;padding:2px 5px;font-size:var(--type-label)}
+.howto-legend .row{display:flex;align-items:center;justify-content:space-between;font-size:var(--type-small);border-bottom:1px dotted var(--sf-line);padding-bottom:2px}
+.howto-kbd{font-family:var(--ff-mono);background:var(--sf-field);border:1px solid var(--sf-line);border-radius:6px;padding:2px 5px;font-size:var(--type-label)}
 .menu-screen{text-align:center;padding:40px 24px;grid-column:1/-1}
 .menu-screen h2{font-family:var(--ff-heading);font-size:var(--type-title);font-weight:800;margin-bottom:6px}
-.menu-screen .subtitle{color:var(--text-muted);font-size:var(--type-body);margin-bottom:24px;font-family:var(--ff-body)}
+.menu-screen .subtitle{color:var(--sf-muted);font-size:var(--type-body);margin-bottom:24px;font-family:var(--ff-body)}
 .menu-screen .menu-btns{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto}
 .menu-screen .menu-btns .btn{padding:12px 18px;font-size:1rem}
-.chapter-card{background:var(--cream-dark);border:2px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;text-align:left;animation:chapter-enter 400ms var(--ease-out)}
+.chapter-card{background:var(--sf-panel-2);border:2px solid var(--sf-line);border-radius:var(--radius);padding:20px;margin-bottom:12px;text-align:left;animation:chapter-enter 400ms var(--ease-out)}
 @keyframes chapter-enter{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
 .chapter-card h2{font-family:var(--ff-heading);font-size:1.3rem;font-weight:800;margin-bottom:4px}
-.chapter-card .ch-meta{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--text-muted);margin-bottom:12px}
-.chapter-card .ch-opening{font-size:var(--type-body);line-height:1.6;margin-bottom:12px;font-style:italic;color:var(--text)}
+.chapter-card .ch-meta{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--sf-muted);margin-bottom:12px}
+.chapter-card .ch-opening{font-size:var(--type-body);line-height:1.6;margin-bottom:12px;font-style:italic;color:var(--sf-ink)}
 .chapter-card .ch-mechanic{font-size:var(--type-small);color:var(--char-gurl);font-weight:600;padding:8px 10px;background:rgba(95,143,69,.1);border-radius:8px;margin-bottom:12px;font-family:var(--ff-body)}
-.journal-card{background:var(--cream-dark);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.journal-card{background:var(--sf-panel-2);border:1px solid var(--sf-line);border-radius:8px;padding:12px;margin-bottom:8px}
 .journal-card .jc-title{font-family:var(--ff-heading);font-size:var(--type-body);font-weight:700;margin-bottom:3px}
 .journal-card .jc-score{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--char-gurl);margin-bottom:4px}
-.journal-card .jc-moment{font-size:var(--type-small);color:var(--text-muted);font-style:italic;line-height:1.4}
-.keepsake-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;padding-bottom:18px}
-.keepsake-item{width:50px;height:50px;border-radius:8px;border:1px solid var(--border);background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:1.4rem;position:relative}
+.journal-card .jc-moment{font-size:var(--type-small);color:var(--sf-muted);font-style:italic;line-height:1.4}
+.keepsake-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.keepsake-item{width:50px;height:50px;border-radius:8px;border:1px solid var(--sf-line);background:var(--sf-panel-2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;position:relative}
 .keepsake-item.empty{opacity:.25}
-.keepsake-item .kp-label{position:absolute;bottom:-14px;font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);white-space:nowrap;text-align:center;width:60px;left:-5px}
+.keepsake-item .kp-label{position:absolute;bottom:-14px;font-size:var(--type-label);font-family:var(--ff-mono);color:var(--sf-muted);white-space:nowrap;text-align:center;width:60px;left:-5px}
 .recipe-ladder{display:flex;flex-direction:column;gap:4px;margin:6px 0}
-.recipe-row{display:flex;align-items:center;gap:6px;font-size:var(--type-small);padding:4px 8px;border-radius:6px;background:var(--cream-dark);border:1px solid transparent}
-.recipe-row.complete{background:var(--synergy-bg);border:1px solid var(--leaf-bright)}
+.recipe-row{display:flex;align-items:center;gap:6px;font-size:var(--type-small);padding:4px 8px;border-radius:6px;background:var(--sf-panel-2)}
+.recipe-row.complete{background:var(--sem-good-bg);border:1px solid var(--sem-good)}
 .recipe-row.incomplete{opacity:.6}
-.recipe-row .r-name{font-weight:600;flex:1;font-family:var(--ff-body);min-width:0}
-.recipe-row .r-status{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted)}
+.recipe-row .r-name{font-weight:600;flex:1;font-family:var(--ff-body)}
+.recipe-row .r-status{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--sf-muted)}
 .sauce-reveal{text-align:center;padding:20px}
 .sauce-item{font-size:1.1rem;font-family:var(--ff-body);margin:8px 0;opacity:0;transform:scale(0.9);transition:opacity 300ms ease,transform 300ms ease}
 .sauce-item.revealed{opacity:1;transform:scale(1)}
-.sauce-item.missing{opacity:.3;text-decoration:line-through;color:var(--text-muted)}
+.sauce-item.missing{opacity:.3;text-decoration:line-through;color:var(--sf-muted)}
 .sauce-onion-line{font-size:1.1rem;color:var(--char-onion);font-family:var(--ff-heading);font-weight:700}
-.epilogue-section{padding:12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
-.epilogue-section h3{margin-bottom:8px;text-transform:none;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;color:var(--text);letter-spacing:0}
-.score-history-row{display:flex;justify-content:space-between;font-size:var(--type-small);font-family:var(--ff-mono);padding:4px 0;border-bottom:1px dotted var(--border)}
-.mastery-badge{text-align:center;padding:16px;background:var(--cream-dark);border-radius:var(--radius);margin:10px 0}
+.epilogue-section{padding:12px;margin-bottom:12px;border-bottom:1px solid var(--sf-line)}
+.epilogue-section h3{margin-bottom:8px;text-transform:none;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;color:var(--sf-ink);letter-spacing:0}
+.score-history-row{display:flex;justify-content:space-between;font-size:var(--type-small);font-family:var(--ff-mono);padding:4px 0;border-bottom:1px dotted var(--sf-line)}
+.mastery-badge{text-align:center;padding:16px;background:var(--sf-panel-2);border-radius:var(--radius);margin:10px 0}
 .mastery-badge .rank-title{font-family:var(--ff-heading);font-size:1.2rem;font-weight:800;color:var(--char-gurl)}
-.mastery-badge .rank-sub{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--text-muted)}
-.harvest-checklist{background:var(--cream-dark);border-radius:8px;padding:10px;margin-bottom:8px}
+.mastery-badge .rank-sub{font-size:var(--type-small);font-family:var(--ff-mono);color:var(--sf-muted)}
+.fill-counter{position:fixed;top:10px;right:10px;background:var(--char-gurl);color:#fff;padding:4px 12px;border-radius:99px;font-weight:700;font-size:var(--type-body);z-index:50;display:none}
+.fill-counter.active{display:block}
+.harvest-checklist{background:var(--sf-panel-2);border-radius:8px;padding:10px;margin-bottom:8px}
 .harvest-checklist .hc-item{font-size:var(--type-small);padding:3px 0;display:flex;align-items:center;gap:4px;font-family:var(--ff-body)}
-.harvest-checklist .hc-item.checked{color:var(--leaf-bright);font-weight:600}
-.harvest-checklist .hc-item.unchecked{color:var(--text-muted);opacity:.5}
+.harvest-checklist .hc-item.checked{color:var(--sem-good);font-weight:600}
+.harvest-checklist .hc-item.unchecked{color:var(--sf-muted);opacity:.5}
 .row-objective{background:rgba(95,143,69,.1);border:1px solid var(--char-gurl);border-radius:8px;padding:10px;margin-bottom:8px;font-size:var(--type-small);font-family:var(--ff-body)}
-.faction-counter{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);padding:3px 0}
+.faction-counter{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--sf-muted);padding:3px 0}
 *:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
+@keyframes sim-blink{0%,100%{opacity:1}50%{opacity:0.1}}
+.sim-dot{animation:sim-blink 1.2s ease infinite}.sim-dot:nth-child(2){animation-delay:0.2s}.sim-dot:nth-child(3){animation-delay:0.4s}
 @keyframes harvest-pulse{0%{opacity:1;transform:scale(1)}40%{opacity:0.3;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
 .cell.harvesting{animation:harvest-pulse 280ms var(--ease-expo-out) forwards}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms;animation-iteration-count:1;transition-duration:0.15s;scroll-behavior:auto}.cell.just-planted,.cell.harvesting,.cell.event-hit{animation:none}.cell.event-hit{box-shadow:inset 0 0 0 2px var(--danger)}.event-card.entering{opacity:1;transform:translateY(0)}.chapter-card{animation:none}.grade.reveal{animation:none;opacity:1;transform:scale(1)}.narrator-slot,.sauce-item{transition-duration:0.15s}.ring-fill{transition-duration:0.01ms}.factor-bar .fill{transition-duration:0.15s}}
-/* Utility accordion — collapsible sections */
-.acc-section{border-top:1px solid var(--border);margin-top:6px;padding-top:2px}
-.acc-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:none;background:transparent;cursor:pointer;padding:4px 0;font-family:var(--ff-body);font-size:var(--type-small);font-weight:600;color:var(--text);text-align:left}
-.acc-toggle:hover{color:var(--leaf-bright)}
-.acc-toggle:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.acc-toggle::after{content:'▾';font-size:.7rem;color:var(--text-muted);margin-left:4px;transition:transform .15s}
-.acc-toggle.is-collapsed::after{transform:rotate(-90deg)}
-.acc-body{overflow:hidden;transition:max-height .2s ease}
-.acc-body[hidden]{display:none}
-@media print{.controls,.toolbar,.event-card,.narrator-area,.beat-indicator,.confirm-overlay,button,select,.skip-nav{display:none !important}body{background:white !important;color:#1a1a1a !important}.app{display:block !important;width:100% !important;margin:0 !important;box-shadow:none !important}.panel{background:white !important;border:1px solid #ccc !important;box-shadow:none !important;break-inside:avoid;margin-bottom:12px !important}.grid{background:#f0f0f0 !important;border:1px solid #999 !important;gap:3px !important}.cell{background:#fafafa !important;border:1px solid #bbb !important;min-height:40px !important}.cell.score-good{background:#e8f5e8 !important}.cell.score-warn{background:#fdf4e4 !important}.cell.score-hard{background:#fce8e8 !important}.ring-fill{transition:none !important}.results{max-height:none !important;overflow:visible !important}@page{margin:14mm}h1::after{content:" — Season Recap";font-weight:400;font-size:0.6em}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms;animation-iteration-count:1;transition-duration:0.15s;scroll-behavior:auto}.cell.just-planted,.cell.harvesting,.cell.event-hit{animation:none}.cell.event-hit{box-shadow:inset 0 0 0 2px var(--sem-hard)}.event-card.entering{opacity:1;transform:translateY(0)}.chapter-card{animation:none}.grade.reveal{animation:none;opacity:1;transform:scale(1)}.narrator-slot,.sauce-item{transition-duration:0.15s}.ring-fill{transition-duration:0.01ms}.factor-bar .fill{transition-duration:0.15s}}
+@media print{.controls,.toolbar,.event-card,.narrator-area,.beat-indicator,.confirm-overlay,button,select,.skip-nav,.fill-counter{display:none !important}body{background:white !important;color:#1a1a1a !important}.app{display:block !important;width:100% !important;margin:0 !important;box-shadow:none !important}.panel{background:white !important;border:1px solid #ccc !important;box-shadow:none !important;break-inside:avoid;margin-bottom:12px !important}.grid{background:#f0f0f0 !important;border:1px solid #999 !important;gap:3px !important}.cell{background:#fafafa !important;border:1px solid #bbb !important;min-height:40px !important}.cell.score-good{background:#e8f5e8 !important}.cell.score-warn{background:#fdf4e4 !important}.cell.score-hard{background:#fce8e8 !important}.ring-fill{transition:none !important}.results{max-height:none !important;overflow:visible !important}@page{margin:14mm}h1::after{content:" — Season Recap";font-weight:400;font-size:0.6em}}
 </style>
 </head>
 <body class="season-spring">
 <a href="#boardPanel" class="skip-nav">Skip to garden bed</a>
 <div class="app" id="app">
   <div class="head" role="banner">
-    <a href="https://davehomeassist.github.io/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
-      <svg width="34" height="34" viewBox="0 0 32 32" fill="none" role="img" aria-label="Garden OS logo mark">
-        <rect x="2" y="8" width="28" height="16" rx="3" stroke="#c8b090" stroke-width="1.5" fill="none"/>
-        <line x1="5.8"  y1="8" x2="5.8"  y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="9.3"  y1="8" x2="9.3"  y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="12.8" y1="8" x2="12.8" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="16"   y1="8" x2="16"   y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="19.2" y1="8" x2="19.2" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="22.7" y1="8" x2="22.7" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="26.2" y1="8" x2="26.2" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="2"    y1="16" x2="30"  y2="16" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <path d="M8 8.5 Q16 1 24 8.5" stroke="#5aab6b" stroke-width="1.8" fill="none"/>
-        <circle cx="16" cy="16" r="2.8" fill="#e8c84a"/>
-        <circle cx="16" cy="16" r="4.5" fill="none" stroke="#e8c84a" stroke-width=".7" opacity=".45"/>
-        <line x1="12.5" y1="24" x2="11.5" y2="30" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
-        <line x1="16"   y1="24" x2="16"   y2="31" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
-        <line x1="19.5" y1="24" x2="20.5" y2="30" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
-      </svg>
-      <div>
-        <h1 style="font-size:clamp(1rem,2.2vw,1.5rem);letter-spacing:0.06em;">GARDEN <span style="font-weight:400;opacity:0.78;">OS</span></h1>
-        <div class="sanctuary-label">MOM'S SANCTUARY</div>
-      </div>
-    </a>
+    <a href="https://davehomeassist.github.io/" style="text-decoration:none;color:inherit"><h1>Garden OS</h1></a>
     <div class="head-right">
-      <button class="btn" id="gameManageBtn" type="button" aria-label="Open manage menu" aria-haspopup="true" aria-expanded="false">Manage</button>
+      <div class="meta" id="metaChips" aria-label="Game status"></div>
       <button class="btn help-btn" id="howToBtn" type="button" aria-label="How to play">How to Play</button>
     </div>
   </div>
-  <div class="meta-strip" id="metaStrip" aria-label="Game status">
-    <div class="meta" id="metaChips"></div>
-  </div>
-  <div class="objective-strip" id="objectiveStrip" aria-live="polite"></div>
   <div class="panel controls" id="controlsPanel" role="complementary" aria-label="Crop selection"></div>
   <div class="panel board-wrap" id="boardPanel" role="main" aria-label="Garden bed"></div>
   <div class="panel results" id="resultsPanel" role="complementary" aria-label="Results and narrators"></div>
@@ -384,27 +250,6 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 <div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-label="Confirmation">
   <div class="confirm-box" id="confirmBox"></div>
 </div>
-<div class="menu-overlay" id="gameMenuOverlay"></div>
-<aside class="menu-panel" id="gameManagePanel" role="dialog" aria-modal="true" aria-labelledby="gameManageTitle" tabindex="-1">
-  <div class="menu-header">
-    <div class="menu-title" id="gameManageTitle">Manage</div>
-    <div class="menu-subtitle" id="gameManageSubtitle">Season Engine v4</div>
-  </div>
-
-  <div class="menu-section-label">Navigate</div>
-  <button class="menu-row" id="gameMenuPlanner"><span class="menu-row-icon"></span>Open planner<span class="menu-row-sub">→</span></button>
-  <button class="menu-row" id="gameMenuHome"><span class="menu-row-icon"></span>Open overview<span class="menu-row-sub">→</span></button>
-  <button class="menu-row" id="gameMenuHub"><span class="menu-row-icon"></span>Open tool hub<span class="menu-row-sub">→</span></button>
-
-  <div class="menu-divider"></div>
-  <div class="menu-section-label">Learn</div>
-  <button class="menu-row" id="gameMenuHowTo"><span class="menu-row-icon"></span>How to play<span class="menu-row-sub">?</span></button>
-  <button class="menu-row" id="gameMenuHowItThinks"><span class="menu-row-icon"></span>How it thinks<span class="menu-row-sub">→</span></button>
-
-  <div class="menu-divider"></div>
-  <div class="menu-section-label">Session</div>
-  <button class="menu-row" id="gameMenuRestart"><span class="menu-row-icon"></span>Restart chapter<span class="menu-row-sub">↺</span></button>
-</aside>
 <script>
 (()=>{
 'use strict';
@@ -413,19 +258,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 const COLS=8,ROWS=4,SIZE=32,MIN_PLANTED=8;
 const TRELLIS=new Set([0,1]);
 const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
-const SKEY='garden_os_v4_state',HKEY='garden_os_v4_hist',CKEY='garden_os_v4_campaign';
-const APP_VERSION='4.0';
+const SKEY='garden_os_v3_state',HKEY='garden_os_v3_hist',CKEY='garden_os_v3_campaign';
 const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
-const PHASES = Object.freeze({
-  PLANNING: 'PLANNING',
-  EARLY_SEASON: 'EARLY_SEASON',
-  MID_SEASON: 'MID_SEASON',
-  LATE_SEASON: 'LATE_SEASON',
-  HARVEST: 'HARVEST',
-  HARVEST_REVIEW: 'HARVEST_REVIEW',
-  WINTER_REVIEW: 'WINTER_REVIEW',
-});
-const VALID_PHASES = new Set(Object.values(PHASES));
 const SEASONS=['spring','summer','fall','winter'];
 const HOWTO_SECTIONS=[
   {
@@ -436,20 +270,20 @@ const HOWTO_SECTIONS=[
       'Pick crops in Planning. You need at least 8 planted cells (Chapter 10 requires all 32).',
       'Use rows 0-1 for trellis crops (dashed rows), keep rows 2-3 reachable for maintenance.',
       'Commit Layout to lock placements and begin Early Season.',
-      'Each phase gives you one action \u2014 use it or accept the event.',
+      'Each beat gives one intervention token: use it or choose Accept.',
       'After Late Season, harvest and review before moving to the next chapter.'
     ]
   },
   {
     id:'loop',
     name:'Season Flow',
-    summary:'Plan \u2192 Commit \u2192 Early / Mid / Late Season \u2192 Harvest \u2192 Harvest Review.',
+    summary:'Plan -> Commit -> 3 beats -> Harvest -> Review.',
     bullets:[
       'Planning: place crops, check chapter objective, and validate row requirements.',
-      'Early / Mid / Late Season: weather and events test your layout.',
+      'Early / Mid / Late beats: events trigger and test weak rows, spacing, and support.',
       'Interventions: Swap, Prune, Protect, Mulch, or Companion Patch when offered.',
       'Harvest: score final layout + event outcomes; recipes and chapter goals resolve.',
-      'Harvest Review: inspect factors, event log, and carry-forward effects before advancing.'
+      'Review: inspect factors, event log, and transition effects that carry forward.'
     ]
   },
   {
@@ -483,7 +317,7 @@ const HOWTO_SECTIONS=[
     ],
     shortcuts:[
       ['E','Toggle eraser in Planning.'],
-      ['R','Advance to next phase.'],
+      ['R','Advance beat when no action remains.'],
       ['Esc','Clear current selection or close overlays.'],
       ['H','Open How to Play overlay.']
     ]
@@ -495,7 +329,7 @@ const C={
 cherry_tom:{id:'cherry_tom',name:'Cherry Tomato',emoji:'\u{1F345}',short:'CT',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold'],conflicts:['broccoli'],chapterUnlock:1,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['pest-target','blight-prone','heat-tolerant'],sm:{spring:.5,summer:1,fall:.3}},
 pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:5,sunIdeal:7,support:true,shadeScore:2,coolSeason:true,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['frost-hardy','wind-sensitive'],sm:{spring:.9,summer:.8,fall:.7}},
 peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:4,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce','radish','spinach'],conflicts:['onion'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
-cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:[],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
+cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:['tomato_sandwich'],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
 radish:{id:'radish',name:'Radish',emoji:'\u{1F330}',short:'RAD',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:3,coolSeason:true,tall:false,water:2,companions:['carrot','lettuce'],conflicts:['radish'],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy','pest-target'],sm:{spring:.9,summer:.4,fall:.85}},
 lettuce:{id:'lettuce',name:'Lettuce',emoji:'\u{1F96C}',short:'LET',faction:'fast_cycles',sunMin:3,sunIdeal:5,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['carrot','radish','onion','peas'],conflicts:[],chapterUnlock:1,recipes:['tomato_sandwich'],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:1}},
 arugula:{id:'arugula',name:'Arugula',emoji:'\u{1F33F}',short:'ARU',faction:'fast_cycles',sunMin:4,sunIdeal:6,support:false,shadeScore:5,coolSeason:true,tall:false,water:3,companions:['dill','basil'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
@@ -526,7 +360,7 @@ const ED=[
 {id:"S01",title:"Late Frost Advisory",season:"spring",valence:"negative",description:"Temperature drops to 28\u00b0. Frost-sensitive crops take the hit.",me:{ch:"cell_penalty",tgt:{type:"crop_filter",filter:"frost-sensitive",max:null},mod:-2,dur:"beat"},io:["protect","mulch","swap","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1.2},
 {id:"S02",title:"Phillies Home Opener Energy",season:"spring",valence:"positive",description:"Neighbor drops off composted horse manure. Row 3 gets enriched.",me:{ch:"cell_buff",tgt:{type:"row",filter:"row-3",max:null},mod:1,dur:"season"},io:["mulch","companion_patch","accept_loss"],cf:{eff:"enriched"},ca:[6,7,8,9,10,11,12],dw:1},
 {id:"S03",title:"Cabbage Moth Arrival",season:"spring",valence:"negative",description:"White butterflies laying eggs on brassicas. Pest hit.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"brassicas",max:null},mod:-1.5,dur:"beat"},io:["protect","prune","companion_patch","accept_loss"],cf:null,ca:[5,6,7,8,9,10,11,12],dw:1},
-{id:"S04",title:"Block Party Planning",season:"spring",valence:"mixed",description:"Mrs. Gonzalez wants herbs for the cookout. Herb crops lose yield.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"herbs",max:3},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
+{id:"S04",title:"Block Party Planning",season:"spring",valence:"mixed",description:"Mrs. Gonzalez wants herbs for the cookout. Herb faction loses yield.",me:{ch:"cell_penalty",tgt:{type:"faction",filter:"herbs",max:3},mod:-1,dur:"beat"},io:["protect","prune","swap","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
 {id:"S05",title:"Spring Rain Streak",season:"spring",valence:"positive",description:"Five days of rain. Crops with water >= 3 get a boost.",me:{ch:"cell_buff",tgt:{type:"crop_filter",filter:"water>=3",max:null},mod:.75,dur:"beat"},io:["mulch","companion_patch","accept_loss"],cf:null,ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:1},
 {id:"S06",title:"Alley Cat Patrol",season:"spring",valence:"negative",description:"The tabby uses your bed as a litter box. Two front-row cells compacted.",me:{ch:"cell_penalty",tgt:{type:"random_cells",filter:"row-3",max:2},mod:-1,dur:"season"},io:["protect","mulch","prune","accept_loss"],cf:{eff:"compacted"},ca:[1,2,3,4,5,6,7,8,9,10,11,12],dw:.9},
 {id:"S07",title:"Seed Swap on Passyunk",season:"spring",valence:"positive",description:"Garden club had extra seedlings. Two random cells get vigor buff.",me:{ch:"cell_buff",tgt:{type:"random_cells",filter:"planted",max:2},mod:1,dur:"season"},io:["companion_patch","mulch","accept_loss"],cf:null,ca:[6,7,8,9,10,11,12],dw:1},
@@ -611,16 +445,16 @@ const CHAPTERS={
   failOnion:'The offseason is for planning. The Phillies know this. Sometimes.',
   transition:'Year 2. The light shifts. Spring again. But the bed is not new anymore.',
   unlock:'Season Journal unlocked.'},
-5:{name:'Quick Harvest',year:2,season:'spring',scoreTarget:6.5,mechanic:'Crop Diversity',mechanicHint:'Four or more crop types triggers a diversity bonus. Three or fewer is a monoculture.',
+5:{name:'Quick Harvest',year:2,season:'spring',scoreTarget:6.5,mechanic:'Crop Factions',mechanicHint:'Four or more factions triggers a diversity bonus. Three or fewer is a monoculture.',
   opening:'Year 2 spring. The tarp comes off faster this time. The player knows the bed. The soil looks different, darker, more worked.',
-  gurlIntro:'You have been planting by instinct. Now plant by variety. Four or more crop types in one season triggers a diversity bonus.',
+  gurlIntro:'You have been planting by instinct. Now plant by faction. Four or more factions in one season triggers a diversity bonus.',
   onionIntro:'Variety matters. Think about what you actually want to eat in June. A bed full of one thing is a field. This is not a field.',
-  successGurl:'Five crop types represented. Diversity bonus confirmed. The bed is thinking in systems now.',
+  successGurl:'Five factions represented. Diversity bonus confirmed. The bed is thinking in systems now.',
   successOnion:'That is a salad, a side dish, and a garnish in one bed. Real kitchen energy.',
-  failGurl:'Three crop types in thirty-two cells. That is not a garden. That is a monoculture with excuses.',
+  failGurl:'Three factions in thirty-two cells. That is not a garden. That is a monoculture with excuses.',
   failOnion:'Variety matters. In food, in life, in a rotation. We have discussed this.',
   transition:'Summer will test what spring built. Weather is not optional.',
-  unlock:'Crop Type Filter unlocked.'},
+  unlock:'Faction Filter unlocked.'},
 6:{name:'Heat Check',year:2,season:'summer',scoreTarget:6.0,mechanic:'Seasonal Events',mechanicHint:'Seasonal events are now active. Plan for the forecast.',
   opening:'A weather bar appears at the top. It reads: Summer forecast: sustained heat. Plan accordingly. The yard looks bright and overexposed.',
   gurlIntro:'Seasonal events are now active. Cool-season crops will take a scoring penalty during the heatwave. Heat-tolerant crops hold or gain.',
@@ -631,11 +465,11 @@ const CHAPTERS={
   failOnion:'We did not plan for August. August noticed.',
   transition:'Fall. My season. The part where things go underground and get serious.',
   unlock:'Event Forecast panel unlocked.'},
-7:{name:'Underground',year:2,season:'fall',scoreTarget:5.5,mechanic:'Row Objectives',mechanicHint:'Row 3 must be 100% root crops. Eight cells. No exceptions.',
-  opening:'The front row is highlighted. Row Objective: Front row must be 100% Roots crops. Onion Man is looking at the front row like it owes him something.',
-  gurlIntro:'Row objective is active. Row three requires all root crops. Eight cells. No exceptions.',
+7:{name:'Underground',year:2,season:'fall',scoreTarget:5.5,mechanic:'Row Objectives',mechanicHint:'Row 3 must be 100% Roots faction. Eight cells. No exceptions.',
+  opening:'The front row is highlighted. Row Objective: Front row must be 100% Roots faction. Onion Man is looking at the front row like it owes him something.',
+  gurlIntro:'Row objective is active. Row three requires complete Roots faction occupancy. Eight cells. No exceptions.',
   onionIntro:'The front row. All roots. Carrots, beets, radish, turnips. The things that do their work underground where nobody sees. I relate to this more than I should.',
-  successGurl:'Row objective complete. Root crops confirmed across all eight cells.',
+  successGurl:'Row objective complete. Roots faction occupancy confirmed. Clean compliance.',
   successOnion:'All roots. Front row. Underground union is pleased. I may have cried a little. It is biologically ambiguous.',
   failGurl:'Row objective failed. Three of eight cells are non-compliant.',
   failOnion:'The front row needed roots and it got chaos. I am not angry. I am disappointed. Those are different and both are happening.',
@@ -786,18 +620,13 @@ const DIALOGUE_DB={
 "onion":["Some good, some bad. That is a season.","Mixed bag. Part of the bed is fine. Part of it looks rough.","Good and bad in the same event. The garden is teaching you that those things coexist.","Half the bed smiled. Half the bed winced. I relate to both halves.","Mixed results. Like a Phillies game where they score six runs and give up seven.","Some cells got lucky. Some did not.","Good news and bad news in the same event.","The bed split. Winners and losers from the same weather."],
 "critters":["Mixed conditions. Some targets stressed. Some not.","Uneven damage. We focus on the weak cells.","Split event. Assessing which targets are now viable.","Some crops held. Some did not. We noticed.","Mixed results. Partial vulnerability detected.","Event resolved unevenly. Adjusting approach.","Good for some. Bad for others. Standard.","Damage inconsistent. Targeting the damaged."]
 },
-"event_neutral":{
-"gurl":["Neutral event. No modifier applied. The bed state is unchanged.","Event logged. No scoring impact. The grid remains as-is.","Neutral conditions. The bed continues without modification.","No effect on cells. The event is informational only.","Neutral event resolved. No action required.","Conditions unchanged. The bed holds steady.","Event noted. No impact on the current layout.","Neutral. The season moves forward without adjustment."],
-"onion":["Nothing happened. Which in a garden is sometimes the best thing that can happen.","Neutral event. The bed stays the same. That is not boring. That is stability.","No damage. No bonus. Just a day in the garden.","The event came and went. The bed did not notice.","Nothing changed. Sometimes the garden just sits there and grows.","Neutral. Like a Tuesday. Nothing wrong with a Tuesday.","No impact. The bed keeps doing what it was doing.","Event with no effect. The garden equivalent of a rain delay with no rain."],
-"critters":["No change detected. Status quo maintained.","Neutral conditions. No targets affected.","Event resolved. No vulnerability shift.","No modifier applied. Grid unchanged.","Neutral. We continue observing.","No impact. Positions unchanged.","Status maintained. No action needed.","Neutral event. Standard monitoring continues."]
-},
 "intervention_used":{
-"gurl":["Action taken. The cell is updated.","Action confirmed. The modification is on record.","Action logged. Applied before the event resolved.","Action used. The decision is final.","One action used this phase.","Action applied. The cell state is updated.","Action confirmed. Applied before event.","Action deployed. Move on."],
-"onion":["Good call. Sometimes you have to act before the damage hits.","Action taken. That is not panic. That is preparation.","You used your action. The bed is better for it.","Action taken. The kind of decision that shows up in the score.","Used the action. Good.","Action taken. That cell is protected now.","You intervened. She would have done the same.","Good timing on that. The event was coming and you moved first."]
+"gurl":["Intervention deployed. Token spent.","Action taken. The intervention is on record.","Intervention logged. The modification is active.","Token spent. Intervention confirmed.","Action registered. One fewer token this beat.","Intervention applied. The cell state is updated.","Token used. The decision is final.","Intervention confirmed. Applied before event."],
+"onion":["Good call. Sometimes you have to act before the damage hits.","Intervention used. That is not panic. That is preparation.","You spent the token. The bed is better for it.","Action taken. The kind of decision that shows up in the score.","Used the intervention. Good.","Token spent. That cell is protected now.","You intervened. She would have done the same.","Good timing on that. The event was coming and you moved first."]
 },
 "intervention_skipped":{
-"gurl":["No action taken. The event resolves at full effect.","Loss accepted. The bed absorbs the impact without modification.","Action skipped. The event applies unmitigated.","No action taken. The damage or benefit resolves as-is.","No action this phase. The season continues.","Action skipped. Sometimes that is the right call.","No action taken. The bed takes whatever the event delivers.","No action. The event resolves cleanly."],
-"onion":["No action. That takes nerve. Or it takes not caring. I am choosing to believe it was nerve.","You let it ride. Sometimes that is the right move.","Skipped the action. The bed takes the full hit.","No action taken. Okay. The bed will deal with whatever comes.","You chose not to act. That is a decision too.","Let the event play out. Unfiltered. There is something honest about that.","No action. Like watching a Phillies game without changing the channel in the eighth inning.","You held back. Sometimes the best move is no move."]
+"gurl":["No intervention. Token forfeited. The event resolves at full effect.","Loss accepted. The bed absorbs the impact without modification.","Intervention declined. The event applies unmitigated.","Token unused. The damage or benefit resolves as drawn.","No action taken. The season continues without intervention.","Intervention skipped. Sometimes that is the right call.","Token forfeited. The bed takes whatever the event delivers.","No intervention deployed. The event resolves cleanly."],
+"onion":["No intervention. That takes nerve. Or it takes not caring. I am choosing to believe it was nerve.","You let it ride. Sometimes that is the right move.","Skipped the intervention. The bed takes the full hit.","No token used. Okay. The bed will deal with whatever comes.","You chose not to act. That is a decision too.","Let the event play out. Unfiltered. There is something honest about that.","No intervention. Like watching a Phillies game without changing the channel in the eighth inning.","You held back. Sometimes the best move is no move."]
 },
 "harvest_good_yield":{
 "gurl":["Yield above par. The bed produced what it was designed to produce.","Strong harvest. The yield numbers track with the cell scores.","Good yield across planted cells. The harvest report reflects sound planning.","Production above threshold. The pantry benefits.","Yield confirmed at high level. The crops delivered.","Harvest yield: above average. The bed converted score into food.","Strong production numbers. The yield report is clean.","Good harvest. The bed performed as scored."],
@@ -806,6 +635,22 @@ const DIALOGUE_DB={
 "harvest_poor_yield":{
 "gurl":["Yield below par. The bed underproduced.","Poor harvest. Production fell short.","Low yield. The gap between potential and actual is documented.","Underperformance at harvest. The pantry receives less than projected.","Yield below threshold.","Poor production confirmed. The harvest report shows the deficit.","Low yield numbers.","Harvest below par. The pantry feels it."],
 "onion":["Thin harvest. Not much to bring inside.","Low yield. The bed tried. I am not blaming the bed.","Not much came out of that one.","Poor harvest. The kind where you stand in the yard holding three tomatoes and wondering.","Low production. The pantry is light.","Thin yield. She had seasons like this. Said you learn more from the thin ones.","Not enough to cook with. Barely enough to eat standing up in the yard.","Poor harvest. But the bed is still there. The soil is still there."]
+},
+"harvest_sauce_ingredients_complete":{
+"gurl":["Harvest inventory matches target recipe. Yield sufficient. Season objective complete."],
+"onion":["Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying."]
+},
+"challenge_accepted":{
+"gurl":["Challenge constraint active. The modifier is in effect for the full season.","Challenge accepted. The constraint is now load-bearing.","Modifier engaged. The challenge rules apply to every placement.","Challenge registered. Bonus score available at completion.","Constraint accepted. The season is harder now.","Challenge active. The bed operates under additional rules.","Modifier applied. The challenge is in effect.","Challenge confirmed. The season just got more specific."],
+"onion":["You took the challenge. That is Year 3 confidence. Earn it.","Challenge accepted. The bed does not know it got harder. You do.","Constraint active. You chose this. Remember that when the score comes back.","Challenge mode. The kind of season where every cell matters twice as much.","You signed up for harder. I respect that.","Challenge engaged. The bed is the same bed. The rules are different.","That is a commitment. Make it count.","Challenge on. The kind of decision she would have made."]
+},
+"challenge_passed":{
+"gurl":["Challenge passed. Constraint honored through all three beats. Bonus score applied.","Challenge complete. The bed operated under restriction and held.","Constraint satisfied. The bonus is earned.","Challenge cleared. Full compliance with the modifier.","Passed. The challenge constraint held from planning through scoring.","Challenge complete. The bed proved it can perform under pressure.","Constraint honored. Challenge bonus applied.","Passed under challenge conditions. That distinction matters."],
+"onion":["You passed. Under the harder rules. That is not just a score. That is proof.","Challenge cleared. The kind of result that changes how you see the bed.","Passed. I watched you work through that constraint and I did not say anything.","Challenge complete. The bed held. You held. Everything held.","Cleared. Under pressure. Under constraint.","You did the hard version and you passed. I need a minute.","Challenge passed. She never backed away from a hard season either.","Clean challenge pass. That goes in the journal. That stays in the journal."]
+},
+"challenge_failed":{
+"gurl":["Challenge failed. The constraint was violated. No bonus applied.","Challenge incomplete. The modifier was not honored.","Failed. The challenge required full compliance.","Challenge constraint broken. The bonus is forfeited.","Failed challenge. The constraint was clear.","Challenge not met. The season score stands without the bonus.","Constraint violated. Challenge failed.","Challenge failed. Retry available in a future season."],
+"onion":["Missed it. Close, but missed.","Challenge failed. That happens. The Phillies have been eliminated in October more times than I can count.","Did not clear the challenge. The bed is still good.","Failed. I watched you try. That counts for something.","Missed the challenge. Not the season, just the challenge.","Challenge not met. It will be there next time.","Close. The kind of close that hurts more than not trying.","Did not pass the challenge. The bed moves on. You move on."]
 },
 "season_spring_start":{
 "gurl":["Spring. New season. The bed is open for placement. Begin.","Spring season active. Cool-season crops have the advantage.","Opening day. The bed is clear. The scoring engine is live.","Spring. The soil is ready. Whether you are ready is the question.","New season. Spring conditions active. The light is increasing.","Spring loaded. Score target posted. Crop roster updated.","Fresh season. Spring. The bed has been resting since fall.","Spring. The beginning. Again."],
@@ -829,7 +674,8 @@ const DIALOGUE_DB={
 },
 "chapter_12_epilogue":{
 "gurl":["Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common."],
-"onion":["The bed is ready for next year.","The bed is ready for next year, and so are you."]
+"onion_sauce_complete":["The bed is ready for next year, and so are you."],
+"onion_sauce_incomplete":["The bed is ready for next year."]
 },
 "phillies_spring":{
 "gurl":["I do not follow baseball. I follow compliance metrics. Both involve counting failures.","Spring training data is not predictive. Neither is a first-season garden score.","The Phillies open their season and the city loses its composure.","Opening day. The only data point that matters less than a spring training record is a first-season score prediction.","Baseball returns. The city's attention drifts. The bed's scoring engine does not drift.","The ballpark is open. The garden bed is open. One of these produces reliable data."],
@@ -857,28 +703,10 @@ const DIALOGUE_DB={
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n))}
 function rc(i){return{row:Math.floor(i/COLS),col:i%COLS}}
 function ri(r,c){return r*COLS+c}
+function fmt(i){const p=rc(i);return'R'+p.row+'C'+p.col}
 function dc(o){return JSON.parse(JSON.stringify(o))}
 function nbs(i){const{row,col}=rc(i);const o=[];if(row>0)o.push(ri(row-1,col));if(row<ROWS-1)o.push(ri(row+1,col));if(col>0)o.push(ri(row,col-1));if(col<COLS-1)o.push(ri(row,col+1));return o}
-function normalizeSeed(seed){const n=Number(seed);return((Number.isFinite(n)?n:Date.now())>>>0)||1}
-/* seeded PRNG (mulberry32) — deterministic event selection */
-function mulberry32Step(state){let a=normalizeSeed(state);a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return{state:a,value:((t^t>>>14)>>>0)/4294967296}}
-function seedRng(a){a=normalizeSeed(a);return function(){const step=mulberry32Step(a);a=step.state;return step.value}}
-function gridHash(grid){let h=0;for(let i=0;i<grid.length;i++){const c=grid[i];if(c&&c.cropId){for(let j=0;j<c.cropId.length;j++)h=(h*31+c.cropId.charCodeAt(j))|0}}return h}
-function ensureStateSeed(st,seed=Date.now()){
-  if(!st)return normalizeSeed(seed);
-  if(!Number.isFinite(st.seed))st.seed=normalizeSeed(seed);
-  if(!Number.isFinite(st.rngState))st.rngState=normalizeSeed(st.seed);
-  return st.seed;
-}
-function nextSeededRand(st,seed=Date.now()){
-  if(!st)return seedRng(seed)();
-  ensureStateSeed(st,seed);
-  const step=mulberry32Step(st.rngState);
-  st.rngState=step.state;
-  return step.value;
-}
-function seedEventRng(st,seed=Date.now()){ensureStateSeed(st,seed);return st.seed}
-function wRand(items,wf,seed=Date.now()){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);const rand=()=>nextSeededRand(S,seed);if(t<=0)return items[Math.floor(rand()*items.length)];let r=rand()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
+function wRand(items,wf){const ws=items.map(wf);const t=ws.reduce((a,b)=>a+b,0);if(t<=0)return items[Math.floor(Math.random()*items.length)];let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
 function seasonFor(ch){return SEASONS[(ch-1)%4]}
 function isWinter(ch){return seasonFor(ch)==='winter'}
 function grade(s){for(const[g,t]of GRADES)if(s>=t)return g;return'F'}
@@ -904,7 +732,7 @@ function sunFit(crop,L){
 }
 function supFit(crop,row){if(crop.support)return TRELLIS.has(row)?5:1;return 3}
 function shadeFit(crop,L){return L<crop.sunMin?Math.max(1,crop.shadeScore*.6):crop.shadeScore}
-function accFit(crop,row){const as=row/(ROWS-1);return crop.tall?3:3+as*2}
+function accFit(crop,row){const as=(ROWS-1-row)/(ROWS-1);return crop.tall?3:3+as*2}
 function seaFit(crop,season){
   if(season==='spring')return crop.coolSeason?5:3;
   if(season==='summer')return crop.coolSeason?2:5;
@@ -985,7 +813,6 @@ function drawEvent(pool,st){
     }else if(tgt.type==='faction'){if(planted.some(cid=>C[cid]&&C[cid].faction===tgt.filter))w*=1.5}
     return w;
   }
-  seedEventRng(st);
   const chosen=wRand(el,ew);
   st.drawnEventIds.push(chosen.id);
   return chosen;
@@ -1011,12 +838,11 @@ function resolveTargets(ev,grid){
     if(f.startsWith('row-')){const rn=parseInt(f.split('-')[1]);for(let c=0;c<COLS;c++){const idx=ri(rn,c);if(grid[idx]&&grid[idx].cropId)cands.push(idx)}}
     else{for(let i=0;i<SIZE;i++)if(grid[i]&&grid[i].cropId)cands.push(i)}
   }
-  if(t.max&&cands.length>t.max){cands=cands.slice(0,t.max)}
+  if(t.max&&cands.length>t.max){cands=[...cands].sort(()=>Math.random()-.5).slice(0,t.max)}
   return cands;
 }
 
 function applyEvent(ev,grid){
-  if(S)S._cachedBedScore=null;
   const tgts=resolveTargets(ev,grid);const aff=[];
   for(const idx of tgts){const c=grid[idx];if(!c)continue;if(c.interventionFlag==='protected')continue;c.eventModifier=(c.eventModifier||0)+ev.me.mod;aff.push(idx)}
   return aff;
@@ -1045,20 +871,8 @@ function mkCampaign(){return{
 
 let CAM=null;
 
-function saveCampaign(){try{localStorage.setItem(CKEY,JSON.stringify(CAM))}catch(e){console.warn('Campaign save failed:',e);showSaveWarning()}}
-function migrateCampaign(c){
-  if(!c)return c;
-  const d=mkCampaign();
-  for(const k of Object.keys(d)){if(c[k]===undefined)c[k]=d[k]}
-  return c;
-}
-function loadCampaign(){
-  const parsed = safeParseStorageJSON(CKEY, null);
-  if(parsed && typeof parsed==='object' && !Array.isArray(parsed) && parsed.mode){
-    return migrateCampaign(parsed);
-  }
-  return null;
-}
+function saveCampaign(){try{localStorage.setItem(CKEY,JSON.stringify(CAM))}catch(e){}}
+function loadCampaign(){try{const r=localStorage.getItem(CKEY);if(r){const p=JSON.parse(r);if(p&&p.mode)return p}}catch(e){}return null}
 
 /* ===== DIALOGUE SYSTEM ===== */
 function selectLine(pool,triggerKey,charKey){
@@ -1068,12 +882,8 @@ function selectLine(pool,triggerKey,charKey){
   if(!CAM.dialogueHistory[hk])CAM.dialogueHistory[hk]=[];
   const recent=CAM.dialogueHistory[hk];
   let filtered=pool.filter(l=>!recent.includes(l));
-  if(!filtered.length){recent.length=0;filtered=pool}
-  let seed=((S?S.chapter:(CAM.currentChapter||0))*1000+recent.length*97)|0;
-  const sk=triggerKey+'|'+charKey;
-  for(let i=0;i<sk.length;i++)seed=(seed*31+sk.charCodeAt(i))|0;
-  const pick=seedRng(seed||1);
-  const chosen=filtered[Math.floor(pick()*filtered.length)];
+  if(!filtered.length){CAM.dialogueHistory[hk]=[];filtered=pool}
+  const chosen=filtered[Math.floor(Math.random()*filtered.length)];
   recent.push(chosen);
   if(recent.length>3)recent.shift();
   return chosen;
@@ -1111,7 +921,7 @@ function determinePlacementTrigger(idx,cropId){
 
 function getCharAvailability(chapter){
   const chars=['gurl','onion'];
-  if(chapter>=2)chars.push('vegeman');
+  if(chapter===2||chapter===10)chars.push('vegeman');
   return chars;
 }
 
@@ -1135,39 +945,21 @@ function fireDialogue(triggerKey,extraChars){
   if(lines.length)queueNarratorLines(lines);
 }
 
-const NARRATOR_MIN_DISPLAY=2800; // ms — minimum time a narrator message stays visible
-let _narratorPending=[];       // buffered message sets waiting to display
-let _narratorBusy=false;       // true while a message set is holding the floor
-let _narratorTimer=null;       // setTimeout id for current hold
-
 function queueNarratorLines(lines){
-  _narratorPending.push(lines);
-  _drainNarrator();
+  CAM.narratorQueue=lines;
+  displayNarratorQueue();
 }
 
-function _drainNarrator(){
-  if(_narratorBusy||!_narratorPending.length||!CAM)return;
-  _narratorBusy=true;
-  const lines=_narratorPending.shift();
+function displayNarratorQueue(){
+  if(!CAM.narratorQueue||!CAM.narratorQueue.length)return;
+  const lines=CAM.narratorQueue;
+  CAM.narratorQueue=[];
   // Store as last lines for persistent display
   for(const l of lines){
     CAM.lastNarratorLines[l.character]=l.line;
   }
-  CAM.narratorQueue=[];
   saveCampaign();
   renderNarratorArea();
-  _narratorTimer=setTimeout(()=>{
-    _narratorBusy=false;
-    _narratorTimer=null;
-    _drainNarrator();
-  },NARRATOR_MIN_DISPLAY);
-}
-
-function displayNarratorQueue(){
-  // Legacy compat — redirect through the queue
-  if(!CAM||!CAM.narratorQueue||!CAM.narratorQueue.length)return;
-  queueNarratorLines(CAM.narratorQueue.slice());
-  CAM.narratorQueue=[];
 }
 
 const CHAR_DISPLAY={
@@ -1182,32 +974,8 @@ function mkCell(r,c){return{cropId:null,row:r,col:c,locked:false,eventModifier:0
 function mkGrid(){const g=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)g.push(mkCell(r,c));return g}
 function mkCF(){return{soilFatigueMap:{},lastFamilyMap:{},infrastructureMap:{},recipePantry:[],eventMemory:[],seasonHistory:[]}}
 
-function buildCarryForward(S,cf){
-  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
-  cf.seasonHistory.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
-  const nfm={};const nff={};
-  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
-    const prev=cf.soilFatigueMap[k]||0;const prevFam=cf.lastFamilyMap[k]||null;
-    if(!c.cropId){nfm[k]=0;continue}
-    const fam=C[c.cropId]?C[c.cropId].faction:null;if(fam)nff[k]=fam;
-    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
-    if(prevFam===fam){nfm[k]=Math.max(-1.5,(prev<0?prev:0)-(HEAVY.includes(c.cropId)?.3:.15))}
-    else if(HEAVY.includes(c.cropId))nfm[k]=-.3;
-    else nfm[k]=0;
-  }
-  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
-  cf.infrastructureMap={};
-  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
-    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
-  }
-  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
-  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
-  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:S.chapter,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1})}
-  return cf;
-}
-
-function mkSeason(ch,cf,seed=Date.now()){
-  const season=seasonFor(ch);const grid=mkGrid();const seasonSeed=normalizeSeed(seed);
+function mkSeason(ch,cf){
+  const season=seasonFor(ch);const grid=mkGrid();
   if(cf){
     if(cf.infrastructureMap)for(const[k,flags]of Object.entries(cf.infrastructureMap)){
       const[r,c]=k.split(',').map(Number);const idx=ri(r,c);if(grid[idx])for(const f of flags){
@@ -1236,186 +1004,24 @@ function mkSeason(ch,cf,seed=Date.now()){
       cf.eventMemory=nextMemory;
     }
   }
-  // _version tracks save-state schema (v3), not product version (APP_VERSION). v4 reuses the v3 save format.
-  return{_version:3,phase:PHASES.PLANNING,season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[],seed:seasonSeed,rngState:seasonSeed};
+  return{phase:'PLANNING',season,chapter:ch,beatIndex:0,grid,committedGrid:null,drawnEventIds:[],currentEvent:null,beatTokenAvailable:false,interventionLog:[],eventLog:[],harvestResult:null,carryForward:cf||mkCF(),selectedCrop:null,eraserMode:false,selectedCell:null,interventionMode:null,swapFirstCell:null,eventAffectedCells:[]};
 }
 
 let S=null;
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// STATE MAP (mirrors v3 — see v3 for canonical docs)
-// ═══════════════════════════════════════════════════════════════════════════════
-// CAM — campaign state | S — season/engine state | howToSection — help tab
-// Keys: SKEY, HKEY, CKEY | Score: safeScore() centralizes fallback chain
-// Boot: loadCampaign() → load() → migrateState() → mkSeason fallback → render()
-// ═══════════════════════════════════════════════════════════════════════════════
-
 /* ===== PERSISTENCE ===== */
-function showSaveWarning(){
-  let w=document.getElementById('save-warning');
-  if(!w){w=document.createElement('div');w.id='save-warning';w.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:8px 16px;border-radius:8px;font-family:var(--ff-body);font-size:var(--type-body);font-weight:600;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,0.2)';w.textContent='Save failed — localStorage may be full or unavailable.';document.body.appendChild(w)}
-  w.style.display='block';setTimeout(()=>{if(w)w.style.display='none'},5000);
-}
-function migrateState(s){
-  if(!s)return s;
-  if(s.phase==='REVIEW'){
-    s.phase=isWinter(s.chapter)?PHASES.WINTER_REVIEW:PHASES.HARVEST_REVIEW;
-  }
-  if(!s._version||s._version<3){
-    if(!s.eventAffectedCells)s.eventAffectedCells=[];
-    if(!s.carryForward)s.carryForward=mkCF();
-    if(s.beatTokenAvailable===undefined)s.beatTokenAvailable=false;
-    s._version=3;
-  }
-  return s;
-}
-function safeParseStorageJSON(key, fallback){
-  try{
-    const raw = localStorage.getItem(key);
-    if(!raw) return fallback;
-    return JSON.parse(raw);
-  }catch(e){
-    return fallback;
-  }
-}
-// Persisted engine state can be partial or stale; normalize before boot/render.
-function normalizeLoadedState(state){
-  if(!state || typeof state!=='object' || Array.isArray(state)) return null;
-  const next = migrateState(state);
-  if(!Array.isArray(next.grid) || next.grid.length!==SIZE) return null;
-  if(!VALID_PHASES.has(next.phase)) return null;
-  if(next.phase===PHASES.WINTER_REVIEW && !isWinter(next.chapter)) return null;
-  if(next.phase===PHASES.HARVEST_REVIEW && isWinter(next.chapter)) return null;
-  next.seed = normalizeSeed(next.seed);
-  next.rngState = Number.isFinite(next.rngState) ? normalizeSeed(next.rngState) : next.seed;
-  if(next.selectedCrop && !C[next.selectedCrop]) next.selectedCrop = null;
-  next.selectedCell = Number.isInteger(next.selectedCell) && next.selectedCell >= 0 && next.selectedCell < next.grid.length
-    ? next.selectedCell
-    : null;
-  next.eraserMode = !!next.eraserMode;
-  if(!Array.isArray(next.eventLog)) next.eventLog = [];
-  if(!Array.isArray(next.interventionLog)) next.interventionLog = [];
-  if(!Array.isArray(next.eventAffectedCells)) next.eventAffectedCells = [];
-  if(next.phase!==PHASES.PLANNING){
-    next.selectedCrop = null;
-    next.eraserMode = false;
-  }
-  return next;
-}
-function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){console.warn('Save failed:',e);showSaveWarning()}}
-function load(){
-  const parsed = safeParseStorageJSON(SKEY, null);
-  if(parsed && parsed.phase){
-    const storedPhase = parsed.phase;
-    const normalized = normalizeLoadedState(parsed);
-    if(normalized && normalized.phase!==storedPhase){
-      try{localStorage.setItem(SKEY,JSON.stringify(normalized))}catch(e){}
-    }
-    return normalized;
-  }
-  return null;
-}
-function loadH(){
-  const parsed = safeParseStorageJSON(HKEY, []);
-  return Array.isArray(parsed) ? parsed.slice(-12) : [];
-}
-function saveH(h){
-  const history = Array.isArray(h) ? h.slice(-12) : [];
-  try{localStorage.setItem(HKEY,JSON.stringify(history))}catch(e){}
-}
-
-// Centralized score source — eliminates NaN risk from partial objects
-function safeScore(){
-  const src=S.harvestResult||S._cachedBedScore;
-  if(src&&typeof src.finalScore==='number'&&isFinite(src.finalScore))return src;
-  try{return bedScore(S.grid,S.season)}catch(e){return{finalScore:0,grade:'-',cellScores:[],bedAverage:0,yieldList:[]}}
-}
-
-// Clear transient state that must not leak across phase boundaries
-function clearTransientState(){
-  S.currentEvent=null;
-  S.beatTokenAvailable=false;
-  S.interventionMode=null;
-  S.swapFirstCell=null;
-  S.eventAffectedCells=[];
-  S._cachedBedScore=null;
-}
-function setInspectMode(){
-  if(!S) return;
-  S.selectedCrop = null;
-  S.eraserMode = false;
-  S.interventionMode = null;
-  S.swapFirstCell = null;
-}
-function setSelectedCropTool(cropId){
-  if(!S || !C[cropId]) return;
-  S.selectedCrop = cropId;
-  S.eraserMode = false;
-}
-function toggleEraserTool(){
-  if(!S || S.phase!==PHASES.PLANNING) return;
-  S.eraserMode = !S.eraserMode;
-  S.selectedCrop = null;
-}
+function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(SKEY);if(r){const p=JSON.parse(r);if(p&&p.phase)return p}}catch(e){}return null}
+function loadH(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]').slice(-12)}catch(e){return[]}}
+function saveH(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(-12)))}catch(e){}}
 
 /* ===== DOM ===== */
 const $=id=>document.getElementById(id);
-const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),objective:$('objectiveStrip'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn'),gameMenuBtn:$('gameManageBtn'),gameMenuOverlay:$('gameMenuOverlay'),gameMenuPanel:$('gameManagePanel')};
+const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn')};
 let howToSection='quickstart';
-let gridView='score'; // score | sun | water
 
 function h(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
-function accSection(title, children, startCollapsed){
-  const sec=h('div','acc-section');
-  const btn=h('button','acc-toggle'+(startCollapsed?' is-collapsed':''));
-  btn.textContent=title;
-  btn.setAttribute('aria-expanded', startCollapsed?'false':'true');
-  sec.appendChild(btn);
-  const body=h('div','acc-body');
-  if(startCollapsed) body.hidden=true;
-  for(const c of children) body.appendChild(c);
-  sec.appendChild(body);
-  btn.addEventListener('click',()=>{
-    const hiding=!body.hidden;
-    body.hidden=hiding;
-    btn.classList.toggle('is-collapsed',hiding);
-    btn.setAttribute('aria-expanded',String(!hiding));
-  });
-  return sec;
-}
 if(el.howToBtn)el.howToBtn.onclick=()=>showHowToOverlay('quickstart');
-let gameMenuTrigger=null;
-function updateGameMenuSubtitle(){
-  const sub=$('gameManageSubtitle');
-  if(!sub) return;
-  if(!S){ sub.textContent='Season Engine v4'; return; }
-  const chapter=S.chapter||1;
-  const meta=CHAPTERS[chapter];
-  sub.textContent=`Chapter ${chapter}${meta?' · '+meta.name:''} · ${S.phase.replace(/_/g,' ')}`;
-}
-function toggleGameMenu(forceOpen){
-  const open=typeof forceOpen==='boolean'?forceOpen:!el.gameMenuPanel.hasAttribute('data-open');
-  if(open){
-    gameMenuTrigger=document.activeElement;
-    updateGameMenuSubtitle();
-    el.gameMenuOverlay.setAttribute('data-open','');
-    el.gameMenuPanel.setAttribute('data-open','');
-    if(el.gameMenuBtn) el.gameMenuBtn.setAttribute('aria-expanded','true');
-    requestAnimationFrame(()=>{
-      const first=el.gameMenuPanel.querySelector('.menu-row');
-      if(first) first.focus();
-    });
-    return;
-  }
-  closeGameMenu();
-}
-function closeGameMenu(){
-  if(el.gameMenuOverlay) el.gameMenuOverlay.removeAttribute('data-open');
-  if(el.gameMenuPanel) el.gameMenuPanel.removeAttribute('data-open');
-  if(el.gameMenuBtn) el.gameMenuBtn.setAttribute('aria-expanded','false');
-  if(gameMenuTrigger && gameMenuTrigger.focus) gameMenuTrigger.focus();
-  gameMenuTrigger=null;
-}
 if(el.overlay)el.overlay.addEventListener('click',e=>{if(e.target===el.overlay)el.overlay.classList.remove('active')});
 
 /* ===== RENDER: MENU ===== */
@@ -1496,7 +1102,7 @@ function renderChapterStart(){
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter '+ch));
-  el.meta.appendChild(h('span','chip season-'+meta.season+'-pill','Year '+meta.year+' '+meta.season.charAt(0).toUpperCase()+meta.season.slice(1)));
+  el.meta.appendChild(h('span','chip','Year '+meta.year+' '+meta.season.charAt(0).toUpperCase()+meta.season.slice(1)));
   el.meta.appendChild(h('span','chip phase','CHAPTER START'));
 
   const f=document.createDocumentFragment();
@@ -1579,7 +1185,7 @@ function startChapter(ch){
   }
 
   if(isWinter(ch)){
-    S.phase=PHASES.WINTER_REVIEW;
+    S.phase='REVIEW';
     S.harvestResult={cellScores:[],bedAverage:0,finalScore:0,grade:'-',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
     if(ch===12){
       CAM.mode='epilogue';
@@ -1599,7 +1205,7 @@ function startChapter(ch){
 
   // Phillies 1-in-3
   const philliesKey='phillies_'+S.season;
-  if(DIALOGUE_DB[philliesKey]&&S.chapter%3===0){
+  if(DIALOGUE_DB[philliesKey]&&Math.random()<0.333){
     setTimeout(()=>fireDialogue(philliesKey),2500);
   }
 
@@ -1611,10 +1217,8 @@ function renderCtrl(){
   const f=document.createDocumentFragment();
   f.appendChild(h('h2',null,'Crops'));
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
-  eb.disabled=S.phase!==PHASES.PLANNING;
-  eb.setAttribute('aria-pressed',S.eraserMode?'true':'false');
-  eb.setAttribute('aria-label','Eraser tool (E)');
-  eb.onclick=()=>{toggleEraserTool();render()};
+  eb.disabled=S.phase!=='PLANNING';
+  eb.onclick=()=>{S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()};
   f.appendChild(eb);
 
   const chap=CAM&&CAM.mode==='freeplay'?99:S.chapter;
@@ -1625,38 +1229,25 @@ function renderCtrl(){
     for(const crop of crops){
       const locked=crop.chapterUnlock>chap;
       const btn=h('button','crop-btn'+(S.selectedCrop===crop.id?' selected':'')+(locked?' locked':''));
-      btn.setAttribute('aria-label',crop.name+(locked?' (locked)':''));
-      btn.setAttribute('aria-pressed',S.selectedCrop===crop.id?'true':'false');
-      btn.disabled=S.phase!==PHASES.PLANNING||locked;
+      btn.disabled=S.phase!=='PLANNING'||locked;
       const em=h('span','emoji',crop.emoji);
       const tw=h('div','crop-text');
       tw.appendChild(h('span','name',locked?crop.name+' (Ch'+crop.chapterUnlock+')':crop.name));
       tw.appendChild(h('span','tags',crop.short+(crop.support?' \u00b7 trellis':'')+(crop.tall?' \u00b7 tall':'')));
       btn.appendChild(em);btn.appendChild(tw);
-      if(!locked)btn.onclick=()=>{setSelectedCropTool(crop.id);render()};
+      if(!locked)btn.onclick=()=>{S.selectedCrop=crop.id;S.eraserMode=false;render()};
       cg.appendChild(btn);
     }
     grp.appendChild(cg);f.appendChild(grp);
   }
 
   // Faction counter for Ch5+
-  if(chap>=5&&S.phase===PHASES.PLANNING){
+  if(chap>=5&&S.phase==='PLANNING'){
     const factions=new Set();
     for(const cell of S.grid){if(cell&&cell.cropId&&C[cell.cropId])factions.add(C[cell.cropId].faction)}
-    const fc=h('div','faction-counter','Crop types: '+factions.size+'/8'+(factions.size>=4?' \u2714':''));
+    const fc=h('div','faction-counter','Factions: '+factions.size+'/8'+(factions.size>=4?' \u2714':''));
     f.appendChild(fc);
   }
-
-  // Zone Info
-  const zi=h('div','crop-group');
-  zi.appendChild(h('h3',null,'Zone Info'));
-  const zt=h('div','');
-  zt.style.cssText='font-family:var(--ff-mono);font-size:var(--type-label);color:var(--text-muted);letter-spacing:0.06em;line-height:2.2';
-  const meta=CHAPTERS[S.chapter];
-  const seasonName=S.season[0].toUpperCase()+S.season.slice(1);
-  zt.innerHTML='ZONE <b style="color:var(--text)">6B</b><br>SEASON <b style="color:var(--text)">'+seasonName+'</b><br>LAST FROST <b style="color:var(--text)">APR 15</b><br>FIRST FROST <b style="color:var(--text)">OCT 20</b><br>GROWING DAYS <b style="color:var(--leaf-bright)">188</b>';
-  zi.appendChild(zt);
-  f.appendChild(zi);
 
   el.ctrl.replaceChildren(f);
 }
@@ -1673,37 +1264,29 @@ function renderBoard(){
   el.app.classList.remove('menu-mode');
   el.ctrl.style.display='';
   el.res.style.display='';
-  el.board.setAttribute('aria-label','Garden bed');
 
   const f=document.createDocumentFragment();
-  // Phase dots
+  // Beat dots
   const br=h('div','beat-indicator');
-  br.setAttribute('role','group');
-  br.setAttribute('aria-label','Season phases');
-  const phaseNames=['Early','Mid','Late'];
   ['E','M','L'].forEach((l,b)=>{
     const d=h('div','beat-dot',l);
     const isBeat=BEAT_PHASES.includes(S.phase);
-    const isActive=isBeat&&S.beatIndex===b;
-    const isDone=(isBeat&&b<S.beatIndex)||S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
-    if(isActive)d.classList.add('active');
-    if(isDone)d.classList.add('done');
-    d.setAttribute('role','img');
-    d.setAttribute('aria-label',phaseNames[b]+' phase'+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
+    if(isBeat&&S.beatIndex===b)d.classList.add('active');
+    if((isBeat&&b<S.beatIndex)||S.phase==='HARVEST'||S.phase==='REVIEW'||S.phase==='TRANSITION')d.classList.add('done');
     br.appendChild(d);
   });
   f.appendChild(br);
   f.appendChild(h('div','zone-label','Back rows \u2014 Trellis (climbers go here) \u2502 Front rows \u2014 Access (short crops)'));
 
   // Ch7 row objective
-  if(CAM&&CAM.mode==='campaign'&&S.chapter===7&&S.phase===PHASES.PLANNING){
+  if(CAM&&CAM.mode==='campaign'&&S.chapter===7&&S.phase==='PLANNING'){
     const rootCount=S.grid.filter((c,i)=>rc(i).row===3&&c.cropId&&C[c.cropId]&&C[c.cropId].faction==='roots').length;
     const ro=h('div','row-objective','Row Objective: Front row (row 3) must be 100% Roots \u2014 '+rootCount+'/8');
     f.appendChild(ro);
   }
 
   // Ch11 harvest checklist
-  if(CAM&&CAM.mode==='campaign'&&S.chapter===11&&S.phase===PHASES.PLANNING){
+  if(CAM&&CAM.mode==='campaign'&&S.chapter===11&&S.phase==='PLANNING'){
     const cl=h('div','harvest-checklist');
     cl.appendChild(h('h3',null,'Harvest Checklist'));
     const planted=new Set(S.grid.filter(c=>c&&c.cropId).map(c=>c.cropId));
@@ -1715,8 +1298,7 @@ function renderBoard(){
     f.appendChild(cl);
   }
 
-  const preview=S.phase===PHASES.PLANNING?bedScore(S.grid,S.season):null;
-  S._cachedBedScore=preview;
+  const preview=S.phase==='PLANNING'?bedScore(S.grid,S.season):null;
   const gd=h('div','grid');
   gd.setAttribute('role','grid');
   gd.setAttribute('aria-label','8 by 4 raised bed');
@@ -1733,51 +1315,24 @@ function renderBoard(){
     if(cell.interventionFlag==='protected')d.classList.add('protected-cell');
     if(cell.interventionFlag==='mulched')d.classList.add('mulched-cell');
     if(S.interventionMode==='swap'&&S.swapFirstCell===i)d.classList.add('swap-highlight');
-    // Companion overlay: highlight cells with companion/conflict adjacency
-    if(S.phase===PHASES.PLANNING&&cell.cropId&&C[cell.cropId]&&gridView==='score'){
-      const crop=C[cell.cropId];let hasBuff=false,hasConflict=false;
-      for(const ni of nbs(i)){const nc=S.grid[ni];if(!nc||!nc.cropId)continue;if(crop.companions.includes(nc.cropId))hasBuff=true;if(crop.conflicts.includes(nc.cropId))hasConflict=true}
-      if(hasConflict)d.style.outline='2px solid var(--danger)';
-      else if(hasBuff)d.style.outline='2px solid var(--char-onion)';
-    }
     d.tabIndex=(S.selectedCell===i||(S.selectedCell===null&&i===0))?0:-1;
     let ariaLabel='Row '+row+', Column '+col+', '+zone+' zone';
     if(cell.cropId&&C[cell.cropId]){
       const cr=C[cell.cropId];
       d.classList.add('has-crop');
-      // View overlay tints
-      if(S.phase===PHASES.PLANNING&&gridView==='sun'){
-        const sl=cr.sunIdeal>=7?'high':cr.sunIdeal>=5?'mid':'low';
-        d.classList.add('view-sun-'+sl);
-      }else if(S.phase===PHASES.PLANNING&&gridView==='water'){
-        const wl=cr.water>=3?'high':cr.water>=2?'mid':'low';
-        d.classList.add('view-water-'+wl);
-      }
       d.appendChild(h('span','emoji',cr.emoji));
       d.appendChild(h('span','short',cr.short));
       ariaLabel+=', '+cr.name+' planted';
       const src=S.harvestResult||preview;
       if(src){const cs=src.cellScores.find(s=>s.index===i);if(cs){
-        const indicator=cs.finalScore>=7?'\u2713':cs.finalScore>=4.5?'~':'!';
-        const pip=h('span','score-pip',indicator+cs.finalScore.toFixed(1));
+        const pip=h('span','score-pip',cs.finalScore.toFixed(1));
         if(cs.finalScore>=7){pip.classList.add('pip-good');d.classList.add('score-good')}
         else if(cs.finalScore>=5){pip.classList.add('pip-warn');d.classList.add('score-warn')}
         else{pip.classList.add('pip-hard');d.classList.add('score-hard')}
         d.appendChild(pip);
-        // mini-bar score indicator
-        const bar=h('span','score-bar');
-        bar.style.background=cs.finalScore>=7?'var(--leaf-bright)':cs.finalScore>=5?'var(--sun)':'var(--danger)';
-        bar.style.width=Math.min(100,cs.finalScore*10)+'%';
-        d.appendChild(bar);
         ariaLabel+=', score '+cs.finalScore.toFixed(1);
       }}
-    }else{
-      ariaLabel+=', empty';
-      // hover preview ghost during planning
-      if(S.phase===PHASES.PLANNING&&S.selectedCrop&&C[S.selectedCrop]){
-        d.setAttribute('data-preview',C[S.selectedCrop].emoji);
-      }
-    }
+    }else{ariaLabel+=', empty'}
     d.setAttribute('aria-label',ariaLabel);
     d.onclick=()=>cellClick(i);
     gd.appendChild(d);
@@ -1787,34 +1342,15 @@ function renderBoard(){
   // Toolbar
   const tb=h('div','toolbar');
   const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
-  if(S.phase===PHASES.PLANNING){
+  if(S.phase==='PLANNING'){
     const cb=h('button','btn primary','Commit Layout');cb.disabled=countPlanted(S.grid)<minPlanted;cb.onclick=showCommitConfirm;tb.appendChild(cb);
-    const clr=h('button','btn','Clear');clr.onclick=()=>{undoStack=[];S.grid=mkGrid();save();render()};tb.appendChild(clr);
+    const clr=h('button','btn','Clear');clr.onclick=()=>{S.grid=mkGrid();render()};tb.appendChild(clr);
     tb.appendChild(h('span','chip',countPlanted(S.grid)+'/32'+(S.chapter===10?' (all required)':'')));
-    // View toggle (Score / Sun / Water)
-    const vg=h('span','');vg.style.cssText='display:flex;gap:3px;margin-left:auto';
-    ['score','sun','water'].forEach(v=>{
-      const vb=h('button','view-toggle'+(gridView===v?' active':''),v[0].toUpperCase()+v.slice(1));
-      vb.setAttribute('aria-pressed',gridView===v?'true':'false');
-      vb.onclick=()=>{gridView=v;render()};
-      vg.appendChild(vb);
-    });
-    tb.appendChild(vg);
   }
   if(BEAT_PHASES.includes(S.phase)){
-    // Action indicator
-    const ai=h('div','action-indicator '+(S.beatTokenAvailable&&S.currentEvent?'available':'used'));
-    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve this phase':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
-    tb.appendChild(ai);
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
-      const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept Loss'};
-      const descs={swap:'Swap two crops on the grid',prune:'Prune a crop to reduce damage',protect:'Shield a cell from the event',mulch:'Add mulch to protect soil',companion_patch:'Patch a companion planting',accept_loss:'Accept the event damage and resolve this phase'};
-      for(const it of S.currentEvent.io){
-        const b=h('button',it==='accept_loss'?'btn danger':'btn',labels[it]||it);
-        b.setAttribute('aria-label',descs[it]||labels[it]||it);
-        b.onclick=()=>startIntervention(it);
-        tb.appendChild(b);
-      }
+      const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept'};
+      for(const it of S.currentEvent.io){const b=h('button','btn',labels[it]||it);b.onclick=()=>startIntervention(it);tb.appendChild(b)}
     }
     if(S.interventionMode){
       const cb=h('button','btn danger','Cancel (Esc)');cb.onclick=()=>{S.interventionMode=null;S.swapFirstCell=null;render()};tb.appendChild(cb);
@@ -1824,10 +1360,10 @@ function renderBoard(){
       const ab=h('button','btn primary',S.beatIndex>=2?'Harvest (R)':'Advance (R)');ab.onclick=advanceBeat;tb.appendChild(ab);
     }
   }
-  if(S.phase===PHASES.HARVEST){
+  if(S.phase==='HARVEST'){
     const b=h('button','btn primary','View Review');
     b.onclick=()=>{
-      S.phase=PHASES.HARVEST_REVIEW;save();
+      S.phase='REVIEW';save();
       // Check for sauce sequence in ch11
       if(CAM&&CAM.mode==='campaign'&&S.chapter===11){
         handleChapter11Harvest();
@@ -1837,7 +1373,7 @@ function renderBoard(){
     };
     tb.appendChild(b);
   }
-  if(S.phase===PHASES.HARVEST_REVIEW){
+  if(S.phase==='REVIEW'){
     if(CAM&&CAM.mode==='campaign'){
       const b=h('button','btn primary','Complete Chapter');
       b.onclick=completeChapter;
@@ -1856,129 +1392,14 @@ function renderBoard(){
 
 function statusText(){
   const p=S.phase;
-  if(p===PHASES.PLANNING)return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
+  if(p==='PLANNING')return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
   if(BEAT_PHASES.includes(p)){const bn=['Early','Mid','Late'][S.beatIndex];
-    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose a response or press Accept Loss to resolve the event.';
+    if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose intervention or accept.';
     if(S.currentEvent)return bn+': Event resolved. Advance when ready.';
     return bn+': No event. Advance when ready.';}
-  if(p===PHASES.HARVEST)return'Harvest complete.';
-  if(p===PHASES.HARVEST_REVIEW)return'Harvest review summary.';
-  if(p===PHASES.WINTER_REVIEW)return'Winter review.';
+  if(p==='HARVEST')return'Harvest complete.';
+  if(p==='REVIEW')return'Season summary.';
   return'';
-}
-function objectiveMeta(){
-  if(!S) return { kicker:'Garden OS', title:'Start a season', note:'Choose a chapter or continue the current run.' };
-  if(CAM&&CAM.mode==='menu') return { kicker:'Menu', title:'Choose a chapter', note:'Free Play and campaign both resume from here.' };
-  const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
-  if(S.phase===PHASES.PLANNING){
-    return {
-      kicker:'Plan',
-      title:'Lock a layout that can survive the season',
-      note:`${countPlanted(S.grid)}/${minPlanted} planted. Trellis rows belong in the back. Keep the front reachable.`,
-      actionLabel:'Commit Layout',
-      disabled:countPlanted(S.grid)<minPlanted,
-      action:showCommitConfirm
-    };
-  }
-  if(BEAT_PHASES.includes(S.phase)){
-    if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
-      const consequence=describeEventConsequence(S.currentEvent,S);
-      return {
-        kicker:'Respond',
-        title:'Resolve the event before you advance',
-        note:'Choose one response in the toolbar, or use Accept Loss if you want the event to land and move on. '+consequence,
-        actionLabel:'Accept Loss',
-        action:doAcceptLoss
-      };
-    }
-    return {
-      kicker:'Advance',
-      title:S.beatIndex>=2?'Harvest this season':'Move to the next phase',
-      note:statusText(),
-      actionLabel:S.beatIndex>=2?'Harvest':'Advance',
-      action:advanceBeat
-    };
-  }
-  if(S.phase===PHASES.HARVEST){
-    return {
-      kicker:'Harvest',
-      title:'Review the final score for this season',
-      note:'The bed is locked. Move into review to see yield, factors, and chapter outcome.',
-      actionLabel:'View Review',
-      action:()=>{
-        S.phase=PHASES.HARVEST_REVIEW;save();
-        if(CAM&&CAM.mode==='campaign'&&S.chapter===11){handleChapter11Harvest();return;}
-        render();
-      }
-    };
-  }
-  if(S.phase===PHASES.HARVEST_REVIEW){
-    return {
-      kicker:'Harvest Review',
-      title:'Carry this season forward',
-      note:'Complete the chapter or continue into the next chapter state.',
-      actionLabel:CAM&&CAM.mode==='campaign'?'Complete Chapter':'Continue',
-      action:CAM&&CAM.mode==='campaign'?completeChapter:doTransition
-    };
-  }
-  if(S.phase===PHASES.WINTER_REVIEW){
-    return {
-      kicker:'Winter Review',
-      title:'Review carry-forward state before the next growing chapter',
-      note:'Winter chapters are review-only states. Use the winter review screen to inspect memory, journal, and progression.',
-    };
-  }
-  return { kicker:'Season', title:'Stay with the current objective', note:statusText() };
-}
-
-function describeEventConsequence(event,state){
-  if(!event||!event.me) return 'No event consequence is available.';
-  const mod=Number(event.me.mod)||0;
-  const dir=mod<0?'Penalty':'Buff';
-  const dur=event.me.dur==='season'?'season long':event.me.dur==='carry'?'carry forward':'this phase';
-  const max=event.me.tgt&&Number.isFinite(event.me.tgt.max)?event.me.tgt.max:null;
-  const scope=max?`up to ${max} target cells`:'all matching targets';
-  return `${dir} ${mod>=0?'+':''}${mod.toFixed(1)} on ${scope} for ${dur}.`;
-}
-
-function latestEventOutcome(){
-  if(!S||!Array.isArray(S.eventLog)||!S.eventLog.length) return null;
-  const entry=S.eventLog[S.eventLog.length-1];
-  const event=ED.find(e=>e.id===entry.eventId)||null;
-  return { entry, event };
-}
-
-function renderObjectiveStrip(){
-  if(!el.objective) return;
-  const meta=objectiveMeta();
-  el.objective.innerHTML='';
-  const copy=h('div','objective-copy');
-  copy.appendChild(h('div','objective-kicker',meta.kicker));
-  copy.appendChild(h('div','objective-title',meta.title));
-  copy.appendChild(h('div','objective-note',meta.note||''));
-  el.objective.appendChild(copy);
-  const actions=h('div','objective-actions');
-  if(meta.actionLabel&&typeof meta.action==='function'){
-    const btn=h('button','btn primary objective-btn',meta.actionLabel);
-    if(meta.disabled) btn.disabled=true;
-    btn.onclick=meta.action;
-    actions.appendChild(btn);
-  }
-  const help=h('button','btn objective-btn','How to Play');
-  help.onclick=renderHowToOverlay;
-  actions.appendChild(help);
-  el.objective.appendChild(actions);
-}
-if(el.gameMenuBtn) el.gameMenuBtn.onclick=()=>toggleGameMenu(true);
-if(el.gameMenuOverlay) el.gameMenuOverlay.onclick=()=>closeGameMenu();
-if($('gameMenuPlanner')) $('gameMenuPlanner').onclick=()=>{location.href='garden-planner-v4.html'};
-if($('gameMenuHome')) $('gameMenuHome').onclick=()=>{location.href='home.html'};
-if($('gameMenuHub')) $('gameMenuHub').onclick=()=>{location.href='index.html'};
-if($('gameMenuHowTo')) $('gameMenuHowTo').onclick=()=>{closeGameMenu();showHowToOverlay(howToSection||'quickstart')};
-if($('gameMenuHowItThinks')) $('gameMenuHowItThinks').onclick=()=>{window.open('how-it-thinks.html','_blank')};
-if($('gameMenuRestart')) $('gameMenuRestart').onclick=()=>{
-  closeGameMenu();
-  if(S) startChapter(S.chapter||1);
 }
 
 /* ===== RENDER: RIGHT ===== */
@@ -1986,7 +1407,7 @@ function renderRes(){
   if(CAM&&(CAM.mode==='menu'||CAM.mode==='chapter_start'||CAM.mode==='chapter_end'||CAM.mode==='sauce_sequence'||CAM.mode==='epilogue'||CAM.mode==='winter_review'))return;
 
   const f=document.createDocumentFragment();
-  const sd=safeScore();
+  const sd=S.harvestResult||bedScore(S.grid,S.season);
 
   // Score with SVG ring gauge
   const ringWrap=h('div','score-ring-wrap');
@@ -2000,9 +1421,9 @@ function renderRes(){
   fill.setAttribute('class','ring-fill');fill.setAttribute('cx','50');fill.setAttribute('cy','50');fill.setAttribute('r','42');
   fill.id='scoreArc';
   const circ=2*Math.PI*42;const ratio=sd.finalScore/100;const offset=circ*(1-ratio);
-  if(sd.finalScore>=70)fill.style.stroke='var(--leaf-bright)';
-  else if(sd.finalScore>=50)fill.style.stroke='var(--sun)';
-  else fill.style.stroke='var(--danger)';
+  if(sd.finalScore>=70)fill.style.stroke='var(--sem-good)';
+  else if(sd.finalScore>=50)fill.style.stroke='var(--sem-warn)';
+  else fill.style.stroke='var(--sem-hard)';
   svg.appendChild(track);svg.appendChild(fill);ring.appendChild(svg);
   const scoreNum=h('span','score-value',sd.finalScore.toFixed(1));
   ring.appendChild(scoreNum);
@@ -2012,22 +1433,6 @@ function renderRes(){
   // Animate ring fill after render
   requestAnimationFrame(()=>requestAnimationFrame(()=>{fill.style.strokeDashoffset=offset}));
 
-  // Narrator Area — prominent placement right below score
-  f.appendChild(_buildNarratorArea());
-
-  // Weakest-factor callout
-  if(sd.factorSummary){
-    const fnames={sun:'Sun Fit',support:'Support',shade:'Shade',access:'Access',season:'Season Fit',adjacency:'Adjacency'};
-    let worstK='sun',worstV=99;
-    for(const[k,v]of Object.entries(sd.factorSummary)){if(v<worstV){worstV=v;worstK=k}}
-    if(worstV<3.5){
-      const tip=h('div','status-bar');
-      tip.style.color='var(--danger)';
-      tip.textContent='\u26A0\uFE0F '+(fnames[worstK]||worstK)+' ('+worstV.toFixed(1)+') is the weakest factor. Improving it will have the biggest score impact.';
-      f.appendChild(tip);
-    }
-  }
-
   // Chapter score target
   if(CAM&&CAM.mode==='campaign'){
     const meta=CHAPTERS[S.chapter];
@@ -2036,34 +1441,25 @@ function renderRes(){
     }
   }
 
-  // Factors with animated fill + tooltips
+  // Factors with animated fill
   const fnames=[['sun','Sun(x2)'],['support','Support'],['shade','Shade'],['access','Access'],['season','Season'],['adjacency','Adj']];
-  const ftips={sun:'Does this cell get enough direct sunlight for the crop?',support:'Is the crop placed where trellis wire exists?',shade:'Can this crop tolerate the shade in this location?',access:'Is the crop easy to reach and maintain here?',season:'Does the crop match the current growing season?',adjacency:'Do neighboring crops help or hurt this placement?'};
   const factorFills=[];
   for(const[k,label]of fnames){
     const bar=h('div','factor-bar');
     bar.setAttribute('aria-label',label+': '+(sd.factorSummary[k]||0).toFixed(1)+' out of 5');
-    const lbl=h('span','label',label);
-    lbl.title=ftips[k]||'';
-    lbl.style.cursor='help';
-    bar.appendChild(lbl);
+    bar.appendChild(h('span','label',label));
     const track=h('span','track');track.setAttribute('role','progressbar');
     track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','5');
     track.setAttribute('aria-valuenow',(sd.factorSummary[k]||0).toFixed(1));
     const fill=h('span','fill');
     const v=sd.factorSummary[k]||0;
     fill.dataset.target=(v/5*100);
-    fill.style.background=v>=3.5?'var(--leaf-bright)':v>=2.5?'var(--sun)':'var(--danger)';
+    fill.style.background=v>=3.5?'var(--sem-good)':v>=2.5?'var(--sem-warn)':'var(--sem-hard)';
     factorFills.push(fill);
     track.appendChild(fill);bar.appendChild(track);
     bar.appendChild(h('span','val',v.toFixed(1)));
     f.appendChild(bar);
   }
-  // Scoring explanation link
-  const scoreLink=h('a','','How scoring works \u2192');
-  scoreLink.href='how-it-thinks.html';
-  scoreLink.style.cssText='font-family:var(--ff-mono);font-size:var(--type-label);color:var(--char-gurl);text-decoration:none;display:block;padding:4px 0;opacity:0.7';
-  f.appendChild(scoreLink);
 
   // Event card
   if(S.currentEvent&&BEAT_PHASES.includes(S.phase)){
@@ -2079,99 +1475,36 @@ function renderRes(){
     // Animate entry
     requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.remove('entering')));
   }
-  const latestOutcome=latestEventOutcome();
-  if(latestOutcome && (!S.currentEvent || !S.beatTokenAvailable)){
-    const { entry, event } = latestOutcome;
-    const summary=h('div','event-outcome');
-    const head=h('div','event-outcome-head');
-    head.appendChild(h('div','event-outcome-title',event?event.title:'Event resolved'));
-    head.appendChild(h('div','event-outcome-meta',(['Early','Mid','Late'][entry.beatIndex]||'Season')+' resolved'));
-    summary.appendChild(head);
-    const net=Number(entry.netModifier)||0;
-    const affected=Array.isArray(entry.affectedCells)?entry.affectedCells.length:0;
-    const outcomeCopy=entry.wasInterventionUsed
-      ? `Intervention used. ${affected} cell${affected===1?'':'s'} changed before the phase resolved.`
-      : `No intervention blocked the event. ${affected} cell${affected===1?'':'s'} absorbed the full hit.`;
-    summary.appendChild(h('div','event-outcome-copy',outcomeCopy));
-    const impact=h('div','event-outcome-impact');
-    impact.appendChild(h('span','event-impact-chip','Cells '+affected));
-    impact.appendChild(h('span','event-impact-chip','Net '+(net>=0?'+':'')+net.toFixed(1)));
-    impact.appendChild(h('span','event-impact-chip',entry.wasInterventionUsed?'Intervention used':'Accept Loss or no response'));
-    summary.appendChild(impact);
-    f.appendChild(summary);
-  }
 
-  // Yield / Harvest Timeline
+  // Yield
   if(sd.yieldList.length){
-    f.appendChild(h('h3',null,'Harvest Timeline'));
-    const crops=sd.yieldList.map(cid=>C[cid]).filter(Boolean).sort((a,b)=>(a.sm[S.season]||0.5)-(b.sm[S.season]||0.5));
-    for(const cr of crops){
-      const row=h('div','');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:var(--type-small);border-bottom:1px dotted var(--border)';
-      const name=h('span','',cr.emoji+' '+cr.name);
-      name.style.cssText='font-family:var(--ff-body);color:var(--text)';
-      const sm=cr.sm[S.season]||0.5;
-      const barWrap=h('span','');
-      barWrap.style.cssText='width:60px;height:4px;background:var(--cream-dark);border-radius:2px;overflow:hidden;display:inline-block;margin:0 8px';
-      const barFill=h('span','');
-      barFill.style.cssText='display:block;height:100%;border-radius:2px;width:'+Math.round(sm*100)+'%;background:'+(sm>=0.8?'var(--leaf-bright)':sm>=0.5?'var(--sun)':'var(--danger)');
-      barWrap.appendChild(barFill);
-      const val=h('span','',sm>=0.8?'Peak':sm>=0.5?'Fair':'Poor');
-      val.style.cssText='font-family:var(--ff-mono);font-size:var(--type-label);color:var(--text-muted);min-width:32px;text-align:right';
-      row.appendChild(name);row.appendChild(barWrap);row.appendChild(val);
-      f.appendChild(row);
-    }
+    f.appendChild(h('h3',null,'Yield'));
+    f.appendChild(h('div',null,sd.yieldList.map(c=>C[c]?C[c].name:c).join(', ')));
   }
-  // ── Utility accordion: collapsible secondary sections ──
   if(sd.recipeMatches.length){
-    f.appendChild(accSection('Recipes',[h('div',null,sd.recipeMatches.join(', '))],false));
+    f.appendChild(h('h3',null,'Recipes'));
+    f.appendChild(h('div',null,sd.recipeMatches.join(', ')));
   }
 
   // Event log
   if(S.eventLog.length){
-    const evItems=[];
+    f.appendChild(h('h3',null,'Events'));
     for(const en of S.eventLog){
       const ev=ED.find(e=>e.id===en.eventId);
-      evItems.push(h('div',null,(ev?ev.title:en.eventId)+' ('+['Early','Mid','Late'][en.beatIndex]+' phase) '+en.affectedCells.length+' cells'));
+      f.appendChild(h('div',null,(ev?ev.title:en.eventId)+' (Beat '+(en.beatIndex+1)+') '+en.affectedCells.length+' cells'));
     }
-    f.appendChild(accSection('Events ('+S.eventLog.length+')',evItems,true));
   }
   if(S.interventionLog.length){
-    const intItems=[];
-    for(const en of S.interventionLog) intItems.push(h('div',null,['Early','Mid','Late'][en.beatIndex]+' phase: '+en.type));
-    f.appendChild(accSection('Interventions ('+S.interventionLog.length+')',intItems,true));
+    f.appendChild(h('h3',null,'Interventions'));
+    for(const en of S.interventionLog)f.appendChild(h('div',null,'Beat '+(en.beatIndex+1)+': '+en.type));
   }
 
   // Pantry
   const pantry=S.carryForward.recipePantry;
-  if(pantry.length){
-    f.appendChild(accSection('Pantry',[h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', '))],true));
-  }
+  if(pantry.length){f.appendChild(h('h3',null,'Pantry'));f.appendChild(h('div',null,pantry.map(c=>C[c]?C[c].name:c).join(', ')))}
 
-
-
-  // History
-  const hist=loadH();
-  if(hist.length){
-    const histItems=[];
-    for(const en of hist.slice().reverse()){
-      const d=h('div','history-entry');
-      d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
-      d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
-      histItems.push(d);
-    }
-    f.appendChild(accSection('History ('+hist.length+')',histItems,true));
-  }
-  el.res.replaceChildren(f);
-
-  // Animate factor bar fills after DOM update
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const fills=el.res.querySelectorAll('.factor-bar .fill');
-    fills.forEach(f=>{if(f.dataset.target)f.style.width=f.dataset.target+'%'});
-  }));
-}
-
-function _buildNarratorArea(){
+  // Narrator Area
+  f.appendChild(h('h3',null,'Narrators'));
   const na=h('div','narrator-area');
   na.id='narratorArea';
   na.setAttribute('aria-live','polite');
@@ -2193,7 +1526,26 @@ function _buildNarratorArea(){
       na.appendChild(slot);
     }
   }
-  return na;
+  f.appendChild(na);
+
+  // History
+  const hist=loadH();
+  if(hist.length){
+    f.appendChild(h('h3',null,'History'));
+    for(const en of hist.slice().reverse()){
+      const d=h('div','history-entry');
+      d.appendChild(h('span',null,'Ch'+en.chapter+' '+en.season));
+      d.appendChild(h('span',null,en.finalScore.toFixed(1)+' '+en.grade));
+      f.appendChild(d);
+    }
+  }
+  el.res.replaceChildren(f);
+
+  // Animate factor bar fills after DOM update
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const fills=el.res.querySelectorAll('.factor-bar .fill');
+    fills.forEach(f=>{if(f.dataset.target)f.style.width=f.dataset.target+'%'});
+  }));
 }
 
 function renderNarratorArea(){
@@ -2225,7 +1577,6 @@ function renderChapterEnd(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
-  el.board.setAttribute('aria-label','Chapter end screen');
 
   const ch=CAM.currentChapter;
   const meta=CHAPTERS[ch];
@@ -2331,8 +1682,8 @@ function renderWinterReview(){
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter '+ch));
-  el.meta.appendChild(h('span','chip season-winter-pill','Year '+meta.year+' Winter'));
-  el.meta.appendChild(h('span','chip phase','WINTER REVIEW'));
+  el.meta.appendChild(h('span','chip','Year '+meta.year+' Winter'));
+  el.meta.appendChild(h('span','chip phase','REVIEW'));
 
   const f=document.createDocumentFragment();
   const card=h('div','chapter-card');
@@ -2463,7 +1814,6 @@ function handleChapter11Harvest(){
     CAM.sauceComplete=true;
     CAM.keepsakes.sauce_card={earnedCh:11,timestamp:Date.now()};
     CAM.mode='sauce_sequence';
-    if(DIALOGUE_DB.chapter_11_sauce_moment)setTimeout(()=>fireDialogue('chapter_11_sauce_moment'),500);
     saveCampaign();
     render();
   }else{
@@ -2488,7 +1838,6 @@ function renderSauceSequence(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
-  el.board.setAttribute('aria-label','Sauce recipe sequence');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 11'));
@@ -2518,7 +1867,6 @@ function renderSauceSequence(){
   card.appendChild(sr);
 
   // GURL line (appears after items)
-  const sauceMoment=DIALOGUE_DB.chapter_11_sauce_moment||{};
   const gurlSlot=h('div','narrator-slot char-gurl-slot');
   gurlSlot.id='sauce-gurl';
   const gh=h('div','char-head');
@@ -2526,7 +1874,7 @@ function renderSauceSequence(){
   const gnEl=h('span','char-name','GURL');gnEl.style.color='var(--char-gurl)';
   gh.appendChild(gnEl);
   gurlSlot.appendChild(gh);
-  gurlSlot.appendChild(h('div','char-line',(sauceMoment.gurl&&sauceMoment.gurl[0])||'Harvest inventory matches target recipe. Yield sufficient. Season objective complete.'));
+  gurlSlot.appendChild(h('div','char-line','Harvest inventory matches target recipe. Yield sufficient. Season objective complete.'));
   card.appendChild(gurlSlot);
 
   // Onion Man line (appears after GURL)
@@ -2537,7 +1885,7 @@ function renderSauceSequence(){
   const onEl=h('span','char-name','Onion Man');onEl.style.color='var(--char-onion)';
   oh.appendChild(onEl);
   onionSlot.appendChild(oh);
-  const sauceLine=h('div','char-line sauce-onion-line',(sauceMoment.onion&&sauceMoment.onion[0])||'Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying.');
+  const sauceLine=h('div','char-line sauce-onion-line','Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying.');
   onionSlot.appendChild(sauceLine);
   card.appendChild(onionSlot);
 
@@ -2604,7 +1952,6 @@ function renderEpilogue(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
-  el.board.setAttribute('aria-label','Epilogue');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 12'));
@@ -2676,14 +2023,13 @@ function renderEpilogue(){
   card.appendChild(sec4);
 
   // GURL final assessment
-  const epilogueMoment=DIALOGUE_DB.chapter_12_epilogue||{};
   const na=h('div','narrator-area');
   const gurlSlot=h('div','narrator-slot visible');
   const gh=h('div','char-head');
   gh.appendChild(h('span','char-emoji','\u{1F33F}'));
   gh.appendChild(h('span','char-name','GURL'));
   gurlSlot.appendChild(gh);
-  gurlSlot.appendChild(h('div','char-line',(epilogueMoment.gurl&&epilogueMoment.gurl[0])||'Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.'));
+  gurlSlot.appendChild(h('div','char-line','Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.'));
   na.appendChild(gurlSlot);
 
   // Onion Man final line
@@ -2692,10 +2038,9 @@ function renderEpilogue(){
   oh.appendChild(h('span','char-emoji','\u{1F9C5}'));
   oh.appendChild(h('span','char-name','Onion Man'));
   onionSlot.appendChild(oh);
-  const onionPool=epilogueMoment.onion||[];
   const onionLine=CAM.sauceComplete?
-    (onionPool[1]||onionPool[0]||'The bed is ready for next year, and so are you.'):
-    (onionPool[0]||'The bed is ready for next year.');
+    'The bed is ready for next year, and so are you.':
+    'The bed is ready for next year.';
   onionSlot.appendChild(h('div','char-line',onionLine));
   na.appendChild(onionSlot);
   card.appendChild(na);
@@ -2706,7 +2051,7 @@ function renderEpilogue(){
   const nb=h('button','btn primary','Continue to Free Play');
   nb.onclick=()=>{
     CAM.freePlayUnlocked=true;
-    if(!CAM.completedChapters.includes(12))CAM.completedChapters.push(12);
+    CAM.completedChapters.push(12);
     CAM.mode='menu';
     saveCampaign();
     render();
@@ -2739,7 +2084,7 @@ function showHowToOverlay(sectionId){
   if(sectionId)howToSection=sectionId;
   if(!HOWTO_SECTIONS.some(s=>s.id===howToSection))howToSection=HOWTO_SECTIONS[0].id;
   renderHowToOverlay();
-  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+  el.overlay.classList.add('active');
 }
 
 function renderHowToOverlay(){
@@ -2790,20 +2135,6 @@ function renderHowToOverlay(){
     card.appendChild(sk);
   }
   layout.appendChild(card);
-
-  // Learn More links
-  const lm=h('div','howto-card');
-  lm.style.marginTop='8px';
-  lm.appendChild(h('h3',null,'Learn More'));
-  const ll=h('ul','howto-list');
-  [['how-it-thinks.html','How Garden OS evaluates placements'],['scoring-visualizer.html','Scoring visualizer'],['garden-cage-build-guide.html','Cage build guide'],['garden-cage-ops-guide.html','Cage operations guide']].forEach(([href,text])=>{
-    const li=h('li','');
-    const a=h('a','',text);a.href=href;a.style.cssText='color:var(--char-gurl);text-decoration:none';
-    li.appendChild(a);ll.appendChild(li);
-  });
-  lm.appendChild(ll);
-  layout.appendChild(lm);
-
   el.cbox.appendChild(layout);
 
   const btns=h('div','btns');
@@ -2853,7 +2184,7 @@ function showJournalOverlay(){
   cb.onclick=()=>el.overlay.classList.remove('active');
   btns.appendChild(cb);
   el.cbox.appendChild(btns);
-  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+  el.overlay.classList.add('active');
 }
 
 /* ===== MAIN RENDER ===== */
@@ -2883,38 +2214,21 @@ function render(){
   }else{
     el.meta.appendChild(h('span','chip','Ch '+ch+(chMeta?' "'+chMeta.name+'"':'')));
   }
-  el.meta.appendChild(h('span','chip season-'+S.season+'-pill',S.season[0].toUpperCase()+S.season.slice(1)));
+  el.meta.appendChild(h('span','chip',S.season[0].toUpperCase()+S.season.slice(1)));
   el.meta.appendChild(h('span','chip phase',S.phase.replace(/_/g,' ')));
-  renderObjectiveStrip();
   renderCtrl();renderBoard();renderRes();
 }
 
-/* ===== UNDO STACK (planning phase only) ===== */
-const UNDO_MAX=20;
-let undoStack=[];
-function pushUndo(){if(S&&S.phase===PHASES.PLANNING){undoStack.push(S.grid.map(c=>c.cropId));if(undoStack.length>UNDO_MAX)undoStack.shift()}}
-function doUndo(){if(!S||S.phase!==PHASES.PLANNING||!undoStack.length)return;const prev=undoStack.pop();for(let i=0;i<SIZE;i++)S.grid[i].cropId=prev[i]||null;S._cachedBedScore=null;save();render()}
-
 /* ===== CELL CLICK ===== */
 function cellClick(i){
-  S._cachedBedScore=null;
   if(S.interventionMode){execIntervention(i);return}
-  if(S.phase===PHASES.PLANNING){
+  if(S.phase==='PLANNING'){
     const prevCropId=S.grid[i].cropId;
-    let changed=false;
     if(S.eraserMode){
-      if(prevCropId){
-        pushUndo();
-        S.grid[i].cropId=null;
-        changed=true;
-      }
+      S.grid[i].cropId=null;
     }else if(S.selectedCrop){
-      if(prevCropId!==S.selectedCrop){
-        pushUndo();
-        S.grid[i].cropId=S.selectedCrop;
-        changed=true;
-      }
-      if(changed&&CAM){
+      S.grid[i].cropId=S.selectedCrop;
+      if(CAM){
         CAM.placementCount++;
         // Trigger dialogue
         const trigger=determinePlacementTrigger(i,S.selectedCrop);
@@ -2932,9 +2246,7 @@ function cellClick(i){
         saveCampaign();
       }
     }
-    S.selectedCell=i;
-    if(!changed){ render(); return; }
-    save();render();
+    S.selectedCell=i;save();render();
     // Plant bounce animation
     if(S.selectedCrop&&!S.eraserMode){
       const grid=el.board.querySelector('.grid');
@@ -2965,21 +2277,19 @@ function showCommitConfirm(){
   const cancel=h('button','btn','Cancel');cancel.onclick=()=>el.overlay.classList.remove('active');
   const confirm=h('button','btn primary','Confirm');confirm.onclick=()=>{el.overlay.classList.remove('active');doCommit()};
   btns.appendChild(cancel);btns.appendChild(confirm);el.cbox.appendChild(btns);
-  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+  el.overlay.classList.add('active');
 }
 
 function doCommit(){
-  clearTransientState();
   for(const c of S.grid)c.locked=true;
-  S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];
-  S.phase=PHASES.EARLY_SEASON;
+  S.committedGrid=dc(S.grid);S.drawnEventIds=[];S.beatIndex=0;S.eventLog=[];S.interventionLog=[];S.eventAffectedCells=[];
+  S.phase='EARLY_SEASON';
   startBeat();save();render();
 }
 
 /* ===== BEAT ===== */
 function startBeat(){
   S.beatTokenAvailable=true;S.interventionMode=null;S.swapFirstCell=null;
-  // Mulch is intentionally persistent: it carries through the season and into carry-forward infrastructure.
   for(const c of S.grid)if(c.interventionFlag==='protected'||c.interventionFlag==='companion_patched')c.interventionFlag=null;
 
   // Events only fire in Ch6+ for campaign (or always in freeplay)
@@ -3021,40 +2331,22 @@ function startBeat(){
   }
 }
 
-function hasLoggedCurrentEventForBeat(){
-  return !!(S&&S.currentEvent&&S.eventLog.some(en=>en.eventId===S.currentEvent.id&&en.beatIndex===S.beatIndex));
-}
-
-function hasPendingBeatDecision(){
-  return !!(S && BEAT_PHASES.includes(S.phase) && S.currentEvent && S.beatTokenAvailable);
-}
-
 function advanceBeat(){
-  if(hasPendingBeatDecision()) return false;
-  if(S.currentEvent&&!hasLoggedCurrentEventForBeat()){
+  if(S.beatTokenAvailable&&S.currentEvent)doAcceptLoss();
+  if(S.currentEvent&&!S.eventAffectedCells.length){
     const aff=applyEvent(S.currentEvent,S.grid);
     S.eventAffectedCells=aff;
     S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
-    // Keepsake: first_frost_marker on surviving a frost event
-    if(CAM&&!CAM.keepsakes.first_frost_marker&&S.currentEvent.title&&/frost|freeze/i.test(S.currentEvent.title)){
-      CAM.keepsakes.first_frost_marker={earnedCh:S.chapter,timestamp:Date.now()};saveCampaign();
-    }
   }
   S.beatTokenAvailable=false;S.currentEvent=null;S.eventAffectedCells=[];
   if(S.beatIndex<2){S.beatIndex++;S.phase=BEAT_PHASES[S.beatIndex];startBeat()}
   else{
-    clearTransientState();
-    S.phase=PHASES.HARVEST;S.harvestResult=bedScore(S.grid,S.season);
+    S.phase='HARVEST';S.harvestResult=bedScore(S.grid,S.season);
     // Fire score dialogue
     if(CAM){
       const avg=S.harvestResult.bedAverage;
       const scoreTrigger=avg>=8?'simulation_score_high':avg>=5.5?'simulation_score_mid':'simulation_score_low';
       setTimeout(()=>fireDialogue(scoreTrigger),500);
-
-      // Keepsake: onion_scorecard on first perfect adjacency
-      if(!CAM.keepsakes.onion_scorecard&&S.harvestResult.cellScores.some(cs=>{const f=cs.factors;return f&&(f.adjacency-2.5)>=1.5})){
-        CAM.keepsakes.onion_scorecard={earnedCh:S.chapter,timestamp:Date.now()};saveCampaign();
-      }
 
       // Check for hard violations
       const hasViolation=S.grid.some(c=>{
@@ -3066,10 +2358,6 @@ function advanceBeat(){
         setTimeout(()=>fireDialogue('simulation_hard_violation'),1800);
       }
 
-      // Harvest yield dialogue
-      if(avg>=7.5)setTimeout(()=>fireDialogue('harvest_good_yield'),1200);
-      else if(avg<4.0)setTimeout(()=>fireDialogue('harvest_poor_yield'),1200);
-
       // Mom memory (Ch3-11, once per chapter, at harvest)
       const ch=S.chapter;
       if(ch>=3&&ch<=11&&DIALOGUE_DB.mom_memory){
@@ -3078,7 +2366,6 @@ function advanceBeat(){
     }
   }
   save();render();
-  return true;
 }
 
 /* ===== INTERVENTION ===== */
@@ -3095,7 +2382,6 @@ function doAcceptLoss(){
     const aff=applyEvent(S.currentEvent,S.grid);S.eventAffectedCells=aff;
     S.eventLog.push({eventId:S.currentEvent.id,beatIndex:S.beatIndex,affectedCells:aff,netModifier:S.currentEvent.me.mod*aff.length,wasInterventionUsed:false});
   }
-  S.currentEvent=null;
   // Fire intervention_skipped dialogue
   if(CAM)setTimeout(()=>fireDialogue('intervention_skipped'),400);
   S.interventionMode=null;save();render();
@@ -3114,7 +2400,6 @@ function execIntervention(i){
     if(!nbs(fi).includes(i)){S.swapFirstCell=null;render();return}
     const fc=S.grid[fi];if(!fc.cropId){S.swapFirstCell=null;render();return}
     const tmp=fc.cropId;fc.cropId=cell.cropId;cell.cropId=tmp;
-    const tmpMod=fc.eventModifier;fc.eventModifier=cell.eventModifier;cell.eventModifier=tmpMod;
     S.swapFirstCell=null;finishInt([{row:fc.row,col:fc.col},{row:cell.row,col:cell.col}]);
   }
 }
@@ -3159,11 +2444,6 @@ function completeChapter(){
     }
   }
 
-  // Keepsake: block_party_plate on completing all 4 recipes
-  if(!CAM.keepsakes.block_party_plate&&CAM.recipesCompleted.length>=RECIPE_LADDER.length){
-    CAM.keepsakes.block_party_plate={earnedCh:ch,timestamp:Date.now()};
-  }
-
   // Journal entry
   const narratorHighlight=CAM.lastNarratorLines.gurl||CAM.lastNarratorLines.onion||'';
   CAM.journal[ch]={
@@ -3180,7 +2460,35 @@ function completeChapter(){
   saveH(hist);
 
   // Carry forward
-  const cf=buildCarryForward(S,S.carryForward||mkCF());
+  const cf=S.carryForward||mkCF();
+  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
+  cf.seasonHistory.push({chapter:ch,season:S.season,finalScore:score,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
+  // Soil fatigue
+  const nfm={};const nff={};
+  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
+    const prev=cf.soilFatigueMap[k]||0;
+    const prevFam=cf.lastFamilyMap[k]||null;
+    if(!c.cropId){nfm[k]=0;continue}
+    const fam=C[c.cropId]?C[c.cropId].faction:null;
+    if(fam)nff[k]=fam;
+    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
+    if(HEAVY.includes(c.cropId)){
+      if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);
+      else nfm[k]=-.3;
+    }else nfm[k]=prev<0?prev:0;
+  }
+  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
+  // Infrastructure
+  cf.infrastructureMap={};
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
+  }
+  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
+  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
+  for(const en of S.eventLog){
+    const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:ch,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1});
+  }
 
   // Prepare next season state
   if(ch<12){
@@ -3200,14 +2508,32 @@ function completeChapter(){
 
 /* ===== TRANSITION (free play) ===== */
 function doTransition(){
-  const cf=buildCarryForward(S,S.carryForward||mkCF());
+  const cf=S.carryForward||mkCF();
+  if(S.harvestResult){const ps=new Set(cf.recipePantry);for(const c of(S.harvestResult.yieldList||[]))ps.add(c);cf.recipePantry=[...ps]}
+  cf.seasonHistory.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F',yieldList:S.harvestResult?S.harvestResult.yieldList:[],eventsDrawn:S.drawnEventIds,interventionsUsed:S.interventionLog.filter(l=>l.type!=='accept_loss').length});
   const hist=loadH();hist.push({chapter:S.chapter,season:S.season,finalScore:S.harvestResult?S.harvestResult.finalScore:0,grade:S.harvestResult?S.harvestResult.grade:'F'});saveH(hist);
+  const nfm={};const nff={};
+  for(let i=0;i<SIZE;i++){const c=S.grid[i];const k=c.row+','+c.col;
+    const prev=cf.soilFatigueMap[k]||0;const prevFam=cf.lastFamilyMap[k]||null;
+    if(!c.cropId){nfm[k]=0;continue}
+    const fam=C[c.cropId]?C[c.cropId].faction:null;if(fam)nff[k]=fam;
+    if(prevFam&&fam&&prevFam!==fam){nfm[k]=0;continue}
+    if(HEAVY.includes(c.cropId)){if(prev<0&&prevFam===fam)nfm[k]=Math.max(-1.5,prev-.3);else nfm[k]=-.3}else nfm[k]=prev<0?prev:0;
+  }
+  cf.soilFatigueMap=nfm;cf.lastFamilyMap=nff;
+  cf.infrastructureMap={};
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);
+    if(ev&&ev.cf&&ev.cf.eff&&ev.cf.eff!=='narrative_flag')for(const idx of en.affectedCells){const c=S.grid[idx];const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push(ev.cf.eff)}
+  }
+  for(const c of S.grid)if(c.interventionFlag==='mulched'){const k=c.row+','+c.col;if(!cf.infrastructureMap[k])cf.infrastructureMap[k]=[];cf.infrastructureMap[k].push('mulched')}
+  if(!Array.isArray(cf.eventMemory))cf.eventMemory=[];
+  for(const en of S.eventLog){const ev=ED.find(e=>e.id===en.eventId);if(ev&&ev.cf)cf.eventMemory.push({eventId:ev.id,chapter:S.chapter,effectType:ev.cf.eff==='narrative_flag'?'narrative_flag':'infrastructure',modifier:ev.me.mod,affectedCells:en.affectedCells.map(idx=>{const c=S.grid[idx];return c?{row:c.row,col:c.col}:null}).filter(Boolean),expiresAfter:ev.cf.eff==='narrative_flag'?0:1})}
   const next=S.chapter+1;
   if(next>12){
     // Free play wraps back to ch1 season cycle
     S=mkSeason(1,cf);S.chapter=99;
   }else if(isWinter(next)){
-    S=mkSeason(next,cf);S.phase=PHASES.WINTER_REVIEW;
+    S=mkSeason(next,cf);S.phase='REVIEW';
     S.harvestResult={cellScores:[],bedAverage:0,finalScore:0,grade:'-',yieldList:[],recipeMatches:[],factorSummary:{sun:0,support:0,shade:0,access:0,season:0,adjacency:0}};
   }else{
     S=mkSeason(next,cf);
@@ -3230,25 +2556,8 @@ document.addEventListener('keydown',e=>{
     }
     return;
   }
-  if(el.gameMenuPanel && el.gameMenuPanel.hasAttribute('data-open')){
-    if(e.key==='Escape'){closeGameMenu();return}
-    if(e.key==='Tab'){
-      const focusable=el.gameMenuPanel.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])');
-      if(focusable.length){
-        const first=focusable[0],last=focusable[focusable.length-1];
-        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
-        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
-      }
-    }
-    return;
-  }
   const t=e.target.tagName;
   const inField=t==='INPUT'||t==='SELECT'||t==='TEXTAREA';
-  if(!inField&&(e.key==='m'||e.key==='M')){
-    e.preventDefault();
-    toggleGameMenu(true);
-    return;
-  }
   if(!inField&&(e.key==='h'||e.key==='H'||e.key==='?'||(e.key==='/'&&e.shiftKey))){
     e.preventDefault();
     showHowToOverlay(howToSection||'quickstart');
@@ -3256,10 +2565,9 @@ document.addEventListener('keydown',e=>{
   }
   if(inField)return;
   if(!S)return;
-  if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo();return}
-  if(e.key==='e'||e.key==='E'){if(S.phase===PHASES.PLANNING){toggleEraserTool();render()}}
+  if(e.key==='e'||e.key==='E'){if(S.phase==='PLANNING'){S.eraserMode=!S.eraserMode;S.selectedCrop=null;render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
-  if(e.key==='Escape'){if(S){setInspectMode();render()}}
+  if(e.key==='Escape'){if(S){S.selectedCrop=null;S.eraserMode=false;S.interventionMode=null;S.swapFirstCell=null;render()}}
 });
 document.addEventListener('keydown',e=>{
   if(!S)return;
@@ -3283,21 +2591,15 @@ document.addEventListener('keydown',e=>{
 window.gardenOS={
   getState:()=>S,
   getCampaign:()=>CAM,
-  getPhaseContract:()=>({
-    phase:S?S.phase:null,
-    valid:!!(S&&VALID_PHASES.has(S.phase)),
-    pendingDecision:hasPendingBeatDecision(),
-    reviewPhases:[PHASES.HARVEST_REVIEW,PHASES.WINTER_REVIEW]
-  }),
   resetGame:()=>{try{localStorage.removeItem(SKEY);localStorage.removeItem(HKEY);localStorage.removeItem(CKEY)}catch(e){}CAM=mkCampaign();S=mkSeason(1,mkCF());save();saveCampaign();render()},
   render_game_to_text:()=>{
     if(!S)return'No active season';
     const lines=['Chapter '+S.chapter+' | '+S.season+' | '+S.phase];
     for(let r=0;r<ROWS;r++){let row='';for(let c=0;c<COLS;c++){const cell=S.grid[ri(r,c)];row+=(cell.cropId?C[cell.cropId].short:'..').padEnd(4)}lines.push(row)}
-    const s=safeScore();lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
+    const s=bedScore(S.grid,S.season);lines.push('Score: '+s.finalScore.toFixed(1)+' ('+s.grade+')');
     return lines.join('\n');
   },
-  advanceTime:()=>{if(!S)return;if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase===PHASES.HARVEST){S.phase=PHASES.HARVEST_REVIEW;save();render()}else if(S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW){if(CAM&&CAM.mode==='campaign'&&S.phase===PHASES.HARVEST_REVIEW)completeChapter();else doTransition()}},
+  advanceTime:()=>{if(!S)return;if(BEAT_PHASES.includes(S.phase))advanceBeat();else if(S.phase==='HARVEST'){S.phase='REVIEW';save();render()}else if(S.phase==='REVIEW'){if(CAM&&CAM.mode==='campaign')completeChapter();else doTransition()}},
   skipToChapter:(ch)=>{if(!CAM)CAM=mkCampaign();CAM.currentChapter=ch;for(let i=1;i<ch;i++)if(!CAM.completedChapters.includes(i))CAM.completedChapters.push(i);CAM.mode='chapter_start';S=mkSeason(ch,mkCF());save();saveCampaign();render()},
   goToMenu:()=>{if(!CAM)CAM=mkCampaign();CAM.mode='menu';saveCampaign();render()}
 };
@@ -3312,6 +2614,9 @@ if(!CAM){
   const saved=load();
   if(saved&&saved.phase&&saved.grid){
     S=saved;
+    if(!S.eventAffectedCells)S.eventAffectedCells=[];
+    if(!S.carryForward)S.carryForward=mkCF();
+    if(S.beatTokenAvailable===undefined)S.beatTokenAvailable=false;
     CAM.mode='campaign';
     CAM.currentChapter=S.chapter;
     saveCampaign();
@@ -3321,6 +2626,9 @@ if(!CAM){
   const saved=load();
   if(saved&&saved.phase&&saved.grid){
     S=saved;
+    if(!S.eventAffectedCells)S.eventAffectedCells=[];
+    if(!S.carryForward)S.carryForward=mkCF();
+    if(S.beatTokenAvailable===undefined)S.beatTokenAvailable=false;
   }else if(CAM.mode==='campaign'||CAM.mode==='freeplay'){
     S=mkSeason(CAM.currentChapter,mkCF());
     save();
@@ -3336,21 +2644,7 @@ if(!CAM.mode||CAM.mode==='menu'||(!S&&CAM.mode!=='chapter_start'&&CAM.mode!=='ch
 
 render();
 
-/*
-const _testItems=['a','b','c','d'];
-const _testWeights=()=>1;
-const _runSeededReplay=(seed)=>{
-  const prev=S;
-  S={seed:normalizeSeed(seed),rngState:normalizeSeed(seed)};
-  const out=[wRand(_testItems,_testWeights,seed),wRand(_testItems,_testWeights,seed),wRand(_testItems,_testWeights,seed)].join(',');
-  S=prev;
-  return out;
-};
-console.assert(_runSeededReplay(12345)===_runSeededReplay(12345),'Seeded wRand should replay deterministically');
-*/
-
 })();
 </script>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>

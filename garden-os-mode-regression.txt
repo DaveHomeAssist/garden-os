@@ -84,3 +84,102 @@ REG-11 Mode contract alignment
 - Action: compare live behavior to mode contract
 - Expected Result: allowed actions, phase contract, and deterministic guarantees match the live product
 - Failure Meaning: prompt system and shipped game loop have drifted apart
+
+---
+
+```json
+{
+  "regression_suite": "Garden OS Mode Regression",
+  "version": 1,
+  "checks": [
+    {
+      "id": "REG-01",
+      "surface": "garden-league-simulator-v4.html",
+      "preconditions": "saved payload contains phase TRANSITION or UNKNOWN",
+      "action": "load normalization",
+      "expected_result": "payload rejected as invalid; runtime phase contract remains valid",
+      "failure_meaning": "corrupted saves can enter illegal runtime states"
+    },
+    {
+      "id": "REG-02",
+      "surface": "garden-league-simulator-v4.html",
+      "preconditions": "saved payload contains REVIEW",
+      "action": "load winter and non-winter chapters",
+      "expected_result": "winter chapter normalizes to WINTER_REVIEW; non-winter chapter normalizes to HARVEST_REVIEW",
+      "failure_meaning": "semantic review collision remains in save/load flow"
+    },
+    {
+      "id": "REG-03",
+      "surface": "garden-league-simulator-v4.html",
+      "preconditions": "beat phase active, event unresolved, beat token available",
+      "action": "press advance or call advanceBeat()",
+      "expected_result": "no advance occurs until intervention or explicit Accept Loss",
+      "failure_meaning": "hidden loss acceptance still exists"
+    },
+    {
+      "id": "REG-04",
+      "surface": "garden-league-simulator-v4.html",
+      "preconditions": "harvest complete in normal chapter; winter chapter start",
+      "action": "progress naturally",
+      "expected_result": "harvest path enters HARVEST_REVIEW only; winter path enters WINTER_REVIEW only",
+      "failure_meaning": "review states are still semantically overloaded"
+    },
+    {
+      "id": "REG-05",
+      "surface": "garden-league-simulator-v4.html",
+      "preconditions": "simulator booted",
+      "action": "inspect window.gardenOS.getPhaseContract()",
+      "expected_result": "valid=true for live states, reviewPhases contains HARVEST_REVIEW and WINTER_REVIEW, pendingDecision reflects unresolved beat status",
+      "failure_meaning": "regression harness cannot verify the phase contract safely"
+    },
+    {
+      "id": "REG-06",
+      "surface": "garden-planner-v4.html",
+      "preconditions": "one cell has unsupported climber, another has crowding advisory",
+      "action": "render reasoning and issue ordering",
+      "expected_result": "unsupported climber ranks above crowding every time",
+      "failure_meaning": "the user sees advisory noise before real blockers"
+    },
+    {
+      "id": "REG-07",
+      "surface": "garden-planner-v4.html",
+      "preconditions": "tall crop in front access row and a separate advisory issue elsewhere",
+      "action": "select the tall crop",
+      "expected_result": "front access shade blocker is critical and outranks advisory crowding",
+      "failure_meaning": "planner underweights bed-wide shade/access damage"
+    },
+    {
+      "id": "REG-08",
+      "surface": "garden-planner-v4.html",
+      "preconditions": "tall crop in high-access lane plus low-severity water mismatch",
+      "action": "inspect selected cell",
+      "expected_result": "access blocker ranks above water mismatch and crowding notes",
+      "failure_meaning": "harvest/access friction is hidden behind low-value warnings"
+    },
+    {
+      "id": "REG-09",
+      "surface": "garden-planner-v4.html",
+      "preconditions": "selected planted cell with at least one issue and one better-fit alternative",
+      "action": "open reasoning surface",
+      "expected_result": "score direction, cell facts, top risk, ordered issues, tradeoff, score delta, and next move all appear in one card",
+      "failure_meaning": "cause/effect is still fragmented across inspect, score, and notes surfaces"
+    },
+    {
+      "id": "REG-10",
+      "surface": "garden-os-scenario-spec.txt",
+      "preconditions": "fixed scenarios SCN-01 through SCN-10",
+      "action": "run scenario review against planner/guide/simulator behavior",
+      "expected_result": "each scenario preserves its Expected Score Direction and Required System Behavior",
+      "failure_meaning": "scenario outputs are descriptive but not deterministic"
+    },
+    {
+      "id": "REG-11",
+      "surface": "garden-os-mode-contract.txt",
+      "preconditions": "current planner, guide, and season-engine build",
+      "action": "compare live behavior to mode contract",
+      "expected_result": "allowed actions, phase contract, and deterministic guarantees match the live product",
+      "failure_meaning": "prompt system and shipped game loop have drifted apart"
+    }
+  ]
+}
+```

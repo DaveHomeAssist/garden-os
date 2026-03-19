@@ -23,6 +23,7 @@ Garden OS is a browser native garden planning and scoring ecosystem. It combines
 
 | ID | Severity | Status | Title | Notes |
 |----|----------|--------|-------|-------|
+| 014 | P2 | resolved | Reduce planner right sidebar overload | Summary now stays compact, dashboard moved behind its own reveal, and switching sections collapses stale side content |
 | 001 | P2 | resolved | Replace planner confirm flows with reversible recovery | Clear, reset, delete, import replace, and harvest delete now use undo or restore paths |
 | 002 | P2 | resolved | Separate home and hub roles | `home.html` is the guided start page and `index.html` is the live launcher |
 | 003 | P2 | resolved | Surface one dominant simulator action per phase | Added objective strip with current phase CTA and kept existing engine logic intact |
@@ -53,3 +54,5 @@ Garden OS is a browser native garden planning and scoring ecosystem. It combines
 [2026-03-18] [GardenOS] [feat] Add planner severity summary and inspect next moves
 [2026-03-18] [GardenOS] [feat] Add deterministic scenario pack and regression clauses
 [2026-03-18] [GardenOS] [test] Add phase and reasoning smoke script
+[2026-03-18] [GardenOS] [docs] Add planner right sidebar overload ticket
+[2026-03-18] [GardenOS] [fix] Reduce planner right sidebar overload

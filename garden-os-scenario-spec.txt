@@ -148,3 +148,163 @@ Canonical regression scenarios
 - Expected Primary Risk: highest-severity issue on selected cell
 - Expected Next Move: follow the surfaced best-fit or fix guidance
 
+---
+
+```json
+{
+  "scenario_spec": "Garden OS Scenario Spec",
+  "version": 1,
+  "scenarios": [
+    {
+      "scenario_id": "SCN-01",
+      "title": "Unsupported climber",
+      "mode": "planner",
+      "season": "spring",
+      "bed_state": "cucumber painted in non-trellis interior cell",
+      "structure_state": "cage enabled, rear trellis available",
+      "active_pressures": [],
+      "player_objective": "maximize score without structural violations",
+      "constraints": ["keep cucumber in bed"],
+      "expected_score_direction": "down",
+      "required_system_behavior": "flag unsupported climber as critical, prioritize trellis relocation, surface above any crowding note",
+      "expected_primary_risk": "missing support / unsupported climber",
+      "expected_next_move": "move cucumber to back trellis row"
+    },
+    {
+      "scenario_id": "SCN-02",
+      "title": "Front-row tall blocker",
+      "mode": "planner",
+      "season": "summer",
+      "bed_state": "tall tomato in front access row with lower crops behind it",
+      "structure_state": "open bed",
+      "active_pressures": ["shade loss"],
+      "player_objective": "keep front access usable",
+      "constraints": ["preserve tomato somewhere in bed"],
+      "expected_score_direction": "down",
+      "required_system_behavior": "flag front-row tall placement as critical and describe both shade and reach impact",
+      "expected_primary_risk": "front access shade blocker",
+      "expected_next_move": "move tall crop off front access row"
+    },
+    {
+      "scenario_id": "SCN-03",
+      "title": "Access lane blocker",
+      "mode": "planner",
+      "season": "spring",
+      "bed_state": "tall crop in high-access lane but not literal front row",
+      "structure_state": "raised bed with frequent succession harvest",
+      "active_pressures": ["harvest friction"],
+      "player_objective": "preserve easy access",
+      "constraints": ["no structural change"],
+      "expected_score_direction": "down",
+      "required_system_behavior": "mark access blocking above advisory crowding and recommend reserving high-access cells for low crops or succession",
+      "expected_primary_risk": "access blocker",
+      "expected_next_move": "free the lane for low-profile crops"
+    },
+    {
+      "scenario_id": "SCN-04",
+      "title": "Advisory crowding only",
+      "mode": "planner",
+      "season": "spring",
+      "bed_state": "two tall crops adjacent in a non-front row",
+      "structure_state": "trellis available elsewhere",
+      "active_pressures": ["mild shade competition"],
+      "player_objective": "refine layout without overreacting",
+      "constraints": ["both crops remain planted"],
+      "expected_score_direction": "slightly down",
+      "required_system_behavior": "label as advisory or low severity, not critical",
+      "expected_primary_risk": "crowding shade advisory",
+      "expected_next_move": "separate one tall crop if a better cell exists"
+    },
+    {
+      "scenario_id": "SCN-05",
+      "title": "Late-summer bolting risk",
+      "mode": "guide",
+      "season": "late summer",
+      "bed_state": "cool-season greens still planted in heat",
+      "structure_state": "cage enabled",
+      "active_pressures": ["heat", "bolting"],
+      "player_objective": "protect harvest quality",
+      "constraints": ["no full bed reset"],
+      "expected_score_direction": "down",
+      "required_system_behavior": "identify heat/bolting risk and recommend rotation, shade mitigation, or replacement",
+      "expected_primary_risk": "late-summer bolt risk",
+      "expected_next_move": "rotate cool crops out before heat compounds penalties"
+    },
+    {
+      "scenario_id": "SCN-06",
+      "title": "Water mismatch pair",
+      "mode": "planner",
+      "season": "summer",
+      "bed_state": "high-water and low-water crops adjacent",
+      "structure_state": "open bed",
+      "active_pressures": ["irrigation mismatch"],
+      "player_objective": "stabilize watering",
+      "constraints": ["keep both crop types"],
+      "expected_score_direction": "slightly down",
+      "required_system_behavior": "surface water mismatch as low severity and avoid outranking critical support or access issues",
+      "expected_primary_risk": "water mismatch advisory",
+      "expected_next_move": "separate irrigation-conflicting crops"
+    },
+    {
+      "scenario_id": "SCN-07",
+      "title": "Beat phase unresolved",
+      "mode": "season-engine",
+      "season": "mid season",
+      "bed_state": "current event active, beat token available",
+      "structure_state": "chapter in progress",
+      "active_pressures": ["unresolved beat event"],
+      "player_objective": "progress fairly",
+      "constraints": ["no hidden resolution"],
+      "expected_score_direction": "unchanged until explicit action",
+      "required_system_behavior": "block advancement until an intervention or Accept Loss is chosen",
+      "expected_primary_risk": "unresolved event",
+      "expected_next_move": "choose intervention or explicit Accept Loss"
+    },
+    {
+      "scenario_id": "SCN-08",
+      "title": "Legacy review load",
+      "mode": "season-engine",
+      "season": "winter",
+      "bed_state": "saved state contains legacy REVIEW phase",
+      "structure_state": "load normalization path",
+      "active_pressures": ["stale save data"],
+      "player_objective": "restore valid state only",
+      "constraints": ["preserve chapter semantics"],
+      "expected_score_direction": "unchanged",
+      "required_system_behavior": "normalize REVIEW to WINTER_REVIEW for winter chapters and HARVEST_REVIEW otherwise",
+      "expected_primary_risk": "invalid legacy phase",
+      "expected_next_move": "continue from normalized review state"
+    },
+    {
+      "scenario_id": "SCN-09",
+      "title": "Invalid phase corruption",
+      "mode": "season-engine",
+      "season": "any",
+      "bed_state": "saved state contains TRANSITION or unknown phase",
+      "structure_state": "load normalization path",
+      "active_pressures": ["corrupted state"],
+      "player_objective": "prevent non-repro bugs",
+      "constraints": ["no invalid runtime state allowed"],
+      "expected_score_direction": "unchanged — load must fail or reset safely",
+      "required_system_behavior": "reject invalid phase values during normalization",
+      "expected_primary_risk": "corrupted phase contract",
+      "expected_next_move": "fall back to safe boot or reject restore"
+    },
+    {
+      "scenario_id": "SCN-10",
+      "title": "Single-surface reasoning",
+      "mode": "planner",
+      "season": "spring",
+      "bed_state": "selected cell has one critical issue, one advisory issue, and a better-fit alternative",
+      "structure_state": "normal planner view",
+      "active_pressures": ["user needs cause/effect quickly"],
+      "player_objective": "correct the weakest cell with minimal friction",
+      "constraints": ["no multi-panel hunting"],
+      "expected_score_direction": "up after correction",
+      "required_system_behavior": "reasoning surface must show score direction, ordered issue stack, cell facts, score delta, and next move in one place",
+      "expected_primary_risk": "highest-severity issue on selected cell",
+      "expected_next_move": "follow the surfaced best-fit or fix guidance"
+    }
+  ]
+}
+```

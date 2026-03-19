@@ -383,11 +383,10 @@
         "bush_beans", "pole_beans", "peas",
         "radish", "carrots", "scallions", "beets", "turnips", "onions", "garlic",
         "basil", "cilantro", "parsley", "dill", "chives",
-        "peppers", "compact_tomato", "cherry_tomato", "zucchini", "summer_squash",
-        "eggplant", "okra",
-        "nasturtium", "marigold", "sunflower",
-        "broccoli", "cauliflower", "cabbage", "kohlrabi", "brussels_sprouts",
-        "sweet_potato"
+        "peppers", "compact_tomato", "cherry_tomato", "zucchini",
+        "eggplant",
+        "nasturtium", "marigold",
+        "compact_cabbage", "broccoli", "kohlrabi"
       ]
     },
 

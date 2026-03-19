@@ -1,7 +1,7 @@
 {
   "$schema": "garden-os-crop-scoring-v1",
   "version": 1,
-  "description": "Definitive crop roster and scoring data for Garden OS. 20 crops, deterministic scoring. Same inputs = same outputs.",
+  "description": "Definitive crop roster and scoring data for Garden OS. 19 crops, deterministic scoring. Same inputs = same outputs.",
   "lastUpdated": "2026-03-15",
 
   "recipes": {

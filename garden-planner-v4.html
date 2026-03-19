@@ -1908,13 +1908,19 @@
     <div class="insight-content" aria-live="polite">
       <div id="rpane-score"></div>
       <div id="rpane-reasoning"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightDashboard">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Planner board</button>
+    <div class="insight-content" hidden>
       <div id="rpane-dashboard"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightInspect">
-    <button class="insight-header" aria-expanded="true" data-section="inspect">Inspect</button>
-    <div class="insight-content">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Inspect</button>
+    <div class="insight-content" hidden>
       <div id="rpane-inspect"></div>
       <div id="rpane-companions"></div>
     </div>
@@ -1935,8 +1941,8 @@
   </section>
 
   <section class="insight-block" id="insightNotes">
-    <button class="insight-header" aria-expanded="true" data-section="notes">Notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
-    <div class="insight-content">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="notes">Notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
+    <div class="insight-content" hidden>
       <div id="rpane-notes"></div>
     </div>
   </section>
@@ -2455,7 +2461,7 @@ const SUBS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
-let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'dashboard' };
+let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'score' };
 let undoStack = [], redoStack = [];
 let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
 let interaction = {
@@ -2878,7 +2884,7 @@ function createMinimalWorkspace(){
     createdAt: now,
     updatedAt: now,
     activeBedId: starter.id,
-    workspaceSettings: { catFilter:'all', rightTab:'dashboard' },
+    workspaceSettings: { catFilter:'all', rightTab:'score' },
     beds: [starter],
     guideProgress: [],
     harvests: []
@@ -2907,7 +2913,7 @@ function validateWorkspace(ws){
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
     rightTab: ['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
-      : 'dashboard'
+      : 'score'
   };
   normalized.beds = ws.beds.map((b, i)=>normalizeBedRecord(b, i));
   if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
@@ -2961,7 +2967,7 @@ function migrateV0toV1(legacyState){
     createdAt: now,
     updatedAt: now,
     activeBedId: bedRecord.id,
-    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'dashboard' },
+    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score' },
     beds: [bedRecord],
     guideProgress: []
   };
@@ -3248,7 +3254,7 @@ function applyWorkspaceToUI(ws){
   cage = rawCageToRuntime(b.cage);
   syncCageUI();
   normalizeSelectionState();
-  switchRTab(ui.rTab || 'dashboard', false);
+  switchRTab(ui.rTab || 'score', false);
   renderPlacementStatus();
   renderWorkspaceSwitcher();
 }
@@ -5041,11 +5047,28 @@ function switchLTab(t){
 }
 // Insight section map: old tab names → section IDs
 const INSIGHT_SECTION_MAP = {
-  dashboard:'insightSummary', score:'insightSummary',
+  score:'insightSummary', dashboard:'insightDashboard',
   inspect:'insightInspect', companions:'insightInspect',
   calendar:'insightCalendar', harvest:'insightHarvest',
   notes:'insightNotes'
 };
+
+function setInsightSectionState(sectionEl, expanded){
+  if(!sectionEl) return;
+  const hdr = sectionEl.querySelector('.insight-header');
+  const content = sectionEl.querySelector('.insight-content');
+  if(!hdr || !content) return;
+  content.hidden = !expanded;
+  hdr.classList.toggle('is-collapsed', !expanded);
+  hdr.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+}
+
+function syncInsightRail(targetSectionId){
+  const keepOpen = new Set(targetSectionId ? ['insightSummary', targetSectionId] : ['insightSummary']);
+  document.querySelectorAll('.insight-block').forEach(section=>{
+    setInsightSectionState(section, keepOpen.has(section.id));
+  });
+}
 
 function switchRTab(t, persist=true){
   ui.rTab=t;
@@ -5059,15 +5082,11 @@ function switchRTab(t, persist=true){
   if(sectionId){
     const section = document.getElementById(sectionId);
     if(section){
-      const hdr = section.querySelector('.insight-header');
-      const content = section.querySelector('.insight-content');
-      if(hdr && content && content.hidden){
-        content.hidden = false;
-        hdr.classList.remove('is-collapsed');
-        hdr.setAttribute('aria-expanded','true');
-      }
+      syncInsightRail(sectionId);
       section.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
+  }else{
+    syncInsightRail();
   }
   if(t==='dashboard') renderDashboardTab();
   if(t==='companions') renderCompanionPanel();
@@ -5076,13 +5095,15 @@ function switchRTab(t, persist=true){
 }
 
 function toggleInsightSection(sectionEl){
-  const hdr = sectionEl.querySelector('.insight-header');
   const content = sectionEl.querySelector('.insight-content');
-  if(!hdr || !content) return;
+  if(!content) return false;
   const expanding = content.hidden;
-  content.hidden = !expanding;
-  hdr.classList.toggle('is-collapsed', !expanding);
-  hdr.setAttribute('aria-expanded', String(expanding));
+  if(expanding){
+    syncInsightRail(sectionEl.id);
+    return true;
+  }
+  setInsightSectionState(sectionEl, false);
+  return false;
 }
 
 function renderPalette(){
@@ -5455,9 +5476,11 @@ document.getElementById('shortcutOverlay').addEventListener('click',e=>{
 document.querySelectorAll('.insight-header').forEach(hdr=>{
   hdr.addEventListener('click',()=>{
     const section = hdr.closest('.insight-block');
-    if(section) toggleInsightSection(section);
+    const expanded = section ? toggleInsightSection(section) : false;
+    if(!expanded) return;
     const key = hdr.getAttribute('data-section');
-    if(key==='summary') switchRTab('dashboard', false);
+    if(key==='summary') switchRTab('score', false);
+    if(key==='dashboard') switchRTab('dashboard', false);
     if(key==='inspect') switchRTab('inspect', false);
     if(key==='notes') switchRTab('notes', false);
     if(key==='calendar') switchRTab('calendar', false);

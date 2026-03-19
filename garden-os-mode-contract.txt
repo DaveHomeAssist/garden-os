@@ -91,3 +91,91 @@ Regression output must include:
 - Expected Result
 - Failure Meaning
 
+---
+
+```json
+{
+  "mode_name": "Garden OS",
+  "version": 1,
+  "phases": [
+    "PLANNING",
+    "EARLY_SEASON",
+    "MID_SEASON",
+    "LATE_SEASON",
+    "HARVEST",
+    "HARVEST_REVIEW",
+    "WINTER_REVIEW"
+  ],
+  "legacy_phases": {
+    "REVIEW": "normalizes to HARVEST_REVIEW or WINTER_REVIEW based on chapter type",
+    "TRANSITION": "invalid at runtime — reject on load"
+  },
+  "modes": [
+    {
+      "name": "Planner",
+      "primary_action": "place or move a crop",
+      "allowed_actions": ["paint", "erase", "inspect", "select_crop", "auto_fill", "undo", "save", "restore", "export", "import"],
+      "blocked_actions": ["beat_advancement"],
+      "deterministic_guarantee": "identical inputs and grid state must produce identical score, issue ordering, and reasoning guidance"
+    },
+    {
+      "name": "Guide",
+      "primary_action": "resolve the next operational issue with the least structural disruption",
+      "allowed_actions": ["inspect", "identify_pressure", "choose_corrective_action", "verify_next_move"],
+      "blocked_actions": [],
+      "deterministic_guarantee": "identical scenario inputs must produce the same diagnosis, same primary risk ordering, and same next-step recommendation"
+    },
+    {
+      "name": "Season Engine",
+      "primary_action": "one intervention or explicit Accept Loss per beat",
+      "allowed_actions_by_phase": {
+        "PLANNING": ["select_crop", "paint", "erase", "inspect", "undo", "commit_plan"],
+        "beat_phases": ["inspect_event", "choose_intervention", "accept_loss", "advance_after_resolution"],
+        "HARVEST": ["harvest", "review"],
+        "HARVEST_REVIEW": ["inspect_results", "continue"],
+        "WINTER_REVIEW": ["inspect_results", "continue"]
+      },
+      "blocked_actions_by_phase": {
+        "PLANNING": ["beat_advancement_without_commit"],
+        "beat_phases": ["silent_resolution", "second_intervention_before_phase_resolves"],
+        "HARVEST": ["new_interventions"],
+        "HARVEST_REVIEW": ["returning_to_unresolved_beat_actions"],
+        "WINTER_REVIEW": ["returning_to_unresolved_beat_actions"]
+      },
+      "deterministic_guarantee": "identical save state, chapter seed, and intervention sequence must produce the same event resolution and final review state"
+    }
+  ],
+  "state_fields": {
+    "mutable": ["current_phase", "beat_token", "intervention_chosen", "event_active", "grid_state"],
+    "persistent": ["chapter_seed", "save_state", "score_history"],
+    "derived": ["score", "issue_ordering", "phase_contract_validity"],
+    "deterministic_for_replay": ["chapter_seed", "intervention_sequence", "save_state"]
+  },
+  "scoring_points": {
+    "when_computed": "on grid change in planner; on beat resolution in season engine",
+    "functions": ["safeScore", "bedScore", "scoreCell"],
+    "player_visible": true,
+    "can_change_score": ["crop_placement", "intervention_choice", "accept_loss", "structural_state"],
+    "must_remain_deterministic": true
+  },
+  "issue_ordering": {
+    "rule": "severity-first, then code-priority",
+    "critical_outranks": ["unsupported_climbers", "front_access_row_tall_blockers", "access_blockers"],
+    "advisory_examples": ["crowding_notes", "water_mismatch"]
+  },
+  "failure_states": {
+    "soft": ["beat_unresolved_with_token_available", "advisory_issue_present", "score_below_threshold"],
+    "hard": ["invalid_phase_on_load", "silent_auto_accept_loss", "corrupted_save_state"]
+  },
+  "recovery_paths": [
+    "normalize legacy REVIEW phase on load",
+    "reject invalid phase values and fall back to safe boot",
+    "require explicit Accept Loss before beat advancement"
+  ],
+  "open_gaps": [
+    "no formal definition of chapter_seed generation algorithm",
+    "score threshold for soft-fail not yet specified",
+    "guide mode allowed_actions not fully enumerated in live code"
+  ]
+}
+```

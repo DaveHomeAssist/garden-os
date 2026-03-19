@@ -19,7 +19,7 @@ THE PLANNER
 
 The core tool. A drag-and-drop raised bed designer with live scoring.
 
-— 38 crops across 8 categories: cucurbits, nightshades, greens, alliums, legumes, roots, herbs, flowers
+— 38 crops across 8 categories: cucurbits, fruiting, greens, brassica, legumes, roots, herbs, companion
 — Variable bed sizes from 2×2 to 10×10
 — Cage-aware layout engine: trellis zones, protected zones, critter barriers, double-door front access
 — 6-factor deterministic scoring: sun fit (2× weight), support fit, shade tolerance, access fit, season fit, adjacency
@@ -47,11 +47,11 @@ Each chapter plays as a 3-beat season: Early, Mid, and Late. You commit a crop l
 The game carries state forward. What you plant in Chapter 1 affects what you can afford in Chapter 4. A bad harvest compounds. A smart companion planting pays dividends three seasons later.
 
 — 12 chapters with escalating difficulty and narrative progression
-— Deterministic event deck: every playthrough on the same seed produces the same events
+— Deterministic 40-event deck: every playthrough on the same seed produces the same events
 — Intervention system: spend earned resources to mitigate, redirect, or prevent damage
 — Pantry and supply carry-forward between seasons
 — Recipe objectives: harvest the right crops in the right quantities to complete seasonal recipes
-— Character narrators with fixed voice and speaking order
+— Four character narrators — Garden GURL, Onion Man, Vegeman, Garden Critters — with fixed voice and speaking order
 — Phase-locked state machine: PLANNING → COMMIT → EARLY → MID → LATE → HARVEST → REVIEW → TRANSITION
 — No backward transitions after commit. Every decision is permanent.
 — Collapsible results panel with accordion sections for events, interventions, pantry, history
@@ -121,6 +121,12 @@ DESIGN
 Typography: Fraunces (headings), DM Sans (body), DM Mono (labels and data)
 Palette: Soil brown, leaf green, sun gold, cream white
 Aesthetic: Warm, grounded, organic. Reads like a garden journal, not a SaaS dashboard.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOW TO GET IN
+
+Open davehomeassist.github.io/garden-os/ in any modern browser. The hub loads a launcher with every tool. No install, no account, no loading screen.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
