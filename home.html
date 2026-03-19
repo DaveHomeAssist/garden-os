@@ -16,18 +16,18 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5c3d1e">
+  <meta name="theme-color" content="var(--soil)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
 :root {
-  --soil:#5c3d1e;--soil-mid:#7a5230;--soil-light:#9a6b42;
-  --leaf:#3d7a4f;--leaf-bright:#5aab6b;--leaf-pale:#c8e6c9;
-  --sun:#e8c84a;--sun-pale:#fdf3c0;
-  --cream:#f7f2ea;--cream-dark:#ede5d8;
-  --text:#1e110a;--text-mid:#5a3e2b;--text-light:#7d5f45;
-  --border:#c8b090;--border-soft:#ddd0b8;
+  --soil:var(--soil);--soil-mid:var(--soil-light);--soil-light:#9a6b42;
+  --leaf:var(--leaf);--leaf-bright:var(--leaf-bright);--leaf-pale:#c8e6c9;
+  --sun:var(--sun-bright);--sun-pale:#fdf3c0;
+  --cream:var(--cream);--cream-dark:var(--cream-mid);
+  --text:var(--text);--text-mid:var(--text-mid);--text-light:#7d5f45;
+  --border:var(--border);--border-soft:#ddd0b8;
   --sage:#5a7a52;--sage-light:#7a9e70;--sage-pale:#d4e8ce;--sage-wash:#edf5ea;
   --terracotta:#c4603a;--terra-wash:#fdf0eb;
   --sky:#5b9bc4;--sky-pale:#ddeef8;
@@ -336,7 +336,7 @@ h2 {
   text-transform: uppercase; border-radius: 3px; margin-top: 0.2rem;
   font-family: 'DM Mono', monospace;
 }
-.tag-core    { background: #1e110a; color: #f5ede0; }
+.tag-core    { background: var(--text); color: #f5ede0; }
 .tag-planner { background: var(--sun-pale); color: var(--soil); }
 .tag-guide   { background: var(--leaf-pale); color: #1a4a28; }
 .tag-visual  { background: var(--sun-pale); color: #b07010; }

@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5c3d1e">
+  <meta name="theme-color" content="var(--soil)">
 <link rel="icon" href="assets/icons/favicon/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,23 +26,23 @@
   --ease-expo-out:cubic-bezier(0.16,1,0.3,1);--ease-expo-in:cubic-bezier(0.7,0,0.84,0);
   --ease-out:cubic-bezier(0.33,1,0.68,1);--ease-back-out:cubic-bezier(0.34,1.56,0.64,1);
   --radius:16px;--shadow:0 8px 24px rgba(42,28,16,0.12);
-  --cream:#f7f2ea;--surface:#fffdf8;--cream-dark:#ede5d8;--soil:#5c3d1e;
+  --cream:var(--cream);--surface:#fffdf8;--cream-dark:var(--cream-mid);--soil:var(--soil);
   --sf-overlay:rgba(44,31,20,0.52);
-  --text:#1e110a;--text-muted:#8a7b6b;--border:#c8b090;
-  --leaf-bright:#5aab6b;--synergy-bg:#e6f4ec;--sun:#e8c84a;--warn-bg:#fef8e8;
+  --text:var(--text);--text-muted:#8a7b6b;--border:var(--border);
+  --leaf-bright:var(--leaf-bright);--synergy-bg:#e6f4ec;--sun:var(--sun-bright);--warn-bg:#fef8e8;
   --danger:#c0392b;--conflict-bg:#fceaea;--sem-companion:#bb6bd9;
   --sem-companion-bg:rgba(187,107,217,0.12);--rain:#5b9bd5;
-  --char-gurl:#3d7a4f;--char-gurl-bg:#e6f4ec;--char-onion:#e8c84a;--char-onion-bg:#fef8e8;
-  --char-vegeman:#5aab6b;--char-vegeman-bg:#edf6f0;--char-critter:#d4854a;--char-critter-bg:#faeee6;
+  --char-gurl:var(--leaf);--char-gurl-bg:#e6f4ec;--char-onion:var(--sun-bright);--char-onion-bg:#fef8e8;
+  --char-vegeman:var(--leaf-bright);--char-vegeman-bg:#edf6f0;--char-critter:#d4854a;--char-critter-bg:#faeee6;
   --bg:var(--cream);--panel:var(--surface);--panel-2:var(--cream-dark);
   --ink:var(--text);--muted:var(--text-muted);--line:var(--border);
   --accent:var(--char-gurl);--accent-2:var(--char-onion);
   --good:var(--leaf-bright);--warn:var(--sun);--bad:var(--danger);--focus:var(--rain);
-  --s-ground-deep:#3e2a14;--s-ground-mid:#5c3d1e;--s-ground-light:#8b7355;
+  --s-ground-deep:#3e2a14;--s-ground-mid:var(--soil);--s-ground-light:#8b7355;
   --s-growth-primary:#6b9a5b;--s-growth-accent:#a3c78a;--s-growth-muted:#7a8b6e;
   --s-sky-wash:#c8cfc2;--s-sky-light:#dde3d6;--s-sky-highlight:#e8eddf;
 }
-.season-spring{--s-ground-deep:#3e2a14;--s-ground-mid:#5c3d1e;--s-ground-light:#8b7355;--s-growth-primary:#6b9a5b;--s-growth-accent:#a3c78a;--s-growth-muted:#7a8b6e;--s-sky-wash:#c8cfc2;--s-sky-light:#dde3d6;--s-sky-highlight:#e8eddf}
+.season-spring{--s-ground-deep:#3e2a14;--s-ground-mid:var(--soil);--s-ground-light:#8b7355;--s-growth-primary:#6b9a5b;--s-growth-accent:#a3c78a;--s-growth-muted:#7a8b6e;--s-sky-wash:#c8cfc2;--s-sky-light:#dde3d6;--s-sky-highlight:#e8eddf}
 .season-summer{--s-ground-deep:#4c321f;--s-ground-mid:#6b4a2a;--s-ground-light:#b89b72;--s-growth-primary:#3d7a2e;--s-growth-accent:#c24433;--s-growth-muted:#8b6b2f;--s-sky-wash:#f0e6d0;--s-sky-light:#f5ecdc;--s-sky-highlight:#e8b44a}
 .season-fall{--s-ground-deep:#3a2810;--s-ground-mid:#5e4020;--s-ground-light:#8a6b40;--s-growth-primary:#6b7a44;--s-growth-accent:#a83c2e;--s-growth-muted:#8b5a30;--s-sky-wash:#d4c5a8;--s-sky-light:#e0d4ba;--s-sky-highlight:#c9963a}
 .season-winter{--s-ground-deep:#2e2e30;--s-ground-mid:#4a4a4c;--s-ground-light:#6e6e6b;--s-growth-primary:#5a6858;--s-growth-accent:#8a7a5e;--s-growth-muted:#6b6b60;--s-sky-wash:#c8c4b8;--s-sky-light:#e8e2d4;--s-sky-highlight:#c9963a}
@@ -52,13 +52,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 /* ── BRAND LAYER: sanctuary label ── */
 .sanctuary-label{font-family:var(--ff-mono);font-size:0.625rem;color:rgba(200,176,144,0.85);letter-spacing:0.12em;white-space:nowrap}
 /* ── BRAND LAYER: season pill colours ── */
-.chip.season-spring-pill{background:#7cc576;color:#1a4a18;border-color:#5aab6b}
-.chip.season-summer-pill{background:#e8c84a;color:#5c3d1e;border-color:#c8a830}
+.chip.season-spring-pill{background:#7cc576;color:#1a4a18;border-color:var(--leaf-bright)}
+.chip.season-summer-pill{background:var(--sun-bright);color:var(--soil);border-color:#c8a830}
 .chip.season-fall-pill{background:#d4854a;color:#3a1c08;border-color:#b86c38}
 .chip.season-winter-pill{background:#8fa3b8;color:#1e2e3e;border-color:#6a8aaa}
 /* ── BRAND LAYER: trellis arch above grid ── */
 .trellis-arch-label{font-family:var(--ff-mono);font-size:0.56rem;letter-spacing:0.1em;color:var(--text-muted);text-align:center;margin-bottom:4px;opacity:0.7}
-.board-wrap::before{content:'';display:block;width:92%;margin:0 auto 6px;height:28px;background:radial-gradient(ellipse 92% 100% at 50% 100%, transparent 59%, #5aab6b 60%, #5aab6b 62%, transparent 63%)}
+.board-wrap::before{content:'';display:block;width:92%;margin:0 auto 6px;height:28px;background:radial-gradient(ellipse 92% 100% at 50% 100%, transparent 59%, var(--leaf-bright) 60%, var(--leaf-bright) 62%, transparent 63%)}
 body{font-family:var(--ff-body);font-size:13px;line-height:1.6;color:var(--text);background:var(--cream);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background-color 0.8s ease-in-out}
 /* ── TYPE SCALE (1.25 Major Third) ── */
 :root{--fs-xs:0.64rem;--fs-sm:0.8rem;--fs-base:1rem;--fs-md:1.25rem;--fs-lg:1.563rem;--fs-xl:1.953rem;--fs-2xl:2.441rem}
@@ -70,8 +70,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .app{width:min(1280px,96vw);margin:22px auto 38px;display:grid;gap:16px;grid-template-columns:240px 1fr 320px;grid-template-rows:auto 1fr;box-shadow:0 4px 24px rgba(0,0,0,0.15)}
 .app.menu-mode{grid-template-columns:1fr;max-width:600px}
 .app.menu-mode .panel{max-height:none}
-.head{grid-column:1/-1;background:var(--soil,#5c3d1e);border:1px solid rgba(44,28,10,0.6);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
-.head h1,.head h1 a,.head h1 *{color:var(--cream,#f7f2ea)}
+.head{grid-column:1/-1;background:var(--soil,var(--soil));border:1px solid rgba(44,28,10,0.6);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:var(--shadow);transition:background-color 0.8s ease-in-out,border-color 0.8s ease-in-out}
+.head h1,.head h1 a,.head h1 *{color:var(--cream,var(--cream))}
 .head .btn,.head .chip{border-color:rgba(200,176,144,0.4);color:var(--cream);background:rgba(255,255,255,0.1)}
 .head .btn:hover{background:rgba(255,255,255,0.18)}
 .head-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -189,8 +189,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 /* mini-bar score indicator at cell base */
 .cell .score-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 4px 4px;pointer-events:none;opacity:0.7}
 /* view overlay tints */
-.cell.view-sun-high{background-color:#fff8d6 !important;border-color:#e8c84a !important}
-.cell.view-sun-mid{background-color:#fffaeb !important;border-color:#c8b090 !important}
+.cell.view-sun-high{background-color:#fff8d6 !important;border-color:var(--sun-bright) !important}
+.cell.view-sun-mid{background-color:#fffaeb !important;border-color:var(--border) !important}
 .cell.view-sun-low{background-color:#f7f4ec !important;border-color:#d0caba !important}
 .cell.view-water-high{background-color:#deeefa !important;border-color:#5b9bd5 !important}
 .cell.view-water-mid{background-color:#eef5fc !important;border-color:#8ab8dc !important}
@@ -199,7 +199,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .view-toggle{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text-muted);cursor:pointer;transition:all 0.12s}
 .view-toggle:hover{background:var(--cream-dark)}
 .view-toggle:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
-.view-toggle.active{background:var(--soil,#5c3d1e);color:var(--cream);border-color:var(--soil)}
+.view-toggle.active{background:var(--soil,var(--soil));color:var(--cream);border-color:var(--soil)}
 /* action indicator */
 .action-indicator{font-family:var(--ff-mono);font-size:var(--type-label);letter-spacing:0.06em;padding:4px 10px;border-radius:4px;width:100%;text-align:center;margin-top:4px;border:1px solid transparent}
 .action-indicator.available{background:var(--synergy-bg);color:var(--char-gurl);border:1px solid var(--leaf-bright)}
@@ -347,21 +347,21 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
   <div class="head" role="banner">
     <a href="https://davehomeassist.github.io/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
       <svg width="34" height="34" viewBox="0 0 32 32" fill="none" role="img" aria-label="Garden OS logo mark">
-        <rect x="2" y="8" width="28" height="16" rx="3" stroke="#c8b090" stroke-width="1.5" fill="none"/>
-        <line x1="5.8"  y1="8" x2="5.8"  y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="9.3"  y1="8" x2="9.3"  y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="12.8" y1="8" x2="12.8" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="16"   y1="8" x2="16"   y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="19.2" y1="8" x2="19.2" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="22.7" y1="8" x2="22.7" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="26.2" y1="8" x2="26.2" y2="24" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <line x1="2"    y1="16" x2="30"  y2="16" stroke="#c8b090" stroke-width=".5" opacity=".55"/>
-        <path d="M8 8.5 Q16 1 24 8.5" stroke="#5aab6b" stroke-width="1.8" fill="none"/>
-        <circle cx="16" cy="16" r="2.8" fill="#e8c84a"/>
-        <circle cx="16" cy="16" r="4.5" fill="none" stroke="#e8c84a" stroke-width=".7" opacity=".45"/>
-        <line x1="12.5" y1="24" x2="11.5" y2="30" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
-        <line x1="16"   y1="24" x2="16"   y2="31" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
-        <line x1="19.5" y1="24" x2="20.5" y2="30" stroke="#c8b090" stroke-width="1.1" opacity=".7"/>
+        <rect x="2" y="8" width="28" height="16" rx="3" stroke="var(--border)" stroke-width="1.5" fill="none"/>
+        <line x1="5.8"  y1="8" x2="5.8"  y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="9.3"  y1="8" x2="9.3"  y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="12.8" y1="8" x2="12.8" y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="16"   y1="8" x2="16"   y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="19.2" y1="8" x2="19.2" y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="22.7" y1="8" x2="22.7" y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="26.2" y1="8" x2="26.2" y2="24" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <line x1="2"    y1="16" x2="30"  y2="16" stroke="var(--border)" stroke-width=".5" opacity=".55"/>
+        <path d="M8 8.5 Q16 1 24 8.5" stroke="var(--leaf-bright)" stroke-width="1.8" fill="none"/>
+        <circle cx="16" cy="16" r="2.8" fill="var(--sun-bright)"/>
+        <circle cx="16" cy="16" r="4.5" fill="none" stroke="var(--sun-bright)" stroke-width=".7" opacity=".45"/>
+        <line x1="12.5" y1="24" x2="11.5" y2="30" stroke="var(--border)" stroke-width="1.1" opacity=".7"/>
+        <line x1="16"   y1="24" x2="16"   y2="31" stroke="var(--border)" stroke-width="1.1" opacity=".7"/>
+        <line x1="19.5" y1="24" x2="20.5" y2="30" stroke="var(--border)" stroke-width="1.1" opacity=".7"/>
       </svg>
       <div>
         <h1 style="font-size:clamp(1rem,2.2vw,1.5rem);letter-spacing:0.06em;">GARDEN <span style="font-weight:400;opacity:0.78;">OS</span></h1>

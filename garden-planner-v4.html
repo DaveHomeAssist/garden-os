@@ -9,17 +9,17 @@
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5c3d1e">
+  <meta name="theme-color" content="var(--soil)">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root {
-    --soil:#5c3d1e;--soil-mid:#7a5230;--soil-light:#9a6b42;
-    --leaf:#3d7a4f;--leaf-bright:#5aab6b;--leaf-pale:#c8e6c9;
-    --sun:#e8c84a;--sun-pale:#fdf3c0;
-    --cream:#f7f2ea;--cream-dark:#ede5d8;--cream-mid:#f0e9de;
-    --text:#1e110a;--text-mid:#5a3e2b;--text-light:#7d5f45;
-    --border:#c8b090;--border-light:#ddd0b8;
-    --warn:#d4651a;--good:#3d7a4f;--bad:#b02a1e;--blue:#3a6abf;
+    --soil:var(--soil);--soil-mid:var(--soil-light);--soil-light:#9a6b42;
+    --leaf:var(--leaf);--leaf-bright:var(--leaf-bright);--leaf-pale:#c8e6c9;
+    --sun:var(--sun-bright);--sun-pale:#fdf3c0;
+    --cream:var(--cream);--cream-dark:var(--cream-mid);--cream-mid:#f0e9de;
+    --text:var(--text);--text-mid:var(--text-mid);--text-light:#7d5f45;
+    --border:var(--border);--border-light:#ddd0b8;
+    --warn:var(--rust-light);--good:var(--leaf);--bad:#b02a1e;--blue:#3a6abf;
     --panel:#f0e9de;
     --radius:8px;
     --shadow:0 2px 12px rgba(0,0,0,.1);
@@ -255,7 +255,7 @@
     font-weight:700;
   }
   .bc.preview-paint .hover-preview{
-    color:#1e110a;
+    color:var(--text);
   }
   .bc.preview-inspect .hover-preview{
     color:var(--blue, #3a6abf);
@@ -301,7 +301,7 @@
   .ichdr{padding:.45rem .65rem;background:var(--panel);border-bottom:1px solid var(--border-light);
     font-family:'DM Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.1em;color:var(--soil);font-weight:600;}
   .icbody{padding:.65rem;}
-  .vitem{padding:.4rem 0;border-bottom:1px solid #ede5d8;display:flex;flex-direction:column;gap:.1rem;}
+  .vitem{padding:.4rem 0;border-bottom:1px solid var(--cream-mid);display:flex;flex-direction:column;gap:.1rem;}
   .vitem:last-child{border-bottom:none;padding-bottom:0;}
   .vname{font-weight:500;font-size:.76rem;display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;}
   .vdesc{font-size:.68rem;color:var(--text-light);line-height:1.4;}
@@ -818,7 +818,7 @@
   .harvest-quality { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; }
   .harvest-quality-excellent { background: var(--leaf-pale); color: var(--leaf); }
   .harvest-quality-good { background: var(--sun-pale); color: var(--soil); }
-  .harvest-quality-fair { background: #f2e8d8; color: var(--soil-mid); }
+  .harvest-quality-fair { background: var(--cedar-wash); color: var(--soil-mid); }
   .harvest-quality-poor { background: #faeae8; color: var(--bad); }
   .harvest-entry-note { font-size: 11px; color: var(--text-light); margin-top: 2px; font-style: italic; }
   .harvest-entry-actions { margin-top: 4px; }
@@ -1093,9 +1093,9 @@
 
   /* ═══ COACH LAYER (tutorial + future explain/suggest) ═══ */
   .coach-overlay{position:fixed;inset:0;background:rgba(10,8,6,0.55);z-index:2000;pointer-events:all;transition:opacity .3s ease}
-  .coach-target{position:relative;z-index:2001;pointer-events:auto;box-shadow:0 0 0 4px var(--sun,#e8c84a),0 0 20px rgba(232,200,74,0.3);border-radius:8px;animation:coach-pulse 1.5s ease-in-out infinite}
+  .coach-target{position:relative;z-index:2001;pointer-events:auto;box-shadow:0 0 0 4px var(--sun,var(--sun-bright)),0 0 20px rgba(232,200,74,0.3);border-radius:8px;animation:coach-pulse 1.5s ease-in-out infinite}
   @keyframes coach-pulse{0%,100%{box-shadow:0 0 0 4px var(--sun),0 0 20px rgba(232,200,74,0.3)}50%{box-shadow:0 0 0 6px var(--sun),0 0 30px rgba(232,200,74,0.4)}}
-  .coach-bubble{position:fixed;z-index:2002;max-width:240px;background:#fffdf8;border:1.5px solid #c8b090;border-radius:14px;padding:14px 16px 12px;box-shadow:0 8px 28px rgba(42,28,16,0.18);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.55;color:#1e110a;animation:bubble-pop .25s cubic-bezier(0.34,1.56,0.64,1) forwards}
+  .coach-bubble{position:fixed;z-index:2002;max-width:240px;background:#fffdf8;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px 12px;box-shadow:0 8px 28px rgba(42,28,16,0.18);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.55;color:var(--text);animation:bubble-pop .25s cubic-bezier(0.34,1.56,0.64,1) forwards}
   @keyframes bubble-pop{0%{opacity:0;transform:scale(0.9) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
   .coach-bubble .cb-char{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
   .coach-bubble .cb-text{font-size:14px;line-height:1.55}
@@ -1104,13 +1104,13 @@
   .coach-bubble .cb-skip:hover{opacity:1;color:#c0392b}
   /* bubble tails */
   .coach-bubble[data-tail="down"]::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#fffdf8;border-bottom:0}
-  .coach-bubble[data-tail="down"]::before{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top-color:#c8b090;border-bottom:0}
+  .coach-bubble[data-tail="down"]::before{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top-color:var(--border);border-bottom:0}
   .coach-bubble[data-tail="up"]::after{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-bottom-color:#fffdf8;border-top:0}
-  .coach-bubble[data-tail="up"]::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-bottom-color:#c8b090;border-top:0}
+  .coach-bubble[data-tail="up"]::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-bottom-color:var(--border);border-top:0}
   .coach-bubble[data-tail="left"]::after{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-right-color:#fffdf8;border-left:0}
-  .coach-bubble[data-tail="left"]::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-right-color:#c8b090;border-left:0}
+  .coach-bubble[data-tail="left"]::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-right-color:var(--border);border-left:0}
   .coach-bubble[data-tail="right"]::after{content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-left-color:#fffdf8;border-right:0}
-  .coach-bubble[data-tail="right"]::before{content:'';position:absolute;right:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-left-color:#c8b090;border-right:0}
+  .coach-bubble[data-tail="right"]::before{content:'';position:absolute;right:-10px;top:50%;transform:translateY(-50%);border:9px solid transparent;border-left-color:var(--border);border-right:0}
   @media(prefers-reduced-motion:reduce){.coach-target{animation:none}.coach-bubble{animation:none;opacity:1;transform:none}}
 
   /* ═══ SETTINGS MENU ═══ */
@@ -1890,8 +1890,8 @@
       <div class="zone-legend" id="zoneLegend" style="display:none">
         <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
         <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
-        <span class="zleg"><span class="zleg-dot" style="background:#d4651a"></span>Score &lt; 4.5</span>
-        <span class="zleg"><span class="zleg-dot" style="background:#3d7a4f"></span>Score &ge; 7</span>
+        <span class="zleg"><span class="zleg-dot" style="background:var(--rust-light)"></span>Score &lt; 4.5</span>
+        <span class="zleg"><span class="zleg-dot" style="background:var(--leaf)"></span>Score &ge; 7</span>
       </div>
     </div>
     <div id="issueSummaryStrip" class="issue-strip" aria-live="polite"></div>
@@ -4073,7 +4073,7 @@ function renderScoreExplanation(cell, inputs){
     : `<div class="adj-item"><span class="adj-label">No adjacent crops contributing to adjacency score.</span><span class="adj-delta">+0.00</span></div>`;
 
   const adjClass=adjacency.clamped>0?'good':adjacency.clamped<0?'bad':'mid';
-  const finalColor=final>=7?'#3d7a4f':final>=4?'#b07820':'#b02a1e';
+  const finalColor=final>=7?'var(--leaf)':final>=4?'#b07820':'#b02a1e';
 
   return `<div class="score-explain">
     <div class="score-explain-h">Why this score?</div>
@@ -4742,7 +4742,7 @@ function renderPlacementStatus(){
   }else{
     const cn = ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].name : 'no crop selected';
     el.textContent = '\uD83D\uDD8C Editing: ' + cn + ' \u2014 click or drag to place. Press Esc to stop.';
-    el.style.color='var(--char-gurl,#3d7a4f)';
+    el.style.color='var(--char-gurl,var(--leaf))';
   }
 }
 let _dialogTrigger = null;
@@ -4987,8 +4987,8 @@ function renderBed(inputs,issues,opts={}){
     const kbFocus = interaction.keyboardMode && cell.id===getFocusedCellId();
     const c=cell.crop?CROPS[cell.crop]:null;
     const bg=c?c.color+'28':'#f2ebe0';
-    const bdc=c?c.color+'88':'#c8b090';
-    const sbc=skipScores ? '#8a6a50' : (cs>=7?'#3d7a4f':cs>=4.5?'#e8c84a':'#d4651a');
+    const bdc=c?c.color+'88':'var(--border)';
+    const sbc=skipScores ? '#8a6a50' : (cs>=7?'var(--leaf)':cs>=4.5?'var(--sun-bright)':'var(--rust-light)');
     const issues=issueMap[cell.id]||[];
     const tipLines=c
       ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,skipScores?'Scoring updates on drag end':`Score: ${cs.toFixed(1)}/10`,cell.hasVerticalSupport?'🪴 Trellis':'',cell.isCritterSafe?'🛡':'',issues.length?issues.join(' '):'']
@@ -5136,7 +5136,7 @@ function renderRight(inputs,issues,scoreTotal){
   updateActiveBedScoreCache(bs);
   const ws=warnings(inputs,issues);
   const warnCount=ws.filter(w=>w.t==='warn').length;
-  const sc=bs>=75?'#3d7a4f':bs>=55?'#b07820':'#b02a1e';
+  const sc=bs>=75?'var(--leaf)':bs>=55?'#b07820':'#b02a1e';
   const rl=bs>=80?'Excellent':bs>=65?'Good':bs>=50?'Workable':bs>=35?'Risky':'Poor fit';
   const badge=document.getElementById('warnBadge');
   if(badge) badge.style.display=warnCount>0?'inline-block':'none';
@@ -5183,7 +5183,7 @@ function renderRight(inputs,issues,scoreTotal){
     const primaryIssue=targetIssues[0]||null;
     const delta=cellScoreDelta(selCell,inputs);
     const btLabel=bt?`${escapeHtml(CROPS[bt.cropKey].name)} (~${bt.score.toFixed(1)})${bt.reasons&&bt.reasons.length
-      ?' <span style="font-size:.58rem;color:#3d7a4f;font-family:\'DM Mono\',monospace">['+escapeHtml(bt.reasons.join(' '))+']</span>':''}`:'';
+      ?' <span style="font-size:.58rem;color:var(--leaf);font-family:\'DM Mono\',monospace">['+escapeHtml(bt.reasons.join(' '))+']</span>':''}`:'';
     const ck=selCell.crop;
     const rv=rankVar(ck,inputs);
     const vhtml=rv.map((v,i)=>`<div class="vitem">
@@ -5200,7 +5200,7 @@ function renderRight(inputs,issues,scoreTotal){
         <div class="inspb">
           <div class="irow"><span class="ikey">Effective light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
           <div class="irow"><span class="ikey">Cell score</span>
-            <span class="ival" style="color:${cs>=7?'#3d7a4f':cs>=4?'#b07820':'#b02a1e'}">${cs.toFixed(1)}/10</span>
+            <span class="ival" style="color:${cs>=7?'var(--leaf)':cs>=4?'#b07820':'#b02a1e'}">${cs.toFixed(1)}/10</span>
           </div>
           <div class="irow"><span class="ikey">Water need</span><span class="ival">${waterIcon} ${CROPS[ck].waterNeed}</span></div>
           <div class="irow"><span class="ikey">Succession</span><span class="ival">${CROPS[ck].successionFriendly?'✓ yes':'—'}</span></div>
@@ -5211,8 +5211,8 @@ function renderRight(inputs,issues,scoreTotal){
           }${selCell.isCritterSafe?'🛡 ':''
           }${!(selCell.isTrellisRow||selCell.isProtected||selCell.hasVerticalSupport||selCell.isCritterSafe)?'—':''
           }</span></div>
-          ${delta&&delta.gain>0.15?`<div class="irow"><span class="ikey">Score delta</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">+${escapeHtml(delta.gain.toFixed(1))} with ${escapeHtml(CROPS[delta.betterCropKey].name)}</span></div>`:''}
-          ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:#3d7a4f;font-size:.65rem">${btLabel}</span></div>`:''}
+          ${delta&&delta.gain>0.15?`<div class="irow"><span class="ikey">Score delta</span><span class="ival" style="color:var(--leaf);font-size:.65rem">+${escapeHtml(delta.gain.toFixed(1))} with ${escapeHtml(CROPS[delta.betterCropKey].name)}</span></div>`:''}
+          ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:var(--leaf);font-size:.65rem">${btLabel}</span></div>`:''}
         </div>
       </div>
       ${renderScoreExplanation(selCell, inputs)}
@@ -5859,7 +5859,7 @@ function printGardenPlan(){
       const cell = getCell(r, c);
       const crop = cell && cell.crop ? CROPS[cell.crop] : null;
       const cs = cell && cell.crop ? scoreCell(cell, inputs) : 0;
-      const bgColor = crop ? crop.color + '33' : '#f7f2ea';
+      const bgColor = crop ? crop.color + '33' : 'var(--cream)';
       tableHtml += '<td style="background:' + bgColor + '">';
       if(crop){
         tableHtml += '<span class="print-cell-emoji">' + escapeHtml(crop.emoji) + '</span>';
@@ -6407,9 +6407,9 @@ function buildDashboardVoices(snapshot){
   }
 
   return [
-    { key:'gurl', name:'Garden GURL', emoji:'🌿', color:'#3d7a4f', line:gurl },
+    { key:'gurl', name:'Garden GURL', emoji:'🌿', color:'var(--leaf)', line:gurl },
     { key:'onion', name:'Onion Man', emoji:'🧅', color:'#b8860b', line:onion },
-    { key:'vegeman', name:'Vegeman', emoji:'💪', color:'#d4651a', line:vegeman },
+    { key:'vegeman', name:'Vegeman', emoji:'💪', color:'var(--rust-light)', line:vegeman },
     { key:'critters', name:'Garden Critters', emoji:'🐛', color:'#7a3010', line:critters }
   ];
 }
@@ -6580,7 +6580,7 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
 // COACH LAYER (reusable: tutorial, explain, suggest)
 // ═══════════════════════════════════════════════════════════════════════════════
 const COACH_CHARS={
-  gurl:{emoji:'\u{1F33F}',name:'GURL',color:'#3d7a4f'},
+  gurl:{emoji:'\u{1F33F}',name:'GURL',color:'var(--leaf)'},
   onion:{emoji:'\u{1F9C5}',name:'Onion Man',color:'#b8860b'}
 };
 
