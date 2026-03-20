@@ -75,25 +75,24 @@ async function loadData() {
   const plannerResp = await fetch('../garden-planner-v4.html');
   const html = await plannerResp.text();
 
-  // Extract CROPS
-  const cropsMatch = html.match(/const CROPS\s*=\s*\{/);
-  const cropsStart = cropsMatch.index;
-  let depth = 0, i = cropsStart;
-  for (; i < html.length; i++) {
-    if (html[i] === '{') depth++;
-    if (html[i] === '}') { depth--; if (depth === 0) break; }
+  // Extract CROPS — replace "const CROPS" with assignment to outer variable
+  function extractObject(src, varName) {
+    const re = new RegExp('(?:const|let|var)\\s+' + varName + '\\s*=\\s*\\{');
+    const match = src.match(re);
+    if (!match) throw new Error(varName + ' not found in planner HTML');
+    const start = match.index;
+    let depth = 0, i = start;
+    for (; i < src.length; i++) {
+      if (src[i] === '{') depth++;
+      if (src[i] === '}') { depth--; if (depth === 0) break; }
+    }
+    // Replace "const X =" with just the object literal, then eval-assign
+    const objectLiteral = src.slice(start + match[0].length - 1, i + 1);
+    return eval('(' + objectLiteral + ')');
   }
-  eval(html.slice(cropsStart, i + 1));
 
-  // Extract SUBS
-  const subsMatch = html.match(/const SUBS\s*=\s*\{/);
-  const subsStart = subsMatch.index;
-  depth = 0; i = subsStart;
-  for (; i < html.length; i++) {
-    if (html[i] === '{') depth++;
-    if (html[i] === '}') { depth--; if (depth === 0) break; }
-  }
-  eval(html.slice(subsStart, i + 1));
+  CROPS = extractObject(html, 'CROPS');
+  SUBS = extractObject(html, 'SUBS');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
