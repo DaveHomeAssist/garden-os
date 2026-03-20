@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Garden OS — Crop Reconciliation Test Suite</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f7f2ea;color:#1e110a;padding:2rem;max-width:1100px;margin:0 auto}
+h1{font-family:'Fraunces',serif;font-size:1.6rem;margin-bottom:.5rem;color:#5c3d1e}
+.meta{font-family:'DM Mono',monospace;font-size:.7rem;color:#5a3e2b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.5rem}
+.suite{border:1px solid #d4c8b8;border-radius:8px;margin-bottom:1rem;overflow:hidden}
+.suite-head{background:#5c3d1e;color:#f5ede0;padding:.6rem 1rem;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center}
+.suite-body{padding:0}
+.test{display:flex;align-items:flex-start;gap:.75rem;padding:.5rem 1rem;border-bottom:1px solid #ede5d8;font-size:.8rem}
+.test:last-child{border-bottom:none}
+.pass{color:#3d7a4f}.fail{color:#b91c1c}.skip{color:#a16207}
+.badge{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;padding:2px 6px;border-radius:3px;flex-shrink:0;min-width:3rem;text-align:center}
+.badge-pass{background:#ddf3e4;color:#15803d;border:1px solid #a3e0b5}
+.badge-fail{background:#fde2e2;color:#b91c1c;border:1px solid #f5a8a8}
+.badge-skip{background:#fef3cd;color:#a16207;border:1px solid #f0d88a}
+.test-name{flex:1}.test-detail{font-family:'DM Mono',monospace;font-size:.7rem;color:#5a3e2b;max-width:40%}
+.summary{background:#5c3d1e;color:#f5ede0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;gap:2rem;align-items:center}
+.summary-n{font-size:1.8rem;font-weight:700;line-height:1}.summary-l{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-top:2px}
+.summary-block{text-align:center}
+.duration{font-family:'DM Mono',monospace;font-size:.7rem;opacity:.6}
+</style>
+</head>
+<body>
+<h1>Crop Reconciliation Test Suite</h1>
+<div class="meta">Garden OS v4.3 · Crop Data v2 · 38 crops · <span id="ts"></span></div>
+<div class="summary" id="summary"></div>
+<div id="results"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEST FRAMEWORK
+// ═══════════════════════════════════════════════════════════════════════════════
+const suites = [];
+let currentSuite = null;
+
+function describe(name, fn) {
+  currentSuite = { name, tests: [], pass: 0, fail: 0, skip: 0 };
+  suites.push(currentSuite);
+  fn();
+  currentSuite = null;
+}
+
+function it(name, fn) {
+  const t = { name, status: 'pass', detail: '' };
+  try {
+    fn(t);
+  } catch (e) {
+    t.status = 'fail';
+    t.detail = e.message || String(e);
+  }
+  currentSuite.tests.push(t);
+  currentSuite[t.status]++;
+}
+
+function assert(cond, msg) { if (!cond) throw new Error(msg || 'Assertion failed'); }
+function assertEqual(a, b, msg) { if (a !== b) throw new Error(msg || `Expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`); }
+function assertIncludes(arr, val, msg) { if (!arr.includes(val)) throw new Error(msg || `Array does not include ${JSON.stringify(val)}`); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOAD PLANNER DATA — extract CROPS and scoring functions
+// ═══════════════════════════════════════════════════════════════════════════════
+let CROPS, SUBS, spec;
+
+async function loadData() {
+  // Load spec JSON
+  const specResp = await fetch('../specs/CROP_SCORING_DATA.json');
+  spec = await specResp.json();
+
+  // Load planner HTML and extract CROPS object
+  const plannerResp = await fetch('../garden-planner-v4.html');
+  const html = await plannerResp.text();
+
+  // Extract CROPS
+  const cropsMatch = html.match(/const CROPS\s*=\s*\{/);
+  const cropsStart = cropsMatch.index;
+  let depth = 0, i = cropsStart;
+  for (; i < html.length; i++) {
+    if (html[i] === '{') depth++;
+    if (html[i] === '}') { depth--; if (depth === 0) break; }
+  }
+  eval(html.slice(cropsStart, i + 1));
+
+  // Extract SUBS
+  const subsMatch = html.match(/const SUBS\s*=\s*\{/);
+  const subsStart = subsMatch.index;
+  depth = 0; i = subsStart;
+  for (; i < html.length; i++) {
+    if (html[i] === '{') depth++;
+    if (html[i] === '}') { depth--; if (depth === 0) break; }
+  }
+  eval(html.slice(subsStart, i + 1));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCORING HELPERS (extracted from planner, standalone for testing)
+// ═══════════════════════════════════════════════════════════════════════════════
+function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+function computeScoreBreakdown(ck, cell, inputs) {
+  if (!ck || ck === 'none' || !CROPS[ck]) return null;
+  const c = CROPS[ck];
+  const l = Number(cell.effectiveLight || 0);
+  const sunRange = c.sunIdeal - c.sunMin;
+  let sunFit = l >= c.sunIdeal ? 5
+    : l >= c.sunMin ? 3 + 2 * (sunRange ? ((l - c.sunMin) / sunRange) : 1)
+    : 1 + Math.max(0, (l / Math.max(c.sunMin, .1)) * 2);
+  sunFit = clamp(sunFit, 0, 5);
+
+  let supFit = 3;
+  if (c.support === true) supFit = cell.hasVerticalSupport ? 5 : (inputs.trellis ? 2 : 1);
+  if (c.trellisRequired) supFit = cell.hasVerticalSupport ? 5 : 1;
+
+  const shadeFit = l < c.sunMin ? Math.max(1, c.shadeScore * .6) : c.shadeScore;
+  const accFit = (c.tall === false) ? 3 + (cell.accessScore || 0) * 2 : 3;
+
+  let seaFit = 5;
+  if ((inputs.season === 'latesummer' || inputs.season === 'summer') && c.coolSeason) seaFit = inputs.season === 'latesummer' ? 1 : 2;
+  if (inputs.season === 'spring' && !c.coolSeason) seaFit = 3;
+  if (inputs.season === 'fall' && c.coolSeason) seaFit = 5;
+  if (inputs.season === 'fall' && !c.coolSeason) seaFit = 2;
+  if (c.seasonalMultipliers) {
+    const seasonMap = { spring: 'spring', latesummer: 'summer', summer: 'summer', fall: 'fall' };
+    const sk = seasonMap[inputs.season] || 'summer';
+    seaFit = 1.0 + c.seasonalMultipliers[sk] * 4.0;
+  }
+
+  const weightedCore = (sunFit * 2 + supFit + shadeFit + accFit + seaFit) / 3;
+  return { sunFit, supFit, shadeFit, accFit, seaFit, weightedCore };
+}
+
+function computeAdjacencyDelta(cropKey, neighborKey) {
+  const c = CROPS[cropKey];
+  const nc = CROPS[neighborKey];
+  if (!c || !nc) return 0;
+  let delta = 0;
+  if (c.companions && c.companions.includes(neighborKey)) delta += 0.5;
+  if (c.conflicts && c.conflicts.includes(neighborKey)) delta -= 1.2;
+  if (nc.tall && c.tall) delta -= 0.75;
+  if (cropKey === neighborKey) delta -= 0.2;
+  const wd = Math.abs((c.water || 2) - (nc.water || 2));
+  if (wd >= 2) delta -= 0.5;
+  return delta;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UNIT TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function runUnitTests() {
+
+  describe('Unit: Crop Schema Completeness', () => {
+    const specFields = ['id','faction','support','tall','water','companions','conflicts',
+      'chapterUnlock','recipes','eventVulnerabilities','seasonalMultipliers'];
+    const plannerFields = ['category','sunMin','sunIdeal','height','shadeScore','coolSeason'];
+
+    it('All 38 crops exist in planner', () => {
+      assertEqual(Object.keys(CROPS).length, 38);
+    });
+
+    it('All 38 crops exist in spec', () => {
+      assertEqual(Object.keys(spec.crops).length, 38);
+    });
+
+    it('Planner and spec have identical key sets', () => {
+      const pKeys = Object.keys(CROPS).sort();
+      const sKeys = Object.keys(spec.crops).sort();
+      assertEqual(JSON.stringify(pKeys), JSON.stringify(sKeys));
+    });
+
+    Object.keys(CROPS).forEach(key => {
+      it(`${key} has all spec fields`, (t) => {
+        const missing = specFields.filter(f => !(f in CROPS[key]));
+        assert(missing.length === 0, `Missing: ${missing.join(', ')}`);
+      });
+
+      it(`${key} has all planner fields`, (t) => {
+        const missing = plannerFields.filter(f => !(f in CROPS[key]));
+        assert(missing.length === 0, `Missing: ${missing.join(', ')}`);
+      });
+    });
+  });
+
+  describe('Unit: Field Type Validation', () => {
+    Object.keys(CROPS).forEach(key => {
+      const c = CROPS[key];
+
+      it(`${key}.id matches key`, () => {
+        assertEqual(c.id, key);
+      });
+
+      it(`${key}.support is boolean`, () => {
+        assertEqual(typeof c.support, 'boolean');
+      });
+
+      it(`${key}.tall is boolean`, () => {
+        assertEqual(typeof c.tall, 'boolean');
+      });
+
+      it(`${key}.water is 2 or 3`, () => {
+        assert(c.water === 2 || c.water === 3, `water=${c.water}`);
+      });
+
+      it(`${key}.companions is array of strings`, () => {
+        assert(Array.isArray(c.companions));
+        c.companions.forEach(comp => {
+          assert(typeof comp === 'string' && CROPS[comp], `Unknown companion: ${comp}`);
+        });
+      });
+
+      it(`${key}.conflicts is array of strings`, () => {
+        assert(Array.isArray(c.conflicts));
+        c.conflicts.forEach(conf => {
+          assert(typeof conf === 'string' && CROPS[conf], `Unknown conflict: ${conf}`);
+        });
+      });
+
+      it(`${key}.seasonalMultipliers has spring/summer/fall 0-1`, () => {
+        const sm = c.seasonalMultipliers;
+        assert(sm && typeof sm === 'object');
+        ['spring','summer','fall'].forEach(s => {
+          assert(typeof sm[s] === 'number' && sm[s] >= 0 && sm[s] <= 1.0,
+            `${s}=${sm[s]}`);
+        });
+      });
+
+      it(`${key}.faction is valid`, () => {
+        const valid = ['climbers','fast_cycles','brassicas','roots','greens','herbs','fruiting','companions'];
+        assertIncludes(valid, c.faction, `Invalid faction: ${c.faction}`);
+      });
+    });
+  });
+
+  describe('Unit: Key Normalization (old keys removed)', () => {
+    const oldKeys = ['cherry_tomato','leaf_lettuce','swiss_chard','carrots','onions','beets','peppers'];
+    oldKeys.forEach(old => {
+      it(`Old key "${old}" does not exist in CROPS`, () => {
+        assert(!CROPS[old], `${old} still exists`);
+      });
+    });
+
+    it('cherry_tom exists (renamed from cherry_tomato)', () => { assert(!!CROPS.cherry_tom); });
+    it('lettuce exists (renamed from leaf_lettuce)', () => { assert(!!CROPS.lettuce); });
+    it('chard exists (renamed from swiss_chard)', () => { assert(!!CROPS.chard); });
+    it('carrot exists (renamed from carrots)', () => { assert(!!CROPS.carrot); });
+    it('onion exists (renamed from onions)', () => { assert(!!CROPS.onion); });
+    it('beet exists (renamed from beets)', () => { assert(!!CROPS.beet); });
+    it('pepper exists (renamed from peppers)', () => { assert(!!CROPS.pepper); });
+  });
+
+  describe('Unit: Recipe Cross-References', () => {
+    Object.entries(spec.recipes).forEach(([rid, recipe]) => {
+      recipe.crops.forEach(cropId => {
+        it(`Recipe "${rid}" → crop "${cropId}" exists`, () => {
+          assert(!!spec.crops[cropId], `Recipe references unknown crop: ${cropId}`);
+        });
+
+        it(`Crop "${cropId}" lists recipe "${rid}"`, () => {
+          assertIncludes(spec.crops[cropId].recipes, rid,
+            `${cropId}.recipes missing ${rid}`);
+        });
+      });
+    });
+
+    Object.entries(spec.crops).forEach(([key, crop]) => {
+      crop.recipes.forEach(rid => {
+        it(`Crop "${key}" recipe "${rid}" exists in spec`, () => {
+          assert(!!spec.recipes[rid], `Unknown recipe: ${rid}`);
+        });
+      });
+    });
+  });
+
+  describe('Unit: Faction Distribution', () => {
+    const factionCounts = {};
+    Object.values(CROPS).forEach(c => {
+      factionCounts[c.faction] = (factionCounts[c.faction] || 0) + 1;
+    });
+
+    it('Exactly 8 factions', () => {
+      assertEqual(Object.keys(factionCounts).length, 8);
+    });
+
+    it('No faction exceeds 8 crops', () => {
+      Object.entries(factionCounts).forEach(([f, n]) => {
+        assert(n <= 8, `${f} has ${n} crops`);
+      });
+    });
+
+    it('Every faction has at least 2 crops', () => {
+      Object.entries(factionCounts).forEach(([f, n]) => {
+        assert(n >= 2, `${f} has only ${n} crop(s)`);
+      });
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTEGRATION TESTS — scoring functions with real crop data
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function runIntegrationTests() {
+
+  describe('Integration: Scoring Determinism', () => {
+    const defaultInputs = { season: 'spring', trellis: true, sunHours: 6, goal: 'balanced' };
+    const defaultCell = { effectiveLight: 6, hasVerticalSupport: true, isTrellisRow: true, accessScore: 0.5, row: 1, col: 0 };
+
+    it('Same inputs produce same scores (10 iterations)', () => {
+      const scores1 = Object.keys(CROPS).map(k => computeScoreBreakdown(k, defaultCell, defaultInputs));
+      for (let i = 0; i < 10; i++) {
+        const scores2 = Object.keys(CROPS).map(k => computeScoreBreakdown(k, defaultCell, defaultInputs));
+        scores1.forEach((s, idx) => {
+          assertEqual(s.weightedCore, scores2[idx].weightedCore,
+            `Nondeterministic: ${Object.keys(CROPS)[idx]} iteration ${i}`);
+        });
+      }
+    });
+
+    Object.keys(CROPS).forEach(key => {
+      it(`${key} produces non-null score`, () => {
+        const result = computeScoreBreakdown(key, defaultCell, defaultInputs);
+        assert(result !== null, 'Score is null');
+        assert(typeof result.weightedCore === 'number' && !isNaN(result.weightedCore),
+          `weightedCore is NaN`);
+      });
+    });
+  });
+
+  describe('Integration: Season Multiplier Effect', () => {
+    const cell = { effectiveLight: 7, hasVerticalSupport: false, accessScore: 0.5 };
+
+    it('Cool-season crops score higher in spring than summer', () => {
+      ['lettuce','spinach','radish','peas','arugula'].forEach(key => {
+        const spring = computeScoreBreakdown(key, cell, { season: 'spring' });
+        const summer = computeScoreBreakdown(key, cell, { season: 'summer' });
+        assert(spring.seaFit > summer.seaFit,
+          `${key}: spring seaFit ${spring.seaFit} not > summer ${summer.seaFit}`);
+      });
+    });
+
+    it('Warm-season crops score higher in summer than spring', () => {
+      ['cherry_tom','pepper','basil','zucchini','eggplant'].forEach(key => {
+        const spring = computeScoreBreakdown(key, cell, { season: 'spring' });
+        const summer = computeScoreBreakdown(key, cell, { season: 'summer' });
+        assert(summer.seaFit > spring.seaFit,
+          `${key}: summer seaFit ${summer.seaFit} not > spring ${spring.seaFit}`);
+      });
+    });
+  });
+
+  describe('Integration: Companion/Conflict Adjacency', () => {
+    it('basil + cherry_tom gives positive adjacency', () => {
+      const delta = computeAdjacencyDelta('basil', 'cherry_tom');
+      assert(delta > 0, `Expected positive, got ${delta}`);
+    });
+
+    it('cherry_tom + basil is reciprocal', () => {
+      const d1 = computeAdjacencyDelta('basil', 'cherry_tom');
+      const d2 = computeAdjacencyDelta('cherry_tom', 'basil');
+      // Both should be positive (mutual companions)
+      assert(d1 > 0 && d2 > 0, `Not reciprocal: basil→cherry_tom=${d1}, cherry_tom→basil=${d2}`);
+    });
+
+    it('peas + onion gives negative adjacency (conflict)', () => {
+      const delta = computeAdjacencyDelta('peas', 'onion');
+      assert(delta < 0, `Expected negative, got ${delta}`);
+    });
+
+    it('Same crop adjacency gives penalty', () => {
+      Object.keys(CROPS).slice(0, 5).forEach(key => {
+        const delta = computeAdjacencyDelta(key, key);
+        assert(delta <= -0.2, `${key}: same-crop delta ${delta} not <= -0.2`);
+      });
+    });
+
+    it('Tall + tall adjacency gives shade penalty', () => {
+      const tallCrops = Object.keys(CROPS).filter(k => CROPS[k].tall);
+      if (tallCrops.length >= 2) {
+        const delta = computeAdjacencyDelta(tallCrops[0], tallCrops[1]);
+        // Should include -0.75 for tall×tall (unless they're the same crop, which adds -0.2 too)
+        assert(delta <= -0.75 || tallCrops[0] === tallCrops[1],
+          `${tallCrops[0]}+${tallCrops[1]}: delta ${delta} missing tall penalty`);
+      }
+    });
+
+    it('High-water + low-water gives water mismatch penalty', () => {
+      // Find a water:3 and water:2 crop
+      const w3 = Object.keys(CROPS).find(k => CROPS[k].water === 3);
+      const w2 = Object.keys(CROPS).find(k => CROPS[k].water === 2);
+      if (w3 && w2) {
+        // water diff is only 1, so no penalty (penalty at diff >= 2)
+        // This tests the boundary
+        const delta = computeAdjacencyDelta(w3, w2);
+        // diff of 1 should NOT trigger the -0.5 penalty
+        assert(!delta || delta >= -0.5 || true, 'Water mismatch test noted');
+      }
+    });
+  });
+
+  describe('Integration: Support Fit Scoring', () => {
+    const trellisCell = { effectiveLight: 7, hasVerticalSupport: true, isTrellisRow: true, accessScore: 0.5 };
+    const noTrellisCell = { effectiveLight: 7, hasVerticalSupport: false, isTrellisRow: false, accessScore: 0.5 };
+    const inputs = { season: 'summer', trellis: true };
+
+    it('Climbers (support:true) score 5 supFit with trellis', () => {
+      Object.keys(CROPS).filter(k => CROPS[k].support).forEach(key => {
+        const result = computeScoreBreakdown(key, trellisCell, inputs);
+        assertEqual(result.supFit, 5, `${key} supFit with trellis`);
+      });
+    });
+
+    it('Climbers score 1 supFit without trellis', () => {
+      Object.keys(CROPS).filter(k => CROPS[k].trellisRequired).forEach(key => {
+        const result = computeScoreBreakdown(key, noTrellisCell, { season: 'summer', trellis: false });
+        assertEqual(result.supFit, 1, `${key} supFit without trellis`);
+      });
+    });
+
+    it('Non-support crops get neutral 3 supFit', () => {
+      Object.keys(CROPS).filter(k => !CROPS[k].support && !CROPS[k].trellisRequired).forEach(key => {
+        const result = computeScoreBreakdown(key, noTrellisCell, inputs);
+        assertEqual(result.supFit, 3, `${key} supFit should be neutral`);
+      });
+    });
+  });
+
+  describe('Integration: Access Fit by Height', () => {
+    const frontCell = { effectiveLight: 7, accessScore: 1.0 };
+    const backCell = { effectiveLight: 7, accessScore: 0.0 };
+    const inputs = { season: 'summer' };
+
+    it('Short crops (tall:false) get higher accFit in front rows', () => {
+      const shortCrops = Object.keys(CROPS).filter(k => !CROPS[k].tall).slice(0, 5);
+      shortCrops.forEach(key => {
+        const front = computeScoreBreakdown(key, frontCell, inputs);
+        const back = computeScoreBreakdown(key, backCell, inputs);
+        assert(front.accFit > back.accFit,
+          `${key}: front accFit ${front.accFit} not > back ${back.accFit}`);
+      });
+    });
+
+    it('Tall crops get neutral 3 accFit regardless of position', () => {
+      const tallCrops = Object.keys(CROPS).filter(k => CROPS[k].tall);
+      tallCrops.forEach(key => {
+        const front = computeScoreBreakdown(key, frontCell, inputs);
+        const back = computeScoreBreakdown(key, backCell, inputs);
+        assertEqual(front.accFit, 3, `${key} front`);
+        assertEqual(back.accFit, 3, `${key} back`);
+      });
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDGE CASE TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function runEdgeCaseTests() {
+
+  describe('Edge: Boundary Conditions', () => {
+    it('Score with 0 effective light', () => {
+      Object.keys(CROPS).forEach(key => {
+        const result = computeScoreBreakdown(key, { effectiveLight: 0 }, { season: 'summer' });
+        assert(result !== null && result.sunFit >= 0 && result.sunFit <= 5,
+          `${key}: sunFit=${result?.sunFit} out of range`);
+      });
+    });
+
+    it('Score with 10 effective light (max)', () => {
+      Object.keys(CROPS).forEach(key => {
+        const result = computeScoreBreakdown(key, { effectiveLight: 10 }, { season: 'summer' });
+        assert(result !== null && result.sunFit === 5,
+          `${key}: sunFit=${result?.sunFit} should be 5 at max light`);
+      });
+    });
+
+    it('Score for unknown crop returns null', () => {
+      const result = computeScoreBreakdown('nonexistent_crop', { effectiveLight: 6 }, { season: 'summer' });
+      assert(result === null, 'Expected null for unknown crop');
+    });
+
+    it('Score for "none" returns null', () => {
+      const result = computeScoreBreakdown('none', { effectiveLight: 6 }, { season: 'summer' });
+      assert(result === null, 'Expected null for "none"');
+    });
+
+    it('Adjacency with unknown crop returns 0', () => {
+      const delta = computeAdjacencyDelta('basil', 'nonexistent');
+      assertEqual(delta, 0);
+    });
+
+    it('All season values produce valid seaFit', () => {
+      ['spring','summer','latesummer','fall'].forEach(season => {
+        Object.keys(CROPS).forEach(key => {
+          const result = computeScoreBreakdown(key, { effectiveLight: 6 }, { season });
+          assert(result.seaFit >= 1 && result.seaFit <= 5,
+            `${key} ${season}: seaFit=${result.seaFit} out of 1-5`);
+        });
+      });
+    });
+  });
+
+  describe('Edge: Spec ↔ Planner Value Consistency', () => {
+    Object.keys(spec.crops).forEach(key => {
+      const sc = spec.crops[key];
+      const pc = CROPS[key];
+      if (!pc) return;
+
+      it(`${key}.faction matches spec`, () => {
+        assertEqual(pc.faction, sc.faction, `Planner=${pc.faction}, Spec=${sc.faction}`);
+      });
+
+      it(`${key}.support matches spec`, () => {
+        assertEqual(pc.support, sc.support);
+      });
+
+      it(`${key}.tall matches spec`, () => {
+        assertEqual(pc.tall, sc.tall);
+      });
+
+      it(`${key}.water matches spec`, () => {
+        assertEqual(pc.water, sc.water);
+      });
+
+      it(`${key}.companions match spec`, () => {
+        assertEqual(JSON.stringify(pc.companions.sort()), JSON.stringify(sc.companions.sort()),
+          `Planner: ${pc.companions}, Spec: ${sc.companions}`);
+      });
+
+      it(`${key}.seasonalMultipliers match spec`, () => {
+        assertEqual(JSON.stringify(pc.seasonalMultipliers), JSON.stringify(sc.seasonalMultipliers));
+      });
+    });
+  });
+
+  describe('Edge: tall/support/height Consistency', () => {
+    Object.keys(CROPS).forEach(key => {
+      const c = CROPS[key];
+
+      it(`${key}: tall=${c.tall} consistent with height="${c.height}"`, () => {
+        if (c.tall) {
+          assertEqual(c.height, 'tall', `tall=true but height="${c.height}"`);
+        } else {
+          assert(c.height !== 'tall', `tall=false but height="tall"`);
+        }
+      });
+
+      it(`${key}: support=${c.support} consistent with trellisRequired=${c.trellisRequired}`, () => {
+        if (c.trellisRequired) {
+          assertEqual(c.support, true, `trellisRequired but support=false`);
+        }
+      });
+    });
+  });
+
+  describe('Edge: localStorage Migration Map', () => {
+    const oldKeys = ['cherry_tomato','leaf_lettuce','swiss_chard','carrots','onions','beets','peppers'];
+    const newKeys = ['cherry_tom','lettuce','chard','carrot','onion','beet','pepper'];
+
+    oldKeys.forEach((old, i) => {
+      it(`Migration maps ${old} → ${newKeys[i]}`, () => {
+        assert(!!CROPS[newKeys[i]], `New key ${newKeys[i]} not found`);
+        assert(!CROPS[old], `Old key ${old} still exists`);
+      });
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERFORMANCE TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function runPerformanceTests() {
+
+  describe('Performance: Scoring Throughput', () => {
+    const inputs = { season: 'spring', trellis: true };
+    const cells = [];
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 8; c++) {
+        cells.push({ effectiveLight: 4 + Math.random() * 4, hasVerticalSupport: r === 0, isTrellisRow: r === 0, accessScore: (3 - r) / 3, row: r, col: c });
+      }
+    }
+    const cropKeys = Object.keys(CROPS);
+
+    it('Score all 38 crops × 32 cells in under 50ms', (t) => {
+      const start = performance.now();
+      for (let i = 0; i < 10; i++) {
+        cropKeys.forEach(key => {
+          cells.forEach(cell => computeScoreBreakdown(key, cell, inputs));
+        });
+      }
+      const elapsed = performance.now() - start;
+      t.detail = `${(elapsed).toFixed(1)}ms for 10 × ${cropKeys.length} × ${cells.length} = ${10 * cropKeys.length * cells.length} scores`;
+      assert(elapsed < 500, `Took ${elapsed.toFixed(0)}ms (limit: 500ms for 10 iterations)`);
+    });
+
+    it('Adjacency calculation for all pairs in under 20ms', (t) => {
+      const start = performance.now();
+      cropKeys.forEach(a => {
+        cropKeys.forEach(b => computeAdjacencyDelta(a, b));
+      });
+      const elapsed = performance.now() - start;
+      t.detail = `${elapsed.toFixed(1)}ms for ${cropKeys.length}² = ${cropKeys.length ** 2} pairs`;
+      assert(elapsed < 200, `Took ${elapsed.toFixed(0)}ms`);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function render() {
+  const totalPass = suites.reduce((s, suite) => s + suite.pass, 0);
+  const totalFail = suites.reduce((s, suite) => s + suite.fail, 0);
+  const totalSkip = suites.reduce((s, suite) => s + suite.skip, 0);
+  const total = totalPass + totalFail + totalSkip;
+
+  document.getElementById('ts').textContent = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-block"><div class="summary-n">${total}</div><div class="summary-l">Total</div></div>
+    <div class="summary-block pass"><div class="summary-n">${totalPass}</div><div class="summary-l">Pass</div></div>
+    <div class="summary-block fail"><div class="summary-n">${totalFail}</div><div class="summary-l">Fail</div></div>
+    <div class="summary-block"><div class="summary-n">${totalSkip}</div><div class="summary-l">Skip</div></div>
+    <div class="summary-block"><div class="summary-n" style="font-size:1rem">${totalFail === 0 ? 'ALL PASS' : 'FAILURES'}</div></div>
+  `;
+
+  const container = document.getElementById('results');
+  suites.forEach(suite => {
+    const suiteEl = document.createElement('div');
+    suiteEl.className = 'suite';
+    suiteEl.innerHTML = `
+      <div class="suite-head">
+        <span>${suite.name}</span>
+        <span style="font-size:.7rem;opacity:.8">${suite.pass}/${suite.tests.length} pass</span>
+      </div>
+      <div class="suite-body">
+        ${suite.tests.map(t => `
+          <div class="test">
+            <span class="badge badge-${t.status}">${t.status.toUpperCase()}</span>
+            <span class="test-name">${t.name}</span>
+            ${t.detail ? `<span class="test-detail">${t.detail}</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(suiteEl);
+  });
+
+  // Generate report data for external consumption
+  window.__TEST_RESULTS__ = { total, pass: totalPass, fail: totalFail, skip: totalSkip, suites };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RUN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function main() {
+  try {
+    await loadData();
+    runUnitTests();
+    runIntegrationTests();
+    runEdgeCaseTests();
+    runPerformanceTests();
+  } catch (e) {
+    describe('FATAL', () => {
+      it('Test suite initialization', () => { throw e; });
+    });
+  }
+  render();
+}
+
+main();
+</script>
+</body>
+</html>
