@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — Brand Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,200;1,9..144,300;1,9..144,400;1,9..144,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   GARDEN OS — BRAND TOKEN REFERENCE
+   All values here ARE the canonical tokens.
+═══════════════════════════════════════════════ */
+:root {
+  /* ── Soil scale ── */
+  --soil-900: #0f0804;
+  --soil-800: #1a0f07;
+  --soil-700: #2d1a0e;
+  --soil-600: #3d2210;
+  --soil-500: #5c3d1e;
+  --soil-400: #7a5230;
+  --soil-300: #9a6b42;
+  --soil-200: #c8a882;
+  --soil-100: #e8d5b8;
+
+  /* ── Leaf scale ── */
+  --leaf-900: #0d1f10;
+  --leaf-800: #1a3520;
+  --leaf-700: #2a5030;
+  --leaf-600: #3a6b42;
+  --leaf-500: #52924a;
+  --leaf-400: #6aaa60;
+  --leaf-300: #8aba80;
+  --leaf-200: #b8d8b0;
+  --leaf-100: #dff0dc;
+
+  /* ── Sun / Amber scale ── */
+  --sun-900: #3d2000;
+  --sun-800: #6a3800;
+  --sun-700: #9a5800;
+  --sun-600: #c8781a;
+  --sun-500: #e8a030;
+  --sun-400: #f5c14a;
+  --sun-300: #f8d470;
+  --sun-200: #fbe8a8;
+  --sun-100: #fdf5dc;
+
+  /* ── Cream scale ── */
+  --cream-900: #2a2018;
+  --cream-800: #4a3828;
+  --cream-700: #6a5540;
+  --cream-600: #8a7258;
+  --cream-500: #aa9070;
+  --cream-400: #c8b090;
+  --cream-300: #ddd0b8;
+  --cream-200: #ede5d8;
+  --cream-100: #f7f2ea;
+  --cream-50:  #faf8f4;
+
+  /* ── Semantic aliases ── */
+  --bg:          var(--cream-50);
+  --bg-panel:    var(--cream-100);
+  --bg-card:     white;
+  --bg-code:     var(--cream-200);
+  --text:        var(--soil-700);
+  --text-mid:    var(--soil-400);
+  --text-dim:    var(--cream-600);
+  --text-link:   var(--leaf-600);
+  --border:      var(--cream-300);
+  --border-mid:  var(--cream-400);
+  --accent:      var(--sun-600);
+  --accent-soft: var(--sun-100);
+  --good:        var(--leaf-600);
+  --warn:        #c85820;
+  --bad:         #b02a1e;
+
+  /* ── Spacing scale ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* ── Radius ── */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 9999px;
+
+  /* ── Shadow ── */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
+  --shadow-md: 0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,.1);
+  --shadow-lift: 0 8px 32px rgba(0,0,0,.12);
+
+  /* ── Type scale ── */
+  --text-xs:   0.625rem;   /* 10px */
+  --text-sm:   0.75rem;    /* 12px */
+  --text-base: 0.875rem;   /* 14px */
+  --text-md:   1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  2rem;       /* 32px */
+  --text-4xl:  2.5rem;     /* 40px */
+  --text-5xl:  3.5rem;     /* 56px */
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: var(--text-base);
+}
+
+/* ── LAYOUT ── */
+.page-wrap { max-width: 1080px; margin: 0 auto; padding: 0 var(--sp-8); }
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--soil-500);
+  color: var(--cream-100);
+  padding: var(--sp-3) var(--sp-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 2px solid var(--sun-500);
+}
+.topbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+.topbar-brand .name {
+  font-family: 'Fraunces', serif;
+  font-size: var(--text-lg);
+  font-weight: 400;
+  letter-spacing: -.01em;
+}
+.topbar-brand .doc-type {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--cream-400);
+  opacity: .7;
+}
+.topbar-nav {
+  display: flex;
+  gap: var(--sp-6);
+  list-style: none;
+}
+.topbar-nav a {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--cream-300);
+  text-decoration: none;
+  transition: color .15s;
+  opacity: .7;
+}
+.topbar-nav a:hover { color: var(--sun-400); opacity: 1; }
+
+/* ── HERO ── */
+.guide-hero {
+  background: var(--soil-800);
+  padding: var(--sp-16) var(--sp-8);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.guide-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 60%, rgba(58,107,66,.25) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 75% 30%, rgba(200,120,26,.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+/* Paper grain */
+.guide-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.hero-inner { position: relative; z-index: 1; }
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .2em;
+  color: var(--leaf-400);
+  margin-bottom: var(--sp-4);
+}
+.hero-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 200;
+  color: var(--cream-100);
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  margin-bottom: var(--sp-4);
+}
+.hero-title em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--sun-400);
+}
+.hero-sub {
+  font-size: var(--text-base);
+  color: var(--cream-400);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+.hero-version {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--cream-600);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.hero-version-dot {
+  width: 6px; height: 6px;
+  background: var(--leaf-500);
+  border-radius: 50%;
+}
+
+/* ── SECTION SCAFFOLD ── */
+.section {
+  padding: var(--sp-12) 0;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-8);
+}
+.section-num {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--cream-400);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  flex-shrink: 0;
+}
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: var(--text-3xl);
+  font-weight: 300;
+  color: var(--soil-600);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+.section-desc {
+  font-size: var(--text-base);
+  color: var(--text-dim);
+  margin-top: var(--sp-2);
+  line-height: 1.65;
+}
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── LABEL UTILITY ── */
+.label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  margin-bottom: var(--sp-2);
+  display: block;
+}
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+/* ── GRID HELPERS ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-6); }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); }
+.g-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); }
+
+/* ═══════════════════════════════════════════════
+   § 1 — PALETTE
+═══════════════════════════════════════════════ */
+.palette-group { margin-bottom: var(--sp-8); }
+.palette-group-label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  color: var(--text-dim);
+  margin-bottom: var(--sp-3);
+}
+.palette-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 88px;
+}
+.swatch-block {
+  height: 56px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(0,0,0,.06);
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  position: relative;
+}
+.swatch-block:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: var(--shadow-lift);
+}
+.swatch-block.large { height: 80px; }
+.swatch-name {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  line-height: 1.3;
+}
+.swatch-val {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  color: var(--cream-500);
+  user-select: all;
+}
+.copy-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.4);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  font-weight: 500;
+  color: var(--soil-700);
+}
+.swatch-block.copied .copy-flash { opacity: 1; }
+
+/* Semantic token row */
+.token-table { width: 100%; border-collapse: collapse; margin-top: var(--sp-4); }
+.token-table th, .token-table td {
+  padding: var(--sp-2) var(--sp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+.token-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  background: var(--bg-panel);
+  font-weight: 400;
+}
+.token-table td:first-child {
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem;
+  color: var(--leaf-600);
+}
+.token-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: var(--sp-2);
+}
+
+/* ═══════════════════════════════════════════════
+   § 2 — TYPOGRAPHY
+═══════════════════════════════════════════════ */
+.type-specimen {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: var(--sp-6);
+}
+.type-specimen-header {
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--soil-500);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.type-specimen-name {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--cream-300);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.type-specimen-role {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--cream-500);
+  letter-spacing: .06em;
+}
+.type-specimen-body {
+  padding: var(--sp-6) var(--sp-8);
+}
+.type-ramp { display: flex; flex-direction: column; gap: var(--sp-5); }
+.type-ramp-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-6);
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+.type-ramp-row:last-child { border-bottom: none; padding-bottom: 0; }
+.type-ramp-meta {
+  min-width: 120px;
+  flex-shrink: 0;
+}
+.type-ramp-meta .size {
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem;
+  color: var(--text-dim);
+}
+.type-ramp-meta .token {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  color: var(--cream-500);
+}
+.type-ramp-sample { flex: 1; }
+
+.weight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+.weight-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+}
+.weight-sample {
+  font-family: 'Fraunces', serif;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--soil-600);
+  margin-bottom: var(--sp-3);
+}
+.weight-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: .65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+/* ═══════════════════════════════════════════════
+   § 3 — SPACING
+═══════════════════════════════════════════════ */
+.spacing-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.spacing-row:last-child { border-bottom: none; }
+.spacing-block {
+  background: var(--leaf-200);
+  border: 1px solid var(--leaf-300);
+  border-radius: 2px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.spacing-token { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--leaf-600); min-width: 70px; }
+.spacing-px { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--text-dim); min-width: 40px; }
+.spacing-use { font-size: .78rem; color: var(--text-dim); }
+
+/* ═══════════════════════════════════════════════
+   § 4 — COMPONENTS
+═══════════════════════════════════════════════ */
+.comp-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: var(--sp-6);
+}
+.comp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+.comp-card-name {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+}
+.comp-card-body { padding: var(--sp-6) var(--sp-8); }
+.comp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.comp-row:last-child { margin-bottom: 0; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: .5rem 1.1rem;
+  border-radius: var(--r-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: filter .15s, transform .1s, box-shadow .15s;
+  text-decoration: none;
+  line-height: 1;
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); filter: brightness(.97); }
+
+.btn-primary { background: var(--soil-500); color: var(--cream-100); }
+.btn-accent  { background: var(--sun-600);  color: white; }
+.btn-leaf    { background: var(--leaf-600); color: white; }
+.btn-outline { background: transparent; color: var(--soil-500); border: 1.5px solid var(--border-mid); }
+.btn-outline:hover { border-color: var(--soil-400); background: var(--bg-panel); }
+.btn-ghost   { background: transparent; color: var(--text-dim); }
+.btn-ghost:hover { background: var(--bg-panel); color: var(--text); }
+.btn-danger  { background: var(--bad); color: white; }
+.btn-sm { padding: .32rem .75rem; font-size: var(--text-xs); }
+.btn-lg { padding: .75rem 1.5rem; font-size: var(--text-md); }
+.btn-icon { padding: .45rem .5rem; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+/* Tags / badges */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: .2rem .55rem;
+  border-radius: var(--r-sm);
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-weight: 400;
+  line-height: 1;
+}
+.tag-soil   { background: var(--soil-100);  color: var(--soil-600);  border: 1px solid var(--soil-200); }
+.tag-leaf   { background: var(--leaf-100);  color: var(--leaf-700);  border: 1px solid var(--leaf-200); }
+.tag-sun    { background: var(--sun-100);   color: var(--sun-800);   border: 1px solid var(--sun-200); }
+.tag-cream  { background: var(--cream-200); color: var(--cream-700); border: 1px solid var(--cream-300); }
+.tag-warn   { background: #fef3e8;          color: var(--warn);      border: 1px solid #f5d5b8; }
+.tag-bad    { background: #fde8e8;          color: var(--bad);       border: 1px solid #f5c0c0; }
+
+/* Score badge */
+.score-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  height: 52px;
+  justify-content: center;
+  border-radius: var(--r-md);
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+}
+.score-badge .score-num { font-size: 1.2rem; line-height: 1; }
+.score-badge .score-max { font-family: 'DM Mono', monospace; font-size: .55rem; opacity: .6; margin-top: 2px; }
+.sb-excellent { background: var(--leaf-100); color: var(--leaf-700); border: 1.5px solid var(--leaf-300); }
+.sb-good      { background: var(--sun-100);  color: var(--sun-800);  border: 1.5px solid var(--sun-300); }
+.sb-fair      { background: var(--cream-200); color: var(--cream-700); border: 1.5px solid var(--cream-400); }
+.sb-poor      { background: #fde8e8;          color: var(--bad);      border: 1.5px solid #f5c0c0; }
+
+/* Factor bar */
+.factor-bar-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.factor-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.factor-label {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-dim);
+  width: 100px;
+  flex-shrink: 0;
+}
+.factor-track {
+  flex: 1;
+  height: 6px;
+  background: var(--cream-200);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.factor-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  transition: width .8s ease;
+}
+.ff-sun     { background: linear-gradient(90deg, var(--sun-600), var(--sun-400)); }
+.ff-support { background: linear-gradient(90deg, var(--leaf-600), var(--leaf-400)); }
+.ff-shade   { background: linear-gradient(90deg, #3a6a9a, #5a8aba); }
+.ff-access  { background: linear-gradient(90deg, var(--soil-400), var(--soil-300)); }
+.ff-season  { background: linear-gradient(90deg, #7a4a9a, #9a6aba); }
+.ff-adj     { background: linear-gradient(90deg, #9a3a4a, #ba5a6a); }
+.factor-val {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  color: var(--text-dim);
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Form elements */
+.form-group { display: flex; flex-direction: column; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.form-label { font-size: var(--text-sm); font-weight: 500; color: var(--text-mid); }
+.form-input {
+  width: 100%;
+  padding: .42rem .65rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: var(--r-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--text-base);
+  color: var(--text);
+  background: white;
+  transition: border-color .15s, box-shadow .15s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--soil-400);
+  box-shadow: 0 0 0 3px rgba(92,61,30,.1);
+}
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%237a5230' d='M5 7L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 2rem;
+}
+.form-range { width: 100%; accent-color: var(--sun-600); cursor: pointer; }
+.form-hint { font-size: var(--text-xs); color: var(--text-dim); }
+
+/* Toggle */
+.toggle-wrap { display: flex; align-items: center; gap: var(--sp-3); }
+.toggle {
+  width: 36px; height: 20px;
+  background: var(--cream-300);
+  border-radius: var(--r-full);
+  position: relative;
+  cursor: pointer;
+  border: none;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--leaf-500); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle.on::after { left: 19px; }
+.toggle-label { font-size: var(--text-sm); color: var(--text); }
+
+/* Card / Panel */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+}
+.panel-title {
+  font-family: 'Fraunces', serif;
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--soil-600);
+  margin-bottom: var(--sp-2);
+}
+.panel-body { font-size: var(--text-sm); color: var(--text-dim); line-height: 1.6; }
+
+/* Callout */
+.callout {
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-md);
+  border-left: 3px solid;
+}
+.callout-icon { font-size: 1rem; flex-shrink: 0; line-height: 1.6; }
+.callout-text { font-size: var(--text-sm); line-height: 1.65; }
+.callout-text strong { font-weight: 600; display: block; margin-bottom: .2rem; }
+.callout-info    { background: var(--sun-100);  border-color: var(--sun-500);  }
+.callout-success { background: var(--leaf-100); border-color: var(--leaf-500); }
+.callout-warn    { background: #fef3e8;         border-color: var(--warn);     }
+.callout-danger  { background: #fde8e8;         border-color: var(--bad);      }
+
+/* Crop cell */
+.bed-demo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  max-width: 260px;
+}
+.bed-cell {
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  position: relative;
+  transition: transform .15s;
+  cursor: default;
+}
+.bed-cell:hover { transform: scale(1.08); z-index: 1; }
+.bc-tomato   { background: rgba(180,50,40,.15); border-color: rgba(180,50,40,.3); }
+.bc-pepper   { background: rgba(200,90,20,.12); border-color: rgba(200,90,20,.25); }
+.bc-lettuce  { background: rgba(60,140,60,.12); border-color: rgba(60,140,60,.25); }
+.bc-carrot   { background: rgba(200,120,20,.12); border-color: rgba(200,120,20,.25); }
+.bc-bean     { background: rgba(50,130,70,.12); border-color: rgba(50,130,70,.25); }
+.bc-basil    { background: rgba(40,100,50,.12); border-color: rgba(40,100,50,.25); }
+.bc-empty    { background: var(--cream-100); border-color: var(--border); border-style: dashed; }
+.bc-selected { box-shadow: 0 0 0 2px var(--sun-500); }
+.cell-score-dot {
+  position: absolute;
+  bottom: 3px; right: 4px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dot-good   { background: var(--leaf-500); }
+.dot-ok     { background: var(--sun-500); }
+.dot-warn   { background: var(--warn); }
+
+/* Tab bar */
+.tab-bar-demo {
+  display: flex;
+  gap: 3px;
+  background: rgba(0,0,0,.06);
+  border-radius: var(--r-md);
+  padding: 3px;
+  width: fit-content;
+}
+.tab-btn-demo {
+  padding: .28rem .7rem;
+  border-radius: var(--r-sm);
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  cursor: pointer;
+  color: var(--text-dim);
+  background: transparent;
+  transition: background .15s, color .15s;
+}
+.tab-btn-demo.active {
+  background: var(--soil-500);
+  color: var(--sun-400);
+  font-weight: 500;
+}
+.tab-btn-demo:not(.active):hover { background: rgba(0,0,0,.05); color: var(--text); }
+
+/* Section label (as used in planner) */
+.slabel-demo {
+  font-family: 'DM Mono', monospace;
+  font-size: .56rem;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--soil-400);
+  font-weight: 600;
+  padding-bottom: .25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .6rem;
+}
+
+/* Warning chip */
+.warn-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: #fef3e8;
+  border: 1px solid #f5d5b8;
+  border-radius: var(--r-sm);
+  font-size: var(--text-xs);
+  color: var(--warn);
+}
+.warn-chip-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* ═══════════════════════════════════════════════
+   § 5 — VOICE & COPY
+═══════════════════════════════════════════════ */
+.voice-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: var(--sp-4);
+}
+.voice-card-header {
+  padding: var(--sp-3) var(--sp-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.voice-card-title { font-weight: 500; font-size: var(--text-sm); color: var(--text); }
+.voice-card-tag   { font-family: 'DM Mono', monospace; font-size: .6rem; text-transform: uppercase; letter-spacing: .1em; }
+.voice-body { padding: var(--sp-5); }
+.voice-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.voice-do, .voice-dont {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.voice-do { background: var(--leaf-100); border: 1px solid var(--leaf-200); }
+.voice-dont { background: #fde8e8; border: 1px solid #f5c0c0; }
+.voice-do-label, .voice-dont-label {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: var(--sp-2);
+  display: block;
+}
+.voice-do-label { color: var(--leaf-700); }
+.voice-dont-label { color: var(--bad); }
+.voice-example {
+  font-style: italic;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(0,0,0,.08);
+  font-size: .8rem;
+}
+
+/* ═══════════════════════════════════════════════
+   § 6 — LOGO MARK
+═══════════════════════════════════════════════ */
+.logo-variants {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+.logo-cell {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-8) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.logo-cell.dark  { background: var(--soil-700); }
+.logo-cell.light { background: var(--cream-50); }
+.logo-cell.mid   { background: var(--cream-200); }
+.logo-mark {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  font-weight: 200;
+  letter-spacing: -.04em;
+  line-height: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.logo-mark .line1 { font-size: 1.1rem; font-weight: 200; letter-spacing: .02em; opacity: .7; }
+.logo-mark .line2 { font-size: 2rem; font-weight: 200; }
+.logo-meta { font-family: 'DM Mono', monospace; font-size: .6rem; text-transform: uppercase; letter-spacing: .1em; }
+.on-dark  { color: var(--cream-100); }
+.on-dark .logo-meta { color: var(--cream-500); }
+.on-light .logo-meta { color: var(--text-dim); }
+.on-light { color: var(--soil-600); }
+.on-mid   { color: var(--soil-500); }
+.on-mid .logo-meta { color: var(--text-dim); }
+
+.dont-card {
+  background: #fde8e8;
+  border: 1px solid #f5c0c0;
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.dont-card .dont-label {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--bad);
+}
+.dont-card .dont-text { font-size: var(--text-sm); color: var(--text-dim); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--soil-800);
+  color: var(--cream-300);
+  padding: var(--sp-8);
+  text-align: center;
+}
+footer .footer-title {
+  font-family: 'Fraunces', serif;
+  font-size: var(--text-xl);
+  font-weight: 200;
+  color: var(--cream-100);
+  margin-bottom: var(--sp-2);
+}
+footer .footer-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  color: var(--cream-600);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+/* ── CODE BLOCKS ── */
+.code {
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .15rem .4rem;
+  color: var(--leaf-700);
+  white-space: nowrap;
+}
+pre.code-block {
+  background: var(--cream-200);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem;
+  color: var(--soil-600);
+  overflow-x: auto;
+  line-height: 1.7;
+  margin-top: var(--sp-4);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-inner > * {
+  animation: fadeUp .5s ease backwards;
+}
+.hero-inner > *:nth-child(1) { animation-delay: .05s; }
+.hero-inner > *:nth-child(2) { animation-delay: .12s; }
+.hero-inner > *:nth-child(3) { animation-delay: .2s; }
+.hero-inner > *:nth-child(4) { animation-delay: .28s; }
+
+@media (max-width: 700px) {
+  .g2, .g3, .g4 { grid-template-columns: 1fr; }
+  .voice-pair { grid-template-columns: 1fr; }
+  .logo-variants { grid-template-columns: 1fr; }
+  .topbar-nav { display: none; }
+  .type-ramp-row { flex-direction: column; gap: var(--sp-2); }
+  .type-ramp-meta { min-width: unset; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <span class="name">Garden OS</span>
+    <span class="doc-type">Brand Guide</span>
+  </div>
+  <ul class="topbar-nav">
+    <li><a href="#palette">Palette</a></li>
+    <li><a href="#typography">Type</a></li>
+    <li><a href="#spacing">Spacing</a></li>
+    <li><a href="#components">Components</a></li>
+    <li><a href="#voice">Voice</a></li>
+    <li><a href="#identity">Identity</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<header class="guide-hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Living Brand Document</p>
+    <h1 class="hero-title">Garden <em>OS</em><br>Brand Guide</h1>
+    <p class="hero-sub">Tokens, type, components, voice, and identity rules for everything built under the Garden OS name.</p>
+    <div class="hero-version">
+      <span class="hero-version-dot"></span>
+      v4.4 · Updated March 2026
+    </div>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- ══════════════════════════════════
+       § 0 — BRAND STATEMENT
+  ══════════════════════════════════ -->
+  <section class="section" id="statement">
+    <div class="section-header">
+      <span class="section-num">§ 0</span>
+      <div>
+        <h2 class="section-title">Brand Statement</h2>
+        <p class="section-desc">The one-paragraph brief that everything else should feel consistent with.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <div class="g2">
+      <div>
+        <div class="panel" style="border-left: 3px solid var(--sun-500);">
+          <div class="panel-title">The position</div>
+          <p class="panel-body">Garden OS is a local-first raised bed garden planning system and narrative strategy game. It reads like a <strong>garden journal</strong>, not a SaaS dashboard. It is warm, grounded, and organic — but precise underneath. Every pixel either explains something or gets out of the way.</p>
+        </div>
+        <div style="margin-top: var(--sp-4);" class="panel">
+          <div class="panel-title">The promise</div>
+          <p class="panel-body">No cloud. No login. No tracking. <strong>Just dirt, data, and decisions.</strong> The system earns trust by being transparent: every score shows exactly why, every action is reversible, every file is yours.</p>
+        </div>
+      </div>
+      <div>
+        <span class="label">Core attributes</span>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3);margin-top:var(--sp-2)">
+          <div class="callout callout-info">
+            <span class="callout-icon">🌱</span>
+            <div class="callout-text"><strong>Warm and grounded</strong>Soil tones, natural language, no jargon. Feels handmade, not generated.</div>
+          </div>
+          <div class="callout callout-success">
+            <span class="callout-icon">🧮</span>
+            <div class="callout-text"><strong>Precise and explainable</strong>Every number has a reason. Every score is traceable. Trust is built by showing work.</div>
+          </div>
+          <div class="callout callout-warn">
+            <span class="callout-icon">🔒</span>
+            <div class="callout-text"><strong>Local and permanent</strong>Your data lives in your browser. The app works offline. Nothing disappears when the server does.</div>
+          </div>
+          <div class="callout callout-danger" style="border-color: var(--soil-400); background: var(--cream-100);">
+            <span class="callout-icon">🎮</span>
+            <div class="callout-text"><strong>Serious but fun</strong>Real horticultural logic. But also: a 12-chapter season game with narrators and recipes. Both are meant.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 1 — PALETTE
+  ══════════════════════════════════ -->
+  <section class="section" id="palette">
+    <div class="section-header">
+      <span class="section-num">§ 1</span>
+      <div>
+        <h2 class="section-title">Colour Palette</h2>
+        <p class="section-desc">Four families. One intentional light theme. Click any swatch to copy its hex value.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <div class="palette-group">
+      <div class="palette-group-label">Soil — structure, headers, text</div>
+      <div class="palette-row" id="swatches-soil"></div>
+    </div>
+    <div class="palette-group">
+      <div class="palette-group-label">Leaf — success, growth, good states</div>
+      <div class="palette-row" id="swatches-leaf"></div>
+    </div>
+    <div class="palette-group">
+      <div class="palette-group-label">Sun / Amber — accent, CTA, warmth</div>
+      <div class="palette-row" id="swatches-sun"></div>
+    </div>
+    <div class="palette-group">
+      <div class="palette-group-label">Cream — backgrounds, panels, borders</div>
+      <div class="palette-row" id="swatches-cream"></div>
+    </div>
+
+    <span class="label" style="margin-top: var(--sp-6); display:block;">Semantic aliases — use these in component code, not raw scale values</span>
+    <table class="token-table">
+      <thead>
+        <tr><th>Token</th><th>Value</th><th>Preview</th><th>Use for</th></tr>
+      </thead>
+      <tbody id="semantic-tokens"></tbody>
+    </table>
+
+    <div class="callout callout-info" style="margin-top: var(--sp-6);">
+      <span class="callout-icon">🎨</span>
+      <div class="callout-text"><strong>Single-theme policy</strong>Garden OS ships one intentional light theme. Do not add dark mode without updating all surface, text, and border tokens systematically. Do not introduce purple, blue, or grey as primary tones — they undermine the warm soil aesthetic.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 2 — TYPOGRAPHY
+  ══════════════════════════════════ -->
+  <section class="section" id="typography">
+    <div class="section-header">
+      <span class="section-num">§ 2</span>
+      <div>
+        <h2 class="section-title">Typography</h2>
+        <p class="section-desc">Three typefaces. One for narrative, one for prose, one for data.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <!-- Fraunces -->
+    <div class="type-specimen">
+      <div class="type-specimen-header">
+        <span class="type-specimen-name">Fraunces — Display & Headings</span>
+        <span class="type-specimen-role">Optical size: 9–144 · Ital + Roman</span>
+      </div>
+      <div class="type-specimen-body">
+        <div style="font-family:'Fraunces',serif; font-size: 3rem; font-weight: 200; color: var(--soil-600); letter-spacing:-.03em; line-height:1.05; margin-bottom: var(--sp-4);">
+          Where should the<br><em style="font-style:italic; color:var(--sun-600);">tomatoes go?</em>
+        </div>
+        <div class="type-ramp">
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">56px / 3.5rem</div><div class="token">--text-5xl</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:3.5rem; font-weight:200; color:var(--soil-600); line-height:1; letter-spacing:-.03em;">Garden OS</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">40px / 2.5rem</div><div class="token">--text-4xl</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:2.5rem; font-weight:300; color:var(--soil-600); letter-spacing:-.02em;">Season Engine</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">32px / 2rem</div><div class="token">--text-3xl</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:2rem; font-weight:300; color:var(--soil-600); letter-spacing:-.02em;">The Planner</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">24px / 1.5rem</div><div class="token">--text-2xl</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:1.5rem; font-weight:400; color:var(--soil-600);">Scoring Engine</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">20px / 1.25rem</div><div class="token">--text-xl</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:1.25rem; font-weight:400; color:var(--soil-500);">Bed Score: 78</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">Italic variant</div><div class="token">font-style: italic</div></div>
+            <div class="type-ramp-sample" style="font-family:'Fraunces',serif; font-size:1.5rem; font-style:italic; font-weight:300; color:var(--sun-600);">"An aphid surge hit the nightshade row."</div>
+          </div>
+        </div>
+
+        <span class="label" style="margin-top: var(--sp-6); display:block;">Weight reference</span>
+        <div class="weight-grid">
+          <div class="weight-card">
+            <div class="weight-sample" style="font-weight:200;">Fraunces 200</div>
+            <div class="weight-meta">Hero titles, display</div>
+          </div>
+          <div class="weight-card">
+            <div class="weight-sample" style="font-weight:300;">Fraunces 300</div>
+            <div class="weight-meta">Section heads</div>
+          </div>
+          <div class="weight-card">
+            <div class="weight-sample" style="font-weight:400;">Fraunces 400</div>
+            <div class="weight-meta">Panel titles, cards</div>
+          </div>
+          <div class="weight-card">
+            <div class="weight-sample" style="font-weight:600;">Fraunces 600</div>
+            <div class="weight-meta">Score numbers, emphasis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DM Sans -->
+    <div class="type-specimen">
+      <div class="type-specimen-header">
+        <span class="type-specimen-name">DM Sans — Body & UI Prose</span>
+        <span class="type-specimen-role">Weights: 300, 400, 500, 600</span>
+      </div>
+      <div class="type-specimen-body">
+        <div class="type-ramp">
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">16px</div><div class="token">--text-md</div></div>
+            <div class="type-ramp-sample">Plan your bed. Learn why each placement scores the way it does.</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">14px</div><div class="token">--text-base</div></div>
+            <div class="type-ramp-sample" style="font-size:.875rem;">No cloud. No login. No tracking. Just dirt, data, and decisions.</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">12px</div><div class="token">--text-sm</div></div>
+            <div class="type-ramp-sample" style="font-size:.75rem;">Works offline. Saves to localStorage. No backend required.</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">500 weight</div><div class="token">font-weight:500</div></div>
+            <div class="type-ramp-sample" style="font-weight:500;">Labels, button text, field headings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DM Mono -->
+    <div class="type-specimen">
+      <div class="type-specimen-header">
+        <span class="type-specimen-name">DM Mono — Data, Labels, Code</span>
+        <span class="type-specimen-role">Weights: 400, 500 · Always ALL-CAPS for UI labels</span>
+      </div>
+      <div class="type-specimen-body">
+        <div class="type-ramp">
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">UI labels</div><div class="token">0.55–0.65rem</div></div>
+            <div class="type-ramp-sample" style="font-family:'DM Mono',monospace; font-size:.6rem; text-transform:uppercase; letter-spacing:.14em; color:var(--text-dim);">BED SCORE &nbsp; SUN FIT &nbsp; VERSION v4.4 &nbsp; SCHEMA v1</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">Data values</div><div class="token">0.7–0.8rem</div></div>
+            <div class="type-ramp-sample" style="font-family:'DM Mono',monospace; font-size:.75rem; color:var(--soil-600);">78 / 100 &nbsp;·&nbsp; 4.5 hrs sun &nbsp;·&nbsp; Zone 7 &nbsp;·&nbsp; Last frost Apr-01</div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">Token names</div><div class="token">code usage</div></div>
+            <div class="type-ramp-sample"><span class="code">--soil-500</span> <span class="code">--text-base</span> <span class="code">scoreBed()</span> <span class="code">gardenOS_workspace</span></div>
+          </div>
+          <div class="type-ramp-row">
+            <div class="type-ramp-meta"><div class="size">Nav + tabs</div><div class="token">letter-spacing:.1em</div></div>
+            <div class="type-ramp-sample">
+              <div class="tab-bar-demo">
+                <button class="tab-btn-demo active">Score</button>
+                <button class="tab-btn-demo">Inspect</button>
+                <button class="tab-btn-demo">Notes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-warn" style="margin-top: var(--sp-4);">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-text"><strong>Never substitute</strong>Do not replace Fraunces with a geometric sans (e.g. Nunito, Outfit, Plus Jakarta). The optical-size serif is load-bearing for the warm/grounded aesthetic. DM Mono can be replaced with another mono in code contexts only.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 3 — SPACING
+  ══════════════════════════════════ -->
+  <section class="section" id="spacing">
+    <div class="section-header">
+      <span class="section-num">§ 3</span>
+      <div>
+        <h2 class="section-title">Spacing Scale</h2>
+        <p class="section-desc">4px base unit. Always use tokens — never write arbitrary pixel values.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <div class="g2">
+      <div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-1</span>
+          <div class="spacing-block" style="width:4px"></div>
+          <span class="spacing-px">4px</span>
+          <span class="spacing-use">Icon gap, dot, fine spacing</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-2</span>
+          <div class="spacing-block" style="width:8px"></div>
+          <span class="spacing-px">8px</span>
+          <span class="spacing-use">Tag padding, close pairs</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-3</span>
+          <div class="spacing-block" style="width:12px"></div>
+          <span class="spacing-px">12px</span>
+          <span class="spacing-use">Inline elements, label-field gap</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-4</span>
+          <div class="spacing-block" style="width:16px"></div>
+          <span class="spacing-px">16px</span>
+          <span class="spacing-use">List items, row padding, callout</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-5</span>
+          <div class="spacing-block" style="width:20px"></div>
+          <span class="spacing-px">20px</span>
+          <span class="spacing-use">Card padding (compact)</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-6</span>
+          <div class="spacing-block" style="width:24px"></div>
+          <span class="spacing-px">24px</span>
+          <span class="spacing-use">Card padding, section gap</span>
+        </div>
+      </div>
+      <div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-8</span>
+          <div class="spacing-block" style="width:32px"></div>
+          <span class="spacing-px">32px</span>
+          <span class="spacing-use">Page gutter, panel spacing</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-10</span>
+          <div class="spacing-block" style="width:40px"></div>
+          <span class="spacing-px">40px</span>
+          <span class="spacing-use">Section vertical padding</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-12</span>
+          <div class="spacing-block" style="width:48px"></div>
+          <span class="spacing-px">48px</span>
+          <span class="spacing-use">Major section breaks</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-token">--sp-16</span>
+          <div class="spacing-block" style="width:64px"></div>
+          <span class="spacing-px">64px</span>
+          <span class="spacing-use">Hero padding, full-bleed gaps</span>
+        </div>
+      </div>
+    </div>
+
+    <span class="label" style="margin-top: var(--sp-6); display:block;">Radius scale</span>
+    <div class="g4" style="margin-top: var(--sp-3);">
+      <div style="text-align:center;">
+        <div style="height:48px;background:var(--cream-200);border:1.5px solid var(--border);border-radius:var(--r-sm);margin-bottom:var(--sp-2);"></div>
+        <code class="code">--r-sm · 4px</code><br><span class="label">Tags, dots, cells</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="height:48px;background:var(--cream-200);border:1.5px solid var(--border);border-radius:var(--r-md);margin-bottom:var(--sp-2);"></div>
+        <code class="code">--r-md · 8px</code><br><span class="label">Buttons, inputs, cards</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="height:48px;background:var(--cream-200);border:1.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:var(--sp-2);"></div>
+        <code class="code">--r-lg · 12px</code><br><span class="label">Panels, modals</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="height:48px;background:var(--cream-200);border:1.5px solid var(--border);border-radius:var(--r-full);margin-bottom:var(--sp-2);"></div>
+        <code class="code">--r-full</code><br><span class="label">Pills, toggles, dots</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 4 — COMPONENTS
+  ══════════════════════════════════ -->
+  <section class="section" id="components">
+    <div class="section-header">
+      <span class="section-num">§ 4</span>
+      <div>
+        <h2 class="section-title">Components</h2>
+        <p class="section-desc">Live examples of every reusable element. All behaviour is in-page, no framework.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <!-- Buttons -->
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <span class="comp-card-name">Buttons</span>
+        <span class="tag tag-cream">Interactive</span>
+      </div>
+      <div class="comp-card-body">
+        <span class="label">Variants</span>
+        <div class="comp-row">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-accent">Accent (CTA)</button>
+          <button class="btn btn-leaf">Confirm / Good</button>
+          <button class="btn btn-outline">Outline</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-danger">Danger</button>
+        </div>
+        <span class="label">Sizes</span>
+        <div class="comp-row">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary">Default</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+          <button class="btn btn-primary" disabled>Disabled</button>
+        </div>
+        <span class="label">With icons</span>
+        <div class="comp-row">
+          <button class="btn btn-primary">🌱 Auto-fill</button>
+          <button class="btn btn-accent">→ Open in Browser</button>
+          <button class="btn btn-outline">⟳ Undo</button>
+          <button class="btn btn-icon btn-outline" title="Help">?</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <span class="comp-card-name">Tags & Badges</span>
+        <span class="tag tag-cream">Display</span>
+      </div>
+      <div class="comp-card-body">
+        <span class="label">Semantic tags</span>
+        <div class="comp-row">
+          <span class="tag tag-leaf">Local First</span>
+          <span class="tag tag-leaf">Offline</span>
+          <span class="tag tag-sun">Season</span>
+          <span class="tag tag-sun">Strategy</span>
+          <span class="tag tag-soil">Nightshade</span>
+          <span class="tag tag-soil">Greens</span>
+          <span class="tag tag-cream">Annotation</span>
+        </div>
+        <span class="label">Status tags</span>
+        <div class="comp-row">
+          <span class="tag tag-leaf">✓ Confirmed</span>
+          <span class="tag tag-warn">⚠ At risk</span>
+          <span class="tag tag-bad">✕ Conflict</span>
+        </div>
+        <span class="label">Score badges</span>
+        <div class="comp-row">
+          <div class="score-badge sb-excellent"><span class="score-num">92</span><span class="score-max">/100</span></div>
+          <div class="score-badge sb-good"><span class="score-num">74</span><span class="score-max">/100</span></div>
+          <div class="score-badge sb-fair"><span class="score-num">51</span><span class="score-max">/100</span></div>
+          <div class="score-badge sb-poor"><span class="score-num">28</span><span class="score-max">/100</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoring factors -->
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <span class="comp-card-name">Factor Bars — Scoring Breakdown</span>
+        <span class="tag tag-cream">Data Viz</span>
+      </div>
+      <div class="comp-card-body">
+        <div class="g2">
+          <div>
+            <div class="slabel-demo">Placement score · Tomato R1C2</div>
+            <div class="factor-bar-demo">
+              <div class="factor-row">
+                <span class="factor-label">Sun Fit</span>
+                <div class="factor-track"><div class="factor-fill ff-sun" style="width:90%"></div></div>
+                <span class="factor-val">9</span>
+              </div>
+              <div class="factor-row">
+                <span class="factor-label">Support</span>
+                <div class="factor-track"><div class="factor-fill ff-support" style="width:80%"></div></div>
+                <span class="factor-val">8</span>
+              </div>
+              <div class="factor-row">
+                <span class="factor-label">Shade Tol.</span>
+                <div class="factor-track"><div class="factor-fill ff-shade" style="width:50%"></div></div>
+                <span class="factor-val">5</span>
+              </div>
+              <div class="factor-row">
+                <span class="factor-label">Access</span>
+                <div class="factor-track"><div class="factor-fill ff-access" style="width:70%"></div></div>
+                <span class="factor-val">7</span>
+              </div>
+              <div class="factor-row">
+                <span class="factor-label">Season</span>
+                <div class="factor-track"><div class="factor-fill ff-season" style="width:100%"></div></div>
+                <span class="factor-val">10</span>
+              </div>
+              <div class="factor-row">
+                <span class="factor-label">Adjacency</span>
+                <div class="factor-track"><div class="factor-fill ff-adj" style="width:60%"></div></div>
+                <span class="factor-val">+1</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="slabel-demo">Bed grid · 4 × 4</div>
+            <div class="bed-demo">
+              <div class="bed-cell bc-tomato">🍅<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-tomato">🍅<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-pepper">🌶️<span class="cell-score-dot dot-ok"></span></div>
+              <div class="bed-cell bc-pepper bc-selected">🌶️<span class="cell-score-dot dot-ok"></span></div>
+              <div class="bed-cell bc-lettuce">🥬<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-basil">🌿<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-carrot">🥕<span class="cell-score-dot dot-ok"></span></div>
+              <div class="bed-cell bc-carrot">🥕<span class="cell-score-dot dot-warn"></span></div>
+              <div class="bed-cell bc-bean">🫘<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-bean">🫘<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-lettuce">🥬<span class="cell-score-dot dot-ok"></span></div>
+              <div class="bed-cell bc-empty"></div>
+              <div class="bed-cell bc-basil">🌿<span class="cell-score-dot dot-good"></span></div>
+              <div class="bed-cell bc-empty"></div>
+              <div class="bed-cell bc-empty"></div>
+              <div class="bed-cell bc-empty"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forms -->
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <span class="comp-card-name">Form Elements</span>
+        <span class="tag tag-cream">Interactive</span>
+      </div>
+      <div class="comp-card-body">
+        <div class="g2">
+          <div>
+            <div class="form-group">
+              <label class="form-label">Bed name</label>
+              <input class="form-input" type="text" value="Mom's Sanctuary" placeholder="Name this bed…">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Wall side</label>
+              <select class="form-input form-select">
+                <option>North (wall behind)</option>
+                <option>South</option>
+                <option>East</option>
+                <option>West</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sun hours: <span style="font-family:'DM Mono',monospace;color:var(--sun-600)" id="sunVal">6 hrs</span></label>
+              <input class="form-range" type="range" min="1" max="12" value="6" oninput="document.getElementById('sunVal').textContent=this.value+' hrs'">
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label class="form-label">Season</label>
+              <select class="form-input form-select">
+                <option>Summer</option>
+                <option>Spring</option>
+                <option>Fall</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--sp-3);margin-top:var(--sp-2)">
+              <div class="toggle-wrap">
+                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <span class="toggle-label">Trellis / cage present</span>
+              </div>
+              <div class="toggle-wrap">
+                <button class="toggle" onclick="this.classList.toggle('on')"></button>
+                <span class="toggle-label">Protected zone active</span>
+              </div>
+              <div class="toggle-wrap">
+                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <span class="toggle-label">Show heatmap overlay</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Callouts -->
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <span class="comp-card-name">Callouts & Warnings</span>
+        <span class="tag tag-cream">Feedback</span>
+      </div>
+      <div class="comp-card-body">
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+          <div class="callout callout-info">
+            <span class="callout-icon">💡</span>
+            <div class="callout-text"><strong>Tip</strong>Planting beans next to corn activates the Three Sisters bonus — a confirmed nitrogen fixation benefit.</div>
+          </div>
+          <div class="callout callout-success">
+            <span class="callout-icon">✓</span>
+            <div class="callout-text"><strong>Good placement</strong>Tomato in R1C1 scores 8.4 — sun fit and trellis access are both optimal.</div>
+          </div>
+          <div class="callout callout-warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-text"><strong>Season warning</strong>Lettuce is a cool-season crop. Planting in July risks bolting within 2 weeks.</div>
+          </div>
+          <div class="callout callout-danger">
+            <span class="callout-icon">✕</span>
+            <div class="callout-text"><strong>Conflict detected</strong>Garlic and beans are in adjacent cells. Allium sulfur compounds suppress legume nitrogen fixation — move one.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 5 — VOICE & COPY
+  ══════════════════════════════════ -->
+  <section class="section" id="voice">
+    <div class="section-header">
+      <span class="section-num">§ 5</span>
+      <div>
+        <h2 class="section-title">Voice & Copy</h2>
+        <p class="section-desc">Garden OS speaks like a knowledgeable friend, not a SaaS dashboard or a textbook.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-card-header">
+        <span class="voice-card-title">Tone principles</span>
+        <span class="voice-card-tag tag tag-soil">Foundation</span>
+      </div>
+      <div class="voice-body">
+        <div class="g3" style="gap: var(--sp-4);">
+          <div class="panel" style="border-top: 3px solid var(--leaf-500);">
+            <div class="panel-title" style="font-size:1rem;">Warm, not cozy</div>
+            <p class="panel-body">The voice is direct and helpful. It doesn't over-explain, doesn't use filler phrases like "Great choice!", and doesn't hedge with "you might want to consider."</p>
+          </div>
+          <div class="panel" style="border-top: 3px solid var(--sun-500);">
+            <div class="panel-title" style="font-size:1rem;">Precise, not clinical</div>
+            <p class="panel-body">Numbers have context. "Score: 8.4" alone is not enough — "sun fit: 9, season fit: 7" explains it. Always show the reason behind the number.</p>
+          </div>
+          <div class="panel" style="border-top: 3px solid var(--soil-400);">
+            <div class="panel-title" style="font-size:1rem;">Grounded, not formal</div>
+            <p class="panel-body">Use plain English. Horticultural terms are allowed when they're more precise (e.g. "bolting", "allium", "trellis zone") — but always explain them on first use.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-card-header">
+        <span class="voice-card-title">Do / Don't — UI microcopy</span>
+        <span class="voice-card-tag tag tag-warn">Rules</span>
+      </div>
+      <div class="voice-body">
+        <div class="voice-pair" style="margin-bottom:var(--sp-4)">
+          <div class="voice-do">
+            <span class="voice-do-label">✓ Do</span>
+            "Auto-fill a starter layout →"
+            <div class="voice-example">Direct, verb-first. The arrow implies action. No "click here."</div>
+          </div>
+          <div class="voice-dont">
+            <span class="voice-dont-label">✕ Don't</span>
+            "Click here to automatically fill your garden bed with recommended crops"
+            <div class="voice-example">Too long, passive, explains what the user can already see.</div>
+          </div>
+        </div>
+        <div class="voice-pair" style="margin-bottom:var(--sp-4)">
+          <div class="voice-do">
+            <span class="voice-do-label">✓ Do</span>
+            "Lettuce risks bolting — plant before May or after September."
+            <div class="voice-example">States the problem, gives the solution, cites the condition.</div>
+          </div>
+          <div class="voice-dont">
+            <span class="voice-dont-label">✕ Don't</span>
+            "Warning: This crop may not be optimal for the current season settings."
+            <div class="voice-example">Vague, passive, gives no actionable guidance.</div>
+          </div>
+        </div>
+        <div class="voice-pair">
+          <div class="voice-do">
+            <span class="voice-do-label">✓ Do</span>
+            "Saved just now · 78 cells · 4 beds"
+            <div class="voice-example">Compact, specific, reassuring. Uses DM Mono for data.</div>
+          </div>
+          <div class="voice-dont">
+            <span class="voice-dont-label">✕ Don't</span>
+            "Your changes have been successfully saved to local storage."
+            <div class="voice-example">Wordy, formal, sounds like a server response.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-card-header">
+        <span class="voice-card-title">Narrator voice — Season Engine</span>
+        <span class="voice-card-tag tag tag-soil">Game context</span>
+      </div>
+      <div class="voice-body">
+        <p style="font-size:var(--text-sm);color:var(--text-dim);margin-bottom:var(--sp-4);line-height:1.65;">Season Engine narrators speak in the first person with a fixed voice and consistent point of view. Each line references at least one live game signal — score, event severity, crop status, or resource level.</p>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+          <div style="border-left:3px solid var(--leaf-500);padding:var(--sp-3) var(--sp-4);background:var(--leaf-100);border-radius:0 var(--r-md) var(--r-md) 0;">
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--leaf-700);margin-bottom:var(--sp-2);">Voice example — good state (bed score 80+)</div>
+            <p style="font-family:'Fraunces',serif;font-style:italic;font-size:.95rem;color:var(--soil-600);line-height:1.55;">"The basil held its line. Your companion layout paid off — the nightshade row took zero pest pressure this week. Harvest window opens in 12 days."</p>
+          </div>
+          <div style="border-left:3px solid var(--warn);padding:var(--sp-3) var(--sp-4);background:#fef3e8;border-radius:0 var(--r-md) var(--r-md) 0;">
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warn);margin-bottom:var(--sp-2);">Voice example — stress event (drought, score dropping)</div>
+            <p style="font-family:'Fraunces',serif;font-style:italic;font-size:.95rem;color:var(--soil-600);line-height:1.55;">"Third dry week. The cucumbers are pulling ahead of your water budget. You'll need to choose between them and the bean row before Friday's commit."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 6 — IDENTITY
+  ══════════════════════════════════ -->
+  <section class="section" id="identity">
+    <div class="section-header">
+      <span class="section-num">§ 6</span>
+      <div>
+        <h2 class="section-title">Identity & Logomark</h2>
+        <p class="section-desc">The wordmark, usage rules, and clear space requirements.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <span class="label">Approved wordmark variants</span>
+    <div class="logo-variants" style="margin: var(--sp-4) 0 var(--sp-6);">
+      <div class="logo-cell dark">
+        <div class="logo-mark on-dark">
+          <span class="line1">Garden</span>
+          <span class="line2">OS</span>
+        </div>
+        <span class="logo-meta on-dark">On dark / primary use</span>
+      </div>
+      <div class="logo-cell light">
+        <div class="logo-mark on-light">
+          <span class="line1">Garden</span>
+          <span class="line2">OS</span>
+        </div>
+        <span class="logo-meta on-light">On light / cream backgrounds</span>
+      </div>
+      <div class="logo-cell mid">
+        <div class="logo-mark on-mid">
+          <span class="line1">Garden</span>
+          <span class="line2">OS</span>
+        </div>
+        <span class="logo-meta on-mid">On panel / medium backgrounds</span>
+      </div>
+    </div>
+
+    <span class="label">Usage rules</span>
+    <div class="g2" style="margin-top: var(--sp-3);">
+      <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+        <div class="callout callout-success">
+          <span class="callout-icon">✓</span>
+          <div class="callout-text">Always set "Garden" and "OS" at different weights and sizes — "Garden" is subordinate, "OS" is the identity anchor.</div>
+        </div>
+        <div class="callout callout-success">
+          <span class="callout-icon">✓</span>
+          <div class="callout-text">Use Fraunces 200 (ultralight) for "Garden" and Fraunces 200–300 for "OS". The lightness is intentional — it reads as grown, not bold.</div>
+        </div>
+        <div class="callout callout-success">
+          <span class="callout-icon">✓</span>
+          <div class="callout-text">Page headers use the full wordmark with version metadata in DM Mono below: <span class="code">v4.4 · Schema v1</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+        <div class="dont-card">
+          <span class="dont-label">✕ Never</span>
+          <span class="dont-text">Render "Garden OS" in a single weight — the two-weight stacking is structurally part of the mark.</span>
+        </div>
+        <div class="dont-card">
+          <span class="dont-label">✕ Never</span>
+          <span class="dont-text">Use a logo on a pure white or pure black background — always pair with cream, soil, or the brand gradient.</span>
+        </div>
+        <div class="dont-card">
+          <span class="dont-label">✕ Never</span>
+          <span class="dont-text">Abbreviate to "GOS" — the wordmark is always "Garden OS", never shortened.</span>
+        </div>
+      </div>
+    </div>
+
+    <span class="label" style="margin-top: var(--sp-8); display:block;">Aesthetic in one sentence</span>
+    <div style="background: var(--soil-700); padding: var(--sp-8) var(--sp-10); border-radius: var(--r-xl); margin-top: var(--sp-3); text-align: center;">
+      <p style="font-family:'Fraunces',serif; font-size:1.6rem; font-weight:200; font-style:italic; color:var(--cream-100); line-height:1.4; letter-spacing:-.01em;">
+        "Warm, grounded, organic.<br>Reads like a garden journal,<br>not a SaaS dashboard."
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       § 7 — TOKEN REFERENCE
+  ══════════════════════════════════ -->
+  <section class="section" id="tokens">
+    <div class="section-header">
+      <span class="section-num">§ 7</span>
+      <div>
+        <h2 class="section-title">CSS Token Reference</h2>
+        <p class="section-desc">Copy these directly into any Garden OS page's <code class="code">:root</code> block.</p>
+      </div>
+      <span class="section-rule"></span>
+    </div>
+
+    <pre class="code-block">:root {
+  /* ── Soil ── */
+  --soil-900: #0f0804;  --soil-800: #1a0f07;  --soil-700: #2d1a0e;
+  --soil-600: #3d2210;  --soil-500: #5c3d1e;  --soil-400: #7a5230;
+  --soil-300: #9a6b42;  --soil-200: #c8a882;  --soil-100: #e8d5b8;
+
+  /* ── Leaf ── */
+  --leaf-900: #0d1f10;  --leaf-800: #1a3520;  --leaf-700: #2a5030;
+  --leaf-600: #3a6b42;  --leaf-500: #52924a;  --leaf-400: #6aaa60;
+  --leaf-300: #8aba80;  --leaf-200: #b8d8b0;  --leaf-100: #dff0dc;
+
+  /* ── Sun / Amber ── */
+  --sun-900: #3d2000;   --sun-800: #6a3800;   --sun-700: #9a5800;
+  --sun-600: #c8781a;   --sun-500: #e8a030;   --sun-400: #f5c14a;
+  --sun-300: #f8d470;   --sun-200: #fbe8a8;   --sun-100: #fdf5dc;
+
+  /* ── Cream ── */
+  --cream-900: #2a2018; --cream-800: #4a3828; --cream-700: #6a5540;
+  --cream-600: #8a7258; --cream-500: #aa9070; --cream-400: #c8b090;
+  --cream-300: #ddd0b8; --cream-200: #ede5d8; --cream-100: #f7f2ea;
+  --cream-50:  #faf8f4;
+
+  /* ── Semantic ── */
+  --bg: var(--cream-50);          --bg-panel: var(--cream-100);
+  --text: var(--soil-700);        --text-mid: var(--soil-400);
+  --text-dim: var(--cream-600);   --border: var(--cream-300);
+  --accent: var(--sun-600);       --good: var(--leaf-600);
+  --warn: #c85820;                --bad: #b02a1e;
+
+  /* ── Fonts ── */
+  --font-display: 'Fraunces', serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+
+  /* ── Spacing ── */
+  --sp-1:4px; --sp-2:8px;  --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+  --sp-12:48px; --sp-16:64px;
+
+  /* ── Radius ── */
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-full:9999px;
+}</pre>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-title">Garden OS</div>
+  <div class="footer-meta">Brand Guide · v4.4 · March 2026 · davehomeassist.github.io/garden-os</div>
+</footer>
+
+<script>
+// ── PALETTE SWATCHES ──
+const palettes = {
+  soil: [
+    ['900','#0f0804'],['800','#1a0f07'],['700','#2d1a0e'],
+    ['600','#3d2210'],['500','#5c3d1e'],['400','#7a5230'],
+    ['300','#9a6b42'],['200','#c8a882'],['100','#e8d5b8'],
+  ],
+  leaf: [
+    ['900','#0d1f10'],['800','#1a3520'],['700','#2a5030'],
+    ['600','#3a6b42'],['500','#52924a'],['400','#6aaa60'],
+    ['300','#8aba80'],['200','#b8d8b0'],['100','#dff0dc'],
+  ],
+  sun: [
+    ['900','#3d2000'],['800','#6a3800'],['700','#9a5800'],
+    ['600','#c8781a'],['500','#e8a030'],['400','#f5c14a'],
+    ['300','#f8d470'],['200','#fbe8a8'],['100','#fdf5dc'],
+  ],
+  cream: [
+    ['900','#2a2018'],['800','#4a3828'],['700','#6a5540'],
+    ['600','#8a7258'],['500','#aa9070'],['400','#c8b090'],
+    ['300','#ddd0b8'],['200','#ede5d8'],['100','#f7f2ea'],['50','#faf8f4'],
+  ],
+};
+
+Object.entries(palettes).forEach(([family, stops]) => {
+  const container = document.getElementById(`swatches-${family}`);
+  stops.forEach(([stop, hex]) => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch';
+    sw.innerHTML = `
+      <div class="swatch-block" style="background:${hex}" title="Click to copy ${hex}" data-hex="${hex}">
+        <div class="copy-flash">Copied!</div>
+      </div>
+      <div class="swatch-name">--${family}-${stop}</div>
+      <div class="swatch-val">${hex}</div>
+    `;
+    sw.querySelector('.swatch-block').addEventListener('click', function() {
+      navigator.clipboard?.writeText(this.dataset.hex);
+      this.classList.add('copied');
+      setTimeout(() => this.classList.remove('copied'), 800);
+    });
+    container.appendChild(sw);
+  });
+});
+
+// ── SEMANTIC TOKEN TABLE ──
+const semanticTokens = [
+  ['--bg',        '#faf8f4', 'var(--cream-50)',  'Page background'],
+  ['--bg-panel',  '#f7f2ea', 'var(--cream-100)', 'Sidebar, panel fill'],
+  ['--bg-card',   '#ffffff', 'white',            'Card, modal fill'],
+  ['--text',      '#2d1a0e', 'var(--soil-700)',   'Body text'],
+  ['--text-mid',  '#7a5230', 'var(--soil-400)',   'Labels, secondary text'],
+  ['--text-dim',  '#8a7258', 'var(--cream-600)',  'Muted / hint text'],
+  ['--border',    '#ddd0b8', 'var(--cream-300)',  'Default borders'],
+  ['--border-mid','#c8b090', 'var(--cream-400)',  'Stronger borders'],
+  ['--accent',    '#c8781a', 'var(--sun-600)',    'CTA, active highlights'],
+  ['--good',      '#3a6b42', 'var(--leaf-600)',   'Success, positive scores'],
+  ['--warn',      '#c85820', 'hardcoded',         'Warnings, at-risk states'],
+  ['--bad',       '#b02a1e', 'hardcoded',         'Errors, conflicts'],
+];
+const tbody = document.getElementById('semantic-tokens');
+semanticTokens.forEach(([token, hex, alias, use]) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${token}</td>
+    <td><code class="code">${alias}</code></td>
+    <td><span class="token-preview" style="background:${hex}"></span>${hex}</td>
+    <td style="color:var(--text-dim);font-size:var(--text-sm);">${use}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ── TOGGLE TABS DEMO ──
+document.querySelectorAll('.tab-btn-demo').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.closest('.tab-bar-demo').querySelectorAll('.tab-btn-demo')
+       .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
