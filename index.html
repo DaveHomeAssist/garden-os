@@ -188,6 +188,16 @@
     background: var(--border-subtle);
   }
 
+  .os-nav-back {
+    color: rgba(245, 237, 224, 0.35);
+    text-decoration: none;
+    font-size: .7rem;
+    letter-spacing: .04em;
+    margin-right: .5rem;
+    transition: color var(--ease, .18s ease);
+  }
+  .os-nav-back:hover { color: rgba(245, 237, 224, 0.8); }
+
   @media (max-width: 500px) {
     .tool-card { flex-direction: column; text-align: center; }
     .tool-card-icon { width: auto; }
@@ -200,7 +210,7 @@
 
 <!-- Shared nav -->
 <nav class="os-nav" aria-label="Garden OS tools">
-  <a href="https://davehomeassist.github.io/" style="color:rgba(0,0,0,0.35);text-decoration:none;font-size:.7rem;letter-spacing:.04em;margin-right:.5rem;transition:color .15s;" <!-- HAMMER: inline-handler --> onmouseover="this.style.color='currentColor'" onmouseout="this.style.color='rgba(0,0,0,0.35)'">&larr; All Projects</a>
+  <a href="https://davehomeassist.github.io/" class="os-nav-back">&larr; All Projects</a>
   <a href="home.html">Overview</a>
   <a href="index.html" class="active" aria-current="page">Hub</a>
   <a href="garden-league-simulator-v4.html">Play Game</a>
