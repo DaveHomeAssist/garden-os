@@ -1,0 +1,341 @@
+GARDEN OS — CROP DATA RECONCILIATION
+Implementation Plan
+Generated: 2026-03-20
+
+════════════════════════════════════════════════════════════════════════════════
+PROBLEM STATEMENT
+════════════════════════════════════════════════════════════════════════════════
+
+The canonical spec (CROP_SCORING_DATA.json) defines 19 crops with a full
+scoring schema. The planner (garden-planner-v4.html) has grown to 38 crops
+using an incompatible schema. The league simulator (19 crops) is aligned
+with the spec.
+
+This is not a simple "add missing crops" task. The planner's schema has
+drifted at the field level — companions are category-based instead of
+crop-keyed, water is text instead of numeric, height is an enum instead
+of boolean, and five critical fields are missing entirely.
+
+════════════════════════════════════════════════════════════════════════════════
+SCOPE
+════════════════════════════════════════════════════════════════════════════════
+
+Files touched:
+  1. specs/CROP_SCORING_DATA.json     ← expand from 19 → 38 crops
+  2. garden-planner-v4.html           ← realign CROPS object + scoring fns
+  3. garden-league-simulator-v4.html  ← expand from 19 → 38 crops (C object)
+  4. CLAUDE.md                        ← update "19 crops" references
+
+Files read-only (validation targets):
+  - specs/SCORING_RULES.md            ← algorithm contract, do not change
+  - specs/EVENT_DECK.json             ← event vulnerability references
+  - gos-schema.json                   ← crop validation schema
+
+════════════════════════════════════════════════════════════════════════════════
+PHASE 1 — KEY NORMALIZATION
+════════════════════════════════════════════════════════════════════════════════
+
+Milestone: All three files use identical crop keys.
+Effort: Small
+Risk: Low (mechanical rename, fully testable)
+
+Resolve the 7 key mismatches. Spec keys win (singular form, abbreviated).
+
+  Spec Key (keep)    Planner Key (rename)     Action
+  ─────────────────  ─────────────────────    ──────────────────────────
+  cherry_tom         cherry_tomato            Rename in planner
+  carrot             carrots                  Rename in planner
+  onion              onions                   Rename in planner
+  beet               beets                    Rename in planner
+  pepper             peppers                  Rename in planner
+  lettuce            leaf_lettuce             Rename in planner (merge)
+  chard              swiss_chard              Rename in planner
+
+head_lettuce stays as a NEW crop (not merged with lettuce).
+
+Search scope for each rename:
+  - CROPS object key
+  - All string literals referencing the crop (goalBonus, presets, etc.)
+  - companionTags/conflictTags arrays that reference category names
+  - localStorage migration note (users with saved beds use old keys)
+
+Migration concern: Users who have saved bed layouts in localStorage will
+reference old keys. Add a one-time key migration function that runs on
+load, mapping old keys → new keys in any saved bed data.
+
+Deliverable: Single commit. Planner keys match spec keys for all 19
+             overlapping crops. Saved beds still load correctly.
+
+════════════════════════════════════════════════════════════════════════════════
+PHASE 2 — SCHEMA ALIGNMENT (PLANNER → SPEC SHAPE)
+════════════════════════════════════════════════════════════════════════════════
+
+Milestone: Every planner crop has all fields the scoring algorithm needs.
+Effort: Medium-Large (38 crops × 6 new/changed fields)
+Risk: Medium (data authoring required — values must be botanically sane)
+
+For each of the 38 planner crops, add or convert these fields:
+
+  Field                    Current Planner        Target (Spec)
+  ───────────────────────  ─────────────────────  ───────────────────────
+  id                       (implicit from key)    Explicit string
+  faction                  category (9 values)    faction (8 values)
+  support                  trellisRequired        Boolean (true/false)
+  tall                     height (enum)          Boolean
+  water                    waterNeed (text)       Numeric (2 or 3)
+  companions               companionTags (cats)   Crop ID array
+  conflicts                conflictTags (cats)    Crop ID array
+  chapterUnlock            MISSING                Integer (1-9)
+  recipes                  MISSING                String array
+  eventVulnerabilities     MISSING                String array
+  seasonalMultipliers      MISSING                {spring, summer, fall}
+
+Conversion rules:
+
+  faction mapping:
+    cucurbit  → climbers    (vining cucurbits)
+    cucurbit  → fruiting    (bush cucurbits — zucchini already there)
+    legume    → climbers    (pole_beans, peas)
+    legume    → fast_cycles (bush_beans — short, quick harvest)
+    greens    → greens      (spinach, chard) OR fast_cycles (lettuce, arugula)
+    roots     → roots
+    herbs     → herbs
+    brassica  → brassicas
+    companion → companions
+    flowers   → companions
+
+  tall mapping:
+    height === 'tall'  → tall: true
+    everything else    → tall: false
+
+  water mapping:
+    waterNeed === 'high'   → water: 3
+    waterNeed === 'medium' → water: 2
+    waterNeed === 'low'    → water: 2
+
+  support mapping:
+    trellisRequired === true → support: true
+    everything else          → support: false
+
+  companions/conflicts:
+    Must be authored per-crop as specific crop IDs.
+    Use horticultural companion planting references:
+    - Carrots & Onions (mutual companions)
+    - Tomatoes & Basil (mutual companions)
+    - Beans & Onions (mutual conflict)
+    - Brassicas & Tomatoes (mutual conflict)
+    Each new crop needs 1-3 companions and 0-2 conflicts.
+
+  chapterUnlock:
+    Tier crops by complexity for the Season Engine progression.
+    1 = starter (lettuce, radish, basil, spinach, arugula, marigold)
+    2 = easy (bush_beans, peas, pole_beans, cherry_tom)
+    3 = intermediate roots (carrot, onion, beet, scallion, turnip)
+    4 = intermediate greens (bok_choy, mustard_greens, tatsoi, mizuna)
+    5 = brassicas + herbs (broccoli, kale, dill, cilantro, parsley, chives)
+    6 = fruiting (pepper, eggplant, compact_tomato, zucchini)
+    7 = cucurbits (beit_cucumber, slicing_cucumber, bush_cucumber)
+    8 = advanced brassicas (compact_cabbage, kohlrabi)
+    9 = specialists (nasturtium, garlic, head_lettuce, chard)
+
+  eventVulnerabilities:
+    Valid tags (from EVENT_DECK.json):
+      pest-target, pest-repellent, pest-decoy
+      blight-prone
+      frost-sensitive, frost-hardy
+      heat-sensitive, heat-tolerant
+      wind-sensitive
+    Assign 1-3 tags per crop based on botanical reality.
+
+  seasonalMultipliers:
+    {spring, summer, fall} — each 0.0 to 1.0.
+    Cool-season crops: spring ~1.0, summer ~0.3, fall ~0.9
+    Warm-season crops: spring ~0.4, summer ~1.0, fall ~0.3
+    All-season crops: spring ~0.7, summer ~0.8, fall ~0.7
+
+The planner keeps its EXTRA fields (trellisZone, protectedZone, habit,
+height, spacingPerSqFt, waterNeed, companionTags, conflictTags,
+varieties, successionFriendly, replacementCategory, heatTolerance, color,
+category) — these are planner-specific UI/UX fields. But the SPEC fields
+must also be present so scoring functions can reference them.
+
+Deliverable: All 38 planner crops have both the planner-specific fields
+             AND the full spec schema fields. No field is missing.
+
+════════════════════════════════════════════════════════════════════════════════
+PHASE 3 — SCORING FUNCTION MIGRATION
+════════════════════════════════════════════════════════════════════════════════
+
+Milestone: Planner scoring uses spec-compatible fields, not planner-only fields.
+Effort: Medium
+Risk: High (scoring determinism is sacred — must not change existing scores
+      for the original 19 crops)
+
+Functions to update in garden-planner-v4.html:
+
+  computeScoreBreakdown() — line 3643
+    Currently uses:
+      c.habit === 'vining'       → change to: c.support === true
+      c.trellisRequired          → keep (also add c.support check)
+      c.height === 'low'         → change to: c.tall === false
+      c.height === 'tall'        → change to: c.tall === true
+
+  computeAdjacencyBreakdown() — line 3712
+    Currently uses:
+      c.companionTags.some(t => nc.category === t)   → REPLACE with:
+        c.companions.includes(nc_key)
+      c.conflictTags.some(t => ...)                   → REPLACE with:
+        c.conflicts.includes(nc_key)
+      nc.height === 'tall' && c.height === 'tall'     → change to:
+        nc.tall && c.tall
+      waterMap[c.waterNeed]                            → change to:
+        c.water (already numeric)
+
+  scoreBed() — line 3779
+    Currently uses:
+      CROPS[ck].height === 'tall'    → change to: CROPS[ck].tall
+      CROPS[ck].habit === 'vining'   → keep (planner-specific trellis check)
+
+  goalBonus() — line 3767
+    Currently hardcodes crop keys for goal matching.
+    Update to include new crop keys where relevant.
+
+  seaFit in computeScoreBreakdown() — line 3662
+    Currently uses only c.coolSeason (boolean, rough).
+    UPGRADE to: use c.seasonalMultipliers when available.
+    Formula: seaFit = 1.0 + (c.seasonalMultipliers[season] * 4.0)
+    This matches SCORING_RULES.md section 5c.
+    Fallback to current coolSeason logic if multipliers missing.
+
+CRITICAL CONSTRAINT: For the original 19 crops, the new scoring path
+must produce identical or near-identical scores to the current path.
+Write a validation function that computes scores for all 19 crops in
+all 32 cells under default inputs using BOTH the old and new logic,
+then asserts max delta < 0.01.
+
+Deliverable: Scoring functions use spec fields. Regression test passes.
+
+════════════════════════════════════════════════════════════════════════════════
+PHASE 4 — SPEC FILE UPDATE
+════════════════════════════════════════════════════════════════════════════════
+
+Milestone: CROP_SCORING_DATA.json is the single source of truth for 38 crops.
+Effort: Small (data is authored in Phase 2; this is the write)
+Risk: Low
+
+  1. Update specs/CROP_SCORING_DATA.json:
+     - Bump version to 2
+     - Update description: "38 crops"
+     - Update lastUpdated
+     - Add all 19 new crops with full schema
+     - Add new recipes if applicable (e.g., stir_fry with bok_choy)
+
+  2. Update garden-league-simulator-v4.html C object:
+     - Add all 19 new crops with league-compatible fields
+     - Assign factions to new crops
+     - Verify ev[] and sm{} present on each
+
+  3. Update CLAUDE.md:
+     - Change "19 crops, 8 factions, 4 recipes" → "38 crops, 8 factions, N recipes"
+
+  4. Update gos-schema.json if it has a crop key whitelist.
+
+Deliverable: All files agree on 38 crops. Spec is canonical again.
+
+════════════════════════════════════════════════════════════════════════════════
+PHASE 5 — VALIDATION & CLEANUP
+════════════════════════════════════════════════════════════════════════════════
+
+Milestone: Everything works, nothing regressed.
+Effort: Small
+Risk: Low
+
+  1. Scoring regression test:
+     - For each of the original 19 crops, compute scores across all 32 cells
+       with default site settings (6 hrs sun, back wall, spring season).
+     - Compare against pre-migration baseline.
+     - Max acceptable delta: 0.5 points per cell (to account for companion
+       changes from category→crop-keyed).
+
+  2. Visual inspection:
+     - Open planner, place each of the 38 crops, verify:
+       □ Crop appears in palette
+       □ Drops onto grid
+       □ Score displays (non-zero, reasonable)
+       □ Inspect panel shows correct data
+       □ Companion/conflict highlighting works
+
+  3. localStorage migration:
+     - Load a saved bed with old keys (cherry_tomato, carrots, etc.)
+     - Verify auto-migration converts to new keys
+     - Verify bed score unchanged
+
+  4. League simulator:
+     - Start a new game
+     - Verify all 38 crops appear in roster
+     - Verify faction assignments display correctly
+
+Deliverable: Final commit with regression test results in commit message.
+
+════════════════════════════════════════════════════════════════════════════════
+EXECUTION ORDER & DEPENDENCIES
+════════════════════════════════════════════════════════════════════════════════
+
+  Phase 1 (key normalization)    → no deps, start here
+      ↓
+  Phase 2 (schema alignment)     → depends on Phase 1 keys
+      ↓
+  Phase 3 (scoring migration)    → depends on Phase 2 fields
+      ↓
+  Phase 4 (spec file update)     → depends on Phase 2 data
+      ↓
+  Phase 5 (validation)           → depends on all above
+
+Phases 2 and 4 can overlap (author data once, write to both planner and spec).
+Phase 3 is the riskiest — do it carefully with regression checks.
+
+════════════════════════════════════════════════════════════════════════════════
+COMMIT PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+  Commit 1: "fix: normalize crop keys — align planner with spec naming"
+            Phase 1. Key renames + localStorage migration function.
+
+  Commit 2: "feat: expand crop schema — add spec fields to all 38 planner crops"
+            Phase 2. Schema alignment in planner.
+
+  Commit 3: "refactor: migrate scoring to spec-compatible fields"
+            Phase 3. Scoring function updates + regression validation.
+
+  Commit 4: "feat: expand CROP_SCORING_DATA.json to 38 crops"
+            Phase 4. Spec + league simulator + CLAUDE.md updates.
+
+  Commit 5: "test: validate crop reconciliation — 38 crops across all files"
+            Phase 5. Final validation pass.
+
+════════════════════════════════════════════════════════════════════════════════
+RISK REGISTER
+════════════════════════════════════════════════════════════════════════════════
+
+  Risk                                    Severity  Mitigation
+  ──────────────────────────────────────  ────────  ─────────────────────────
+  Scoring regression for original 19      HIGH      Baseline snapshot + delta
+                                                    test before/after Phase 3
+
+  Companion data quality (crop-keyed)     MEDIUM    Use horticultural refs;
+                                                    err conservative (fewer
+                                                    companions > wrong ones)
+
+  localStorage saved beds break           MEDIUM    Migration function in
+                                                    Phase 1; test with real
+                                                    saved data
+
+  Season multiplier values wrong          LOW       Use existing spec values
+                                                    as templates; new crops
+                                                    follow same patterns
+
+  League simulator faction balance        MEDIUM    19 new crops across 8
+                                                    factions; verify no
+                                                    faction gets >7 crops
+
+════════════════════════════════════════════════════════════════════════════════

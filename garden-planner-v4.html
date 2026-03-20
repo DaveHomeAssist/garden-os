@@ -2121,7 +2121,12 @@ const APP_VERSION = '4.3';
 
 const CROPS = {
   // ── CUCURBITS ──────────────────────────────────────────────────────────────
-  beit_cucumber:{name:'Beit Alpha Cucumber',short:'Beit Cuke',emoji:'🥒',color:'#4a7c59',
+  beit_cucumber:{id:'beit_cucumber',name:'Beit Alpha Cucumber',short:'Beit Cuke',emoji:'🥒',color:'#4a7c59',
+    faction:'climbers',support:false,tall:true,water:3,
+    companions:['lettuce','bush_beans','radish'],conflicts:[],
+    chapterUnlock:7,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant','pest-target'],
+    seasonalMultipliers:{spring:0.4,summer:1.0,fall:0.3},
     category:'cucurbit',sunMin:5.5,sunIdeal:7,height:'tall',habit:'vining',trellisRequired:false,
     trellisZone:true,protectedZone:false,
     shadeScore:2,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
@@ -2129,14 +2134,24 @@ const CROPS = {
     varieties:[{name:'Beit Alpha',desc:'Classic crisp type. Excellent on trellis in small spaces.'},
       {name:'Spacemaster 80',desc:'Compact vines, good partial-sun tolerance. Raised-bed star.'},
       {name:'Picklebush',desc:'Bush habit, no trellis needed. Top pick for tight spots.'}]},
-  slicing_cucumber:{name:'Slicing Cucumber',short:'Slicer',emoji:'🥒',color:'#2d6644',
+  slicing_cucumber:{id:'slicing_cucumber',name:'Slicing Cucumber',short:'Slicer',emoji:'🥒',color:'#2d6644',
+    faction:'climbers',support:false,tall:true,water:3,
+    companions:['lettuce','pole_beans','marigold'],conflicts:[],
+    chapterUnlock:7,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant','pest-target'],
+    seasonalMultipliers:{spring:0.4,summer:1.0,fall:0.3},
     category:'cucurbit',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:false,
     trellisZone:true,protectedZone:false,
     shadeScore:1,spacingPerSqFt:.33,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['legume','greens'],conflictTags:[],replacementCategory:'cucurbit',successionFriendly:false,
     varieties:[{name:'Marketmore 76',desc:'Reliable, disease-tolerant. Needs full sun ideally.'},
       {name:'Straight Eight',desc:'Long smooth slicers. Best at 6+ hrs.'}]},
-  bush_cucumber:{name:'Bush Pickle Cucumber',short:'Bush Cuke',emoji:'🥒',color:'#5d9e70',
+  bush_cucumber:{id:'bush_cucumber',name:'Bush Pickle Cucumber',short:'Bush Cuke',emoji:'🥒',color:'#5d9e70',
+    faction:'fruiting',support:false,tall:false,water:2,
+    companions:['lettuce','bush_beans','radish'],conflicts:[],
+    chapterUnlock:7,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.5,summer:1.0,fall:0.4},
     category:'cucurbit',sunMin:5,sunIdeal:7,height:'medium',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:1,coolSeason:false,heatTolerance:3,waterNeed:'medium',
@@ -2144,7 +2159,12 @@ const CROPS = {
     varieties:[{name:'Picklebush',desc:'Compact. No trellis. Great for 4×4 beds.'},
       {name:'Bush Pickle',desc:'2–3 ft spread. Good for tight spaces.'}]},
   // ── GREENS ─────────────────────────────────────────────────────────────────
-  leaf_lettuce:{name:'Leaf Lettuce',short:'Lettuce',emoji:'🥬',color:'#8bc34a',
+  lettuce:{id:'lettuce',name:'Leaf Lettuce',short:'Lettuce',emoji:'🥬',color:'#8bc34a',
+    faction:'fast_cycles',support:false,tall:false,water:2,
+    companions:['carrot','radish','chives'],conflicts:[],
+    chapterUnlock:1,recipes:['tomato_sandwich'],
+    eventVulnerabilities:['heat-sensitive','pest-target','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:1.0},
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2152,42 +2172,72 @@ const CROPS = {
     varieties:[{name:'Black Seeded Simpson',desc:'Fast, heat-tolerant for lettuce. Great succession crop.'},
       {name:'Salad Bowl',desc:'Cut-and-come-again. Plant once, harvest for weeks.'},
       {name:'Red Sails',desc:'Slow to bolt, beautiful red leaves. Outstanding spring bed crop.'}]},
-  head_lettuce:{name:'Head Lettuce',short:'Head Lettuce',emoji:'🥬',color:'#7cb342',
+  head_lettuce:{id:'head_lettuce',name:'Head Lettuce',short:'Head Lettuce',emoji:'🥬',color:'#7cb342',
+    faction:'fast_cycles',support:false,tall:false,water:2,
+    companions:['carrot','radish'],conflicts:[],
+    chapterUnlock:9,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:0.9},
     category:'greens',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:1,coolSeason:true,heatTolerance:1,waterNeed:'medium',
     companionTags:['cucurbit','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Little Gem',desc:'Mini romaine. Compact, great for raised beds.'},
       {name:'Butterhead',desc:'Buttery soft leaves. Spring or fall only.'}]},
-  spinach:{name:'Spinach',short:'Spinach',emoji:'🌿',color:'#388e3c',
+  spinach:{id:'spinach',name:'Spinach',short:'Spinach',emoji:'🌿',color:'#388e3c',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['radish','peas'],conflicts:[],
+    chapterUnlock:1,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.2,fall:1.0},
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:4,coolSeason:true,heatTolerance:1,waterNeed:'medium',
     companionTags:['roots','legume'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Space',desc:'Smooth leaves, slow to bolt. More heat-tolerant than Bloomsdale.'},
       {name:'Bloomsdale',desc:'Classic savoy type. Best in cool spring or fall.'}]},
-  kale:{name:'Kale',short:'Kale',emoji:'🥦',color:'#2e7d32',
+  kale:{id:'kale',name:'Kale',short:'Kale',emoji:'🥦',color:'#2e7d32',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['marigold','dill','beet'],conflicts:['cherry_tom'],
+    chapterUnlock:5,recipes:[],
+    eventVulnerabilities:['pest-target','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.4,fall:1.0},
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['roots','legume'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Lacinato (Dino)',desc:'Tall, dark leaves. Very cold-hardy and productive.'},
       {name:'Dwarf Curled',desc:'Compact form, great for tight beds.'}]},
-  arugula:{name:'Arugula',short:'Arugula',emoji:'🌱',color:'#558b2f',
+  arugula:{id:'arugula',name:'Arugula',short:'Arugula',emoji:'🌱',color:'#558b2f',
+    faction:'fast_cycles',support:false,tall:false,water:2,
+    companions:['dill','basil'],conflicts:[],
+    chapterUnlock:1,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:0.9},
     category:'greens',sunMin:3,sunIdeal:5,height:'low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:5,spacingPerSqFt:6,coolSeason:true,heatTolerance:1,waterNeed:'low',
     companionTags:['roots','greens'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Roquette',desc:'Classic peppery arugula. Fast-growing, succession every 3 weeks.'},
       {name:'Astro',desc:'Slower to bolt, milder flavor. Good for summer edges.'}]},
-  swiss_chard:{name:'Swiss Chard',short:'Chard',emoji:'🍃',color:'#43a047',
+  chard:{id:'chard',name:'Swiss Chard',short:'Chard',emoji:'🍃',color:'#43a047',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['bush_beans','onion'],conflicts:[],
+    chapterUnlock:9,recipes:[],
+    eventVulnerabilities:['heat-tolerant'],
+    seasonalMultipliers:{spring:0.7,summer:0.9,fall:0.8},
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:2,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['legume','roots'],conflictTags:[],replacementCategory:'greens',successionFriendly:false,
     varieties:[{name:'Rainbow Chard',desc:'Multicolored stems. Ornamental and productive.'},
       {name:'Fordhook Giant',desc:'Classic white-stemmed. Very heat-tolerant.'}]},
-  bok_choy:{name:'Bok Choy',short:'Bok Choy',emoji:'🥬',color:'#a0c379',
+  bok_choy:{id:'bok_choy',name:'Bok Choy',short:'Bok Choy',emoji:'🥬',color:'#a0c379',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['dill','marigold'],conflicts:['cherry_tom'],
+    chapterUnlock:4,recipes:[],
+    eventVulnerabilities:['pest-target','heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:1.0},
     category:'greens',sunMin:3,sunIdeal:6,height:'low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2195,7 +2245,12 @@ const CROPS = {
     varieties:[{name:'Mei Qing Choi',desc:'Compact baby-bok type, heat tolerant and suitable for raised beds.'},
       {name:'Win-Win Choi',desc:'Small, slow-bolting variety ideal for tight spacing.'},
       {name:'Black Summer',desc:'Dark-leaved variety bred for heat tolerance and partial shade.'}]},
-  mustard_greens:{name:'Mustard Greens',short:'Mustard',emoji:'🥬',color:'#a5b44f',
+  mustard_greens:{id:'mustard_greens',name:'Mustard Greens',short:'Mustard',emoji:'🥬',color:'#a5b44f',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['dill','marigold'],conflicts:['cherry_tom'],
+    chapterUnlock:4,recipes:[],
+    eventVulnerabilities:['pest-target','heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:0.9},
     category:'greens',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2203,14 +2258,24 @@ const CROPS = {
     varieties:[{name:'Red Giant',desc:'Attractive red-tinged leaves; tolerates partial shade.'},
       {name:'Southern Giant Curled',desc:'Classic curled leaves; heat tolerant.'},
       {name:'Mizuna Green Wave',desc:'Mild flavour and bolt resistance.'}]},
-  tatsoi:{name:'Tatsoi',short:'Tatsoi',emoji:'🥬',color:'#7fa86f',
+  tatsoi:{id:'tatsoi',name:'Tatsoi',short:'Tatsoi',emoji:'🥬',color:'#7fa86f',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['radish','peas'],conflicts:[],
+    chapterUnlock:4,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:1.0},
     category:'greens',sunMin:3,sunIdeal:6,height:'very low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['legume','roots'],conflictTags:['brassica'],replacementCategory:'greens',successionFriendly:true,
     varieties:[{name:'Rosette Tat',desc:'Compact, spoon-shaped leaves; suited to small beds.'},
       {name:'Yukina Savoy',desc:'Upright habit with thick leaves; heat tolerant.'}]},
-  mizuna:{name:'Mizuna',short:'Mizuna',emoji:'🥬',color:'#a6c75b',
+  mizuna:{id:'mizuna',name:'Mizuna',short:'Mizuna',emoji:'🥬',color:'#a6c75b',
+    faction:'greens',support:false,tall:false,water:2,
+    companions:['radish','dill'],conflicts:[],
+    chapterUnlock:4,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.4,fall:0.9},
     category:'greens',sunMin:4,sunIdeal:6,height:'low',habit:'rosette',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
@@ -2219,7 +2284,12 @@ const CROPS = {
       {name:'Purple Mizuna',desc:'Reddish leaves; compact and bolt resistant.'},
       {name:'Mizuna Early',desc:'Quick-maturing; ideal for spring succession plantings.'}]},
   // ── LEGUMES ────────────────────────────────────────────────────────────────
-  bush_beans:{name:'Bush Green Beans',short:'Bush Beans',emoji:'🫘',color:'#d4a017',
+  bush_beans:{id:'bush_beans',name:'Bush Green Beans',short:'Bush Beans',emoji:'🫘',color:'#d4a017',
+    faction:'fast_cycles',support:false,tall:false,water:2,
+    companions:['carrot','lettuce','radish'],conflicts:['onion','garlic'],
+    chapterUnlock:2,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.7,summer:1.0,fall:0.6},
     category:'legume',sunMin:5,sunIdeal:6,height:'medium',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:3,coolSeason:false,heatTolerance:4,waterNeed:'medium',
@@ -2227,14 +2297,24 @@ const CROPS = {
     varieties:[{name:'Provider',desc:'Top pick for partial sun. Bred for shade and cool conditions.'},
       {name:'Contender',desc:'Heat and disease tolerant. Good early producer.'},
       {name:'Blue Lake Bush',desc:'Classic best flavor, needs more sun than Provider.'}]},
-  pole_beans:{name:'Pole Beans',short:'Pole Beans',emoji:'🫘',color:'#b8860b',
+  pole_beans:{id:'pole_beans',name:'Pole Beans',short:'Pole Beans',emoji:'🫘',color:'#b8860b',
+    faction:'climbers',support:true,tall:true,water:2,
+    companions:['carrot','basil'],conflicts:['onion','garlic'],
+    chapterUnlock:2,recipes:[],
+    eventVulnerabilities:['frost-hardy','wind-sensitive'],
+    seasonalMultipliers:{spring:0.9,summer:0.8,fall:0.7},
     category:'legume',sunMin:6,sunIdeal:8,height:'tall',habit:'vining',trellisRequired:true,
     trellisZone:true,protectedZone:false,
     shadeScore:2,spacingPerSqFt:2,coolSeason:false,heatTolerance:4,waterNeed:'medium',
     companionTags:['greens','roots'],conflictTags:['allium'],replacementCategory:'legume',successionFriendly:false,
     varieties:[{name:'Kentucky Wonder',desc:'Heavy yielder. Classic pole type. Needs trellis.'},
       {name:'Dragon Tongue',desc:'Yellow-purple variety. Can do without trellis.'}]},
-  peas:{name:'Peas',short:'Peas',emoji:'🫛',color:'#7eb038',
+  peas:{id:'peas',name:'Peas',short:'Peas',emoji:'🫛',color:'#7eb038',
+    faction:'climbers',support:true,tall:true,water:2,
+    companions:['carrot','lettuce','radish'],conflicts:['onion','pepper','garlic'],
+    chapterUnlock:2,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:0.9},
     category:'legume',sunMin:4,sunIdeal:6,height:'tall',habit:'vining',trellisRequired:true,
     trellisZone:true,protectedZone:false,
     shadeScore:3,spacingPerSqFt:4,coolSeason:true,heatTolerance:1,waterNeed:'medium',
@@ -2242,35 +2322,60 @@ const CROPS = {
     varieties:[{name:'Sugar Snap',desc:'Eat pod and all. Sweet, reliable, great on a trellis.'},
       {name:'Oregon Sugar Pod',desc:'Flat snow pea. Very productive in cool weather.'}]},
   // ── ROOTS ──────────────────────────────────────────────────────────────────
-  radish:{name:'Radish',short:'Radish',emoji:'🌰',color:'#c0392b',
+  radish:{id:'radish',name:'Radish',short:'Radish',emoji:'🌰',color:'#c0392b',
+    faction:'fast_cycles',support:false,tall:false,water:2,
+    companions:['carrot','lettuce','peas'],conflicts:[],
+    chapterUnlock:1,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.4,fall:0.9},
     category:'roots',sunMin:3,sunIdeal:5,height:'very low',habit:'root',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:16,coolSeason:true,heatTolerance:2,waterNeed:'low',
     companionTags:['greens','legume','cucurbit'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Cherry Belle',desc:'24-day radish. Great succession filler.'},
       {name:'French Breakfast',desc:'Mild, elongated. Good spring performer.'}]},
-  carrots:{name:'Carrots',short:'Carrot',emoji:'🥕',color:'#e67e22',
+  carrot:{id:'carrot',name:'Carrots',short:'Carrot',emoji:'🥕',color:'#e67e22',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['lettuce','onion','peas'],conflicts:['dill'],
+    chapterUnlock:3,recipes:['moms_sauce'],
+    eventVulnerabilities:['frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.6,fall:1.0},
     category:'roots',sunMin:5,sunIdeal:7,height:'very low',habit:'root',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:3,spacingPerSqFt:9,coolSeason:true,heatTolerance:2,waterNeed:'medium',
     companionTags:['greens'],conflictTags:['dill'],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Chantenay',desc:'Stubby, ideal for raised bed soil depth.'},
       {name:'Danvers 126',desc:'Reliable, tolerates heavier soils.'}]},
-  scallions:{name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
+  scallions:{id:'scallions',name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['carrot','lettuce'],conflicts:['peas','bush_beans'],
+    chapterUnlock:3,recipes:[],
+    eventVulnerabilities:['frost-hardy','heat-tolerant'],
+    seasonalMultipliers:{spring:0.9,summer:0.7,fall:0.9},
     category:'roots',sunMin:4,sunIdeal:6,height:'low',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:12,coolSeason:true,heatTolerance:3,waterNeed:'low',
     companionTags:['greens','carrots'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Evergreen Hardy',desc:'Reliable bunching onion. Winter-hardy.'},
       {name:'Tokyo Long White',desc:'Slender, mild flavor. Great for raised beds.'}]},
-  beets:{name:'Beets',short:'Beets',emoji:'🫐',color:'#880e4f',
+  beet:{id:'beet',name:'Beets',short:'Beets',emoji:'🫐',color:'#880e4f',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['onion','lettuce'],conflicts:[],
+    chapterUnlock:3,recipes:[],
+    eventVulnerabilities:['frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.5,fall:1.0},
     category:'roots',sunMin:5,sunIdeal:7,height:'low',habit:'root',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:3,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
     companionTags:['greens'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Detroit Dark Red',desc:'Classic. Reliable yields, beautiful color.'},
       {name:'Chioggia',desc:'Candy-striped Italian heirloom. Mild taste.'}]},
-  turnips:{name:'Turnips',short:'Turnips',emoji:'🥔',color:'#c98ec2',
+  turnips:{id:'turnips',name:'Turnips',short:'Turnips',emoji:'🥔',color:'#c98ec2',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['peas','lettuce'],conflicts:[],
+    chapterUnlock:3,recipes:[],
+    eventVulnerabilities:['frost-hardy','heat-sensitive'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:0.9},
     category:'roots',sunMin:3,sunIdeal:6,height:'low',habit:'root',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:9,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2278,7 +2383,12 @@ const CROPS = {
     varieties:[{name:'Hakurei',desc:'Small white Tokyo turnip ideal for raised beds and quick harvest.'},
       {name:'Purple Top',desc:'Classic variety tolerant of partial shade.'},
       {name:'Golden Ball',desc:'Heirloom with sweet yellow flesh; heat tolerant.'}]},
-  onions:{name:'Onions',short:'Onions',emoji:'🧅',color:'#e0c776',
+  onion:{id:'onion',name:'Onions',short:'Onions',emoji:'🧅',color:'#e0c776',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['carrot','pepper','beet'],conflicts:['peas','pole_beans','bush_beans'],
+    chapterUnlock:3,recipes:['weeknight_pasta','moms_sauce'],
+    eventVulnerabilities:['frost-hardy','heat-tolerant'],
+    seasonalMultipliers:{spring:0.8,summer:0.7,fall:0.8},
     category:'roots',sunMin:6,sunIdeal:8,height:'low',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:9,coolSeason:true,heatTolerance:4,waterNeed:'medium',
@@ -2286,7 +2396,12 @@ const CROPS = {
     varieties:[{name:'Evergreen Bunching',desc:'Scallion type; compact and tolerant of partial shade.'},
       {name:'Walla Walla',desc:'Sweet, large bulb; requires full sun and deep soil.'},
       {name:'Yellow Granex',desc:'Short-day variety adapted to raised beds in warm climates.'}]},
-  garlic:{name:'Garlic',short:'Garlic',emoji:'🧄',color:'#e6d8a6',
+  garlic:{id:'garlic',name:'Garlic',short:'Garlic',emoji:'🧄',color:'#e6d8a6',
+    faction:'roots',support:false,tall:false,water:2,
+    companions:['lettuce','beet','carrot'],conflicts:['peas','bush_beans','pole_beans'],
+    chapterUnlock:9,recipes:[],
+    eventVulnerabilities:['frost-hardy','heat-tolerant','pest-repellent'],
+    seasonalMultipliers:{spring:0.8,summer:0.5,fall:0.9},
     category:'roots',sunMin:6,sunIdeal:8,height:'low',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:16,coolSeason:true,heatTolerance:4,waterNeed:'low',
@@ -2295,14 +2410,24 @@ const CROPS = {
       {name:'Italian Softneck',desc:'Compact, productive and tolerant of partial shade.'},
       {name:'Inchelium Red',desc:'Artichoke type; good for raised beds in mild climates.'}]},
   // ── HERBS ──────────────────────────────────────────────────────────────────
-  basil:{name:'Basil',short:'Basil',emoji:'🌿',color:'#66bb6a',
+  basil:{id:'basil',name:'Basil',short:'Basil',emoji:'🌿',color:'#66bb6a',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['cherry_tom','pepper','marigold'],conflicts:[],
+    chapterUnlock:1,recipes:['herb_bowl','tomato_sandwich','weeknight_pasta','moms_sauce'],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.5,summer:1.0,fall:0.4},
     category:'herbs',sunMin:6,sunIdeal:8,height:'low',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:2,spacingPerSqFt:2,coolSeason:false,heatTolerance:5,waterNeed:'medium',
     companionTags:['fruiting'],conflictTags:['shiso'],replacementCategory:'herbs',successionFriendly:true,
     varieties:[{name:'Genovese',desc:'Classic large-leaf. Best for pesto.'},
       {name:'Compact Globe',desc:'Tiny mound habit. Great for small squares.'}]},
-  cilantro:{name:'Cilantro',short:'Cilantro',emoji:'🌿',color:'#9dbe93',
+  cilantro:{id:'cilantro',name:'Cilantro',short:'Cilantro',emoji:'🌿',color:'#9dbe93',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['lettuce','peas','carrot'],conflicts:[],
+    chapterUnlock:5,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1.0,summer:0.3,fall:0.9},
     category:'herbs',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
     trellisZone:false,protectedZone:true,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2310,7 +2435,12 @@ const CROPS = {
     varieties:[{name:'Santo',desc:'Slow-bolting type suitable for summer succession plantings.'},
       {name:'Calypso',desc:'Compact, bushy and tolerant of partial shade.'},
       {name:'Caribe',desc:'Heat-tolerant cilantro that thrives in raised beds and containers.'}]},
-  parsley:{name:'Parsley',short:'Parsley',emoji:'🌿',color:'#5fa147',
+  parsley:{id:'parsley',name:'Parsley',short:'Parsley',emoji:'🌿',color:'#5fa147',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['carrot','cherry_tom','pepper'],conflicts:[],
+    chapterUnlock:5,recipes:[],
+    eventVulnerabilities:['frost-hardy'],
+    seasonalMultipliers:{spring:0.8,summer:0.6,fall:0.9},
     category:'herbs',sunMin:4,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:3,waterNeed:'medium',
@@ -2318,7 +2448,12 @@ const CROPS = {
     varieties:[{name:'Flat-leaf (Italian)',desc:'Flavourful, upright plants; tolerant of partial shade.'},
       {name:'Moss Curled',desc:'Compact ruffled leaves; suitable for raised beds.'},
       {name:'Gigante d\'Italia',desc:'Vigorous, heat-tolerant variety with large leaves.'}]},
-  dill:{name:'Dill',short:'Dill',emoji:'🌿',color:'#7fb772',
+  dill:{id:'dill',name:'Dill',short:'Dill',emoji:'🌿',color:'#7fb772',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['broccoli','lettuce','bok_choy'],conflicts:['cherry_tom','carrot'],
+    chapterUnlock:5,recipes:['herb_bowl'],
+    eventVulnerabilities:['heat-sensitive','wind-sensitive'],
+    seasonalMultipliers:{spring:1.0,summer:0.5,fall:0.8},
     category:'herbs',sunMin:4,sunIdeal:6,height:'medium',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:2,coolSeason:true,heatTolerance:3,waterNeed:'low',
@@ -2326,7 +2461,12 @@ const CROPS = {
     varieties:[{name:'Fernleaf',desc:'Compact, dwarf dill ideal for containers and raised beds.'},
       {name:'Tetra',desc:'Large, aromatic variety slow to bolt and tolerant of partial shade.'},
       {name:'Bouquet',desc:'Upright variety with abundant seed heads; good companion plant.'}]},
-  chives:{name:'Chives',short:'Chives',emoji:'🧅',color:'#93c47d',
+  chives:{id:'chives',name:'Chives',short:'Chives',emoji:'🧅',color:'#93c47d',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['carrot','lettuce','cherry_tom'],conflicts:['peas','bush_beans'],
+    chapterUnlock:5,recipes:[],
+    eventVulnerabilities:['frost-hardy','heat-tolerant','pest-repellent'],
+    seasonalMultipliers:{spring:0.8,summer:0.7,fall:0.8},
     category:'herbs',sunMin:4,sunIdeal:6,height:'very low',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:4,waterNeed:'low',
@@ -2334,21 +2474,36 @@ const CROPS = {
     varieties:[{name:'Common',desc:'Standard garlic chives; hardy and tolerates partial shade.'},
       {name:'Fine Leaf',desc:'Compact variety with slender leaves for dense plantings.'}]},
   // ── FRUITING ───────────────────────────────────────────────────────────────
-  peppers:{name:'Peppers',short:'Peppers',emoji:'🫑',color:'#e53935',
+  pepper:{id:'pepper',name:'Peppers',short:'Peppers',emoji:'🫑',color:'#e53935',
+    faction:'fruiting',support:false,tall:false,water:2,
+    companions:['basil','onion','carrot'],conflicts:['peas'],
+    chapterUnlock:6,recipes:['weeknight_pasta','moms_sauce'],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.4,summer:1.0,fall:0.3},
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:5,waterNeed:'medium',
     companionTags:['herbs'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'California Wonder',desc:'Classic bell pepper. Reliable in warm beds.'},
       {name:'Jimmy Nardello',desc:'Sweet frying pepper. Prolific in full sun.'}]},
-  compact_tomato:{name:'Compact Tomato',short:'Tomato',emoji:'🍅',color:'#d32f2f',
+  compact_tomato:{id:'compact_tomato',name:'Compact Tomato',short:'Tomato',emoji:'🍅',color:'#d32f2f',
+    faction:'fruiting',support:false,tall:false,water:3,
+    companions:['basil','marigold','carrot'],conflicts:['broccoli','kale'],
+    chapterUnlock:6,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant','blight-prone'],
+    seasonalMultipliers:{spring:0.5,summer:1.0,fall:0.3},
     category:'fruiting',sunMin:7,sunIdeal:9,height:'medium',habit:'bush',trellisRequired:false,
     trellisZone:true,protectedZone:false,
     shadeScore:1,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
     companionTags:['herbs'],conflictTags:['corn'],replacementCategory:'fruiting',successionFriendly:false,
     varieties:[{name:'Tumbling Tom',desc:'Very compact. Cascading habit. Good for small beds.'},
       {name:'Tiny Tim',desc:'Dwarf plant, cherry tomatoes. Easy in a 4×4.'}]},
-  cherry_tomato:{name:'Cherry Tomato (climbing)',short:'Cherry Tom',emoji:'🍅',color:'#c62828',
+  cherry_tom:{id:'cherry_tom',name:'Cherry Tomato (climbing)',short:'Cherry Tom',emoji:'🍅',color:'#c62828',
+    faction:'fruiting',support:true,tall:true,water:3,
+    companions:['basil','marigold','carrot'],conflicts:['broccoli','kale','dill'],
+    chapterUnlock:2,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],
+    eventVulnerabilities:['pest-target','blight-prone','heat-tolerant'],
+    seasonalMultipliers:{spring:0.5,summer:1.0,fall:0.3},
     category:'fruiting',sunMin:7,sunIdeal:9,height:'tall',habit:'vining',trellisRequired:true,
     trellisZone:true,protectedZone:false,
     shadeScore:1,spacingPerSqFt:.5,coolSeason:false,heatTolerance:4,waterNeed:'high',
@@ -2356,7 +2511,12 @@ const CROPS = {
     varieties:[{name:'Sun Gold',desc:'Orange cherry. Incredibly sweet. Vigorous on trellis.'},
       {name:'Sweet Million',desc:'Heavy yields on cage trellis. Disease resistant.'},
       {name:'Black Cherry',desc:'Rich complex flavor. Excellent cage climber.'}]},
-  eggplant:{name:'Eggplant',short:'Eggplant',emoji:'🍆',color:'#7a3e6c',
+  eggplant:{id:'eggplant',name:'Eggplant',short:'Eggplant',emoji:'🍆',color:'#7a3e6c',
+    faction:'fruiting',support:true,tall:false,water:2,
+    companions:['basil','pepper','marigold'],conflicts:[],
+    chapterUnlock:6,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant','pest-target'],
+    seasonalMultipliers:{spring:0.4,summer:1.0,fall:0.3},
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:true,
     trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:4,waterNeed:'medium',
@@ -2364,7 +2524,12 @@ const CROPS = {
     varieties:[{name:'Fairy Tale',desc:'Compact, dwarf plants with striped fruit; ideal for containers.'},
       {name:'Ichiban',desc:'Japanese type; slender fruits on upright plants.'},
       {name:'Hansel',desc:'Mini eggplant variety well-suited to small raised beds.'}]},
-  zucchini:{name:'Zucchini',short:'Zucchini',emoji:'🥒',color:'#9dae4c',
+  zucchini:{id:'zucchini',name:'Zucchini',short:'Zucchini',emoji:'🥒',color:'#9dae4c',
+    faction:'fruiting',support:false,tall:false,water:3,
+    companions:['marigold','nasturtium'],conflicts:[],
+    chapterUnlock:6,recipes:[],
+    eventVulnerabilities:['pest-target','frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.4,summer:1.0,fall:0.3},
     category:'fruiting',sunMin:6,sunIdeal:8,height:'medium',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:1,spacingPerSqFt:1,coolSeason:false,heatTolerance:4,waterNeed:'high',
@@ -2373,7 +2538,12 @@ const CROPS = {
       {name:'Eight Ball',desc:'Round zucchini; small plant suited for raised beds.'},
       {name:'Patio Star',desc:'Dwarf plant bred for container and raised-bed gardening.'}]},
   // ── BRASSICA ───────────────────────────────────────────────────────────────
-  compact_cabbage:{name:'Compact Cabbage',short:'Cabbage',emoji:'🥬',color:'#88b378',
+  compact_cabbage:{id:'compact_cabbage',name:'Compact Cabbage',short:'Cabbage',emoji:'🥬',color:'#88b378',
+    faction:'brassicas',support:false,tall:false,water:2,
+    companions:['onion','dill','nasturtium'],conflicts:['cherry_tom'],
+    chapterUnlock:8,recipes:[],
+    eventVulnerabilities:['pest-target','frost-hardy','heat-sensitive'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:1.0},
     category:'brassica',sunMin:6,sunIdeal:8,height:'medium',habit:'compact',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2381,7 +2551,12 @@ const CROPS = {
     varieties:[{name:'Golden Acre',desc:'Early, compact cabbage head ideal for small spaces.'},
       {name:'Pixie',desc:'Mini cabbage maturing quickly; good for succession.'},
       {name:'Tender Sweet',desc:'Sweet leaves; tolerant of partial shade.'}]},
-  broccoli:{name:'Broccoli',short:'Broccoli',emoji:'🥦',color:'#6aa84f',
+  broccoli:{id:'broccoli',name:'Broccoli',short:'Broccoli',emoji:'🥦',color:'#6aa84f',
+    faction:'brassicas',support:false,tall:false,water:2,
+    companions:['onion','dill','marigold'],conflicts:['cherry_tom'],
+    chapterUnlock:5,recipes:[],
+    eventVulnerabilities:['pest-target','heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:1.0},
     category:'brassica',sunMin:6,sunIdeal:8,height:'medium',habit:'upright',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:1,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2389,7 +2564,12 @@ const CROPS = {
     varieties:[{name:'De Cicco',desc:'Heirloom with side shoots; compact plants.'},
       {name:'Packman',desc:'Early maturing and good in raised beds.'},
       {name:'Spigariello',desc:'Leafy broccoli cross tolerant of heat.'}]},
-  kohlrabi:{name:'Kohlrabi',short:'Kohlrabi',emoji:'🥬',color:'#b4c17c',
+  kohlrabi:{id:'kohlrabi',name:'Kohlrabi',short:'Kohlrabi',emoji:'🥬',color:'#b4c17c',
+    faction:'brassicas',support:false,tall:false,water:2,
+    companions:['beet','onion','dill'],conflicts:['cherry_tom'],
+    chapterUnlock:8,recipes:[],
+    eventVulnerabilities:['pest-target','frost-hardy','heat-sensitive'],
+    seasonalMultipliers:{spring:0.9,summer:0.3,fall:1.0},
     category:'brassica',sunMin:6,sunIdeal:8,height:'low',habit:'compact',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:2,spacingPerSqFt:4,coolSeason:true,heatTolerance:2,waterNeed:'medium',
@@ -2398,14 +2578,24 @@ const CROPS = {
       {name:'Purple Vienna',desc:'Purple skin and tolerant of partial shade.'},
       {name:'Kolibri',desc:'Hybrid with tender bulbs; performs well in raised beds.'}]},
   // ── COMPANION ──────────────────────────────────────────────────────────────
-  marigold:{name:'Marigold',short:'Marigold',emoji:'🌼',color:'#ff8f00',
+  marigold:{id:'marigold',name:'Marigold',short:'Marigold',emoji:'🌼',color:'#ff8f00',
+    faction:'companions',support:false,tall:false,water:2,
+    companions:['cherry_tom','pepper','broccoli'],conflicts:[],
+    chapterUnlock:1,recipes:[],
+    eventVulnerabilities:['heat-tolerant','pest-repellent'],
+    seasonalMultipliers:{spring:0.6,summer:1.0,fall:0.5},
     category:'companion',sunMin:4,sunIdeal:7,height:'low',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:3,spacingPerSqFt:3,coolSeason:false,heatTolerance:5,waterNeed:'low',
     companionTags:['cucurbit','fruiting','legume','brassica'],conflictTags:[],replacementCategory:'companion',successionFriendly:false,
     varieties:[{name:'French Marigold',desc:'Best pest deterrent. Plant at bed edges.'},
       {name:'African Marigold',desc:'Taller, striking. Good border plant.'}]},
-  nasturtium:{name:'Nasturtium',short:'Nasturtium',emoji:'🌸',color:'#efa94a',
+  nasturtium:{id:'nasturtium',name:'Nasturtium',short:'Nasturtium',emoji:'🌸',color:'#efa94a',
+    faction:'companions',support:false,tall:false,water:2,
+    companions:['zucchini','compact_cabbage'],conflicts:[],
+    chapterUnlock:9,recipes:[],
+    eventVulnerabilities:['frost-sensitive','pest-decoy'],
+    seasonalMultipliers:{spring:0.5,summer:1.0,fall:0.4},
     category:'companion',sunMin:4,sunIdeal:6,height:'low',habit:'bush',trellisRequired:false,
     trellisZone:false,protectedZone:false,
     shadeScore:4,spacingPerSqFt:2,coolSeason:false,heatTolerance:3,waterNeed:'low',
@@ -2417,13 +2607,83 @@ const CROPS = {
 
 const SUBS = {
   slicing_cucumber:{swap:'bush_cucumber',reason:'Bush Pickle tolerates partial sun and small beds far better.'},
-  head_lettuce:{swap:'leaf_lettuce',reason:'Leaf lettuce handles heat better and is easier to succession-plant.'},
+  head_lettuce:{swap:'lettuce',reason:'Leaf lettuce handles heat better and is easier to succession-plant.'},
   pole_beans:{swap:'bush_beans',reason:'Bush beans need no trellis and are more compact for a raised bed.'},
   beit_cucumber:{swap:'bush_cucumber',reason:'Under 5 hrs sun, Bush Pickle handles lower light more gracefully.'},
   spinach:{swap:'arugula',reason:'Arugula handles heat a little better with the same shade tolerance.'},
-  compact_tomato:{swap:'peppers',reason:'Peppers need slightly less sun and are more compact in a small bed.'},
-  cherry_tomato:{swap:'compact_tomato',reason:'If no trellis available, Compact Tomato is more self-supporting.'},
+  compact_tomato:{swap:'pepper',reason:'Peppers need slightly less sun and are more compact in a small bed.'},
+  cherry_tom:{swap:'compact_tomato',reason:'If no trellis available, Compact Tomato is more self-supporting.'},
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CROP KEY MIGRATION (Phase 1 — key normalization)
+// Renames old plural/verbose keys to canonical short forms in saved localStorage.
+// Runs once on page load; safe to call repeatedly (no-ops if already migrated).
+// ═══════════════════════════════════════════════════════════════════════════════
+(function migrateCropKeys() {
+  const KEY_MAP = {
+    cherry_tomato: 'cherry_tom',
+    leaf_lettuce:  'lettuce',
+    swiss_chard:   'chard',
+    carrots:       'carrot',
+    onions:        'onion',
+    beets:         'beet',
+    peppers:       'pepper',
+  };
+  const OLD_KEYS = Object.keys(KEY_MAP);
+  const STORAGE_KEYS = ['gardenOS_workspace', 'gardenOS', 'gardenOS_v4', 'gardenOS_workspace_restore_v1'];
+
+  function renameCropInCells(cells) {
+    if (!Array.isArray(cells)) return false;
+    let changed = false;
+    cells.forEach(function(cell) {
+      if (cell && typeof cell.crop === 'string' && KEY_MAP[cell.crop]) {
+        cell.crop = KEY_MAP[cell.crop];
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function migrateSelectedCrop(obj) {
+    if (obj && typeof obj.selectedCrop === 'string' && KEY_MAP[obj.selectedCrop]) {
+      obj.selectedCrop = KEY_MAP[obj.selectedCrop];
+      return true;
+    }
+    return false;
+  }
+
+  STORAGE_KEYS.forEach(function(sk) {
+    try {
+      var raw = localStorage.getItem(sk);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== 'object') return;
+      var dirty = false;
+
+      // Workspace format: { beds: { [id]: { cells: [...], plannerState: {...} } } }
+      if (data.beds && typeof data.beds === 'object') {
+        Object.keys(data.beds).forEach(function(bedId) {
+          var bed = data.beds[bedId];
+          if (bed) {
+            if (renameCropInCells(bed.cells)) dirty = true;
+            if (bed.plannerState && migrateSelectedCrop(bed.plannerState)) dirty = true;
+          }
+        });
+      }
+
+      // Legacy flat format: { bed: [...], ui: { selectedCrop } }
+      if (renameCropInCells(data.bed)) dirty = true;
+      if (data.ui && migrateSelectedCrop(data.ui)) dirty = true;
+
+      // Also check a top-level cells array (restore snapshots)
+      if (renameCropInCells(data.cells)) dirty = true;
+      if (migrateSelectedCrop(data)) dirty = true;
+
+      if (dirty) localStorage.setItem(sk, JSON.stringify(data));
+    } catch (e) { /* corrupted or missing — skip */ }
+  });
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STATE MAP
@@ -2461,7 +2721,7 @@ const SUBS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 let bedW = 8, bedH = 4;
 let bed = createEmptyBed(bedW, bedH);
-let ui = { selectedCrop:'leaf_lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'score' };
+let ui = { selectedCrop:'lettuce', tool:'inspect', selCell:null, catFilter:'all', rTab:'score' };
 let undoStack = [], redoStack = [];
 let cage = { enabled:false, rearTrellis:true, wireSides:true, height:'24', doorStyle:'double' };
 let interaction = {
@@ -2812,7 +3072,7 @@ function createBed(name, size, cageConfig){
     cage: normalizeCageConfig(cageConfig || runtimeCageToRaw(rows), rows),
     plannerState: {
       cells: new Array(cols * rows).fill(null),
-      selectedCrop: ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'leaf_lettuce',
+      selectedCrop: ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'lettuce',
       activeTool: VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint',
       site: defaultSiteSettingsFromUI()
     },
@@ -2852,7 +3112,7 @@ function normalizeBedRecord(rawBed, index){
   const legacySettings = rawBed?.settings && typeof rawBed.settings==='object' ? rawBed.settings : {};
   const selectedCrop = (typeof planner.selectedCrop==='string' && CROPS[planner.selectedCrop])
     ? planner.selectedCrop
-    : 'leaf_lettuce';
+    : 'lettuce';
   const activeTool = VALID_TOOLS.includes(planner.activeTool) ? planner.activeTool : 'paint';
   const site = normalizeSiteSettings(planner.site || legacySettings);
   const cells = normalizeCellArray(planner.cells || rawBed?.cells, cols, rows);
@@ -2954,7 +3214,7 @@ function migrateV0toV1(legacyState){
     cage: toRawCageConfigFromLegacy(legacySettings.cage, h),
     plannerState: {
       cells: normalizeCellArray(legacyState?.bed, w, h),
-      selectedCrop: (typeof legacyUi.selectedCrop==='string' && CROPS[legacyUi.selectedCrop]) ? legacyUi.selectedCrop : 'leaf_lettuce',
+      selectedCrop: (typeof legacyUi.selectedCrop==='string' && CROPS[legacyUi.selectedCrop]) ? legacyUi.selectedCrop : 'lettuce',
       activeTool: VALID_TOOLS.includes(legacyUi.tool) ? legacyUi.tool : 'paint',
       site: normalizeSiteSettings(legacySettings)
     },
@@ -3104,7 +3364,7 @@ function saveState(){
   b.size.rows = bedH;
   b.plannerState = b.plannerState || {};
   b.plannerState.cells = bed.map(c=>c.crop);
-  b.plannerState.selectedCrop = ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'leaf_lettuce';
+  b.plannerState.selectedCrop = ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'lettuce';
   b.plannerState.activeTool = VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint';
   const wallEl = document.getElementById('wallSide');
   const sunDirectionEl = document.getElementById('sunDirection');
@@ -3232,7 +3492,7 @@ function applyWorkspaceToUI(ws){
   const cells = normalizeCellArray(p.cells, bedW, bedH);
   cells.forEach((crop, i)=>{ bed[i].crop = crop; });
   resetInteractionState();
-  ui.selectedCrop = (typeof p.selectedCrop==='string' && CROPS[p.selectedCrop]) ? p.selectedCrop : 'leaf_lettuce';
+  ui.selectedCrop = (typeof p.selectedCrop==='string' && CROPS[p.selectedCrop]) ? p.selectedCrop : 'lettuce';
   ui.tool = VALID_TOOLS.includes(p.activeTool) ? p.activeTool : 'inspect';
   ui.selCell = null;
   syncToolButtons(ui.tool);
@@ -3653,17 +3913,22 @@ function computeScoreBreakdown(ck, cell, inputs){
   sunFit=clamp(sunFit,0,5);
 
   let supFit=3;
-  if(c.habit==='vining') supFit=cell.hasVerticalSupport?5:(inputs.trellis?2:1);
+  if(c.support===true) supFit=cell.hasVerticalSupport?5:(inputs.trellis?2:1);
   if(c.trellisRequired) supFit=cell.hasVerticalSupport?5:1;
 
   const shadeFit=l<c.sunMin?Math.max(1,c.shadeScore*.6):c.shadeScore;
-  const accFit=(c.height==='low'||c.height==='very low')?3+(cell.accessScore||0)*2:3;
+  const accFit=(c.tall===false)?3+(cell.accessScore||0)*2:3;
 
   let seaFit=5;
   if((inputs.season==='latesummer'||inputs.season==='summer')&&c.coolSeason) seaFit=inputs.season==='latesummer'?1:2;
   if(inputs.season==='spring'&&!c.coolSeason) seaFit=3;
   if(inputs.season==='fall'&&c.coolSeason) seaFit=5;
   if(inputs.season==='fall'&&!c.coolSeason) seaFit=2;
+  if(c.seasonalMultipliers){
+    const seasonMap={spring:'spring',latesummer:'summer',summer:'summer',fall:'fall'};
+    const sk=seasonMap[inputs.season]||'summer';
+    seaFit=1.0+c.seasonalMultipliers[sk]*4.0;
+  }
 
   let structBonus=0;
   const structContrib=[];
@@ -3712,7 +3977,6 @@ function neighbors(r,c){ return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCel
 function computeAdjacencyBreakdown(cell){
   if(!cell||!cell.crop||!CROPS[cell.crop]) return {raw:0,clamped:0,interactions:[]};
   const c=CROPS[cell.crop];
-  const waterMap={low:0,medium:1,high:2};
   const interactions=[];
   let raw=0;
   neighbors(cell.row,cell.col).forEach(n=>{
@@ -3720,17 +3984,17 @@ function computeAdjacencyBreakdown(cell){
     const nc=CROPS[n.crop];
     let delta=0;
     const contributions=[];
-    if(c.companionTags.some(t=>nc.category===t)){
+    if(c.companions && c.companions.includes(n.crop)){
       const w=companionWeight(c.category, nc.category);
       const bonus=0.5*w;
       delta+=bonus;
       contributions.push({label:'Companion match', delta:bonus});
     }
-    if(c.conflictTags.some(t=>nc.category===t||nc.name.toLowerCase().includes(t))){
+    if(c.conflicts && c.conflicts.includes(n.crop)){
       delta-=1.2;
       contributions.push({label:'Conflict tag', delta:-1.2});
     }
-    if(nc.height==='tall'&&c.height==='tall'){
+    if(nc.tall&&c.tall){
       delta-=0.75;
       contributions.push({label:'Tall × tall shade risk', delta:-0.75});
     }
@@ -3738,7 +4002,7 @@ function computeAdjacencyBreakdown(cell){
       delta-=0.2;
       contributions.push({label:'Same crop adjacency', delta:-0.2});
     }
-    const wd=Math.abs((waterMap[c.waterNeed]||1)-(waterMap[nc.waterNeed]||1));
+    const wd=Math.abs((c.water||2)-(nc.water||2));
     if(wd>=2){
       delta-=0.5;
       contributions.push({label:'Water mismatch', delta:-0.5});
@@ -3767,12 +4031,12 @@ function scoreCropPlacement(ck, inputs){
 function goalBonus(inputs){
   const u=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
   let b=0;
-  if(inputs.goal==='salad'&&u.some(ck=>['leaf_lettuce','arugula','spinach','mizuna','tatsoi','bok_choy'].includes(ck))) b+=5;
+  if(inputs.goal==='salad'&&u.some(ck=>['lettuce','arugula','spinach','mizuna','tatsoi','bok_choy'].includes(ck))) b+=5;
   if(inputs.goal==='pickling'&&u.some(ck=>ck.includes('cucumber'))) b+=5;
   if(inputs.goal==='yield'&&u.some(ck=>ck.includes('bean')||ck.includes('cucumber')||ck==='zucchini')) b+=3;
   if(inputs.goal==='easy'&&!u.some(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired))) b+=4;
   if(inputs.goal==='herbs'&&u.filter(ck=>CROPS[ck]&&CROPS[ck].category==='herbs').length>=2) b+=5;
-  if(inputs.goal==='sanctuary'&&u.some(ck=>ck==='cherry_tomato')&&u.some(ck=>ck==='basil')&&u.some(ck=>ck==='nasturtium')) b+=5;
+  if(inputs.goal==='sanctuary'&&u.some(ck=>ck==='cherry_tom')&&u.some(ck=>ck==='basil')&&u.some(ck=>ck==='nasturtium')) b+=5;
   return b;
 }
 
@@ -3784,7 +4048,7 @@ function scoreBed(inputs){
   if(uniq.length>=4) score+=7;
   else if(uniq.length>=3) score+=5;
   else if(uniq.length>=2) score+=3;
-  const tall=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].height==='tall');
+  const tall=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].tall);
   if(tall.length>1) score-=8;
   const trN=uniq.filter(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired));
   if(trN.length>1) score-=6;
@@ -3851,13 +4115,13 @@ function buildRec(inputs){
   const traits = b ? deriveBedTraits(b) : _activeBedTraits;
   const zones=buildZoneMap(inputs, traits);
   const GOAL_SETS = {
-    salad:    [['leaf_lettuce',8],['arugula',4],['radish',4],['mizuna',4]],
-    pickling: [['beit_cucumber',6],['leaf_lettuce',6],['bush_beans',4]],
-    yield:    [['bush_beans',6],['beit_cucumber',5],['swiss_chard',5]],
-    easy:     [['bush_beans',6],['leaf_lettuce',6],['radish',4],['marigold',2]],
-    balanced: [['beit_cucumber',4],['leaf_lettuce',6],['bush_beans',4],['radish',2]],
+    salad:    [['lettuce',8],['arugula',4],['radish',4],['mizuna',4]],
+    pickling: [['beit_cucumber',6],['lettuce',6],['bush_beans',4]],
+    yield:    [['bush_beans',6],['beit_cucumber',5],['chard',5]],
+    easy:     [['bush_beans',6],['lettuce',6],['radish',4],['marigold',2]],
+    balanced: [['beit_cucumber',4],['lettuce',6],['bush_beans',4],['radish',2]],
     herbs:    [['basil',4],['parsley',4],['chives',4],['cilantro',4]],
-    sanctuary: [['cherry_tomato',4],['basil',4],['leaf_lettuce',4],['nasturtium',2],['marigold',2]],
+    sanctuary: [['cherry_tom',4],['basil',4],['lettuce',4],['nasturtium',2],['marigold',2]],
   };
   const total=bedW*bedH;
   const cropCaps=Object.fromEntries((GOAL_SETS[inputs.goal]||GOAL_SETS.balanced)
@@ -4336,7 +4600,7 @@ function warnings(inputs,issues){
   if(inputs.sunHours>=6) w.push({t:'good',msg:'6+ hours of sun: cucumbers and fruiting crops can perform well here.'});
   if(uniq.some(ck=>CROPS[ck]&&CROPS[ck].successionFriendly))
     w.push({t:'tip',msg:'Succession-sow fast crops (lettuce, radish, arugula) every 2–3 weeks for continuous harvest.'});
-  if(uniq.includes('bush_beans')&&(uniq.includes('leaf_lettuce')||uniq.includes('radish')))
+  if(uniq.includes('bush_beans')&&(uniq.includes('lettuce')||uniq.includes('radish')))
     w.push({t:'good',msg:'Beans + lettuce/radish: classic companion combo — beans fix nitrogen for leafy crops.'});
   if(uniq.some(ck=>['marigold','nasturtium'].includes(ck)))
     w.push({t:'good',msg:'Companion flowers attract pollinators and deter pests — great choice!'});
@@ -5576,12 +5840,12 @@ var CROP_TIMING = {
   slicing_cucumber:   { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 9 },
   bush_cucumber:      { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 8 },
   // Greens
-  leaf_lettuce:       { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 6 },
+  lettuce:       { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 6 },
   head_lettuce:       { indoorWeeks: -6, transplantWeeks: -2, directSow: false, harvestWeeks: 10 },
   spinach:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 6 },
   kale:               { indoorWeeks: -6, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
   arugula:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 4 },
-  swiss_chard:        { indoorWeeks: -4, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
+  chard:        { indoorWeeks: -4, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
   bok_choy:           { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 6 },
   mustard_greens:     { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 5 },
   tatsoi:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 6 },
@@ -5592,11 +5856,11 @@ var CROP_TIMING = {
   peas:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 9 },
   // Roots
   radish:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 4 },
-  carrots:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 10 },
+  carrot:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 10 },
   scallions:          { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
-  beets:              { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
+  beet:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
   turnips:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 7 },
-  onions:             { indoorWeeks: -10, transplantWeeks: -2, directSow: false, harvestWeeks: 14 },
+  onion:              { indoorWeeks: -10, transplantWeeks: -2, directSow: false, harvestWeeks: 14 },
   garlic:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 20 },
   // Herbs
   basil:              { indoorWeeks: -6, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
@@ -5605,9 +5869,9 @@ var CROP_TIMING = {
   dill:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
   chives:             { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 10 },
   // Fruiting
-  peppers:            { indoorWeeks: -8, transplantWeeks: 2,  directSow: false, harvestWeeks: 10 },
+  pepper:             { indoorWeeks: -8, transplantWeeks: 2,  directSow: false, harvestWeeks: 10 },
   compact_tomato:     { indoorWeeks: -6, transplantWeeks: 0,  directSow: false, harvestWeeks: 10 },
-  cherry_tomato:      { indoorWeeks: -8, transplantWeeks: 0,  directSow: false, harvestWeeks: 10 },
+  cherry_tom:      { indoorWeeks: -8, transplantWeeks: 0,  directSow: false, harvestWeeks: 10 },
   eggplant:           { indoorWeeks: -8, transplantWeeks: 2,  directSow: false, harvestWeeks: 12 },
   zucchini:           { indoorWeeks: -3, transplantWeeks: 2,  directSow: true,  harvestWeeks: 7 },
   // Brassica
@@ -6691,9 +6955,9 @@ const TUTORIAL_STEPS=[
     text:'Start here \u2014 tap the tomato to select it.',
     hint:'scroll the palette, then click',
     tail:'left',
-    target:()=>document.querySelector('[data-crop="cherry_tomato"]'),
-    setup:()=>{setTool('inspect');_tutTargetId=tutorialTargetCell();primeTutorialPalette('cherry_tomato')},
-    check:()=>ui.selectedCrop==='cherry_tomato',
+    target:()=>document.querySelector('[data-crop="cherry_tom"]'),
+    setup:()=>{setTool('inspect');_tutTargetId=tutorialTargetCell();primeTutorialPalette('cherry_tom')},
+    check:()=>ui.selectedCrop==='cherry_tom',
     onComplete:{char:'gurl',line:'Tomato selected. Now it needs somewhere to grow.'}
   },
   {
@@ -6703,7 +6967,7 @@ const TUTORIAL_STEPS=[
     tail:'down',
     target:()=>_tutTargetId?document.getElementById(_tutTargetId):null,
     setup:()=>{setTool('paint')},
-    check:()=>{const cell=tutorialCellById(_tutTargetId);return !!(cell&&cell.crop==='cherry_tomato');},
+    check:()=>{const cell=tutorialCellById(_tutTargetId);return !!(cell&&cell.crop==='cherry_tom');},
     onComplete:{char:'onion',line:'One in the dirt. That is where it starts.'}
   },
   {
