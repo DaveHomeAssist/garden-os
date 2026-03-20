@@ -55,7 +55,7 @@
   .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:"DM Mono",monospace;font-size:11px;}
   .os-nav a{color:rgba(255,248,240,0.6);text-decoration:none;padding:8px 14px;letter-spacing:.04em;transition:color .15s;}
   .os-nav a:hover{color:#fff8f0;}
-  .os-nav a.active,
+  .os-nav a.is-active,
   .os-nav a[aria-current="page"]{color:#fff8f0;border-bottom:2px solid var(--sun-bright);}
 
   /* ── Masthead — compact ── */
@@ -227,7 +227,7 @@
     border-left-color: var(--line);
   }
 
-  .nav-item.active {
+  .nav-item.is-active {
     background: rgba(58,107,42,0.07);
     color: var(--ink);
     border-left-color: var(--cedar);
@@ -715,7 +715,7 @@
     <a href="garden-league-simulator-v4.html">Play Game</a>
     <a href="garden-planner-v4.html">Planner</a>
     <a href="garden-cage-build-guide.html">Build Guide</a>
-    <a href="garden-cage-ops-guide.html" class="active" aria-current="page">Ops Guide</a>
+    <a href="garden-cage-ops-guide.html" class="is-active" aria-current="page">Ops Guide</a>
     <a href="how-it-thinks.html">How It Thinks</a>
     <a href="scoring-visualizer.html" style="margin-left:auto;opacity:.55">Dev Tools →</a>
   </nav>
@@ -1249,7 +1249,7 @@ FRONT DOORS</pre>
   /* ── Nav sync ── */
   function setActiveNav(targetId) {
     navBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.target === targetId);
+      btn.classList.toggle('is-active', btn.dataset.target === targetId);
     });
   }
 

@@ -256,7 +256,7 @@ code, kbd, samp {
   transition: color var(--ease), border-color var(--ease);
 }
 .os-nav a:hover { color: #f5ede0; }
-.os-nav a.active,
+.os-nav a.is-active,
 .os-nav a[aria-current="page"] {
   color: #f5ede0;
   border-bottom-color: var(--sun-bright);

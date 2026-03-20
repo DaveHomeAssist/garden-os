@@ -1700,7 +1700,7 @@
   <div class="tab-pane on" id="lpane-site" role="tabpanel" aria-labelledby="ltab-site">
     <div>
       <div class="slabel">Bed Size</div>
-      <div class="bed-presets" id="bed-presets"></div>
+      <div class="bed-presets" id="bedPresets"></div>
       <div class="bed-custom">
         <span>Custom:</span>
         <label for="bedW" class="visually-hidden">Bed width (columns)</label>
@@ -1886,7 +1886,7 @@
       <div id="cageDoorBar" class="cage-door-bar">Double Door — Front Access</div>
       <div class="flbl">▼ Front (access side)</div>
       <div class="chint" id="chint"></div>
-      <div class="fillbar"><div class="fillbar-fill" id="fillbar-fill" style="width:0%"></div></div>
+      <div class="fillbar"><div class="fillbar-fill" id="fillbarFill" style="width:0%"></div></div>
       <div class="zone-legend" id="zoneLegend" style="display:none">
         <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
         <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
@@ -1906,44 +1906,44 @@
   <section class="insight-block" id="insightSummary">
     <button class="insight-header" aria-expanded="true" data-section="summary">Summary</button>
     <div class="insight-content" aria-live="polite">
-      <div id="rpane-score"></div>
-      <div id="rpane-reasoning"></div>
+      <div id="rpaneScore"></div>
+      <div id="rpaneReasoning"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightDashboard">
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Planner board</button>
     <div class="insight-content" hidden>
-      <div id="rpane-dashboard"></div>
+      <div id="rpaneDashboard"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightInspect">
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Inspect</button>
     <div class="insight-content" hidden>
-      <div id="rpane-inspect"></div>
-      <div id="rpane-companions"></div>
+      <div id="rpaneInspect"></div>
+      <div id="rpaneCompanions"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightCalendar">
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="calendar">Calendar</button>
     <div class="insight-content" hidden>
-      <div id="rpane-calendar"></div>
+      <div id="rpaneCalendar"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightHarvest">
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest</button>
     <div class="insight-content" hidden>
-      <div id="rpane-harvest"></div>
+      <div id="rpaneHarvest"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightNotes">
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="notes">Notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
     <div class="insight-content" hidden>
-      <div id="rpane-notes"></div>
+      <div id="rpaneNotes"></div>
     </div>
   </section>
 </aside>
@@ -3511,7 +3511,7 @@ const BED_PRESETS = [
   {label:'4×8',w:4,h:8},{label:'2×6',w:2,h:6},{label:'3×4',w:3,h:4}
 ];
 function renderBedPresets(){
-  const c=document.getElementById('bed-presets');
+  const c=document.getElementById('bedPresets');
   c.innerHTML=BED_PRESETS.map(p=>
     `<button class="preset-btn ${p.w===bedW&&p.h===bedH?'active':''}" data-pw="${p.w}" data-ph="${p.h}">${escapeHtml(p.label)}</button>`
   ).join('');
@@ -4241,7 +4241,7 @@ function renderIssueSummaryStrip(issues){
 }
 
 function buildReasoningSurface(inputs, issues){
-  const pane=document.getElementById('rpane-reasoning');
+  const pane=document.getElementById('rpaneReasoning');
   if(!pane) return;
   const selected=ui.selCell?bed.find(c=>c.id===ui.selCell):null;
   const planted=bed.filter(c=>c.crop);
@@ -4951,7 +4951,7 @@ function render(){
     `${inputs.orientation==='ew'?'East–West':'North–South'} bed · sun from ${_sunLabels[_sd]} · ${inputs.orientation===sunAxisForDirection(_sd)?'even spread':'strong gradient across bed'}`;
   // Fill bar
   const fill=bed.filter(c=>c.crop).length/(bedW*bedH);
-  const fb=document.getElementById('fillbar-fill');
+  const fb=document.getElementById('fillbarFill');
   if(fb) fb.style.width=Math.round(fill*100)+'%';
   renderPlacementStatus();
   syncShareStaleness();
@@ -5158,7 +5158,7 @@ function renderRight(inputs,issues,scoreTotal){
     return`<div class="cchip"><span class="cnum" style="color:${CROPS[ck].color}">${n}</span>
       <span class="ccrp">${escapeHtml(CROPS[ck].short)}<br>plants</span></div>`;
   }).join('');
-  document.getElementById('rpane-score').innerHTML=`
+  document.getElementById('rpaneScore').innerHTML=`
     <div class="score-hero">
       <div class="sbig">
         <div class="snum" style="color:${sc}">${bs}</div>
@@ -5251,7 +5251,7 @@ function renderRight(inputs,issues,scoreTotal){
   } else {
     inspHtml=`<div class="inspect-empty"><span>🔍</span><p>Select a cell to see its score, light, and traits</p><button class="state-action" data-action="switch-inspect">Switch to Inspect tool</button></div>`;
   }
-  document.getElementById('rpane-inspect').innerHTML=inspHtml;
+  document.getElementById('rpaneInspect').innerHTML=inspHtml;
 
   // Bind harvest button in inspect pane
   const harvestBtn = document.getElementById('inspectHarvestBtn');
@@ -5266,7 +5266,7 @@ function renderRight(inputs,issues,scoreTotal){
     <span class="wico">${w.t==='warn'?'⚠':w.t==='good'?'✓':'ℹ'}</span>
     <span>${escapeHtml(w.msg)}</span>
   </div>`).join('');
-  document.getElementById('rpane-notes').innerHTML=
+  document.getElementById('rpaneNotes').innerHTML=
     `<div class="icard"><div class="icbody">${whtml||
       '<div class="notes-empty" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem;text-align:center;opacity:.5;"><span style="font-size:1.6rem;">📋</span><p style="font-size:.72rem;font-family:\'DM Mono\',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light)">Place crops to see warnings, tips, and companion notes</p></div>'
     }</div></div>`;
@@ -5526,7 +5526,7 @@ document.querySelector('.insight-panel').addEventListener('click',function(ev){
 document.getElementById('printPlanBtn').addEventListener('click',printGardenPlan);
 
 // Event delegation: bed presets (dynamic buttons)
-document.getElementById('bed-presets').addEventListener('click',e=>{
+document.getElementById('bedPresets').addEventListener('click',e=>{
   const btn=e.target.closest('[data-pw]');
   if(btn) setPreset(+btn.dataset.pw, +btn.dataset.ph);
 });
@@ -5652,7 +5652,7 @@ function setCalendarZone(z){
 }
 
 function renderCalendarPanel(){
-  const pane = document.getElementById('rpane-calendar');
+  const pane = document.getElementById('rpaneCalendar');
   if(!pane) return;
 
   const zone = getCalendarZone();
@@ -5976,7 +5976,7 @@ function getCompanionRelationships(cropKey){
 }
 
 function renderCompanionPanel(){
-  const pane = document.getElementById('rpane-companions');
+  const pane = document.getElementById('rpaneCompanions');
   if(!pane) return;
 
   const cropEntries = Object.entries(CROPS);
@@ -6143,7 +6143,7 @@ function getHarvestSummary(){
   return { total: harvests.length, byCrop, byCell, bestCell, bestCount };
 }
 function renderHarvestTab(){
-  const pane = document.getElementById('rpane-harvest');
+  const pane = document.getElementById('rpaneHarvest');
   if(!pane) return;
   const harvests = getHarvests();
   if(harvests.length === 0){
@@ -6415,7 +6415,7 @@ function buildDashboardVoices(snapshot){
 }
 
 function renderDashboardTab(inputsArg, issuesArg, scoreArg){
-  const pane = document.getElementById('rpane-dashboard');
+  const pane = document.getElementById('rpaneDashboard');
   if(!pane) return;
   const inputs = inputsArg || inp();
   const issues = issuesArg || cellIssues(inputs);
@@ -6711,7 +6711,7 @@ const TUTORIAL_STEPS=[
     text:'Your tomato has a score \u2014 check the Score panel on the right.',
     hint:'each factor (sun, support, shade...) affects the score',
     tail:'left',
-    target:()=>document.getElementById('insightSummary')||document.getElementById('rpane-score'),
+    target:()=>document.getElementById('insightSummary')||document.getElementById('rpaneScore'),
     setup:()=>{switchRTab('dashboard')},
     check:()=>true,
     autoAdvanceMs:2500,

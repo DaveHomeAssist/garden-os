@@ -1,10 +1,9 @@
 # Garden OS
 
-Garden OS is a local-first raised-bed planning system that runs entirely in the browser.
-
-It is designed to explain placement decisions, not just produce layouts. The planner computes crop fit per cell and now exposes *why* each score is high or low.
+> A local-first raised-bed planning system that runs entirely in the browser. Explains placement decisions, not just layouts.
 
 ## Problem Statement
+
 Most garden planners answer "where should I plant this?" with weak reasoning transparency.
 
 Garden OS focuses on explainable decisions:
@@ -18,7 +17,8 @@ Garden OS focuses on explainable decisions:
 
 The system also highlights the limiting factor so users can make high-leverage changes quickly.
 
-## Key Features
+## Features
+
 - Explainable scoring panel in Inspect tab
 - Limiting-factor detection for each selected crop/cell
 - Adjacency analysis (companion/conflict/water mismatch)
@@ -26,16 +26,8 @@ The system also highlights the limiting factor so users can make high-leverage c
 - Canonical data contract in `gos-schema.json`
 - Zero-backend, offline-capable architecture
 
-## Tool Suite
-- `index.html` - Garden OS hub
-- `garden-planner-v4.html` - core planner and scoring engine
-- `garden-cage-build-guide.html` - cage construction guide
-- `garden-cage-ops-guide.html` - operations and maintenance guide
-- `garden_planner_scoring_system_map.html` - scoring architecture reference
-- `garden_planner_scoring_visualizer.html` - scoring debugger
-- `system-topology.html` - ecosystem topology map
-
 ## Quick Start
+
 1. Clone the repo.
 2. Open `index.html` in a modern browser.
 3. Launch `garden-planner-v4.html` from the hub.
@@ -43,6 +35,7 @@ The system also highlights the limiting factor so users can make high-leverage c
 No install step, no build step, no runtime services.
 
 ## Usage Example
+
 1. Select a crop in the palette.
 2. Paint cells in the bed.
 3. Open Inspect tab on a planted cell.
@@ -50,7 +43,40 @@ No install step, no build step, no runtime services.
 5. Move the crop based on limiting-factor diagnostics.
 6. Export workspace to `.gos.json` for backup or sharing.
 
+## Structure
+
+```
+garden-os/
+├── index.html                          # Hub / landing page
+├── garden-planner-v4.html              # Core planner and scoring engine
+├── garden-cage-build-guide.html        # Cage construction guide
+├── garden-cage-ops-guide.html          # Operations and maintenance guide
+├── garden_planner_scoring_system_map.html  # Scoring architecture reference
+├── garden_planner_scoring_visualizer.html  # Scoring debugger
+├── system-topology.html                # Ecosystem topology map
+├── brand-guide.html                    # Brand token and component reference
+├── specs/                              # Data schemas and reference JSON
+├── docs/                               # Design docs, audits, roadmaps
+├── AGENTS.md                           # Agent instructions and issue tracker
+├── CLAUDE.md                           # Architecture constraints
+└── README.md                           # This file
+```
+
+## Deployment
+
+- **Host:** GitHub Pages
+- **Live URL:** https://davehomeassist.github.io/garden-os/
+- **Build step:** None (static)
+
+## Tech
+
+- HTML5, CSS3, Vanilla JavaScript — no dependencies
+- localStorage for persistence
+- JSON Schema for contract validation
+- Offline-capable (no network required except Google Fonts)
+
 ## Smoke Checklist
+
 - Planner reloads cleanly with existing saved workspaces.
 - Planner recovers to a safe empty workspace if localStorage JSON is malformed.
 - Planner tool state stays in sync across click, keyboard, reload, and bed switching.
@@ -59,50 +85,22 @@ No install step, no build step, no runtime services.
 - Season Engine v4 `E` toggles eraser and `Escape` returns to neutral inspect behavior.
 - Menus and dialogs open with focus on an action, trap Tab where expected, and close on `Escape`.
 
-## Technical Stack
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- localStorage for persistence
-- JSON Schema for contract validation
+## Roadmap
 
-## Architecture Highlights
-- Local-first data ownership
-- Deterministic scoring logic
-- Schema-validated workspace model
-- Portable workspace files
-- Single-file tool architecture
-
-See:
-- `docs/garden-os-system-map.html`
-- `docs/garden-os-architecture-diagram.svg`
-- `docs/DOCUMENTATION_CATALOG.md`
-- `docs/game-timeline/README.md`
-
-## Contribution Guidelines
-Contributions are welcome.
-
-Please open an issue or PR for:
-- crop model improvements
-- scoring model refinements
-- UX/a11y hardening
-- documentation quality
-- testing and validation improvements
-
-Guidelines:
-- Keep tools browser-native and offline-capable.
-- Avoid backend dependencies unless explicitly scoped.
-- Preserve schema compatibility or document migrations clearly.
-
-## Roadmap (Near-Term)
 - Planner accessibility hardening (ARIA, keyboard clarity)
 - Scoring visualization polish and diagnostics depth
 - Workspace lifecycle improvements
 - Additional decision-support modules
 
-## License
-MIT (project-level convention).
-
 ## Links
+
 - Live: https://davehomeassist.github.io/garden-os/
 - Source: https://github.com/DaveHomeAssist/garden-os
+
+## Conventions
+
+This project follows the shared naming conventions in `30-shared-resources/shared-standards/NAMING_CONVENTIONS.md`.
+
+## License
+
+MIT (project-level convention).
