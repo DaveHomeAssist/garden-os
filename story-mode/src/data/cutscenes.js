@@ -1,3 +1,5 @@
+import { getRecipeById } from './crops.js';
+
 export const CUTSCENES = [
 
   // ═══ CHAPTER INTROS ═══════════════════════════════════════
@@ -77,138 +79,19 @@ export const CUTSCENES = [
 
   // ═══ EVENT REACTIONS — by family ═════════════════════════
 
-  // Weather — negative
-  { id: 'event-weather-frost', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative', season: 'spring' }, priority: 80, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Frost line is dropping. The tender crops feel it first.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'storm' },
-  ]},
-  { id: 'event-weather-heat', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative', season: 'summer' }, priority: 80, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'This heat is serious. Even I would not plant into this.', emotion: 'surprised', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'heat' },
-  ]},
-  { id: 'event-weather-storm', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative' }, priority: 76, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Weather event. Check which cells are exposed.', emotion: 'neutral', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'storm' },
-  ]},
-
-  // Weather — positive
-  { id: 'event-weather-positive', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'positive' }, priority: 78, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Rain when you need it. That is the kind of luck you cannot plan for.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'dawn' },
-  ]},
-
-  // Pests — negative
-  { id: 'event-pest-negative', trigger: 'event_drawn', conditions: { category: 'critter', valence: 'negative' }, priority: 80, once: false, skippable: true, beats: [
-    { speaker: 'critters', text: 'Found something. Stems are stressed. This is not our fault. Mostly.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  // Pests — mixed
-  { id: 'event-pest-mixed', trigger: 'event_drawn', conditions: { category: 'critter', valence: 'mixed' }, priority: 78, once: false, skippable: true, beats: [
-    { speaker: 'critters', text: 'Some of us eat the bad ones. Some of us are the bad ones. Good luck sorting it out.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  // Neighbor — positive
-  { id: 'event-neighbor-positive', trigger: 'event_drawn', conditions: { category: 'neighbor', valence: 'positive' }, priority: 78, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Neighbors looking out. That is how it works on this block.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'dawn' },
-  ]},
-
-  // Neighbor — negative
-  { id: 'event-neighbor-negative', trigger: 'event_drawn', conditions: { category: 'neighbor', valence: 'negative' }, priority: 78, once: false, skippable: true, beats: [
-    { speaker: 'critters', text: 'Foot traffic. Not ours this time. The damage is real though.', emotion: 'neutral', portraitAnim: 'talk', camera: 'event-push' },
-  ]},
-
-  // Family/memory — neutral
-  { id: 'event-memory', trigger: 'event_drawn', conditions: { category: 'family' }, priority: 80, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Something from the old days surfaced. The bed remembers more than you think.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'calm' },
-  ]},
-
-  // Phillies — any valence
-  { id: 'event-phillies', trigger: 'event_drawn', conditions: { category: 'phillies' }, priority: 78, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Phillies energy in the yard. That changes things, whether you believe it or not.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
-  ]},
-
-  // Infrastructure/soil
-  { id: 'event-infrastructure', trigger: 'event_drawn', conditions: { category: 'infrastructure' }, priority: 77, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Structural change in the bed. The soil state just shifted.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
-  ]},
-  { id: 'event-soil', trigger: 'event_drawn', conditions: { category: 'soil' }, priority: 77, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Soil condition update. This one carries forward.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  // Generic fallback — only if no family matched. Single line, no mechanic explanation.
+  // Generic fallback — only if the deck does not provide commentary.
   { id: 'event-drawn-fallback', trigger: 'event_drawn', conditions: {}, priority: 65, once: false, skippable: true, beats: [
     { speaker: 'garden_gurl', text: 'New condition on the bed. Check the event card above the grid.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
   ]},
 
   // ═══ INTERVENTION MOMENTS ═════════════════════════════════
 
-  { id: 'intervention-protect', trigger: 'intervention_used', conditions: { intervention: 'protect' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Shielded.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  { id: 'intervention-mulch', trigger: 'intervention_used', conditions: { intervention: 'mulch' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'That mulch will matter in three weeks.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  { id: 'intervention-prune', trigger: 'intervention_used', conditions: { intervention: 'prune' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'Gone. Sometimes the best move is subtraction.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'row-close' },
-  ]},
-
-  { id: 'intervention-swap', trigger: 'intervention_used', conditions: { intervention: 'swap' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Repositioned. The scoring factors just changed.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  { id: 'intervention-companion-patch', trigger: 'intervention_used', conditions: { intervention: 'companion_patch' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Good neighbors make good gardens.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
-  ]},
-
-  { id: 'intervention-accept', trigger: 'intervention_used', conditions: { intervention: 'accept_loss' }, priority: 55, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Noted.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
+  { id: 'intervention-fallback', trigger: 'intervention_used', conditions: {}, priority: 55, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Intervention recorded. The bed will answer with the next scoring pass.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   // ═══ HARVEST REACTIONS ════════════════════════════════════
 
-  { id: 'harvest-grade-a-plus', trigger: 'harvest_complete', conditions: { grade: 'A+' }, priority: 90, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Perfect execution. The bed gave everything it had and you respected every inch of it.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'celebration' },
-    { speaker: 'onion_man', text: 'She would have cried. The good kind.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
-    { speaker: 'vegeman', text: 'I TOLD you to plant more. And somehow it WORKED.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'overview' },
-  ]},
-
-  { id: 'harvest-grade-a', trigger: 'harvest_complete', conditions: { grade: 'A' }, priority: 80, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'A clean harvest. Nothing wasted, nothing accidental.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'harvest-gold', duration: 1800 },
-  ]},
-
-  // Season-specific B grades
-  { id: 'harvest-grade-b-spring', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'spring' }, priority: 76, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'First season holding. The roots took. That is what spring is for.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
-  ]},
-  { id: 'harvest-grade-b-summer', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'summer' }, priority: 76, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'Survived the heat. Not perfect, but nothing burned. I respect that.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
-  ]},
-  { id: 'harvest-grade-b-fall', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'fall' }, priority: 76, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Fall harvest. Solid. The pantry gets what the bed promised.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
-  ]},
-  // B fallback
-  { id: 'harvest-grade-b', trigger: 'harvest_complete', conditions: { grade: 'B' }, priority: 75, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Solid work. Not everything landed, but the bed held together.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
-  ]},
-
-  // Season-specific C grades
-  { id: 'harvest-grade-c-spring', trigger: 'harvest_complete', conditions: { grade: 'C', season: 'spring' }, priority: 71, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Spring is forgiving. The next season will not be. Study the factors.', emotion: 'neutral', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
-  ]},
-  { id: 'harvest-grade-c-summer', trigger: 'harvest_complete', conditions: { grade: 'C', season: 'summer' }, priority: 71, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'The heat exposed the weak placements. Sun fit is carrying you or sinking you.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
-  ]},
-  { id: 'harvest-grade-c', trigger: 'harvest_complete', conditions: { grade: 'C' }, priority: 70, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Passing. The scoring factors tell you exactly where it went wrong.', emotion: 'neutral', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
-  ]},
-
-  { id: 'harvest-grade-d', trigger: 'harvest_complete', conditions: { grade: 'D' }, priority: 70, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Rough season. Mom had those too. She came back every time.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
-  ]},
-
-  { id: 'harvest-grade-f', trigger: 'harvest_complete', conditions: { grade: 'F' }, priority: 72, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'That happened. We do not talk about it. We just plant better.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'loss' },
-  ]},
-
-  // Fallback harvest
   { id: 'harvest-fallback', trigger: 'harvest_complete', conditions: {}, priority: 60, once: false, skippable: true, beats: [
     { speaker: 'onion_man', text: 'Every harvest tells the truth. Some of them just tell it harder.', emotion: 'sad', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold', duration: 1800 },
   ]},
@@ -278,6 +161,32 @@ const COMMENTARY_KEY_TO_SPEAKER = {
   vegeman: 'vegeman',
   critters: 'critters',
 };
+
+function oxfordJoin(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+function buildReactiveBeat({
+  speaker,
+  text,
+  camera = 'overview',
+  backdropTone = 'calm',
+  emotion,
+  duration,
+}) {
+  return {
+    speaker,
+    text,
+    emotion: emotion ?? (speaker === 'critters' ? 'smirk' : speaker === 'onion_man' ? 'warm' : speaker === 'vegeman' ? 'smirk' : 'emphasis'),
+    portraitAnim: 'talk',
+    camera,
+    backdropTone,
+    ...(duration != null ? { duration } : {}),
+  };
+}
 
 function buildEventBeat(speaker, text, triggerPayload, index) {
   const negative = triggerPayload.eventValence === 'negative';
@@ -374,6 +283,188 @@ function buildDynamicEventCutscene(triggerPayload) {
   };
 }
 
+function pickInterventionSpeakers(triggerPayload) {
+  const { intervention, season, eventCategory, eventValence } = triggerPayload;
+
+  if (intervention === 'protect') {
+    if (eventCategory === 'critter') return ['critters', 'garden_gurl'];
+    if (season === 'winter') return ['onion_man', 'garden_gurl'];
+    return ['garden_gurl'];
+  }
+
+  if (intervention === 'mulch') {
+    return season === 'summer' ? ['garden_gurl', 'vegeman'] : ['onion_man'];
+  }
+
+  if (intervention === 'swap') {
+    return season === 'summer' ? ['vegeman', 'garden_gurl'] : ['garden_gurl'];
+  }
+
+  if (intervention === 'prune') {
+    return season === 'fall' ? ['onion_man', 'garden_gurl'] : ['vegeman'];
+  }
+
+  if (intervention === 'companion_patch') {
+    return season === 'spring' || season === 'fall' ? ['onion_man'] : ['garden_gurl'];
+  }
+
+  if (intervention === 'accept_loss') {
+    return eventValence === 'negative' ? ['critters', 'garden_gurl'] : ['garden_gurl'];
+  }
+
+  return ['garden_gurl'];
+}
+
+function buildInterventionText(speaker, triggerPayload) {
+  const cropText = oxfordJoin(triggerPayload.targetCropNames) || 'that cell';
+  const targetText = triggerPayload.targetSummary || cropText;
+
+  if (triggerPayload.intervention === 'protect') {
+    if (speaker === 'critters') return `You covered ${cropText}. Fine. We saw that.`;
+    if (speaker === 'onion_man') return `Protected ${cropText}. Sometimes one clean save is enough to steady the whole bed.`;
+    return `${cropText} is covered. ${targetText} gets a cleaner shot at this beat now.`;
+  }
+
+  if (triggerPayload.intervention === 'mulch') {
+    if (speaker === 'vegeman') return `Good. ${cropText} gets a little cushion and a little patience.`;
+    if (speaker === 'garden_gurl') return `Mulch applied to ${targetText}. You are banking on the soil holding more of the season.`;
+    return `Mulch on ${cropText}. That kind of move matters later, which is why it matters now.`;
+  }
+
+  if (triggerPayload.intervention === 'swap') {
+    if (speaker === 'vegeman') return `${targetText} just changed the angle of the whole beat. That is a real move.`;
+    return `Repositioned. The bed only cares about the layout in front of it now, not the one you started with.`;
+  }
+
+  if (triggerPayload.intervention === 'prune') {
+    if (speaker === 'onion_man') return `You let ${cropText} go so the rest of the bed could keep moving. That is part of gardening too.`;
+    if (speaker === 'garden_gurl') return `Pruned. One hard subtraction is better than a whole row dragged downward.`;
+    return `Gone. Better one decisive cut than pretending ${cropText} was still helping.`;
+  }
+
+  if (triggerPayload.intervention === 'companion_patch') {
+    if (speaker === 'onion_man') return `${cropText} has company now. The bed usually rewards that kind of cooperation.`;
+    return `Patch placed on ${targetText}. You turned adjacency into part of the answer.`;
+  }
+
+  if (triggerPayload.intervention === 'accept_loss') {
+    if (speaker === 'critters') return 'You let it land. Honest, if nothing else.';
+    return 'Accepted. The consequence belongs to this beat now.';
+  }
+
+  return 'Intervention logged.';
+}
+
+function buildDynamicInterventionCutscene(triggerPayload) {
+  if (triggerPayload?.type !== 'intervention_used') return null;
+
+  const speakers = pickInterventionSpeakers(triggerPayload);
+  const beats = speakers.map((speaker, index) => buildReactiveBeat({
+    speaker,
+    text: buildInterventionText(speaker, triggerPayload),
+    camera: speaker === 'vegeman' ? 'front-access' : speaker === 'onion_man' ? 'bed-low-angle' : 'row-close',
+    backdropTone: triggerPayload.eventValence === 'negative' ? 'storm' : triggerPayload.season === 'summer' ? 'heat' : 'calm',
+    emotion: speaker === 'garden_gurl' && index === 0 ? 'neutral' : undefined,
+  }));
+
+  return {
+    id: `dynamic-intervention-${triggerPayload.intervention}-${triggerPayload.season}`,
+    trigger: 'intervention_used',
+    priority: 190,
+    once: false,
+    skippable: true,
+    beats,
+  };
+}
+
+function pickHarvestSpeakers(triggerPayload) {
+  if (triggerPayload.recipeMatches?.includes('moms_sauce')) return ['onion_man', 'garden_gurl'];
+  if (triggerPayload.grade === 'A+') return ['garden_gurl', 'onion_man'];
+  if (triggerPayload.grade === 'A') return triggerPayload.season === 'summer' ? ['vegeman', 'garden_gurl'] : ['garden_gurl'];
+  if (triggerPayload.grade === 'B') return triggerPayload.season === 'summer' ? ['vegeman'] : ['onion_man'];
+  if (triggerPayload.grade === 'C') return ['garden_gurl'];
+  if (triggerPayload.grade === 'D') return ['onion_man'];
+  if (triggerPayload.grade === 'F') return ['vegeman', 'garden_gurl'];
+  return (triggerPayload.recipeMatches?.length ?? 0) > 0 ? ['onion_man'] : ['garden_gurl'];
+}
+
+function buildHarvestText(speaker, triggerPayload) {
+  const recipeNames = (triggerPayload.recipeMatches ?? [])
+    .map((recipeId) => getRecipeById(recipeId)?.name ?? recipeId)
+    .filter(Boolean);
+  const recipeText = oxfordJoin(recipeNames);
+  const yieldCount = triggerPayload.yieldCount ?? 0;
+
+  if (triggerPayload.recipeMatches?.includes('moms_sauce')) {
+    if (speaker === 'onion_man') return `That is Mom's sauce on the table. ${yieldCount} good pulls out of the bed, and the right five among them.`;
+    return 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
+  }
+
+  if (recipeNames.length > 0) {
+    if (speaker === 'onion_man') return `${yieldCount} good things out of the bed, and now ${recipeText} is real. That is pantry work, not theory.`;
+    if (speaker === 'garden_gurl') return `Harvest converted into recipe progress. Useful output. No sentiment required.`;
+  }
+
+  if (triggerPayload.grade === 'A+') {
+    if (speaker === 'onion_man') return 'That one would have made the whole house stop and look.';
+    return `A+ harvest. ${yieldCount} useful pulls and no wasted structure anywhere in the bed.`;
+  }
+
+  if (triggerPayload.grade === 'A') {
+    if (speaker === 'vegeman') return `That is a real summer harvest. Loud, heavy, and somehow still under control.`;
+    return `Clean harvest. ${yieldCount} solid pulls, and none of them feel accidental.`;
+  }
+
+  if (triggerPayload.grade === 'B') {
+    if (speaker === 'vegeman') return `Not perfect, but the bed stayed in the fight. Summer counts that as a win.`;
+    return `Solid season. ${yieldCount} things for the pantry and enough proof that the plan held.`;
+  }
+
+  if (triggerPayload.grade === 'C') {
+    return triggerPayload.season === 'summer'
+      ? 'Passing, but the heat found every weak placement you left exposed.'
+      : 'Passing. The bed told you exactly where the soft spots were.';
+  }
+
+  if (triggerPayload.grade === 'D') {
+    return `Rough season. Still, ${yieldCount} things came in, and rough seasons are part of the record too.`;
+  }
+
+  if (triggerPayload.grade === 'F') {
+    if (speaker === 'vegeman') return 'Bad beat. Bad harvest. Plant again and do not romanticize it.';
+    return 'Failure logged. The next season starts when you are ready to read what went wrong.';
+  }
+
+  return 'The harvest is in. The bed told the truth again.';
+}
+
+function buildDynamicHarvestCutscene(triggerPayload) {
+  if (triggerPayload?.type !== 'harvest_complete') return null;
+
+  const speakers = pickHarvestSpeakers(triggerPayload);
+  const lossGrade = triggerPayload.grade === 'D' || triggerPayload.grade === 'F';
+  const beats = speakers.map((speaker, index) => buildReactiveBeat({
+    speaker,
+    text: buildHarvestText(speaker, triggerPayload),
+    camera: index === 0 ? 'harvest-hero' : speaker === 'onion_man' ? 'bed-low-angle' : 'overview',
+    backdropTone: triggerPayload.recipeMatches?.includes('moms_sauce')
+      ? 'celebration'
+      : lossGrade
+        ? 'loss'
+        : 'harvest-gold',
+    duration: speakers.length === 1 ? 1800 : undefined,
+  }));
+
+  return {
+    id: `dynamic-harvest-${triggerPayload.grade}-${triggerPayload.season}`,
+    trigger: 'harvest_complete',
+    priority: 195,
+    once: false,
+    skippable: true,
+    beats,
+  };
+}
+
 export function getEligibleCutscenes(triggerPayload, campaign, seenSet) {
   return CUTSCENES.filter((scene) => {
     if (scene.trigger !== triggerPayload.type) return false;
@@ -383,7 +474,9 @@ export function getEligibleCutscenes(triggerPayload, campaign, seenSet) {
 }
 
 export function getHighestPriorityCutscene(triggerPayload, campaign, seenSet) {
-  const dynamicScene = buildDynamicEventCutscene(triggerPayload);
+  const dynamicScene = buildDynamicEventCutscene(triggerPayload)
+    ?? buildDynamicInterventionCutscene(triggerPayload)
+    ?? buildDynamicHarvestCutscene(triggerPayload);
   if (dynamicScene) return dynamicScene;
   const eligible = getEligibleCutscenes(triggerPayload, campaign, seenSet);
   if (eligible.length === 0) return null;

@@ -248,6 +248,9 @@ export function advance(state) {
       type: 'harvest_complete',
       score: result.scoreResult.score,
       grade: result.scoreResult.grade,
+      yieldCount: result.scoreResult.yieldList?.length ?? 0,
+      yieldList: result.scoreResult.yieldList ?? [],
+      recipeMatches: result.scoreResult.recipeMatches ?? [],
       season: season.season,
       chapter: season.chapter,
     };

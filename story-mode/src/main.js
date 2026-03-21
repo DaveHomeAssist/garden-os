@@ -621,6 +621,13 @@ function startGame(state, viewport) {
       state.season.interventionTokens = Math.max(0, state.season.interventionTokens - 1);
     }
 
+    const targetIndices = [targetA, targetB]
+      .filter((index) => Number.isInteger(index) && index >= 0)
+      .filter((index, position, arr) => arr.indexOf(index) === position);
+    const targetCropNames = targetIndices
+      .map((index) => getCropById(state.season.grid[index]?.cropId)?.name)
+      .filter(Boolean);
+
     applyIntervention(state.season.grid, interventionId, targetA, targetB);
 
     const resolvedEvent = state.season.eventActive;
@@ -644,7 +651,19 @@ function startGame(state, viewport) {
       2200
     );
     persistState();
-    setGameInputEnabled(true);
+    setGameInputEnabled(false);
+    handleNarrativeTrigger({
+      type: 'intervention_used',
+      intervention: interventionId,
+      season: state.season.season,
+      chapter: state.season.chapter,
+      eventCategory: resolvedEvent?.category ?? null,
+      eventValence: resolvedEvent?.valence ?? null,
+      eventTitle: resolvedEvent?.title ?? null,
+      targetSummary,
+      targetCount: targetIndices.length,
+      targetCropNames,
+    });
     updateHUD();
   }
 

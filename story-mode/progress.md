@@ -70,3 +70,10 @@ Update 2026-03-21 dialogue structure pass:
 - Speaker selection is now routed by event family + season + valence, so weather / critter / neighbor / family / infrastructure beats stop defaulting to the same `Garden GURL <-> Critters` pairing every season.
 - Static event scenes remain as fallback coverage, but dynamic event commentary now takes priority whenever the deck supplies character-specific lines.
 - Validation: `npx vite build` passed. A Playwright smoke run still booted the chapter intro / planning scene and captured a clean screenshot after the refactor, though the client emitted one `ERR_CONNECTION_REFUSED` console artifact while running against the local preview server.
+
+Update 2026-03-21 reactive dialogue cleanup:
+- Trimmed the large static `event_drawn`, `intervention_used`, and `harvest_complete` scene banks down to lightweight fallbacks. The reactive variety now lives in dynamic builders instead of many overlapping static cutscenes.
+- `main.js` now emits real `intervention_used` narrative triggers with intervention id, related event context, target summary, and target crop names, so intervention dialogue can finally vary at runtime instead of being dead data.
+- `phase-machine` harvest triggers now include `yieldCount`, `yieldList`, and `recipeMatches`, allowing harvest scenes to react to recipe progress and not just letter grade.
+- `cutscenes.js` now dynamically builds intervention reactions from the action + season + event family, and harvest reactions from grade + season + recipe progress, including a dedicated Mom's Sauce branch.
+- Validation: `npx vite build` passed after the trigger/runtime changes. Playwright smoke still boots the game and captures the intro/planning scene without breaking the dialogue panel.
