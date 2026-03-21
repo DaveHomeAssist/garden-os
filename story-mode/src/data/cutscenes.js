@@ -6,8 +6,9 @@ export const CUTSCENES = [
 
   { id: 'ch1-intro', trigger: 'chapter_start', conditions: { chapter: 1 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
+    { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'front-access', duration: 1200 },
+    { speaker: 'onion_man', text: 'He does that every spring. Mom never stopped him either.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'garden_gurl', text: 'This bed fed your family once. Now it is your turn.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
-    { speaker: 'onion_man', text: 'I remember when she planted the first tomato here. Felt like opening day.', emotion: 'sad', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'garden_gurl', text: 'Start simple. Lettuce, basil, radishes. Learn the light before you push the bed.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
   ]},
 
