@@ -152,15 +152,23 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .eraser-btn:hover{opacity:0.8}
 .eraser-btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
 .eraser-btn.selected{background:#f5b8b8;border-color:var(--danger)}
-.beat-indicator{display:flex;gap:0;font-family:var(--ff-mono);font-size:var(--type-label);background:var(--cream-dark);border-radius:10px;border:1px solid var(--border);overflow:hidden;width:100%;max-width:320px}
-.beat-dot{flex:1;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:var(--text-muted);padding:0 6px;letter-spacing:0.03em;transition:all 200ms var(--ease-out);position:relative;border-right:1px solid var(--border);cursor:default}
+.calendar-strip{display:flex;align-items:center;gap:6px;width:100%;padding:4px 0}
+.cal-chapter{font-family:var(--ff-mono);font-size:0.6rem;font-weight:700;color:var(--text-muted);white-space:nowrap;min-width:42px;letter-spacing:0.04em;cursor:help}
+.cal-season{font-family:var(--ff-heading);font-size:0.8rem;font-weight:700;color:var(--text);min-width:44px}
+.cal-progress{font-family:var(--ff-mono);font-size:0.6rem;color:var(--text-muted);white-space:nowrap;cursor:help}
+.beat-indicator{display:flex;gap:0;font-family:var(--ff-mono);font-size:var(--type-label);background:var(--cream-dark);border-radius:10px;border:1px solid var(--border);overflow:hidden;flex:1;min-width:0}
+.beat-dot{flex:1;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:var(--text-muted);padding:0 4px;letter-spacing:0.02em;transition:all 200ms var(--ease-out);position:relative;border-right:1px solid var(--border);cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .beat-dot:last-child{border-right:none}
 .beat-dot.active{background:var(--sun);color:var(--soil);font-weight:800;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.12)}
 .beat-dot.done{background:var(--leaf-bright);color:#fff}
-.beat-dot.active::after{content:'';position:absolute;bottom:-1px;left:25%;right:25%;height:3px;background:var(--soil);border-radius:3px 3px 0 0}
-.beat-harvest{flex:0.7;font-size:0.6rem;letter-spacing:0.06em;color:var(--text-muted)}
+.beat-dot.done[title]{cursor:help}
+.beat-dot.active::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:3px;background:var(--soil);border-radius:3px 3px 0 0}
+.beat-harvest{flex:0.6;font-size:0.7rem}
 .beat-harvest.active{background:var(--sun);color:var(--soil)}
 .beat-harvest.done{background:var(--leaf-bright);color:#fff}
+.cal-plan{flex:0.6;font-size:0.55rem;letter-spacing:0.04em;background:rgba(26,111,160,0.08);color:var(--rain);border-color:rgba(26,111,160,0.15)}
+.cal-plan.active{background:var(--rain);color:#fff}
+.cal-winter{flex:1;font-size:0.62rem;letter-spacing:0.04em}
 .zone-label{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);width:100%;text-align:left;padding:2px 0}
 .grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;background:linear-gradient(180deg,var(--s-ground-mid) 0%,var(--s-ground-deep) 100%);padding:8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--s-ground-light) 60%,var(--border) 40%);transition:background 0.8s ease-in-out,border-color 0.8s ease-in-out}
 .cell{aspect-ratio:1;border-radius:6px;border:2px solid var(--border);background:radial-gradient(circle at 20% 24%,rgba(129,99,62,0.22) 1px,transparent 2px),radial-gradient(circle at 76% 68%,rgba(96,71,38,0.16) 1px,transparent 2px),linear-gradient(180deg,#f0e3ca 0%,#e6d5b6 100%);background-size:12px 12px,14px 14px,100% 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;min-width:0;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out),background-color 0.8s ease-in-out}
@@ -1720,49 +1728,95 @@ function renderBoard(){
 
   const f=document.createDocumentFragment();
   // Season calendar strip
-  const calWrap=h('div','');
-  calWrap.style.cssText='display:flex;align-items:center;gap:8px;width:100%';
-  const seasonLabel=h('div','');
-  seasonLabel.style.cssText='font-family:var(--ff-heading);font-size:0.85rem;font-weight:700;color:var(--text);min-width:48px;text-transform:capitalize';
-  seasonLabel.textContent=S.season;
-  calWrap.appendChild(seasonLabel);
-
-  const br=h('div','beat-indicator');
-  br.setAttribute('role','group');
-  br.setAttribute('aria-label','Season months');
+  const calWrap=h('div','calendar-strip');
+  const chMeta2=CHAPTERS[S.chapter];
+  const isWinterCh=isWinter(S.chapter);
   const months=MONTH_NAMES[S.season]||['Month 1','Month 2','Month 3'];
   const monthAbbr=months.map(m=>m.slice(0,3));
   const isBeat=BEAT_PHASES.includes(S.phase);
-  const atHarvest=S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
+  const atHarvest=S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW;
+  const atReview=S.phase===PHASES.WINTER_REVIEW||S.phase===PHASES.HARVEST_REVIEW;
+  const isPlanning=S.phase===PHASES.PLANNING;
 
-  monthAbbr.forEach((lbl,b)=>{
-    const d=h('div','beat-dot',lbl);
-    const isActive=isBeat&&S.beatIndex===b;
-    const isDone=(isBeat&&b<S.beatIndex)||atHarvest;
-    if(isActive)d.classList.add('active');
-    if(isDone)d.classList.add('done');
-    d.setAttribute('role','img');
-    d.setAttribute('aria-label',months[b]+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
-    br.appendChild(d);
-  });
+  // Chapter + year badge
+  const chBadge=h('div','cal-chapter');
+  chBadge.textContent='Ch '+(S.chapter)+'/12';
+  if(chMeta2)chBadge.title='Year '+chMeta2.year+' \u2014 '+chMeta2.name;
+  calWrap.appendChild(chBadge);
 
-  // Harvest segment
-  const hd=h('div','beat-dot beat-harvest','\u2692');
-  if(atHarvest)hd.classList.add('active');
-  hd.setAttribute('role','img');
-  hd.setAttribute('aria-label','Harvest'+(atHarvest?' (current)':' (after months)'));
-  br.appendChild(hd);
+  // Season label
+  const seasonLabel=h('div','cal-season');
+  seasonLabel.textContent=S.season[0].toUpperCase()+S.season.slice(1);
+  calWrap.appendChild(seasonLabel);
+
+  // Month bar
+  const br=h('div','beat-indicator');
+  br.setAttribute('role','group');
+  br.setAttribute('aria-label','Season months');
+
+  if(isWinterCh){
+    // Winter: single bar, no month breakdown
+    const wd=h('div','beat-dot cal-winter');
+    wd.textContent=isPlanning?'Review':'Winter Review';
+    wd.classList.add('active');
+    wd.setAttribute('aria-label','Winter review chapter');
+    br.appendChild(wd);
+  }else{
+    // Planning indicator
+    if(isPlanning){
+      const pd=h('div','beat-dot cal-plan');
+      pd.textContent='\u270E Plan';
+      pd.classList.add('active');
+      pd.setAttribute('aria-label','Planning phase \u2014 place crops before the season starts');
+      br.appendChild(pd);
+    }
+
+    monthAbbr.forEach((lbl,b)=>{
+      const d=h('div','beat-dot',lbl);
+      const isActive=isBeat&&S.beatIndex===b;
+      const isDone=(isBeat&&b<S.beatIndex)||atHarvest||atReview;
+
+      if(isActive){
+        d.classList.add('active');
+        // Event indicator on active month
+        if(S.currentEvent){
+          const evIcon=S.currentEvent.valence==='positive'?'\u2600':S.currentEvent.valence==='negative'?'\u26A0':'\u2022';
+          d.textContent=lbl+' '+evIcon;
+        }
+      }
+      if(isDone)d.classList.add('done');
+
+      // Tooltip with event history for completed months
+      if(isDone){
+        const logEntry=S.eventLog.find(e=>e.beatIndex===b);
+        if(logEntry){
+          const ev=ED.find(e=>e.id===logEntry.eventId);
+          d.title=(ev?ev.title:'Event')+' \u2014 '+(logEntry.wasInterventionUsed?'intervention used':'no intervention');
+        }
+      }
+
+      d.setAttribute('role','img');
+      d.setAttribute('aria-label',months[b]+(isActive?' (current month)':isDone?' (complete)':' (upcoming)'));
+      br.appendChild(d);
+    });
+
+    // Harvest segment
+    const hd=h('div','beat-dot beat-harvest');
+    hd.textContent=atReview?'\u2714':'\u2692';
+    if(atHarvest)hd.classList.add('active');
+    if(atReview)hd.classList.add('done');
+    hd.setAttribute('role','img');
+    hd.setAttribute('aria-label',atHarvest?'Harvest (current)':atReview?'Review (current)':'Harvest (after months)');
+    br.appendChild(hd);
+  }
 
   calWrap.appendChild(br);
 
-  // Year indicator
-  const chMeta2=CHAPTERS[S.chapter];
-  if(chMeta2){
-    const yr=h('div','');
-    yr.style.cssText='font-family:var(--ff-mono);font-size:0.6rem;color:var(--text-muted);white-space:nowrap';
-    yr.textContent='Y'+chMeta2.year;
-    calWrap.appendChild(yr);
-  }
+  // Progress ring — season within the 12-chapter arc
+  const progress=h('div','cal-progress');
+  progress.textContent='Y'+(chMeta2?chMeta2.year:'?');
+  progress.title='Year '+(chMeta2?chMeta2.year:'?')+' of 3';
+  calWrap.appendChild(progress);
 
   f.appendChild(calWrap);
   f.appendChild(h('div','zone-label','Back rows \u2014 Trellis (climbers go here) \u2502 Front rows \u2014 Access (short crops)'));
