@@ -106,3 +106,9 @@ Update 2026-03-21 in-scene sheepdog rebuild:
 - Rebuilt the sheepdog in `src/scene/garden-scene.js` as an articulated world actor with a shadow blob, torso/head/tail pivots, and four two-segment legs animated procedurally during the run.
 - Season-opening narrator beats now use a dedicated `chapter-intro` camera preset so the dog reads in the opening frame without covering the bed UI.
 - Validation: `npx vite build` passed, and Playwright capture against the preview build shows the real in-scene sheepdog in `story-mode/output/web-game/shot-0.png`.
+
+Update 2026-03-21 winter review usability pass:
+- `story-mode` already had the winter review port in place, but the overlay behaved like another dead screen on laptop-height viewports because the action row could fall below the fold.
+- Tightened `src/ui/winter-review.js` into a bounded review panel with an internal scroll region, persistent explanatory footer copy, and a pinned action row so `Open Backpack` / `Continue` stay visible while the review content scrolls.
+- The winter review now reads like an actual tool: year recap, soil + carry-forward map, last harvest summary, recipes/keepsakes, strongest/weakest cells, next-spring hints, and a visible exit into the next chapter.
+- Validation: `npx vite build` passed. Forced-winter Playwright fixtures confirmed both the review screen layout (`output/web-game/winter-review-direct-oneshot/shot-0.png`) and the follow-through into the season-complete transition (`output/web-game/winter-review-continue/shot-0.png`).

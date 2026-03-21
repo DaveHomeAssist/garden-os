@@ -55,20 +55,21 @@ export function showWinterReview(container, data, handlers = {}) {
   overlay.className = 'harvest-reveal';
   overlay.style.cssText = `
     position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
-    background:rgba(20,17,24,0.92);z-index:32;padding:24px;overflow-y:auto;
+    background:rgba(20,17,24,0.92);z-index:32;padding:18px;overflow:hidden;
     animation:fadeInIntro 0.35s ease-out both;
   `;
 
   overlay.innerHTML = `
-    <div style="width:min(960px,100%);display:grid;gap:16px;">
-      <div style="text-align:center;padding-top:10px;">
+    <div style="width:min(1040px,100%);max-height:calc(100vh - 36px);display:flex;flex-direction:column;gap:14px;border-radius:18px;background:rgba(24,21,29,0.9);border:1px solid rgba(247,242,234,0.08);box-shadow:0 28px 90px rgba(0,0,0,0.42);backdrop-filter:blur(10px);overflow:hidden;">
+      <div style="text-align:center;padding:18px 20px 0;flex:0 0 auto;">
         <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,242,234,0.4);margin-bottom:6px;">Winter Review</div>
         <h2 style="margin:0;font-family:'Fraunces',serif;font-size:34px;color:#f7f2ea;">Year ${data.year} in the bed</h2>
         <p style="margin:10px auto 0;max-width:640px;font-size:15px;line-height:1.6;color:rgba(247,242,234,0.72);">
-          Winter is for reading the ground before spring asks you to choose again.
+          Review the last year, inspect tired soil, read carry-forward effects, and leave winter with a plan.
         </p>
       </div>
 
+      <div style="padding:0 20px 10px;display:grid;gap:16px;overflow-y:auto;min-height:0;flex:1 1 auto;">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
         ${data.yearEntries.map((entry) => `
           <div style="padding:14px;border-radius:12px;background:rgba(247,242,234,0.05);border:1px solid rgba(247,242,234,0.08);">
@@ -137,7 +138,13 @@ export function showWinterReview(container, data, handlers = {}) {
         </div>
       </section>
 
-      <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:12px;">
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px 18px;border-top:1px solid rgba(247,242,234,0.08);background:linear-gradient(180deg, rgba(24,21,29,0.15) 0%, rgba(24,21,29,0.95) 28%);flex:0 0 auto;">
+        <div style="font-size:12px;line-height:1.5;color:rgba(247,242,234,0.56);max-width:520px;">
+          Winter is review-only. When you continue, the game rolls straight into the next chapter with this soil and carry-forward state in mind.
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
         ${handlers.onViewBackpack ? `
           <button type="button" id="winter-review-backpack" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(247,242,234,0.18);background:rgba(247,242,234,0.08);color:#f7f2ea;font-size:14px;cursor:pointer;">
             Open Backpack
@@ -146,6 +153,7 @@ export function showWinterReview(container, data, handlers = {}) {
         <button type="button" id="winter-review-continue" style="padding:12px 20px;border-radius:10px;border:none;background:#e8c84a;color:#1e110a;font-size:14px;font-weight:600;cursor:pointer;">
           Continue
         </button>
+        </div>
       </div>
     </div>
   `;
