@@ -58,6 +58,9 @@ const DAMAGE_VISUALS = {
   blight: { soil: 0x564739, emissive: 0x5d4735, emissiveIntensity: 0.2, tilt: 0.22, tint: 0x6d553a },
   impact: { soil: 0x674d35, emissive: 0x5d4735, emissiveIntensity: 0.14, tilt: 0.14, tint: 0x8a6a48 },
 };
+const DORMANT_SOIL_TINT = new THREE.Color(0xc0c6cf);
+const DORMANT_CROP_TINT = new THREE.Color(0xb8c1ca);
+const DORMANT_CROP_EMISSIVE = 0x8798aa;
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
@@ -220,12 +223,16 @@ export function createGardenScene(container) {
   const TARGET_COLOR = new THREE.Color(0x3d6e8f);
   let targetableCellIndices = new Set();
   let currentGridState = [];
+  let currentSeasonId = 'spring';
 
   function getCellDisplayColor(index) {
     const mesh = bed.cellMeshes[index];
     if (!mesh) return new THREE.Color(0x3a2a1a);
     const baseColor = mesh.userData._baseColor?.clone() ?? mesh.material.color.clone();
     const cellState = currentGridState[index];
+    if (currentSeasonId === 'winter' && cellState?.cropId) {
+      baseColor.lerp(DORMANT_SOIL_TINT, 0.72);
+    }
     const damageState = cellState?.damageState;
     if (!damageState || !DAMAGE_VISUALS[damageState]) {
       return baseColor;
@@ -577,7 +584,8 @@ export function createGardenScene(container) {
     }
   }
 
-  function getGrowthScale(phase) {
+  function getGrowthScale(phase, season) {
+    if (season === 'winter') return 0.52;
     if (phase === 'MID_SEASON') return 0.7;
     if (phase === 'LATE_SEASON' || phase === 'HARVEST' || phase === 'REVIEW' || phase === 'TRANSITION') {
       return 1.0;
@@ -585,9 +593,10 @@ export function createGardenScene(container) {
     return 0.4;
   }
 
-  function applyCropDamageState(mesh, damageState) {
+  function applyCropDamageState(mesh, damageState, season) {
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
-    mesh.rotation.z = damageVisual ? -damageVisual.tilt : 0;
+    const dormant = season === 'winter';
+    mesh.rotation.z = damageVisual ? -damageVisual.tilt : (dormant ? -0.04 : 0);
     mesh.rotation.x = 0;
     mesh.position.y = bed.soilY;
 
@@ -600,6 +609,14 @@ export function createGardenScene(container) {
       child.material.emissive?.setHex(0x000000);
       child.material.emissiveIntensity = 0;
 
+      if (dormant) {
+        child.material.color.lerp(DORMANT_CROP_TINT, 0.7);
+        if (child.material.emissive) {
+          child.material.emissive.setHex(DORMANT_CROP_EMISSIVE);
+          child.material.emissiveIntensity = 0.04;
+        }
+      }
+
       if (!damageVisual) return;
 
       child.material.color.lerp(new THREE.Color(damageVisual.tint), 0.42);
@@ -610,9 +627,9 @@ export function createGardenScene(container) {
     });
   }
 
-  function syncCrops(grid, phase) {
+  function syncCrops(grid, phase, season) {
     const activeIds = new Set();
-    const growthScale = getGrowthScale(phase);
+    const growthScale = getGrowthScale(phase, season);
 
     for (let i = 0; i < grid.length; i++) {
       const cell = grid[i];
@@ -632,7 +649,7 @@ export function createGardenScene(container) {
         const existing = cropMeshes.get(key);
         if (existing.userData.cropId === cell.cropId) {
           existing.scale.setScalar(growthScale);
-          applyCropDamageState(existing, cell.damageState);
+          applyCropDamageState(existing, cell.damageState, season);
           continue;
         }
         root.remove(existing);
@@ -651,7 +668,7 @@ export function createGardenScene(container) {
       mesh.scale.setScalar(growthScale);
       mesh.userData.cropId = cell.cropId;
       mesh.userData.cellIndex = i;
-      applyCropDamageState(mesh, cell.damageState);
+      applyCropDamageState(mesh, cell.damageState, season);
       root.add(mesh);
       cropMeshes.set(key, mesh);
     }
@@ -799,10 +816,11 @@ export function createGardenScene(container) {
     },
     sync(state) {
       currentGridState = state.season.grid;
+      currentSeasonId = state.season.season;
       for (let i = 0; i < bed.cellMeshes.length; i++) {
         applyCellVisualState(i);
       }
-      syncCrops(state.season.grid, state.season.phase);
+      syncCrops(state.season.grid, state.season.phase, state.season.season);
       applySeason(state.season.season);
 
       // Trigger ambient weather on season change

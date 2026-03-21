@@ -45,3 +45,9 @@ Update 2026-03-21 review-flow cleanup:
 - This removes the extra Enter/Next presses that previously walked `HARVEST -> REVIEW -> TRANSITION` even though `REVIEW` had no dedicated screen of its own.
 - Confirmed the current winter screenshot confusion is not crop carry-over: `story-mode` creates a fresh grid on rollover. Visible plants are always from the current season grid; the pale/gray look comes from the winter scene treatment and the specific crop mesh being rendered.
 - Validation: `npx vite build` passed after the phase-flow patch.
+
+Update 2026-03-21 winter readability pass:
+- `garden-scene.js` now renders occupied winter plots as clearly dormant: frosted soil tint, desaturated crop tint, and reduced growth scale so they stop reading like active summer herbs under a dark filter.
+- Winter occupied cells now intentionally look pale/frosted against the darker empty soil, which makes “occupied but dormant” legible at a glance.
+- `main.js` phase helper copy now explicitly tells the player that pale plots in winter are dormant occupied cells.
+- Validation: `npx vite build` passed after the winter visual pass.
