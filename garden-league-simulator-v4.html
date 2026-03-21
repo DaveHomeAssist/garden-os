@@ -1368,6 +1368,7 @@ function clearTransientState(){
   S.interventionMode=null;
   S.swapFirstCell=null;
   S.eventAffectedCells=[];
+  S.selectedCell=null;
   S._cachedBedScore=null;
 }
 function setInspectMode(){
@@ -2977,7 +2978,8 @@ function cellClick(i){
     }
     return;
   }
-  S.selectedCell=i;render();
+  // Only select cells during planning or intervention targeting
+  if(S.phase===PHASES.PLANNING||S.interventionMode){S.selectedCell=i;render()}
 }
 
 /* ===== COMMIT ===== */
