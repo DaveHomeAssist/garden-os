@@ -606,6 +606,81 @@ function startGame(state, viewport) {
     toggleBackpack();
   });
 
+  // Bug report system
+  const fabBug = document.getElementById('fab-bug');
+  const bugPanel = document.getElementById('bug-panel');
+  const bugText = document.getElementById('bug-text');
+  const bugMeta = document.getElementById('bug-meta');
+  const bugSend = document.getElementById('bug-send');
+  const bugCancel = document.getElementById('bug-cancel');
+
+  function toggleBugPanel() {
+    const isOpen = bugPanel.classList.toggle('is-open');
+    if (isOpen) {
+      bugText.value = '';
+      bugText.focus();
+      // Auto-fill game state context
+      const meta = [
+        `Chapter: ${state.campaign.currentChapter}`,
+        `Phase: ${state.season.phase}`,
+        `Season: ${state.season.season}`,
+        `Crops: ${state.season.grid.filter(c => c.cropId).length}/32`,
+        `Score: ${hudScore.textContent}`,
+        `Time: ${new Date().toISOString()}`,
+        `UA: ${navigator.userAgent.slice(0, 60)}`,
+      ].join(' · ');
+      bugMeta.textContent = meta;
+    }
+  }
+
+  fabBug?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleBugPanel();
+  });
+
+  bugCancel?.addEventListener('click', () => {
+    bugPanel.classList.remove('is-open');
+  });
+
+  bugSend?.addEventListener('click', () => {
+    const text = bugText.value.trim();
+    if (!text) {
+      bugText.focus();
+      return;
+    }
+
+    const report = {
+      text,
+      chapter: state.campaign.currentChapter,
+      phase: state.season.phase,
+      season: state.season.season,
+      score: hudScore.textContent,
+      cropsPlanted: state.season.grid.filter(c => c.cropId).map(c => c.cropId),
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+    };
+
+    // Save to localStorage
+    const BUGS_KEY = 'gos-story-bugs';
+    try {
+      const existing = JSON.parse(localStorage.getItem(BUGS_KEY) || '[]');
+      existing.push(report);
+      localStorage.setItem(BUGS_KEY, JSON.stringify(existing));
+    } catch (e) {
+      console.warn('Bug save failed:', e);
+    }
+
+    bugPanel.classList.remove('is-open');
+    showToast('🦗 Bug report saved! Thanks Mom.', 2500);
+  });
+
+  // Close bug panel on outside click
+  document.addEventListener('click', (e) => {
+    if (bugPanel?.classList.contains('is-open') && !bugPanel.contains(e.target) && e.target !== fabBug) {
+      bugPanel.classList.remove('is-open');
+    }
+  });
+
   function resize() {
     const rect = viewport.getBoundingClientRect();
     scene.resize(rect.width, rect.height);

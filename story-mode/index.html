@@ -259,6 +259,120 @@
       transform: scale(0.8);
     }
 
+    #fab-bug {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      z-index: 25;
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      background: rgba(30,17,10,0.72);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(139,168,181,0.2);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #fab-bug:hover { border-color: rgba(139,168,181,0.4); }
+    #fab-bug:active { transform: scale(0.92); }
+
+    .bug-report-panel {
+      position: absolute;
+      top: 64px;
+      right: 16px;
+      z-index: 26;
+      width: min(340px, calc(100vw - 32px));
+      background: rgba(30,17,10,0.94);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(139,168,181,0.15);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(-8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .bug-report-panel.is-open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .bug-report-panel h3 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f7f2ea;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bug-report-panel .bug-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(247,242,234,0.3);
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .bug-report-panel textarea {
+      width: 100%;
+      min-height: 100px;
+      background: rgba(247,242,234,0.05);
+      border: 1px solid rgba(247,242,234,0.1);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #f7f2ea;
+      resize: vertical;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .bug-report-panel textarea:focus {
+      border-color: rgba(139,168,181,0.4);
+      outline: none;
+    }
+    .bug-report-panel textarea::placeholder {
+      color: rgba(247,242,234,0.25);
+    }
+    .bug-report-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .bug-report-actions button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      border: none;
+    }
+    .bug-btn-send {
+      background: #8ba8b5;
+      color: #1e110a;
+    }
+    .bug-btn-cancel {
+      background: rgba(247,242,234,0.08);
+      color: rgba(247,242,234,0.6);
+      border: 1px solid rgba(247,242,234,0.1) !important;
+    }
+    .bug-report-panel .bug-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: rgba(247,242,234,0.2);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
     #fab-advance {
       position: absolute;
       bottom: 24px;
@@ -367,6 +481,17 @@
     <div id="overlay-container"></div>
     <div id="cutscene-layer" aria-hidden="true">
       <div id="dialogue-root"></div>
+    </div>
+    <button id="fab-bug" aria-label="Report a bug">🦗</button>
+    <div class="bug-report-panel" id="bug-panel">
+      <h3>🦗 Report a Bug</h3>
+      <div class="bug-subtitle">Critters want to know what went wrong</div>
+      <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>
+      <div class="bug-report-actions">
+        <button class="bug-btn-cancel" id="bug-cancel">Cancel</button>
+        <button class="bug-btn-send" id="bug-send">Send Report</button>
+      </div>
+      <div class="bug-meta" id="bug-meta"></div>
     </div>
     <button id="fab-backpack" aria-label="Open crop backpack">🎒</button>
     <button id="fab-advance">Next</button>
