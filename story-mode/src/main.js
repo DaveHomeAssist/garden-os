@@ -679,6 +679,12 @@ function startGame(state, viewport) {
     toggleBackpack();
   });
 
+  // Pause button in HUD
+  document.getElementById('hud-pause')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePauseMenu();
+  });
+
   // Pause menu system
   const pauseOverlay = document.getElementById('pause-menu');
   const pauseStatus = document.getElementById('pause-status');
