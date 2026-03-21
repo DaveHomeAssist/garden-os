@@ -22,6 +22,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Story Mode
+        working-directory: story-mode
+        run: |
+          npm ci
+          npx vite build
+
+      - name: Stage Story Mode for Pages
+        run: |
+          mkdir -p story-mode-live
+          cp -r story-mode/dist/* story-mode-live/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
