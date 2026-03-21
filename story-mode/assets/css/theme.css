@@ -89,6 +89,10 @@
   background: linear-gradient(180deg, rgba(139, 168, 181, 0.88), rgba(30, 38, 45, 0.96));
 }
 
+.dp-portrait[data-portrait="calvin"] {
+  background: linear-gradient(180deg, rgba(230, 223, 212, 0.96), rgba(78, 82, 86, 0.98));
+}
+
 .dp-portrait-layer {
   position: absolute;
   inset: 0;
@@ -162,11 +166,58 @@
   color: rgba(180, 220, 140, 0.9);
 }
 
+.dp-speaker-badge--thought {
+  color: rgba(92, 61, 30, 0.8);
+}
+
 .dp-text {
   font-size: 0.95rem;
   line-height: 1.55;
   color: rgba(240, 248, 235, 0.95);
   min-height: 3.2em;
+}
+
+.dp-panel--thought {
+  background: rgba(247, 242, 234, 0.97);
+  border-color: rgba(92, 61, 30, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.dp-panel--thought::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  right: 82px;
+  width: 26px;
+  height: 26px;
+  background: rgba(247, 242, 234, 0.97);
+  border-right: 1px solid rgba(92, 61, 30, 0.18);
+  border-bottom: 1px solid rgba(92, 61, 30, 0.18);
+  border-bottom-right-radius: 12px;
+  transform: rotate(28deg);
+}
+
+.dp-panel--thought[data-side="right"]::after {
+  right: auto;
+  left: 82px;
+  transform: rotate(118deg);
+}
+
+.dp-panel--thought .dp-text {
+  color: rgba(30, 17, 10, 0.92);
+  font-style: italic;
+}
+
+.dp-panel--thought .dp-dots .dp-dot {
+  background: rgba(92, 61, 30, 0.2);
+}
+
+.dp-panel--thought .dp-dots .dp-dot--active {
+  background: rgba(92, 61, 30, 0.72);
+}
+
+.dp-panel--thought .dp-advance-hint {
+  color: rgba(92, 61, 30, 0.45);
 }
 
 .dp-dots {

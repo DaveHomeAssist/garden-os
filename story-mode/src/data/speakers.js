@@ -35,6 +35,16 @@ export const SPEAKERS = {
     side: 'right',
     emoji: '🐛',
   },
+  calvin: {
+    id: 'calvin',
+    displayName: 'Calvin',
+    portraitId: 'calvin',
+    defaultEmotion: 'neutral',
+    defaultAnim: 'idle',
+    side: 'right',
+    emoji: '🐕',
+    thoughtBubble: true,
+  },
   narrator: {
     id: 'narrator',
     displayName: '',

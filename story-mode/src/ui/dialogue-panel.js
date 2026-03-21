@@ -99,12 +99,16 @@ export function createDialoguePanel(rootEl) {
 
       els.panel.classList.add('dp-panel--visible');
       els.panel.dataset.side = uiState.side ?? 'left';
+      els.panel.classList.toggle('dp-panel--thought', Boolean(uiState.thoughtBubble));
+      els.panel.dataset.speaker = uiState.speaker ?? '';
 
       if (uiState.speakerName) {
         els.speakerBadge.textContent = uiState.speakerName;
         els.speakerBadge.style.display = '';
+        els.speakerBadge.classList.toggle('dp-speaker-badge--thought', Boolean(uiState.thoughtBubble));
       } else {
         els.speakerBadge.style.display = 'none';
+        els.speakerBadge.classList.remove('dp-speaker-badge--thought');
       }
 
       els.text.textContent = uiState.textVisible ?? '';
@@ -116,6 +120,7 @@ export function createDialoguePanel(rootEl) {
 
     hide() {
       els.panel.classList.remove('dp-panel--visible');
+      els.panel.classList.remove('dp-panel--thought');
     },
 
     getSkipButton() {

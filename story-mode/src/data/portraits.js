@@ -55,6 +55,20 @@ export const PORTRAITS = {
       emphasis: {},
     },
   },
+  calvin: {
+    id: 'calvin',
+    cssOnly: true,
+    emoji: '🐕',
+    layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
+    emotions: {
+      neutral: {},
+      warm: {},
+      sad: {},
+      surprised: {},
+      smirk: {},
+      emphasis: {},
+    },
+  },
 };
 
 export function getPortrait(portraitId) {

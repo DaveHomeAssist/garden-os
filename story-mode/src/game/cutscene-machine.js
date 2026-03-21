@@ -77,6 +77,7 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       speakerName: speaker.displayName,
       portraitId: speaker.portraitId,
       portraitEmoji: speaker.emoji,
+      thoughtBubble: Boolean(speaker.thoughtBubble),
       textFull: beat.text,
       textVisible: beat.text.slice(0, state.currentTypedChars),
       emotion: beat.emotion ?? speaker.defaultEmotion,

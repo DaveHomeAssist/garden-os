@@ -5,8 +5,9 @@ export const CUTSCENES = [
   // ═══ CHAPTER INTROS ═══════════════════════════════════════
 
   { id: 'ch1-intro', trigger: 'chapter_start', conditions: { chapter: 1 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
-    { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'front-access', duration: 1200 },
+    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run', cueDuration: 4200, cueFromX: -4.2, cueToX: 4.9, cueFromZ: 1.8, cueToZ: 1.1 },
+    { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'chapter-intro', duration: 1800 },
+    { speaker: 'calvin', text: '...dirt is warm.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close', duration: 1200 },
     { speaker: 'onion_man', text: 'He does that every spring. Mom never stopped him either.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'garden_gurl', text: 'This bed fed your family once. Now it is your turn.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Start simple. Lettuce, basil, radishes. Learn the light before you push the bed.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
@@ -85,6 +86,28 @@ export const CUTSCENES = [
     { speaker: 'garden_gurl', text: 'New condition on the bed. Check the event card above the grid.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
   ]},
 
+  // ═══ CALVIN THOUGHT BUBBLES ══════════════════════════════
+
+  // Calvin notices critters before anyone else
+  { id: 'calvin-pest-alert', trigger: 'event_drawn', conditions: { eventCategory: 'critter' }, priority: 68, once: false, skippable: true, beats: [
+    { speaker: 'calvin', text: '...something moving under the leaves.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close', duration: 1000 },
+  ]},
+
+  // Calvin during cat events — rivalry
+  { id: 'calvin-cat-rival', trigger: 'event_drawn', conditions: { eventCategory: 'critter', eventTitle: 'Alley Cat Patrol' }, priority: 72, once: false, skippable: true, beats: [
+    { speaker: 'calvin', text: '...that cat again. my yard.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'front-access', duration: 1000 },
+  ]},
+
+  // Calvin reacts to good harvest — food
+  { id: 'calvin-harvest-good', trigger: 'harvest_complete', conditions: { grade: 'A+' }, priority: 62, once: false, skippable: true, beats: [
+    { speaker: 'calvin', text: '...tomatoes. soon.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close', duration: 900 },
+  ]},
+
+  // Calvin in rain — doesn't like it
+  { id: 'calvin-rain', trigger: 'event_drawn', conditions: { eventCategory: 'weather', eventValence: 'positive' }, priority: 67, once: true, skippable: true, beats: [
+    { speaker: 'calvin', text: '...wet. going inside.', emotion: 'neutral', portraitAnim: 'talk', camera: 'front-access', duration: 900 },
+  ]},
+
   // ═══ INTERVENTION MOMENTS ═════════════════════════════════
 
   { id: 'intervention-fallback', trigger: 'intervention_used', conditions: {}, priority: 55, once: false, skippable: true, beats: [
@@ -152,6 +175,7 @@ export const CUTSCENES = [
     { speaker: 'onion_man', text: 'The cedar will need replacing soon. That is okay. The soil remembers.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'vegeman', text: 'I still say you should have planted more tomatoes. But fine. FINE. It was beautiful.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'overview' },
     { speaker: 'critters', text: 'We were here the whole time. We will be here after you leave.', emotion: 'neutral', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'calvin', text: '...good yard.', emotion: 'warm', portraitAnim: 'talk', camera: 'front-access', duration: 1200, sceneCue: 'sheepdog-run', cueDuration: 2000 },
     { speaker: 'narrator', text: 'The garden stays.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', duration: 3000 },
   ]},
 ];

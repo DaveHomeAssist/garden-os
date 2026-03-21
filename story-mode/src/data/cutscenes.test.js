@@ -24,7 +24,7 @@ const VALENCES = ['negative', 'positive', 'mixed', 'neutral'];
 const INTERVENTIONS = ['protect', 'mulch', 'swap', 'prune', 'companion_patch', 'accept_loss'];
 const GRADES = ['A+', 'A', 'B', 'C', 'D', 'F'];
 
-const VALID_SPEAKERS = new Set(['narrator', 'garden_gurl', 'onion_man', 'vegeman', 'critters']);
+const VALID_SPEAKERS = new Set(['narrator', 'garden_gurl', 'onion_man', 'vegeman', 'critters', 'calvin']);
 const VALID_CAMERAS = new Set(['overview', 'bed-low-angle', 'row-close', 'event-push', 'front-access', 'harvest-hero']);
 const VALID_EMOTIONS = new Set(['neutral', 'warm', 'sad', 'emphasis', 'smirk', 'surprised']);
 const VALID_BACKDROP_TONES = new Set(['dawn', 'heat', 'calm', 'night', 'storm', 'celebration', 'harvest-gold', 'loss']);
