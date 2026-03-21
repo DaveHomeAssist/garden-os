@@ -77,3 +77,9 @@ Update 2026-03-21 reactive dialogue cleanup:
 - `phase-machine` harvest triggers now include `yieldCount`, `yieldList`, and `recipeMatches`, allowing harvest scenes to react to recipe progress and not just letter grade.
 - `cutscenes.js` now dynamically builds intervention reactions from the action + season + event family, and harvest reactions from grade + season + recipe progress, including a dedicated Mom's Sauce branch.
 - Validation: `npx vite build` passed after the trigger/runtime changes. Playwright smoke still boots the game and captures the intro/planning scene without breaking the dialogue panel.
+
+Update 2026-03-21 scenery refinement from real-bed reference:
+- Tuned `src/scene/scenery.js` toward the real garden silhouette instead of the earlier generic yard backdrop.
+- Replaced the chunkier fake porch/wall mass with a flatter house-wall backdrop and siding treatment so the background reads more like the real bed reference and less like a blocking foreground object.
+- Kept the gravel work area / house-presence direction from the earlier scene pass, but reduced the amount of geometry fighting the camera.
+- Validation: `npx vite build` passed after the scenery refinement. Browser smoke in this environment remains noisy, so build stayed the hard gate.

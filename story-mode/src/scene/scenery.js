@@ -54,41 +54,29 @@ export function buildScenery() {
   }
 
   // --- House wall backdrop (closer to the real bed reference) ---
-  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9 });
+  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78 });
-  const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88 });
 
-  const houseWall = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.3, 0.18), sidingMat);
-  houseWall.position.set(0.2, 1.65, 4.6);
+  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.8), sidingMat);
+  houseWall.position.set(0.2, 1.45, 4.9);
   houseWall.receiveShadow = true;
   group.add(houseWall);
 
   for (let i = 0; i < 10; i++) {
-    const board = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.06, 0.03), trimMat);
-    board.position.set(0.2, 0.25 + i * 0.32, 4.72);
+    const board = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.04, 0.02), trimMat);
+    board.position.set(0.2, 0.18 + i * 0.28, 4.88);
     group.add(board);
   }
 
-  const porchOpening = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.4, 0.7), porchMat);
-  porchOpening.position.set(-2.55, 1.2, 4.35);
-  group.add(porchOpening);
-
-  const porchPostA = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 0.12), trimMat);
-  porchPostA.position.set(-1.78, 1.1, 4.92);
-  group.add(porchPostA);
-  const porchPostB = porchPostA.clone();
-  porchPostB.position.x = -3.28;
-  group.add(porchPostB);
-
   const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.08), trimMat);
-  backWindow.position.set(0.3, 2.05, 4.73);
+  backWindow.position.set(0.3, 1.8, 4.85);
   group.add(backWindow);
 
   const backGlass = new THREE.Mesh(
     new THREE.BoxGeometry(0.68, 0.78, 0.04),
     new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 })
   );
-  backGlass.position.set(0.3, 2.05, 4.79);
+  backGlass.position.set(0.3, 1.8, 4.89);
   group.add(backGlass);
 
   // --- Gravel work area in front (instead of a clean path) ---
