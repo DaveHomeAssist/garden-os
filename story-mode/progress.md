@@ -63,3 +63,10 @@ Update 2026-03-21 dialogue/storyflow planning:
 - The spec diagnoses the current repetition problem in `story-mode` reactive dialogue, especially the overuse of generic `Garden GURL <-> Critters` event exchanges.
 - It defines speaker-role rules, seasonal voice distribution, event-family routing, authoring rules, and a 3-pass implementation plan.
 - Recommended next content step: restructure `story-mode/src/data/cutscenes.js` before doing any prose-only polish.
+
+Update 2026-03-21 dialogue structure pass:
+- `phase-machine` event triggers now carry richer event context into the cutscene layer, including category, valence, severity, carry-forward effect, and raw deck commentary.
+- `src/data/cutscenes.js` now builds dynamic `event_drawn` cutscenes from the live event deck commentary instead of always falling back to the same small set of generic event reaction scenes.
+- Speaker selection is now routed by event family + season + valence, so weather / critter / neighbor / family / infrastructure beats stop defaulting to the same `Garden GURL <-> Critters` pairing every season.
+- Static event scenes remain as fallback coverage, but dynamic event commentary now takes priority whenever the deck supplies character-specific lines.
+- Validation: `npx vite build` passed. A Playwright smoke run still booted the chapter intro / planning scene and captured a clean screenshot after the refactor, though the client emitted one `ERR_CONNECTION_REFUSED` console artifact while running against the local preview server.

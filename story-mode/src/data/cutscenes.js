@@ -272,6 +272,108 @@ export const CUTSCENES = [
   ]},
 ];
 
+const COMMENTARY_KEY_TO_SPEAKER = {
+  gurl: 'garden_gurl',
+  onion: 'onion_man',
+  vegeman: 'vegeman',
+  critters: 'critters',
+};
+
+function buildEventBeat(speaker, text, triggerPayload, index) {
+  const negative = triggerPayload.eventValence === 'negative';
+  const mixed = triggerPayload.eventValence === 'mixed';
+  const positive = triggerPayload.eventValence === 'positive';
+  const season = triggerPayload.season;
+  const category = triggerPayload.eventCategory;
+
+  let camera = 'overview';
+  let backdropTone = 'calm';
+
+  if (speaker === 'critters') camera = 'event-push';
+  else if (speaker === 'onion_man') camera = 'bed-low-angle';
+  else if (speaker === 'vegeman') camera = 'front-access';
+  else if (speaker === 'garden_gurl') camera = index === 0 ? 'event-push' : 'overview';
+
+  if (negative || mixed) backdropTone = 'storm';
+  else if (positive) backdropTone = season === 'summer' ? 'heat' : 'dawn';
+
+  if (category === 'neighbor' || category === 'family') backdropTone = season === 'winter' ? 'night' : 'calm';
+  if (category === 'infrastructure') backdropTone = season === 'winter' ? 'night' : 'calm';
+  if (positive && triggerPayload.eventSeverity === 'high') backdropTone = 'celebration';
+
+  return {
+    speaker,
+    text,
+    emotion: speaker === 'critters' ? 'smirk' : speaker === 'vegeman' ? 'smirk' : speaker === 'onion_man' ? 'warm' : 'emphasis',
+    portraitAnim: speaker === 'garden_gurl' ? 'talk' : 'talk',
+    camera,
+    backdropTone,
+  };
+}
+
+function pickEventSpeakers(triggerPayload) {
+  const season = triggerPayload.season;
+  const category = triggerPayload.eventCategory;
+  const valence = triggerPayload.eventValence;
+  const carryForward = Boolean(triggerPayload.eventCarryForward);
+
+  if (category === 'critter') {
+    if (valence === 'negative' || valence === 'mixed') return ['critters', season === 'summer' ? 'vegeman' : 'garden_gurl'];
+    return ['critters'];
+  }
+
+  if (category === 'weather') {
+    if (season === 'summer') return valence === 'negative' ? ['garden_gurl', 'vegeman'] : ['onion_man'];
+    if (season === 'fall') return ['onion_man', 'garden_gurl'];
+    if (season === 'winter') return carryForward ? ['onion_man', 'garden_gurl'] : ['onion_man'];
+    return valence === 'positive' ? ['onion_man'] : ['garden_gurl', 'onion_man'];
+  }
+
+  if (category === 'neighbor') {
+    if (season === 'winter') return ['onion_man'];
+    return valence === 'negative' ? ['onion_man', 'garden_gurl'] : ['onion_man'];
+  }
+
+  if (category === 'family') {
+    return season === 'winter' ? ['onion_man', 'garden_gurl'] : ['onion_man'];
+  }
+
+  if (category === 'infrastructure') {
+    return season === 'winter' ? ['garden_gurl', 'onion_man'] : ['garden_gurl'];
+  }
+
+  if (valence === 'negative') return ['garden_gurl'];
+  if (valence === 'positive') return ['onion_man'];
+  return ['garden_gurl'];
+}
+
+function buildDynamicEventCutscene(triggerPayload) {
+  if (triggerPayload?.type !== 'event_drawn') return null;
+  const commentary = triggerPayload.eventCommentary;
+  if (!commentary || typeof commentary !== 'object') return null;
+
+  const speakerOrder = pickEventSpeakers(triggerPayload);
+  const beats = speakerOrder
+    .map((speakerId, index) => {
+      const commentaryKey = Object.entries(COMMENTARY_KEY_TO_SPEAKER).find(([, mapped]) => mapped === speakerId)?.[0];
+      const text = commentary?.[commentaryKey];
+      if (!text) return null;
+      return buildEventBeat(speakerId, text, triggerPayload, index);
+    })
+    .filter(Boolean);
+
+  if (beats.length === 0) return null;
+
+  return {
+    id: `dynamic-event-${triggerPayload.eventId}`,
+    trigger: 'event_drawn',
+    priority: 200,
+    once: false,
+    skippable: true,
+    beats,
+  };
+}
+
 export function getEligibleCutscenes(triggerPayload, campaign, seenSet) {
   return CUTSCENES.filter((scene) => {
     if (scene.trigger !== triggerPayload.type) return false;
@@ -281,6 +383,8 @@ export function getEligibleCutscenes(triggerPayload, campaign, seenSet) {
 }
 
 export function getHighestPriorityCutscene(triggerPayload, campaign, seenSet) {
+  const dynamicScene = buildDynamicEventCutscene(triggerPayload);
+  if (dynamicScene) return dynamicScene;
   const eligible = getEligibleCutscenes(triggerPayload, campaign, seenSet);
   if (eligible.length === 0) return null;
   return eligible.reduce((best, scene) => (scene.priority > best.priority ? scene : best));
