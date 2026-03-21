@@ -282,3 +282,13 @@ TODO / next-agent suggestions:
   - Simulator: exposed `window.gardenOS.getPhaseContract()` for regression-safe phase checks.
   - Added deterministic prompt/spec docs: `garden-os-mode-contract.txt`, `garden-os-scenario-spec.txt`, `garden-os-mode-regression.txt`.
   - Validation in progress: extracted JS syntax checks + Playwright/browser smoke pass for planner/simulator.
+
+- 2026-03-21 soil-fatigue visibility pass on `garden-league-simulator-v4.html`:
+  - Confirmed `soilFatigue` is stored as a negative additive penalty, so visibility logic should key off values below `-0.1`.
+  - Upgraded the cell fatigue marker from a small warning glyph to a readable pill badge: `FT -0.x`.
+  - Strengthened the fatigued-cell treatment with a red-tinted inset outline + subtle background wash so the penalty reads without a tooltip.
+  - Updated tooltip/ARIA copy to describe the mechanic as a penalty from repeated heavy-feeder planting instead of exposing a raw unexplained number.
+  - Validation:
+    - develop-web-game smoke run completed against `garden-league-simulator-v4.html`
+    - boot artifacts: `output/web-game/shot-0.png`, `output/web-game/state-0.json`
+    - state hook still present and returned `Chapter 1 | spring | PLANNING`

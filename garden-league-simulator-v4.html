@@ -183,8 +183,8 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .cell .emoji{font-size:1.5rem;line-height:1}
 .cell .short{font-size:0.75rem;font-weight:700;color:var(--text-muted);font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.03em}
 .cell .score-pip{position:absolute;bottom:1px;right:2px;font-family:var(--ff-mono);font-size:8px;font-weight:700;line-height:1;pointer-events:none}
-.cell .fatigue-pip{position:absolute;top:1px;left:2px;font-size:9px;line-height:1;pointer-events:none;color:var(--danger);opacity:0.9;cursor:help}
-.cell.fatigued{box-shadow:inset 0 0 0 1px rgba(180,60,60,0.3)}
+.cell .fatigue-pip{position:absolute;top:2px;left:2px;padding:2px 4px;border-radius:999px;background:rgba(140,34,34,0.92);border:1px solid rgba(255,214,214,0.35);font-family:var(--ff-mono);font-size:7px;font-weight:700;line-height:1;letter-spacing:0.04em;pointer-events:none;color:#fff7f2;box-shadow:0 1px 4px rgba(0,0,0,0.28)}
+.cell.fatigued{box-shadow:inset 0 0 0 1px rgba(180,60,60,0.45);background-image:linear-gradient(180deg,rgba(140,34,34,0.16),rgba(140,34,34,0.04))}
 .cell .modifier-pip{position:absolute;top:1px;right:2px;font-family:var(--ff-mono);font-size:7px;font-weight:700;line-height:1;pointer-events:none;color:var(--char-gurl);opacity:0.8;cursor:help}
 .cell .score-pip.pip-good{color:var(--leaf-bright)}.cell .score-pip.pip-warn{color:var(--sun)}.cell .score-pip.pip-hard{color:var(--danger)}
 /* color-blind: shape indicator on score pips */
@@ -1808,11 +1808,12 @@ function renderBoard(){
       }}
       // Soil fatigue indicator (Principle 4: invisible mechanics don't exist)
       if(cell.soilFatigue&&cell.soilFatigue<-0.1){
-        const ft=h('span','fatigue-pip','\u26A0');
-        ft.title='Soil fatigue: '+cell.soilFatigue.toFixed(1)+' (consecutive heavy feeder penalty)';
+        const penalty=Math.abs(cell.soilFatigue);
+        const ft=h('span','fatigue-pip','FT -'+penalty.toFixed(1));
+        ft.title='Soil fatigue penalty: -'+penalty.toFixed(1)+' from repeated heavy-feeder planting';
         d.appendChild(ft);
         d.classList.add('fatigued');
-        ariaLabel+=', soil fatigue '+cell.soilFatigue.toFixed(1);
+        ariaLabel+=', soil fatigue penalty minus '+penalty.toFixed(1);
       }
       // Infrastructure flag indicator
       if(cell.eventModifier&&Math.abs(cell.eventModifier)>0.05){
@@ -1943,12 +1944,20 @@ function objectiveMeta(){
   if(CAM&&CAM.mode==='menu') return { kicker:'Menu', title:'Choose a chapter', note:'Free Play and campaign both resume from here.' };
   const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
   if(S.phase===PHASES.PLANNING){
+    const planted=countPlanted(S.grid);
+    let hint='Select a crop from the left, then tap a cell to place it.';
+    if(planted>0&&planted<minPlanted)hint=planted+'/'+minPlanted+' placed. Keep going \u2014 tap a crop then tap a cell.';
+    else if(planted>=minPlanted)hint=planted+'/32 placed. Ready to commit \u2014 or keep filling.';
+    const fatiguedCells=S.grid.filter(c=>c.soilFatigue&&c.soilFatigue<-0.1);
+    if(fatiguedCells.length)hint+=' \u26A0 '+fatiguedCells.length+' cell'+(fatiguedCells.length>1?'s':'')+' fatigued \u2014 rotate crops to recover.';
+    const enrichedCells=S.grid.filter(c=>c.eventModifier&&c.eventModifier>0.1);
+    if(enrichedCells.length)hint+=' \u2728 '+enrichedCells.length+' cell'+(enrichedCells.length>1?'s':'')+' enriched \u2014 plant high-value crops there.';
     return {
       kicker:'Plan',
       title:'Lock a layout that can survive the season',
-      note:`${countPlanted(S.grid)}/${minPlanted} planted. Trellis rows belong in the back. Keep the front reachable.`,
+      note:hint,
       actionLabel:'Commit Layout',
-      disabled:countPlanted(S.grid)<minPlanted,
+      disabled:planted<minPlanted,
       action:showCommitConfirm
     };
   }
@@ -1956,11 +1965,19 @@ function objectiveMeta(){
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
       const consequence=describeEventConsequence(S.currentEvent,S);
       return {
-        kicker:'Respond',
-        title:'Resolve the event before you advance',
-        note:'Choose one response in the toolbar, or use Accept Loss if you want the event to land and move on. '+consequence,
+        kicker:'Respond \u2014 '+S.currentEvent.title,
+        title:'Choose a response from the nav bar above',
+        note:'Protect shields one cell. Mulch adds +0.5 for the season. Patch boosts adjacency. Swap moves crops. Prune removes a crop. Accept Loss lets the event land. '+consequence,
         actionLabel:'Accept Loss',
         action:doAcceptLoss
+      };
+    }
+    if(S.interventionMode){
+      const modeLabels={protect:'Tap a cell to shield it',mulch:'Tap a cell to mulch it (+0.5 rest of season)',companion_patch:'Tap a cell to boost its adjacency (+1.0)',prune:'Tap a cell to remove the crop',swap:'Tap two adjacent cells to swap their crops'};
+      return {
+        kicker:'Targeting: '+S.interventionMode,
+        title:modeLabels[S.interventionMode]||'Tap a cell',
+        note:'Press Escape to cancel.',
       };
     }
     return {
@@ -1985,10 +2002,15 @@ function objectiveMeta(){
     };
   }
   if(S.phase===PHASES.HARVEST_REVIEW){
+    const mulched=S.grid.filter(c=>c.interventionFlag==='mulched').length;
+    const heavyFeeders=S.grid.filter(c=>c.cropId&&C[c.cropId]&&C[c.cropId].water>=3).length;
+    let carryNote='Mulched cells carry +0.25 into next season. ';
+    if(heavyFeeders)carryNote+='Heavy feeders ('+heavyFeeders+' cells) will fatigue if repeated \u2014 rotate crops to avoid penalties. ';
+    if(mulched)carryNote+=mulched+' mulched cell'+(mulched>1?'s':'')+' will benefit next season.';
     return {
       kicker:'Harvest Review',
-      title:'Carry this season forward',
-      note:'Complete the chapter or continue into the next chapter state.',
+      title:'Review score and carry-forward effects',
+      note:carryNote,
       actionLabel:CAM&&CAM.mode==='campaign'?'Complete Chapter':'Continue',
       action:CAM&&CAM.mode==='campaign'?completeChapter:doTransition
     };
