@@ -720,6 +720,26 @@ function startGame(state, viewport) {
       },
       () => {
         persistState();
+
+        // REVIEW is currently passive in story mode, so don't strand the
+        // player in an intermediate phase with no dedicated screen.
+        if (state.season.phase === PHASES.HARVEST && canAdvance(state.season)) {
+          const reviewResult = advance(state);
+          updateHUD();
+          persistState();
+
+          if (reviewResult.advanced && state.season.phase === PHASES.REVIEW && canAdvance(state.season)) {
+            const transitionResult = advance(state);
+            updateHUD();
+            persistState();
+
+            if (transitionResult.advanced && transitionResult.trigger) {
+              handleNarrativeTrigger(transitionResult.trigger);
+              return;
+            }
+          }
+        }
+
         setGameInputEnabled(true);
         updateHUD();
       }

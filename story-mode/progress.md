@@ -39,3 +39,9 @@ Update 2026-03-21 mobile pass:
 - Event cards now use reusable intervention-button classes and explicit “tap a card, then tap the highlighted bed cell” chips.
 - Intervention targeting prompt now shows valid-target count, step count for swap, and touch-oriented copy rather than desktop-flavored instructions.
 - Validation: `npx vite build` passed, and the `develop-web-game` screenshot capture still renders the HUD / cutscene / FAB layout cleanly after the responsive changes.
+
+Update 2026-03-21 review-flow cleanup:
+- Fixed a dead-feeling season-end path in `src/main.js`: after the harvest reveal closes, story mode now auto-consumes the passive `REVIEW` hop and goes straight into the season-complete transition trigger.
+- This removes the extra Enter/Next presses that previously walked `HARVEST -> REVIEW -> TRANSITION` even though `REVIEW` had no dedicated screen of its own.
+- Confirmed the current winter screenshot confusion is not crop carry-over: `story-mode` creates a fresh grid on rollover. Visible plants are always from the current season grid; the pale/gray look comes from the winter scene treatment and the specific crop mesh being rendered.
+- Validation: `npx vite build` passed after the phase-flow patch.
