@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Zero-backend raised bed planner, season game, and build guides for Mom's backyard sanctuary -- all in your browser.">
-<title>Garden OS — Mom's Sanctuary</title>
-<meta property="og:title" content="Garden OS — Mom's Backyard Scoring Engine">
-<meta property="og:description" content="Zero-backend raised bed planner, season game, and build guides. All in your browser.">
+<meta name="description" content="Garden OS now centers Story Mode: Calvin the sheepdog, month-aware seasons, winter review, richer 3D scenes and dialogue, plus the planner and build guides.">
+<title>Garden OS — Story Mode First</title>
+<meta property="og:title" content="Garden OS — Story Mode First">
+<meta property="og:description" content="Story Mode is the primary Garden OS experience: Calvin's sheepdog intro, month-aware seasons, winter review, richer 3D scenes and dialogue, and the planner and build guides alongside it.">
 <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davehomeassist.github.io/garden-os/index.html">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Garden OS — Mom's Sanctuary">
-<meta name="twitter:description" content="Zero-backend raised bed planner, season game, and build guides for Mom's backyard sanctuary -- all in your browser.">
+<meta name="twitter:title" content="Garden OS — Story Mode First">
+<meta name="twitter:description" content="Story Mode leads Garden OS: Calvin, the sheepdog intro, month-aware seasons, winter review, richer 3D scenes and dialogue, plus the planner and build guides.">
 <link rel="canonical" href="https://davehomeassist.github.io/garden-os/index.html">
 <link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
@@ -123,6 +123,13 @@
     padding: 1.1rem 1.3rem;
     transition: transform var(--ease-out), box-shadow var(--ease-out), border-color var(--ease);
   }
+  .tool-card--featured {
+    background:
+      linear-gradient(135deg, rgba(112, 78, 33, 0.22), rgba(37, 61, 40, 0.2)),
+      var(--panel);
+    border-color: rgba(232, 200, 74, 0.34);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
+  }
   .tool-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
@@ -158,6 +165,11 @@
     color: var(--text-soft);
     line-height: 1.55;
     margin-bottom: 0.45rem;
+  }
+
+  .tool-card-desc strong {
+    color: var(--text);
+    font-weight: 600;
   }
 
   /* Chevron arrow */
@@ -202,6 +214,12 @@
   }
   .os-nav-back:hover { color: rgba(245, 237, 224, 0.8); }
 
+  .os-badge--story {
+    background: rgba(232, 200, 74, 0.14);
+    color: #f5ede0;
+    border: 1px solid rgba(232, 200, 74, 0.24);
+  }
+
   @media (max-width: 500px) {
     .tool-card { flex-direction: column; text-align: center; }
     .tool-card-icon { width: auto; }
@@ -215,9 +233,8 @@
 <!-- Shared nav -->
 <nav class="os-nav" aria-label="Garden OS tools">
   <a href="https://davehomeassist.github.io/" class="os-nav-back">&larr; All Projects</a>
-  <a href="home.html">Overview</a>
+  <a href="garden-league-simulator-v4.html">Story Mode</a>
   <a href="index.html" class="active" aria-current="page">Hub</a>
-  <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html">Planner</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
@@ -230,12 +247,12 @@
 <header class="site-masthead" role="banner">
   <img src="images/gos-logo-mark.png" alt="Garden OS logo" width="56" height="56" style="border-radius:8px;margin-bottom:0.5rem">
   <h1>Garden OS</h1>
-  <p class="site-masthead-sub">Mom's Sanctuary &nbsp;·&nbsp; Raised Bed Planner &amp; Build Guides</p>
+  <p class="site-masthead-sub">Mom's Sanctuary &nbsp;·&nbsp; Story Mode First &nbsp;·&nbsp; Planner &amp; Build Guides</p>
 </header>
 
 <!-- Hero video -->
 <div class="hero-video-wrap">
-  <video autoplay muted loop playsinline preload="none" poster="images/gos-full-scene.png" aria-label="Garden OS character animation">
+  <video autoplay muted loop playsinline preload="none" poster="images/gos-full-scene.png" aria-label="Garden OS Story Mode preview">
     <source src="assets/hero-wow.mp4" type="video/mp4">
   </video>
 </div>
@@ -243,7 +260,7 @@
 <!-- Hub label -->
 <div class="hub-header" aria-hidden="true">
   <div class="hub-header-label">Tool launcher</div>
-  <div class="hub-header-title">Open the right Garden OS surface fast</div>
+  <div class="hub-header-title">Story Mode first, then the planner and guides</div>
 </div>
 
 <!-- Tool hub -->
@@ -252,22 +269,22 @@
   <!-- GROUP 1: Start here -->
   <div class="hub-divider" aria-hidden="true">Start here</div>
 
+  <a class="tool-card tool-card--featured" href="garden-league-simulator-v4.html">
+    <div class="tool-card-icon" aria-hidden="true">🌿</div>
+    <div class="tool-card-body">
+      <div class="tool-card-title">Story Mode v4.0</div>
+      <div class="tool-card-desc"><strong>Calvin and the sheepdog intro</strong> kick off a 12-chapter season game with month-aware seasons, winter review, richer 3D scenes, and dialogue that now follows the current story state.</div>
+      <span class="os-badge os-badge--story">Primary CTA</span>
+    </div>
+    <span class="tool-card-arrow" aria-hidden="true">›</span>
+  </a>
+
   <a class="tool-card" href="garden-planner-v4.html">
     <div class="tool-card-icon" aria-hidden="true">🌱</div>
     <div class="tool-card-body">
       <div class="tool-card-title">Garden Planner</div>
       <div class="tool-card-desc">Plan your raised bed layout, place your crops, and get instant feedback on spacing, companions, and planting timing.</div>
       <span class="os-badge os-badge--planner">Planner · v4.3</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="garden-league-simulator-v4.html">
-    <div class="tool-card-icon" aria-hidden="true">🌿</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Season Engine v4.0</div>
-      <div class="tool-card-desc">12-chapter narrative strategy game. Inherit Mom's 8×4 raised bed, plan layouts, survive seasonal events, and harvest toward her sauce recipe.</div>
-      <span class="os-badge os-badge--planner">Play Now</span>
     </div>
     <span class="tool-card-arrow" aria-hidden="true">›</span>
   </a>

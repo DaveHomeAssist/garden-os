@@ -2,7 +2,7 @@
 
 > **Account:** [github.com/DaveHomeAssist](https://github.com/DaveHomeAssist)
 > **Total repos:** 15 | **Pages enabled:** 14 | **Archived:** 2 | **No Pages:** 1
-> **Last audited:** 2026-03-16
+> **Last audited:** 2026-03-21
 
 ---
 
@@ -46,7 +46,7 @@ Sub-paths served from this repo:
 
 | URL | Repo | Source | First Published | Last Deployed | Status |
 |-----|------|--------|-----------------|---------------|--------|
-| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-03-16 | Live |
+| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-03-21 | Live |
 | [/garden-cage-build-guide](https://davehomeassist.github.io/garden-cage-build-guide/) | garden-cage-build-guide | `main` `/` | 2026-03-14 | 2026-03-14 | Archived — still serving |
 | [/garden-planner](https://davehomeassist.github.io/garden-planner/) | garden-planner | `main` `/` | 2026-03-09 | 2026-03-09 | Archived — still serving (legacy) |
 
@@ -54,14 +54,13 @@ Sub-paths served from this repo:
 
 All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
-**User Track** (nav: Home → Play Game → Planner → Build Guide → Ops Guide → How It Thinks → Dev Tools →)
+**User Track** (nav: Story Mode → Hub → Planner → Build Guide → Ops Guide → Brand Guide → How It Thinks → Dev Tools →)
 
 | Path | Description |
 |------|-------------|
-| [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page (Mom's Sanctuary) |
-| [`/home.html`](https://davehomeassist.github.io/garden-os/home.html) | Marketing home page (test) |
+| [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
+| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Story Mode v4.0 (Calvin, sheepdog intro, month-aware seasons, winter review) |
 | [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.3 |
-| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Season Engine v4 (12-chapter narrative game, brand-aligned) |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
 | [`/how-it-thinks.html`](https://davehomeassist.github.io/garden-os/how-it-thinks.html) | How the planner thinks |
@@ -105,6 +104,7 @@ A master project registry is maintained in Notion:
 
 - **Garden OS uses a two-track nav** — user track (6 items) and dev track (5 items) with bridge links between them.
 - **All filenames are now kebab-case.** Snake_case duplicates have been removed.
+- **`home.html` is archived.** It no longer appears in public entry routes and should not be linked from the active nav.
 - **All live projects are listed on the root index.** Freelance, Contractor, Elysium, and Shieldbox added 2026-03-16.
 - **Elysium duplication:** Both the standalone `elysium-landing` repo and a subfolder in `DaveHomeAssist.github.io` serve to the same path. The standalone repo takes precedence.
 - **2 archived repos still serving:** `garden-cage-build-guide` and `garden-planner` are archived but their Pages remain live and accessible.

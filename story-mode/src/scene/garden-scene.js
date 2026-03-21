@@ -11,10 +11,10 @@ import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
 
 const SEASON_LIGHTING = {
-  spring: { sky: 0xb8c8d8, ground: 0x4a3820, sunAngle: 45, sunInt: 1.2, ambInt: 0.5 },
-  summer: { sky: 0xf0e8d8, ground: 0x6a5030, sunAngle: 72, sunInt: 1.8, ambInt: 0.7 },
-  fall:   { sky: 0xd4a060, ground: 0x3a2810, sunAngle: 30, sunInt: 1.0, ambInt: 0.4 },
-  winter: { sky: 0x606878, ground: 0x181218, sunAngle: 20, sunInt: 0.5, ambInt: 0.3 },
+  spring: { sky: 0xc8d9e4, ground: 0x56462d, sunAngle: 52, sunInt: 1.45, ambInt: 0.7, fillInt: 0.48, fogDensity: 0.021, sunX: -2.7, sunZ: 4.8, fillX: 3.8, fillZ: -2.1 },
+  summer: { sky: 0xf0e6cf, ground: 0x6a5233, sunAngle: 68, sunInt: 1.72, ambInt: 0.82, fillInt: 0.52, fogDensity: 0.018, sunX: -1.8, sunZ: 4.4, fillX: 4.2, fillZ: -2.4 },
+  fall:   { sky: 0xd8b17a, ground: 0x4a3116, sunAngle: 38, sunInt: 1.16, ambInt: 0.56, fillInt: 0.4, fogDensity: 0.024, sunX: -3.4, sunZ: 4.6, fillX: 3.6, fillZ: -1.8 },
+  winter: { sky: 0x7e8ea0, ground: 0x231f26, sunAngle: 28, sunInt: 0.78, ambInt: 0.42, fillInt: 0.3, fogDensity: 0.028, sunX: -4.0, sunZ: 3.3, fillX: 2.8, fillZ: -1.6 },
 };
 
 const CROP_COLORS = {
@@ -29,13 +29,13 @@ const CROP_COLORS = {
 };
 
 const CAMERA_PRESETS = {
-  'chapter-intro': { position: [0, 4.2, 6.9], target: [0, 0.62, 0.4], fov: 38 },
-  overview: { position: [0, 3.15, 5.35], target: [0, 0.5, -0.1], fov: 29 },
-  'bed-low-angle': { position: [0, 2.25, 4.2], target: [0, 0.46, -0.18], fov: 34 },
-  'row-close': { position: [0.95, 2.15, 3.7], target: [0.45, 0.42, -0.16], fov: 35 },
-  'event-push': { position: [0, 2.75, 4.55], target: [0, 0.46, -0.16], fov: 32 },
-  'harvest-hero': { position: [0, 3.1, 4.25], target: [0, 0.5, -0.08], fov: 30 },
-  'front-access': { position: [0, 3.0, 5.95], target: [0, 0.48, -0.2], fov: 34 },
+  'chapter-intro': { position: [0, 3.55, 5.95], target: [0, 0.54, -0.06], fov: 35 },
+  overview: { position: [0, 2.95, 4.9], target: [0, 0.46, -0.12], fov: 31 },
+  'bed-low-angle': { position: [0, 2.0, 3.65], target: [0, 0.4, -0.18], fov: 36 },
+  'row-close': { position: [0.9, 1.92, 3.28], target: [0.45, 0.37, -0.17], fov: 36 },
+  'event-push': { position: [0, 2.4, 4.0], target: [0, 0.42, -0.16], fov: 34 },
+  'harvest-hero': { position: [0, 2.72, 3.88], target: [0, 0.46, -0.05], fov: 32 },
+  'front-access': { position: [0, 2.72, 5.2], target: [0, 0.44, -0.18], fov: 35 },
 };
 
 const MOOD_PRESETS = {
@@ -110,13 +110,13 @@ export function createGardenScene(container) {
   scene.background = new THREE.Color(0x87CEEB);
 
   // Ground-level fog for ambient occlusion feel
-  scene.fog = new THREE.FogExp2(0x7aaa88, 0.035);
+  scene.fog = new THREE.FogExp2(0x8ea797, 0.022);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   // Start from the front/access side looking back toward the house wall.
-  camera.position.set(0, 3.15, 5.35);
-  camera.lookAt(0, 0.5, -0.1);
-  const cameraLookTarget = new THREE.Vector3(0, 0.5, -0.1);
+  camera.position.set(0, 2.95, 4.9);
+  camera.lookAt(0, 0.46, -0.12);
+  const cameraLookTarget = new THREE.Vector3(0, 0.46, -0.12);
   let cameraTransition = null;
   let moodTransition = null;
 
@@ -124,7 +124,7 @@ export function createGardenScene(container) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = 1.18;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   container.appendChild(renderer.domElement);
 
@@ -413,8 +413,8 @@ export function createGardenScene(container) {
   });
   sheepdogGroup.add(dogModelPivot);
 
-  sheepdogGroup.scale.setScalar(1.02);
-  sheepdogGroup.position.set(-3.9, 0, 1.62);
+  sheepdogGroup.scale.setScalar(0.9);
+  sheepdogGroup.position.set(-4.15, 0, 2.1);
   root.add(sheepdogGroup);
 
   const sheepdogRunState = {
@@ -422,8 +422,8 @@ export function createGardenScene(container) {
     elapsedMs: 0,
     duration: 2600,
     fadeOutMs: 0,
-    start: new THREE.Vector3(-3.9, 0, 1.62),
-    end: new THREE.Vector3(4.5, 0, 1.1),
+    start: new THREE.Vector3(-4.15, 0, 2.1),
+    end: new THREE.Vector3(4.7, 0, 1.88),
     arcHeight: 0.1,
     sway: 0.14,
   };
@@ -441,11 +441,11 @@ export function createGardenScene(container) {
   const weather = createWeatherFX(scene);
 
   // Lighting
-  const hemi = new THREE.HemisphereLight(0xb8c8d8, 0x4a3820, 0.5);
+  const hemi = new THREE.HemisphereLight(0xc7d8df, 0x56462d, 0.7);
   scene.add(hemi);
 
-  const sun = new THREE.DirectionalLight(0xfff5e0, 1.2);
-  sun.position.set(3, 8, -2);
+  const sun = new THREE.DirectionalLight(0xfff4de, 1.45);
+  sun.position.set(-2.7, 8, 4.8);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.camera.near = 0.5;
@@ -456,9 +456,13 @@ export function createGardenScene(container) {
   sun.shadow.camera.bottom = -6;
   scene.add(sun);
 
-  const fill = new THREE.DirectionalLight(0x8899bb, 0.4);
-  fill.position.set(-4, 5, 4);
+  const fill = new THREE.DirectionalLight(0x8ea8bc, 0.48);
+  fill.position.set(3.8, 4.4, -2.1);
   scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xd7e6f5, 0.18);
+  rim.position.set(-4.4, 3.1, -4.7);
+  scene.add(rim);
 
 
   // ── Seasonal atmosphere elements ─────────────────────────────────────────
@@ -592,7 +596,7 @@ export function createGardenScene(container) {
     birdGroup.add(birdTail);
   }
   // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.06*0.15) ≈ -1.009
-  birdGroup.position.set(0.6, 1.095, -(4 * 0.5 / 2 + 0.06 * 0.15));
+  birdGroup.position.set(1.24, 1.105, -(4 * 0.5 / 2 + 0.06 * 0.15));
   birdGroup.visible = true;
   root.add(birdGroup);
   let birdVisible = true;
@@ -1264,8 +1268,11 @@ function getGrowthScale(phase, season) {
     hemi.groundColor.set(config.ground);
     hemi.intensity = config.ambInt;
     sun.intensity = config.sunInt;
+    fill.intensity = config.fillInt;
+    scene.fog.density = config.fogDensity;
     const angle = (config.sunAngle * Math.PI) / 180;
-    sun.position.set(3 * Math.cos(angle), 8 * Math.sin(angle), -2);
+    sun.position.set(config.sunX, 8 * Math.sin(angle), config.sunZ);
+    fill.position.set(config.fillX, 4.4 + Math.sin(angle) * 0.5, config.fillZ);
 
     // Update tree foliage colors
     scenery.updateSeason(season);
@@ -1347,14 +1354,14 @@ function getGrowthScale(phase, season) {
     sheepdogRunState.arcHeight = opts.cueArcHeight ?? 0.1;
     sheepdogRunState.sway = opts.cueSway ?? 0.18;
     sheepdogRunState.start.set(
-      opts.cueFromX ?? -3.9,
+      opts.cueFromX ?? -4.15,
       0,
-      opts.cueFromZ ?? 1.62,
+      opts.cueFromZ ?? 2.1,
     );
     sheepdogRunState.end.set(
-      opts.cueToX ?? 4.5,
+      opts.cueToX ?? 4.7,
       0,
-      opts.cueToZ ?? 1.1,
+      opts.cueToZ ?? 1.88,
     );
     sheepdogGroup.position.copy(sheepdogRunState.start);
     sheepdogGroup.visible = true;

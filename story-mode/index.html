@@ -900,10 +900,260 @@
     .panel-sheet, .pause-overlay, .chapter-intro, .toast-notification, #fab-advance, #fab-backpack, #fab-plant {
       will-change: transform;
     }
+
+    /* ── Title Screen ── */
+    .title-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #1e110a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 36px;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .title-screen.is-exiting {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
+    }
+    .title-logo {
+      text-align: center;
+    }
+    .title-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: clamp(10px, 2vw, 12px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(247,242,234,0.3);
+      margin-bottom: 6px;
+    }
+    .title-name {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: clamp(36px, 8vw, 64px);
+      color: #e8c84a;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    .title-tagline {
+      font-family: 'DM Sans', sans-serif;
+      font-style: italic;
+      font-size: clamp(13px, 2.5vw, 16px);
+      color: rgba(247,242,234,0.45);
+      max-width: 36ch;
+      margin: 0 auto;
+    }
+
+    .save-slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: min(720px, calc(100vw - 48px));
+    }
+    .save-slot-card {
+      background: rgba(247,242,234,0.04);
+      border: 1px solid rgba(247,242,234,0.08);
+      border-radius: 12px;
+      padding: 18px 16px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .save-slot-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+    .save-slot-card--empty {
+      justify-content: center;
+      align-items: center;
+      border-style: dashed;
+    }
+    .save-slot-card--occupied {
+      border-left: 3px solid #5aab6b;
+    }
+    .save-slot-card--occupied.progress-mid {
+      border-left-color: #e8c84a;
+    }
+    .save-slot-card--occupied.progress-low {
+      border-left-color: #d44a2a;
+    }
+    .save-slot-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(247,242,234,0.25);
+      margin-bottom: 8px;
+    }
+    .save-slot-chapter {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: #e8c84a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .save-slot-chapter .season-emoji {
+      font-size: 16px;
+    }
+    .save-slot-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(247,242,234,0.4);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .save-slot-sparkline {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .sparkline-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(247,242,234,0.15);
+    }
+    .sparkline-dot--a { background: #5aab6b; }
+    .sparkline-dot--b { background: #8ba8b5; }
+    .sparkline-dot--c { background: #e8c84a; }
+    .sparkline-dot--d { background: #dda855; }
+    .sparkline-dot--f { background: #d44a2a; }
+    .save-slot-empty-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: rgba(247,242,234,0.25);
+      margin-bottom: 12px;
+    }
+    .save-slot-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .save-slot-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .save-slot-btn:active { transform: scale(0.96); }
+    .save-slot-btn--primary {
+      background: #e8c84a;
+      color: #1e110a;
+      flex: 1;
+    }
+    .save-slot-btn--primary:hover { background: #f0d45c; }
+    .save-slot-btn--danger {
+      background: rgba(212,74,42,0.12);
+      color: rgba(212,74,42,0.8);
+      border: 1px solid rgba(212,74,42,0.2);
+    }
+    .save-slot-btn--danger:hover { background: rgba(212,74,42,0.2); }
+
+    .title-footer {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .title-version {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: rgba(247,242,234,0.15);
+    }
+    .title-modes {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .mode-card {
+      background: rgba(247,242,234,0.04);
+      border: 1px solid rgba(247,242,234,0.08);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(247,242,234,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: border-color 0.15s;
+    }
+    .mode-card--active {
+      border-color: rgba(232,200,74,0.3);
+      color: #e8c84a;
+    }
+    .mode-card--locked {
+      opacity: 0.4;
+    }
+    .mode-card .mode-icon {
+      font-size: 16px;
+    }
+    .mode-card .mode-lock {
+      font-size: 11px;
+      color: rgba(247,242,234,0.2);
+    }
+    .mode-card .mode-soon {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(247,242,234,0.2);
+    }
+
+    @media (max-width: 640px) {
+      .save-slots {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: min(360px, calc(100vw - 32px));
+      }
+      .save-slot-card {
+        min-height: 120px;
+        padding: 14px;
+      }
+      .title-modes {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="app">
+    <div id="title-screen" class="title-screen">
+      <div class="title-logo">
+        <div class="title-eyebrow">Mom's Backyard</div>
+        <h1 class="title-name">Garden OS</h1>
+        <div class="title-tagline">A 12-chapter story about soil, seasons, and sauce.</div>
+      </div>
+      <div class="save-slots" id="save-slots">
+        <!-- 3 save slot cards rendered by JS -->
+      </div>
+      <div class="title-footer">
+        <div class="title-version">v0.1 &middot; Story Mode</div>
+        <div class="title-modes" id="title-modes">
+          <!-- Game mode buttons rendered by JS -->
+        </div>
+      </div>
+    </div>
     <div id="viewport"></div>
     <div class="vignette-overlay"></div>
     <div id="hud">

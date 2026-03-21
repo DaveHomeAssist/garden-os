@@ -4,22 +4,22 @@
 import * as THREE from 'three';
 
 const POSES = {
-  overview: { position: [0, 5.6, 6.4], target: [0, 0, -0.2] },
-  closeup:  { position: [0, 3, 2.8], target: [0, 0, -0.1] },
-  side:     { position: [5, 4, 1.2], target: [0, 0, -0.1] },
-  birds:    { position: [0, 10, -0.2], target: [0, 0, -0.2] },
+  overview: { position: [0, 3.45, 5.35], target: [0, 0.44, -0.18] },
+  closeup:  { position: [0, 2.15, 3.55], target: [0, 0.36, -0.16] },
+  side:     { position: [3.7, 2.65, 3.5], target: [0.15, 0.4, -0.14] },
+  birds:    { position: [0, 6.5, 2.2], target: [0, 0.1, -0.15] },
 };
 
 export function createCameraController(camera, domElement) {
-  const target = new THREE.Vector3(0, 0, -0.2);
+  const target = new THREE.Vector3(0, 0.44, -0.18);
   let isDragging = false;
   let lastX = 0;
   let lastY = 0;
   let theta = 0;
-  let phi = Math.PI / 3.3;
-  let radius = 7.6;
+  let phi = 1.08;
+  let radius = 6.55;
   let targetPose = null;
-  let lerpSpeed = 0.08;
+  let lerpSpeed = 0.1;
 
   function updateOrbit() {
     camera.position.set(
@@ -51,7 +51,7 @@ export function createCameraController(camera, domElement) {
     lastY = e.clientY;
 
     theta -= dx * 0.005;
-    phi = Math.max(0.2, Math.min(Math.PI / 2.2, phi - dy * 0.005));
+    phi = Math.max(0.48, Math.min(1.34, phi - dy * 0.005));
     targetPose = null;
     updateOrbit();
   });
@@ -75,7 +75,7 @@ export function createCameraController(camera, domElement) {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const delta = pinchDist - dist;
-      radius = Math.max(3, Math.min(15, radius + delta * 0.02));
+      radius = Math.max(4.4, Math.min(11.5, radius + delta * 0.02));
       pinchDist = dist;
       targetPose = null;
       updateOrbit();
@@ -85,7 +85,7 @@ export function createCameraController(camera, domElement) {
   // Mouse wheel zoom
   domElement.addEventListener('wheel', (e) => {
     e.preventDefault();
-    radius = Math.max(3, Math.min(15, radius + e.deltaY * 0.01));
+    radius = Math.max(4.4, Math.min(11.5, radius + e.deltaY * 0.01));
     targetPose = null;
     updateOrbit();
   }, { passive: false });

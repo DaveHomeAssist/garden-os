@@ -112,3 +112,18 @@ Update 2026-03-21 winter review usability pass:
 - Tightened `src/ui/winter-review.js` into a bounded review panel with an internal scroll region, persistent explanatory footer copy, and a pinned action row so `Open Backpack` / `Continue` stay visible while the review content scrolls.
 - The winter review now reads like an actual tool: year recap, soil + carry-forward map, last harvest summary, recipes/keepsakes, strongest/weakest cells, next-spring hints, and a visible exit into the next chapter.
 - Validation: `npx vite build` passed. Forced-winter Playwright fixtures confirmed both the review screen layout (`output/web-game/winter-review-direct-oneshot/shot-0.png`) and the follow-through into the season-complete transition (`output/web-game/winter-review-continue/shot-0.png`).
+
+Update 2026-03-21 Calvin intro/talk bubble pass:
+- Calvin is now a real speaker in the portrait system instead of dead data in `src/data/speakers.js`. Added `calvin` to `src/data/portraits.js`, surfaced `thoughtBubble` through `src/game/cutscene-machine.js`, and gave `src/ui/dialogue-panel.js` / `assets/css/theme.css` a dedicated thought-bubble presentation so Calvin reads as instinctive inner monologue rather than a normal narrator badge.
+- Re-timed the Chapter 1 intro in `src/data/cutscenes.js` so the sheepdog run starts on the opening narrator beat and persists into Garden GURL's callout. The GURL yell now stays on the wider intro framing instead of triggering the run too late on a tighter shot.
+- Updated `src/data/cutscenes.test.js` to recognize Calvin as a valid authored speaker.
+- Validation: `npx vite build` passed and `node --experimental-vm-modules src/data/cutscenes.test.js` passed (`1827 passed, 0 failed`).
+- Automation note: the Playwright client still captured the updated opening frame (`output/web-game/shot-0.png`), but this environment remained flaky for deterministic mid-cutscene advancement, so the narrator-opener screenshot is verified while the exact Calvin callout frame still needs one quick headed/manual smoke check next pass.
+
+Update 2026-03-21 scoped 3D polish pass:
+- Tightened the front-facing 3D framing in `src/scene/garden-scene.js` and `src/scene/camera-controller.js` so the bed fills more of the frame, cutscene presets sit lower/closer, and free orbit no longer drifts back into the older high generic overview.
+- Rebalanced seasonal lighting in `src/scene/garden-scene.js`: brighter front-biased sun/fill, lighter fog, and slightly hotter exposure so the bed, trellis, and side props read cleanly in the opening planning scene instead of sinking into the darker backdrop.
+- Refined `src/scene/scenery.js` for background depth and readability: added a foundation strip + mulch border + hedge planting bed behind the wall, porch rail/steps, a rain barrel by the downspout, and retuned seasonal accent color updates for shrubs/flowers.
+- Moved several work-zone props inward so they stop clipping against the lower frame edges, pushed the clothesline / telephone pole / distant rooftops farther out of the main composition, and rebuilt the porch screen door as an actual frame instead of a dark slab.
+- Reduced the sheepdog scale and shifted its default run line farther down the access path so it reads as scene action without blocking the bed as aggressively during chapter intros.
+- Validation: `npx vite build` passed. Playwright capture at `output/web-game/polish-pass/shot-0.png` confirmed the new framing and prop placement, but one limitation remains: the environment here is still noisy for repeated interactive browser checks, so the final visual sign-off is based on that static capture plus the clean build.

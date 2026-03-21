@@ -9,12 +9,17 @@ import { advance, canAdvance, getPhaseLabel } from './game/phase-machine.js';
 import { scoreBed } from './scoring/bed-score.js';
 import { getCropById, getCropsForChapter, getRecipeById, getRecipes } from './data/crops.js';
 import { getKeepsakeById, getKeepsakeSlots } from './data/keepsakes.js';
-import { saveCampaign, loadCampaign, deleteCampaign, saveSeasonState, loadSeasonState, awardKeepsake } from './game/save.js';
+import {
+  saveCampaign, loadCampaign, deleteCampaign,
+  saveSeasonState, loadSeasonState, awardKeepsake,
+  listSaves, getActiveSaveSlot, setActiveSaveSlot, SAVE_SLOTS,
+} from './game/save.js';
 import { showEventCard } from './ui/event-card.js';
 import { showHarvestReveal } from './ui/harvest-reveal.js';
 import { showBackpackPanel } from './ui/backpack-panel.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
 import { showWinterReview } from './ui/winter-review.js';
+import { showSeasonJournalSheet, showBugReportsSheet } from './ui/pause-panels.js';
 import { createCutsceneMachine } from './game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './ui/season-calendar.js';
 import { applyIntervention, getTargetableCells } from './game/intervention.js';
@@ -108,7 +113,9 @@ function mount() {
     return;
   }
 
-  startGame(state, viewport);
+  showFirstRunOverlay(() => {
+    startGame(state, viewport);
+  });
 }
 
 function showStartChoice(saved, onContinue, onNewGame) {
@@ -136,6 +143,51 @@ function showStartChoice(saved, onContinue, onNewGame) {
   });
 
   overlayContainer.appendChild(choice);
+}
+
+function showFirstRunOverlay(onStart) {
+  const overlayContainer = document.getElementById('overlay-container');
+  const overlay = document.createElement('div');
+  overlay.className = 'chapter-intro entry-intro';
+  overlay.id = 'first-run-overlay';
+  overlay.innerHTML = `
+    <div class="entry-shell">
+      <div class="chapter-num">Garden OS</div>
+      <h2>Story Mode</h2>
+      <p>
+        Start at the beginning, learn the bed, and carry your garden through every season.
+        Pause, journal, and bug tools stay available once you enter.
+      </p>
+      <div class="entry-grid" aria-hidden="true">
+        <div class="entry-card">
+          <div class="entry-card__label">Plan</div>
+          <div class="entry-card__copy">Shape the bed before each season begins.</div>
+        </div>
+        <div class="entry-card">
+          <div class="entry-card__label">Tend</div>
+          <div class="entry-card__copy">React to events with interventions and carries.</div>
+        </div>
+        <div class="entry-card">
+          <div class="entry-card__label">Review</div>
+          <div class="entry-card__copy">Read the journal to track the garden’s memory.</div>
+        </div>
+      </div>
+      <div class="start-choice-actions">
+        <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-begin-story">Enter the Garden</button>
+      </div>
+      <div class="tap-hint entry-hint">Press ESC later to open the pause menu.</div>
+    </div>
+  `;
+
+  overlay.querySelector('#btn-begin-story')?.addEventListener('click', () => {
+    overlay.style.animation = 'fadeOutIntro 0.25s ease-in both';
+    setTimeout(() => {
+      overlay.remove();
+      onStart?.();
+    }, 220);
+  });
+
+  overlayContainer.appendChild(overlay);
 }
 
 function startGame(state, viewport) {
@@ -1194,6 +1246,13 @@ function startGame(state, viewport) {
       return;
     }
 
+    const activeReadOnlySheet = pauseContainer.querySelector('#season-journal-sheet, #bug-reports-sheet');
+    if (event.key === 'Escape' && activeReadOnlySheet) {
+      event.preventDefault();
+      activeReadOnlySheet.querySelector('[data-close="true"]')?.click();
+      return;
+    }
+
     // Escape always toggles pause menu (unless cutscene skipping)
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -1261,6 +1320,7 @@ function startGame(state, viewport) {
   // Pause menu system
   const pauseOverlay = document.getElementById('pause-menu');
   const pauseStatus = document.getElementById('pause-status');
+  const pauseContainer = document.getElementById('panel-container');
   let pauseMenuOpen = false;
 
   function togglePauseMenu() {
@@ -1270,6 +1330,7 @@ function startGame(state, viewport) {
       // Close other panels
       bugPanel?.classList.remove('is-open');
       if (cropPaletteOpen) closePalette();
+      closePanelSheets();
       pauseStatus.textContent = `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       pauseOverlay.classList.add('is-open');
     } else {
@@ -1277,45 +1338,36 @@ function startGame(state, viewport) {
     }
   }
 
+  function closePauseMenu() {
+    pauseMenuOpen = false;
+    pauseOverlay.classList.remove('is-open');
+  }
+
   document.getElementById('pause-resume')?.addEventListener('click', () => {
     togglePauseMenu();
   });
 
   document.getElementById('pause-journal')?.addEventListener('click', () => {
-    const entries = state.campaign.journalEntries || [];
-    togglePauseMenu(); // close menu first
-    if (!entries.length) {
-      showToast('No journal entries yet — complete a season first.', 2500);
-      return;
-    }
-    const text = entries.map(e =>
-      `Ch${e.chapter} ${e.season}: ${e.score} (${e.grade}) — ${(e.eventsEncountered || []).join(', ') || 'no events'}`
-    ).join('\n');
-    alert('Season Journal:\n\n' + text);
+    closePauseMenu();
+    showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
   });
 
   document.getElementById('pause-bugs')?.addEventListener('click', () => {
     const BUGS_KEY = 'gos-story-bugs';
-    togglePauseMenu(); // close menu first
+    closePauseMenu();
     try {
       const bugs = JSON.parse(localStorage.getItem(BUGS_KEY) || '[]');
-      if (!bugs.length) {
-        showToast('No bug reports saved yet.', 2000);
-        return;
-      }
-      const text = bugs.map((b, i) =>
-        `#${i + 1} [Ch${b.chapter} ${b.phase}]: ${b.text}`
-      ).join('\n\n');
-      alert('Bug Reports:\n\n' + text);
-    } catch { showToast('Could not load bug reports.', 2000); }
+      showBugReportsSheet(pauseContainer, Array.isArray(bugs) ? bugs : []);
+    } catch {
+      showBugReportsSheet(pauseContainer, []);
+    }
   });
 
   document.getElementById('pause-restart')?.addEventListener('click', () => {
     if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
     state.season = createSeasonState(state.campaign.currentChapter, state.season.season);
     state.selectedCropId = null;
-    pauseMenuOpen = false;
-    pauseOverlay.classList.remove('is-open');
+    closePauseMenu();
     updateHUD();
     showToast('Chapter restarted.', 1800);
   });
@@ -1324,6 +1376,16 @@ function startGame(state, viewport) {
     if (!confirm('Start a new campaign? ALL progress will be erased.')) return;
     deleteCampaign();
     window.location.reload();
+  });
+
+  document.getElementById('pause-close')?.addEventListener('click', () => {
+    closePauseMenu();
+  });
+
+  pauseOverlay?.addEventListener('click', (event) => {
+    if (event.target === pauseOverlay) {
+      closePauseMenu();
+    }
   });
 
   // Bug report system
