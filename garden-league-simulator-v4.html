@@ -421,6 +421,9 @@ const HEAVY=['cherry_tom','pepper','zucchini','broccoli','kale'];
 const SKEY='garden_os_v4_state',HKEY='garden_os_v4_hist',CKEY='garden_os_v4_campaign';
 const APP_VERSION='4.0';
 const BEAT_PHASES=['EARLY_SEASON','MID_SEASON','LATE_SEASON'];
+const MONTH_NAMES={spring:['March','April','May'],summer:['June','July','August'],fall:['September','October','November'],winter:['December','January','February']};
+function monthName(season,beatIndex){return (MONTH_NAMES[season]||['Month 1','Month 2','Month 3'])[beatIndex]||'Month'}
+
 const PHASES = Object.freeze({
   PLANNING: 'PLANNING',
   EARLY_SEASON: 'EARLY_SEASON',
@@ -448,10 +451,10 @@ const HOWTO_SECTIONS=[
   {
     id:'loop',
     name:'Season Flow',
-    summary:'Plan \u2192 Commit \u2192 Early / Mid / Late Season \u2192 Harvest \u2192 Harvest Review.',
+    summary:'Plan \u2192 Commit \u2192 3 Months \u2192 Harvest \u2192 Review.',
     bullets:[
       'Planning: place crops, check chapter objective, and validate row requirements.',
-      'Early / Mid / Late Season: weather and events test your layout.',
+      'Three months per season: weather and events test your layout.',
       'Interventions: Swap, Prune, Protect, Mulch, or Companion Patch when offered.',
       'Harvest: score final layout + event outcomes; recipes and chapter goals resolve.',
       'Harvest Review: inspect factors, event log, and carry-forward effects before advancing.'
@@ -1715,8 +1718,8 @@ function renderBoard(){
   const br=h('div','beat-indicator');
   br.setAttribute('role','group');
   br.setAttribute('aria-label','Season phases');
-  const phaseNames=['Early','Mid','Late'];
-  ['E','M','L'].forEach((l,b)=>{
+  const phaseNames=MONTH_NAMES[S.season]||['Early','Mid','Late'];
+  (MONTH_NAMES[S.season]||['E','M','L']).map(n=>n[0]).forEach((l,b)=>{
     const d=h('div','beat-dot',l);
     const isBeat=BEAT_PHASES.includes(S.phase);
     const isActive=isBeat&&S.beatIndex===b;
@@ -1854,7 +1857,7 @@ function renderBoard(){
   if(BEAT_PHASES.includes(S.phase)){
     // Action indicator
     const ai=h('div','action-indicator '+(S.beatTokenAvailable&&S.currentEvent?'available':'used'));
-    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve this phase':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
+    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve this month':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
     tb.appendChild(ai);
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
       const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept Loss'};
@@ -1910,7 +1913,7 @@ function renderBoard(){
     ec.appendChild(h('h3',null,S.currentEvent.title));
     ec.appendChild(h('div','desc',S.currentEvent.description));
     const mod=S.currentEvent.me.mod;
-    const dur=S.currentEvent.me.dur==='beat'?'this beat':S.currentEvent.me.dur==='season'?'rest of season':'carry-forward';
+    const dur=S.currentEvent.me.dur==='beat'?'this month':S.currentEvent.me.dur==='season'?'rest of season':'carry-forward';
     ec.appendChild(h('div','effect','Effect: '+(mod>=0?'+':'')+mod.toFixed(1)+' \u00B7 '+dur));
     if(S.beatTokenAvailable){
       ec.appendChild(h('div','effect','Response: Use the toolbar above to act, or Accept Loss'));
@@ -1930,7 +1933,7 @@ function renderBoard(){
 function statusText(){
   const p=S.phase;
   if(p===PHASES.PLANNING)return'Place crops. '+countPlanted(S.grid)+'/'+(CAM&&CAM.mode==='campaign'&&S.chapter===10?'32 required':MIN_PLANTED+' min.')+'.';
-  if(BEAT_PHASES.includes(p)){const bn=['Early','Mid','Late'][S.beatIndex];
+  if(BEAT_PHASES.includes(p)){const bn=monthName(S.season,S.beatIndex);
     if(S.currentEvent&&S.beatTokenAvailable)return bn+': Choose a response or press Accept Loss to resolve the event.';
     if(S.currentEvent)return bn+': Event resolved. Advance when ready.';
     return bn+': No event. Advance when ready.';}
@@ -2179,7 +2182,7 @@ function renderRes(){
     const summary=h('div','event-outcome');
     const head=h('div','event-outcome-head');
     head.appendChild(h('div','event-outcome-title',event?event.title:'Event resolved'));
-    head.appendChild(h('div','event-outcome-meta',(['Early','Mid','Late'][entry.beatIndex]||'Season')+' resolved'));
+    head.appendChild(h('div','event-outcome-meta',(monthName(S.season,entry.beatIndex))+' resolved'));
     summary.appendChild(head);
     const net=Number(entry.netModifier)||0;
     const affected=Array.isArray(entry.affectedCells)?entry.affectedCells.length:0;
