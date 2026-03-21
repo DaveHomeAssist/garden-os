@@ -15,6 +15,32 @@ const TRANSITIONS = {
   [PHASES.TRANSITION]:    PHASES.PLANNING,
 };
 
+// Simple event stubs for season beats
+const SEASON_EVENTS = {
+  [PHASES.EARLY_SEASON]: [
+    { title: 'First Sprouts', description: 'Tiny green shoots push through the soil. Everything is starting.' },
+    { title: 'April Showers', description: 'A gentle rain waters the bed overnight. The soil looks rich.' },
+    { title: 'Early Visitors', description: 'Earthworms surface. A sign of healthy soil underneath.' },
+  ],
+  [PHASES.MID_SEASON]: [
+    { title: 'Full Canopy', description: 'Leaves spread wide, competing for sunlight. The bed is filling in.' },
+    { title: 'Afternoon Heat', description: 'The sun beats down. Some leaves curl slightly at the edges.' },
+    { title: 'Busy Bees', description: 'Pollinators buzz between flowers. Fruit is starting to set.' },
+  ],
+  [PHASES.LATE_SEASON]: [
+    { title: 'Harvest Time', description: 'Colors are changing. Some crops hang heavy and ready.' },
+    { title: 'Cooling Nights', description: 'Morning dew lingers longer. The season is winding down.' },
+    { title: 'Last Push', description: 'A final burst of growth before the frost line drops.' },
+  ],
+};
+
+function pickSeasonEvent(phase) {
+  const pool = SEASON_EVENTS[phase];
+  if (!pool || pool.length === 0) return null;
+  const idx = Math.floor(Math.random() * pool.length);
+  return { ...pool[idx] };
+}
+
 export function canAdvance(season) {
   const { phase } = season;
   if (phase === PHASES.PLANNING) {
@@ -42,14 +68,15 @@ export function advance(season) {
   if (nextPhase === PHASES.EARLY_SEASON) {
     season.beatIndex = 0;
     season.interventionTokens = 3;
+    season.eventActive = pickSeasonEvent(nextPhase);
   } else if (nextPhase === PHASES.MID_SEASON) {
     season.beatIndex = 1;
     season.interventionChosen = null;
-    season.eventActive = null;
+    season.eventActive = pickSeasonEvent(nextPhase);
   } else if (nextPhase === PHASES.LATE_SEASON) {
     season.beatIndex = 2;
     season.interventionChosen = null;
-    season.eventActive = null;
+    season.eventActive = pickSeasonEvent(nextPhase);
   }
 
   return true;

@@ -4,22 +4,93 @@
  */
 import { createGardenScene } from './scene/garden-scene.js';
 import { createLoop } from './game/loop.js';
-import { createGameState, PHASES } from './game/state.js';
+import { createGameState, PHASES, PHASE_ORDER } from './game/state.js';
 import { advance, canAdvance, getPhaseLabel } from './game/phase-machine.js';
 import { scoreBed } from './scoring/bed-score.js';
 import { getCropsForChapter } from './data/crops.js';
-import { saveCampaign, loadCampaign } from './game/save.js';
+import { saveCampaign, loadCampaign, hasSave, deleteCampaign } from './game/save.js';
+
+// Faction badge colors
+const FACTION_BADGE_COLORS = {
+  climbers: '#2d8a4e',
+  fast_cycles: '#6dbf6d',
+  greens: '#3a7a4f',
+  roots: '#c47a3a',
+  herbs: '#7ab85e',
+  fruiting: '#d44a2a',
+  brassicas: '#4a8a6a',
+  companions: '#e8c84a',
+};
+
+// Faction display names
+const FACTION_NAMES = {
+  climbers: 'Climber',
+  fast_cycles: 'Fast',
+  greens: 'Greens',
+  roots: 'Root',
+  herbs: 'Herb',
+  fruiting: 'Fruit',
+  brassicas: 'Brassica',
+  companions: 'Companion',
+};
 
 function mount() {
   const viewport = document.getElementById('viewport');
   const state = createGameState();
 
-  // Restore campaign if exists
+  // New Game vs Continue choice
   const saved = loadCampaign();
   if (saved) {
-    Object.assign(state.campaign, saved);
+    showStartChoice(saved, state, () => startGame(state, viewport));
+    return;
   }
 
+  startGame(state, viewport);
+}
+
+function showStartChoice(saved, state, onStart) {
+  const overlayContainer = document.getElementById('overlay-container');
+  const choice = document.createElement('div');
+  choice.className = 'chapter-intro';
+  choice.style.animation = 'fadeInIntro 0.6s ease-out both';
+  choice.innerHTML = `
+    <div class="chapter-num">Garden OS</div>
+    <h2>Welcome Back</h2>
+    <p>Chapter ${saved.currentChapter} save found from ${new Date(saved.updatedAt).toLocaleDateString()}.</p>
+    <div style="display:flex;gap:16px;margin-top:28px;">
+      <button id="btn-continue" style="
+        font-family:'DM Sans',sans-serif;font-size:15px;
+        padding:12px 28px;border-radius:8px;cursor:pointer;
+        background:#e8c84a;color:#1e110a;border:none;
+        font-weight:500;
+      ">Continue</button>
+      <button id="btn-new" style="
+        font-family:'DM Sans',sans-serif;font-size:15px;
+        padding:12px 28px;border-radius:8px;cursor:pointer;
+        background:rgba(247,242,234,0.1);color:#f7f2ea;
+        border:1px solid rgba(247,242,234,0.2);
+        font-weight:500;
+      ">New Game</button>
+    </div>
+  `;
+
+  choice.querySelector('#btn-continue').addEventListener('click', () => {
+    Object.assign(state.campaign, saved);
+    state.showChapterIntro = false;
+    choice.remove();
+    onStart();
+  });
+
+  choice.querySelector('#btn-new').addEventListener('click', () => {
+    deleteCampaign();
+    choice.remove();
+    onStart();
+  });
+
+  overlayContainer.appendChild(choice);
+}
+
+function startGame(state, viewport) {
   // Scene
   let scene;
   try {
@@ -37,9 +108,52 @@ function mount() {
   const hudScore = document.getElementById('hud-score');
   const panelContainer = document.getElementById('panel-container');
   const overlayContainer = document.getElementById('overlay-container');
+  const phaseDots = document.getElementById('phase-dots');
+  const toastContainer = document.getElementById('toast-container');
+  const fab = document.getElementById('fab-advance');
 
   // Site config (defaults for Chapter 1)
   const siteConfig = { sunHours: 6, trellis: true, orientation: 'ew' };
+
+  // Toast notification system
+  function showToast(message, durationMs) {
+    if (!toastContainer) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.classList.add('is-visible');
+    });
+    setTimeout(() => {
+      toast.classList.remove('is-visible');
+      setTimeout(() => toast.remove(), 300);
+    }, durationMs || 2200);
+  }
+
+  // Phase progress dots
+  function updatePhaseDots() {
+    if (!phaseDots) return;
+    const currentIndex = PHASE_ORDER.indexOf(state.season.phase);
+    phaseDots.innerHTML = PHASE_ORDER.map((p, i) => {
+      let cls = 'phase-dot';
+      if (i < currentIndex) cls += ' phase-dot--done';
+      else if (i === currentIndex) cls += ' phase-dot--active';
+      return `<span class="${cls}" title="${getPhaseLabel(p)}"></span>`;
+    }).join('');
+  }
+
+  // FAB visibility
+  function updateFAB() {
+    if (!fab) return;
+    if (canAdvance(state.season)) {
+      fab.classList.add('is-visible');
+      fab.textContent = state.season.phase === PHASES.PLANNING ? 'Commit' : 'Next';
+    } else {
+      fab.classList.remove('is-visible');
+    }
+  }
 
   function updateHUD() {
     hudChapter.textContent = `Chapter ${state.campaign.currentChapter}`;
@@ -51,6 +165,28 @@ function mount() {
       const result = scoreBed(state.season.grid, siteConfig, state.season.season, state.campaign.pantry);
       hudScore.textContent = result.score > 0 ? result.score.toString() : '--';
     }
+
+    updatePhaseDots();
+    updateFAB();
+  }
+
+  // Phase advance logic
+  function doAdvance() {
+    if (!canAdvance(state.season)) return;
+    const prevPhase = state.season.phase;
+    advance(state.season);
+
+    // Show event if active
+    if (state.season.eventActive) {
+      showToast(`${state.season.eventActive.title}: ${state.season.eventActive.description}`, 3500);
+      // Auto-clear event so canAdvance works for next beat
+      state.season.eventActive = null;
+    } else {
+      showToast(`Phase: ${getPhaseLabel(state.season.phase)}`, 1800);
+    }
+
+    updateHUD();
+    saveCampaign(state.campaign);
   }
 
   // Chapter intro
@@ -58,6 +194,7 @@ function mount() {
     const chapter = state.campaign.currentChapter;
     const intro = document.createElement('div');
     intro.className = 'chapter-intro';
+    intro.style.animation = 'fadeInIntro 0.6s ease-out both';
     intro.innerHTML = `
       <div class="chapter-num">Chapter ${chapter}</div>
       <h2>${getChapterTitle(chapter)}</h2>
@@ -65,8 +202,11 @@ function mount() {
       <div class="tap-hint">Tap to begin</div>
     `;
     intro.addEventListener('click', () => {
-      intro.remove();
-      state.showChapterIntro = false;
+      intro.style.animation = 'fadeOutIntro 0.3s ease-in both';
+      setTimeout(() => {
+        intro.remove();
+        state.showChapterIntro = false;
+      }, 300);
     });
     overlayContainer.appendChild(intro);
   }
@@ -78,27 +218,59 @@ function mount() {
     sheet.className = 'panel-sheet is-open';
     sheet.innerHTML = `
       <div class="panel-handle"></div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.4);margin-bottom:12px;">Select Crop</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">
-        ${crops.map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.4);">Select Crop</div>
+        <button id="palette-dismiss" style="
+          background:none;border:1px solid rgba(247,242,234,0.15);
+          color:rgba(247,242,234,0.5);font-size:18px;
+          width:28px;height:28px;border-radius:6px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+          line-height:1;padding:0;
+        ">&times;</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;">
+        ${crops.map(c => {
+          const badgeColor = FACTION_BADGE_COLORS[c.faction] || '#888';
+          const badgeName = FACTION_NAMES[c.faction] || c.faction;
+          const isSelected = state.selectedCropId === c.id;
+          return `
           <button data-crop="${c.id}" style="
             background:rgba(247,242,234,0.06);
-            border:1px solid ${state.selectedCropId === c.id ? '#e8c84a' : 'rgba(247,242,234,0.1)'};
+            border:1px solid ${isSelected ? '#e8c84a' : 'rgba(247,242,234,0.1)'};
             border-radius:8px;padding:10px 8px;cursor:pointer;color:#f7f2ea;
             font-family:'DM Sans',sans-serif;font-size:13px;text-align:center;
             transition:border-color 0.15s;
           ">
-            <div style="font-size:22px;margin-bottom:4px;">${c.emoji}</div>
-            <div style="font-size:11px;line-height:1.3;">${c.name}</div>
+            <div style="font-size:22px;margin-bottom:2px;">${c.emoji}</div>
+            <div style="font-size:11px;line-height:1.3;margin-bottom:4px;">${c.name}</div>
+            <span style="
+              display:inline-block;
+              font-family:'DM Mono',monospace;
+              font-size:9px;
+              padding:2px 6px;
+              border-radius:999px;
+              background:${badgeColor}22;
+              color:${badgeColor};
+              border:1px solid ${badgeColor}44;
+              letter-spacing:0.05em;
+              text-transform:uppercase;
+            ">${badgeName}</span>
           </button>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
     sheet.addEventListener('click', (e) => {
+      if (e.target.closest('#palette-dismiss')) {
+        sheet.classList.remove('is-open');
+        setTimeout(() => sheet.remove(), 300);
+        return;
+      }
       const btn = e.target.closest('[data-crop]');
       if (btn) {
         state.selectedCropId = btn.dataset.crop;
-        sheet.remove();
+        sheet.classList.remove('is-open');
+        setTimeout(() => sheet.remove(), 300);
       }
     });
     panelContainer.innerHTML = '';
@@ -122,23 +294,31 @@ function mount() {
       cell.cropId = null;
     } else if (state.selectedCropId) {
       cell.cropId = state.selectedCropId;
+      // Brief green highlight after placement
+      scene.flashCell(cellIndex, 0x4a9a4a, 350);
     } else {
       showCropPalette();
     }
     updateHUD();
   });
 
-  // Advance phase button (temporary — will be replaced by proper UI)
+  // Advance phase — keyboard
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && canAdvance(state.season)) {
-      advance(state.season);
-      updateHUD();
-      saveCampaign(state.campaign);
+    if (e.key === 'Enter') {
+      doAdvance();
     }
     if (e.key === 'p' || e.key === 'P') {
       showCropPalette();
     }
   });
+
+  // Advance phase — FAB button
+  if (fab) {
+    fab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      doAdvance();
+    });
+  }
 
   // Resize
   function resize() {

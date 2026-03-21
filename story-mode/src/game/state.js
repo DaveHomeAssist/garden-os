@@ -21,6 +21,18 @@ const COLS = 8;
 const ROWS = 4;
 const CELL_COUNT = COLS * ROWS;
 
+// All phases in order for progress indicator
+const PHASE_ORDER = [
+  PHASES.PLANNING,
+  PHASES.COMMIT,
+  PHASES.EARLY_SEASON,
+  PHASES.MID_SEASON,
+  PHASES.LATE_SEASON,
+  PHASES.HARVEST,
+  PHASES.REVIEW,
+  PHASES.TRANSITION,
+];
+
 function createEmptyGrid() {
   return Array.from({ length: CELL_COUNT }, () => ({
     cropId: null,
@@ -73,6 +85,7 @@ function createGameState() {
     season,
     selectedCropId: null,
     cameraMode: 'overview',
+    cameraWeight: 'overview',
     panelOpen: null,
     showChapterIntro: true,
   };
@@ -85,6 +98,7 @@ export {
   COLS,
   ROWS,
   CELL_COUNT,
+  PHASE_ORDER,
   createEmptyGrid,
   createSeasonState,
   createCampaignState,
