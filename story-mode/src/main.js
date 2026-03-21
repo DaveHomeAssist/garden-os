@@ -134,6 +134,7 @@ function startGame(state, viewport) {
   const phaseDots = document.getElementById('phase-dots');
   const toastContainer = document.getElementById('toast-container');
   const fab = document.getElementById('fab-advance');
+  const fabPlant = document.getElementById('fab-plant');
   const fabBackpack = document.getElementById('fab-backpack');
   let backpackOpen = false;
   let cropPaletteOpen = false;
@@ -294,6 +295,7 @@ function startGame(state, viewport) {
     if (!fab) return;
     if (!gameInputEnabled || cutsceneMachine.isActive()) {
       fab.classList.remove('is-visible');
+      if (fabPlant) fabPlant.classList.remove('is-visible');
       if (fabBackpack) fabBackpack.classList.add('is-hidden');
       return;
     }
@@ -302,6 +304,15 @@ function startGame(state, viewport) {
       fab.textContent = state.season.phase === PHASES.PLANNING ? 'Commit' : 'Next';
     } else {
       fab.classList.remove('is-visible');
+    }
+
+    if (fabPlant) {
+      if (state.season.phase === PHASES.PLANNING) {
+        fabPlant.classList.add('is-visible');
+      } else {
+        fabPlant.classList.remove('is-visible');
+        if (cropPaletteOpen) closePalette();
+      }
     }
 
     if (fabBackpack) {
@@ -672,6 +683,16 @@ function startGame(state, viewport) {
   fab?.addEventListener('click', (event) => {
     event.stopPropagation();
     doAdvance();
+  });
+
+  fabPlant?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (state.season.phase !== PHASES.PLANNING) return;
+    if (cropPaletteOpen) {
+      closePalette();
+    } else {
+      showCropPalette();
+    }
   });
 
   fabBackpack?.addEventListener('click', (event) => {
