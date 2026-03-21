@@ -1077,6 +1077,91 @@ export function createGardenScene(container) {
     return dome;
   }
 
+  function buildCompanionPatchProp() {
+    // Green ring glow on the cell — adjacency boost visual
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0x5aab6b,
+      transparent: true,
+      opacity: 0.35,
+      emissive: 0x3d7a4f,
+      emissiveIntensity: 0.4,
+      side: THREE.DoubleSide,
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.17, 16), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.01;
+    return ring;
+  }
+
+  function buildEventDamageProp() {
+    // Red crack marks on soil — event penalty visual
+    const group = new THREE.Group();
+    const crackMat = new THREE.MeshStandardMaterial({ color: 0x8b3a2a, roughness: 0.9 });
+    for (const [x, z, rot, len] of [
+      [-0.05, -0.04, 0.3, 0.12],
+      [0.06, 0.03, -0.5, 0.1],
+      [0.02, -0.08, 0.8, 0.08],
+    ]) {
+      const crack = new THREE.Mesh(new THREE.BoxGeometry(len, 0.003, 0.008), crackMat);
+      crack.position.set(x, 0.004, z);
+      crack.rotation.y = rot;
+      group.add(crack);
+    }
+    return group;
+  }
+
+  function buildPrunedProp() {
+    // Small cut stump left after pruning
+    const stumpMat = new THREE.MeshStandardMaterial({ color: 0x8a7a5a, roughness: 0.92 });
+    const stump = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.03, 6), stumpMat);
+    stump.position.y = 0.015;
+    stump.castShadow = true;
+    return stump;
+  }
+
+  function buildEnrichedProp() {
+    // Golden soil shimmer — enriched carry-forward
+    const glowMat = new THREE.MeshStandardMaterial({
+      color: 0xe8c84a,
+      transparent: true,
+      opacity: 0.15,
+      emissive: 0xe8c84a,
+      emissiveIntensity: 0.3,
+      side: THREE.DoubleSide,
+    });
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.15, 12), glowMat);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 0.005;
+    return disc;
+  }
+
+  function buildCompactedProp() {
+    // Dark cracked patches — compacted soil
+    const group = new THREE.Group();
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.98 });
+    for (const [x, z, s] of [[-0.06, -0.05, 0.07], [0.05, 0.04, 0.06], [0.0, -0.02, 0.05]]) {
+      const patch = new THREE.Mesh(new THREE.CircleGeometry(s, 5), darkMat);
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set(x, 0.003, z);
+      group.add(patch);
+    }
+    return group;
+  }
+
+  function buildFatigueProp() {
+    // Grey soil tint — depleted from consecutive heavy feeders
+    const greyMat = new THREE.MeshStandardMaterial({
+      color: 0x7a7a7a,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.DoubleSide,
+    });
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.14, 10), greyMat);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 0.004;
+    return disc;
+  }
+
   function buildCellSupportProps(cell) {
     const group = new THREE.Group();
     const crop = cell.cropId ? getCropById(cell.cropId) : null;
@@ -1094,6 +1179,36 @@ export function createGardenScene(container) {
 
     if (cell.protected) {
       group.add(buildProtectionProp());
+      hasProp = true;
+    }
+
+    if (cell.companionPatched) {
+      group.add(buildCompanionPatchProp());
+      hasProp = true;
+    }
+
+    if (cell.pruned && !cell.cropId) {
+      group.add(buildPrunedProp());
+      hasProp = true;
+    }
+
+    if (cell.eventDamaged) {
+      group.add(buildEventDamageProp());
+      hasProp = true;
+    }
+
+    if (cell.carryForwardType === 'enriched') {
+      group.add(buildEnrichedProp());
+      hasProp = true;
+    }
+
+    if (cell.carryForwardType === 'compacted') {
+      group.add(buildCompactedProp());
+      hasProp = true;
+    }
+
+    if ((cell.soilFatigue ?? 0) < -0.1) {
+      group.add(buildFatigueProp());
       hasProp = true;
     }
 
@@ -1209,6 +1324,11 @@ function getGrowthScale(phase, season) {
         support: Boolean(cell.cropId && getCropById(cell.cropId)?.support),
         mulched: Boolean(cell.mulched || cell.carryForwardType === 'mulched'),
         protected: Boolean(cell.protected),
+        companionPatched: Boolean(cell.companionPatched),
+        pruned: Boolean(cell.pruned),
+        eventDamaged: Boolean(cell.eventDamaged),
+        carryForwardType: cell.carryForwardType || null,
+        soilFatigue: Math.round((cell.soilFatigue ?? 0) * 10),
       });
       const propMesh = buildCellSupportProps(cell);
 

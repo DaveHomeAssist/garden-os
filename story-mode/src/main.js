@@ -1430,10 +1430,17 @@ function startGame(state, viewport) {
     showToast('Chapter restarted.', 1800);
   });
 
+  document.getElementById('pause-main-menu')?.addEventListener('click', () => {
+    persistState();
+    closePauseMenu();
+    loop.stop();
+    showTitleScreen();
+  });
+
   document.getElementById('pause-new')?.addEventListener('click', () => {
-    if (!confirm('Return to the title screen? Unsaved progress in this session will be lost.')) return;
-    pauseMenuOpen = false;
-    pauseOverlay.classList.remove('is-open');
+    if (!confirm('Delete this save slot and return to the title screen? This cannot be undone.')) return;
+    deleteCampaign(activeSlot);
+    closePauseMenu();
     loop.stop();
     showTitleScreen();
   });
