@@ -39,6 +39,31 @@ function createAdvanceResult() {
   };
 }
 
+function getEventSeverity(event) {
+  const modifier = Math.abs(event?.mechanicalEffect?.modifier ?? 0);
+  const duration = event?.mechanicalEffect?.duration ?? 'current_beat';
+  if (modifier >= 1.5 || duration === 'season' || event?.carryForward) return 'high';
+  if (modifier >= 0.75 || duration === 'current_season') return 'medium';
+  return 'low';
+}
+
+function createEventTrigger(season) {
+  if (!season.eventActive) return null;
+  return {
+    type: 'event_drawn',
+    eventId: season.eventActive.id,
+    eventTitle: season.eventActive.title,
+    eventDescription: season.eventActive.description,
+    eventCategory: season.eventActive.category,
+    eventValence: season.eventActive.valence,
+    eventSeverity: getEventSeverity(season.eventActive),
+    eventCarryForward: season.eventActive.carryForward?.effect ?? null,
+    eventCommentary: season.eventActive.commentary ?? null,
+    season: season.season,
+    chapter: season.chapter,
+  };
+}
+
 function assignBeatState(season, beatIndex) {
   season.beatIndex = beatIndex;
   season.interventionChosen = null;
@@ -194,15 +219,7 @@ export function advance(state) {
     season.interventionTokens = 3;
     assignBeatState(season, 0);
     result.seasonChanged = true;
-    if (season.eventActive) {
-      result.trigger = {
-        type: 'event_drawn',
-        eventId: season.eventActive.id,
-        eventTitle: season.eventActive.title,
-        season: season.season,
-        chapter: season.chapter,
-      };
-    }
+    result.trigger = createEventTrigger(season);
     return result;
   }
 
@@ -210,15 +227,7 @@ export function advance(state) {
     season.phase = nextPhase;
     assignBeatState(season, 1);
     result.seasonChanged = true;
-    if (season.eventActive) {
-      result.trigger = {
-        type: 'event_drawn',
-        eventId: season.eventActive.id,
-        eventTitle: season.eventActive.title,
-        season: season.season,
-        chapter: season.chapter,
-      };
-    }
+    result.trigger = createEventTrigger(season);
     return result;
   }
 
@@ -226,15 +235,7 @@ export function advance(state) {
     season.phase = nextPhase;
     assignBeatState(season, 2);
     result.seasonChanged = true;
-    if (season.eventActive) {
-      result.trigger = {
-        type: 'event_drawn',
-        eventId: season.eventActive.id,
-        eventTitle: season.eventActive.title,
-        season: season.season,
-        chapter: season.chapter,
-      };
-    }
+    result.trigger = createEventTrigger(season);
     return result;
   }
 

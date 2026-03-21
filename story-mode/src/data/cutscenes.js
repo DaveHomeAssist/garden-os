@@ -75,38 +75,91 @@ export const CUTSCENES = [
     { speaker: 'garden_gurl', text: 'A new chapter means a new bed, a new season, and new pressure.', emotion: 'warm', portraitAnim: 'talk', camera: 'overview', backdropTone: 'calm' },
   ]},
 
-  // ═══ EVENT REACTIONS ══════════════════════════════════════
+  // ═══ EVENT REACTIONS — by family ═════════════════════════
 
-  { id: 'event-drawn-generic', trigger: 'event_drawn', conditions: {}, priority: 70, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Something just shifted in the bed. Pay attention to the warning.', emotion: 'surprised', portraitAnim: 'surprised', camera: 'event-push', backdropTone: 'storm' },
-    { speaker: 'critters', text: 'We noticed first. You are simply late to the scene.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
+  // Weather — negative
+  { id: 'event-weather-frost', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative', season: 'spring' }, priority: 80, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Frost line is dropping. The tender crops feel it first.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'storm' },
+  ]},
+  { id: 'event-weather-heat', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative', season: 'summer' }, priority: 80, once: false, skippable: true, beats: [
+    { speaker: 'vegeman', text: 'This heat is serious. Even I would not plant into this.', emotion: 'surprised', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'heat' },
+  ]},
+  { id: 'event-weather-storm', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'negative' }, priority: 76, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Weather event. Check which cells are exposed.', emotion: 'neutral', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'storm' },
   ]},
 
-  { id: 'event-positive', trigger: 'event_drawn', conditions: { valence: 'positive' }, priority: 75, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Something good is happening out there. I can feel it.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'dawn' },
+  // Weather — positive
+  { id: 'event-weather-positive', trigger: 'event_drawn', conditions: { category: 'weather', valence: 'positive' }, priority: 78, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Rain when you need it. That is the kind of luck you cannot plan for.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'dawn' },
   ]},
 
-  { id: 'event-negative', trigger: 'event_drawn', conditions: { valence: 'negative' }, priority: 75, once: false, skippable: true, beats: [
-    { speaker: 'critters', text: 'Trouble incoming. We tried to warn you. Actually, no we did not.', emotion: 'smirk', portraitAnim: 'talk', camera: 'event-push', backdropTone: 'storm' },
-    { speaker: 'garden_gurl', text: 'Use your intervention wisely. You only get one per beat.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'overview' },
+  // Pests — negative
+  { id: 'event-pest-negative', trigger: 'event_drawn', conditions: { category: 'critter', valence: 'negative' }, priority: 80, once: false, skippable: true, beats: [
+    { speaker: 'critters', text: 'Found something. Stems are stressed. This is not our fault. Mostly.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
+  ]},
+
+  // Pests — mixed
+  { id: 'event-pest-mixed', trigger: 'event_drawn', conditions: { category: 'critter', valence: 'mixed' }, priority: 78, once: false, skippable: true, beats: [
+    { speaker: 'critters', text: 'Some of us eat the bad ones. Some of us are the bad ones. Good luck sorting it out.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
+  ]},
+
+  // Neighbor — positive
+  { id: 'event-neighbor-positive', trigger: 'event_drawn', conditions: { category: 'neighbor', valence: 'positive' }, priority: 78, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Neighbors looking out. That is how it works on this block.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'dawn' },
+  ]},
+
+  // Neighbor — negative
+  { id: 'event-neighbor-negative', trigger: 'event_drawn', conditions: { category: 'neighbor', valence: 'negative' }, priority: 78, once: false, skippable: true, beats: [
+    { speaker: 'critters', text: 'Foot traffic. Not ours this time. The damage is real though.', emotion: 'neutral', portraitAnim: 'talk', camera: 'event-push' },
+  ]},
+
+  // Family/memory — neutral
+  { id: 'event-memory', trigger: 'event_drawn', conditions: { category: 'family' }, priority: 80, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Something from the old days surfaced. The bed remembers more than you think.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'calm' },
+  ]},
+
+  // Phillies — any valence
+  { id: 'event-phillies', trigger: 'event_drawn', conditions: { category: 'phillies' }, priority: 78, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Phillies energy in the yard. That changes things, whether you believe it or not.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
+  ]},
+
+  // Infrastructure/soil
+  { id: 'event-infrastructure', trigger: 'event_drawn', conditions: { category: 'infrastructure' }, priority: 77, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Structural change in the bed. The soil state just shifted.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
+  ]},
+  { id: 'event-soil', trigger: 'event_drawn', conditions: { category: 'soil' }, priority: 77, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Soil condition update. This one carries forward.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'row-close' },
+  ]},
+
+  // Generic fallback — only if no family matched. Single line, no mechanic explanation.
+  { id: 'event-drawn-fallback', trigger: 'event_drawn', conditions: {}, priority: 65, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'New condition on the bed. Check the event card above the grid.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
   ]},
 
   // ═══ INTERVENTION MOMENTS ═════════════════════════════════
 
   { id: 'intervention-protect', trigger: 'intervention_used', conditions: { intervention: 'protect' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Smart. That cell is shielded for this beat.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
+    { speaker: 'garden_gurl', text: 'Shielded.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'intervention-mulch', trigger: 'intervention_used', conditions: { intervention: 'mulch' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Mulch holds the memory of good seasons. It carries forward.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
+    { speaker: 'onion_man', text: 'That mulch will matter in three weeks.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'intervention-prune', trigger: 'intervention_used', conditions: { intervention: 'prune' }, priority: 60, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'Bold move. Sometimes you have to cut to grow.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'row-close' },
+    { speaker: 'vegeman', text: 'Gone. Sometimes the best move is subtraction.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'row-close' },
+  ]},
+
+  { id: 'intervention-swap', trigger: 'intervention_used', conditions: { intervention: 'swap' }, priority: 60, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Repositioned. The scoring factors just changed.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close' },
+  ]},
+
+  { id: 'intervention-companion-patch', trigger: 'intervention_used', conditions: { intervention: 'companion_patch' }, priority: 60, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Good neighbors make good gardens.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'intervention-accept', trigger: 'intervention_used', conditions: { intervention: 'accept_loss' }, priority: 55, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Accepted. The bed absorbs the hit. Move forward.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
+    { speaker: 'garden_gurl', text: 'Noted.', emotion: 'neutral', portraitAnim: 'talk', camera: 'overview' },
   ]},
 
   // ═══ HARVEST REACTIONS ════════════════════════════════════
@@ -121,22 +174,38 @@ export const CUTSCENES = [
     { speaker: 'garden_gurl', text: 'A clean harvest. Nothing wasted, nothing accidental.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'harvest-gold', duration: 1800 },
   ]},
 
+  // Season-specific B grades
+  { id: 'harvest-grade-b-spring', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'spring' }, priority: 76, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'First season holding. The roots took. That is what spring is for.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
+  ]},
+  { id: 'harvest-grade-b-summer', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'summer' }, priority: 76, once: false, skippable: true, beats: [
+    { speaker: 'vegeman', text: 'Survived the heat. Not perfect, but nothing burned. I respect that.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
+  ]},
+  { id: 'harvest-grade-b-fall', trigger: 'harvest_complete', conditions: { grade: 'B', season: 'fall' }, priority: 76, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'Fall harvest. Solid. The pantry gets what the bed promised.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
+  ]},
+  // B fallback
   { id: 'harvest-grade-b', trigger: 'harvest_complete', conditions: { grade: 'B' }, priority: 75, once: false, skippable: true, beats: [
     { speaker: 'onion_man', text: 'Solid work. Not everything landed, but the bed held together.', emotion: 'warm', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'harvest-gold' },
   ]},
 
+  // Season-specific C grades
+  { id: 'harvest-grade-c-spring', trigger: 'harvest_complete', conditions: { grade: 'C', season: 'spring' }, priority: 71, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'Spring is forgiving. The next season will not be. Study the factors.', emotion: 'neutral', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
+  ]},
+  { id: 'harvest-grade-c-summer', trigger: 'harvest_complete', conditions: { grade: 'C', season: 'summer' }, priority: 71, once: false, skippable: true, beats: [
+    { speaker: 'garden_gurl', text: 'The heat exposed the weak placements. Sun fit is carrying you or sinking you.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
+  ]},
   { id: 'harvest-grade-c', trigger: 'harvest_complete', conditions: { grade: 'C' }, priority: 70, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Passing, but barely. The scoring factors tell the story. Study them.', emotion: 'neutral', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
+    { speaker: 'garden_gurl', text: 'Passing. The scoring factors tell you exactly where it went wrong.', emotion: 'neutral', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'calm' },
   ]},
 
   { id: 'harvest-grade-d', trigger: 'harvest_complete', conditions: { grade: 'D' }, priority: 70, once: false, skippable: true, beats: [
-    { speaker: 'critters', text: 'That was... educational. For everyone.', emotion: 'smirk', portraitAnim: 'talk', camera: 'harvest-hero', backdropTone: 'loss' },
-    { speaker: 'onion_man', text: 'Bad seasons teach more than good ones. Mom said that after the drought of 2019.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'Rough season. Mom had those too. She came back every time.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'harvest-grade-f', trigger: 'harvest_complete', conditions: { grade: 'F' }, priority: 72, once: false, skippable: true, beats: [
-    { speaker: 'vegeman', text: 'Okay. That happened. We do NOT talk about it. We just plant better next time.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'loss' },
-    { speaker: 'garden_gurl', text: 'Check your sun fit and season alignment. Those two factors carry the most weight.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'overview' },
+    { speaker: 'vegeman', text: 'That happened. We do not talk about it. We just plant better.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'harvest-hero', backdropTone: 'loss' },
   ]},
 
   // Fallback harvest
@@ -164,29 +233,25 @@ export const CUTSCENES = [
   // ═══ FIRST-TIME MILESTONES ════════════════════════════════
 
   { id: 'first-companion-bonus', trigger: 'placement_companion_found', conditions: {}, priority: 85, once: true, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Companion match detected. Those two crops boost each other. That is +0.5 adjacency.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'row-close' },
     { speaker: 'onion_man', text: 'Mom always planted basil next to tomatoes. Said they were friends.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'first-conflict', trigger: 'placement_conflict_found', conditions: {}, priority: 85, once: true, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Conflict detected. Those two crops penalize each other. Check your adjacency score.', emotion: 'surprised', portraitAnim: 'surprised', camera: 'row-close' },
-    { speaker: 'critters', text: 'We love a messy garden. More conflict means more chaos. More chaos means more of us.', emotion: 'smirk', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'critters', text: 'Those two do not get along. We can tell from here.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'first-trellis-use', trigger: 'placement_trellis_correct', conditions: {}, priority: 85, once: true, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'Climber on the trellis row. Support factor is maxed. Well done.', emotion: 'warm', portraitAnim: 'emphasis', camera: 'row-close' },
+    { speaker: 'garden_gurl', text: 'Wire row. That crop has something to climb. Good.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'full-bed', trigger: 'bed_full', conditions: {}, priority: 80, once: true, skippable: true, beats: [
     { speaker: 'vegeman', text: 'EVERY CELL PLANTED. That is what I am TALKING about!', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'overview', backdropTone: 'celebration' },
-    { speaker: 'garden_gurl', text: 'Full bed. Watch your fill ratio — diversity matters more than density.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   // ═══ RECIPE MOMENTS ═══════════════════════════════════════
 
   { id: 'recipe-first-unlock', trigger: 'recipe_unlocked', conditions: {}, priority: 90, once: true, skippable: true, beats: [
     { speaker: 'onion_man', text: 'Your first recipe. The pantry remembers what the bed produced.', emotion: 'warm', portraitAnim: 'talk', camera: 'overview', backdropTone: 'harvest-gold' },
-    { speaker: 'garden_gurl', text: 'Recipes give a scoring bonus. Keep growing the right ingredients.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'recipe-moms-sauce', trigger: 'recipe_unlocked', conditions: { recipeId: 'moms_sauce' }, priority: 95, once: true, skippable: true, beats: [
