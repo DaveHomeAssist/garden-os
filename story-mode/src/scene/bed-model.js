@@ -124,6 +124,19 @@ export function buildBed() {
     group.add(slat);
   }
 
+  // Trellis wires — horizontal tension wires across the trellis frame
+  const trellisWireHeights = [0.3, 0.6, 0.9];
+  for (const wy of trellisWireHeights) {
+    const wire = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.006, 0.006, trellisWidth + 0.04, 4),
+      new THREE.MeshStandardMaterial({ color: 0x8a8a7a, roughness: 0.5, metalness: 0.6 })
+    );
+    wire.rotation.z = Math.PI / 2;
+    wire.position.set(0, wy, trellisZ - 0.01);
+    wire.name = 'trellis-wire';
+    group.add(wire);
+  }
+
   // Front critter guard — low frame plus chicken wire
   const guardHeight = 0.42;
   const guardZ = bedDepth / 2 + FRAME_THICKNESS * 0.55;

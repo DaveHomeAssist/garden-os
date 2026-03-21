@@ -29,12 +29,12 @@ const CROP_COLORS = {
 };
 
 const CAMERA_PRESETS = {
-  overview: { position: [0.15, 4.0, 7.2], target: [0, 0.75, -0.2], fov: 36 },
-  'bed-low-angle': { position: [-0.35, 2.4, 4.8], target: [0, 0.58, -0.25], fov: 50 },
-  'row-close': { position: [2.15, 2.7, 3.9], target: [1.0, 0.48, -0.25], fov: 48 },
-  'event-push': { position: [0, 3.4, 5.4], target: [0, 0.52, -0.2], fov: 38 },
-  'harvest-hero': { position: [0, 3.8, 4.9], target: [0, 0.54, -0.12], fov: 34 },
-  'front-access': { position: [0, 3.4, 8.0], target: [0, 0.5, -0.28], fov: 42 },
+  overview: { position: [0, 3.15, 5.35], target: [0, 0.5, -0.1], fov: 29 },
+  'bed-low-angle': { position: [0, 2.25, 4.2], target: [0, 0.46, -0.18], fov: 34 },
+  'row-close': { position: [0.95, 2.15, 3.7], target: [0.45, 0.42, -0.16], fov: 35 },
+  'event-push': { position: [0, 2.75, 4.55], target: [0, 0.46, -0.16], fov: 32 },
+  'harvest-hero': { position: [0, 3.1, 4.25], target: [0, 0.5, -0.08], fov: 30 },
+  'front-access': { position: [0, 3.0, 5.95], target: [0, 0.48, -0.2], fov: 34 },
 };
 
 const MOOD_PRESETS = {
@@ -113,9 +113,9 @@ export function createGardenScene(container) {
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   // Start from the front/access side looking back toward the house wall.
-  camera.position.set(0.15, 4.0, 7.2);
-  camera.lookAt(0, 0.75, -0.2);
-  const cameraLookTarget = new THREE.Vector3(0, 0.75, -0.2);
+  camera.position.set(0, 3.15, 5.35);
+  camera.lookAt(0, 0.5, -0.1);
+  const cameraLookTarget = new THREE.Vector3(0, 0.5, -0.1);
   let cameraTransition = null;
   let moodTransition = null;
 
@@ -187,6 +187,64 @@ export function createGardenScene(container) {
   const scenery = buildScenery();
   root.add(scenery.group);
 
+  // ── Creature meshes ──────────────────────────────────────────────────────
+  // Cat silhouette on fence
+  const catGroup = new THREE.Group();
+  const catDarkMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
+
+  const catBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), catDarkMat);
+  catBody.position.set(0, 0, 0);
+  catGroup.add(catBody);
+
+  const catHead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), catDarkMat);
+  catHead.position.set(0.07, 0.04, 0);
+  catGroup.add(catHead);
+
+  // Ears — two small cones
+  for (const ex of [-0.012, 0.012]) {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 4), catDarkMat);
+    ear.position.set(0.07 + ex, 0.075, 0);
+    catGroup.add(ear);
+  }
+
+  // Tail — thin cylinder angled upward
+  const catTail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 5), catDarkMat);
+  catTail.rotation.z = -0.7;
+  catTail.position.set(-0.09, 0.04, 0);
+  catGroup.add(catTail);
+
+  catGroup.position.set(5.0, 0.5, 0.5);
+  catGroup.visible = false;
+  root.add(catGroup);
+
+  // Neighbor arm reaching over fence
+  const neighborGroup = new THREE.Group();
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
+  const bagMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 }); // compost-brown bag
+
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), skinMat);
+  arm.rotation.z = Math.PI / 4; // angled, reaching over the fence
+  arm.position.set(0, 0, 0);
+  neighborGroup.add(arm);
+
+  // Hand / compost bag at the end of the arm
+  const handBag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.06), bagMat);
+  handBag.position.set(0.2, -0.2, 0);
+  neighborGroup.add(handBag);
+
+  neighborGroup.position.set(4.8, 0.8, -0.2);
+  neighborGroup.visible = false;
+  root.add(neighborGroup);
+
+  // Collect trellis wire refs after bed group is already added to root
+  const trellisWires = [];
+  bed.group.traverse((child) => {
+    if (child.isMesh && child.name === 'trellis-wire') {
+      trellisWires.push({ mesh: child, baseX: child.position.x });
+    }
+  });
+  // ── End creature meshes ──────────────────────────────────────────────────
+
   // Weather effects (rain, frost, sun rays)
   const weather = createWeatherFX(scene);
 
@@ -210,6 +268,202 @@ export function createGardenScene(container) {
   fill.position.set(-4, 5, 4);
   scene.add(fill);
 
+
+  // ── Seasonal atmosphere elements ─────────────────────────────────────────
+
+  // 1. Fallen leaves (fall) — scattered on front gravel area
+  const fallLeaves = new THREE.Group();
+  {
+    const leafColors = [0xc96b2a, 0x8b4513, 0xa0522d];
+    const leafPositions = [
+      [-1.8, 2.6], [-0.6, 1.5], [0.4, 2.8], [1.2, 1.8], [-0.2, 3.1],
+      [0.9, 2.2], [-1.2, 3.3], [1.8, 1.4], [-0.8, 2.0], [0.2, 1.6],
+      [-1.5, 1.9], [0.7, 3.0], [-0.4, 1.3], [1.4, 2.7], [-1.0, 2.4],
+      [0.5, 1.1], [-1.9, 3.0], [1.1, 3.2],
+    ];
+    leafPositions.forEach(([x, z], i) => {
+      const r = 0.02 + (i % 3) * 0.007;
+      const geo = new THREE.CircleGeometry(r, 6);
+      const mat = new THREE.MeshStandardMaterial({
+        color: leafColors[i % leafColors.length],
+        roughness: 0.9,
+        side: THREE.DoubleSide,
+      });
+      const leaf = new THREE.Mesh(geo, mat);
+      leaf.rotation.x = -Math.PI / 2;
+      leaf.rotation.z = i * 0.71;
+      leaf.position.set(x, 0.008, z);
+      fallLeaves.add(leaf);
+    });
+  }
+  fallLeaves.visible = false;
+  root.add(fallLeaves);
+
+  // 2. Snow dusting (winter) — thin white patches on frame edges and trellis rails
+  const snowDusting = new THREE.Group();
+  {
+    const snowMat = new THREE.MeshStandardMaterial({ color: 0xf0f4ff, roughness: 0.85 });
+    const bedWidthSnow = 8 * 0.5;
+    const bedDepthSnow = 4 * 0.5;
+    const frameHSnow = 0.15;
+    const frZSnow  =  bedDepthSnow / 2 + 0.03;
+    const bkZSnow  = -(bedDepthSnow / 2 + 0.03);
+    const trellisZSnow = -(bedDepthSnow / 2 + 0.06 * 0.15);
+    const trellisTopY  = 1.08;
+
+    const snowPatches = [
+      { w: bedWidthSnow + 0.12, d: 0.06, x: 0,                         y: frameHSnow + 0.003, z: frZSnow },
+      { w: bedWidthSnow + 0.12, d: 0.06, x: 0,                         y: frameHSnow + 0.003, z: bkZSnow },
+      { w: 0.06, d: bedDepthSnow,        x: -(bedWidthSnow / 2 + 0.03), y: frameHSnow + 0.003, z: 0      },
+      { w: 0.06, d: bedDepthSnow,        x:  (bedWidthSnow / 2 + 0.03), y: frameHSnow + 0.003, z: 0      },
+    ];
+    snowPatches.forEach(({ w, d, x, y, z }) => {
+      for (let k = 0; k < 8; k++) {
+        const patch = new THREE.Mesh(
+          new THREE.BoxGeometry(w / 8 * (0.6 + (k % 3) * 0.2), 0.005, d * (0.5 + (k % 2) * 0.3)),
+          snowMat
+        );
+        patch.position.set(x + (k - 3.5) * (w / 8), y, z);
+        snowDusting.add(patch);
+      }
+    });
+    for (let k = 0; k < 10; k++) {
+      const patch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.35 + (k % 3) * 0.1, 0.005, 0.03),
+        snowMat
+      );
+      patch.position.set(-1.7 + k * 0.38, trellisTopY + 0.028, trellisZSnow);
+      snowDusting.add(patch);
+    }
+    for (const px of [-1.94, 1.94]) {
+      for (let k = 0; k < 6; k++) {
+        const patch = new THREE.Mesh(
+          new THREE.BoxGeometry(0.06, 0.005, 0.03 + (k % 2) * 0.01),
+          snowMat
+        );
+        patch.position.set(px, 0.15 + k * 0.18, trellisZSnow);
+        snowDusting.add(patch);
+      }
+    }
+  }
+  snowDusting.visible = false;
+  root.add(snowDusting);
+
+  // 3. Puddles (spring) — flat reflective circles on gravel
+  const springPuddles = new THREE.Group();
+  {
+    const puddleBaseMat = new THREE.MeshStandardMaterial({
+      color: 0x6699aa,
+      roughness: 0.1,
+      metalness: 0.3,
+      opacity: 0.5,
+      transparent: true,
+    });
+    const puddleData = [
+      { r: 0.13, x: -0.9, z: 2.4 },
+      { r: 0.09, x:  1.3, z: 1.6 },
+      { r: 0.15, x:  0.3, z: 3.0 },
+      { r: 0.10, x: -2.0, z: 0.7 },
+    ];
+    puddleData.forEach(({ r, x, z }) => {
+      const puddle = new THREE.Mesh(new THREE.CircleGeometry(r, 16), puddleBaseMat.clone());
+      puddle.rotation.x = -Math.PI / 2;
+      puddle.position.set(x, 0.009, z);
+      springPuddles.add(puddle);
+    });
+  }
+  springPuddles.visible = false;
+  root.add(springPuddles);
+
+  // 4. Bird on trellis — body + head + beak + tail
+  const birdGroup = new THREE.Group();
+  {
+    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x3a3028, roughness: 0.85 });
+    const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xddaa44, roughness: 0.7 });
+
+    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.025, 7, 5), birdBodyMat);
+    birdBody.scale.set(1.4, 0.8, 1.1);
+    birdGroup.add(birdBody);
+
+    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 5), birdBodyMat);
+    birdHead.position.set(0.028, 0.018, 0);
+    birdGroup.add(birdHead);
+
+    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.022, 4), birdBeakMat);
+    birdBeak.rotation.z = -Math.PI / 2;
+    birdBeak.position.set(0.048, 0.016, 0);
+    birdGroup.add(birdBeak);
+
+    const birdTail = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.006, 0.01), birdBodyMat);
+    birdTail.position.set(-0.034, 0.004, 0);
+    birdTail.rotation.z = 0.25;
+    birdGroup.add(birdTail);
+  }
+  // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.06*0.15) ≈ -1.009
+  birdGroup.position.set(0.6, 1.095, -(4 * 0.5 / 2 + 0.06 * 0.15));
+  birdGroup.visible = true;
+  root.add(birdGroup);
+  let birdVisible = true;
+  let birdFlipTimer = 0;
+
+  // 5. String lights — 8 emissive bulbs between porch posts
+  const stringLights = new THREE.Group();
+  {
+    const lightBulbMat = new THREE.MeshStandardMaterial({
+      color: 0xffdd88,
+      emissive: 0xffdd88,
+      emissiveIntensity: 0.6,
+      roughness: 0.5,
+    });
+    // Porch posts: x=-3.38 and x=-1.72, z=-4.1 (from scenery.js)
+    const xA = -3.38;
+    const xB = -1.72;
+    const yLine = 2.5;
+    const zLine = -4.08;
+    for (let i = 0; i < 8; i++) {
+      const t = i / 7;
+      const x = xA + (xB - xA) * t;
+      const sag = -0.06 * Math.sin(t * Math.PI);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), lightBulbMat.clone());
+      bulb.position.set(x, yLine + sag, zLine);
+      stringLights.add(bulb);
+    }
+  }
+  stringLights.visible = false;
+  root.add(stringLights);
+
+  // 6. Butterfly particles (summer) — 3 small billboard planes, animated in render loop
+  const butterflies = new THREE.Group();
+  const butterflyData = [];
+  {
+    const bfBaseMat = new THREE.MeshStandardMaterial({
+      color: 0xf4a460,
+      roughness: 0.5,
+      side: THREE.DoubleSide,
+      emissive: 0xf4a460,
+      emissiveIntensity: 0.15,
+    });
+    const bfConfigs = [
+      { x: -0.4, y: 0.55, z:  0.8, phase: 0.0, speed: 1.1 },
+      { x:  0.8, y: 0.65, z: -0.3, phase: 1.8, speed: 0.9 },
+      { x: -1.0, y: 0.72, z: -0.9, phase: 3.5, speed: 1.3 },
+    ];
+    bfConfigs.forEach((cfg) => {
+      const bf = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), bfBaseMat.clone());
+      bf.position.set(cfg.x, cfg.y, cfg.z);
+      butterflies.add(bf);
+      butterflyData.push({ mesh: bf, baseX: cfg.x, baseY: cfg.y, baseZ: cfg.z, phase: cfg.phase, speed: cfg.speed });
+    });
+  }
+  butterflies.visible = false;
+  root.add(butterflies);
+
+  // Accumulated time for atmosphere animations
+  let atmosphereTime = 0;
+  let atmosphereLastNow = performance.now();
+
+  // ── End atmosphere elements ───────────────────────────────────────────────
+
   // Camera controller
   const camCtrl = createCameraController(camera, renderer.domElement);
 
@@ -224,6 +478,7 @@ export function createGardenScene(container) {
   let targetableCellIndices = new Set();
   let currentGridState = [];
   let currentSeasonId = 'spring';
+  let lastSyncedState = null; // used by render() for event-reactive effects
 
   function getCellDisplayColor(index) {
     const mesh = bed.cellMeshes[index];
@@ -822,6 +1077,17 @@ function getGrowthScale(phase, season) {
 
     // Update tree foliage colors
     scenery.updateSeason(season);
+
+    // ── Atmosphere element visibility by season ────────────────────────────
+    fallLeaves.visible   = season === 'fall';
+    snowDusting.visible  = season === 'winter';
+    springPuddles.visible = season === 'spring';
+    butterflies.visible  = season === 'summer';
+    // Bird: always potentially visible (toggled in render loop) except winter
+    if (season === 'winter') {
+      birdGroup.visible = false;
+    }
+    // ── End season visibility ──────────────────────────────────────────────
   }
 
   let lastSeason = null;
@@ -862,6 +1128,9 @@ function getGrowthScale(phase, season) {
       toFillIntensity: preset.fillIntensity,
       toSkyTint: new THREE.Color(preset.skyTint),
     };
+
+    // String lights: show during night mood
+    stringLights.visible = (name === 'night');
   }
 
   function resetMood() {
@@ -943,6 +1212,7 @@ function getGrowthScale(phase, season) {
       camera.updateProjectionMatrix();
     },
     sync(state) {
+      lastSyncedState = state;
       currentGridState = state.season.grid;
       currentSeasonId = state.season.season;
       for (let i = 0; i < bed.cellMeshes.length; i++) {
@@ -961,8 +1231,68 @@ function getGrowthScale(phase, season) {
       weather.update(0.016);
       camCtrl.update();
       updateTransitions(performance.now());
+
+      // ── Creature visibility ────────────────────────────────────────────
+      const ev = state.season?.currentEvent ?? null;
+      const evTitle = ev?.title ?? '';
+      const evCategory = ev?.category ?? '';
+      const evValence = ev?.valence ?? '';
+
+      // Cat: show for critter events with 'cat' or 'alley' in the title
+      catGroup.visible = (
+        evCategory === 'critter' &&
+        (evTitle.toLowerCase().includes('cat') || evTitle.toLowerCase().includes('alley'))
+      );
+
+      // Neighbor arm: show for positive neighbor events
+      neighborGroup.visible = (evCategory === 'neighbor' && evValence === 'positive');
+      // ── End creature visibility ────────────────────────────────────────
     },
     render() {
+      const time = performance.now() * 0.001; // seconds
+
+      // ── Trellis wire wind oscillation ──────────────────────────────────
+      const ev = lastSyncedState?.season?.currentEvent ?? null;
+      const isWindEvent = (ev?.category === 'weather') &&
+        (ev?.title?.toLowerCase().includes('wind') || ev?.title?.toLowerCase().includes('storm'));
+      if (isWindEvent && trellisWires.length > 0) {
+        for (const { mesh, baseX } of trellisWires) {
+          mesh.position.x = baseX + Math.sin(time * 8) * 0.003;
+        }
+      } else {
+        for (const { mesh, baseX } of trellisWires) {
+          mesh.position.x = baseX;
+        }
+      }
+      // ── End wire oscillation ───────────────────────────────────────────
+
+      // ── Atmosphere animations ──────────────────────────────────────────
+      const now = performance.now();
+      const dt = Math.min((now - atmosphereLastNow) * 0.001, 0.1);
+      atmosphereLastNow = now;
+      atmosphereTime += dt;
+
+      // Butterfly sine-wave drift (only when visible)
+      if (butterflies.visible) {
+        butterflyData.forEach(({ mesh, baseX, baseY, baseZ, phase, speed }) => {
+          mesh.position.x = baseX + Math.sin(atmosphereTime * speed + phase) * 0.08;
+          mesh.position.y = baseY + Math.sin(atmosphereTime * speed * 1.3 + phase + 1.0) * 0.04;
+          mesh.position.z = baseZ + Math.cos(atmosphereTime * speed * 0.7 + phase) * 0.06;
+          // Always face camera (billboard)
+          mesh.quaternion.copy(camera.quaternion);
+        });
+      }
+
+      // Bird random perch: flip every ~4-8 seconds, 50% chance visible
+      birdFlipTimer += dt;
+      if (birdFlipTimer > 4 + Math.sin(atmosphereTime * 0.17) * 2) {
+        birdFlipTimer = 0;
+        birdVisible = Math.sin(atmosphereTime * 137.5) > 0;
+        const season = lastSyncedState?.season?.season ?? 'spring';
+        birdGroup.visible = birdVisible && season !== 'winter';
+      }
+      // ── End atmosphere animations ──────────────────────────────────────
+
       renderer.render(scene, camera);
     },
     raycastCell,

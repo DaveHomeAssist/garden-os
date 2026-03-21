@@ -89,3 +89,8 @@ Update 2026-03-21 front-of-bed camera rebuild:
 - Updated `src/scene/camera-controller.js` to use front-facing orbit defaults too, so touch/mouse camera control no longer snaps the player back to the old rear view on boot.
 - Simplified `src/scene/scenery.js` by removing the extra generic rowhouse block and keeping the flatter house wall / porch / neighbor composition behind the bed as the actual backdrop.
 - Validation: `npx vite build` passed, and a fresh Playwright screenshot at `story-mode/output/web-game/shot-0.png` confirmed the opening frame now shows the front guard in the foreground and the house behind the garden.
+
+Update 2026-03-21 scene-orientation correction:
+- The first front-yard pass still read wrong in play because the house wall mass sat too close to the frame and still looked like it belonged on the access side during cutscenes.
+- Pushed the house wall, porch, and neighbor structures farther back behind the trellis plane in `src/scene/scenery.js`, and tightened the cutscene/default camera presets in `src/scene/garden-scene.js` so the bed stays centered and the wall reads unmistakably as the back side of the garden.
+- Validation: `npx vite build` passed again, and the refreshed screenshot in `story-mode/output/web-game/shot-0.png` now shows the wall running behind the trellis rather than beside the access path.
