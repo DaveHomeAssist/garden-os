@@ -185,6 +185,12 @@ function startGame(state, viewport) {
         return;
       }
 
+      if (postCutsceneAction === 'transition') {
+        postCutsceneAction = null;
+        openSeasonTransitionOverlay();
+        return;
+      }
+
       setGameInputEnabled(true);
     },
     gardenScene: scene,
@@ -339,6 +345,14 @@ function startGame(state, viewport) {
   }
 
   const SEASON_ICONS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: '❄️' };
+  const SEASON_LABELS = { spring: 'Spring', summer: 'Summer', fall: 'Fall', winter: 'Winter' };
+
+  function getRotatedSeasonLabel(seasonId) {
+    const order = ['spring', 'summer', 'fall', 'winter'];
+    const idx = order.indexOf(seasonId);
+    const next = order[(idx + 1) % order.length] ?? 'spring';
+    return SEASON_LABELS[next];
+  }
 
   function updateHUD() {
     hudChapter.textContent = `Ch ${state.campaign.currentChapter}`;
@@ -680,6 +694,48 @@ function startGame(state, viewport) {
     );
   }
 
+  function openSeasonTransitionOverlay() {
+    const overlayContainer = document.getElementById('overlay-container');
+    const existing = overlayContainer.querySelector('#season-transition-overlay');
+    if (existing) existing.remove();
+
+    const nextChapter = state.campaign.currentChapter + 1;
+    const campaignComplete = nextChapter > 12;
+    const nextSeasonLabel = getRotatedSeasonLabel(state.season.season);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'chapter-intro';
+    overlay.id = 'season-transition-overlay';
+    overlay.innerHTML = `
+      <div class="chapter-num">Season Complete</div>
+      <h2>${campaignComplete ? 'The Garden Stays' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
+      <p>
+        ${campaignComplete
+          ? 'You have reached the end of the current campaign. Continue to view the closing season.'
+          : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
+      </p>
+      <div class="tap-hint" style="margin-top:20px;margin-bottom:10px;">
+        ${campaignComplete ? 'Tap continue for the ending' : 'Tap continue to roll into the next season'}
+      </div>
+      <div class="start-choice-actions">
+        <button type="button" class="start-choice-btn start-choice-btn--primary" id="season-transition-continue">
+          ${campaignComplete ? 'Continue' : `Continue to Chapter ${nextChapter}`}
+        </button>
+      </div>
+    `;
+
+    overlay.querySelector('#season-transition-continue')?.addEventListener('click', () => {
+      overlay.style.animation = 'fadeOutIntro 0.25s ease-in both';
+      setTimeout(() => {
+        overlay.remove();
+        setGameInputEnabled(true);
+        doAdvance();
+      }, 220);
+    });
+
+    overlayContainer.appendChild(overlay);
+  }
+
   function handleNarrativeTrigger(trigger) {
     if (!trigger) {
       setGameInputEnabled(true);
@@ -692,6 +748,8 @@ function startGame(state, viewport) {
         openEventCard();
       } else if (trigger.type === 'harvest_complete') {
         openHarvestReveal();
+      } else if (trigger.type === 'chapter_complete') {
+        openSeasonTransitionOverlay();
       } else {
         setGameInputEnabled(true);
       }
@@ -702,6 +760,8 @@ function startGame(state, viewport) {
       postCutsceneAction = 'event';
     } else if (trigger.type === 'harvest_complete') {
       postCutsceneAction = 'harvest';
+    } else if (trigger.type === 'chapter_complete') {
+      postCutsceneAction = 'transition';
     } else {
       postCutsceneAction = null;
     }
