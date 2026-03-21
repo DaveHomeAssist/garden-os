@@ -602,7 +602,7 @@ const CHAPTERS={
 1:{name:'First Light',year:1,season:'spring',scoreTarget:4.0,mechanic:'Basic Placement',mechanicHint:'Select a crop. Place it in a cell. Commit when ready.',
   opening:'The bed is under a blue tarp. Rain has pooled in the center fold. You pull the tarp back and see 32 empty cells of cedar and soil, built by someone who does not use them anymore.',
   gurlIntro:'This bed has good bones. Let us see if you do.',
-  onionIntro:'Just start somewhere. The first one does not have to be perfect. It just has to go in the ground.',
+  onionIntro:'She built this. You are the one who gets to use it. Just start somewhere. The first one does not have to be perfect. It just has to go in the ground.',
   successGurl:'Functional first draft. No hard violations. You are not hopeless.',
   successOnion:'Okay. Okay. That looks like something. That looks like the beginning of something.',
   failGurl:'You placed eleven crops and created twelve problems. That is almost impressive.',
@@ -636,10 +636,10 @@ const CHAPTERS={
   onionIntro:'The offseason is for planning. The Phillies know this. Sometimes.',
   successGurl:'Year one average: above threshold on all three seasons. Clean record to build on.',
   successOnion:'We did that. Three seasons. Real food potential. I need a minute.',
-  failGurl:'Year one data logged. There is room for improvement. Significant room.',
+  failGurl:'Year one data logged. Multiple categories below threshold. The improvement curve starts now.',
   failOnion:'The offseason is for planning. The Phillies know this. Sometimes.',
   transition:'Year 2. The light shifts. Spring again. But the bed is not new anymore.',
-  unlock:'Season Journal unlocked.'},
+  unlock:'Season Journal unlocked. Best cell per season now tracked.'},
 5:{name:'Quick Harvest',year:2,season:'spring',scoreTarget:6.5,mechanic:'Crop Diversity',mechanicHint:'Four or more crop types triggers a diversity bonus. Three or fewer is a monoculture.',
   opening:'Year 2 spring. The tarp comes off faster this time. The player knows the bed. The soil looks different, darker, more worked.',
   gurlIntro:'You have been planting by instinct. Now plant by variety. Four or more crop types in one season triggers a diversity bonus.',
@@ -673,7 +673,7 @@ const CHAPTERS={
 8:{name:'The Seedling',year:2,season:'winter',scoreTarget:0,mechanic:'Narrative Memory',mechanicHint:'The bed carries history. Certain crops now have lineage markers.',
   opening:'The bed is covered. Winter again. The review screen has a new element: a small annotation next to the tomato crop icon. It reads: Original seedling line.',
   gurlIntro:'Cedar condition: stable. Trellis wire: intact. The infrastructure is sound.',
-  onionIntro:'You know where the first tomato came from? The guy two doors down gave Mom a seedling. The tomatoes in this bed started with a gift.',
+  onionIntro:'You know where the first tomato came from? The guy two doors down gave Mom a seedling twenty years ago. Every cherry tomato in this bed traces back to that one plant. Whether you planted them yet or not, the lineage is in the soil.',
   successGurl:'Year two data archived. Cedar condition: stable. Trellis wire: intact. The infrastructure is sound.',
   successOnion:'Two years. The bed has seen more of you now than it saw of anyone in the years it sat empty. That counts for something.',
   failGurl:'Year two data archived. Performance trajectory: noted.',
@@ -2712,7 +2712,12 @@ function renderEpilogue(){
   gh.appendChild(h('span','char-emoji','\u{1F33F}'));
   gh.appendChild(h('span','char-name','GURL'));
   gurlSlot.appendChild(gh);
-  gurlSlot.appendChild(h('div','char-line',(epilogueMoment.gurl&&epilogueMoment.gurl[0])||'Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.'));
+  let gurlLine=(epilogueMoment.gurl&&epilogueMoment.gurl[0])||'Twelve seasons logged. The bed is structurally sound and the operator demonstrated consistent improvement under escalating constraint. I do not give compliments, but I am noting for the record that this bed was maintained with intention, and that is not common.';
+  // Challenge callback — reference Ch9 challenge performance
+  const challengesPassed=CAM.journal[9]&&CAM.bestScores[9]>=70;
+  if(challengesPassed){gurlLine+=' The challenge constraints from Year 3 spring were honored. That is on the record.'}
+  else if(CAM.completedChapters.includes(9)){gurlLine+=' The challenge constraints from Year 3 spring were not all met. That is also on the record.'}
+  gurlSlot.appendChild(h('div','char-line',gurlLine));
   na.appendChild(gurlSlot);
 
   // Onion Man final line
