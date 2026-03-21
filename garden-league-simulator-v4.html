@@ -2554,25 +2554,145 @@ function renderWinterReview(){
   }
   card.appendChild(na);
 
-  // Season journal cards
+  // ── YEAR SCORECARD ──
   const hist=loadH();
-  if(hist.length){
-    card.appendChild(h('h3',null,'Season Record'));
-    // Show the relevant year's seasons
-    const yearStart=(meta.year-1)*4+1;
-    const yearEnd=yearStart+3;
-    for(const en of hist){
-      if(en.chapter>=yearStart&&en.chapter<yearEnd){
-        const jc=h('div','journal-card');
-        const chMeta=CHAPTERS[en.chapter];
-        jc.appendChild(h('div','jc-title','Ch '+en.chapter+': '+(chMeta?'"'+chMeta.name+'"':'')+ ' \u2014 '+en.season));
-        jc.appendChild(h('div','jc-score','Score: '+en.finalScore.toFixed(1)+' \u2014 Grade: '+en.grade));
-        // Show narrator highlight if journal has one
-        if(CAM.journal[en.chapter]&&CAM.journal[en.chapter].narratorHighlight){
-          jc.appendChild(h('div','jc-moment','"'+CAM.journal[en.chapter].narratorHighlight+'"'));
-        }
-        card.appendChild(jc);
+  const yearStart=(meta.year-1)*4+1;
+  const yearEnd=yearStart+3;
+  const yearHist2=hist.filter(en=>en.chapter>=yearStart&&en.chapter<yearEnd);
+
+  if(yearHist2.length){
+    card.appendChild(h('h3',null,'Year '+meta.year+' Scorecard'));
+    const scoreGrid=h('div','');scoreGrid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px';
+    for(const en of yearHist2){
+      const chMeta3=CHAPTERS[en.chapter];
+      const sc=h('div','journal-card');
+      sc.style.cssText='padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--cream-dark)';
+      sc.appendChild(h('div','jc-title',(chMeta3?chMeta3.name:en.season)+' ('+en.season+')'));
+      const scoreRow=h('div','');scoreRow.style.cssText='display:flex;justify-content:space-between;align-items:baseline;margin-top:4px';
+      const gradeEl=h('span','');gradeEl.style.cssText='font-family:var(--ff-heading);font-size:1.4rem;font-weight:800;color:'+(en.grade==='A+'||en.grade==='A'?'var(--leaf-bright)':en.grade==='B'?'var(--sun)':'var(--danger)');
+      gradeEl.textContent=en.grade;
+      scoreRow.appendChild(gradeEl);
+      scoreRow.appendChild(h('span','',en.finalScore.toFixed(1)+' pts'));
+      sc.appendChild(scoreRow);
+      if(CAM.journal[en.chapter]&&CAM.journal[en.chapter].narratorHighlight){
+        const q=h('div','jc-moment','"'+CAM.journal[en.chapter].narratorHighlight+'"');
+        q.style.cssText='margin-top:6px;font-size:0.72rem;font-style:italic;color:var(--text-muted)';
+        sc.appendChild(q);
       }
+      scoreGrid.appendChild(sc);
+    }
+    card.appendChild(scoreGrid);
+
+    // Year average
+    const yearAvg2=yearHist2.reduce((a,e)=>a+e.finalScore,0)/yearHist2.length;
+    const avgRow=h('div','');avgRow.style.cssText='display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);margin-bottom:16px;font-family:var(--ff-mono);font-size:0.75rem';
+    avgRow.appendChild(h('span','','Year '+meta.year+' Average'));
+    const avgVal=h('span','');avgVal.style.cssText='font-weight:800;font-size:1rem;color:'+(yearAvg2>=70?'var(--leaf-bright)':yearAvg2>=50?'var(--sun)':'var(--danger)');
+    avgVal.textContent=yearAvg2.toFixed(1);
+    avgRow.appendChild(avgVal);
+    card.appendChild(avgRow);
+  }
+
+  // ── SOIL FATIGUE MAP ──
+  const cf=S.carryForward||mkCF();
+  const hasFatigue=Object.values(cf.soilFatigueMap).some(v=>v<-0.05);
+  const hasInfra=Object.keys(cf.infrastructureMap).length>0;
+
+  if(hasFatigue||hasInfra){
+    card.appendChild(h('h3',null,'Soil & Infrastructure \u2192 Next Season'));
+    const soilNote=h('div','');soilNote.style.cssText='font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;line-height:1.5';
+    soilNote.textContent='These effects carry into next season. Fatigued cells need crop rotation. Enriched cells are primed for high-value crops.';
+    card.appendChild(soilNote);
+
+    // Mini grid showing carry-forward state
+    const miniGrid=h('div','');miniGrid.style.cssText='display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-bottom:12px';
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const k=r+','+c;
+        const cell=h('div','');cell.style.cssText='aspect-ratio:1;border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-family:var(--ff-mono);cursor:help';
+        const fatigue=cf.soilFatigueMap[k]||0;
+        const infra=cf.infrastructureMap[k]||[];
+        if(fatigue<-0.05){
+          cell.style.background='rgba(180,60,60,0.15)';
+          cell.style.borderColor='rgba(180,60,60,0.3)';
+          cell.textContent='\u26A0';
+          cell.title='Soil fatigue: '+fatigue.toFixed(1)+'. Plant a different crop family here next season to recover.';
+        }else if(infra.includes('mulched')){
+          cell.style.background='rgba(93,171,107,0.15)';
+          cell.style.borderColor='rgba(93,171,107,0.3)';
+          cell.textContent='+';
+          cell.title='Mulched: +0.25 bonus next season';
+        }else if(infra.includes('enriched')){
+          cell.style.background='rgba(232,200,74,0.15)';
+          cell.style.borderColor='rgba(232,200,74,0.3)';
+          cell.textContent='\u2728';
+          cell.title='Enriched: +0.3 bonus next season. Plant high-value crops here.';
+        }else if(infra.includes('compacted')){
+          cell.style.background='rgba(140,100,60,0.15)';
+          cell.style.borderColor='rgba(140,100,60,0.3)';
+          cell.textContent='\u2013';
+          cell.title='Compacted: -0.5 penalty next season';
+        }else{
+          cell.style.background='var(--cream-dark)';
+          cell.textContent='\u00B7';
+          cell.title='Row '+r+', Col '+c+' \u2014 no carry-forward effect';
+        }
+        miniGrid.appendChild(cell);
+      }
+    }
+    card.appendChild(miniGrid);
+
+    // Legend
+    const legend=h('div','');legend.style.cssText='display:flex;gap:12px;flex-wrap:wrap;font-size:0.62rem;font-family:var(--ff-mono);color:var(--text-muted);margin-bottom:12px';
+    [['rgba(180,60,60,0.15)','\u26A0 Fatigued \u2014 rotate crop'],['rgba(93,171,107,0.15)','+ Mulched (+0.25)'],['rgba(232,200,74,0.15)','\u2728 Enriched (+0.3)'],['rgba(140,100,60,0.15)','\u2013 Compacted (-0.5)']].forEach(([bg,label])=>{
+      const item=h('span','');item.style.cssText='display:flex;align-items:center;gap:4px';
+      const swatch=h('span','');swatch.style.cssText='width:10px;height:10px;border-radius:2px;background:'+bg+';border:1px solid var(--border)';
+      item.appendChild(swatch);item.appendChild(h('span','',label));legend.appendChild(item);
+    });
+    card.appendChild(legend);
+  }
+
+  // ── EVENT TIMELINE ──
+  const yearCF=cf.seasonHistory||[];
+  if(yearCF.length){
+    card.appendChild(h('h3',null,'Event Timeline'));
+    for(const sh of yearCF){
+      if(sh.chapter<yearStart||sh.chapter>=yearEnd)continue;
+      const chM=CHAPTERS[sh.chapter];
+      if(!chM)continue;
+      const eventIds=sh.eventsDrawn||[];
+      if(!eventIds.length)continue;
+      const evRow=h('div','');evRow.style.cssText='margin-bottom:8px';
+      evRow.appendChild(h('div','',chM.name+' ('+sh.season+') \u2014 '+sh.interventionsUsed+' intervention'+(sh.interventionsUsed!==1?'s':'')));
+      const evList=h('div','');evList.style.cssText='display:flex;gap:4px;flex-wrap:wrap;margin-top:4px';
+      for(const eid of eventIds){
+        const ev=ED.find(e=>e.id===eid);
+        if(!ev)continue;
+        const chip=h('span','');chip.style.cssText='font-size:0.6rem;font-family:var(--ff-mono);padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:'+(ev.valence==='positive'?'rgba(93,171,107,0.12)':ev.valence==='negative'?'rgba(180,60,60,0.12)':'rgba(140,140,140,0.12)');
+        chip.textContent=(ev.valence==='positive'?'\u2600 ':ev.valence==='negative'?'\u26A0 ':'\u2022 ')+ev.title;
+        chip.title=ev.description;
+        evList.appendChild(chip);
+      }
+      evRow.appendChild(evList);
+      card.appendChild(evRow);
+    }
+  }
+
+  // ── PLANNING HINTS FOR NEXT SEASON ──
+  if(ch<12){
+    const nextCh=ch+1;
+    const nextMeta=CHAPTERS[nextCh];
+    if(nextMeta&&!isWinter(nextCh)){
+      card.appendChild(h('h3',null,'Looking Ahead \u2192 '+nextMeta.name+' ('+nextMeta.season+')'));
+      const hints=h('div','');hints.style.cssText='font-size:0.78rem;color:var(--text-muted);line-height:1.6;margin-bottom:8px';
+      let hintText='';
+      if(hasFatigue)hintText+='Rotate away from heavy feeders on fatigued cells. ';
+      if(hasInfra&&Object.values(cf.infrastructureMap).some(f=>f.includes('enriched')))hintText+='Enriched cells are primed \u2014 put your best crops there. ';
+      if(hasInfra&&Object.values(cf.infrastructureMap).some(f=>f.includes('compacted')))hintText+='Compacted cells will drag your score \u2014 consider light crops or leave them empty. ';
+      if(nextMeta.mechanic)hintText+='New mechanic: '+nextMeta.mechanic+'. '+nextMeta.mechanicHint;
+      if(!hintText)hintText='The soil is clean. Plant with confidence.';
+      hints.textContent=hintText;
+      card.appendChild(hints);
     }
   }
 
