@@ -233,6 +233,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .factor-bar .fill{height:100%;border-radius:4px;transition:width 400ms var(--ease-out);width:0}
 .factor-bar .val{width:42px;font-weight:600;font-size:var(--type-small);font-family:var(--ff-mono)}
 .event-card{border-radius:12px;padding:12px;background:var(--surface);border:2px solid var(--sun);border-left-width:4px;opacity:1;transform:translateY(0);transition:opacity 300ms var(--ease-out),transform 500ms var(--ease-expo-out)}
+.event-card.board-event{background:rgba(30,17,10,0.92);border:2px solid var(--sun);padding:14px 16px;margin-bottom:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4),0 0 0 1px rgba(232,200,74,0.15);backdrop-filter:blur(8px)}
 .event-card.entering{opacity:0;transform:translateY(60px)}
 .event-card h3{color:var(--text);text-transform:none;letter-spacing:0;font-size:var(--type-body);font-family:var(--ff-heading);font-weight:700;margin:0 0 6px}
 .event-card .desc{font-size:var(--type-small);margin-bottom:6px;line-height:1.45;color:var(--text-muted)}
@@ -1876,6 +1877,28 @@ function renderBoard(){
     }
   }
   f.appendChild(tb);
+
+  // Event card — render in the board panel so it's visible next to the bed
+  if(S.currentEvent&&BEAT_PHASES.includes(S.phase)){
+    const valCls=S.currentEvent.valence==='positive'?' positive':S.currentEvent.valence==='neutral'?' neutral':S.currentEvent.valence==='mixed'?' mixed':'';
+    const ec=h('div','event-card board-event entering'+valCls);
+    ec.setAttribute('role','alert');
+    ec.setAttribute('aria-label','Event: '+S.currentEvent.title);
+    const ecHead=h('div','');ecHead.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    ecHead.appendChild(h('span','','SEASON EVENT'));
+    ec.appendChild(ecHead);
+    ec.appendChild(h('h3',null,S.currentEvent.title));
+    ec.appendChild(h('div','desc',S.currentEvent.description));
+    const mod=S.currentEvent.me.mod;
+    const dur=S.currentEvent.me.dur==='beat'?'this beat':S.currentEvent.me.dur==='season'?'rest of season':'carry-forward';
+    ec.appendChild(h('div','effect','Effect: '+(mod>=0?'+':'')+mod.toFixed(1)+' \u00B7 '+dur));
+    if(S.beatTokenAvailable){
+      ec.appendChild(h('div','effect','Response: Use the toolbar above to act, or Accept Loss'));
+    }
+    f.appendChild(ec);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>ec.classList.remove('entering')));
+  }
+
   f.appendChild(gd);
 
   // Status
