@@ -15,3 +15,5 @@ output/
 assets/hero-video.mp4
 assets/garden-os-man.mp4
 archives/
+story-mode/node_modules/
+story-mode/dist/

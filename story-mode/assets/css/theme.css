@@ -1,0 +1,14 @@
+/* Garden OS Story Mode — Design Tokens */
+:root {
+  --soil: #5c3d1e;
+  --soil-dark: #3a2510;
+  --leaf: #3d7a4f;
+  --leaf-bright: #5aab6b;
+  --sun: #e8c84a;
+  --sun-soft: rgba(232, 200, 74, 0.15);
+  --cream: #f7f2ea;
+  --cream-dark: #ede5d8;
+  --text: #1e110a;
+  --text-mid: #5a3e2b;
+  --text-light: rgba(247, 242, 234, 0.6);
+}

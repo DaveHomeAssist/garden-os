@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1e110a" />
+  <title>Garden OS - Story Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/theme.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; touch-action: none; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #1e110a;
+      color: #f7f2ea;
+    }
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #viewport {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    #viewport canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(30,17,10,0.85) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    #hud > * { pointer-events: auto; }
+    .hud-left, .hud-right { display: flex; align-items: center; gap: 8px; }
+    .hud-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(30,17,10,0.7);
+      border: 1px solid rgba(232,200,74,0.2);
+      color: #e8c84a;
+      white-space: nowrap;
+    }
+    .hud-pill.chapter { color: #f7f2ea; border-color: rgba(247,242,234,0.15); }
+    .hud-score {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: #e8c84a;
+    }
+    #panel-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+    }
+    .panel-sheet {
+      background: rgba(30,17,10,0.95);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(232,200,74,0.15);
+      border-radius: 16px 16px 0 0;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+      padding: 0 16px 24px;
+    }
+    .panel-sheet.is-open { transform: translateY(0); }
+    .panel-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(247,242,234,0.2);
+      margin: 10px auto 16px;
+    }
+    #overlay-container {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+    }
+    #overlay-container > * { pointer-events: auto; }
+    .chapter-intro {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(30,17,10,0.92);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .chapter-intro h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: clamp(28px, 6vw, 42px);
+      color: #e8c84a;
+      margin-bottom: 8px;
+    }
+    .chapter-intro .chapter-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(247,242,234,0.4);
+      margin-bottom: 12px;
+    }
+    .chapter-intro p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: rgba(247,242,234,0.75);
+      max-width: 480px;
+    }
+    .chapter-intro .tap-hint {
+      margin-top: 32px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: rgba(247,242,234,0.25);
+      letter-spacing: 0.1em;
+    }
+    @media (min-width: 768px) {
+      #panel-container {
+        top: 0;
+        left: auto;
+        right: 0;
+        width: 380px;
+        bottom: 0;
+      }
+      .panel-sheet {
+        border-radius: 0;
+        border-top: none;
+        border-left: 1px solid rgba(232,200,74,0.15);
+        max-height: 100%;
+        height: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="viewport"></div>
+    <div id="hud">
+      <div class="hud-left">
+        <span class="hud-pill chapter" id="hud-chapter">Chapter 1</span>
+        <span class="hud-pill" id="hud-phase">Planning</span>
+      </div>
+      <div class="hud-right">
+        <span class="hud-pill" id="hud-crops">0 / 32</span>
+        <span class="hud-score" id="hud-score">--</span>
+      </div>
+    </div>
+    <div id="panel-container"></div>
+    <div id="overlay-container"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
