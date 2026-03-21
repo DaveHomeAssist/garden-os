@@ -326,6 +326,23 @@ export function createGardenScene(container) {
   dogTongue.visible = false;
   dogHeadPivot.add(dogTongue);
 
+  const dogThoughtBubble = new THREE.Group();
+  const bubbleMat = new THREE.MeshStandardMaterial({ color: 0xf3eee5, roughness: 0.92 });
+  const bubbleDotMat = new THREE.MeshStandardMaterial({ color: 0x4a4035, roughness: 0.8 });
+  for (const [x, y, r] of [[-0.1, 0.08, 0.03], [-0.04, 0.18, 0.045], [0.06, 0.33, 0.11]]) {
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), bubbleMat);
+    puff.position.set(x, y, 0);
+    dogThoughtBubble.add(puff);
+  }
+  for (const dotX of [-0.03, 0.02, 0.07]) {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), bubbleDotMat);
+    dot.position.set(dotX, 0.34, 0.08);
+    dogThoughtBubble.add(dot);
+  }
+  dogThoughtBubble.position.set(0.1, 0.62, 0);
+  dogThoughtBubble.visible = false;
+  sheepdogGroup.add(dogThoughtBubble);
+
   for (const eyeZ of [-0.035, 0.035]) {
     const dogEye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 4), dogEyeMat);
     dogEye.position.set(0.2, 0.035, eyeZ);
@@ -401,7 +418,7 @@ export function createGardenScene(container) {
 
   // Dog model faces +X by construction; rotation handled in animation via sheepdogGroup.rotation.y
 
-  sheepdogGroup.scale.setScalar(0.9);
+  sheepdogGroup.scale.setScalar(1.12);
   sheepdogGroup.position.set(-4.15, 0, 2.1);
   root.add(sheepdogGroup);
 
@@ -415,6 +432,28 @@ export function createGardenScene(container) {
     arcHeight: 0.1,
     sway: 0.14,
   };
+  const sheepdogHoldState = {
+    active: false,
+    remainingMs: 0,
+    position: new THREE.Vector3(0.15, 0, 0.34),
+  };
+
+  function resetSheepdogVisuals() {
+    dogTongue.visible = false;
+    dogThoughtBubble.visible = false;
+    dogShadow.scale.setScalar(1);
+    dogShadow.material.opacity = 0.22;
+    dustPuffs.forEach((puff) => {
+      puff.userData.active = false;
+      puff.visible = false;
+      puff.userData.age = 0;
+    });
+    sheepdogGroup.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+      child.material.transparent = false;
+      child.material.opacity = 1;
+    });
+  }
 
   // Collect trellis wire refs after bed group is already added to root
   const trellisWires = [];
@@ -1455,9 +1494,28 @@ function getGrowthScale(phase, season) {
   }
 
   function playSceneCue(name, opts = {}) {
+    if (name === 'sheepdog-bed') {
+      sheepdogRunState.active = false;
+      sheepdogRunState.fadeOutMs = 0;
+      sheepdogHoldState.active = true;
+      sheepdogHoldState.remainingMs = opts.cueDuration ?? 1600;
+      sheepdogHoldState.position.set(
+        opts.cueFromX ?? 0.15,
+        0,
+        opts.cueFromZ ?? 0.34,
+      );
+      resetSheepdogVisuals();
+      dogThoughtBubble.visible = true;
+      sheepdogGroup.position.copy(sheepdogHoldState.position);
+      sheepdogGroup.rotation.y = -0.55;
+      sheepdogGroup.visible = true;
+      return;
+    }
     if (name !== 'sheepdog-run') return;
+    sheepdogHoldState.active = false;
     sheepdogRunState.active = true;
     sheepdogRunState.elapsedMs = 0;
+    sheepdogRunState.fadeOutMs = 0;
     sheepdogRunState.duration = opts.cueDuration ?? 2600;
     sheepdogRunState.arcHeight = opts.cueArcHeight ?? 0.1;
     sheepdogRunState.sway = opts.cueSway ?? 0.18;
@@ -1471,6 +1529,7 @@ function getGrowthScale(phase, season) {
       0,
       opts.cueToZ ?? 1.88,
     );
+    resetSheepdogVisuals();
     sheepdogGroup.position.copy(sheepdogRunState.start);
     sheepdogGroup.visible = true;
   }
@@ -1631,6 +1690,20 @@ function getGrowthScale(phase, season) {
         birdGroup.visible = birdVisible && season !== 'winter';
       }
 
+      if (sheepdogHoldState.active) {
+        sheepdogHoldState.remainingMs -= dt * 1000;
+        sheepdogGroup.visible = true;
+        sheepdogGroup.position.copy(sheepdogHoldState.position);
+        dogTorso.position.y = 0.34 + Math.sin(time * 3.4) * 0.012;
+        dogHeadPivot.rotation.z = Math.sin(time * 2.1) * 0.03;
+        dogTailPivot.rotation.y = Math.sin(time * 4.1) * 0.22;
+        dogTailPivot.rotation.z = 0.34 + Math.cos(time * 4.1) * 0.06;
+        dogThoughtBubble.position.y = 0.62 + Math.sin(time * 2.8) * 0.015;
+        if (sheepdogHoldState.remainingMs <= 0) {
+          sheepdogHoldState.active = false;
+        }
+      }
+
       if (sheepdogRunState.active) {
         sheepdogRunState.elapsedMs += dt * 1000;
         const progress = Math.min(sheepdogRunState.elapsedMs / sheepdogRunState.duration, 1);
@@ -1758,7 +1831,7 @@ function getGrowthScale(phase, season) {
           });
         }
       } else {
-        sheepdogGroup.visible = false;
+        if (!sheepdogHoldState.active) sheepdogGroup.visible = false;
       }
       // ── End atmosphere animations ──────────────────────────────────────
 

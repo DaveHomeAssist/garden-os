@@ -78,6 +78,15 @@ Update 2026-03-21 reactive dialogue cleanup:
 - `cutscenes.js` now dynamically builds intervention reactions from the action + season + event family, and harvest reactions from grade + season + recipe progress, including a dedicated Mom's Sauce branch.
 - Validation: `npx vite build` passed after the trigger/runtime changes. Playwright smoke still boots the game and captures the intro/planning scene without breaking the dialogue panel.
 
+Update 2026-03-21 Calvin opener visibility fix:
+- Chapter 1's `sheepdog-run` cue now uses a bed-to-access diagonal path that stays in the visible middle of the `chapter-intro` frame instead of running along the lower edge under the dialogue box.
+- After the first opener capture still missed him, moved Calvin's cue start even farther into the center-left soil area and increased the sheepdog scale again so the very first intro frame already contains him.
+- Reworked the chapter 1 opener into two explicit Calvin cues: `sheepdog-bed` on the narrator beat so Calvin is visibly sitting in the bed, then `sheepdog-run` on GURL's line so she is yelling at an actual on-screen dog instead of an off-screen reference.
+- Added a floating Calvin thought bubble to the `sheepdog-bed` hold cue so the opener still reads clearly even in the wide chapter-intro camera where the dog model alone can get visually lost against the bed.
+- Extended the opener cue duration so Calvin remains on screen through the first line exchange instead of vanishing before GURL calls him out.
+- `garden-scene.playSceneCue()` now fully resets Calvin's mesh opacity, dust puff pool, tongue visibility, and fade state before every run, so a prior fade-out cannot leave him effectively invisible on the next trigger.
+- Slightly increased the sheepdog scale for readability in the wide intro framing.
+
 Update 2026-03-21 scenery refinement from real-bed reference:
 - Tuned `src/scene/scenery.js` toward the real garden silhouette instead of the earlier generic yard backdrop.
 - Replaced the chunkier fake porch/wall mass with a flatter house-wall backdrop and siding treatment so the background reads more like the real bed reference and less like a blocking foreground object.

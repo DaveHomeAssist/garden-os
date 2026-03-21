@@ -5,8 +5,8 @@ export const CUTSCENES = [
   // ═══ CHAPTER INTROS ═══════════════════════════════════════
 
   { id: 'ch1-intro', trigger: 'chapter_start', conditions: { chapter: 1 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run', cueDuration: 4200, cueFromX: -4.2, cueToX: 4.9, cueFromZ: 1.8, cueToZ: 1.1 },
-    { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'chapter-intro', duration: 1800 },
+    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-bed', cueDuration: 1800, cueFromX: 0.15, cueFromZ: 0.34 },
+    { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'chapter-intro', duration: 1800, sceneCue: 'sheepdog-run', cueDuration: 3400, cueFromX: 0.15, cueToX: 2.9, cueFromZ: 0.34, cueToZ: 0.96, cueArcHeight: 0.06, cueSway: 0.05 },
     { speaker: 'calvin', text: '...dirt is warm.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close', duration: 1200 },
     { speaker: 'onion_man', text: 'He does that every spring. Mom never stopped him either.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'garden_gurl', text: 'This bed fed your family once. Now it is your turn.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
