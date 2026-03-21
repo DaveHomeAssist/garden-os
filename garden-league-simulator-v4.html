@@ -1392,7 +1392,7 @@ function toggleEraserTool(){
 
 /* ===== DOM ===== */
 const $=id=>document.getElementById(id);
-const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),objective:$('objectiveStrip'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn'),gameMenuBtn:$('gameManageBtn'),gameMenuOverlay:$('gameMenuOverlay'),gameMenuPanel:$('gameManagePanel')};
+const el={app:$('app'),ctrl:$('controlsPanel'),board:$('boardPanel'),res:$('resultsPanel'),meta:$('metaChips'),objective:$('objectiveStrip'),overlay:$('confirmOverlay'),cbox:$('confirmBox'),howToBtn:$('howToBtn'),gameMenuBtn:$('gameManageBtn'),gameMenuOverlay:$('gameMenuOverlay'),gameMenuPanel:$('gameManagePanel'),headRight:document.querySelector('.head-right')};
 let howToSection='quickstart';
 let gridView='score'; // score | sun | water
 
@@ -2945,7 +2945,52 @@ function render(){
   el.meta.appendChild(h('span','chip season-'+S.season+'-pill',S.season[0].toUpperCase()+S.season.slice(1)));
   el.meta.appendChild(h('span','chip phase',S.phase.replace(/_/g,' ')));
   renderObjectiveStrip();
+  renderHeadActions();
   renderCtrl();renderBoard();renderRes();
+}
+
+function renderHeadActions(){
+  // Remove previous action buttons (keep Manage + How to Play)
+  el.headRight.querySelectorAll('.phase-action').forEach(b=>b.remove());
+
+  if(S.phase===PHASES.PLANNING){
+    const minPlanted=CAM&&CAM.mode==='campaign'&&S.chapter===10?32:MIN_PLANTED;
+    const cb=h('button','btn phase-action','Commit Plan');
+    cb.disabled=countPlanted(S.grid)<minPlanted;
+    cb.onclick=showCommitConfirm;
+    cb.style.cssText='background:var(--sun);color:var(--soil);font-weight:700;border-color:var(--sun)';
+    el.headRight.insertBefore(cb,el.headRight.firstChild);
+  }
+  if(BEAT_PHASES.includes(S.phase)){
+    if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
+      const labels={protect:'Protect',mulch:'Mulch',swap:'Swap',prune:'Prune',companion_patch:'Patch',accept_loss:'Accept Loss'};
+      for(const it of [...S.currentEvent.io].reverse()){
+        const b=h('button','btn phase-action',labels[it]||it);
+        if(it==='accept_loss')b.style.cssText='background:rgba(180,60,60,0.3);border-color:rgba(180,60,60,0.5);color:var(--cream)';
+        else b.style.cssText='background:rgba(255,255,255,0.12);color:var(--cream)';
+        b.onclick=()=>startIntervention(it);
+        el.headRight.insertBefore(b,el.headRight.firstChild);
+      }
+    }
+    if(!S.beatTokenAvailable||!S.currentEvent){
+      const ab=h('button','btn phase-action',S.beatIndex>=2?'Harvest':'Advance');
+      ab.style.cssText='background:var(--sun);color:var(--soil);font-weight:700;border-color:var(--sun)';
+      ab.onclick=advanceBeat;
+      el.headRight.insertBefore(ab,el.headRight.firstChild);
+    }
+  }
+  if(S.phase===PHASES.HARVEST){
+    const b=h('button','btn phase-action','View Review');
+    b.style.cssText='background:var(--sun);color:var(--soil);font-weight:700;border-color:var(--sun)';
+    b.onclick=()=>{S.phase=PHASES.HARVEST_REVIEW;save();if(CAM&&CAM.mode==='campaign'&&S.chapter===11){handleChapter11Harvest();return}render()};
+    el.headRight.insertBefore(b,el.headRight.firstChild);
+  }
+  if(S.phase===PHASES.HARVEST_REVIEW){
+    const b=h('button','btn phase-action',CAM&&CAM.mode==='campaign'?'Complete Chapter':'Continue');
+    b.style.cssText='background:var(--sun);color:var(--soil);font-weight:700;border-color:var(--sun)';
+    b.onclick=CAM&&CAM.mode==='campaign'?completeChapter:doTransition;
+    el.headRight.insertBefore(b,el.headRight.firstChild);
+  }
 }
 
 /* ===== UNDO STACK (planning phase only) ===== */
