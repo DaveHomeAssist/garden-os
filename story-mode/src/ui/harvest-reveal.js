@@ -38,6 +38,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
   const recipeNames = extras.recipeNames ?? [];
   const unlockedCount = extras.unlockedCount ?? 0;
   const totalKeepsakes = extras.totalKeepsakes ?? unlockedCount;
+  const onViewBackpack = extras.onViewBackpack ?? null;
 
   // Compute average factors across all scored cells
   const factorAvgs = {};
@@ -164,6 +165,15 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
         `}
       </div>
 
+      ${onViewBackpack && (keepsakes.length > 0 || recipeNames.length > 0) ? `
+        <button id="harvest-backpack" style="
+          margin-top:16px;width:100%;max-width:280px;
+          font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+          padding:12px 24px;border-radius:8px;cursor:pointer;
+          background:rgba(247,242,234,0.08);color:#f7f2ea;border:1px solid rgba(247,242,234,0.16);
+        ">View Backpack</button>
+      ` : ''}
+
       <button id="harvest-continue" style="
         margin-top:20px;width:100%;max-width:280px;
         font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;
@@ -189,6 +199,15 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
     if (progress < 1) requestAnimationFrame(animateCounter);
   }
   requestAnimationFrame(animateCounter);
+
+  overlay.querySelector('#harvest-backpack')?.addEventListener('click', () => {
+    overlay.style.animation = 'fadeOutIntro 0.3s ease-in both';
+    setTimeout(() => {
+      overlay.remove();
+      onViewBackpack?.();
+      onDismiss?.();
+    }, 300);
+  });
 
   overlay.querySelector('#harvest-continue').addEventListener('click', () => {
     overlay.style.animation = 'fadeOutIntro 0.3s ease-in both';
