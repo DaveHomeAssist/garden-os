@@ -86,30 +86,30 @@ function getYearForChapter(chapter) {
 let activeSlot = 0;
 
 const GRADE_DOT_CLASS = {
-  ‘A+’: ‘sparkline-dot--a’, A: ‘sparkline-dot--a’,
-  ‘B+’: ‘sparkline-dot--b’, B: ‘sparkline-dot--b’,
-  ‘C+’: ‘sparkline-dot--c’, C: ‘sparkline-dot--c’,
-  D: ‘sparkline-dot--d’,
-  F: ‘sparkline-dot--f’,
+  'A+': 'sparkline-dot--a', A: 'sparkline-dot--a',
+  'B+': 'sparkline-dot--b', B: 'sparkline-dot--b',
+  'C+': 'sparkline-dot--c', C: 'sparkline-dot--c',
+  D: 'sparkline-dot--d',
+  F: 'sparkline-dot--f',
 };
 
 function getProgressClass(campaign) {
   const entries = campaign.journalEntries ?? [];
-  if (!entries.length) return ‘’;
-  const lastGrade = entries[entries.length - 1]?.grade ?? ‘’;
-  if ([‘A+’, ‘A’, ‘B+’, ‘B’].includes(lastGrade)) return ‘’;
-  if ([‘C+’, ‘C’].includes(lastGrade)) return ‘progress-mid’;
-  return ‘progress-low’;
+  if (!entries.length) return '';
+  const lastGrade = entries[entries.length - 1]?.grade ?? '';
+  if (['A+', 'A', 'B+', 'B'].includes(lastGrade)) return '';
+  if (['C+', 'C'].includes(lastGrade)) return 'progress-mid';
+  return 'progress-low';
 }
 
 function renderTitleScreen(onStart) {
-  const titleScreen = document.getElementById(‘title-screen’);
-  const slotsContainer = document.getElementById(‘save-slots’);
-  const modesContainer = document.getElementById(‘title-modes’);
+  const titleScreen = document.getElementById('title-screen');
+  const slotsContainer = document.getElementById('save-slots');
+  const modesContainer = document.getElementById('title-modes');
   if (!titleScreen || !slotsContainer) return;
 
-  titleScreen.classList.remove(‘is-exiting’);
-  titleScreen.style.display = ‘’;
+  titleScreen.classList.remove('is-exiting');
+  titleScreen.style.display = '';
 
   const saves = listSaves();
   slotsContainer.innerHTML = saves.map((entry) => {
@@ -122,10 +122,10 @@ function renderTitleScreen(onStart) {
         </div>`;
     }
     const sparkline = (entry.gradeHistory ?? []).map((gh) => {
-      const cls = GRADE_DOT_CLASS[gh.grade] ?? ‘’;
+      const cls = GRADE_DOT_CLASS[gh.grade] ?? '';
       return `<span class="sparkline-dot ${cls}" title="Ch${gh.chapter}: ${gh.grade}"></span>`;
-    }).join(‘’);
-    const dateStr = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : ‘unknown’;
+    }).join('');
+    const dateStr = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : 'unknown';
     const progressCls = getProgressClass(entry.campaign);
     return `
       <div class="save-slot-card save-slot-card--occupied ${progressCls}" data-slot="${entry.slot}">
@@ -136,14 +136,14 @@ function renderTitleScreen(onStart) {
             Chapter ${entry.chapter}
           </div>
           <div class="save-slot-meta">Score: ${entry.score} &middot; ${dateStr}</div>
-          ${sparkline ? `<div class="save-slot-sparkline">${sparkline}</div>` : ‘’}
+          ${sparkline ? `<div class="save-slot-sparkline">${sparkline}</div>` : ''}
         </div>
         <div class="save-slot-actions">
           <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="continue" data-slot="${entry.slot}">Continue</button>
           <button type="button" class="save-slot-btn save-slot-btn--danger" data-action="delete" data-slot="${entry.slot}">Delete</button>
         </div>
       </div>`;
-  }).join(‘’);
+  }).join('');
 
   if (modesContainer) {
     modesContainer.innerHTML = `
@@ -176,27 +176,27 @@ function renderTitleScreen(onStart) {
   const freshSlots = slotsContainer.cloneNode(true);
   slotsContainer.parentNode.replaceChild(freshSlots, slotsContainer);
 
-  freshSlots.addEventListener(‘click’, (e) => {
-    const btn = e.target.closest(‘[data-action]’);
+  freshSlots.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
     const slot = parseInt(btn.dataset.slot, 10);
 
-    if (action === ‘delete’) {
+    if (action === 'delete') {
       if (!confirm(`Delete save in Slot ${slot + 1}? This cannot be undone.`)) return;
       deleteCampaign(slot);
       renderTitleScreen(onStart);
       return;
     }
 
-    if (action === ‘new’) {
+    if (action === 'new') {
       activeSlot = slot;
       setActiveSaveSlot(slot);
       dismissTitleScreen(titleScreen, () => onStart(slot, null));
       return;
     }
 
-    if (action === ‘continue’) {
+    if (action === 'continue') {
       activeSlot = slot;
       setActiveSaveSlot(slot);
       const saved = loadCampaign(slot);
@@ -207,21 +207,21 @@ function renderTitleScreen(onStart) {
 }
 
 function dismissTitleScreen(titleScreen, callback) {
-  titleScreen.classList.add(‘is-exiting’);
+  titleScreen.classList.add('is-exiting');
   setTimeout(() => {
-    titleScreen.style.display = ‘none’;
+    titleScreen.style.display = 'none';
     callback();
   }, 400);
 }
 
 function showTitleScreen() {
-  const titleScreen = document.getElementById(‘title-screen’);
+  const titleScreen = document.getElementById('title-screen');
   if (titleScreen) {
-    titleScreen.classList.remove(‘is-exiting’);
-    titleScreen.style.display = ‘’;
+    titleScreen.classList.remove('is-exiting');
+    titleScreen.style.display = '';
   }
   renderTitleScreen((slot, saved) => {
-    const viewport = document.getElementById(‘viewport’);
+    const viewport = document.getElementById('viewport');
     const state = createGameState();
     if (saved) {
       Object.assign(state.campaign, saved);
@@ -229,13 +229,13 @@ function showTitleScreen() {
       if (savedSeason) {
         Object.assign(state.season, savedSeason);
         state.season.campaign = state.campaign;
-        if (state.season.phase === ‘REVIEW’) {
+        if (state.season.phase === 'REVIEW') {
           state.season.phase = PHASES.TRANSITION;
         }
       } else {
         state.season = createSeasonState(
           state.campaign.currentChapter,
-          state.campaign.currentSeason ?? ‘spring’,
+          state.campaign.currentSeason ?? 'spring',
           state.campaign,
         );
       }
