@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#1e110a" />
+  <meta name="description" content="Garden OS Story Mode: a 12-chapter raised-bed strategy game with Calvin the sheepdog, month-aware seasons, winter review, and a rebuilt 3D backyard scene." />
+  <meta property="og:title" content="Garden OS Story Mode" />
+  <meta property="og:description" content="Plan one raised bed across three years, meet Calvin and the cast, survive month-aware seasons, and use winter review to carry the garden forward." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://davehomeassist.github.io/garden-os/story-mode/" />
+  <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Garden OS Story Mode" />
+  <meta name="twitter:description" content="Calvin, month-aware seasons, winter review, and a rebuilt 3D South Philly backyard scene." />
   <title>Garden OS - Story Mode</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -325,6 +334,45 @@
       line-height: 1.85;
       color: rgba(247,242,234,0.75);
       max-width: min(540px, 65ch);
+    }
+    .entry-intro .entry-shell {
+      width: min(720px, calc(100vw - 32px));
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(24, 16, 10, 0.74);
+      border: 1px solid rgba(232, 200, 74, 0.18);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+    }
+    .entry-intro .entry-shell h2 {
+      margin-bottom: 12px;
+    }
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .entry-card {
+      text-align: left;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(247, 242, 234, 0.05);
+      border: 1px solid rgba(247, 242, 234, 0.08);
+      min-height: 116px;
+    }
+    .entry-card__label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(232, 200, 74, 0.72);
+      margin-bottom: 8px;
+    }
+    .entry-card__copy {
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(247, 242, 234, 0.78);
     }
     .chapter-intro .tap-hint {
       margin-top: 32px;
@@ -660,6 +708,23 @@
       opacity: 1;
       pointer-events: auto;
     }
+    .pause-shell {
+      position: relative;
+      width: min(640px, calc(100vw - 32px));
+      padding: 28px 24px 22px;
+      border-radius: 24px;
+      background: rgba(24, 16, 10, 0.74);
+      border: 1px solid rgba(232, 200, 74, 0.18);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+    }
+    .pause-shell__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
     .pause-title {
       font-family: 'Fraunces', serif;
       font-weight: 700;
@@ -673,54 +738,209 @@
       color: rgba(247,242,234,0.3);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-bottom: 28px;
     }
-    .pause-menu {
-      display: flex;
-      flex-direction: column;
+    .pause-close-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(247,242,234,0.12);
+      background: rgba(247,242,234,0.06);
+      color: rgba(247,242,234,0.72);
+      font-size: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .pause-close-btn:hover {
+      border-color: rgba(232,200,74,0.35);
+      background: rgba(247,242,234,0.1);
+    }
+    .pause-section {
+      margin-top: 18px;
+    }
+    .pause-section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(232,200,74,0.6);
+      margin-bottom: 10px;
+    }
+    .pause-action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      width: min(280px, 80vw);
     }
-    .pause-menu button {
+    .pause-action {
       width: 100%;
-      padding: 14px 20px;
-      border-radius: 10px;
+      padding: 14px 16px;
+      border-radius: 14px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 500;
       cursor: pointer;
       border: 1px solid rgba(247,242,234,0.1);
       background: rgba(247,242,234,0.06);
       color: #f7f2ea;
       text-align: left;
-      transition: background 0.15s, border-color 0.15s;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
       display: flex;
-      align-items: center;
-      gap: 10px;
+      align-items: flex-start;
+      gap: 12px;
     }
-    .pause-menu button:hover {
+    .pause-action:hover {
       background: rgba(247,242,234,0.1);
       border-color: rgba(232,200,74,0.3);
+      transform: translateY(-1px);
     }
-    .pause-menu button .pm-icon {
+    .pause-action__icon {
       font-size: 20px;
       width: 28px;
       text-align: center;
+      margin-top: 1px;
+      flex-shrink: 0;
     }
-    .pause-menu .pm-danger {
-      color: rgba(212,74,42,0.8);
+    .pause-action__title {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 3px;
+      color: #f7f2ea;
+    }
+    .pause-action__copy {
+      display: block;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(247,242,234,0.55);
+    }
+    .pause-action--primary {
+      border-color: rgba(232,200,74,0.28);
+      background: rgba(232,200,74,0.14);
+    }
+    .pause-action--primary:hover {
+      background: rgba(232,200,74,0.2);
+      border-color: rgba(232,200,74,0.42);
+    }
+    .pause-action--danger {
+      color: rgba(212,74,42,0.92);
       border-color: rgba(212,74,42,0.15);
     }
-    .pause-menu .pm-danger:hover {
+    .pause-action--danger:hover {
       background: rgba(212,74,42,0.08);
       border-color: rgba(212,74,42,0.3);
     }
-    .pause-hint {
-      margin-top: 24px;
+    .pause-footer-note {
+      margin-top: 18px;
       font-family: 'DM Mono', monospace;
       font-size: 10px;
-      color: rgba(247,242,234,0.15);
+      color: rgba(247,242,234,0.18);
       letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .read-only-sheet {
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    .read-only-sheet__header {
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .read-only-sheet__subtitle {
+      margin-top: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(247,242,234,0.6);
+    }
+    .read-only-sheet__close {
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .read-only-sheet__body {
+      display: grid;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .read-only-sheet__footer {
+      margin-top: 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(247,242,234,0.18);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .read-only-sheet__empty {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(247,242,234,0.05);
+      border: 1px solid rgba(247,242,234,0.08);
+      color: rgba(247,242,234,0.68);
+      line-height: 1.65;
+    }
+    .read-only-sheet__list {
+      display: grid;
+      gap: 10px;
+    }
+    .read-only-sheet__card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(247,242,234,0.04);
+      border: 1px solid rgba(247,242,234,0.08);
+      display: grid;
+      gap: 10px;
+    }
+    .read-only-sheet__card--bug {
+      background: rgba(139,168,181,0.06);
+      border-color: rgba(139,168,181,0.12);
+    }
+    .read-only-sheet__card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .read-only-sheet__card-title {
+      font-family: 'Fraunces', serif;
+      font-size: 18px;
+      color: #f7f2ea;
+      margin-bottom: 2px;
+    }
+    .read-only-sheet__card-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(247,242,234,0.42);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .read-only-sheet__score {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      color: #e8c84a;
+      flex-shrink: 0;
+    }
+    .read-only-sheet__card-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .read-only-sheet__chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(247,242,234,0.08);
+      background: rgba(247,242,234,0.03);
+      color: rgba(247,242,234,0.64);
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .read-only-sheet__card-copy {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(247,242,234,0.72);
     }
 
     @media (min-width: 768px) {
@@ -830,6 +1050,14 @@
         white-space: normal;
         width: 100%;
         text-align: center;
+      }
+
+      .entry-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pause-action-grid {
+        grid-template-columns: 1fr;
       }
 
       .pause-menu {
@@ -1184,17 +1412,71 @@
     <div id="cutscene-layer" aria-hidden="true">
       <div id="dialogue-root"></div>
     </div>
-    <div class="pause-overlay" id="pause-menu">
-      <div class="pause-title">Garden OS</div>
-      <div class="pause-subtitle" id="pause-status">Chapter 1 · Planning</div>
-      <div class="pause-menu">
-        <button id="pause-resume"><span class="pm-icon">▶</span> Resume</button>
-        <button id="pause-journal"><span class="pm-icon">📖</span> Season Journal</button>
-        <button id="pause-bugs"><span class="pm-icon">🦗</span> View Bug Reports</button>
-        <button id="pause-restart" class="pm-danger"><span class="pm-icon">↺</span> Restart Chapter</button>
-        <button id="pause-new" class="pm-danger"><span class="pm-icon">🗑</span> New Campaign</button>
+    <div class="pause-overlay" id="pause-menu" aria-hidden="true">
+      <div class="pause-shell" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="pause-shell__top">
+          <div>
+            <div class="pause-title" id="pause-title">Garden OS</div>
+            <div class="pause-subtitle" id="pause-status">Chapter 1 · Planning</div>
+          </div>
+          <button type="button" id="pause-close" class="pause-close-btn" aria-label="Close pause menu">×</button>
+        </div>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Session</div>
+          <div class="pause-action-grid">
+            <button id="pause-resume" class="pause-action pause-action--primary">
+              <span class="pause-action__icon">▶</span>
+              <span>
+                <span class="pause-action__title">Resume</span>
+                <span class="pause-action__copy">Return to the garden without changing state.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Story Archive</div>
+          <div class="pause-action-grid">
+            <button id="pause-journal" class="pause-action">
+              <span class="pause-action__icon">📖</span>
+              <span>
+                <span class="pause-action__title">Season Journal</span>
+                <span class="pause-action__copy">Read completed seasons in a clean in-app archive.</span>
+              </span>
+            </button>
+            <button id="pause-bugs" class="pause-action">
+              <span class="pause-action__icon">🦗</span>
+              <span>
+                <span class="pause-action__title">Bug Reports</span>
+                <span class="pause-action__copy">Review saved reports from this device.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Danger Zone</div>
+          <div class="pause-action-grid">
+            <button id="pause-restart" class="pause-action pause-action--danger">
+              <span class="pause-action__icon">↺</span>
+              <span>
+                <span class="pause-action__title">Restart Chapter</span>
+                <span class="pause-action__copy">Reset the current chapter and lose bed progress.</span>
+              </span>
+            </button>
+            <button id="pause-new" class="pause-action pause-action--danger">
+              <span class="pause-action__icon">🗑</span>
+              <span>
+                <span class="pause-action__title">New Campaign</span>
+                <span class="pause-action__copy">Erase all saves and begin a fresh run.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <div class="pause-footer-note">ESC or Close returns you to play.</div>
       </div>
-      <div class="pause-hint">ESC to close</div>
     </div>
     <button id="fab-bug" aria-label="Report a bug">🦗</button>
     <div class="bug-report-panel" id="bug-panel">

@@ -83,111 +83,169 @@ function getYearForChapter(chapter) {
   return Math.floor((chapter - 1) / 4) + 1;
 }
 
-function mount() {
-  const viewport = document.getElementById('viewport');
-  const state = createGameState();
-  const saved = loadCampaign();
+let activeSlot = 0;
 
-  if (saved) {
-    showStartChoice(saved, () => {
+const GRADE_DOT_CLASS = {
+  ‘A+’: ‘sparkline-dot--a’, A: ‘sparkline-dot--a’,
+  ‘B+’: ‘sparkline-dot--b’, B: ‘sparkline-dot--b’,
+  ‘C+’: ‘sparkline-dot--c’, C: ‘sparkline-dot--c’,
+  D: ‘sparkline-dot--d’,
+  F: ‘sparkline-dot--f’,
+};
+
+function getProgressClass(campaign) {
+  const entries = campaign.journalEntries ?? [];
+  if (!entries.length) return ‘’;
+  const lastGrade = entries[entries.length - 1]?.grade ?? ‘’;
+  if ([‘A+’, ‘A’, ‘B+’, ‘B’].includes(lastGrade)) return ‘’;
+  if ([‘C+’, ‘C’].includes(lastGrade)) return ‘progress-mid’;
+  return ‘progress-low’;
+}
+
+function renderTitleScreen(onStart) {
+  const titleScreen = document.getElementById(‘title-screen’);
+  const slotsContainer = document.getElementById(‘save-slots’);
+  const modesContainer = document.getElementById(‘title-modes’);
+  if (!titleScreen || !slotsContainer) return;
+
+  titleScreen.classList.remove(‘is-exiting’);
+  titleScreen.style.display = ‘’;
+
+  const saves = listSaves();
+  slotsContainer.innerHTML = saves.map((entry) => {
+    if (entry.isEmpty) {
+      return `
+        <div class="save-slot-card save-slot-card--empty" data-slot="${entry.slot}">
+          <div class="save-slot-label">Slot ${entry.slot + 1}</div>
+          <div class="save-slot-empty-label">Empty Slot</div>
+          <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="new" data-slot="${entry.slot}">New Game</button>
+        </div>`;
+    }
+    const sparkline = (entry.gradeHistory ?? []).map((gh) => {
+      const cls = GRADE_DOT_CLASS[gh.grade] ?? ‘’;
+      return `<span class="sparkline-dot ${cls}" title="Ch${gh.chapter}: ${gh.grade}"></span>`;
+    }).join(‘’);
+    const dateStr = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : ‘unknown’;
+    const progressCls = getProgressClass(entry.campaign);
+    return `
+      <div class="save-slot-card save-slot-card--occupied ${progressCls}" data-slot="${entry.slot}">
+        <div>
+          <div class="save-slot-label">Slot ${entry.slot + 1}</div>
+          <div class="save-slot-chapter">
+            <span class="season-emoji">${entry.seasonEmoji}</span>
+            Chapter ${entry.chapter}
+          </div>
+          <div class="save-slot-meta">Score: ${entry.score} &middot; ${dateStr}</div>
+          ${sparkline ? `<div class="save-slot-sparkline">${sparkline}</div>` : ‘’}
+        </div>
+        <div class="save-slot-actions">
+          <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="continue" data-slot="${entry.slot}">Continue</button>
+          <button type="button" class="save-slot-btn save-slot-btn--danger" data-action="delete" data-slot="${entry.slot}">Delete</button>
+        </div>
+      </div>`;
+  }).join(‘’);
+
+  if (modesContainer) {
+    modesContainer.innerHTML = `
+      <div class="mode-card mode-card--active">
+        <span class="mode-icon">📖</span>
+        <span>Story Mode</span>
+      </div>
+      <div class="mode-card mode-card--locked">
+        <span class="mode-icon">🌿</span>
+        <span>Free Play</span>
+        <span class="mode-lock">🔒</span>
+        <span class="mode-soon">Coming Soon</span>
+      </div>
+      <div class="mode-card mode-card--locked">
+        <span class="mode-icon">📅</span>
+        <span>Daily Challenge</span>
+        <span class="mode-lock">🔒</span>
+        <span class="mode-soon">Coming Soon</span>
+      </div>
+      <div class="mode-card mode-card--locked">
+        <span class="mode-icon">⏱</span>
+        <span>Speedrun</span>
+        <span class="mode-lock">🔒</span>
+        <span class="mode-soon">Coming Soon</span>
+      </div>
+    `;
+  }
+
+  // Use event delegation — replace container to avoid stacking listeners
+  const freshSlots = slotsContainer.cloneNode(true);
+  slotsContainer.parentNode.replaceChild(freshSlots, slotsContainer);
+
+  freshSlots.addEventListener(‘click’, (e) => {
+    const btn = e.target.closest(‘[data-action]’);
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const slot = parseInt(btn.dataset.slot, 10);
+
+    if (action === ‘delete’) {
+      if (!confirm(`Delete save in Slot ${slot + 1}? This cannot be undone.`)) return;
+      deleteCampaign(slot);
+      renderTitleScreen(onStart);
+      return;
+    }
+
+    if (action === ‘new’) {
+      activeSlot = slot;
+      setActiveSaveSlot(slot);
+      dismissTitleScreen(titleScreen, () => onStart(slot, null));
+      return;
+    }
+
+    if (action === ‘continue’) {
+      activeSlot = slot;
+      setActiveSaveSlot(slot);
+      const saved = loadCampaign(slot);
+      dismissTitleScreen(titleScreen, () => onStart(slot, saved));
+      return;
+    }
+  });
+}
+
+function dismissTitleScreen(titleScreen, callback) {
+  titleScreen.classList.add(‘is-exiting’);
+  setTimeout(() => {
+    titleScreen.style.display = ‘none’;
+    callback();
+  }, 400);
+}
+
+function showTitleScreen() {
+  const titleScreen = document.getElementById(‘title-screen’);
+  if (titleScreen) {
+    titleScreen.classList.remove(‘is-exiting’);
+    titleScreen.style.display = ‘’;
+  }
+  renderTitleScreen((slot, saved) => {
+    const viewport = document.getElementById(‘viewport’);
+    const state = createGameState();
+    if (saved) {
       Object.assign(state.campaign, saved);
-      const savedSeason = loadSeasonState();
+      const savedSeason = loadSeasonState(slot);
       if (savedSeason) {
         Object.assign(state.season, savedSeason);
         state.season.campaign = state.campaign;
-        if (state.season.phase === 'REVIEW') {
+        if (state.season.phase === ‘REVIEW’) {
           state.season.phase = PHASES.TRANSITION;
         }
       } else {
         state.season = createSeasonState(
           state.campaign.currentChapter,
-          state.campaign.currentSeason ?? 'spring',
+          state.campaign.currentSeason ?? ‘spring’,
           state.campaign,
         );
       }
-      startGame(state, viewport);
-    }, () => {
-      deleteCampaign();
-      startGame(state, viewport);
-    });
-    return;
-  }
-
-  showFirstRunOverlay(() => {
+    }
     startGame(state, viewport);
   });
 }
 
-function showStartChoice(saved, onContinue, onNewGame) {
-  const overlayContainer = document.getElementById('overlay-container');
-  const choice = document.createElement('div');
-  choice.className = 'chapter-intro';
-  choice.innerHTML = `
-    <div class="chapter-num">Garden OS</div>
-    <h2>Welcome Back</h2>
-    <p>Chapter ${saved.currentChapter} save found from ${new Date(saved.updatedAt).toLocaleDateString()}.</p>
-    <div class="start-choice-actions">
-      <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-continue">Continue</button>
-      <button type="button" class="start-choice-btn start-choice-btn--ghost" id="btn-new">New Game</button>
-    </div>
-  `;
-
-  choice.querySelector('#btn-continue').addEventListener('click', () => {
-    choice.remove();
-    onContinue();
-  });
-
-  choice.querySelector('#btn-new').addEventListener('click', () => {
-    choice.remove();
-    onNewGame();
-  });
-
-  overlayContainer.appendChild(choice);
-}
-
-function showFirstRunOverlay(onStart) {
-  const overlayContainer = document.getElementById('overlay-container');
-  const overlay = document.createElement('div');
-  overlay.className = 'chapter-intro entry-intro';
-  overlay.id = 'first-run-overlay';
-  overlay.innerHTML = `
-    <div class="entry-shell">
-      <div class="chapter-num">Garden OS</div>
-      <h2>Story Mode</h2>
-      <p>
-        Start at the beginning, learn the bed, and carry your garden through every season.
-        Pause, journal, and bug tools stay available once you enter.
-      </p>
-      <div class="entry-grid" aria-hidden="true">
-        <div class="entry-card">
-          <div class="entry-card__label">Plan</div>
-          <div class="entry-card__copy">Shape the bed before each season begins.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-card__label">Tend</div>
-          <div class="entry-card__copy">React to events with interventions and carries.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-card__label">Review</div>
-          <div class="entry-card__copy">Read the journal to track the garden’s memory.</div>
-        </div>
-      </div>
-      <div class="start-choice-actions">
-        <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-begin-story">Enter the Garden</button>
-      </div>
-      <div class="tap-hint entry-hint">Press ESC later to open the pause menu.</div>
-    </div>
-  `;
-
-  overlay.querySelector('#btn-begin-story')?.addEventListener('click', () => {
-    overlay.style.animation = 'fadeOutIntro 0.25s ease-in both';
-    setTimeout(() => {
-      overlay.remove();
-      onStart?.();
-    }, 220);
-  });
-
-  overlayContainer.appendChild(overlay);
+function mount() {
+  showTitleScreen();
 }
 
 function startGame(state, viewport) {
@@ -301,8 +359,8 @@ function startGame(state, viewport) {
     if (!hasKeepsake(state.campaign, 'first_seed_packet')) {
       awardCampaignKeepsake('first_seed_packet');
     }
-    saveCampaign(state.campaign);
-    saveSeasonState(state.season);
+    saveCampaign(state.campaign, activeSlot);
+    saveSeasonState(state.season, activeSlot);
   }
 
   function finalizeHarvestProgression() {
@@ -1373,9 +1431,11 @@ function startGame(state, viewport) {
   });
 
   document.getElementById('pause-new')?.addEventListener('click', () => {
-    if (!confirm('Start a new campaign? ALL progress will be erased.')) return;
-    deleteCampaign();
-    window.location.reload();
+    if (!confirm('Return to the title screen? Unsaved progress in this session will be lost.')) return;
+    pauseMenuOpen = false;
+    pauseOverlay.classList.remove('is-open');
+    loop.stop();
+    showTitleScreen();
   });
 
   document.getElementById('pause-close')?.addEventListener('click', () => {

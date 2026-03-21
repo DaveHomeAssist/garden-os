@@ -78,6 +78,16 @@ TODO / next-agent suggestions:
   - Added `specs/V2_REUSE_AUDIT.md` mapping v2 functions/data/UI into reuse vs refactor vs rewrite for v3.
   - Added `garden-league-simulator-v3.html` scaffold (HTML + Google Fonts + CSS custom properties only; no JS).
 
+- 2026-03-21 root landing/public-entry update:
+  - Reframed the root `index.html` around Story Mode as the primary CTA.
+  - Replaced the stale `home.html` nav target with a direct Story Mode link and removed the duplicate play-game nav item.
+  - Updated landing copy to mention Calvin, the sheepdog intro, month-aware seasons, winter review, and richer 3D scenes/dialogue.
+  - Updated `manifest.json` so installs open directly to Story Mode and the shortcut list puts Story Mode first.
+  - Updated `docs/active-hosted-urls.md` so the active Garden OS route registry no longer lists `home.html` as a live entry point.
+  - Validation:
+    - `jq . manifest.json` passed.
+    - `git diff --check -- index.html manifest.json docs/active-hosted-urls.md` passed.
+
 Validation notes:
 - Confirmed v2 references used in the audit by function/line anchors.
 - Confirmed no JS was added to v3 scaffold (prompt 8-safe).

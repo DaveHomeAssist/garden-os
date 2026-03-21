@@ -59,7 +59,8 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | Path | Description |
 |------|-------------|
 | [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
-| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Story Mode v4.0 (Calvin, sheepdog intro, month-aware seasons, winter review) |
+| [`/story-mode/`](https://davehomeassist.github.io/garden-os/story-mode/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
+| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Legacy season sandbox / predecessor to Story Mode |
 | [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.3 |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
