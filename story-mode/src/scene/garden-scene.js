@@ -318,6 +318,14 @@ export function createGardenScene(container) {
   dogNose.position.set(0.29, -0.02, 0);
   dogHeadPivot.add(dogNose);
 
+  // Tongue — pink, hangs from muzzle during run
+  const dogTongueMat = new THREE.MeshStandardMaterial({ color: 0xe88a9a, roughness: 0.65 });
+  const dogTongue = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.04, 0.018), dogTongueMat);
+  dogTongue.position.set(0.25, -0.065, 0.012);
+  dogTongue.rotation.z = 0.15;
+  dogTongue.visible = false;
+  dogHeadPivot.add(dogTongue);
+
   for (const eyeZ of [-0.035, 0.035]) {
     const dogEye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 4), dogEyeMat);
     dogEye.position.set(0.2, 0.035, eyeZ);
@@ -380,6 +388,31 @@ export function createGardenScene(container) {
     dogLegRigs.push({ hipPivot, kneePivot, phase });
   }
 
+  // Dust puff pool
+  const dustPuffs = [];
+  const dustMat = new THREE.MeshBasicMaterial({ color: 0xc8b898, transparent: true, opacity: 0, depthWrite: false });
+  for (let i = 0; i < 6; i++) {
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), dustMat.clone());
+    puff.visible = false;
+    puff.userData = { age: 0, maxAge: 400, active: false };
+    sheepdogGroup.add(puff);
+    dustPuffs.push(puff);
+  }
+
+  // Rotate dog model 90° so it faces along its travel direction (+Z in world = forward)
+  // The mesh is built with head at +X, so rotate -90° on Y to face +Z
+  const dogModelPivot = new THREE.Group();
+  dogModelPivot.rotation.y = -Math.PI / 2;
+  // Re-parent everything from sheepdogGroup into the pivot
+  const dogChildren = [...sheepdogGroup.children];
+  dogChildren.forEach(child => {
+    if (child !== dogModelPivot) {
+      sheepdogGroup.remove(child);
+      dogModelPivot.add(child);
+    }
+  });
+  sheepdogGroup.add(dogModelPivot);
+
   sheepdogGroup.scale.setScalar(1.02);
   sheepdogGroup.position.set(-3.9, 0, 1.62);
   root.add(sheepdogGroup);
@@ -388,6 +421,7 @@ export function createGardenScene(container) {
     active: false,
     elapsedMs: 0,
     duration: 2600,
+    fadeOutMs: 0,
     start: new THREE.Vector3(-3.9, 0, 1.62),
     end: new THREE.Vector3(4.5, 0, 1.1),
     arcHeight: 0.1,
@@ -1486,39 +1520,110 @@ function getGrowthScale(phase, season) {
         sheepdogRunState.elapsedMs += dt * 1000;
         const progress = Math.min(sheepdogRunState.elapsedMs / sheepdogRunState.duration, 1);
         const eased = easeInOutCubic(progress);
-        const stridePhase = progress * Math.PI * 12;
+
+        // Stride frequency decelerates with easeInOutCubic derivative
+        const speed = 1 - Math.abs(progress - 0.5) * 1.2; // faster in middle, slower at ends
+        const strideFreq = 8 + speed * 6; // 8-14 cycles, faster when running fast
+        const stridePhase = eased * Math.PI * strideFreq;
+
         const pathPos = new THREE.Vector3().lerpVectors(sheepdogRunState.start, sheepdogRunState.end, eased);
-        const bob = Math.abs(Math.sin(stridePhase)) * sheepdogRunState.arcHeight;
+        const bob = Math.abs(Math.sin(stridePhase)) * sheepdogRunState.arcHeight * speed;
         const zArc = Math.sin(progress * Math.PI) * sheepdogRunState.sway;
         sheepdogGroup.visible = true;
         sheepdogGroup.position.set(pathPos.x, 0, pathPos.z + zArc);
 
-        const runDirection = sheepdogRunState.end.clone().sub(sheepdogRunState.start);
+        // Facing: atan2 for travel direction along XZ plane
+        const runDirection = sheepdogRunState.end.clone().sub(sheepdogRunState.start).normalize();
         sheepdogGroup.rotation.y = Math.atan2(runDirection.x, runDirection.z);
 
+        // Tongue visible during run
+        dogTongue.visible = true;
+        dogTongue.rotation.x = Math.sin(stridePhase * 1.3) * 0.12;
+
+        // Shadow responds to bob
         dogShadow.scale.setScalar(1 - bob * 1.9);
         dogShadow.material.opacity = 0.24 - bob * 0.7;
+
+        // Body motion
         dogTorso.position.y = 0.34 + bob;
-        dogTorso.rotation.z = Math.sin(stridePhase) * 0.06;
-        dogTorso.rotation.x = Math.cos(stridePhase * 0.5) * 0.04;
-        dogHeadPivot.rotation.z = Math.sin(stridePhase + 0.35) * 0.08;
+        dogTorso.rotation.z = Math.sin(stridePhase) * 0.06 * speed;
+        dogTorso.rotation.x = Math.cos(stridePhase * 0.5) * 0.04 * speed;
+
+        // Head
+        dogHeadPivot.rotation.z = Math.sin(stridePhase + 0.35) * 0.08 * speed;
         dogHeadPivot.rotation.x = -0.05 + Math.cos(stridePhase + 0.4) * 0.04;
-        dogTailPivot.rotation.y = Math.sin(stridePhase * 0.92) * 0.5;
-        dogTailPivot.rotation.z = 0.28 + Math.cos(stridePhase * 0.92) * 0.14;
+
+        // Tail — wags faster at start (excited), slower mid-run (focused)
+        const tailExcitement = progress < 0.3 ? 1.4 : progress > 0.8 ? 0.6 : 1.0;
+        dogTailPivot.rotation.y = Math.sin(stridePhase * 0.92) * 0.5 * tailExcitement;
+        dogTailPivot.rotation.z = 0.28 + Math.cos(stridePhase * 0.92) * 0.14 * tailExcitement;
+
+        // Ears flop with individual timing
         dogEars.forEach((earPivot, index) => {
-          earPivot.rotation.z = (index === 0 ? 1 : -1) * 0.08 + Math.sin(stridePhase + index) * 0.05;
+          earPivot.rotation.z = (index === 0 ? 1 : -1) * 0.08 + Math.sin(stridePhase + index) * 0.05 * speed;
           earPivot.rotation.x = -0.08 + Math.cos(stridePhase + index) * 0.04;
         });
+
+        // Legs — amplitude scales with speed
         dogLegRigs.forEach(({ hipPivot, kneePivot, phase }) => {
           const gaitPhase = stridePhase + phase;
-          hipPivot.rotation.z = Math.sin(gaitPhase) * 0.85;
-          kneePivot.rotation.z = -0.28 + Math.max(0, Math.sin(gaitPhase + 0.6)) * 0.95;
+          hipPivot.rotation.z = Math.sin(gaitPhase) * 0.85 * speed;
+          kneePivot.rotation.z = -0.28 + Math.max(0, Math.sin(gaitPhase + 0.6)) * 0.95 * speed;
         });
 
+        // Dust puffs at paw contact
+        if (Math.sin(stridePhase) > 0.9 && speed > 0.5) {
+          const freePuff = dustPuffs.find(p => !p.userData.active);
+          if (freePuff) {
+            freePuff.userData.active = true;
+            freePuff.userData.age = 0;
+            freePuff.position.set(
+              (Math.random() - 0.5) * 0.15,
+              0.02,
+              (Math.random() - 0.5) * 0.1
+            );
+            freePuff.visible = true;
+            freePuff.scale.setScalar(0.6);
+          }
+        }
+        dustPuffs.forEach(p => {
+          if (!p.userData.active) return;
+          p.userData.age += dt * 1000;
+          const t = p.userData.age / p.userData.maxAge;
+          p.material.opacity = Math.max(0, 0.35 * (1 - t));
+          p.scale.setScalar(0.6 + t * 1.2);
+          p.position.y += dt * 0.15;
+          if (t >= 1) { p.userData.active = false; p.visible = false; }
+        });
+
+        // Fade out at end instead of popping invisible
         if (progress >= 1) {
           sheepdogRunState.active = false;
+          sheepdogRunState.fadeOutMs = 400;
+          dogTongue.visible = false;
+          dustPuffs.forEach(p => { p.userData.active = false; p.visible = false; });
+        }
+      }
+
+      // Fade-out after run completes
+      if (sheepdogRunState.fadeOutMs > 0) {
+        sheepdogRunState.fadeOutMs -= dt * 1000;
+        const fadeT = Math.max(0, sheepdogRunState.fadeOutMs / 400);
+        sheepdogGroup.visible = true;
+        dogModelPivot.traverse(child => {
+          if (child.isMesh && child.material) {
+            child.material.transparent = true;
+            child.material.opacity = fadeT;
+          }
+        });
+        if (sheepdogRunState.fadeOutMs <= 0) {
           sheepdogGroup.visible = false;
-          sheepdogGroup.position.copy(sheepdogRunState.end);
+          dogModelPivot.traverse(child => {
+            if (child.isMesh && child.material) {
+              child.material.transparent = false;
+              child.material.opacity = 1;
+            }
+          });
           dogShadow.scale.setScalar(1);
           dogShadow.material.opacity = 0.22;
           dogTorso.position.y = 0.34;
