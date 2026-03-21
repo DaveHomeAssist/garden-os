@@ -14,6 +14,39 @@ function resolveCarryForwardType(event) {
   return null;
 }
 
+function resolveDamageState(event) {
+  const haystack = `${event?.category ?? ''} ${event?.title ?? ''} ${event?.description ?? ''}`.toLowerCase();
+  if (!haystack.trim()) return 'impact';
+  if (haystack.includes('frost') || haystack.includes('freeze') || haystack.includes('ice') || haystack.includes('cold')) {
+    return 'frost';
+  }
+  if (haystack.includes('storm') || haystack.includes('thunder') || haystack.includes('wind') || haystack.includes('hail')) {
+    return 'storm';
+  }
+  if (haystack.includes('flood') || haystack.includes('waterlog') || haystack.includes('downspout') || haystack.includes('standing water')) {
+    return 'flood';
+  }
+  if (haystack.includes('heat') || haystack.includes('hot') || haystack.includes('drought')) {
+    return 'heat';
+  }
+  if (haystack.includes('blight')) {
+    return 'blight';
+  }
+  if (
+    haystack.includes('critter')
+    || haystack.includes('pest')
+    || haystack.includes('aphid')
+    || haystack.includes('slug')
+    || haystack.includes('hornworm')
+    || haystack.includes('borer')
+    || haystack.includes('butterfl')
+    || haystack.includes('raccoon')
+  ) {
+    return 'pest';
+  }
+  return 'impact';
+}
+
 /**
  * Check if a cell's crop matches the event's target criteria.
  */
@@ -76,6 +109,7 @@ export function applyEventEffect(grid, event) {
 
   const { modifier, target } = event.mechanicalEffect;
   const carryForwardType = resolveCarryForwardType(event);
+  const damageState = modifier < 0 ? resolveDamageState(event) : null;
   if (modifier === undefined || modifier === null) {
     return {
       affectedCells: [],
@@ -102,6 +136,9 @@ export function applyEventEffect(grid, event) {
 
     if (matchesTarget(cell, i, target, grid)) {
       cell.eventModifier += modifier;
+      if (damageState) {
+        cell.damageState = damageState;
+      }
       if (carryForwardType) {
         cell.carryForwardType = carryForwardType;
       }

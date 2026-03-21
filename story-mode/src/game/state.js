@@ -40,6 +40,7 @@ function createEmptyGrid() {
     cropId: null,
     protected: false,
     mulched: false,
+    damageState: null,
     carryForwardType: null,
     eventModifier: 0,
     interventionBonus: 0,

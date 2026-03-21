@@ -874,8 +874,10 @@ function startGame(state, viewport) {
     const cell = state.season.grid[cellIndex];
     if (cell.cropId && !state.selectedCropId) {
       cell.cropId = null;
+      cell.damageState = null;
     } else if (state.selectedCropId) {
       cell.cropId = state.selectedCropId;
+      cell.damageState = null;
       scene.flashCell(cellIndex, 0x4a9a4a, 350);
       if (
         cellIndex === 0

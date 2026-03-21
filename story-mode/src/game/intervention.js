@@ -70,6 +70,7 @@ export function companion_patch(grid, cellIndex) {
 export function prune(grid, cellIndex) {
   if (cellIndex < 0 || cellIndex >= grid.length) return;
   grid[cellIndex].cropId = null;
+  grid[cellIndex].damageState = null;
 }
 
 /**

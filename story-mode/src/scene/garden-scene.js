@@ -49,6 +49,15 @@ const MOOD_PRESETS = {
 };
 
 const NEUTRAL_MOOD = MOOD_PRESETS.calm;
+const DAMAGE_VISUALS = {
+  storm: { soil: 0x7a6a4f, emissive: 0x3d4c58, emissiveIntensity: 0.18, tilt: 0.16, tint: 0x6a7f8f },
+  flood: { soil: 0x5b4f35, emissive: 0x2f5670, emissiveIntensity: 0.22, tilt: 0.08, tint: 0x5b87a4 },
+  frost: { soil: 0x7b7567, emissive: 0xbad4e8, emissiveIntensity: 0.18, tilt: 0.05, tint: 0xb9d4df },
+  heat: { soil: 0x6a4a26, emissive: 0x8b4f22, emissiveIntensity: 0.14, tilt: 0.12, tint: 0xa97845 },
+  pest: { soil: 0x5d4d2a, emissive: 0x6a7a33, emissiveIntensity: 0.16, tilt: 0.2, tint: 0x72823a },
+  blight: { soil: 0x564739, emissive: 0x5d4735, emissiveIntensity: 0.2, tilt: 0.22, tint: 0x6d553a },
+  impact: { soil: 0x674d35, emissive: 0x5d4735, emissiveIntensity: 0.14, tilt: 0.14, tint: 0x8a6a48 },
+};
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
@@ -210,6 +219,19 @@ export function createGardenScene(container) {
   const HOVER_COLOR = new THREE.Color(0x6a5a30);
   const TARGET_COLOR = new THREE.Color(0x3d6e8f);
   let targetableCellIndices = new Set();
+  let currentGridState = [];
+
+  function getCellDisplayColor(index) {
+    const mesh = bed.cellMeshes[index];
+    if (!mesh) return new THREE.Color(0x3a2a1a);
+    const baseColor = mesh.userData._baseColor?.clone() ?? mesh.material.color.clone();
+    const cellState = currentGridState[index];
+    const damageState = cellState?.damageState;
+    if (!damageState || !DAMAGE_VISUALS[damageState]) {
+      return baseColor;
+    }
+    return baseColor.lerp(new THREE.Color(DAMAGE_VISUALS[damageState].soil), 0.55);
+  }
 
   function applyCellVisualState(index) {
     const mesh = bed.cellMeshes[index];
@@ -222,10 +244,17 @@ export function createGardenScene(container) {
       return;
     }
 
-    mesh.material.color.copy(mesh.userData._baseColor);
+    const cellState = currentGridState[index];
+    const damageState = cellState?.damageState;
+    const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
+
+    mesh.material.color.copy(getCellDisplayColor(index));
     if (targetableCellIndices.has(index)) {
       mesh.material.emissive?.copy(TARGET_COLOR);
       mesh.material.emissiveIntensity = 0.35;
+    } else if (damageVisual) {
+      mesh.material.emissive?.setHex(damageVisual.emissive);
+      mesh.material.emissiveIntensity = damageVisual.emissiveIntensity;
     } else {
       mesh.material.emissive?.setHex(0x000000);
       mesh.material.emissiveIntensity = 0;
@@ -556,6 +585,31 @@ export function createGardenScene(container) {
     return 0.4;
   }
 
+  function applyCropDamageState(mesh, damageState) {
+    const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
+    mesh.rotation.z = damageVisual ? -damageVisual.tilt : 0;
+    mesh.rotation.x = 0;
+    mesh.position.y = bed.soilY;
+
+    mesh.traverse((child) => {
+      if (!child.isMesh || !child.material?.color) return;
+      if (!child.material.userData._baseColor) {
+        child.material.userData._baseColor = child.material.color.clone();
+      }
+      child.material.color.copy(child.material.userData._baseColor);
+      child.material.emissive?.setHex(0x000000);
+      child.material.emissiveIntensity = 0;
+
+      if (!damageVisual) return;
+
+      child.material.color.lerp(new THREE.Color(damageVisual.tint), 0.42);
+      if (child.material.emissive) {
+        child.material.emissive.setHex(damageVisual.emissive);
+        child.material.emissiveIntensity = Math.max(0.08, damageVisual.emissiveIntensity * 0.45);
+      }
+    });
+  }
+
   function syncCrops(grid, phase) {
     const activeIds = new Set();
     const growthScale = getGrowthScale(phase);
@@ -578,6 +632,7 @@ export function createGardenScene(container) {
         const existing = cropMeshes.get(key);
         if (existing.userData.cropId === cell.cropId) {
           existing.scale.setScalar(growthScale);
+          applyCropDamageState(existing, cell.damageState);
           continue;
         }
         root.remove(existing);
@@ -596,6 +651,7 @@ export function createGardenScene(container) {
       mesh.scale.setScalar(growthScale);
       mesh.userData.cropId = cell.cropId;
       mesh.userData.cellIndex = i;
+      applyCropDamageState(mesh, cell.damageState);
       root.add(mesh);
       cropMeshes.set(key, mesh);
     }
@@ -742,6 +798,10 @@ export function createGardenScene(container) {
       camera.updateProjectionMatrix();
     },
     sync(state) {
+      currentGridState = state.season.grid;
+      for (let i = 0; i < bed.cellMeshes.length; i++) {
+        applyCellVisualState(i);
+      }
       syncCrops(state.season.grid, state.season.phase);
       applySeason(state.season.season);
 
