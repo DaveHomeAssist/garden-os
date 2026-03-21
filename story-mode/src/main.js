@@ -16,7 +16,7 @@ import { showBackpackPanel } from './ui/backpack-panel.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
 import { createCutsceneMachine } from './game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './ui/season-calendar.js';
-import { applyIntervention } from './game/intervention.js';
+import { applyIntervention, getTargetableCells } from './game/intervention.js';
 import { applyEventEffect } from './game/event-engine.js';
 
 const FACTION_BADGE_COLORS = {
@@ -39,6 +39,23 @@ const FACTION_NAMES = {
   fruiting: 'Fruit',
   brassicas: 'Brassica',
   companions: 'Companion',
+};
+
+const INTERVENTION_LABELS = {
+  protect: 'Protect',
+  mulch: 'Mulch',
+  swap: 'Swap',
+  companion_patch: 'Companion Patch',
+  prune: 'Prune',
+  accept_loss: 'Accept Loss',
+};
+
+const INTERVENTION_PROMPTS = {
+  protect: 'Choose a planted cell to shield from this event.',
+  mulch: 'Choose a planted cell to mulch for this season and next-season carry-forward.',
+  companion_patch: 'Choose a planted cell to patch with an adjacency bonus.',
+  prune: 'Choose a planted cell to remove from the bed.',
+  swap: 'Choose the first planted cell to swap.',
 };
 
 function hasKeepsake(campaign, keepsakeId) {
@@ -144,6 +161,7 @@ function startGame(state, viewport) {
   let gameInputEnabled = true;
   let holdTimer = null;
   let postCutsceneAction = null;
+  let interventionTargetState = null;
 
   const dialoguePanel = createDialoguePanel(dialogueRoot);
   const cutsceneMachine = createCutsceneMachine({
@@ -293,7 +311,7 @@ function startGame(state, viewport) {
 
   function updateFAB() {
     if (!fab) return;
-    if (!gameInputEnabled || cutsceneMachine.isActive()) {
+    if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargetState) {
       fab.classList.remove('is-visible');
       if (fabPlant) fabPlant.classList.remove('is-visible');
       if (fabBackpack) fabBackpack.classList.add('is-hidden');
@@ -320,8 +338,10 @@ function startGame(state, viewport) {
     }
   }
 
+  const SEASON_ICONS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: '❄️' };
+
   function updateHUD() {
-    hudChapter.textContent = `Chapter ${state.campaign.currentChapter}`;
+    hudChapter.textContent = `Ch ${state.campaign.currentChapter}`;
     hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
     hudCrops.textContent = `${planted} / 32`;
@@ -329,6 +349,23 @@ function startGame(state, viewport) {
     const scoreResult = state.season.harvestResult
       ?? scoreBed(state.season.grid, state.season.siteConfig, state.season.season, state.campaign.pantry);
     hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
+
+    // Season icon
+    const seasonIcon = document.getElementById('hud-season-icon');
+    if (seasonIcon) seasonIcon.textContent = SEASON_ICONS[state.season.season] || '🌱';
+
+    // Intervention tokens (show during beat phases)
+    const tokensEl = document.getElementById('hud-tokens');
+    if (tokensEl) {
+      const inBeat = [PHASES.EARLY_SEASON, PHASES.MID_SEASON, PHASES.LATE_SEASON].includes(state.season.phase);
+      tokensEl.style.display = inBeat ? '' : 'none';
+      if (inBeat) {
+        const remaining = state.season.interventionTokens ?? 0;
+        tokensEl.innerHTML = Array.from({ length: 3 }, (_, i) =>
+          `<span class="token-dot${i >= remaining ? ' spent' : ''}"></span>`
+        ).join('');
+      }
+    }
 
     updatePhaseDots();
     updateFAB();
@@ -443,7 +480,137 @@ function startGame(state, viewport) {
     if (fabBackpack) fabBackpack.classList.remove('is-open');
   }
 
+  function clearInterventionTargeting() {
+    interventionTargetState = null;
+    scene.clearTargeting?.();
+    const sheet = panelContainer.querySelector('#intervention-target-panel');
+    if (sheet) {
+      sheet.remove();
+    }
+  }
+
+  function getCellLabel(cellIndex) {
+    const row = Math.floor(cellIndex / 8) + 1;
+    const col = (cellIndex % 8) + 1;
+    return `R${row} · C${col}`;
+  }
+
+  function showInterventionTargetPrompt() {
+    if (!interventionTargetState) return;
+    const { interventionId, firstCell } = interventionTargetState;
+    const secondStep = interventionId === 'swap' && firstCell >= 0;
+
+    const sheet = document.createElement('div');
+    sheet.className = 'panel-sheet is-open';
+    sheet.id = 'intervention-target-panel';
+    sheet.innerHTML = `
+      <div class="panel-handle"></div>
+      <div class="palette-header">
+        <div>
+          <div class="palette-title">${INTERVENTION_LABELS[interventionId]}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(247,242,234,0.35);margin-top:4px;">
+            ${secondStep ? `Choose an adjacent swap partner for ${getCellLabel(firstCell)}.` : INTERVENTION_PROMPTS[interventionId]}
+          </div>
+        </div>
+        <button type="button" class="palette-dismiss" id="target-cancel" aria-label="Cancel targeting">&times;</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;">
+        ${secondStep ? '<button type="button" id="target-back" class="start-choice-btn start-choice-btn--ghost" style="padding:10px 16px;font-size:13px;">Back</button>' : ''}
+        <button type="button" id="target-cancel-text" class="start-choice-btn start-choice-btn--ghost" style="padding:10px 16px;font-size:13px;">Cancel</button>
+      </div>
+    `;
+
+    sheet.addEventListener('click', (event) => {
+      if (event.target.closest('#target-cancel') || event.target.closest('#target-cancel-text')) {
+        clearInterventionTargeting();
+        setGameInputEnabled(false);
+        openEventCard();
+        return;
+      }
+
+      if (event.target.closest('#target-back') && interventionTargetState?.interventionId === 'swap') {
+        interventionTargetState.firstCell = -1;
+        scene.setTargetableCells(getTargetableCells(state.season.grid, 'swap'));
+        showInterventionTargetPrompt();
+      }
+    });
+
+    panelContainer.innerHTML = '';
+    panelContainer.appendChild(sheet);
+  }
+
+  function finalizeInterventionChoice(interventionId, targetA = -1, targetB = -1) {
+    clearInterventionTargeting();
+    state.season.interventionChosen = interventionId;
+    if (interventionId !== 'accept_loss') {
+      state.season.interventionTokens = Math.max(0, state.season.interventionTokens - 1);
+    }
+
+    applyIntervention(state.season.grid, interventionId, targetA, targetB);
+
+    const resolvedEvent = state.season.eventActive;
+    state.season.lastResolvedEvent = resolvedEvent ? { ...resolvedEvent } : null;
+    state.season.lastEventEffectSummary = applyEventEffect(state.season.grid, resolvedEvent);
+    state.season.eventActive = null;
+
+    if (targetA >= 0) scene.flashCell(targetA, 0xe8c84a, 450);
+    if (targetB >= 0) scene.flashCell(targetB, 0xe8c84a, 450);
+
+    const targetSummary = interventionId === 'swap' && targetA >= 0 && targetB >= 0
+      ? `${getCellLabel(targetA)} ↔ ${getCellLabel(targetB)}`
+      : targetA >= 0
+        ? getCellLabel(targetA)
+        : '';
+
+    showToast(
+      interventionId === 'accept_loss'
+        ? 'Accepted the loss'
+        : `${INTERVENTION_LABELS[interventionId]}${targetSummary ? ` · ${targetSummary}` : ''}`,
+      2200
+    );
+    persistState();
+    setGameInputEnabled(true);
+    updateHUD();
+  }
+
+  function beginInterventionTargeting(interventionId) {
+    const validCells = getTargetableCells(state.season.grid, interventionId);
+    if (validCells.length === 0) {
+      showToast(`No valid targets for ${INTERVENTION_LABELS[interventionId]}.`, 2000);
+      setGameInputEnabled(false);
+      openEventCard();
+      return;
+    }
+
+    interventionTargetState = { interventionId, firstCell: -1 };
+    scene.setTargetableCells(validCells);
+    setGameInputEnabled(true);
+    showInterventionTargetPrompt();
+    updateHUD();
+  }
+
+  function handleInterventionTargetClick(cellIndex) {
+    if (!interventionTargetState) return;
+    const { interventionId, firstCell } = interventionTargetState;
+    const validCells = getTargetableCells(state.season.grid, interventionId, firstCell);
+    if (cellIndex < 0 || !validCells.includes(cellIndex)) {
+      showToast('Choose a highlighted cell.', 1400);
+      return;
+    }
+
+    if (interventionId === 'swap' && firstCell < 0) {
+      interventionTargetState.firstCell = cellIndex;
+      scene.setTargetableCells(getTargetableCells(state.season.grid, 'swap', cellIndex));
+      scene.flashCell(cellIndex, 0x8ba8b5, 350);
+      showInterventionTargetPrompt();
+      return;
+    }
+
+    finalizeInterventionChoice(interventionId, firstCell >= 0 ? firstCell : cellIndex, cellIndex);
+  }
+
   function toggleBackpack() {
+    if (interventionTargetState) return;
     if (backpackOpen) {
       closeBackpackPanel();
     } else {
@@ -462,24 +629,11 @@ function startGame(state, viewport) {
     }
 
     showEventCard(panelContainer, event, state.season.interventionTokens, (interventionId) => {
-      state.season.interventionChosen = interventionId;
-      if (interventionId !== 'accept_loss') {
-        state.season.interventionTokens = Math.max(0, state.season.interventionTokens - 1);
+      if (interventionId === 'accept_loss') {
+        finalizeInterventionChoice(interventionId);
+        return;
       }
-
-      // Bug 4: Apply the intervention's mechanical effect to the grid
-      applyIntervention(state.season.grid, interventionId);
-
-      // Bug 9 + 11: Save event reference BEFORE clearing, apply event effect
-      const resolvedEvent = state.season.eventActive;
-      state.season.lastResolvedEvent = resolvedEvent ? { ...resolvedEvent } : null;
-      state.season.lastEventEffectSummary = applyEventEffect(state.season.grid, resolvedEvent);
-      state.season.eventActive = null;
-
-      showToast(interventionId === 'accept_loss' ? 'Accepted the loss' : `Used ${interventionId}`, 1800);
-      persistState();
-      setGameInputEnabled(true);
-      updateHUD();
+      beginInterventionTargeting(interventionId);
     });
   }
 
@@ -616,9 +770,15 @@ function startGame(state, viewport) {
   viewport.addEventListener('click', (event) => {
     if (pauseMenuOpen) return;
     if (!gameInputEnabled || cutsceneMachine.isActive()) return;
-    if (state.season.phase !== PHASES.PLANNING) return;
 
     const cellIndex = scene.raycastCell(event.clientX, event.clientY);
+    if (interventionTargetState) {
+      handleInterventionTargetClick(cellIndex);
+      return;
+    }
+
+    if (state.season.phase !== PHASES.PLANNING) return;
+
     if (cellIndex < 0) {
       if (!cropPaletteOpen) {
         showCropPalette();
@@ -648,6 +808,16 @@ function startGame(state, viewport) {
   });
 
   document.addEventListener('keydown', (event) => {
+    if (interventionTargetState) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        clearInterventionTargeting();
+        setGameInputEnabled(false);
+        openEventCard();
+      }
+      return;
+    }
+
     // Escape always toggles pause menu (unless cutscene skipping)
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -713,6 +883,7 @@ function startGame(state, viewport) {
   let pauseMenuOpen = false;
 
   function togglePauseMenu() {
+    if (interventionTargetState) return;
     pauseMenuOpen = !pauseMenuOpen;
     if (pauseMenuOpen) {
       // Close other panels
@@ -783,6 +954,7 @@ function startGame(state, viewport) {
   const bugCancel = document.getElementById('bug-cancel');
 
   function toggleBugPanel() {
+    if (interventionTargetState) return;
     // Close pause menu if open
     if (pauseMenuOpen) {
       pauseMenuOpen = false;
