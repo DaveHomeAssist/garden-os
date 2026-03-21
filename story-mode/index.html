@@ -186,6 +186,31 @@
       color: rgba(247,242,234,0.25);
       letter-spacing: 0.1em;
     }
+    .start-choice-actions {
+      display:flex;
+      gap:16px;
+      margin-top:28px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .start-choice-btn {
+      font-family:'DM Sans',sans-serif;
+      font-size:15px;
+      padding:12px 28px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:500;
+      border:none;
+    }
+    .start-choice-btn--primary {
+      background:#e8c84a;
+      color:#1e110a;
+    }
+    .start-choice-btn--ghost {
+      background:rgba(247,242,234,0.1);
+      color:#f7f2ea;
+      border:1px solid rgba(247,242,234,0.2);
+    }
 
     /* Fade-in/out keyframes for chapter intro */
     @keyframes fadeInIntro {
@@ -304,6 +329,9 @@
     <div id="phase-dots"></div>
     <div id="panel-container"></div>
     <div id="overlay-container"></div>
+    <div id="cutscene-layer" aria-hidden="true">
+      <div id="dialogue-root"></div>
+    </div>
     <button id="fab-advance">Next</button>
     <div id="toast-container"></div>
   </div>

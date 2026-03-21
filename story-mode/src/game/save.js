@@ -29,3 +29,19 @@ export function deleteCampaign() {
 export function hasSave() {
   return localStorage.getItem(SAVE_KEY) !== null;
 }
+
+export function pushJournalEntry(campaign, entry) {
+  if (!campaign.journalEntries) {
+    campaign.journalEntries = [];
+  }
+
+  campaign.journalEntries.push({
+    chapter: entry.chapter,
+    season: entry.season,
+    score: entry.score,
+    grade: entry.grade,
+    eventsEncountered: [...(entry.eventsEncountered ?? [])],
+    cropsPlanted: [...(entry.cropsPlanted ?? [])],
+    timestamp: entry.timestamp ?? new Date().toISOString(),
+  });
+}

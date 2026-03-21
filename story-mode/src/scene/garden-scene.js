@@ -4,6 +4,8 @@
  */
 import * as THREE from 'three';
 import { buildBed } from './bed-model.js';
+import { buildScenery } from './scenery.js';
+import { createWeatherFX } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
@@ -25,6 +27,32 @@ const CROP_COLORS = {
   brassicas: 0x4a8a6a,
   companions: 0xe8c84a,
 };
+
+const CAMERA_PRESETS = {
+  overview: { position: [0.5, 7, -5.5], target: [0, 0, 0.5], fov: 45 },
+  'bed-low-angle': { position: [0, 2.8, -3.6], target: [0, 0.15, 0.5], fov: 58 },
+  'row-close': { position: [2.2, 3.2, -1.6], target: [1.5, 0.1, 0.6], fov: 54 },
+  'event-push': { position: [0, 4.6, -3.9], target: [0, 0.12, 0.5], fov: 42 },
+  'harvest-hero': { position: [0, 5.7, -2.9], target: [0, 0.1, 0.4], fov: 38 },
+  'front-access': { position: [0, 4.8, -6.8], target: [0, 0.1, 0.9], fov: 48 },
+};
+
+const MOOD_PRESETS = {
+  dawn: { fogColor: 0xffd59e, fogDensity: 0.018, ambientIntensity: 0.62, ambientColor: 0xffe8c0, fillIntensity: 0.34, skyTint: 0xffe4b3 },
+  calm: { fogColor: 0x9db3a6, fogDensity: 0.02, ambientIntensity: 0.6, ambientColor: 0xd9efe0, fillIntensity: 0.4, skyTint: 0x9cd0e8 },
+  storm: { fogColor: 0x61707a, fogDensity: 0.04, ambientIntensity: 0.32, ambientColor: 0xa3b0ba, fillIntensity: 0.22, skyTint: 0x748ca1 },
+  heat: { fogColor: 0xffd68c, fogDensity: 0.024, ambientIntensity: 0.9, ambientColor: 0xffefba, fillIntensity: 0.46, skyTint: 0xf2c67c },
+  'harvest-gold': { fogColor: 0xf0c060, fogDensity: 0.018, ambientIntensity: 0.98, ambientColor: 0xffd060, fillIntensity: 0.44, skyTint: 0xf2c96a },
+  night: { fogColor: 0x1a2030, fogDensity: 0.05, ambientIntensity: 0.18, ambientColor: 0x6f8ac0, fillIntensity: 0.14, skyTint: 0x384a7a },
+  celebration: { fogColor: 0xffefc4, fogDensity: 0.012, ambientIntensity: 1.12, ambientColor: 0xfff2bf, fillIntensity: 0.5, skyTint: 0xffe2a6 },
+  loss: { fogColor: 0x606870, fogDensity: 0.03, ambientIntensity: 0.28, ambientColor: 0x8a98a4, fillIntensity: 0.18, skyTint: 0x6c7a84 },
+};
+
+const NEUTRAL_MOOD = MOOD_PRESETS.calm;
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
+}
 
 // Map emoji to approximate hex color for per-crop tinting
 const EMOJI_COLORS = {
@@ -75,6 +103,9 @@ export function createGardenScene(container) {
   // Better default: slightly more elevated, angled for a pleasant overview
   camera.position.set(0.5, 7, -5.5);
   camera.lookAt(0, 0, 0.5);
+  const cameraLookTarget = new THREE.Vector3(0, 0, 0.5);
+  let cameraTransition = null;
+  let moodTransition = null;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.shadowMap.enabled = true;
@@ -136,6 +167,13 @@ export function createGardenScene(container) {
   ground.position.y = -0.01;
   ground.receiveShadow = true;
   root.add(ground);
+
+  // Background scenery (fence, trees, path, props)
+  const scenery = buildScenery();
+  root.add(scenery.group);
+
+  // Weather effects (rain, frost, sun rays)
+  const weather = createWeatherFX(scene);
 
   // Lighting
   const hemi = new THREE.HemisphereLight(0xb8c8d8, 0x4a3820, 0.5);
@@ -484,8 +522,17 @@ export function createGardenScene(container) {
     }
   }
 
-  function syncCrops(grid) {
+  function getGrowthScale(phase) {
+    if (phase === 'MID_SEASON') return 0.7;
+    if (phase === 'LATE_SEASON' || phase === 'HARVEST' || phase === 'REVIEW' || phase === 'TRANSITION') {
+      return 1.0;
+    }
+    return 0.4;
+  }
+
+  function syncCrops(grid, phase) {
     const activeIds = new Set();
+    const growthScale = getGrowthScale(phase);
 
     for (let i = 0; i < grid.length; i++) {
       const cell = grid[i];
@@ -503,7 +550,10 @@ export function createGardenScene(container) {
 
       if (cropMeshes.has(key)) {
         const existing = cropMeshes.get(key);
-        if (existing.userData.cropId === cell.cropId) continue;
+        if (existing.userData.cropId === cell.cropId) {
+          existing.scale.setScalar(growthScale);
+          continue;
+        }
         root.remove(existing);
         cropMeshes.delete(key);
       }
@@ -517,6 +567,7 @@ export function createGardenScene(container) {
       const x = (col - (COLS - 1) / 2) * cellSize;
       const z = (row - (ROWS - 1) / 2) * cellSize;
       mesh.position.set(x, bed.soilY, z);
+      mesh.scale.setScalar(growthScale);
       mesh.userData.cropId = cell.cropId;
       mesh.userData.cellIndex = i;
       root.add(mesh);
@@ -535,7 +586,6 @@ export function createGardenScene(container) {
   function applySeason(season) {
     const config = SEASON_LIGHTING[season] || SEASON_LIGHTING.spring;
     scene.background.set(config.sky);
-    if (scene.fog) scene.fog.color.set(config.sky);
     hemi.color.set(config.sky);
     hemi.groundColor.set(config.ground);
     hemi.intensity = config.ambInt;
@@ -543,9 +593,85 @@ export function createGardenScene(container) {
     const angle = (config.sunAngle * Math.PI) / 180;
     sun.position.set(3 * Math.cos(angle), 8 * Math.sin(angle), -2);
 
-    // Update sky gradient tint per season
-    const skyColor = new THREE.Color(config.sky);
-    skyMat.color.copy(skyColor);
+    // Update tree foliage colors
+    scenery.updateSeason(season);
+  }
+
+  let lastSeason = null;
+
+  function setCameraPreset(name, opts = {}) {
+    const preset = CAMERA_PRESETS[name];
+    if (!preset) return;
+
+    cameraTransition = {
+      startedAt: performance.now(),
+      duration: opts.duration ?? 800,
+      fromPosition: camera.position.clone(),
+      fromTarget: cameraLookTarget.clone(),
+      fromFov: camera.fov,
+      toPosition: new THREE.Vector3(...preset.position),
+      toTarget: new THREE.Vector3(...preset.target),
+      toFov: preset.fov,
+    };
+  }
+
+  function applyMood(name, opts = {}) {
+    const preset = MOOD_PRESETS[name];
+    if (!preset) return;
+
+    moodTransition = {
+      startedAt: performance.now(),
+      duration: opts.duration ?? 1200,
+      fromFogColor: scene.fog.color.clone(),
+      fromFogDensity: scene.fog.density,
+      fromAmbientIntensity: hemi.intensity,
+      fromAmbientColor: hemi.color.clone(),
+      fromFillIntensity: fill.intensity,
+      fromSkyTint: skyMat.color.clone(),
+      toFogColor: new THREE.Color(preset.fogColor),
+      toFogDensity: preset.fogDensity,
+      toAmbientIntensity: preset.ambientIntensity,
+      toAmbientColor: new THREE.Color(preset.ambientColor),
+      toFillIntensity: preset.fillIntensity,
+      toSkyTint: new THREE.Color(preset.skyTint),
+    };
+  }
+
+  function resetMood() {
+    applyMood('calm', { duration: 600 });
+  }
+
+  function pulseEventFocus(cellIndex) {
+    flashCell(cellIndex, 0xe8c84a, 650);
+  }
+
+  function updateTransitions(now) {
+    if (cameraTransition) {
+      const t = Math.min((now - cameraTransition.startedAt) / cameraTransition.duration, 1);
+      const eased = easeInOutCubic(t);
+      camera.position.lerpVectors(cameraTransition.fromPosition, cameraTransition.toPosition, eased);
+      cameraLookTarget.lerpVectors(cameraTransition.fromTarget, cameraTransition.toTarget, eased);
+      camera.fov = cameraTransition.fromFov + (cameraTransition.toFov - cameraTransition.fromFov) * eased;
+      camera.updateProjectionMatrix();
+      camera.lookAt(cameraLookTarget);
+      if (t >= 1) {
+        cameraTransition = null;
+      }
+    }
+
+    if (moodTransition) {
+      const t = Math.min((now - moodTransition.startedAt) / moodTransition.duration, 1);
+      const eased = easeInOutCubic(t);
+      scene.fog.color.lerpColors(moodTransition.fromFogColor, moodTransition.toFogColor, eased);
+      scene.fog.density = moodTransition.fromFogDensity + (moodTransition.toFogDensity - moodTransition.fromFogDensity) * eased;
+      hemi.intensity = moodTransition.fromAmbientIntensity + (moodTransition.toAmbientIntensity - moodTransition.fromAmbientIntensity) * eased;
+      hemi.color.lerpColors(moodTransition.fromAmbientColor, moodTransition.toAmbientColor, eased);
+      fill.intensity = moodTransition.fromFillIntensity + (moodTransition.toFillIntensity - moodTransition.fromFillIntensity) * eased;
+      skyMat.color.lerpColors(moodTransition.fromSkyTint, moodTransition.toSkyTint, eased);
+      if (t >= 1) {
+        moodTransition = null;
+      }
+    }
   }
 
   function raycastCell(clientX, clientY) {
@@ -578,15 +704,29 @@ export function createGardenScene(container) {
       camera.updateProjectionMatrix();
     },
     sync(state) {
-      syncCrops(state.season.grid);
+      syncCrops(state.season.grid, state.season.phase);
       applySeason(state.season.season);
+
+      // Trigger ambient weather on season change
+      if (state.season.season !== lastSeason) {
+        lastSeason = state.season.season;
+        weather.triggerForEvent(null, state.season.season);
+      }
+
+      weather.update(0.016);
       camCtrl.update();
+      updateTransitions(performance.now());
     },
     render() {
       renderer.render(scene, camera);
     },
     raycastCell,
     flashCell,
+    setCameraPreset,
+    applyMood,
+    resetMood,
+    pulseEventFocus,
+    weather,
     dispose() {
       renderer.dispose();
     },

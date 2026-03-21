@@ -2,49 +2,118 @@
  * Phase Machine — implements SEASON_ENGINE_SPEC.md state transitions.
  * No backward transitions after COMMIT.
  */
-import { PHASES, BEAT_PHASES } from './state.js';
+import { PHASES, BEAT_PHASES, SEASONS, createSeasonState } from './state.js';
+import { getCropsForChapter } from '../data/crops.js';
+import { drawEvent } from '../data/events.js';
+import { scoreBed } from '../scoring/bed-score.js';
+import { pushJournalEntry, saveCampaign } from './save.js';
 
 const TRANSITIONS = {
-  [PHASES.PLANNING]:      PHASES.COMMIT,
-  [PHASES.COMMIT]:        PHASES.EARLY_SEASON,
-  [PHASES.EARLY_SEASON]:  PHASES.MID_SEASON,
-  [PHASES.MID_SEASON]:    PHASES.LATE_SEASON,
-  [PHASES.LATE_SEASON]:   PHASES.HARVEST,
-  [PHASES.HARVEST]:       PHASES.REVIEW,
-  [PHASES.REVIEW]:        PHASES.TRANSITION,
-  [PHASES.TRANSITION]:    PHASES.PLANNING,
+  [PHASES.PLANNING]: PHASES.COMMIT,
+  [PHASES.COMMIT]: PHASES.EARLY_SEASON,
+  [PHASES.EARLY_SEASON]: PHASES.MID_SEASON,
+  [PHASES.MID_SEASON]: PHASES.LATE_SEASON,
+  [PHASES.LATE_SEASON]: PHASES.HARVEST,
+  [PHASES.HARVEST]: PHASES.REVIEW,
+  [PHASES.REVIEW]: PHASES.TRANSITION,
+  [PHASES.TRANSITION]: PHASES.PLANNING,
 };
 
-// Simple event stubs for season beats
-const SEASON_EVENTS = {
-  [PHASES.EARLY_SEASON]: [
-    { title: 'First Sprouts', description: 'Tiny green shoots push through the soil. Everything is starting.' },
-    { title: 'April Showers', description: 'A gentle rain waters the bed overnight. The soil looks rich.' },
-    { title: 'Early Visitors', description: 'Earthworms surface. A sign of healthy soil underneath.' },
-  ],
-  [PHASES.MID_SEASON]: [
-    { title: 'Full Canopy', description: 'Leaves spread wide, competing for sunlight. The bed is filling in.' },
-    { title: 'Afternoon Heat', description: 'The sun beats down. Some leaves curl slightly at the edges.' },
-    { title: 'Busy Bees', description: 'Pollinators buzz between flowers. Fruit is starting to set.' },
-  ],
-  [PHASES.LATE_SEASON]: [
-    { title: 'Harvest Time', description: 'Colors are changing. Some crops hang heavy and ready.' },
-    { title: 'Cooling Nights', description: 'Morning dew lingers longer. The season is winding down.' },
-    { title: 'Last Push', description: 'A final burst of growth before the frost line drops.' },
-  ],
-};
+function rotateSeason(currentSeason) {
+  const currentIndex = SEASONS.indexOf(currentSeason);
+  if (currentIndex === -1) return SEASONS[0];
+  return SEASONS[(currentIndex + 1) % SEASONS.length];
+}
 
-function pickSeasonEvent(phase) {
-  const pool = SEASON_EVENTS[phase];
-  if (!pool || pool.length === 0) return null;
-  const idx = Math.floor(Math.random() * pool.length);
-  return { ...pool[idx] };
+function listPlantedCropIds(grid) {
+  return [...new Set(grid.map((cell) => cell.cropId).filter(Boolean))];
+}
+
+function createAdvanceResult() {
+  return {
+    advanced: false,
+    seasonChanged: false,
+    chapterChanged: false,
+    campaignComplete: false,
+    scoreResult: null,
+    journalEntryAdded: false,
+    trigger: null,
+  };
+}
+
+function assignBeatState(season, beatIndex) {
+  season.beatIndex = beatIndex;
+  season.interventionChosen = null;
+  season.eventActive = drawEvent(season.season, season.chapter, season.eventsDrawn);
+
+  if (season.eventActive) {
+    season.eventsDrawn.push(season.eventActive.id);
+    season.eventTitles.push(season.eventActive.title);
+  }
+}
+
+function finalizeHarvest(season) {
+  if (season.harvestResult) return season.harvestResult;
+
+  const campaign = season.campaign ?? null;
+  const pantry = campaign?.pantry ?? {};
+  season.harvestResult = scoreBed(season.grid, season.siteConfig, season.season, pantry);
+  return season.harvestResult;
+}
+
+function recordSeasonJournal(season) {
+  const campaign = season.campaign;
+  if (!campaign) return false;
+
+  const harvest = finalizeHarvest(season);
+  pushJournalEntry(campaign, {
+    chapter: season.chapter,
+    season: season.season,
+    score: harvest.score,
+    grade: harvest.grade,
+    eventsEncountered: season.eventTitles,
+    cropsPlanted: listPlantedCropIds(season.grid),
+    timestamp: new Date().toISOString(),
+  });
+  return true;
+}
+
+function rollCampaignForward(season) {
+  const campaign = season.campaign;
+  if (!campaign) {
+    return { complete: false, chapterChanged: false };
+  }
+
+  if (!campaign.completedChapters.includes(season.chapter)) {
+    campaign.completedChapters.push(season.chapter);
+  }
+
+  campaign.seasonHistory.push({
+    chapter: season.chapter,
+    season: season.season,
+    score: season.harvestResult?.score ?? 0,
+    grade: season.harvestResult?.grade ?? 'F',
+  });
+
+  const nextChapter = campaign.currentChapter + 1;
+  const nextSeason = rotateSeason(season.season);
+
+  campaign.currentChapter = nextChapter;
+  campaign.currentSeason = nextSeason;
+  campaign.complete = nextChapter > 12;
+  campaign.cropsUnlocked = getCropsForChapter(nextChapter).map((crop) => crop.id);
+
+  const nextSeasonState = createSeasonState(nextChapter, nextSeason, campaign);
+  Object.assign(season, nextSeasonState);
+
+  saveCampaign(campaign);
+  return { complete: campaign.complete, chapterChanged: true };
 }
 
 export function canAdvance(season) {
   const { phase } = season;
   if (phase === PHASES.PLANNING) {
-    const planted = season.grid.filter(c => c.cropId !== null).length;
+    const planted = season.grid.filter((cell) => cell.cropId !== null).length;
     return planted >= 8;
   }
   if (phase === PHASES.COMMIT) return true;
@@ -57,29 +126,115 @@ export function canAdvance(season) {
   return false;
 }
 
-export function advance(season) {
-  if (!canAdvance(season)) return false;
+export function advance(state) {
+  const season = state.season;
+  const result = createAdvanceResult();
+  if (!canAdvance(season)) return result;
 
-  const nextPhase = TRANSITIONS[season.phase];
-  if (!nextPhase) return false;
+  const previousPhase = season.phase;
+  const nextPhase = TRANSITIONS[previousPhase];
+  if (!nextPhase) return result;
 
-  season.phase = nextPhase;
+  result.advanced = true;
 
   if (nextPhase === PHASES.EARLY_SEASON) {
-    season.beatIndex = 0;
+    season.phase = nextPhase;
     season.interventionTokens = 3;
-    season.eventActive = pickSeasonEvent(nextPhase);
-  } else if (nextPhase === PHASES.MID_SEASON) {
-    season.beatIndex = 1;
-    season.interventionChosen = null;
-    season.eventActive = pickSeasonEvent(nextPhase);
-  } else if (nextPhase === PHASES.LATE_SEASON) {
-    season.beatIndex = 2;
-    season.interventionChosen = null;
-    season.eventActive = pickSeasonEvent(nextPhase);
+    assignBeatState(season, 0);
+    result.seasonChanged = true;
+    if (season.eventActive) {
+      result.trigger = {
+        type: 'event_drawn',
+        eventId: season.eventActive.id,
+        eventTitle: season.eventActive.title,
+        season: season.season,
+        chapter: season.chapter,
+      };
+    }
+    return result;
   }
 
-  return true;
+  if (nextPhase === PHASES.MID_SEASON) {
+    season.phase = nextPhase;
+    assignBeatState(season, 1);
+    result.seasonChanged = true;
+    if (season.eventActive) {
+      result.trigger = {
+        type: 'event_drawn',
+        eventId: season.eventActive.id,
+        eventTitle: season.eventActive.title,
+        season: season.season,
+        chapter: season.chapter,
+      };
+    }
+    return result;
+  }
+
+  if (nextPhase === PHASES.LATE_SEASON) {
+    season.phase = nextPhase;
+    assignBeatState(season, 2);
+    result.seasonChanged = true;
+    if (season.eventActive) {
+      result.trigger = {
+        type: 'event_drawn',
+        eventId: season.eventActive.id,
+        eventTitle: season.eventActive.title,
+        season: season.season,
+        chapter: season.chapter,
+      };
+    }
+    return result;
+  }
+
+  if (nextPhase === PHASES.HARVEST) {
+    season.phase = nextPhase;
+    season.eventActive = null;
+    season.interventionChosen = null;
+    result.scoreResult = finalizeHarvest(season);
+    result.trigger = {
+      type: 'harvest_complete',
+      score: result.scoreResult.score,
+      grade: result.scoreResult.grade,
+      season: season.season,
+      chapter: season.chapter,
+    };
+    return result;
+  }
+
+  if (nextPhase === PHASES.REVIEW) {
+    result.journalEntryAdded = recordSeasonJournal(season);
+    season.phase = nextPhase;
+    return result;
+  }
+
+  if (nextPhase === PHASES.TRANSITION) {
+    season.phase = nextPhase;
+    result.trigger = {
+      type: 'chapter_complete',
+      chapter: season.chapter,
+      season: season.season,
+    };
+    return result;
+  }
+
+  if (previousPhase === PHASES.TRANSITION && nextPhase === PHASES.PLANNING) {
+    const rollover = rollCampaignForward(season);
+    result.chapterChanged = rollover.chapterChanged;
+    result.campaignComplete = rollover.complete;
+    if (rollover.complete) {
+      result.trigger = { type: 'campaign_complete' };
+    } else {
+      result.trigger = {
+        type: 'chapter_start',
+        chapter: season.chapter,
+        season: season.season,
+      };
+    }
+    return result;
+  }
+
+  season.phase = nextPhase;
+  return result;
 }
 
 export function cancelCommit(season) {
