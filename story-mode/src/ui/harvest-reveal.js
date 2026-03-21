@@ -72,21 +72,24 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
       <div style="
         font-family:'Fraunces',serif;font-weight:700;font-size:28px;
         color:${gradeColor};margin-bottom:20px;
-      " id="grade-badge">${result.grade}</div>
+        opacity:0;transform:scale(0.5);
+        position:relative;
+      " id="grade-badge">${result.grade}${result.grade === 'A+' ? '<span class="confetti-burst"></span>' : ''}</div>
 
       <div style="
         background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);
         border-radius:12px;padding:16px;margin-bottom:16px;text-align:left;
       ">
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.3);margin-bottom:10px;">Scoring Factors</div>
-        ${Object.entries(FACTOR_LABELS).map(([key, info]) => {
+        ${Object.entries(FACTOR_LABELS).map(([key, info], factorIdx) => {
           const val = factorAvgs[key] || 0;
           const maxVal = key === 'adjacency' ? 2 : 5;
           const minVal = key === 'adjacency' ? -2 : 0;
           const pct = Math.max(0, Math.min(100, ((val - minVal) / (maxVal - minVal)) * 100));
           const barColor = pct > 70 ? '#5aab6b' : pct > 40 ? '#e8c84a' : '#d44a2a';
+          const staggerDelay = factorIdx * 100;
           return `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="factor-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;opacity:0;transform:translateY(6px);transition:opacity 0.3s ease ${staggerDelay}ms, transform 0.3s ease ${staggerDelay}ms;">
               <span style="font-size:16px;width:24px;text-align:center;">${info.emoji}</span>
               <div style="flex:1;">
                 <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
@@ -94,7 +97,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
                   <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.4);">${val.toFixed(1)} <span style="font-size:9px;color:rgba(247,242,234,0.25);">${info.weight}</span></span>
                 </div>
                 <div style="height:6px;border-radius:3px;background:rgba(247,242,234,0.06);overflow:hidden;">
-                  <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.8s ease-out;"></div>
+                  <div class="factor-bar-fill" style="height:100%;width:0%;background:${barColor};border-radius:3px;transition:width 0.8s ease-out ${staggerDelay + 200}ms;"></div>
                 </div>
               </div>
             </div>
@@ -185,6 +188,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
 
   // Animate score counter
   const counterEl = overlay.querySelector('#score-counter');
+  const gradeBadge = overlay.querySelector('#grade-badge');
   let count = 0;
   const target = result.score;
   const duration = 1200;
@@ -196,9 +200,37 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
     const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
     count = Math.round(eased * target);
     counterEl.textContent = count;
-    if (progress < 1) requestAnimationFrame(animateCounter);
+    if (progress < 1) {
+      requestAnimationFrame(animateCounter);
+    } else {
+      // Bounce in the grade badge after counter finishes
+      if (gradeBadge) {
+        gradeBadge.style.transition = 'opacity 0.3s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        gradeBadge.style.opacity = '1';
+        gradeBadge.style.transform = 'scale(1)';
+      }
+    }
   }
   requestAnimationFrame(animateCounter);
+
+  // Stagger factor bar animations after mount
+  requestAnimationFrame(() => {
+    // Fade in factor rows
+    overlay.querySelectorAll('.factor-row').forEach((row) => {
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+    });
+    // Compute and set actual bar widths to trigger width transition
+    const factorKeys = Object.keys(FACTOR_LABELS);
+    overlay.querySelectorAll('.factor-bar-fill').forEach((bar, idx) => {
+      const key = factorKeys[idx];
+      const val = factorAvgs[key] || 0;
+      const maxVal = key === 'adjacency' ? 2 : 5;
+      const minVal = key === 'adjacency' ? -2 : 0;
+      const pct = Math.max(0, Math.min(100, ((val - minVal) / (maxVal - minVal)) * 100));
+      bar.style.width = `${pct}%`;
+    });
+  });
 
   overlay.querySelector('#harvest-backpack')?.addEventListener('click', () => {
     overlay.style.animation = 'fadeOutIntro 0.3s ease-in both';

@@ -333,6 +333,7 @@
 
 .intervention-btn:hover {
   border-color: rgba(232, 200, 74, 0.34);
+  transform: scale(1.03);
 }
 
 .intervention-btn.is-disabled {
@@ -457,4 +458,64 @@
     right: 10px;
     min-height: 34px;
   }
+}
+
+/* Harvest reveal — A+ confetti burst (CSS-only pseudo-elements) */
+.confetti-burst {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+}
+.confetti-burst::before,
+.confetti-burst::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: confettiPop 1s ease-out forwards;
+}
+.confetti-burst::before {
+  background: #e8c84a;
+  top: 50%;
+  left: 50%;
+  box-shadow:
+    -14px -18px 0 #5aab6b,
+    16px -12px 0 #d44a2a,
+    -20px 8px 0 #4a9aba,
+    18px 14px 0 #e8c84a,
+    -6px -22px 0 #dda855,
+    10px 20px 0 #5aab6b,
+    -18px -4px 0 #d44a2a,
+    22px 2px 0 #4a9aba;
+}
+.confetti-burst::after {
+  background: #5aab6b;
+  top: 50%;
+  left: 50%;
+  box-shadow:
+    12px -20px 0 #e8c84a,
+    -16px -14px 0 #4a9aba,
+    20px 6px 0 #dda855,
+    -14px 16px 0 #d44a2a,
+    8px -24px 0 #5aab6b,
+    -10px 22px 0 #e8c84a,
+    16px -6px 0 #4a9aba,
+    -22px -2px 0 #dda855;
+}
+@keyframes confettiPop {
+  0%   { transform: scale(0); opacity: 1; }
+  50%  { transform: scale(1.4); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Event card slide-in animation */
+@keyframes eventSlideIn {
+  from { transform: translateX(20px) translateY(100%); opacity: 0.6; }
+  to   { transform: translateX(0) translateY(0); opacity: 1; }
+}
+
+/* Event card sheet — ensure the colored top border renders */
+.event-card-sheet {
+  overflow: visible;
 }

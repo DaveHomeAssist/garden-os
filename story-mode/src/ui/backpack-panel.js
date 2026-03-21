@@ -132,7 +132,7 @@ export function showBackpackPanel(container, data, onClose) {
       setTimeout(() => {
         sheet.remove();
         onClose?.();
-      }, 300);
+      }, 260);
     }
   });
 

@@ -62,6 +62,7 @@ function createSeasonState(chapter, season, campaign = null) {
     lastResolvedEvent: null,
     lastEventEffectSummary: null,
     newlyEarnedKeepsakes: [],
+    winterReviewSeen: false,
     campaign,
   };
 }
@@ -81,6 +82,7 @@ function createCampaignState() {
     keepsakes: [],
     cropsUnlocked: getCropsForChapter(1).map((crop) => crop.id),
     journalEntries: [],
+    lastSeasonReview: null,
     seenCutsceneIds: [],
     masteryRank: 0,
     soilHealth: Array(CELL_COUNT).fill(1.0),

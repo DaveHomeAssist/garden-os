@@ -19,13 +19,16 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
   });
 
   const sheet = document.createElement('div');
-  sheet.className = 'panel-sheet is-open';
+  sheet.className = 'panel-sheet is-open event-card-sheet';
   sheet.id = 'event-card-panel';
+  sheet.style.animation = 'eventSlideIn 0.3s ease-out both';
 
   const valenceColor = event.valence === 'positive' ? '#5aab6b'
     : event.valence === 'negative' ? '#d44a2a'
     : event.valence === 'mixed' ? '#e8c84a'
     : '#8ba8b5';
+
+  sheet.style.borderTop = `3px solid ${valenceColor}`;
 
   const valenceLabel = event.valence === 'positive' ? '+'
     : event.valence === 'negative' ? '−'
@@ -37,7 +40,7 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:4px;">Season Event</div>
-        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:20px;color:#f7f2ea;line-height:1.3;">${escapeHtml(event.title)}</div>
+        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:23px;color:#f7f2ea;line-height:1.3;">${escapeHtml(event.title)}</div>
       </div>
       <span style="
         display:inline-flex;align-items:center;justify-content:center;
@@ -97,7 +100,7 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     setTimeout(() => {
       sheet.remove();
       onChoose(interventionId);
-    }, 300);
+    }, 260);
   });
 
   container.innerHTML = '';
@@ -108,7 +111,7 @@ export function dismissEventCard() {
   const panel = document.getElementById('event-card-panel');
   if (panel) {
     panel.classList.remove('is-open');
-    setTimeout(() => panel.remove(), 300);
+    setTimeout(() => panel.remove(), 260);
   }
 }
 

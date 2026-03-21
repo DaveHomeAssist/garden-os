@@ -351,6 +351,7 @@ function startGame(state, viewport) {
   }
 
   function getAdvanceLabel() {
+    if (state.season.season === 'winter') return 'Continue';
     switch (state.season.phase) {
       case PHASES.PLANNING:
         return 'Commit Plan';
@@ -363,26 +364,47 @@ function startGame(state, viewport) {
     }
   }
 
+  let fabWasVisible = false;
+  let fabPlantWasVisible = false;
+
+  function pulseOnEnter(el, wasVisible) {
+    if (!wasVisible) {
+      el.classList.remove('is-entering');
+      void el.offsetWidth;
+      el.classList.add('is-entering');
+      setTimeout(() => el.classList.remove('is-entering'), 700);
+    }
+  }
+
   function updateFAB() {
     if (!fab) return;
     if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargetState) {
       fab.classList.remove('is-visible');
-      if (fabPlant) fabPlant.classList.remove('is-visible');
+      fabWasVisible = false;
+      if (fabPlant) { fabPlant.classList.remove('is-visible'); fabPlantWasVisible = false; }
       if (fabBackpack) fabBackpack.classList.add('is-hidden');
       return;
     }
     if (canAdvance(state.season)) {
+      const wasVis = fabWasVisible;
       fab.classList.add('is-visible');
       fab.textContent = getAdvanceLabel();
+      pulseOnEnter(fab, wasVis);
+      fabWasVisible = true;
     } else {
       fab.classList.remove('is-visible');
+      fabWasVisible = false;
     }
 
     if (fabPlant) {
       if (state.season.phase === PHASES.PLANNING) {
+        const wasVis = fabPlantWasVisible;
         fabPlant.classList.add('is-visible');
+        pulseOnEnter(fabPlant, wasVis);
+        fabPlantWasVisible = true;
       } else {
         fabPlant.classList.remove('is-visible');
+        fabPlantWasVisible = false;
         if (cropPaletteOpen) closePalette();
       }
     }
@@ -523,7 +545,7 @@ function startGame(state, viewport) {
     const sheet = panelContainer.querySelector('#crop-palette-panel');
     if (sheet) {
       sheet.classList.remove('is-open');
-      setTimeout(() => sheet.remove(), 300);
+      setTimeout(() => sheet.remove(), 260);
     }
     cropPaletteOpen = false;
   }
@@ -685,7 +707,7 @@ function startGame(state, viewport) {
     const sheet = panelContainer.querySelector('#backpack-panel');
     if (sheet) {
       sheet.classList.remove('is-open');
-      setTimeout(() => sheet.remove(), 300);
+      setTimeout(() => sheet.remove(), 260);
     }
     backpackOpen = false;
     if (fabBackpack) fabBackpack.classList.remove('is-open');

@@ -1,6 +1,7 @@
 /**
  * Season Calendar — compact HUD widget showing year, season, and beat progress.
  */
+import { getChapterTitle } from './chapter-text.js';
 
 const SEASON_MONTHS = {
   spring: { early: 'March', mid: 'April', late: 'May' },
@@ -41,7 +42,8 @@ export function createSeasonCalendar() {
       <span id="cal-emoji" style="font-size:18px;">🌱</span>
       <div>
         <div id="cal-month" style="font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:#f7f2ea;line-height:1.2;">March</div>
-        <div id="cal-year" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.35);letter-spacing:0.08em;">Year 1</div>
+        <div id="cal-chapter-title" style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(247,242,234,0.52);line-height:1.25;margin-top:1px;"></div>
+        <div id="cal-year" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.35);letter-spacing:0.08em;margin-top:2px;">Year 1 of 3</div>
       </div>
     </div>
     <div style="display:flex;gap:4px;align-items:center;" id="cal-beats">
@@ -77,7 +79,12 @@ export function updateSeasonCalendar(state) {
 
   document.getElementById('cal-emoji').textContent = emoji;
   document.getElementById('cal-month').textContent = month;
-  document.getElementById('cal-year').textContent = `Year ${year}`;
+  document.getElementById('cal-year').textContent = `Year ${year} of 3`;
+
+  const chapterTitleEl = document.getElementById('cal-chapter-title');
+  if (chapterTitleEl) {
+    chapterTitleEl.textContent = getChapterTitle(chapter);
+  }
 
   // Beat progress bars
   const beats = el.querySelectorAll('.cal-beat');
