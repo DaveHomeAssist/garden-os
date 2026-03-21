@@ -253,6 +253,14 @@ export function createGardenScene(container) {
     }
   });
 
+  renderer.domElement.addEventListener('pointerleave', () => {
+    if (hoveredCellIndex >= 0 && hoveredCellIndex < bed.cellMeshes.length) {
+      const lastHovered = hoveredCellIndex;
+      hoveredCellIndex = -1;
+      applyCellVisualState(lastHovered);
+    }
+  });
+
   // Crop mesh cache
   const cropMeshes = new Map();
 
