@@ -152,10 +152,15 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .eraser-btn:hover{opacity:0.8}
 .eraser-btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
 .eraser-btn.selected{background:#f5b8b8;border-color:var(--danger)}
-.beat-indicator{display:flex;gap:6px;font-family:var(--ff-mono);font-size:var(--type-label)}
-.beat-dot{min-width:32px;height:24px;border-radius:12px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:var(--text-muted);padding:0 4px;letter-spacing:0.02em;transition:all 200ms var(--ease-out)}
-.beat-dot.active{border-color:var(--char-gurl);background:var(--char-gurl-bg);color:var(--char-gurl)}
-.beat-dot.done{border-color:var(--leaf-bright);background:var(--leaf-bright);color:#fff}
+.beat-indicator{display:flex;gap:0;font-family:var(--ff-mono);font-size:var(--type-label);background:var(--cream-dark);border-radius:10px;border:1px solid var(--border);overflow:hidden;width:100%;max-width:320px}
+.beat-dot{flex:1;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:var(--text-muted);padding:0 6px;letter-spacing:0.03em;transition:all 200ms var(--ease-out);position:relative;border-right:1px solid var(--border);cursor:default}
+.beat-dot:last-child{border-right:none}
+.beat-dot.active{background:var(--sun);color:var(--soil);font-weight:800;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.12)}
+.beat-dot.done{background:var(--leaf-bright);color:#fff}
+.beat-dot.active::after{content:'';position:absolute;bottom:-1px;left:25%;right:25%;height:3px;background:var(--soil);border-radius:3px 3px 0 0}
+.beat-harvest{flex:0.7;font-size:0.6rem;letter-spacing:0.06em;color:var(--text-muted)}
+.beat-harvest.active{background:var(--sun);color:var(--soil)}
+.beat-harvest.done{background:var(--leaf-bright);color:#fff}
 .zone-label{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);width:100%;text-align:left;padding:2px 0}
 .grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;background:linear-gradient(180deg,var(--s-ground-mid) 0%,var(--s-ground-deep) 100%);padding:8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--s-ground-light) 60%,var(--border) 40%);transition:background 0.8s ease-in-out,border-color 0.8s ease-in-out}
 .cell{aspect-ratio:1;border-radius:6px;border:2px solid var(--border);background:radial-gradient(circle at 20% 24%,rgba(129,99,62,0.22) 1px,transparent 2px),radial-gradient(circle at 76% 68%,rgba(96,71,38,0.16) 1px,transparent 2px),linear-gradient(180deg,#f0e3ca 0%,#e6d5b6 100%);background-size:12px 12px,14px 14px,100% 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;min-width:0;transition:border-color 140ms var(--ease-out),box-shadow 140ms var(--ease-out),transform 140ms var(--ease-out),background-color 0.8s ease-in-out}
@@ -1714,24 +1719,52 @@ function renderBoard(){
   el.board.setAttribute('aria-label','Garden bed');
 
   const f=document.createDocumentFragment();
-  // Phase dots
+  // Season calendar strip
+  const calWrap=h('div','');
+  calWrap.style.cssText='display:flex;align-items:center;gap:8px;width:100%';
+  const seasonLabel=h('div','');
+  seasonLabel.style.cssText='font-family:var(--ff-heading);font-size:0.85rem;font-weight:700;color:var(--text);min-width:48px;text-transform:capitalize';
+  seasonLabel.textContent=S.season;
+  calWrap.appendChild(seasonLabel);
+
   const br=h('div','beat-indicator');
   br.setAttribute('role','group');
   br.setAttribute('aria-label','Season months');
   const months=MONTH_NAMES[S.season]||['Month 1','Month 2','Month 3'];
   const monthAbbr=months.map(m=>m.slice(0,3));
+  const isBeat=BEAT_PHASES.includes(S.phase);
+  const atHarvest=S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
+
   monthAbbr.forEach((lbl,b)=>{
     const d=h('div','beat-dot',lbl);
-    const isBeat=BEAT_PHASES.includes(S.phase);
     const isActive=isBeat&&S.beatIndex===b;
-    const isDone=(isBeat&&b<S.beatIndex)||S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
+    const isDone=(isBeat&&b<S.beatIndex)||atHarvest;
     if(isActive)d.classList.add('active');
     if(isDone)d.classList.add('done');
     d.setAttribute('role','img');
     d.setAttribute('aria-label',months[b]+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
     br.appendChild(d);
   });
-  f.appendChild(br);
+
+  // Harvest segment
+  const hd=h('div','beat-dot beat-harvest','\u2692');
+  if(atHarvest)hd.classList.add('active');
+  hd.setAttribute('role','img');
+  hd.setAttribute('aria-label','Harvest'+(atHarvest?' (current)':' (after months)'));
+  br.appendChild(hd);
+
+  calWrap.appendChild(br);
+
+  // Year indicator
+  const chMeta2=CHAPTERS[S.chapter];
+  if(chMeta2){
+    const yr=h('div','');
+    yr.style.cssText='font-family:var(--ff-mono);font-size:0.6rem;color:var(--text-muted);white-space:nowrap';
+    yr.textContent='Y'+chMeta2.year;
+    calWrap.appendChild(yr);
+  }
+
+  f.appendChild(calWrap);
   f.appendChild(h('div','zone-label','Back rows \u2014 Trellis (climbers go here) \u2502 Front rows \u2014 Access (short crops)'));
 
   // Ch7 row objective
