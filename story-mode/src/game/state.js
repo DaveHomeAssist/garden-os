@@ -61,6 +61,9 @@ function createSeasonState(chapter, season, campaign = null) {
     interventionChosen: null,
     beatScores: [],
     harvestResult: null,
+    lastResolvedEvent: null,
+    lastEventEffectSummary: null,
+    newlyEarnedKeepsakes: [],
     campaign,
   };
 }
@@ -77,6 +80,7 @@ function createCampaignState() {
     seasonHistory: [],
     pantry: {},
     recipesCompleted: [],
+    keepsakes: [],
     cropsUnlocked: getCropsForChapter(1).map((crop) => crop.id),
     journalEntries: [],
     seenCutsceneIds: [],

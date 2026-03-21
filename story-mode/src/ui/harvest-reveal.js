@@ -21,7 +21,7 @@ const GRADE_COLORS = {
   'F': '#d44a2a',
 };
 
-export function showHarvestReveal(container, result, onDismiss) {
+export function showHarvestReveal(container, result, extras = {}, onDismiss) {
   const overlay = document.createElement('div');
   overlay.className = 'harvest-reveal';
   overlay.style.cssText = `
@@ -34,6 +34,10 @@ export function showHarvestReveal(container, result, onDismiss) {
   `;
 
   const gradeColor = GRADE_COLORS[result.grade] || '#f7f2ea';
+  const keepsakes = extras.keepsakes ?? [];
+  const recipeNames = extras.recipeNames ?? [];
+  const unlockedCount = extras.unlockedCount ?? 0;
+  const totalKeepsakes = extras.totalKeepsakes ?? unlockedCount;
 
   // Compute average factors across all scored cells
   const factorAvgs = {};
@@ -123,6 +127,42 @@ export function showHarvestReveal(container, result, onDismiss) {
       ${result.details.fillPenalty > 0 ? `
         <div style="font-size:12px;color:#d44a2a;margin-bottom:4px;">-${result.details.fillPenalty.toFixed(1)} fill penalty</div>
       ` : ''}
+
+      ${recipeNames.length > 0 ? `
+        <div style="
+          background:rgba(232,200,74,0.08);border:1px solid rgba(232,200,74,0.18);
+          border-radius:12px;padding:14px;margin-top:14px;text-align:left;
+        ">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(232,200,74,0.7);margin-bottom:8px;">Recipe Matches</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${recipeNames.map((name) => `
+              <span style="padding:6px 10px;border-radius:999px;background:rgba(232,200,74,0.14);color:#f4dfa1;font-size:12px;">${name}</span>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div style="
+        background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);
+        border-radius:12px;padding:14px;margin-top:14px;text-align:left;
+      ">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:${keepsakes.length > 0 ? '10px' : '0'};">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.3);">Keepsakes</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.55);">${unlockedCount} / ${totalKeepsakes}</div>
+        </div>
+        ${keepsakes.length > 0 ? `
+          <div style="display:grid;gap:8px;">
+            ${keepsakes.map((keepsake) => `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(90,171,107,0.12);border:1px solid rgba(90,171,107,0.24);">
+                <span style="font-family:'Fraunces',serif;font-size:16px;color:#f7f2ea;">${keepsake.name}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#8fd39b;">New</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="font-size:12px;color:rgba(247,242,234,0.5);">No new keepsakes this chapter.</div>
+        `}
+      </div>
 
       <button id="harvest-continue" style="
         margin-top:20px;width:100%;max-width:280px;

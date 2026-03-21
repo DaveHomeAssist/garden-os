@@ -223,6 +223,42 @@
     }
 
     /* Floating Action Button */
+    #fab-backpack {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      z-index: 25;
+      width: 56px;
+      height: 56px;
+      border-radius: 28px;
+      background: rgba(30,17,10,0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(232,200,74,0.2);
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #fab-backpack:hover {
+      border-color: rgba(232,200,74,0.4);
+    }
+    #fab-backpack:active {
+      transform: scale(0.95);
+    }
+    #fab-backpack.is-open {
+      background: rgba(232,200,74,0.15);
+      border-color: #e8c84a;
+    }
+    #fab-backpack.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.8);
+    }
+
     #fab-advance {
       position: absolute;
       bottom: 24px;
@@ -332,6 +368,7 @@
     <div id="cutscene-layer" aria-hidden="true">
       <div id="dialogue-root"></div>
     </div>
+    <button id="fab-backpack" aria-label="Open crop backpack">🎒</button>
     <button id="fab-advance">Next</button>
     <div id="toast-container"></div>
   </div>

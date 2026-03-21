@@ -3,7 +3,7 @@
  */
 import { scoreCell } from './cell-score.js';
 import { CELL_COUNT } from '../game/state.js';
-import { checkRecipeComplete, getRecipes, getCropById } from '../data/crops.js';
+import { checkRecipeComplete, getRecipes, getCropById, getYieldListForGrid, getRecipeMatchesForGrid } from '../data/crops.js';
 
 function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
@@ -24,12 +24,14 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   }
 
   if (occupiedCount === 0) {
-    return { score: 0, grade: 'F', cellScores, occupiedCount, details: {} };
+    return { score: 0, grade: 'F', cellScores, occupiedCount, yieldList: [], recipeMatches: [], details: {} };
   }
 
   const cellAvg = totalScore / occupiedCount;
   const fillRatio = occupiedCount / CELL_COUNT;
   const fillPenalty = (1 - Math.sqrt(fillRatio)) * 1.5;
+  const yieldList = getYieldListForGrid(grid);
+  const recipeMatches = getRecipeMatchesForGrid(grid);
 
   let diversityBonus = 0;
   if (uniqueCrops.size >= 4) diversityBonus = 0.7;
@@ -69,12 +71,14 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   else if (finalScore >= 40) grade = 'D';
   else grade = 'F';
 
-  return {
-    score: finalScore,
-    grade,
-    cellScores,
-    occupiedCount,
-    details: {
+    return {
+      score: finalScore,
+      grade,
+      cellScores,
+      occupiedCount,
+      yieldList,
+      recipeMatches,
+      details: {
       cellAvg,
       fillRatio,
       fillPenalty,
