@@ -2255,7 +2255,8 @@ function renderChapterEnd(){
   el.res.style.display='none';
   el.board.setAttribute('aria-label','Chapter end screen');
 
-  const ch=CAM.currentChapter;
+  // Show the COMPLETED chapter, not the next one
+  const ch=Math.max(1,CAM.currentChapter-1);
   const meta=CHAPTERS[ch];
   const score=CAM.bestScores[ch]||0;
   const passed=!meta.scoreTarget||score>=meta.scoreTarget*10;
