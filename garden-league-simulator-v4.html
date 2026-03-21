@@ -153,7 +153,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .eraser-btn:focus-visible{outline:2px solid var(--char-gurl);outline-offset:2px}
 .eraser-btn.selected{background:#f5b8b8;border-color:var(--danger)}
 .beat-indicator{display:flex;gap:6px;font-family:var(--ff-mono);font-size:var(--type-label)}
-.beat-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--text-muted);transition:all 200ms var(--ease-out)}
+.beat-dot{min-width:32px;height:24px;border-radius:12px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:var(--text-muted);padding:0 4px;letter-spacing:0.02em;transition:all 200ms var(--ease-out)}
 .beat-dot.active{border-color:var(--char-gurl);background:var(--char-gurl-bg);color:var(--char-gurl)}
 .beat-dot.done{border-color:var(--leaf-bright);background:var(--leaf-bright);color:#fff}
 .zone-label{font-size:var(--type-label);font-family:var(--ff-mono);color:var(--text-muted);width:100%;text-align:left;padding:2px 0}
@@ -491,7 +491,7 @@ const HOWTO_SECTIONS=[
     ],
     shortcuts:[
       ['E','Toggle eraser in Planning.'],
-      ['R','Advance to next phase.'],
+      ['R','Advance to next month.'],
       ['Esc','Clear current selection or close overlays.'],
       ['H','Open How to Play overlay.']
     ]
@@ -829,11 +829,11 @@ const DIALOGUE_DB={
 "critters":["No change detected. Status quo maintained.","Neutral conditions. No targets affected.","Event resolved. No vulnerability shift.","No modifier applied. Grid unchanged.","Neutral. We continue observing.","No impact. Positions unchanged.","Status maintained. No action needed.","Neutral event. Standard monitoring continues."]
 },
 "intervention_used":{
-"gurl":["Action taken. The cell is updated.","Action confirmed. The modification is on record.","Action logged. Applied before the event resolved.","Action used. The decision is final.","One action used this phase.","Action applied. The cell state is updated.","Action confirmed. Applied before event.","Action deployed. Move on."],
+"gurl":["Action taken. The cell is updated.","Action confirmed. The modification is on record.","Action logged. Applied before the event resolved.","Action used. The decision is final.","One action used this month.","Action applied. The cell state is updated.","Action confirmed. Applied before event.","Action deployed. Move on."],
 "onion":["Good call. Sometimes you have to act before the damage hits.","Action taken. That is not panic. That is preparation.","You used your action. The bed is better for it.","Action taken. The kind of decision that shows up in the score.","Used the action. Good.","Action taken. That cell is protected now.","You intervened. She would have done the same.","Good timing on that. The event was coming and you moved first."]
 },
 "intervention_skipped":{
-"gurl":["No action taken. The event resolves at full effect.","Loss accepted. The bed absorbs the impact without modification.","Action skipped. The event applies unmitigated.","No action taken. The damage or benefit resolves as-is.","No action this phase. The season continues.","Action skipped. Sometimes that is the right call.","No action taken. The bed takes whatever the event delivers.","No action. The event resolves cleanly."],
+"gurl":["No action taken. The event resolves at full effect.","Loss accepted. The bed absorbs the impact without modification.","Action skipped. The event applies unmitigated.","No action taken. The damage or benefit resolves as-is.","No action this month. The season continues.","Action skipped. Sometimes that is the right call.","No action taken. The bed takes whatever the event delivers.","No action. The event resolves cleanly."],
 "onion":["No action. That takes nerve. Or it takes not caring. I am choosing to believe it was nerve.","You let it ride. Sometimes that is the right move.","Skipped the action. The bed takes the full hit.","No action taken. Okay. The bed will deal with whatever comes.","You chose not to act. That is a decision too.","Let the event play out. Unfiltered. There is something honest about that.","No action. Like watching a Phillies game without changing the channel in the eighth inning.","You held back. Sometimes the best move is no move."]
 },
 "harvest_good_yield":{
@@ -1717,17 +1717,18 @@ function renderBoard(){
   // Phase dots
   const br=h('div','beat-indicator');
   br.setAttribute('role','group');
-  br.setAttribute('aria-label','Season phases');
-  const phaseNames=MONTH_NAMES[S.season]||['Early','Mid','Late'];
-  (MONTH_NAMES[S.season]||['E','M','L']).map(n=>n[0]).forEach((l,b)=>{
-    const d=h('div','beat-dot',l);
+  br.setAttribute('aria-label','Season months');
+  const months=MONTH_NAMES[S.season]||['Month 1','Month 2','Month 3'];
+  const monthAbbr=months.map(m=>m.slice(0,3));
+  monthAbbr.forEach((lbl,b)=>{
+    const d=h('div','beat-dot',lbl);
     const isBeat=BEAT_PHASES.includes(S.phase);
     const isActive=isBeat&&S.beatIndex===b;
     const isDone=(isBeat&&b<S.beatIndex)||S.phase===PHASES.HARVEST||S.phase===PHASES.HARVEST_REVIEW||S.phase===PHASES.WINTER_REVIEW;
     if(isActive)d.classList.add('active');
     if(isDone)d.classList.add('done');
     d.setAttribute('role','img');
-    d.setAttribute('aria-label',phaseNames[b]+' phase'+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
+    d.setAttribute('aria-label',months[b]+(isActive?' (current)':isDone?' (complete)':' (upcoming)'));
     br.appendChild(d);
   });
   f.appendChild(br);
@@ -1857,11 +1858,11 @@ function renderBoard(){
   if(BEAT_PHASES.includes(S.phase)){
     // Action indicator
     const ai=h('div','action-indicator '+(S.beatTokenAvailable&&S.currentEvent?'available':'used'));
-    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve this month':(S.currentEvent?'Action used \u2014 advance when ready':'No event this phase \u2014 advance when ready');
+    ai.textContent=S.beatTokenAvailable&&S.currentEvent?'1 action available \u2014 choose a response or accept loss to resolve '+monthName(S.season,S.beatIndex):(S.currentEvent?'Action used \u2014 advance when ready':'No event in '+monthName(S.season,S.beatIndex)+' \u2014 advance when ready');
     tb.appendChild(ai);
     if(S.currentEvent&&S.beatTokenAvailable&&!S.interventionMode){
       const labels={swap:'Swap',prune:'Prune',protect:'Protect',mulch:'Mulch',companion_patch:'Patch',accept_loss:'Accept Loss'};
-      const descs={swap:'Swap two crops on the grid',prune:'Prune a crop to reduce damage',protect:'Shield a cell from the event',mulch:'Add mulch to protect soil',companion_patch:'Patch a companion planting',accept_loss:'Accept the event damage and resolve this phase'};
+      const descs={swap:'Swap two crops on the grid',prune:'Prune a crop to reduce damage',protect:'Shield a cell from the event',mulch:'Add mulch to protect soil',companion_patch:'Patch a companion planting',accept_loss:'Accept the event damage and resolve this month'};
       for(const it of S.currentEvent.io){
         const b=h('button',it==='accept_loss'?'btn danger':'btn',labels[it]||it);
         b.setAttribute('aria-label',descs[it]||labels[it]||it);
@@ -1985,7 +1986,7 @@ function objectiveMeta(){
     }
     return {
       kicker:'Advance',
-      title:S.beatIndex>=2?'Harvest this season':'Move to the next phase',
+      title:S.beatIndex>=2?'Harvest this season':'Move to '+monthName(S.season,S.beatIndex+1),
       note:statusText(),
       actionLabel:S.beatIndex>=2?'Harvest':'Advance',
       action:advanceBeat
@@ -2032,7 +2033,7 @@ function describeEventConsequence(event,state){
   if(!event||!event.me) return 'No event consequence is available.';
   const mod=Number(event.me.mod)||0;
   const dir=mod<0?'Penalty':'Buff';
-  const dur=event.me.dur==='season'?'season long':event.me.dur==='carry'?'carry forward':'this phase';
+  const dur=event.me.dur==='season'?'season long':event.me.dur==='carry'?'carry forward':'this month';
   const max=event.me.tgt&&Number.isFinite(event.me.tgt.max)?event.me.tgt.max:null;
   const scope=max?`up to ${max} target cells`:'all matching targets';
   return `${dir} ${mod>=0?'+':''}${mod.toFixed(1)} on ${scope} for ${dur}.`;
