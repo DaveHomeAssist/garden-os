@@ -240,6 +240,7 @@ function pickEventSpeakers(triggerPayload) {
 
   if (category === 'neighbor') {
     if (season === 'winter') return ['onion_man'];
+    if (season === 'summer' && valence === 'positive') return ['vegeman', 'onion_man'];
     return valence === 'negative' ? ['onion_man', 'garden_gurl'] : ['onion_man'];
   }
 
@@ -248,9 +249,12 @@ function pickEventSpeakers(triggerPayload) {
   }
 
   if (category === 'infrastructure') {
+    if (season === 'summer') return ['vegeman', 'garden_gurl'];
     return season === 'winter' ? ['garden_gurl', 'onion_man'] : ['garden_gurl'];
   }
 
+  // Fallback by valence — Vegeman gets summer/positive energy
+  if (valence === 'positive' && season === 'summer') return ['vegeman'];
   if (valence === 'negative') return ['garden_gurl'];
   if (valence === 'positive') return ['onion_man'];
   return ['garden_gurl'];

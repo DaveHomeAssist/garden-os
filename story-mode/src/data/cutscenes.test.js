@@ -302,7 +302,7 @@ async function runTests() {
   // Onion Man should appear meaningfully
   assert(speakerCounts.onion_man > 10, 'Onion Man appears in 10+ event reactions');
   // Vegeman should appear
-  assert(speakerCounts.vegeman >= 3, 'Vegeman appears in 3+ event reactions');
+  assert(speakerCounts.vegeman > 3, 'Vegeman appears in 3+ event reactions');
 
   // Test 12: No mechanic explanation in dialogue
   section('No mechanic explanation in dialogue');

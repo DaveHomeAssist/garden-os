@@ -59,36 +59,36 @@ export function buildScenery() {
   const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88 });
 
   const houseWall = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.3, 0.18), sidingMat);
-  houseWall.position.set(0.2, 1.65, -3.2);
+  houseWall.position.set(0.2, 1.65, 4.6);
   houseWall.receiveShadow = true;
   group.add(houseWall);
 
   for (let i = 0; i < 10; i++) {
     const board = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.06, 0.03), trimMat);
-    board.position.set(0.2, 0.25 + i * 0.32, -3.08);
+    board.position.set(0.2, 0.25 + i * 0.32, 4.72);
     group.add(board);
   }
 
   const porchOpening = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.4, 0.7), porchMat);
-  porchOpening.position.set(-2.55, 1.2, -3.45);
+  porchOpening.position.set(-2.55, 1.2, 4.35);
   group.add(porchOpening);
 
   const porchPostA = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 0.12), trimMat);
-  porchPostA.position.set(-1.78, 1.1, -2.88);
+  porchPostA.position.set(-1.78, 1.1, 4.92);
   group.add(porchPostA);
   const porchPostB = porchPostA.clone();
   porchPostB.position.x = -3.28;
   group.add(porchPostB);
 
   const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.08), trimMat);
-  backWindow.position.set(0.3, 2.05, -3.07);
+  backWindow.position.set(0.3, 2.05, 4.73);
   group.add(backWindow);
 
   const backGlass = new THREE.Mesh(
     new THREE.BoxGeometry(0.68, 0.78, 0.04),
     new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 })
   );
-  backGlass.position.set(0.3, 2.05, -3.01);
+  backGlass.position.set(0.3, 2.05, 4.79);
   group.add(backGlass);
 
   // --- Gravel work area in front (instead of a clean path) ---
