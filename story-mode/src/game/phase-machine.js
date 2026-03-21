@@ -107,6 +107,48 @@ function recordSeasonJournal(season) {
   return true;
 }
 
+function summarizeReviewCell(cellScore, grid) {
+  const sourceCell = grid[cellScore.cellIndex] ?? {};
+  return {
+    cellIndex: cellScore.cellIndex,
+    cropId: cellScore.cropId,
+    total: cellScore.total,
+    factors: { ...cellScore.factors },
+    soilFatigue: sourceCell.soilFatigue ?? 0,
+    eventModifier: sourceCell.eventModifier ?? 0,
+    interventionBonus: sourceCell.interventionBonus ?? 0,
+    carryForwardType: sourceCell.carryForwardType ?? null,
+  };
+}
+
+function buildSeasonReviewSnapshot(season) {
+  const harvest = finalizeHarvest(season);
+  const rankedCells = (harvest.cellScores ?? [])
+    .filter(Boolean)
+    .map((cellScore) => summarizeReviewCell(cellScore, season.grid));
+
+  const bestCells = [...rankedCells]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3);
+
+  const worstCells = [...rankedCells]
+    .sort((a, b) => a.total - b.total)
+    .slice(0, 3);
+
+  return {
+    chapter: season.chapter,
+    season: season.season,
+    score: harvest.score,
+    grade: harvest.grade,
+    occupiedCount: harvest.occupiedCount ?? 0,
+    eventsEncountered: [...(season.eventTitles ?? [])],
+    yieldList: [...(harvest.yieldList ?? [])],
+    recipeMatches: [...(harvest.recipeMatches ?? [])],
+    bestCells,
+    worstCells,
+  };
+}
+
 const HEAVY_FEEDERS = new Set([
   'cherry_tom', 'compact_tomato', 'pepper', 'zucchini', 'broccoli',
   'kale', 'lettuce', 'arugula', 'spinach', 'chard', 'basil',
@@ -148,6 +190,7 @@ function rollCampaignForward(season) {
   });
 
   // Bug 2/8: Save current grid as previousGrid before creating next season
+  campaign.lastSeasonReview = buildSeasonReviewSnapshot(season);
   campaign.previousGrid = season.grid.map((cell) => ({ ...cell }));
 
   const nextChapter = campaign.currentChapter + 1;

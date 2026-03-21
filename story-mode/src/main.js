@@ -14,6 +14,7 @@ import { showEventCard } from './ui/event-card.js';
 import { showHarvestReveal } from './ui/harvest-reveal.js';
 import { showBackpackPanel } from './ui/backpack-panel.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
+import { showWinterReview } from './ui/winter-review.js';
 import { createCutsceneMachine } from './game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './ui/season-calendar.js';
 import { applyIntervention, getTargetableCells } from './game/intervention.js';
@@ -71,6 +72,10 @@ function getRowAverages(cellScores, rowCount = 4, colCount = 8) {
     rows[row].count += 1;
   });
   return rows.map((row) => (row.count > 0 ? row.total / row.count : 0));
+}
+
+function getYearForChapter(chapter) {
+  return Math.floor((chapter - 1) / 4) + 1;
 }
 
 function mount() {
@@ -134,6 +139,13 @@ function showStartChoice(saved, onContinue, onNewGame) {
 }
 
 function startGame(state, viewport) {
+  if (state.season.winterReviewSeen == null) {
+    state.season.winterReviewSeen = false;
+  }
+  if (state.campaign.lastSeasonReview == null) {
+    state.campaign.lastSeasonReview = null;
+  }
+
   let scene;
   try {
     scene = createGardenScene(viewport);
@@ -173,10 +185,13 @@ function startGame(state, viewport) {
     onStateChange: (uiState) => {
       dialoguePanel.render(uiState);
       cutsceneLayer?.setAttribute('aria-hidden', uiState.visible ? 'false' : 'true');
+      // Fade phase dots during cutscenes
+      phaseDots?.classList.toggle('is-cutscene', uiState.visible);
     },
     onFinish: () => {
       dialoguePanel.hide();
       cutsceneLayer?.setAttribute('aria-hidden', 'true');
+      phaseDots?.classList.remove('is-cutscene');
 
       if (postCutsceneAction === 'event') {
         postCutsceneAction = null;
@@ -193,6 +208,12 @@ function startGame(state, viewport) {
       if (postCutsceneAction === 'transition') {
         postCutsceneAction = null;
         openSeasonTransitionOverlay();
+        return;
+      }
+
+      if (postCutsceneAction === 'winter_review') {
+        postCutsceneAction = null;
+        openWinterReviewOverlay();
         return;
       }
 
@@ -297,10 +318,10 @@ function startGame(state, viewport) {
     }
   }
 
-  function showToast(message, durationMs = 2200) {
+  function showToast(message, durationMs = 2200, variant = 'info') {
     if (!toastContainer) return;
     const toast = document.createElement('div');
-    toast.className = 'toast-notification';
+    toast.className = `toast-notification toast--${variant}`;
     toast.textContent = message;
     toastContainer.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('is-visible'));
@@ -308,6 +329,15 @@ function startGame(state, viewport) {
       toast.classList.remove('is-visible');
       setTimeout(() => toast.remove(), 300);
     }, durationMs);
+  }
+
+  function triggerScreenShake() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.classList.remove('is-shaking');
+    void app.offsetWidth; // force reflow to restart animation
+    app.classList.add('is-shaking');
+    setTimeout(() => app.classList.remove('is-shaking'), 250);
   }
 
   function updatePhaseDots() {
@@ -422,9 +452,9 @@ function startGame(state, viewport) {
 
       if (state.season.phase === PHASES.PLANNING) {
         if (isWinter) {
-          helperText = planted > 0
-            ? 'Winter chapter. Pale plots mark dormant occupied cells in the bed.'
-            : 'Winter chapter. The bed is dormant. Review the year and the soil.';
+          helperText = state.season.winterReviewSeen
+            ? 'Winter review complete. Continue to roll into the next chapter.'
+            : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
         } else if (planted < 8) {
           helperText = `Plant at least 8 crops to begin the season. ${8 - planted} more to go.`;
         } else {
@@ -525,6 +555,94 @@ function startGame(state, viewport) {
     };
   }
 
+  function buildWinterReviewData() {
+    const year = getYearForChapter(state.campaign.currentChapter);
+    const review = state.campaign.lastSeasonReview ?? {
+      score: 0,
+      grade: '–',
+      eventsEncountered: [],
+      yieldList: [],
+      bestCells: [],
+      worstCells: [],
+    };
+    const yearEntries = (state.campaign.journalEntries ?? [])
+      .filter((entry) => getYearForChapter(entry.chapter) === year)
+      .sort((a, b) => a.chapter - b.chapter);
+
+    const previousGrid = state.campaign.previousGrid ?? [];
+    const soilCells = state.season.grid.map((cell, index) => {
+      const previousCell = previousGrid[index] ?? null;
+      const carryForwardType = previousCell?.carryForwardType ?? null;
+      let carryForward = null;
+      if (carryForwardType === 'mulched') {
+        carryForward = { type: carryForwardType, label: 'Mulched carry-over · +0.25' };
+      } else if (carryForwardType === 'compacted') {
+        carryForward = { type: carryForwardType, label: 'Compacted carry-over · -0.50' };
+      } else if (carryForwardType === 'enriched') {
+        carryForward = { type: carryForwardType, label: 'Enriched carry-over · +0.30' };
+      }
+      return {
+        index,
+        soilFatigue: cell.soilFatigue ?? 0,
+        carryForward,
+      };
+    });
+
+    const maxFatigue = soilCells.reduce((max, cell) => Math.max(max, cell.soilFatigue), 0);
+    const mulchedCount = soilCells.filter((cell) => cell.carryForward?.type === 'mulched').length;
+    const compactedCount = soilCells.filter((cell) => cell.carryForward?.type === 'compacted').length;
+    const enrichedCount = soilCells.filter((cell) => cell.carryForward?.type === 'enriched').length;
+    const recipesCompleted = state.campaign.recipesCompleted?.length ?? 0;
+    const totalRecipes = Object.keys(getRecipes()).length;
+    const keepsakesUnlocked = state.campaign.keepsakes?.length ?? 0;
+    const totalKeepsakes = getKeepsakeSlots().length;
+
+    const decorateCells = (cells) => cells.map((cell) => ({
+      ...cell,
+      cropName: getCropById(cell.cropId)?.name ?? cell.cropId ?? 'Empty',
+    }));
+
+    const hints = [];
+    if (maxFatigue >= 0.6) {
+      hints.push('Several cells are heavily fatigued. Rotate heavy feeders out of the reddest spots next spring.');
+    } else if (maxFatigue >= 0.3) {
+      hints.push('A few cells are getting tired. Spread brassicas and fruiting crops around instead of repeating winners.');
+    } else {
+      hints.push('Soil fatigue is low. You have freedom to chase recipes without fighting the bed too hard.');
+    }
+    if (mulchedCount > 0) {
+      hints.push(`${mulchedCount} cell${mulchedCount === 1 ? '' : 's'} carry mulch into the next season. Those are safe places to restart tender crops.`);
+    }
+    if (compactedCount > 0) {
+      hints.push(`${compactedCount} compacted cell${compactedCount === 1 ? '' : 's'} need relief. Favor roots or low-demand crops there first.`);
+    }
+    if (enrichedCount > 0) {
+      hints.push(`${enrichedCount} enriched cell${enrichedCount === 1 ? '' : 's'} are primed for a push. Save your hungriest crops for those pockets.`);
+    }
+    if ((review.recipeMatches?.length ?? 0) === 0 && recipesCompleted < totalRecipes) {
+      hints.push('No recipe completed last season. Use the pantry list and your strongest cells to aim at one dish on purpose next year.');
+    }
+    if (!hints.length) {
+      hints.push('Nothing urgent is flashing red. Winter is a clean read: preserve what worked and do not overreact.');
+    }
+
+    return {
+      year,
+      yearEntries,
+      soilCells,
+      lastReview: {
+        ...review,
+        bestCells: decorateCells(review.bestCells ?? []),
+        worstCells: decorateCells(review.worstCells ?? []),
+      },
+      recipesCompleted,
+      totalRecipes,
+      keepsakesUnlocked,
+      totalKeepsakes,
+      hints,
+    };
+  }
+
   function showBackpack() {
     scene.clearTargeting?.();
     closePalette();
@@ -534,6 +652,33 @@ function startGame(state, viewport) {
     });
     backpackOpen = true;
     if (fabBackpack) fabBackpack.classList.add('is-open');
+  }
+
+  function openWinterReviewOverlay() {
+    setGameInputEnabled(false);
+    scene.clearTargeting?.();
+    closePanelSheets();
+    const overlayContainer = document.getElementById('overlay-container');
+    overlayContainer.querySelector('#winter-review-overlay')?.remove();
+
+    const mount = document.createElement('div');
+    mount.id = 'winter-review-overlay';
+    overlayContainer.appendChild(mount);
+
+    showWinterReview(mount, buildWinterReviewData(), {
+      onViewBackpack: () => {
+        showBackpack();
+      },
+      onContinue: () => {
+        mount.remove();
+        state.season.winterReviewSeen = true;
+        state.season.phase = PHASES.TRANSITION;
+        updateHUD();
+        persistState();
+        setGameInputEnabled(true);
+        openSeasonTransitionOverlay();
+      },
+    });
   }
 
   function closeBackpackPanel() {
@@ -738,6 +883,11 @@ function startGame(state, viewport) {
       return;
     }
 
+    // Screen shake for negative events
+    if (event.valence === 'negative') {
+      triggerScreenShake();
+    }
+
     showEventCard(panelContainer, event, state.season.interventionTokens, (interventionId) => {
       if (interventionId === 'accept_loss') {
         finalizeInterventionChoice(interventionId);
@@ -756,6 +906,9 @@ function startGame(state, viewport) {
       return;
     }
 
+    // Harvest score glow
+    hudScore.classList.add('is-harvest-glow');
+
     finalizeHarvestProgression();
     showHarvestReveal(
       document.getElementById('overlay-container'),
@@ -772,6 +925,9 @@ function startGame(state, viewport) {
         },
       },
       () => {
+        // Reset harvest score glow
+        hudScore.classList.remove('is-harvest-glow');
+
         persistState();
 
         if (state.season.phase === PHASES.HARVEST && canAdvance(state.season)) {
@@ -810,7 +966,9 @@ function startGame(state, viewport) {
       <p>
         ${campaignComplete
           ? 'You have reached the end of the current campaign. Continue to view the closing season.'
-          : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
+          : state.season.season === 'winter'
+            ? `Winter review is complete. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`
+            : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
       </p>
       <div class="tap-hint" style="margin-top:20px;margin-bottom:10px;">
         ${campaignComplete ? 'Tap continue for the ending' : 'Tap continue to roll into the next season'}
@@ -845,6 +1003,10 @@ function startGame(state, viewport) {
 
     const queued = cutsceneMachine.queueFromTrigger(trigger, state.campaign);
     if (!queued) {
+      if (trigger.type === 'chapter_start' && state.season.season === 'winter' && !state.season.winterReviewSeen) {
+        openWinterReviewOverlay();
+        return;
+      }
       if (trigger.type === 'event_drawn') {
         openEventCard();
       } else if (trigger.type === 'harvest_complete') {
@@ -863,6 +1025,8 @@ function startGame(state, viewport) {
       postCutsceneAction = 'harvest';
     } else if (trigger.type === 'chapter_complete') {
       postCutsceneAction = 'transition';
+    } else if (trigger.type === 'chapter_start' && state.season.season === 'winter' && !state.season.winterReviewSeen) {
+      postCutsceneAction = 'winter_review';
     } else {
       postCutsceneAction = null;
     }
@@ -888,7 +1052,17 @@ function startGame(state, viewport) {
   }
 
   function doAdvance() {
-    if (!gameInputEnabled || cutsceneMachine.isActive() || !canAdvance(state.season)) return;
+    if (!gameInputEnabled || cutsceneMachine.isActive()) return;
+    if (!canAdvance(state.season)) {
+      // Show helpful toast when player tries to advance without enough crops
+      if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter') {
+        const planted = state.season.grid.filter((c) => c.cropId !== null).length;
+        if (planted < 8) {
+          showToast(`Need at least 8 crops to commit (${planted} planted)`, 2400, 'error');
+        }
+      }
+      return;
+    }
 
     setGameInputEnabled(false);
     const result = advance(state);
@@ -963,10 +1137,15 @@ function startGame(state, viewport) {
     if (cell.cropId && !state.selectedCropId) {
       cell.cropId = null;
       cell.damageState = null;
+      showToast('Crop removed', 1400);
     } else if (state.selectedCropId) {
+      const cropInfo = getCropById(state.selectedCropId);
       cell.cropId = state.selectedCropId;
       cell.damageState = null;
       scene.flashCell(cellIndex, 0x4a9a4a, 350);
+      if (cropInfo) {
+        showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
+      }
       if (
         cellIndex === 0
         && state.campaign.currentChapter === 1
