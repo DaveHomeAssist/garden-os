@@ -147,6 +147,7 @@ function startGame(state, viewport) {
   const hudPhase = document.getElementById('hud-phase');
   const hudCrops = document.getElementById('hud-crops');
   const hudScore = document.getElementById('hud-score');
+  const phaseHelper = document.getElementById('phase-helper');
   const panelContainer = document.getElementById('panel-container');
   const phaseDots = document.getElementById('phase-dots');
   const toastContainer = document.getElementById('toast-container');
@@ -325,7 +326,7 @@ function startGame(state, viewport) {
     }
     if (canAdvance(state.season)) {
       fab.classList.add('is-visible');
-      fab.textContent = state.season.phase === PHASES.PLANNING ? 'Commit' : 'Next';
+      fab.textContent = state.season.phase === PHASES.PLANNING ? 'Commit Plan' : 'Next';
     } else {
       fab.classList.remove('is-visible');
     }
@@ -379,6 +380,28 @@ function startGame(state, viewport) {
           `<span class="token-dot${i >= remaining ? ' spent' : ''}"></span>`
         ).join('');
       }
+    }
+
+    if (phaseHelper) {
+      const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
+      let helperText = '';
+
+      if (state.season.phase === PHASES.PLANNING) {
+        if (planted < 8) {
+          helperText = `Plant at least 8 crops to begin the season. ${8 - planted} more to go.`;
+        } else {
+          helperText = 'Bed is ready. Tap Commit Plan to start the season events.';
+        }
+      } else if (state.season.phase === PHASES.COMMIT) {
+        helperText = 'Plan locked. Tap Next to enter Early Season.';
+      } else if (state.season.phase === PHASES.REVIEW) {
+        helperText = 'Season review complete. Tap Next to move into season wrap-up.';
+      } else if (state.season.phase === PHASES.TRANSITION) {
+        helperText = 'Season complete. Use Continue to roll into the next chapter.';
+      }
+
+      phaseHelper.textContent = helperText;
+      phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
     }
 
     updatePhaseDots();

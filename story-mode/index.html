@@ -185,6 +185,32 @@
       border-color: rgba(232,200,74,0.25);
     }
 
+    #phase-helper {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 11;
+      max-width: min(560px, calc(100vw - 28px));
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(30,17,10,0.78);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(232,200,74,0.16);
+      color: rgba(247,242,234,0.78);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    #phase-helper.is-visible {
+      opacity: 1;
+    }
+
     #panel-container {
       position: absolute;
       bottom: 0;
@@ -683,6 +709,12 @@
         top: 56px;
       }
 
+      #phase-helper {
+        top: 82px;
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
       .panel-sheet {
         max-height: min(64vh, 560px);
         border-radius: 18px 18px 0 0;
@@ -807,6 +839,7 @@
       </div>
     </div>
     <div id="phase-dots"></div>
+    <div id="phase-helper" aria-live="polite"></div>
     <div id="panel-container"></div>
     <div id="overlay-container"></div>
     <div id="cutscene-layer" aria-hidden="true">
