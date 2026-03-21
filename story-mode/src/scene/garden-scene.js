@@ -399,19 +399,7 @@ export function createGardenScene(container) {
     dustPuffs.push(puff);
   }
 
-  // Rotate dog model 90° so it faces along its travel direction (+Z in world = forward)
-  // The mesh is built with head at +X, so rotate -90° on Y to face +Z
-  const dogModelPivot = new THREE.Group();
-  dogModelPivot.rotation.y = -Math.PI / 2;
-  // Re-parent everything from sheepdogGroup into the pivot
-  const dogChildren = [...sheepdogGroup.children];
-  dogChildren.forEach(child => {
-    if (child !== dogModelPivot) {
-      sheepdogGroup.remove(child);
-      dogModelPivot.add(child);
-    }
-  });
-  sheepdogGroup.add(dogModelPivot);
+  // Dog model faces +X by construction; rotation handled in animation via sheepdogGroup.rotation.y
 
   sheepdogGroup.scale.setScalar(0.9);
   sheepdogGroup.position.set(-4.15, 0, 2.1);
@@ -1617,7 +1605,7 @@ function getGrowthScale(phase, season) {
         sheepdogRunState.fadeOutMs -= dt * 1000;
         const fadeT = Math.max(0, sheepdogRunState.fadeOutMs / 400);
         sheepdogGroup.visible = true;
-        dogModelPivot.traverse(child => {
+        sheepdogGroup.traverse(child => {
           if (child.isMesh && child.material) {
             child.material.transparent = true;
             child.material.opacity = fadeT;
@@ -1625,7 +1613,7 @@ function getGrowthScale(phase, season) {
         });
         if (sheepdogRunState.fadeOutMs <= 0) {
           sheepdogGroup.visible = false;
-          dogModelPivot.traverse(child => {
+          sheepdogGroup.traverse(child => {
             if (child.isMesh && child.material) {
               child.material.transparent = false;
               child.material.opacity = 1;
