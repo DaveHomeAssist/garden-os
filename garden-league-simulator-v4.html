@@ -2992,9 +2992,9 @@ function showCommitConfirm(){
   if(rowWarning)el.cbox.appendChild(h('p',null,rowWarning));
   const btns=h('div','btns');
   const cancel=h('button','btn','Cancel');cancel.onclick=()=>el.overlay.classList.remove('active');
-  const confirm=h('button','btn primary','Confirm');confirm.onclick=()=>{el.overlay.classList.remove('active');doCommit()};
-  btns.appendChild(cancel);btns.appendChild(confirm);el.cbox.appendChild(btns);
-  el.overlay.classList.add('active');requestAnimationFrame(()=>{const fb=el.cbox.querySelector('button');if(fb)fb.focus()});
+  const confirmBtn=h('button','btn primary','Commit & Start Season');confirmBtn.onclick=()=>{el.overlay.classList.remove('active');doCommit()};
+  btns.appendChild(cancel);btns.appendChild(confirmBtn);el.cbox.appendChild(btns);
+  el.overlay.classList.add('active');requestAnimationFrame(()=>confirmBtn.focus());
 }
 
 function doCommit(){
@@ -3248,6 +3248,7 @@ function doTransition(){
 document.addEventListener('keydown',e=>{
   if(el.overlay.classList.contains('active')){
     if(e.key==='Escape'){el.overlay.classList.remove('active');return}
+    if(e.key==='Enter'){const primary=el.cbox.querySelector('.btn.primary');if(primary){e.preventDefault();primary.click();}return}
     // Focus trap in modal
     if(e.key==='Tab'){
       const focusable=el.cbox.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"]),input,select,textarea');
