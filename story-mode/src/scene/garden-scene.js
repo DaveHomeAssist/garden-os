@@ -141,6 +141,9 @@ export function createGardenScene(container) {
   // Build the garden bed
   const bed = buildBed();
   root.add(bed.group);
+  for (const mesh of bed.cellMeshes) {
+    mesh.userData._baseColor = mesh.material.color.clone();
+  }
 
   // Ground plane — grass-like, slightly darker near the bed via vertex colors
   const groundGeo = new THREE.PlaneGeometry(40, 40, 40, 40);
@@ -211,9 +214,6 @@ export function createGardenScene(container) {
   function applyCellVisualState(index) {
     const mesh = bed.cellMeshes[index];
     if (!mesh) return;
-    if (!mesh.userData._baseColor) {
-      mesh.userData._baseColor = mesh.material.color.clone();
-    }
 
     if (hoveredCellIndex === index) {
       mesh.material.color.copy(HOVER_COLOR);
@@ -714,10 +714,8 @@ export function createGardenScene(container) {
   function flashCell(cellIndex, color, durationMs) {
     if (cellIndex < 0 || cellIndex >= bed.cellMeshes.length) return;
     const mesh = bed.cellMeshes[cellIndex];
-    const origColor = mesh.material.color.clone();
     mesh.material.color.set(color);
     setTimeout(() => {
-      mesh.material.color.copy(origColor);
       applyCellVisualState(cellIndex);
     }, durationMs || 400);
   }
