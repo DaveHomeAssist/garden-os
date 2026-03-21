@@ -57,3 +57,9 @@ Update 2026-03-21 commit phase removal:
 - Updated phase order, phase labels, calendar/HUD logic, helper copy, and top-rail action labels to match the simplified flow.
 - The top HUD still exposes an explicit action button, but the misleading `CONFIRM PLAN` phase label is gone.
 - Validation: `npx vite build` passed after removing the commit phase.
+
+Update 2026-03-21 dialogue/storyflow planning:
+- Added an implementation-ready narrative rework spec at `docs/garden-os-writers-room/STORY_MODE_DIALOGUE_REWORK_SPEC.md`.
+- The spec diagnoses the current repetition problem in `story-mode` reactive dialogue, especially the overuse of generic `Garden GURL <-> Critters` event exchanges.
+- It defines speaker-role rules, seasonal voice distribution, event-family routing, authoring rules, and a 3-pass implementation plan.
+- Recommended next content step: restructure `story-mode/src/data/cutscenes.js` before doing any prose-only polish.
