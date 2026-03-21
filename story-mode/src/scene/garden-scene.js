@@ -29,6 +29,7 @@ const CROP_COLORS = {
 };
 
 const CAMERA_PRESETS = {
+  'chapter-intro': { position: [0, 4.2, 6.9], target: [0, 0.62, 0.4], fov: 38 },
   overview: { position: [0, 3.15, 5.35], target: [0, 0.5, -0.1], fov: 29 },
   'bed-low-angle': { position: [0, 2.25, 4.2], target: [0, 0.46, -0.18], fov: 34 },
   'row-close': { position: [0.95, 2.15, 3.7], target: [0.45, 0.42, -0.16], fov: 35 },
@@ -379,18 +380,18 @@ export function createGardenScene(container) {
     dogLegRigs.push({ hipPivot, kneePivot, phase });
   }
 
-  sheepdogGroup.scale.setScalar(4.2);
-  sheepdogGroup.position.set(-4.4, 0, -1.15);
+  sheepdogGroup.scale.setScalar(1.02);
+  sheepdogGroup.position.set(-3.9, 0, 1.62);
   root.add(sheepdogGroup);
 
   const sheepdogRunState = {
     active: false,
     elapsedMs: 0,
-    duration: 2800,
-    start: new THREE.Vector3(-4.4, 0, -1.15),
-    end: new THREE.Vector3(4.9, 0, -0.9),
+    duration: 2600,
+    start: new THREE.Vector3(-3.9, 0, 1.62),
+    end: new THREE.Vector3(4.5, 0, 1.1),
     arcHeight: 0.1,
-    sway: 0.06,
+    sway: 0.14,
   };
 
   // Collect trellis wire refs after bed group is already added to root
@@ -1308,18 +1309,18 @@ function getGrowthScale(phase, season) {
     if (name !== 'sheepdog-run') return;
     sheepdogRunState.active = true;
     sheepdogRunState.elapsedMs = 0;
-    sheepdogRunState.duration = opts.cueDuration ?? 2800;
+    sheepdogRunState.duration = opts.cueDuration ?? 2600;
     sheepdogRunState.arcHeight = opts.cueArcHeight ?? 0.1;
     sheepdogRunState.sway = opts.cueSway ?? 0.18;
     sheepdogRunState.start.set(
-      opts.cueFromX ?? -4.4,
+      opts.cueFromX ?? -3.9,
       0,
-      opts.cueFromZ ?? -1.15,
+      opts.cueFromZ ?? 1.62,
     );
     sheepdogRunState.end.set(
-      opts.cueToX ?? 4.9,
+      opts.cueToX ?? 4.5,
       0,
-      opts.cueToZ ?? -0.9,
+      opts.cueToZ ?? 1.1,
     );
     sheepdogGroup.position.copy(sheepdogRunState.start);
     sheepdogGroup.visible = true;

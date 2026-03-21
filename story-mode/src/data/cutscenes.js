@@ -5,20 +5,20 @@ export const CUTSCENES = [
   // ═══ CHAPTER INTROS ═══════════════════════════════════════
 
   { id: 'ch1-intro', trigger: 'chapter_start', conditions: { chapter: 1 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
     { speaker: 'garden_gurl', text: 'This bed fed your family once. Now it is your turn.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
     { speaker: 'onion_man', text: 'I remember when she planted the first tomato here. Felt like opening day.', emotion: 'sad', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'garden_gurl', text: 'Start simple. Lettuce, basil, radishes. Learn the light before you push the bed.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
   ]},
 
   { id: 'ch2-intro', trigger: 'chapter_start', conditions: { chapter: 2 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Summer. The trellises are up. Mom always said climbers need something to reach for.', emotion: 'neutral', camera: 'overview', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Summer. The trellises are up. Mom always said climbers need something to reach for.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
     { speaker: 'vegeman', text: 'POLE BEANS. Let me at them. I will fill every cell.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Support crops need the back row. Check the trellis before you commit.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'ch3-intro', trigger: 'chapter_start', conditions: { chapter: 3 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Fall. The light changes first. Then the temperature follows.', emotion: 'neutral', camera: 'overview', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Fall. The light changes first. Then the temperature follows.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
     { speaker: 'onion_man', text: 'Carrots and beets. Root work. The stuff you cannot see is doing the most.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Adjacency matters now. Companions lift each other. Conflicts cost more than you think.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'row-close' },
   ]},
@@ -30,18 +30,18 @@ export const CUTSCENES = [
   ]},
 
   { id: 'ch5-intro', trigger: 'chapter_start', conditions: { chapter: 5 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Year two. You know the light now — where the shadow falls, which corner stays warm.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Year two. You know the light now — where the shadow falls, which corner stays warm.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
     { speaker: 'garden_gurl', text: 'Broccoli and herbs. The bed is getting serious. Respect the soil fatigue.', emotion: 'emphasis', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'ch6-intro', trigger: 'chapter_start', conditions: { chapter: 6 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Full sun. The fruiting crops demand everything.', emotion: 'neutral', camera: 'overview', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Full sun. The fruiting crops demand everything.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
     { speaker: 'vegeman', text: 'Peppers, tomatoes, eggplant — this is where legends are MADE.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
     { speaker: 'critters', text: 'More fruit means more of us. Just so you know.', emotion: 'smirk', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'ch7-intro', trigger: 'chapter_start', conditions: { chapter: 7 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'The climbing season. The trellis is full. Vines tangle in ways you did not plan.', emotion: 'neutral', camera: 'overview', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'The climbing season. The trellis is full. Vines tangle in ways you did not plan.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
     { speaker: 'garden_gurl', text: 'Every surface is alive. The bed is teaching you things the notebook never mentioned.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
@@ -51,17 +51,17 @@ export const CUTSCENES = [
   ]},
 
   { id: 'ch9-intro', trigger: 'chapter_start', conditions: { chapter: 9 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'The final spring. Garlic and nasturtiums — the last unlocks.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'The final spring. Garlic and nasturtiums — the last unlocks.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-run' },
     { speaker: 'garden_gurl', text: 'The recipe book is open on the counter. Every cell matters now.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
   ]},
 
   { id: 'ch10-intro', trigger: 'chapter_start', conditions: { chapter: 10 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Legacy rows. The soil is darker, richer. You rotate without thinking.', emotion: 'neutral', camera: 'overview', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Legacy rows. The soil is darker, richer. You rotate without thinking.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
     { speaker: 'onion_man', text: 'The neighbors ask questions now. You sound like your mother when you answer.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'ch11-intro', trigger: 'chapter_start', conditions: { chapter: 11 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Cherry tomato, basil, pepper, onion, carrot. Five ingredients, this bed, this soil, this yard.', emotion: 'neutral', camera: 'overview', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Cherry tomato, basil, pepper, onion, carrot. Five ingredients, this bed, this soil, this yard.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
     { speaker: 'onion_man', text: 'The sauce simmers on the stove. The house smells the way it is supposed to.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'harvest-gold' },
     { speaker: 'garden_gurl', text: 'This is what the bed was always for. Finish what she started.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
   ]},
@@ -74,7 +74,7 @@ export const CUTSCENES = [
 
   // Fallback for chapters without specific intros
   { id: 'chapter-generic-intro', trigger: 'chapter_start', conditions: {}, priority: 100, once: false, skippable: true, beats: [
-    { speaker: 'garden_gurl', text: 'A new chapter means a new bed, a new season, and new pressure.', emotion: 'warm', portraitAnim: 'talk', camera: 'overview', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
+    { speaker: 'garden_gurl', text: 'A new chapter means a new bed, a new season, and new pressure.', emotion: 'warm', portraitAnim: 'talk', camera: 'chapter-intro', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
   ]},
 
   // ═══ EVENT REACTIONS — by family ═════════════════════════

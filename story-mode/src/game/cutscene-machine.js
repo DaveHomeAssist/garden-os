@@ -81,7 +81,6 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       textVisible: beat.text.slice(0, state.currentTypedChars),
       emotion: beat.emotion ?? speaker.defaultEmotion,
       portraitAnim: beat.portraitAnim ?? speaker.defaultAnim,
-      sceneCue: beat.sceneCue ?? null,
       canAdvance: state.typingDone,
       canSkip: state.currentScene.skippable ?? true,
       beatIndex: state.currentBeatIndex,

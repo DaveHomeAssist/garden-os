@@ -100,3 +100,9 @@ Update 2026-03-21 season-opening sheepdog animation:
 - Added a visible sheepdog run overlay to `src/ui/dialogue-panel.js` / `assets/css/theme.css` so the intro beat gets a readable cross-screen motion pass even when 3D scene animation is subtle.
 - Kept a matching in-scene sheepdog cue path in `src/scene/garden-scene.js`, but the dialogue-layer animation is now the reliable presentation layer for the opening-season beat.
 - Validation: `npx vite build` passed, and a fresh screenshot at `story-mode/output/web-game/shot-0.png` now shows the sheepdog crossing during the opening narration.
+
+Update 2026-03-21 in-scene sheepdog rebuild:
+- Removed the dialogue-layer sheepdog overlay entirely from `src/ui/dialogue-panel.js` and `assets/css/theme.css`. The season-opening dog beat is now scene-only.
+- Rebuilt the sheepdog in `src/scene/garden-scene.js` as an articulated world actor with a shadow blob, torso/head/tail pivots, and four two-segment legs animated procedurally during the run.
+- Season-opening narrator beats now use a dedicated `chapter-intro` camera preset so the dog reads in the opening frame without covering the bed UI.
+- Validation: `npx vite build` passed, and Playwright capture against the preview build shows the real in-scene sheepdog in `story-mode/output/web-game/shot-0.png`.
