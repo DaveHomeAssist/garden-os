@@ -1240,7 +1240,7 @@ function mkSeason(ch,cf,seed=Date.now()){
   if(cf){
     if(cf.infrastructureMap)for(const[k,flags]of Object.entries(cf.infrastructureMap)){
       const[r,c]=k.split(',').map(Number);const idx=ri(r,c);if(grid[idx])for(const f of flags){
-        if(f==='mulched')grid[idx].interventionFlag='mulched';else if(f==='compacted')grid[idx].eventModifier-=.5;else if(f==='enriched')grid[idx].eventModifier+=.5;
+        if(f==='mulched')grid[idx].eventModifier+=.25;else if(f==='compacted')grid[idx].eventModifier-=.5;else if(f==='enriched')grid[idx].eventModifier+=.3;
       }
     }
     if(cf.soilFatigueMap)for(const[k,v]of Object.entries(cf.soilFatigueMap)){
