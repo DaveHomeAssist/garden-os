@@ -322,8 +322,411 @@ export function buildScenery() {
   kneelingPad.rotation.y = 0.22;
   group.add(kneelingPad);
 
+  // ── NEW SCENERY ITEMS ──────────────────────────────────────────────────
+
+  // 1. Screen door on the back porch
+  const screenDoorFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 1.5, 0.04),
+    new THREE.MeshStandardMaterial({ color: 0x8a7a5a, roughness: 0.85 })
+  );
+  screenDoorFrame.position.set(-2.55, 0.85, -4.1);
+  group.add(screenDoorFrame);
+
+  const screenMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.58, 1.3),
+    new THREE.MeshStandardMaterial({
+      color: 0x3a3a3a,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+    })
+  );
+  screenMesh.position.set(-2.55, 0.85, -4.08);
+  group.add(screenMesh);
+
+  // 2. Radio on porch railing
+  const radioBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.06, 0.05),
+    new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.88 })
+  );
+  radioBody.position.set(-2.0, 0.22, -3.5);
+  group.add(radioBody);
+
+  const radioAntenna = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.005, 0.005, 0.1, 4),
+    new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.4 })
+  );
+  radioAntenna.position.set(-2.0, 0.3, -3.5);
+  group.add(radioAntenna);
+
+  // 3. Clothesline — two poles + catenary line + hanging towel
+  const clotheslineMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9 });
+  const poleA = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6), clotheslineMat);
+  poleA.position.set(-4.5, 0.6, 2.5);
+  group.add(poleA);
+
+  const poleB = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6), clotheslineMat);
+  poleB.position.set(3.5, 0.6, 4.0);
+  group.add(poleB);
+
+  // Catenary line between poles using TubeGeometry
+  {
+    const startPt = new THREE.Vector3(-4.5, 1.2, 2.5);
+    const endPt = new THREE.Vector3(3.5, 1.2, 4.0);
+    const mid = new THREE.Vector3().addVectors(startPt, endPt).multiplyScalar(0.5);
+    mid.y -= 0.25; // droop
+    const curve = new THREE.QuadraticBezierCurve3(startPt, mid, endPt);
+    const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.004, 4, false);
+    const lineMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7 });
+    const clothesline = new THREE.Mesh(tubeGeo, lineMat);
+    group.add(clothesline);
+
+    // Hanging towel at midpoint
+    const towelMat = new THREE.MeshStandardMaterial({
+      color: 0xd8c8b0, roughness: 0.92, side: THREE.DoubleSide,
+    });
+    const towel = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4), towelMat);
+    const towelPos = curve.getPoint(0.5);
+    towel.position.copy(towelPos);
+    towel.position.y -= 0.2;
+    towel.rotation.y = 0.3;
+    towel.rotation.x = 0.05;
+    group.add(towel);
+  }
+
+  // 4. Bird on the fence
+  const seasonalProps = new THREE.Group();
+  {
+    const birdOnFence = new THREE.Group();
+    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8 });
+    const birdCone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.05, 6), birdBodyMat);
+    birdCone.position.set(0, 0, 0);
+    birdOnFence.add(birdCone);
+    const birdHeadSphere = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 5), birdBodyMat);
+    birdHeadSphere.position.set(0, 0.04, 0);
+    birdOnFence.add(birdHeadSphere);
+    birdOnFence.position.set(5.02, 0.5, 0.5);
+    seasonalProps.add(birdOnFence);
+  }
+  group.add(seasonalProps);
+
+  // 5. Fallen leaves (fall only)
+  const fallLeaves = new THREE.Group();
+  {
+    const leafColors = [0xcc7722, 0xdd4422, 0x8b5a2a];
+    for (let i = 0; i < 15; i++) {
+      const r = 0.02 + Math.abs(Math.sin(i * 2.7)) * 0.02;
+      const mat = new THREE.MeshStandardMaterial({
+        color: leafColors[i % 3], roughness: 0.9, side: THREE.DoubleSide,
+      });
+      const leaf = new THREE.Mesh(new THREE.CircleGeometry(r, 6), mat);
+      leaf.rotation.x = -Math.PI / 2;
+      leaf.position.set(
+        -1.5 + Math.sin(i * 1.7) * 2.0,
+        0.008,
+        -0.5 + Math.cos(i * 2.3) * 2.0
+      );
+      leaf.rotation.z = i * 0.8;
+      fallLeaves.add(leaf);
+    }
+  }
+  fallLeaves.visible = false;
+  group.add(fallLeaves);
+
+  // 6. Snow patches (winter only)
+  const winterSnow = new THREE.Group();
+  {
+    const snowMat = new THREE.MeshStandardMaterial({ color: 0xf0f4ff, roughness: 0.85 });
+    const patchSizes = [0.5, 0.3, 0.7, 0.4, 0.6, 0.35, 0.8, 0.45];
+    const patchPositions = [
+      [-1.2, 1.8], [0.6, 2.4], [-2.0, 0.5], [1.5, 1.2],
+      [-0.4, 3.0], [2.2, 0.8], [-1.8, 2.8], [0.2, 0.3],
+    ];
+    patchPositions.forEach(([x, z], i) => {
+      const size = patchSizes[i];
+      const patch = new THREE.Mesh(new THREE.PlaneGeometry(size, size), snowMat);
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set(x, 0.01, z);
+      winterSnow.add(patch);
+    });
+    // White emissive strips on cedar frame top edges
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0xf0f4ff, emissive: 0xddeeff, emissiveIntensity: 0.2, roughness: 0.85,
+    });
+    const halfW = 4 * 0.5 / 2;
+    const halfD = 4 * 0.5 / 2;
+    const frameY = 0.16;
+    for (const [w, d, x, z] of [
+      [halfW * 2 + 0.1, 0.04, 0, halfD + 0.03],
+      [halfW * 2 + 0.1, 0.04, 0, -(halfD + 0.03)],
+      [0.04, halfD * 2, -(halfW + 0.03), 0],
+      [0.04, halfD * 2, halfW + 0.03, 0],
+    ]) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(w, 0.006, d), frameMat);
+      strip.position.set(x, frameY, z);
+      winterSnow.add(strip);
+    }
+  }
+  winterSnow.visible = false;
+  group.add(winterSnow);
+
+  // 7. Spring flowers in grass
+  const springFlowers = new THREE.Group();
+  {
+    const flowerColors = [0xffee44, 0xaa55cc, 0xffffff, 0xff88bb, 0xffcc22];
+    for (let i = 0; i < 20; i++) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: flowerColors[i % flowerColors.length], roughness: 0.6,
+      });
+      const flower = new THREE.Mesh(new THREE.SphereGeometry(0.01, 5, 4), mat);
+      flower.position.set(
+        -3.5 + Math.sin(i * 3.1) * 3.5,
+        0.01,
+        2.5 + Math.cos(i * 2.1) * 2.0
+      );
+      springFlowers.add(flower);
+    }
+  }
+  springFlowers.visible = false;
+  group.add(springFlowers);
+
+  // 8. Mom's notebook on porch
+  const narrativeProps = new THREE.Group();
+  {
+    const notebookMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.9 });
+    const notebook = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.01, 0.08), notebookMat);
+    notebook.position.set(-2.3, 0.2, -3.4);
+    narrativeProps.add(notebook);
+
+    const coverMat = new THREE.MeshStandardMaterial({ color: 0x8a6a4a, roughness: 0.85 });
+    const cover = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.003, 0.08), coverMat);
+    cover.position.set(-2.3, 0.205, -3.4);
+    narrativeProps.add(cover);
+  }
+
+  // 9. Sauce jar on porch step
+  {
+    const jarMat = new THREE.MeshStandardMaterial({
+      color: 0x88aa88, transparent: true, opacity: 0.45,
+      roughness: 0.2, metalness: 0.05,
+    });
+    const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.06, 8), jarMat);
+    jar.position.set(-2.2, 0.15, -3.35);
+    narrativeProps.add(jar);
+  }
+  narrativeProps.visible = true;
+  group.add(narrativeProps);
+
+  // 10. Phillies pennant on fence
+  {
+    const pennantShape = new THREE.Shape();
+    pennantShape.moveTo(0, 0);
+    pennantShape.lineTo(0.15, 0.04);
+    pennantShape.lineTo(0, 0.08);
+    pennantShape.closePath();
+    const pennantGeo = new THREE.ShapeGeometry(pennantShape);
+    const pennantMat = new THREE.MeshStandardMaterial({
+      color: 0xE81828, roughness: 0.7, side: THREE.DoubleSide,
+    });
+    const pennant = new THREE.Mesh(pennantGeo, pennantMat);
+    pennant.position.set(5.02, 0.5, 1.5);
+    pennant.rotation.y = -Math.PI / 2;
+    group.add(pennant);
+  }
+
+  // 11. Seed packets near bed (planning only)
+  const planningProps = new THREE.Group();
+  {
+    const pColors = [0xe05a2b, 0xeacc2b, 0x4a9a40, 0x5a7abf];
+    for (let i = 0; i < 4; i++) {
+      const pMat = new THREE.MeshStandardMaterial({ color: pColors[i], roughness: 0.7 });
+      const pkt = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.06), pMat);
+      pkt.rotation.x = -Math.PI / 2;
+      pkt.position.set(-0.8 + i * 0.12, 0.008, 2.2 + (i % 2) * 0.08);
+      pkt.rotation.z = (i - 1.5) * 0.15;
+      planningProps.add(pkt);
+    }
+  }
+  planningProps.visible = false;
+  group.add(planningProps);
+
+  // 12. Telephone pole
+  {
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.92 });
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.0, 8), poleMat);
+    pole.position.set(6, 1.5, -3);
+    group.add(pole);
+
+    const crossbar = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.04), poleMat);
+    crossbar.position.set(6, 3.0, -3);
+    group.add(crossbar);
+
+    const wireMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+    const wire = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.005, 0.005), wireMat);
+    wire.position.set(7.5, 2.98, -3);
+    group.add(wire);
+  }
+
+  // 13. Distant rooftops
+  {
+    const silMat = new THREE.MeshStandardMaterial({ color: 0x3a3a4a, roughness: 0.95 });
+    const rooftops = [
+      { w: 2.0, h: 1.2, d: 1.5, x: 8.5, y: 0.6, z: -7 },
+      { w: 1.5, h: 1.8, d: 1.2, x: 10.5, y: 0.9, z: -6.5 },
+      { w: 1.8, h: 1.0, d: 1.4, x: 12, y: 0.5, z: -8 },
+    ];
+    rooftops.forEach(({ w, h, d, x, y, z }) => {
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silMat);
+      roof.position.set(x, y, z);
+      group.add(roof);
+    });
+  }
+
+  // 14. Drifting clouds
+  const clouds = [];
+  {
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.55, roughness: 1.0,
+    });
+    const cloudData = [
+      { x: -4, y: 12, z: -6, sx: 2.5, sy: 0.6, sz: 1.2 },
+      { x: 3, y: 14, z: -8, sx: 3.0, sy: 0.5, sz: 1.5 },
+      { x: -1, y: 13, z: -10, sx: 2.0, sy: 0.4, sz: 1.0 },
+      { x: 6, y: 15, z: -5, sx: 2.2, sy: 0.55, sz: 1.3 },
+    ];
+    cloudData.forEach(({ x, y, z, sx, sy, sz }) => {
+      const cloud = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), cloudMat.clone());
+      cloud.scale.set(sx, sy, sz);
+      cloud.position.set(x, y, z);
+      group.add(cloud);
+      clouds.push({ mesh: cloud, baseX: x, speed: 0.08 + Math.abs(Math.sin(x)) * 0.04 });
+    });
+  }
+
+  // 15. Fireflies (night/winter mood)
+  const fireflies = new THREE.Group();
+  let fireflyPositions;
+  {
+    const count = 30;
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = -3 + Math.sin(i * 2.1) * 4;
+      positions[i * 3 + 1] = 0.3 + Math.abs(Math.sin(i * 1.3)) * 1.5;
+      positions[i * 3 + 2] = -2 + Math.cos(i * 1.7) * 4;
+    }
+    fireflyPositions = positions;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xffee66,
+      size: 0.015,
+      transparent: true,
+      opacity: 0.8,
+      sizeAttenuation: true,
+    });
+    const points = new THREE.Points(geo, mat);
+    fireflies.add(points);
+  }
+  fireflies.visible = false;
+  group.add(fireflies);
+
+  // 16. Puddles after rain
+  const puddles = new THREE.Group();
+  {
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: 0x667788, metalness: 0.3, roughness: 0.1,
+      transparent: true, opacity: 0.5,
+    });
+    const puddleData = [
+      { r: 0.3, x: -1.0, z: 1.8 },
+      { r: 0.2, x: 1.2, z: 2.2 },
+      { r: 0.5, x: 0.0, z: 3.2 },
+      { r: 0.25, x: -2.0, z: 0.6 },
+    ];
+    puddleData.forEach(({ r, x, z }) => {
+      const puddle = new THREE.Mesh(new THREE.CircleGeometry(r, 16), puddleMat.clone());
+      puddle.rotation.x = -Math.PI / 2;
+      puddle.position.set(x, 0.009, z);
+      puddles.add(puddle);
+    });
+  }
+  puddles.visible = false;
+  group.add(puddles);
+
+  // 17. Cat silhouette on fence
+  {
+    const catMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
+    const catSilhouette = new THREE.Group();
+    const catBody2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.04), catMat);
+    catSilhouette.add(catBody2);
+    const catHead2 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), catMat);
+    catHead2.position.set(0.05, 0.03, 0);
+    catSilhouette.add(catHead2);
+    const catTail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 5), catMat);
+    catTail2.rotation.z = -0.8;
+    catTail2.position.set(-0.07, 0.03, 0);
+    catSilhouette.add(catTail2);
+    catSilhouette.position.set(5.02, 0.55, 2.0);
+    seasonalProps.add(catSilhouette);
+  }
+
+  // 18. Chimney smoke (winter)
+  const winterSmoke = new THREE.Group();
+  let smokePositions;
+  {
+    const count = 20;
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = 4.7 + (Math.sin(i * 1.5) * 0.1);
+      positions[i * 3 + 1] = 2.5 + i * 0.08;
+      positions[i * 3 + 2] = -2.1 + (Math.cos(i * 1.3) * 0.1);
+    }
+    smokePositions = positions;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xaaaaaa,
+      size: 0.015,
+      transparent: true,
+      opacity: 0.45,
+      sizeAttenuation: true,
+    });
+    const points = new THREE.Points(geo, mat);
+    winterSmoke.add(points);
+  }
+  winterSmoke.visible = false;
+  group.add(winterSmoke);
+
+  // 19. Wind indicator on fence
+  const windIndicator = new THREE.Group();
+  {
+    const windPoleMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.3 });
+    const windPole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.3, 4), windPoleMat);
+    windPole.position.y = 0.15;
+    windIndicator.add(windPole);
+
+    const flagShape = new THREE.Shape();
+    flagShape.moveTo(0, 0);
+    flagShape.lineTo(0.06, 0.02);
+    flagShape.lineTo(0, 0.04);
+    flagShape.closePath();
+    const flagGeo = new THREE.ShapeGeometry(flagShape);
+    const flagMat = new THREE.MeshStandardMaterial({
+      color: 0xee6633, roughness: 0.7, side: THREE.DoubleSide,
+    });
+    const windFlag = new THREE.Mesh(flagGeo, flagMat);
+    windFlag.position.set(0.01, 0.25, 0);
+    windIndicator.add(windFlag);
+    windIndicator._flag = windFlag;
+  }
+  windIndicator.position.set(4.95, 0.5, 1.0);
+  group.add(windIndicator);
+
+  // ── END NEW SCENERY ITEMS ──────────────────────────────────────────────
+
   return {
     group,
+
     updateSeason(season) {
       const colors = SEASON_TREE_COLORS[season] || SEASON_TREE_COLORS.spring;
       for (const canopyGroup of treeCanopies) {
@@ -331,6 +734,82 @@ export function buildScenery() {
           mesh.material.color.set(colors[i] || colors[0]);
         });
       }
+      // Seasonal prop visibility
+      fallLeaves.visible = season === 'fall';
+      winterSnow.visible = season === 'winter';
+      winterSmoke.visible = season === 'winter';
+      springFlowers.visible = season === 'spring';
+      seasonalProps.visible = season !== 'winter';
+
+      // Wind flag rotation varies by season
+      if (windIndicator._flag) {
+        const seasonRotations = { spring: 0.3, summer: 0.1, fall: 0.6, winter: 0.8 };
+        windIndicator._flag.rotation.y = seasonRotations[season] || 0.2;
+      }
+    },
+
+    updateClouds(dt) {
+      for (const c of clouds) {
+        c.mesh.position.x = c.baseX + Math.sin(performance.now() * 0.0001 * c.speed) * 3.0;
+      }
+    },
+
+    updateSmoke(dt) {
+      if (!winterSmoke.visible) return;
+      const pts = winterSmoke.children[0];
+      if (!pts || !smokePositions) return;
+      const posAttr = pts.geometry.getAttribute('position');
+      for (let i = 0; i < posAttr.count; i++) {
+        // Slowly rise and drift
+        smokePositions[i * 3 + 1] += dt * 0.12;
+        smokePositions[i * 3] += Math.sin(performance.now() * 0.001 + i) * dt * 0.02;
+        // Reset when too high
+        if (smokePositions[i * 3 + 1] > 4.5) {
+          smokePositions[i * 3] = 4.7 + (Math.sin(i * 1.5) * 0.1);
+          smokePositions[i * 3 + 1] = 2.5;
+          smokePositions[i * 3 + 2] = -2.1 + (Math.cos(i * 1.3) * 0.1);
+        }
+      }
+      posAttr.needsUpdate = true;
+    },
+
+    updateFireflies(dt) {
+      if (!fireflies.visible) return;
+      const pts = fireflies.children[0];
+      if (!pts || !fireflyPositions) return;
+      const posAttr = pts.geometry.getAttribute('position');
+      const t = performance.now() * 0.001;
+      for (let i = 0; i < posAttr.count; i++) {
+        fireflyPositions[i * 3] += Math.sin(t * 0.5 + i * 0.7) * dt * 0.15;
+        fireflyPositions[i * 3 + 1] += Math.cos(t * 0.3 + i * 1.1) * dt * 0.08;
+        fireflyPositions[i * 3 + 2] += Math.sin(t * 0.4 + i * 0.9) * dt * 0.12;
+        // Keep in bounds
+        if (Math.abs(fireflyPositions[i * 3]) > 5) fireflyPositions[i * 3] *= 0.95;
+        if (fireflyPositions[i * 3 + 1] > 2.5 || fireflyPositions[i * 3 + 1] < 0.1) {
+          fireflyPositions[i * 3 + 1] = 0.3 + Math.abs(Math.sin(i * 1.3)) * 1.5;
+        }
+        if (Math.abs(fireflyPositions[i * 3 + 2]) > 5) fireflyPositions[i * 3 + 2] *= 0.95;
+      }
+      posAttr.needsUpdate = true;
+      // Pulse opacity
+      pts.material.opacity = 0.5 + Math.sin(t * 2.0) * 0.3;
+    },
+
+    showPlanningProps(visible) {
+      planningProps.visible = visible;
+    },
+
+    showNarrativeProps(chapter, campaign) {
+      // Show notebook/sauce jar from chapter 2 onward or when campaign has started
+      narrativeProps.visible = (chapter >= 2 || (campaign && campaign.length > 0));
+    },
+
+    showFireflies(visible) {
+      fireflies.visible = visible;
+    },
+
+    showPuddles(visible) {
+      puddles.visible = visible;
     },
   };
 }
