@@ -7,11 +7,12 @@ import { createLoop } from './game/loop.js';
 import { createGameState, createSeasonState, PHASES, PHASE_ORDER } from './game/state.js';
 import { advance, canAdvance, getPhaseLabel } from './game/phase-machine.js';
 import { scoreBed } from './scoring/bed-score.js';
-import { getCropsForChapter, getRecipeById } from './data/crops.js';
+import { getCropById, getCropsForChapter, getRecipeById, getRecipes } from './data/crops.js';
 import { getKeepsakeById, getKeepsakeSlots } from './data/keepsakes.js';
 import { saveCampaign, loadCampaign, deleteCampaign, saveSeasonState, loadSeasonState, awardKeepsake } from './game/save.js';
 import { showEventCard } from './ui/event-card.js';
 import { showHarvestReveal } from './ui/harvest-reveal.js';
+import { showBackpackPanel } from './ui/backpack-panel.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
 import { createCutsceneMachine } from './game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './ui/season-calendar.js';
@@ -135,6 +136,7 @@ function startGame(state, viewport) {
   const fab = document.getElementById('fab-advance');
   const fabBackpack = document.getElementById('fab-backpack');
   let backpackOpen = false;
+  let cropPaletteOpen = false;
   const dialogueRoot = document.getElementById('dialogue-root');
   const cutsceneLayer = document.getElementById('cutscene-layer');
 
@@ -302,14 +304,8 @@ function startGame(state, viewport) {
       fab.classList.remove('is-visible');
     }
 
-    // Backpack only visible during PLANNING
     if (fabBackpack) {
-      if (state.season.phase === PHASES.PLANNING) {
-        fabBackpack.classList.remove('is-hidden');
-      } else {
-        fabBackpack.classList.add('is-hidden');
-        if (backpackOpen) closePalette();
-      }
+      fabBackpack.classList.remove('is-hidden');
     }
   }
 
@@ -329,9 +325,11 @@ function startGame(state, viewport) {
   }
 
   function showCropPalette() {
+    closeBackpackPanel();
     const crops = getCropsForChapter(state.campaign.currentChapter);
     const sheet = document.createElement('div');
     sheet.className = 'panel-sheet is-open';
+    sheet.id = 'crop-palette-panel';
     sheet.innerHTML = `
       <div class="panel-handle"></div>
       <div class="palette-header">
@@ -368,12 +366,57 @@ function startGame(state, viewport) {
 
     panelContainer.innerHTML = '';
     panelContainer.appendChild(sheet);
+    cropPaletteOpen = true;
+  }
+
+  function closePalette() {
+    const sheet = panelContainer.querySelector('#crop-palette-panel');
+    if (sheet) {
+      sheet.classList.remove('is-open');
+      setTimeout(() => sheet.remove(), 300);
+    }
+    cropPaletteOpen = false;
+  }
+
+  function buildBackpackData() {
+    const keepsakeSlots = getKeepsakeSlots();
+    const unlockedKeepsakes = (state.campaign.keepsakes ?? []).map((entry) => ({
+      ...entry,
+      ...(getKeepsakeById(entry.id) ?? {}),
+    }));
+    const recipesCompleted = (state.campaign.recipesCompleted ?? [])
+      .map((recipeId) => ({ id: recipeId, ...(getRecipeById(recipeId) ?? { name: recipeId }) }));
+    const pantryEntries = Object.entries(state.campaign.pantry ?? {})
+      .filter(([, count]) => count > 0)
+      .map(([cropId, count]) => ({
+        id: cropId,
+        name: getCropById(cropId)?.name ?? cropId,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+    return {
+      keepsakeSlots,
+      unlockedKeepsakes,
+      recipesCompleted,
+      totalRecipes: Object.keys(getRecipes()).length,
+      pantryEntries,
+      seasonHistory: state.campaign.seasonHistory ?? [],
+    };
+  }
+
+  function showBackpack() {
+    closePalette();
+    showBackpackPanel(panelContainer, buildBackpackData(), () => {
+      backpackOpen = false;
+      if (fabBackpack) fabBackpack.classList.remove('is-open');
+    });
     backpackOpen = true;
     if (fabBackpack) fabBackpack.classList.add('is-open');
   }
 
-  function closePalette() {
-    const sheet = panelContainer.querySelector('.panel-sheet');
+  function closeBackpackPanel() {
+    const sheet = panelContainer.querySelector('#backpack-panel');
     if (sheet) {
       sheet.classList.remove('is-open');
       setTimeout(() => sheet.remove(), 300);
@@ -382,15 +425,24 @@ function startGame(state, viewport) {
     if (fabBackpack) fabBackpack.classList.remove('is-open');
   }
 
+  function closePanelSheets() {
+    panelContainer.innerHTML = '';
+    cropPaletteOpen = false;
+    backpackOpen = false;
+    if (fabBackpack) fabBackpack.classList.remove('is-open');
+  }
+
   function toggleBackpack() {
     if (backpackOpen) {
-      closePalette();
+      closeBackpackPanel();
     } else {
-      showCropPalette();
+      showBackpack();
+      if (fabBackpack) fabBackpack.classList.add('is-open');
     }
   }
 
   function openEventCard() {
+    closePanelSheets();
     const event = state.season.eventActive;
     if (!event) {
       setGameInputEnabled(true);
@@ -421,6 +473,7 @@ function startGame(state, viewport) {
   }
 
   function openHarvestReveal() {
+    closePanelSheets();
     if (!state.season.harvestResult) {
       setGameInputEnabled(true);
       updateHUD();
@@ -437,6 +490,10 @@ function startGame(state, viewport) {
         totalKeepsakes: getKeepsakeSlots().length,
         recipeNames: (state.season.harvestResult.recipeMatches ?? [])
           .map((recipeId) => getRecipeById(recipeId)?.name ?? recipeId),
+        onViewBackpack: () => {
+          showBackpack();
+          if (fabBackpack) fabBackpack.classList.add('is-open');
+        },
       },
       () => {
         persistState();
@@ -551,7 +608,9 @@ function startGame(state, viewport) {
 
     const cellIndex = scene.raycastCell(event.clientX, event.clientY);
     if (cellIndex < 0) {
-      showCropPalette();
+      if (!cropPaletteOpen) {
+        showCropPalette();
+      }
       return;
     }
 
@@ -577,12 +636,24 @@ function startGame(state, viewport) {
   });
 
   document.addEventListener('keydown', (event) => {
+    // Escape always toggles pause menu (unless cutscene skipping)
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (cutsceneMachine.isActive()) {
+        cutsceneMachine.skip();
+      } else {
+        togglePauseMenu();
+      }
+      return;
+    }
+
+    // Block all input while paused
+    if (pauseMenuOpen) return;
+
     if (cutsceneMachine.isActive()) {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         cutsceneMachine.next();
-      } else if (event.key === 'Escape') {
-        cutsceneMachine.skip();
       }
       return;
     }
@@ -593,6 +664,8 @@ function startGame(state, viewport) {
       doAdvance();
     } else if (event.key === 'p' || event.key === 'P') {
       showCropPalette();
+    } else if (event.key === 'b' || event.key === 'B') {
+      toggleBackpack();
     }
   });
 
@@ -604,6 +677,68 @@ function startGame(state, viewport) {
   fabBackpack?.addEventListener('click', (event) => {
     event.stopPropagation();
     toggleBackpack();
+  });
+
+  // Pause menu system
+  const pauseOverlay = document.getElementById('pause-menu');
+  const pauseStatus = document.getElementById('pause-status');
+  let pauseMenuOpen = false;
+
+  function togglePauseMenu() {
+    pauseMenuOpen = !pauseMenuOpen;
+    if (pauseMenuOpen) {
+      pauseStatus.textContent = `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
+      pauseOverlay.classList.add('is-open');
+    } else {
+      pauseOverlay.classList.remove('is-open');
+    }
+  }
+
+  document.getElementById('pause-resume')?.addEventListener('click', () => {
+    togglePauseMenu();
+  });
+
+  document.getElementById('pause-journal')?.addEventListener('click', () => {
+    const entries = state.campaign.journalEntries || [];
+    if (!entries.length) {
+      showToast('No journal entries yet — complete a season first.', 2500);
+      return;
+    }
+    const text = entries.map(e =>
+      `Ch${e.chapter} ${e.season}: ${e.score} (${e.grade}) — ${(e.eventsEncountered || []).join(', ') || 'no events'}`
+    ).join('\n');
+    alert('Season Journal:\n\n' + text);
+  });
+
+  document.getElementById('pause-bugs')?.addEventListener('click', () => {
+    const BUGS_KEY = 'gos-story-bugs';
+    try {
+      const bugs = JSON.parse(localStorage.getItem(BUGS_KEY) || '[]');
+      if (!bugs.length) {
+        showToast('No bug reports saved yet.', 2000);
+        return;
+      }
+      const text = bugs.map((b, i) =>
+        `#${i + 1} [Ch${b.chapter} ${b.phase}]: ${b.text}`
+      ).join('\n\n');
+      alert('Bug Reports:\n\n' + text);
+    } catch { showToast('Could not load bug reports.', 2000); }
+  });
+
+  document.getElementById('pause-restart')?.addEventListener('click', () => {
+    if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
+    state.season = createSeasonState(state.campaign.currentChapter, state.season.season);
+    state.selectedCropId = null;
+    pauseMenuOpen = false;
+    pauseOverlay.classList.remove('is-open');
+    updateHUD();
+    showToast('Chapter restarted.', 1800);
+  });
+
+  document.getElementById('pause-new')?.addEventListener('click', () => {
+    if (!confirm('Start a new campaign? ALL progress will be erased.')) return;
+    deleteCampaign();
+    window.location.reload();
   });
 
   // Bug report system
@@ -654,8 +789,21 @@ function startGame(state, viewport) {
       chapter: state.campaign.currentChapter,
       phase: state.season.phase,
       season: state.season.season,
+      beatIndex: state.season.beatIndex,
       score: hudScore.textContent,
       cropsPlanted: state.season.grid.filter(c => c.cropId).map(c => c.cropId),
+      interventionChosen: state.season.interventionChosen,
+      interventionTokens: state.season.interventionTokens,
+      eventActive: state.season.eventActive ? {
+        id: state.season.eventActive.id,
+        title: state.season.eventActive.title,
+      } : null,
+      lastResolvedEvent: state.season.lastResolvedEvent ? {
+        id: state.season.lastResolvedEvent.id,
+        title: state.season.lastResolvedEvent.title,
+      } : null,
+      keepsakes: (state.campaign.keepsakes ?? []).map((entry) => entry.id),
+      recipesCompleted: [...(state.campaign.recipesCompleted ?? [])],
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
     };
@@ -671,7 +819,7 @@ function startGame(state, viewport) {
     }
 
     bugPanel.classList.remove('is-open');
-    showToast('🦗 Bug report saved! Thanks Mom.', 2500);
+    showToast('Bug report saved on this device.', 2500);
   });
 
   // Close bug panel on outside click

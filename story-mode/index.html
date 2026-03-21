@@ -443,6 +443,88 @@
       transform: translateY(0);
     }
 
+    /* Pause / Main Menu */
+    .pause-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: rgba(30,17,10,0.88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .pause-overlay.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .pause-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: clamp(24px, 5vw, 36px);
+      color: #e8c84a;
+      margin-bottom: 4px;
+    }
+    .pause-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: rgba(247,242,234,0.3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .pause-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(280px, 80vw);
+    }
+    .pause-menu button {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(247,242,234,0.1);
+      background: rgba(247,242,234,0.06);
+      color: #f7f2ea;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pause-menu button:hover {
+      background: rgba(247,242,234,0.1);
+      border-color: rgba(232,200,74,0.3);
+    }
+    .pause-menu button .pm-icon {
+      font-size: 20px;
+      width: 28px;
+      text-align: center;
+    }
+    .pause-menu .pm-danger {
+      color: rgba(212,74,42,0.8);
+      border-color: rgba(212,74,42,0.15);
+    }
+    .pause-menu .pm-danger:hover {
+      background: rgba(212,74,42,0.08);
+      border-color: rgba(212,74,42,0.3);
+    }
+    .pause-hint {
+      margin-top: 24px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(247,242,234,0.15);
+      letter-spacing: 0.08em;
+    }
+
     @media (min-width: 768px) {
       #panel-container {
         top: 0;
@@ -481,14 +563,26 @@
     <div id="cutscene-layer" aria-hidden="true">
       <div id="dialogue-root"></div>
     </div>
+    <div class="pause-overlay" id="pause-menu">
+      <div class="pause-title">Garden OS</div>
+      <div class="pause-subtitle" id="pause-status">Chapter 1 · Planning</div>
+      <div class="pause-menu">
+        <button id="pause-resume"><span class="pm-icon">▶</span> Resume</button>
+        <button id="pause-journal"><span class="pm-icon">📖</span> Season Journal</button>
+        <button id="pause-bugs"><span class="pm-icon">🦗</span> View Bug Reports</button>
+        <button id="pause-restart" class="pm-danger"><span class="pm-icon">↺</span> Restart Chapter</button>
+        <button id="pause-new" class="pm-danger"><span class="pm-icon">🗑</span> New Campaign</button>
+      </div>
+      <div class="pause-hint">ESC to close</div>
+    </div>
     <button id="fab-bug" aria-label="Report a bug">🦗</button>
     <div class="bug-report-panel" id="bug-panel">
       <h3>🦗 Report a Bug</h3>
-      <div class="bug-subtitle">Critters want to know what went wrong</div>
+      <div class="bug-subtitle">Saved locally on this device for later review</div>
       <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>
       <div class="bug-report-actions">
         <button class="bug-btn-cancel" id="bug-cancel">Cancel</button>
-        <button class="bug-btn-send" id="bug-send">Send Report</button>
+        <button class="bug-btn-send" id="bug-send">Save Report</button>
       </div>
       <div class="bug-meta" id="bug-meta"></div>
     </div>
