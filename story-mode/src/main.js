@@ -614,6 +614,7 @@ function startGame(state, viewport) {
   });
 
   viewport.addEventListener('click', (event) => {
+    if (pauseMenuOpen) return;
     if (!gameInputEnabled || cutsceneMachine.isActive()) return;
     if (state.season.phase !== PHASES.PLANNING) return;
 
@@ -714,6 +715,9 @@ function startGame(state, viewport) {
   function togglePauseMenu() {
     pauseMenuOpen = !pauseMenuOpen;
     if (pauseMenuOpen) {
+      // Close other panels
+      bugPanel?.classList.remove('is-open');
+      if (cropPaletteOpen) closePalette();
       pauseStatus.textContent = `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       pauseOverlay.classList.add('is-open');
     } else {
@@ -727,6 +731,7 @@ function startGame(state, viewport) {
 
   document.getElementById('pause-journal')?.addEventListener('click', () => {
     const entries = state.campaign.journalEntries || [];
+    togglePauseMenu(); // close menu first
     if (!entries.length) {
       showToast('No journal entries yet — complete a season first.', 2500);
       return;
@@ -739,6 +744,7 @@ function startGame(state, viewport) {
 
   document.getElementById('pause-bugs')?.addEventListener('click', () => {
     const BUGS_KEY = 'gos-story-bugs';
+    togglePauseMenu(); // close menu first
     try {
       const bugs = JSON.parse(localStorage.getItem(BUGS_KEY) || '[]');
       if (!bugs.length) {
@@ -777,6 +783,11 @@ function startGame(state, viewport) {
   const bugCancel = document.getElementById('bug-cancel');
 
   function toggleBugPanel() {
+    // Close pause menu if open
+    if (pauseMenuOpen) {
+      pauseMenuOpen = false;
+      pauseOverlay.classList.remove('is-open');
+    }
     const isOpen = bugPanel.classList.toggle('is-open');
     if (isOpen) {
       bugText.value = '';
