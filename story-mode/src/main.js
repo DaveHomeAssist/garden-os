@@ -393,6 +393,15 @@ function startGame(state, viewport) {
     const seasonIcon = document.getElementById('hud-season-icon');
     if (seasonIcon) seasonIcon.textContent = SEASON_ICONS[state.season.season] || '🌱';
 
+    // Auto-show event card if event is active but card isn't rendered
+    const inBeatPhase = [PHASES.EARLY_SEASON, PHASES.MID_SEASON, PHASES.LATE_SEASON].includes(state.season.phase);
+    if (inBeatPhase && state.season.eventActive && state.season.interventionChosen === null && gameInputEnabled && !cutsceneMachine.isActive()) {
+      const existingCard = panelContainer.querySelector('.event-card-sheet');
+      if (!existingCard) {
+        openEventCard();
+      }
+    }
+
     // Intervention tokens (show during beat phases)
     const tokensEl = document.getElementById('hud-tokens');
     if (tokensEl) {
