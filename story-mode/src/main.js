@@ -387,6 +387,7 @@ function startGame(state, viewport) {
   }
 
   function showCropPalette() {
+    scene.clearTargeting?.();
     closeBackpackPanel();
     const crops = getCropsForChapter(state.campaign.currentChapter);
     const sheet = document.createElement('div');
@@ -468,6 +469,7 @@ function startGame(state, viewport) {
   }
 
   function showBackpack() {
+    scene.clearTargeting?.();
     closePalette();
     showBackpackPanel(panelContainer, buildBackpackData(), () => {
       backpackOpen = false;
@@ -492,6 +494,9 @@ function startGame(state, viewport) {
     cropPaletteOpen = false;
     backpackOpen = false;
     if (fabBackpack) fabBackpack.classList.remove('is-open');
+    if (!interventionTargetState) {
+      scene.clearTargeting?.();
+    }
   }
 
   function clearInterventionTargeting() {
@@ -646,6 +651,9 @@ function startGame(state, viewport) {
   }
 
   function openEventCard() {
+    if (!interventionTargetState) {
+      scene.clearTargeting?.();
+    }
     closePanelSheets();
     const event = state.season.eventActive;
     if (!event) {
@@ -664,6 +672,7 @@ function startGame(state, viewport) {
   }
 
   function openHarvestReveal() {
+    scene.clearTargeting?.();
     closePanelSheets();
     if (!state.season.harvestResult) {
       setGameInputEnabled(true);
@@ -695,6 +704,7 @@ function startGame(state, viewport) {
   }
 
   function openSeasonTransitionOverlay() {
+    scene.clearTargeting?.();
     const overlayContainer = document.getElementById('overlay-container');
     const existing = overlayContainer.querySelector('#season-transition-overlay');
     if (existing) existing.remove();
@@ -737,6 +747,9 @@ function startGame(state, viewport) {
   }
 
   function handleNarrativeTrigger(trigger) {
+    if (!interventionTargetState) {
+      scene.clearTargeting?.();
+    }
     if (!trigger) {
       setGameInputEnabled(true);
       return;
