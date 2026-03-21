@@ -85,6 +85,9 @@ function mount() {
       if (savedSeason) {
         Object.assign(state.season, savedSeason);
         state.season.campaign = state.campaign;
+        if (state.season.phase === 'REVIEW') {
+          state.season.phase = PHASES.TRANSITION;
+        }
       } else {
         state.season = createSeasonState(
           state.campaign.currentChapter,
@@ -321,8 +324,6 @@ function startGame(state, viewport) {
     switch (state.season.phase) {
       case PHASES.PLANNING:
         return 'Commit Plan';
-      case PHASES.REVIEW:
-        return 'Continue';
       case PHASES.TRANSITION:
         return 'Continue';
       case PHASES.LATE_SEASON:
@@ -420,10 +421,6 @@ function startGame(state, viewport) {
         } else {
           helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
         }
-      } else if (state.season.phase === PHASES.REVIEW) {
-        helperText = isWinter
-          ? 'Winter review. Pale plots mark dormant occupied cells. Tap Next to continue.'
-          : 'Season review complete. Tap Next to move into season wrap-up.';
       } else if (state.season.phase === PHASES.TRANSITION) {
         helperText = 'Season complete. Use Continue to roll into the next chapter.';
       }
@@ -768,22 +765,14 @@ function startGame(state, viewport) {
       () => {
         persistState();
 
-        // REVIEW is currently passive in story mode, so don't strand the
-        // player in an intermediate phase with no dedicated screen.
         if (state.season.phase === PHASES.HARVEST && canAdvance(state.season)) {
-          const reviewResult = advance(state);
+          const transitionResult = advance(state);
           updateHUD();
           persistState();
 
-          if (reviewResult.advanced && state.season.phase === PHASES.REVIEW && canAdvance(state.season)) {
-            const transitionResult = advance(state);
-            updateHUD();
-            persistState();
-
-            if (transitionResult.advanced && transitionResult.trigger) {
-              handleNarrativeTrigger(transitionResult.trigger);
-              return;
-            }
+          if (transitionResult.advanced && transitionResult.trigger) {
+            handleNarrativeTrigger(transitionResult.trigger);
+            return;
           }
         }
 

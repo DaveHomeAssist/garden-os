@@ -12,8 +12,7 @@ const TRANSITIONS = {
   [PHASES.EARLY_SEASON]: PHASES.MID_SEASON,
   [PHASES.MID_SEASON]: PHASES.LATE_SEASON,
   [PHASES.LATE_SEASON]: PHASES.HARVEST,
-  [PHASES.HARVEST]: PHASES.REVIEW,
-  [PHASES.REVIEW]: PHASES.TRANSITION,
+  [PHASES.HARVEST]: PHASES.TRANSITION,
   [PHASES.TRANSITION]: PHASES.PLANNING,
 };
 
@@ -198,7 +197,6 @@ export function canAdvance(season) {
     return season.interventionChosen !== null || season.eventActive === null;
   }
   if (phase === PHASES.HARVEST) return season.harvestResult !== null;
-  if (phase === PHASES.REVIEW) return true;
   if (phase === PHASES.TRANSITION) return true;
   return false;
 }
@@ -257,13 +255,8 @@ export function advance(state) {
     return result;
   }
 
-  if (nextPhase === PHASES.REVIEW) {
-    result.journalEntryAdded = recordSeasonJournal(season);
-    season.phase = nextPhase;
-    return result;
-  }
-
   if (nextPhase === PHASES.TRANSITION) {
+    result.journalEntryAdded = recordSeasonJournal(season);
     season.phase = nextPhase;
     result.trigger = {
       type: 'chapter_complete',
@@ -300,7 +293,6 @@ export function getPhaseLabel(phase) {
     [PHASES.MID_SEASON]: 'Mid Season',
     [PHASES.LATE_SEASON]: 'Late Season',
     [PHASES.HARVEST]: 'Harvest',
-    [PHASES.REVIEW]: 'Season Review',
     [PHASES.TRANSITION]: 'Season Complete',
   };
   return labels[phase] ?? phase;

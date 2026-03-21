@@ -78,6 +78,72 @@ export function buildBed() {
   rightBevel.position.set(bedWidth / 2 + FRAME_THICKNESS / 2, FRAME_HEIGHT + BEVEL_INSET / 2, 0);
   group.add(rightBevel);
 
+  // Back lattice trellis — closer to the real bed silhouette
+  const trellisMat = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.82, metalness: 0.05 });
+  const meshWireMat = new THREE.MeshStandardMaterial({
+    color: 0x9c9b95,
+    transparent: true,
+    opacity: 0.42,
+    roughness: 0.45,
+    metalness: 0.55,
+    wireframe: true,
+  });
+  const trellisZ = -bedDepth / 2 - FRAME_THICKNESS * 0.15;
+  const trellisHeight = 1.2;
+  const trellisWidth = bedWidth - 0.12;
+
+  for (const x of [-trellisWidth / 2, trellisWidth / 2]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.05, trellisHeight, 0.05), trellisMat);
+    post.position.set(x, trellisHeight / 2, trellisZ);
+    post.castShadow = true;
+    group.add(post);
+  }
+
+  for (const y of [0.12, trellisHeight - 0.12]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(trellisWidth + 0.08, 0.05, 0.05), trellisMat);
+    rail.position.set(0, y, trellisZ);
+    rail.castShadow = true;
+    group.add(rail);
+  }
+
+  const latticeCols = 8;
+  const latticeRows = 5;
+  for (let col = 0; col < latticeCols; col++) {
+    const x = -trellisWidth / 2 + (col / (latticeCols - 1)) * trellisWidth;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.025, trellisHeight - 0.18, 0.02), trellisMat);
+    slat.position.set(x, trellisHeight / 2, trellisZ);
+    slat.castShadow = true;
+    group.add(slat);
+  }
+
+  for (let row = 0; row < latticeRows; row++) {
+    const y = 0.18 + (row / (latticeRows - 1)) * (trellisHeight - 0.36);
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(trellisWidth - 0.08, 0.025, 0.02), trellisMat);
+    slat.position.set(0, y, trellisZ);
+    slat.castShadow = true;
+    group.add(slat);
+  }
+
+  // Front critter guard — low frame plus chicken wire
+  const guardHeight = 0.42;
+  const guardZ = bedDepth / 2 + FRAME_THICKNESS * 0.55;
+  const frontMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(bedWidth - 0.12, guardHeight - 0.08, 10, 6),
+    meshWireMat
+  );
+  frontMesh.position.set(0, guardHeight / 2 + 0.04, guardZ + 0.012);
+  group.add(frontMesh);
+
+  for (const x of [-bedWidth / 2 + 0.06, 0, bedWidth / 2 - 0.06]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, guardHeight, 0.04), trellisMat);
+    post.position.set(x, guardHeight / 2, guardZ);
+    group.add(post);
+  }
+
+  const guardRailTop = new THREE.Mesh(new THREE.BoxGeometry(bedWidth - 0.04, 0.04, 0.04), trellisMat);
+  guardRailTop.position.set(0, guardHeight, guardZ);
+  group.add(guardRailTop);
+
   // Grid lines between cells (thin dark strips)
   const gridLineThickness = 0.012;
 

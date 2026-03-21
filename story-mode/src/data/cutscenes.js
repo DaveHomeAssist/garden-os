@@ -232,7 +232,7 @@ function pickEventSpeakers(triggerPayload) {
   }
 
   if (category === 'weather') {
-    if (season === 'summer') return valence === 'negative' ? ['garden_gurl', 'vegeman'] : ['onion_man'];
+    if (season === 'summer') return valence === 'negative' ? ['garden_gurl', 'vegeman'] : ['vegeman', 'onion_man'];
     if (season === 'fall') return ['onion_man', 'garden_gurl'];
     if (season === 'winter') return carryForward ? ['onion_man', 'garden_gurl'] : ['onion_man'];
     return valence === 'positive' ? ['onion_man'] : ['garden_gurl', 'onion_man'];

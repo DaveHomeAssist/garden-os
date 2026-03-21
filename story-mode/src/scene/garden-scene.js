@@ -299,6 +299,7 @@ export function createGardenScene(container) {
 
   // Crop mesh cache
   const cropMeshes = new Map();
+  const supportMeshes = new Map();
 
   // -- Distinct crop mesh builders per faction --
 
@@ -584,14 +585,90 @@ export function createGardenScene(container) {
     }
   }
 
-  function getGrowthScale(phase, season) {
-    if (season === 'winter') return 0.52;
-    if (phase === 'MID_SEASON') return 0.7;
-    if (phase === 'LATE_SEASON' || phase === 'HARVEST' || phase === 'REVIEW' || phase === 'TRANSITION') {
-      return 1.0;
-    }
-    return 0.4;
+  function buildMulchProp() {
+    const group = new THREE.Group();
+    const chipMat = new THREE.MeshStandardMaterial({ color: 0x8b6b3e, roughness: 0.95 });
+    const chipPositions = [
+      [-0.1, 0.02], [-0.04, -0.09], [0.08, -0.06], [0.1, 0.05], [0, 0.11], [0.04, 0.01],
+    ];
+    chipPositions.forEach(([x, z], index) => {
+      const chip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.01, 0.03),
+        chipMat
+      );
+      chip.position.set(x, 0.006 + (index % 2) * 0.002, z);
+      chip.rotation.y = index * 0.55;
+      group.add(chip);
+    });
+    return group;
   }
+
+  function buildStakeProp() {
+    const group = new THREE.Group();
+    const stakeMat = new THREE.MeshStandardMaterial({ color: 0x6e5130, roughness: 0.86 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: 0xb8a87a, roughness: 0.8 });
+
+    for (const [x, z, rot] of [[-0.08, -0.02, 0.1], [0.08, 0.02, -0.1]]) {
+      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.62, 5), stakeMat);
+      stake.position.set(x, 0.31, z);
+      stake.rotation.z = rot;
+      stake.castShadow = true;
+      group.add(stake);
+    }
+
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.014, 0.014), tieMat);
+    tie.position.set(0, 0.38, 0);
+    group.add(tie);
+
+    return group;
+  }
+
+  function buildProtectionProp() {
+    const domeMat = new THREE.MeshStandardMaterial({
+      color: 0xbfd4d9,
+      transparent: true,
+      opacity: 0.22,
+      roughness: 0.25,
+      metalness: 0.15,
+      wireframe: true,
+    });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
+    dome.rotation.x = Math.PI;
+    dome.position.y = 0.17;
+    return dome;
+  }
+
+  function buildCellSupportProps(cell) {
+    const group = new THREE.Group();
+    const crop = cell.cropId ? getCropById(cell.cropId) : null;
+    let hasProp = false;
+
+    if (cell.mulched || cell.carryForwardType === 'mulched') {
+      group.add(buildMulchProp());
+      hasProp = true;
+    }
+
+    if (crop?.support) {
+      group.add(buildStakeProp());
+      hasProp = true;
+    }
+
+    if (cell.protected) {
+      group.add(buildProtectionProp());
+      hasProp = true;
+    }
+
+    return hasProp ? group : null;
+  }
+
+function getGrowthScale(phase, season) {
+  if (season === 'winter') return 0.52;
+  if (phase === 'MID_SEASON') return 0.7;
+  if (phase === 'LATE_SEASON' || phase === 'HARVEST' || phase === 'TRANSITION') {
+    return 1.0;
+  }
+  return 0.4;
+}
 
   function applyCropDamageState(mesh, damageState, season) {
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
@@ -678,6 +755,57 @@ export function createGardenScene(container) {
       if (!activeIds.has(key) && key.startsWith('cell-')) {
         root.remove(mesh);
         cropMeshes.delete(key);
+      }
+    }
+  }
+
+  function syncSupportProps(grid) {
+    const activeIds = new Set();
+
+    for (let i = 0; i < grid.length; i++) {
+      const cell = grid[i];
+      const key = `support-${i}`;
+      const signature = JSON.stringify({
+        cropId: cell.cropId,
+        support: Boolean(cell.cropId && getCropById(cell.cropId)?.support),
+        mulched: Boolean(cell.mulched || cell.carryForwardType === 'mulched'),
+        protected: Boolean(cell.protected),
+      });
+      const propMesh = buildCellSupportProps(cell);
+
+      if (!propMesh) {
+        if (supportMeshes.has(key)) {
+          root.remove(supportMeshes.get(key));
+          supportMeshes.delete(key);
+        }
+        continue;
+      }
+
+      activeIds.add(key);
+
+      if (supportMeshes.has(key) && supportMeshes.get(key).userData.signature === signature) {
+        continue;
+      }
+
+      if (supportMeshes.has(key)) {
+        root.remove(supportMeshes.get(key));
+        supportMeshes.delete(key);
+      }
+
+      const row = Math.floor(i / COLS);
+      const col = i % COLS;
+      const x = (col - (COLS - 1) / 2) * bed.cellSize;
+      const z = (row - (ROWS - 1) / 2) * bed.cellSize;
+      propMesh.position.set(x, bed.soilY, z);
+      propMesh.userData.signature = signature;
+      root.add(propMesh);
+      supportMeshes.set(key, propMesh);
+    }
+
+    for (const [key, mesh] of supportMeshes) {
+      if (!activeIds.has(key)) {
+        root.remove(mesh);
+        supportMeshes.delete(key);
       }
     }
   }
@@ -821,6 +949,7 @@ export function createGardenScene(container) {
         applyCellVisualState(i);
       }
       syncCrops(state.season.grid, state.season.phase, state.season.season);
+      syncSupportProps(state.season.grid);
       applySeason(state.season.season);
 
       // Trigger ambient weather on season change

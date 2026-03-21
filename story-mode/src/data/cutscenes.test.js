@@ -52,16 +52,38 @@ section('Static cutscene structure');
 
 async function runTests() {
   // Dynamic import to handle ES modules
+  // Mock the crops.js dependency before importing cutscenes
   let CUTSCENES, getHighestPriorityCutscene, getEligibleCutscenes;
   try {
-    const mod = await import('./cutscenes.js');
-    CUTSCENES = mod.CUTSCENES;
-    getHighestPriorityCutscene = mod.getHighestPriorityCutscene;
-    getEligibleCutscenes = mod.getEligibleCutscenes;
+    // Register a loader hook or use direct file parsing
+    // Since cutscenes.js imports from crops.js which imports from loader.js (Vite alias),
+    // we need to mock the entire chain. Parse cutscenes.js directly instead.
+    const fs = await import('fs');
+    const path = await import('path');
+    const url = await import('url');
+    const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+    const source = fs.readFileSync(path.join(__dirname, 'cutscenes.js'), 'utf-8');
+
+    // Strip the import line and eval the module content
+    const stripped = source
+      .replace(/^import\s+\{[^}]+\}\s+from\s+'[^']+';?\s*$/gm, '')
+      .replace(/^export\s+/gm, '');
+
+    // Eval in a function scope that provides the mock
+    const moduleCode = `
+      const MOCK_RECIPES = ${JSON.stringify(MOCK_RECIPES)};
+      const getRecipeById = (id) => MOCK_RECIPES[id] || { name: id };
+      ${stripped}
+      return { CUTSCENES, getHighestPriorityCutscene, getEligibleCutscenes };
+    `;
+    const result = new Function(moduleCode)();
+    CUTSCENES = result.CUTSCENES;
+    getHighestPriorityCutscene = result.getHighestPriorityCutscene;
+    getEligibleCutscenes = result.getEligibleCutscenes;
+    console.log(`Loaded ${CUTSCENES.length} static cutscenes + dynamic builders\n`);
   } catch (e) {
-    console.error('Could not import cutscenes.js:', e.message);
+    console.error('Could not load cutscenes.js:', e.message);
     console.log('\nRunning structural validation only (no import)...\n');
-    // Fallback: validate the test scenarios without the actual module
     runStructuralTests();
     return;
   }
@@ -280,7 +302,7 @@ async function runTests() {
   // Onion Man should appear meaningfully
   assert(speakerCounts.onion_man > 10, 'Onion Man appears in 10+ event reactions');
   // Vegeman should appear
-  assert(speakerCounts.vegeman > 3, 'Vegeman appears in 3+ event reactions');
+  assert(speakerCounts.vegeman >= 3, 'Vegeman appears in 3+ event reactions');
 
   // Test 12: No mechanic explanation in dialogue
   section('No mechanic explanation in dialogue');

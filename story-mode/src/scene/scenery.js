@@ -53,28 +53,63 @@ export function buildScenery() {
     group.add(rail);
   }
 
-  // --- Walkway / path in front (access side) ---
-  const pathGeo = new THREE.PlaneGeometry(4.5, 1.2);
-  const pathMat = new THREE.MeshStandardMaterial({
-    color: PATH_COLOR,
-    roughness: 0.92,
-  });
-  const path = new THREE.Mesh(pathGeo, pathMat);
-  path.rotation.x = -Math.PI / 2;
-  path.position.set(0, 0.005, 1.8);
-  path.receiveShadow = true;
-  group.add(path);
+  // --- House wall backdrop (closer to the real bed reference) ---
+  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78 });
+  const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88 });
 
-  // Path stepping stones
-  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x9a8a6a, roughness: 0.85 });
-  for (let i = 0; i < 5; i++) {
-    const stone = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.14, 0.02, 7),
+  const houseWall = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.3, 0.18), sidingMat);
+  houseWall.position.set(0.2, 1.65, -3.2);
+  houseWall.receiveShadow = true;
+  group.add(houseWall);
+
+  for (let i = 0; i < 10; i++) {
+    const board = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.06, 0.03), trimMat);
+    board.position.set(0.2, 0.25 + i * 0.32, -3.08);
+    group.add(board);
+  }
+
+  const porchOpening = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.4, 0.7), porchMat);
+  porchOpening.position.set(-2.55, 1.2, -3.45);
+  group.add(porchOpening);
+
+  const porchPostA = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 0.12), trimMat);
+  porchPostA.position.set(-1.78, 1.1, -2.88);
+  group.add(porchPostA);
+  const porchPostB = porchPostA.clone();
+  porchPostB.position.x = -3.28;
+  group.add(porchPostB);
+
+  const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.08), trimMat);
+  backWindow.position.set(0.3, 2.05, -3.07);
+  group.add(backWindow);
+
+  const backGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(0.68, 0.78, 0.04),
+    new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 })
+  );
+  backGlass.position.set(0.3, 2.05, -3.01);
+  group.add(backGlass);
+
+  // --- Gravel work area in front (instead of a clean path) ---
+  const gravel = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.6, 2.2),
+    new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0 })
+  );
+  gravel.rotation.x = -Math.PI / 2;
+  gravel.position.set(0, 0.006, 1.95);
+  gravel.receiveShadow = true;
+  group.add(gravel);
+
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb29c7c, roughness: 0.92 });
+  for (let i = 0; i < 26; i++) {
+    const pebble = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03 + (i % 3) * 0.01, 0.03 + (i % 3) * 0.01, 0.018, 6),
       stoneMat
     );
-    stone.position.set(-1.5 + i * 0.75, 0.015, 1.8 + (Math.sin(i * 1.5) * 0.15));
-    stone.receiveShadow = true;
-    group.add(stone);
+    pebble.position.set(-2.4 + (i % 13) * 0.38, 0.014, 1.25 + Math.floor(i / 13) * 0.46 + ((i % 2) * 0.08));
+    pebble.rotation.y = i * 0.37;
+    group.add(pebble);
   }
 
   // --- Trees (3 low-poly deciduous) ---
@@ -198,6 +233,97 @@ export function buildScenery() {
   }
   hoseGroup.position.set(-3, 0, 1.5);
   group.add(hoseGroup);
+
+  // Garden gloves near the gravel work area
+  const gloveMat = new THREE.MeshStandardMaterial({ color: 0xb7b1a0, roughness: 0.92 });
+  const gloveCuffMat = new THREE.MeshStandardMaterial({ color: 0x6a8b8c, roughness: 0.8 });
+  for (const [x, z, rot] of [[0.8, 2.55, 0.35], [1.02, 2.45, -0.28]]) {
+    const glove = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.09), gloveMat);
+    glove.position.set(x, 0.02, z);
+    glove.rotation.y = rot;
+    group.add(glove);
+
+    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.1), gloveCuffMat);
+    cuff.position.set(x - 0.08, 0.02, z);
+    cuff.rotation.y = rot;
+    group.add(cuff);
+  }
+
+  // Harvest basket with produce
+  const basketMat = new THREE.MeshStandardMaterial({ color: 0x8a6032, roughness: 0.88 });
+  const basket = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.28), basketMat);
+  basket.position.set(2.45, 0.08, 2.35);
+  group.add(basket);
+
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.015, 5, 18, Math.PI), basketMat);
+  handle.position.set(2.45, 0.19, 2.35);
+  handle.rotation.z = Math.PI;
+  group.add(handle);
+
+  const produceMatA = new THREE.MeshStandardMaterial({ color: 0xd45a33, roughness: 0.55 });
+  const produceMatB = new THREE.MeshStandardMaterial({ color: 0x4a8a4a, roughness: 0.7 });
+  for (const [x, y, z, mat] of [
+    [2.36, 0.16, 2.31, produceMatA],
+    [2.48, 0.17, 2.37, produceMatB],
+    [2.56, 0.16, 2.28, produceMatA],
+  ]) {
+    const produce = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), mat);
+    produce.position.set(x, y, z);
+    group.add(produce);
+  }
+
+  // --- Simple rowhouse backdrop ---
+  const houseGroup = new THREE.Group();
+  const brickMat = new THREE.MeshStandardMaterial({ color: 0x7a4336, roughness: 0.9 });
+  const rowhouseTrimMat = new THREE.MeshStandardMaterial({ color: 0xd8c8ac, roughness: 0.75 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x3c2e2c, roughness: 0.88 });
+  const windowMat = new THREE.MeshStandardMaterial({
+    color: 0xf4d38c,
+    emissive: 0xe7b45a,
+    emissiveIntensity: 0.25,
+    roughness: 0.2,
+    metalness: 0.1,
+  });
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.9, 1.6), brickMat);
+  body.position.set(0, 0.95, -5.4);
+  body.castShadow = true;
+  body.receiveShadow = true;
+  houseGroup.add(body);
+
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.18, 1.82), roofMat);
+  roof.position.set(0, 1.92, -5.4);
+  roof.castShadow = true;
+  houseGroup.add(roof);
+
+  const stoop = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.18, 0.56), rowhouseTrimMat);
+  stoop.position.set(-0.42, 0.09, -4.34);
+  houseGroup.add(stoop);
+
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.9, 0.05), rowhouseTrimMat);
+  door.position.set(-0.42, 0.47, -4.58);
+  houseGroup.add(door);
+
+  const windowOffsets = [
+    [-0.7, 0.62], [0.42, 0.62],
+    [-0.7, 1.3], [0.42, 1.3],
+  ];
+  for (const [x, y] of windowOffsets) {
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.42, 0.06), rowhouseTrimMat);
+    frame.position.set(x, y, -4.58);
+    houseGroup.add(frame);
+
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.04), windowMat);
+    glass.position.set(x, y, -4.54);
+    houseGroup.add(glass);
+  }
+
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.18), brickMat);
+  chimney.position.set(0.74, 2.18, -5.72);
+  chimney.castShadow = true;
+  houseGroup.add(chimney);
+
+  group.add(houseGroup);
 
   return {
     group,

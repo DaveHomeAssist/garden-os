@@ -68,7 +68,7 @@ export function updateSeasonCalendar(state) {
   let beatIdx = 0;
   if (phase === 'MID_SEASON') beatIdx = 1;
   else if (phase === 'LATE_SEASON') beatIdx = 2;
-  else if (phase === 'HARVEST' || phase === 'REVIEW' || phase === 'TRANSITION') beatIdx = 2;
+  else if (phase === 'HARVEST' || phase === 'TRANSITION') beatIdx = 2;
 
   const beatName = BEAT_NAMES[beatIdx] || 'early';
   const months = SEASON_MONTHS[season] || SEASON_MONTHS.spring;
@@ -82,7 +82,7 @@ export function updateSeasonCalendar(state) {
   // Beat progress bars
   const beats = el.querySelectorAll('.cal-beat');
   beats.forEach((b, i) => {
-    if (i <= beatIdx && ['EARLY_SEASON','MID_SEASON','LATE_SEASON','HARVEST','REVIEW','TRANSITION'].includes(phase)) {
+    if (i <= beatIdx && ['EARLY_SEASON','MID_SEASON','LATE_SEASON','HARVEST','TRANSITION'].includes(phase)) {
       b.style.background = 'rgba(232,200,74,0.5)';
     } else if (phase === 'PLANNING') {
       b.style.background = 'rgba(247,242,234,0.08)';
@@ -97,8 +97,8 @@ export function updateSeasonCalendar(state) {
     labelEl.textContent = 'Planning Phase';
   } else if (phase === 'HARVEST') {
     labelEl.textContent = 'Harvest Time';
-  } else if (phase === 'REVIEW') {
-    labelEl.textContent = 'Season Review';
+  } else if (phase === 'TRANSITION') {
+    labelEl.textContent = 'Season Complete';
   } else {
     labelEl.textContent = `${beatName} ${season}`;
   }
