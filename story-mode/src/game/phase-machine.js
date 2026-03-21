@@ -90,6 +90,24 @@ const HEAVY_FEEDERS = new Set([
   'kale', 'lettuce', 'arugula', 'spinach', 'chard', 'basil',
 ]);
 
+function applyCarryForwardInfrastructure(nextCell, previousCell) {
+  if (!previousCell?.carryForwardType) return;
+
+  if (previousCell.carryForwardType === 'mulched') {
+    nextCell.eventModifier += 0.25;
+    return;
+  }
+
+  if (previousCell.carryForwardType === 'compacted') {
+    nextCell.eventModifier -= 0.5;
+    return;
+  }
+
+  if (previousCell.carryForwardType === 'enriched') {
+    nextCell.eventModifier += 0.3;
+  }
+}
+
 function rollCampaignForward(season) {
   const campaign = season.campaign;
   if (!campaign) {
@@ -137,6 +155,7 @@ function rollCampaignForward(season) {
           0.9,
         );
       }
+      applyCarryForwardInfrastructure(nextSeasonState.grid[i], prevCell);
     }
   }
 

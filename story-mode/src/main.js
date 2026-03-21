@@ -499,24 +499,29 @@ function startGame(state, viewport) {
     if (!interventionTargetState) return;
     const { interventionId, firstCell } = interventionTargetState;
     const secondStep = interventionId === 'swap' && firstCell >= 0;
+    const validCells = getTargetableCells(state.season.grid, interventionId, firstCell);
 
     const sheet = document.createElement('div');
-    sheet.className = 'panel-sheet is-open';
+    sheet.className = 'panel-sheet is-open targeting-sheet';
     sheet.id = 'intervention-target-panel';
     sheet.innerHTML = `
       <div class="panel-handle"></div>
       <div class="palette-header">
         <div>
           <div class="palette-title">${INTERVENTION_LABELS[interventionId]}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(247,242,234,0.35);margin-top:4px;">
-            ${secondStep ? `Choose an adjacent swap partner for ${getCellLabel(firstCell)}.` : INTERVENTION_PROMPTS[interventionId]}
+          <div class="targeting-hint">
+            ${secondStep ? `Tap a highlighted neighbor to complete the swap for ${getCellLabel(firstCell)}.` : INTERVENTION_PROMPTS[interventionId]}
           </div>
         </div>
         <button type="button" class="palette-dismiss" id="target-cancel" aria-label="Cancel targeting">&times;</button>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;">
-        ${secondStep ? '<button type="button" id="target-back" class="start-choice-btn start-choice-btn--ghost" style="padding:10px 16px;font-size:13px;">Back</button>' : ''}
-        <button type="button" id="target-cancel-text" class="start-choice-btn start-choice-btn--ghost" style="padding:10px 16px;font-size:13px;">Cancel</button>
+      <div class="targeting-chip-row">
+        <span class="targeting-chip">${validCells.length} valid target${validCells.length === 1 ? '' : 's'}</span>
+        <span class="targeting-chip">${secondStep ? 'Step 2 of 2' : interventionId === 'swap' ? 'Step 1 of 2' : 'Tap the bed'}</span>
+      </div>
+      <div class="targeting-actions">
+        ${secondStep ? '<button type="button" id="target-back" class="start-choice-btn start-choice-btn--ghost">Back</button>' : ''}
+        <button type="button" id="target-cancel-text" class="start-choice-btn start-choice-btn--ghost">Cancel</button>
       </div>
     `;
 
@@ -586,6 +591,12 @@ function startGame(state, viewport) {
     scene.setTargetableCells(validCells);
     setGameInputEnabled(true);
     showInterventionTargetPrompt();
+    showToast(
+      interventionId === 'swap'
+        ? 'Tap the first highlighted cell to start the swap.'
+        : 'Tap a highlighted bed cell to apply the intervention.',
+      2200
+    );
     updateHUD();
   }
 
@@ -603,6 +614,7 @@ function startGame(state, viewport) {
       scene.setTargetableCells(getTargetableCells(state.season.grid, 'swap', cellIndex));
       scene.flashCell(cellIndex, 0x8ba8b5, 350);
       showInterventionTargetPrompt();
+      showToast(`First swap cell locked: ${getCellLabel(cellIndex)}. Choose an adjacent partner.`, 2200);
       return;
     }
 

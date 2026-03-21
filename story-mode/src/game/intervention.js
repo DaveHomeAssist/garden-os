@@ -13,18 +13,9 @@ function getPlantedIndices(grid) {
 }
 
 /**
- * Pick a random planted cell index, or -1 if none.
- */
-function randomPlantedIndex(grid) {
-  const planted = getPlantedIndices(grid);
-  if (planted.length === 0) return -1;
-  return planted[Math.floor(Math.random() * planted.length)];
-}
-
-/**
  * Get indices adjacent to cellIndex (up/down/left/right) that have a crop.
  */
-function getAdjacentPlantedIndices(grid, cellIndex, cols = 8, rows = 4) {
+export function getAdjacentPlantedIndices(grid, cellIndex, cols = 8, rows = 4) {
   const row = Math.floor(cellIndex / cols);
   const col = cellIndex % cols;
   const neighbors = [];
@@ -44,11 +35,13 @@ export function protect(grid, cellIndex) {
 }
 
 /**
- * Mulch a cell — adds +0.5 intervention bonus.
+ * Mulch a cell — adds +0.5 intervention bonus this season
+ * and carries +0.25 into the next season.
  */
 export function mulch(grid, cellIndex) {
   if (cellIndex < 0 || cellIndex >= grid.length) return;
   grid[cellIndex].mulched = true;
+  grid[cellIndex].carryForwardType = 'mulched';
   grid[cellIndex].interventionBonus += 0.5;
 }
 
@@ -87,46 +80,49 @@ export function accept_loss() {
 }
 
 /**
- * Apply an intervention by id. For protect/mulch/companion_patch/prune,
- * auto-targets a random planted cell. For swap, auto-picks a random
- * planted cell and one of its adjacent planted neighbors.
+ * Apply an intervention by id using explicit target indices.
  */
-export function applyIntervention(grid, interventionId) {
+export function applyIntervention(grid, interventionId, targetA = -1, targetB = -1) {
   if (interventionId === 'accept_loss') {
     accept_loss();
     return;
   }
 
   if (interventionId === 'protect') {
-    const idx = randomPlantedIndex(grid);
-    if (idx >= 0) protect(grid, idx);
+    if (targetA >= 0) protect(grid, targetA);
     return;
   }
 
   if (interventionId === 'mulch') {
-    const idx = randomPlantedIndex(grid);
-    if (idx >= 0) mulch(grid, idx);
+    if (targetA >= 0) mulch(grid, targetA);
     return;
   }
 
   if (interventionId === 'companion_patch') {
-    const idx = randomPlantedIndex(grid);
-    if (idx >= 0) companion_patch(grid, idx);
+    if (targetA >= 0) companion_patch(grid, targetA);
     return;
   }
 
   if (interventionId === 'prune') {
-    const idx = randomPlantedIndex(grid);
-    if (idx >= 0) prune(grid, idx);
+    if (targetA >= 0) prune(grid, targetA);
     return;
   }
 
   if (interventionId === 'swap') {
-    const idxA = randomPlantedIndex(grid);
-    if (idxA < 0) return;
-    const adjacentPlanted = getAdjacentPlantedIndices(grid, idxA);
-    if (adjacentPlanted.length === 0) return;
-    const idxB = adjacentPlanted[Math.floor(Math.random() * adjacentPlanted.length)];
-    swap(grid, idxA, idxB);
+    if (targetA >= 0 && targetB >= 0) swap(grid, targetA, targetB);
   }
+}
+
+export function getTargetableCells(grid, interventionId, firstCell = -1) {
+  const planted = getPlantedIndices(grid);
+
+  if (interventionId === 'accept_loss') return [];
+  if (interventionId === 'swap') {
+    if (firstCell >= 0) {
+      return getAdjacentPlantedIndices(grid, firstCell);
+    }
+    return planted.filter((index) => getAdjacentPlantedIndices(grid, index).length > 0);
+  }
+
+  return planted;
 }

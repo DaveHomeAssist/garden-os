@@ -205,6 +205,32 @@ export function createGardenScene(container) {
   // Hover state
   let hoveredCellIndex = -1;
   const HOVER_COLOR = new THREE.Color(0x6a5a30);
+  const TARGET_COLOR = new THREE.Color(0x3d6e8f);
+  let targetableCellIndices = new Set();
+
+  function applyCellVisualState(index) {
+    const mesh = bed.cellMeshes[index];
+    if (!mesh) return;
+    if (!mesh.userData._baseColor) {
+      mesh.userData._baseColor = mesh.material.color.clone();
+    }
+
+    if (hoveredCellIndex === index) {
+      mesh.material.color.copy(HOVER_COLOR);
+      mesh.material.emissive?.setHex(0x000000);
+      mesh.material.emissiveIntensity = 0;
+      return;
+    }
+
+    mesh.material.color.copy(mesh.userData._baseColor);
+    if (targetableCellIndices.has(index)) {
+      mesh.material.emissive?.copy(TARGET_COLOR);
+      mesh.material.emissiveIntensity = 0.35;
+    } else {
+      mesh.material.emissive?.setHex(0x000000);
+      mesh.material.emissiveIntensity = 0;
+    }
+  }
 
   // Cell highlight on hover
   renderer.domElement.addEventListener('pointermove', (e) => {
@@ -214,24 +240,16 @@ export function createGardenScene(container) {
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(bed.cellMeshes);
 
-    const newIndex = hits.length > 0 ? hits[0].object.userData.cellIndex : -1;
+    const rawIndex = hits.length > 0 ? hits[0].object.userData.cellIndex : -1;
+    const newIndex = targetableCellIndices.size > 0 && !targetableCellIndices.has(rawIndex) ? -1 : rawIndex;
     if (newIndex !== hoveredCellIndex) {
-      // Restore previous
       if (hoveredCellIndex >= 0 && hoveredCellIndex < bed.cellMeshes.length) {
-        const prev = bed.cellMeshes[hoveredCellIndex];
-        if (prev.userData._origColor) {
-          prev.material.color.copy(prev.userData._origColor);
-        }
-      }
-      // Apply hover
-      if (newIndex >= 0 && newIndex < bed.cellMeshes.length) {
-        const mesh = bed.cellMeshes[newIndex];
-        if (!mesh.userData._origColor) {
-          mesh.userData._origColor = mesh.material.color.clone();
-        }
-        mesh.material.color.copy(HOVER_COLOR);
+        applyCellVisualState(hoveredCellIndex);
       }
       hoveredCellIndex = newIndex;
+      if (newIndex >= 0 && newIndex < bed.cellMeshes.length) {
+        applyCellVisualState(newIndex);
+      }
     }
   });
 
@@ -692,9 +710,23 @@ export function createGardenScene(container) {
     mesh.material.color.set(color);
     setTimeout(() => {
       mesh.material.color.copy(origColor);
-      // Also update the stored original for hover system
-      if (mesh.userData._origColor) mesh.userData._origColor.copy(origColor);
+      applyCellVisualState(cellIndex);
     }, durationMs || 400);
+  }
+
+  function setTargetableCells(cellIndices = []) {
+    targetableCellIndices = new Set(cellIndices);
+    for (let i = 0; i < bed.cellMeshes.length; i++) {
+      applyCellVisualState(i);
+    }
+  }
+
+  function clearTargeting() {
+    targetableCellIndices.clear();
+    hoveredCellIndex = -1;
+    for (let i = 0; i < bed.cellMeshes.length; i++) {
+      applyCellVisualState(i);
+    }
   }
 
   return {
@@ -722,6 +754,8 @@ export function createGardenScene(container) {
     },
     raycastCell,
     flashCell,
+    setTargetableCells,
+    clearTargeting,
     setCameraPreset,
     applyMood,
     resetMood,

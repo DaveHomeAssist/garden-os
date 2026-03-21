@@ -6,6 +6,14 @@
 import { getCropById } from '../data/crops.js';
 import { COLS, ROWS } from './state.js';
 
+function resolveCarryForwardType(event) {
+  const text = `${event?.carryForward?.effect ?? ''}`.toLowerCase();
+  if (!text) return null;
+  if (text.includes('enriched')) return 'enriched';
+  if (text.includes('compacted') || text.includes('waterlogged')) return 'compacted';
+  return null;
+}
+
 /**
  * Check if a cell's crop matches the event's target criteria.
  */
@@ -67,6 +75,7 @@ export function applyEventEffect(grid, event) {
   }
 
   const { modifier, target } = event.mechanicalEffect;
+  const carryForwardType = resolveCarryForwardType(event);
   if (modifier === undefined || modifier === null) {
     return {
       affectedCells: [],
@@ -93,6 +102,9 @@ export function applyEventEffect(grid, event) {
 
     if (matchesTarget(cell, i, target, grid)) {
       cell.eventModifier += modifier;
+      if (carryForwardType) {
+        cell.carryForwardType = carryForwardType;
+      }
       affectedCells.push(i);
     }
   }

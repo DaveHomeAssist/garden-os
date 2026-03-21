@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/css/theme.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; touch-action: none; }
+    html, body { height: 100%; overflow: hidden; touch-action: manipulation; }
     body {
       font-family: 'DM Sans', system-ui, sans-serif;
       background: #1e110a;
@@ -29,6 +29,7 @@
       position: absolute;
       inset: 0;
       z-index: 0;
+      touch-action: none;
     }
     #viewport canvas {
       width: 100%;
@@ -197,6 +198,9 @@
       border-radius: 16px 16px 0 0;
       max-height: 50vh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
       padding: 0 16px calc(24px + env(safe-area-inset-bottom, 0px));
@@ -652,6 +656,128 @@
         border-left: 1px solid rgba(232,200,74,0.15);
         max-height: 100%;
         height: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      #hud {
+        padding: 10px 10px 0;
+      }
+
+      .hud-left, .hud-right {
+        gap: 4px;
+      }
+
+      .hud-pause-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+      }
+
+      .hud-pill {
+        padding: 6px 9px;
+        font-size: 10px;
+      }
+
+      #phase-dots {
+        top: 56px;
+      }
+
+      .panel-sheet {
+        max-height: min(64vh, 560px);
+        border-radius: 18px 18px 0 0;
+        padding: 0 14px calc(26px + env(safe-area-inset-bottom, 0px));
+      }
+
+      #fab-backpack {
+        left: 14px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        width: 58px;
+        height: 58px;
+        border-radius: 29px;
+      }
+
+      #fab-plant {
+        left: 14px;
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        min-width: 108px;
+        height: 52px;
+        border-radius: 26px;
+        font-size: 15px;
+        padding: 0 18px;
+      }
+
+      #fab-advance {
+        right: 14px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        min-width: 74px;
+        height: 58px;
+        border-radius: 29px;
+        font-size: 16px;
+      }
+
+      #fab-bug {
+        top: auto;
+        right: 14px;
+        bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+        width: 46px;
+        height: 46px;
+        border-radius: 23px;
+      }
+
+      .bug-report-panel {
+        top: auto;
+        right: 10px;
+        bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+        width: min(360px, calc(100vw - 20px));
+        max-height: 48vh;
+        overflow-y: auto;
+      }
+
+      #toast-container {
+        bottom: calc(154px + env(safe-area-inset-bottom, 0px));
+        width: calc(100vw - 28px);
+      }
+
+      .toast-notification {
+        white-space: normal;
+        width: 100%;
+        text-align: center;
+      }
+
+      .pause-menu {
+        width: min(320px, calc(100vw - 28px));
+      }
+
+      .pause-menu button {
+        min-height: 54px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hud-pill#hud-crops {
+        display: none;
+      }
+
+      .hud-score {
+        font-size: 18px;
+      }
+
+      .chapter-intro {
+        padding: 28px 18px;
+      }
+
+      .start-choice-btn {
+        width: 100%;
+      }
+
+      .bug-report-actions {
+        flex-direction: column-reverse;
+      }
+
+      .bug-report-actions button {
+        width: 100%;
+        min-height: 44px;
       }
     }
   </style>

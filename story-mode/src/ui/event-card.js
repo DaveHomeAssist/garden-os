@@ -5,7 +5,7 @@
 
 const INTERVENTIONS = [
   { id: 'protect', label: 'Protect', emoji: '🛡️', desc: 'Shield one cell from this event' },
-  { id: 'mulch', label: 'Mulch', emoji: '🍂', desc: '+0.5 score, carries forward' },
+  { id: 'mulch', label: 'Mulch', emoji: '🍂', desc: '+0.5 now, +0.25 next season' },
   { id: 'swap', label: 'Swap', emoji: '🔄', desc: 'Exchange two adjacent crops' },
   { id: 'companion_patch', label: 'Patch', emoji: '🌼', desc: '+1.0 adjacency bonus this beat' },
   { id: 'prune', label: 'Prune', emoji: '✂️', desc: 'Remove one crop entirely' },
@@ -13,6 +13,11 @@ const INTERVENTIONS = [
 ];
 
 export function showEventCard(container, event, tokensLeft, onChoose) {
+  const availableInterventions = INTERVENTIONS.filter((intervention) => {
+    const options = event.interventionOptions ?? [];
+    return options.length === 0 || options.includes(intervention.id);
+  });
+
   const sheet = document.createElement('div');
   sheet.className = 'panel-sheet is-open';
   sheet.id = 'event-card-panel';
@@ -61,27 +66,26 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:8px;">
       Response · ${tokensLeft} token${tokensLeft !== 1 ? 's' : ''} left
     </div>
+    <div class="targeting-hint" style="margin-bottom:10px;">
+      Choose an intervention type first. If it targets the bed, you will pick the exact cell next.
+    </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="intervention-grid">
-      ${INTERVENTIONS.map(iv => {
+    <div class="intervention-grid" id="intervention-grid">
+      ${availableInterventions.map(iv => {
         const isAccept = iv.id === 'accept_loss';
         const disabled = !isAccept && tokensLeft <= 0;
         return `
-          <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} style="
-            background:${disabled ? 'rgba(247,242,234,0.02)' : 'rgba(247,242,234,0.06)'};
-            border:1px solid rgba(247,242,234,${disabled ? '0.05' : '0.12'});
-            border-radius:8px;padding:10px 6px;cursor:${disabled ? 'default' : 'pointer'};
-            color:${disabled ? 'rgba(247,242,234,0.2)' : '#f7f2ea'};
-            font-family:'DM Sans',sans-serif;font-size:12px;text-align:center;
-            transition:border-color 0.15s;
-            opacity:${disabled ? '0.4' : '1'};
-          ">
+          <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}">
             <div style="font-size:20px;margin-bottom:4px;">${iv.emoji}</div>
             <div style="font-weight:600;margin-bottom:2px;">${iv.label}</div>
             <div style="font-size:10px;color:rgba(247,242,234,0.4);line-height:1.3;">${iv.desc}</div>
           </button>
         `;
       }).join('')}
+    </div>
+    <div class="targeting-chip-row" style="margin-bottom:6px;">
+      <span class="targeting-chip">Tap a card</span>
+      <span class="targeting-chip">Tap the highlighted bed cell</span>
     </div>
   `;
 
