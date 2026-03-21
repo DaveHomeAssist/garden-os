@@ -82,6 +82,7 @@ function createCampaignState() {
     seenCutsceneIds: [],
     masteryRank: 0,
     soilHealth: Array(CELL_COUNT).fill(1.0),
+    previousGrid: null,
   };
 }
 

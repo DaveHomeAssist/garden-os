@@ -3,7 +3,7 @@
  */
 import { scoreCell } from './cell-score.js';
 import { CELL_COUNT } from '../game/state.js';
-import { checkRecipeComplete, getRecipes } from '../data/crops.js';
+import { checkRecipeComplete, getRecipes, getCropById } from '../data/crops.js';
 
 function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
@@ -12,8 +12,6 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   let occupiedCount = 0;
   let totalScore = 0;
   const uniqueCrops = new Set();
-  let tallCount = 0;
-  let supportCount = 0;
 
   for (let i = 0; i < CELL_COUNT; i++) {
     const result = scoreCell(i, grid, siteConfig, season);
@@ -46,15 +44,29 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   }
   recipeBonus = Math.min(recipeBonus, 0.8);
 
-  const bedScore = clamp(cellAvg + diversityBonus - fillPenalty + recipeBonus, 0, 10);
+  // Bug 1: Tall/trellis penalties — penalize multiple tall or support crop types
+  const tallTypes = new Set();
+  const supportTypes = new Set();
+  for (const cell of grid) {
+    if (!cell.cropId) continue;
+    const crop = getCropById(cell.cropId);
+    if (!crop) continue;
+    if (crop.tall) tallTypes.add(cell.cropId);
+    if (crop.support) supportTypes.add(cell.cropId);
+  }
+  const tallPenalty = tallTypes.size > 1 ? -0.8 : 0;
+  const trellisPenalty = supportTypes.size > 1 ? -0.6 : 0;
+
+  const bedScore = clamp(cellAvg + diversityBonus - fillPenalty + recipeBonus + tallPenalty + trellisPenalty, 0, 10);
   const finalScore = Math.round(bedScore * 10);
 
+  // Bug 3: Grade thresholds corrected to match spec
   let grade;
   if (finalScore >= 90) grade = 'A+';
-  else if (finalScore >= 80) grade = 'A';
+  else if (finalScore >= 85) grade = 'A';
   else if (finalScore >= 70) grade = 'B';
-  else if (finalScore >= 60) grade = 'C';
-  else if (finalScore >= 50) grade = 'D';
+  else if (finalScore >= 55) grade = 'C';
+  else if (finalScore >= 40) grade = 'D';
   else grade = 'F';
 
   return {
@@ -68,6 +80,8 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
       fillPenalty,
       diversityBonus,
       recipeBonus,
+      tallPenalty,
+      trellisPenalty,
       uniqueCrops: uniqueCrops.size,
     },
   };

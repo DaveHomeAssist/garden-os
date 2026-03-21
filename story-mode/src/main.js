@@ -8,12 +8,14 @@ import { createGameState, createSeasonState, PHASES, PHASE_ORDER } from './game/
 import { advance, canAdvance, getPhaseLabel } from './game/phase-machine.js';
 import { scoreBed } from './scoring/bed-score.js';
 import { getCropsForChapter } from './data/crops.js';
-import { saveCampaign, loadCampaign, deleteCampaign } from './game/save.js';
+import { saveCampaign, loadCampaign, deleteCampaign, saveSeasonState, loadSeasonState } from './game/save.js';
 import { showEventCard } from './ui/event-card.js';
 import { showHarvestReveal } from './ui/harvest-reveal.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
 import { createCutsceneMachine } from './game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './ui/season-calendar.js';
+import { applyIntervention } from './game/intervention.js';
+import { applyEventEffect } from './game/event-engine.js';
 
 const FACTION_BADGE_COLORS = {
   climbers: '#2d8a4e',
@@ -45,11 +47,17 @@ function mount() {
   if (saved) {
     showStartChoice(saved, () => {
       Object.assign(state.campaign, saved);
-      state.season = createSeasonState(
-        state.campaign.currentChapter,
-        state.campaign.currentSeason ?? 'spring',
-        state.campaign,
-      );
+      const savedSeason = loadSeasonState();
+      if (savedSeason) {
+        Object.assign(state.season, savedSeason);
+        state.season.campaign = state.campaign;
+      } else {
+        state.season = createSeasonState(
+          state.campaign.currentChapter,
+          state.campaign.currentSeason ?? 'spring',
+          state.campaign,
+        );
+      }
       startGame(state, viewport);
     }, () => {
       deleteCampaign();
@@ -260,9 +268,18 @@ function startGame(state, viewport) {
       if (interventionId !== 'accept_loss') {
         state.season.interventionTokens = Math.max(0, state.season.interventionTokens - 1);
       }
+
+      // Bug 4: Apply the intervention's mechanical effect to the grid
+      applyIntervention(state.season.grid, interventionId);
+
+      // Bug 9 + 11: Save event reference BEFORE clearing, apply event effect
+      const resolvedEvent = state.season.eventActive;
+      applyEventEffect(state.season.grid, resolvedEvent);
       state.season.eventActive = null;
+
       showToast(interventionId === 'accept_loss' ? 'Accepted the loss' : `Used ${interventionId}`, 1800);
       saveCampaign(state.campaign);
+      saveSeasonState(state.season);
       setGameInputEnabled(true);
       updateHUD();
     });
@@ -308,16 +325,44 @@ function startGame(state, viewport) {
     }
   }
 
+  function showEndGameOverlay() {
+    const overlayContainer = document.getElementById('overlay-container');
+    const overlay = document.createElement('div');
+    overlay.className = 'chapter-intro';
+    overlay.innerHTML = `
+      <div class="chapter-num">Garden OS</div>
+      <h2>The Garden Stays</h2>
+      <p>All 12 chapters complete. Your garden has grown through every season.</p>
+      <div class="start-choice-actions">
+        <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-endgame-close">Close</button>
+      </div>
+    `;
+    overlay.querySelector('#btn-endgame-close').addEventListener('click', () => {
+      overlay.remove();
+      setGameInputEnabled(true);
+    });
+    overlayContainer.appendChild(overlay);
+  }
+
   function doAdvance() {
     if (!gameInputEnabled || cutsceneMachine.isActive() || !canAdvance(state.season)) return;
 
     setGameInputEnabled(false);
     const result = advance(state);
     updateHUD();
+
+    // Bug 12: Save both campaign and season on every phase transition
     saveCampaign(state.campaign);
+    saveSeasonState(state.season);
 
     if (!result.advanced) {
       setGameInputEnabled(true);
+      return;
+    }
+
+    // Bug 7: End-game guard — show completion overlay when campaign is done
+    if (result.campaignComplete) {
+      showEndGameOverlay();
       return;
     }
 

@@ -61,13 +61,19 @@ export function accessFit(crop, row) {
 }
 
 /**
- * Factor 5: Season Fit
+ * Factor 5: Season Fit — categorical score based on cool-season flag
  */
 export function seasonFit(crop, season) {
-  const sm = crop.seasonalMultipliers || crop.sm;
-  if (!sm) return 3.0;
-  const mult = sm[season] ?? 0.5;
-  return 1.0 + mult * 4.0;
+  if (season === 'spring' || season === 'fall') {
+    return crop.coolSeason ? 5.0 : 3.0;
+  }
+  if (season === 'summer') {
+    return crop.coolSeason ? 2.0 : 5.0;
+  }
+  if (season === 'winter') {
+    return crop.coolSeason ? 3.0 : 1.0;
+  }
+  return 3.0;
 }
 
 /**
@@ -79,7 +85,6 @@ export function adjacencyScore(cropId, cellIndex, grid) {
 
   let score = 0;
   const neighborIndices = getNeighborIndices(cellIndex);
-  const seen = new Set();
 
   for (const ni of neighborIndices) {
     const neighbor = grid[ni];
@@ -91,12 +96,10 @@ export function adjacencyScore(cropId, cellIndex, grid) {
     if (crop.companions.includes(neighbor.cropId)) score += 0.5;
     if (crop.conflicts.includes(neighbor.cropId)) score -= 1.2;
     if (crop.tall && nCrop.tall) score -= 0.75;
-    if (neighbor.cropId === cropId && !seen.has(neighbor.cropId)) score -= 0.2;
+    if (neighbor.cropId === cropId) score -= 0.2;
 
     const waterDiff = Math.abs((crop.water || 2) - (nCrop.water || 2));
     if (waterDiff >= 2) score -= 0.5;
-
-    seen.add(neighbor.cropId);
   }
 
   return clamp(score, -2, 2);

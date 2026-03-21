@@ -2,6 +2,7 @@
  * Save System — localStorage with optional cloud sync adapter.
  */
 const SAVE_KEY = 'gos-story-campaign';
+const SEASON_SAVE_KEY = 'gos-story-season';
 
 export function saveCampaign(campaign) {
   campaign.updatedAt = new Date().toISOString();
@@ -24,10 +25,31 @@ export function loadCampaign() {
 
 export function deleteCampaign() {
   localStorage.removeItem(SAVE_KEY);
+  localStorage.removeItem(SEASON_SAVE_KEY);
 }
 
 export function hasSave() {
   return localStorage.getItem(SAVE_KEY) !== null;
+}
+
+export function saveSeasonState(season) {
+  try {
+    // Save a copy without the circular campaign reference
+    const toSave = { ...season, campaign: undefined };
+    localStorage.setItem(SEASON_SAVE_KEY, JSON.stringify(toSave));
+  } catch (e) {
+    console.warn('[GOS] Season save failed:', e.message);
+  }
+}
+
+export function loadSeasonState() {
+  try {
+    const raw = localStorage.getItem(SEASON_SAVE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 export function pushJournalEntry(campaign, entry) {

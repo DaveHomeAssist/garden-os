@@ -49,6 +49,13 @@ function assignBeatState(season, beatIndex) {
   if (season.eventActive) {
     season.eventsDrawn.push(season.eventActive.id);
     season.eventTitles.push(season.eventActive.title);
+
+    // Ensure every event has a mechanicalEffect — assign a default for stub events
+    if (!season.eventActive.mechanicalEffect) {
+      season.eventActive.mechanicalEffect = season.eventActive.valence === 'positive'
+        ? { modifier: 0.3, target: { type: 'random_cells' }, duration: 'current_beat' }
+        : { modifier: -0.5, target: { type: 'random_cells' }, duration: 'current_beat' };
+    }
   }
 }
 
@@ -78,6 +85,11 @@ function recordSeasonJournal(season) {
   return true;
 }
 
+const HEAVY_FEEDERS = new Set([
+  'cherry_tom', 'compact_tomato', 'pepper', 'zucchini', 'broccoli',
+  'kale', 'lettuce', 'arugula', 'spinach', 'chard', 'basil',
+]);
+
 function rollCampaignForward(season) {
   const campaign = season.campaign;
   if (!campaign) {
@@ -95,19 +107,43 @@ function rollCampaignForward(season) {
     grade: season.harvestResult?.grade ?? 'F',
   });
 
+  // Bug 2/8: Save current grid as previousGrid before creating next season
+  campaign.previousGrid = season.grid.map((cell) => ({ ...cell }));
+
   const nextChapter = campaign.currentChapter + 1;
   const nextSeason = rotateSeason(season.season);
 
   campaign.currentChapter = nextChapter;
   campaign.currentSeason = nextSeason;
   campaign.complete = nextChapter > 12;
+
+  // Bug 7: End-game guard — don't create a new season if campaign is complete
+  if (campaign.complete) {
+    saveCampaign(campaign);
+    return { complete: true, chapterChanged: true };
+  }
+
   campaign.cropsUnlocked = getCropsForChapter(nextChapter).map((crop) => crop.id);
 
   const nextSeasonState = createSeasonState(nextChapter, nextSeason, campaign);
+
+  // Bug 2: Apply soil fatigue for heavy feeders in the same cell position
+  if (campaign.previousGrid) {
+    for (let i = 0; i < nextSeasonState.grid.length; i++) {
+      const prevCell = campaign.previousGrid[i];
+      if (prevCell && prevCell.cropId && HEAVY_FEEDERS.has(prevCell.cropId)) {
+        nextSeasonState.grid[i].soilFatigue = Math.min(
+          (nextSeasonState.grid[i].soilFatigue || 0) + 0.3,
+          0.9,
+        );
+      }
+    }
+  }
+
   Object.assign(season, nextSeasonState);
 
   saveCampaign(campaign);
-  return { complete: campaign.complete, chapterChanged: true };
+  return { complete: false, chapterChanged: true };
 }
 
 export function canAdvance(season) {
