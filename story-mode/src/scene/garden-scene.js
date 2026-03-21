@@ -236,6 +236,77 @@ export function createGardenScene(container) {
   neighborGroup.visible = false;
   root.add(neighborGroup);
 
+  // Sheepdog opening-scene runner
+  const sheepdogGroup = new THREE.Group();
+  sheepdogGroup.visible = false;
+
+  const dogFurDark = new THREE.MeshStandardMaterial({ color: 0x3d332b, roughness: 0.92 });
+  const dogFurLight = new THREE.MeshStandardMaterial({ color: 0xd8d0c4, roughness: 0.94 });
+  const dogNoseMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 });
+
+  const dogBody = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.18), dogFurLight);
+  dogBody.position.set(0, 0.26, 0);
+  sheepdogGroup.add(dogBody);
+
+  const dogSaddle = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.18, 0.16), dogFurDark);
+  dogSaddle.position.set(-0.02, 0.29, 0);
+  sheepdogGroup.add(dogSaddle);
+
+  const dogChest = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.16), dogFurLight);
+  dogChest.position.set(0.18, 0.21, 0);
+  sheepdogGroup.add(dogChest);
+
+  const dogHead = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.15, 0.14), dogFurLight);
+  dogHead.position.set(0.29, 0.35, 0);
+  sheepdogGroup.add(dogHead);
+
+  const dogMuzzle = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.08), dogFurLight);
+  dogMuzzle.position.set(0.38, 0.31, 0);
+  sheepdogGroup.add(dogMuzzle);
+
+  const dogNose = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.03), dogNoseMat);
+  dogNose.position.set(0.43, 0.31, 0);
+  sheepdogGroup.add(dogNose);
+
+  for (const ez of [-0.05, 0.05]) {
+    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.07, 0.035), dogFurDark);
+    ear.position.set(0.28, 0.43, ez);
+    ear.rotation.x = ez > 0 ? 0.18 : -0.18;
+    ear.rotation.z = ez > 0 ? -0.12 : 0.12;
+    sheepdogGroup.add(ear);
+  }
+
+  const dogTail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.03), dogFurDark);
+  dogTail.position.set(-0.28, 0.34, 0);
+  dogTail.rotation.z = 0.55;
+  sheepdogGroup.add(dogTail);
+
+  const dogLegs = [];
+  for (const [lx, lz] of [
+    [-0.12, -0.05],
+    [0.1, -0.05],
+    [-0.12, 0.05],
+    [0.1, 0.05],
+  ]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.22, 0.045), dogFurLight);
+    leg.position.set(lx, 0.11, lz);
+    sheepdogGroup.add(leg);
+    dogLegs.push(leg);
+  }
+
+  sheepdogGroup.scale.setScalar(2.25);
+  sheepdogGroup.position.set(-2.8, 0, 2.7);
+  root.add(sheepdogGroup);
+
+  const sheepdogRunState = {
+    active: false,
+    elapsedMs: 0,
+    duration: 2200,
+    laneZ: 2.7,
+    fromX: -2.8,
+    toX: 4.2,
+  };
+
   // Collect trellis wire refs after bed group is already added to root
   const trellisWires = [];
   bed.group.traverse((child) => {
@@ -479,6 +550,7 @@ export function createGardenScene(container) {
   let currentGridState = [];
   let currentSeasonId = 'spring';
   let lastSyncedState = null; // used by render() for event-reactive effects
+  let lastSheepdogSeasonKey = null;
 
   function getCellDisplayColor(index) {
     const mesh = bed.cellMeshes[index];
@@ -1141,6 +1213,18 @@ function getGrowthScale(phase, season) {
     flashCell(cellIndex, 0xe8c84a, 650);
   }
 
+  function playSceneCue(name, opts = {}) {
+    if (name !== 'sheepdog-run') return;
+    sheepdogRunState.active = true;
+    sheepdogRunState.elapsedMs = 0;
+    sheepdogRunState.duration = opts.cueDuration ?? 2200;
+    sheepdogRunState.laneZ = opts.cueLaneZ ?? 2.7;
+    sheepdogRunState.fromX = opts.cueFromX ?? -2.8;
+    sheepdogRunState.toX = opts.cueToX ?? 4.2;
+    sheepdogGroup.position.set(sheepdogRunState.fromX, 0, sheepdogRunState.laneZ);
+    sheepdogGroup.visible = true;
+  }
+
   function updateTransitions(now) {
     if (cameraTransition) {
       const t = Math.min((now - cameraTransition.startedAt) / cameraTransition.duration, 1);
@@ -1228,6 +1312,18 @@ function getGrowthScale(phase, season) {
         weather.triggerForEvent(null, state.season.season);
       }
 
+      const seasonKey = `${state.season.chapter}-${state.season.season}`;
+      const plantedCount = state.season.grid.filter((cell) => Boolean(cell.cropId)).length;
+      if (
+        seasonKey !== lastSheepdogSeasonKey &&
+        state.season.phase === 'PLANNING' &&
+        plantedCount === 0 &&
+        state.season.season !== 'winter'
+      ) {
+        lastSheepdogSeasonKey = seasonKey;
+        playSceneCue('sheepdog-run');
+      }
+
       weather.update(0.016);
       camCtrl.update();
       updateTransitions(performance.now());
@@ -1268,7 +1364,7 @@ function getGrowthScale(phase, season) {
 
       // ── Atmosphere animations ──────────────────────────────────────────
       const now = performance.now();
-      const dt = Math.min((now - atmosphereLastNow) * 0.001, 0.1);
+      const dt = 1 / 60;
       atmosphereLastNow = now;
       atmosphereTime += dt;
 
@@ -1291,6 +1387,39 @@ function getGrowthScale(phase, season) {
         const season = lastSyncedState?.season?.season ?? 'spring';
         birdGroup.visible = birdVisible && season !== 'winter';
       }
+
+      if (sheepdogRunState.active) {
+        sheepdogRunState.elapsedMs += dt * 1000;
+        const progress = Math.min(sheepdogRunState.elapsedMs / sheepdogRunState.duration, 1);
+        const eased = easeInOutCubic(progress);
+        const x = sheepdogRunState.fromX + (sheepdogRunState.toX - sheepdogRunState.fromX) * eased;
+        const bob = Math.abs(Math.sin(progress * Math.PI * 8)) * 0.04;
+        sheepdogGroup.visible = true;
+        sheepdogGroup.position.set(x, bob, sheepdogRunState.laneZ);
+        sheepdogGroup.rotation.y = sheepdogRunState.toX >= sheepdogRunState.fromX ? Math.PI / 2 : -Math.PI / 2;
+
+        dogBody.rotation.z = Math.sin(progress * Math.PI * 8) * 0.04;
+        dogHead.rotation.z = Math.sin(progress * Math.PI * 8 + 0.35) * 0.05;
+        dogTail.rotation.y = Math.sin(progress * Math.PI * 12) * 0.45;
+        dogTail.rotation.z = 0.55 + Math.cos(progress * Math.PI * 10) * 0.08;
+        dogLegs.forEach((leg, index) => {
+          const gaitPhase = progress * Math.PI * 10 + (index % 2 === 0 ? 0 : Math.PI);
+          leg.rotation.z = Math.sin(gaitPhase) * 0.55;
+        });
+
+        if (progress >= 1) {
+          sheepdogRunState.active = false;
+          sheepdogGroup.visible = false;
+          sheepdogGroup.position.set(sheepdogRunState.toX, 0, sheepdogRunState.laneZ);
+          dogLegs.forEach((leg) => { leg.rotation.z = 0; });
+          dogBody.rotation.z = 0;
+          dogHead.rotation.z = 0;
+          dogTail.rotation.y = 0;
+          dogTail.rotation.z = 0.55;
+        }
+      } else {
+        sheepdogGroup.visible = false;
+      }
       // ── End atmosphere animations ──────────────────────────────────────
 
       renderer.render(scene, camera);
@@ -1303,6 +1432,7 @@ function getGrowthScale(phase, season) {
     applyMood,
     resetMood,
     pulseEventFocus,
+    playSceneCue,
     weather,
     dispose() {
       renderer.dispose();

@@ -61,6 +61,7 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
     if (!beat) return;
     if (beat.camera) gardenScene.setCameraPreset?.(beat.camera);
     if (beat.backdropTone) gardenScene.applyMood?.(beat.backdropTone);
+    if (beat.sceneCue) gardenScene.playSceneCue?.(beat.sceneCue, beat);
   }
 
   function buildUiState() {
@@ -80,6 +81,7 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       textVisible: beat.text.slice(0, state.currentTypedChars),
       emotion: beat.emotion ?? speaker.defaultEmotion,
       portraitAnim: beat.portraitAnim ?? speaker.defaultAnim,
+      sceneCue: beat.sceneCue ?? null,
       canAdvance: state.typingDone,
       canSkip: state.currentScene.skippable ?? true,
       beatIndex: state.currentBeatIndex,

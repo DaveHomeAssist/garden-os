@@ -94,3 +94,9 @@ Update 2026-03-21 scene-orientation correction:
 - The first front-yard pass still read wrong in play because the house wall mass sat too close to the frame and still looked like it belonged on the access side during cutscenes.
 - Pushed the house wall, porch, and neighbor structures farther back behind the trellis plane in `src/scene/scenery.js`, and tightened the cutscene/default camera presets in `src/scene/garden-scene.js` so the bed stays centered and the wall reads unmistakably as the back side of the garden.
 - Validation: `npx vite build` passed again, and the refreshed screenshot in `story-mode/output/web-game/shot-0.png` now shows the wall running behind the trellis rather than beside the access path.
+
+Update 2026-03-21 season-opening sheepdog animation:
+- Added `sceneCue: 'sheepdog-run'` to season-opening intro beats in `src/data/cutscenes.js` and surfaced `sceneCue` through the cutscene machine UI state.
+- Added a visible sheepdog run overlay to `src/ui/dialogue-panel.js` / `assets/css/theme.css` so the intro beat gets a readable cross-screen motion pass even when 3D scene animation is subtle.
+- Kept a matching in-scene sheepdog cue path in `src/scene/garden-scene.js`, but the dialogue-layer animation is now the reliable presentation layer for the opening-season beat.
+- Validation: `npx vite build` passed, and a fresh screenshot at `story-mode/output/web-game/shot-0.png` now shows the sheepdog crossing during the opening narration.

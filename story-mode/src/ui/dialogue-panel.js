@@ -2,6 +2,9 @@ import { resolvePortraitLayers } from '../data/portraits.js';
 
 export function createDialoguePanel(rootEl) {
   rootEl.innerHTML = `
+    <div class="dp-scene-cue" id="dp-scene-cue" aria-hidden="true">
+      <div class="dp-sheepdog-run" id="dp-sheepdog-run">🐕</div>
+    </div>
     <div class="dp-panel" id="dp-panel" aria-live="polite" aria-atomic="false">
       <div class="dp-portrait-area">
         <div class="dp-portrait" id="dp-portrait">
@@ -25,6 +28,8 @@ export function createDialoguePanel(rootEl) {
 
   const els = {
     panel: rootEl.querySelector('#dp-panel'),
+    sceneCue: rootEl.querySelector('#dp-scene-cue'),
+    sheepdogRun: rootEl.querySelector('#dp-sheepdog-run'),
     portrait: rootEl.querySelector('#dp-portrait'),
     portraitFallback: rootEl.querySelector('#dp-portrait-fallback'),
     layerBase: rootEl.querySelector('#dp-layer-base'),
@@ -112,10 +117,16 @@ export function createDialoguePanel(rootEl) {
       renderDots(uiState.beatIndex, uiState.beatCount);
       els.advanceHint.style.opacity = uiState.canAdvance ? '1' : '0';
       els.skipBtn.style.display = uiState.canSkip ? '' : 'none';
+
+      const cue = uiState.sceneCue ?? '';
+      els.sceneCue.dataset.cue = cue;
+      els.sceneCue.classList.toggle('dp-scene-cue--active', cue === 'sheepdog-run');
     },
 
     hide() {
       els.panel.classList.remove('dp-panel--visible');
+      els.sceneCue.classList.remove('dp-scene-cue--active');
+      els.sceneCue.dataset.cue = '';
     },
 
     getSkipButton() {
