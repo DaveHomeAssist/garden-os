@@ -20,112 +20,134 @@ export function buildScenery() {
   const group = new THREE.Group();
   const treeCanopies = [];
 
-  // --- Fence behind the bed (Row 0 / wall side) ---
-  const fenceY = 0;
-  const fenceZ = -1.3;
-  const fenceWidth = 5.5;
-  const fenceHeight = 0.6;
-  const slatCount = 14;
-  const slatWidth = fenceWidth / slatCount - 0.02;
-  const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88 });
-  const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9 });
-
-  for (let i = 0; i < slatCount; i++) {
-    const x = (i - (slatCount - 1) / 2) * (fenceWidth / slatCount);
-    const slatH = fenceHeight + (Math.sin(i * 2.3) * 0.04);
-    const slat = new THREE.Mesh(
-      new THREE.BoxGeometry(slatWidth, slatH, 0.02),
-      i % 3 === 0 ? fenceDarkMat : fenceMat
-    );
-    slat.position.set(x, fenceY + slatH / 2, fenceZ);
-    slat.castShadow = true;
-    slat.receiveShadow = true;
-    group.add(slat);
-  }
-
-  // Fence horizontal rails
-  for (const railY of [0.15, 0.45]) {
-    const rail = new THREE.Mesh(
-      new THREE.BoxGeometry(fenceWidth + 0.1, 0.035, 0.025),
-      fenceDarkMat
-    );
-    rail.position.set(0, railY, fenceZ + 0.015);
-    group.add(rail);
-  }
-
-  // --- House wall backdrop (closer to the real bed reference) ---
   const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78 });
+  const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
+  const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
+  const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88 });
+  const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9 });
+  const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0 });
 
-  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.8), sidingMat);
-  houseWall.position.set(0.2, 1.45, 4.9);
+  // --- Back house wall directly behind the bed ---
+  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 3.4), sidingMat);
+  houseWall.position.set(-0.1, 1.7, -4.7);
   houseWall.receiveShadow = true;
   group.add(houseWall);
 
-  for (let i = 0; i < 10; i++) {
-    const board = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.04, 0.02), trimMat);
-    board.position.set(0.2, 0.18 + i * 0.28, 4.88);
+  for (let i = 0; i < 11; i++) {
+    const board = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.045, 0.02), trimMat);
+    board.position.set(-0.1, 0.22 + i * 0.29, -4.68);
     group.add(board);
   }
 
-  const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.08), trimMat);
-  backWindow.position.set(0.3, 1.8, 4.85);
-  group.add(backWindow);
+  // Porch left
+  const porchFloor = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.12, 1.6), porchMat);
+  porchFloor.position.set(-2.55, 0.06, -4.15);
+  porchFloor.receiveShadow = true;
+  group.add(porchFloor);
 
-  const backGlass = new THREE.Mesh(
-    new THREE.BoxGeometry(0.68, 0.78, 0.04),
-    new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 })
-  );
-  backGlass.position.set(0.3, 1.8, 4.89);
+  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.08, 1.72), porchMat);
+  porchRoof.position.set(-2.55, 2.72, -4.12);
+  group.add(porchRoof);
+
+  for (const x of [-3.38, -1.72]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.58, 0.1), trimMat);
+    post.position.set(x, 1.29, -4.1);
+    group.add(post);
+  }
+
+  const backDoor = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.62, 0.08), trimMat);
+  backDoor.position.set(-2.55, 0.95, -4.72);
+  group.add(backDoor);
+
+  // Back window centered above bed
+  const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.12, 0.08), trimMat);
+  backWindow.position.set(0.2, 1.95, -4.72);
+  group.add(backWindow);
+  const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
+  backGlass.position.set(0.2, 1.95, -4.76);
   group.add(backGlass);
 
-  // --- Gravel work area in front (instead of a clean path) ---
-  const gravel = new THREE.Mesh(
-    new THREE.PlaneGeometry(5.6, 2.2),
-    new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0 })
-  );
-  gravel.rotation.x = -Math.PI / 2;
-  gravel.position.set(0, 0.006, 1.95);
-  gravel.receiveShadow = true;
-  group.add(gravel);
+  // Neighbor house right
+  const neighborWall = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), sidingMat);
+  neighborWall.position.set(4.25, 1.2, -2.6);
+  neighborWall.rotation.y = Math.PI / 2.7;
+  group.add(neighborWall);
+
+  const neighborRoof = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.08, 1.35), roofMat);
+  neighborRoof.position.set(4.7, 2.28, -2.1);
+  neighborRoof.rotation.y = Math.PI / 2.7;
+  group.add(neighborRoof);
+
+  // Side fence line on the right edge of the yard
+  for (let i = 0; i < 10; i++) {
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42 + (i % 2) * 0.04, 0.03), i % 3 === 0 ? fenceDarkMat : fenceMat);
+    slat.position.set(5.02, slat.geometry.parameters.height / 2, -0.4 + i * 0.36);
+    slat.rotation.y = -0.08;
+    group.add(slat);
+  }
+
+  // Gravel border around the bed instead of a single front pad
+  const gravelPatches = [
+    { w: 5.8, h: 1.9, x: 0, z: 2.05 },
+    { w: 0.95, h: 2.9, x: -3.05, z: 0.85 },
+    { w: 0.95, h: 2.9, x: 3.05, z: 0.85 },
+    { w: 5.8, h: 1.15, x: 0, z: -1.95 },
+  ];
+  gravelPatches.forEach(({ w, h, x, z }) => {
+    const patch = new THREE.Mesh(new THREE.PlaneGeometry(w, h), gravelMat);
+    patch.rotation.x = -Math.PI / 2;
+    patch.position.set(x, 0.006, z);
+    patch.receiveShadow = true;
+    group.add(patch);
+  });
 
   const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb29c7c, roughness: 0.92 });
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 48; i++) {
     const pebble = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.03 + (i % 3) * 0.01, 0.03 + (i % 3) * 0.01, 0.018, 6),
+      new THREE.CylinderGeometry(0.025 + (i % 3) * 0.012, 0.025 + (i % 3) * 0.012, 0.014, 6),
       stoneMat
     );
-    pebble.position.set(-2.4 + (i % 13) * 0.38, 0.014, 1.25 + Math.floor(i / 13) * 0.46 + ((i % 2) * 0.08));
+    const band = i % 4;
+    const x = band === 0
+      ? -2.7 + (i % 12) * 0.48
+      : band === 1
+        ? -3.18 + (i % 12) * 0.04
+        : band === 2
+          ? 3.18 - (i % 12) * 0.04
+          : -2.7 + (i % 12) * 0.48;
+    const z = band === 0
+      ? 1.35 + Math.floor(i / 12) * 0.24
+      : band === 1
+        ? -0.45 + Math.floor(i / 12) * 0.42
+        : band === 2
+          ? -0.45 + Math.floor(i / 12) * 0.42
+          : -2.2 + Math.floor(i / 12) * 0.12;
+    pebble.position.set(x, 0.014, z);
     pebble.rotation.y = i * 0.37;
     group.add(pebble);
   }
 
-  // --- Trees (3 low-poly deciduous) ---
-  const treePositions = [
-    { x: -4, z: -2.5, scale: 1.0 },
-    { x: 4.5, z: -1.5, scale: 0.8 },
-    { x: -3, z: 3.5, scale: 0.7 },
-  ];
-
+  // Yard framing foliage kept minimal so the bed stays the subject
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.9 });
-
+  const treePositions = [
+    { x: 4.8, z: 0.1, scale: 0.82 },
+    { x: -4.7, z: 3.8, scale: 0.75 },
+  ];
   for (const tp of treePositions) {
     const treeGroup = new THREE.Group();
-
-    // Trunk
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06 * tp.scale, 0.1 * tp.scale, 1.2 * tp.scale, 6),
+      new THREE.CylinderGeometry(0.06 * tp.scale, 0.1 * tp.scale, 1.1 * tp.scale, 6),
       trunkMat
     );
-    trunk.position.y = 0.6 * tp.scale;
+    trunk.position.y = 0.55 * tp.scale;
     trunk.castShadow = true;
     treeGroup.add(trunk);
 
-    // Canopy (3 stacked spheres)
     const canopyGroup = new THREE.Group();
-    const sizes = [0.5, 0.4, 0.3];
-    const heights = [1.0, 1.35, 1.6];
-
+    const sizes = [0.46, 0.36, 0.26];
+    const heights = [0.9, 1.2, 1.42];
     for (let j = 0; j < 3; j++) {
       const canopyMat = new THREE.MeshStandardMaterial({
         color: SEASON_TREE_COLORS.spring[j],
@@ -139,49 +161,18 @@ export function buildScenery() {
       canopy.castShadow = true;
       canopyGroup.add(canopy);
     }
-
     treeGroup.add(canopyGroup);
     treeGroup.position.set(tp.x, 0, tp.z);
     group.add(treeGroup);
     treeCanopies.push(canopyGroup);
   }
 
-  // --- Grass tufts ---
-  const grassMat = new THREE.MeshStandardMaterial({
-    color: GRASS_DARK,
-    roughness: 0.8,
-    side: THREE.DoubleSide,
-  });
-
-  for (let i = 0; i < 30; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 2 + Math.random() * 6;
-    const x = Math.cos(angle) * dist;
-    const z = Math.sin(angle) * dist;
-
-    // Skip if too close to bed
-    if (Math.abs(x) < 2.5 && Math.abs(z) < 1.5) continue;
-
-    const tuft = new THREE.Group();
-    const bladeCount = 3 + Math.floor(Math.random() * 3);
-
-    for (let b = 0; b < bladeCount; b++) {
-      const blade = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.03, 0.08 + Math.random() * 0.06),
-        grassMat
-      );
-      blade.position.set(
-        (Math.random() - 0.5) * 0.05,
-        0.03 + Math.random() * 0.02,
-        (Math.random() - 0.5) * 0.05
-      );
-      blade.rotation.y = Math.random() * Math.PI;
-      blade.rotation.z = (Math.random() - 0.5) * 0.4;
-      tuft.add(blade);
-    }
-
-    tuft.position.set(x, 0, z);
-    group.add(tuft);
+  const shrubMat = new THREE.MeshStandardMaterial({ color: 0x3f6f32, roughness: 0.82 });
+  for (const [x, z, scale] of [[-4.1, 2.6, 0.9], [4.0, 3.9, 0.72]]) {
+    const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.34 * scale, 7, 5), shrubMat);
+    shrub.scale.set(1.1, 0.8, 1);
+    shrub.position.set(x, 0.22 * scale, z);
+    group.add(shrub);
   }
 
   // --- Props ---
@@ -259,59 +250,6 @@ export function buildScenery() {
     produce.position.set(x, y, z);
     group.add(produce);
   }
-
-  // --- Simple rowhouse backdrop ---
-  const houseGroup = new THREE.Group();
-  const brickMat = new THREE.MeshStandardMaterial({ color: 0x7a4336, roughness: 0.9 });
-  const rowhouseTrimMat = new THREE.MeshStandardMaterial({ color: 0xd8c8ac, roughness: 0.75 });
-  const roofMat = new THREE.MeshStandardMaterial({ color: 0x3c2e2c, roughness: 0.88 });
-  const windowMat = new THREE.MeshStandardMaterial({
-    color: 0xf4d38c,
-    emissive: 0xe7b45a,
-    emissiveIntensity: 0.25,
-    roughness: 0.2,
-    metalness: 0.1,
-  });
-
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.9, 1.6), brickMat);
-  body.position.set(0, 0.95, -5.4);
-  body.castShadow = true;
-  body.receiveShadow = true;
-  houseGroup.add(body);
-
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.18, 1.82), roofMat);
-  roof.position.set(0, 1.92, -5.4);
-  roof.castShadow = true;
-  houseGroup.add(roof);
-
-  const stoop = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.18, 0.56), rowhouseTrimMat);
-  stoop.position.set(-0.42, 0.09, -4.34);
-  houseGroup.add(stoop);
-
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.9, 0.05), rowhouseTrimMat);
-  door.position.set(-0.42, 0.47, -4.58);
-  houseGroup.add(door);
-
-  const windowOffsets = [
-    [-0.7, 0.62], [0.42, 0.62],
-    [-0.7, 1.3], [0.42, 1.3],
-  ];
-  for (const [x, y] of windowOffsets) {
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.42, 0.06), rowhouseTrimMat);
-    frame.position.set(x, y, -4.58);
-    houseGroup.add(frame);
-
-    const glass = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.04), windowMat);
-    glass.position.set(x, y, -4.54);
-    houseGroup.add(glass);
-  }
-
-  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.18), brickMat);
-  chimney.position.set(0.74, 2.18, -5.72);
-  chimney.castShadow = true;
-  houseGroup.add(chimney);
-
-  group.add(houseGroup);
 
   return {
     group,

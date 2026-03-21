@@ -83,3 +83,9 @@ Update 2026-03-21 scenery refinement from real-bed reference:
 - Replaced the chunkier fake porch/wall mass with a flatter house-wall backdrop and siding treatment so the background reads more like the real bed reference and less like a blocking foreground object.
 - Kept the gravel work area / house-presence direction from the earlier scene pass, but reduced the amount of geometry fighting the camera.
 - Validation: `npx vite build` passed after the scenery refinement. Browser smoke in this environment remains noisy, so build stayed the hard gate.
+
+Update 2026-03-21 front-of-bed camera rebuild:
+- Reoriented `story-mode` so the default camera and all narrative camera presets begin from the front/access side of the bed looking back toward the house wall, matching the real garden layout instead of starting from behind the trellis.
+- Updated `src/scene/camera-controller.js` to use front-facing orbit defaults too, so touch/mouse camera control no longer snaps the player back to the old rear view on boot.
+- Simplified `src/scene/scenery.js` by removing the extra generic rowhouse block and keeping the flatter house wall / porch / neighbor composition behind the bed as the actual backdrop.
+- Validation: `npx vite build` passed, and a fresh Playwright screenshot at `story-mode/output/web-game/shot-0.png` confirmed the opening frame now shows the front guard in the foreground and the house behind the garden.

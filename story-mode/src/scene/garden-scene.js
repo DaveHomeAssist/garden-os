@@ -29,12 +29,12 @@ const CROP_COLORS = {
 };
 
 const CAMERA_PRESETS = {
-  overview: { position: [0.5, 7, -5.5], target: [0, 0, 0.5], fov: 45 },
-  'bed-low-angle': { position: [0, 2.8, -3.6], target: [0, 0.15, 0.5], fov: 58 },
-  'row-close': { position: [2.2, 3.2, -1.6], target: [1.5, 0.1, 0.6], fov: 54 },
-  'event-push': { position: [0, 4.6, -3.9], target: [0, 0.12, 0.5], fov: 42 },
-  'harvest-hero': { position: [0, 5.7, -2.9], target: [0, 0.1, 0.4], fov: 38 },
-  'front-access': { position: [0, 4.8, -6.8], target: [0, 0.1, 0.9], fov: 48 },
+  overview: { position: [0.15, 4.0, 7.2], target: [0, 0.75, -0.2], fov: 36 },
+  'bed-low-angle': { position: [-0.35, 2.4, 4.8], target: [0, 0.58, -0.25], fov: 50 },
+  'row-close': { position: [2.15, 2.7, 3.9], target: [1.0, 0.48, -0.25], fov: 48 },
+  'event-push': { position: [0, 3.4, 5.4], target: [0, 0.52, -0.2], fov: 38 },
+  'harvest-hero': { position: [0, 3.8, 4.9], target: [0, 0.54, -0.12], fov: 34 },
+  'front-access': { position: [0, 3.4, 8.0], target: [0, 0.5, -0.28], fov: 42 },
 };
 
 const MOOD_PRESETS = {
@@ -112,10 +112,10 @@ export function createGardenScene(container) {
   scene.fog = new THREE.FogExp2(0x7aaa88, 0.035);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  // Better default: slightly more elevated, angled for a pleasant overview
-  camera.position.set(0.5, 7, -5.5);
-  camera.lookAt(0, 0, 0.5);
-  const cameraLookTarget = new THREE.Vector3(0, 0, 0.5);
+  // Start from the front/access side looking back toward the house wall.
+  camera.position.set(0.15, 4.0, 7.2);
+  camera.lookAt(0, 0.75, -0.2);
+  const cameraLookTarget = new THREE.Vector3(0, 0.75, -0.2);
   let cameraTransition = null;
   let moodTransition = null;
 

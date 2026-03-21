@@ -4,20 +4,20 @@
 import * as THREE from 'three';
 
 const POSES = {
-  overview: { position: [0, 6, -5], target: [0, 0, 1] },
-  closeup:  { position: [0, 3, -2], target: [0, 0, 0.5] },
-  side:     { position: [5, 4, 0], target: [0, 0, 0.5] },
-  birds:    { position: [0, 10, 0.5], target: [0, 0, 0.5] },
+  overview: { position: [0, 5.6, 6.4], target: [0, 0, -0.2] },
+  closeup:  { position: [0, 3, 2.8], target: [0, 0, -0.1] },
+  side:     { position: [5, 4, 1.2], target: [0, 0, -0.1] },
+  birds:    { position: [0, 10, -0.2], target: [0, 0, -0.2] },
 };
 
 export function createCameraController(camera, domElement) {
-  const target = new THREE.Vector3(0, 0, 1);
+  const target = new THREE.Vector3(0, 0, -0.2);
   let isDragging = false;
   let lastX = 0;
   let lastY = 0;
-  let theta = Math.PI;
-  let phi = Math.PI / 4;
-  let radius = 8;
+  let theta = 0;
+  let phi = Math.PI / 3.3;
+  let radius = 7.6;
   let targetPose = null;
   let lerpSpeed = 0.08;
 
