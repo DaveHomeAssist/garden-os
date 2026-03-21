@@ -7,8 +7,9 @@ import { createLoop } from './game/loop.js';
 import { createGameState, createSeasonState, PHASES, PHASE_ORDER } from './game/state.js';
 import { advance, canAdvance, getPhaseLabel } from './game/phase-machine.js';
 import { scoreBed } from './scoring/bed-score.js';
-import { getCropsForChapter } from './data/crops.js';
-import { saveCampaign, loadCampaign, deleteCampaign, saveSeasonState, loadSeasonState } from './game/save.js';
+import { getCropsForChapter, getRecipeById } from './data/crops.js';
+import { getKeepsakeById, getKeepsakeSlots } from './data/keepsakes.js';
+import { saveCampaign, loadCampaign, deleteCampaign, saveSeasonState, loadSeasonState, awardKeepsake } from './game/save.js';
 import { showEventCard } from './ui/event-card.js';
 import { showHarvestReveal } from './ui/harvest-reveal.js';
 import { createDialoguePanel } from './ui/dialogue-panel.js';
@@ -38,6 +39,21 @@ const FACTION_NAMES = {
   brassicas: 'Brassica',
   companions: 'Companion',
 };
+
+function hasKeepsake(campaign, keepsakeId) {
+  return Array.isArray(campaign.keepsakes) && campaign.keepsakes.some((entry) => entry.id === keepsakeId);
+}
+
+function getRowAverages(cellScores, rowCount = 4, colCount = 8) {
+  const rows = Array.from({ length: rowCount }, () => ({ total: 0, count: 0 }));
+  cellScores.forEach((cellScore, index) => {
+    if (!cellScore) return;
+    const row = Math.floor(index / colCount);
+    rows[row].total += cellScore.total ?? 0;
+    rows[row].count += 1;
+  });
+  return rows.map((row) => (row.count > 0 ? row.total / row.count : 0));
+}
 
 function mount() {
   const viewport = document.getElementById('viewport');
@@ -159,6 +175,94 @@ function startGame(state, viewport) {
     }
   }
 
+  function awardCampaignKeepsake(keepsakeId, meta = {}) {
+    const awarded = awardKeepsake(state.campaign, keepsakeId, {
+      chapter: state.campaign.currentChapter,
+      season: state.season.season,
+      ...meta,
+    });
+    if (!awarded) return null;
+    state.season.newlyEarnedKeepsakes.push(awarded);
+    const keepsake = getKeepsakeById(keepsakeId);
+    if (keepsake) {
+      showToast(`Keepsake earned: ${keepsake.name}`, 2600);
+    }
+    return awarded;
+  }
+
+  function persistState() {
+    if (!hasKeepsake(state.campaign, 'first_seed_packet')) {
+      awardCampaignKeepsake('first_seed_packet');
+    }
+    saveCampaign(state.campaign);
+    saveSeasonState(state.season);
+  }
+
+  function finalizeHarvestProgression() {
+    const result = state.season.harvestResult;
+    if (!result) return;
+
+    state.season.newlyEarnedKeepsakes = [];
+
+    for (const cropId of result.yieldList ?? []) {
+      state.campaign.pantry[cropId] = (state.campaign.pantry[cropId] ?? 0) + 1;
+    }
+
+    for (const recipeId of result.recipeMatches ?? []) {
+      if (!state.campaign.recipesCompleted.includes(recipeId)) {
+        state.campaign.recipesCompleted.push(recipeId);
+      }
+    }
+
+    if (
+      state.campaign.currentChapter === 8
+      && !hasKeepsake(state.campaign, 'the_photo')
+    ) {
+      awardCampaignKeepsake('the_photo');
+    }
+
+    if (
+      (result.recipeMatches ?? []).includes('moms_sauce')
+      && state.campaign.currentChapter >= 11
+      && !hasKeepsake(state.campaign, 'handwritten_sauce_card')
+    ) {
+      awardCampaignKeepsake('handwritten_sauce_card', { recipeId: 'moms_sauce' });
+    }
+
+    const lastEvent = state.season.lastResolvedEvent;
+    const eventSummary = state.season.lastEventEffectSummary;
+
+    if (
+      lastEvent
+      && /block party/i.test(`${lastEvent.title} ${lastEvent.description}`)
+      && (result.recipeMatches?.length ?? 0) > 0
+      && !hasKeepsake(state.campaign, 'block_party_plate')
+    ) {
+      awardCampaignKeepsake('block_party_plate', { recipeId: result.recipeMatches[0] });
+    }
+
+    if (
+      lastEvent
+      && /frost/i.test(`${lastEvent.title} ${lastEvent.description}`)
+      && (eventSummary?.negativeAffectedCount ?? 0) > 0
+      && !hasKeepsake(state.campaign, 'first_frost_marker')
+    ) {
+      awardCampaignKeepsake('first_frost_marker', { eventId: lastEvent.id, eventTitle: lastEvent.title });
+    }
+
+    const rowAverages = getRowAverages(result.cellScores);
+    const hadGardenFailure = rowAverages.some((avg) => avg > 0 && avg < 3);
+    if (
+      lastEvent
+      && /phillies/i.test(`${lastEvent.title} ${lastEvent.description}`)
+      && lastEvent.valence !== 'positive'
+      && hadGardenFailure
+      && !hasKeepsake(state.campaign, 'onion_mans_scorecard')
+    ) {
+      awardCampaignKeepsake('onion_mans_scorecard', { eventId: lastEvent.id, eventTitle: lastEvent.title });
+    }
+  }
+
   function showToast(message, durationMs = 2200) {
     if (!toastContainer) return;
     const toast = document.createElement('div');
@@ -274,12 +378,12 @@ function startGame(state, viewport) {
 
       // Bug 9 + 11: Save event reference BEFORE clearing, apply event effect
       const resolvedEvent = state.season.eventActive;
-      applyEventEffect(state.season.grid, resolvedEvent);
+      state.season.lastResolvedEvent = resolvedEvent ? { ...resolvedEvent } : null;
+      state.season.lastEventEffectSummary = applyEventEffect(state.season.grid, resolvedEvent);
       state.season.eventActive = null;
 
       showToast(interventionId === 'accept_loss' ? 'Accepted the loss' : `Used ${interventionId}`, 1800);
-      saveCampaign(state.campaign);
-      saveSeasonState(state.season);
+      persistState();
       setGameInputEnabled(true);
       updateHUD();
     });
@@ -292,10 +396,23 @@ function startGame(state, viewport) {
       return;
     }
 
-    showHarvestReveal(document.getElementById('overlay-container'), state.season.harvestResult, () => {
-      setGameInputEnabled(true);
-      updateHUD();
-    });
+    finalizeHarvestProgression();
+    showHarvestReveal(
+      document.getElementById('overlay-container'),
+      state.season.harvestResult,
+      {
+        keepsakes: state.season.newlyEarnedKeepsakes.map((entry) => getKeepsakeById(entry.id)).filter(Boolean),
+        unlockedCount: state.campaign.keepsakes.length,
+        totalKeepsakes: getKeepsakeSlots().length,
+        recipeNames: (state.season.harvestResult.recipeMatches ?? [])
+          .map((recipeId) => getRecipeById(recipeId)?.name ?? recipeId),
+      },
+      () => {
+        persistState();
+        setGameInputEnabled(true);
+        updateHUD();
+      }
+    );
   }
 
   function handleNarrativeTrigger(trigger) {
@@ -352,8 +469,7 @@ function startGame(state, viewport) {
     updateHUD();
 
     // Bug 12: Save both campaign and season on every phase transition
-    saveCampaign(state.campaign);
-    saveSeasonState(state.season);
+    persistState();
 
     if (!result.advanced) {
       setGameInputEnabled(true);
@@ -414,6 +530,13 @@ function startGame(state, viewport) {
     } else if (state.selectedCropId) {
       cell.cropId = state.selectedCropId;
       scene.flashCell(cellIndex, 0x4a9a4a, 350);
+      if (
+        cellIndex === 0
+        && state.campaign.currentChapter === 1
+        && !hasKeepsake(state.campaign, 'moms_trowel')
+      ) {
+        awardCampaignKeepsake('moms_trowel', { cellIndex, cropId: state.selectedCropId });
+      }
     } else {
       showCropPalette();
       return;

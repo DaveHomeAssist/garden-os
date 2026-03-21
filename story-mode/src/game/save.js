@@ -52,6 +52,22 @@ export function loadSeasonState() {
   }
 }
 
+export function awardKeepsake(campaign, keepsakeId, meta = {}) {
+  if (!campaign.keepsakes) {
+    campaign.keepsakes = [];
+  }
+  const existing = campaign.keepsakes.find((entry) => entry.id === keepsakeId);
+  if (existing) return null;
+
+  const awarded = {
+    id: keepsakeId,
+    earnedAt: new Date().toISOString(),
+    ...meta,
+  };
+  campaign.keepsakes.push(awarded);
+  return awarded;
+}
+
 export function pushJournalEntry(campaign, entry) {
   if (!campaign.journalEntries) {
     campaign.journalEntries = [];

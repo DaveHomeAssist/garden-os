@@ -36,6 +36,21 @@ export function getRecipeById(id) {
   return RECIPES[id] ?? null;
 }
 
+export function getYieldListForGrid(grid) {
+  return [...new Set(
+    grid
+      .filter((cell) => cell.cropId !== null)
+      .map((cell) => cell.cropId)
+  )];
+}
+
+export function getRecipeMatchesForGrid(grid) {
+  const yieldList = new Set(getYieldListForGrid(grid));
+  return Object.entries(RECIPES)
+    .filter(([, recipe]) => recipe.crops.every((cropId) => yieldList.has(cropId)))
+    .map(([recipeId]) => recipeId);
+}
+
 export function checkRecipeComplete(recipeId, pantry) {
   const recipe = RECIPES[recipeId];
   if (!recipe) return false;

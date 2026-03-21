@@ -55,10 +55,31 @@ function matchesTarget(cell, cellIndex, target, grid) {
  * Protected cells are skipped. Protection is cleared after resolution.
  */
 export function applyEventEffect(grid, event) {
-  if (!event || !event.mechanicalEffect) return;
+  if (!event || !event.mechanicalEffect) {
+    return {
+      affectedCells: [],
+      protectedCells: [],
+      negativeAffectedCount: 0,
+      removedCells: [],
+      eventId: event?.id ?? null,
+      eventTitle: event?.title ?? null,
+    };
+  }
 
   const { modifier, target } = event.mechanicalEffect;
-  if (modifier === undefined || modifier === null) return;
+  if (modifier === undefined || modifier === null) {
+    return {
+      affectedCells: [],
+      protectedCells: [],
+      negativeAffectedCount: 0,
+      removedCells: [],
+      eventId: event.id,
+      eventTitle: event.title,
+    };
+  }
+
+  const affectedCells = [];
+  const protectedCells = [];
 
   for (let i = 0; i < grid.length; i++) {
     const cell = grid[i];
@@ -66,11 +87,13 @@ export function applyEventEffect(grid, event) {
 
     // Protected cells skip the event
     if (cell.protected === true) {
+      protectedCells.push(i);
       continue;
     }
 
     if (matchesTarget(cell, i, target, grid)) {
       cell.eventModifier += modifier;
+      affectedCells.push(i);
     }
   }
 
@@ -78,4 +101,13 @@ export function applyEventEffect(grid, event) {
   for (let i = 0; i < grid.length; i++) {
     grid[i].protected = false;
   }
+
+  return {
+    affectedCells,
+    protectedCells,
+    negativeAffectedCount: modifier < 0 ? affectedCells.length : 0,
+    removedCells: [],
+    eventId: event.id,
+    eventTitle: event.title,
+  };
 }
