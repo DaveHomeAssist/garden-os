@@ -5,7 +5,6 @@ import { getCropsForChapter } from '../data/crops.js';
 
 const PHASES = {
   PLANNING: 'PLANNING',
-  COMMIT: 'COMMIT',
   EARLY_SEASON: 'EARLY_SEASON',
   MID_SEASON: 'MID_SEASON',
   LATE_SEASON: 'LATE_SEASON',
@@ -26,7 +25,6 @@ const DEFAULT_SITE_CONFIG = { sunHours: 6, trellis: true, orientation: 'ew' };
 // All phases in order for progress indicator
 const PHASE_ORDER = [
   PHASES.PLANNING,
-  PHASES.COMMIT,
   PHASES.EARLY_SEASON,
   PHASES.MID_SEASON,
   PHASES.LATE_SEASON,

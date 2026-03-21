@@ -1,6 +1,5 @@
 /**
  * Phase Machine — implements SEASON_ENGINE_SPEC.md state transitions.
- * No backward transitions after COMMIT.
  */
 import { PHASES, BEAT_PHASES, SEASONS, createSeasonState } from './state.js';
 import { getCropsForChapter } from '../data/crops.js';
@@ -9,8 +8,7 @@ import { scoreBed } from '../scoring/bed-score.js';
 import { pushJournalEntry, saveCampaign } from './save.js';
 
 const TRANSITIONS = {
-  [PHASES.PLANNING]: PHASES.COMMIT,
-  [PHASES.COMMIT]: PHASES.EARLY_SEASON,
+  [PHASES.PLANNING]: PHASES.EARLY_SEASON,
   [PHASES.EARLY_SEASON]: PHASES.MID_SEASON,
   [PHASES.MID_SEASON]: PHASES.LATE_SEASON,
   [PHASES.LATE_SEASON]: PHASES.HARVEST,
@@ -171,7 +169,6 @@ export function canAdvance(season) {
     const planted = season.grid.filter((cell) => cell.cropId !== null).length;
     return planted >= 8;
   }
-  if (phase === PHASES.COMMIT) return true;
   if (BEAT_PHASES.includes(phase)) {
     return season.interventionChosen !== null || season.eventActive === null;
   }
@@ -292,24 +289,15 @@ export function advance(state) {
   return result;
 }
 
-export function cancelCommit(season) {
-  if (season.phase === PHASES.COMMIT) {
-    season.phase = PHASES.PLANNING;
-    return true;
-  }
-  return false;
-}
-
 export function getPhaseLabel(phase) {
   const labels = {
     [PHASES.PLANNING]: 'Planning',
-    [PHASES.COMMIT]: 'Confirm Plan',
     [PHASES.EARLY_SEASON]: 'Early Season',
     [PHASES.MID_SEASON]: 'Mid Season',
     [PHASES.LATE_SEASON]: 'Late Season',
     [PHASES.HARVEST]: 'Harvest',
     [PHASES.REVIEW]: 'Season Review',
-    [PHASES.TRANSITION]: 'Next Season',
+    [PHASES.TRANSITION]: 'Season Complete',
   };
   return labels[phase] ?? phase;
 }

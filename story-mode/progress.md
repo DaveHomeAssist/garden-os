@@ -51,3 +51,9 @@ Update 2026-03-21 winter readability pass:
 - Winter occupied cells now intentionally look pale/frosted against the darker empty soil, which makes “occupied but dormant” legible at a glance.
 - `main.js` phase helper copy now explicitly tells the player that pale plots in winter are dormant occupied cells.
 - Validation: `npx vite build` passed after the winter visual pass.
+
+Update 2026-03-21 commit phase removal:
+- Removed the passive `COMMIT` phase from `story-mode` entirely. `Commit Plan` now advances directly from `PLANNING` into `EARLY_SEASON`.
+- Updated phase order, phase labels, calendar/HUD logic, helper copy, and top-rail action labels to match the simplified flow.
+- The top HUD still exposes an explicit action button, but the misleading `CONFIRM PLAN` phase label is gone.
+- Validation: `npx vite build` passed after removing the commit phase.

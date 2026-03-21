@@ -84,7 +84,7 @@ export function updateSeasonCalendar(state) {
   beats.forEach((b, i) => {
     if (i <= beatIdx && ['EARLY_SEASON','MID_SEASON','LATE_SEASON','HARVEST','REVIEW','TRANSITION'].includes(phase)) {
       b.style.background = 'rgba(232,200,74,0.5)';
-    } else if (phase === 'PLANNING' || phase === 'COMMIT') {
+    } else if (phase === 'PLANNING') {
       b.style.background = 'rgba(247,242,234,0.08)';
     } else {
       b.style.background = 'rgba(247,242,234,0.08)';
@@ -93,7 +93,7 @@ export function updateSeasonCalendar(state) {
 
   // Beat label
   const labelEl = document.getElementById('cal-beat-label');
-  if (phase === 'PLANNING' || phase === 'COMMIT') {
+  if (phase === 'PLANNING') {
     labelEl.textContent = 'Planning Phase';
   } else if (phase === 'HARVEST') {
     labelEl.textContent = 'Harvest Time';

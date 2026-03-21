@@ -145,6 +145,7 @@ function startGame(state, viewport) {
 
   const hudChapter = document.getElementById('hud-chapter');
   const hudPhase = document.getElementById('hud-phase');
+  const hudAction = document.getElementById('hud-action');
   const hudCrops = document.getElementById('hud-crops');
   const hudScore = document.getElementById('hud-score');
   const phaseHelper = document.getElementById('phase-helper');
@@ -316,6 +317,21 @@ function startGame(state, viewport) {
     }).join('');
   }
 
+  function getAdvanceLabel() {
+    switch (state.season.phase) {
+      case PHASES.PLANNING:
+        return 'Commit Plan';
+      case PHASES.REVIEW:
+        return 'Continue';
+      case PHASES.TRANSITION:
+        return 'Continue';
+      case PHASES.LATE_SEASON:
+        return canAdvance(state.season) ? 'Harvest' : 'Next';
+      default:
+        return 'Next';
+    }
+  }
+
   function updateFAB() {
     if (!fab) return;
     if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargetState) {
@@ -326,7 +342,7 @@ function startGame(state, viewport) {
     }
     if (canAdvance(state.season)) {
       fab.classList.add('is-visible');
-      fab.textContent = state.season.phase === PHASES.PLANNING ? 'Commit Plan' : 'Next';
+      fab.textContent = getAdvanceLabel();
     } else {
       fab.classList.remove('is-visible');
     }
@@ -365,6 +381,13 @@ function startGame(state, viewport) {
       ?? scoreBed(state.season.grid, state.season.siteConfig, state.season.season, state.campaign.pantry);
     hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
 
+    if (hudAction) {
+      const visible = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargetState && canAdvance(state.season);
+      hudAction.textContent = getAdvanceLabel();
+      hudAction.disabled = !visible;
+      hudAction.classList.toggle('is-visible', visible);
+    }
+
     // Season icon
     const seasonIcon = document.getElementById('hud-season-icon');
     if (seasonIcon) seasonIcon.textContent = SEASON_ICONS[state.season.season] || '🌱';
@@ -395,10 +418,8 @@ function startGame(state, viewport) {
         } else if (planted < 8) {
           helperText = `Plant at least 8 crops to begin the season. ${8 - planted} more to go.`;
         } else {
-          helperText = 'Bed is ready. Tap Commit Plan to start the season events.';
+          helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
         }
-      } else if (state.season.phase === PHASES.COMMIT) {
-        helperText = 'Plan locked. Tap Next to enter Early Season.';
       } else if (state.season.phase === PHASES.REVIEW) {
         helperText = isWinter
           ? 'Winter review. Pale plots mark dormant occupied cells. Tap Next to continue.'
@@ -989,6 +1010,11 @@ function startGame(state, viewport) {
   });
 
   fab?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    doAdvance();
+  });
+
+  hudAction?.addEventListener('click', (event) => {
     event.stopPropagation();
     doAdvance();
   });
