@@ -18,21 +18,21 @@
 :root {
   --soil:       #2c1f0e;
   --soil-mid:   #3d2c18;
-  --cedar:      var(--cedar);
+  --cedar:      #7a5232;
   --cedar-lt:   #c4915c;
   --cedar-pale: #e8d4be;
   --gravel:     #c8bfa8;
-  --leaf:       var(--leaf);
+  --leaf:       #305c22;
   --leaf-dark:  #2d5421;
-  --seedling:   var(--leaf-light);
+  --seedling:   #6aab4a;
   --wire:       #8a9a8a;
   --wire-lt:    #d0d8cc;
-  --rust:       var(--rust);
+  --rust:       #b45b34;
   --rust-lt:    #fdeee6;
-  --cream:      var(--cream);
+  --cream:      #fff8f0;
   --parchment:  #ede7da;
   --ink:        #1e1608;
-  --faded:      #7a6c58;
+  --faded:      #5e5040;
   --highlight:  #eef5e8;
   --tag-bg:     #e4ede0;
   --white:      #ffffff;
@@ -104,7 +104,7 @@ body {
 }
 
 .os-nav a{
-  color:rgba(255,248,240,0.6);
+  color:rgba(255,248,240,0.78);
   text-decoration:none;
   padding:8px 14px;
   letter-spacing:.04em;
@@ -172,7 +172,7 @@ body {
   font-size: 9.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.32);
+  color: rgba(255,255,255,0.52);
   margin-top: 4px;
 }
 
@@ -231,8 +231,8 @@ body {
 }
 
 .search-icon {
-  color: var(--cedar-lt);
-  opacity: 0.6;
+  color: var(--cedar-pale);
+  opacity: 0.92;
   flex-shrink: 0;
   font-size: 15px;
 }
@@ -249,7 +249,7 @@ body {
 }
 
 .search-input::placeholder {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,248,240,0.72);
   font-style: italic;
 }
 
@@ -265,9 +265,9 @@ body {
 
 .search-clear {
   background: none;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,248,240,0.26);
   border-radius: var(--radius-pill);
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,248,240,0.76);
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   padding: 3px 10px;
@@ -348,7 +348,7 @@ mark.search-hl {
 
 .toc-header-label {
   font-family: 'DM Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9.5px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--cedar);
@@ -357,7 +357,7 @@ mark.search-hl {
 
 .toc-group-label {
   font-family: 'DM Mono', monospace;
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--cedar);
@@ -365,7 +365,6 @@ mark.search-hl {
   display: flex;
   align-items: center;
   gap: 7px;
-  opacity: 0.75;
 }
 
 .toc-group-label::before {
@@ -438,7 +437,7 @@ mark.search-hl {
 
 .toc-progress-label {
   font-family: 'DM Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--faded);
@@ -632,7 +631,7 @@ mark.search-hl {
 .spec-table tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
 .spec-table tr:last-child { border-bottom: none; }
 .spec-table td { padding: 7px 0; font-size: 11.5px; }
-.spec-table td:first-child { color: rgba(255,255,255,0.42); width: 56%; }
+.spec-table td:first-child { color: rgba(255,248,240,0.82); width: 56%; }
 .spec-table td:last-child { color: var(--cream); font-weight: 500; text-align: right; }
 
 /* ═══════════════════════════════════════════════
@@ -926,7 +925,7 @@ mark.search-hl {
 
 .tag {
   font-family: 'DM Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   background: var(--tag-bg);
