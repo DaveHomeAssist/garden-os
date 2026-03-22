@@ -1,5 +1,5 @@
 /**
- * Bed Model — 8x4 cedar frame + 32 soil cells + grid lines + row labels.
+ * Bed Model — cedar frame + configurable soil grid.
  */
 import * as THREE from 'three';
 import { COLS, ROWS } from '../game/state.js';
@@ -10,10 +10,10 @@ const FRAME_THICKNESS = 0.06;
 const BEVEL_INSET = 0.008;
 const SOIL_Y = FRAME_HEIGHT * 0.6;
 
-const CEDAR = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.85, metalness: 0.05 });
-const CEDAR_BEVEL = new THREE.MeshStandardMaterial({ color: 0x7A4E24, roughness: 0.8, metalness: 0.08 });
-const SOIL = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.95 });
-const GRID_LINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.35 });
+const CEDAR_MATERIAL = { color: 0x8B5A2B, roughness: 0.85, metalness: 0.05 };
+const CEDAR_BEVEL_MATERIAL = { color: 0x7A4E24, roughness: 0.8, metalness: 0.08 };
+const SOIL_MATERIAL = { color: 0x3a2a1a, roughness: 0.95 };
+const GRID_LINE_MATERIAL = { color: 0x1a1208, transparent: true, opacity: 0.35 };
 
 // Seeded random for consistent soil terrain per cell
 function seededRandom(seed) {
@@ -21,14 +21,22 @@ function seededRandom(seed) {
   return x - Math.floor(x);
 }
 
-const ROW_LABELS = ['Back (Wall)', 'Row 1', 'Row 2', 'Front (Access)'];
-const ROW_LABEL_COLORS = [0x6688aa, 0x888888, 0x888888, 0x88aa66];
+const ROW_LABEL_COLORS = [0x6688aa, 0x888888, 0x888888, 0x88aa66, 0xd2a95a, 0x88aa66, 0x88aa66, 0x88aa66];
 
-export function buildBed() {
+function getRowLabel(row, rows) {
+  if (row === 0) return 'Back (Wall)';
+  if (row === rows - 1) return 'Front (Access)';
+  return `Row ${row}`;
+}
+
+export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   const group = new THREE.Group();
+  const cedarMat = new THREE.MeshStandardMaterial(CEDAR_MATERIAL);
+  const cedarBevelMat = new THREE.MeshStandardMaterial(CEDAR_BEVEL_MATERIAL);
+  const gridLineMat = new THREE.MeshBasicMaterial(GRID_LINE_MATERIAL);
 
-  const bedWidth = COLS * CELL_SIZE;
-  const bedDepth = ROWS * CELL_SIZE;
+  const bedWidth = cols * CELL_SIZE;
+  const bedDepth = rows * CELL_SIZE;
 
   // Cedar frame — 4 planks with bevel edges
   const longPlank = new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2, FRAME_HEIGHT, FRAME_THICKNESS);
@@ -38,43 +46,43 @@ export function buildBed() {
   const longBevel = new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2 + BEVEL_INSET, BEVEL_INSET, FRAME_THICKNESS + BEVEL_INSET);
   const shortBevel = new THREE.BoxGeometry(FRAME_THICKNESS + BEVEL_INSET, BEVEL_INSET, bedDepth + BEVEL_INSET);
 
-  const front = new THREE.Mesh(longPlank, CEDAR);
+  const front = new THREE.Mesh(longPlank, cedarMat);
   front.position.set(0, FRAME_HEIGHT / 2, bedDepth / 2 + FRAME_THICKNESS / 2);
   front.castShadow = true;
   front.receiveShadow = true;
   group.add(front);
 
-  const frontBevel = new THREE.Mesh(longBevel, CEDAR_BEVEL);
+  const frontBevel = new THREE.Mesh(longBevel, cedarBevelMat);
   frontBevel.position.set(0, FRAME_HEIGHT + BEVEL_INSET / 2, bedDepth / 2 + FRAME_THICKNESS / 2);
   group.add(frontBevel);
 
-  const back = new THREE.Mesh(longPlank, CEDAR);
+  const back = new THREE.Mesh(longPlank, cedarMat);
   back.position.set(0, FRAME_HEIGHT / 2, -bedDepth / 2 - FRAME_THICKNESS / 2);
   back.castShadow = true;
   back.receiveShadow = true;
   group.add(back);
 
-  const backBevel = new THREE.Mesh(longBevel, CEDAR_BEVEL);
+  const backBevel = new THREE.Mesh(longBevel, cedarBevelMat);
   backBevel.position.set(0, FRAME_HEIGHT + BEVEL_INSET / 2, -bedDepth / 2 - FRAME_THICKNESS / 2);
   group.add(backBevel);
 
-  const left = new THREE.Mesh(shortPlank, CEDAR);
+  const left = new THREE.Mesh(shortPlank, cedarMat);
   left.position.set(-bedWidth / 2 - FRAME_THICKNESS / 2, FRAME_HEIGHT / 2, 0);
   left.castShadow = true;
   left.receiveShadow = true;
   group.add(left);
 
-  const leftBevel = new THREE.Mesh(shortBevel, CEDAR_BEVEL);
+  const leftBevel = new THREE.Mesh(shortBevel, cedarBevelMat);
   leftBevel.position.set(-bedWidth / 2 - FRAME_THICKNESS / 2, FRAME_HEIGHT + BEVEL_INSET / 2, 0);
   group.add(leftBevel);
 
-  const right = new THREE.Mesh(shortPlank, CEDAR);
+  const right = new THREE.Mesh(shortPlank, cedarMat);
   right.position.set(bedWidth / 2 + FRAME_THICKNESS / 2, FRAME_HEIGHT / 2, 0);
   right.castShadow = true;
   right.receiveShadow = true;
   group.add(right);
 
-  const rightBevel = new THREE.Mesh(shortBevel, CEDAR_BEVEL);
+  const rightBevel = new THREE.Mesh(shortBevel, cedarBevelMat);
   rightBevel.position.set(bedWidth / 2 + FRAME_THICKNESS / 2, FRAME_HEIGHT + BEVEL_INSET / 2, 0);
   group.add(rightBevel);
 
@@ -107,7 +115,7 @@ export function buildBed() {
   }
 
   const latticeCols = 8;
-  const latticeRows = 5;
+  const latticeRows = Math.max(5, rows + 1);
   for (let col = 0; col < latticeCols; col++) {
     const x = -trellisWidth / 2 + (col / (latticeCols - 1)) * trellisWidth;
     const slat = new THREE.Mesh(new THREE.BoxGeometry(0.025, trellisHeight - 0.18, 0.02), trellisMat);
@@ -161,19 +169,19 @@ export function buildBed() {
   const gridLineThickness = 0.012;
 
   // Vertical grid lines (between columns)
-  for (let col = 1; col < COLS; col++) {
-    const x = (col - COLS / 2) * CELL_SIZE;
+  for (let col = 1; col < cols; col++) {
+    const x = (col - cols / 2) * CELL_SIZE;
     const lineGeo = new THREE.BoxGeometry(gridLineThickness, 0.005, bedDepth);
-    const line = new THREE.Mesh(lineGeo, GRID_LINE_MAT);
+    const line = new THREE.Mesh(lineGeo, gridLineMat);
     line.position.set(x, SOIL_Y + 0.003, 0);
     group.add(line);
   }
 
   // Horizontal grid lines (between rows)
-  for (let row = 1; row < ROWS; row++) {
-    const z = (row - ROWS / 2) * CELL_SIZE;
+  for (let row = 1; row < rows; row++) {
+    const z = (row - rows / 2) * CELL_SIZE;
     const lineGeo = new THREE.BoxGeometry(bedWidth, 0.005, gridLineThickness);
-    const line = new THREE.Mesh(lineGeo, GRID_LINE_MAT);
+    const line = new THREE.Mesh(lineGeo, gridLineMat);
     line.position.set(0, SOIL_Y + 0.003, z);
     group.add(line);
   }
@@ -182,10 +190,10 @@ export function buildBed() {
   const cellGeo = new THREE.PlaneGeometry(CELL_SIZE * 0.95, CELL_SIZE * 0.95);
   const cellMeshes = [];
 
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const index = row * COLS + col;
-      const soilMat = SOIL.clone();
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const index = row * cols + col;
+      const soilMat = new THREE.MeshStandardMaterial(SOIL_MATERIAL);
       // Slight color variation per cell
       const rnd = seededRandom(index * 7 + 42);
       const colorShift = 0.02 * (rnd - 0.5);
@@ -193,8 +201,8 @@ export function buildBed() {
 
       const cell = new THREE.Mesh(cellGeo, soilMat);
       cell.rotation.x = -Math.PI / 2;
-      const x = (col - (COLS - 1) / 2) * CELL_SIZE;
-      const z = (row - (ROWS - 1) / 2) * CELL_SIZE;
+      const x = (col - (cols - 1) / 2) * CELL_SIZE;
+      const z = (row - (rows - 1) / 2) * CELL_SIZE;
       // Subtle terrain: slight height variation per cell
       const heightOffset = (seededRandom(index * 13 + 97) - 0.5) * 0.012;
       cell.position.set(x, SOIL_Y + heightOffset, z);
@@ -208,9 +216,9 @@ export function buildBed() {
   }
 
   // Row labels — colored marker cubes along the left side
-  for (let row = 0; row < ROWS; row++) {
-    const z = (row - (ROWS - 1) / 2) * CELL_SIZE;
-    const markerX = -bedWidth / 2 - FRAME_THICKNESS - 0.12;
+  for (let row = 0; row < rows; row++) {
+    const z = (row - (rows - 1) / 2) * CELL_SIZE;
+    const markerX = -bedWidth / 2 - FRAME_THICKNESS - 0.05;
 
     // Small colored cube marker
     const markerGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
@@ -229,22 +237,42 @@ export function buildBed() {
     canvas.width = 256;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,0)';
-    ctx.fillRect(0, 0, 256, 64);
-    ctx.font = '28px monospace';
-    ctx.fillStyle = '#d0c8b8';
+    ctx.clearRect(0, 0, 256, 64);
+    ctx.fillStyle = 'rgba(18,12,8,0.76)';
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(0, 8, 212, 48, 16);
+      ctx.fill();
+    } else {
+      ctx.fillRect(0, 8, 212, 48);
+    }
+    ctx.strokeStyle = 'rgba(232,200,74,0.42)';
+    ctx.lineWidth = 2;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(1, 9, 210, 46, 15);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(1, 9, 210, 46);
+    }
+    ctx.font = '600 28px monospace';
+    ctx.fillStyle = '#f4ead8';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(ROW_LABELS[row], 4, 32);
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(getRowLabel(row, rows), 14, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
-    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.7 });
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.92 });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(0.8, 0.2, 1);
-    sprite.position.set(markerX - 0.55, FRAME_HEIGHT * 0.6, z);
+    sprite.scale.set(0.84, 0.21, 1);
+    sprite.position.set(markerX - 0.48, FRAME_HEIGHT * 0.62, z);
     group.add(sprite);
   }
+
+  tracker?.trackObject(group);
 
   return {
     group,
@@ -252,5 +280,7 @@ export function buildBed() {
     cellSize: CELL_SIZE,
     soilY: SOIL_Y,
     frameHeight: FRAME_HEIGHT,
+    cols,
+    rows,
   };
 }

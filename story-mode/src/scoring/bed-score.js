@@ -2,18 +2,23 @@
  * Bed Scoring — aggregate from cell scores per SCORING_RULES.md.
  */
 import { scoreCell } from './cell-score.js';
-import { CELL_COUNT } from '../game/state.js';
+import { CELL_COUNT, getGridCols, getGridRows } from '../game/state.js';
 import { checkRecipeComplete, getRecipes, getCropById, getYieldListForGrid, getRecipeMatchesForGrid } from '../data/crops.js';
 
 function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
 export function scoreBed(grid, siteConfig, season, pantry = {}) {
+  const totalCells = Array.isArray(grid) ? grid.length : CELL_COUNT;
+  if (Array.isArray(grid)) {
+    grid.cols = getGridCols(grid);
+    grid.rows = getGridRows(grid);
+  }
   const cellScores = [];
   let occupiedCount = 0;
   let totalScore = 0;
   const uniqueCrops = new Set();
 
-  for (let i = 0; i < CELL_COUNT; i++) {
+  for (let i = 0; i < totalCells; i++) {
     const result = scoreCell(i, grid, siteConfig, season);
     cellScores.push(result);
     if (result) {
@@ -28,7 +33,7 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   }
 
   const cellAvg = totalScore / occupiedCount;
-  const fillRatio = occupiedCount / CELL_COUNT;
+  const fillRatio = occupiedCount / totalCells;
   const fillPenalty = (1 - Math.sqrt(fillRatio)) * 1.5;
   const yieldList = getYieldListForGrid(grid);
   const recipeMatches = getRecipeMatchesForGrid(grid);

@@ -4,7 +4,186 @@
  */
 import * as THREE from 'three';
 
-export function createWeatherFX(scene) {
+const DAY_NIGHT_KEYFRAMES = [
+  {
+    time: 0,
+    sunColor: 0xffb366,
+    sunIntensity: 0.6,
+    hemiSky: 0xffd4a3,
+    hemiGround: 0x5a3e20,
+    ambient: 0.4,
+  },
+  {
+    time: 0.25,
+    sunColor: 0xfffff0,
+    sunIntensity: 1.0,
+    hemiSky: 0x87ceeb,
+    hemiGround: 0x8fbc8f,
+    ambient: 0.6,
+  },
+  {
+    time: 0.5,
+    sunColor: 0xff7f50,
+    sunIntensity: 0.5,
+    hemiSky: 0xcd853f,
+    hemiGround: 0x3e2723,
+    ambient: 0.35,
+  },
+  {
+    time: 0.75,
+    sunColor: 0x4169e1,
+    sunIntensity: 0.15,
+    hemiSky: 0x1a1a3e,
+    hemiGround: 0x0d0d1a,
+    ambient: 0.15,
+  },
+  {
+    time: 1,
+    sunColor: 0xffb366,
+    sunIntensity: 0.6,
+    hemiSky: 0xffd4a3,
+    hemiGround: 0x5a3e20,
+    ambient: 0.4,
+  },
+];
+
+function smoothHermite(t) {
+  return t * t * (3 - 2 * t);
+}
+
+function lerpColor(fromHex, toHex, t) {
+  return new THREE.Color(fromHex).lerp(new THREE.Color(toHex), t);
+}
+
+function findFramePair(timeOfDay) {
+  for (let i = 0; i < DAY_NIGHT_KEYFRAMES.length - 1; i++) {
+    const current = DAY_NIGHT_KEYFRAMES[i];
+    const next = DAY_NIGHT_KEYFRAMES[i + 1];
+    if (timeOfDay >= current.time && timeOfDay <= next.time) {
+      return [current, next];
+    }
+  }
+  return [DAY_NIGHT_KEYFRAMES[0], DAY_NIGHT_KEYFRAMES[1]];
+}
+
+export class DayNightCycle {
+  constructor(scene, options = {}) {
+    this.scene = scene;
+    this.cycleDurationMs = options.cycleDurationMs ?? 300000;
+    this.enabled = Boolean(options.enabled);
+    this.timeOfDay = 0;
+    this.currentSeason = 'spring';
+    this.baseFogDensity = scene.fog?.density ?? 0.02;
+    this.moonLight = new THREE.DirectionalLight(0xa8bbff, 0);
+    this.moonLight.position.set(-2, 5, -3);
+    this.stars = this.createStars();
+    scene.add(this.moonLight, this.stars);
+    this.apply();
+  }
+
+  createStars() {
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(90);
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i] = (Math.random() - 0.5) * 20;
+      positions[i + 1] = 5 + Math.random() * 4;
+      positions[i + 2] = (Math.random() - 0.5) * 20;
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.06,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
+    const stars = new THREE.Points(geometry, material);
+    stars.visible = false;
+    return stars;
+  }
+
+  setEnabled(enabled) {
+    this.enabled = Boolean(enabled);
+    if (!this.enabled) {
+      this.stars.visible = false;
+      this.stars.material.opacity = 0;
+      this.moonLight.intensity = 0;
+    }
+  }
+
+  setSeason(season) {
+    this.currentSeason = season ?? this.currentSeason;
+  }
+
+  setTimeOfDay(t) {
+    this.timeOfDay = Math.max(0, Math.min(1, t));
+    this.apply();
+  }
+
+  getTimeOfDay() {
+    return this.timeOfDay;
+  }
+
+  setCycleDuration(ms) {
+    this.cycleDurationMs = Math.max(1000, ms ?? this.cycleDurationMs);
+  }
+
+  update(dt) {
+    if (!this.enabled) return;
+    this.timeOfDay = (this.timeOfDay + ((dt * 1000) / this.cycleDurationMs)) % 1;
+    this.apply();
+  }
+
+  apply() {
+    const rig = this.scene.userData.lightingRig ?? {};
+    if (!rig.sun || !rig.hemi) return;
+
+    const [from, to] = findFramePair(this.timeOfDay);
+    const localT = smoothHermite((this.timeOfDay - from.time) / Math.max(to.time - from.time, 0.0001));
+    const sunColor = lerpColor(from.sunColor, to.sunColor, localT);
+    const skyColor = lerpColor(from.hemiSky, to.hemiSky, localT);
+    const groundColor = lerpColor(from.hemiGround, to.hemiGround, localT);
+    const sunIntensity = from.sunIntensity + (to.sunIntensity - from.sunIntensity) * localT;
+    const ambient = from.ambient + (to.ambient - from.ambient) * localT;
+
+    rig.sun.color.copy(sunColor);
+    rig.sun.intensity = sunIntensity;
+    rig.sun.position.set(
+      Math.cos(this.timeOfDay * Math.PI * 2) * 5,
+      Math.max(0.5, Math.sin(this.timeOfDay * Math.PI * 2) * 5 + 4),
+      Math.sin(this.timeOfDay * Math.PI * 2) * 4,
+    );
+    rig.hemi.color.copy(skyColor);
+    rig.hemi.groundColor.copy(groundColor);
+    rig.hemi.intensity = ambient;
+    if (rig.fill) {
+      rig.fill.intensity = ambient * 0.8;
+    }
+    if (rig.rim) {
+      rig.rim.intensity = ambient * 0.35;
+    }
+    if (this.scene.fog) {
+      this.scene.fog.color.copy(skyColor);
+      this.scene.fog.density = this.baseFogDensity * (this.timeOfDay >= 0.75 ? 0.6 : 1);
+    }
+
+    const showStars = this.timeOfDay >= 0.75 && this.timeOfDay <= 0.95;
+    this.stars.visible = showStars;
+    this.stars.material.opacity = showStars ? 0.75 : 0;
+    this.moonLight.intensity = showStars ? 0.25 : 0;
+
+    this.scene.userData.weatherFx?.[this.timeOfDay >= 0.2 && this.timeOfDay <= 0.3 ? 'startSunRays' : 'stopSunRays']?.(1.2);
+    this.scene.userData.scenery?.showFireflies?.(this.currentSeason === 'summer' && this.timeOfDay >= 0.6 && this.timeOfDay <= 0.8);
+  }
+
+  dispose() {
+    this.scene.remove(this.moonLight, this.stars);
+    this.stars.geometry.dispose();
+    this.stars.material.dispose();
+  }
+}
+
+export function createWeatherFX(scene, tracker = null) {
   // --- Rain system ---
   const RAIN_COUNT = 300;
   const rainGeo = new THREE.BufferGeometry();
@@ -33,6 +212,7 @@ export function createWeatherFX(scene) {
   const rain = new THREE.Points(rainGeo, rainMat);
   rain.visible = false;
   scene.add(rain);
+  tracker?.trackObject(rain);
 
   // --- Frost overlay ---
   const frostGeo = new THREE.PlaneGeometry(10, 10);
@@ -48,6 +228,7 @@ export function createWeatherFX(scene) {
   frost.position.y = 0.3;
   frost.visible = false;
   scene.add(frost);
+  tracker?.trackObject(frost);
 
   // --- Sun rays (spotlight cone) ---
   const sunRayLight = new THREE.SpotLight(0xffe0a0, 0, 20, Math.PI / 6, 0.5, 1);
@@ -168,6 +349,14 @@ export function createWeatherFX(scene) {
       if (title.includes('wind') || desc.includes('wind')) {
         this.startRain(0.3); // light particles for wind debris
       }
+    },
+
+    dispose() {
+      this.stopAll();
+      scene.remove(rain);
+      scene.remove(frost);
+      scene.remove(sunRayLight);
+      scene.remove(sunRayLight.target);
     },
 
     get active() { return activeEffects; },

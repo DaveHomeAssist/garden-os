@@ -19,6 +19,25 @@ function isAvailableForSeason(event, season) {
   return event.season === season;
 }
 
+function getMonthlyRestriction(event) {
+  if (Array.isArray(event.months) && event.months.length) {
+    return event.months;
+  }
+  const fallbackById = {
+    S01: [1],
+    U05: [2, 3],
+    F01: [3],
+    W08: [3],
+  };
+  return fallbackById[event.id] ?? null;
+}
+
+function isAvailableForMonth(event, month) {
+  const months = getMonthlyRestriction(event);
+  if (!months) return true;
+  return months.includes(month);
+}
+
 function weightedPick(events) {
   const totalWeight = events.reduce((sum, event) => sum + (event.drawWeight ?? 1), 0);
   if (totalWeight <= 0) {
@@ -46,3 +65,15 @@ export function drawEvent(season, chapter, alreadyDrawn = []) {
   return drawn ? { ...drawn } : null;
 }
 
+export function getMonthlyEvents(season, month, chapter, drawnThisSeason = []) {
+  const drawnIds = normalizeAlreadyDrawn(drawnThisSeason);
+  return (eventDeck.events ?? [])
+    .filter((event) => (
+      isAvailableForSeason(event, season)
+      && isAvailableForChapter(event, chapter)
+      && isAvailableForMonth(event, month)
+      && !drawnIds.has(event.id)
+    ))
+    .sort((a, b) => (b.drawWeight ?? 1) - (a.drawWeight ?? 1))
+    .map((event) => ({ ...event }));
+}

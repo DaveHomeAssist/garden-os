@@ -12,6 +12,8 @@ const POSES = {
 
 export function createCameraController(camera, domElement) {
   const target = new THREE.Vector3(0, 0.44, -0.18);
+  const followTarget = new THREE.Vector3(0, 0.44, -0.18);
+  const disposers = [];
   let isDragging = false;
   let lastX = 0;
   let lastY = 0;
@@ -20,6 +22,8 @@ export function createCameraController(camera, domElement) {
   let radius = 6.55;
   let targetPose = null;
   let lerpSpeed = 0.1;
+  let followStrength = 0.12;
+  let followEnabled = false;
 
   function updateOrbit() {
     camera.position.set(
@@ -30,8 +34,13 @@ export function createCameraController(camera, domElement) {
     camera.lookAt(target);
   }
 
+  function listen(type, handler, options) {
+    domElement.addEventListener(type, handler, options);
+    disposers.push(() => domElement.removeEventListener(type, handler, options));
+  }
+
   // Touch/mouse orbit
-  domElement.addEventListener('pointerdown', (e) => {
+  const onPointerDown = (e) => {
     if (e.pointerType === 'touch' && e.isPrimary) {
       isDragging = true;
       lastX = e.clientX;
@@ -41,9 +50,10 @@ export function createCameraController(camera, domElement) {
       lastX = e.clientX;
       lastY = e.clientY;
     }
-  });
+  };
+  listen('pointerdown', onPointerDown);
 
-  domElement.addEventListener('pointermove', (e) => {
+  const onPointerMove = (e) => {
     if (!isDragging) return;
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
@@ -54,22 +64,25 @@ export function createCameraController(camera, domElement) {
     phi = Math.max(0.48, Math.min(1.34, phi - dy * 0.005));
     targetPose = null;
     updateOrbit();
-  });
+  };
+  listen('pointermove', onPointerMove);
 
-  domElement.addEventListener('pointerup', () => { isDragging = false; });
-  domElement.addEventListener('pointercancel', () => { isDragging = false; });
+  const stopDragging = () => { isDragging = false; };
+  listen('pointerup', stopDragging);
+  listen('pointercancel', stopDragging);
 
   // Pinch zoom
   let pinchDist = 0;
-  domElement.addEventListener('touchstart', (e) => {
+  const onTouchStart = (e) => {
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       pinchDist = Math.sqrt(dx * dx + dy * dy);
     }
-  }, { passive: true });
+  };
+  listen('touchstart', onTouchStart, { passive: true });
 
-  domElement.addEventListener('touchmove', (e) => {
+  const onTouchMove = (e) => {
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -80,15 +93,17 @@ export function createCameraController(camera, domElement) {
       targetPose = null;
       updateOrbit();
     }
-  }, { passive: true });
+  };
+  listen('touchmove', onTouchMove, { passive: true });
 
   // Mouse wheel zoom
-  domElement.addEventListener('wheel', (e) => {
+  const onWheel = (e) => {
     e.preventDefault();
     radius = Math.max(4.4, Math.min(11.5, radius + e.deltaY * 0.01));
     targetPose = null;
     updateOrbit();
-  }, { passive: false });
+  };
+  listen('wheel', onWheel, { passive: false });
 
   updateOrbit();
 
@@ -101,6 +116,17 @@ export function createCameraController(camera, domElement) {
         target: new THREE.Vector3(...pose.target),
       };
     },
+    setFollowTarget(nextTarget, options = {}) {
+      if (!nextTarget) return;
+      followTarget.copy(nextTarget);
+      if (typeof options.strength === 'number') {
+        followStrength = options.strength;
+      }
+      followEnabled = options.enabled ?? true;
+    },
+    clearFollowTarget() {
+      followEnabled = false;
+    },
     update() {
       if (targetPose) {
         camera.position.lerp(targetPose.position, lerpSpeed);
@@ -110,8 +136,16 @@ export function createCameraController(camera, domElement) {
         if (camera.position.distanceTo(targetPose.position) < 0.01) {
           targetPose = null;
         }
+      } else if (followEnabled) {
+        target.lerp(followTarget, followStrength);
+        updateOrbit();
       }
     },
     getTarget() { return target; },
+    dispose() {
+      disposers.forEach((dispose) => dispose());
+      disposers.length = 0;
+      isDragging = false;
+    },
   };
 }

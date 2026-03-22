@@ -3,21 +3,24 @@
  * Deterministic: same inputs = same outputs.
  */
 import { getCropById } from '../data/crops.js';
-import { COLS, ROWS } from '../game/state.js';
+import { COLS, ROWS, getGridCols, getGridRows } from '../game/state.js';
 
 function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
-function cellToRowCol(index) {
-  return { row: Math.floor(index / COLS), col: index % COLS };
+function cellToRowCol(index, grid) {
+  const cols = getGridCols(grid, COLS);
+  return { row: Math.floor(index / cols), col: index % cols };
 }
 
-function getNeighborIndices(index) {
-  const { row, col } = cellToRowCol(index);
+function getNeighborIndices(index, grid) {
+  const cols = getGridCols(grid, COLS);
+  const rows = getGridRows(grid, ROWS);
+  const { row, col } = cellToRowCol(index, grid);
   const neighbors = [];
-  if (row > 0) neighbors.push(index - COLS);
-  if (row < ROWS - 1) neighbors.push(index + COLS);
+  if (row > 0) neighbors.push(index - cols);
+  if (row < rows - 1) neighbors.push(index + cols);
   if (col > 0) neighbors.push(index - 1);
-  if (col < COLS - 1) neighbors.push(index + 1);
+  if (col < cols - 1) neighbors.push(index + 1);
   return neighbors;
 }
 
@@ -54,8 +57,8 @@ export function shadeFit(crop, effectiveLight) {
 /**
  * Factor 4: Access Fit
  */
-export function accessFit(crop, row) {
-  const accessScore = row / (ROWS - 1);
+export function accessFit(crop, row, totalRows = ROWS) {
+  const accessScore = row / Math.max(1, totalRows - 1);
   if (!crop.tall) return 3.0 + accessScore * 2.0;
   return 3.0;
 }
@@ -84,7 +87,7 @@ export function adjacencyScore(cropId, cellIndex, grid) {
   if (!crop) return 0;
 
   let score = 0;
-  const neighborIndices = getNeighborIndices(cellIndex);
+  const neighborIndices = getNeighborIndices(cellIndex, grid);
 
   for (const ni of neighborIndices) {
     const neighbor = grid[ni];
@@ -115,14 +118,15 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
   const crop = getCropById(cell.cropId);
   if (!crop) return null;
 
-  const { row } = cellToRowCol(cellIndex);
+  const rows = getGridRows(grid, ROWS);
+  const { row } = cellToRowCol(cellIndex, grid);
   const effectiveLight = siteConfig.sunHours || 6;
   const hasTrellis = row === 0 && (siteConfig.trellis ?? true);
 
   const sf = sunFit(crop, effectiveLight);
   const sup = supportFit(crop, hasTrellis);
   const shd = shadeFit(crop, effectiveLight);
-  const acc = accessFit(crop, row);
+  const acc = accessFit(crop, row, rows);
   const sea = seasonFit(crop, season);
   const adj = adjacencyScore(cell.cropId, cellIndex, grid);
 

@@ -118,6 +118,32 @@ Update 2026-03-21 in-scene sheepdog rebuild:
 
 Update 2026-03-21 winter review usability pass:
 - `story-mode` already had the winter review port in place, but the overlay behaved like another dead screen on laptop-height viewports because the action row could fall below the fold.
+
+Update 2026-03-22 scene/UI polish pass from live screenshot baseline:
+- Removed the clothesline wire + hanging towel from `src/scene/scenery.js` while keeping the poles. In the current camera framing they were reading as stray debug geometry across the yard.
+- Reworked row labels in `src/scene/bed-model.js` into darker pill-backed sprites with brighter text and stronger opacity so `Back (Wall)` / `Front (Access)` remain readable against the soil and gravel.
+- Softened the crop accent sticker layer in `src/scene/garden-scene.js` by reducing opacity/scale/lift and re-enabling depth testing, so the procedural crop meshes carry more of the scene and the sprite cards stop dominating mid-season beds.
+- Slimmed the backpack rail in `src/ui/backpack-panel.js` and `index.html` by narrowing the desktop panel container and shrinking inventory slot tiles.
+- Validation:
+  - `node --check` passed for `src/scene/bed-model.js`, `src/scene/scenery.js`, `src/scene/garden-scene.js`, and `src/ui/backpack-panel.js`.
+  - `git diff --check` passed for the touched files.
+  - `npm run build` was started under Node 22 and reached `vite build`, but remained silent/stalled in this shell before completion, so local manual smoke is still the practical next check.
+
+Update 2026-03-22 gameplay guide layout port:
+- Rebuilt `src/ui/gameplay-guide.js` around the stronger standalone guide mock instead of the older stacked-card sheet.
+- The live overlay now uses a left-nav + section-content shell with richer section styles: overview status table, story loop steps, scoring factors + grade grid, intervention carry-forward table, scene-style cards, tool matrix, and controls tables.
+- Kept the guide grounded in the actual current build contract: Story Mode live, Planner Mode not yet a menu path, Let It Grow tool layer gated/experimental, and the new planner/story/celebration scene preset framing.
+- Extended `index.html` with dedicated gameplay-guide nav/table/callout/grade/tool styles and widened the sheet shell so the guide reads like a real in-game manual rather than a dev note stack.
+- Validation:
+  - `node --check` should be run for `src/ui/gameplay-guide.js`.
+  - `git diff --check` should be run for the guide files.
+  - Manual smoke next: open title screen -> `How To Play`, click each left-nav section, confirm section switching and mobile collapse behavior.
+
+Update 2026-03-22 follow-up 3D cleanup after guide port:
+- Removed the remaining clothesline poles from `src/scene/scenery.js`; the lane was still reading as a stray diagonal guide in the active camera framing.
+- Removed the right-side neighbor-wall / roof plane from `src/scene/scenery.js`; it was reading like a floating panel more than a believable backdrop.
+- Pulled row markers and label sprites inward in `src/scene/bed-model.js` so the left labels are less likely to clip off-screen.
+- Increased sprite accent scale in `src/scene/garden-scene.js` so planted cells read a bit more clearly from the default camera without bringing back the old card-overlay problem.
 - Tightened `src/ui/winter-review.js` into a bounded review panel with an internal scroll region, persistent explanatory footer copy, and a pinned action row so `Open Backpack` / `Continue` stay visible while the review content scrolls.
 - The winter review now reads like an actual tool: year recap, soil + carry-forward map, last harvest summary, recipes/keepsakes, strongest/weakest cells, next-spring hints, and a visible exit into the next chapter.
 - Validation: `npx vite build` passed. Forced-winter Playwright fixtures confirmed both the review screen layout (`output/web-game/winter-review-direct-oneshot/shot-0.png`) and the follow-through into the season-complete transition (`output/web-game/winter-review-continue/shot-0.png`).
@@ -136,3 +162,38 @@ Update 2026-03-21 scoped 3D polish pass:
 - Moved several work-zone props inward so they stop clipping against the lower frame edges, pushed the clothesline / telephone pole / distant rooftops farther out of the main composition, and rebuilt the porch screen door as an actual frame instead of a dark slab.
 - Reduced the sheepdog scale and shifted its default run line farther down the access path so it reads as scene action without blocking the bed as aggressively during chapter intros.
 - Validation: `npx vite build` passed. Playwright capture at `output/web-game/polish-pass/shot-0.png` confirmed the new framing and prop placement, but one limitation remains: the environment here is still noisy for repeated interactive browser checks, so the final visual sign-off is based on that static capture plus the clean build.
+
+Update 2026-03-22 visible Let It Grow surfacing pass:
+- Added a fourth `Crafting` tab to `src/ui/backpack-panel.js` with recipe cards, output badges, craftability state, material shortfall rows, and live `Craft` actions.
+- Extended `src/ui/ui-binder.js` backpack payloads with recipe output defs and crafting-skill progress so the backpack can show a real workbench surface instead of just inventory/pantry.
+- Surfaced Let It Grow world-state summaries in planning HUD copy and `window.render_game_to_text()`: current zone, available paths, and current foraging availability.
+- Registered zone exits and foraging spots as proximity interactables in `src/ui/ui-binder.js` using `evaluateZoneAccess(...)`, so the active scene can now produce travel/gate feedback and forage prompts in the same interaction lane as bed cells.
+- Validation:
+  - `node --check` passed for `src/ui/backpack-panel.js`, `src/ui/ui-binder.js`, and `src/scene/zone-manager.js`.
+  - `git diff --check -- src/ui/backpack-panel.js src/ui/ui-binder.js src/scene/zone-manager.js` passed.
+  - Skill Playwright client ran against `http://127.0.0.1:4174/garden-os/story-mode-live/?mode=let-it-grow` and captured the title screen at `/tmp/garden-os-visible-pass/shot-0.png`, but the title-screen click still timed out in automation.
+  - Direct Playwright gameplay smoke confirmed the route still boots into Chapter 1 planning/cutscene and wrote `/tmp/garden-os-visible-pass-direct/backpack.png`, `/tmp/garden-os-visible-pass-direct/state.json`, and `/tmp/garden-os-visible-pass-direct/errors.json`.
+  - Important boundary: the `4174` route is serving a stale `story-mode/dist` bundle. The smoke state from that route did not include the newly added `currentZone`, `routes`, or `foraging` fields, which confirms the local served build predates this patch.
+  - `npm run build` and a clean-port `vite dev` attempt both stalled in this shell before updating/serving the new bundle, so source is correct but local runtime refresh is still blocked by the environment.
+
+Update 2026-03-22 crop billboard transparency fix:
+- Diagnosed the gray crop-card artifact as an asset format issue, not a Three.js transparency flag issue: the active `grow-*.png` sheets in `assets/textures/` are plain RGB PNGs with no alpha channel, while the single-crop `crop-*.png` icons are RGBA.
+- Patched `src/scene/sprite-loader.js` so `getGrowthTexture(...)` falls back to the RGBA crop icon whenever a `grow-*` sheet is marked `hasAlpha: false`.
+- This keeps Story Mode / Let It Grow bed sprites visually readable immediately, while preserving the option to restore real staged growth sheets once transparent assets are regenerated.
+- Validation:
+  - `node --check src/scene/sprite-loader.js` passed.
+  - `git diff --check -- src/scene/sprite-loader.js` passed.
+
+Update 2026-03-22 crop stage readability pass:
+- Re-enabled crop accent sprites in `src/scene/garden-scene.js` now that the growth texture loader safely falls back to RGBA crop icons.
+- Accent readability is stage-driven instead of art-driven for now:
+  - SEED / SPROUT / GROWING / HARVEST change icon opacity, scale, and vertical lift
+  - winter cells shift cooler/desaturated
+  - damaged cells tint warmer and dim further
+- Added `scripts/local-dist-transform-server.mjs` so the local `4174` route can serve `dist` with targeted scene transforms while Vite build/dev remains unreliable in this shell.
+- Validation:
+  - `node --check src/scene/garden-scene.js` passed.
+  - `git diff --check -- story-mode/src/scene/garden-scene.js` passed.
+  - The current `dist` bundle now contains the stage-accent logic (`garden-scene-BsadH2ka.js`).
+  - The `develop-web-game` Playwright client reaches the title screen cleanly on the refreshed `4174` route.
+  - The automated click burst still did not advance into gameplay, so the final in-garden visual check remains a quick manual smoke step.

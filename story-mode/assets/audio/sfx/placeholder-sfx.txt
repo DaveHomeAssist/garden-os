@@ -1,0 +1,13 @@
+Expected placeholder SFX ids:
+
+plant
+water
+harvest
+event_good
+event_bad
+ui_click
+ui_tab
+tool_switch
+footstep
+quest_accept
+quest_complete

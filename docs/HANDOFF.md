@@ -1,9 +1,9 @@
 ---
 Status: Active
-Document Version: 1.0
-Compatible With: Garden OS v4.3, Schema v1, Season Engine v4
+Document Version: 1.1
+Compatible With: Garden OS v4.3, Story Mode v0.1, Schema v1, Season Engine v4
 Owner: Dave Robertson
-Last Updated: 2026-03-16
+Last Updated: 2026-03-22
 Artifact Class: Ref
 ---
 
@@ -16,40 +16,107 @@ Artifact Class: Ref
 
 ## What This Is
 
-Garden OS is a local-first, browser-native raised-bed garden planning system. Zero backend, zero dependencies, zero build step. Every tool is a single self-contained HTML file deployed to GitHub Pages. The core mission: make garden placement decisions *explainable* — not just produce layouts, but show players *why* each score is high or low.
+Garden OS is now a hybrid browser-native repo with two active product layers:
 
-**Architecture:** Single-file HTML tools → localStorage persistence → `.gos.json` file export/import → JSON Schema validation. Offline-capable. Runs entirely in the browser.
+1. **Root static tool suite**: planner, legacy season simulator, guides, explainers, and dev tools shipped as direct HTML files from repo root.
+2. **`story-mode/` app**: a Three.js + Vite story-driven prototype served at `/garden-os/story-mode/`.
+
+The core mission remains the same: make garden decisions explainable, playable, and reusable across planning, simulation, and narrative surfaces.
+
+**Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. Zero backend. GitHub Pages remains the delivery model.
+
+## Current State Snapshot (2026-03-22)
+
+### Repo Shape
+
+- Repo root is still the public Garden OS hub and tool surface.
+- `story-mode/` is the most actively evolving runtime and the primary public CTA from `index.html`.
+- `specs/` remains the canonical contract layer for scoring, season flow, dialogue, progression, and UI.
+- `docs/` remains the canonical repo-level context layer.
+- `docs/story-mode/` is an imported story-mode package covering product, systems, technical, and roadmap material for the Let It Grow expansion path.
+
+### Working Inventory
+
+- Approximate raw repo size: 3007 files / 561 directories.
+- Approximate working source footprint excluding `.git`, `dist`, and `story-mode/node_modules`: 301 files.
+- Root HTML surfaces: 12 public/dev entry files.
+- `docs/`: 85 files.
+- `specs/`: 16 canonical or historical spec files.
+- `story-mode/src/`: 32 source files.
+
+### What Is Actually Live
+
+- Primary public entry: `index.html` with Story Mode as the lead CTA.
+- Current flagship playable build: `/story-mode/`.
+- Root planner and legacy season simulator remain live, but Story Mode is the active evolution path.
+- Dev track tools remain important for inspection and validation, but the current `system-map.html` is planner-centric and no longer reflects the full repo accurately.
+
+### Canonical Source Hierarchy
+
+1. `specs/` for gameplay and contract truth.
+2. `docs/HANDOFF.md` for repo-wide intake and current-state orientation.
+3. Root `docs/` for repo-level design, launch, migration, and audits.
+4. `docs/story-mode/` for story-mode and Let It Grow-specific expansion/technical planning.
+5. `progress.md` and `story-mode/progress.md` for implementation chronology, not canon.
+
+### Important Reality Checks
+
+- Root `CLAUDE.md` still describes a no-build, single-file HTML world. That is true for root tools, but **not** for `story-mode/`, which intentionally uses Vite, Three.js, and Vitest.
+- The repo now has two active simulation surfaces: `garden-league-simulator-v4.html` as the legacy deterministic season sandbox, and `story-mode/` as the active narrative/3D branch.
+- `theme-organizer-resource` is no longer the intended home for Garden OS planning docs. The staged package is now local at `docs/story-mode/`.
 
 ---
 
 ## What Exists Today
 
-### User-Facing Tools (nav: Home → Play Game → Planner → Build Guide → Ops Guide → How It Thinks)
+### User-Facing Live Surfaces
+
+#### Root Track (GitHub Pages repo root)
 
 | Tool | File | Lines | Purpose |
 |------|------|-------|---------|
-| Hub | `index.html` | 355 | Navigation hub (Mom's Sanctuary) |
-| Marketing Home | `home.html` | 823 | Primary marketing landing page |
+| Hub | `index.html` | 355 | Public Garden OS launcher with Story Mode as primary CTA |
+| Story Mode | `story-mode/` | app | Active Vite/Three.js narrative prototype |
 | Planner v4.3 | `garden-planner-v4.html` | 6,076 | Core placement UI, scoring breakdown, export/import |
-| Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | 12-chapter narrative strategy game with events, interventions, carry-forward, and chapter progression |
+| Legacy Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | Prior chapter-based season sandbox; still live, no longer the flagship branch |
 | Build Guide | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |
 | Ops Guide | `garden-cage-ops-guide.html` | 1,313 | Seasonal maintenance checklist |
+| Brand Guide | `brand-guide.html` | 1 file | Design tokens and reference surface |
 | How It Thinks | `how-it-thinks.html` | ~500 | Plain-English scoring walkthrough |
 
-### Developer Tools (nav: ← Garden → Visualizer → Scoring Map → Fairness Tester → System Map → Topology)
+#### Developer / Analysis Track
 
 | Tool | File | Purpose |
 |------|------|---------|
 | Scoring Visualizer | `scoring-visualizer.html` | Interactive per-cell scoring factor breakdown |
 | Scoring Map | `scoring-map.html` | Scoring engine architecture reference |
 | Fairness Tester | `fairness-tester.html` | Crop balance analysis across factions |
-| System Map | `system-map.html` | Full ecosystem architecture (dark mode) |
+| System Map | `system-map.html` | Existing dark-mode ecosystem page; now outdated against current repo shape |
 | System Topology | `system-topology.html` | D3-based interactive system graph (dark mode) |
+
+### Story Mode Runtime (`story-mode/`)
+
+| Area | Path | Purpose |
+|------|------|---------|
+| App entry | `story-mode/index.html` | Story Mode shell served on GitHub Pages |
+| Runtime source | `story-mode/src/` | Scene, game, scoring, sync, data, and UI logic |
+| Build output | `story-mode/dist/` | Generated deployable bundle |
+| Package manifest | `story-mode/package.json` | Vite + Three.js + Vitest toolchain |
+| Implementation log | `story-mode/progress.md` | Most current build chronology |
+
+Story Mode currently includes:
+- chapter intros and cutscene-machine architecture
+- animated speakers and portraits, including Calvin
+- intervention targeting flow
+- winter review flow
+- keepsakes, recipe matches, and carry-forward campaign state
+- mobile-responsive HUD/panel work
+- front-of-bed camera/scenery reorientation
 
 ### Navigation Structure
 
 Two-track nav with bridge links:
-- **User track:** 6 items + "Dev Tools →" right-aligned at 55% opacity
+- **User track:** Story Mode → Hub → Planner → Build Guide → Ops Guide → Brand Guide → How It Thinks → Dev Tools →
 - **Dev track:** 5 items + "← Garden" left-aligned at 55% opacity
 - Shared nav bar style: dark soil (`#5c3d1e`) background, `DM Mono` font, sun (`#e8c84a`) accent
 
@@ -298,6 +365,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 | File | Content |
 |------|---------|
+| `HANDOFF.md` | Repo-wide intake and current-state summary |
 | `ART_DIRECTION.md` | Visual pillars (worn surface, Philly grit, seasonal honesty), color by season, texture vocabulary |
 | `VOICE_BIBLE.md` | 4 character voices, tone rules, sample lines, recognition test |
 | `GAME_FEEL.md` | Juice layer — placement feedback, harvest payoff, seasonal transitions, commentary timing |
@@ -310,33 +378,36 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 | `MIGRATION-CONTRACT.md` | Schema migration rules between versions |
 | `active-hosted-urls.md` | Current deployment audit — all live URLs, nav structure |
 | `UI_GRAPHICAL_IMPROVEMENT_AUDIT.md` | Visual polish roadmap |
+| `SYSTEM_MAP_PROPOSAL.md` | Proposed canonical system map structure for the hybrid repo |
+| `story-mode/` | Imported story-mode / Let It Grow package: overview, systems, narrative, technical, roadmap |
 
 ---
 
 ## Roadmap
 
-### Phase 1 ✅ Complete
+### Active Focus
 
-- Canonical schema + explainable score breakdown + export/import + all user-track tools live
+- Keep Story Mode as the flagship playable branch.
+- Maintain the root planner and legacy simulator as stable explainability and reference tools.
+- Reconcile repo-wide canon between `specs/`, root `docs/`, and `docs/story-mode/`.
+- Redesign the system map so it reflects the hybrid root-tools + story-mode architecture.
 
-### Phase 2 (Days 31-60)
+### Likely Next Structural Work
 
-- Layout simulator / "What If?" mode
-- Garden Doctor symptom triage tool
-- Yield forecast + harvest window
-- Difficulty presets (easy/standard/hard)
-
-### Phase 3 (Days 61-90)
-
-- A/B experiment tracking between beds
-- Succession planting timeline
-- Season retrospective with printable summary
+- Clarify which systems are shared candidates versus story-mode-specific implementations.
+- Decide whether any runtime logic should move into a future shared-core layer after real reuse appears in more than one simulation surface.
+- Reduce legacy/document duplication and retire outdated planner-only architecture descriptions where they conflict with the live repo.
 
 ---
 
 ## Deployment
 
-**GitHub Pages:** Push to `main` → auto-deploys via `.github/workflows/pages.yml`. No build step. Entire repo root served at `davehomeassist.github.io/garden-os/`.
+**GitHub Pages:** Push to `main` → auto-deploys via `.github/workflows/pages.yml`.
+
+- Repo root serves the static Garden OS hub and tool pages at `davehomeassist.github.io/garden-os/`.
+- `story-mode/` is served as a built sub-app at `davehomeassist.github.io/garden-os/story-mode/`.
+- Root tools still have no build step.
+- `story-mode/` does have a build step (`vite build`) and should be treated as an explicit exception to the root single-file rule.
 
 **Testing locally:** `python3 -m http.server 8000` from repo root.
 
@@ -361,12 +432,24 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 - `EVENT_DECK` — event cards with modifiers
 - `carryForward()` — persists fatigue, event memory, infrastructure between seasons
 
+### Story Mode (`story-mode/src/`)
+
+- `main.js` — app bootstrap, UI orchestration, persistence, and trigger wiring
+- `game/phase-machine.js` — chapter/season/phase progression logic
+- `game/cutscene-machine.js` — narrative sequencing and playback state
+- `game/intervention.js` — intervention availability and target resolution
+- `scene/garden-scene.js` — Three.js world, lighting, camera presets, world actors
+- `data/cutscenes.js` — authored and dynamic cutscene content
+- `data/speakers.js` / `data/portraits.js` / `data/keepsakes.js` — narrative/supporting data
+- `ui/` modules — dialogue, winter review, event cards, harvest reveal, and sheet surfaces
+
 ### Adding New Features
 
-1. Add data to `/specs/` files (crops, events, dialogue)
-2. Update the corresponding `.html` file
-3. Test with `.gos.json` export/import for schema compatibility
-4. Push to `main` → live in < 1 minute
+1. Decide whether the change belongs to the root static tool suite or `story-mode/`.
+2. Update canonical data/contracts in `/specs/` when the change affects shared game rules.
+3. Update the corresponding root HTML file or `story-mode/src/` modules.
+4. If the change touches story-mode, validate with `vite build`; if it touches root tools, validate the direct HTML surface.
+5. Push to `main` → Pages deploys the root and the `story-mode` subpath.
 
 ---
 
@@ -379,6 +462,6 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 ## Legacy / Unlinked Files (safe to ignore)
 
-- `garden-os-home.html` — original marketing page (superseded by `home.html`)
+- `garden-os-home.html` — original marketing page (superseded by `index.html`)
 - `garden-league-simulator.html`, `garden-league-simulator-v2.html`, `garden-league-simulator-v3.html`, `garden-os-simulator-v2.html` — old game versions
 - `archive/` folder — versioned HTML snapshots (v1-v7)

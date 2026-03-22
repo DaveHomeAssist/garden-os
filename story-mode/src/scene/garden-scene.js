@@ -1,12 +1,16 @@
 /**
  * Garden Scene — Three.js setup following curling sim renderer3d.js pattern.
- * Returns { resize, sync, render, dispose, raycastCell, onHover }
+ * Returns { resize, sync, render, dispose, raycastCell }
  */
 import * as THREE from 'three';
 import { buildBed } from './bed-model.js';
 import { buildScenery } from './scenery.js';
-import { createWeatherFX } from './weather-fx.js';
+import { applySceneStyle, getStyleForPhase } from './scene-style.js';
+import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
+import { createPlayerCharacter } from './player-character.js';
+import { ResourceTracker } from './resource-tracker.js';
+import { loadSprites, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
 
@@ -100,6 +104,20 @@ function getEmojiColor(emoji, factionColor) {
   return factionColor;
 }
 
+export function disposeGardenScene({ container, renderer, scene, weather, dayNight, cameraController, resourceTracker, cropMeshes, supportMeshes, accentMeshes }) {
+  resourceTracker?.trackObject(scene);
+  weather?.dispose?.();
+  dayNight?.dispose?.();
+  cameraController?.dispose?.();
+  cropMeshes?.clear();
+  supportMeshes?.clear();
+  accentMeshes?.clear();
+  scene?.clear?.();
+  resourceTracker?.disposeAll();
+  renderer?.dispose();
+  renderer?.domElement?.remove?.();
+}
+
 export function createGardenScene(container) {
   // WebGL check
   const testCanvas = document.createElement('canvas');
@@ -107,6 +125,7 @@ export function createGardenScene(container) {
   if (!gl) throw new Error('WebGL not available');
 
   const scene = new THREE.Scene();
+  const resourceTracker = new ResourceTracker();
   scene.background = new THREE.Color(0x87CEEB);
 
   // Ground-level fog for ambient occlusion feel
@@ -119,6 +138,9 @@ export function createGardenScene(container) {
   const cameraLookTarget = new THREE.Vector3(0, 0.46, -0.12);
   let cameraTransition = null;
   let moodTransition = null;
+  let currentScenePhase = 'PLANNING';
+  let currentSceneStyle = getStyleForPhase(currentScenePhase);
+  let lightingState = null;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.shadowMap.enabled = true;
@@ -152,7 +174,7 @@ export function createGardenScene(container) {
   scene.add(skyMesh);
 
   // Build the garden bed
-  const bed = buildBed();
+  const bed = buildBed(resourceTracker);
   root.add(bed.group);
   for (const mesh of bed.cellMeshes) {
     mesh.userData._baseColor = mesh.material.color.clone();
@@ -185,8 +207,11 @@ export function createGardenScene(container) {
   root.add(ground);
 
   // Background scenery (fence, trees, path, props)
-  const scenery = buildScenery();
+  const scenery = buildScenery(resourceTracker);
   root.add(scenery.group);
+
+  // Load sprite textures (async, non-blocking — accents appear once loaded)
+  loadSprites().catch(() => { /* missing assets handled silently by sprite-loader */ });
 
   // ── Creature meshes ──────────────────────────────────────────────────────
   // Cat silhouette on fence
@@ -465,7 +490,7 @@ export function createGardenScene(container) {
   // ── End creature meshes ──────────────────────────────────────────────────
 
   // Weather effects (rain, frost, sun rays)
-  const weather = createWeatherFX(scene);
+  const weather = createWeatherFX(scene, resourceTracker);
 
   // Lighting
   const hemi = new THREE.HemisphereLight(0xc7d8df, 0x56462d, 0.7);
@@ -490,6 +515,36 @@ export function createGardenScene(container) {
   const rim = new THREE.DirectionalLight(0xd7e6f5, 0.18);
   rim.position.set(-4.4, 3.1, -4.7);
   scene.add(rim);
+  scene.userData.lightingRig = { hemi, sun, fill, rim, skyMat };
+  scene.userData.weatherFx = weather;
+  scene.userData.scenery = scenery;
+  const dayNight = new DayNightCycle(scene, { enabled: false });
+
+  function applyCurrentSceneStyle(opts = {}) {
+    if (!lightingState && !opts.force) return;
+    applySceneStyle(currentSceneStyle, {
+      renderer,
+      scene,
+      skyMat,
+      hemi,
+      sun,
+      fill,
+      rim,
+      lightingState,
+      materialTargets: [root],
+    });
+  }
+
+  function setSceneStyle(styleName, opts = {}) {
+    if (!opts.force && styleName === currentSceneStyle) return;
+    currentSceneStyle = styleName;
+    applyCurrentSceneStyle({ force: true });
+  }
+
+  function setScenePhase(phase, opts = {}) {
+    currentScenePhase = phase;
+    setSceneStyle(getStyleForPhase(phase), opts);
+  }
 
 
   // ── Seasonal atmosphere elements ─────────────────────────────────────────
@@ -680,6 +735,15 @@ export function createGardenScene(container) {
   }
   butterflies.visible = false;
   root.add(butterflies);
+  resourceTracker.trackObject(root);
+  resourceTracker.trackObject(skyMesh);
+
+  const playerCharacter = createPlayerCharacter(resourceTracker);
+  root.add(playerCharacter.group);
+  const playerFollowHome = new THREE.Vector3(0, 0.46, -0.12);
+  const playerFollowScratch = new THREE.Vector3();
+  const playerFocusTarget = new THREE.Vector3();
+  let playerState = null;
 
   // Accumulated time for atmosphere animations
   let atmosphereTime = 0;
@@ -702,6 +766,11 @@ export function createGardenScene(container) {
   let currentGridState = [];
   let currentSeasonId = 'spring';
   let lastSyncedState = null; // used by render() for event-reactive effects
+
+  let interactionHighlightedCellIndex = -1;
+  let interactionHighlightIntensity = 0.3;
+  const projectedPositionScratch = new THREE.Vector3();
+  const cellWorldPositionScratch = new THREE.Vector3();
 
   function getCellDisplayColor(index) {
     const mesh = bed.cellMeshes[index];
@@ -734,7 +803,10 @@ export function createGardenScene(container) {
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
 
     mesh.material.color.copy(getCellDisplayColor(index));
-    if (targetableCellIndices.has(index)) {
+    if (interactionHighlightedCellIndex === index) {
+      mesh.material.emissive?.setHex(0xe8c84a);
+      mesh.material.emissiveIntensity = interactionHighlightIntensity;
+    } else if (targetableCellIndices.has(index)) {
       mesh.material.emissive?.copy(TARGET_COLOR);
       mesh.material.emissiveIntensity = 0.35;
     } else if (damageVisual) {
@@ -746,38 +818,285 @@ export function createGardenScene(container) {
     }
   }
 
-  // Cell highlight on hover
-  renderer.domElement.addEventListener('pointermove', (e) => {
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  function setHoveredCell(newIndex) {
+    if (newIndex === hoveredCellIndex) return;
+    if (hoveredCellIndex >= 0 && hoveredCellIndex < bed.cellMeshes.length) {
+      applyCellVisualState(hoveredCellIndex);
+    }
+    hoveredCellIndex = newIndex;
+    if (newIndex >= 0 && newIndex < bed.cellMeshes.length) {
+      applyCellVisualState(newIndex);
+    }
+  }
+
+  function updatePointer(pointerPosition) {
+    if (!pointerPosition?.inside) {
+      setHoveredCell(-1);
+      return;
+    }
+
+    pointer.x = pointerPosition.x;
+    pointer.y = pointerPosition.y;
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(bed.cellMeshes);
 
     const rawIndex = hits.length > 0 ? hits[0].object.userData.cellIndex : -1;
     const newIndex = targetableCellIndices.size > 0 && !targetableCellIndices.has(rawIndex) ? -1 : rawIndex;
-    if (newIndex !== hoveredCellIndex) {
-      if (hoveredCellIndex >= 0 && hoveredCellIndex < bed.cellMeshes.length) {
-        applyCellVisualState(hoveredCellIndex);
-      }
-      hoveredCellIndex = newIndex;
-      if (newIndex >= 0 && newIndex < bed.cellMeshes.length) {
-        applyCellVisualState(newIndex);
-      }
-    }
-  });
+    setHoveredCell(newIndex);
+  }
 
-  renderer.domElement.addEventListener('pointerleave', () => {
-    if (hoveredCellIndex >= 0 && hoveredCellIndex < bed.cellMeshes.length) {
-      const lastHovered = hoveredCellIndex;
-      hoveredCellIndex = -1;
-      applyCellVisualState(lastHovered);
+  function clearPointerHover() {
+    setHoveredCell(-1);
+  }
+
+  function setInteractionHighlight(cellIndex, intensity = 0.3) {
+    const nextIndex = Number.isInteger(cellIndex) ? cellIndex : -1;
+    const previousIndex = interactionHighlightedCellIndex;
+    const intensityChanged = Math.abs(interactionHighlightIntensity - intensity) > 0.0001;
+    if (previousIndex === nextIndex && !intensityChanged) {
+      return;
     }
-  });
+
+    interactionHighlightedCellIndex = nextIndex;
+    interactionHighlightIntensity = intensity;
+
+    if (previousIndex >= 0 && previousIndex < bed.cellMeshes.length) {
+      applyCellVisualState(previousIndex);
+    }
+    if (nextIndex >= 0 && nextIndex < bed.cellMeshes.length) {
+      applyCellVisualState(nextIndex);
+    }
+  }
+
+  function clearInteractionHighlight() {
+    setInteractionHighlight(-1, 0);
+  }
+
+  function setPlayerState(nextPlayerState) {
+    if (!nextPlayerState) return;
+    playerState = nextPlayerState;
+    playerCharacter.update(nextPlayerState);
+    playerFollowScratch.copy(playerFollowHome).lerp(
+      playerCharacter.getFocusTarget(playerFocusTarget),
+      0.28,
+    );
+    camCtrl.setFollowTarget(playerFollowScratch, {
+      strength: nextPlayerState.moving ? 0.16 : 0.1,
+      enabled: true,
+    });
+  }
+
+  function setPlayerTool(toolId) {
+    playerCharacter.setEquippedTool?.(toolId);
+  }
 
   // Crop mesh cache
   const cropMeshes = new Map();
   const supportMeshes = new Map();
+  const accentMeshes = new Map();   // sprite accent billboards per cell
+
+  // ── Sprite accent layer ─────────────────────────────────────────────────────
+  // Maps game phase to sprite growth stage index.
+  // Planner phases return -1 (no accent).
+  function phaseToGrowthStage(phase, season) {
+    if (season === 'winter') return GROWTH_STAGE.SEED;
+    switch (phase) {
+      case 'EARLY_SEASON': case 'TRANSITION': return GROWTH_STAGE.SPROUT;
+      case 'MID_SEASON': return GROWTH_STAGE.GROWING;
+      case 'LATE_SEASON': return GROWTH_STAGE.GROWING;
+      case 'HARVEST': case 'GRADE': case 'CELEBRATION': return GROWTH_STAGE.HARVEST;
+      default: return -1; // PLANNING, INSPECT, CUTSCENE — no accent
+    }
+  }
+
+  // Accent tuning — now alpha-ready growth sheets are available.
+  // Full opacity and meaningful scale per stage so sprites read as world objects.
+  const ACCENT_OPACITY = [0.35, 0.65, 0.85, 1.0];
+  const ACCENT_SCALE = [0.18, 0.26, 0.38, 0.5];
+  const ACCENT_LIFT = [0.085, 0.12, 0.16, 0.2];
+  const ACCENT_DORMANT_TINT = new THREE.Color(0xb7c3d0);
+  const ACCENT_DAMAGED_TINT = new THREE.Color(0xc8b198);
+
+  function applyCropAccentState(sprite, stage, damageState, season) {
+    const opacity = ACCENT_OPACITY[stage] ?? 0.7;
+    const scale = ACCENT_SCALE[stage] ?? 0.25;
+    const lift = ACCENT_LIFT[stage] ?? 0.18;
+
+    sprite.material.opacity = opacity;
+    sprite.material.color.setHex(0xffffff);
+    if (season === 'winter') {
+      sprite.material.color.lerp(ACCENT_DORMANT_TINT, 0.5);
+      sprite.material.opacity *= 0.82;
+    } else if (damageState && DAMAGE_VISUALS[damageState]) {
+      const damageBlend = damageState === 'critical' ? 0.6 : 0.35;
+      sprite.material.color.lerp(ACCENT_DAMAGED_TINT, damageBlend);
+      sprite.material.opacity *= damageState === 'critical' ? 0.72 : 0.86;
+    }
+
+    sprite.scale.set(scale, scale, 1);
+    sprite.position.y = bed.soilY + lift;
+    sprite.renderOrder = 12;
+  }
+
+  function syncCropAccents(grid, phase, season) {
+    const style = getStyleForPhase(phase);
+    const isPlanner = style === 'planner';
+    const stage = phaseToGrowthStage(phase, season);
+    const activeIds = new Set();
+
+    for (let i = 0; i < grid.length; i++) {
+      const cell = grid[i];
+      const key = `accent-${i}`;
+
+      // No accent if: planner mode, no crop, or stage is hidden
+      if (isPlanner || !cell.cropId || stage < 0) {
+        if (accentMeshes.has(key)) {
+          resourceTracker.disposeObject(accentMeshes.get(key));
+          accentMeshes.delete(key);
+        }
+        continue;
+      }
+
+      const tex = getGrowthTexture(cell.cropId, stage);
+      if (!tex) {
+        // No sprite for this crop — procedural fallback, skip silently
+        if (accentMeshes.has(key)) {
+          resourceTracker.disposeObject(accentMeshes.get(key));
+          accentMeshes.delete(key);
+        }
+        continue;
+      }
+
+      activeIds.add(key);
+      const sig = `${cell.cropId}:${stage}:${cell.damageState ?? 'none'}:${season}`;
+
+      if (accentMeshes.has(key) && accentMeshes.get(key).userData.sig === sig) {
+        const spr = accentMeshes.get(key);
+        applyCropAccentState(spr, stage, cell.damageState, season);
+        continue;
+      }
+
+      // Remove stale accent
+      if (accentMeshes.has(key)) {
+        resourceTracker.disposeObject(accentMeshes.get(key));
+        accentMeshes.delete(key);
+      }
+
+      // Create billboard sprite
+      const spriteMat = new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        opacity: ACCENT_OPACITY[stage] ?? 0.7,
+        depthWrite: false,
+        depthTest: true,
+        sizeAttenuation: true,
+      });
+      const sprite = new THREE.Sprite(spriteMat);
+
+      // Position above the procedural crop mesh
+      const row = Math.floor(i / COLS);
+      const col = i % COLS;
+      const cellSize = bed.cellSize;
+      const x = (col - (COLS - 1) / 2) * cellSize;
+      const z = (row - (ROWS - 1) / 2) * cellSize;
+      sprite.position.set(x, bed.soilY + 0.2, z);
+      sprite.userData.sig = sig;
+      sprite.userData.cellIndex = i;
+      applyCropAccentState(sprite, stage, cell.damageState, season);
+
+      resourceTracker.trackObject(sprite);
+      root.add(sprite);
+      accentMeshes.set(key, sprite);
+    }
+
+    // Remove stale accents
+    for (const [key, spr] of accentMeshes) {
+      if (!activeIds.has(key)) {
+        resourceTracker.disposeObject(spr);
+        accentMeshes.delete(key);
+      }
+    }
+  }
+
+  // ── Harvest FX particle pool ────────────────────────────────────────────────
+  const HARVEST_FX_POOL_SIZE = 48;  // 4 particles × 12 max simultaneous harvests
+  const HARVEST_FX_LIFETIME = 1.5;  // seconds
+  const harvestParticles = [];
+  const harvestFXColors = [0xe8c84a, 0x5aab6b, 0xd44a2a, 0x87CEEB, 0xff9944, 0xcc55aa];
+  {
+    const particleGeo = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+    for (let i = 0; i < HARVEST_FX_POOL_SIZE; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: harvestFXColors[i % harvestFXColors.length],
+        transparent: true,
+        opacity: 1,
+      });
+      const p = new THREE.Mesh(particleGeo, mat);
+      p.visible = false;
+      p.userData.active = false;
+      p.userData.age = 0;
+      p.userData.vx = 0;
+      p.userData.vy = 0;
+      p.userData.vz = 0;
+      root.add(p);
+      harvestParticles.push(p);
+    }
+  }
+
+  function triggerHarvestFX(cellIndex) {
+    const row = Math.floor(cellIndex / COLS);
+    const col = cellIndex % COLS;
+    const cx = (col - (COLS - 1) / 2) * bed.cellSize;
+    const cz = (row - (ROWS - 1) / 2) * bed.cellSize;
+    const cy = bed.soilY + 0.3;
+
+    // Burst 8 particles from this cell
+    let spawned = 0;
+    for (const p of harvestParticles) {
+      if (spawned >= 8) break;
+      if (p.userData.active) continue;
+      p.userData.active = true;
+      p.userData.age = 0;
+      p.position.set(cx, cy, cz);
+      // Radial burst with upward bias
+      const angle = (spawned / 8) * Math.PI * 2 + Math.sin(cellIndex) * 0.5;
+      const speed = 0.6 + (spawned % 3) * 0.2;
+      p.userData.vx = Math.cos(angle) * speed * 0.3;
+      p.userData.vy = 1.2 + (spawned % 4) * 0.3;
+      p.userData.vz = Math.sin(angle) * speed * 0.3;
+      p.visible = true;
+      p.material.opacity = 1;
+      p.scale.setScalar(0.8 + (spawned % 3) * 0.4);
+      spawned++;
+    }
+  }
+
+  function updateHarvestFX(dt) {
+    for (const p of harvestParticles) {
+      if (!p.userData.active) continue;
+      p.userData.age += dt;
+      const t = p.userData.age / HARVEST_FX_LIFETIME;
+      if (t >= 1) {
+        p.userData.active = false;
+        p.visible = false;
+        continue;
+      }
+      // Gravity
+      p.userData.vy -= 3.2 * dt;
+      p.position.x += p.userData.vx * dt;
+      p.position.y += p.userData.vy * dt;
+      p.position.z += p.userData.vz * dt;
+      // Fade out
+      p.material.opacity = Math.max(0, 1 - t * t);
+      // Spin
+      p.rotation.x += dt * 4;
+      p.rotation.z += dt * 3;
+    }
+  }
+
+  // Track which cells have already triggered harvest FX this phase
+  let harvestFXTriggered = new Set();
+  let lastHarvestPhase = null;
 
   // -- Distinct crop mesh builders per faction --
 
@@ -1307,7 +1626,7 @@ function getGrowthScale(phase, season) {
 
       if (!cell.cropId) {
         if (cropMeshes.has(key)) {
-          root.remove(cropMeshes.get(key));
+          resourceTracker.disposeObject(cropMeshes.get(key));
           cropMeshes.delete(key);
         }
         continue;
@@ -1322,12 +1641,13 @@ function getGrowthScale(phase, season) {
           applyCropDamageState(existing, cell.damageState, season);
           continue;
         }
-        root.remove(existing);
+        resourceTracker.disposeObject(existing);
         cropMeshes.delete(key);
       }
 
       const mesh = buildCropMesh(cell.cropId);
       if (!mesh) continue;
+      resourceTracker.trackObject(mesh);
 
       const row = Math.floor(i / COLS);
       const col = i % COLS;
@@ -1346,8 +1666,24 @@ function getGrowthScale(phase, season) {
     // Remove stale meshes
     for (const [key, mesh] of cropMeshes) {
       if (!activeIds.has(key) && key.startsWith('cell-')) {
-        root.remove(mesh);
+        resourceTracker.disposeObject(mesh);
         cropMeshes.delete(key);
+      }
+    }
+
+    // ── Harvest FX: trigger confetti burst on HARVEST/CELEBRATION entry ──
+    const isCelebration = getStyleForPhase(phase) === 'celebration';
+    if (phase !== lastHarvestPhase) {
+      // Phase changed — reset triggered set
+      harvestFXTriggered.clear();
+      lastHarvestPhase = phase;
+    }
+    if (isCelebration) {
+      for (let i = 0; i < grid.length; i++) {
+        if (grid[i].cropId && !harvestFXTriggered.has(i)) {
+          harvestFXTriggered.add(i);
+          triggerHarvestFX(i);
+        }
       }
     }
   }
@@ -1369,11 +1705,17 @@ function getGrowthScale(phase, season) {
         carryForwardType: cell.carryForwardType || null,
         soilFatigue: Math.round((cell.soilFatigue ?? 0) * 10),
       });
+
+      if (supportMeshes.has(key) && supportMeshes.get(key).userData.signature === signature) {
+        activeIds.add(key);
+        continue;
+      }
+
       const propMesh = buildCellSupportProps(cell);
 
       if (!propMesh) {
         if (supportMeshes.has(key)) {
-          root.remove(supportMeshes.get(key));
+          resourceTracker.disposeObject(supportMeshes.get(key));
           supportMeshes.delete(key);
         }
         continue;
@@ -1381,15 +1723,12 @@ function getGrowthScale(phase, season) {
 
       activeIds.add(key);
 
-      if (supportMeshes.has(key) && supportMeshes.get(key).userData.signature === signature) {
-        continue;
-      }
-
       if (supportMeshes.has(key)) {
-        root.remove(supportMeshes.get(key));
+        resourceTracker.disposeObject(supportMeshes.get(key));
         supportMeshes.delete(key);
       }
 
+      resourceTracker.trackObject(propMesh);
       const row = Math.floor(i / COLS);
       const col = i % COLS;
       const x = (col - (COLS - 1) / 2) * bed.cellSize;
@@ -1402,7 +1741,7 @@ function getGrowthScale(phase, season) {
 
     for (const [key, mesh] of supportMeshes) {
       if (!activeIds.has(key)) {
-        root.remove(mesh);
+        resourceTracker.disposeObject(mesh);
         supportMeshes.delete(key);
       }
     }
@@ -1410,16 +1749,25 @@ function getGrowthScale(phase, season) {
 
   function applySeason(season) {
     const config = SEASON_LIGHTING[season] || SEASON_LIGHTING.spring;
-    scene.background.set(config.sky);
-    hemi.color.set(config.sky);
-    hemi.groundColor.set(config.ground);
-    hemi.intensity = config.ambInt;
-    sun.intensity = config.sunInt;
-    fill.intensity = config.fillInt;
-    scene.fog.density = config.fogDensity;
     const angle = (config.sunAngle * Math.PI) / 180;
-    sun.position.set(config.sunX, 8 * Math.sin(angle), config.sunZ);
-    fill.position.set(config.fillX, 4.4 + Math.sin(angle) * 0.5, config.fillZ);
+    lightingState = {
+      background: new THREE.Color(config.sky),
+      fogColor: new THREE.Color(config.sky),
+      fogDensity: config.fogDensity,
+      hemiSky: new THREE.Color(config.sky),
+      hemiGround: new THREE.Color(config.ground),
+      hemiIntensity: config.ambInt,
+      sunColor: new THREE.Color(0xfff4de),
+      sunIntensity: config.sunInt,
+      sunPosition: new THREE.Vector3(config.sunX, 8 * Math.sin(angle), config.sunZ),
+      fillColor: new THREE.Color(0x8ea8bc),
+      fillIntensity: config.fillInt,
+      fillPosition: new THREE.Vector3(config.fillX, 4.4 + Math.sin(angle) * 0.5, config.fillZ),
+      rimColor: new THREE.Color(0xd7e6f5),
+      rimIntensity: 0.18,
+      rimPosition: new THREE.Vector3(-4.4, 3.1, -4.7),
+    };
+    applyCurrentSceneStyle({ force: true });
 
     // Update tree foliage colors
     scenery.updateSeason(season);
@@ -1573,6 +1921,56 @@ function getGrowthScale(phase, season) {
     return -1;
   }
 
+  function getGridLayout() {
+    return bed.cellMeshes.map((mesh, index) => {
+      mesh.updateWorldMatrix(true, false);
+      mesh.getWorldPosition(cellWorldPositionScratch);
+      if (mesh.geometry && !mesh.geometry.boundingBox) {
+        mesh.geometry.computeBoundingBox();
+      }
+
+      const width = mesh.geometry?.boundingBox
+        ? (mesh.geometry.boundingBox.max.x - mesh.geometry.boundingBox.min.x) * mesh.scale.x
+        : 0.25;
+      const depth = mesh.geometry?.boundingBox
+        ? (mesh.geometry.boundingBox.max.z - mesh.geometry.boundingBox.min.z) * mesh.scale.z
+        : 0.25;
+
+      return {
+        index,
+        x: cellWorldPositionScratch.x,
+        y: cellWorldPositionScratch.y,
+        z: cellWorldPositionScratch.z,
+        width,
+        depth,
+      };
+    });
+  }
+
+  function projectWorldPosition(worldPosition) {
+    if (!worldPosition) {
+      return null;
+    }
+
+    projectedPositionScratch.set(
+      worldPosition.x ?? 0,
+      worldPosition.y ?? 0,
+      worldPosition.z ?? 0,
+    );
+    projectedPositionScratch.project(camera);
+
+    return {
+      x: (projectedPositionScratch.x * 0.5 + 0.5) * renderer.domElement.clientWidth,
+      y: (-projectedPositionScratch.y * 0.5 + 0.5) * renderer.domElement.clientHeight,
+      visible: projectedPositionScratch.z >= -1
+        && projectedPositionScratch.z <= 1
+        && projectedPositionScratch.x >= -1.05
+        && projectedPositionScratch.x <= 1.05
+        && projectedPositionScratch.y >= -1.05
+        && projectedPositionScratch.y <= 1.05,
+    };
+  }
+
   // Temporarily highlight a cell (e.g. after crop placement)
   function flashCell(cellIndex, color, durationMs) {
     if (cellIndex < 0 || cellIndex >= bed.cellMeshes.length) return;
@@ -1599,6 +1997,7 @@ function getGrowthScale(phase, season) {
   }
 
   return {
+    canvas: renderer.domElement,
     resize(width, height) {
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
@@ -1607,19 +2006,25 @@ function getGrowthScale(phase, season) {
     sync(state) {
       lastSyncedState = state;
       currentGridState = state.season.grid;
+      const seasonChanged = state.season.season !== currentSeasonId || !lightingState;
       currentSeasonId = state.season.season;
       for (let i = 0; i < bed.cellMeshes.length; i++) {
         applyCellVisualState(i);
       }
       syncCrops(state.season.grid, state.season.phase, state.season.season);
       syncSupportProps(state.season.grid);
-      applySeason(state.season.season);
+      syncCropAccents(state.season.grid, state.season.phase, state.season.season);
+      if (seasonChanged) {
+        applySeason(state.season.season);
+      }
 
       // Trigger ambient weather on season change
       if (state.season.season !== lastSeason) {
         lastSeason = state.season.season;
         weather.triggerForEvent(null, state.season.season);
+        dayNight.setSeason?.(state.season.season);
       }
+      dayNight.setEnabled(Boolean(state.settings?.dayNightEnabled));
 
       // ── Scenery state-driven updates ───────────────────────────────────
       scenery.showPlanningProps(state.season.phase === 'PLANNING');
@@ -1647,6 +2052,7 @@ function getGrowthScale(phase, season) {
       // ── End creature visibility ────────────────────────────────────────
     },
     render() {
+      dayNight.update(1 / 60);
       const time = performance.now() * 0.001; // seconds
 
       // ── Trellis wire wind oscillation ──────────────────────────────────
@@ -1844,20 +2250,49 @@ function getGrowthScale(phase, season) {
       scenery.updateFireflies(dt);
       // ── End scenery per-frame animations ─────────────────────────────
 
+      // ── Harvest FX particle update ──────────────────────────────────
+      updateHarvestFX(dt);
+      // ── End harvest FX ──────────────────────────────────────────────
+
       renderer.render(scene, camera);
     },
     raycastCell,
+    getGridLayout,
+    projectWorldPosition,
+    updatePointer,
+    clearPointerHover,
+    setInteractionHighlight,
+    clearInteractionHighlight,
     flashCell,
     setTargetableCells,
     clearTargeting,
+    setPlayerState,
+    setPlayerTool,
+    setScenePhase,
+    setSceneStyle,
+    setDayNightEnabled(enabled) {
+      dayNight.setEnabled(Boolean(enabled));
+    },
     setCameraPreset,
     applyMood,
     resetMood,
     pulseEventFocus,
     playSceneCue,
     weather,
+    dayNight,
     dispose() {
-      renderer.dispose();
+      disposeGardenScene({
+        container,
+        renderer,
+        scene,
+        weather,
+        dayNight,
+        cameraController: camCtrl,
+        resourceTracker,
+        cropMeshes,
+        supportMeshes,
+        accentMeshes,
+      });
     },
   };
 }

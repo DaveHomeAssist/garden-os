@@ -7,6 +7,27 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="../assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/favicon/apple-touch-icon.png">
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  UI ISSUES TABLE — Garden OS                                    ║
+  ║                                                                 ║
+  ║  Based on: 30-shared-resources/shared-standards/                ║
+  ║            UI_ISSUES_TABLE_TEMPLATE.html                        ║
+  ║                                                                 ║
+  ║  AGENT UPDATE INSTRUCTIONS:                                     ║
+  ║  1. Issues live in the <script id="issue-data"> JSON block      ║
+  ║  2. To add an issue: append to the JSON array                   ║
+  ║  3. To resolve: change "status" to "done", add "resolved" date  ║
+  ║  4. To defer: change "status" to "deferred"                     ║
+  ║  5. Update data-last-verified on <main> after any review        ║
+  ║  6. Do NOT edit the HTML card markup — it renders from JSON     ║
+  ║                                                                 ║
+  ║  CUSTOMIZATION:                                                 ║
+  ║  - Project config set below: Garden OS fonts, nav, areas, tools ║
+  ║  - CSS custom properties use Garden OS design system            ║
+  ║  - Storage key: gos-ui-issues-user                              ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
 <title>Garden OS — UI Issues Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -75,7 +96,6 @@
   .dot-open { background: var(--rust); }
   .dot-deferred { background: var(--text-muted); }
 
-  /* ── Filter bar ── */
   .filter-bar {
     display: flex; gap: .4rem; margin-bottom: 1.25rem; flex-wrap: wrap;
     align-items: center;
@@ -93,11 +113,7 @@
   .fbtn:hover { border-color: var(--border); color: var(--text); }
   .fbtn.active { background: var(--soil); color: var(--sun); border-color: var(--soil); }
   .fbtn:focus-visible { outline: 2.5px solid var(--leaf-bright); outline-offset: 2px; }
-  .fbtn .cnt {
-    font-size: .6rem; opacity: .7; margin-left: .2rem;
-  }
 
-  /* ── Collapsible sections ── */
   .issue-group {
     background: var(--panel); border: 1.5px solid var(--border-soft);
     border-radius: 8px; overflow: hidden; margin-bottom: 1rem;
@@ -127,7 +143,6 @@
   .group-body { display: none; padding: .5rem; }
   .issue-group.open .group-body { display: block; }
 
-  /* ── Card grid ── */
   .card-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: .6rem;
@@ -151,9 +166,9 @@
     font-family: var(--mono); font-size: .6rem; letter-spacing: .06em;
     text-transform: uppercase; padding: .1rem .4rem; border-radius: 999px;
   }
-  .card-sev-crit { color: #fff; background: var(--rust); }
-  .card-sev-med { color: #a08520; background: var(--sun-wash); border: 1px solid var(--sun-pale); }
-  .card-sev-low { color: var(--text-muted); background: var(--cream-mid); border: 1px solid var(--border-soft); }
+  .card-sev-P1 { color: #fff; background: var(--rust); }
+  .card-sev-P2 { color: #a08520; background: var(--sun-wash); border: 1px solid var(--sun-pale); }
+  .card-sev-P3 { color: var(--text-muted); background: var(--cream-mid); border: 1px solid var(--border-soft); }
   .card-title {
     font-size: .88rem; font-weight: 500; line-height: 1.4;
   }
@@ -178,7 +193,6 @@
   }
   .issue-card.expanded .card-expand-hint { display: none; }
 
-  /* ── Status badges on cards ── */
   .status {
     display: inline-flex; align-items: center; gap: .35rem;
     font-family: var(--mono); font-size: .62rem; font-weight: 500;
@@ -190,7 +204,6 @@
   .status-open { background: var(--rust-wash); color: var(--rust); border: 1px solid var(--rust-pale); }
   .status-deferred { background: var(--cream-mid); color: var(--text-soft); border: 1px solid var(--border-soft); }
 
-  /* ── Form ── */
   .form-wrap { margin-top: 1.5rem; }
   .form-header {
     font-family: var(--serif); font-size: 1.15rem; font-weight: 600; margin-bottom: .75rem;
@@ -202,10 +215,11 @@
     box-shadow: 0 2px 8px rgba(44,27,11,.06);
   }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-  .form-grid .full { grid-column: 1 / -1; }
+  .form-field { display: flex; flex-direction: column; gap: .25rem; }
+  .form-field.full { grid-column: 1 / -1; }
   .form-field label {
-    display: block; font-family: var(--mono); font-size: .68rem; font-weight: 500;
-    letter-spacing: .1em; text-transform: uppercase; color: var(--text-soft); margin-bottom: .3rem;
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-soft);
   }
   .form-field input, .form-field select, .form-field textarea {
     width: 100%; font-family: var(--sans); font-size: .88rem; color: var(--text);
@@ -217,22 +231,21 @@
     box-shadow: 0 0 0 2.5px rgba(90,171,107,.15);
   }
   .form-field textarea { resize: vertical; min-height: 60px; }
-  .form-actions { display: flex; align-items: center; gap: .75rem; margin-top: .85rem; }
+  .form-actions {
+    display: flex; align-items: center; gap: .75rem; margin-top: .85rem;
+  }
   .btn-submit {
-    font-family: var(--sans); font-size: .88rem; font-weight: 600; color: #fff;
-    background: var(--leaf-bright); border: none; border-radius: 999px;
-    padding: .5rem 1.25rem; cursor: pointer; transition: background .15s, transform .1s;
+    font-family: var(--mono); font-size: .75rem; font-weight: 500;
+    letter-spacing: .06em; padding: .5rem 1.2rem;
+    background: var(--leaf); color: #fff; border: none; border-radius: 6px;
+    cursor: pointer; transition: background .15s;
   }
-  .btn-submit:hover { background: var(--leaf); transform: translateY(-1px); }
-  .btn-submit:focus-visible { outline: 3px solid var(--leaf-bright); outline-offset: 3px; }
-  .form-msg { font-family: var(--mono); font-size: .72rem; opacity: 0; transition: opacity .2s; }
+  .btn-submit:hover { background: var(--leaf-bright); }
+  .btn-submit:focus-visible { outline: 2.5px solid var(--sun); outline-offset: 2px; }
+  .form-msg {
+    font-family: var(--mono); font-size: .72rem; opacity: 0; transition: opacity .2s;
+  }
   .form-msg.visible { opacity: 1; }
-  .del-btn {
-    background: none; border: none; color: var(--rust); cursor: pointer;
-    font-size: .75rem; padding: .15rem .4rem; border-radius: 4px; font-family: var(--mono);
-    transition: background .15s;
-  }
-  .del-btn:hover { background: var(--rust-wash); }
 
   .os-footer {
     background: var(--soil); color: rgba(245,237,224,.5); text-align: center;
@@ -257,22 +270,13 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<nav class="os-nav" aria-label="Garden OS">
-  <a href="../index.html">Home</a>
-  <a href="../garden-league-simulator-v3.html">Play Game</a>
-  <a href="../garden-planner-v4.html">Planner</a>
-  <a href="../garden-cage-build-guide.html">Build Guide</a>
-  <a href="../garden-cage-ops-guide.html">Ops Guide</a>
-  <a href="../how-it-thinks.html">How It Thinks</a>
-  <a href="../scoring-visualizer.html" class="bridge">Dev Tools &rarr;</a>
-</nav>
-
-<main id="main">
+<nav class="os-nav" id="navBar" aria-label="Garden OS"></nav>
+<main id="main" data-last-verified="2026-03-22">
 <div class="wrap">
   <header>
-    <div class="eyebrow">Garden OS &middot; UI Audit Refresh &middot; Updated 2026-03-17</div>
+    <div class="eyebrow" id="eyebrow"></div>
     <h1>Issues Tracker</h1>
-    <p class="subtitle">Repo-state tracker for Planner v4 and Season Engine v3/v4. Verified fixes are closed against the current codebase, open items are still actionable, and deferred items are backlog work rather than live regressions.</p>
+    <p class="subtitle" id="subtitle"></p>
     <div class="stats" id="stats">
       <div class="stat"><span class="stat-dot dot-done"></span> <span id="stat-done">0</span> verified fixed</div>
       <div class="stat"><span class="stat-dot dot-partial"></span> <span id="stat-partial">0</span> follow-up</div>
@@ -281,362 +285,31 @@
       <div class="stat" style="color:var(--text-muted)"><span id="stat-total">0</span> tracked</div>
     </div>
   </header>
-
-  <div class="filter-bar" role="group" aria-label="Filter issues">
-    <span class="label">Show:</span>
-    <button class="fbtn active" data-filter="all">All</button>
-    <button class="fbtn" data-filter="open">Open</button>
-    <button class="fbtn" data-filter="partial">Follow-up</button>
-    <button class="fbtn" data-filter="done">Verified fixed</button>
-    <button class="fbtn" data-filter="deferred">Deferred</button>
-    <button class="fbtn" data-filter="planner">Planner</button>
-    <button class="fbtn" data-filter="engine">Engine</button>
-  </div>
-
-  <!-- ═══ RESOLVED ═══ -->
-  <section class="issue-group" data-status="done">
-    <button class="group-toggle" type="button" aria-expanded="false">
-      <span>Verified Fixed (<span class="g-count">27</span>)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-done g-count-badge">27</span><span class="chev">&rsaquo;</span></span>
-    </button>
-    <div class="group-body">
-      <div class="card-grid">
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Tutorial</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Replay tutorial button added to settings</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Users who skipped can now re-trigger</dd><dt>Location</dt><dd>Planner settings menu L1352 &mdash; wired at L5194</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Language</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Jargon &ldquo;faction&rdquo; removed from all UI labels</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Players no longer blocked by undefined terminology</dd><dt>Location</dt><dd>Season Engine dialogue, chapter metadata, UI labels</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Language</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Jargon &ldquo;beat&rdquo; and &ldquo;token&rdquo; clarified</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Rules comprehension improved</dd><dt>Location</dt><dd>HOWTO strings, dialogue lines, shortcut labels</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
-          <div class="card-title">&ldquo;1 action per phase&rdquo; now surfaced at decision time</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Choices no longer feel arbitrary</dd><dt>Location</dt><dd>Season Engine planning phases, toolbar messaging</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Factor bars explained in-context</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Users can now interpret crop scores</dd><dt>Location</dt><dd>Score tab factor bars</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Clarity</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Score-to-explanation path connected</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Users can self-serve scoring answers</dd><dt>Location</dt><dd>&ldquo;How scoring works&rdquo; link, Learn More</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Inspect click no longer modifies grid</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Trust restored &mdash; safe to explore</dd><dt>Location</dt><dd>Planner v4 three tool modes</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Neutral &ldquo;just look&rdquo; default cursor</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>No accidental edits on load</dd><dt>Location</dt><dd>Planner v4 &mdash; inspect is default tool</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Tool parity</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Eraser added to Planner</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Context-switching friction eliminated</dd><dt>Location</dt><dd>Planner v4 toolbar &mdash; eraser with drag + shortcut E</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Notes panel now scrolls</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Content below fold now accessible</dd><dt>Location</dt><dd>Planner v4 &mdash; overflow-y: auto</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Harvest log button binding fixed</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>No longer intermittently unresponsive</dd><dt>Location</dt><dd>Planner v4 event binding</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Copy</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Frost line clearly labeled</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Calendar no longer misread</dd><dt>Location</dt><dd>Planner v4 &mdash; explicit labels + zone footer</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Discoverability</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Inspect panel entry point made obvious</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Core feature no longer missed</dd><dt>Location</dt><dd>Planner v4 &mdash; toolbar button, tab bar, empty-state prompt</dd></dl>
-        </div>
-        <!-- Verified against current repo state -->
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Companion panel fixed &mdash; flat array iteration <span class="card-sev card-sev-crit">was CRIT</span></div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Verification</dt><dd>Current planner companion collection already iterates the flat bed array safely. This was a stale audit item, not a remaining bug.</dd><dt>Location</dt><dd>Planner companion panel crop collection path</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Tutorial</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Tutorial crop key fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Verification</dt><dd>The current planner tutorial already uses <code>cherry_tomato</code> for the guided flow references.</dd><dt>Location</dt><dd>Planner tutorial seed data</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">UI bug</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Settings score NaN fixed <span class="card-sev card-sev-crit">was CRIT</span></div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Verification</dt><dd>Current engine score rendering reads the numeric final score safely. The object <code>.toFixed()</code> crash path is already closed in the active engine.</dd><dt>Location</dt><dd>Season Engine settings score render path</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Data</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Cage 4x8 preset dimension swap fixed</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Verification</dt><dd>The current cage preset button already uses <code>setPreset(4,8)</code>. The remaining <code>setPreset(8,4)</code> path is the default-bed reset and is intentional.</dd><dt>Location</dt><dd>Planner cage preset controls</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Right tab restore now includes all 6 tabs</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Added companions, calendar, harvest to restore whitelist</dd><dt>Location</dt><dd>Planner L2447</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Feature</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Bed delete added with confirmation dialog</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>New &ldquo;Delete this bed&rdquo; in danger zone, minimum-1-bed guard</dd><dt>Location</dt><dd>Planner settings menu</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Responsive</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Mobile sidebar collapse toggles added</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Sidebars start collapsed on mobile, toggle buttons with aria-expanded</dd><dt>Location</dt><dd>Planner @900px breakpoint</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Settings panel dialog role + focus trap</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Added <code>role="dialog"</code>, <code>aria-modal</code>, focus trap, Escape handling</dd><dt>Location</dt><dd>Season Engine settings panel</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
-          <div class="card-title">ARIA pass: labels, roles, and pressed states</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Bed inputs labeled, crop search aria-label, palette items role=button, category filters radiogroup, tool buttons aria-pressed, warn badge role=status</dd><dt>Location</dt><dd>Planner: bed inputs, palette, toolbar, notes badge</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">State</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Planner reload path now survives malformed storage and stale restore state</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Snapshot restore validates shape, workspace restore clears transient pointer state, selection/focus normalize, and <code>sunDirection</code> now persists through save/load without changing the storage schema.</dd><dt>Location</dt><dd>Planner persistence, restore, tutorial targets</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Responsive</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Planner shell now gives the board priority at medium and mobile widths</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Side rails shrink before the board, mobile stacks the board first, and collapsed sidebars keep a stable toggle height instead of stretching the page.</dd><dt>Location</dt><dd>Planner app shell and sidebar breakpoints</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Planner menu and confirm dialogs now open with focus and return it on close</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Settings menu focuses the first row, traps Tab while open, and restores focus to the trigger. Confirm dialog now focuses an action button and returns focus when dismissed.</dd><dt>Location</dt><dd>Planner settings menu and confirm dialog</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Mode safety</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Season Engine planning clicks no longer masquerade as edits when nothing changes</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Neutral clicks inspect/select only, same-crop clicks no longer fake-save, empty eraser clicks are harmless, and <code>Escape</code> returns to neutral inspect behavior in v3/v4.</dd><dt>Location</dt><dd>Season Engine v3/v4 planning interaction flow</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-done">Done</span></div>
-          <div class="card-title">Engine ARIA: eraser, beats, interventions, skip-nav</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Fix</dt><dd>Eraser aria-pressed, beat dots labeled, intervention buttons aria-label, skip-nav text fixed, duplicate rules link fixed, dead CSS removed</dd><dt>Location</dt><dd>Season Engine: eraser, HUD, interventions, settings, skip-nav</dd></dl>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ PARTIAL ═══ -->
-  <section class="issue-group open" data-status="partial">
-    <button class="group-toggle" type="button" aria-expanded="true">
-      <span>Needs Verification / Follow-up (<span class="g-count">4</span>)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-partial g-count-badge">4</span><span class="chev">&rsaquo;</span></span>
-    </button>
-    <div class="group-body">
-      <div class="card-grid">
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Follow-up</span></div>
-          <div class="card-title">Mulch/protect is per-cell only, no drag paint</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Zone edits are painful</dd><dt>Current state</dt><dd>Shift+click multi-select works, drag not implemented</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Interaction</span><span class="status status-partial">Follow-up</span></div>
-          <div class="card-title">No multi-cell selection or batch actions</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Row/zone workflows slow</dd><dt>Current state</dt><dd>Interventions only, not general-purpose</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Resource</span><span class="status status-partial">Follow-up</span></div>
-          <div class="card-title">Token economy is opaque</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Strategy collapses, users cannot plan</dd><dt>Current state</dt><dd>Count shown but rules not explained</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Goals</span><span class="status status-partial">Follow-up</span></div>
-          <div class="card-title">No persistent scoreboard / objective HUD</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Users do not know how to win</dd><dt>Current state</dt><dd>Target in results panel, scrolls away</dd></dl>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ DEFERRED ═══ -->
-  <section class="issue-group" data-status="deferred">
-    <button class="group-toggle" type="button" aria-expanded="false">
-      <span>Deferred / Planned (<span class="g-count">6</span>)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-deferred g-count-badge">6</span><span class="chev">&rsaquo;</span></span>
-    </button>
-    <div class="group-body">
-      <div class="card-grid">
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">State</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Extract <code>buildCarryForward()</code> and deduplicate chapter transition logic</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Code quality / maintainability pass, not a live user-facing break.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 2A</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">State</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Add saved-state versioning and migration guardrails</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Hardening work with good ROI, but lower urgency than open interaction and accessibility gaps.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 2B/2C</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Resilience</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Expose save failures instead of silent catches</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Useful state-hardening improvement, but not currently verified as a live break in normal play.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 3A</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Add color-blind-safe score indicators beyond hue alone</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Still worth doing, but this is a polish pass after current interaction gaps are closed.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 3D</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Content</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Wire orphaned keepsakes, harvest yield dialogue, and chapter 11/12 dialogue pools</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Feature activation backlog. Existing content is half-built but not on the critical bug path.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 4A-4C</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Performance</span><span class="status status-deferred">Deferred</span></div>
-          <div class="card-title">Cache <code>bedScore()</code> during planning and reuse it in render</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Why deferred</dt><dd>Performance optimization is sequenced after correctness, interaction safety, and content wiring.</dd><dt>Source</dt><dd>Season Engine patch plan Phase 4D</dd></dl>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ OPEN ═══ -->
-  <section class="issue-group open" data-status="open">
-    <button class="group-toggle" type="button" aria-expanded="true">
-      <span>Open (<span class="g-count">7</span>)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-open g-count-badge">7</span><span class="chev">&rsaquo;</span></span>
-    </button>
-    <div class="group-body">
-      <div class="card-grid">
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Accessibility</span><span class="card-sev card-sev-med">MED</span></div>
-          <div class="card-title">Full-screen story modes lack landmark roles</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Screen readers get no context that view changed (chapter end, epilogue, sauce)</dd><dt>Location</dt><dd>Season Engine chapter/winter/sauce/epilogue screens</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Mode safety</span><span class="card-sev card-sev-med">MED</span></div>
-          <div class="card-title">Season Engine has no inspect mode</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Clicking places if crop selected &mdash; trust breaker, inconsistent with Planner</dd><dt>Location</dt><dd>Season Engine cellClick()</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Discoverability</span><span class="card-sev card-sev-med">MED</span></div>
-          <div class="card-title">No visible inspect button or panel in Engine</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Cell inspection hidden, users must discover by clicking</dd><dt>Location</dt><dd>Season Engine toolbar</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Layout</span><span class="card-sev card-sev-med">MED</span></div>
-          <div class="card-title">Results panel info below scroll fold</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Factor bars, event details, narrator text can be invisible without scrolling</dd><dt>Location</dt><dd>Season Engine right panel</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Tutorial</span><span class="card-sev card-sev-med">MED</span></div>
-          <div class="card-title">Steps 2 &amp; 4 do not lock clicks to target cell</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>User places crops in wrong cells, breaks narrative and subsequent steps</dd><dt>Location</dt><dd>Planner TUTORIAL_STEPS[1] and [3]</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="planner">
-          <div class="card-top"><span class="card-area">Tutorial</span><span class="card-sev card-sev-low">LOW</span></div>
-          <div class="card-title">First-run prompt uses raw browser confirm()</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Breaks warm aesthetic, feels like system error</dd><dt>Location</dt><dd>Planner boot sequence</dd></dl>
-        </div>
-        <div class="issue-card" tabindex="0" data-tool="engine">
-          <div class="card-top"><span class="card-area">Keyboard</span><span class="card-sev card-sev-low">LOW</span></div>
-          <div class="card-title">No keyboard shortcut for inspect/neutral mode</div>
-          <div class="card-expand-hint">click to expand</div>
-          <dl class="card-detail"><dt>Impact</dt><dd>Power users cannot switch modes via keyboard</dd><dt>Location</dt><dd>Season Engine</dd></dl>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ USER SUBMITTED ═══ -->
-  <section class="issue-group" id="userGroup" style="display:none" data-status="open">
-    <button class="group-toggle" type="button" aria-expanded="false">
-      <span id="userGroupTitle">User Submitted (0)</span>
-      <span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-open" id="userBadge">0</span><span class="chev">&rsaquo;</span></span>
-    </button>
-    <div class="group-body">
-      <div class="card-grid" id="userBody"></div>
-    </div>
-  </section>
-
-  <!-- ═══ FORM ═══ -->
+  <div class="filter-bar" role="group" aria-label="Filter issues" id="filterBar"></div>
+  <div id="groups"></div>
   <div class="form-wrap">
-    <div class="form-header">&#x1F4DD; Report a Bug</div>
+    <div class="form-header">Report a Bug</div>
     <form class="form-panel" id="issueForm">
       <div class="form-grid">
         <div class="form-field">
           <label for="f-area">Area</label>
-          <select id="f-area" required>
-            <option value="">Select...</option>
-            <option>Language</option><option>Clarity</option><option>Mode safety</option>
-            <option>Tool parity</option><option>Interaction</option><option>Resource clarity</option>
-            <option>Goals</option><option>UI bug</option><option>Copy</option>
-            <option>Discoverability</option><option>Keyboard</option><option>Feedback</option>
-            <option>Resilience</option><option>Accessibility</option><option>Code quality</option>
-            <option>Tutorial</option><option>Layout</option><option>Other</option>
+          <select id="f-area" required></select>
+        </div>
+        <div class="form-field">
+          <label for="f-sev">Severity</label>
+          <select id="f-sev" required>
+            <option value="P1">P1 — Blocks usage</option>
+            <option value="P2" selected>P2 — Degrades function</option>
+            <option value="P3">P3 — Polish / edge case</option>
           </select>
         </div>
         <div class="form-field">
           <label for="f-location">Location</label>
           <input id="f-location" type="text" placeholder="e.g. Season Engine toolbar">
+        </div>
+        <div class="form-field">
+          <label for="f-tool">Tool / Area Tag</label>
+          <input id="f-tool" type="text" placeholder="e.g. planner, engine">
         </div>
         <div class="form-field full">
           <label for="f-issue">Issue</label>
@@ -655,140 +328,786 @@
   </div>
 </div>
 </main>
+<footer class="os-footer" id="footerEl"></footer>
 
-<footer class="os-footer">
-  Garden OS &middot; UI Issues Tracker &middot; Updated 2026-03-17 &middot;
-  <a href="../index.html">Back to Garden OS</a>
-</footer>
+<!--
+  ═══════════════════════════════════════════════════════════════
+  ISSUE DATA — This is the single source of truth.
+  Agents: edit this JSON block to add, resolve, or defer issues.
+  Schema per entry:
+    id:           string  — zero-padded 3-digit sequential ID
+    severity:     string  — "P1" | "P2" | "P3"
+    status:       string  — "open" | "partial" | "done" | "deferred"
+    area:         string  — category tag (e.g. "Accessibility", "UI bug")
+    tool:         string  — tool/component filter tag ("planner" or "engine")
+    title:        string  — short issue title
+    impact:       string  — user impact description
+    fix:          string  — fix description (optional)
+    verification: string  — verification notes (optional)
+    location:     string  — file/component/line reference
+    notes:        string  — additional context (optional)
+    added:        string  — ISO date when issue was opened
+    resolved:     string  — ISO date when resolved (optional)
+  ═══════════════════════════════════════════════════════════════
+-->
+<script type="application/json" id="issue-data">
+{
+  "project": "Garden OS",
+  "subtitle": "Repo-state tracker for Planner v4 and Season Engine v3/v4. Verified fixes are closed against the current codebase, open items are still actionable, and deferred items are backlog work rather than live regressions.",
+  "navLinks": [
+    { "label": "Home", "href": "../index.html" },
+    { "label": "Play Game", "href": "../garden-league-simulator-v3.html" },
+    { "label": "Planner", "href": "../garden-planner-v4.html" },
+    { "label": "Build Guide", "href": "../garden-cage-build-guide.html" },
+    { "label": "Ops Guide", "href": "../garden-cage-ops-guide.html" },
+    { "label": "How It Thinks", "href": "../how-it-thinks.html" },
+    { "label": "Dev Tools \u2192", "href": "../scoring-visualizer.html", "class": "bridge" }
+  ],
+  "areaOptions": [
+    "Accessibility", "Clarity", "Code quality", "Content", "Copy",
+    "Data", "Discoverability", "Feedback", "Feature", "Goals",
+    "Interaction", "Keyboard", "Language", "Layout", "Mode safety",
+    "Performance", "Resilience", "Resource clarity", "Responsive",
+    "State", "Tool parity", "Tutorial", "UI bug", "Other"
+  ],
+  "toolFilters": [
+    { "key": "planner", "label": "Planner" },
+    { "key": "engine", "label": "Engine" }
+  ],
+  "storageKey": "gos-ui-issues-user",
+  "issues": [
+    {
+      "id": "001",
+      "severity": "P2",
+      "status": "done",
+      "area": "Tutorial",
+      "tool": "planner",
+      "title": "Replay tutorial button added to settings",
+      "impact": "Users who skipped can now re-trigger",
+      "location": "Planner settings menu L1352 \u2014 wired at L5194"
+    },
+    {
+      "id": "002",
+      "severity": "P2",
+      "status": "done",
+      "area": "Language",
+      "tool": "engine",
+      "title": "Jargon \u201cfaction\u201d removed from all UI labels",
+      "impact": "Players no longer blocked by undefined terminology",
+      "location": "Season Engine dialogue, chapter metadata, UI labels"
+    },
+    {
+      "id": "003",
+      "severity": "P2",
+      "status": "done",
+      "area": "Language",
+      "tool": "engine",
+      "title": "Jargon \u201cbeat\u201d and \u201ctoken\u201d clarified",
+      "impact": "Rules comprehension improved",
+      "location": "HOWTO strings, dialogue lines, shortcut labels"
+    },
+    {
+      "id": "004",
+      "severity": "P2",
+      "status": "done",
+      "area": "Clarity",
+      "tool": "engine",
+      "title": "\u201c1 action per phase\u201d now surfaced at decision time",
+      "impact": "Choices no longer feel arbitrary",
+      "location": "Season Engine planning phases, toolbar messaging"
+    },
+    {
+      "id": "005",
+      "severity": "P2",
+      "status": "done",
+      "area": "Clarity",
+      "tool": "planner",
+      "title": "Factor bars explained in-context",
+      "impact": "Users can now interpret crop scores",
+      "location": "Score tab factor bars"
+    },
+    {
+      "id": "006",
+      "severity": "P2",
+      "status": "done",
+      "area": "Clarity",
+      "tool": "planner",
+      "title": "Score-to-explanation path connected",
+      "impact": "Users can self-serve scoring answers",
+      "location": "\u201cHow scoring works\u201d link, Learn More"
+    },
+    {
+      "id": "007",
+      "severity": "P2",
+      "status": "done",
+      "area": "Mode safety",
+      "tool": "planner",
+      "title": "Inspect click no longer modifies grid",
+      "impact": "Trust restored \u2014 safe to explore",
+      "location": "Planner v4 three tool modes"
+    },
+    {
+      "id": "008",
+      "severity": "P2",
+      "status": "done",
+      "area": "Mode safety",
+      "tool": "planner",
+      "title": "Neutral \u201cjust look\u201d default cursor",
+      "impact": "No accidental edits on load",
+      "location": "Planner v4 \u2014 inspect is default tool"
+    },
+    {
+      "id": "009",
+      "severity": "P2",
+      "status": "done",
+      "area": "Tool parity",
+      "tool": "planner",
+      "title": "Eraser added to Planner",
+      "impact": "Context-switching friction eliminated",
+      "location": "Planner v4 toolbar \u2014 eraser with drag + shortcut E"
+    },
+    {
+      "id": "010",
+      "severity": "P2",
+      "status": "done",
+      "area": "UI bug",
+      "tool": "planner",
+      "title": "Notes panel now scrolls",
+      "impact": "Content below fold now accessible",
+      "location": "Planner v4 \u2014 overflow-y: auto"
+    },
+    {
+      "id": "011",
+      "severity": "P2",
+      "status": "done",
+      "area": "UI bug",
+      "tool": "planner",
+      "title": "Harvest log button binding fixed",
+      "impact": "No longer intermittently unresponsive",
+      "location": "Planner v4 event binding"
+    },
+    {
+      "id": "012",
+      "severity": "P2",
+      "status": "done",
+      "area": "Copy",
+      "tool": "planner",
+      "title": "Frost line clearly labeled",
+      "impact": "Calendar no longer misread",
+      "location": "Planner v4 \u2014 explicit labels + zone footer"
+    },
+    {
+      "id": "013",
+      "severity": "P2",
+      "status": "done",
+      "area": "Discoverability",
+      "tool": "planner",
+      "title": "Inspect panel entry point made obvious",
+      "impact": "Core feature no longer missed",
+      "location": "Planner v4 \u2014 toolbar button, tab bar, empty-state prompt"
+    },
+    {
+      "id": "014",
+      "severity": "P1",
+      "status": "done",
+      "area": "Data",
+      "tool": "planner",
+      "title": "Companion panel fixed \u2014 flat array iteration (was P1)",
+      "verification": "Current planner companion collection already iterates the flat bed array safely. This was a stale audit item, not a remaining bug.",
+      "location": "Planner companion panel crop collection path"
+    },
+    {
+      "id": "015",
+      "severity": "P1",
+      "status": "done",
+      "area": "Tutorial",
+      "tool": "planner",
+      "title": "Tutorial crop key fixed (was P1)",
+      "verification": "The current planner tutorial already uses cherry_tomato for the guided flow references.",
+      "location": "Planner tutorial seed data"
+    },
+    {
+      "id": "016",
+      "severity": "P1",
+      "status": "done",
+      "area": "UI bug",
+      "tool": "engine",
+      "title": "Settings score NaN fixed (was P1)",
+      "verification": "Current engine score rendering reads the numeric final score safely. The object .toFixed() crash path is already closed in the active engine.",
+      "location": "Season Engine settings score render path"
+    },
+    {
+      "id": "017",
+      "severity": "P2",
+      "status": "done",
+      "area": "Data",
+      "tool": "planner",
+      "title": "Cage 4x8 preset dimension swap fixed",
+      "verification": "The current cage preset button already uses setPreset(4,8). The remaining setPreset(8,4) path is the default-bed reset and is intentional.",
+      "location": "Planner cage preset controls"
+    },
+    {
+      "id": "018",
+      "severity": "P2",
+      "status": "done",
+      "area": "State",
+      "tool": "planner",
+      "title": "Right tab restore now includes all 6 tabs",
+      "fix": "Added companions, calendar, harvest to restore whitelist",
+      "location": "Planner L2447"
+    },
+    {
+      "id": "019",
+      "severity": "P2",
+      "status": "done",
+      "area": "Feature",
+      "tool": "planner",
+      "title": "Bed delete added with confirmation dialog",
+      "fix": "New \u201cDelete this bed\u201d in danger zone, minimum-1-bed guard",
+      "location": "Planner settings menu"
+    },
+    {
+      "id": "020",
+      "severity": "P2",
+      "status": "done",
+      "area": "Responsive",
+      "tool": "planner",
+      "title": "Mobile sidebar collapse toggles added",
+      "fix": "Sidebars start collapsed on mobile, toggle buttons with aria-expanded",
+      "location": "Planner @900px breakpoint"
+    },
+    {
+      "id": "021",
+      "severity": "P2",
+      "status": "done",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Settings panel dialog role + focus trap",
+      "fix": "Added role=\"dialog\", aria-modal, focus trap, Escape handling",
+      "location": "Season Engine settings panel"
+    },
+    {
+      "id": "022",
+      "severity": "P2",
+      "status": "done",
+      "area": "Accessibility",
+      "tool": "planner",
+      "title": "ARIA pass: labels, roles, and pressed states",
+      "fix": "Bed inputs labeled, crop search aria-label, palette items role=button, category filters radiogroup, tool buttons aria-pressed, warn badge role=status",
+      "location": "Planner: bed inputs, palette, toolbar, notes badge"
+    },
+    {
+      "id": "023",
+      "severity": "P2",
+      "status": "done",
+      "area": "State",
+      "tool": "planner",
+      "title": "Planner reload path now survives malformed storage and stale restore state",
+      "fix": "Snapshot restore validates shape, workspace restore clears transient pointer state, selection/focus normalize, and sunDirection now persists through save/load without changing the storage schema.",
+      "location": "Planner persistence, restore, tutorial targets"
+    },
+    {
+      "id": "024",
+      "severity": "P2",
+      "status": "done",
+      "area": "Responsive",
+      "tool": "planner",
+      "title": "Planner shell now gives the board priority at medium and mobile widths",
+      "fix": "Side rails shrink before the board, mobile stacks the board first, and collapsed sidebars keep a stable toggle height instead of stretching the page.",
+      "location": "Planner app shell and sidebar breakpoints"
+    },
+    {
+      "id": "025",
+      "severity": "P2",
+      "status": "done",
+      "area": "Accessibility",
+      "tool": "planner",
+      "title": "Planner menu and confirm dialogs now open with focus and return it on close",
+      "fix": "Settings menu focuses the first row, traps Tab while open, and restores focus to the trigger. Confirm dialog now focuses an action button and returns focus when dismissed.",
+      "location": "Planner settings menu and confirm dialog"
+    },
+    {
+      "id": "026",
+      "severity": "P2",
+      "status": "done",
+      "area": "Mode safety",
+      "tool": "engine",
+      "title": "Season Engine planning clicks no longer masquerade as edits when nothing changes",
+      "fix": "Neutral clicks inspect/select only, same-crop clicks no longer fake-save, empty eraser clicks are harmless, and Escape returns to neutral inspect behavior in v3/v4.",
+      "location": "Season Engine v3/v4 planning interaction flow"
+    },
+    {
+      "id": "027",
+      "severity": "P2",
+      "status": "done",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Engine ARIA: eraser, beats, interventions, skip-nav",
+      "fix": "Eraser aria-pressed, beat dots labeled, intervention buttons aria-label, skip-nav text fixed, duplicate rules link fixed, dead CSS removed",
+      "location": "Season Engine: eraser, HUD, interventions, settings, skip-nav"
+    },
+    {
+      "id": "028",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Interaction",
+      "tool": "engine",
+      "title": "Mulch/protect is per-cell only, no drag paint",
+      "impact": "Zone edits are painful",
+      "notes": "Shift+click multi-select works, drag not implemented"
+    },
+    {
+      "id": "029",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Interaction",
+      "tool": "engine",
+      "title": "No multi-cell selection or batch actions",
+      "impact": "Row/zone workflows slow",
+      "notes": "Interventions only, not general-purpose"
+    },
+    {
+      "id": "030",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Resource clarity",
+      "tool": "engine",
+      "title": "Token economy is opaque",
+      "impact": "Strategy collapses, users cannot plan",
+      "notes": "Count shown but rules not explained"
+    },
+    {
+      "id": "031",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Goals",
+      "tool": "engine",
+      "title": "No persistent scoreboard / objective HUD",
+      "impact": "Users do not know how to win",
+      "notes": "Target in results panel, scrolls away"
+    },
+    {
+      "id": "032",
+      "severity": "P2",
+      "status": "open",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Full-screen story modes lack landmark roles",
+      "impact": "Screen readers get no context that view changed (chapter end, epilogue, sauce)",
+      "location": "Season Engine chapter/winter/sauce/epilogue screens"
+    },
+    {
+      "id": "033",
+      "severity": "P2",
+      "status": "open",
+      "area": "Mode safety",
+      "tool": "engine",
+      "title": "Season Engine has no inspect mode",
+      "impact": "Clicking places if crop selected \u2014 trust breaker, inconsistent with Planner",
+      "location": "Season Engine cellClick()"
+    },
+    {
+      "id": "034",
+      "severity": "P2",
+      "status": "open",
+      "area": "Discoverability",
+      "tool": "engine",
+      "title": "No visible inspect button or panel in Engine",
+      "impact": "Cell inspection hidden, users must discover by clicking",
+      "location": "Season Engine toolbar"
+    },
+    {
+      "id": "035",
+      "severity": "P2",
+      "status": "open",
+      "area": "Layout",
+      "tool": "engine",
+      "title": "Results panel info below scroll fold",
+      "impact": "Factor bars, event details, narrator text can be invisible without scrolling",
+      "location": "Season Engine right panel"
+    },
+    {
+      "id": "036",
+      "severity": "P2",
+      "status": "open",
+      "area": "Tutorial",
+      "tool": "planner",
+      "title": "Steps 2 & 4 do not lock clicks to target cell",
+      "impact": "User places crops in wrong cells, breaks narrative and subsequent steps",
+      "location": "Planner TUTORIAL_STEPS[1] and [3]"
+    },
+    {
+      "id": "037",
+      "severity": "P3",
+      "status": "open",
+      "area": "Tutorial",
+      "tool": "planner",
+      "title": "First-run prompt uses raw browser confirm()",
+      "impact": "Breaks warm aesthetic, feels like system error",
+      "location": "Planner boot sequence"
+    },
+    {
+      "id": "038",
+      "severity": "P3",
+      "status": "open",
+      "area": "Keyboard",
+      "tool": "engine",
+      "title": "No keyboard shortcut for inspect/neutral mode",
+      "impact": "Power users cannot switch modes via keyboard",
+      "location": "Season Engine"
+    },
+    {
+      "id": "039",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "State",
+      "tool": "engine",
+      "title": "Extract buildCarryForward() and deduplicate chapter transition logic",
+      "notes": "Code quality / maintainability pass, not a live user-facing break. Source: Season Engine patch plan Phase 2A"
+    },
+    {
+      "id": "040",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "State",
+      "tool": "engine",
+      "title": "Add saved-state versioning and migration guardrails",
+      "notes": "Hardening work with good ROI, but lower urgency than open interaction and accessibility gaps. Source: Season Engine patch plan Phase 2B/2C"
+    },
+    {
+      "id": "041",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Expose save failures instead of silent catches",
+      "notes": "Useful state-hardening improvement, but not currently verified as a live break in normal play. Source: Season Engine patch plan Phase 3A"
+    },
+    {
+      "id": "042",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Add color-blind-safe score indicators beyond hue alone",
+      "notes": "Still worth doing, but this is a polish pass after current interaction gaps are closed. Source: Season Engine patch plan Phase 3D"
+    },
+    {
+      "id": "043",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Content",
+      "tool": "engine",
+      "title": "Wire orphaned keepsakes, harvest yield dialogue, and chapter 11/12 dialogue pools",
+      "notes": "Feature activation backlog. Existing content is half-built but not on the critical bug path. Source: Season Engine patch plan Phase 4A-4C"
+    },
+    {
+      "id": "044",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Performance",
+      "tool": "engine",
+      "title": "Cache bedScore() during planning and reuse it in render",
+      "notes": "Performance optimization is sequenced after correctness, interaction safety, and content wiring. Source: Season Engine patch plan Phase 4D"
+    }
+  ]
+}
+</script>
 
 <script>
-(function(){
-  // Collapsible sections
-  document.querySelectorAll('.group-toggle').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var g=btn.closest('.issue-group');
-      var open=g.classList.toggle('open');
-      btn.setAttribute('aria-expanded',String(open));
+(function() {
+  'use strict';
+
+  var dataEl = document.getElementById('issue-data');
+  var config = JSON.parse(dataEl.textContent);
+  var issues = config.issues || [];
+
+  // Escape HTML
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+  }
+
+  // Config: header
+  document.getElementById('eyebrow').textContent = config.project + ' \u00b7 Issues Tracker';
+  document.getElementById('subtitle').textContent = config.subtitle || '';
+  document.title = config.project + ' \u2014 Issues Tracker';
+
+  // Config: nav (Garden OS custom nav with bridge class support)
+  var navBar = document.getElementById('navBar');
+  (config.navLinks || []).forEach(function(link) {
+    var a = document.createElement('a');
+    a.href = link.href;
+    a.textContent = link.label;
+    if (link.active) a.className = 'active';
+    if (link['class']) a.classList.add(link['class']);
+    navBar.appendChild(a);
   });
 
-  // Card expand/collapse
-  document.querySelectorAll('.issue-card').forEach(function(card){
-    card.addEventListener('click',function(){card.classList.toggle('expanded')});
-    card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();card.classList.toggle('expanded')}});
+  // Config: area options in form
+  var areaSelect = document.getElementById('f-area');
+  var opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = 'Select...';
+  areaSelect.appendChild(opt0);
+  (config.areaOptions || []).forEach(function(area) {
+    var o = document.createElement('option');
+    o.value = area;
+    o.textContent = area;
+    areaSelect.appendChild(o);
   });
 
-  // Filter bar
-  var activeFilter='all';
-  document.querySelectorAll('.fbtn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active')});
+  // Config: footer
+  document.getElementById('footerEl').innerHTML =
+    esc(config.project) + ' \u00b7 Issues Tracker \u00b7 ' +
+    '<a href="' + esc((config.navLinks || [{}])[0].href || '../index.html') + '">Back to ' + esc(config.project) + '</a>';
+
+  // Group issues by status
+  var STATUS_ORDER = ['open', 'partial', 'done', 'deferred'];
+  var STATUS_LABELS = { open: 'Open', partial: 'Needs Verification / Follow-up', done: 'Verified Fixed', deferred: 'Deferred / Planned' };
+  var STATUS_BADGE = { open: 'badge-open', partial: 'badge-partial', done: 'badge-done', deferred: 'badge-deferred' };
+  var STATUS_CSS = { open: 'status-open', partial: 'status-partial', done: 'status-done', deferred: 'status-deferred' };
+  var STATUS_TEXT = { open: 'Open', partial: 'Follow-up', done: 'Done', deferred: 'Deferred' };
+
+  var grouped = {};
+  STATUS_ORDER.forEach(function(s) { grouped[s] = []; });
+  issues.forEach(function(issue) {
+    var s = issue.status || 'open';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(issue);
+  });
+
+  // Build filter bar
+  var filterBar = document.getElementById('filterBar');
+  var allFilters = [
+    { key: 'all', label: 'All' },
+    { key: 'open', label: 'Open' },
+    { key: 'partial', label: 'Follow-up' },
+    { key: 'done', label: 'Verified fixed' },
+    { key: 'deferred', label: 'Deferred' }
+  ];
+  (config.toolFilters || []).forEach(function(tf) {
+    allFilters.push({ key: 'tool:' + tf.key, label: tf.label });
+  });
+
+  var spanLabel = document.createElement('span');
+  spanLabel.className = 'label';
+  spanLabel.textContent = 'Show:';
+  filterBar.appendChild(spanLabel);
+
+  var activeFilter = 'all';
+  allFilters.forEach(function(f) {
+    var btn = document.createElement('button');
+    btn.className = 'fbtn' + (f.key === 'all' ? ' active' : '');
+    btn.setAttribute('data-filter', f.key);
+    btn.textContent = f.label;
+    btn.addEventListener('click', function() {
+      filterBar.querySelectorAll('.fbtn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      activeFilter=btn.getAttribute('data-filter');
+      activeFilter = f.key;
       applyFilter();
     });
+    filterBar.appendChild(btn);
   });
 
-  function applyFilter(){
-    document.querySelectorAll('.issue-group').forEach(function(g){
-      var status=g.getAttribute('data-status');
-      if(!status)return;
-      var show=activeFilter==='all'||activeFilter===status;
-      // Tool filters
-      if(activeFilter==='planner'||activeFilter==='engine'){
-        show=false;
-        var cards=g.querySelectorAll('.issue-card');
-        var anyVisible=false;
-        cards.forEach(function(c){
-          var tool=c.getAttribute('data-tool')||'';
-          var vis=tool===activeFilter;
-          c.style.display=vis?'':'none';
-          if(vis)anyVisible=true;
-        });
-        show=anyVisible;
-        if(show){
-          // Show cards that match
-          cards.forEach(function(c){
-            if(!c.getAttribute('data-tool'))c.style.display='';
-          });
-        }
-      }else{
-        // Show all cards in matching groups
-        g.querySelectorAll('.issue-card').forEach(function(c){c.style.display=''});
-      }
-      g.classList.toggle('is-hidden',!show);
+  // Render issue card
+  function renderCard(issue) {
+    var card = document.createElement('div');
+    card.className = 'issue-card';
+    card.tabIndex = 0;
+    if (issue.tool) card.setAttribute('data-tool', issue.tool);
+
+    var statusClass = STATUS_CSS[issue.status] || 'status-open';
+    var statusText = STATUS_TEXT[issue.status] || issue.status;
+
+    var topRight = '';
+    if (issue.status === 'done' || issue.status === 'partial' || issue.status === 'deferred') {
+      topRight = '<span class="status ' + statusClass + '">' + esc(statusText) + '</span>';
+    } else if (issue.severity) {
+      topRight = '<span class="card-sev card-sev-' + esc(issue.severity) + '">' + esc(issue.severity) + '</span>';
+    }
+
+    var detailParts = [];
+    if (issue.impact) detailParts.push('<dt>Impact</dt><dd>' + esc(issue.impact) + '</dd>');
+    if (issue.fix) detailParts.push('<dt>Fix</dt><dd>' + esc(issue.fix) + '</dd>');
+    if (issue.verification) detailParts.push('<dt>Verification</dt><dd>' + esc(issue.verification) + '</dd>');
+    if (issue.location) detailParts.push('<dt>Location</dt><dd>' + esc(issue.location) + '</dd>');
+    if (issue.notes) detailParts.push('<dt>Notes</dt><dd>' + esc(issue.notes) + '</dd>');
+    if (issue.resolved) detailParts.push('<dt>Resolved</dt><dd>' + esc(issue.resolved) + '</dd>');
+    if (issue.added) detailParts.push('<dt>Added</dt><dd>' + esc(issue.added) + '</dd>');
+
+    card.innerHTML =
+      '<div class="card-top"><span class="card-area">' + esc(issue.area || '') + '</span>' + topRight + '</div>' +
+      '<div class="card-title">' + esc(issue.title) + '</div>' +
+      '<div class="card-expand-hint">click to expand</div>' +
+      '<dl class="card-detail">' + detailParts.join('') + '</dl>';
+
+    card.addEventListener('click', function() { card.classList.toggle('expanded'); });
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.classList.toggle('expanded'); }
     });
+    return card;
   }
+
+  // Render groups
+  var groupsEl = document.getElementById('groups');
+  STATUS_ORDER.forEach(function(status) {
+    var items = grouped[status];
+    if (!items || items.length === 0) return;
+
+    var section = document.createElement('section');
+    section.className = 'issue-group' + (status === 'open' || status === 'partial' ? ' open' : '');
+    section.setAttribute('data-status', status);
+
+    var expanded = status === 'open' || status === 'partial';
+    section.innerHTML =
+      '<button class="group-toggle" type="button" aria-expanded="' + expanded + '">' +
+        '<span>' + esc(STATUS_LABELS[status]) + ' (' + items.length + ')</span>' +
+        '<span style="display:flex;align-items:center;gap:.5rem">' +
+          '<span class="badge ' + STATUS_BADGE[status] + '">' + items.length + '</span>' +
+          '<span class="chev">&rsaquo;</span>' +
+        '</span>' +
+      '</button>' +
+      '<div class="group-body"><div class="card-grid"></div></div>';
+
+    var grid = section.querySelector('.card-grid');
+    items.forEach(function(issue) { grid.appendChild(renderCard(issue)); });
+
+    section.querySelector('.group-toggle').addEventListener('click', function() {
+      var open = section.classList.toggle('open');
+      this.setAttribute('aria-expanded', String(open));
+    });
+
+    groupsEl.appendChild(section);
+  });
+
+  // User submitted section
+  var userSection = document.createElement('section');
+  userSection.className = 'issue-group';
+  userSection.id = 'userGroup';
+  userSection.style.display = 'none';
+  userSection.setAttribute('data-status', 'open');
+  userSection.innerHTML =
+    '<button class="group-toggle" type="button" aria-expanded="false">' +
+      '<span id="userGroupTitle">User Submitted (0)</span>' +
+      '<span style="display:flex;align-items:center;gap:.5rem"><span class="badge badge-open" id="userBadge">0</span><span class="chev">&rsaquo;</span></span>' +
+    '</button>' +
+    '<div class="group-body"><div class="card-grid" id="userBody"></div></div>';
+  userSection.querySelector('.group-toggle').addEventListener('click', function() {
+    var open = userSection.classList.toggle('open');
+    this.setAttribute('aria-expanded', String(open));
+  });
+  groupsEl.appendChild(userSection);
 
   // Stats
-  var done=document.querySelectorAll('[data-status="done"] .issue-card').length;
-  var partial=document.querySelectorAll('[data-status="partial"] .issue-card').length;
-  var open=document.querySelectorAll('[data-status="open"] .issue-card').length;
-  var deferred=document.querySelectorAll('[data-status="deferred"] .issue-card').length;
-  document.getElementById('stat-done').textContent=done;
-  document.getElementById('stat-partial').textContent=partial;
-  document.getElementById('stat-open').textContent=open;
-  document.getElementById('stat-deferred').textContent=deferred;
-  document.getElementById('stat-total').textContent=done+partial+open+deferred;
+  function updateStats() {
+    document.getElementById('stat-done').textContent = (grouped.done || []).length;
+    document.getElementById('stat-partial').textContent = (grouped.partial || []).length;
+    document.getElementById('stat-open').textContent = (grouped.open || []).length;
+    document.getElementById('stat-deferred').textContent = (grouped.deferred || []).length;
+    document.getElementById('stat-total').textContent = issues.length;
+  }
+  updateStats();
 
-  // User submissions
-  var SKEY='gos-ui-issues-user';
-  var userGroup=document.getElementById('userGroup');
-  var userBody=document.getElementById('userBody');
-  var form=document.getElementById('issueForm');
-  var msgEl=document.getElementById('formMsg');
+  // Filter
+  function applyFilter() {
+    document.querySelectorAll('.issue-group').forEach(function(g) {
+      var status = g.getAttribute('data-status');
+      if (!status) return;
 
-  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  function load(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch(e){return[]}}
-  function save(list){try{localStorage.setItem(SKEY,JSON.stringify(list))}catch(e){}}
-  function flash(text,color){
-    msgEl.textContent=text;msgEl.style.color=color||'var(--leaf-bright)';
-    msgEl.classList.add('visible');setTimeout(function(){msgEl.classList.remove('visible')},2500);
+      if (activeFilter === 'all') {
+        g.classList.remove('is-hidden');
+        g.querySelectorAll('.issue-card').forEach(function(c) { c.style.display = ''; });
+        return;
+      }
+
+      if (activeFilter.indexOf('tool:') === 0) {
+        var toolKey = activeFilter.slice(5);
+        var anyVisible = false;
+        g.querySelectorAll('.issue-card').forEach(function(c) {
+          var match = (c.getAttribute('data-tool') || '') === toolKey;
+          c.style.display = match ? '' : 'none';
+          if (match) anyVisible = true;
+        });
+        g.classList.toggle('is-hidden', !anyVisible);
+      } else {
+        var show = activeFilter === status;
+        g.classList.toggle('is-hidden', !show);
+        g.querySelectorAll('.issue-card').forEach(function(c) { c.style.display = ''; });
+      }
+    });
   }
 
-  function renderUserRows(){
-    userBody.innerHTML='';
-    var items=load();
-    if(!items.length){userGroup.style.display='none';return}
-    userGroup.style.display='';
-    document.getElementById('userGroupTitle').textContent='User Submitted ('+items.length+')';
-    document.getElementById('userBadge').textContent=items.length;
-    items.forEach(function(item,i){
-      var card=document.createElement('div');
-      card.className='issue-card';card.tabIndex=0;card.setAttribute('data-tool','planner');
-      card.innerHTML=
-        '<div class="card-top"><span class="card-area">'+esc(item.area)+'</span><span class="status status-open">Open</span></div>'+
-        '<div class="card-title">'+esc(item.issue)+'</div>'+
-        '<div class="card-expand-hint">click to expand</div>'+
-        '<dl class="card-detail"><dt>Impact</dt><dd>'+esc(item.impact)+'</dd><dt>Location</dt><dd>'+esc(item.location)+
-        '</dd></dl><button class="del-btn" data-idx="'+i+'" title="Remove">&times; Remove</button>';
-      card.addEventListener('click',function(e){if(!e.target.closest('.del-btn'))card.classList.toggle('expanded')});
+  // User submission persistence
+  var SKEY = config.storageKey || 'ui-issues-user';
+  function loadUser() { try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch(e) { return []; } }
+  function saveUser(list) { try { localStorage.setItem(SKEY, JSON.stringify(list)); } catch(e) {} }
+  var msgEl = document.getElementById('formMsg');
+  function flash(text, color) {
+    msgEl.textContent = text;
+    msgEl.style.color = color || 'var(--leaf-bright)';
+    msgEl.classList.add('visible');
+    setTimeout(function() { msgEl.classList.remove('visible'); }, 2500);
+  }
+
+  function renderUserRows() {
+    var userBody = document.getElementById('userBody');
+    userBody.innerHTML = '';
+    var items = loadUser();
+    if (!items.length) { userSection.style.display = 'none'; return; }
+    userSection.style.display = '';
+    document.getElementById('userGroupTitle').textContent = 'User Submitted (' + items.length + ')';
+    document.getElementById('userBadge').textContent = items.length;
+    items.forEach(function(item, i) {
+      var card = document.createElement('div');
+      card.className = 'issue-card';
+      card.tabIndex = 0;
+      if (item.tool) card.setAttribute('data-tool', item.tool);
+      card.innerHTML =
+        '<div class="card-top"><span class="card-area">' + esc(item.area) + '</span>' +
+          '<span class="card-sev card-sev-' + esc(item.severity || 'P2') + '">' + esc(item.severity || 'P2') + '</span></div>' +
+        '<div class="card-title">' + esc(item.issue) + '</div>' +
+        '<div class="card-expand-hint">click to expand</div>' +
+        '<dl class="card-detail"><dt>Impact</dt><dd>' + esc(item.impact) + '</dd>' +
+          '<dt>Location</dt><dd>' + esc(item.location) + '</dd></dl>' +
+        '<button style="font-family:var(--mono);font-size:.65rem;color:var(--rust);background:none;border:1px solid var(--rust-pale);border-radius:4px;padding:.2rem .5rem;cursor:pointer;margin-top:.3rem" data-idx="' + i + '">&times; Remove</button>';
+      card.addEventListener('click', function(e) { if (!e.target.closest('[data-idx]')) card.classList.toggle('expanded'); });
+      card.querySelector('[data-idx]').addEventListener('click', function(e) {
+        e.stopPropagation();
+        var items = loadUser();
+        items.splice(i, 1);
+        saveUser(items);
+        flash('Removed', 'var(--rust)');
+        renderUserRows();
+      });
       userBody.appendChild(card);
     });
-    document.querySelectorAll('#userBody .del-btn').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var idx=parseInt(this.getAttribute('data-idx'));
-        var items=load();var removed=items.splice(idx,1)[0];save(items);
-        flash('Removed: '+removed.area,'var(--rust)');renderUserRows();
-      });
-    });
   }
 
-  form.addEventListener('submit',function(e){
+  document.getElementById('issueForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    var area=document.getElementById('f-area').value.trim();
-    var issue=document.getElementById('f-issue').value.trim();
-    var impact=document.getElementById('f-impact').value.trim();
-    var location=document.getElementById('f-location').value.trim();
-    if(!area||!issue){flash('Area and issue are required','var(--rust)');return}
-    var items=load();
-    items.push({area:area,issue:issue,impact:impact||'Not specified',location:location||'Not specified',date:new Date().toISOString().split('T')[0]});
-    save(items);form.reset();flash('Added: '+area+' issue');
+    var area = document.getElementById('f-area').value.trim();
+    var issue = document.getElementById('f-issue').value.trim();
+    var impact = document.getElementById('f-impact').value.trim();
+    var location = document.getElementById('f-location').value.trim();
+    var severity = document.getElementById('f-sev').value;
+    var tool = document.getElementById('f-tool').value.trim();
+    if (!area || !issue) { flash('Area and issue are required', 'var(--rust)'); return; }
+    var items = loadUser();
+    items.push({
+      area: area, issue: issue, impact: impact || 'Not specified',
+      location: location || 'Not specified', severity: severity,
+      tool: tool || '', date: new Date().toISOString().split('T')[0]
+    });
+    saveUser(items);
+    this.reset();
+    flash('Added: ' + area + ' issue');
     renderUserRows();
-    userGroup.classList.add('open');
-    userGroup.querySelector('.group-toggle').setAttribute('aria-expanded','true');
+    userSection.classList.add('open');
+    userSection.querySelector('.group-toggle').setAttribute('aria-expanded', 'true');
   });
+
   renderUserRows();
 })();
 </script>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS — Build State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inconsolata:wght@400;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #111009;
+    --soil-mid: #1e1a0e;
+    --soil-light: #32280f;
+    --bark: #7a6840;
+    --moss: #4a7a38;
+    --sage: #8ab870;
+    --leaf: #a8d48a;
+    --sprout: #c8e8ae;
+    --cream: #f5edd8;
+    --parchment: #ede0c0;
+    --amber: #e0b050;
+    --rust: #c05830;
+    --muted: #a89870;
+    --body-text: #d8cba8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background-color: var(--soil);
+    color: var(--body-text);
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, #221808 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 100%, #0a1205 0%, transparent 45%);
+  }
+
+  header {
+    border-bottom: 1px solid var(--soil-light);
+    padding: 2.5rem 3rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(17,16,9,0.97);
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--sprout);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--leaf); font-style: italic; font-weight: 400; }
+
+  .header-meta { display: flex; gap: 1.2rem; flex-wrap: wrap; align-items: center; }
+
+  .pill {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .pill-green { background: #2a4820; color: var(--leaf); border: 1px solid var(--moss); }
+  .pill-amber { background: #3a2808; color: var(--amber); border: 1px solid #6a4810; }
+  .pill-muted { background: var(--soil-mid); color: var(--muted); border: 1px solid var(--soil-light); }
+
+  .header-links { margin-left: auto; display: flex; gap: 1.5rem; }
+  .header-links a {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+  .header-links a:hover { color: var(--leaf); }
+
+  .controls-bar {
+    padding: 0.9rem 3rem;
+    border-bottom: 1px solid var(--soil-light);
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    background: var(--soil-mid);
+  }
+  .ctrl-btn {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--soil-light);
+    color: var(--muted);
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { border-color: var(--moss); color: var(--leaf); }
+  .ctrl-label {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.68rem;
+    color: var(--bark);
+    letter-spacing: 0.08em;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 3rem 6rem;
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 0 4rem;
+  }
+
+  nav {
+    position: sticky;
+    top: 110px;
+    align-self: start;
+    padding-top: 0.5rem;
+  }
+  nav .nav-label {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--bark);
+    margin-bottom: 0.8rem;
+    padding-left: 0.6rem;
+  }
+  nav a {
+    display: block;
+    font-size: 0.79rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.3rem 0.6rem;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  nav a:hover { color: var(--sprout); border-left-color: var(--moss); background: rgba(74,122,56,0.08); }
+
+  main { min-width: 0; }
+
+  .overview {
+    background: var(--soil-mid);
+    border: 1px solid var(--soil-light);
+    border-left: 3px solid var(--moss);
+    padding: 1.6rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 1px;
+  }
+  .overview-eyebrow { font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--muted); font-style: italic; margin-bottom: 0.3rem; }
+  .overview-sub { color: var(--cream); font-size: 0.95rem; margin-bottom: 1rem; }
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1.2rem; }
+  .overview-stat { font-family: 'Inconsolata', monospace; }
+  .overview-stat .val { display: block; font-size: 1.3rem; color: var(--leaf); font-weight: 600; line-height: 1; margin-bottom: 0.2rem; }
+  .overview-stat .key { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* COLLAPSIBLE */
+  .collapsible {
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--soil-light);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .section-toggle {
+    width: 100%;
+    background: var(--soil-mid);
+    border: none;
+    cursor: pointer;
+    padding: 0.95rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: left;
+    transition: background 0.15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .section-toggle:hover { background: #26200e; }
+
+  .toggle-icon { font-size: 1rem; flex-shrink: 0; }
+
+  .toggle-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--sprout);
+    letter-spacing: -0.01em;
+    flex: 1;
+  }
+
+  .toggle-count {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.67rem;
+    color: var(--bark);
+    letter-spacing: 0.06em;
+    margin-right: 0.3rem;
+  }
+
+  .toggle-chevron {
+    color: var(--muted);
+    font-size: 0.7rem;
+    transition: transform 0.22s ease;
+    flex-shrink: 0;
+    font-family: 'Inconsolata', monospace;
+  }
+  .collapsible.open .toggle-chevron { transform: rotate(180deg); }
+
+  .section-body {
+    display: none;
+    padding: 1.4rem 1.6rem 1.6rem;
+    background: rgba(14,12,6,0.7);
+    border-top: 1px solid var(--soil-light);
+  }
+  .collapsible.open .section-body { display: block; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.7rem;
+  }
+
+  .feature-card {
+    background: var(--soil-mid);
+    border: 1px solid var(--soil-light);
+    padding: 0.9rem 1.1rem;
+    border-radius: 1px;
+    transition: border-color 0.2s;
+  }
+  .feature-card:hover { border-color: var(--moss); }
+
+  .feature-title {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+  }
+
+  .feature-items { list-style: none; }
+  .feature-items li {
+    font-size: 0.77rem;
+    color: var(--body-text);
+    padding: 0.15rem 0 0.15rem 0.9rem;
+    position: relative;
+    line-height: 1.45;
+  }
+  .feature-items li::before { content: '·'; position: absolute; left: 0; color: var(--bark); }
+
+  .inline-list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .tag {
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.73rem;
+    padding: 0.2rem 0.55rem;
+    background: var(--soil-mid);
+    border: 1px solid var(--soil-light);
+    color: var(--body-text);
+    border-radius: 2px;
+  }
+  .tag-green { border-color: #3a5c28; color: var(--leaf); background: #1a2810; }
+  .tag-amber { border-color: #5a3e10; color: var(--amber); background: #201408; }
+
+  .two-col { columns: 2; column-gap: 3rem; }
+  .two-col li {
+    font-size: 0.8rem;
+    color: var(--body-text);
+    padding: 0.2rem 0 0.2rem 1rem;
+    list-style: none;
+    position: relative;
+    break-inside: avoid;
+    line-height: 1.45;
+  }
+  .two-col li::before { content: '→'; position: absolute; left: 0; color: var(--bark); font-size: 0.65rem; top: 0.3rem; }
+  .two-col li strong { color: var(--cream); font-weight: 400; }
+
+  .score-table { width: 100%; border-collapse: collapse; font-family: 'Inconsolata', monospace; font-size: 0.8rem; margin-top: 0.5rem; }
+  .score-table th { text-align: left; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0.4rem 0.8rem 0.6rem; border-bottom: 1px solid var(--soil-light); }
+  .score-table td { padding: 0.45rem 0.8rem; border-bottom: 1px solid rgba(50,40,15,0.5); color: var(--body-text); }
+  .score-table td:first-child { font-weight: 600; }
+  .grade-a { color: var(--leaf) !important; }
+  .grade-b { color: var(--amber) !important; }
+  .grade-c { color: var(--muted) !important; }
+  .grade-f { color: var(--rust) !important; }
+
+  .mood-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1.2rem; }
+  .mood-swatch { padding: 0.65rem 0.8rem; border-radius: 1px; font-family: 'Inconsolata', monospace; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+  .mood-dawn    { background: #281808; color: #e0b870; border: 1px solid #503010; }
+  .mood-calm    { background: #0c1808; color: #80c060; border: 1px solid #204010; }
+  .mood-storm   { background: #0c1020; color: #8098c8; border: 1px solid #202840; }
+  .mood-heat    { background: #200c04; color: #e07040; border: 1px solid #502010; }
+  .mood-harvest { background: #201808; color: #e0b840; border: 1px solid #504010; }
+  .mood-night   { background: #04040e; color: #6878b8; border: 1px solid #141428; }
+  .mood-celebration { background: #141a04; color: #b0d840; border: 1px solid #304010; }
+  .mood-loss    { background: #0e080e; color: #a080a0; border: 1px solid #281828; }
+
+  .char-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem; margin-top: 1rem; }
+  .char-chip { background: var(--soil-mid); border: 1px solid var(--soil-light); padding: 0.65rem 0.8rem; font-size: 0.78rem; text-align: center; transition: border-color 0.15s; }
+  .char-chip:hover { border-color: var(--moss); }
+  .char-chip .emoji { font-size: 1.4rem; display: block; margin-bottom: 0.2rem; }
+  .char-chip .name { color: var(--cream); font-size: 0.76rem; }
+  .char-chip .role { color: var(--muted); font-size: 0.65rem; font-family: 'Inconsolata', monospace; }
+
+  .deploy-flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-family: 'Inconsolata', monospace; font-size: 0.78rem; margin-top: 0.5rem; }
+  .deploy-step { background: var(--soil-mid); border: 1px solid var(--soil-light); padding: 0.4rem 0.8rem; color: var(--body-text); border-radius: 2px; }
+  .deploy-arrow { color: var(--bark); }
+
+  .section-gap { height: 0; }
+
+  footer { border-top: 1px solid var(--soil-light); padding: 1.5rem 3rem; font-family: 'Inconsolata', monospace; font-size: 0.7rem; color: var(--muted); display: flex; gap: 2rem; flex-wrap: wrap; letter-spacing: 0.06em; }
+
+  @media (max-width: 768px) {
+    .page { grid-template-columns: 1fr; padding: 2rem 1.2rem 4rem; }
+    nav { display: none; }
+    .mood-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { columns: 1; }
+    header { padding: 1.2rem 1.5rem; }
+    .header-links { display: none; }
+    .controls-bar { padding: 0.8rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Garden <span>OS</span></div>
+  <div class="header-meta">
+    <span class="pill pill-green">Story Mode</span>
+    <span class="pill pill-amber">Active Build</span>
+    <span class="pill pill-muted">Vite + Three.js</span>
+    <span class="pill pill-muted">~10,800 lines</span>
+  </div>
+  <div class="header-links">
+    <a href="https://davehomeassist.github.io/garden-os/story-mode-live/" target="_blank">↗ Live</a>
+    <a href="#">garden-os/story-mode/</a>
+  </div>
+</header>
+
+<div class="controls-bar">
+  <span class="ctrl-label">Sections:</span>
+  <button class="ctrl-btn" onclick="toggleAll(true)">Expand All</button>
+  <button class="ctrl-btn" onclick="toggleAll(false)">Collapse All</button>
+</div>
+
+<div class="page">
+
+  <nav>
+    <div class="nav-label">Jump to</div>
+    <a href="#overview">Overview</a>
+    <a href="#title-screen">Title Screen</a>
+    <a href="#scene-3d">3D Scene</a>
+    <a href="#scenery">Scenery</a>
+    <a href="#weather">Weather</a>
+    <a href="#camera">Camera</a>
+    <a href="#engine">Game Engine</a>
+    <a href="#events">Events</a>
+    <a href="#interventions">Interventions</a>
+    <a href="#cutscenes">Cutscenes</a>
+    <a href="#hud">HUD</a>
+    <a href="#ui-panels">UI Panels</a>
+    <a href="#mobile">Mobile UX</a>
+    <a href="#save">Save System</a>
+    <a href="#pause">Pause Menu</a>
+    <a href="#polish">Polish</a>
+    <a href="#deploy">Deploy</a>
+  </nav>
+
+  <main>
+
+    <div id="overview" class="overview">
+      <div class="overview-eyebrow">Build State Document</div>
+      <div class="overview-sub">Vanilla JS · No framework · GitHub Pages deploy</div>
+      <div class="overview-grid">
+        <div class="overview-stat"><span class="val">32</span><span class="key">Source Files</span></div>
+        <div class="overview-stat"><span class="val">10,800</span><span class="key">Total Lines</span></div>
+        <div class="overview-stat"><span class="val">8,698</span><span class="key">JS Lines</span></div>
+        <div class="overview-stat"><span class="val">38</span><span class="key">Crops</span></div>
+        <div class="overview-stat"><span class="val">40</span><span class="key">Events</span></div>
+        <div class="overview-stat"><span class="val">35+</span><span class="key">Cutscenes</span></div>
+        <div class="overview-stat"><span class="val">8</span><span class="key">Game Phases</span></div>
+        <div class="overview-stat"><span class="val">3</span><span class="key">Save Slots</span></div>
+      </div>
+    </div>
+
+    <div id="title-screen" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🌱</span>
+        <span class="toggle-title">Title Screen</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Menu</div>
+            <ul class="feature-items">
+              <li>Full-screen with logo, tagline, version</li>
+              <li>Loads before 3D scene — instant render</li>
+              <li>Game mode preview (3 locked modes shown)</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Save Slots</div>
+            <ul class="feature-items">
+              <li>3 independent slots with chapter/season/score</li>
+              <li>Grade sparkline per slot</li>
+              <li>Continue / New Game / Delete per slot</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="scene-3d" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🌿</span>
+        <span class="toggle-title">3D Garden Scene</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Bed Structure</div>
+            <ul class="feature-items">
+              <li>8×4 cedar raised bed with soil cells</li>
+              <li>Grid lines + row labels</li>
+              <li>Cell hover highlight + placement flash</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Crop Meshes</div>
+            <ul class="feature-items">
+              <li>8 distinct archetypes by faction</li>
+              <li>Climbers, roots, herbs, fruiting, greens, fast cycles, brassicas, companions</li>
+              <li>Per-crop emoji-based coloring</li>
+              <li>3 growth stages: seedling → mid → full</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Seasonal Lighting</div>
+            <ul class="feature-items">
+              <li>Spring pewter → Summer haze → Fall gold → Winter indigo</li>
+              <li>Sky gradient sphere with season tint</li>
+              <li>Ground plane with vertex-colored grass (darker near bed)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="scenery" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🏡</span>
+        <span class="toggle-title">Scenery</span>
+        <span class="toggle-count">19 items</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="inline-list">
+          <span class="tag">Back house wall</span><span class="tag">Siding + porch</span><span class="tag">Screen door</span>
+          <span class="tag">Window</span><span class="tag">Radio on railing</span>
+          <span class="tag tag-amber">Mom's notebook (Ch4+)</span><span class="tag tag-amber">Sauce jar (post-recipe)</span>
+          <span class="tag">Clothesline + towel</span><span class="tag">Garden hose</span><span class="tag">Watering can</span>
+          <span class="tag">Gloves</span><span class="tag">Harvest basket</span>
+          <span class="tag tag-green">Phillies pennant</span><span class="tag">Seed packets (planning)</span>
+          <span class="tag">Fence</span><span class="tag">Bird silhouette</span><span class="tag">Cat silhouette</span>
+          <span class="tag">Telephone pole + wire</span><span class="tag">2 seasonal trees</span>
+          <span class="tag">Wind flag</span><span class="tag">Distant rooftops</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="weather" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🌦</span>
+        <span class="toggle-title">Weather & Atmosphere</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Particle Systems</div>
+            <ul class="feature-items">
+              <li>Rain — 300 points, spring ambient + events</li>
+              <li>Chimney smoke — winter</li>
+              <li>Fireflies — night/celebration mood</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Overlays & FX</div>
+            <ul class="feature-items">
+              <li>Frost overlay — winter + frost events</li>
+              <li>Sun rays spotlight — summer + heat events</li>
+              <li>Puddles, fallen leaves, snow patches, spring flowers</li>
+              <li>Vignette overlay with bottom emphasis</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Clouds & Sky</div>
+            <ul class="feature-items">
+              <li>4 animated drifting cloud meshes</li>
+              <li>8 mood presets</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mood-grid">
+          <div class="mood-swatch mood-dawn">Dawn</div>
+          <div class="mood-swatch mood-calm">Calm</div>
+          <div class="mood-swatch mood-storm">Storm</div>
+          <div class="mood-swatch mood-heat">Heat</div>
+          <div class="mood-swatch mood-harvest">Harvest Gold</div>
+          <div class="mood-swatch mood-night">Night</div>
+          <div class="mood-swatch mood-celebration">Celebration</div>
+          <div class="mood-swatch mood-loss">Loss</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="camera" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">📷</span>
+        <span class="toggle-title">Camera System</span>
+        <span class="toggle-count">6 presets</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="inline-list" style="margin-bottom:1rem;">
+          <span class="tag tag-green">overview</span>
+          <span class="tag tag-green">bed-low-angle</span>
+          <span class="tag tag-green">row-close</span>
+          <span class="tag tag-green">event-push</span>
+          <span class="tag tag-green">harvest-hero</span>
+          <span class="tag tag-green">front-access</span>
+        </div>
+        <ul class="two-col">
+          <li>Smooth lerp transitions with <strong>cubic easing</strong></li>
+          <li>Touch orbit + <strong>pinch zoom</strong> (mobile)</li>
+          <li>Mouse drag + <strong>scroll wheel</strong> (desktop)</li>
+          <li>Camera preset + mood change per cutscene beat</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="engine" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">⚙️</span>
+        <span class="toggle-title">Game Engine</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid" style="margin-bottom:1.4rem;">
+          <div class="feature-card">
+            <div class="feature-title">State Machine</div>
+            <ul class="feature-items">
+              <li>8 phases: PLANNING → COMMIT → EARLY / MID / LATE_SEASON → HARVEST → REVIEW → TRANSITION</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Crops & Factions</div>
+            <ul class="feature-items">
+              <li>38 crops across 8 factions</li>
+              <li>Chapter unlock gates (Ch 1–9)</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Scoring — 6 Factors</div>
+            <ul class="feature-items">
+              <li>Sun ×2, support, shade, access, season, adjacency</li>
+              <li>Tall penalty (−0.8) · Trellis penalty (−0.6)</li>
+              <li>Diversity bonus (+0.7)</li>
+              <li>Soil fatigue: +0.3 per consecutive heavy feeder, cap 0.9</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Systems</div>
+            <ul class="feature-items">
+              <li>Recipe system — 6 recipes, ingredient + pantry tracking</li>
+              <li>Keepsake collectibles</li>
+              <li>Deterministic scoring (no RNG on grades)</li>
+            </ul>
+          </div>
+        </div>
+        <div style="font-family:'Inconsolata',monospace; font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.6rem;">Grade Thresholds</div>
+        <table class="score-table">
+          <thead><tr><th>Grade</th><th>Score</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td class="grade-a">A+</td><td>90+</td><td>Confetti on harvest reveal</td></tr>
+            <tr><td class="grade-a">A</td><td>85+</td><td></td></tr>
+            <tr><td class="grade-b">B</td><td>70+</td><td></td></tr>
+            <tr><td class="grade-c">C</td><td>55+</td><td></td></tr>
+            <tr><td class="grade-c">D</td><td>40+</td><td></td></tr>
+            <tr><td class="grade-f">F</td><td>&lt;40</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="events" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🎴</span>
+        <span class="toggle-title">Event System</span>
+        <span class="toggle-count">40 events · 4 pools</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <ul class="two-col">
+          <li><strong>40 events</strong> in EVENT_DECK.json</li>
+          <li><strong>4 seasonal pools</strong></li>
+          <li>Weighted random draw</li>
+          <li>Chapter gating per event</li>
+          <li>Mechanical effects on grid cells</li>
+          <li>Modifiers, protection, duration tracking</li>
+          <li>Valence: <strong>positive / negative / mixed / neutral</strong></li>
+          <li>Dynamic cutscene generation from commentary</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="interventions" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🛡️</span>
+        <span class="toggle-title">Intervention System</span>
+        <span class="toggle-count">6 types · 3 tokens/season</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="inline-list" style="margin-bottom:1rem;">
+          <span class="tag tag-green">Protect</span>
+          <span class="tag tag-green">Mulch</span>
+          <span class="tag tag-green">Swap</span>
+          <span class="tag tag-green">Companion Patch</span>
+          <span class="tag tag-green">Prune</span>
+          <span class="tag tag-amber">Accept Loss</span>
+        </div>
+        <ul class="two-col">
+          <li><strong>3 tokens</strong> per season — 1 per beat</li>
+          <li>Cell targeting with grid interaction</li>
+          <li>Each modifies grid state before event resolves</li>
+          <li>Visual props rendered on affected cells</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="cutscenes" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🎬</span>
+        <span class="toggle-title">Cutscene System</span>
+        <span class="toggle-count">35+ scenes · 6 characters</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid" style="margin-bottom:1.2rem;">
+          <div class="feature-card">
+            <div class="feature-title">Authored Scenes</div>
+            <ul class="feature-items">
+              <li>35+ total scenes</li>
+              <li>12 chapter intros</li>
+              <li>Event / harvest / intervention reactions</li>
+              <li>Milestone + recipe scenes</li>
+              <li>Campaign finale</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Playback Engine</div>
+            <ul class="feature-items">
+              <li>State machine with beat progression</li>
+              <li>Typing effect + auto-advance</li>
+              <li>Skip button + hold-to-fast-forward (6× speed)</li>
+              <li>One-time scene tracking via campaign persistence</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Portrait System</div>
+            <ul class="feature-items">
+              <li>Emoji fallbacks + emotion variants</li>
+              <li>Speaking order: GURL → Onion Man → Vegeman → Critters</li>
+              <li>Camera preset + mood per beat</li>
+            </ul>
+          </div>
+        </div>
+        <div class="char-row">
+          <div class="char-chip"><span class="emoji">👩‍🌾</span><div class="name">Garden GURL</div><div class="role">Protagonist</div></div>
+          <div class="char-chip"><span class="emoji">🧅</span><div class="name">Onion Man</div><div class="role">Advisor</div></div>
+          <div class="char-chip"><span class="emoji">🥦</span><div class="name">Vegeman</div><div class="role">Faction rep</div></div>
+          <div class="char-chip"><span class="emoji">🐛</span><div class="name">Critters</div><div class="role">Chaos agent</div></div>
+          <div class="char-chip"><span class="emoji">📖</span><div class="name">Narrator</div><div class="role">Framing</div></div>
+          <div class="char-chip"><span class="emoji">🐕</span><div class="name">Calvin</div><div class="role">Sheepdog</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hud" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">📊</span>
+        <span class="toggle-title">HUD</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <ul class="two-col">
+          <li>Season emoji <strong>🌱☀️🍂❄️</strong></li>
+          <li>Chapter + phase pills</li>
+          <li>Crop count (X / 32)</li>
+          <li>Score with harvest glow animation</li>
+          <li>Intervention token dots — 3 circles, filled/spent</li>
+          <li>Phase progress dots — 8 dots, active/done states</li>
+          <li>Season calendar widget — month, year, beat, chapter title</li>
+          <li>☰ Pause button (touch-friendly)</li>
+          <li>🦗 Bug report button</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ui-panels" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🗂️</span>
+        <span class="toggle-title">UI Panels</span>
+        <span class="toggle-count">7 panels</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <ul class="two-col">
+          <li><strong>Crop palette</strong> — bottom-sheet, emoji, name, faction badge</li>
+          <li><strong>Event card</strong> — valence badge, effect display, 6 intervention buttons</li>
+          <li><strong>Harvest reveal</strong> — animated score counter, grade bounce, 6-factor bar chart, confetti on A+</li>
+          <li><strong>Backpack panel</strong></li>
+          <li><strong>Winter review</strong></li>
+          <li><strong>Dialogue panel</strong> — portrait, typewriter, beat dots, skip, advance hint</li>
+          <li><strong>Chapter intro overlay</strong> — fade in/out</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="mobile" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">📱</span>
+        <span class="toggle-title">Mobile UX</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Touch Controls</div>
+            <ul class="feature-items">
+              <li>Tap to place · long press to remove</li>
+              <li>Drag to orbit · pinch to zoom</li>
+              <li>🌱 Plant + 🎒 Backpack (bottom-left FABs)</li>
+              <li>Gold FAB "Commit" / "Next" (bottom-right)</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Layout</div>
+            <ul class="feature-items">
+              <li>Bottom-sheet panels (50vh max, opaque, safe-area padding)</li>
+              <li>Side-panel mode on tablet+ (768px breakpoint)</li>
+              <li>Breakpoints: 640 / 480 / 420px</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="save" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">💾</span>
+        <span class="toggle-title">Save System</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <ul class="two-col">
+          <li>3 independent slots with summaries</li>
+          <li>Campaign + season state saved separately</li>
+          <li>Auto-save on every phase transition</li>
+          <li>Active slot tracking</li>
+          <li>Bug reports saved to localStorage with full game context</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="pause" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">⏸</span>
+        <span class="toggle-title">Pause Menu</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="inline-list" style="margin-bottom:1rem;">
+          <span class="tag">Resume</span>
+          <span class="tag">Season Journal</span>
+          <span class="tag">View Bug Reports</span>
+          <span class="tag tag-amber">Restart Chapter</span>
+          <span class="tag tag-amber">New Campaign</span>
+        </div>
+        <ul class="two-col">
+          <li>Returns to title screen (no page reload)</li>
+          <li>Mutual exclusion with all other panels</li>
+          <li>Blocks all game input while open</li>
+          <li>Opens via ☰ button or ESC key</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="polish" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">✨</span>
+        <span class="toggle-title">Polish</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <ul class="two-col">
+          <li>Toast notifications — info / success / error accents</li>
+          <li>Crop placement feedback ("🌿 Basil planted")</li>
+          <li>Minimum crop guard toast ("Need 8+ crops")</li>
+          <li>Screen shake on negative events</li>
+          <li>FAB pulse on first appearance</li>
+          <li>Phase dots fade during cutscenes</li>
+          <li>Text shadows for HUD readability</li>
+          <li><code style="font-family:Inconsolata,monospace;font-size:0.73rem;color:var(--sage)">will-change</code> on animated elements</li>
+          <li><code style="font-family:Inconsolata,monospace;font-size:0.73rem;color:var(--sage)">-webkit-tap-highlight-color: transparent</code> on all interactives</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="deploy" class="collapsible open">
+      <button class="section-toggle" onclick="toggle(this)">
+        <span class="toggle-icon">🚀</span>
+        <span class="toggle-title">Deploy</span>
+        <span class="toggle-chevron">▼</span>
+      </button>
+      <div class="section-body">
+        <div class="deploy-flow">
+          <div class="deploy-step">push to main</div>
+          <span class="deploy-arrow">→</span>
+          <div class="deploy-step">GH Actions workflow</div>
+          <span class="deploy-arrow">→</span>
+          <div class="deploy-step">Node 22 build</div>
+          <span class="deploy-arrow">→</span>
+          <div class="deploy-step">Vite → dist/</div>
+          <span class="deploy-arrow">→</span>
+          <div class="deploy-step">copy → story-mode-live/</div>
+          <span class="deploy-arrow">→</span>
+          <div class="deploy-step">GitHub Pages</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  <span>Garden OS · Story Mode</span>
+  <span>32 files · ~10,800 lines · Vite + Three.js · Vanilla JS</span>
+  <span style="margin-left:auto;">davehomeassist.github.io/garden-os/story-mode-live/</span>
+</footer>
+
+<script>
+  function toggle(btn) {
+    btn.closest('.collapsible').classList.toggle('open');
+  }
+  function toggleAll(open) {
+    document.querySelectorAll('.collapsible').forEach(s => {
+      open ? s.classList.add('open') : s.classList.remove('open');
+    });
+  }
+</script>
+
+</body>
+</html>

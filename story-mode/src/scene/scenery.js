@@ -18,7 +18,7 @@ const SEASON_TREE_COLORS = {
   winter: [0x6a6a6a, 0x7a7a7a, 0x5a5a5a],
 };
 
-export function buildScenery() {
+export function buildScenery(tracker = null) {
   const group = new THREE.Group();
   const treeCanopies = [];
   const hedgePlants = [];
@@ -140,17 +140,6 @@ export function buildScenery() {
   const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
   backGlass.position.set(0.25, 1.95, -6.22);
   group.add(backGlass);
-
-  // Neighbor house right
-  const neighborWall = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), sidingMat);
-  neighborWall.position.set(6.35, 1.08, -5.55);
-  neighborWall.rotation.y = Math.PI / 2.7;
-  group.add(neighborWall);
-
-  const neighborRoof = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.08, 1.35), roofMat);
-  neighborRoof.position.set(6.55, 2.08, -5.05);
-  neighborRoof.rotation.y = Math.PI / 2.7;
-  group.add(neighborRoof);
 
   // Side fence line on the right edge of the yard
   for (let i = 0; i < 10; i++) {
@@ -453,40 +442,8 @@ export function buildScenery() {
   radioAntenna.position.set(-2.0, 0.3, -3.5);
   group.add(radioAntenna);
 
-  // 3. Clothesline — two poles + catenary line + hanging towel
-  const clotheslineMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9 });
-  const poleA = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6), clotheslineMat);
-  poleA.position.set(-5.2, 0.6, 2.85);
-  group.add(poleA);
-
-  const poleB = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6), clotheslineMat);
-  poleB.position.set(4.5, 0.6, 4.65);
-  group.add(poleB);
-
-  // Catenary line between poles using TubeGeometry
-  {
-    const startPt = new THREE.Vector3(-5.2, 1.2, 2.85);
-    const endPt = new THREE.Vector3(4.5, 1.2, 4.65);
-    const mid = new THREE.Vector3().addVectors(startPt, endPt).multiplyScalar(0.5);
-    mid.y -= 0.25; // droop
-    const curve = new THREE.QuadraticBezierCurve3(startPt, mid, endPt);
-    const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.004, 4, false);
-    const lineMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7 });
-    const clothesline = new THREE.Mesh(tubeGeo, lineMat);
-    group.add(clothesline);
-
-    // Hanging towel at midpoint
-    const towelMat = new THREE.MeshStandardMaterial({
-      color: 0xd8c8b0, roughness: 0.92, side: THREE.DoubleSide,
-    });
-    const towel = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4), towelMat);
-    const towelPos = curve.getPoint(0.5);
-    towel.position.copy(towelPos);
-    towel.position.y -= 0.2;
-    towel.rotation.y = 0.3;
-    towel.rotation.x = 0.05;
-    group.add(towel);
-  }
+  // 3. Clothesline removed entirely.
+  // Even the remaining poles were still reading as a phantom guide lane in the current framing.
 
   // 4. Bird on the fence
   const seasonalProps = new THREE.Group();
@@ -818,6 +775,8 @@ export function buildScenery() {
   group.add(windIndicator);
 
   // ── END NEW SCENERY ITEMS ──────────────────────────────────────────────
+
+  tracker?.trackObject(group);
 
   return {
     group,

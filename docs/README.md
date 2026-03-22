@@ -37,6 +37,8 @@ These are canonical. Do not duplicate their content elsewhere — point to them.
 | [GAME_DESIGN_CRITIQUE.md](./GAME_DESIGN_CRITIQUE.md) | Brutal risk audit with anti-boring redesign recommendations. | Committed |
 | [GAME_FEEL.md](./GAME_FEEL.md) | Feedback/motion/microinteraction spec for tasteful juice. | Committed |
 | [MARKETING_STRATEGY.md](./MARKETING_STRATEGY.md) | Steam/trailer/store-facing framing, tags, hooks. | Committed |
+| [RESOURCE_STORAGE_POLICY.md](./RESOURCE_STORAGE_POLICY.md) | Scope and lifecycle rules for storing shared, runtime-local, generated, and archived resources. | Active |
+| [SYSTEM_MAP_PROPOSAL.md](./SYSTEM_MAP_PROPOSAL.md) | Proposal for updating the system map around the hybrid root-tools plus story-mode architecture. | Active |
 | [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Progression architecture without grind loops. | Committed |
 | [REPLAYABILITY.md](./REPLAYABILITY.md) | Retention/replay systems and challenge framing. | Committed |
 | [SEASONAL_EVENT_SYSTEM.md](./SEASONAL_EVENT_SYSTEM.md) | Seasonal event taxonomy, triggers, effects, and commentary. | Committed |
@@ -54,6 +56,7 @@ These are canonical. Do not duplicate their content elsewhere — point to them.
 | [garden-os-writers-room/](./garden-os-writers-room/) | Prompt-runner kit for creative/system passes (01–16). | Scaffolding |
 | [game-timeline/](./game-timeline/) | Time-based planning artifacts and sprint scaffolding. | Scaffolding |
 | [launch-pack/](./launch-pack/) | External-facing launch prep (HN, Reddit, diagram spec). | Committed |
+| [story-mode/](./story-mode/) | Imported Let It Grow and story-mode product, systems, technical, and roadmap package. | Active |
 | [garden-os-architecture-diagram.svg](./garden-os-architecture-diagram.svg) | Component relationships and data flow diagram. | Committed |
 
 ## Canonical Specs (`specs/`)

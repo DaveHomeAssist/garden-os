@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Garden OS Sprite Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #171008;
+      --panel: rgba(37, 24, 14, 0.94);
+      --panel-2: rgba(57, 37, 22, 0.92);
+      --edge: rgba(246, 222, 167, 0.12);
+      --edge-strong: rgba(246, 222, 167, 0.24);
+      --text: #f6eddc;
+      --muted: rgba(246, 237, 220, 0.62);
+      --gold: #f0cf61;
+      --leaf: #8eb874;
+      --danger: #d97549;
+      --checker-a: #2b2117;
+      --checker-b: #1c140d;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top, rgba(240, 207, 97, 0.08), transparent 28%),
+        linear-gradient(180deg, #1a120a 0%, #130d08 100%);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    body {
+      padding: 28px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      gap: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      gap: 14px;
+      padding: 24px 26px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(55, 36, 20, 0.96), rgba(30, 20, 12, 0.96));
+      border: 1px solid var(--edge);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(246, 237, 220, 0.34);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 0.95;
+      color: var(--gold);
+    }
+
+    .hero-copy {
+      max-width: 70ch;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn,
+    .ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 12px 16px;
+      border: 1px solid var(--edge-strong);
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      text-decoration: none;
+    }
+
+    .btn {
+      background: var(--gold);
+      color: #1b130d;
+      font-weight: 700;
+    }
+
+    .btn:hover,
+    .ghost-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .ghost-btn {
+      background: rgba(246, 237, 220, 0.05);
+      color: var(--text);
+    }
+
+    .toolbar-note {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.1fr) minmax(160px, 0.7fr) minmax(160px, 0.6fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: var(--panel);
+      border: 1px solid var(--edge);
+      box-shadow: var(--shadow);
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label,
+    .toggle-group__label,
+    .range-wrap__label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(246, 237, 220, 0.44);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(246, 237, 220, 0.1);
+      background: rgba(16, 12, 9, 0.92);
+      color: var(--text);
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(240, 207, 97, 0.45);
+      box-shadow: 0 0 0 3px rgba(240, 207, 97, 0.12);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(330px, 0.92fr) minmax(520px, 1.48fr);
+      gap: 18px;
+      min-height: 68vh;
+    }
+
+    .panel {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--edge);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid rgba(246, 237, 220, 0.08);
+    }
+
+    .panel-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .panel-title h2,
+    .panel-title h3 {
+      margin: 0;
+      font-family: 'Fraunces', serif;
+      font-size: 1.25rem;
+      color: var(--text);
+    }
+
+    .panel-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stat-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      background: rgba(246, 237, 220, 0.04);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+    }
+
+    .asset-list {
+      display: grid;
+      gap: 1px;
+      background: rgba(246, 237, 220, 0.05);
+      max-height: 72vh;
+      overflow: auto;
+    }
+
+    .asset-card {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(26, 18, 12, 0.92);
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+
+    .asset-card:hover {
+      background: rgba(50, 34, 22, 0.96);
+    }
+
+    .asset-card.is-active {
+      background: linear-gradient(180deg, rgba(65, 45, 26, 0.96), rgba(40, 28, 18, 0.96));
+      outline: 1px solid rgba(240, 207, 97, 0.24);
+    }
+
+    .asset-thumb {
+      width: 76px;
+      height: 76px;
+      border-radius: 18px;
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      background-image:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+      background-color: var(--checker-b);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .asset-thumb img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .asset-meta {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .asset-name {
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .asset-path {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: rgba(246, 237, 220, 0.42);
+      overflow-wrap: anywhere;
+    }
+
+    .asset-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(246, 237, 220, 0.04);
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(246, 237, 220, 0.72);
+    }
+
+    .viewer-body {
+      display: grid;
+      grid-template-rows: auto minmax(280px, 1fr) auto;
+      gap: 16px;
+      padding: 18px;
+      min-height: 100%;
+    }
+
+    .viewer-controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .range-wrap,
+    .toggle-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(246, 237, 220, 0.1);
+      background: rgba(16, 12, 9, 0.92);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+
+    .mini-btn.is-active {
+      border-color: rgba(240, 207, 97, 0.28);
+      background: rgba(240, 207, 97, 0.12);
+      color: var(--gold);
+    }
+
+    .canvas-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 340px;
+      border-radius: 24px;
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      background-color: var(--checker-b);
+      background-image:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+      overflow: hidden;
+    }
+
+    .canvas-stage[data-bg="light"] {
+      background: #ece5d8;
+      background-image: none;
+    }
+
+    .canvas-stage[data-bg="dark"] {
+      background: #120c08;
+      background-image: none;
+    }
+
+    .canvas-stage canvas {
+      max-width: calc(100% - 32px);
+      max-height: calc(100% - 32px);
+      width: auto;
+      height: auto;
+      border-radius: 14px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+      background: transparent;
+    }
+
+    .empty-view {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-view strong {
+      color: var(--text);
+      font-size: 20px;
+      font-family: 'Fraunces', serif;
+    }
+
+    .inspector {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .inspector-card {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(16, 12, 9, 0.92);
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      display: grid;
+      gap: 8px;
+    }
+
+    .inspector-card h3 {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr);
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .kv dt {
+      color: rgba(246, 237, 220, 0.46);
+    }
+
+    .kv dd {
+      margin: 0;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .frames {
+      display: grid;
+      gap: 14px;
+    }
+
+    .frames-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .frame-card {
+      padding: 12px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(246, 237, 220, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .frame-card canvas {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      background-color: var(--checker-b);
+      background-image:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+      image-rendering: pixelated;
+    }
+
+    .frame-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .hint {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(142, 184, 116, 0.08);
+      border: 1px solid rgba(142, 184, 116, 0.14);
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(246, 237, 220, 0.82);
+    }
+
+    .anim-section {
+      display: grid;
+      gap: 14px;
+    }
+
+    .anim-stage {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: start;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(16, 12, 9, 0.92);
+      border: 1px solid rgba(246, 237, 220, 0.08);
+    }
+
+    .anim-canvas-wrap {
+      position: relative;
+      border-radius: 16px;
+      border: 1px solid rgba(246, 237, 220, 0.1);
+      background-color: var(--checker-b);
+      background-image:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 14px 14px;
+      background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      min-width: 140px;
+      min-height: 140px;
+      max-width: 220px;
+      max-height: 220px;
+    }
+
+    .anim-canvas-wrap canvas {
+      image-rendering: pixelated;
+      width: 100%;
+      height: 100%;
+    }
+
+    .anim-controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .anim-transport {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .anim-transport .mini-btn {
+      min-width: 44px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+    }
+
+    .anim-transport .mini-btn.is-playing {
+      border-color: rgba(142, 184, 116, 0.38);
+      background: rgba(142, 184, 116, 0.14);
+      color: var(--leaf);
+    }
+
+    .anim-scrubber {
+      display: grid;
+      gap: 6px;
+    }
+
+    .anim-scrubber input[type="range"] {
+      width: 100%;
+      accent-color: var(--gold);
+    }
+
+    .anim-scrubber-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .anim-settings {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .anim-settings .field {
+      flex: 0 0 auto;
+      min-width: 80px;
+    }
+
+    .anim-settings .field input {
+      width: 80px;
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .anim-frame-strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    .anim-frame-strip-item {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background-color: var(--checker-b);
+      background-image:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 10px 10px;
+      background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+      cursor: pointer;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      transition: border-color 100ms ease;
+    }
+
+    .anim-frame-strip-item.is-current {
+      border-color: var(--gold);
+    }
+
+    .anim-frame-strip-item canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .anim-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hidden-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .status {
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status.is-danger {
+      color: var(--danger);
+    }
+
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .asset-list {
+        max-height: 46vh;
+      }
+
+      .viewer-controls {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 840px) {
+      body {
+        padding: 16px;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .viewer-controls,
+      .inspector {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-head {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="eyebrow">Garden OS Tools</div>
+      <div>
+        <h1>Sprite Loader + Viewer</h1>
+      </div>
+      <div class="hero-copy">
+        Load a local sprite folder, inspect transparent PNGs and JPG refs, search by name or folder, and slice sprite strips into frames.
+        This is standalone by design: it works with a file picker, no build step and no server-side directory crawling.
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="pick-folder-btn" type="button">Load Folder</button>
+        <button class="ghost-btn" id="pick-files-btn" type="button">Add Files</button>
+        <button class="ghost-btn" id="clear-btn" type="button">Clear Session</button>
+        <div class="toolbar-note">Recommended first load: <code>garden-os-sprites/</code></div>
+      </div>
+      <input class="hidden-input" id="folder-input" type="file" webkitdirectory directory multiple accept="image/*" />
+      <input class="hidden-input" id="files-input" type="file" multiple accept="image/*" />
+    </section>
+
+    <section class="filters">
+      <div class="field">
+        <label for="search-input">Search</label>
+        <input id="search-input" type="search" placeholder="spinach, ui, marigold, grow..." />
+      </div>
+      <div class="field">
+        <label for="folder-select">Folder</label>
+        <select id="folder-select">
+          <option value="all">All folders</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sort-select">Sort</label>
+        <select id="sort-select">
+          <option value="path">Path</option>
+          <option value="name">Name</option>
+          <option value="area">Largest first</option>
+        </select>
+      </div>
+      <div class="stat-pills" id="summary-pills"></div>
+      <div class="status" id="status-text">No sprites loaded yet.</div>
+    </section>
+
+    <section class="workspace">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2>Loaded Assets</h2>
+            <div class="panel-subtitle">Nested folders stay intact using the browser-provided relative path.</div>
+          </div>
+        </div>
+        <div class="asset-list" id="asset-list">
+          <div class="empty-view">
+            <strong>No sprites yet</strong>
+            <div>Pick a folder or a set of files to start browsing local art.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2 id="viewer-title">Viewer</h2>
+            <div class="panel-subtitle" id="viewer-subtitle">Select a sprite to inspect dimensions, transparency, and frame layout.</div>
+          </div>
+        </div>
+
+        <div class="viewer-body">
+          <div class="viewer-controls">
+            <div class="range-wrap">
+              <div class="range-wrap__label">Zoom</div>
+              <input id="zoom-input" type="range" min="1" max="16" step="0.5" value="4" />
+            </div>
+
+            <div class="field">
+              <label for="bg-select">Background</label>
+              <select id="bg-select">
+                <option value="checker">Checker</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="columns-input">Columns</label>
+              <input id="columns-input" type="number" min="1" step="1" value="1" />
+            </div>
+
+            <div class="field">
+              <label for="rows-input">Rows</label>
+              <input id="rows-input" type="number" min="1" step="1" value="1" />
+            </div>
+
+            <div class="field">
+              <label for="padding-input">Padding</label>
+              <input id="padding-input" type="number" min="0" step="1" value="0" />
+            </div>
+
+            <div class="toggle-group">
+              <div class="toggle-group__label">View</div>
+              <div class="toggle-row">
+                <button class="mini-btn is-active" type="button" data-toggle="pixel" id="pixel-btn">Pixelated</button>
+                <button class="mini-btn" type="button" data-toggle="grid" id="grid-btn">Frame Grid</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-stage" id="canvas-stage" data-bg="checker">
+            <canvas id="preview-canvas" width="512" height="512"></canvas>
+            <div class="empty-view" id="empty-view">
+              <strong>Viewer ready</strong>
+              <div>Choose any sprite and the preview, metadata, and frame slices will appear here.</div>
+            </div>
+          </div>
+
+          <div class="inspector">
+            <div class="inspector-card">
+              <h3>Metadata</h3>
+              <dl class="kv" id="meta-list">
+                <dt>Path</dt><dd>Nothing selected</dd>
+              </dl>
+            </div>
+            <div class="inspector-card">
+              <h3>Frame Slice</h3>
+              <dl class="kv" id="slice-list">
+                <dt>Frames</dt><dd>1</dd>
+              </dl>
+            </div>
+          </div>
+
+          <div class="anim-section" id="anim-section">
+            <div class="panel-title">
+              <h3>Animation Preview</h3>
+              <div class="panel-subtitle">Play sprite sheet frames as animation. Adjust FPS and scrub through frames.</div>
+            </div>
+
+            <div class="anim-stage" id="anim-stage">
+              <div class="anim-canvas-wrap" id="anim-canvas-wrap">
+                <canvas id="anim-canvas" width="256" height="256"></canvas>
+              </div>
+              <div class="anim-controls">
+                <div class="anim-transport">
+                  <button class="mini-btn" type="button" id="anim-prev" title="Previous frame">&#9664;&#9664;</button>
+                  <button class="mini-btn" type="button" id="anim-play" title="Play / Pause">&#9654;</button>
+                  <button class="mini-btn" type="button" id="anim-next" title="Next frame">&#9654;&#9654;</button>
+                  <button class="mini-btn" type="button" id="anim-loop" title="Toggle loop">Loop</button>
+                  <button class="mini-btn" type="button" id="anim-pingpong" title="Ping-pong mode">Ping-pong</button>
+                </div>
+                <div class="anim-scrubber">
+                  <input type="range" id="anim-scrub" min="0" max="0" step="1" value="0" />
+                  <div class="anim-scrubber-labels">
+                    <span id="anim-frame-label">Frame 1 / 1</span>
+                    <span id="anim-time-label">0.00s</span>
+                  </div>
+                </div>
+                <div class="anim-settings">
+                  <div class="field">
+                    <label for="anim-fps">FPS</label>
+                    <input id="anim-fps" type="number" min="1" max="60" step="1" value="6" />
+                  </div>
+                  <div class="field">
+                    <label for="anim-scale">Scale</label>
+                    <input id="anim-scale" type="number" min="1" max="8" step="1" value="2" />
+                  </div>
+                </div>
+                <div class="anim-frame-strip" id="anim-strip"></div>
+              </div>
+            </div>
+
+            <div class="anim-empty" id="anim-empty">
+              Set columns or rows above 1 to enable animation preview.
+            </div>
+          </div>
+
+          <div class="frames">
+            <div class="panel-title">
+              <h3>Frames</h3>
+              <div class="panel-subtitle">Useful for crop strips, growth stages, and manual sheet inspection.</div>
+            </div>
+            <div class="frames-grid" id="frames-grid"></div>
+            <div class="hint">
+              Tip: if a strip is not slicing correctly, adjust columns, rows, and padding. Growth strips in this repo are often 4 columns by 1 row.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      items: [],
+      filtered: [],
+      selectedId: null,
+      search: '',
+      folder: 'all',
+      sort: 'path',
+      zoom: 4,
+      bg: 'checker',
+      columns: 1,
+      rows: 1,
+      padding: 0,
+      pixelated: true,
+      showGrid: false,
+    };
+
+    const refs = {
+      folderInput: document.getElementById('folder-input'),
+      filesInput: document.getElementById('files-input'),
+      searchInput: document.getElementById('search-input'),
+      folderSelect: document.getElementById('folder-select'),
+      sortSelect: document.getElementById('sort-select'),
+      summaryPills: document.getElementById('summary-pills'),
+      statusText: document.getElementById('status-text'),
+      assetList: document.getElementById('asset-list'),
+      viewerTitle: document.getElementById('viewer-title'),
+      viewerSubtitle: document.getElementById('viewer-subtitle'),
+      canvasStage: document.getElementById('canvas-stage'),
+      previewCanvas: document.getElementById('preview-canvas'),
+      emptyView: document.getElementById('empty-view'),
+      metaList: document.getElementById('meta-list'),
+      sliceList: document.getElementById('slice-list'),
+      framesGrid: document.getElementById('frames-grid'),
+      zoomInput: document.getElementById('zoom-input'),
+      bgSelect: document.getElementById('bg-select'),
+      columnsInput: document.getElementById('columns-input'),
+      rowsInput: document.getElementById('rows-input'),
+      paddingInput: document.getElementById('padding-input'),
+      pixelBtn: document.getElementById('pixel-btn'),
+      gridBtn: document.getElementById('grid-btn'),
+    };
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat().format(value);
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let size = bytes;
+      let unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+      }
+      return unitIndex === 0 ? `${size} ${units[unitIndex]}` : `${size.toFixed(1)} ${units[unitIndex]}`;
+    }
+
+    function getRelativePath(file) {
+      return file.webkitRelativePath || file.name;
+    }
+
+    function getFolderFromPath(path) {
+      const parts = path.split('/');
+      parts.pop();
+      return parts.join('/') || 'root';
+    }
+
+    function guessDefaultSlice(item) {
+      const name = item.name.toLowerCase();
+      if (name.includes('grow-')) return { columns: 4, rows: 1 };
+      if (name.includes('sheet') && item.width >= item.height * 2) {
+        const guess = Math.min(8, Math.max(2, Math.round(item.width / item.height)));
+        return { columns: guess, rows: 1 };
+      }
+      return { columns: 1, rows: 1 };
+    }
+
+    function revokeUrls() {
+      state.items.forEach((item) => {
+        URL.revokeObjectURL(item.url);
+      });
+    }
+
+    function clearSession() {
+      revokeUrls();
+      state.items = [];
+      state.filtered = [];
+      state.selectedId = null;
+      refs.folderInput.value = '';
+      refs.filesInput.value = '';
+      render();
+      setStatus('Session cleared.');
+    }
+
+    function setStatus(message, tone = 'normal') {
+      refs.statusText.textContent = message;
+      refs.statusText.classList.toggle('is-danger', tone === 'danger');
+    }
+
+    async function loadFiles(fileList, modeLabel) {
+      const files = Array.from(fileList || []).filter((file) => file.type.startsWith('image/'));
+      if (!files.length) {
+        setStatus('No image files found in that selection.', 'danger');
+        return;
+      }
+
+      revokeUrls();
+
+      const items = await Promise.all(files.map(async (file, index) => {
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        image.decoding = 'async';
+        const decoded = new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = reject;
+        });
+        image.src = url;
+        await decoded;
+        return {
+          id: `${Date.now()}_${index}_${file.name}`,
+          file,
+          url,
+          image,
+          name: file.name,
+          path: getRelativePath(file),
+          folder: getFolderFromPath(getRelativePath(file)),
+          type: file.type,
+          size: file.size,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+        };
+      }));
+
+      state.items = items;
+      state.selectedId = items[0]?.id ?? null;
+      state.folder = 'all';
+      state.search = '';
+      refs.searchInput.value = '';
+      refs.folderSelect.value = 'all';
+      setStatus(`Loaded ${items.length} image files from ${modeLabel}.`);
+      syncFilters();
+    }
+
+    function sortItems(items) {
+      const next = [...items];
+      if (state.sort === 'name') {
+        next.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (state.sort === 'area') {
+        next.sort((a, b) => (b.width * b.height) - (a.width * a.height) || a.path.localeCompare(b.path));
+      } else {
+        next.sort((a, b) => a.path.localeCompare(b.path));
+      }
+      return next;
+    }
+
+    function syncFilters() {
+      const needle = state.search.trim().toLowerCase();
+      const filtered = state.items.filter((item) => {
+        const matchesSearch = !needle
+          || item.name.toLowerCase().includes(needle)
+          || item.path.toLowerCase().includes(needle)
+          || item.folder.toLowerCase().includes(needle);
+        const matchesFolder = state.folder === 'all' || item.folder === state.folder;
+        return matchesSearch && matchesFolder;
+      });
+      state.filtered = sortItems(filtered);
+
+      if (!state.filtered.some((item) => item.id === state.selectedId)) {
+        state.selectedId = state.filtered[0]?.id ?? null;
+      }
+
+      render();
+    }
+
+    function updateFolderOptions() {
+      const folders = [...new Set(state.items.map((item) => item.folder))].sort((a, b) => a.localeCompare(b));
+      refs.folderSelect.innerHTML = '<option value="all">All folders</option>'
+        + folders.map((folder) => `<option value="${folder}">${folder}</option>`).join('');
+      refs.folderSelect.value = folders.includes(state.folder) ? state.folder : 'all';
+      if (!folders.includes(state.folder)) {
+        state.folder = 'all';
+      }
+    }
+
+    function renderSummary() {
+      const folderCount = new Set(state.items.map((item) => item.folder)).size;
+      const selected = state.items.find((item) => item.id === state.selectedId);
+      const pills = [
+        `${formatNumber(state.filtered.length)} shown`,
+        `${formatNumber(state.items.length)} loaded`,
+        `${formatNumber(folderCount)} folders`,
+      ];
+      if (selected) {
+        pills.push(`${selected.width} x ${selected.height}`);
+      }
+      refs.summaryPills.innerHTML = pills.map((label) => `<span class="stat-pill">${label}</span>`).join('');
+    }
+
+    function renderAssetList() {
+      if (!state.items.length) {
+        refs.assetList.innerHTML = `
+          <div class="empty-view">
+            <strong>No sprites yet</strong>
+            <div>Pick a folder or a set of files to start browsing local art.</div>
+          </div>
+        `;
+        return;
+      }
+
+      if (!state.filtered.length) {
+        refs.assetList.innerHTML = `
+          <div class="empty-view">
+            <strong>No matches</strong>
+            <div>Try a looser search term or reset the folder filter.</div>
+          </div>
+        `;
+        return;
+      }
+
+      refs.assetList.innerHTML = state.filtered.map((item) => `
+        <button class="asset-card ${item.id === state.selectedId ? 'is-active' : ''}" type="button" data-id="${item.id}">
+          <div class="asset-thumb">
+            <img src="${item.url}" alt="${item.name}" loading="lazy" />
+          </div>
+          <div class="asset-meta">
+            <div class="asset-name">${item.name}</div>
+            <div class="asset-path">${item.path}</div>
+            <div class="asset-tags">
+              <span class="tag">${item.folder}</span>
+              <span class="tag">${item.width} x ${item.height}</span>
+              <span class="tag">${formatBytes(item.size)}</span>
+            </div>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function getSelectedItem() {
+      return state.items.find((item) => item.id === state.selectedId) ?? null;
+    }
+
+    function getSliceMetrics(item) {
+      const columns = Math.max(1, Number.parseInt(state.columns, 10) || 1);
+      const rows = Math.max(1, Number.parseInt(state.rows, 10) || 1);
+      const padding = Math.max(0, Number.parseInt(state.padding, 10) || 0);
+      const usableWidth = item.width - (padding * 2);
+      const usableHeight = item.height - (padding * 2);
+      const frameWidth = Math.max(1, Math.floor(usableWidth / columns));
+      const frameHeight = Math.max(1, Math.floor(usableHeight / rows));
+      const count = columns * rows;
+      return { columns, rows, padding, frameWidth, frameHeight, count };
+    }
+
+    function drawPreview(item) {
+      const canvas = refs.previewCanvas;
+      const ctx = canvas.getContext('2d');
+      const metrics = getSliceMetrics(item);
+      const zoom = Number(state.zoom) || 1;
+      const width = Math.max(128, Math.ceil(item.width * zoom));
+      const height = Math.max(128, Math.ceil(item.height * zoom));
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.clearRect(0, 0, width, height);
+      ctx.imageSmoothingEnabled = !state.pixelated;
+      ctx.drawImage(item.image, 0, 0, width, height);
+
+      if (state.showGrid && metrics.count > 1) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(240, 207, 97, 0.86)';
+        ctx.lineWidth = Math.max(1, zoom * 0.35);
+        for (let col = 0; col <= metrics.columns; col += 1) {
+          const x = (metrics.padding + (metrics.frameWidth * col)) * zoom;
+          ctx.beginPath();
+          ctx.moveTo(x, metrics.padding * zoom);
+          ctx.lineTo(x, (metrics.padding + (metrics.frameHeight * metrics.rows)) * zoom);
+          ctx.stroke();
+        }
+        for (let row = 0; row <= metrics.rows; row += 1) {
+          const y = (metrics.padding + (metrics.frameHeight * row)) * zoom;
+          ctx.beginPath();
+          ctx.moveTo(metrics.padding * zoom, y);
+          ctx.lineTo((metrics.padding + (metrics.frameWidth * metrics.columns)) * zoom, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function renderMetadata(item) {
+      refs.viewerTitle.textContent = item.name;
+      refs.viewerSubtitle.textContent = item.path;
+      refs.emptyView.style.display = 'none';
+
+      refs.metaList.innerHTML = `
+        <dt>Path</dt><dd>${item.path}</dd>
+        <dt>Folder</dt><dd>${item.folder}</dd>
+        <dt>Type</dt><dd>${item.type || 'unknown'}</dd>
+        <dt>Size</dt><dd>${formatBytes(item.size)}</dd>
+        <dt>Dimensions</dt><dd>${item.width} x ${item.height}</dd>
+      `;
+
+      const metrics = getSliceMetrics(item);
+      refs.sliceList.innerHTML = `
+        <dt>Frames</dt><dd>${metrics.count}</dd>
+        <dt>Columns</dt><dd>${metrics.columns}</dd>
+        <dt>Rows</dt><dd>${metrics.rows}</dd>
+        <dt>Frame size</dt><dd>${metrics.frameWidth} x ${metrics.frameHeight}</dd>
+        <dt>Padding</dt><dd>${metrics.padding}px</dd>
+      `;
+    }
+
+    function renderFrames(item) {
+      const metrics = getSliceMetrics(item);
+      refs.framesGrid.innerHTML = '';
+
+      if (metrics.count <= 1) {
+        refs.framesGrid.innerHTML = `
+          <div class="empty-view" style="padding: 24px 0;">
+            <strong>Single image</strong>
+            <div>Set columns or rows above 1 if this asset is actually a sheet or strip.</div>
+          </div>
+        `;
+        return;
+      }
+
+      for (let row = 0; row < metrics.rows; row += 1) {
+        for (let col = 0; col < metrics.columns; col += 1) {
+          const frameIndex = (row * metrics.columns) + col;
+          const frameCanvas = document.createElement('canvas');
+          frameCanvas.width = metrics.frameWidth;
+          frameCanvas.height = metrics.frameHeight;
+          const ctx = frameCanvas.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(
+            item.image,
+            metrics.padding + (col * metrics.frameWidth),
+            metrics.padding + (row * metrics.frameHeight),
+            metrics.frameWidth,
+            metrics.frameHeight,
+            0,
+            0,
+            metrics.frameWidth,
+            metrics.frameHeight
+          );
+
+          const card = document.createElement('div');
+          card.className = 'frame-card';
+          const label = document.createElement('div');
+          label.className = 'frame-label';
+          label.textContent = `Frame ${frameIndex + 1} · c${col + 1} r${row + 1}`;
+          card.appendChild(frameCanvas);
+          card.appendChild(label);
+          refs.framesGrid.appendChild(card);
+        }
+      }
+    }
+
+    function renderViewer() {
+      const item = getSelectedItem();
+      refs.canvasStage.dataset.bg = state.bg;
+      refs.previewCanvas.style.imageRendering = state.pixelated ? 'pixelated' : 'auto';
+
+      if (!item) {
+        refs.viewerTitle.textContent = 'Viewer';
+        refs.viewerSubtitle.textContent = 'Select a sprite to inspect dimensions, transparency, and frame layout.';
+        refs.emptyView.style.display = 'grid';
+        refs.metaList.innerHTML = '<dt>Path</dt><dd>Nothing selected</dd>';
+        refs.sliceList.innerHTML = '<dt>Frames</dt><dd>1</dd>';
+        refs.framesGrid.innerHTML = '';
+        const ctx = refs.previewCanvas.getContext('2d');
+        ctx.clearRect(0, 0, refs.previewCanvas.width, refs.previewCanvas.height);
+        return;
+      }
+
+      renderMetadata(item);
+      drawPreview(item);
+      renderFrames(item);
+    }
+
+    function render() {
+      updateFolderOptions();
+      renderSummary();
+      renderAssetList();
+      renderViewer();
+    }
+
+    function selectItem(id) {
+      const item = state.items.find((entry) => entry.id === id);
+      if (!item) return;
+      state.selectedId = id;
+      const guess = guessDefaultSlice(item);
+      state.columns = guess.columns;
+      state.rows = guess.rows;
+      state.padding = 0;
+      refs.columnsInput.value = String(state.columns);
+      refs.rowsInput.value = String(state.rows);
+      refs.paddingInput.value = String(state.padding);
+      render();
+    }
+
+    document.getElementById('pick-folder-btn').addEventListener('click', () => refs.folderInput.click());
+    document.getElementById('pick-files-btn').addEventListener('click', () => refs.filesInput.click());
+    document.getElementById('clear-btn').addEventListener('click', clearSession);
+
+    refs.folderInput.addEventListener('change', (event) => {
+      loadFiles(event.target.files, 'folder');
+    });
+
+    refs.filesInput.addEventListener('change', (event) => {
+      loadFiles(event.target.files, 'manual selection');
+    });
+
+    refs.searchInput.addEventListener('input', (event) => {
+      state.search = event.target.value;
+      syncFilters();
+    });
+
+    refs.folderSelect.addEventListener('change', (event) => {
+      state.folder = event.target.value;
+      syncFilters();
+    });
+
+    refs.sortSelect.addEventListener('change', (event) => {
+      state.sort = event.target.value;
+      syncFilters();
+    });
+
+    refs.assetList.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-id]');
+      if (!card) return;
+      selectItem(card.dataset.id);
+    });
+
+    refs.zoomInput.addEventListener('input', (event) => {
+      state.zoom = Number(event.target.value);
+      renderViewer();
+    });
+
+    refs.bgSelect.addEventListener('change', (event) => {
+      state.bg = event.target.value;
+      renderViewer();
+    });
+
+    refs.columnsInput.addEventListener('input', (event) => {
+      state.columns = Math.max(1, Number.parseInt(event.target.value, 10) || 1);
+      renderViewer();
+    });
+
+    refs.rowsInput.addEventListener('input', (event) => {
+      state.rows = Math.max(1, Number.parseInt(event.target.value, 10) || 1);
+      renderViewer();
+    });
+
+    refs.paddingInput.addEventListener('input', (event) => {
+      state.padding = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
+      renderViewer();
+    });
+
+    refs.pixelBtn.addEventListener('click', () => {
+      state.pixelated = !state.pixelated;
+      refs.pixelBtn.classList.toggle('is-active', state.pixelated);
+      renderViewer();
+    });
+
+    refs.gridBtn.addEventListener('click', () => {
+      state.showGrid = !state.showGrid;
+      refs.gridBtn.classList.toggle('is-active', state.showGrid);
+      renderViewer();
+    });
+
+    /* ── Animation Previewer ──────────────────────────────────────────── */
+
+    const anim = {
+      playing: false,
+      loop: true,
+      pingpong: false,
+      fps: 6,
+      scale: 2,
+      frame: 0,
+      direction: 1,    // 1 = forward, -1 = reverse (ping-pong)
+      frameCount: 0,
+      rafId: null,
+      lastTick: 0,
+      frameBuffers: [],  // pre-rendered ImageData per frame
+    };
+
+    const animRefs = {
+      section:    document.getElementById('anim-section'),
+      stage:      document.getElementById('anim-stage'),
+      empty:      document.getElementById('anim-empty'),
+      canvas:     document.getElementById('anim-canvas'),
+      wrap:       document.getElementById('anim-canvas-wrap'),
+      playBtn:    document.getElementById('anim-play'),
+      prevBtn:    document.getElementById('anim-prev'),
+      nextBtn:    document.getElementById('anim-next'),
+      loopBtn:    document.getElementById('anim-loop'),
+      pingpongBtn:document.getElementById('anim-pingpong'),
+      scrub:      document.getElementById('anim-scrub'),
+      frameLabel: document.getElementById('anim-frame-label'),
+      timeLabel:  document.getElementById('anim-time-label'),
+      fpsInput:   document.getElementById('anim-fps'),
+      scaleInput: document.getElementById('anim-scale'),
+      strip:      document.getElementById('anim-strip'),
+    };
+
+    function animStop() {
+      anim.playing = false;
+      if (anim.rafId) { cancelAnimationFrame(anim.rafId); anim.rafId = null; }
+      animRefs.playBtn.classList.remove('is-playing');
+      animRefs.playBtn.innerHTML = '&#9654;';
+    }
+
+    function animBuildFrames(item) {
+      const metrics = getSliceMetrics(item);
+      anim.frameCount = metrics.count;
+      anim.frameBuffers = [];
+
+      for (let i = 0; i < metrics.count; i++) {
+        const col = i % metrics.columns;
+        const row = Math.floor(i / metrics.columns);
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = metrics.frameWidth;
+        offCanvas.height = metrics.frameHeight;
+        const ctx = offCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(
+          item.image,
+          metrics.padding + (col * metrics.frameWidth),
+          metrics.padding + (row * metrics.frameHeight),
+          metrics.frameWidth,
+          metrics.frameHeight,
+          0, 0,
+          metrics.frameWidth,
+          metrics.frameHeight
+        );
+        anim.frameBuffers.push(offCanvas);
+      }
+    }
+
+    function animDrawFrame() {
+      const buf = anim.frameBuffers[anim.frame];
+      if (!buf) return;
+      const scale = Math.max(1, anim.scale);
+      const w = buf.width * scale;
+      const h = buf.height * scale;
+      animRefs.canvas.width = w;
+      animRefs.canvas.height = h;
+      const ctx = animRefs.canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(buf, 0, 0, w, h);
+
+      animRefs.scrub.value = anim.frame;
+      animRefs.frameLabel.textContent = `Frame ${anim.frame + 1} / ${anim.frameCount}`;
+      const elapsed = anim.fps > 0 ? (anim.frame / anim.fps).toFixed(2) : '0.00';
+      animRefs.timeLabel.textContent = `${elapsed}s`;
+
+      // highlight strip
+      const stripItems = animRefs.strip.children;
+      for (let i = 0; i < stripItems.length; i++) {
+        stripItems[i].classList.toggle('is-current', i === anim.frame);
+      }
+    }
+
+    function animTick(timestamp) {
+      if (!anim.playing) return;
+      const interval = 1000 / Math.max(1, anim.fps);
+      if (timestamp - anim.lastTick >= interval) {
+        anim.lastTick = timestamp;
+        let next = anim.frame + anim.direction;
+
+        if (anim.pingpong) {
+          if (next >= anim.frameCount) {
+            anim.direction = -1;
+            next = anim.frame + anim.direction;
+          } else if (next < 0) {
+            if (anim.loop) {
+              anim.direction = 1;
+              next = anim.frame + anim.direction;
+            } else {
+              animStop();
+              return;
+            }
+          }
+        } else {
+          if (next >= anim.frameCount) {
+            if (anim.loop) {
+              next = 0;
+            } else {
+              animStop();
+              return;
+            }
+          }
+        }
+
+        anim.frame = next;
+        animDrawFrame();
+      }
+      anim.rafId = requestAnimationFrame(animTick);
+    }
+
+    function animPlay() {
+      if (anim.frameCount <= 1) return;
+      if (anim.playing) { animStop(); return; }
+      anim.playing = true;
+      anim.direction = 1;
+      anim.lastTick = 0;
+      animRefs.playBtn.classList.add('is-playing');
+      animRefs.playBtn.innerHTML = '&#9646;&#9646;';
+      anim.rafId = requestAnimationFrame(animTick);
+    }
+
+    function animBuildStrip() {
+      animRefs.strip.innerHTML = '';
+      for (let i = 0; i < anim.frameBuffers.length; i++) {
+        const item = document.createElement('div');
+        item.className = 'anim-frame-strip-item' + (i === anim.frame ? ' is-current' : '');
+        const c = document.createElement('canvas');
+        const buf = anim.frameBuffers[i];
+        c.width = buf.width;
+        c.height = buf.height;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(buf, 0, 0);
+        item.appendChild(c);
+        item.addEventListener('click', () => {
+          anim.frame = i;
+          animDrawFrame();
+        });
+        animRefs.strip.appendChild(item);
+      }
+    }
+
+    function renderAnimation() {
+      const item = getSelectedItem();
+      if (!item) {
+        animStop();
+        animRefs.stage.style.display = 'none';
+        animRefs.empty.style.display = 'block';
+        animRefs.empty.textContent = 'Select a sprite to preview animation.';
+        return;
+      }
+
+      const metrics = getSliceMetrics(item);
+      if (metrics.count <= 1) {
+        animStop();
+        animRefs.stage.style.display = 'none';
+        animRefs.empty.style.display = 'block';
+        animRefs.empty.textContent = 'Set columns or rows above 1 to enable animation preview.';
+        return;
+      }
+
+      animRefs.stage.style.display = 'grid';
+      animRefs.empty.style.display = 'none';
+
+      animBuildFrames(item);
+      anim.frame = Math.min(anim.frame, anim.frameCount - 1);
+      animRefs.scrub.max = anim.frameCount - 1;
+      animBuildStrip();
+      animDrawFrame();
+    }
+
+    animRefs.playBtn.addEventListener('click', animPlay);
+
+    animRefs.prevBtn.addEventListener('click', () => {
+      if (anim.frameCount <= 1) return;
+      animStop();
+      anim.frame = (anim.frame - 1 + anim.frameCount) % anim.frameCount;
+      animDrawFrame();
+    });
+
+    animRefs.nextBtn.addEventListener('click', () => {
+      if (anim.frameCount <= 1) return;
+      animStop();
+      anim.frame = (anim.frame + 1) % anim.frameCount;
+      animDrawFrame();
+    });
+
+    animRefs.loopBtn.addEventListener('click', () => {
+      anim.loop = !anim.loop;
+      animRefs.loopBtn.classList.toggle('is-active', anim.loop);
+    });
+    animRefs.loopBtn.classList.add('is-active');
+
+    animRefs.pingpongBtn.addEventListener('click', () => {
+      anim.pingpong = !anim.pingpong;
+      animRefs.pingpongBtn.classList.toggle('is-active', anim.pingpong);
+    });
+
+    animRefs.scrub.addEventListener('input', (e) => {
+      anim.frame = Number(e.target.value);
+      animDrawFrame();
+    });
+
+    animRefs.fpsInput.addEventListener('input', (e) => {
+      anim.fps = Math.max(1, Math.min(60, Number(e.target.value) || 6));
+    });
+
+    animRefs.scaleInput.addEventListener('input', (e) => {
+      anim.scale = Math.max(1, Math.min(8, Number(e.target.value) || 2));
+      animDrawFrame();
+    });
+
+    // Patch renderViewer to also render animation
+    const _origRenderViewer = renderViewer;
+    renderViewer = function() {
+      _origRenderViewer();
+      renderAnimation();
+    };
+
+    window.addEventListener('beforeunload', revokeUrls);
+    render();
+  </script>
+</body>
+</html>

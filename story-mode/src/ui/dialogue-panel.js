@@ -1,6 +1,58 @@
 import { resolvePortraitLayers } from '../data/portraits.js';
 
+function ensureChoiceStyles() {
+  if (document.getElementById('dp-choice-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'dp-choice-styles';
+  style.textContent = `
+    .dp-choice-row {
+      display: none;
+      gap: 8px;
+      padding: 12px 16px 0;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .dp-choice-row.is-visible {
+      display: flex;
+    }
+    .dp-choice-btn {
+      min-height: 44px;
+      background: var(--soil, #5c3d1e);
+      color: var(--cream, #f7f0da);
+      border: 1px solid var(--sun, #e8c84a);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: dp-choice-in 180ms ease forwards;
+    }
+    .dp-choice-btn:hover {
+      background: var(--sun, #e8c84a);
+      color: var(--text, #1f1a14);
+    }
+    .dp-choice-btn:focus-visible {
+      outline: 2px solid var(--sun, #e8c84a);
+      outline-offset: 2px;
+    }
+    .dp-choice-btn.is-selected {
+      background: var(--leaf-bright, #8bcf5a);
+      color: var(--text, #1f1a14);
+    }
+    @keyframes dp-choice-in {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 export function createDialoguePanel(rootEl) {
+  ensureChoiceStyles();
   rootEl.innerHTML = `
     <div class="dp-panel" id="dp-panel" aria-live="polite" aria-atomic="false">
       <div class="dp-portrait-area">
@@ -16,6 +68,7 @@ export function createDialoguePanel(rootEl) {
       <div class="dp-content-area">
         <div class="dp-speaker-badge" id="dp-speaker-badge"></div>
         <div class="dp-text" id="dp-text"></div>
+        <div class="dp-choice-row" id="dp-choice-row" role="group" aria-label="Dialogue choices"></div>
         <div class="dp-dots" id="dp-dots"></div>
         <div class="dp-advance-hint" id="dp-advance-hint" aria-hidden="true">▼</div>
       </div>
@@ -34,10 +87,13 @@ export function createDialoguePanel(rootEl) {
     layerOverlay: rootEl.querySelector('#dp-layer-overlay'),
     speakerBadge: rootEl.querySelector('#dp-speaker-badge'),
     text: rootEl.querySelector('#dp-text'),
+    choiceRow: rootEl.querySelector('#dp-choice-row'),
     dots: rootEl.querySelector('#dp-dots'),
     advanceHint: rootEl.querySelector('#dp-advance-hint'),
     skipBtn: rootEl.querySelector('#dp-skip-btn'),
   };
+  let choiceHandler = null;
+  let lastChoiceSignature = '';
 
   function setLayerSrc(el, src) {
     el.style.backgroundImage = src ? `url("${src}")` : 'none';
@@ -90,6 +146,61 @@ export function createDialoguePanel(rootEl) {
     )).join('');
   }
 
+  function focusChoice(index = 0) {
+    const buttons = [...els.choiceRow.querySelectorAll('.dp-choice-btn')];
+    buttons[index]?.focus();
+  }
+
+  function renderChoices(uiState) {
+    const choices = uiState.choices ?? [];
+    if (!choices.length || !uiState.canAdvance) {
+      els.choiceRow.innerHTML = '';
+      els.choiceRow.classList.remove('is-visible');
+      lastChoiceSignature = '';
+      return;
+    }
+
+    const signature = choices.map((choice) => choice.label).join('|');
+    els.choiceRow.innerHTML = choices.map((choice, index) => (
+      `<button
+        type="button"
+        class="dp-choice-btn ${index === uiState.selectedChoiceIndex ? 'is-selected' : ''}"
+        data-choice-index="${index}"
+        style="animation-delay:${index * 100}ms"
+      >${choice.label}</button>`
+    )).join('');
+    els.choiceRow.classList.add('is-visible');
+
+    if (signature !== lastChoiceSignature) {
+      queueMicrotask(() => focusChoice(uiState.selectedChoiceIndex ?? 0));
+    }
+    lastChoiceSignature = signature;
+  }
+
+  els.choiceRow.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-choice-index]');
+    if (!button) return;
+    event.stopPropagation();
+    choiceHandler?.(Number(button.dataset.choiceIndex));
+  });
+
+  els.choiceRow.addEventListener('keydown', (event) => {
+    const buttons = [...els.choiceRow.querySelectorAll('.dp-choice-btn')];
+    if (!buttons.length) return;
+    const currentIndex = buttons.findIndex((button) => button === document.activeElement);
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusChoice((currentIndex + 1 + buttons.length) % buttons.length);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusChoice((currentIndex - 1 + buttons.length) % buttons.length);
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      const fallbackIndex = currentIndex >= 0 ? currentIndex : 0;
+      event.preventDefault();
+      choiceHandler?.(fallbackIndex);
+    }
+  });
+
   return {
     render(uiState) {
       if (!uiState.visible) {
@@ -113,8 +224,9 @@ export function createDialoguePanel(rootEl) {
 
       els.text.textContent = uiState.textVisible ?? '';
       renderPortrait(uiState);
+      renderChoices(uiState);
       renderDots(uiState.beatIndex, uiState.beatCount);
-      els.advanceHint.style.opacity = uiState.canAdvance ? '1' : '0';
+      els.advanceHint.style.opacity = uiState.canAdvance && !(uiState.choices?.length) ? '1' : '0';
       els.skipBtn.style.display = uiState.canSkip ? '' : 'none';
     },
 
@@ -129,6 +241,18 @@ export function createDialoguePanel(rootEl) {
 
     getPanelElement() {
       return els.panel;
+    },
+
+    setChoiceHandler(handler) {
+      choiceHandler = handler;
+    },
+
+    hasVisibleChoices() {
+      return els.choiceRow.classList.contains('is-visible');
+    },
+
+    isChoiceTarget(target) {
+      return Boolean(target?.closest?.('[data-choice-index]'));
     },
 
     destroy() {

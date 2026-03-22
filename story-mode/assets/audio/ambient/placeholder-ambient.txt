@@ -1,0 +1,10 @@
+Expected placeholder ambient loops:
+
+spring_suburban
+summer_suburban
+fall_suburban
+winter_suburban
+spring_neighborhood
+summer_neighborhood
+fall_neighborhood
+winter_neighborhood

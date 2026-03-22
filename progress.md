@@ -198,6 +198,51 @@ TODO / next-agent suggestions:
 [2026-03-18] [GardenOS] [feat] Unify planner reasoning into one surface
 [2026-03-18] [GardenOS] [fix] Normalize legacy simulator review saves
 [2026-03-18] [GardenOS] [refactor] Split simulator review copy by phase
+[2026-03-22] [GardenOS] [feat] Add Let It Grow proximity interaction system scaffold
+[2026-03-22] [GardenOS] [feat] Add floating interact prompt and dedicated cell highlight lane
+[2026-03-22] [GardenOS] [note] Let It Grow proximity mode is gated behind query params `?mode=let-it-grow`, `?let-it-grow=1`, or `?proximity=1`, plus optional localStorage key `garden-os:let-it-grow-mode=1`
+[2026-03-22] [GardenOS] [feat] Add Let It Grow tool HUD with number-key, tab-cycle, and touch selection
+[2026-03-22] [GardenOS] [feat] Wire equipped-tool visuals into player avatar and scene API
+[2026-03-22] [GardenOS] [note] Phase 1E keeps tool state runtime-local in `ui-binder.js`; water/protect/mulch/harvest currently show tool-aware feedback and flashes, with deeper mechanics deferred to 1G
+[2026-03-22] [GardenOS] [validation] `node --check` passed for `tool-hud.js`, `ui-binder.js`, `player-character.js`, and `garden-scene.js`; browser automation still hangs after title-screen boot when entering a new game headlessly
+[2026-03-22] [GardenOS] [feat] Add real-time tool execution API to `intervention.js` with `canUseTool`, `executeToolAction`, and store-backed cooldowns
+[2026-03-22] [GardenOS] [feat] Extend reducer/state for `WATER_CELL`, `HARVEST_CELL`, `SET_COOLDOWN`, `toolCooldowns`, and per-cell `lastWateredAt`
+[2026-03-22] [GardenOS] [feat] Replace 1E placeholder tool toasts with real store-driven water/harvest/protect/mulch/inspect behavior in `ui-binder.js`
+[2026-03-22] [GardenOS] [test] Add `story-mode/src/game/intervention.test.js` covering tool validity, cooldowns, harvest, protect, and mulch flows
+[2026-03-22] [GardenOS] [validation] `node --check` passed for `intervention.js`, `store.js`, `ui-binder.js`, and `intervention.test.js`; direct Node imports still fail outside Vite because of the existing `specs` alias, and targeted vitest remained non-responsive in this shell
+[2026-03-22] [GardenOS] [feat] Add `story-mode/src/data/npcs.js` with canonical NPC registry, schedules, neighbor templates, and greeting accessors
+[2026-03-22] [GardenOS] [feat] Add `story-mode/src/game/reputation.js` and extend state/store/save for quest log, reputation, world state, and zone persistence
+[2026-03-22] [GardenOS] [feat] Add `story-mode/src/game/quest-engine.js` with prerequisite filtering, progress evaluation, turn-in rewards, and timed quest failure checks
+[2026-03-22] [GardenOS] [feat] Extend dialogue runtime for branching beats via `cutscene-machine.js` and `dialogue-panel.js`
+[2026-03-22] [GardenOS] [feat] Add `story-mode/src/scene/zone-manager.js` and `story-mode/src/scene/zones/neighborhood.js`
+[2026-03-22] [GardenOS] [test] Add Phase 2 coverage in `npcs.test.js`, `reputation.test.js`, `quest-engine.test.js`, `save.test.js`, `zone-manager.test.js`, and expanded `store.test.js`
+[2026-03-22] [GardenOS] [validation] Phase 2 `node --check` passed for code and test files; whitespace/conflict-marker scan passed; targeted vitest remained non-responsive in this shell
+[2026-03-22] [GardenOS] [feat] Add monthly event rotation in `story-mode/src/data/events.js` and month metadata to `specs/EVENT_DECK.json`
+[2026-03-22] [GardenOS] [feat] Add slot-based inventory core in `story-mode/src/game/inventory.js` with stacking, drag-targetable slot movement helpers, durability fields, and legacy bag migration
+[2026-03-22] [GardenOS] [feat] Add skill progression core in `story-mode/src/game/skills.js` and normalize campaign skill state for XP/level tracking
+[2026-03-22] [GardenOS] [feat] Add recipe crafting system in `story-mode/src/game/crafting.js` and zone foraging system in `story-mode/src/game/foraging.js`
+[2026-03-22] [GardenOS] [feat] Extend reducer/save/state for inventory actions, skill XP, crafting bookkeeping, foraging state, and versioned season grid persistence
+[2026-03-22] [GardenOS] [feat] Extend `intervention.js` for tool durability, consumable usage, and repair support; starter campaign inventory now seeds the baseline tool kit
+[2026-03-22] [GardenOS] [feat] Rebuild `story-mode/src/ui/backpack-panel.js` as a tabbed slot inventory panel with selection, keyboard navigation, pointer drag/drop, and keepsake/pantry preservation
+[2026-03-22] [GardenOS] [feat] Instantiate `SkillSystem` in the Story Mode binder so Phase 4 XP hooks are live against store actions during gameplay
+[2026-03-22] [GardenOS] [feat] Add zone gate enforcement in `story-mode/src/scene/zone-manager.js` and dynamic grid/scoring support in `state.js`, `bed-model.js`, `cell-score.js`, and `bed-score.js`
+[2026-03-22] [GardenOS] [test] Add Phase 4/5 coverage in `inventory.test.js`, `skills.test.js`, `crafting.test.js`, `foraging.test.js`, plus durability/save/zone gate updates
+[2026-03-22] [GardenOS] [validation] `node --check` passed for touched Phase 4/5 code and test files; hygiene scan passed; direct Playwright tooling remained flaky in this shell (client completed without artifacts and MCP browser transport was closed), but the local Vite server booted on `127.0.0.1:4174`
+[2026-03-22] [GardenOS] [feat] Add seasonal festival engine in `story-mode/src/game/festivals.js` with store-backed active festival state
+[2026-03-22] [GardenOS] [feat] Add placeholder-capable `story-mode/src/audio/audio-manager.js` and `story-mode/assets/audio/` placeholder docs
+[2026-03-22] [GardenOS] [feat] Add optional `DayNightCycle` to `weather-fx.js` and wire garden-scene support via `setDayNightEnabled(...)`
+[2026-03-22] [GardenOS] [test] Add Phase 3 coverage in `events.test.js`, `festivals.test.js`, and `audio-manager.test.js`
+[2026-03-22] [GardenOS] [validation] Phase 3 `node --check` passed for code and test files; whitespace/conflict-marker scan passed; targeted vitest remained non-responsive in this shell
+[2026-03-22] [GardenOS] [feat] Add title-screen gameplay guide scaffold in `story-mode/src/ui/gameplay-guide.js`
+[2026-03-22] [GardenOS] [feat] Wire a `How To Play` launcher into `story-mode/src/game/game-init.js` and `story-mode/index.html`
+[2026-03-22] [GardenOS] [note] Guide content is grounded in current code: Story Mode season loop, live bed-score bonuses/penalties, intervention carry-forward, and the gated Let It Grow tool layer/cooldowns
+[2026-03-22] [GardenOS] [validation] `node --check` passed for `gameplay-guide.js` and `game-init.js`; `git diff --check` passed for `gameplay-guide.js`, `game-init.js`, and `index.html`
+[2026-03-22] [GardenOS] [validation] Static source serving on `http://127.0.0.1:4191/` confirms the new `title-actions` slot and `/src/main.js` entry are present in source HTML
+[2026-03-22] [GardenOS] [validation] Browser automation remains unreliable in this shell: the develop-web-game client produced screenshots only against stale preview ports, and both the client and direct Playwright probes timed out against a clean static server before full guide-open verification completed
+[2026-03-22] [GardenOS] [feat] Add standalone root tool `garden-os-sprite-viewer.html` for local sprite-folder loading and inspection
+[2026-03-22] [GardenOS] [feat] Sprite viewer supports folder/file loading, search, folder filtering, metadata inspection, zoom/background controls, and manual sheet slicing into frames
+[2026-03-22] [GardenOS] [validation] Static source serving on `http://127.0.0.1:4192/garden-os-sprite-viewer.html` confirms the expected viewer UI hooks (`pick-folder-btn`, `asset-list`, `preview-canvas`, `frames-grid`) are present
+[2026-03-22] [GardenOS] [validation] The develop-web-game Playwright client still stalled before writing smoke screenshots for the standalone viewer in this shell, so runtime DOM/source checks are complete but browser-loop verification is still partial
 [2026-03-18] [GardenOS] [feat] Surface Accept Loss in simulator beat UI
 [2026-03-18] [GardenOS] [feat] Add deterministic scenario harness prompts
 [2026-03-18] [GardenOS] [feat] Unify planner reasoning into one surface
@@ -238,6 +283,44 @@ TODO / next-agent suggestions:
     - Garden Gurl / Onion Man narration
     - local-first persistence for current board, last report, and score history
     - automation hooks: `window.render_game_to_text` and `window.advanceTime()`
+
+- 2026-03-22 Story Mode Phase 0A refactor pass:
+  - Added `story-mode/src/input/input-manager.js`.
+  - Moved gameplay keyboard + canvas pointer routing in Story Mode off inline `main.js` listeners and through `InputManager`.
+  - Rewired `story-mode/src/scene/garden-scene.js` hover tracking so pointer position is fed in externally instead of the scene owning `pointermove` / `pointerleave` listeners.
+  - Updated `story-mode/src/game/loop.js` to support per-frame `update(dt)` plus `tick(dt)` for deterministic stepping.
+  - Added lightweight Story Mode automation hooks in `story-mode/src/main.js`:
+    - `window.render_game_to_text`
+    - `window.advanceTime(ms)`
+    - `window.gardenOS`
+  - Added input cleanup on return-to-title flows so the extracted keyboard/pointer listeners do not stack across sessions.
+
+- 2026-03-22 validation notes for Story Mode input refactor:
+  - Syntax check passed:
+    - `node --check story-mode/src/input/input-manager.js`
+    - `node --check story-mode/src/game/loop.js`
+    - `node --check story-mode/src/scene/garden-scene.js`
+    - `node --check story-mode/src/main.js`
+  - `npm test` and `npm run build` in `story-mode/` did not complete with usable output in this environment; status remains unverified.
+  - develop-web-game Playwright client run against Vite dev server:
+    - URL: `http://127.0.0.1:5174/garden-os/story-mode-live/`
+    - click target: new game slot 1
+    - artifacts:
+      - `/tmp/garden-os-story-input-smoke/shot-0.png`
+      - `/tmp/garden-os-story-input-smoke/state-0.json`
+      - `/tmp/garden-os-story-input-smoke/errors-0.json`
+    - observed state export:
+      - `phase=PLANNING`
+      - `cutsceneActive=true`
+      - pointer position updated from canvas click
+    - observed runtime note:
+      - one `404` resource error was captured during the smoke run; input-path regression not confirmed from that error alone
+
+- TODO / next-agent suggestions for Story Mode:
+  - run `npm test` and `npm run build` again in a cleaner shell to confirm there is no hidden runtime/module failure
+  - identify the Playwright smoke `404` resource and confirm whether it is pre-existing or introduced
+  - continue with Phase 0B (`src/game/store.js`) once Phase 0A is accepted
+  - if sticking with the develop-web-game loop, add a more targeted action burst that fully exits the opening cutscene before asserting gameplay interactions
   - Added seed/config placeholders at repo root:
     - `game-voice-guide.md`
     - `scoring-api.json`
@@ -302,3 +385,182 @@ TODO / next-agent suggestions:
     - develop-web-game smoke run completed against `garden-league-simulator-v4.html`
     - boot artifacts: `output/web-game/shot-0.png`, `output/web-game/state-0.json`
     - state hook still present and returned `Chapter 1 | spring | PLANNING`
+
+- 2026-03-22 Story Mode Phase 0B store refactor pass:
+  - Added `story-mode/src/game/store.js` with a centralized `Store`, `Actions`, `gameReducer`, and state normalization/clone helpers.
+  - Added `story-mode/src/game/store.test.js` to cover reducer actions and subscriber notifications.
+  - Patched `story-mode/src/main.js` so live Story Mode state now flows through the store:
+    - created a single store owner per session
+    - subscribed local runtime state to store updates
+    - routed crop selection, planting/removal, restart, winter-review completion, intervention resolution, harvest progression, and phase advancement through `dispatch(...)`
+    - kept existing imperative systems (`phase-machine.js`, `event-engine.js`, `intervention.js`) operating on cloned draft state before replacement dispatch
+  - Patched `story-mode/src/game/save.js`:
+    - `saveCampaign()` / `saveSeasonState()` now ignore invalid slots and no longer mutate the passed-in state object
+    - added `subscribeToStoreSaves()` for store-driven autosave wiring
+  - Validation:
+    - syntax checks passed:
+      - `node --check story-mode/src/game/store.js`
+      - `node --check story-mode/src/game/store.test.js`
+      - `node --check story-mode/src/game/save.js`
+      - `node --check story-mode/src/main.js`
+    - `git diff --check -- story-mode/src/game/store.js story-mode/src/game/store.test.js story-mode/src/game/save.js story-mode/src/main.js` passed
+    - `vitest` runner remains unreliable in this environment:
+      - `npx vitest ...` and the local `./node_modules/.bin/vitest --help` both stalled without producing usable output
+      - reducer test file was still authored and left in place for normal local execution
+    - develop-web-game browser validation succeeded after forcing software GL flags in a direct Playwright pass:
+      - boot/title smoke: `/tmp/garden-os-story-store-smoke-swiftshader/page.png`, `state.json`, `errors.json`
+      - interaction smoke: `/tmp/garden-os-story-store-flow/page.png`, `state.json`, `errors.json`
+      - verified flow: start new game -> skip intro -> open plant palette -> select lettuce -> plant one crop
+      - resulting state: `phase=PLANNING`, `cutsceneActive=false`, `selectedCropId=lettuce`, `plantedCount=1`, `plantedCells[0].index=0`, `errors=[]`
+
+TODO / next-agent suggestions:
+- Phase `0C` is the clean next step now that input and state ownership are extracted.
+- If you want reducer tests to run cleanly in CI/local shells, investigate why the Vitest CLI stalls in this environment even for `--help`.
+
+- 2026-03-22 Story Mode Phase 0C main decomposition pass:
+  - Added `story-mode/src/game/game-init.js`:
+    - extracted title-screen rendering/start flow
+    - centralized save-slot boot logic into `showTitleScreen(...)`
+    - added `initGame(initialState, { slot })` to create the store, attach autosave persistence, and return canonical data refs
+  - Added `story-mode/src/game/phase-router.js`:
+    - moved advance/cutscene routing into a dedicated phase router
+    - centralizes `doAdvance()`, cutscene finish routing, and narrative trigger handling
+  - Added `story-mode/src/ui/ui-binder.js`:
+    - moved the Story Mode session orchestration out of `main.js`
+    - owns HUD updates, panels, pause/bug UI, interaction wiring, loop startup, automation hooks, and cleanup
+    - wires the extracted phase router into the existing cutscene/event/harvest/transition flow
+  - Replaced `story-mode/src/main.js` with a thin boot file:
+    - title screen -> scene creation -> input manager -> `initGame(...)` -> `bindUI(...)`
+    - added small fallback if `viewport` is unexpectedly missing during scene init failure
+  - Validation:
+    - syntax checks passed:
+      - `node --check story-mode/src/game/game-init.js`
+      - `node --check story-mode/src/game/phase-router.js`
+      - `node --check story-mode/src/ui/ui-binder.js`
+      - `node --check story-mode/src/main.js`
+    - `git diff --check -- story-mode/src/game/game-init.js story-mode/src/game/phase-router.js story-mode/src/ui/ui-binder.js story-mode/src/main.js` passed
+    - software-GL Playwright smoke still passes through the decomposed boot path:
+      - artifacts: `/tmp/garden-os-story-0c-flow/page.png`, `state.json`, `errors.json`
+      - verified flow: start new game -> skip intro -> open plant palette -> select lettuce -> plant one crop
+      - resulting state: `phase=PLANNING`, `cutsceneActive=false`, `selectedCropId=lettuce`, `plantedCount=1`, `plantedCells[0].index=0`, `errors=[]`
+
+TODO / next-agent suggestions:
+- The prompt target of a ~150-line binder split is now structurally in place; the next refactor should slice `ui-binder.js` into smaller sub-binders instead of touching `main.js` again.
+- The same `vitest` CLI stall remains unresolved in this environment.
+
+- 2026-03-22 Story Mode Phase 0D asset disposal tracking pass:
+  - Added `story-mode/src/scene/resource-tracker.js`:
+    - central `ResourceTracker` with `track(...)`, `trackObject(...)`, `dispose(...)`, `disposeObject(...)`, and `disposeAll()`
+    - handles geometries, materials, nested textures, and render targets without double-disposal
+  - Added `story-mode/src/scene/resource-tracker.test.js`:
+    - covers object graph tracking, nested texture disposal, duplicate tracking, render target disposal, and parent detachment for runtime objects
+  - Updated `story-mode/src/scene/bed-model.js`:
+    - switched frame/grid/soil materials to per-build instances so they can be disposed safely on scene teardown
+    - wired optional tracker injection and tracks the returned bed group
+  - Updated `story-mode/src/scene/scenery.js` and `story-mode/src/scene/weather-fx.js`:
+    - accept a tracker instance and register created scene resources
+    - weather FX now exposes `dispose()` so zone teardown removes transient weather objects from the scene
+  - Updated `story-mode/src/scene/camera-controller.js`:
+    - normalized all DOM listeners through tracked handler refs
+    - added `dispose()` so scene teardown removes pointer/touch/wheel listeners cleanly
+  - Updated `story-mode/src/scene/garden-scene.js`:
+    - creates a shared `ResourceTracker` per scene
+    - passes the tracker into bed/scenery/weather creation
+    - adds exported `disposeGardenScene(...)` helper for teardown
+    - tracks static scene resources plus runtime crop/support meshes
+    - immediately disposes replaced/removed crop and support props instead of letting them linger until full scene teardown
+  - Validation:
+    - syntax checks passed:
+      - `node --check story-mode/src/scene/resource-tracker.js`
+      - `node --check story-mode/src/scene/resource-tracker.test.js`
+      - `node --check story-mode/src/scene/bed-model.js`
+      - `node --check story-mode/src/scene/scenery.js`
+      - `node --check story-mode/src/scene/weather-fx.js`
+      - `node --check story-mode/src/scene/camera-controller.js`
+      - `node --check story-mode/src/scene/garden-scene.js`
+    - file sanity check passed via `rg`:
+      - no trailing-whitespace hits
+      - no conflict-marker hits
+    - local Story Mode route responds:
+      - `curl -I http://127.0.0.1:4174/garden-os/story-mode-live/` -> `HTTP/1.1 200 OK`
+    - unresolved tool limits in this environment:
+      - `vitest` CLI still stalls instead of completing, even when targeting only `src/scene/resource-tracker.test.js` and `src/game/store.test.js`
+      - Playwright browser launch is currently stalling before first-page automation, so a post-0D browser smoke was not completed in this shell
+
+TODO / next-agent suggestions:
+- Once the local test shell is healthy again, rerun:
+  - `cd story-mode && npx vitest run src/scene/resource-tracker.test.js src/game/store.test.js`
+  - a software-GL Playwright smoke against `http://127.0.0.1:4174/garden-os/story-mode-live/`
+- If zone transitions arrive soon, consider extending `ResourceTracker` to cover any late-created shadow maps or adding a lightweight scene teardown regression harness around `disposeGardenScene(...)`.
+
+- 2026-03-22 Story Mode Phase 1A / 1B / 1C embodiment pass:
+  - Added `story-mode/src/scene/player-character.js`:
+    - low-poly gardener avatar with shadow, hat, torso/apron, limbs, idle/walk animation, and a camera focus target
+  - Added `story-mode/src/game/player-controller.js`:
+    - runtime movement controller with spawn position, world bounds, bed collision blocking, facing, speed, and per-frame snapshot output
+  - Added `story-mode/src/ui/touch-stick.js`:
+    - coarse-pointer touch joystick overlay for mobile movement input
+    - hidden on non-touch devices and cleaned up on scene teardown
+  - Updated `story-mode/src/scene/camera-controller.js`:
+    - added optional smooth follow-target support while preserving existing orbit and preset behavior
+  - Updated `story-mode/src/scene/garden-scene.js`:
+    - mounts the player avatar into the world
+    - exposes `setPlayerState(...)`
+    - blends camera follow toward the player without fully abandoning the raised-bed framing
+  - Updated `story-mode/src/ui/ui-binder.js`:
+    - wires existing `move_up/down/left/right` bindings into the new player controller
+    - adds touch-stick mounting and cleanup
+    - updates the per-frame loop so player state advances before render
+    - extends `render_game_to_text()` with player state for automation visibility
+  - Validation:
+    - syntax checks passed:
+      - `node --check story-mode/src/scene/player-character.js`
+      - `node --check story-mode/src/game/player-controller.js`
+      - `node --check story-mode/src/ui/touch-stick.js`
+      - `node --check story-mode/src/scene/camera-controller.js`
+      - `node --check story-mode/src/scene/garden-scene.js`
+      - `node --check story-mode/src/ui/ui-binder.js`
+    - file sanity check passed via `rg`:
+      - no trailing-whitespace hits
+      - no conflict-marker hits
+    - unresolved runtime verification limits in this shell:
+      - Playwright browser launch is still stalling before first-page automation
+      - `vitest` CLI still stalls instead of completing, so no live browser smoke was completed for 1A/1B/1C yet
+
+TODO / next-agent suggestions:
+- Run a clean Story Mode smoke once the local browser shell is healthy again and confirm:
+  - avatar is visible at spawn
+  - WASD/arrow movement works
+  - touch-stick works on a coarse-pointer viewport
+  - follow camera feels supportive rather than disorienting
+- If the camera feels too eager, reduce the follow blend in `garden-scene.js` from `0.28` or lower the follow strength in `camera-controller.js`.
+
+- 2026-03-22 scene-style preset pass for Story Mode planning vs narrative readability:
+  - Added `story-mode/src/scene/scene-style.js` with three presets:
+    - `planner` for flat, muted, low-shadow planning readability
+    - `story` for default atmospheric gameplay/cutscenes
+    - `celebration` for richer harvest/reveal moments
+  - Integrated the style system into `story-mode/src/scene/garden-scene.js`:
+    - scene style now layers on top of seasonal lighting instead of replacing season data
+    - added `setScenePhase(...)` and `setSceneStyle(...)` on the scene API
+    - material overrides are applied centrally by traversing existing scene groups instead of rewriting every material constructor
+    - season lighting now only reapplies on actual season changes to avoid repeated heavy restyling
+  - Integrated phase-driven style switching in `story-mode/src/ui/ui-binder.js`:
+    - planning -> planner style
+    - cutscenes / live beats -> story style
+    - harvest -> celebration style via phase mapping
+  - Added `story-mode/src/scene/scene-style.test.js` for basic phase/style mapping coverage.
+  - Validation:
+    - direct module import check passed for `scene-style.js` (`PLANNING -> planner`, `HARVEST -> celebration`)
+    - full `node import` checks for `garden-scene.js` and `ui-binder.js` were blocked by the repo's existing Vite-only `specs` alias, not by this patch
+    - `vite build` and `vitest` still stall in this shell before completion, matching earlier environment issues
+
+- 2026-03-22 Story Mode boot-performance pass:
+  - Updated `story-mode/src/main.js` to lazy-load the heavy runtime modules (`input-manager`, `garden-scene`, `ui-binder`) only after the title screen is shown.
+  - Added background preload scheduling so the title/menu can appear quickly while runtime modules warm in the background.
+  - Added a lightweight `Loading Garden` viewport overlay during post-title session boot.
+  - Purpose:
+    - reduce the initial blank wait before save slots/mode cards appear
+    - keep this work off the `1G` write path while tool mechanics are being built elsewhere
+  - Validation:
+    - `node --check story-mode/src/main.js` passed

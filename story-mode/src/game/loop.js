@@ -7,13 +7,17 @@ export function createLoop(services) {
   let lastTime = performance.now();
   let running = false;
 
+  function runStep(dt) {
+    services.update?.(dt);
+    services.scene.sync(services.getState());
+    services.scene.render();
+  }
+
   function frame(now) {
     if (!running) return;
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
-
-    services.scene.sync(services.getState());
-    services.scene.render();
+    runStep(dt);
 
     rafId = requestAnimationFrame(frame);
   }
@@ -28,6 +32,9 @@ export function createLoop(services) {
     stop() {
       running = false;
       cancelAnimationFrame(rafId);
+    },
+    tick(dt = 1 / 60) {
+      runStep(dt);
     },
   };
 }

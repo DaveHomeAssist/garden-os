@@ -57,9 +57,15 @@ export const PORTRAITS = {
   },
   calvin: {
     id: 'calvin',
-    cssOnly: true,
+    cssOnly: false,
     emoji: '🐕',
-    layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
+    layers: {
+      base: '../../assets/textures/portrait-calvin.svg',
+      body: null,
+      eyes: null,
+      mouth: null,
+      overlay: null,
+    },
     emotions: {
       neutral: {},
       warm: {},
@@ -72,7 +78,7 @@ export const PORTRAITS = {
   old_gus: {
     id: 'old_gus',
     cssOnly: true,
-    emoji: '👴',
+    emoji: '🌾',
     layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
     emotions: {
       neutral: {},
@@ -86,7 +92,7 @@ export const PORTRAITS = {
   maya: {
     id: 'maya',
     cssOnly: true,
-    emoji: '👩‍🔧',
+    emoji: '🔧',
     layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
     emotions: {
       neutral: {},

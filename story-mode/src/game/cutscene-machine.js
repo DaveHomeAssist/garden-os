@@ -1,13 +1,21 @@
 import { getHighestPriorityCutscene } from '../data/cutscenes.js';
 import { getSpeaker } from '../data/speakers.js';
 
-export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) {
+export function createCutsceneMachine({
+  onStateChange,
+  onFinish,
+  onEffect,
+  gardenScene,
+}) {
   const state = {
     active: false,
     currentScene: null,
+    activeBeats: [],
     currentBeatIndex: 0,
     currentTypedChars: 0,
     typingDone: false,
+    awaitingChoice: false,
+    selectedChoiceIndex: 0,
     queue: [],
     seenSceneIds: new Set(),
     currentCampaign: null,
@@ -31,7 +39,7 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
   }
 
   function currentBeat() {
-    return state.currentScene?.beats?.[state.currentBeatIndex] ?? null;
+    return state.activeBeats?.[state.currentBeatIndex] ?? null;
   }
 
   function syncSeenSet(campaign) {
@@ -85,8 +93,10 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       canAdvance: state.typingDone,
       canSkip: state.currentScene.skippable ?? true,
       beatIndex: state.currentBeatIndex,
-      beatCount: state.currentScene.beats.length,
+      beatCount: state.activeBeats.length,
       side: speaker.side,
+      choices: state.awaitingChoice ? beat.choices ?? null : null,
+      selectedChoiceIndex: state.selectedChoiceIndex,
     };
   }
 
@@ -100,8 +110,9 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
 
     if (state.currentTypedChars >= beat.text.length) {
       state.typingDone = true;
+      state.awaitingChoice = Array.isArray(beat.choices) && beat.choices.length > 0;
       emitState();
-      if (beat.duration != null) {
+      if (!state.awaitingChoice && beat.duration != null) {
         state._autoAdvanceTimer = setTimeout(() => machine.next(), beat.duration);
       }
       return;
@@ -123,9 +134,12 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
   function startScene(scene, campaign = state.currentCampaign) {
     state.currentCampaign = campaign;
     state.currentScene = scene;
+    state.activeBeats = [...(scene?.beats ?? [])];
     state.currentBeatIndex = 0;
     state.active = true;
     state._fastForward = false;
+    state.awaitingChoice = false;
+    state.selectedChoiceIndex = 0;
     clearTimers();
     applyBeat(currentBeat());
     startTyping();
@@ -136,10 +150,13 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       persistSeen(state.currentScene.id);
     }
     state.currentScene = null;
+    state.activeBeats = [];
     state.currentBeatIndex = 0;
     state.currentTypedChars = 0;
     state.typingDone = false;
     state._fastForward = false;
+    state.awaitingChoice = false;
+    state.selectedChoiceIndex = 0;
     clearTimers();
 
     if (state.queue.length > 0) {
@@ -163,6 +180,8 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
         currentBeatIndex: state.currentBeatIndex,
         currentTypedChars: state.currentTypedChars,
         typingDone: state.typingDone,
+        awaitingChoice: state.awaitingChoice,
+        selectedChoiceIndex: state.selectedChoiceIndex,
         queue: [...state.queue],
         seenSceneIds: new Set(state.seenSceneIds),
       };
@@ -215,14 +234,21 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
         return;
       }
 
+      if (state.awaitingChoice) {
+        emitState();
+        return;
+      }
+
       const nextBeatIndex = state.currentBeatIndex + 1;
-      if (nextBeatIndex >= state.currentScene.beats.length) {
+      if (nextBeatIndex >= state.activeBeats.length) {
         completeScene();
         return;
       }
 
       state.currentBeatIndex = nextBeatIndex;
       state._fastForward = false;
+      state.awaitingChoice = false;
+      state.selectedChoiceIndex = 0;
       applyBeat(currentBeat());
       startTyping();
     },
@@ -244,10 +270,43 @@ export function createCutsceneMachine({ onStateChange, onFinish, gardenScene }) 
       completeScene();
     },
 
+    hasChoices() {
+      return Boolean(state.awaitingChoice && currentBeat()?.choices?.length);
+    },
+
+    selectChoice(choiceIndex) {
+      const beat = currentBeat();
+      if (!state.awaitingChoice || !beat?.choices?.length) return false;
+      const choice = beat.choices[choiceIndex];
+      if (!choice) return false;
+
+      state.selectedChoiceIndex = choiceIndex;
+      state.awaitingChoice = false;
+      emitState();
+
+      if (choice.effect) {
+        onEffect?.(choice.effect);
+      }
+
+      if (choice.branchId && Array.isArray(state.currentScene?.branches?.[choice.branchId])) {
+        state.activeBeats = [...state.currentScene.branches[choice.branchId]];
+        state.currentBeatIndex = 0;
+        state.selectedChoiceIndex = 0;
+        state._fastForward = false;
+        applyBeat(currentBeat());
+        startTyping();
+        return true;
+      }
+
+      machine.next();
+      return true;
+    },
+
     finish() {
       clearTimers();
       state.queue = [];
       state.currentScene = null;
+      state.activeBeats = [];
       state.active = false;
       onFinish?.();
     },

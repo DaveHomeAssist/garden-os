@@ -15,7 +15,7 @@
 - **Deterministic.** Same inputs must always produce the same outputs. Never add randomness to scoring.
 - **Six factors:** sun fit (2x weight), support fit, shade tolerance, access fit, season fit, adjacency (additive).
 - **Canonical spec:** `specs/SCORING_RULES.md` is the single source of truth for the algorithm. If code and spec disagree, the spec wins — fix the code.
-- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 50 crops (20 campaign + 30 expansion), 8 factions, 8 scoring recipes. See `specs/PROGRESSION_SPEC.md` for the 7 campaign recipes + 5 hidden Mom recipes.
+- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 38 crops, 8 factions, 6 recipes.
 
 ## Navigation — Two-Track Model
 
@@ -62,18 +62,40 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 | Scoring algorithm | `specs/SCORING_RULES.md` |
 | Season engine | `specs/SEASON_ENGINE_SPEC.md` |
 | Crop definitions | `specs/CROP_SCORING_DATA.json` |
-| Progression & unlocks | `specs/PROGRESSION_SPEC.md` |
-| Narrative (12 chapters) | `specs/NARRATIVE_SPEC.md` |
-| Dialogue system | `specs/DIALOGUE_SYSTEM.md` |
 | Character voice | `docs/VOICE_BIBLE.md` |
 | Event deck | `specs/EVENT_DECK.json` |
 | Dialogue triggers | `specs/DIALOGUE_ENGINE.json` |
-| Intervention logic | `specs/INTERVENTION_LOGIC_TABLE.md` |
-| UI specification | `specs/UI_SPEC.md` |
-| Audio design | `specs/AUDIO_SPEC.md` |
 | Full project context | `docs/HANDOFF.md` |
 | Live URLs | `docs/active-hosted-urls.md` |
 | Roadmap | `IMPLEMENTATION_PLAN.md` |
+
+## Documentation Maintenance
+
+- **Issues**: `docs/UI_ISSUES_TABLE.html` — update the JSON data array when opening, resolving, or deferring issues. AGENTS.md issue tracker is deprecated.
+- **Session log**: Append to `/Users/daverobertson/Desktop/Code/95-docs-personal/today.csv` after each meaningful change
+- **Implementation plan**: `IMPLEMENTATION_PLAN.md` — update `Last verified:` date when reviewing
+- **Handoff**: `docs/HANDOFF.md` — update when architecture or key decisions change
+
+## Issue Archive (from AGENTS.md)
+
+> Historical reference only. New issues go in `docs/UI_ISSUES_TABLE.html`.
+
+| ID | Severity | Status | Title | Notes |
+|----|----------|--------|-------|-------|
+| 014 | P2 | resolved | Reduce planner right sidebar overload | Summary now stays compact, dashboard moved behind its own reveal, and switching sections collapses stale side content |
+| 001 | P2 | resolved | Replace planner confirm flows with reversible recovery | Clear, reset, delete, import replace, and harvest delete now use undo or restore paths |
+| 002 | P2 | resolved | Separate home and hub roles | `home.html` is the guided start page and `index.html` is the live launcher |
+| 003 | P2 | resolved | Surface one dominant simulator action per phase | Added objective strip with current phase CTA and kept existing engine logic intact |
+| 004 | P2 | resolved | Share planner manage menu pattern with Season Engine | Added a matching manage drawer in the game shell with tool and learn routes |
+| 005 | P2 | resolved | Repair tutorial tomato targeting | Tutorial step 1 now forces the crop palette open before pointing at the tomato item |
+| 006 | P2 | resolved | Add deterministic scenario harness prompts | Garden OS prompt pack now includes scenario harness and stronger regression guarantees |
+| 007 | P2 | resolved | Unify planner reasoning into one surface | Summary panel now combines score direction, top risk, tradeoff, and next move |
+| 008 | P2 | resolved | Harden simulator phase restore and split review semantics | Legacy REVIEW saves now normalize to explicit review phases and UI copy distinguishes harvest review from winter review |
+| 009 | P2 | resolved | Surface Accept Loss in simulator beat UI | Unresolved event phases now name Accept Loss directly in the objective strip, status text, and action toolbar |
+| 010 | P2 | resolved | Surface planner severity summary and inspect next moves | Planner now shows severity counts above the bed and per cell risk guidance in Inspect |
+| 011 | P3 | resolved | Confirm restore success after import and reset | Restore flows now show a success banner after recovery completes |
+| 012 | P2 | resolved | Add deterministic scenario pack and regression clauses | Prompt assets now include a fixed scenario pack and stronger regression checks for phase migration and Accept Loss clarity |
+| 013 | P2 | resolved | Add phase and reasoning smoke script | Browser smoke script now checks planner reasoning surface and simulator legacy review migration |
 
 ## What Not To Do
 

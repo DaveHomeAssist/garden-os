@@ -1,3 +1,5 @@
+> **DEPRECATED** — This file is superseded by `CLAUDE.md`. New issues go in `docs/UI_ISSUES_TABLE.html`. Session log entries go in `95-docs-personal/today.csv`. This file is retained as a historical archive only.
+
 # AGENTS.md
 
 Inherits root rules from `/Users/daverobertson/Desktop/Code/AGENTS.md`.

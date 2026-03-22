@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5c3d1e">
+<title>Garden OS — System Map v2 Draft</title>
+<style>
+  :root {
+    --bg-root: #080c0a;
+    --bg-panel: #0d1410;
+    --bg-card: #111a14;
+    --bg-card-hover: #162019;
+    --bg-chip: #0f1a11;
+    --border: #1e3024;
+    --border-bright: #2a4432;
+    --green-1: #4cff82;
+    --green-2: #2ae860;
+    --green-3: #1ab84c;
+    --green-dim: #26663a;
+    --green-glow-sm: rgba(76, 255, 130, 0.06);
+    --amber: #f5c842;
+    --blue: #5ab4ff;
+    --red: #ff8080;
+    --text-primary: #e2f0e6;
+    --text-secondary: #8faa96;
+    --text-muted: #4d6654;
+    --text-mono: #6ddb96;
+    --radius: 6px;
+    --radius-lg: 10px;
+    --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 15px;
+  }
+
+  body {
+    background: var(--bg-root);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrapper {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #5c3d1e;
+    border-bottom: 3px solid #e8c84a;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  nav a {
+    color: rgba(245, 237, 224, 0.6);
+    text-decoration: none;
+    padding: 0.5rem 0.8rem;
+    letter-spacing: 0.04em;
+  }
+
+  nav a:hover,
+  nav a:focus-visible {
+    color: #f5ede0;
+    outline: none;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  nav a.active {
+    color: #f5ede0;
+    border-bottom: 2px solid #e8c84a;
+  }
+
+  section {
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-of-type {
+    border-bottom: none;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--green-3);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-label::before {
+    content: "//";
+    color: var(--text-muted);
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--green-1);
+    text-shadow: 0 0 40px rgba(76, 255, 130, 0.25);
+  }
+
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .section-intro {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    max-width: 720px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+  }
+
+  #hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 50%, rgba(26, 184, 76, 0.04) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30, 48, 36, 0.25) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30, 48, 36, 0.25) 40px);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--green-3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-eyebrow span {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    background: rgba(26, 184, 76, 0.12);
+    border: 1px solid var(--green-dim);
+    border-radius: 3px;
+    font-size: 0.65rem;
+  }
+
+  .hero-tagline {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.6rem;
+    font-weight: 300;
+    max-width: 720px;
+  }
+
+  .hero-summary {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 760px;
+    line-height: 1.75;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.4rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-3);
+    border-radius: var(--radius);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.38rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary {
+    background: var(--green-3);
+    color: #040a06;
+    border-color: var(--green-3);
+  }
+
+  .btn-primary:hover {
+    background: var(--green-2);
+    border-color: var(--green-2);
+    box-shadow: 0 0 16px rgba(42, 232, 96, 0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-bright);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--green-dim);
+    background: var(--green-glow-sm);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .summary-card,
+  .tool-card,
+  .principle-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  }
+
+  .summary-card:hover,
+  .tool-card:hover,
+  .principle-card:hover {
+    border-color: var(--green-dim);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+
+  .card-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .card-title,
+  .tool-name,
+  .principle-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .card-body,
+  .tool-desc,
+  .principle-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  .arch-diagram {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    overflow-x: auto;
+  }
+
+  .arch-inner {
+    min-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .arch-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .arch-box {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 500;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .arch-box.ui {
+    background: rgba(90, 180, 255, 0.07);
+    color: var(--blue);
+    border-color: rgba(90, 180, 255, 0.25);
+  }
+
+  .arch-box.logic {
+    background: rgba(76, 255, 130, 0.07);
+    color: var(--green-1);
+    border-color: var(--green-dim);
+  }
+
+  .arch-box.data {
+    background: rgba(245, 200, 66, 0.07);
+    color: var(--amber);
+    border-color: rgba(245, 200, 66, 0.25);
+  }
+
+  .arch-box.persist {
+    background: rgba(255, 100, 100, 0.07);
+    color: var(--red);
+    border-color: rgba(255, 100, 100, 0.25);
+  }
+
+  .arch-arrow {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    text-align: center;
+    user-select: none;
+  }
+
+  .tools-grid,
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tool-type {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .type-core {
+    background: rgba(76, 255, 130, 0.1);
+    color: var(--green-1);
+    border: 1px solid var(--green-dim);
+  }
+
+  .type-guide {
+    background: rgba(90, 180, 255, 0.1);
+    color: var(--blue);
+    border: 1px solid rgba(90, 180, 255, 0.25);
+  }
+
+  .type-visual {
+    background: rgba(245, 200, 66, 0.1);
+    color: var(--amber);
+    border: 1px solid rgba(245, 200, 66, 0.25);
+  }
+
+  .type-meta {
+    background: rgba(255, 100, 100, 0.1);
+    color: var(--red);
+    border: 1px solid rgba(255, 100, 100, 0.25);
+  }
+
+  .tool-format {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+  }
+
+  .tool-format::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background: var(--green-dim);
+    border-radius: 50%;
+  }
+
+  .flow-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 760px;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 36px;
+    bottom: -12px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--green-dim), transparent);
+  }
+
+  .flow-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--green-3);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+
+  .flow-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    flex: 1;
+    margin-bottom: 10px;
+  }
+
+  .flow-title {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--green-1);
+    margin-bottom: 0.2rem;
+  }
+
+  .flow-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .principle-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .principle-num {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--green-dim);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding-top: 0.15rem;
+    flex-shrink: 0;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    color: var(--text-mono);
+    background: rgba(76, 255, 130, 0.06);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    border: 1px solid rgba(76, 255, 130, 0.12);
+  }
+
+  footer {
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    padding: 3rem 0;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .footer-brand-name {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--green-1);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-tagline {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    max-width: 360px;
+    line-height: 1.5;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .footer-links a {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .footer-links a:hover,
+  .footer-links a:focus-visible {
+    color: var(--green-1);
+    outline: none;
+  }
+
+  .footer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: right;
+  }
+
+  .footer-meta span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .footer-meta .license {
+    color: var(--green-dim);
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--green-1);
+    color: #040a06;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 999;
+    border-radius: 0 0 var(--radius) 0;
+    text-decoration: none;
+    transition: top 0.15s;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--green-1);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+  }
+
+  @media (max-width: 700px) {
+    .wrapper {
+      padding: 0 1rem;
+    }
+
+    nav {
+      justify-content: flex-start;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .arch-inner {
+      min-width: 0;
+      align-items: stretch;
+    }
+
+    .footer-meta {
+      text-align: left;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<nav aria-label="Garden OS">
+  <a href="index.html">← Garden</a>
+  <a href="scoring-visualizer.html">Visualizer</a>
+  <a href="scoring-map.html">Scoring Map</a>
+  <a href="fairness-tester.html">Fairness Tester</a>
+  <a href="gos-system-map.html">Original Map</a>
+  <a href="system-map%20copy.html" class="active">System Map v2</a>
+  <a href="system-topology.html">Topology</a>
+</nav>
+
+<main id="main">
+  <section id="hero" aria-labelledby="hero-heading">
+    <div class="wrapper">
+      <div class="hero-eyebrow">
+        <span>v2 Draft</span>
+        Hybrid Repo Map
+      </div>
+      <h1 id="hero-heading">
+        <em>Garden OS</em><br>
+        System Map v2
+      </h1>
+      <p class="hero-tagline">
+        A fuller map of the repo as it actually exists now: root static tools, a built <code>story-mode/</code> app, shared canon in <code>specs/</code> and <code>docs/</code>, and Let It Grow as a planned mode rather than a live runtime.
+      </p>
+      <div class="hero-summary" role="note">
+        Garden OS is no longer one single architectural line. The repo currently combines a root HTML tool suite, a legacy simulator lineage, Story Mode as the active flagship runtime, and an expanding canon across <code>specs/</code>, root <code>docs/</code>, and <code>docs/story-mode/</code>. This draft reframes the map around that hybrid state and the storage rule that matters now: resources should be stored by scope and lifecycle, not by version label alone.
+      </div>
+      <div class="hero-actions">
+        <a href="gos-system-map.html" class="btn btn-primary">Original Map</a>
+        <a href="docs/SYSTEM_MAP_PROPOSAL.md" class="btn btn-ghost">Proposal Doc</a>
+        <a href="docs/RESOURCE_STORAGE_POLICY.md" class="btn btn-ghost">Storage Policy</a>
+        <a href="index.html" class="btn btn-ghost">Garden OS Home</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="summary" aria-labelledby="summary-heading">
+    <div class="wrapper">
+      <div class="section-label">01</div>
+      <h2 id="summary-heading">Current State Snapshot</h2>
+      <p class="section-intro">
+        The repo has four practical lines in play at once. This page treats them as one coordinated system with clear source-of-truth boundaries instead of flattening everything into one planner-centric stack.
+      </p>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">⬡</span>
+          <div class="card-title">Hybrid Repo</div>
+          <div class="card-body">
+            Garden OS now combines root-level static HTML surfaces, shared docs and specs, generated output trees, and a separate built application in <code>story-mode/</code>. The repo cannot be described honestly as single-file-only anymore.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">▣</span>
+          <div class="card-title">Story Mode Flagship</div>
+          <div class="card-body">
+            <code>story-mode/</code> is the current flagship runtime. It owns the active game loop, built app packaging, Three.js scene layer, and save flow, while the root surfaces still serve planning, explainability, and legacy play support.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◈</span>
+          <div class="card-title">Shared Canon</div>
+          <div class="card-body">
+            The current order of truth runs through <code>specs/</code>, <code>docs/HANDOFF.md</code>, root <code>docs/</code>, and then <code>docs/story-mode/</code>. That canon layer is more important than any individual page or generated artifact.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">⟁</span>
+          <div class="card-title">Let It Grow In Scope</div>
+          <div class="card-body">
+            Let It Grow is in scope as planning and future mode design inside <code>docs/story-mode/</code>. It is not a separate deployed runtime, not a separate repo line, and not yet a peer to Story Mode in executable code.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="topology" aria-labelledby="topology-heading">
+    <div class="wrapper">
+      <div class="section-label">02</div>
+      <h2 id="topology-heading">Six-Layer Topology</h2>
+      <p class="section-intro">
+        The cleanest current map is layered, not linear. Public pages sit on top, runtime branches sit underneath, canon and resource ownership anchor the middle, and delivery plus archive boundaries close the bottom.
+      </p>
+      <div class="arch-diagram" aria-label="Garden OS six-layer topology diagram" role="img">
+        <div class="arch-inner">
+          <div class="arch-label">public surfaces</div>
+          <div class="arch-row">
+            <div class="arch-box ui">Hub / index.html</div>
+            <div class="arch-box ui">Story Mode</div>
+            <div class="arch-box ui">Planner v4.3</div>
+            <div class="arch-box ui">Legacy Season v4</div>
+            <div class="arch-box ui">Guides + Explainers</div>
+            <div class="arch-box ui">Dev Track</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">runtime systems</div>
+          <div class="arch-row">
+            <div class="arch-box logic">Root HTML Tools</div>
+            <div class="arch-box logic">Planner Logic</div>
+            <div class="arch-box logic">Legacy Season Sim</div>
+            <div class="arch-box logic">Story Mode App</div>
+            <div class="arch-box logic">Diagnostics</div>
+            <div class="arch-box logic">Let It Grow Planned</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">canonical data + docs</div>
+          <div class="arch-row">
+            <div class="arch-box data">specs/</div>
+            <div class="arch-box data">gos-schema.json</div>
+            <div class="arch-box data">docs/HANDOFF.md</div>
+            <div class="arch-box data">root docs/</div>
+            <div class="arch-box data">docs/story-mode/</div>
+            <div class="arch-box data">README indexes</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">shared resources</div>
+          <div class="arch-row">
+            <div class="arch-box data">future data/shared/</div>
+            <div class="arch-box data">future assets/shared/</div>
+            <div class="arch-box data">root assets + images</div>
+            <div class="arch-box data">story-mode/assets/</div>
+            <div class="arch-box data">story-mode/src/data/</div>
+            <div class="arch-box data">loose JSON cleanup</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">persistence + delivery</div>
+          <div class="arch-row">
+            <div class="arch-box persist">localStorage</div>
+            <div class="arch-box persist">.gos.json export</div>
+            <div class="arch-box persist">.gos.json import</div>
+            <div class="arch-box persist">GitHub Pages root</div>
+            <div class="arch-box persist">manifest + sw</div>
+            <div class="arch-box persist">story-mode/dist</div>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">↓</div>
+          <div class="arch-label">legacy + future boundaries</div>
+          <div class="arch-row">
+            <div class="arch-box persist">archive/ + archives/</div>
+            <div class="arch-box persist">legacy sim lineage</div>
+            <div class="arch-box persist">output + reports</div>
+            <div class="arch-box persist">future shared-core</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="surfaces" aria-labelledby="surfaces-heading">
+    <div class="wrapper">
+      <div class="section-label">03</div>
+      <h2 id="surfaces-heading">Public Surface Map</h2>
+      <p class="section-intro">
+        These are the user-facing or contributor-facing entry points that already exist in the repo root today. They do not all serve the same role, which is exactly why the map should separate them.
+      </p>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Hub</span>
+            <span class="tool-type type-core">Core</span>
+          </div>
+          <div class="tool-desc">
+            <code>index.html</code> is the launcher and framing surface for the project. It should describe the ecosystem and route people toward Story Mode, the planner stack, and the support surfaces without pretending there is only one runtime.
+          </div>
+          <div class="tool-format">index.html</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Story Mode</span>
+            <span class="tool-type type-core">Core</span>
+          </div>
+          <div class="tool-desc">
+            <code>story-mode/</code> is the flagship playable branch. It is a built app rather than a single-file page and owns the active game-state, scene, review, and save experience.
+          </div>
+          <div class="tool-format">story-mode/index.html</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Planner v4.3</span>
+            <span class="tool-type type-core">Core</span>
+          </div>
+          <div class="tool-desc">
+            <code>garden-planner-v4.html</code> remains a stable root tool for deterministic planning and scoring. It is still important, but it is no longer the only center of gravity in the repo.
+          </div>
+          <div class="tool-format">garden-planner-v4.html</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Legacy Season Engine</span>
+            <span class="tool-type type-meta">Legacy</span>
+          </div>
+          <div class="tool-desc">
+            <code>garden-league-simulator-v4.html</code> represents the older simulator lineage. It still matters for historical mechanics context, but it should not be presented as the flagship runtime.
+          </div>
+          <div class="tool-format">garden-league-simulator-v4.html</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Support Surfaces</span>
+            <span class="tool-type type-guide">Guide</span>
+          </div>
+          <div class="tool-desc">
+            The repo root also ships support and explainability pages such as <code>garden-cage-build-guide.html</code>, <code>garden-cage-ops-guide.html</code>, <code>brand-guide.html</code>, and <code>how-it-thinks.html</code>.
+          </div>
+          <div class="tool-format">guides + explainers</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">Dev Track</span>
+            <span class="tool-type type-visual">Visual</span>
+          </div>
+          <div class="tool-desc">
+            Diagnostics and architecture views live in <code>scoring-visualizer.html</code>, <code>scoring-map.html</code>, <code>fairness-tester.html</code>, <code>gos-system-map.html</code>, and <code>system-topology.html</code>.
+          </div>
+          <div class="tool-format">visualizer + maps + testers</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="canon" aria-labelledby="canon-heading">
+    <div class="wrapper">
+      <div class="section-label">04</div>
+      <h2 id="canon-heading">Canonical Source Hierarchy</h2>
+      <p class="section-intro">
+        The repo now has enough overlapping documentation that the page needs to show source precedence explicitly. This is the order contributors should reason from when pages, docs, or experiments disagree.
+      </p>
+      <div class="flow-container" role="list" aria-label="Canonical source hierarchy">
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">01</div>
+          <div class="flow-content">
+            <div class="flow-title">specs/</div>
+            <div class="flow-detail">
+              Shared gameplay contracts, scoring rules, schemas, and mode-shaping canon belong here first. If a rule is shared across active lines, this is the strongest place to anchor it.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">02</div>
+          <div class="flow-content">
+            <div class="flow-title">docs/HANDOFF.md</div>
+            <div class="flow-detail">
+              The handoff document is the clearest current-state summary for the repo as a whole. It describes the hybrid architecture, current live surfaces, and current tension between root tools and Story Mode.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">03</div>
+          <div class="flow-content">
+            <div class="flow-title">root docs/</div>
+            <div class="flow-detail">
+              Repo-wide SOPs, architecture notes, launch material, URL registries, and storage/versioning policy live here. This is the main repo canon layer outside strict rules and schema files.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">04</div>
+          <div class="flow-content">
+            <div class="flow-title">docs/story-mode/</div>
+            <div class="flow-detail">
+              Story Mode planning, Let It Grow expansion framing, world design, systems docs, and technical notes live here. These are active mode docs, but they do not automatically outrank shared repo canon.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">05</div>
+          <div class="flow-content">
+            <div class="flow-title">progress logs and notes</div>
+            <div class="flow-detail">
+              Files like <code>progress.md</code>, implementation notes, and roadmap traces are useful for context and chronology, but they should not silently override specs or core docs.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">06</div>
+          <div class="flow-content">
+            <div class="flow-title">generated and archived artifacts</div>
+            <div class="flow-detail">
+              <code>dist/</code>, <code>output/</code>, <code>reports/</code>, and archive trees are downstream artifacts. They matter operationally, but they should not become the place people edit from first.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resources" aria-labelledby="resources-heading">
+    <div class="wrapper">
+      <div class="section-label">05</div>
+      <h2 id="resources-heading">Shared Resource Boundaries</h2>
+      <p class="section-intro">
+        Storage needs to follow ownership now. The real problem is no longer version count by itself. The real problem is mixing shared canon, runtime-local assets, generated output, and archived files in the same mental bucket.
+      </p>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◉</span>
+          <div class="card-title">Shared Canon Lives Once</div>
+          <div class="card-body">
+            If a rule or data set means the same thing across multiple active lines, it should live once in <code>specs/</code> or a future shared data namespace such as <code>data/shared/</code>. Duplicate canon is where version sprawl starts.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◌</span>
+          <div class="card-title">Runtime-Local Stays Local</div>
+          <div class="card-body">
+            Story Mode-only assets and authored game data belong in <code>story-mode/assets/</code> and <code>story-mode/src/data/</code>. Future planner-only or legacy-only resources should follow the same rule instead of landing at repo root.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◎</span>
+          <div class="card-title">Generated Is Not Source</div>
+          <div class="card-body">
+            <code>dist/</code>, <code>story-mode/dist/</code>, <code>output/</code>, and similar trees may be necessary for deployment or validation, but they are generated artifacts. They should stay labeled and downstream.
+          </div>
+        </div>
+        <div class="summary-card">
+          <span class="card-icon" aria-hidden="true">◇</span>
+          <div class="card-title">Current Cleanup Targets</div>
+          <div class="card-body">
+            The biggest current cleanup targets are loose root JSON files such as <code>achievement-registry.json</code> and <code>crop-roster.json</code>, plus the double archive pattern of <code>archive/</code> and <code>archives/</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="delivery" aria-labelledby="delivery-heading">
+    <div class="wrapper">
+      <div class="section-label">06</div>
+      <h2 id="delivery-heading">State, Persistence, and Delivery</h2>
+      <p class="section-intro">
+        Root tools and Story Mode use different packaging models, but they still share the same repo and the same delivery surface. This section names how state moves and where the deploy boundary actually sits.
+      </p>
+      <div class="flow-container" role="list" aria-label="State and delivery flow">
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">01</div>
+          <div class="flow-content">
+            <div class="flow-title">Root tools persist locally</div>
+            <div class="flow-detail">
+              Planner and root support tools store user state in the browser. They still operate as static pages with local persistence rather than server-backed applications.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">02</div>
+          <div class="flow-content">
+            <div class="flow-title">Portable <code>.gos.json</code> flow</div>
+            <div class="flow-detail">
+              Export and import remain part of the root tool contract. <code>gos-schema.json</code> and related spec material anchor that portability instead of leaving it implicit in page code alone.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">03</div>
+          <div class="flow-content">
+            <div class="flow-title">Story Mode keeps its own save state</div>
+            <div class="flow-detail">
+              Story Mode manages campaign and gameplay state in its own app model. It shares the repo, but it is not packaged or organized like the root single-file tools.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">04</div>
+          <div class="flow-content">
+            <div class="flow-title">GitHub Pages serves both layers</div>
+            <div class="flow-detail">
+              The root project pages and the Story Mode branch live under the same public hosting umbrella. Delivery is unified at the site level even though the runtime architectures differ underneath.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step" role="listitem">
+          <div class="flow-icon-wrap" aria-hidden="true">05</div>
+          <div class="flow-content">
+            <div class="flow-title">Generated delivery artifacts stay labeled</div>
+            <div class="flow-detail">
+              <code>dist/</code>, <code>story-mode/dist/</code>, <code>output/</code>, and <code>reports/</code> need to remain clearly downstream so contributors do not confuse deploy products and validation captures with authored source.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="risks" aria-labelledby="risks-heading">
+    <div class="wrapper">
+      <div class="section-label">07</div>
+      <h2 id="risks-heading">Current Risks and Future Boundaries</h2>
+      <p class="section-intro">
+        The repo is workable, but the friction points are visible. This draft names them directly so the map does not accidentally flatten current architectural tensions into a cleaner picture than reality.
+      </p>
+      <div class="principles-grid">
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R1</div>
+          <div>
+            <div class="principle-name">Root Rules No Longer Cover Everything</div>
+            <div class="principle-desc">
+              Older repo assumptions were written for a root-level single-file tool suite. They do not fully describe the built Story Mode branch or its runtime-local asset and data model.
+            </div>
+          </div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R2</div>
+          <div>
+            <div class="principle-name">Resource Sprawl By Version</div>
+            <div class="principle-desc">
+              Several files are still effectively organized by history and convenience rather than by scope and lifecycle. That makes it too easy for each new branch to create its own data and asset silo.
+            </div>
+          </div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R3</div>
+          <div>
+            <div class="principle-name">Legacy Simulator Overlap</div>
+            <div class="principle-desc">
+              The legacy season simulator lineage and Story Mode overlap in mechanics and campaign ideas. That overlap is useful context, but it is also a source of duplicated concepts and naming drift.
+            </div>
+          </div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R4</div>
+          <div>
+            <div class="principle-name">Let It Grow Is Planned, Not Runtime</div>
+            <div class="principle-desc">
+              Let It Grow belongs in scope as future mode design and product framing, but the repo should not pretend it already has executable parity with Story Mode. Its current home is documentation, not runtime code.
+            </div>
+          </div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R5</div>
+          <div>
+            <div class="principle-name">Shared-Core Is Future, Not Present</div>
+            <div class="principle-desc">
+              A shared engine or shared-core extraction may make sense later, but it is still a boundary to define, not an implemented architecture to advertise. Resource cleanup comes before shared-core storytelling.
+            </div>
+          </div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-num" aria-hidden="true">R6</div>
+          <div>
+            <div class="principle-name">Archive Discipline Matters</div>
+            <div class="principle-desc">
+              Historical HTML, reports, output captures, and experiments need one clearly marked archive path. Otherwise active work and frozen history keep competing for the same top-level visual weight.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer role="contentinfo">
+  <div class="wrapper">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-name">Garden OS</div>
+        <div class="footer-tagline">
+          "System Map v2 draft: hybrid repo, shared canon, and cleaner resource boundaries."
+        </div>
+      </div>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="https://github.com/DaveHomeAssist/garden-os" target="_blank" rel="noopener noreferrer">↗ GitHub Repository</a>
+        <a href="gos-system-map.html">↗ Original Map</a>
+        <a href="docs/SYSTEM_MAP_PROPOSAL.md">↗ Proposal Doc</a>
+        <a href="docs/RESOURCE_STORAGE_POLICY.md">↗ Storage Policy</a>
+      </div>
+      <div class="footer-meta" aria-label="Project metadata">
+        <span class="license">MIT License — Open Source</span>
+        <span>Draft copy only. Original live map left untouched.</span>
+        <span>Story Mode is the current flagship runtime.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(function (error) {
+      console.warn("SW registration failed:", error);
+    });
+  }
+</script>
+</body>
+</html>

@@ -2,8 +2,14 @@
  * Save System — Multi-slot localStorage persistence.
  * 3 independent save slots, each storing campaign + season state.
  */
+import { DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from './state.js';
+
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
+
+function isValidSlot(slot) {
+  return Number.isInteger(slot) && slot >= 0 && slot < SAVE_SLOTS;
+}
 
 function campaignKey(slot) {
   return `gos-story-slot-${slot}-campaign`;
@@ -24,11 +30,26 @@ export function setActiveSaveSlot(slot) {
 }
 
 export function saveCampaign(campaign, slot) {
-  campaign.updatedAt = new Date().toISOString();
+  if (!campaign || !isValidSlot(slot)) return null;
+  const worldState = {
+    ...DEFAULT_WORLD_STATE,
+    ...(campaign.worldState ?? {}),
+    visitedZones: [...new Set(campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
+  };
+  const toSave = {
+    ...campaign,
+    version: 3,
+    questLog: { ...(campaign.questLog ?? {}) },
+    reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },
+    worldState,
+    updatedAt: new Date().toISOString(),
+  };
   try {
-    localStorage.setItem(campaignKey(slot), JSON.stringify(campaign));
+    localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
+    return toSave;
   } catch (e) {
     console.warn('[GOS] Save failed:', e.message);
+    return null;
   }
 }
 
@@ -36,7 +57,19 @@ export function loadCampaign(slot) {
   try {
     const raw = localStorage.getItem(campaignKey(slot));
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const version = parsed.version ?? 1;
+    return {
+      ...parsed,
+      version: Math.max(3, version),
+      questLog: parsed.questLog ?? {},
+      reputation: { ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
+      worldState: {
+        ...DEFAULT_WORLD_STATE,
+        ...(parsed.worldState ?? {}),
+        visitedZones: [...new Set(parsed.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
+      },
+    };
   } catch {
     return null;
   }
@@ -48,12 +81,23 @@ export function deleteCampaign(slot) {
 }
 
 export function saveSeasonState(season, slot) {
+  if (!season || !isValidSlot(slot)) return null;
   try {
     // Save a copy without the circular campaign reference
-    const toSave = { ...season, campaign: undefined };
+    const toSave = {
+      ...season,
+      campaign: undefined,
+      grid: {
+        cells: Array.isArray(season.grid) ? season.grid : (season.grid?.cells ?? []),
+        cols: season.gridCols ?? season.grid?.cols ?? 8,
+        rows: season.gridRows ?? season.grid?.rows ?? 4,
+      },
+    };
     localStorage.setItem(seasonKey(slot), JSON.stringify(toSave));
+    return toSave;
   } catch (e) {
     console.warn('[GOS] Season save failed:', e.message);
+    return null;
   }
 }
 
@@ -61,7 +105,18 @@ export function loadSeasonState(slot) {
   try {
     const raw = localStorage.getItem(seasonKey(slot));
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed?.grid)) {
+      return {
+        ...parsed,
+        grid: {
+          cells: parsed.grid,
+          cols: parsed.gridCols ?? 8,
+          rows: parsed.gridRows ?? 4,
+        },
+      };
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -94,6 +149,10 @@ export function listSaves() {
           chapter: e.chapter,
           grade: e.grade,
         })),
+        activeQuests: Object.values(campaign.questLog ?? {}).filter((entry) => (
+          entry?.state === 'ACCEPTED' || entry?.state === 'IN_PROGRESS'
+        )).length,
+        zonesVisited: (campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones).length,
       });
     }
   }
@@ -129,6 +188,22 @@ export function pushJournalEntry(campaign, entry) {
     eventsEncountered: [...(entry.eventsEncountered ?? [])],
     cropsPlanted: [...(entry.cropsPlanted ?? [])],
     timestamp: entry.timestamp ?? new Date().toISOString(),
+  });
+}
+
+export function subscribeToStoreSaves(store, resolveSlot, options = {}) {
+  if (!store?.subscribe) {
+    return () => {};
+  }
+
+  const shouldPersist = options.shouldPersist ?? (() => true);
+
+  return store.subscribe((state, action) => {
+    const slot = typeof resolveSlot === 'function' ? resolveSlot(action, state) : resolveSlot;
+    if (!isValidSlot(slot)) return;
+    if (!shouldPersist(state, action)) return;
+    saveCampaign(state.campaign, slot);
+    saveSeasonState(state.season, slot);
   });
 }
 
