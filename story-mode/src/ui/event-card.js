@@ -37,40 +37,37 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
 
   sheet.innerHTML = `
     <div class="panel-handle"></div>
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
       <div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:4px;">Season Event</div>
-        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:23px;color:#f7f2ea;line-height:1.3;">${escapeHtml(event.title)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:2px;">Season Event</div>
+        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:20px;color:#f7f2ea;line-height:1.25;">${escapeHtml(event.title)}</div>
       </div>
       <span style="
         display:inline-flex;align-items:center;justify-content:center;
-        width:32px;height:32px;border-radius:50%;
+        width:28px;height:28px;border-radius:50%;
         background:${valenceColor}22;border:1px solid ${valenceColor}44;
-        color:${valenceColor};font-weight:700;font-size:18px;
+        color:${valenceColor};font-weight:700;font-size:16px;
         flex-shrink:0;
       ">${valenceLabel}</span>
     </div>
 
-    <p style="font-size:14px;line-height:1.65;color:rgba(247,242,234,0.7);margin-bottom:16px;">
+    <p style="font-size:13px;line-height:1.5;color:rgba(247,242,234,0.7);margin-bottom:10px;">
       ${escapeHtml(event.description)}
     </p>
 
     ${event.mechanicalEffect ? `
       <div style="
         background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);
-        border-radius:8px;padding:10px 12px;margin-bottom:16px;
+        border-radius:8px;padding:8px 10px;margin-bottom:10px;
         font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.5);
       ">
-        <div style="margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em;font-size:9px;color:rgba(247,242,234,0.3);">Effect</div>
+        <div style="margin-bottom:2px;text-transform:uppercase;letter-spacing:0.1em;font-size:9px;color:rgba(247,242,234,0.3);">Effect</div>
         ${event.mechanicalEffect.modifier > 0 ? '+' : ''}${event.mechanicalEffect.modifier} · ${event.mechanicalEffect.duration || 'this beat'}
       </div>
     ` : ''}
 
-    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:8px;">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:6px;">
       Response · ${tokensLeft} token${tokensLeft !== 1 ? 's' : ''} left
-    </div>
-    <div class="targeting-hint" style="margin-bottom:10px;">
-      Choose an intervention type first. If it targets the bed, you will pick the exact cell next.
     </div>
 
     <div class="intervention-grid" id="intervention-grid">
@@ -79,16 +76,12 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
         const disabled = !isAccept && tokensLeft <= 0;
         return `
           <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}">
-            <div style="font-size:20px;margin-bottom:4px;">${iv.emoji}</div>
-            <div style="font-weight:600;margin-bottom:2px;">${iv.label}</div>
+            <div style="font-size:18px;margin-bottom:2px;">${iv.emoji}</div>
+            <div style="font-weight:600;margin-bottom:1px;">${iv.label}</div>
             <div style="font-size:10px;color:rgba(247,242,234,0.4);line-height:1.3;">${iv.desc}</div>
           </button>
         `;
       }).join('')}
-    </div>
-    <div class="targeting-chip-row" style="margin-bottom:6px;">
-      <span class="targeting-chip">Tap a card</span>
-      <span class="targeting-chip">Tap the highlighted bed cell</span>
     </div>
   `;
 

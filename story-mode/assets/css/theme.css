@@ -476,14 +476,14 @@
   }
 
   .intervention-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .intervention-btn {
-    min-height: 118px;
-    padding: 14px 10px;
-    font-size: 13px;
+    min-height: 76px;
+    padding: 10px 6px;
+    font-size: 11px;
   }
 
   .targeting-hint {
@@ -501,7 +501,7 @@
 
 @media (max-width: 380px) {
   .intervention-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dp-skip-btn {
