@@ -69,6 +69,48 @@ export const PORTRAITS = {
       emphasis: {},
     },
   },
+  old_gus: {
+    id: 'old_gus',
+    cssOnly: true,
+    emoji: '👴',
+    layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
+    emotions: {
+      neutral: {},
+      warm: {},
+      sad: {},
+      surprised: {},
+      smirk: {},
+      emphasis: {},
+    },
+  },
+  maya: {
+    id: 'maya',
+    cssOnly: true,
+    emoji: '👩‍🔧',
+    layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
+    emotions: {
+      neutral: {},
+      warm: {},
+      sad: {},
+      surprised: {},
+      smirk: {},
+      emphasis: {},
+    },
+  },
+  lila: {
+    id: 'lila',
+    cssOnly: true,
+    emoji: '👩‍🍳',
+    layers: { base: null, body: null, eyes: null, mouth: null, overlay: null },
+    emotions: {
+      neutral: {},
+      warm: {},
+      sad: {},
+      surprised: {},
+      smirk: {},
+      emphasis: {},
+    },
+  },
 };
 
 export function getPortrait(portraitId) {

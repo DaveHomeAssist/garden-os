@@ -1,6 +1,6 @@
 # Garden OS — Progression & Unlock Specification
 
-Version: 1 · Date: 2026-03-15
+Version: 1.1 · Date: 2026-03-22
 
 ---
 
@@ -23,7 +23,9 @@ Each chapter = one season of play (spring, summer, or fall). Chapters 1-4 cover 
 | 11 | Y3 Fall | Mom's recipe reconstruction — hidden recipes become findable through journal clues | **Mom's Recipe card** — handwritten-style card UI, ingredient checklist from pantry | No new crops | **Mom's Sauce** (apex recipe) | **Handwritten Sauce Card** — Mom's handwriting, stain marks | GURL: "Your mother would've passed inspection too"; Onion Man: "She never wrote it down for anyone else"; Vegeman concedes |
 | 12 | Y3 Winter | Free play — all systems active, all crops available, legacy scoring begins | **Legacy View** — full garden history timeline, season-by-season replay, final score | Full roster unlocked (20 crops) | — | — | Characters deliver final lines; game enters free-play loop with challenge modifiers |
 
-**Crop Roster Summary (20 crops, cumulative):**
+**Crop Roster Summary (20 campaign-track crops, cumulative):**
+
+> **Note:** The full roster in `CROP_SCORING_DATA.json` (v3) contains 50 crops. The additional 30 are expansion-zone and biome-specific crops unlocked through the Let It Grow free-roam mode, not the 12-chapter campaign. This table tracks the campaign unlock sequence only.
 
 | Chapter | Crops Added | Running Total |
 |---------|-------------|---------------|
@@ -76,7 +78,9 @@ Carryover fires at season end. Player reviews results, makes one forward-facing 
 
 ## 3. Recipe Progression
 
-### Main Recipe Ladder (7 recipes)
+### Main Recipe Ladder (7 campaign recipes)
+
+> **Note:** `CROP_SCORING_DATA.json` (v3) defines 8 scoring-level recipes (simplified ingredient lists for bed-score recipe bonuses). This section defines the full campaign recipe ladder with quantity requirements, quality gates, and narrative artifacts. The expansion mode adds additional recipes (Stir Fry, Garden Salad, Forager's Stew, Garden Deluxe Salsa) through zone exploration.
 
 Recipes require specific pantry ingredients. Ingredients come from harvests. Harvests depend on what was planted and how well it grew. A bad season = missing ingredients = delayed recipe.
 

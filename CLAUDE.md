@@ -15,7 +15,7 @@
 - **Deterministic.** Same inputs must always produce the same outputs. Never add randomness to scoring.
 - **Six factors:** sun fit (2x weight), support fit, shade tolerance, access fit, season fit, adjacency (additive).
 - **Canonical spec:** `specs/SCORING_RULES.md` is the single source of truth for the algorithm. If code and spec disagree, the spec wins — fix the code.
-- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 38 crops, 8 factions, 6 recipes.
+- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 50 crops (20 campaign + 30 expansion), 8 factions, 8 scoring recipes. See `specs/PROGRESSION_SPEC.md` for the 7 campaign recipes + 5 hidden Mom recipes.
 
 ## Navigation — Two-Track Model
 
@@ -62,9 +62,15 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 | Scoring algorithm | `specs/SCORING_RULES.md` |
 | Season engine | `specs/SEASON_ENGINE_SPEC.md` |
 | Crop definitions | `specs/CROP_SCORING_DATA.json` |
+| Progression & unlocks | `specs/PROGRESSION_SPEC.md` |
+| Narrative (12 chapters) | `specs/NARRATIVE_SPEC.md` |
+| Dialogue system | `specs/DIALOGUE_SYSTEM.md` |
 | Character voice | `docs/VOICE_BIBLE.md` |
 | Event deck | `specs/EVENT_DECK.json` |
 | Dialogue triggers | `specs/DIALOGUE_ENGINE.json` |
+| Intervention logic | `specs/INTERVENTION_LOGIC_TABLE.md` |
+| UI specification | `specs/UI_SPEC.md` |
+| Audio design | `specs/AUDIO_SPEC.md` |
 | Full project context | `docs/HANDOFF.md` |
 | Live URLs | `docs/active-hosted-urls.md` |
 | Roadmap | `IMPLEMENTATION_PLAN.md` |

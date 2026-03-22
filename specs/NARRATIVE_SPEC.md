@@ -1,3 +1,12 @@
+---
+Status: Active
+Document Version: 1.1
+Compatible With: Garden OS v4.3, Season Engine v3, Dialogue Engine v1
+Owner: Dave Robertson
+Last Updated: 2026-03-22
+Artifact Class: Spec
+---
+
 # Garden OS: Linear Narrative Specification
 
 > Chapters 1-12. Every line deterministic in trigger. No line begs the player to feel something. Feeling arrives through precision.
@@ -533,7 +542,7 @@ The final screen: the bed, covered, in the gray yard. The legacy record below it
 
 1. After simulation resolves, GURL speaks first. Always.
 2. Onion Man speaks second. Always.
-3. Vegeman speaks only in Chapters 2, 10, and specific chaos/tutorial triggers.
+3. Vegeman has full speaking roles in Chapters 2 and 10 only. In all other chapters, his pool is skipped (see DIALOGUE_SYSTEM.md §5.2 for exact rules).
 4. Garden Critters speak only during events and environmental pressure beats.
 5. No character breaks the fourth wall.
 6. No em dashes in dialogue.

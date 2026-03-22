@@ -1,6 +1,14 @@
-# Garden OS -- Dialogue System Specification
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3, Season Engine v3, Dialogue Engine v1
+Owner: Dave Robertson
+Last Updated: 2026-03-22
+Artifact Class: Spec
+---
 
-Version: 1.0 / Date: 2026-03-15
+# Garden OS — Dialogue System Specification
+
 Depends on: NARRATIVE_SPEC.md, SEASON_ENGINE_SPEC.md, SCORING_RULES.md, DIALOGUE_ENGINE.json
 
 ---
