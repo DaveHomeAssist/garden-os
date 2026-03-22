@@ -1,0 +1,358 @@
+{
+  "$schema": "garden-os-crafting-recipes-v1",
+  "version": 1,
+  "description": "Complete crafting recipe deck for Let It Grow. 15 recipes across 4 skill tiers.",
+  "lastUpdated": "2026-03-22",
+  "materials": {
+    "plant_matter": {
+      "name": "Plant Matter",
+      "description": "Common organic material from harvesting",
+      "rarity": "common",
+      "sources": ["harvesting", "foraging"]
+    },
+    "compost": {
+      "name": "Compost",
+      "description": "Decomposed plant material",
+      "rarity": "common",
+      "sources": ["composting", "foraging"]
+    },
+    "dried_leaves": {
+      "name": "Dried Leaves",
+      "description": "Crispy autumn leaves",
+      "rarity": "common",
+      "sources": ["fall_foraging", "harvest_byproduct"]
+    },
+    "plant_fiber": {
+      "name": "Plant Fiber",
+      "description": "Strong fibers from herb stems",
+      "rarity": "common",
+      "sources": ["harvesting_herbs"]
+    },
+    "herb_extract": {
+      "name": "Herb Extract",
+      "description": "Concentrated herbal essence",
+      "rarity": "uncommon",
+      "sources": ["processing_herbs"]
+    },
+    "scrap_metal": {
+      "name": "Scrap Metal",
+      "description": "Repurposed metal pieces",
+      "rarity": "uncommon",
+      "sources": ["foraging_rocks", "quest_rewards"]
+    },
+    "wood": {
+      "name": "Wood",
+      "description": "Sturdy lumber pieces",
+      "rarity": "uncommon",
+      "sources": ["forest_foraging", "zone_exploration"]
+    },
+    "crystal_shard": {
+      "name": "Crystal Shard",
+      "description": "A shimmering fragment of crystal",
+      "rarity": "rare",
+      "sources": ["rare_foraging", "quest_rewards"]
+    },
+    "lens": {
+      "name": "Lens",
+      "description": "A precision-ground glass lens",
+      "rarity": "rare",
+      "sources": ["maya_quest_reward", "rare_forage"]
+    },
+    "mechanism": {
+      "name": "Mechanism",
+      "description": "Intricate clockwork gears",
+      "rarity": "rare",
+      "sources": ["maya_quest_reward", "advanced_crafting"]
+    },
+    "rare_earth": {
+      "name": "Rare Earth",
+      "description": "Precious mineral from deep soil",
+      "rarity": "very_rare",
+      "sources": ["deep_foraging_high_skill", "quest_reward"]
+    },
+    "garden_twine": {
+      "name": "Garden Twine",
+      "description": "Strong plant-fiber rope",
+      "rarity": "common",
+      "sources": ["crafting"]
+    }
+  },
+  "recipes": [
+    {
+      "id": "basic_fertilizer",
+      "name": "Basic Fertilizer",
+      "description": "A simple but effective soil booster made from compost and plant matter.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "compost", "count": 2, "name": "Compost" },
+        { "itemId": "plant_matter", "count": 3, "name": "Plant Matter" }
+      ],
+      "output": {
+        "itemId": "fertilizer_bag",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 15,
+      "unlockCondition": null
+    },
+    {
+      "id": "pest_spray",
+      "name": "Pest Spray",
+      "description": "An herbal repellent that keeps garden pests at bay.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "herb_extract", "count": 2, "name": "Herb Extract" },
+        { "itemId": "plant_matter", "count": 1, "name": "Plant Matter" }
+      ],
+      "output": {
+        "itemId": "pest_spray",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 15,
+      "unlockCondition": null
+    },
+    {
+      "id": "garden_twine",
+      "name": "Garden Twine",
+      "description": "Strong plant-fiber rope used in many crafting recipes and for tying up plants.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "plant_fiber", "count": 3, "name": "Plant Fiber" }
+      ],
+      "output": {
+        "itemId": "garden_twine",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 10,
+      "unlockCondition": null
+    },
+    {
+      "id": "improved_watering_can",
+      "name": "Improved Watering Can",
+      "description": "A sturdier watering can with better reach and capacity.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "scrap_metal", "count": 1, "name": "Scrap Metal" },
+        { "itemId": "plant_fiber", "count": 2, "name": "Plant Fiber" },
+        { "itemId": "crystal_shard", "count": 1, "name": "Crystal Shard" }
+      ],
+      "output": {
+        "itemId": "watering_can",
+        "count": 1,
+        "durability": 100
+      },
+      "skillRequirement": { "crafting": 3 },
+      "craftingXP": 25,
+      "unlockCondition": null
+    },
+    {
+      "id": "pruning_shears",
+      "name": "Pruning Shears",
+      "description": "Sharp shears for trimming and shaping plants to encourage healthy growth.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "scrap_metal", "count": 2, "name": "Scrap Metal" },
+        { "itemId": "garden_twine", "count": 1, "name": "Garden Twine" }
+      ],
+      "output": {
+        "itemId": "pruning_shears",
+        "count": 1,
+        "durability": 50
+      },
+      "skillRequirement": { "crafting": 3 },
+      "craftingXP": 25,
+      "unlockCondition": null
+    },
+    {
+      "id": "mulch_bag",
+      "name": "Mulch Bag",
+      "description": "Nutrient-rich mulch that retains moisture and suppresses weeds.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "compost", "count": 3, "name": "Compost" },
+        { "itemId": "dried_leaves", "count": 2, "name": "Dried Leaves" }
+      ],
+      "output": {
+        "itemId": "mulch_bag",
+        "count": 2,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 3 },
+      "craftingXP": 20,
+      "unlockCondition": null
+    },
+    {
+      "id": "trellis_extension",
+      "name": "Trellis Extension",
+      "description": "A sturdy trellis kit for climbing plants and vertical garden expansion.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "wood", "count": 4, "name": "Wood" },
+        { "itemId": "garden_twine", "count": 2, "name": "Garden Twine" }
+      ],
+      "output": {
+        "itemId": "trellis_kit",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 3 },
+      "craftingXP": 30,
+      "unlockCondition": null
+    },
+    {
+      "id": "soil_scanner",
+      "name": "Soil Scanner",
+      "description": "A crystal-powered device that reveals hidden soil properties and nutrient levels.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "crystal_shard", "count": 1, "name": "Crystal Shard" },
+        { "itemId": "scrap_metal", "count": 2, "name": "Scrap Metal" },
+        { "itemId": "lens", "count": 1, "name": "Lens" }
+      ],
+      "output": {
+        "itemId": "soil_scanner",
+        "count": 1,
+        "durability": 30
+      },
+      "skillRequirement": { "crafting": 5 },
+      "craftingXP": 35,
+      "unlockCondition": null
+    },
+    {
+      "id": "smart_watering_can",
+      "name": "Smart Watering Can",
+      "description": "An enchanted watering can that automatically waters adjacent zones.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "watering_can", "count": 1, "name": "Improved Watering Can" },
+        { "itemId": "crystal_shard", "count": 2, "name": "Crystal Shard" },
+        { "itemId": "mechanism", "count": 1, "name": "Mechanism" }
+      ],
+      "output": {
+        "itemId": "smart_watering_can",
+        "count": 1,
+        "durability": 80
+      },
+      "skillRequirement": { "crafting": 5 },
+      "craftingXP": 40,
+      "unlockCondition": null
+    },
+    {
+      "id": "companion_patch_kit",
+      "name": "Companion Patch Kit",
+      "description": "A herbal treatment kit that boosts companion planting synergy effects.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "herb_extract", "count": 3, "name": "Herb Extract" },
+        { "itemId": "compost", "count": 2, "name": "Compost" },
+        { "itemId": "plant_fiber", "count": 1, "name": "Plant Fiber" }
+      ],
+      "output": {
+        "itemId": "companion_patch_kit",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 5 },
+      "craftingXP": 30,
+      "unlockCondition": null
+    },
+    {
+      "id": "greenhouse_panel",
+      "name": "Greenhouse Panel",
+      "description": "A crystal-infused panel that extends the growing season for a zone.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "crystal_shard", "count": 4, "name": "Crystal Shard" },
+        { "itemId": "scrap_metal", "count": 2, "name": "Scrap Metal" }
+      ],
+      "output": {
+        "itemId": "greenhouse_panel",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 7 },
+      "craftingXP": 50,
+      "unlockCondition": "quest_maya_masterwork"
+    },
+    {
+      "id": "seed_hybridizer",
+      "name": "Seed Hybridizer",
+      "description": "A precision instrument that combines seed traits to create superior plant varieties.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "crystal_shard", "count": 3, "name": "Crystal Shard" },
+        { "itemId": "mechanism", "count": 2, "name": "Mechanism" },
+        { "itemId": "rare_earth", "count": 1, "name": "Rare Earth" }
+      ],
+      "output": {
+        "itemId": "seed_hybridizer",
+        "count": 1,
+        "durability": 20
+      },
+      "skillRequirement": { "crafting": 7 },
+      "craftingXP": 60,
+      "unlockCondition": null
+    },
+    {
+      "id": "masterwork_fertilizer",
+      "name": "Masterwork Fertilizer",
+      "description": "A potent crystal-enhanced fertilizer with double the effect of the basic version.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "fertilizer_bag", "count": 3, "name": "Basic Fertilizer" },
+        { "itemId": "crystal_shard", "count": 2, "name": "Crystal Shard" }
+      ],
+      "output": {
+        "itemId": "masterwork_fertilizer",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 7 },
+      "craftingXP": 45,
+      "unlockCondition": null
+    },
+    {
+      "id": "auto_composter",
+      "name": "Auto-Composter",
+      "description": "A mechanical marvel that passively generates compost over time.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "mechanism", "count": 4, "name": "Mechanism" },
+        { "itemId": "scrap_metal", "count": 3, "name": "Scrap Metal" },
+        { "itemId": "crystal_shard", "count": 2, "name": "Crystal Shard" }
+      ],
+      "output": {
+        "itemId": "auto_composter",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 10 },
+      "craftingXP": 80,
+      "unlockCondition": null
+    },
+    {
+      "id": "legendary_trowel",
+      "name": "Legendary Trowel",
+      "description": "An unbreakable masterwork trowel forged from rare earth and crystal. The ultimate gardening tool.",
+      "category": "tool",
+      "materials": [
+        { "itemId": "rare_earth", "count": 5, "name": "Rare Earth" },
+        { "itemId": "crystal_shard", "count": 3, "name": "Crystal Shard" },
+        { "itemId": "mechanism", "count": 2, "name": "Mechanism" }
+      ],
+      "output": {
+        "itemId": "legendary_trowel",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 10 },
+      "craftingXP": 100,
+      "unlockCondition": null
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "$schema": "garden-os-skill-tree-v1",
+  "version": 1,
+  "description": "Complete skill tree for Let It Grow. 6 skills × 10 levels with XP sources and buff unlocks.",
+  "lastUpdated": "2026-03-22",
+  "xpTable": [
+    { "level": 1, "xpForLevel": 0, "cumulativeXP": 0 },
+    { "level": 2, "xpForLevel": 100, "cumulativeXP": 100 },
+    { "level": 3, "xpForLevel": 150, "cumulativeXP": 250 },
+    { "level": 4, "xpForLevel": 250, "cumulativeXP": 500 },
+    { "level": 5, "xpForLevel": 350, "cumulativeXP": 850 },
+    { "level": 6, "xpForLevel": 450, "cumulativeXP": 1300 },
+    { "level": 7, "xpForLevel": 600, "cumulativeXP": 1900 },
+    { "level": 8, "xpForLevel": 800, "cumulativeXP": 2700 },
+    { "level": 9, "xpForLevel": 1100, "cumulativeXP": 3800 },
+    { "level": 10, "xpForLevel": 1400, "cumulativeXP": 5200 }
+  ],
+  "skills": {
+    "gardening": {
+      "name": "Gardening",
+      "description": "Master the art of growing plants.",
+      "icon": "🌱",
+      "xpSources": [
+        { "action": "PLANT_CROP", "xp": 10, "description": "Plant a crop in a cell" },
+        { "action": "HARVEST_CELL", "xp": 25, "description": "Harvest a mature crop" },
+        { "action": "WATER_CELL", "xp": 5, "description": "Water a planted cell" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "gardening_yield_10", "name": "+10% Yield", "description": "All harvests produce 10% more yield.", "effect": { "type": "multiply", "target": "harvest_yield", "value": 1.1 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "gardening_yield_20", "name": "+20% Yield", "description": "All harvests produce 20% more yield. Replaces +10% Yield.", "effect": { "type": "multiply", "target": "harvest_yield", "value": 1.2 }, "replaces": "gardening_yield_10" } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "gardening_growth_speed", "name": "Growth Speed +25%", "description": "All crops grow 25% faster.", "effect": { "type": "multiply", "target": "growth_speed", "value": 1.25 } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "gardening_rare_discovery", "name": "Rare Crop Discovery", "description": "Harvesting has a chance to discover rare crop variants.", "effect": { "type": "unlock", "target": "rare_variant_on_harvest", "value": true } } }
+      ]
+    },
+    "soil_science": {
+      "name": "Soil Science",
+      "description": "Understand and improve the earth beneath your plants.",
+      "icon": "🔬",
+      "xpSources": [
+        { "action": "COMPOST_APPLY", "xp": 15, "description": "Apply compost to a cell" },
+        { "action": "SOIL_TEST", "xp": 20, "description": "Run a soil test on a cell" },
+        { "action": "SEASON_TRANSITION", "xp": 50, "description": "Survive a season transition" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "soil_fatigue_15", "name": "Fatigue -15%", "description": "Soil fatigue accumulates 15% slower.", "effect": { "type": "multiply", "target": "soil_fatigue_rate", "value": 0.85 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "soil_fatigue_25", "name": "Fatigue -25%", "description": "Soil fatigue accumulates 25% slower. Replaces Fatigue -15%.", "effect": { "type": "multiply", "target": "soil_fatigue_rate", "value": 0.75 }, "replaces": "soil_fatigue_15" } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "soil_insight", "name": "Soil Insight", "description": "Reveals hidden soil stats for all cells.", "effect": { "type": "unlock", "target": "hidden_soil_stats_visible", "value": true } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "soil_auto_enrich", "name": "Auto-Enrich", "description": "Soil passively recovers 10% health each season.", "effect": { "type": "passive", "target": "soil_recovery_per_season", "value": 0.1 } } }
+      ]
+    },
+    "composting": {
+      "name": "Composting",
+      "description": "Turn waste into garden gold.",
+      "icon": "♻️",
+      "xpSources": [
+        { "action": "CRAFT_COMPOST", "xp": 15, "description": "Craft a batch of compost" },
+        { "action": "COMPOST_APPLY", "xp": 10, "description": "Apply compost to a cell" },
+        { "action": "HARVEST_CELL", "xp": 5, "description": "Harvest a crop (composting byproducts)" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "compost_fertilizer_50", "name": "Fertilizer +50%", "description": "Fertilizer is 50% more effective when applied.", "effect": { "type": "multiply", "target": "fertilizer_effectiveness", "value": 1.5 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "compost_double_yield", "name": "Double Compost", "description": "Compost recipes produce double output.", "effect": { "type": "multiply", "target": "compost_recipe_yield", "value": 2.0 } } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "compost_rare_finds", "name": "Rare Compost Finds", "description": "Chance to find rare materials when composting.", "effect": { "type": "unlock", "target": "rare_material_in_compost", "value": true } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "compost_auto_convert", "name": "Auto-Compost", "description": "Waste is automatically converted to compost each turn.", "effect": { "type": "passive", "target": "auto_convert_waste_to_compost", "value": true } } }
+      ]
+    },
+    "foraging": {
+      "name": "Foraging",
+      "description": "Discover nature's hidden bounty in the wild.",
+      "icon": "🍄",
+      "xpSources": [
+        { "action": "FORAGE_ITEM", "xp": 20, "description": "Forage an item from the wild" },
+        { "action": "ZONE_DISCOVERED", "xp": 50, "description": "Discover a new foraging zone" },
+        { "action": "RARE_FIND", "xp": 30, "description": "Find a rare item while foraging" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "forage_extra_item", "name": "+1 Forage Item", "description": "Find one additional item each time you forage.", "effect": { "type": "add", "target": "forage_item_count", "value": 1 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "forage_rare_seed_2x", "name": "Rare Seed 2x", "description": "Double the chance of finding rare seeds.", "effect": { "type": "multiply", "target": "rare_seed_chance", "value": 2.0 } } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "forage_double_yield", "name": "Double Forage", "description": "All forage yields are doubled.", "effect": { "type": "multiply", "target": "forage_yield", "value": 2.0 } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "forage_legendary_loot", "name": "Legendary Loot", "description": "Legendary items can now appear in forage loot tables.", "effect": { "type": "unlock", "target": "legendary_items_in_loot", "value": true } } }
+      ]
+    },
+    "social": {
+      "name": "Social",
+      "description": "Build relationships and earn trust in your community.",
+      "icon": "🤝",
+      "xpSources": [
+        { "action": "COMPLETE_QUEST", "xp": 30, "description": "Complete a quest for an NPC" },
+        { "action": "DIALOGUE_CHOICE", "xp": 5, "description": "Make a dialogue choice in conversation" },
+        { "action": "TRADE_ITEM", "xp": 10, "description": "Trade an item with another character" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "social_rep_25", "name": "Rep +25%", "description": "Reputation gains are increased by 25%.", "effect": { "type": "multiply", "target": "reputation_gain", "value": 1.25 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "social_quest_rewards", "name": "Quest Rewards +20%", "description": "Quest rewards are 20% more valuable.", "effect": { "type": "multiply", "target": "quest_reward_amount", "value": 1.2 } } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "social_elite_quests", "name": "Elite Quests", "description": "Unlocks access to high-tier quests from NPCs.", "effect": { "type": "unlock", "target": "high_tier_quests", "value": true } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "social_instant_family", "name": "Instant Family", "description": "Unlocks family-tier dialogue with all NPCs.", "effect": { "type": "unlock", "target": "all_npc_family_dialogue", "value": true } } }
+      ]
+    },
+    "crafting": {
+      "name": "Crafting",
+      "description": "Build tools and items to improve your garden.",
+      "icon": "🔨",
+      "xpSources": [
+        { "action": "CRAFT_ITEM", "xp": 20, "description": "Craft a general item" },
+        { "action": "CRAFT_TOOL", "xp": 30, "description": "Craft a garden tool" },
+        { "action": "REPAIR_TOOL", "xp": 10, "description": "Repair a damaged tool" }
+      ],
+      "levels": [
+        { "level": 1, "xpRequired": 0, "totalXP": 0, "buff": null },
+        { "level": 2, "xpRequired": 100, "totalXP": 100, "buff": null },
+        { "level": 3, "xpRequired": 150, "totalXP": 250, "buff": { "id": "crafting_cost_20", "name": "Material Cost -20%", "description": "Crafting recipes cost 20% fewer materials.", "effect": { "type": "multiply", "target": "crafting_material_cost", "value": 0.8 } } },
+        { "level": 4, "xpRequired": 250, "totalXP": 500, "buff": null },
+        { "level": 5, "xpRequired": 350, "totalXP": 850, "buff": { "id": "crafting_durability_10", "name": "Tool Durability +10", "description": "Crafted tools have 10 additional max durability.", "effect": { "type": "add", "target": "crafted_tool_max_durability", "value": 10 } } },
+        { "level": 6, "xpRequired": 450, "totalXP": 1300, "buff": null },
+        { "level": 7, "xpRequired": 600, "totalXP": 1900, "buff": { "id": "crafting_rare_recipes", "name": "Rare Recipes", "description": "Unlocks rare crafting recipes.", "effect": { "type": "unlock", "target": "rare_crafting_recipes", "value": true } } },
+        { "level": 8, "xpRequired": 800, "totalXP": 2700, "buff": null },
+        { "level": 9, "xpRequired": 1100, "totalXP": 3800, "buff": null },
+        { "level": 10, "xpRequired": 1400, "totalXP": 5200, "buff": { "id": "crafting_masterwork", "name": "Masterwork", "description": "All crafted items are 10% more effective.", "effect": { "type": "multiply", "target": "crafted_item_effectiveness", "value": 1.1 } } }
+      ]
+    }
+  }
+}
