@@ -1,0 +1,358 @@
+{
+  "$schema": "garden-os-world-map-v1",
+  "version": 1,
+  "description": "World map for Let It Grow. 8 zones with connections, gates, and content.",
+  "lastUpdated": "2026-03-22",
+  "zones": {
+    "player_plot": {
+      "id": "player_plot",
+      "name": "Your Garden",
+      "description": "Home base. A tidy 8×4 raised cedar bed in your suburban backyard. Everything starts here — your first seeds, your first harvest, your first mistakes.",
+      "biome": "suburban",
+      "visualTheme": {
+        "primaryColor": "#5c3d1e",
+        "secondaryColor": "#3d7a4f",
+        "groundColor": "#8b6f47",
+        "atmosphere": "Warm afternoon light filtering through a backyard fence. Cedar planks, potting soil, garden hose coiled by the shed."
+      },
+      "connections": ["neighborhood"],
+      "gate": null,
+      "features": ["garden_bed", "tool_shed"],
+      "bounds": { "minX": -2.5, "maxX": 2.5, "minZ": -2.0, "maxZ": 2.0 },
+      "spawnPoint": { "x": 0, "z": 0 },
+      "exitPoints": [
+        { "edge": "south", "position": { "x": 0, "z": -2.0 }, "destination": "neighborhood" }
+      ],
+      "foraging": false,
+      "npcSlots": [],
+      "interactables": [
+        { "id": "cedar_bed", "type": "object", "position": { "x": 0, "z": 0.5 }, "label": "8×4 raised cedar bed — your main growing area" },
+        { "id": "tool_shed", "type": "object", "position": { "x": -2.0, "z": -1.0 }, "label": "Tool shed — store and upgrade your gardening tools" }
+      ],
+      "ambientAudio": "suburban_spring",
+      "seasonalVariation": {
+        "spring": "Fresh mulch on the beds, buds on the fence-line shrubs, robins hopping on the lawn.",
+        "summer": "Full green canopy, buzzing pollinators, sprinkler mist catching the light.",
+        "fall": "Amber leaves drifting across the yard, pumpkins on the porch, crisp air.",
+        "winter": "Bare branches, frost on the cedar planks, a dusting of snow on the shed roof."
+      },
+      "biomeCrops": []
+    },
+    "neighborhood": {
+      "id": "neighborhood",
+      "name": "The Neighborhood",
+      "description": "A friendly suburban street lined with mature trees and picket fences. Neighbors tend their own plots and swap gossip at the mailbox. The notice board by the corner store is always covered in requests.",
+      "biome": "suburban",
+      "visualTheme": {
+        "primaryColor": "#7a9e7e",
+        "secondaryColor": "#d4a76a",
+        "groundColor": "#b0a48a",
+        "atmosphere": "Quiet residential street with dappled shade, colorful front gardens, and the distant sound of a lawnmower."
+      },
+      "connections": ["player_plot", "meadow", "forest_edge", "market_square", "festival_grounds"],
+      "gate": null,
+      "features": ["community_plot", "npc_houses", "notice_board"],
+      "bounds": { "minX": -8, "maxX": 8, "minZ": -8, "maxZ": 8 },
+      "spawnPoint": { "x": 0, "z": 0 },
+      "exitPoints": [
+        { "edge": "north", "position": { "x": 0, "z": 8 }, "destination": "player_plot" },
+        { "edge": "east", "position": { "x": 8, "z": 0 }, "destination": "meadow" },
+        { "edge": "west", "position": { "x": -8, "z": 0 }, "destination": "forest_edge" },
+        { "edge": "south", "position": { "x": 0, "z": -8 }, "destination": "market_square" },
+        { "edge": "east", "position": { "x": 5, "z": -8 }, "destination": "festival_grounds" }
+      ],
+      "foraging": false,
+      "npcSlots": [
+        { "npcId": "old_gus", "position": { "x": -3, "z": 4 }, "seasons": ["spring", "summer", "fall", "winter"] },
+        { "npcId": "maya", "position": { "x": 4, "z": 2 }, "seasons": ["spring", "summer", "fall"] },
+        { "npcId": "lila", "position": { "x": -1, "z": -3 }, "seasons": ["spring", "summer", "fall", "winter"] }
+      ],
+      "interactables": [
+        { "id": "notice_board", "type": "sign", "position": { "x": 0, "z": -2 }, "label": "Community notice board — check for quests and requests" },
+        { "id": "community_plot", "type": "object", "position": { "x": 3, "z": 5 }, "label": "Shared community garden plot" },
+        { "id": "mailbox_row", "type": "object", "position": { "x": -5, "z": 0 }, "label": "Neighborhood mailboxes — sometimes hold gifts" }
+      ],
+      "ambientAudio": "neighborhood_ambient",
+      "seasonalVariation": {
+        "spring": "Cherry blossoms along the sidewalk, kids drawing chalk on the pavement, fresh-mowed grass smell.",
+        "summer": "Sprinklers arcing over lawns, lemonade stands, fireflies at dusk.",
+        "fall": "Leaf piles on every curb, jack-o-lanterns on porches, wood smoke in the air.",
+        "winter": "String lights on eaves, snowmen in yards, the crunch of salt underfoot."
+      },
+      "biomeCrops": []
+    },
+    "meadow": {
+      "id": "meadow",
+      "name": "Sun-drenched Meadow",
+      "description": "Rolling grassland bursting with wildflowers and humming with bees. The trails wind through waist-high grasses to hidden herb patches and sun-warmed rock piles. Foragers come here for the best wild seeds.",
+      "biome": "grassland",
+      "visualTheme": {
+        "primaryColor": "#e8c84a",
+        "secondaryColor": "#7db86a",
+        "groundColor": "#c9b87a",
+        "atmosphere": "Wide open sky, golden light, swaying grasses, butterflies drifting between wildflower clusters."
+      },
+      "connections": ["neighborhood", "riverside"],
+      "gate": {
+        "type": "skill",
+        "requirement": { "skill": "foraging", "level": 3 },
+        "blockerMessage": "The meadow trails are overgrown. You need more foraging experience to navigate them."
+      },
+      "features": ["wildflower_field", "herb_patch", "rock_pile"],
+      "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
+      "spawnPoint": { "x": -8, "z": 0 },
+      "exitPoints": [
+        { "edge": "west", "position": { "x": -10, "z": 0 }, "destination": "neighborhood" },
+        { "edge": "east", "position": { "x": 10, "z": 0 }, "destination": "riverside" }
+      ],
+      "foraging": {
+        "enabled": true,
+        "spots": 4,
+        "lootTable": ["plant_matter", "plant_fiber", "dried_leaves", "herb_extract", "wild_clover_seeds", "prairie_onion_seeds", "meadow_sage_seeds"],
+        "cooldownMinutes": 30,
+        "skillModifier": "foraging"
+      },
+      "npcSlots": [],
+      "interactables": [
+        { "id": "wildflower_field", "type": "object", "position": { "x": 3, "z": 5 }, "label": "A carpet of wildflowers — bees love this spot" },
+        { "id": "herb_patch", "type": "object", "position": { "x": -4, "z": -3 }, "label": "Wild herb patch — forage here for herb seeds" },
+        { "id": "rock_pile", "type": "object", "position": { "x": 7, "z": -6 }, "label": "Sun-warmed rock pile — lizards bask here in summer" }
+      ],
+      "ambientAudio": "meadow_ambient",
+      "seasonalVariation": {
+        "spring": "Tender green shoots pushing through last year's straw, early crocuses and violets dotting the hillside.",
+        "summer": "Chest-high golden grasses, blazing sunflowers, the drone of cicadas in the heat.",
+        "fall": "Dry rustling seedheads, goldenrod and aster in purple-gold waves, migrating birds overhead.",
+        "winter": "Flattened straw under a thin snow crust, bare seed stalks poking through, quiet and windswept."
+      },
+      "biomeCrops": ["wild_clover", "prairie_onion", "meadow_sage"]
+    },
+    "riverside": {
+      "id": "riverside",
+      "name": "Riverside",
+      "description": "Muddy banks lined with cattails and whispering reeds. The water runs clear over smooth stones, and driftwood collects in eddies. A good place to find wetland seeds and the occasional lost fishing lure.",
+      "biome": "wetland",
+      "visualTheme": {
+        "primaryColor": "#4a8fa8",
+        "secondaryColor": "#6b8f5e",
+        "groundColor": "#7a6d55",
+        "atmosphere": "Cool mist off the water, dragonflies hovering, the steady murmur of the current over rocks."
+      },
+      "connections": ["meadow"],
+      "gate": {
+        "type": "quest",
+        "requirement": { "quest": "gus_river_path" },
+        "blockerMessage": "The path to the river is blocked. Ask around the neighborhood for help."
+      },
+      "features": ["fishing_pond", "reed_bed", "driftwood_pile"],
+      "bounds": { "minX": -8, "maxX": 8, "minZ": -12, "maxZ": 12 },
+      "spawnPoint": { "x": -6, "z": 0 },
+      "exitPoints": [
+        { "edge": "west", "position": { "x": -8, "z": 0 }, "destination": "meadow" }
+      ],
+      "foraging": {
+        "enabled": true,
+        "spots": 3,
+        "lootTable": ["plant_matter", "wood", "scrap_metal", "watercress_seeds", "wild_rice_seeds", "marsh_marigold_seeds"],
+        "cooldownMinutes": 30,
+        "skillModifier": "foraging"
+      },
+      "npcSlots": [],
+      "interactables": [
+        { "id": "fishing_pond", "type": "object", "position": { "x": 2, "z": 6 }, "label": "A calm fishing spot — cast a line if you have a rod" },
+        { "id": "reed_bed", "type": "object", "position": { "x": -3, "z": -4 }, "label": "Dense reed bed — waterfowl nest here in spring" },
+        { "id": "driftwood_pile", "type": "object", "position": { "x": 5, "z": -8 }, "label": "Pile of driftwood — scavenge for wood and scrap" }
+      ],
+      "ambientAudio": "riverside_ambient",
+      "seasonalVariation": {
+        "spring": "Swollen banks from snowmelt, frog chorus at dusk, bright green reeds emerging.",
+        "summer": "Lazy current, turtles sunning on logs, damselflies in iridescent blue.",
+        "fall": "Fallen leaves spinning in eddies, salmon-colored reflections, mist at dawn.",
+        "winter": "Ice shelves along the banks, black water running fast in the center, frost on the cattails."
+      },
+      "biomeCrops": ["watercress", "wild_rice", "marsh_marigold"]
+    },
+    "forest_edge": {
+      "id": "forest_edge",
+      "name": "Forest Edge",
+      "description": "Dappled shade under tall oaks and birches where the suburb gives way to old-growth woods. Mushroom logs line a mossy path, and berry bushes fruit in the understory. Gus knows every trail here.",
+      "biome": "woodland",
+      "visualTheme": {
+        "primaryColor": "#2d5a3f",
+        "secondaryColor": "#8b6f47",
+        "groundColor": "#4a5a3a",
+        "atmosphere": "Shifting leaf-shadow patterns, cool damp air, the smell of moss and decaying wood, birdsong in the canopy."
+      },
+      "connections": ["neighborhood", "greenhouse"],
+      "gate": {
+        "type": "reputation",
+        "requirement": { "npc": "old_gus", "tier": "friend", "minValue": 50 },
+        "blockerMessage": "Gus hasn't told you about this place yet. Build your friendship with him."
+      },
+      "features": ["mushroom_logs", "berry_bushes", "shade_garden"],
+      "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
+      "spawnPoint": { "x": 8, "z": 0 },
+      "exitPoints": [
+        { "edge": "east", "position": { "x": 10, "z": 0 }, "destination": "neighborhood" },
+        { "edge": "south", "position": { "x": 0, "z": -10 }, "destination": "greenhouse" }
+      ],
+      "foraging": {
+        "enabled": true,
+        "spots": 4,
+        "lootTable": ["wood", "plant_matter", "herb_extract", "crystal_shard", "shiitake_spores", "wild_garlic_seeds", "woodland_strawberry_seeds"],
+        "cooldownMinutes": 30,
+        "skillModifier": "foraging"
+      },
+      "npcSlots": [
+        { "npcId": "old_gus", "position": { "x": -4, "z": 3 }, "seasons": ["fall", "winter"] }
+      ],
+      "interactables": [
+        { "id": "mushroom_logs", "type": "object", "position": { "x": -4, "z": 3 }, "label": "Inoculated mushroom logs — Gus tends these in the cold months" },
+        { "id": "berry_bushes", "type": "object", "position": { "x": 5, "z": 6 }, "label": "Wild berry bushes — harvest in summer and fall" },
+        { "id": "shade_garden", "type": "object", "position": { "x": -2, "z": -5 }, "label": "A shaded garden clearing — ideal for woodland crops" }
+      ],
+      "ambientAudio": "forest_ambient",
+      "seasonalVariation": {
+        "spring": "Trilliums and fiddleheads on the forest floor, bright new leaves overhead, woodpeckers drumming.",
+        "summer": "Deep green canopy blocking most sunlight, ferns at full height, fireflies at twilight.",
+        "fall": "Crimson and gold canopy, mushrooms erupting from every log, acorns underfoot.",
+        "winter": "Bare branches revealing the sky, frost on moss, owl calls in the silence."
+      },
+      "biomeCrops": ["shiitake_mushroom", "wild_garlic", "woodland_strawberry"]
+    },
+    "greenhouse": {
+      "id": "greenhouse",
+      "name": "The Greenhouse",
+      "description": "A Victorian-style glass greenhouse tucked behind the forest edge. Year-round warmth under the panes lets you grow tropical and tender crops regardless of the season. Maya keeps the heaters running in winter.",
+      "biome": "indoor",
+      "visualTheme": {
+        "primaryColor": "#a8d5a2",
+        "secondaryColor": "#e8e8e8",
+        "groundColor": "#c4a882",
+        "atmosphere": "Warm humid air, condensation on glass panes, the green glow of grow lights, terracotta pots everywhere."
+      },
+      "connections": ["forest_edge"],
+      "gate": {
+        "type": "skill",
+        "requirement": { "skill": "crafting", "level": 5 },
+        "blockerMessage": "The greenhouse needs repairs. Reach Crafting level 5 to fix it up."
+      },
+      "features": ["heated_beds", "seed_vendor", "climate_control"],
+      "bounds": { "minX": -6, "maxX": 6, "minZ": -8, "maxZ": 8 },
+      "spawnPoint": { "x": 0, "z": 6 },
+      "exitPoints": [
+        { "edge": "north", "position": { "x": 0, "z": 8 }, "destination": "forest_edge" }
+      ],
+      "foraging": false,
+      "npcSlots": [
+        { "npcId": "maya", "position": { "x": 3, "z": -4 }, "seasons": ["winter"] }
+      ],
+      "interactables": [
+        { "id": "heated_beds", "type": "object", "position": { "x": 0, "z": 0 }, "label": "Heated growing beds — plant tropical crops year-round" },
+        { "id": "seed_vendor_booth", "type": "vendor", "position": { "x": -4, "z": -5 }, "label": "Seed vendor — buy rare and exotic seeds" },
+        { "id": "climate_control", "type": "object", "position": { "x": 5, "z": 6 }, "label": "Climate control panel — adjust temperature and humidity" }
+      ],
+      "ambientAudio": "greenhouse_ambient",
+      "seasonalVariation": {
+        "spring": "Always temperate inside. Condensation drips from the glass. Seedlings in trays on every shelf.",
+        "summer": "Always temperate inside. Vents open to prevent overheating. Ceiling fans turning slowly.",
+        "fall": "Always temperate inside. Heaters begin humming. The glass fogs at the edges.",
+        "winter": "Always temperate inside. Maya tinkers with the boiler. Snow piles on the glass roof overhead."
+      },
+      "biomeCrops": ["vanilla_orchid", "lemon_tree", "ghost_pepper"]
+    },
+    "festival_grounds": {
+      "id": "festival_grounds",
+      "name": "Festival Grounds",
+      "description": "A wide-open park at the edge of the neighborhood that transforms completely for each seasonal festival. Between events it sits empty — just mowed grass and a locked bandstand. During festivals, it comes alive.",
+      "biome": "festive",
+      "visualTheme": {
+        "primaryColor": "#d94f7a",
+        "secondaryColor": "#f5c542",
+        "groundColor": "#7ab648",
+        "atmosphere": "Bunting and banners, music from the stage, the smell of grilled corn and kettle corn, crowds milling between stalls."
+      },
+      "connections": ["neighborhood"],
+      "gate": {
+        "type": "event",
+        "requirement": { "activeFestival": true },
+        "blockerMessage": "The festival grounds are quiet between events. Come back during a festival!"
+      },
+      "features": ["main_stage", "market_stalls", "activity_booths"],
+      "bounds": { "minX": -12, "maxX": 12, "minZ": -12, "maxZ": 12 },
+      "spawnPoint": { "x": 0, "z": -10 },
+      "exitPoints": [
+        { "edge": "south", "position": { "x": 0, "z": -12 }, "destination": "neighborhood" }
+      ],
+      "foraging": false,
+      "npcSlots": [
+        { "npcId": "old_gus", "position": { "x": -5, "z": 3 }, "seasons": ["spring", "summer", "fall", "winter"] },
+        { "npcId": "maya", "position": { "x": 5, "z": 3 }, "seasons": ["spring", "summer", "fall", "winter"] },
+        { "npcId": "lila", "position": { "x": 0, "z": 6 }, "seasons": ["spring", "summer", "fall", "winter"] }
+      ],
+      "interactables": [
+        { "id": "main_stage", "type": "object", "position": { "x": 0, "z": 8 }, "label": "Main stage — performances and announcements during festivals" },
+        { "id": "market_stalls", "type": "vendor", "position": { "x": -6, "z": 0 }, "label": "Festival market stalls — special seasonal items for sale" },
+        { "id": "activity_booths", "type": "object", "position": { "x": 6, "z": 0 }, "label": "Activity booths — mini-games and contests" }
+      ],
+      "ambientAudio": "festival_ambient",
+      "seasonalVariation": {
+        "spring": "Pastel streamers, flower crowns for sale, seed-swap tables, maypole in the center.",
+        "summer": "Tiki torches, watermelon-eating contest, firecracker stands, live band on stage.",
+        "fall": "Hay bales and corn mazes, pumpkin carving stations, caramel apple booth, harvest wreaths.",
+        "winter": "Twinkling string lights, hot cocoa stand, ice sculpture display, carolers on the stage."
+      },
+      "biomeCrops": []
+    },
+    "market_square": {
+      "id": "market_square",
+      "name": "Market Square",
+      "description": "A bustling trading hub where gardeners come to swap seeds, sell harvests, and buy tools. Lila runs a food stall in the warm months. The notice board here has the best-paying requests.",
+      "biome": "urban",
+      "visualTheme": {
+        "primaryColor": "#c4763a",
+        "secondaryColor": "#e8c84a",
+        "groundColor": "#9a8a7a",
+        "atmosphere": "Cobblestone underfoot, canvas awnings snapping in the breeze, chatter and haggling, crates of produce stacked high."
+      },
+      "connections": ["neighborhood"],
+      "gate": {
+        "type": "skill",
+        "requirement": { "skill": "social", "level": 2 },
+        "blockerMessage": "You don't know anyone at the market yet. Build your social skills first."
+      },
+      "features": ["seed_exchange", "tool_vendor", "notice_board"],
+      "bounds": { "minX": -8, "maxX": 8, "minZ": -6, "maxZ": 6 },
+      "spawnPoint": { "x": 0, "z": 5 },
+      "exitPoints": [
+        { "edge": "north", "position": { "x": 0, "z": 6 }, "destination": "neighborhood" }
+      ],
+      "foraging": false,
+      "npcSlots": [
+        { "npcId": "lila", "position": { "x": -3, "z": -2 }, "seasons": ["spring", "summer"] }
+      ],
+      "interactables": [
+        { "id": "seed_exchange", "type": "vendor", "position": { "x": -5, "z": 0 }, "label": "Seed exchange — trade your seeds for new varieties" },
+        { "id": "tool_vendor_stall", "type": "vendor", "position": { "x": 5, "z": 0 }, "label": "Tool vendor — buy and upgrade gardening tools" },
+        { "id": "market_notice_board", "type": "sign", "position": { "x": 0, "z": -4 }, "label": "Market notice board — high-reward delivery requests" }
+      ],
+      "ambientAudio": "market_ambient",
+      "seasonalVariation": {
+        "spring": "Fresh greens and starts piled on tables, tulips in buckets, optimistic chatter about the new season.",
+        "summer": "Overflowing tomato crates, berry baskets, fans and shade umbrellas, ice-cold drinks.",
+        "fall": "Root vegetables and squash towers, apple cider press in the corner, wool scarves on a rack.",
+        "winter": "Reduced stalls under heavy canvas, preserved goods and dried herbs, warm bread from a brick oven."
+      },
+      "biomeCrops": []
+    }
+  },
+  "connections": [
+    { "from": "player_plot", "to": "neighborhood", "bidirectional": true },
+    { "from": "neighborhood", "to": "meadow", "bidirectional": true },
+    { "from": "neighborhood", "to": "forest_edge", "bidirectional": true },
+    { "from": "neighborhood", "to": "market_square", "bidirectional": true },
+    { "from": "neighborhood", "to": "festival_grounds", "bidirectional": true },
+    { "from": "meadow", "to": "riverside", "bidirectional": true },
+    { "from": "forest_edge", "to": "greenhouse", "bidirectional": true }
+  ]
+}

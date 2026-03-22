@@ -1,0 +1,362 @@
+{
+  "$schema": "garden-os-quest-deck-v1",
+  "version": 1,
+  "description": "Initial quest deck for Let It Grow. 13 quests across 4 NPCs.",
+  "lastUpdated": "2026-03-22",
+  "quests": [
+    {
+      "id": "gus_tomatoes",
+      "npc": "old_gus",
+      "type": "discover",
+      "title": "Grandpa's Tomatoes",
+      "description": "Old Gus remembers a cherry tomato his grandfather used to grow — sweet as candy, red as sunset. He wants to see if you can coax that old variety back to life in your garden.",
+      "acceptDialogue": "Used to be a tomato my granddad grew. Small thing. Red as a barn door. Sweetest you ever tasted. Haven't seen one in years. Think you can find it? Grow me three. I'll know if they're right.",
+      "progressDialogue": "Back when I was small, those tomatoes came in by the bushel. You'll get there. Just takes patience. Soil doesn't hurry for nobody.",
+      "completeDialogue": "Well I'll be. That's the one. Smell that? That's summer, 1962. Here — take these pepper seeds. My granddad grew those too. Figured they ought to stay together.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "cherry_tom", "count": 3 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "heritage_pepper", "amount": 1 },
+        { "type": "reputation", "id": "old_gus", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 3,
+        "season": "summer",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "gus_compost",
+      "npc": "old_gus",
+      "type": "assist",
+      "title": "The Old Compost Method",
+      "description": "Gus's compost bin has seen better days. He swears his old layering method made the richest soil in the county. Help him restore it with fresh compost and some kale for green matter.",
+      "acceptDialogue": "Bin's falling apart. Used to make the best dirt you ever saw. Dark as coffee. Smelled like the forest floor after rain. Need two batches of compost and some kale for the green layer. You in?",
+      "progressDialogue": "Back when the bin was working, worms came from three yards over. They knew. Animals always know where the good soil is. Keep at it.",
+      "completeDialogue": "That's the stuff. Layers just right. Give it six weeks and this'll be black gold. You earned this — compost supplies, on me. And you learned something about soil today. That's worth more than seeds.",
+      "requirements": [
+        { "type": "item_crafted", "id": "compost", "count": 2 },
+        { "type": "crop_harvested", "id": "kale", "count": 2 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "compost_supplies", "amount": 1 },
+        { "type": "reputation", "id": "old_gus", "amount": 20 },
+        { "type": "xp", "id": "soil_science", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 5,
+        "season": "fall",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "gus_frost",
+      "npc": "old_gus",
+      "type": "timed",
+      "title": "Before the First Frost",
+      "description": "Winter is coming, and Gus knows the signs. He needs you to harvest five cold-weather crops before the frost kills them. The clock is ticking — once fall ends, they're gone.",
+      "acceptDialogue": "Frost's coming. I can feel it in my knees. We got carrots, beets, kale, broccoli, and turnips still in the ground. Pull them all before winter hits or we lose the lot. No second chances with frost.",
+      "progressDialogue": "Sky's getting grayer. Hurry it up. Used to be we had another week this time of year. Weather's not what it was. Get those crops in.",
+      "completeDialogue": "Every last one. That's how it's done. My dad would've said you've got farmer's hands. Here — rare seeds I've been saving. Didn't think I'd find someone worth giving them to.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "carrot", "count": 1 },
+        { "type": "crop_harvested", "id": "beet", "count": 1 },
+        { "type": "crop_harvested", "id": "kale", "count": 1 },
+        { "type": "crop_harvested", "id": "broccoli", "count": 1 },
+        { "type": "crop_harvested", "id": "turnip", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "rare_seed_bundle", "amount": 1 },
+        { "type": "reputation", "id": "old_gus", "amount": 25 },
+        { "type": "xp", "id": "gardening", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 7,
+        "season": "fall",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": true,
+      "deadline": "end_of_fall"
+    },
+    {
+      "id": "maya_sprinkler",
+      "npc": "maya",
+      "type": "craft",
+      "title": "The Prototype Sprinkler",
+      "description": "Maya's been sketching designs for a garden sprinkler system on napkins for weeks. She's got the blueprints — sort of — but needs someone to actually build the first prototype.",
+      "acceptDialogue": "OK so I've been thinking — well, more like obsessing — about irrigation efficiency, right? And I drew this sprinkler design on a napkin at breakfast, and — oh! I spilled coffee on it but the important parts survived — anyway, can you build one? Just one! The basic version. I need to see if the flow rate matches my calculations.",
+      "progressDialogue": "How's it going? Did you figure out the valve part? Because I was thinking — wait, no, finish the first version first. But ALSO I had this idea for a drip attachment that — no. Focus. Basic sprinkler. Then we iterate!",
+      "completeDialogue": "YOU BUILT IT! Let me see — oh wow, the spray pattern is actually better than I predicted! Here, take this — I call it the Smart Watering Can, it's got a — well, it's basically a regular can but I added a moisture sensor to the — you know what, just try it. You'll love it.",
+      "requirements": [
+        { "type": "item_crafted", "id": "basic_sprinkler", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "smart_watering_can", "amount": 1 },
+        { "type": "reputation", "id": "maya", "amount": 15 },
+        { "type": "xp", "id": "crafting", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 2,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "maya_scanner",
+      "npc": "maya",
+      "type": "assist",
+      "title": "Soil Scanner Calibration",
+      "description": "Maya built a soil scanner but it needs real-world calibration data. Visit the meadow, riverside, and forest edge so she can compare readings across different soil compositions.",
+      "acceptDialogue": "So I built this soil scanner — don't ask how, I may have borrowed parts from a — anyway, it WORKS, theoretically, but I need field data from three different soil types to calibrate it. The meadow, the riverside, and the forest edge. Totally different mineral profiles. Oh! And take notes on the color? Or don't, I'll add a camera next version.",
+      "progressDialogue": "Did you get to all three spots yet? Because the calibration won't work unless — actually wait, even partial data could — no, I need all three. The riverside clay is completely different from the meadow loam and I need that contrast to set the baseline. Science!",
+      "completeDialogue": "Three zones! Three datasets! This is — hold on, let me punch these numbers — YES. The scanner works! PH, nitrogen, phosphorus, all reading clean. You earned this. Take the scanner. I already started building version two with a — actually, you don't want to know. Just take it.",
+      "requirements": [
+        { "type": "zone_visited", "id": "meadow", "count": 1 },
+        { "type": "zone_visited", "id": "riverside", "count": 1 },
+        { "type": "zone_visited", "id": "forest_edge", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "soil_scanner", "amount": 1 },
+        { "type": "reputation", "id": "maya", "amount": 20 },
+        { "type": "xp", "id": "soil_science", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 4,
+        "season": "spring",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "maya_hybrid",
+      "npc": "maya",
+      "type": "discover",
+      "title": "The Experimental Hybrid",
+      "description": "Maya has a wild theory about cross-pollinating cherry tomatoes and peppers to create a new hybrid variety. She needs you to plant both crops side by side and craft a hybrid seed.",
+      "acceptDialogue": "OK this is going to sound crazy — but what if we could cross a cherry tomato with a pepper? I've been reading about capsaicinoid transfer and lycopene expression and — oh! I found this old paper from 1987 that suggests — anyway, plant them next to each other, and I'll walk you through the seed grafting. This could be HUGE. Or a total disaster. Either way, data!",
+      "progressDialogue": "How are the plants looking? Are they flowering yet? Because the cross-pollination window is really narrow — like three days — and we need to time the — wait, did you plant them close enough? They need to be ADJACENT. The bees won't fly far in summer heat and — just check on them, OK?",
+      "completeDialogue": "A hybrid seed. An actual hybrid seed. Do you realize what we just — this is a brand new cultivar! Nobody's ever — well, probably someone has, but WE did it! Here, take these hybrid seeds. Grow them out. Document everything. I need to write this up. Where's my notebook? WHERE'S MY — oh, it's in my hand.",
+      "requirements": [
+        { "type": "crop_planted", "id": "cherry_tom", "count": 1 },
+        { "type": "crop_planted", "id": "pepper", "count": 1 },
+        { "type": "item_crafted", "id": "hybrid_seed", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "hybrid_seeds", "amount": 1 },
+        { "type": "reputation", "id": "maya", "amount": 25 },
+        { "type": "xp", "id": "gardening", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 6,
+        "season": "summer",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "lila_basil",
+      "npc": "lila",
+      "type": "fetch",
+      "title": "Fresh Basil, Please",
+      "description": "Lila needs fresh basil for tonight's special. Not grocery store basil — real, garden-grown basil with actual flavor. Three bunches, and they'd better smell like something.",
+      "acceptDialogue": "I need basil. Three bunches. And I mean fresh. Not store-shelf fresh. Dawn-picked fresh. The kind where you bruise a leaf and the whole kitchen smells like summer in Genoa. Can you do that? Because the last person who brought me basil — I won't even talk about it. It was an insult to pesto.",
+      "progressDialogue": "Still waiting on that basil. Every hour it's not here, the leaves on MY plants get a little sadder. Sympathetic wilting. That's a real thing. I may have made it up. But the point stands — hurry.",
+      "completeDialogue": "Let me see. Let me smell. ...Yes. THAT is basil. You can taste the sun in these leaves. Here — take these herb seeds. Grow more. Grow different ones. A garden without herbs is just a vegetable warehouse.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "basil", "count": 3 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "herb_seeds", "amount": 1 },
+        { "type": "reputation", "id": "lila", "amount": 10 },
+        { "type": "xp", "id": "social", "amount": 10 }
+      ],
+      "prerequisites": {
+        "chapter_min": 1,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "lila_salsa",
+      "npc": "lila",
+      "type": "fetch",
+      "title": "The Perfect Salsa",
+      "description": "Lila is perfecting her fresh salsa recipe and needs garden-ripe ingredients. Tomatoes, peppers, cilantro, and onion — all from the same soil, all at peak ripeness.",
+      "acceptDialogue": "I'm making salsa. Not the jarred kind — the kind that makes you close your eyes and forget what month it is. I need two ripe tomatoes, two peppers with actual heat, one bunch of cilantro, and an onion with bite. Everything from your garden. Supermarket produce has no soul.",
+      "progressDialogue": "The mortar and pestle are ready. The lime is cut. I'm literally just standing here waiting for you. No pressure. But also — pressure. Flavor waits for no one.",
+      "completeDialogue": "Tomatoes — firm, good. Peppers — I can smell the capsaicin. Cilantro — bright, not bolted. Onion — oh, that'll make someone cry, and I mean that as the highest compliment. Take this recipe card. You've earned it. Share it with someone who deserves it.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
+        { "type": "crop_harvested", "id": "pepper", "count": 2 },
+        { "type": "crop_harvested", "id": "cilantro", "count": 1 },
+        { "type": "crop_harvested", "id": "onion", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "recipe_card_salsa", "amount": 1 },
+        { "type": "reputation", "id": "lila", "amount": 20 },
+        { "type": "xp", "id": "gardening", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 4,
+        "season": "summer",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "lila_recipe",
+      "npc": "lila",
+      "type": "fetch",
+      "title": "Mom's Secret Recipe",
+      "description": "Lila's mother left behind a handwritten recipe card — a sauce that takes eight ingredients, all garden-fresh. She's never made it before. This is personal, and every ingredient has to be perfect.",
+      "acceptDialogue": "This is my mother's recipe. She never made it for anyone outside the family. I've never made it at all. I need tomatoes, basil, peppers, onion, carrot, and garlic — all from the garden. Not because it tastes better. Because she would have wanted it that way. Every ingredient matters. Don't bring me anything you wouldn't eat raw, standing in the dirt.",
+      "progressDialogue": "I keep reading her handwriting on the card. She underlined 'fresh' three times. She spelled 'garlic' wrong. I'm not changing it. Just — bring me what I asked for. Take your time. But not too much time. Fall doesn't last forever.",
+      "completeDialogue": "Everything's here. All of it, perfect. I can smell her kitchen already. ...Thank you. I mean it. Here — these seeds are rare. I've been saving them for someone who understands that food isn't just food. It's memory. It's people. You get that.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
+        { "type": "crop_harvested", "id": "basil", "count": 2 },
+        { "type": "crop_harvested", "id": "pepper", "count": 1 },
+        { "type": "crop_harvested", "id": "onion", "count": 1 },
+        { "type": "crop_harvested", "id": "carrot", "count": 1 },
+        { "type": "crop_harvested", "id": "garlic", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "exclusive_seed", "amount": 1 },
+        { "type": "reputation", "id": "lila", "amount": 30 },
+        { "type": "xp", "id": "social", "amount": 20 },
+        { "type": "xp", "id": "crafting", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 8,
+        "season": "fall",
+        "reputation": {},
+        "quests_completed": ["lila_basil", "lila_salsa"]
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "pat_watering",
+      "npc": "neighbor_pat",
+      "type": "assist",
+      "title": "Weekend Watering",
+      "description": "Pat's heading out of town for the weekend and needs someone to water their garden. Visit the neighborhood and make sure nothing wilts while they're gone.",
+      "acceptDialogue": "Hey neighbor! I'm visiting my sister this weekend — could you pop over and water my garden? It's just the front beds, nothing fancy. But my sunflowers are FINALLY about to bloom and I'd hate to lose them to the heat.",
+      "progressDialogue": "How's it going over there? I keep checking my weather app. It says hot and dry. Please tell me my sunflowers are OK. I'm trusting you with my babies!",
+      "completeDialogue": "Everything's alive! And are those — did my sunflowers BLOOM? You're the best neighbor ever. Here, take some of this plant matter I've been saving. Least I can do!",
+      "requirements": [
+        { "type": "zone_visited", "id": "neighborhood", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "plant_matter", "amount": 5 },
+        { "type": "reputation", "id": "neighbor_pat", "amount": 10 }
+      ],
+      "prerequisites": {
+        "chapter_min": 2,
+        "season": "summer",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "sam_bees",
+      "npc": "neighbor_sam",
+      "type": "fetch",
+      "title": "Bee-Friendly Garden",
+      "description": "Sam keeps bees and wants to plant companion flowers nearby to help the hive thrive. Marigolds and nasturtiums are perfect — bright, fragrant, and full of pollen.",
+      "acceptDialogue": "My bees need more forage — the clover field got mowed last week and they're struggling. Could you plant some marigolds and a nasturtium near the garden? The bees love those bright colors, and nasturtium nectar makes the most amazing honey.",
+      "progressDialogue": "The bees are out there looking for flowers every morning. Poor things come back with barely anything. How are those plantings coming along?",
+      "completeDialogue": "Flowers in the ground! The bees will find them by tomorrow, I guarantee it. Here — fresh honey from last season's harvest. Consider it an advance payment from the bees themselves.",
+      "requirements": [
+        { "type": "crop_planted", "id": "marigold", "count": 2 },
+        { "type": "crop_planted", "id": "nasturtium", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "honey_jar", "amount": 1 },
+        { "type": "reputation", "id": "neighbor_sam", "amount": 10 }
+      ],
+      "prerequisites": {
+        "chapter_min": 3,
+        "season": "spring",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "jo_compost",
+      "npc": "neighbor_jo",
+      "type": "fetch",
+      "title": "Compost Contribution",
+      "description": "Jo is building a community compost pile and needs plant matter contributions. Any five harvested crops will do — it all breaks down the same.",
+      "acceptDialogue": "I'm starting a community compost pile in the back corner of the lot. Good for the neighborhood, good for the soil. But I need green matter to get it started. Got any crops you can spare? Five of anything will do. It all turns into dirt eventually.",
+      "progressDialogue": "The compost pile's looking a little sad right now. Just a pile of leaves and cardboard. It needs the good stuff — garden scraps, crop waste. Bring me what you've got!",
+      "completeDialogue": "That's what I'm talking about! This pile is going to cook. Give it a few weeks and we'll have the richest compost on the block. Take this fertilizer — consider it the first dividend from our little compost investment.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "any", "count": 5 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "fertilizer", "amount": 2 },
+        { "type": "reputation", "id": "neighbor_jo", "amount": 10 }
+      ],
+      "prerequisites": {
+        "chapter_min": 2,
+        "season": "fall",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+    {
+      "id": "robin_birds",
+      "npc": "neighbor_robin",
+      "type": "discover",
+      "title": "Bird Census",
+      "description": "Robin is conducting a neighborhood bird census and needs help spotting species in different habitats. Visit the meadow, riverside, and forest edge to record what you see.",
+      "acceptDialogue": "I'm doing a bird count for the neighborhood nature group. We need observations from three different habitats — the meadow, the riverside, and the forest edge. Different birds, different zones. Grab your binoculars. Well, grab your eyes. Binoculars are optional but strongly encouraged.",
+      "progressDialogue": "How many zones have you visited? Each habitat has different species. The meadow has sparrows and larks, the riverside has kingfishers, and the forest edge — that's where the warblers hide. Don't rush it. Birds can tell when you're impatient.",
+      "completeDialogue": "Three habitats surveyed! Let me see your notes — oh, wonderful. A kingfisher at the riverside? That's the first sighting this season. You've got a good eye. Here, take these wildflower seeds. Plant them and you'll bring even more birds to the garden.",
+      "requirements": [
+        { "type": "zone_visited", "id": "meadow", "count": 1 },
+        { "type": "zone_visited", "id": "riverside", "count": 1 },
+        { "type": "zone_visited", "id": "forest_edge", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "rare_wildflower_seeds", "amount": 1 },
+        { "type": "reputation", "id": "neighbor_robin", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 4,
+        "season": "spring",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    }
+  ]
+}
