@@ -24,34 +24,36 @@ export function createSeasonCalendar() {
   el.id = 'season-calendar';
   el.style.cssText = `
     position:absolute;
-    top:60px;
+    top:64px;
     left:16px;
     z-index:10;
-    background:rgba(30,17,10,0.82);
-    backdrop-filter:blur(12px);
-    border:1px solid rgba(232,200,74,0.12);
-    border-radius:12px;
-    padding:12px 14px;
-    min-width:140px;
+    background:rgba(30,17,10,0.72);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(232,200,74,0.14);
+    border-radius:14px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.22);
+    padding:10px 12px;
+    min-width:128px;
+    max-width:168px;
     pointer-events:none;
     font-family:'DM Sans',sans-serif;
   `;
 
   el.innerHTML = `
-    <div id="cal-season-row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-      <span id="cal-emoji" style="font-size:18px;">🌱</span>
-      <div>
-        <div id="cal-month" style="font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:#f7f2ea;line-height:1.2;">March</div>
-        <div id="cal-chapter-title" style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(247,242,234,0.52);line-height:1.25;margin-top:1px;"></div>
-        <div id="cal-year" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.35);letter-spacing:0.08em;margin-top:2px;">Year 1 of 3</div>
+    <div id="cal-season-row" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;">
+      <span id="cal-emoji" style="font-size:16px;line-height:1;">🌱</span>
+      <div style="min-width:0;">
+        <div id="cal-month" style="font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:#f7f2ea;line-height:1.15;">March</div>
+        <div id="cal-chapter-title" style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(247,242,234,0.62);line-height:1.2;margin-top:2px;"></div>
+        <div id="cal-year" style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(247,242,234,0.34);letter-spacing:0.08em;margin-top:4px;">Year 1 of 3</div>
       </div>
     </div>
-    <div style="display:flex;gap:4px;align-items:center;" id="cal-beats">
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(232,200,74,0.5);"></div>
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(247,242,234,0.08);"></div>
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(247,242,234,0.08);"></div>
+    <div style="display:flex;gap:5px;align-items:center;" id="cal-beats">
+      <div class="cal-beat" style="width:28px;height:4px;border-radius:999px;background:rgba(232,200,74,0.5);"></div>
+      <div class="cal-beat" style="width:28px;height:4px;border-radius:999px;background:rgba(247,242,234,0.08);"></div>
+      <div class="cal-beat" style="width:28px;height:4px;border-radius:999px;background:rgba(247,242,234,0.08);"></div>
     </div>
-    <div id="cal-beat-label" style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(247,242,234,0.25);letter-spacing:0.08em;margin-top:4px;text-transform:uppercase;">Early Season</div>
+    <div id="cal-beat-label" style="font-family:'DM Mono',monospace;font-size:8px;color:rgba(247,242,234,0.28);letter-spacing:0.08em;margin-top:5px;text-transform:uppercase;">Early Season</div>
   `;
 
   return el;

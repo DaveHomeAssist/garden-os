@@ -64,7 +64,7 @@
       left: 0;
       right: 0;
       z-index: 10;
-      padding: 10px 14px;
+      padding: 12px 16px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -76,13 +76,13 @@
     .hud-left, .hud-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .hud-pause-btn {
-      background: rgba(247,242,234,0.06);
-      border: 1px solid rgba(247,242,234,0.1);
-      border-radius: 8px;
+      background: rgba(247,242,234,0.08);
+      border: 1px solid rgba(232,200,74,0.16);
+      border-radius: 10px;
       width: 36px;
       height: 36px;
       cursor: pointer;
@@ -90,7 +90,7 @@
       align-items: center;
       justify-content: center;
       font-size: 15px;
-      color: rgba(247,242,234,0.45);
+      color: rgba(247,242,234,0.62);
       -webkit-tap-highlight-color: transparent;
       transition: border-color 0.15s, color 0.15s;
       flex-shrink: 0;
@@ -105,18 +105,20 @@
       font-size: clamp(9px, 1.8vw, 11px);
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      padding: 5px 10px;
+      padding: 6px 11px;
       border-radius: 999px;
-      background: rgba(30,17,10,0.65);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(232,200,74,0.18);
-      color: #e8c84a;
+      background: rgba(30,17,10,0.74);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(247,242,234,0.08);
+      color: rgba(247,242,234,0.76);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.14);
       white-space: nowrap;
       transition: background 0.2s, border-color 0.2s;
     }
     .hud-pill.chapter {
-      color: #f7f2ea;
-      border-color: rgba(247,242,234,0.12);
+      color: #f4dfa1;
+      background: rgba(232,200,74,0.14);
+      border-color: rgba(232,200,74,0.2);
       font-weight: 500;
     }
     .hud-action-btn {
@@ -176,7 +178,7 @@
     .hud-score {
       font-family: 'Fraunces', serif;
       font-weight: 700;
-      font-size: clamp(16px, 3.5vw, 20px);
+      font-size: clamp(15px, 3vw, 18px);
       color: #e8c84a;
       min-width: 28px;
       text-align: right;
@@ -189,18 +191,51 @@
     }
     .hud-score-label {
       font-family: 'DM Mono', monospace;
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(232,200,74,0.35);
+      color: rgba(247,242,234,0.34);
       text-align: right;
       line-height: 1;
-      margin-bottom: 1px;
+      margin-bottom: 4px;
     }
     .hud-score-wrap {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      min-width: 74px;
+      padding: 7px 10px;
+      border-radius: 14px;
+      background: rgba(30,17,10,0.74);
+      border: 1px solid rgba(247,242,234,0.08);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+    }
+    .hud-status-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 78px;
+      padding: 7px 10px;
+      border-radius: 14px;
+      background: rgba(30,17,10,0.74);
+      border: 1px solid rgba(247,242,234,0.08);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+    }
+    .hud-status-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(247,242,234,0.34);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .hud-status-value {
+      font-family: 'Fraunces', serif;
+      font-size: 15px;
+      color: #f7f2ea;
     }
 
     /* Phase progress dots */
@@ -240,20 +275,20 @@
 
     #phase-helper {
       position: absolute;
-      top: 76px;
+      top: 82px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 11;
-      max-width: min(560px, calc(100vw - 28px));
-      padding: 9px 14px;
+      max-width: min(480px, calc(100vw - 28px));
+      padding: 8px 14px;
       border-radius: 999px;
-      background: rgba(30,17,10,0.78);
+      background: rgba(30,17,10,0.72);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(232,200,74,0.16);
-      color: rgba(247,242,234,0.78);
+      border: 1px solid rgba(232,200,74,0.14);
+      color: rgba(247,242,234,0.82);
       font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      line-height: 1.35;
+      font-size: 12px;
+      line-height: 1.4;
       text-align: center;
       pointer-events: none;
       opacity: 0;
@@ -943,12 +978,12 @@
       color: rgba(247,242,234,0.72);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 1100px) {
       #panel-container {
         top: 0;
         left: auto;
         right: 0;
-        width: 340px;
+        width: 312px;
         bottom: 0;
       }
       .panel-sheet {
@@ -980,12 +1015,18 @@
         font-size: 10px;
       }
 
+      .hud-status-card,
+      .hud-score-wrap {
+        padding: 6px 8px;
+        min-width: 64px;
+      }
+
       #phase-dots {
         top: 56px;
       }
 
       #phase-helper {
-        top: 82px;
+        top: 88px;
         font-size: 12px;
         padding: 8px 12px;
       }
@@ -1070,12 +1111,12 @@
     }
 
     @media (max-width: 420px) {
-      .hud-pill#hud-crops {
-        display: none;
-      }
-
       .hud-score {
         font-size: 18px;
+      }
+
+      .hud-status-label {
+        display: none;
       }
 
       .chapter-intro {
@@ -1847,7 +1888,10 @@
         </span>
       </div>
       <div class="hud-right">
-        <span class="hud-pill" id="hud-crops">0 / 32</span>
+        <div class="hud-status-card hud-status-card--progress">
+          <div class="hud-status-label">Planted</div>
+          <span class="hud-status-value" id="hud-crops">0/32</span>
+        </div>
         <div class="hud-score-wrap">
           <div class="hud-score-label">Score</div>
           <span class="hud-score" id="hud-score">--</span>

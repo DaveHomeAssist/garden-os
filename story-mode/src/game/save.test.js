@@ -27,8 +27,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  globalThis.localStorage?.clear?.();
   vi.unstubAllGlobals();
-  localStorage.clear();
 });
 
 describe('save', () => {

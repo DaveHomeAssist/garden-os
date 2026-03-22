@@ -2,6 +2,21 @@ import { initGame, showTitleScreen } from './game/game-init.js';
 
 let runtimeModulesPromise = null;
 
+function renderErrorMessage(host, message, tagName = 'div') {
+  if (!host) return;
+  host.replaceChildren();
+
+  const el = document.createElement(tagName);
+  el.style.padding = '24px';
+  el.style.color = '#e8c84a';
+  el.style.fontFamily = 'monospace';
+  if (tagName === 'pre') {
+    el.style.whiteSpace = 'pre-wrap';
+  }
+  el.textContent = message;
+  host.appendChild(el);
+}
+
 function loadRuntimeModules() {
   if (!runtimeModulesPromise) {
     runtimeModulesPromise = Promise.all([
@@ -80,9 +95,7 @@ async function startSession({ initialState, slot, viewport }) {
   } catch (err) {
     clearLoading();
     const host = viewport ?? document.getElementById('app');
-    if (host) {
-      host.innerHTML = `<div style="padding:24px;color:#e8c84a;font-family:monospace">${err.message}</div>`;
-    }
+    renderErrorMessage(host, err?.message ?? 'Unknown startup error');
   }
 }
 
@@ -97,7 +110,5 @@ try {
   mount();
 } catch (err) {
   const app = document.getElementById('app');
-  if (app) {
-    app.innerHTML = `<pre style="color:#e8c84a;padding:24px;font-family:monospace;white-space:pre-wrap">${err.stack || err.message}</pre>`;
-  }
+  renderErrorMessage(app, err?.stack || err?.message || 'Unknown mount error', 'pre');
 }

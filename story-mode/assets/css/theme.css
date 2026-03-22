@@ -21,7 +21,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 0 max(env(safe-area-inset-bottom, 16px), 16px);
+  padding: 0 16px max(env(safe-area-inset-bottom, 12px), 12px);
 }
 
 .dp-panel {
@@ -33,15 +33,15 @@
   display: flex;
   flex-direction: row;
   align-items: flex-end;
-  gap: 12px;
-  width: clamp(320px, 88vw, 720px);
-  min-height: 120px;
-  padding: 16px;
-  margin-bottom: 24px;
-  background: rgba(20, 28, 20, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(180, 220, 140, 0.25);
-  border-radius: 12px;
+  gap: 10px;
+  width: clamp(300px, 76vw, 620px);
+  min-height: 104px;
+  padding: 14px 16px 12px;
+  margin-bottom: 14px;
+  background: rgba(28, 24, 18, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(232, 200, 74, 0.18);
+  border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
@@ -57,8 +57,8 @@
 
 .dp-portrait-area {
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
+  width: 68px;
+  height: 68px;
   position: relative;
 }
 
@@ -153,17 +153,17 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
   position: relative;
 }
 
 .dp-speaker-badge {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(180, 220, 140, 0.9);
+  color: rgba(232, 200, 74, 0.88);
 }
 
 .dp-speaker-badge--thought {
@@ -171,10 +171,10 @@
 }
 
 .dp-text {
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: 0.91rem;
+  line-height: 1.48;
   color: rgba(240, 248, 235, 0.95);
-  min-height: 3.2em;
+  min-height: 2.9em;
 }
 
 .dp-panel--thought {
@@ -222,14 +222,14 @@
 
 .dp-dots {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
-  height: 8px;
+  height: 6px;
 }
 
 .dp-dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: rgba(180, 220, 140, 0.3);
   transition: background 200ms;
@@ -257,23 +257,23 @@
 
 .dp-skip-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  font-size: 0.7rem;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: transparent;
-  border: 1px solid rgba(180, 220, 140, 0.3);
-  border-radius: 4px;
-  color: rgba(180, 220, 140, 0.6);
+  border: 1px solid rgba(232, 200, 74, 0.28);
+  border-radius: 999px;
+  color: rgba(247, 242, 234, 0.64);
   cursor: pointer;
   transition: border-color 150ms, color 150ms;
 }
 
 .dp-skip-btn:hover {
-  border-color: rgba(180, 220, 140, 0.7);
-  color: rgba(180, 220, 140, 0.9);
+  border-color: rgba(232, 200, 74, 0.56);
+  color: rgba(247, 242, 234, 0.9);
 }
 
 .palette-header {
@@ -446,19 +446,20 @@
 
 @media (max-width: 480px) {
   .dp-panel {
-    width: 92vw;
-    padding: 12px;
+    width: 94vw;
+    min-height: 92px;
+    padding: 10px 12px;
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .dp-portrait-area {
-    width: 60px;
-    height: 60px;
+    width: 54px;
+    height: 54px;
   }
 
   .dp-text {
-    font-size: 0.875rem;
+    font-size: 0.84rem;
   }
 
   .palette-grid {

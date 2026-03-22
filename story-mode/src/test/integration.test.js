@@ -49,6 +49,23 @@ function createMockStorage() {
   };
 }
 
+function createKeyboardEvent(type, init = {}) {
+  const event = new Event(type, {
+    bubbles: init.bubbles ?? false,
+    cancelable: init.cancelable ?? false,
+  });
+
+  Object.defineProperties(event, {
+    key: { value: init.key ?? '', enumerable: true },
+    altKey: { value: Boolean(init.altKey), enumerable: true },
+    ctrlKey: { value: Boolean(init.ctrlKey), enumerable: true },
+    metaKey: { value: Boolean(init.metaKey), enumerable: true },
+    shiftKey: { value: Boolean(init.shiftKey), enumerable: true },
+  });
+
+  return event;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Full Season Playthrough
 // ---------------------------------------------------------------------------
@@ -192,9 +209,9 @@ describe('Save/Load Round-Trip', () => {
 
     // Verify season round-trip preserves grid
     expect(loadedSeason.phase).toBe(state.season.phase);
-    expect(loadedSeason.grid.length).toBe(CELL_COUNT);
+    expect(loadedSeason.grid.cells.length).toBe(CELL_COUNT);
     for (let i = 0; i < CELL_COUNT; i++) {
-      expect(loadedSeason.grid[i].cropId).toBe(state.season.grid[i].cropId);
+      expect(loadedSeason.grid.cells[i].cropId).toBe(state.season.grid[i].cropId);
     }
   });
 
@@ -285,7 +302,7 @@ describe('Save/Load Round-Trip', () => {
     expect(loaded).not.toBeNull();
     const loadedSeason = loadSeasonState(slot);
     expect(loadedSeason).not.toBeNull();
-    expect(loadedSeason.grid[0].cropId).toBe('basil');
+    expect(loadedSeason.grid.cells[0].cropId).toBe('basil');
 
     unsub();
 
@@ -462,7 +479,7 @@ describe('Input -> Action Pipeline', () => {
     inputManager.on('advance', callback);
 
     // Dispatch a keyboard event matching the binding
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', {
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', {
       key: ' ',
       bubbles: true,
       cancelable: true,
@@ -480,7 +497,7 @@ describe('Input -> Action Pipeline', () => {
     inputManager.on('debug', callback);
 
     // Without shift — should not fire
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', {
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', {
       key: 'd',
       bubbles: true,
       shiftKey: false,
@@ -488,7 +505,7 @@ describe('Input -> Action Pipeline', () => {
     expect(callback).not.toHaveBeenCalled();
 
     // With shift — should fire
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', {
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', {
       key: 'd',
       bubbles: true,
       shiftKey: true,
@@ -497,10 +514,10 @@ describe('Input -> Action Pipeline', () => {
   });
 
   it('tracks held keys correctly', () => {
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'w' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 'w' }));
     expect(inputManager.isKeyHeld('w')).toBe(true);
 
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keyup', { key: 'w' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keyup', { key: 'w' }));
     expect(inputManager.isKeyHeld('w')).toBe(false);
   });
 
@@ -509,11 +526,11 @@ describe('Input -> Action Pipeline', () => {
     inputManager.registerAction('test', { keys: ['t'] });
     const off = inputManager.on('test', callback);
 
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 't' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 't' }));
     expect(callback).toHaveBeenCalledTimes(1);
 
     off();
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 't' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 't' }));
     expect(callback).toHaveBeenCalledTimes(1); // no additional call
   });
 
@@ -522,10 +539,10 @@ describe('Input -> Action Pipeline', () => {
     inputManager.registerAction('cancel', { keys: ['Escape', 'q'] });
     inputManager.on('cancel', callback);
 
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 'Escape' }));
     expect(callback).toHaveBeenCalledTimes(1);
 
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'q' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 'q' }));
     expect(callback).toHaveBeenCalledTimes(2);
   });
 
@@ -537,7 +554,7 @@ describe('Input -> Action Pipeline', () => {
     inputManager.on('intercept', first);
     inputManager.on('intercept', second);
 
-    keyboardTarget.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+    keyboardTarget.dispatchEvent(createKeyboardEvent('keydown', { key: 'x' }));
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).not.toHaveBeenCalled();
   });

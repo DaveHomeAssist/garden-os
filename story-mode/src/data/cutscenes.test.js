@@ -7,6 +7,7 @@
  *
  * Or import into a test runner.
  */
+import { it } from 'vitest';
 
 // Minimal mock for crops.js since we're testing cutscenes in isolation
 const MOCK_RECIPES = {
@@ -51,6 +52,9 @@ function section(name) {
 section('Static cutscene structure');
 
 async function runTests() {
+  passed = 0;
+  failed = 0;
+  failures.length = 0;
   // Dynamic import to handle ES modules
   // Mock the crops.js dependency before importing cutscenes
   let CUTSCENES, getHighestPriorityCutscene, getEligibleCutscenes;
@@ -336,8 +340,8 @@ async function runTests() {
   if (failures.length > 0) {
     console.log('  FAILURES:');
     for (const f of failures) console.log(`    ✗ ${f}`);
+    throw new Error(`${failed} cutscene checks failed`);
   }
-  process.exit(failed > 0 ? 1 : 0);
 }
 
 function runStructuralTests() {
@@ -357,7 +361,6 @@ function runStructuralTests() {
   console.log('  cd story-mode && node --experimental-vm-modules src/data/cutscenes.test.js');
 }
 
-runTests().catch(e => {
-  console.error('Test runner failed:', e);
-  process.exit(1);
+it('validates cutscene matrix and dynamic dialogue coverage', async () => {
+  await runTests();
 });

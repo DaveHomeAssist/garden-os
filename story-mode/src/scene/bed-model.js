@@ -21,14 +21,6 @@ function seededRandom(seed) {
   return x - Math.floor(x);
 }
 
-const ROW_LABEL_COLORS = [0x6688aa, 0x888888, 0x888888, 0x88aa66, 0xd2a95a, 0x88aa66, 0x88aa66, 0x88aa66];
-
-function getRowLabel(row, rows) {
-  if (row === 0) return 'Back (Wall)';
-  if (row === rows - 1) return 'Front (Access)';
-  return `Row ${row}`;
-}
-
 export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   const group = new THREE.Group();
   const cedarMat = new THREE.MeshStandardMaterial(CEDAR_MATERIAL);
@@ -213,63 +205,6 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
       group.add(cell);
       cellMeshes.push(cell);
     }
-  }
-
-  // Row labels — colored marker cubes along the left side
-  for (let row = 0; row < rows; row++) {
-    const z = (row - (rows - 1) / 2) * CELL_SIZE;
-    const markerX = -bedWidth / 2 - FRAME_THICKNESS - 0.05;
-
-    // Small colored cube marker
-    const markerGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
-    const markerMat = new THREE.MeshStandardMaterial({
-      color: ROW_LABEL_COLORS[row],
-      roughness: 0.5,
-      emissive: ROW_LABEL_COLORS[row],
-      emissiveIntensity: 0.3,
-    });
-    const marker = new THREE.Mesh(markerGeo, markerMat);
-    marker.position.set(markerX, FRAME_HEIGHT * 0.5, z);
-    group.add(marker);
-
-    // Canvas-based text sprite for the label
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, 256, 64);
-    ctx.fillStyle = 'rgba(18,12,8,0.76)';
-    if (typeof ctx.roundRect === 'function') {
-      ctx.beginPath();
-      ctx.roundRect(0, 8, 212, 48, 16);
-      ctx.fill();
-    } else {
-      ctx.fillRect(0, 8, 212, 48);
-    }
-    ctx.strokeStyle = 'rgba(232,200,74,0.42)';
-    ctx.lineWidth = 2;
-    if (typeof ctx.roundRect === 'function') {
-      ctx.beginPath();
-      ctx.roundRect(1, 9, 210, 46, 15);
-      ctx.stroke();
-    } else {
-      ctx.strokeRect(1, 9, 210, 46);
-    }
-    ctx.font = '600 28px monospace';
-    ctx.fillStyle = '#f4ead8';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.55)';
-    ctx.shadowBlur = 6;
-    ctx.fillText(getRowLabel(row, rows), 14, 32);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.92 });
-    const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(0.84, 0.21, 1);
-    sprite.position.set(markerX - 0.48, FRAME_HEIGHT * 0.62, z);
-    group.add(sprite);
   }
 
   tracker?.trackObject(group);

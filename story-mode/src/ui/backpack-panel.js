@@ -24,14 +24,14 @@ function renderTabButton(tabId, activeTab, label) {
       style="
         border:none;
         border-radius:999px;
-        padding:8px 12px;
-        font-size:12px;
+        padding:7px 10px;
+        font-size:11px;
         font-family:'DM Mono',monospace;
         letter-spacing:0.08em;
         text-transform:uppercase;
         cursor:pointer;
         color:${active ? '#1a120c' : 'rgba(247,242,234,0.72)'};
-        background:${active ? '#e8c84a' : 'rgba(247,242,234,0.06)'};
+        background:${active ? '#e8c84a' : 'rgba(247,242,234,0.05)'};
       "
     >${label}</button>
   `;
@@ -66,9 +66,9 @@ function renderInventoryGrid(data, selectedSlotIndex) {
         ${slot ? `data-item-id="${slot.itemId}"` : ''}
         style="
           position:relative;
-          width:44px;
-          height:44px;
-          border-radius:8px;
+          width:40px;
+          height:40px;
+          border-radius:10px;
           border:2px ${slot ? 'solid' : 'dashed'} ${border};
           background:${slot ? tint : 'rgba(247,242,234,0.03)'};
           color:#f7f2ea;
@@ -76,7 +76,7 @@ function renderInventoryGrid(data, selectedSlotIndex) {
           display:flex;
           align-items:center;
           justify-content:center;
-          font-size:20px;
+          font-size:18px;
         "
         draggable="${slot ? 'true' : 'false'}"
         aria-label="${slot ? escapeHtml(slot.itemDef?.name ?? slot.itemId) : `Empty slot ${index + 1}`}"
@@ -273,8 +273,8 @@ export function showBackpackPanel(container, initialData, onClose) {
   const sheet = document.createElement('div');
   sheet.className = 'panel-sheet is-open';
   sheet.id = 'backpack-panel';
-  sheet.style.maxWidth = 'min(92vw, 372px)';
-  sheet.style.maxHeight = '82vh';
+  sheet.style.maxWidth = 'min(92vw, 332px)';
+  sheet.style.maxHeight = '80vh';
   sheet.style.overflow = 'auto';
   sheet.tabIndex = 0;
 
@@ -310,16 +310,22 @@ export function showBackpackPanel(container, initialData, onClose) {
     sheet.innerHTML = `
       <div class="panel-handle"></div>
       <div class="palette-header">
-        <div>
+        <div style="min-width:0;">
           <div class="palette-title">Backpack</div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(247,242,234,0.35);margin-top:4px;">
-            Inventory, keepsakes, pantry, and season trail
+            Tools, pantry, keepsakes, trail
           </div>
         </div>
-        <button type="button" class="palette-dismiss" id="backpack-dismiss" aria-label="Close backpack">&times;</button>
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div style="text-align:right;min-width:52px;">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.08em;color:rgba(247,242,234,0.32);text-transform:uppercase;">Load</div>
+            <div style="font-family:'Fraunces',serif;font-size:15px;color:#f7f2ea;line-height:1.1;">${used}/${total}</div>
+          </div>
+          <button type="button" class="palette-dismiss" id="backpack-dismiss" aria-label="Close backpack">&times;</button>
+        </div>
       </div>
 
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
         ${renderTabButton('inventory', activeTab, 'Inventory')}
         ${renderTabButton('crafting', activeTab, 'Crafting')}
         ${renderTabButton('keepsakes', activeTab, 'Keepsakes')}
@@ -330,25 +336,32 @@ export function showBackpackPanel(container, initialData, onClose) {
         ${activeTab === 'inventory' ? `
           <div
             id="inventory-grid"
-            style="display:grid;grid-template-columns:repeat(5,minmax(44px,1fr));gap:4px;justify-content:center;margin-bottom:12px;"
+            style="display:grid;grid-template-columns:repeat(5,minmax(40px,1fr));gap:8px;justify-content:center;margin-bottom:10px;"
           >
             ${renderInventoryGrid(data, selectedSlotIndex)}
           </div>
 
-          <div style="margin-bottom:14px;">
-            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.58);margin-bottom:6px;">
-              <span>Capacity</span>
-              <span>${used}/${total}</span>
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.52);margin-bottom:6px;">
+              <span>Slots used</span>
+              <span>${capacityPercent}% full</span>
             </div>
-            <div style="height:8px;border-radius:999px;background:rgba(247,242,234,0.08);overflow:hidden;">
+            <div style="height:6px;border-radius:999px;background:rgba(247,242,234,0.08);overflow:hidden;">
               <div style="height:100%;width:${capacityPercent}%;background:linear-gradient(90deg,#7fbf7f,#e8c84a);"></div>
             </div>
           </div>
 
-          <div style="padding:12px;border-radius:12px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
-            <div style="font-family:'Fraunces',serif;font-size:16px;color:#f7f2ea;">${selectedSlot ? escapeHtml(selectedSlot.itemDef?.name ?? selectedSlot.itemId) : 'Empty Slot'}</div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.52);margin-top:4px;">
-              ${selectedSlot ? `${escapeHtml(selectedSlot.itemDef?.description ?? 'Stored item.')} ${selectedSlot.count > 1 ? `(x${selectedSlot.count})` : ''}` : 'Select a slot to inspect or move it.'}
+          <div style="padding:10px 12px;border-radius:12px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:38px;height:38px;border-radius:10px;background:${selectedSlot ? (CATEGORY_TINTS[selectedSlot.category] ?? 'rgba(247,242,234,0.08)') : 'rgba(247,242,234,0.04)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                ${selectedSlot ? escapeHtml(selectedSlot.itemDef?.icon ?? '📦') : '·'}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Fraunces',serif;font-size:15px;color:#f7f2ea;">${selectedSlot ? escapeHtml(selectedSlot.itemDef?.name ?? selectedSlot.itemId) : 'Select a slot'}</div>
+                <div style="font-size:12px;color:rgba(247,242,234,0.52);margin-top:3px;line-height:1.45;">
+                  ${selectedSlot ? `${escapeHtml(selectedSlot.itemDef?.description ?? 'Stored item.')} ${selectedSlot.count > 1 ? `(x${selectedSlot.count})` : ''}` : 'Pick a slot to inspect, use, or move the item inside.'}
+                </div>
+              </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:10px;">
               <button type="button" id="backpack-use" ${selectedSlot ? '' : 'disabled'} style="border:none;border-radius:999px;padding:8px 12px;background:#e8c84a;color:#1a120c;font-weight:700;cursor:pointer;">Use</button>

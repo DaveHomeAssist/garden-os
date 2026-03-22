@@ -1361,7 +1361,7 @@ function bindUI({
     if (hudChapter) hudChapter.textContent = `Ch ${state.campaign.currentChapter}`;
     if (hudPhase) hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
-    if (hudCrops) hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
+    if (hudCrops) hudCrops.textContent = `${planted}/${state.season.grid.length}`;
 
     const scoreResult = state.season.harvestResult
       ?? scoreBed(state.season.grid, state.season.siteConfig, state.season.season, state.campaign.pantry);
@@ -1400,6 +1400,7 @@ function bindUI({
     if (phaseHelper) {
       const isWinter = state.season.season === 'winter';
       let helperText = '';
+      const seasonLabel = SEASON_LABELS[state.season.season] ?? state.season.season;
 
       if (state.season.phase === PHASES.PLANNING) {
         if (isWinter) {
@@ -1407,9 +1408,9 @@ function bindUI({
             ? 'Winter review complete. Continue to roll into the next chapter.'
             : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
         } else if (planted < 8) {
-          helperText = `Plant at least 8 crops to begin the season. ${8 - planted} more to go.`;
+          helperText = `Plant 8 crops to start ${seasonLabel}. ${planted}/8 planted.${state.selectedCropId ? '' : ' Tap Plant to choose a crop.'}`;
         } else {
-          helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
+          helperText = 'Bed ready. Commit Plan to begin Early Season.';
         }
       } else if (state.season.phase === PHASES.TRANSITION) {
         helperText = 'Season complete. Use Continue to roll into the next chapter.';
