@@ -31,10 +31,10 @@ export function getMonthlyEvents(season, month, chapter, drawnThisSeason = []) {
 
 // NEW: monthly rotation rules
 // Some events only appear in specific months:
-//   - "late_frost": spring month 1 only
-//   - "heat_wave": summer month 2–3 only
-//   - "first_frost": fall month 3 only
-//   - "holiday_feast": winter month 3 only
+//   - "S01" (Late Frost Advisory): spring month 1 only
+//   - "U05" (August Scorcher): summer month 2–3 only
+//   - "F01" (First Frost Warning): fall month 3 only
+//   - "W08" (New Year Reflection): winter month 3 only
 // Events without month restrictions appear in any month of their season.
 ```
 
@@ -44,14 +44,15 @@ Add optional `months` field to event entries in `specs/EVENT_DECK.json`:
 
 ```json
 {
-  "id": "late_frost",
+  "id": "S01",
+  "title": "Late Frost Advisory",
   "season": "spring",
   "months": [1],
   ...
 }
 ```
 
-Events without `months` field are available all months of their season (backward compatible).
+Events use IDs from EVENT_DECK.json (e.g., S01=Late Frost, U05=August Scorcher). Events without `months` field are available all months of their season (backward compatible).
 
 ### Monthly Draw Logic
 
@@ -78,8 +79,8 @@ In Let It Grow mode (not Story Mode):
 
 ## Testing
 
-- Unit test: `getMonthlyEvents('spring', 1, ...)` includes "late_frost" but not "heat_wave"
-- Unit test: `getMonthlyEvents('summer', 2, ...)` includes "heat_wave" but not "late_frost"
+- Unit test: `getMonthlyEvents('spring', 1, ...)` includes "S01" (Late Frost) but not "U05" (August Scorcher)
+- Unit test: `getMonthlyEvents('summer', 2, ...)` includes "U05" (August Scorcher) but not "S01"
 - Unit test: no-duplicate filtering works
 - Unit test: chapter gating works
 - Unit test: events without month restrictions appear in all months

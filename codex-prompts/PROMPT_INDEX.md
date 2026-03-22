@@ -38,7 +38,7 @@
 | 2A. NPC Data Registry | Codex | `codex-prompts/phase-2/2A-npc-data-registry.md` |
 | 2B. NPC Portrait Artwork | Claude | `claude-prompts/phase-2/2B-npc-portrait-artwork.md` |
 | 2D. Quest State Machine | Codex | `codex-prompts/phase-2/2D-quest-state-machine.md` |
-| 2E. Quest Data (13 quests) | Claude | `claude-prompts/phase-2/2E-quest-data.md` |
+| 2E. Quest Data (25 quests) | Claude | `claude-prompts/phase-2/2E-quest-data.md` |
 | 2F. Dialogue Branching | Codex | `codex-prompts/phase-2/2F-dialogue-branching.md` |
 | 2G. Reputation System | Codex | `codex-prompts/phase-2/2G-reputation-system.md` |
 | 2H. Zone Transition System | Codex | `codex-prompts/phase-2/2H-zone-transition-system.md` |

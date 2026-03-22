@@ -69,7 +69,7 @@ export const ITEM_REGISTRY = {
   // Seeds
   tomato_seed: { id: 'tomato_seed', name: 'Tomato Seeds', category: 'seeds', stackable: true, maxStack: 99, cropId: 'tomato_01' },
   basil_seed: { id: 'basil_seed', name: 'Basil Seeds', category: 'seeds', stackable: true, maxStack: 99, cropId: 'basil_01' },
-  // ... one seed per crop type (38 total)
+  // ... one seed per crop type (50 total — see CROP_SCORING_DATA.json v3)
 
   // Tools
   watering_can: { id: 'watering_can', name: 'Watering Can', category: 'tools', stackable: false, durability: 100 },

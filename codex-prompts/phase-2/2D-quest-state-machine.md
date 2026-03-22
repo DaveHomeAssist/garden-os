@@ -6,7 +6,7 @@ Create `src/game/quest-engine.js` — the quest state machine that manages quest
 
 ## Context
 
-Let It Grow introduces 13 initial quests (9 from core NPCs + 4 from neighbors). Each quest follows a state machine: AVAILABLE → ACCEPTED → IN_PROGRESS → READY_TO_TURN_IN → COMPLETED, with branches to ABANDONED and FAILED.
+Let It Grow introduces 25 quests across 7 NPCs (see `specs/QUEST_DECK.json`). Each quest follows a state machine: AVAILABLE → ACCEPTED → IN_PROGRESS → READY_TO_TURN_IN → COMPLETED, with branches to ABANDONED and FAILED.
 
 ## Deliverable
 
@@ -67,25 +67,25 @@ export class QuestEngine {
 
 ```js
 {
-  id: "gus_heirloom_01",
+  id: "gus_tomatoes",
   npc: "old_gus",
   type: "discover",       // fetch | assist | discover | timed | craft
   title: "Grandpa's Tomatoes",
-  description: "Gus remembers a tomato variety from his grandfather's garden...",
-  acceptDialogue: "Think you can find me one of these? Used to grow 'em right here.",
-  completeDialogue: "Well I'll be. That's the one. Grandpa would be proud.",
+  description: "Old Gus remembers a cherry tomato his grandfather used to grow...",
+  acceptDialogue: "Used to be a tomato my granddad grew...",
+  progressDialogue: "Back when I was small, those tomatoes came in by the bushel...",
+  completeDialogue: "Well I'll be. That's the one...",
   requirements: [
-    { type: "crop_harvested", cropId: "heirloom_tomato", count: 1 }
+    { type: "crop_harvested", id: "cherry_tom", count: 3 }
   ],
   rewards: [
-    { type: "seed", itemId: "heritage_pepper", count: 3 },
-    { type: "reputation", npcId: "old_gus", amount: 15 },
-    { type: "xp", skill: "gardening", amount: 50 }
+    { type: "seed", id: "heritage_pepper", amount: 1 },
+    { type: "reputation", id: "old_gus", amount: 15 }
   ],
   prerequisites: {
     chapter_min: 3,
     season: "summer",          // null = any season
-    reputation: { old_gus: 0 }, // minimum reputation required
+    reputation: {},             // minimum reputation required
     quests_completed: []        // quest IDs that must be done first
   },
   timed: false,
@@ -99,11 +99,11 @@ Requirements are checked against game state:
 
 | Requirement Type | Check Against |
 |-----------------|---------------|
-| `crop_harvested` | campaign.pantry — has player harvested N of cropId? |
-| `crop_planted` | season.grid — are N cells planted with cropId? |
+| `crop_harvested` | campaign.pantry — has player harvested N of crop `id`? |
+| `crop_planted` | season.grid — are N cells planted with crop `id`? |
 | `reputation` | reputation store — is NPC reputation >= threshold? |
-| `item_crafted` | inventory — has player crafted itemId? |
-| `zone_visited` | world state — has player entered zoneId? |
+| `item_crafted` | inventory — has player crafted item `id`? |
+| `zone_visited` | world state — has player entered zone `id`? |
 | `season` | campaign.season — is it the required season? |
 
 ### Store Integration

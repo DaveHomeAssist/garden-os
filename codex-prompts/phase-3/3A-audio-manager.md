@@ -105,7 +105,7 @@ export class AudioManager {
 Since we can't include actual audio files, use the following approach:
 - Create `assets/audio/` directory with placeholder `.txt` files documenting expected audio
 - AudioManager should gracefully handle missing audio files (console.warn, no crash)
-- Use Web Audio API oscillators as fallback SFX if files aren't loaded (simple beeps/tones)
+- Use Web Audio API oscillators as fallback SFX if files aren't loaded — see `specs/AUDIO_SPEC.md` §7 "Placeholder Strategy" for exact oscillator definitions per SFX ID
 
 ## Constraints
 

@@ -30,10 +30,11 @@ export const NPC_REGISTRY = {
     defaultEmotion: 'neutral',
     portrait: 'old_gus', // key into portraits.js (Phase 2B)
     schedule: {
-      spring: { zone: 'player_plot', position: { x: -1.5, z: 1.0 } },
-      summer: { zone: 'neighborhood', position: { x: 2.0, z: -0.5 } },
-      fall:   { zone: 'neighborhood', position: { x: 3.0, z: 1.0 } },
-      winter: { zone: 'neighborhood', position: { x: 1.0, z: 0.0 } },
+      // Positions from WORLD_MAP.json npcSlots
+      spring: { zone: 'neighborhood', position: { x: -3, z: 4 } },
+      summer: { zone: 'neighborhood', position: { x: -3, z: 4 } },
+      fall:   { zone: 'neighborhood', position: { x: -3, z: 4 } },
+      winter: { zone: 'neighborhood', position: { x: -3, z: 4 } },
     },
     reputation: { initial: 0, decayPerSeason: 1 },
     dialogueDefaults: {
@@ -50,10 +51,11 @@ export const NPC_REGISTRY = {
     defaultEmotion: 'excited',
     portrait: 'maya',
     schedule: {
-      spring: { zone: 'neighborhood', position: { x: -2.0, z: -1.0 } },
-      summer: { zone: 'neighborhood', position: { x: -2.0, z: -1.0 } },
-      fall:   { zone: 'neighborhood', position: { x: -2.0, z: -1.0 } },
-      winter: { zone: 'neighborhood', position: { x: -2.0, z: -1.0 } },
+      // Positions from WORLD_MAP.json npcSlots — Maya absent in winter
+      spring: { zone: 'neighborhood', position: { x: 4, z: 2 } },
+      summer: { zone: 'neighborhood', position: { x: 4, z: 2 } },
+      fall:   { zone: 'neighborhood', position: { x: 4, z: 2 } },
+      winter: null, // Maya not available in winter
     },
     reputation: { initial: 0, decayPerSeason: 1 },
     dialogueDefaults: {
@@ -70,10 +72,11 @@ export const NPC_REGISTRY = {
     defaultEmotion: 'warm',
     portrait: 'lila',
     schedule: {
-      spring: { zone: 'neighborhood', position: { x: 0.0, z: -2.0 } },
-      summer: { zone: 'neighborhood', position: { x: 0.0, z: -2.0 } },
-      fall:   { zone: 'neighborhood', position: { x: 1.5, z: -2.5 } },
-      winter: { zone: 'neighborhood', position: { x: 1.0, z: 0.0 } },
+      // Positions from WORLD_MAP.json npcSlots
+      spring: { zone: 'neighborhood', position: { x: -1, z: -3 } },
+      summer: { zone: 'neighborhood', position: { x: -1, z: -3 } },
+      fall:   { zone: 'neighborhood', position: { x: -1, z: -3 } },
+      winter: { zone: 'neighborhood', position: { x: -1, z: -3 } },
     },
     reputation: { initial: 0, decayPerSeason: 1 },
     dialogueDefaults: {
