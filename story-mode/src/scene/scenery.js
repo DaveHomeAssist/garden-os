@@ -947,7 +947,394 @@ export function buildScenery(tracker = null) {
   windIndicator.position.set(4.95, 0.5, 1.0);
   group.add(windIndicator);
 
-  // ── END NEW SCENERY ITEMS ──────────────────────────────────────────────
+  // ── EXPANDED SCENERY — full house, fences, neighbors ─────────────────
+
+  // === FULL HOUSE — second floor, roof, chimney, more windows ===
+
+  // Second floor wall (extends above existing first-floor wall)
+  const secondFloorWall = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 2.8), sidingMat);
+  secondFloorWall.position.set(0, 3.5 + 1.4, -6.15);
+  secondFloorWall.receiveShadow = true;
+  group.add(secondFloorWall);
+
+  // Horizontal siding lines for second floor
+  for (let i = 0; i < 9; i++) {
+    const board2 = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.045, 0.02), trimMat);
+    board2.position.set(0, 3.65 + i * 0.29, -6.12);
+    group.add(board2);
+  }
+
+  // Floor separator trim between stories
+  const storyTrim = new THREE.Mesh(new THREE.BoxGeometry(7.9, 0.08, 0.06), trimMat);
+  storyTrim.position.set(0, 3.46, -6.1);
+  group.add(storyTrim);
+
+  // Second floor windows (2 windows)
+  for (const wx of [-1.2, 1.6]) {
+    const win2Frame = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.0, 0.08), trimMat);
+    win2Frame.position.set(wx, 4.5, -6.18);
+    group.add(win2Frame);
+    const win2Glass = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.78, 0.04), windowGlassMat);
+    win2Glass.position.set(wx, 4.5, -6.22);
+    group.add(win2Glass);
+    // Window sill
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.04, 0.1), trimMat);
+    sill.position.set(wx, 3.98, -6.12);
+    group.add(sill);
+  }
+
+  // First floor — additional window right of center
+  const firstWin2Frame = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.0, 0.08), trimMat);
+  firstWin2Frame.position.set(1.85, 1.85, -6.18);
+  group.add(firstWin2Frame);
+  const firstWin2Glass = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.78, 0.04), windowGlassMat);
+  firstWin2Glass.position.set(1.85, 1.85, -6.22);
+  group.add(firstWin2Glass);
+  const firstWin2Sill = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.04, 0.1), trimMat);
+  firstWin2Sill.position.set(1.85, 1.33, -6.12);
+  group.add(firstWin2Sill);
+
+  // Main roof — pitched (two angled planes)
+  const roofOverhang = 0.35;
+  const roofWidth = 7.8 + roofOverhang * 2;
+  const roofDepth = 2.2;
+  const roofPeakY = 7.4;
+  const roofBaseY = 6.3;
+  const roofZ = -6.15;
+
+  const roofLeftGeo = new THREE.PlaneGeometry(roofWidth / 2 + 0.1, roofDepth);
+  const roofLeftMesh = new THREE.Mesh(roofLeftGeo, roofMat);
+  roofLeftMesh.position.set(-roofWidth / 4, (roofPeakY + roofBaseY) / 2, roofZ);
+  roofLeftMesh.rotation.z = -0.48;
+  roofLeftMesh.rotation.x = -0.15;
+  group.add(roofLeftMesh);
+
+  const roofRightGeo = new THREE.PlaneGeometry(roofWidth / 2 + 0.1, roofDepth);
+  const roofRightMesh = new THREE.Mesh(roofRightGeo, roofMat);
+  roofRightMesh.position.set(roofWidth / 4, (roofPeakY + roofBaseY) / 2, roofZ);
+  roofRightMesh.rotation.z = 0.48;
+  roofRightMesh.rotation.x = -0.15;
+  group.add(roofRightMesh);
+
+  // Roof ridge cap
+  const ridgeCap = new THREE.Mesh(new THREE.BoxGeometry(roofWidth, 0.06, 0.12), roofMat);
+  ridgeCap.position.set(0, roofPeakY, roofZ);
+  group.add(ridgeCap);
+
+  // Gable fill (triangular)
+  const gableShape = new THREE.Shape();
+  gableShape.moveTo(-roofWidth / 2 + roofOverhang, 0);
+  gableShape.lineTo(0, roofPeakY - roofBaseY);
+  gableShape.lineTo(roofWidth / 2 - roofOverhang, 0);
+  gableShape.closePath();
+  const gableGeo = new THREE.ShapeGeometry(gableShape);
+  const gable = new THREE.Mesh(gableGeo, sidingMat);
+  gable.position.set(0, roofBaseY, -6.14);
+  group.add(gable);
+
+  // Chimney
+  const chimneyMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.92 });
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.4, 0.4), chimneyMat);
+  chimney.position.set(2.6, roofPeakY + 0.1, -6.3);
+  chimney.castShadow = true;
+  group.add(chimney);
+  // Chimney cap
+  const chimneyCap = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.5), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 }));
+  chimneyCap.position.set(2.6, roofPeakY + 0.83, -6.3);
+  group.add(chimneyCap);
+
+  // Gutters along roofline
+  const gutterMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, roughness: 0.7, metalness: 0.2 });
+  const gutterLeft = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.05, 0.06), gutterMat);
+  gutterLeft.position.set(-1.8, roofBaseY - 0.02, -5.2);
+  group.add(gutterLeft);
+  const gutterRight = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.05, 0.06), gutterMat);
+  gutterRight.position.set(1.8, roofBaseY - 0.02, -5.2);
+  group.add(gutterRight);
+
+  // House side walls (partially visible)
+  const houseSideLeft = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 6.3), sidingMat);
+  houseSideLeft.position.set(-3.9, 3.15, -4.65);
+  houseSideLeft.rotation.y = Math.PI / 2;
+  group.add(houseSideLeft);
+
+  const houseSideRight = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 6.3), sidingMat);
+  houseSideRight.position.set(3.9, 3.15, -4.65);
+  houseSideRight.rotation.y = -Math.PI / 2;
+  group.add(houseSideRight);
+
+  // === LEFT-SIDE FENCE (mirrors right fence, encloses yard) ===
+  for (let i = 0; i < 14; i++) {
+    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
+    const slatHeight = 0.42 + (i % 2) * 0.04;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, slatHeight, 0.03), slatMat);
+    slat.position.set(-4.95, slatHeight / 2, -0.2 + i * 0.36);
+    slat.rotation.y = 0.08;
+    group.add(slat);
+  }
+  // Left fence posts (thicker support posts every 4 slats)
+  for (let i = 0; i < 14; i += 4) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.08), fenceDarkMat);
+    post.position.set(-4.95, 0.29, -0.2 + i * 0.36);
+    group.add(post);
+  }
+  // Left fence horizontal rails
+  for (const ry of [0.1, 0.38]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 14 * 0.36), fenceMat);
+    rail.position.set(-4.95, ry, -0.2 + 6.5 * 0.36);
+    rail.rotation.y = 0.08;
+    group.add(rail);
+  }
+
+  // Right fence — extend and add posts/rails to match
+  for (let i = 10; i < 14; i++) {
+    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
+    const slatHeight = 0.42 + (i % 2) * 0.04;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, slatHeight, 0.03), slatMat);
+    slat.position.set(4.95, slatHeight / 2, -0.2 + i * 0.36);
+    slat.rotation.y = -0.08;
+    group.add(slat);
+  }
+  for (let i = 0; i < 14; i += 4) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.08), fenceDarkMat);
+    post.position.set(4.95, 0.29, -0.2 + i * 0.36);
+    group.add(post);
+  }
+  for (const ry of [0.1, 0.38]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 14 * 0.36), fenceMat);
+    rail.position.set(4.95, ry, -0.2 + 6.5 * 0.36);
+    rail.rotation.y = -0.08;
+    group.add(rail);
+  }
+
+  // Back fence connecting left and right fences
+  const backFenceZ = -0.2;
+  for (let i = 0; i < 20; i++) {
+    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
+    const slatHeight = 0.42 + (i % 2) * 0.04;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, slatHeight, 0.12), slatMat);
+    slat.position.set(-4.5 + i * 0.48, slatHeight / 2, backFenceZ);
+    group.add(slat);
+  }
+
+  // Front fence with gate opening (skip center slats for gate)
+  const frontFenceZ = 4.8;
+  for (let i = 0; i < 20; i++) {
+    // Leave gap for gate (slats 8-11)
+    if (i >= 8 && i <= 11) continue;
+    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
+    const slatHeight = 0.42 + (i % 2) * 0.04;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, slatHeight, 0.12), slatMat);
+    slat.position.set(-4.5 + i * 0.48, slatHeight / 2, frontFenceZ);
+    group.add(slat);
+  }
+  // Gate posts (taller)
+  for (const gx of [-4.5 + 8 * 0.48 - 0.12, -4.5 + 11 * 0.48 + 0.12]) {
+    const gatePost = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.65, 0.1), fenceDarkMat);
+    gatePost.position.set(gx, 0.325, frontFenceZ);
+    group.add(gatePost);
+  }
+  // Gate (slightly ajar)
+  const gateGroup = new THREE.Group();
+  const gateWidth = 4 * 0.48;
+  for (let i = 0; i < 4; i++) {
+    const gSlat = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.4, 0.1),
+      i % 2 === 0 ? fenceMat : fenceDarkMat
+    );
+    gSlat.position.set(i * 0.48 - gateWidth / 2 + 0.24, 0.2, 0);
+    gateGroup.add(gSlat);
+  }
+  // Gate cross brace
+  const gateBrace = new THREE.Mesh(new THREE.BoxGeometry(gateWidth - 0.1, 0.03, 0.03), fenceMat);
+  gateBrace.position.set(0, 0.35, 0);
+  gateGroup.add(gateBrace);
+  gateGroup.position.set(-4.5 + 9.5 * 0.48, 0, frontFenceZ);
+  gateGroup.rotation.y = 0.25; // slightly ajar
+  group.add(gateGroup);
+
+  // === NEIGHBOR HOUSE — LEFT SIDE ===
+  const neighborSidingLeft = new THREE.MeshStandardMaterial({ color: 0xc4a882, roughness: 0.88, side: THREE.DoubleSide });
+  const neighborRoofLeft = new THREE.MeshStandardMaterial({ color: 0x3a3832, roughness: 0.94 });
+
+  const nLeftWall = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), neighborSidingLeft);
+  nLeftWall.position.set(-6.5, 2.25, -4.8);
+  nLeftWall.rotation.y = -Math.PI / 2.7;
+  group.add(nLeftWall);
+
+  // Left neighbor second wall (front-facing)
+  const nLeftWall2 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 4.5), neighborSidingLeft);
+  nLeftWall2.position.set(-7.2, 2.25, -3.4);
+  nLeftWall2.rotation.y = 0.15;
+  group.add(nLeftWall2);
+
+  const nLeftRoof = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 2.0), neighborRoofLeft);
+  nLeftRoof.position.set(-6.8, 4.4, -4.1);
+  nLeftRoof.rotation.y = -Math.PI / 2.7;
+  group.add(nLeftRoof);
+
+  // Left neighbor window
+  const nLeftWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.55), trimMat);
+  nLeftWin.position.set(-6.45, 2.0, -4.75);
+  nLeftWin.rotation.y = -Math.PI / 2.7;
+  group.add(nLeftWin);
+
+  // Left neighbor foundation
+  const nLeftFound = new THREE.Mesh(
+    new THREE.BoxGeometry(3.2, 0.35, 0.18),
+    new THREE.MeshStandardMaterial({ color: FOUNDATION_COLOR, roughness: 0.94 })
+  );
+  nLeftFound.position.set(-6.6, 0.18, -4.4);
+  nLeftFound.rotation.y = -Math.PI / 2.7;
+  group.add(nLeftFound);
+
+  // === NEIGHBOR HOUSE — RIGHT SIDE (enhance existing) ===
+  // Additional right neighbor wall area (front facing portion)
+  const nRightWall2 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.5), sidingMat);
+  nRightWall2.position.set(7.1, 1.75, -3.8);
+  nRightWall2.rotation.y = Math.PI - 0.15;
+  group.add(nRightWall2);
+
+  // Right neighbor second floor extension
+  const nRightUpper = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), sidingMat);
+  nRightUpper.position.set(6.35, 3.08, -5.55);
+  nRightUpper.rotation.y = Math.PI / 2.7;
+  group.add(nRightUpper);
+
+  // Right neighbor enhanced roof
+  const nRightRoof2 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 1.8), roofMat);
+  nRightRoof2.position.set(6.55, 3.9, -5.05);
+  nRightRoof2.rotation.y = Math.PI / 2.7;
+  group.add(nRightRoof2);
+
+  // Right neighbor window
+  const nRightWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.55), trimMat);
+  nRightWin.position.set(6.4, 1.6, -5.5);
+  nRightWin.rotation.y = Math.PI / 2.7;
+  group.add(nRightWin);
+
+  // Right neighbor foundation
+  const nRightFound = new THREE.Mesh(
+    new THREE.BoxGeometry(2.5, 0.35, 0.18),
+    new THREE.MeshStandardMaterial({ color: FOUNDATION_COLOR, roughness: 0.94 })
+  );
+  nRightFound.position.set(6.5, 0.18, -5.2);
+  nRightFound.rotation.y = Math.PI / 2.7;
+  group.add(nRightFound);
+
+  // === ALLEY / BACK FENCE ===
+  // Back alley fence behind house (visible through gaps)
+  const alleyFenceMat = new THREE.MeshStandardMaterial({ color: 0x5a4a38, roughness: 0.92 });
+  for (let i = 0; i < 16; i++) {
+    const afSlat = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.025), alleyFenceMat);
+    afSlat.position.set(-3.5 + i * 0.48, 0.28, -7.5);
+    group.add(afSlat);
+  }
+
+  // Alley ground strip
+  const alleyMat = new THREE.MeshStandardMaterial({ color: 0x5a5850, roughness: 0.96 });
+  const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.5), alleyMat);
+  alleyGround.rotation.x = -Math.PI / 2;
+  alleyGround.position.set(0, 0.002, -7.0);
+  group.add(alleyGround);
+
+  // === ADDITIONAL DISTANT ROOFTOPS (more depth) ===
+  {
+    const distMat = new THREE.MeshStandardMaterial({ color: 0x4a4a58, roughness: 0.95 });
+    const distMat2 = new THREE.MeshStandardMaterial({ color: 0x5a5250, roughness: 0.95 });
+    const moreRooftops = [
+      { w: 2.5, h: 2.0, d: 1.8, x: -8.5, y: 1.0, z: -9.0, mat: distMat },
+      { w: 1.8, h: 2.5, d: 1.5, x: -10.2, y: 1.25, z: -8.5, mat: distMat2 },
+      { w: 3.0, h: 1.5, d: 2.0, x: -6.5, y: 0.75, z: -10.0, mat: distMat },
+      { w: 2.2, h: 1.8, d: 1.6, x: 14.0, y: 0.9, z: -8.8, mat: distMat2 },
+      { w: 1.5, h: 2.2, d: 1.3, x: 9.5, y: 1.1, z: -10.2, mat: distMat },
+    ];
+    moreRooftops.forEach(({ w, h, d, x, y, z, mat }) => {
+      const block = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      block.position.set(x, y, z);
+      group.add(block);
+    });
+  }
+
+  // === SIDEWALK / CONCRETE PATH ===
+  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xb0a898, roughness: 0.94 });
+  // Path from gate to porch steps
+  const walkway = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2), sidewalkMat);
+  walkway.rotation.x = -Math.PI / 2;
+  walkway.position.set(-2.95, 0.004, -2.5);
+  walkway.receiveShadow = true;
+  group.add(walkway);
+
+  // Sidewalk along front of house
+  const frontWalk = new THREE.Mesh(new THREE.PlaneGeometry(8.0, 0.6), sidewalkMat);
+  frontWalk.rotation.x = -Math.PI / 2;
+  frontWalk.position.set(0, 0.004, 5.1);
+  frontWalk.receiveShadow = true;
+  group.add(frontWalk);
+
+  // === MISC YARD DETAILS ===
+
+  // AC unit on right side of house
+  const acMat = new THREE.MeshStandardMaterial({ color: 0x909090, roughness: 0.7, metalness: 0.15 });
+  const acUnit = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.35), acMat);
+  acUnit.position.set(3.6, 0.225, -4.5);
+  group.add(acUnit);
+  // AC fan grille (circle on top)
+  const acFan = new THREE.Mesh(
+    new THREE.CircleGeometry(0.15, 12),
+    new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.6, metalness: 0.3 })
+  );
+  acFan.rotation.x = -Math.PI / 2;
+  acFan.position.set(3.6, 0.451, -4.5);
+  group.add(acFan);
+
+  // Trash cans near alley
+  const trashMat = new THREE.MeshStandardMaterial({ color: 0x2a5a2a, roughness: 0.8 });
+  for (const [tx, tz] of [[3.2, -4.0], [3.5, -3.85]]) {
+    const trashCan = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.5, 10), trashMat);
+    trashCan.position.set(tx, 0.25, tz);
+    trashCan.castShadow = true;
+    group.add(trashCan);
+    const trashLid = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 10), trashMat);
+    trashLid.position.set(tx, 0.52, tz);
+    group.add(trashLid);
+  }
+
+  // Flower box under back window
+  const flowerBoxMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.88 });
+  const flowerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.14), flowerBoxMat);
+  flowerBox.position.set(0.25, 1.3, -6.06);
+  group.add(flowerBox);
+  // Small flowers in window box
+  for (let fb = 0; fb < 5; fb++) {
+    const fbColor = [0xff6688, 0xffaa44, 0xff88bb, 0xffcc55, 0xff7799][fb];
+    const fbFlower = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 5, 4),
+      new THREE.MeshStandardMaterial({ color: fbColor, roughness: 0.55 })
+    );
+    fbFlower.position.set(0.25 - 0.32 + fb * 0.16, 1.42, -6.02);
+    group.add(fbFlower);
+    accentFlowers.push(fbFlower);
+  }
+
+  // House number on wall near door
+  const numberMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5, metalness: 0.4 });
+  const houseNumber = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.02), numberMat);
+  houseNumber.position.set(-2.1, 2.15, -6.12);
+  group.add(houseNumber);
+
+  // Porch awning bracket details
+  for (const bx of [-3.6, -2.3]) {
+    const bracket = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.3, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.8 })
+    );
+    bracket.position.set(bx, 2.55, -5.32);
+    bracket.rotation.z = 0.4;
+    group.add(bracket);
+  }
+
+  // ── END EXPANDED SCENERY ──────────────────────────────────────────────
 
   tracker?.trackObject(group);
 
