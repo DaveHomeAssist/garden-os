@@ -1,3 +1,12 @@
+---
+Status: Active
+Document Version: 1.0
+Compatible With: Garden OS v4.3
+Owner: Dave Robertson
+Last Updated: 2026-03-22
+Artifact Class: Spec
+---
+
 # Audio Design Specification — Garden OS
 
 > Canonical reference for all audio in Garden OS. The AudioManager (Phase 3A) implements this spec.

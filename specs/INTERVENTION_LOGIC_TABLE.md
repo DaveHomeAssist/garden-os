@@ -1,6 +1,14 @@
+---
+Status: Active
+Document Version: 1.1
+Compatible With: Garden OS v4.3, Season Engine v3, Scoring Rules v1.1
+Owner: Dave Robertson
+Last Updated: 2026-03-22
+Artifact Class: Spec
+---
+
 # Garden OS — Intervention Logic Table
 
-Generated: 2026-03-21
 Source: SCORING_RULES.md, SEASON_ENGINE_SPEC.md, EVENT_DECK.json, CROP_SCORING_DATA.json
 
 ---
@@ -107,5 +115,5 @@ Source: SCORING_RULES.md, SEASON_ENGINE_SPEC.md, EVENT_DECK.json, CROP_SCORING_D
 | Mulch intervention | +0.25 to cell eventModifier | 1 season | No — flag not restored, one-time modifier | `grid[idx].eventModifier += 0.25` |
 | Enriched event | +0.30 to affected cells | 1 season | No | `grid[idx].eventModifier += 0.3` |
 | Compacted event | -0.50 to affected cells | 1 season | No | `grid[idx].eventModifier -= 0.5` |
-| Heavy-feeder fatigue | -0.30 per consecutive season | Cumulative (max -1.5) | Yes — resets on rotation/fallow | `grid[idx].soilFatigue = v` |
+| Heavy-feeder fatigue | -0.30 per consecutive season | Cumulative (max -0.9) | Yes — resets on rotation/fallow | `grid[idx].soilFatigue = v` |
 | Frozen pipe carry-forward | -0.50 to row-3 | 1 season | No | Via eventMemory system |

@@ -1,9 +1,9 @@
 ---
 Status: Active
-Document Version: 1.0
-Compatible With: Garden OS v4.3, Schema v1, Season Engine v3
+Document Version: 1.1
+Compatible With: Garden OS v4.3, Schema v1, Season Engine v3, Crop Scoring Data v3
 Owner: Dave Robertson
-Last Updated: 2026-03-16
+Last Updated: 2026-03-22
 Artifact Class: Spec
 ---
 
@@ -492,7 +492,7 @@ CarryForwardState {
 Heavy feeders deplete the soil. Consecutive heavy-feeder placement in the same cell compounds the penalty.
 
 ```
-Heavy feeder crops: cherry_tom, pepper, zucchini, broccoli, kale
+Heavy feeder crops (water >= 3): cherry_tom, compact_tomato, beit_cucumber, slicing_cucumber, zucchini, watercress, wild_rice, marsh_marigold
 
 After each season, for each cell:
   if cell.cropId is a heavy feeder AND
@@ -502,7 +502,7 @@ After each season, for each cell:
   else:
        soilFatigueMap[cellKey] = 0.0   // reset if rotated or left fallow
 
-Fatigue floor: -1.5 (5 consecutive heavy-feeder seasons in same cell)
+Fatigue floor: -0.9 (3 consecutive heavy-feeder seasons in same cell)
 ```
 
 `soilFatigue` is applied as an additive modifier during scoring (see Section 4.4). It is always zero or negative.
@@ -697,7 +697,7 @@ MULCH_BONUS         = 0.5       // per remaining beat in season
 MULCH_CARRYOVER     = 0.25      // next season only
 COMPANION_PATCH_BONUS = 1.0     // current beat only
 SOIL_FATIGUE_RATE   = -0.3      // per consecutive heavy-feeder season
-SOIL_FATIGUE_FLOOR  = -1.5      // minimum fatigue value
+SOIL_FATIGUE_FLOOR  = -0.9      // minimum fatigue value (3 consecutive seasons)
 INFRASTRUCTURE_DURATION = 1     // seasons of persistence
 SCORE_MIN           = 0.0
 SCORE_MAX           = 100.0
@@ -705,7 +705,7 @@ CELL_SCORE_MIN      = 0.0
 CELL_SCORE_MAX      = 10.0
 GOAL_BONUS_MAX      = 5.0
 
-HEAVY_FEEDERS = ["cherry_tom", "pepper", "zucchini", "broccoli", "kale"]
+HEAVY_FEEDERS = ["cherry_tom", "compact_tomato", "beit_cucumber", "slicing_cucumber", "zucchini", "watercress", "wild_rice", "marsh_marigold"]
 
 GRADE_THRESHOLDS = {
   "A+": 90.0,

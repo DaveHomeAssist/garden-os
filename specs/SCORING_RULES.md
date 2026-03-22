@@ -1,9 +1,9 @@
 ---
 Status: Active
-Document Version: 1.0
-Compatible With: Garden OS v4.3, Season Engine v3
+Document Version: 1.1
+Compatible With: Garden OS v4.3, Season Engine v3, Crop Scoring Data v3
 Owner: Dave Robertson
-Last Updated: 2026-03-16
+Last Updated: 2026-03-22
 Artifact Class: Spec
 ---
 
@@ -339,9 +339,9 @@ else:
 fatigueAdjustedScore = clamp(finalCellScore + fatiguePenalty, 0, 10)
 ```
 
-Heavy feeders: cherry_tom (3), lettuce (3), arugula (3), broccoli (3), kale (3), spinach (3), chard (3), basil (3), zucchini (3).
+Heavy feeders (water >= 3): cherry_tom (3), compact_tomato (3), beit_cucumber (3), slicing_cucumber (3), zucchini (3), watercress (3), wild_rice (3), marsh_marigold (3).
 
-Light feeders (water <= 2): pole_beans, peas, radish, carrot, onion, beet, dill, pepper, marigold, nasturtium.
+Light feeders (water <= 2): All other crops including lettuce, arugula, broccoli, kale, spinach, chard, basil, pole_beans, peas, radish, carrot, onion, beet, dill, pepper, marigold, nasturtium.
 
 **Design rationale**: Encourages crop rotation. A bed of all-tomatoes for 3 seasons loses 0.9 points. Rotating in a light feeder resets the counter.
 
@@ -408,6 +408,8 @@ F  : bedScore <  4.0
 ```
 
 Grades are displayed to the player. The grade letter and numeric score are both shown.
+
+**Note:** These thresholds apply to the per-bed score (0-10 scale). The Season Engine (SEASON_ENGINE_SPEC.md §4.4-4.5) scales to a 0-100 season score by multiplying bedAverage × 10, then adds a goal bonus. That spec uses its own grade thresholds on the 100-point scale.
 
 ---
 
