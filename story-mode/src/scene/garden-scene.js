@@ -797,6 +797,29 @@ export function createGardenScene(container) {
     position: new THREE.Vector3(0.15, 0, 0.34),
   };
 
+  // ── Calvin idle loiter system ──────────────────────────────────────────
+  // Calvin randomly appears in the yard, hangs out, then wanders off.
+  // Uses deterministic timing based on elapsed scene time (no Math.random).
+  const calvinIdleState = {
+    active: false,
+    cooldownMs: 12000,       // wait before first appearance
+    hangoutMs: 0,            // how long he stays
+    fadeInMs: 0,
+    fadeOutMs: 0,
+    appearCount: 0,          // cycles through loiter spots deterministically
+  };
+
+  // Spots where Calvin hangs out in the yard
+  const CALVIN_LOITER_SPOTS = [
+    { x: 1.8,  z: 2.5,  rot: -0.4  },   // near front-right of bed
+    { x: -1.5, z: 3.2,  rot: 0.7   },   // left side of yard, facing bed
+    { x: 0.0,  z: 1.2,  rot: 0.0   },   // right in front of bed, facing it
+    { x: -3.8, z: 1.5,  rot: -1.2  },   // near left fence
+    { x: 3.5,  z: 2.8,  rot: 1.8   },   // near right fence
+    { x: -2.0, z: -3.0, rot: 0.3   },   // near porch steps
+    { x: 0.8,  z: 3.8,  rot: -0.2  },   // further front, near gate
+  ];
+
   function resetSheepdogVisuals() {
     dogTongue.visible = false;
     dogThoughtBubble.visible = false;
@@ -2483,7 +2506,7 @@ function getGrowthScale(phase, season) {
       sheepdogRunState.active = false;
       sheepdogRunState.fadeOutMs = 0;
       sheepdogHoldState.active = true;
-      sheepdogHoldState.remainingMs = opts.cueDuration ?? 1600;
+      sheepdogHoldState.remainingMs = opts.cueDuration ?? 8000;
       sheepdogHoldState.position.set(
         opts.cueFromX ?? 0.15,
         0,
@@ -2745,6 +2768,102 @@ function getGrowthScale(phase, season) {
       const breezeStrength = seasonalBreeze * (isWindEvent ? 1.9 : 1);
       updateCropBreeze(atmosphereTime, breezeStrength);
 
+      // ── Calvin idle loiter — randomly appear in yard ──────────────────
+      if (!sheepdogHoldState.active && !sheepdogRunState.active && sheepdogRunState.fadeOutMs <= 0) {
+        if (calvinIdleState.active) {
+          // Currently loitering
+          calvinIdleState.hangoutMs -= dt * 1000;
+
+          // Idle animation — sitting / sniffing / looking around
+          const idleTime = time;
+          sheepdogGroup.visible = true;
+          dogTorso.position.y = 0.34 + Math.sin(idleTime * 2.0) * 0.008;
+          dogHeadPivot.rotation.z = Math.sin(idleTime * 0.9) * 0.06;
+          dogHeadPivot.rotation.x = Math.sin(idleTime * 0.7 + 1.0) * 0.04;
+          dogTailPivot.rotation.y = Math.sin(idleTime * 2.8) * 0.3;
+          dogTailPivot.rotation.z = 0.32 + Math.cos(idleTime * 2.8) * 0.08;
+          // Ears twitch gently
+          dogEars.forEach((earPivot, idx) => {
+            earPivot.rotation.z = (idx === 0 ? 1 : -1) * 0.05 + Math.sin(idleTime * 1.5 + idx * 2) * 0.03;
+          });
+
+          // Fade in
+          if (calvinIdleState.fadeInMs > 0) {
+            calvinIdleState.fadeInMs -= dt * 1000;
+            const fadeT = Math.max(0, calvinIdleState.fadeInMs / 600);
+            sheepdogGroup.traverse(child => {
+              if (child.isMesh && child.material) {
+                child.material.transparent = true;
+                child.material.opacity = 1 - fadeT;
+              }
+            });
+          } else {
+            sheepdogGroup.traverse(child => {
+              if (child.isMesh && child.material) {
+                child.material.transparent = false;
+                child.material.opacity = 1;
+              }
+            });
+          }
+
+          // Time to leave
+          if (calvinIdleState.hangoutMs <= 0) {
+            calvinIdleState.active = false;
+            calvinIdleState.fadeOutMs = 600;
+            // Cooldown before next appearance: 18-35s (deterministic)
+            calvinIdleState.cooldownMs = 18000 + (calvinIdleState.appearCount * 7331 % 17000);
+          }
+        } else if (calvinIdleState.fadeOutMs > 0) {
+          // Fading out after loiter
+          calvinIdleState.fadeOutMs -= dt * 1000;
+          const fadeT = Math.max(0, calvinIdleState.fadeOutMs / 600);
+          sheepdogGroup.visible = true;
+          sheepdogGroup.traverse(child => {
+            if (child.isMesh && child.material) {
+              child.material.transparent = true;
+              child.material.opacity = fadeT;
+            }
+          });
+          if (calvinIdleState.fadeOutMs <= 0) {
+            sheepdogGroup.visible = false;
+            sheepdogGroup.traverse(child => {
+              if (child.isMesh && child.material) {
+                child.material.transparent = false;
+                child.material.opacity = 1;
+              }
+            });
+          }
+        } else {
+          // Cooldown ticking
+          calvinIdleState.cooldownMs -= dt * 1000;
+          if (calvinIdleState.cooldownMs <= 0) {
+            // Pick next loiter spot deterministically
+            const spot = CALVIN_LOITER_SPOTS[calvinIdleState.appearCount % CALVIN_LOITER_SPOTS.length];
+            calvinIdleState.appearCount++;
+            calvinIdleState.active = true;
+            // Hang out 8-20 seconds (deterministic)
+            calvinIdleState.hangoutMs = 8000 + (calvinIdleState.appearCount * 5113 % 12000);
+            calvinIdleState.fadeInMs = 600;
+
+            resetSheepdogVisuals();
+            sheepdogGroup.position.set(spot.x, 0, spot.z);
+            sheepdogGroup.rotation.y = spot.rot;
+            sheepdogGroup.visible = true;
+            // Legs in resting pose
+            dogLegRigs.forEach(({ hipPivot, kneePivot }) => {
+              hipPivot.rotation.z = 0;
+              kneePivot.rotation.z = -0.28;
+            });
+          }
+        }
+      } else if (calvinIdleState.active && (sheepdogHoldState.active || sheepdogRunState.active)) {
+        // Cutscene took over — cancel idle
+        calvinIdleState.active = false;
+        calvinIdleState.fadeOutMs = 0;
+        calvinIdleState.cooldownMs = 5000;
+      }
+      // ── End Calvin idle loiter ──────────────────────────────────────────
+
       if (sheepdogHoldState.active) {
         sheepdogHoldState.remainingMs -= dt * 1000;
         sheepdogGroup.visible = true;
@@ -2842,7 +2961,7 @@ function getGrowthScale(phase, season) {
         // Fade out at end instead of popping invisible
         if (progress >= 1) {
           sheepdogRunState.active = false;
-          sheepdogRunState.fadeOutMs = 400;
+          sheepdogRunState.fadeOutMs = 800;
           dogTongue.visible = false;
           dustPuffs.forEach(p => { p.userData.active = false; p.visible = false; });
         }
@@ -2851,7 +2970,7 @@ function getGrowthScale(phase, season) {
       // Fade-out after run completes
       if (sheepdogRunState.fadeOutMs > 0) {
         sheepdogRunState.fadeOutMs -= dt * 1000;
-        const fadeT = Math.max(0, sheepdogRunState.fadeOutMs / 400);
+        const fadeT = Math.max(0, sheepdogRunState.fadeOutMs / 800);
         sheepdogGroup.visible = true;
         sheepdogGroup.traverse(child => {
           if (child.isMesh && child.material) {
@@ -2886,7 +3005,7 @@ function getGrowthScale(phase, season) {
           });
         }
       } else {
-        if (!sheepdogHoldState.active) sheepdogGroup.visible = false;
+        if (!sheepdogHoldState.active && !calvinIdleState.active && calvinIdleState.fadeOutMs <= 0) sheepdogGroup.visible = false;
       }
       // ── End atmosphere animations ──────────────────────────────────────
 
