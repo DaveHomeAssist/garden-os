@@ -1,7 +1,7 @@
 {
   "$schema": "garden-os-quest-deck-v1",
   "version": 1,
-  "description": "Initial quest deck for Let It Grow. 13 quests across 4 NPCs.",
+  "description": "Quest deck for Let It Grow. 25 quests across 7 NPCs, including zone-specific exploration, biome, advanced, and community quests.",
   "lastUpdated": "2026-03-22",
   "quests": [
     {
@@ -352,6 +352,340 @@
       "prerequisites": {
         "chapter_min": 4,
         "season": "spring",
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "explore_meadow",
+      "npc": "neighbor_robin",
+      "type": "discover",
+      "title": "Map the Meadow",
+      "description": "Explore the meadow zone and discover all three foraging spots. Robin wants a full survey of what grows wild out there.",
+      "acceptDialogue": "The meadow's full of surprises if you know where to look. I need someone to map out the foraging spots — wildflower patches, herb clusters, rock piles. Find all three and report back.",
+      "progressDialogue": "Still mapping? Take your time. The meadow reveals itself slowly. Look near the old fence line and along the creek bank.",
+      "completeDialogue": "All three spots documented! This is exactly what the nature group needed. You've got a real eye for the wild places. Here — some rare seeds I've been saving.",
+      "requirements": [
+        { "type": "zone_visited", "id": "meadow_spot_1", "count": 1 },
+        { "type": "zone_visited", "id": "meadow_spot_2", "count": 1 },
+        { "type": "zone_visited", "id": "meadow_spot_3", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "rare_wildflower_seeds", "amount": 2 },
+        { "type": "xp", "id": "foraging", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 4,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "gus_river_path",
+      "npc": "old_gus",
+      "type": "discover",
+      "title": "River Crossing",
+      "description": "Old Gus mentions a fishing spot he used to visit by the river. Help him remember the path and find the old crossing.",
+      "acceptDialogue": "Used to fish down by the river. Every Sunday. Path's overgrown now. If you can find where it starts — behind the big oak in the neighborhood — I'll tell you the rest.",
+      "progressDialogue": "Still looking? The oak's on the east side. Path used to go through the tall grass. Might need to push through some brambles.",
+      "completeDialogue": "You found it. The old crossing. Haven't seen that in years. River's still running the same way. Here — the path is yours now. Go whenever you want.",
+      "requirements": [
+        { "type": "zone_visited", "id": "neighborhood", "count": 1 },
+        { "type": "item_found", "id": "old_map", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "riverside_access", "amount": 1 },
+        { "type": "reputation", "id": "old_gus", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 5,
+        "season": null,
+        "reputation": { "old_gus": 25 },
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "greenhouse_access",
+      "npc": "maya",
+      "type": "craft",
+      "title": "The Greenhouse Key",
+      "description": "The old greenhouse needs a new panel before it can be used again. Maya thinks you're skilled enough to build one — if you've reached Crafting level 5.",
+      "acceptDialogue": "Okay okay okay — so the greenhouse? Totally fixable. You just need to craft a greenhouse panel. I drew up the plans — well, most of them. The important parts. Probably. You've got the skills for it!",
+      "progressDialogue": "Panel's not done yet? You need crystal shards and scrap metal. Check the forest for shards — oh! And Maya's tip: hit the rocks at an angle. More efficient. Probably.",
+      "completeDialogue": "YOU BUILT IT! Look at that panel! It's beautiful. It's functional. It's — okay it's a little crooked but that adds character. Greenhouse is all yours now!",
+      "requirements": [
+        { "type": "item_crafted", "id": "greenhouse_panel", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "greenhouse_access", "amount": 1 },
+        { "type": "xp", "id": "crafting", "amount": 30 }
+      ],
+      "prerequisites": {
+        "chapter_min": 6,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "lila_watercress",
+      "npc": "lila",
+      "type": "fetch",
+      "title": "Watercress for Lila",
+      "description": "Lila needs fresh watercress from the riverside for a special stew recipe. Only wild-foraged will do — nothing from a garden bed.",
+      "acceptDialogue": "I'm working on a forager's stew. Old family recipe. But it needs real watercress — riverside watercress. The kind that grows where the water runs cold. Bring me three bunches. Fresh. Not wilted. Not 'it was fresh yesterday.' Fresh.",
+      "progressDialogue": "The watercress? Still waiting. Remember — riverside only. I can taste the difference. Don't test me.",
+      "completeDialogue": "Now THAT is watercress. Feel the crunch? See the color? This is going straight into the stew. Here — you've earned the recipe. Make it yourself sometime.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "watercress", "count": 3 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "recipe_card_foragers_stew", "amount": 1 },
+        { "type": "reputation", "id": "lila", "amount": 20 },
+        { "type": "xp", "id": "social", "amount": 15 }
+      ],
+      "prerequisites": {
+        "chapter_min": 5,
+        "season": null,
+        "reputation": {},
+        "quests_completed": ["gus_river_path"]
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "gus_mushroom_logs",
+      "npc": "old_gus",
+      "type": "assist",
+      "title": "Mushroom Log Inoculation",
+      "description": "Gus wants to set up shiitake logs in the forest edge. He needs wood and compost to get started, and a hand with the heavy lifting.",
+      "acceptDialogue": "Forest's got the right shade for mushrooms. Did this with my grandfather. Need four good logs and some compost to pack around the base. You bring the materials, I'll show you how it's done.",
+      "progressDialogue": "Got the wood and compost yet? Oak's best for the logs. And the compost needs to be mature — none of that half-rotted stuff.",
+      "completeDialogue": "That's it. Logs are set. Give it a few weeks and you'll see the first pins coming through. Here — take some spores. Start your own logs if you want. My grandfather would've liked you.",
+      "requirements": [
+        { "type": "item_delivered", "id": "wood", "count": 4 },
+        { "type": "item_delivered", "id": "compost", "count": 2 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "shiitake_spores", "amount": 3 },
+        { "type": "reputation", "id": "old_gus", "amount": 25 },
+        { "type": "xp", "id": "soil_science", "amount": 20 }
+      ],
+      "prerequisites": {
+        "chapter_min": 7,
+        "season": null,
+        "reputation": { "old_gus": 50 },
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "vanilla_challenge",
+      "npc": "maya",
+      "type": "discover",
+      "title": "The Vanilla Challenge",
+      "description": "Maya dares you to grow a vanilla orchid to full maturity in the greenhouse. It's a long game — multiple seasons — but the reward is legendary.",
+      "acceptDialogue": "So I've been reading about vanilla orchids and — okay don't laugh — but they take FOREVER to grow. Like, multiple seasons. But imagine! Fresh vanilla! In our greenhouse! I dare you. No — I DOUBLE dare you.",
+      "progressDialogue": "How's the vanilla? Still growing? It's so slow! I keep checking mine and — wait, I shouldn't tell you about mine. This is YOUR challenge. Keep going!",
+      "completeDialogue": "YOU DID IT! A full vanilla orchid! Do you know how rare that is?! The smell alone — okay I'm crying a little. This is the best day. Here, take this. You've earned something legendary.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "vanilla_orchid", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "seed", "id": "legendary_seed", "amount": 1 },
+        { "type": "xp", "id": "gardening", "amount": 30 }
+      ],
+      "prerequisites": {
+        "chapter_min": 8,
+        "season": null,
+        "reputation": {},
+        "quests_completed": ["greenhouse_access"]
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "prairie_restore",
+      "npc": "neighbor_sam",
+      "type": "assist",
+      "title": "Prairie Restoration",
+      "description": "Sam wants to restore soil health in the meadow by planting nitrogen-fixing wild clover. Five plants should make a real difference.",
+      "acceptDialogue": "The meadow soil's been depleted for years. Wild clover fixes nitrogen naturally — it's like free fertilizer from nature. Could you plant five clover patches out there? The whole ecosystem will thank you.",
+      "progressDialogue": "How many clover plants are in? Each one is helping the soil recover. The bees love them too — win-win.",
+      "completeDialogue": "Five clover patches! The meadow's already looking healthier. You can actually see the difference in the soil color. Here — I found this rare earth mineral while digging. You should have it.",
+      "requirements": [
+        { "type": "crop_planted", "id": "wild_clover", "count": 5 }
+      ],
+      "rewards": [
+        { "type": "xp", "id": "composting", "amount": 40 },
+        { "type": "item", "id": "rare_earth", "amount": 1 }
+      ],
+      "prerequisites": {
+        "chapter_min": 5,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "maya_masterpiece",
+      "npc": "maya",
+      "type": "craft",
+      "title": "Maya's Masterpiece",
+      "description": "Maya's ultimate invention: a seed hybridizer that can crossbreed crops. She needs a master crafter she trusts to build it.",
+      "acceptDialogue": "Okay. This is the big one. I've been designing this for — honestly? Years. A seed hybridizer. It can CROSSBREED crops. But the build is incredibly precise. I need someone at Crafting level 7 who I trust completely. That's you. No pressure. Okay, some pressure.",
+      "progressDialogue": "The hybridizer needs crystal shards, mechanisms, AND rare earth. I know that's a lot. But think about what we're building! NEW CROPS. From EXISTING CROPS. Science!",
+      "completeDialogue": "It's... it's perfect. Better than my blueprints. You actually improved the calibration mechanism — I see what you did there. This changes everything. You can crossbreed crops now. Go make something the world's never seen.",
+      "requirements": [
+        { "type": "item_crafted", "id": "seed_hybridizer", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "ability_crop_crossbreeding", "amount": 1 },
+        { "type": "reputation", "id": "maya", "amount": 30 }
+      ],
+      "prerequisites": {
+        "chapter_min": 9,
+        "season": null,
+        "reputation": { "maya": 75 },
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "gus_legacy",
+      "npc": "old_gus",
+      "type": "assist",
+      "title": "Gus's Legacy Garden",
+      "description": "Gus wants to recreate his grandfather's exact garden layout. He remembers every plant, every position. This is deeply personal to him.",
+      "acceptDialogue": "My grandfather had a garden. Perfect garden. Tomatoes here. Basil there. Marigolds along the edge. I remember it like it was yesterday. I want to see it again. One more time. Can you build it?",
+      "progressDialogue": "The tomatoes go in the center. Basil right next to them. Marigolds on the border — he always said they kept the bad bugs out. Peppers on the sunny side. Carrots in the shade of the tomatoes.",
+      "completeDialogue": "... That's it. That's his garden. Looks just like I remember. Thank you. I don't say that often. Here — his trowel recipe. And some seeds he saved. They've been in my family for generations. Take care of them.",
+      "requirements": [
+        { "type": "crop_planted", "id": "cherry_tom", "count": 2 },
+        { "type": "crop_planted", "id": "basil", "count": 2 },
+        { "type": "crop_planted", "id": "pepper", "count": 1 },
+        { "type": "crop_planted", "id": "marigold", "count": 2 },
+        { "type": "crop_planted", "id": "carrot", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "legendary_trowel_recipe", "amount": 1 },
+        { "type": "seed", "id": "heirloom_seeds", "amount": 3 },
+        { "type": "reputation", "id": "old_gus", "amount": 30 }
+      ],
+      "prerequisites": {
+        "chapter_min": 10,
+        "season": null,
+        "reputation": { "old_gus": 90 },
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "lila_cookbook",
+      "npc": "lila",
+      "type": "fetch",
+      "title": "Lila's Cookbook",
+      "description": "Lila wants to complete a full cookbook with ingredients from every recipe. This is her life's work — and she needs your help to finish it.",
+      "acceptDialogue": "I've been writing this cookbook for ten years. Ten years of recipes, techniques, stories. But I need every recipe completed with fresh ingredients. Every single one. You've helped me before. Will you help me finish this?",
+      "progressDialogue": "How many recipes have you sourced? I need ingredients for all eight. Fresh. Seasonal. Perfect. This cookbook doesn't accept 'good enough.'",
+      "completeDialogue": "Every recipe. Every ingredient. This cookbook is complete. I'm putting your name in the acknowledgments. Right after my grandmother's. That's the highest honor I give. Thank you.",
+      "requirements": [
+        { "type": "crop_harvested", "id": "basil", "count": 2 },
+        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
+        { "type": "crop_harvested", "id": "lettuce", "count": 1 },
+        { "type": "crop_harvested", "id": "pepper", "count": 1 },
+        { "type": "crop_harvested", "id": "onion", "count": 1 },
+        { "type": "crop_harvested", "id": "carrot", "count": 1 },
+        { "type": "crop_harvested", "id": "wild_garlic", "count": 1 },
+        { "type": "crop_harvested", "id": "ghost_pepper", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "exclusive_cosmetics", "amount": 1 },
+        { "type": "xp", "id": "social", "amount": 40 },
+        { "type": "reputation", "id": "lila", "amount": 30 }
+      ],
+      "prerequisites": {
+        "chapter_min": 10,
+        "season": null,
+        "reputation": { "lila": 75 },
+        "quests_completed": ["lila_basil", "lila_salsa", "lila_recipe", "lila_watercress"]
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "market_day",
+      "npc": "neighbor_pat",
+      "type": "fetch",
+      "title": "Market Day",
+      "description": "Pat's organizing a big market day and needs someone to help fill the stalls. Trade 10 items at the market square to make it a success.",
+      "acceptDialogue": "Market day's coming up and we're short on traders! If you could bring 10 items to trade — seeds, tools, produce, anything — we'll have the best market the neighborhood's ever seen.",
+      "progressDialogue": "How many trades so far? We need the stalls full. The more variety, the better the market. People come from all over for a good market day.",
+      "completeDialogue": "Ten trades! The market was a huge success. People are already asking when the next one is. You made this happen. Here — the other traders pooled some rare materials as a thank-you.",
+      "requirements": [
+        { "type": "item_traded", "id": "any", "count": 10 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "rare_materials_bundle", "amount": 1 },
+        { "type": "xp", "id": "social", "amount": 25 }
+      ],
+      "prerequisites": {
+        "chapter_min": 6,
+        "season": null,
+        "reputation": {},
+        "quests_completed": []
+      },
+      "timed": false,
+      "deadline": null
+    },
+
+    {
+      "id": "festival_champion",
+      "npc": "neighbor_jo",
+      "type": "discover",
+      "title": "Festival Champion",
+      "description": "Complete all four seasonal festival activities in a single year to earn the Festival Champion trophy. Jo's been trying for years — can you do it?",
+      "acceptDialogue": "Every year I try to hit all four festivals and every year something comes up. Spring Bloom, Summer Surge, Harvest Week, Winter Dormancy — all four in one year. Think you can do it? I'll be cheering you on!",
+      "progressDialogue": "How many festivals have you completed this year? Remember — all four, same year. Spring, Summer, Fall, Winter. No skipping!",
+      "completeDialogue": "ALL FOUR! You did it! Festival Champion! I've never even gotten past three! This trophy is yours — and honestly? The whole neighborhood's going to score a little better with you inspiring everyone. Five percent better, I'd say.",
+      "requirements": [
+        { "type": "festival_completed", "id": "spring", "count": 1 },
+        { "type": "festival_completed", "id": "summer", "count": 1 },
+        { "type": "festival_completed", "id": "fall", "count": 1 },
+        { "type": "festival_completed", "id": "winter", "count": 1 }
+      ],
+      "rewards": [
+        { "type": "item", "id": "trophy_festival_champion", "amount": 1 },
+        { "type": "item", "id": "scoring_buff_global_5pct", "amount": 1 }
+      ],
+      "prerequisites": {
+        "chapter_min": 8,
+        "season": null,
         "reputation": {},
         "quests_completed": []
       },
