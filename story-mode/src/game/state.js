@@ -69,7 +69,7 @@ function createSeasonState(chapter, season, campaign = null) {
 
 function createCampaignState() {
   return {
-    version: 1,
+    version: 3,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     currentChapter: 1,
@@ -87,6 +87,16 @@ function createCampaignState() {
     masteryRank: 0,
     soilHealth: Array(CELL_COUNT).fill(1.0),
     previousGrid: null,
+    questLog: {},
+    reputation: { ...DEFAULT_REPUTATION },
+    worldState: { ...DEFAULT_WORLD_STATE, visitedZones: [...DEFAULT_WORLD_STATE.visitedZones] },
+    activeNeighbors: [],
+    inventory: {},
+    craftedItems: {},
+    skills: {},
+    skillXp: {},
+    activeFestival: null,
+    lastLevelUp: null,
   };
 }
 
@@ -102,7 +112,41 @@ function createGameState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: true,
+    settings: {
+      audio: { musicVolume: 0.5, sfxVolume: 0.7, muted: false },
+    },
   };
+}
+
+const DEFAULT_REPUTATION = {
+  old_gus: 0,
+  maya: 0,
+  lila: 0,
+};
+
+const DEFAULT_WORLD_STATE = {
+  currentZone: 'player_plot',
+  visitedZones: ['player_plot'],
+};
+
+/**
+ * Attach grid dimension metadata to a cell array.
+ * Runtime grid is always an array with .cols/.rows properties.
+ * For serialization, use saveSeasonState which converts to { cells, cols, rows }.
+ */
+function attachGridMeta(cells, cols = COLS, rows = ROWS) {
+  const arr = Array.isArray(cells) ? cells : [];
+  arr.cols = cols;
+  arr.rows = rows;
+  return arr;
+}
+
+function getGridCols(grid) {
+  return grid?.cols ?? COLS;
+}
+
+function getGridRows(grid) {
+  return grid?.rows ?? ROWS;
 }
 
 export {
@@ -114,8 +158,13 @@ export {
   CELL_COUNT,
   PHASE_ORDER,
   DEFAULT_SITE_CONFIG,
+  DEFAULT_REPUTATION,
+  DEFAULT_WORLD_STATE,
   createEmptyGrid,
   createSeasonState,
   createCampaignState,
   createGameState,
+  attachGridMeta,
+  getGridCols,
+  getGridRows,
 };

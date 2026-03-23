@@ -2,6 +2,8 @@
  * Save System — Multi-slot localStorage persistence.
  * 3 independent save slots, each storing campaign + season state.
  */
+import { createCampaignState } from './state.js';
+
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
 
@@ -36,7 +38,22 @@ export function loadCampaign(slot) {
   try {
     const raw = localStorage.getItem(campaignKey(slot));
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Merge defaults for old-format saves missing newer fields
+    const defaults = createCampaignState();
+    return {
+      ...defaults,
+      ...parsed,
+      questLog: parsed.questLog ?? defaults.questLog,
+      reputation: { ...defaults.reputation, ...(parsed.reputation ?? {}) },
+      worldState: {
+        ...defaults.worldState,
+        ...(parsed.worldState ?? {}),
+        visitedZones: parsed.worldState?.visitedZones ?? defaults.worldState.visitedZones,
+      },
+      inventory: parsed.inventory ?? defaults.inventory,
+      skills: parsed.skills ?? defaults.skills,
+    };
   } catch {
     return null;
   }
@@ -49,8 +66,10 @@ export function deleteCampaign(slot) {
 
 export function saveSeasonState(season, slot) {
   try {
-    // Save a copy without the circular campaign reference
-    const toSave = { ...season, campaign: undefined };
+    const grid = Array.isArray(season.grid)
+      ? { cells: [...season.grid], cols: season.gridCols ?? season.grid.cols ?? 8, rows: season.gridRows ?? season.grid.rows ?? 4 }
+      : season.grid;
+    const toSave = { ...season, campaign: undefined, grid };
     localStorage.setItem(seasonKey(slot), JSON.stringify(toSave));
   } catch (e) {
     console.warn('[GOS] Season save failed:', e.message);
@@ -61,7 +80,16 @@ export function loadSeasonState(slot) {
   try {
     const raw = localStorage.getItem(seasonKey(slot));
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Migrate old array grids to { cells, cols, rows }
+    if (parsed.grid && Array.isArray(parsed.grid)) {
+      parsed.grid = {
+        cells: parsed.grid,
+        cols: parsed.gridCols ?? 8,
+        rows: parsed.gridRows ?? 4,
+      };
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -80,6 +108,11 @@ export function listSaves() {
       const seasonIdx = ((campaign.currentChapter - 1) % 4);
       const season = campaign.currentSeason ?? seasonOrder[seasonIdx] ?? 'spring';
       const lastEntry = (campaign.journalEntries ?? []).slice(-1)[0] ?? null;
+      const questLog = campaign.questLog ?? {};
+      const activeQuests = Object.values(questLog).filter(
+        (q) => q.state === 'ACCEPTED' || q.state === 'IN_PROGRESS',
+      ).length;
+      const zonesVisited = (campaign.worldState?.visitedZones ?? ['player_plot']).length;
       saves.push({
         slot,
         campaign,
@@ -90,6 +123,8 @@ export function listSaves() {
         score: lastEntry?.score ?? 0,
         grade: lastEntry?.grade ?? null,
         updatedAt: campaign.updatedAt ?? campaign.createdAt,
+        activeQuests,
+        zonesVisited,
         gradeHistory: (campaign.journalEntries ?? []).map((e) => ({
           chapter: e.chapter,
           grade: e.grade,
@@ -129,6 +164,24 @@ export function pushJournalEntry(campaign, entry) {
     eventsEncountered: [...(entry.eventsEncountered ?? [])],
     cropsPlanted: [...(entry.cropsPlanted ?? [])],
     timestamp: entry.timestamp ?? new Date().toISOString(),
+  });
+}
+
+/**
+ * Subscribe to store changes and auto-persist campaign + season state.
+ * Returns an unsubscribe function.
+ *
+ * @param {object} store — Store instance with subscribe/getState
+ * @param {() => number} getSlot — returns the active save slot
+ * @param {{ shouldPersist?: (state, action) => boolean }} options
+ */
+export function subscribeToStoreSaves(store, getSlot, options = {}) {
+  const { shouldPersist } = options;
+  return store.subscribe((nextState, action) => {
+    if (typeof shouldPersist === 'function' && !shouldPersist(nextState, action)) return;
+    const slot = typeof getSlot === 'function' ? getSlot() : 0;
+    if (nextState.campaign) saveCampaign(nextState.campaign, slot);
+    if (nextState.season) saveSeasonState(nextState.season, slot);
   });
 }
 

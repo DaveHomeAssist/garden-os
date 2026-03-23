@@ -107,16 +107,16 @@ export class SkillSystem {
   handleAction(action = {}) {
     if (!action?.type || action.type === 'AWARD_XP' || action.type === 'LEVEL_UP') return;
     const mapped = ACTION_XP_MAP[action.type] ?? [];
-    if (action.type === Actions.FESTIVAL_ACTIVITY) {
+    if (action.type === 'FESTIVAL_ACTIVITY') {
       mapped.push({ skillId: Skills.SOCIAL, amount: 20 });
     }
-    if (action.type === Actions.CRAFT_ITEM) {
+    if (action.type === 'CRAFT_ITEM') {
       mapped.push({ skillId: Skills.CRAFTING, amount: action.payload?.xpGained ?? 20 });
     }
-    if (action.type === Actions.FORAGE) {
+    if (action.type === 'FORAGE') {
       mapped.push({ skillId: Skills.FORAGING, amount: action.payload?.xpGained ?? 20 });
     }
-    if (action.type === Actions.USE_INTERVENTION && action.payload?.interventionId === 'mulch') {
+    if (action.type === 'USE_INTERVENTION' && action.payload?.interventionId === 'mulch') {
       mapped.push({ skillId: Skills.SOIL_SCIENCE, amount: 15 });
     }
     mapped.forEach(({ skillId, amount }) => this.awardXP(skillId, amount));
