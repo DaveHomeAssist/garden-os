@@ -12,8 +12,8 @@ const SOIL_Y = FRAME_HEIGHT * 0.6;
 
 const CEDAR_MATERIAL = { color: 0x8B5A2B, roughness: 0.85, metalness: 0.05 };
 const CEDAR_BEVEL_MATERIAL = { color: 0x7A4E24, roughness: 0.8, metalness: 0.08 };
-const SOIL_MATERIAL = { color: 0x3a2a1a, roughness: 0.95 };
-const GRID_LINE_MATERIAL = { color: 0x1a1208, transparent: true, opacity: 0.35 };
+const SOIL_MATERIAL = { color: 0x473323, roughness: 0.95 };
+const GRID_LINE_MATERIAL = { color: 0xc7b28a, transparent: true, opacity: 0.58 };
 
 // Seeded random for consistent soil terrain per cell
 function seededRandom(seed) {
@@ -158,7 +158,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   group.add(guardRailTop);
 
   // Grid lines between cells (thin dark strips)
-  const gridLineThickness = 0.012;
+  const gridLineThickness = 0.016;
 
   // Vertical grid lines (between columns)
   for (let col = 1; col < cols; col++) {

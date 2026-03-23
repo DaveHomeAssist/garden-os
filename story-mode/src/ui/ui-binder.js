@@ -1408,7 +1408,7 @@ function bindUI({
             ? 'Winter review complete. Continue to roll into the next chapter.'
             : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
         } else if (planted < 8) {
-          helperText = `Plant 8 crops to start ${seasonLabel}. ${planted}/8 planted.${state.selectedCropId ? '' : ' Tap Plant to choose a crop.'}`;
+          helperText = `Plant 8 crops to start ${seasonLabel}. ${planted}/8 planted.${state.selectedCropId ? ' Tap a glowing bed cell to plant.' : ' Tap Plant to choose a crop.'}`;
         } else {
           helperText = 'Bed ready. Commit Plan to begin Early Season.';
         }

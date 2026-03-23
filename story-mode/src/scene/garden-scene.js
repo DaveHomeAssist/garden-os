@@ -760,11 +760,15 @@ export function createGardenScene(container) {
 
   // Hover state
   let hoveredCellIndex = -1;
-  const HOVER_COLOR = new THREE.Color(0x6a5a30);
-  const TARGET_COLOR = new THREE.Color(0x3d6e8f);
+  const HOVER_COLOR = new THREE.Color(0x8f6d36);
+  const HOVER_EMISSIVE = new THREE.Color(0xf0ca71);
+  const TARGET_COLOR = new THREE.Color(0x5e87a4);
+  const PLANT_PREVIEW_COLOR = new THREE.Color(0x6f5834);
+  const PLANT_PREVIEW_EMISSIVE = new THREE.Color(0xa6c86b);
   let targetableCellIndices = new Set();
   let currentGridState = [];
   let currentSeasonId = 'spring';
+  let plantPreviewEnabled = false;
   let lastSyncedState = null; // used by render() for event-reactive effects
 
   let interactionHighlightedCellIndex = -1;
@@ -790,15 +794,17 @@ export function createGardenScene(container) {
   function applyCellVisualState(index) {
     const mesh = bed.cellMeshes[index];
     if (!mesh) return;
+    const cellState = currentGridState[index];
+    const canPreviewPlant = plantPreviewEnabled && !cellState?.cropId;
 
     if (hoveredCellIndex === index) {
-      mesh.material.color.copy(HOVER_COLOR);
-      mesh.material.emissive?.setHex(0x000000);
-      mesh.material.emissiveIntensity = 0;
+      const hoverColor = getCellDisplayColor(index).lerp(HOVER_COLOR, canPreviewPlant ? 0.58 : 0.34);
+      mesh.material.color.copy(hoverColor);
+      mesh.material.emissive?.copy(canPreviewPlant ? PLANT_PREVIEW_EMISSIVE : HOVER_EMISSIVE);
+      mesh.material.emissiveIntensity = canPreviewPlant ? 0.46 : 0.2;
       return;
     }
 
-    const cellState = currentGridState[index];
     const damageState = cellState?.damageState;
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
 
@@ -808,7 +814,11 @@ export function createGardenScene(container) {
       mesh.material.emissiveIntensity = interactionHighlightIntensity;
     } else if (targetableCellIndices.has(index)) {
       mesh.material.emissive?.copy(TARGET_COLOR);
-      mesh.material.emissiveIntensity = 0.35;
+      mesh.material.emissiveIntensity = 0.4;
+    } else if (canPreviewPlant) {
+      mesh.material.color.lerp(PLANT_PREVIEW_COLOR, 0.18);
+      mesh.material.emissive?.copy(PLANT_PREVIEW_EMISSIVE);
+      mesh.material.emissiveIntensity = 0.12;
     } else if (damageVisual) {
       mesh.material.emissive?.setHex(damageVisual.emissive);
       mesh.material.emissiveIntensity = damageVisual.emissiveIntensity;
@@ -2008,6 +2018,7 @@ function getGrowthScale(phase, season) {
       currentGridState = state.season.grid;
       const seasonChanged = state.season.season !== currentSeasonId || !lightingState;
       currentSeasonId = state.season.season;
+      plantPreviewEnabled = state.season.phase === 'PLANNING' && Boolean(state.selectedCropId);
       for (let i = 0; i < bed.cellMeshes.length; i++) {
         applyCellVisualState(i);
       }
