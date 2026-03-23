@@ -171,6 +171,9 @@ function createGameState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: true,
+    settings: {
+      audio: { musicVolume: 0.5, sfxVolume: 0.7, muted: false },
+    },
   };
 }
 

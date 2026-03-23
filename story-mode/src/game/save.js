@@ -135,6 +135,11 @@ export function listSaves() {
       const seasonIdx = ((campaign.currentChapter - 1) % 4);
       const season = campaign.currentSeason ?? seasonOrder[seasonIdx] ?? 'spring';
       const lastEntry = (campaign.journalEntries ?? []).slice(-1)[0] ?? null;
+      const questLog = campaign.questLog ?? {};
+      const activeQuests = Object.values(questLog).filter(
+        (q) => q.state === 'ACCEPTED' || q.state === 'IN_PROGRESS',
+      ).length;
+      const zonesVisited = (campaign.worldState?.visitedZones ?? ['player_plot']).length;
       saves.push({
         slot,
         campaign,
@@ -145,6 +150,8 @@ export function listSaves() {
         score: lastEntry?.score ?? 0,
         grade: lastEntry?.grade ?? null,
         updatedAt: campaign.updatedAt ?? campaign.createdAt,
+        activeQuests,
+        zonesVisited,
         gradeHistory: (campaign.journalEntries ?? []).map((e) => ({
           chapter: e.chapter,
           grade: e.grade,
