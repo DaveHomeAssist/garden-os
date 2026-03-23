@@ -12,9 +12,9 @@
  *
  * Usage:
  *   import { loadSprites, getTexture, getFrame, getSpriteMap } from './sprite-loader.js';
- *   await loadSprites();                        // call once at init
- *   const tex = getTexture('crop-lettuce');      // single PNG
- *   const frame = getFrame('grow-lettuce', 2);   // frame 2 of sprite sheet
+ *   await loadSprites(['crop-lettuce', 'grow-lettuce']); // optional warm preload
+ *   const tex = getTexture('crop-lettuce');              // single PNG
+ *   const frame = getFrame('grow-lettuce', 2);           // frame 2 of sprite sheet
  */
 import * as THREE from 'three';
 import cropArugulaUrl from '../../assets/textures/crop-arugula.png';
@@ -74,8 +74,8 @@ export const SEASON_INDEX = { SPRING: 0, SUMMER: 1, AUTUMN: 2, WINTER: 3 };
 /* ── Internal State ─────────────────────────────────────────────────── */
 
 const texLoader = new THREE.TextureLoader();
-const textureCache = new Map();   // key → THREE.Texture
-const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
+const textureCache = new Map();    // key → THREE.Texture|null
+const frameCache = new Map();      // 'sheetKey:frameIndex' → THREE.Texture
 const loadingPromises = new Map(); // key → Promise<THREE.Texture|null>
 
 /* ── Loading ────────────────────────────────────────────────────────── */
@@ -95,7 +95,6 @@ function loadOne(key, url) {
       },
       undefined,
       () => {
-        // Asset not yet generated — skip silently, return null placeholder
         console.warn(`[sprite-loader] missing texture for key: ${key}`);
         textureCache.set(key, null);
         resolve(null);
@@ -106,6 +105,16 @@ function loadOne(key, url) {
 
 function getAssetDef(key) {
   return SINGLE_ASSETS[key] ?? SHEET_ASSETS[key] ?? null;
+}
+
+function getPreloadKeys(keys) {
+  if (Array.isArray(keys) && keys.length > 0) {
+    return [...new Set(keys)].filter(Boolean);
+  }
+  return [
+    ...Object.keys(SINGLE_ASSETS),
+    ...Object.keys(SHEET_ASSETS),
+  ];
 }
 
 function ensureLoaded(key) {
@@ -128,20 +137,17 @@ function ensureLoaded(key) {
 
 /**
  * Optionally preload a subset of sprite assets.
- * Missing PNGs are silently skipped and cached as null.
+ * When called without keys, it preloads the active runtime manifest.
  */
 export function loadSprites(keys = []) {
-  const uniqueKeys = [...new Set(keys)].filter(Boolean);
-  if (uniqueKeys.length === 0) {
-    return Promise.resolve([]);
-  }
-  return Promise.all(uniqueKeys.map((key) => ensureLoaded(key)));
+  const preloadKeys = getPreloadKeys(keys);
+  return Promise.all(preloadKeys.map((key) => ensureLoaded(key)));
 }
 
 /* ── Accessors ──────────────────────────────────────────────────────── */
 
 /**
- * Get a loaded single texture by key (e.g. 'crop-lettuce', 'bed-empty').
+ * Get a loaded single texture by key (e.g. 'crop-lettuce').
  * Returns null if the asset was missing or not yet loaded.
  */
 export function getTexture(key) {
@@ -155,7 +161,7 @@ export function getTexture(key) {
  * Slice a single frame from a sprite sheet.
  * Uses UV offset/repeat on a cloned texture — no canvas copy needed.
  *
- * @param {string} sheetKey  e.g. 'grow-lettuce', 'bed-seasons', 'crop-sheet'
+ * @param {string} sheetKey  e.g. 'grow-lettuce'
  * @param {number} index     0-based frame index (left to right, top to bottom)
  * @returns {THREE.Texture|null}
  */
@@ -190,7 +196,6 @@ export function getFrame(sheetKey, index) {
 
 /**
  * Convenience: get the crop icon texture for a crop ID.
- * Tries the individual PNG first, falls back to the sprite sheet.
  *
  * @param {string} cropId  e.g. 'lettuce', 'basil'
  * @returns {THREE.Texture|null}
@@ -215,6 +220,7 @@ export function getGrowthTexture(cropId, stage) {
   if (sheet?.hasAlpha === false) {
     return getCropIcon(cropId);
   }
+
   const frame = getFrame(sheetKey, stage);
   if (frame) return frame;
 
@@ -223,33 +229,6 @@ export function getGrowthTexture(cropId, stage) {
   }
 
   return null;
-}
-
-/**
- * Get the bed texture for a given season.
- *
- * @param {number} seasonIndex  SEASON_INDEX.SPRING through SEASON_INDEX.WINTER
- * @returns {THREE.Texture|null}
- */
-export function getSeasonBed(seasonIndex) {
-  return getFrame('bed-seasons', seasonIndex);
-}
-
-/**
- * Get the tileable texture for ground/path surfaces.
- * Sets wrap mode to RepeatWrapping for seamless tiling.
- *
- * @param {'path'|'grass'} surface
- * @returns {THREE.Texture|null}
- */
-export function getTileable(surface) {
-  const key = `env-${surface}`;
-  const tex = getTexture(key);
-  if (tex) {
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-  }
-  return tex;
 }
 
 /**

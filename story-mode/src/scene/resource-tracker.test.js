@@ -60,7 +60,6 @@ describe('ResourceTracker', () => {
     expect(targetDispose).toHaveBeenCalledTimes(1);
     expect(tracker.count).toBe(0);
   });
-
   it('does not dispose textures marked as externally managed', () => {
     const tracker = new ResourceTracker();
     const sharedMap = new THREE.Texture();

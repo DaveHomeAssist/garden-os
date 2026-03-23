@@ -2,7 +2,7 @@
  * Save System — Multi-slot localStorage persistence.
  * 3 independent save slots, each storing campaign + season state.
  */
-import { DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from './state.js';
+import { createCampaignState, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from './state.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -31,6 +31,7 @@ export function setActiveSaveSlot(slot) {
 
 export function saveCampaign(campaign, slot) {
   if (!campaign || !isValidSlot(slot)) return null;
+
   const worldState = {
     ...DEFAULT_WORLD_STATE,
     ...(campaign.worldState ?? {}),
@@ -38,12 +39,13 @@ export function saveCampaign(campaign, slot) {
   };
   const toSave = {
     ...campaign,
-    version: 3,
+    version: Math.max(3, Number(campaign.version ?? 0)),
     questLog: { ...(campaign.questLog ?? {}) },
     reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },
     worldState,
     updatedAt: new Date().toISOString(),
   };
+
   try {
     localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
     return toSave;
@@ -57,18 +59,27 @@ export function loadCampaign(slot) {
   try {
     const raw = localStorage.getItem(campaignKey(slot));
     if (!raw) return null;
+
     const parsed = JSON.parse(raw);
-    const version = parsed.version ?? 1;
+    const defaults = createCampaignState();
+    const version = parsed.version ?? defaults.version ?? 1;
     return {
+      ...defaults,
       ...parsed,
-      version: Math.max(3, version),
-      questLog: parsed.questLog ?? {},
-      reputation: { ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
+      version: Math.max(defaults.version ?? 3, version),
+      questLog: parsed.questLog ?? defaults.questLog,
+      reputation: { ...defaults.reputation, ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
       worldState: {
+        ...defaults.worldState,
         ...DEFAULT_WORLD_STATE,
         ...(parsed.worldState ?? {}),
-        visitedZones: [...new Set(parsed.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
+        visitedZones: [...new Set(parsed.worldState?.visitedZones ?? defaults.worldState.visitedZones)],
       },
+      activeNeighbors: parsed.activeNeighbors ?? defaults.activeNeighbors,
+      inventory: parsed.inventory ?? defaults.inventory,
+      craftedItems: parsed.craftedItems ?? defaults.craftedItems,
+      skills: parsed.skills ?? defaults.skills,
+      skillXp: parsed.skillXp ?? defaults.skillXp,
     };
   } catch {
     return null;
@@ -82,13 +93,16 @@ export function deleteCampaign(slot) {
 
 export function saveSeasonState(season, slot) {
   if (!season || !isValidSlot(slot)) return null;
+
   try {
-    // Save a copy without the circular campaign reference
+    const cells = Array.isArray(season.grid)
+      ? [...season.grid]
+      : [...(season.grid?.cells ?? [])];
     const toSave = {
       ...season,
       campaign: undefined,
       grid: {
-        cells: Array.isArray(season.grid) ? season.grid : (season.grid?.cells ?? []),
+        cells,
         cols: season.gridCols ?? season.grid?.cols ?? 8,
         rows: season.gridRows ?? season.grid?.rows ?? 4,
       },
@@ -105,15 +119,20 @@ export function loadSeasonState(slot) {
   try {
     const raw = localStorage.getItem(seasonKey(slot));
     if (!raw) return null;
+
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed?.grid)) {
-      return {
-        ...parsed,
-        grid: {
-          cells: parsed.grid,
-          cols: parsed.gridCols ?? 8,
-          rows: parsed.gridRows ?? 4,
-        },
+      parsed.grid = {
+        cells: parsed.grid,
+        cols: parsed.gridCols ?? 8,
+        rows: parsed.gridRows ?? 4,
+      };
+    } else if (parsed?.grid) {
+      parsed.grid = {
+        ...parsed.grid,
+        cells: Array.isArray(parsed.grid.cells) ? parsed.grid.cells : [],
+        cols: parsed.grid.cols ?? parsed.gridCols ?? 8,
+        rows: parsed.grid.rows ?? parsed.gridRows ?? 4,
       };
     }
     return parsed;
@@ -135,6 +154,11 @@ export function listSaves() {
       const seasonIdx = ((campaign.currentChapter - 1) % 4);
       const season = campaign.currentSeason ?? seasonOrder[seasonIdx] ?? 'spring';
       const lastEntry = (campaign.journalEntries ?? []).slice(-1)[0] ?? null;
+      const activeQuests = Object.values(campaign.questLog ?? {}).filter((entry) => (
+        entry?.state === 'ACCEPTED' || entry?.state === 'IN_PROGRESS'
+      )).length;
+      const zonesVisited = (campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones).length;
+
       saves.push({
         slot,
         campaign,
@@ -145,14 +169,12 @@ export function listSaves() {
         score: lastEntry?.score ?? 0,
         grade: lastEntry?.grade ?? null,
         updatedAt: campaign.updatedAt ?? campaign.createdAt,
-        gradeHistory: (campaign.journalEntries ?? []).map((e) => ({
-          chapter: e.chapter,
-          grade: e.grade,
+        activeQuests,
+        zonesVisited,
+        gradeHistory: (campaign.journalEntries ?? []).map((entry) => ({
+          chapter: entry.chapter,
+          grade: entry.grade,
         })),
-        activeQuests: Object.values(campaign.questLog ?? {}).filter((entry) => (
-          entry?.state === 'ACCEPTED' || entry?.state === 'IN_PROGRESS'
-        )).length,
-        zonesVisited: (campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones).length,
       });
     }
   }
@@ -191,6 +213,10 @@ export function pushJournalEntry(campaign, entry) {
   });
 }
 
+/**
+ * Subscribe to store changes and auto-persist campaign + season state.
+ * Returns an unsubscribe function.
+ */
 export function subscribeToStoreSaves(store, resolveSlot, options = {}) {
   if (!store?.subscribe) {
     return () => {};
@@ -199,11 +225,11 @@ export function subscribeToStoreSaves(store, resolveSlot, options = {}) {
   const shouldPersist = options.shouldPersist ?? (() => true);
 
   return store.subscribe((state, action) => {
+    if (!shouldPersist(state, action)) return;
     const slot = typeof resolveSlot === 'function' ? resolveSlot(action, state) : resolveSlot;
     if (!isValidSlot(slot)) return;
-    if (!shouldPersist(state, action)) return;
-    saveCampaign(state.campaign, slot);
-    saveSeasonState(state.season, slot);
+    if (state.campaign) saveCampaign(state.campaign, slot);
+    if (state.season) saveSeasonState(state.season, slot);
   });
 }
 

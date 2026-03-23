@@ -45,9 +45,10 @@ const PHASE_ORDER = [
 ];
 
 function attachGridMeta(cells, cols = COLS, rows = ROWS) {
-  cells.cols = cols;
-  cells.rows = rows;
-  return cells;
+  const arr = Array.isArray(cells) ? cells : [];
+  arr.cols = cols;
+  arr.rows = rows;
+  return arr;
 }
 
 function createGrid(cols = COLS, rows = ROWS) {
@@ -183,14 +184,14 @@ export {
   GRID_UNLOCKS,
   PHASE_ORDER,
   DEFAULT_SITE_CONFIG,
+  DEFAULT_REPUTATION,
+  DEFAULT_WORLD_STATE,
   attachGridMeta,
   createGrid,
   createEmptyGrid,
   createSeasonState,
   createCampaignState,
   createGameState,
-  DEFAULT_REPUTATION,
-  DEFAULT_WORLD_STATE,
   getGridCols,
   getGridRows,
   getAvailableGridSizes,
