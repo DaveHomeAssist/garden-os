@@ -490,7 +490,7 @@ function bindUI({
       }
     }
 
-    return { x, z };
+    return scene.projectMovementToCamera?.({ x, z }) ?? { x, z };
   }
 
   function getCellInteractionLabel(cellIndex) {

@@ -158,6 +158,8 @@ export function createGardenScene(container) {
   camera.position.set(0, 2.95, 4.9);
   camera.lookAt(0, 0.46, -0.12);
   const cameraLookTarget = new THREE.Vector3(0, 0.46, -0.12);
+  const movementForward = new THREE.Vector3();
+  const movementRight = new THREE.Vector3();
   let cameraTransition = null;
   let moodTransition = null;
   let currentScenePhase = 'PLANNING';
@@ -1932,6 +1934,29 @@ function getGrowthScale(phase, season) {
     return -1;
   }
 
+  function projectMovementToCamera(input = {}) {
+    const inputX = Number(input?.x ?? 0);
+    const inputZ = Number(input?.z ?? 0);
+    if (Math.hypot(inputX, inputZ) < 0.0001) {
+      return { x: 0, z: 0 };
+    }
+
+    movementForward.copy(cameraLookTarget).sub(camera.position);
+    movementForward.y = 0;
+    if (movementForward.lengthSq() < 0.0001) {
+      return { x: inputX, z: inputZ };
+    }
+    movementForward.normalize();
+
+    movementRight.set(-movementForward.z, 0, movementForward.x);
+
+    const moveForward = -inputZ;
+    return {
+      x: (movementRight.x * inputX) + (movementForward.x * moveForward),
+      z: (movementRight.z * inputX) + (movementForward.z * moveForward),
+    };
+  }
+
   function getGridLayout() {
     return bed.cellMeshes.map((mesh, index) => {
       mesh.updateWorldMatrix(true, false);
@@ -2269,6 +2294,7 @@ function getGrowthScale(phase, season) {
       renderer.render(scene, camera);
     },
     raycastCell,
+    projectMovementToCamera,
     getGridLayout,
     projectWorldPosition,
     updatePointer,
