@@ -11,6 +11,23 @@ export default defineConfig({
     outDir: 'dist',
     minify: true,
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules/three')) return undefined;
+
+          if (id.includes('/three/build/three.core.js')) {
+            return 'three-core';
+          }
+
+          if (id.includes('/three/build/three.module.js')) {
+            return 'three-scene';
+          }
+
+          return 'three-entry';
+        },
+      },
+    },
   },
   resolve: {
     alias: {

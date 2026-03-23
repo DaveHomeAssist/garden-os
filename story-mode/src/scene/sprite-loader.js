@@ -1,7 +1,10 @@
 /**
  * Sprite Loader — loads PNG sprite assets and sprite sheets for Three.js.
  *
- * All textures live in assets/textures/ and are resolved by Vite at build time.
+ * Only the crop assets that story mode actively renders are imported here.
+ * Other texture concepts still live in assets/textures/, but they stay out of
+ * the production bundle until those surfaces are wired into runtime code.
+ *
  * Sprite sheets are sliced into individual frames via canvas offscreen rendering.
  *
  * Usage:
@@ -11,38 +14,55 @@
  *   const frame = getFrame('grow-lettuce', 2);   // frame 2 of sprite sheet
  */
 import * as THREE from 'three';
+import cropArugulaUrl from '../../assets/textures/crop-arugula.png';
+import cropBasilUrl from '../../assets/textures/crop-basil.png';
+import cropLettuceUrl from '../../assets/textures/crop-lettuce.png';
+import cropMarigoldUrl from '../../assets/textures/crop-marigold.png';
+import cropRadishUrl from '../../assets/textures/crop-radish.png';
+import cropSheetUrl from '../../assets/textures/crop-sheet.png';
+import cropSpinachUrl from '../../assets/textures/crop-spinach.png';
+import growArugulaUrl from '../../assets/textures/grow-arugula.png';
+import growBasilUrl from '../../assets/textures/grow-basil.png';
+import growLettuceUrl from '../../assets/textures/grow-lettuce.png';
+import growMarigoldUrl from '../../assets/textures/grow-marigold.png';
+import growRadishUrl from '../../assets/textures/grow-radish.png';
+import growSpinachUrl from '../../assets/textures/grow-spinach.png';
 
 /* ── Asset Manifest ─────────────────────────────────────────────────── */
 
+const ASSET_URLS = {
+  'crop-arugula': cropArugulaUrl,
+  'crop-basil': cropBasilUrl,
+  'crop-lettuce': cropLettuceUrl,
+  'crop-marigold': cropMarigoldUrl,
+  'crop-radish': cropRadishUrl,
+  'crop-sheet': cropSheetUrl,
+  'crop-spinach': cropSpinachUrl,
+  'grow-arugula': growArugulaUrl,
+  'grow-basil': growBasilUrl,
+  'grow-lettuce': growLettuceUrl,
+  'grow-marigold': growMarigoldUrl,
+  'grow-radish': growRadishUrl,
+  'grow-spinach': growSpinachUrl,
+};
+
 const SINGLE_ASSETS = {
-  'bed-empty':     { file: 'bed-empty.png',     w: 1024, h: 512 },
-  'bed-grid':      { file: 'bed-grid.png',      w: 1024, h: 512 },
-  'bed-rain':      { file: 'bed-rain.png',      w: 1024, h: 512 },
-  'bed-cell':      { file: 'bed-cell.png',      w: 256,  h: 256 },
-  'crop-lettuce':  { file: 'crop-lettuce.png',  w: 256,  h: 256 },
-  'crop-spinach':  { file: 'crop-spinach.png',  w: 256,  h: 256 },
-  'crop-arugula':  { file: 'crop-arugula.png',  w: 256,  h: 256 },
-  'crop-radish':   { file: 'crop-radish.png',   w: 256,  h: 256 },
-  'crop-basil':    { file: 'crop-basil.png',    w: 256,  h: 256 },
-  'crop-marigold': { file: 'crop-marigold.png', w: 256,  h: 256 },
-  'env-spigot':    { file: 'env-spigot.png',    w: 128,  h: 256 },
-  'env-fence':     { file: 'env-fence.png',     w: 256,  h: 512 },
-  'env-path':      { file: 'env-path.png',      w: 512,  h: 512 },
-  'env-grass':     { file: 'env-grass.png',     w: 512,  h: 512 },
-  'ui-badges':     { file: 'ui-badges.png',     w: 512,  h: 64  },
-  'ui-month-card': { file: 'ui-month-card.png', w: 320,  h: 96  },
-  'ui-nav-pills':  { file: 'ui-nav-pills.png',  w: 320,  h: 48  },
+  'crop-lettuce':  { url: ASSET_URLS['crop-lettuce'],  w: 256, h: 256 },
+  'crop-spinach':  { url: ASSET_URLS['crop-spinach'],  w: 256, h: 256 },
+  'crop-arugula':  { url: ASSET_URLS['crop-arugula'],  w: 256, h: 256 },
+  'crop-radish':   { url: ASSET_URLS['crop-radish'],   w: 256, h: 256 },
+  'crop-basil':    { url: ASSET_URLS['crop-basil'],    w: 256, h: 256 },
+  'crop-marigold': { url: ASSET_URLS['crop-marigold'], w: 256, h: 256 },
 };
 
 const SHEET_ASSETS = {
-  'crop-sheet':    { file: 'crop-sheet.png',    w: 1536, h: 256, cols: 6, rows: 1 },
-  'bed-seasons':   { file: 'bed-seasons.png',   w: 2048, h: 512, cols: 4, rows: 1 },
-  'grow-lettuce':  { file: 'grow-lettuce.png',  w: 1024, h: 256, cols: 4, rows: 1 },
-  'grow-spinach':  { file: 'grow-spinach.png',  w: 1024, h: 256, cols: 4, rows: 1 },
-  'grow-arugula':  { file: 'grow-arugula.png',  w: 1024, h: 256, cols: 4, rows: 1 },
-  'grow-radish':   { file: 'grow-radish.png',   w: 1024, h: 256, cols: 4, rows: 1 },
-  'grow-basil':    { file: 'grow-basil.png',    w: 1024, h: 256, cols: 4, rows: 1 },
-  'grow-marigold': { file: 'grow-marigold.png', w: 1024, h: 256, cols: 4, rows: 1 },
+  'crop-sheet':    { url: ASSET_URLS['crop-sheet'],    w: 1536, h: 256, cols: 6, rows: 1 },
+  'grow-lettuce':  { url: ASSET_URLS['grow-lettuce'],  w: 1024, h: 256, cols: 4, rows: 1 },
+  'grow-spinach':  { url: ASSET_URLS['grow-spinach'],  w: 1024, h: 256, cols: 4, rows: 1 },
+  'grow-arugula':  { url: ASSET_URLS['grow-arugula'],  w: 1024, h: 256, cols: 4, rows: 1 },
+  'grow-radish':   { url: ASSET_URLS['grow-radish'],   w: 1024, h: 256, cols: 4, rows: 1 },
+  'grow-basil':    { url: ASSET_URLS['grow-basil'],    w: 1024, h: 256, cols: 4, rows: 1 },
+  'grow-marigold': { url: ASSET_URLS['grow-marigold'], w: 1024, h: 256, cols: 4, rows: 1 },
 };
 
 /** Named growth stage indices */
@@ -64,19 +84,12 @@ const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
 let loaded = false;
 let loadPromise = null;
 
-/* ── Texture path resolution ────────────────────────────────────────── */
-
-/** Resolve asset path relative to Vite base */
-function assetPath(filename) {
-  return new URL(`../../assets/textures/${filename}`, import.meta.url).href;
-}
-
 /* ── Loading ────────────────────────────────────────────────────────── */
 
-function loadOne(key, filename) {
+function loadOne(key, url) {
   return new Promise((resolve, reject) => {
     texLoader.load(
-      assetPath(filename),
+      url,
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.LinearFilter;
@@ -88,7 +101,7 @@ function loadOne(key, filename) {
       undefined,
       () => {
         // Asset not yet generated — skip silently, return null placeholder
-        console.warn(`[sprite-loader] missing texture: ${filename}`);
+        console.warn(`[sprite-loader] missing texture for key: ${key}`);
         resolve(null);
       },
     );
@@ -104,10 +117,10 @@ export function loadSprites() {
   if (loadPromise) return loadPromise;
 
   const singles = Object.entries(SINGLE_ASSETS).map(
-    ([key, { file }]) => loadOne(key, file),
+    ([key, { url }]) => loadOne(key, url),
   );
   const sheets = Object.entries(SHEET_ASSETS).map(
-    ([key, { file }]) => loadOne(key, file),
+    ([key, { url }]) => loadOne(key, url),
   );
 
   loadPromise = Promise.all([...singles, ...sheets]).then(() => {
