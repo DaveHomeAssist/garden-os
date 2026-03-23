@@ -5,6 +5,9 @@
  * Other texture concepts still live in assets/textures/, but they stay out of
  * the production bundle until those surfaces are wired into runtime code.
  *
+ * Assets are requested on demand. The first frame that needs a missing sprite
+ * will queue its load and the next sync will pick it up from cache.
+ *
  * Sprite sheets are sliced into individual frames via canvas offscreen rendering.
  *
  * Usage:
@@ -19,7 +22,6 @@ import cropBasilUrl from '../../assets/textures/crop-basil.png';
 import cropLettuceUrl from '../../assets/textures/crop-lettuce.png';
 import cropMarigoldUrl from '../../assets/textures/crop-marigold.png';
 import cropRadishUrl from '../../assets/textures/crop-radish.png';
-import cropSheetUrl from '../../assets/textures/crop-sheet.png';
 import cropSpinachUrl from '../../assets/textures/crop-spinach.png';
 import growArugulaUrl from '../../assets/textures/grow-arugula.png';
 import growBasilUrl from '../../assets/textures/grow-basil.png';
@@ -36,7 +38,6 @@ const ASSET_URLS = {
   'crop-lettuce': cropLettuceUrl,
   'crop-marigold': cropMarigoldUrl,
   'crop-radish': cropRadishUrl,
-  'crop-sheet': cropSheetUrl,
   'crop-spinach': cropSpinachUrl,
   'grow-arugula': growArugulaUrl,
   'grow-basil': growBasilUrl,
@@ -56,7 +57,6 @@ const SINGLE_ASSETS = {
 };
 
 const SHEET_ASSETS = {
-  'crop-sheet':    { url: ASSET_URLS['crop-sheet'],    w: 1536, h: 256, cols: 6, rows: 1 },
   'grow-lettuce':  { url: ASSET_URLS['grow-lettuce'],  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-spinach':  { url: ASSET_URLS['grow-spinach'],  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-arugula':  { url: ASSET_URLS['grow-arugula'],  w: 1024, h: 256, cols: 4, rows: 1 },
@@ -71,30 +71,24 @@ export const GROWTH_STAGE = { SEED: 0, SPROUT: 1, GROWING: 2, HARVEST: 3 };
 /** Named season indices for bed-seasons sheet */
 export const SEASON_INDEX = { SPRING: 0, SUMMER: 1, AUTUMN: 2, WINTER: 3 };
 
-/** Named crop indices for crop-sheet */
-export const CROP_SHEET_INDEX = {
-  LETTUCE: 0, SPINACH: 1, ARUGULA: 2, RADISH: 3, BASIL: 4, MARIGOLD: 5,
-};
-
 /* ── Internal State ─────────────────────────────────────────────────── */
 
 const texLoader = new THREE.TextureLoader();
 const textureCache = new Map();   // key → THREE.Texture
 const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
-let loaded = false;
-let loadPromise = null;
+const loadingPromises = new Map(); // key → Promise<THREE.Texture|null>
 
 /* ── Loading ────────────────────────────────────────────────────────── */
 
 function loadOne(key, url) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     texLoader.load(
       url,
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.LinearFilter;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
         textureCache.set(key, texture);
         resolve(texture);
       },
@@ -102,31 +96,45 @@ function loadOne(key, url) {
       () => {
         // Asset not yet generated — skip silently, return null placeholder
         console.warn(`[sprite-loader] missing texture for key: ${key}`);
+        textureCache.set(key, null);
         resolve(null);
       },
     );
   });
 }
 
-/**
- * Load all sprite assets. Call once during scene init.
- * Safe to call multiple times — subsequent calls return the cached promise.
- * Missing PNGs are silently skipped (returns null for those keys).
- */
-export function loadSprites() {
-  if (loadPromise) return loadPromise;
+function getAssetDef(key) {
+  return SINGLE_ASSETS[key] ?? SHEET_ASSETS[key] ?? null;
+}
 
-  const singles = Object.entries(SINGLE_ASSETS).map(
-    ([key, { url }]) => loadOne(key, url),
-  );
-  const sheets = Object.entries(SHEET_ASSETS).map(
-    ([key, { url }]) => loadOne(key, url),
-  );
+function ensureLoaded(key) {
+  if (textureCache.has(key)) {
+    return Promise.resolve(textureCache.get(key));
+  }
+  if (loadingPromises.has(key)) {
+    return loadingPromises.get(key);
+  }
 
-  loadPromise = Promise.all([...singles, ...sheets]).then(() => {
-    loaded = true;
+  const asset = getAssetDef(key);
+  if (!asset) return Promise.resolve(null);
+
+  const promise = loadOne(key, asset.url).finally(() => {
+    loadingPromises.delete(key);
   });
-  return loadPromise;
+  loadingPromises.set(key, promise);
+  return promise;
+}
+
+/**
+ * Optionally preload a subset of sprite assets.
+ * Missing PNGs are silently skipped and cached as null.
+ */
+export function loadSprites(keys = []) {
+  const uniqueKeys = [...new Set(keys)].filter(Boolean);
+  if (uniqueKeys.length === 0) {
+    return Promise.resolve([]);
+  }
+  return Promise.all(uniqueKeys.map((key) => ensureLoaded(key)));
 }
 
 /* ── Accessors ──────────────────────────────────────────────────────── */
@@ -136,6 +144,9 @@ export function loadSprites() {
  * Returns null if the asset was missing or not yet loaded.
  */
 export function getTexture(key) {
+  if (!textureCache.has(key)) {
+    void ensureLoaded(key);
+  }
   return textureCache.get(key) ?? null;
 }
 
@@ -155,7 +166,12 @@ export function getFrame(sheetKey, index) {
   if (!sheet) return null;
 
   const baseTex = textureCache.get(sheetKey);
-  if (!baseTex) return null;
+  if (!baseTex) {
+    if (!textureCache.has(sheetKey)) {
+      void ensureLoaded(sheetKey);
+    }
+    return null;
+  }
 
   const { cols, rows } = sheet;
   const col = index % cols;
@@ -181,11 +197,6 @@ export function getCropIcon(cropId) {
   const key = `crop-${cropId}`;
   const single = getTexture(key);
   if (single) return single;
-
-  // Fall back to crop-sheet by name
-  const sheetIndex = CROP_SHEET_INDEX[cropId.toUpperCase()];
-  if (sheetIndex !== undefined) return getFrame('crop-sheet', sheetIndex);
-
   return null;
 }
 
@@ -202,7 +213,14 @@ export function getGrowthTexture(cropId, stage) {
   if (sheet?.hasAlpha === false) {
     return getCropIcon(cropId);
   }
-  return getFrame(sheetKey, stage) ?? getCropIcon(cropId);
+  const frame = getFrame(sheetKey, stage);
+  if (frame) return frame;
+
+  if (textureCache.has(sheetKey)) {
+    return getCropIcon(cropId);
+  }
+
+  return null;
 }
 
 /**
@@ -259,6 +277,5 @@ export function disposeSprites() {
   }
   textureCache.clear();
   frameCache.clear();
-  loaded = false;
-  loadPromise = null;
+  loadingPromises.clear();
 }

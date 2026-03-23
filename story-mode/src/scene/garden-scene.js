@@ -10,7 +10,7 @@ import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { createPlayerCharacter } from './player-character.js';
 import { ResourceTracker } from './resource-tracker.js';
-import { loadSprites, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
+import { getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
 
@@ -231,9 +231,6 @@ export function createGardenScene(container) {
   // Background scenery (fence, trees, path, props)
   const scenery = buildScenery(resourceTracker);
   root.add(scenery.group);
-
-  // Load sprite textures (async, non-blocking — accents appear once loaded)
-  loadSprites().catch(() => { /* missing assets handled silently by sprite-loader */ });
 
   // ── Creature meshes ──────────────────────────────────────────────────────
   // Cat silhouette on fence
