@@ -32,17 +32,17 @@ function collectMaterialTextures(material) {
   const textures = [];
   for (const key of MATERIAL_TEXTURE_KEYS) {
     const value = material?.[key];
-    if (value?.isTexture) textures.push(value);
+    if (value?.isTexture && !value.userData?.managedExternally) textures.push(value);
   }
 
   if (material?.uniforms) {
     for (const uniform of Object.values(material.uniforms)) {
       const value = uniform?.value;
-      if (value?.isTexture) {
+      if (value?.isTexture && !value.userData?.managedExternally) {
         textures.push(value);
       } else if (Array.isArray(value)) {
         value.forEach((entry) => {
-          if (entry?.isTexture) textures.push(entry);
+          if (entry?.isTexture && !entry.userData?.managedExternally) textures.push(entry);
         });
       }
     }

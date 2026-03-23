@@ -60,4 +60,24 @@ describe('ResourceTracker', () => {
     expect(targetDispose).toHaveBeenCalledTimes(1);
     expect(tracker.count).toBe(0);
   });
+
+  it('does not dispose textures marked as externally managed', () => {
+    const tracker = new ResourceTracker();
+    const sharedMap = new THREE.Texture();
+    sharedMap.userData.managedExternally = true;
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ map: sharedMap });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    const geometryDispose = vi.spyOn(geometry, 'dispose');
+    const materialDispose = vi.spyOn(material, 'dispose');
+    const mapDispose = vi.spyOn(sharedMap, 'dispose');
+
+    tracker.trackObject(mesh);
+    tracker.disposeObject(mesh);
+
+    expect(geometryDispose).toHaveBeenCalledTimes(1);
+    expect(materialDispose).toHaveBeenCalledTimes(1);
+    expect(mapDispose).not.toHaveBeenCalled();
+  });
 });

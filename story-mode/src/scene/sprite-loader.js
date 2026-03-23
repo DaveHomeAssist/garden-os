@@ -85,6 +85,7 @@ function loadOne(key, url) {
     texLoader.load(
       url,
       (texture) => {
+        texture.userData.managedExternally = true;
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.LinearFilter;
         texture.minFilter = THREE.LinearFilter;
@@ -178,6 +179,7 @@ export function getFrame(sheetKey, index) {
   const row = Math.floor(index / cols);
 
   const frame = baseTex.clone();
+  frame.userData.managedExternally = true;
   frame.repeat.set(1 / cols, 1 / rows);
   frame.offset.set(col / cols, 1 - (row + 1) / rows);
   frame.needsUpdate = true;

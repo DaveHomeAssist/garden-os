@@ -1002,43 +1002,40 @@ export function createGardenScene(container) {
       activeIds.add(key);
       const sig = `${cell.cropId}:${stage}:${cell.damageState ?? 'none'}:${season}`;
 
-      if (accentMeshes.has(key) && accentMeshes.get(key).userData.sig === sig) {
-        const spr = accentMeshes.get(key);
-        applyCropAccentState(spr, stage, cell.damageState, season);
-        continue;
+      let sprite = accentMeshes.get(key) ?? null;
+
+      if (!sprite) {
+        const spriteMat = new THREE.SpriteMaterial({
+          map: tex,
+          transparent: true,
+          opacity: ACCENT_OPACITY[stage] ?? 0.7,
+          depthWrite: false,
+          depthTest: true,
+          sizeAttenuation: true,
+        });
+        sprite = new THREE.Sprite(spriteMat);
+
+        // Position above the procedural crop mesh
+        const row = Math.floor(i / COLS);
+        const col = i % COLS;
+        const cellSize = bed.cellSize;
+        const x = (col - (COLS - 1) / 2) * cellSize;
+        const z = (row - (ROWS - 1) / 2) * cellSize;
+        sprite.position.set(x, bed.soilY + 0.2, z);
+        sprite.userData.cellIndex = i;
+
+        resourceTracker.trackObject(sprite);
+        root.add(sprite);
+        accentMeshes.set(key, sprite);
       }
 
-      // Remove stale accent
-      if (accentMeshes.has(key)) {
-        resourceTracker.disposeObject(accentMeshes.get(key));
-        accentMeshes.delete(key);
+      if (sprite.userData.sig !== sig) {
+        sprite.material.map = tex;
+        sprite.material.needsUpdate = true;
+        sprite.userData.sig = sig;
       }
 
-      // Create billboard sprite
-      const spriteMat = new THREE.SpriteMaterial({
-        map: tex,
-        transparent: true,
-        opacity: ACCENT_OPACITY[stage] ?? 0.7,
-        depthWrite: false,
-        depthTest: true,
-        sizeAttenuation: true,
-      });
-      const sprite = new THREE.Sprite(spriteMat);
-
-      // Position above the procedural crop mesh
-      const row = Math.floor(i / COLS);
-      const col = i % COLS;
-      const cellSize = bed.cellSize;
-      const x = (col - (COLS - 1) / 2) * cellSize;
-      const z = (row - (ROWS - 1) / 2) * cellSize;
-      sprite.position.set(x, bed.soilY + 0.2, z);
-      sprite.userData.sig = sig;
-      sprite.userData.cellIndex = i;
       applyCropAccentState(sprite, stage, cell.damageState, season);
-
-      resourceTracker.trackObject(sprite);
-      root.add(sprite);
-      accentMeshes.set(key, sprite);
     }
 
     // Remove stale accents
