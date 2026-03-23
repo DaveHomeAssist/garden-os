@@ -67,6 +67,28 @@ const DORMANT_SOIL_TINT = new THREE.Color(0xc0c6cf);
 const DORMANT_CROP_TINT = new THREE.Color(0xb8c1ca);
 const DORMANT_CROP_EMISSIVE = 0x8798aa;
 
+function createLightingStateForSeason(season = 'spring') {
+  const config = SEASON_LIGHTING[season] || SEASON_LIGHTING.spring;
+  const angle = (config.sunAngle * Math.PI) / 180;
+  return {
+    background: new THREE.Color(config.sky),
+    fogColor: new THREE.Color(config.sky),
+    fogDensity: config.fogDensity,
+    hemiSky: new THREE.Color(config.sky),
+    hemiGround: new THREE.Color(config.ground),
+    hemiIntensity: config.ambInt,
+    sunColor: new THREE.Color(0xfff4de),
+    sunIntensity: config.sunInt,
+    sunPosition: new THREE.Vector3(config.sunX, 8 * Math.sin(angle), config.sunZ),
+    fillColor: new THREE.Color(0x8ea8bc),
+    fillIntensity: config.fillInt,
+    fillPosition: new THREE.Vector3(config.fillX, 4.4 + Math.sin(angle) * 0.5, config.fillZ),
+    rimColor: new THREE.Color(0xd7e6f5),
+    rimIntensity: 0.18,
+    rimPosition: new THREE.Vector3(-4.4, 3.1, -4.7),
+  };
+}
+
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
 }
@@ -140,7 +162,7 @@ export function createGardenScene(container) {
   let moodTransition = null;
   let currentScenePhase = 'PLANNING';
   let currentSceneStyle = getStyleForPhase(currentScenePhase);
-  let lightingState = null;
+  let lightingState = createLightingStateForSeason('spring');
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.shadowMap.enabled = true;
@@ -545,6 +567,9 @@ export function createGardenScene(container) {
     currentScenePhase = phase;
     setSceneStyle(getStyleForPhase(phase), opts);
   }
+
+  // Seed the scene with a warm baseline before the first synced frame arrives.
+  applyCurrentSceneStyle({ force: true });
 
 
   // ── Seasonal atmosphere elements ─────────────────────────────────────────
@@ -1758,25 +1783,7 @@ function getGrowthScale(phase, season) {
   }
 
   function applySeason(season) {
-    const config = SEASON_LIGHTING[season] || SEASON_LIGHTING.spring;
-    const angle = (config.sunAngle * Math.PI) / 180;
-    lightingState = {
-      background: new THREE.Color(config.sky),
-      fogColor: new THREE.Color(config.sky),
-      fogDensity: config.fogDensity,
-      hemiSky: new THREE.Color(config.sky),
-      hemiGround: new THREE.Color(config.ground),
-      hemiIntensity: config.ambInt,
-      sunColor: new THREE.Color(0xfff4de),
-      sunIntensity: config.sunInt,
-      sunPosition: new THREE.Vector3(config.sunX, 8 * Math.sin(angle), config.sunZ),
-      fillColor: new THREE.Color(0x8ea8bc),
-      fillIntensity: config.fillInt,
-      fillPosition: new THREE.Vector3(config.fillX, 4.4 + Math.sin(angle) * 0.5, config.fillZ),
-      rimColor: new THREE.Color(0xd7e6f5),
-      rimIntensity: 0.18,
-      rimPosition: new THREE.Vector3(-4.4, 3.1, -4.7),
-    };
+    lightingState = createLightingStateForSeason(season);
     applyCurrentSceneStyle({ force: true });
 
     // Update tree foliage colors

@@ -2022,6 +2022,8 @@ function bindUI({
   scene.setPlayerState?.(playerController.getState());
   syncPlayerTool();
   syncInteractionPresentation();
+  scene.sync(state);
+  scene.render();
   loop.start();
   setGameInputEnabled(false);
   phaseRouter.handleNarrativeTrigger({
