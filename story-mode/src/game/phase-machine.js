@@ -193,6 +193,28 @@ function rollCampaignForward(season) {
   campaign.lastSeasonReview = buildSeasonReviewSnapshot(season);
   campaign.previousGrid = season.grid.map((cell) => ({ ...cell }));
 
+  if (campaign.sandbox) {
+    const nextSeason = rotateSeason(season.season);
+    campaign.currentSeason = nextSeason;
+    const cols = season.gridCols ?? 8;
+    const rows = season.gridRows ?? 8;
+    const nextSeasonState = createSeasonState(campaign.currentChapter, nextSeason, campaign, cols, rows);
+    if (campaign.previousGrid) {
+      for (let i = 0; i < nextSeasonState.grid.length; i++) {
+        const prevCell = campaign.previousGrid[i];
+        if (prevCell && prevCell.cropId && HEAVY_FEEDERS.has(prevCell.cropId)) {
+          nextSeasonState.grid[i].soilFatigue = Math.min(
+            (nextSeasonState.grid[i].soilFatigue || 0) + 0.3,
+            0.9,
+          );
+        }
+        applyCarryForwardInfrastructure(nextSeasonState.grid[i], prevCell);
+      }
+    }
+    Object.assign(season, nextSeasonState);
+    return { complete: false, chapterChanged: false };
+  }
+
   const nextChapter = campaign.currentChapter + 1;
   const nextSeason = rotateSeason(season.season);
 
@@ -233,6 +255,7 @@ function rollCampaignForward(season) {
 export function canAdvance(season) {
   const { phase } = season;
   if (phase === PHASES.PLANNING) {
+    if (season.campaign?.sandbox) return true;
     const planted = season.grid.filter((cell) => cell.cropId !== null).length;
     return planted >= 8;
   }

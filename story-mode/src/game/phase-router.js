@@ -58,6 +58,11 @@ function createPhaseRouter({
       return;
     }
 
+    if (state.campaign?.sandbox && trigger.type === 'chapter_start') {
+      setGameInputEnabled(true);
+      return;
+    }
+
     const queued = cutsceneMachine.queueFromTrigger(trigger, state.campaign);
     if (!queued) {
       if (trigger.type === 'chapter_start' && state.season.season === 'winter' && !state.season.winterReviewSeen) {
@@ -94,7 +99,7 @@ function createPhaseRouter({
 
     if (!isGameInputEnabled() || cutsceneMachine.isActive()) return;
     if (!canAdvance(state.season)) {
-      if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter') {
+      if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter' && !state.campaign?.sandbox) {
         const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
         if (planted < 8) {
           showToast(`Need at least 8 crops to commit (${planted} planted)`, 2400, 'error');

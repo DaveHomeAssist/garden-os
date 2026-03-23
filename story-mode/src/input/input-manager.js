@@ -43,6 +43,13 @@ function matchesKeyBinding(event, binding) {
   );
 }
 
+function isTextEntryTarget(target) {
+  return Boolean(
+    target instanceof Element
+    && target.closest('input, textarea, select, [contenteditable="true"]')
+  );
+}
+
 export class InputManager {
   constructor(targetElement, options = {}) {
     this.targetElement = targetElement;
@@ -169,7 +176,13 @@ export class InputManager {
   }
 
   handleKeyDown(event) {
-    this.heldKeys.add(normalizeKey(event.key));
+    const key = normalizeKey(event.key);
+    if (isTextEntryTarget(event.target)) {
+      this.heldKeys.delete(key);
+      return;
+    }
+
+    this.heldKeys.add(key);
 
     for (const [actionName, bindings] of this.actionBindings) {
       if (!bindings.keys.some((binding) => matchesKeyBinding(event, binding))) continue;
@@ -180,6 +193,9 @@ export class InputManager {
 
   handleKeyUp(event) {
     this.heldKeys.delete(normalizeKey(event.key));
+    if (isTextEntryTarget(event.target)) {
+      return;
+    }
   }
 
   handlePointerMove(event) {

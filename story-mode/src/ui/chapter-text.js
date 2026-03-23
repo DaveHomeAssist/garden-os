@@ -54,9 +54,11 @@ const CHAPTERS = {
 };
 
 export function getChapterTitle(chapter) {
+  if (chapter === 99) return 'Free Play';
   return CHAPTERS[chapter]?.title || `Chapter ${chapter}`;
 }
 
 export function getChapterNarrative(chapter) {
+  if (chapter === 99) return 'All crops unlocked. No gates, no pressure. Just the bed and the soil.';
   return CHAPTERS[chapter]?.narrative || "A new season begins.";
 }

@@ -1,4 +1,4 @@
-import { createGameState, createSeasonState } from './state.js';
+import { createGameState, createSandboxState, createSeasonState } from './state.js';
 import { Store } from './store.js';
 import {
   deleteCampaign,
@@ -118,15 +118,13 @@ function renderTitleScreen(onStart) {
 
   if (modesContainer) {
     modesContainer.innerHTML = `
-      <div class="mode-card mode-card--active">
+      <div class="mode-card mode-card--active" data-mode="story">
         <span class="mode-icon">📖</span>
         <span>Story Mode</span>
       </div>
-      <div class="mode-card mode-card--locked">
+      <div class="mode-card mode-card--selectable" data-mode="freeplay">
         <span class="mode-icon">🌿</span>
         <span>Free Play</span>
-        <span class="mode-lock">🔒</span>
-        <span class="mode-soon">Coming Soon</span>
       </div>
       <div class="mode-card mode-card--locked">
         <span class="mode-icon">📅</span>
@@ -141,6 +139,43 @@ function renderTitleScreen(onStart) {
         <span class="mode-soon">Coming Soon</span>
       </div>
     `;
+
+    let selectedMode = 'story';
+    modesContainer.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-mode]');
+      if (!card || card.classList.contains('mode-card--locked')) return;
+      selectedMode = card.dataset.mode;
+      modesContainer.querySelectorAll('.mode-card').forEach((c) => {
+        c.classList.toggle('mode-card--active', c.dataset.mode === selectedMode);
+        if (c.dataset.mode && !c.classList.contains('mode-card--locked')) {
+          c.classList.toggle('mode-card--selectable', c.dataset.mode !== selectedMode);
+        }
+      });
+      updateSlotsVisibility();
+    });
+
+    const freeplayBtn = document.createElement('button');
+    freeplayBtn.type = 'button';
+    freeplayBtn.className = 'save-slot-btn save-slot-btn--primary freeplay-start-btn';
+    freeplayBtn.textContent = 'Start Free Play';
+    freeplayBtn.style.display = 'none';
+    freeplayBtn.addEventListener('click', () => {
+      dismissTitleScreen(titleScreen, () => {
+        onStart({
+          slot: -1,
+          viewport: document.getElementById('viewport'),
+          initialState: createSandboxState(),
+          sandbox: true,
+        });
+      });
+    });
+    slotsContainer.parentNode.insertBefore(freeplayBtn, slotsContainer.nextSibling);
+
+    function updateSlotsVisibility() {
+      const isFreeplay = selectedMode === 'freeplay';
+      slotsContainer.style.display = isFreeplay ? 'none' : '';
+      freeplayBtn.style.display = isFreeplay ? '' : 'none';
+    }
   }
 
   if (actionsContainer) {

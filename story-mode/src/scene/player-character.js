@@ -30,16 +30,20 @@ export function createPlayerCharacter(tracker = null) {
   const hairMat = new THREE.MeshStandardMaterial({ color: 0x3b2c20, roughness: 0.9 });
 
   const torsoPivot = new THREE.Group();
-  torsoPivot.position.y = 0.3;
+  torsoPivot.position.y = 0.38;
   rig.add(torsoPivot);
 
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.11), shirtMat);
-  torso.position.y = 0.13;
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.14, 7, 12), shirtMat);
+  torso.scale.set(1.2, 1.02, 0.82);
+  torso.position.y = 0.14;
   torso.castShadow = true;
   torsoPivot.add(torso);
 
-  const apron = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.03), apronMat);
+  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.1, 0.16, 14, 1, true), apronMat);
   apron.position.set(0, 0.09, 0.065);
+  apron.rotation.y = Math.PI / 2;
+  apron.rotation.z = Math.PI / 2;
+  apron.scale.set(1, 1, 0.36);
   apron.castShadow = true;
   torsoPivot.add(apron);
 
@@ -47,22 +51,22 @@ export function createPlayerCharacter(tracker = null) {
   headPivot.position.y = 0.31;
   torsoPivot.add(headPivot);
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), skinMat);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 16), skinMat);
   head.castShadow = true;
   headPivot.add(head);
 
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.088, 10, 8), hairMat);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.088, 18, 14), hairMat);
   hair.scale.set(1.02, 0.72, 1.02);
   hair.position.y = 0.016;
   hair.castShadow = true;
   headPivot.add(hair);
 
-  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.015, 20), hatMat);
+  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.015, 28), hatMat);
   hatBrim.position.y = 0.065;
   hatBrim.castShadow = true;
   headPivot.add(hatBrim);
 
-  const hatCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.09, 18), hatMat);
+  const hatCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.09, 24), hatMat);
   hatCrown.position.y = 0.11;
   hatCrown.castShadow = true;
   headPivot.add(hatCrown);
@@ -73,12 +77,12 @@ export function createPlayerCharacter(tracker = null) {
     armPivot.position.set(side * 0.13, 0.22, 0);
     torsoPivot.add(armPivot);
 
-    const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.17, 0.055), shirtMat);
+    const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.026, 0.1, 5, 10), shirtMat);
     upperArm.position.y = -0.085;
     upperArm.castShadow = true;
     armPivot.add(upperArm);
 
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), skinMat);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), skinMat);
     hand.position.y = -0.18;
     hand.castShadow = true;
     armPivot.add(hand);
@@ -96,19 +100,19 @@ export function createPlayerCharacter(tracker = null) {
       new THREE.MeshStandardMaterial({ color: 0x4e8fc8, roughness: 0.52 }),
     ),
     plant: new THREE.Mesh(
-      new THREE.ConeGeometry(0.034, 0.12, 4),
+      new THREE.ConeGeometry(0.034, 0.12, 8),
       new THREE.MeshStandardMaterial({ color: 0x8aa667, roughness: 0.72 }),
     ),
     harvest: new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 0.045, 0.06),
+      new THREE.CapsuleGeometry(0.022, 0.04, 4, 8),
       new THREE.MeshStandardMaterial({ color: 0xc7a954, roughness: 0.78 }),
     ),
     protect: new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.05, 0),
+      new THREE.SphereGeometry(0.05, 10, 8),
       new THREE.MeshStandardMaterial({ color: 0x8898af, roughness: 0.48 }),
     ),
     mulch: new THREE.Mesh(
-      new THREE.BoxGeometry(0.075, 0.075, 0.05),
+      new THREE.SphereGeometry(0.045, 10, 8),
       new THREE.MeshStandardMaterial({ color: 0x7a5a33, roughness: 0.9 }),
     ),
   };
@@ -117,8 +121,11 @@ export function createPlayerCharacter(tracker = null) {
   toolMeshes.water.position.set(0.015, -0.03, 0.03);
   toolMeshes.plant.rotation.z = -0.85;
   toolMeshes.plant.position.set(0.02, -0.02, 0.04);
+  toolMeshes.harvest.rotation.z = Math.PI / 2;
+  toolMeshes.harvest.scale.set(1, 0.86, 0.8);
   toolMeshes.harvest.position.set(0.016, -0.04, 0.03);
   toolMeshes.protect.position.set(0.02, -0.03, 0.045);
+  toolMeshes.mulch.scale.set(1.08, 0.72, 0.86);
   toolMeshes.mulch.position.set(0.015, -0.035, 0.02);
 
   Object.values(toolMeshes).forEach((mesh) => {
@@ -130,16 +137,22 @@ export function createPlayerCharacter(tracker = null) {
   const legPivots = [];
   for (const side of [-1, 1]) {
     const legPivot = new THREE.Group();
-    legPivot.position.set(side * 0.055, 0.1, 0);
+    legPivot.position.set(side * 0.055, 0.2, 0);
     rig.add(legPivot);
 
-    const upperLeg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.22, 0.07), pantsMat);
-    upperLeg.position.y = -0.11;
+    const upperLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.034, 0.1, 6, 12), pantsMat);
+    upperLeg.position.y = -0.06;
     upperLeg.castShadow = true;
     legPivot.add(upperLeg);
 
-    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.12), bootMat);
-    boot.position.set(0, -0.24, 0.02);
+    const lowerLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.08, 5, 10), pantsMat);
+    lowerLeg.position.y = -0.15;
+    lowerLeg.castShadow = true;
+    legPivot.add(lowerLeg);
+
+    const boot = new THREE.Mesh(new THREE.CapsuleGeometry(0.036, 0.05, 4, 10), bootMat);
+    boot.scale.set(0.95, 0.65, 1.4);
+    boot.position.set(0, -0.22, 0.02);
     boot.castShadow = true;
     legPivot.add(boot);
 
@@ -164,7 +177,7 @@ export function createPlayerCharacter(tracker = null) {
 
     group.position.set(snapshot.position.x, snapshot.position.y ?? 0, snapshot.position.z);
     group.rotation.y = snapshot.facing;
-    torsoPivot.position.y = 0.3 + bob;
+    torsoPivot.position.y = 0.38 + bob;
     torsoPivot.rotation.z = stride * 0.06;
     headPivot.rotation.z = -stride * 0.04;
     shadow.scale.setScalar(1 - bob * 0.8);
@@ -178,7 +191,7 @@ export function createPlayerCharacter(tracker = null) {
 
   function getFocusTarget(target = new THREE.Vector3()) {
     target.copy(group.position);
-    target.y += 0.58;
+    target.y += 0.66;
     return target;
   }
 

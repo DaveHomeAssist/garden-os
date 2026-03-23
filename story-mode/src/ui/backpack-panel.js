@@ -98,7 +98,7 @@ function renderKeepsakes(data) {
         return `
           <div style="padding:12px;border-radius:10px;background:${unlocked ? 'rgba(90,171,107,0.12)' : 'rgba(247,242,234,0.03)'};border:1px solid ${unlocked ? 'rgba(90,171,107,0.24)' : 'rgba(247,242,234,0.08)'};">
             <div style="font-family:'Fraunces',serif;font-size:15px;color:${unlocked ? '#f7f2ea' : 'rgba(247,242,234,0.42)'};">${escapeHtml(slot.name)}</div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.5);margin-top:4px;">${unlocked ? `Earned in Ch ${unlocked.chapter}` : 'Locked keepsake slot'}</div>
+            <div style="font-size:12px;color:rgba(247,242,234,0.5);margin-top:4px;">${unlocked ? (unlocked.chapter === 99 ? 'Earned in Free Play' : `Earned in Ch ${unlocked.chapter}`) : 'Locked keepsake slot'}</div>
           </div>
         `;
       }).join('')}
@@ -122,7 +122,7 @@ function renderPantry(data) {
             </div>
           `).join('')}
         </div>
-      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">Your pantry is still empty.</div>'}
+      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">Pantry is empty. Harvest crops to collect ingredients.</div>'}
     </section>
     <section style="margin-bottom:14px;">
       <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Recipes</div>
@@ -130,15 +130,15 @@ function renderPantry(data) {
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
           ${recipesCompleted.map((recipe) => `<span style="padding:7px 10px;border-radius:999px;background:rgba(232,200,74,0.14);color:#f4dfa1;font-size:12px;">${escapeHtml(recipe.name)}</span>`).join('')}
         </div>
-      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">No completed recipes yet.</div>'}
+      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">Plant the right crop combos to unlock recipes.</div>'}
     </section>
     <section>
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Season Trail</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Season Log</div>
       ${seasonHistory.length ? `
         <div style="display:grid;gap:8px;">
           ${seasonHistory.map((entry) => `
             <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.03);border:1px solid rgba(247,242,234,0.08);">
-              <span style="font-size:13px;color:#f7f2ea;">Ch ${entry.chapter} · ${escapeHtml(entry.season)}</span>
+              <span style="font-size:13px;color:#f7f2ea;">${entry.chapter === 99 ? 'Free Play' : `Ch ${entry.chapter}`} · ${escapeHtml(entry.season)}</span>
               <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.55);">${entry.score} · ${escapeHtml(entry.grade)}</span>
             </div>
           `).join('')}
@@ -313,7 +313,7 @@ export function showBackpackPanel(container, initialData, onClose) {
         <div>
           <div class="palette-title">Backpack</div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(247,242,234,0.35);margin-top:4px;">
-            Inventory, keepsakes, pantry, and season trail
+            Inventory, keepsakes, pantry, and season log
           </div>
         </div>
         <button type="button" class="palette-dismiss" id="backpack-dismiss" aria-label="Close backpack">&times;</button>

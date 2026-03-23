@@ -123,8 +123,8 @@
       display: none;
       align-items: center;
       justify-content: center;
-      min-height: 32px;
-      padding: 0 12px;
+      min-height: 44px;
+      padding: 0 16px;
       border-radius: 999px;
       border: 1px solid rgba(232,200,74,0.3);
       background: rgba(232,200,74,0.18);
@@ -1358,8 +1358,22 @@
       border-color: rgba(232,200,74,0.3);
       color: #e8c84a;
     }
+    .mode-card--selectable {
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    .mode-card--selectable:hover {
+      border-color: rgba(232,200,74,0.15);
+      opacity: 1;
+    }
     .mode-card--locked {
       opacity: 0.4;
+    }
+    .freeplay-start-btn {
+      margin: 16px auto;
+      display: block;
+      font-size: 15px;
+      padding: 12px 32px;
     }
     .mode-card .mode-icon {
       font-size: 16px;
@@ -1821,7 +1835,7 @@
       <div class="title-footer">
         <div class="title-version">v0.1 &middot; Story Mode</div>
         <div class="title-footer-actions" id="title-actions">
-          <button type="button" class="title-link-btn" id="title-how-to-play">
+          <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="Open how to play guide">
             <span class="title-link-btn__icon">✦</span>
             <span>How To Play</span>
           </button>
@@ -1839,7 +1853,7 @@
         <span class="hud-pill season-icon" id="hud-season-icon">🌱</span>
         <span class="hud-pill chapter" id="hud-chapter">Chapter 1</span>
         <span class="hud-pill" id="hud-phase">Planning</span>
-        <button id="hud-action" class="hud-action-btn" type="button">Commit Plan</button>
+        <button id="hud-action" class="hud-action-btn" type="button" aria-label="Advance to next phase">Start Season</button>
         <span class="hud-pill tokens" id="hud-tokens" style="display:none;">
           <span class="token-dot"></span>
           <span class="token-dot"></span>
@@ -1874,7 +1888,7 @@
         <section class="pause-section">
           <div class="pause-section-label">Session</div>
           <div class="pause-action-grid">
-            <button id="pause-resume" class="pause-action pause-action--primary">
+            <button id="pause-resume" class="pause-action pause-action--primary" aria-label="Resume game">
               <span class="pause-action__icon">▶</span>
               <span>
                 <span class="pause-action__title">Resume</span>
@@ -1940,14 +1954,14 @@
       <div class="bug-subtitle">Saved locally on this device for later review</div>
       <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>
       <div class="bug-report-actions">
-        <button class="bug-btn-cancel" id="bug-cancel">Cancel</button>
-        <button class="bug-btn-send" id="bug-send">Save Report</button>
+        <button class="bug-btn-cancel" id="bug-cancel" aria-label="Cancel bug report">Cancel</button>
+        <button class="bug-btn-send" id="bug-send" aria-label="Submit bug report">Save Report</button>
       </div>
       <div class="bug-meta" id="bug-meta"></div>
     </div>
     <button id="fab-plant" aria-label="Open planting menu"><span aria-hidden="true">🌱</span><span>Plant</span></button>
     <button id="fab-backpack" aria-label="Open crop backpack">🎒</button>
-    <button id="fab-advance">Next</button>
+    <button id="fab-advance" aria-label="Advance to next phase">Next</button>
     <div id="toast-container"></div>
   </div>
   <script type="module" src="/src/main.js"></script>

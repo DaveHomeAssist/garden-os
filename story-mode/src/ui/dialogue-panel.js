@@ -70,7 +70,7 @@ export function createDialoguePanel(rootEl) {
         <div class="dp-text" id="dp-text"></div>
         <div class="dp-choice-row" id="dp-choice-row" role="group" aria-label="Dialogue choices"></div>
         <div class="dp-dots" id="dp-dots"></div>
-        <div class="dp-advance-hint" id="dp-advance-hint" aria-hidden="true">▼</div>
+        <div class="dp-advance-hint" id="dp-advance-hint" aria-hidden="true">tap to continue ▼</div>
       </div>
       <button class="dp-skip-btn" id="dp-skip-btn" aria-label="Skip cutscene">Skip</button>
     </div>

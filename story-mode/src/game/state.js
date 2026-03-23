@@ -1,7 +1,7 @@
 /**
  * Game State — campaign + season state objects.
  */
-import { getCropsForChapter } from '../data/crops.js';
+import { getAllCrops, getCropsForChapter } from '../data/crops.js';
 import { addItemToInventoryState, createInventoryState } from './inventory.js';
 import { getDefaultSkillsState, getSkillXpMap } from './skills.js';
 
@@ -129,6 +129,7 @@ function createCampaignState() {
     pantry: {},
     recipesCompleted: [],
     keepsakes: [],
+    sandbox: false,
     cropsUnlocked: getCropsForChapter(1).map((crop) => crop.id),
     journalEntries: [],
     lastSeasonReview: null,
@@ -173,6 +174,36 @@ function createGameState() {
   };
 }
 
+function createSandboxState() {
+  const campaign = createCampaignState();
+  const SANDBOX_COLS = 8;
+  const SANDBOX_ROWS = 8;
+  campaign.sandbox = true;
+  campaign.currentChapter = 99;
+  campaign.cropsUnlocked = getAllCrops().map((c) => c.id);
+  campaign.soilHealth = Array(SANDBOX_COLS * SANDBOX_ROWS).fill(1.0);
+  const season = createSeasonState(99, 'spring', campaign, SANDBOX_COLS, SANDBOX_ROWS);
+  return {
+    campaign,
+    season,
+    settings: {
+      dayNightEnabled: false,
+      audio: {
+        masterVolume: 1,
+        sfxVolume: 1,
+        ambientVolume: 0.3,
+        muted: false,
+      },
+    },
+    selectedCropId: null,
+    cameraMode: 'overview',
+    cameraWeight: 'overview',
+    selectedWeight: 'overview',
+    panelOpen: null,
+    showChapterIntro: false,
+  };
+}
+
 export {
   PHASES,
   BEAT_PHASES,
@@ -189,6 +220,7 @@ export {
   createSeasonState,
   createCampaignState,
   createGameState,
+  createSandboxState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
   getGridCols,

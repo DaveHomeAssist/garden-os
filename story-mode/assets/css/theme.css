@@ -357,6 +357,18 @@
   text-transform: uppercase;
 }
 
+.palette-fit {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.palette-fit--great { color: #5aab6b; }
+.palette-fit--ok    { color: #e8c84a; }
+.palette-fit--poor  { color: rgba(247,242,234,0.35); }
+
 .intervention-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

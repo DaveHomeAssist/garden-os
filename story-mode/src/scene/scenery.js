@@ -18,20 +18,122 @@ const SEASON_TREE_COLORS = {
   winter: [0x6a6a6a, 0x7a7a7a, 0x5a5a5a],
 };
 
+function makeCanvasTexture(size, painter, repeatX = 1, repeatY = 1) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  painter(ctx, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(repeatX, repeatY);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function createBoardTexture(baseColor, grainColor, repeatX = 1, repeatY = 1) {
+  const base = new THREE.Color(baseColor);
+  const grain = new THREE.Color(grainColor);
+  return makeCanvasTexture(192, (ctx, size) => {
+    ctx.fillStyle = `#${base.getHexString()}`;
+    ctx.fillRect(0, 0, size, size);
+    for (let x = 0; x < size; x += 18) {
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(x, 0, 2, size);
+    }
+    for (let y = 0; y < size; y += 3) {
+      const alpha = 0.08 + (Math.sin(y * 0.13) * 0.04 + 0.04);
+      ctx.strokeStyle = `rgba(${Math.round(grain.r * 255)}, ${Math.round(grain.g * 255)}, ${Math.round(grain.b * 255)}, ${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(0, y + Math.sin(y * 0.09) * 4);
+      ctx.lineTo(size, y - Math.cos(y * 0.07) * 3);
+      ctx.stroke();
+    }
+  }, repeatX, repeatY);
+}
+
+function createPebbleTexture(baseHex, speckHex, repeatX = 1, repeatY = 1) {
+  const base = new THREE.Color(baseHex);
+  const speck = new THREE.Color(speckHex);
+  return makeCanvasTexture(192, (ctx, size) => {
+    ctx.fillStyle = `#${base.getHexString()}`;
+    ctx.fillRect(0, 0, size, size);
+    for (let i = 0; i < 1200; i++) {
+      const x = (i * 47) % size;
+      const y = (i * 83) % size;
+      const r = 1 + (i % 2);
+      const alpha = 0.12 + (i % 4) * 0.03;
+      ctx.fillStyle = `rgba(${Math.round(speck.r * 255)}, ${Math.round(speck.g * 255)}, ${Math.round(speck.b * 255)}, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }, repeatX, repeatY);
+}
+
+function createSoftPatchGeometry(width, depth, segmentsX = 12, segmentsY = 12, amplitude = 0.01, phase = 0) {
+  const geometry = new THREE.PlaneGeometry(width, depth, segmentsX, segmentsY);
+  const position = geometry.getAttribute('position');
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i) / width;
+    const y = position.getY(i) / depth;
+    const edgeFade = Math.max(0, 1 - Math.max(Math.abs(x) * 1.9, Math.abs(y) * 1.9));
+    const ripple = Math.sin((x + phase) * 17) * Math.cos((y - phase) * 13) * 0.55;
+    const swell = Math.sin((x - y + phase) * 11) * 0.45;
+    position.setZ(i, (ripple + swell) * amplitude * edgeFade);
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export function buildScenery(tracker = null) {
   const group = new THREE.Group();
   const treeCanopies = [];
   const hedgePlants = [];
   const accentFlowers = [];
+  const breezeNodes = [];
+  const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
+  const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
+  const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
+  const fenceTexture = createBoardTexture(WOOD_COLOR, WOOD_DARK, 2.6, 2.6);
+  const gravelTexture = createPebbleTexture(PATH_COLOR, 0xc1b39d, 3.6, 3.6);
+  const mulchTexture = createPebbleTexture(MULCH_COLOR, 0x7a5d3a, 3.8, 1.4);
+  const concreteTexture = createPebbleTexture(0xb5b0a2, 0xe2ddd2, 2.2, 2.2);
 
-  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide });
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78 });
-  const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88 });
+  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide, map: sidingTexture, bumpMap: sidingTexture, bumpScale: 0.01 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78, map: trimTexture, bumpMap: trimTexture, bumpScale: 0.008 });
+  const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88, map: porchTexture, bumpMap: porchTexture, bumpScale: 0.008 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
   const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
-  const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88 });
-  const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9 });
-  const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0 });
+  const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.01 });
+  const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.008 });
+  const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0, map: gravelTexture, bumpMap: gravelTexture, bumpScale: 0.012 });
+
+  function registerBreezeNode(mesh, {
+    rotX = 0,
+    rotY = 0,
+    rotZ = 0.04,
+    lift = 0,
+    speed = 0.7,
+    phase = 0,
+  } = {}) {
+    mesh.userData.breeze = {
+      rotX,
+      rotY,
+      rotZ,
+      lift,
+      speed,
+      phase,
+      basePositionY: mesh.position.y,
+      baseRotationX: mesh.rotation.x,
+      baseRotationY: mesh.rotation.y,
+      baseRotationZ: mesh.rotation.z,
+    };
+    breezeNodes.push(mesh);
+    return mesh;
+  }
 
   // --- Back house wall directly behind the bed ---
   const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 3.5), sidingMat);
@@ -47,8 +149,8 @@ export function buildScenery(tracker = null) {
   group.add(foundationStrip);
 
   const mulchBed = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.3, 0.95),
-    new THREE.MeshStandardMaterial({ color: MULCH_COLOR, roughness: 0.98 })
+    createSoftPatchGeometry(7.3, 0.95, 32, 8, 0.022, 0.18),
+    new THREE.MeshStandardMaterial({ color: MULCH_COLOR, roughness: 0.98, map: mulchTexture, bumpMap: mulchTexture, bumpScale: 0.01 })
   );
   mulchBed.rotation.x = -Math.PI / 2;
   mulchBed.position.set(0.25, 0.005, -4.95);
@@ -63,11 +165,12 @@ export function buildScenery(tracker = null) {
     { x: 1.8, z: -4.88, scale: 0.98, color: 0x587949 },
   ]) {
     const shrub = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22 * scale, 8, 6),
+      new THREE.SphereGeometry(0.22 * scale, 12, 10),
       new THREE.MeshStandardMaterial({ color, roughness: 0.84 })
     );
     shrub.scale.set(1.2, 0.85, 1);
     shrub.position.set(x, 0.19 * scale, z);
+    registerBreezeNode(shrub, { rotY: 0.03, rotZ: 0.018, lift: 0.008, speed: 0.8, phase: x * 0.35 });
     group.add(shrub);
     hedgePlants.push(shrub);
   }
@@ -78,11 +181,12 @@ export function buildScenery(tracker = null) {
     { x: 1.35, z: -4.56, color: 0xc7b6d8 },
   ]) {
     const bloom = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 7, 5),
+      new THREE.SphereGeometry(0.09, 10, 8),
       new THREE.MeshStandardMaterial({ color, roughness: 0.6 })
     );
     bloom.scale.set(1.15, 0.8, 1);
     bloom.position.set(x, 0.34, z);
+    registerBreezeNode(bloom, { rotZ: 0.05, lift: 0.012, speed: 1.6, phase: x + z });
     group.add(bloom);
     accentFlowers.push(bloom);
   }
@@ -104,17 +208,18 @@ export function buildScenery(tracker = null) {
   group.add(porchRoof);
 
   for (const x of [-3.38, -2.52, -1.72]) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.58, 0.1), trimMat);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 2.58, 10), trimMat);
     post.position.set(x - 0.4, 1.29, -5.38);
     group.add(post);
   }
 
-  const porchRail = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.06, 0.06), trimMat);
+  const porchRail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.82, 10), trimMat);
+  porchRail.rotation.z = Math.PI / 2;
   porchRail.position.set(-2.95, 0.72, -4.7);
   group.add(porchRail);
 
   for (const x of [-3.35, -2.55, -1.75]) {
-    const baluster = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.54, 0.05), trimMat);
+    const baluster = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.54, 8), trimMat);
     baluster.position.set(x, 0.39, -4.7);
     group.add(baluster);
   }
@@ -143,7 +248,11 @@ export function buildScenery(tracker = null) {
 
   // Side fence line on the right edge of the yard
   for (let i = 0; i < 10; i++) {
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42 + (i % 2) * 0.04, 0.03), i % 3 === 0 ? fenceDarkMat : fenceMat);
+    const slatHeight = 0.42 + (i % 2) * 0.04;
+    const slat = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.028, 0.032, slatHeight, 8),
+      i % 3 === 0 ? fenceDarkMat : fenceMat
+    );
     slat.position.set(4.95, slat.geometry.parameters.height / 2, -0.2 + i * 0.36);
     slat.rotation.y = -0.08;
     group.add(slat);
@@ -157,7 +266,7 @@ export function buildScenery(tracker = null) {
     { w: 5.8, h: 1.15, x: 0, z: -1.95 },
   ];
   gravelPatches.forEach(({ w, h, x, z }) => {
-    const patch = new THREE.Mesh(new THREE.PlaneGeometry(w, h), gravelMat);
+    const patch = new THREE.Mesh(createSoftPatchGeometry(w, h, 16, 16, 0.008, x * 0.13 + z * 0.07), gravelMat);
     patch.rotation.x = -Math.PI / 2;
     patch.position.set(x, 0.006, z);
     patch.receiveShadow = true;
@@ -199,7 +308,7 @@ export function buildScenery(tracker = null) {
   for (const tp of treePositions) {
     const treeGroup = new THREE.Group();
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06 * tp.scale, 0.1 * tp.scale, 1.1 * tp.scale, 6),
+      new THREE.CylinderGeometry(0.06 * tp.scale, 0.1 * tp.scale, 1.1 * tp.scale, 14),
       trunkMat
     );
     trunk.position.y = 0.55 * tp.scale;
@@ -215,7 +324,7 @@ export function buildScenery(tracker = null) {
         roughness: 0.75,
       });
       const canopy = new THREE.Mesh(
-        new THREE.SphereGeometry(sizes[j] * tp.scale, 8, 6),
+        new THREE.SphereGeometry(sizes[j] * tp.scale, 20, 16),
         canopyMat
       );
       canopy.position.y = heights[j] * tp.scale;
@@ -223,6 +332,13 @@ export function buildScenery(tracker = null) {
       canopyGroup.add(canopy);
     }
     treeGroup.add(canopyGroup);
+    registerBreezeNode(canopyGroup, {
+      rotY: 0.045,
+      rotZ: 0.03,
+      lift: 0.02,
+      speed: 0.45 + tp.scale * 0.08,
+      phase: tp.x * 0.4 + tp.z * 0.2,
+    });
     treeGroup.position.set(tp.x, 0, tp.z);
     group.add(treeGroup);
     treeCanopies.push(canopyGroup);
@@ -230,9 +346,10 @@ export function buildScenery(tracker = null) {
 
   const shrubMat = new THREE.MeshStandardMaterial({ color: 0x3f6f32, roughness: 0.82 });
   for (const [x, z, scale] of [[-4.1, 2.6, 0.9], [4.0, 3.9, 0.72]]) {
-    const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.34 * scale, 7, 5), shrubMat);
+    const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.34 * scale, 18, 14), shrubMat);
     shrub.scale.set(1.1, 0.8, 1);
     shrub.position.set(x, 0.22 * scale, z);
+    registerBreezeNode(shrub, { rotY: 0.028, rotZ: 0.016, lift: 0.008, speed: 0.72, phase: z * 0.3 });
     group.add(shrub);
   }
 
@@ -247,7 +364,7 @@ export function buildScenery(tracker = null) {
   canGroup.add(canBody);
 
   const spout = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.01, 0.025, 0.1, 5),
+    new THREE.CylinderGeometry(0.01, 0.025, 0.1, 8),
     new THREE.MeshStandardMaterial({ color: 0x4a8a6a, roughness: 0.6, metalness: 0.2 })
   );
   spout.position.set(0.06, 0.1, 0);
@@ -265,7 +382,7 @@ export function buildScenery(tracker = null) {
     const angle = (i / 12) * Math.PI * 2.5;
     const r = 0.15 + i * 0.008;
     const segment = new THREE.Mesh(
-      new THREE.SphereGeometry(0.015, 4, 3),
+      new THREE.SphereGeometry(0.015, 6, 5),
       hoseMat
     );
     segment.position.set(Math.cos(angle) * r, 0.02, Math.sin(angle) * r);
@@ -278,22 +395,33 @@ export function buildScenery(tracker = null) {
   const gloveMat = new THREE.MeshStandardMaterial({ color: 0xb7b1a0, roughness: 0.92 });
   const gloveCuffMat = new THREE.MeshStandardMaterial({ color: 0x6a8b8c, roughness: 0.8 });
   for (const [x, z, rot] of [[1.42, 1.72, 0.35], [1.66, 1.6, -0.28]]) {
-    const glove = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.09), gloveMat);
+    const glove = new THREE.Mesh(new THREE.CapsuleGeometry(0.026, 0.11, 5, 10), gloveMat);
     glove.position.set(x, 0.02, z);
     glove.rotation.y = rot;
+    glove.rotation.z = Math.PI / 2;
+    glove.scale.set(1, 0.48, 0.72);
     group.add(glove);
 
-    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.1), gloveCuffMat);
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.06, 10), gloveCuffMat);
     cuff.position.set(x - 0.08, 0.02, z);
     cuff.rotation.y = rot;
+    cuff.rotation.z = Math.PI / 2;
+    cuff.scale.set(1, 0.85, 0.95);
     group.add(cuff);
   }
 
   // Harvest basket with produce
   const basketMat = new THREE.MeshStandardMaterial({ color: 0x8a6032, roughness: 0.88 });
-  const basket = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.28), basketMat);
+  const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.16, 24), basketMat);
+  basket.scale.set(1.28, 1, 0.92);
   basket.position.set(2.54, 0.08, 1.58);
   group.add(basket);
+
+  const basketRim = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.012, 6, 18), basketMat);
+  basketRim.position.set(2.54, 0.16, 1.58);
+  basketRim.rotation.x = Math.PI / 2;
+  basketRim.scale.set(1.28, 1, 0.92);
+  group.add(basketRim);
 
   const handle = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.015, 5, 18, Math.PI), basketMat);
   handle.position.set(2.54, 0.19, 1.58);
@@ -307,7 +435,7 @@ export function buildScenery(tracker = null) {
     [2.56, 0.17, 1.6, produceMatB],
     [2.64, 0.16, 1.5, produceMatA],
   ]) {
-    const produce = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), mat);
+    const produce = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mat);
     produce.position.set(x, y, z);
     group.add(produce);
   }
@@ -323,23 +451,24 @@ export function buildScenery(tracker = null) {
 
   // 2. Downspout — vertical box on the right edge of the house wall
   const downspoutMat = new THREE.MeshStandardMaterial({ color: 0xa8a8a8, roughness: 0.7 });
-  const downspout = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.4, 0.06), downspoutMat);
+  const downspout = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 2.4, 10), downspoutMat);
+  downspout.scale.set(1, 1, 0.62);
   downspout.position.set(3.4, 1.2, -4.68);
   group.add(downspout);
 
   const barrelMat = new THREE.MeshStandardMaterial({ color: 0x3c5f46, roughness: 0.76 });
-  const rainBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 12), barrelMat);
+  const rainBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 18), barrelMat);
   rainBarrel.position.set(3.03, 0.35, -4.78);
   rainBarrel.castShadow = true;
   group.add(rainBarrel);
 
-  const barrelLid = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 12), trimMat);
+  const barrelLid = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 18), trimMat);
   barrelLid.position.set(3.03, 0.72, -4.78);
   group.add(barrelLid);
 
   // 3. Concrete pad under bed area — just above ground
-  const concretePadMat = new THREE.MeshStandardMaterial({ color: 0xb5b0a2, roughness: 0.95 });
-  const concretePad = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 3.0), concretePadMat);
+  const concretePadMat = new THREE.MeshStandardMaterial({ color: 0xb5b0a2, roughness: 0.95, map: concreteTexture, bumpMap: concreteTexture, bumpScale: 0.007 });
+  const concretePad = new THREE.Mesh(createSoftPatchGeometry(4.2, 3.0, 18, 14, 0.004, 0.34), concretePadMat);
   concretePad.rotation.x = -Math.PI / 2;
   concretePad.position.set(0, 0.003, 0);
   concretePad.receiveShadow = true;
@@ -347,7 +476,17 @@ export function buildScenery(tracker = null) {
 
   // 4. Wall-mounted light fixture above the back door
   const fixtureMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.7 });
-  const fixture = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.08), fixtureMat);
+  const fixture = new THREE.Group();
+  const fixtureBackplate = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.03, 10), fixtureMat);
+  fixtureBackplate.rotation.x = Math.PI / 2;
+  fixture.add(fixtureBackplate);
+  const fixtureShade = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.08, 10, 1, true), fixtureMat);
+  fixtureShade.rotation.x = Math.PI / 2;
+  fixtureShade.position.z = 0.045;
+  fixture.add(fixtureShade);
+  const fixtureBulb = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), new THREE.MeshStandardMaterial({ color: 0xf8e8c2, emissive: 0xffe1a2, emissiveIntensity: 0.18, roughness: 0.25 }));
+  fixtureBulb.position.z = 0.035;
+  fixture.add(fixtureBulb);
   fixture.position.set(-2.55, 2.0, -4.7);
   group.add(fixture);
   const porchLight = new THREE.PointLight(0xfff0d4, 0.3, 3);
@@ -388,9 +527,11 @@ export function buildScenery(tracker = null) {
 
   // 7. Kneeling pad — flat foam rectangle with slight rotation
   const kneelMat = new THREE.MeshStandardMaterial({ color: 0x5a8a4a, roughness: 0.95 });
-  const kneelingPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.02, 0.16), kneelMat);
+  const kneelingPad = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.16, 5, 10), kneelMat);
   kneelingPad.position.set(0.72, 0.01, 2.08);
   kneelingPad.rotation.y = 0.22;
+  kneelingPad.rotation.z = Math.PI / 2;
+  kneelingPad.scale.set(1, 0.15, 0.72);
   group.add(kneelingPad);
 
   // ── NEW SCENERY ITEMS ──────────────────────────────────────────────────
@@ -404,7 +545,16 @@ export function buildScenery(tracker = null) {
     [0.7, 0.06, 0, 0.72],
     [0.7, 0.06, 0, -0.72],
   ]) {
-    const part = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.03), screenDoorMat);
+    const isVertical = h > w;
+    const part = new THREE.Mesh(
+      isVertical
+        ? new THREE.CylinderGeometry(0.026, 0.03, h, 8)
+        : new THREE.CylinderGeometry(0.026, 0.026, w, 8),
+      screenDoorMat
+    );
+    if (!isVertical) {
+      part.rotation.z = Math.PI / 2;
+    }
     part.position.set(x, y, 0);
     screenDoorGroup.add(part);
   }
@@ -429,14 +579,16 @@ export function buildScenery(tracker = null) {
 
   // 2. Radio on porch railing
   const radioBody = new THREE.Mesh(
-    new THREE.BoxGeometry(0.08, 0.06, 0.05),
+    new THREE.CapsuleGeometry(0.022, 0.04, 4, 8),
     new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.88 })
   );
+  radioBody.rotation.z = Math.PI / 2;
+  radioBody.scale.set(1, 0.86, 0.82);
   radioBody.position.set(-2.0, 0.22, -3.5);
   group.add(radioBody);
 
   const radioAntenna = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.005, 0.005, 0.1, 4),
+    new THREE.CylinderGeometry(0.005, 0.005, 0.1, 6),
     new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.4 })
   );
   radioAntenna.position.set(-2.0, 0.3, -3.5);
@@ -450,12 +602,22 @@ export function buildScenery(tracker = null) {
   {
     const birdOnFence = new THREE.Group();
     const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8 });
-    const birdCone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.05, 6), birdBodyMat);
-    birdCone.position.set(0, 0, 0);
-    birdOnFence.add(birdCone);
-    const birdHeadSphere = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 5), birdBodyMat);
-    birdHeadSphere.position.set(0, 0.04, 0);
+    const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xd9ad54, roughness: 0.65 });
+    const birdBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.034, 5, 10), birdBodyMat);
+    birdBody.rotation.z = Math.PI / 2;
+    birdBody.scale.set(1.15, 0.95, 0.9);
+    birdOnFence.add(birdBody);
+    const birdHeadSphere = new THREE.Mesh(new THREE.SphereGeometry(0.019, 8, 7), birdBodyMat);
+    birdHeadSphere.position.set(0.03, 0.018, 0);
     birdOnFence.add(birdHeadSphere);
+    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.007, 0.02, 6), birdBeakMat);
+    birdBeak.rotation.z = -Math.PI / 2;
+    birdBeak.position.set(0.052, 0.016, 0);
+    birdOnFence.add(birdBeak);
+    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.01, 0.026, 6), birdBodyMat);
+    birdTail.rotation.z = 1.18;
+    birdTail.position.set(-0.03, 0.004, 0);
+    birdOnFence.add(birdTail);
     birdOnFence.position.set(4.98, 0.5, 0.18);
     seasonalProps.add(birdOnFence);
   }
@@ -470,7 +632,7 @@ export function buildScenery(tracker = null) {
       const mat = new THREE.MeshStandardMaterial({
         color: leafColors[i % 3], roughness: 0.9, side: THREE.DoubleSide,
       });
-      const leaf = new THREE.Mesh(new THREE.CircleGeometry(r, 6), mat);
+      const leaf = new THREE.Mesh(new THREE.CircleGeometry(r, 10), mat);
       leaf.rotation.x = -Math.PI / 2;
       leaf.position.set(
         -1.5 + Math.sin(i * 1.7) * 2.0,
@@ -529,12 +691,13 @@ export function buildScenery(tracker = null) {
       const mat = new THREE.MeshStandardMaterial({
         color: flowerColors[i % flowerColors.length], roughness: 0.6,
       });
-      const flower = new THREE.Mesh(new THREE.SphereGeometry(0.01, 5, 4), mat);
+      const flower = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 6), mat);
       flower.position.set(
         -3.5 + Math.sin(i * 3.1) * 3.5,
         0.01,
         2.5 + Math.cos(i * 2.1) * 2.0
       );
+      registerBreezeNode(flower, { rotZ: 0.08, lift: 0.01, speed: 1.9 + (i % 4) * 0.07, phase: i * 0.42 });
       springFlowers.add(flower);
       accentFlowers.push(flower);
     }
@@ -609,12 +772,14 @@ export function buildScenery(tracker = null) {
     pole.position.set(7.8, 1.5, -5.4);
     group.add(pole);
 
-    const crossbar = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.04), poleMat);
+    const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.6, 8), poleMat);
+    crossbar.rotation.z = Math.PI / 2;
     crossbar.position.set(7.8, 3.0, -5.4);
     group.add(crossbar);
 
     const wireMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
-    const wire = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.005, 0.005), wireMat);
+    const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 2.4, 6), wireMat);
+    wire.rotation.z = Math.PI / 2;
     wire.position.set(9.0, 2.98, -5.4);
     group.add(wire);
   }
@@ -647,7 +812,7 @@ export function buildScenery(tracker = null) {
       { x: 6, y: 15, z: -5, sx: 2.2, sy: 0.55, sz: 1.3 },
     ];
     cloudData.forEach(({ x, y, z, sx, sy, sz }) => {
-      const cloud = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), cloudMat.clone());
+      const cloud = new THREE.Mesh(new THREE.SphereGeometry(0.5, 20, 16), cloudMat.clone());
       cloud.scale.set(sx, sy, sz);
       cloud.position.set(x, y, z);
       group.add(cloud);
@@ -686,14 +851,14 @@ export function buildScenery(tracker = null) {
   const puddles = new THREE.Group();
   {
     const puddleMat = new THREE.MeshStandardMaterial({
-      color: 0x667788, metalness: 0.3, roughness: 0.1,
-      transparent: true, opacity: 0.5,
+      color: 0x8899aa, metalness: 0.25, roughness: 0.15,
+      transparent: true, opacity: 0.22,
     });
     const puddleData = [
-      { r: 0.3, x: -1.0, z: 1.8 },
-      { r: 0.2, x: 1.2, z: 2.2 },
-      { r: 0.5, x: 0.0, z: 3.2 },
-      { r: 0.25, x: -2.0, z: 0.6 },
+      { r: 0.12, x: -1.0, z: 1.8 },
+      { r: 0.08, x: 1.2, z: 2.2 },
+      { r: 0.18, x: 0.0, z: 3.2 },
+      { r: 0.10, x: -2.0, z: 0.6 },
     ];
     puddleData.forEach(({ r, x, z }) => {
       const puddle = new THREE.Mesh(new THREE.CircleGeometry(r, 16), puddleMat.clone());
@@ -709,12 +874,19 @@ export function buildScenery(tracker = null) {
   {
     const catMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
     const catSilhouette = new THREE.Group();
-    const catBody2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.04), catMat);
+    const catBody2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.026, 0.05, 5, 10), catMat);
+    catBody2.rotation.z = Math.PI / 2;
+    catBody2.scale.set(1, 0.9, 0.78);
     catSilhouette.add(catBody2);
-    const catHead2 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), catMat);
-    catHead2.position.set(0.05, 0.03, 0);
+    const catHead2 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 7), catMat);
+    catHead2.position.set(0.05, 0.022, 0);
     catSilhouette.add(catHead2);
-    const catTail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 5), catMat);
+    for (const ex of [-0.01, 0.01]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.02, 6), catMat);
+      ear.position.set(0.05 + ex, 0.055, 0);
+      catSilhouette.add(ear);
+    }
+    const catTail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 8), catMat);
     catTail2.rotation.z = -0.8;
     catTail2.position.set(-0.07, 0.03, 0);
     catSilhouette.add(catTail2);
@@ -753,7 +925,7 @@ export function buildScenery(tracker = null) {
   const windIndicator = new THREE.Group();
   {
     const windPoleMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.3 });
-    const windPole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.3, 4), windPoleMat);
+    const windPole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.3, 6), windPoleMat);
     windPole.position.y = 0.15;
     windIndicator.add(windPole);
 
@@ -768,6 +940,7 @@ export function buildScenery(tracker = null) {
     });
     const windFlag = new THREE.Mesh(flagGeo, flagMat);
     windFlag.position.set(0.01, 0.25, 0);
+    registerBreezeNode(windFlag, { rotZ: 0.22, speed: 2.5, phase: 1.1 });
     windIndicator.add(windFlag);
     windIndicator._flag = windFlag;
   }
@@ -820,6 +993,22 @@ export function buildScenery(tracker = null) {
       if (windIndicator._flag) {
         const seasonRotations = { spring: 0.3, summer: 0.1, fall: 0.6, winter: 0.8 };
         windIndicator._flag.rotation.y = seasonRotations[season] || 0.2;
+        if (windIndicator._flag.userData.breeze) {
+          windIndicator._flag.userData.breeze.baseRotationY = windIndicator._flag.rotation.y;
+        }
+      }
+    },
+
+    updateBreeze(time, strength = 1) {
+      for (const node of breezeNodes) {
+        const breeze = node.userData?.breeze;
+        if (!breeze) continue;
+        const wave = Math.sin(time * breeze.speed + breeze.phase);
+        const flutter = Math.cos(time * breeze.speed * 1.7 + breeze.phase * 0.6);
+        node.position.y = breeze.basePositionY + Math.max(0, wave) * breeze.lift * strength;
+        node.rotation.x = breeze.baseRotationX + flutter * breeze.rotX * strength;
+        node.rotation.y = breeze.baseRotationY + flutter * breeze.rotY * strength;
+        node.rotation.z = breeze.baseRotationZ + wave * breeze.rotZ * strength;
       }
     },
 

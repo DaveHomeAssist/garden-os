@@ -78,7 +78,7 @@ export class DayNightCycle {
     this.moonLight.position.set(-2, 5, -3);
     this.stars = this.createStars();
     scene.add(this.moonLight, this.stars);
-    this.apply();
+    if (this.enabled) this.apply();
   }
 
   createStars() {

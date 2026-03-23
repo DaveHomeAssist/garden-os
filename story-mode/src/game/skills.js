@@ -1,4 +1,5 @@
 import skillTreeData from 'specs/SKILL_TREE.json';
+import { Actions } from './store.js';
 
 export const Skills = {
   GARDENING: 'gardening',

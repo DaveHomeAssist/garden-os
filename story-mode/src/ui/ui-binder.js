@@ -148,7 +148,8 @@ function getYearForChapter(chapter) {
   return Math.floor((chapter - 1) / 4) + 1;
 }
 
-function isLetItGrowInteractionMode() {
+function isLetItGrowInteractionMode(state) {
+  if (state?.campaign?.sandbox) return true;
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'let-it-grow') return true;
   if (params.get('let-it-grow') === '1') return true;
@@ -243,7 +244,7 @@ function bindUI({
   const playerController = createPlayerController();
   const touchStick = createTouchStick();
   touchStick.mount(document.getElementById('app'));
-  const letItGrowInteractionMode = isLetItGrowInteractionMode();
+  const letItGrowInteractionMode = isLetItGrowInteractionMode(state);
   const toolHUD = letItGrowInteractionMode
     ? new ToolHUD(document.getElementById('app'), inputManager, store)
     : null;
@@ -711,7 +712,7 @@ function bindUI({
     if (state.season.season === 'winter') return 'Continue';
     switch (state.season.phase) {
       case PHASES.PLANNING:
-        return 'Commit Plan';
+        return 'Start Season';
       case PHASES.TRANSITION:
         return 'Continue';
       case PHASES.LATE_SEASON:
@@ -1294,8 +1295,9 @@ function bindUI({
     const overlayContainer = document.getElementById('overlay-container');
     overlayContainer?.querySelector('#season-transition-overlay')?.remove();
 
+    const isSandbox = state.campaign?.sandbox;
     const nextChapter = state.campaign.currentChapter + 1;
-    const campaignComplete = nextChapter > 12;
+    const campaignComplete = !isSandbox && nextChapter > 12;
     const nextSeasonLabel = getRotatedSeasonLabel(state.season.season);
 
     const overlay = document.createElement('div');
@@ -1303,20 +1305,22 @@ function bindUI({
     overlay.id = 'season-transition-overlay';
     overlay.innerHTML = `
       <div class="chapter-num">Season Complete</div>
-      <h2>${campaignComplete ? 'The Garden Stays' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
+      <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
       <p>
         ${campaignComplete
           ? 'You have reached the end of the current campaign. Continue to view the closing season.'
-          : state.season.season === 'winter'
-            ? `Winter review is complete. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`
-            : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
+          : isSandbox
+            ? `${SEASON_LABELS[state.season.season]} is finished. Continue into ${nextSeasonLabel}.`
+            : state.season.season === 'winter'
+              ? `Winter review is complete. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`
+              : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
       </p>
       <div class="tap-hint" style="margin-top:20px;margin-bottom:10px;">
         ${campaignComplete ? 'Tap continue for the ending' : 'Tap continue to roll into the next season'}
       </div>
       <div class="start-choice-actions">
         <button type="button" class="start-choice-btn start-choice-btn--primary" id="season-transition-continue">
-          ${campaignComplete ? 'Continue' : `Continue to Chapter ${nextChapter}`}
+          ${campaignComplete ? 'Continue' : isSandbox ? `Continue to ${nextSeasonLabel}` : `Continue to Chapter ${nextChapter}`}
         </button>
       </div>
     `;
@@ -1358,7 +1362,7 @@ function bindUI({
 
     syncToolHUDVisibility();
 
-    if (hudChapter) hudChapter.textContent = `Ch ${state.campaign.currentChapter}`;
+    if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${state.campaign.currentChapter}`;
     if (hudPhase) hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
     if (hudCrops) hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
@@ -1406,8 +1410,8 @@ function bindUI({
           helperText = state.season.winterReviewSeen
             ? 'Winter review complete. Continue to roll into the next chapter.'
             : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
-        } else if (planted < 8) {
-          helperText = `Plant at least 8 crops to begin the season. ${8 - planted} more to go.`;
+        } else if (!state.campaign?.sandbox && planted < 8) {
+          helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
         } else {
           helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
         }
@@ -1453,11 +1457,15 @@ function bindUI({
           const badgeColor = FACTION_BADGE_COLORS[crop.faction] || '#888';
           const badgeName = FACTION_NAMES[crop.faction] || crop.faction;
           const selected = state.selectedCropId === crop.id;
+          const fit = crop.seasonalMultipliers?.[state.season.season] ?? 0;
+          const fitLabel = fit >= 0.8 ? 'Great fit' : fit >= 0.5 ? 'OK fit' : 'Poor fit';
+          const fitClass = fit >= 0.8 ? 'palette-fit--great' : fit >= 0.5 ? 'palette-fit--ok' : 'palette-fit--poor';
           return `
-            <button type="button" class="palette-item ${selected ? 'is-selected' : ''}" data-crop="${crop.id}">
+            <button type="button" class="palette-item ${selected ? 'is-selected' : ''}" data-crop="${crop.id}" aria-label="${crop.name}, ${badgeName}, ${fitLabel}">
               <div class="palette-emoji">${crop.emoji}</div>
               <div class="palette-name">${crop.name}</div>
               <span class="palette-badge" style="--badge-color:${badgeColor};">${badgeName}</span>
+              <span class="palette-fit ${fitClass}">${fitLabel}</span>
             </button>
           `;
         }).join('')}
@@ -1760,7 +1768,9 @@ function bindUI({
       if (cropPaletteOpen) closePalette();
       closePanelSheets();
       if (pauseStatus) {
-        pauseStatus.textContent = `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
+        pauseStatus.textContent = state.campaign?.sandbox
+          ? `Free Play · ${getPhaseLabel(state.season.phase)}`
+          : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
       pauseOverlay?.classList.add('is-open');
     } else {
@@ -1928,7 +1938,7 @@ function bindUI({
 
   function resize() {
     const rect = viewport.getBoundingClientRect();
-    scene.resize(rect.width, rect.height);
+    scene.resize(Math.round(rect.width), Math.round(rect.height));
   }
 
   window.addEventListener('resize', resize);
@@ -2022,12 +2032,16 @@ function bindUI({
   syncPlayerTool();
   syncInteractionPresentation();
   loop.start();
-  setGameInputEnabled(false);
-  phaseRouter.handleNarrativeTrigger({
-    type: 'chapter_start',
-    chapter: state.campaign.currentChapter,
-    season: state.season.season,
-  });
+  if (state.campaign?.sandbox) {
+    setGameInputEnabled(true);
+  } else {
+    setGameInputEnabled(false);
+    phaseRouter.handleNarrativeTrigger({
+      type: 'chapter_start',
+      chapter: state.campaign.currentChapter,
+      season: state.season.season,
+    });
+  }
 
   return {
     cleanup: cleanupGame,

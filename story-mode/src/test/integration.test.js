@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Integration Test Suite — story-mode game loop.
  *
@@ -192,9 +193,9 @@ describe('Save/Load Round-Trip', () => {
 
     // Verify season round-trip preserves grid
     expect(loadedSeason.phase).toBe(state.season.phase);
-    expect(loadedSeason.grid.length).toBe(CELL_COUNT);
+    expect(loadedSeason.grid.cells.length).toBe(CELL_COUNT);
     for (let i = 0; i < CELL_COUNT; i++) {
-      expect(loadedSeason.grid[i].cropId).toBe(state.season.grid[i].cropId);
+      expect(loadedSeason.grid.cells[i].cropId).toBe(state.season.grid[i].cropId);
     }
   });
 
@@ -285,7 +286,7 @@ describe('Save/Load Round-Trip', () => {
     expect(loaded).not.toBeNull();
     const loadedSeason = loadSeasonState(slot);
     expect(loadedSeason).not.toBeNull();
-    expect(loadedSeason.grid[0].cropId).toBe('basil');
+    expect(loadedSeason.grid.cells[0].cropId).toBe('basil');
 
     unsub();
 

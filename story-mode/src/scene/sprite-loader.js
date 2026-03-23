@@ -185,10 +185,6 @@ export function getCropIcon(cropId) {
  */
 export function getGrowthTexture(cropId, stage) {
   const sheetKey = `grow-${cropId}`;
-  const sheet = SHEET_ASSETS[sheetKey];
-  if (sheet?.hasAlpha === false) {
-    return getCropIcon(cropId);
-  }
   return getFrame(sheetKey, stage) ?? getCropIcon(cropId);
 }
 

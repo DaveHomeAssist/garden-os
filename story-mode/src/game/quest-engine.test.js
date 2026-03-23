@@ -101,7 +101,7 @@ describe('QuestEngine', () => {
     const state = engine.store.getState();
     state.campaign.pantry.lettuce = 2;
     state.campaign.reputation.old_gus = 25;
-    state.campaign.inventory.compost = 2;
+    state.campaign.craftedItems = { compost: 1 };
     state.campaign.worldState.visitedZones.push('meadow');
     state.season.grid[3].cropId = 'basil';
     state.season.season = 'spring';

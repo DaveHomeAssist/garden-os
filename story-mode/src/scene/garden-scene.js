@@ -67,6 +67,211 @@ const DORMANT_SOIL_TINT = new THREE.Color(0xc0c6cf);
 const DORMANT_CROP_TINT = new THREE.Color(0xb8c1ca);
 const DORMANT_CROP_EMISSIVE = 0x8798aa;
 
+function makeCanvasTexture(size, painter, repeatX = 1, repeatY = 1) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  painter(ctx, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(repeatX, repeatY);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function createGrassTexture(repeatX = 1, repeatY = 1) {
+  return makeCanvasTexture(192, (ctx, size) => {
+    ctx.fillStyle = '#496b34';
+    ctx.fillRect(0, 0, size, size);
+    for (let i = 0; i < 1500; i++) {
+      const x = (i * 37) % size;
+      const y = (i * 73) % size;
+      const h = 4 + (i % 5);
+      ctx.strokeStyle = i % 7 === 0 ? 'rgba(190, 170, 96, 0.16)' : 'rgba(92, 140, 72, 0.22)';
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x + ((i % 3) - 1) * 2, y);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 320; i++) {
+      const x = (i * 53) % size;
+      const y = (i * 97) % size;
+      ctx.fillStyle = 'rgba(58, 92, 43, 0.16)';
+      ctx.beginPath();
+      ctx.arc(x, y, 2 + (i % 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }, repeatX, repeatY);
+}
+
+function seededRandom(seed) {
+  const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
+  return x - Math.floor(x);
+}
+
+function varyColor(colorHex, hueShift = 0, saturationShift = 0, lightnessShift = 0) {
+  return new THREE.Color(colorHex).offsetHSL(hueShift, saturationShift, lightnessShift);
+}
+
+function createLeafGeometry(width, height, {
+  segmentsX = 6,
+  segmentsY = 10,
+  bend = 0.04,
+  cup = 0.02,
+  taper = 0.58,
+} = {}) {
+  const geometry = new THREE.PlaneGeometry(width, height, segmentsX, segmentsY);
+  const position = geometry.getAttribute('position');
+  const halfWidth = width / 2 || 1;
+
+  for (let i = 0; i < position.count; i++) {
+    const originalX = position.getX(i);
+    const originalY = position.getY(i);
+    const xNorm = originalX / halfWidth;
+    const yNorm = (originalY + height / 2) / height;
+    const edge = Math.abs(xNorm);
+    const taperedX = originalX * Math.max(0.12, 1 - yNorm * taper);
+    const midrib = Math.max(0, 1 - edge * 0.9);
+    const curl = Math.sin(yNorm * Math.PI) * bend * midrib;
+    const cupping = Math.sin(edge * Math.PI * 0.5) * cup * (0.2 + yNorm * 0.8);
+    const twist = Math.sin((xNorm * 1.3 + yNorm * 1.1) * Math.PI) * bend * 0.14;
+    position.setX(i, taperedX);
+    position.setZ(i, curl + cupping + twist);
+  }
+
+  geometry.translate(0, height / 2, 0);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function registerBreezeNode(mesh, {
+  rotX = 0,
+  rotY = 0,
+  rotZ = 0.08,
+  lift = 0,
+  speed = 1.3,
+  phase = 0,
+} = {}) {
+  mesh.userData.breeze = {
+    rotX,
+    rotY,
+    rotZ,
+    lift,
+    speed,
+    phase,
+    basePositionY: mesh.position.y,
+    baseRotationX: mesh.rotation.x,
+    baseRotationY: mesh.rotation.y,
+    baseRotationZ: mesh.rotation.z,
+  };
+  return mesh;
+}
+
+function createLeafMesh(colorHex, options = {}) {
+  const leaf = new THREE.Mesh(
+    createLeafGeometry(options.width ?? 0.08, options.height ?? 0.14, options),
+    new THREE.MeshStandardMaterial({
+      color: options.color ?? colorHex,
+      roughness: options.roughness ?? 0.72,
+      side: THREE.DoubleSide,
+    }),
+  );
+  leaf.castShadow = true;
+  return leaf;
+}
+
+function setCropSway(group, {
+  tilt = 0.03,
+  yaw = 0.02,
+  lift = 0.006,
+  speed = 1.2,
+  phase = 0,
+} = {}) {
+  group.userData.sway = { tilt, yaw, lift, speed, phase };
+  return group;
+}
+
+function addGroundShadow(group, {
+  radiusX = 0.11,
+  radiusZ = 0.09,
+  opacity = 0.14,
+  y = 0.005,
+} = {}) {
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.12, 18),
+    new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+    }),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = y;
+  shadow.scale.set(radiusX / 0.12, radiusZ / 0.12, 1);
+  shadow.renderOrder = 2;
+  group.add(shadow);
+  return shadow;
+}
+
+function getCellAnchor(cellIndex, role = 'crop') {
+  const roleSeed = role === 'crop' ? 1.7 : 4.3;
+  return {
+    xOffset: (seededRandom(cellIndex * 17.3 + roleSeed) - 0.5) * (role === 'crop' ? 0.085 : 0.04),
+    zOffset: (seededRandom(cellIndex * 23.9 + roleSeed) - 0.5) * (role === 'crop' ? 0.09 : 0.04),
+    rotationY: (seededRandom(cellIndex * 31.7 + roleSeed) - 0.5) * (role === 'crop' ? 0.7 : 0.35),
+    scale: role === 'crop' ? 0.92 + seededRandom(cellIndex * 11.1 + roleSeed) * 0.16 : 1,
+  };
+}
+
+function addLeafRosette(group, {
+  count = 6,
+  radiusX = 0.08,
+  radiusZ = 0.08,
+  height = 0.02,
+  leafWidth = 0.08,
+  leafHeight = 0.16,
+  color,
+  roughness = 0.72,
+  tilt = -0.95,
+  bend = 0.04,
+  cup = 0.02,
+  yawOffset = 0,
+  liftJitter = 0.015,
+  phaseOffset = 0,
+} = {}) {
+  for (let i = 0; i < count; i++) {
+    const angle = yawOffset + (i / count) * Math.PI * 2;
+    const leaf = createLeafMesh(color, {
+      width: leafWidth * (0.92 + (i % 3) * 0.06),
+      height: leafHeight * (0.92 + ((i + 1) % 2) * 0.08),
+      roughness,
+      bend,
+      cup,
+    });
+    leaf.position.set(
+      Math.cos(angle) * radiusX,
+      height + Math.sin(i * 1.7) * liftJitter,
+      Math.sin(angle) * radiusZ,
+    );
+    leaf.rotation.x = tilt;
+    leaf.rotation.y = angle + Math.PI / 2;
+    leaf.rotation.z = Math.sin(i * 2.1) * 0.18;
+    registerBreezeNode(leaf, {
+      rotX: 0.03,
+      rotY: 0.04,
+      rotZ: 0.13,
+      lift: 0.004,
+      speed: 1.3 + (i % 3) * 0.14,
+      phase: phaseOffset + i * 0.72,
+    });
+    group.add(leaf);
+  }
+}
+
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
 }
@@ -128,8 +333,8 @@ export function createGardenScene(container) {
   const resourceTracker = new ResourceTracker();
   scene.background = new THREE.Color(0x87CEEB);
 
-  // Ground-level fog for ambient occlusion feel
-  scene.fog = new THREE.FogExp2(0x8ea797, 0.022);
+  // Ground-level fog — neutral until mood lighting overrides on first sync
+  scene.fog = new THREE.FogExp2(0xb0c8d0, 0.022);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   // Start from the front/access side looking back toward the house wall.
@@ -155,18 +360,19 @@ export function createGardenScene(container) {
   scene.add(root);
 
   // Sky gradient — large background sphere with gradient texture
-  const skyGeo = new THREE.SphereGeometry(50, 32, 16);
+  const skyGeo = new THREE.SphereGeometry(50, 64, 32);
   const skyCanvas = document.createElement('canvas');
-  skyCanvas.width = 2;
+  skyCanvas.width = 8;
   skyCanvas.height = 256;
   const skyCtx = skyCanvas.getContext('2d');
   const grad = skyCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#4a7aaa');   // zenith — deeper blue
-  grad.addColorStop(0.4, '#87CEEB'); // mid sky
-  grad.addColorStop(0.7, '#c8dde8'); // near horizon — pale
-  grad.addColorStop(1.0, '#e8ddc8'); // horizon — warm haze
+  grad.addColorStop(0, '#6a9fd4');   // zenith — soft blue
+  grad.addColorStop(0.35, '#a8d8f0'); // upper sky
+  grad.addColorStop(0.6, '#d4e8f2');  // mid sky — light
+  grad.addColorStop(0.8, '#e8eeef');  // near horizon — bright haze
+  grad.addColorStop(1.0, '#f2e8d4');  // horizon — warm glow
   skyCtx.fillStyle = grad;
-  skyCtx.fillRect(0, 0, 2, 256);
+  skyCtx.fillRect(0, 0, 8, 256);
   const skyTex = new THREE.CanvasTexture(skyCanvas);
   skyTex.minFilter = THREE.LinearFilter;
   const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false });
@@ -181,13 +387,19 @@ export function createGardenScene(container) {
   }
 
   // Ground plane — grass-like, slightly darker near the bed via vertex colors
-  const groundGeo = new THREE.PlaneGeometry(40, 40, 40, 40);
+  const groundGeo = new THREE.PlaneGeometry(40, 40, 64, 64);
   const groundColors = [];
   const posAttr = groundGeo.getAttribute('position');
+  const grassTexture = createGrassTexture(5.5, 5.5);
   for (let i = 0; i < posAttr.count; i++) {
     const x = posAttr.getX(i);
     const z = posAttr.getY(i); // in the geometry, Y becomes Z after rotation
     const dist = Math.sqrt(x * x + z * z);
+    const centerFade = Math.min(dist / 5.5, 1);
+    const swell = Math.sin(x * 0.52) * Math.cos(z * 0.58) * 0.04;
+    const ripple = Math.sin((x + z) * 0.34) * 0.025;
+    const roll = Math.cos(x * 0.28 + 1.2) * Math.sin(z * 0.22) * 0.02;
+    posAttr.setZ(i, (swell + ripple + roll) * (0.15 + centerFade * 0.85));
     // Darken near center (bed area)
     const t = Math.min(dist / 6, 1);
     const r = 0.22 + t * 0.10;
@@ -195,16 +407,101 @@ export function createGardenScene(container) {
     const b = 0.16 + t * 0.06;
     groundColors.push(r, g, b);
   }
+  posAttr.needsUpdate = true;
   groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(groundColors, 3));
+  groundGeo.computeVertexNormals();
 
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95, vertexColors: true })
+    new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95, vertexColors: true, map: grassTexture, bumpMap: grassTexture, bumpScale: 0.012 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.01;
   ground.receiveShadow = true;
   root.add(ground);
+
+  // ── Grass blade sprites ──────────────────────────────────────────────
+  const grassGroup = new THREE.Group();
+  grassGroup.name = 'grass-sprites';
+  {
+    // Procedural grass tuft texture (canvas-generated)
+    const grassCanvas = document.createElement('canvas');
+    grassCanvas.width = 32;
+    grassCanvas.height = 64;
+    const gCtx = grassCanvas.getContext('2d');
+    gCtx.clearRect(0, 0, 32, 64);
+    const bladeColors = ['#4a7a3a', '#3d6a2e', '#5a8a48', '#3a5e28', '#6a9a52'];
+    for (let b = 0; b < 5; b++) {
+      const bx = 8 + b * 3.2 + (b % 2) * 1.5;
+      const lean = (b - 2) * 2.5;
+      gCtx.strokeStyle = bladeColors[b];
+      gCtx.lineWidth = 1.8 + (b % 2) * 0.6;
+      gCtx.lineCap = 'round';
+      gCtx.beginPath();
+      gCtx.moveTo(bx, 62);
+      gCtx.quadraticCurveTo(bx + lean * 0.4, 36, bx + lean, 4 + b * 3);
+      gCtx.stroke();
+    }
+    const grassTuftTex = new THREE.CanvasTexture(grassCanvas);
+    grassTuftTex.magFilter = THREE.LinearFilter;
+    grassTuftTex.minFilter = THREE.LinearMipmapLinearFilter;
+    grassTuftTex.generateMipmaps = true;
+    grassTuftTex.colorSpace = THREE.SRGBColorSpace;
+
+    const tuftGeo = new THREE.PlaneGeometry(0.12, 0.18);
+    const tuftMat = new THREE.MeshStandardMaterial({
+      map: grassTuftTex,
+      alphaTest: 0.3,
+      transparent: false,
+      side: THREE.DoubleSide,
+      roughness: 0.9,
+      depthWrite: true,
+    });
+
+    // Deterministic scatter — avoid bed area and path
+    const GRASS_COUNT = 220;
+    const SEED = 7919;
+    for (let i = 0; i < GRASS_COUNT; i++) {
+      const hash = ((i + 1) * SEED) % 10007;
+      const nx = ((hash % 997) / 997) * 2 - 1;
+      const nz = ((hash % 991) / 991) * 2 - 1;
+      const gx = nx * 8;
+      const gz = nz * 6 + 1.5;
+
+      // Skip the raised bed area
+      if (Math.abs(gx) < 2.2 && gz > -1.2 && gz < 1.4) continue;
+      // Skip path area (front of bed)
+      if (gz > 2.5 && Math.abs(gx) < 1.8) continue;
+      // Skip house wall area
+      if (gz < -2.5) continue;
+
+      const dist = Math.sqrt(gx * gx + (gz - 1) * (gz - 1));
+      if (dist > 9) continue;
+
+      const scale = 0.7 + ((hash % 13) / 13) * 0.6;
+      const rotY = ((hash % 31) / 31) * Math.PI;
+      const tint = 0.85 + ((hash % 17) / 17) * 0.3;
+
+      const tuft = new THREE.Mesh(tuftGeo, tuftMat.clone());
+      tuft.material.color = new THREE.Color(tint * 0.3, tint * 0.45, tint * 0.22);
+      tuft.scale.set(scale, scale, scale);
+      tuft.position.set(gx, 0.07 * scale, gz);
+      tuft.rotation.y = rotY;
+      grassGroup.add(tuft);
+
+      // Cross-plane for volume (second plane at 90 degrees)
+      if (i % 2 === 0) {
+        const cross = new THREE.Mesh(tuftGeo, tuft.material);
+        cross.scale.copy(tuft.scale);
+        cross.position.copy(tuft.position);
+        cross.rotation.y = rotY + Math.PI / 2;
+        grassGroup.add(cross);
+      }
+    }
+
+    resourceTracker.trackObject(grassGroup);
+  }
+  root.add(grassGroup);
 
   // Background scenery (fence, trees, path, props)
   const scenery = buildScenery(resourceTracker);
@@ -218,23 +515,25 @@ export function createGardenScene(container) {
   const catGroup = new THREE.Group();
   const catDarkMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
 
-  const catBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), catDarkMat);
+  const catBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.034, 0.08, 5, 10), catDarkMat);
+  catBody.rotation.z = Math.PI / 2;
+  catBody.scale.set(1, 0.9, 0.82);
   catBody.position.set(0, 0, 0);
   catGroup.add(catBody);
 
-  const catHead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), catDarkMat);
-  catHead.position.set(0.07, 0.04, 0);
+  const catHead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), catDarkMat);
+  catHead.position.set(0.07, 0.028, 0);
   catGroup.add(catHead);
 
   // Ears — two small cones
   for (const ex of [-0.012, 0.012]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 4), catDarkMat);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.026, 6), catDarkMat);
     ear.position.set(0.07 + ex, 0.075, 0);
     catGroup.add(ear);
   }
 
   // Tail — thin cylinder angled upward
-  const catTail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 5), catDarkMat);
+  const catTail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 8), catDarkMat);
   catTail.rotation.z = -0.7;
   catTail.position.set(-0.09, 0.04, 0);
   catGroup.add(catTail);
@@ -248,15 +547,20 @@ export function createGardenScene(container) {
   const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
   const bagMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 }); // compost-brown bag
 
-  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), skinMat);
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 10), skinMat);
   arm.rotation.z = Math.PI / 4; // angled, reaching over the fence
   arm.position.set(0, 0, 0);
   neighborGroup.add(arm);
 
   // Hand / compost bag at the end of the arm
-  const handBag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.06), bagMat);
+  const handBag = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), bagMat);
+  handBag.scale.set(1.12, 0.84, 0.92);
   handBag.position.set(0.2, -0.2, 0);
   neighborGroup.add(handBag);
+  const handBagNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.024, 0.035, 8), bagMat);
+  handBagNeck.rotation.z = -0.5;
+  handBagNeck.position.set(0.17, -0.17, 0);
+  neighborGroup.add(handBagNeck);
 
   neighborGroup.position.set(4.8, 0.8, -0.2);
   neighborGroup.visible = false;
@@ -281,22 +585,26 @@ export function createGardenScene(container) {
   dogTorso.position.y = 0.34;
   sheepdogGroup.add(dogTorso);
 
-  const dogBody = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.24, 0.2), dogFurLight);
+  const dogBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.28, 8, 16), dogFurLight);
+  dogBody.rotation.z = Math.PI / 2;
+  dogBody.scale.set(1, 0.9, 0.78);
   dogBody.castShadow = true;
   dogTorso.add(dogBody);
 
-  const dogSaddle = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.19, 0.16), dogFurDark);
-  dogSaddle.position.set(-0.03, 0.03, 0);
+  const dogSaddle = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.14, 6, 12), dogFurDark);
+  dogSaddle.rotation.z = Math.PI / 2;
+  dogSaddle.scale.set(1.02, 0.88, 0.8);
+  dogSaddle.position.set(-0.04, 0.05, 0);
   dogSaddle.castShadow = true;
   dogTorso.add(dogSaddle);
 
-  const dogRump = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), dogFurDark);
+  const dogRump = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), dogFurDark);
   dogRump.position.set(-0.22, -0.01, 0);
   dogRump.scale.set(1.1, 1.0, 0.95);
   dogRump.castShadow = true;
   dogTorso.add(dogRump);
 
-  const dogChest = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), dogFurLight);
+  const dogChest = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), dogFurLight);
   dogChest.position.set(0.21, -0.02, 0);
   dogChest.scale.set(0.95, 1.05, 0.95);
   dogChest.castShadow = true;
@@ -307,7 +615,7 @@ export function createGardenScene(container) {
     [0.06, 0.13, 0.09, 0.13, 0.11, 0.1, dogFurDark],
     [0.18, 0.12, -0.08, 0.1, 0.09, 0.08, dogFurLight],
   ]) {
-    const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 6, 5), mat);
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), mat);
     tuft.position.set(x, y, z);
     tuft.scale.set(sx, sy, sz);
     tuft.castShadow = true;
@@ -318,36 +626,45 @@ export function createGardenScene(container) {
   dogHeadPivot.position.set(0.3, 0.08, 0);
   dogTorso.add(dogHeadPivot);
 
-  const dogNeck = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.1, 0.12), dogFurLight);
-  dogNeck.position.set(-0.02, -0.02, 0);
+  const dogNeck = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.08, 5, 10), dogFurLight);
+  dogNeck.position.set(-0.005, -0.01, 0);
   dogNeck.rotation.z = -0.35;
+  dogNeck.scale.set(0.9, 1, 1.15);
   dogNeck.castShadow = true;
   dogHeadPivot.add(dogNeck);
 
-  const dogHead = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.16, 0.15), dogFurLight);
+  const dogHead = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.11, 8, 12), dogFurLight);
+  dogHead.rotation.z = Math.PI / 2;
+  dogHead.scale.set(1.02, 0.9, 0.84);
   dogHead.position.set(0.12, 0.02, 0);
   dogHead.castShadow = true;
   dogHeadPivot.add(dogHead);
 
-  const dogFacePatch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.13), dogFurDark);
-  dogFacePatch.position.set(0.18, 0.01, 0);
+  const dogFacePatch = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), dogFurDark);
+  dogFacePatch.position.set(0.175, 0.015, 0);
+  dogFacePatch.scale.set(0.62, 1.0, 0.92);
   dogFacePatch.castShadow = true;
   dogHeadPivot.add(dogFacePatch);
 
-  const dogMuzzle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.09), dogFurLight);
+  const dogMuzzle = new THREE.Mesh(new THREE.CapsuleGeometry(0.038, 0.07, 6, 10), dogFurLight);
+  dogMuzzle.rotation.z = Math.PI / 2;
+  dogMuzzle.scale.set(1, 0.82, 0.85);
   dogMuzzle.position.set(0.23, -0.03, 0);
   dogMuzzle.castShadow = true;
   dogHeadPivot.add(dogMuzzle);
 
-  const dogNose = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.035), dogNoseMat);
-  dogNose.position.set(0.29, -0.02, 0);
+  const dogNose = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), dogNoseMat);
+  dogNose.position.set(0.285, -0.02, 0);
+  dogNose.scale.set(1, 0.9, 1.2);
   dogHeadPivot.add(dogNose);
 
   // Tongue — pink, hangs from muzzle during run
   const dogTongueMat = new THREE.MeshStandardMaterial({ color: 0xe88a9a, roughness: 0.65 });
-  const dogTongue = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.04, 0.018), dogTongueMat);
+  const dogTongue = new THREE.Mesh(new THREE.CapsuleGeometry(0.008, 0.022, 4, 8), dogTongueMat);
   dogTongue.position.set(0.25, -0.065, 0.012);
-  dogTongue.rotation.z = 0.15;
+  dogTongue.rotation.z = 0.22;
+  dogTongue.rotation.x = Math.PI / 2;
+  dogTongue.scale.set(1, 1.25, 0.9);
   dogTongue.visible = false;
   dogHeadPivot.add(dogTongue);
 
@@ -355,12 +672,12 @@ export function createGardenScene(container) {
   const bubbleMat = new THREE.MeshStandardMaterial({ color: 0xf3eee5, roughness: 0.92 });
   const bubbleDotMat = new THREE.MeshStandardMaterial({ color: 0x4a4035, roughness: 0.8 });
   for (const [x, y, r] of [[-0.1, 0.08, 0.03], [-0.04, 0.18, 0.045], [0.06, 0.33, 0.11]]) {
-    const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), bubbleMat);
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), bubbleMat);
     puff.position.set(x, y, 0);
     dogThoughtBubble.add(puff);
   }
   for (const dotX of [-0.03, 0.02, 0.07]) {
-    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), bubbleDotMat);
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), bubbleDotMat);
     dot.position.set(dotX, 0.34, 0.08);
     dogThoughtBubble.add(dot);
   }
@@ -369,7 +686,7 @@ export function createGardenScene(container) {
   sheepdogGroup.add(dogThoughtBubble);
 
   for (const eyeZ of [-0.035, 0.035]) {
-    const dogEye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 4), dogEyeMat);
+    const dogEye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), dogEyeMat);
     dogEye.position.set(0.2, 0.035, eyeZ);
     dogHeadPivot.add(dogEye);
   }
@@ -378,9 +695,10 @@ export function createGardenScene(container) {
   for (const [ez, rz] of [[-0.05, 0.22], [0.05, -0.22]]) {
     const earPivot = new THREE.Group();
     earPivot.position.set(0.1, 0.1, ez);
-    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.04), dogFurDark);
+    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.028, 0.12, 8), dogFurDark);
     ear.position.set(-0.005, -0.06, 0);
     ear.rotation.z = rz;
+    ear.scale.set(1, 1, 0.85);
     ear.castShadow = true;
     earPivot.add(ear);
     dogHeadPivot.add(earPivot);
@@ -391,9 +709,9 @@ export function createGardenScene(container) {
   dogTailPivot.position.set(-0.31, 0.04, 0);
   dogTorso.add(dogTailPivot);
 
-  const dogTail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.04), dogFurLight);
+  const dogTail = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.008, 0.18, 10), dogFurLight);
   dogTail.position.set(-0.09, 0.02, 0);
-  dogTail.rotation.z = 0.58;
+  dogTail.rotation.z = -0.99;
   dogTail.castShadow = true;
   dogTailPivot.add(dogTail);
 
@@ -408,8 +726,9 @@ export function createGardenScene(container) {
     hipPivot.position.set(x, -0.08, z);
     dogTorso.add(hipPivot);
 
-    const upperLeg = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.05), dogFurLight);
+    const upperLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.08, 5, 10), dogFurLight);
     upperLeg.position.set(0, -0.08, 0);
+    upperLeg.scale.set(1, 1.02, 0.9);
     upperLeg.castShadow = true;
     hipPivot.add(upperLeg);
 
@@ -417,13 +736,15 @@ export function createGardenScene(container) {
     kneePivot.position.set(0, -0.16, 0);
     hipPivot.add(kneePivot);
 
-    const lowerLeg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.045), dogFurDark);
+    const lowerLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.075, 5, 10), dogFurDark);
     lowerLeg.position.set(0, -0.07, 0);
+    lowerLeg.scale.set(1, 1, 0.88);
     lowerLeg.castShadow = true;
     kneePivot.add(lowerLeg);
 
-    const paw = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.03, 0.065), dogFurLight);
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 8), dogFurLight);
     paw.position.set(0.015, -0.15, 0);
+    paw.scale.set(1.25, 0.55, 1.05);
     paw.castShadow = true;
     kneePivot.add(paw);
 
@@ -434,7 +755,7 @@ export function createGardenScene(container) {
   const dustPuffs = [];
   const dustMat = new THREE.MeshBasicMaterial({ color: 0xc8b898, transparent: true, opacity: 0, depthWrite: false });
   for (let i = 0; i < 6; i++) {
-    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), dustMat.clone());
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), dustMat.clone());
     puff.visible = false;
     puff.userData = { age: 0, maxAge: 400, active: false };
     sheepdogGroup.add(puff);
@@ -499,7 +820,7 @@ export function createGardenScene(container) {
   const sun = new THREE.DirectionalLight(0xfff4de, 1.45);
   sun.position.set(-2.7, 8, 4.8);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 0.5;
   sun.shadow.camera.far = 30;
   sun.shadow.camera.left = -6;
@@ -533,6 +854,7 @@ export function createGardenScene(container) {
       lightingState,
       materialTargets: [root],
     });
+    applyBedPresentation(currentSceneStyle);
   }
 
   function setSceneStyle(styleName, opts = {}) {
@@ -631,17 +953,17 @@ export function createGardenScene(container) {
   const springPuddles = new THREE.Group();
   {
     const puddleBaseMat = new THREE.MeshStandardMaterial({
-      color: 0x6699aa,
-      roughness: 0.1,
-      metalness: 0.3,
-      opacity: 0.5,
+      color: 0x8899aa,
+      roughness: 0.15,
+      metalness: 0.25,
+      opacity: 0.2,
       transparent: true,
     });
     const puddleData = [
-      { r: 0.13, x: -0.9, z: 2.4 },
-      { r: 0.09, x:  1.3, z: 1.6 },
-      { r: 0.15, x:  0.3, z: 3.0 },
-      { r: 0.10, x: -2.0, z: 0.7 },
+      { r: 0.08, x: -0.9, z: 2.4 },
+      { r: 0.06, x:  1.3, z: 1.6 },
+      { r: 0.1,  x:  0.3, z: 3.0 },
+      { r: 0.07, x: -2.0, z: 0.7 },
     ];
     puddleData.forEach(({ r, x, z }) => {
       const puddle = new THREE.Mesh(new THREE.CircleGeometry(r, 16), puddleBaseMat.clone());
@@ -659,22 +981,22 @@ export function createGardenScene(container) {
     const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x3a3028, roughness: 0.85 });
     const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xddaa44, roughness: 0.7 });
 
-    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.025, 7, 5), birdBodyMat);
+    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), birdBodyMat);
     birdBody.scale.set(1.4, 0.8, 1.1);
     birdGroup.add(birdBody);
 
-    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 5), birdBodyMat);
+    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 7), birdBodyMat);
     birdHead.position.set(0.028, 0.018, 0);
     birdGroup.add(birdHead);
 
-    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.022, 4), birdBeakMat);
+    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.022, 6), birdBeakMat);
     birdBeak.rotation.z = -Math.PI / 2;
     birdBeak.position.set(0.048, 0.016, 0);
     birdGroup.add(birdBeak);
 
-    const birdTail = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.006, 0.01), birdBodyMat);
+    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.01, 0.028, 6), birdBodyMat);
     birdTail.position.set(-0.034, 0.004, 0);
-    birdTail.rotation.z = 0.25;
+    birdTail.rotation.z = 1.22;
     birdGroup.add(birdTail);
   }
   // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.06*0.15) ≈ -1.009
@@ -702,7 +1024,7 @@ export function createGardenScene(container) {
       const t = i / 7;
       const x = xA + (xB - xA) * t;
       const sag = -0.06 * Math.sin(t * Math.PI);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), lightBulbMat.clone());
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), lightBulbMat.clone());
       bulb.position.set(x, yLine + sag, zLine);
       stringLights.add(bulb);
     }
@@ -911,9 +1233,10 @@ export function createGardenScene(container) {
 
   // Accent tuning — now alpha-ready growth sheets are available.
   // Full opacity and meaningful scale per stage so sprites read as world objects.
-  const ACCENT_OPACITY = [0.35, 0.65, 0.85, 1.0];
-  const ACCENT_SCALE = [0.18, 0.26, 0.38, 0.5];
-  const ACCENT_LIFT = [0.085, 0.12, 0.16, 0.2];
+  const ACCENT_OPACITY = [0.22, 0.34, 0.22, 0.12];
+  const ACCENT_SCALE = [0.14, 0.18, 0.2, 0.18];
+  const ACCENT_LIFT = [0.055, 0.08, 0.105, 0.12];
+  const ACCENT_BASE_TINT = new THREE.Color(0xf2ede2);
   const ACCENT_DORMANT_TINT = new THREE.Color(0xb7c3d0);
   const ACCENT_DAMAGED_TINT = new THREE.Color(0xc8b198);
 
@@ -923,7 +1246,8 @@ export function createGardenScene(container) {
     const lift = ACCENT_LIFT[stage] ?? 0.18;
 
     sprite.material.opacity = opacity;
-    sprite.material.color.setHex(0xffffff);
+    sprite.material.color.copy(ACCENT_BASE_TINT);
+    sprite.material.alphaTest = 0.16;
     if (season === 'winter') {
       sprite.material.color.lerp(ACCENT_DORMANT_TINT, 0.5);
       sprite.material.opacity *= 0.82;
@@ -990,6 +1314,7 @@ export function createGardenScene(container) {
         depthWrite: false,
         depthTest: true,
         sizeAttenuation: true,
+        alphaTest: 0.16,
       });
       const sprite = new THREE.Sprite(spriteMat);
 
@@ -999,7 +1324,7 @@ export function createGardenScene(container) {
       const cellSize = bed.cellSize;
       const x = (col - (COLS - 1) / 2) * cellSize;
       const z = (row - (ROWS - 1) / 2) * cellSize;
-      sprite.position.set(x, bed.soilY + 0.2, z);
+      sprite.position.set(x, bed.soilY, z);
       sprite.userData.sig = sig;
       sprite.userData.cellIndex = i;
       applyCropAccentState(sprite, stage, cell.damageState, season);
@@ -1024,7 +1349,7 @@ export function createGardenScene(container) {
   const harvestParticles = [];
   const harvestFXColors = [0xe8c84a, 0x5aab6b, 0xd44a2a, 0x87CEEB, 0xff9944, 0xcc55aa];
   {
-    const particleGeo = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+    const particleGeo = new THREE.SphereGeometry(0.012, 8, 6);
     for (let i = 0; i < HARVEST_FX_POOL_SIZE; i++) {
       const mat = new THREE.MeshBasicMaterial({
         color: harvestFXColors[i % harvestFXColors.length],
@@ -1103,80 +1428,144 @@ export function createGardenScene(container) {
   function buildClimberMesh(crop, cropColor) {
     // Tall cylinder stems reaching up with leaf planes
     const group = new THREE.Group();
+    setCropSway(group, { tilt: 0.05, yaw: 0.032, lift: 0.012, speed: 1.18, phase: 0.5 });
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a3a20, roughness: 0.9 });
+    const leafColor = varyColor(cropColor, -0.02, 0.06, 0.04);
 
     // Main stem
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.025, 0.55, 6), stemMat);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.025, 0.55, 8), stemMat);
     stem.position.y = 0.275;
     stem.castShadow = true;
     group.add(stem);
 
     // Leaf planes at different heights
-    const leafMat = new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.7, side: THREE.DoubleSide });
-    for (let i = 0; i < 3; i++) {
-      const leafGeo = new THREE.PlaneGeometry(0.12, 0.08);
-      const leaf = new THREE.Mesh(leafGeo, leafMat);
-      leaf.position.set(0.04 * (i % 2 === 0 ? 1 : -1), 0.2 + i * 0.12, 0.02);
-      leaf.rotation.y = (i * Math.PI) / 3;
-      leaf.rotation.z = 0.3 * (i % 2 === 0 ? 1 : -1);
-      leaf.castShadow = true;
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const leaf = createLeafMesh(leafColor, {
+        width: 0.09 + i * 0.008,
+        height: 0.15 - i * 0.01,
+        roughness: 0.68,
+        bend: 0.045,
+        cup: 0.024,
+      });
+      leaf.position.set(0.05 * side, 0.14 + i * 0.1, 0.015 * side);
+      leaf.rotation.y = side * 0.55 + i * 0.18;
+      leaf.rotation.z = side * (0.28 + i * 0.06);
+      registerBreezeNode(leaf, {
+        rotX: 0.04,
+        rotY: 0.05,
+        rotZ: 0.16,
+        lift: 0.005,
+        speed: 1.55 + i * 0.08,
+        phase: i * 0.7,
+      });
       group.add(leaf);
     }
 
     // Top cluster
-    const top = new THREE.Mesh(
-      new THREE.SphereGeometry(0.06, 6, 4),
-      new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.75 })
-    );
-    top.position.y = 0.52;
-    top.castShadow = true;
-    group.add(top);
+    addLeafRosette(group, {
+      count: 3,
+      radiusX: 0.028,
+      radiusZ: 0.028,
+      height: 0.46,
+      leafWidth: 0.07,
+      leafHeight: 0.11,
+      color: varyColor(cropColor, 0.02, 0.04, 0.08),
+      roughness: 0.66,
+      tilt: -0.25,
+      bend: 0.05,
+      cup: 0.022,
+      liftJitter: 0.01,
+      phaseOffset: 1.2,
+    });
 
     return group;
   }
 
   function buildFastCycleMesh(crop, cropColor) {
-    // Flat rosettes — multiple overlapping discs
+    // Low leafy rosette
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.7, side: THREE.DoubleSide });
-
-    for (let i = 0; i < 4; i++) {
-      const disc = new THREE.Mesh(new THREE.CircleGeometry(0.08 - i * 0.01, 8), mat);
-      disc.rotation.x = -Math.PI / 2 + (i * 0.15 - 0.2);
-      disc.rotation.z = (i * Math.PI) / 2;
-      disc.position.set(
-        Math.cos(i * 1.6) * 0.03,
-        0.03 + i * 0.012,
-        Math.sin(i * 1.6) * 0.03
-      );
-      disc.castShadow = true;
-      group.add(disc);
-    }
+    setCropSway(group, { tilt: 0.035, yaw: 0.03, lift: 0.007, speed: 1.45, phase: 0.2 });
+    addLeafRosette(group, {
+      count: 7,
+      radiusX: 0.075,
+      radiusZ: 0.075,
+      height: 0.015,
+      leafWidth: 0.085,
+      leafHeight: 0.14,
+      color: varyColor(cropColor, -0.02, 0.03, 0.04),
+      tilt: -1.05,
+      bend: 0.035,
+      cup: 0.018,
+      liftJitter: 0.008,
+    });
+    addLeafRosette(group, {
+      count: 4,
+      radiusX: 0.04,
+      radiusZ: 0.04,
+      height: 0.045,
+      leafWidth: 0.06,
+      leafHeight: 0.11,
+      color: varyColor(cropColor, 0.01, 0.04, 0.09),
+      tilt: -0.72,
+      bend: 0.05,
+      cup: 0.018,
+      yawOffset: 0.35,
+      liftJitter: 0.006,
+      phaseOffset: 0.8,
+    });
+    const bud = new THREE.Mesh(
+      new THREE.SphereGeometry(0.028, 10, 8),
+      new THREE.MeshStandardMaterial({ color: varyColor(cropColor, 0, 0.02, 0.12), roughness: 0.68 }),
+    );
+    bud.position.y = 0.04;
+    bud.scale.set(1, 0.75, 1);
+    bud.castShadow = true;
+    group.add(bud);
 
     return group;
   }
 
   function buildGreensMesh(crop, cropColor) {
-    // Bushy sphere clusters low to ground
+    // Broad, layered greens
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.75 });
-
-    // Central bush
-    const center = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), mat);
-    center.position.y = 0.07;
-    center.scale.set(1, 0.6, 1);
+    setCropSway(group, { tilt: 0.04, yaw: 0.026, lift: 0.008, speed: 1.34, phase: 1.1 });
+    addLeafRosette(group, {
+      count: 6,
+      radiusX: 0.085,
+      radiusZ: 0.085,
+      height: 0.018,
+      leafWidth: 0.1,
+      leafHeight: 0.17,
+      color: varyColor(cropColor, -0.03, 0.05, 0.03),
+      tilt: -1.08,
+      bend: 0.05,
+      cup: 0.028,
+      liftJitter: 0.012,
+    });
+    addLeafRosette(group, {
+      count: 4,
+      radiusX: 0.045,
+      radiusZ: 0.045,
+      height: 0.05,
+      leafWidth: 0.07,
+      leafHeight: 0.12,
+      color: varyColor(cropColor, 0, 0.03, 0.08),
+      tilt: -0.62,
+      bend: 0.06,
+      cup: 0.022,
+      yawOffset: 0.28,
+      liftJitter: 0.006,
+      phaseOffset: 0.7,
+    });
+    const center = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035, 10, 8),
+      new THREE.MeshStandardMaterial({ color: varyColor(cropColor, 0.01, 0.02, 0.1), roughness: 0.7 }),
+    );
+    center.position.y = 0.055;
+    center.scale.set(1, 0.75, 1);
     center.castShadow = true;
     group.add(center);
-
-    // Side clusters
-    for (let i = 0; i < 3; i++) {
-      const angle = (i * Math.PI * 2) / 3;
-      const cluster = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 4), mat);
-      cluster.position.set(Math.cos(angle) * 0.06, 0.05, Math.sin(angle) * 0.06);
-      cluster.scale.set(1, 0.55, 1);
-      cluster.castShadow = true;
-      group.add(cluster);
-    }
 
     return group;
   }
@@ -1184,23 +1573,37 @@ export function createGardenScene(container) {
   function buildRootsMesh(crop, cropColor) {
     // Small leaf fan poking up (carrot tops)
     const group = new THREE.Group();
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x4a8a3e, roughness: 0.7, side: THREE.DoubleSide });
+    setCropSway(group, { tilt: 0.048, yaw: 0.02, lift: 0.007, speed: 1.52, phase: 0.9 });
+    const rootLeafColor = 0x4a8a3e;
 
     // Several thin leaf blades fanning out
-    for (let i = 0; i < 5; i++) {
-      const leafGeo = new THREE.PlaneGeometry(0.03, 0.14);
-      const leaf = new THREE.Mesh(leafGeo, leafMat);
+    for (let i = 0; i < 6; i++) {
+      const leaf = createLeafMesh(rootLeafColor, {
+        width: 0.04,
+        height: 0.16,
+        roughness: 0.7,
+        bend: 0.055,
+        cup: 0.01,
+      });
       const angle = ((i - 2) * Math.PI) / 8;
       leaf.position.set(Math.sin(angle) * 0.02, 0.08, Math.cos(angle) * 0.02);
-      leaf.rotation.z = angle * 0.6;
+      leaf.rotation.x = -0.22;
+      leaf.rotation.z = angle * 0.78;
       leaf.rotation.y = angle;
-      leaf.castShadow = true;
+      registerBreezeNode(leaf, {
+        rotX: 0.05,
+        rotY: 0.02,
+        rotZ: 0.18,
+        lift: 0.005,
+        speed: 1.7 + i * 0.06,
+        phase: i * 0.5,
+      });
       group.add(leaf);
     }
 
     // Tiny colored root crown at soil level
     const crownMat = new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.8 });
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), crownMat);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), crownMat);
     crown.position.y = 0.01;
     crown.scale.set(1, 0.5, 1);
     group.add(crown);
@@ -1211,8 +1614,9 @@ export function createGardenScene(container) {
   function buildHerbsMesh(crop, cropColor) {
     // Thin stems with small clustered spheres on top
     const group = new THREE.Group();
+    setCropSway(group, { tilt: 0.03, yaw: 0.022, lift: 0.008, speed: 1.6, phase: 0.3 });
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x5a7a3e, roughness: 0.85 });
-    const leafMat = new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.7 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: varyColor(cropColor, -0.01, 0.04, 0.06), roughness: 0.7 });
 
     for (let i = 0; i < 3; i++) {
       const angle = (i * Math.PI * 2) / 3;
@@ -1220,12 +1624,33 @@ export function createGardenScene(container) {
       const z = Math.sin(angle) * 0.03;
       const height = 0.15 + i * 0.04;
 
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, height, 5), stemMat);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, height, 8), stemMat);
       stem.position.set(x, height / 2, z);
       stem.castShadow = true;
       group.add(stem);
 
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 4), leafMat);
+      for (const side of [-1, 1]) {
+        const leaf = createLeafMesh(cropColor, {
+          width: 0.05,
+          height: 0.08,
+          roughness: 0.68,
+          bend: 0.04,
+          cup: 0.014,
+        });
+        leaf.position.set(x + side * 0.016, height * 0.55, z);
+        leaf.rotation.y = angle + side * 0.72;
+        leaf.rotation.z = side * 0.42;
+        registerBreezeNode(leaf, {
+          rotY: 0.05,
+          rotZ: 0.12,
+          lift: 0.003,
+          speed: 1.7 + i * 0.1,
+          phase: i * 0.8 + side,
+        });
+        group.add(leaf);
+      }
+
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 8), leafMat);
       ball.position.set(x, height + 0.02, z);
       ball.castShadow = true;
       group.add(ball);
@@ -1237,14 +1662,29 @@ export function createGardenScene(container) {
   function buildFruitingMesh(crop, cropColor) {
     // Wider bush with small colored fruit spheres
     const group = new THREE.Group();
+    setCropSway(group, { tilt: 0.028, yaw: 0.025, lift: 0.006, speed: 1.16, phase: 0.65 });
 
     // Bush body
     const bushMat = new THREE.MeshStandardMaterial({ color: 0x3a7a3a, roughness: 0.75 });
-    const bush = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), bushMat);
+    const bush = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 14), bushMat);
     bush.position.y = 0.1;
     bush.scale.set(1.2, 0.8, 1.2);
     bush.castShadow = true;
     group.add(bush);
+    addLeafRosette(group, {
+      count: 5,
+      radiusX: 0.08,
+      radiusZ: 0.08,
+      height: 0.06,
+      leafWidth: 0.085,
+      leafHeight: 0.13,
+      color: varyColor(0x3a7a3a, -0.01, 0.02, 0.08),
+      tilt: -0.7,
+      bend: 0.04,
+      cup: 0.02,
+      liftJitter: 0.01,
+      phaseOffset: 0.4,
+    });
 
     // Fruit spheres — use emoji color for the fruit
     const fruitColor = cropColor;
@@ -1255,7 +1695,7 @@ export function createGardenScene(container) {
       [0.02, 0.16, -0.04],
     ];
     for (const pos of fruitPositions) {
-      const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 4), fruitMat);
+      const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), fruitMat);
       fruit.position.set(...pos);
       fruit.castShadow = true;
       group.add(fruit);
@@ -1267,10 +1707,11 @@ export function createGardenScene(container) {
   function buildBrassicaMesh(crop, cropColor) {
     // Dense head on short stem
     const group = new THREE.Group();
+    setCropSway(group, { tilt: 0.033, yaw: 0.024, lift: 0.007, speed: 1.24, phase: 1.4 });
 
     // Short thick stem
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x5a8a5a, roughness: 0.85 });
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.06, 6), stemMat);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.06, 8), stemMat);
     stem.position.y = 0.03;
     group.add(stem);
 
@@ -1288,13 +1729,27 @@ export function createGardenScene(container) {
       roughness: 0.7,
       side: THREE.DoubleSide,
     });
-    for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI * 2) / 4;
-      const leaf = new THREE.Mesh(new THREE.CircleGeometry(0.06, 6), leafMat);
-      leaf.position.set(Math.cos(angle) * 0.08, 0.05, Math.sin(angle) * 0.08);
-      leaf.rotation.x = -0.8;
-      leaf.rotation.y = angle;
-      leaf.castShadow = true;
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * Math.PI * 2) / 5;
+      const leaf = createLeafMesh(leafMat.color, {
+        width: 0.08,
+        height: 0.14,
+        roughness: 0.7,
+        bend: 0.05,
+        cup: 0.024,
+      });
+      leaf.position.set(Math.cos(angle) * 0.075, 0.03, Math.sin(angle) * 0.075);
+      leaf.rotation.x = -0.92;
+      leaf.rotation.y = angle + Math.PI / 2;
+      leaf.rotation.z = Math.sin(i * 1.8) * 0.2;
+      registerBreezeNode(leaf, {
+        rotX: 0.03,
+        rotY: 0.05,
+        rotZ: 0.14,
+        lift: 0.004,
+        speed: 1.35 + i * 0.06,
+        phase: i * 0.6,
+      });
       group.add(leaf);
     }
 
@@ -1304,10 +1759,11 @@ export function createGardenScene(container) {
   function buildCompanionMesh(crop, cropColor) {
     // Short stem with colored flower petals
     const group = new THREE.Group();
+    setCropSway(group, { tilt: 0.038, yaw: 0.028, lift: 0.008, speed: 1.5, phase: 0.75 });
 
     // Stem
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a7a3a, roughness: 0.85 });
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.015, 0.1, 5), stemMat);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.015, 0.1, 8), stemMat);
     stem.position.y = 0.05;
     stem.castShadow = true;
     group.add(stem);
@@ -1322,17 +1778,32 @@ export function createGardenScene(container) {
     });
     for (let i = 0; i < 6; i++) {
       const angle = (i * Math.PI * 2) / 6;
-      const petal = new THREE.Mesh(new THREE.CircleGeometry(0.03, 5), petalMat);
+      const petal = createLeafMesh(cropColor, {
+        width: 0.03,
+        height: 0.07,
+        roughness: 0.5,
+        bend: 0.045,
+        cup: 0.016,
+      });
+      petal.material = petalMat.clone();
       petal.position.set(Math.cos(angle) * 0.035, 0.12, Math.sin(angle) * 0.035);
-      petal.rotation.x = -0.5;
-      petal.rotation.y = angle;
-      petal.castShadow = true;
+      petal.rotation.x = -0.32;
+      petal.rotation.y = angle + Math.PI / 2;
+      petal.rotation.z = Math.sin(i * 1.3) * 0.12;
+      registerBreezeNode(petal, {
+        rotX: 0.04,
+        rotY: 0.05,
+        rotZ: 0.12,
+        lift: 0.003,
+        speed: 1.8 + i * 0.04,
+        phase: i * 0.5,
+      });
       group.add(petal);
     }
 
     // Center
     const centerMat = new THREE.MeshStandardMaterial({ color: 0xaa7722, roughness: 0.6 });
-    const center = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 4), centerMat);
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.02, 10, 8), centerMat);
     center.position.y = 0.12;
     center.castShadow = true;
     group.add(center);
@@ -1341,7 +1812,7 @@ export function createGardenScene(container) {
     const leafMat = new THREE.MeshStandardMaterial({ color: 0x4a8a3e, roughness: 0.7, side: THREE.DoubleSide });
     for (let i = 0; i < 3; i++) {
       const a = (i * Math.PI * 2) / 3 + 0.3;
-      const leaf = new THREE.Mesh(new THREE.CircleGeometry(0.04, 5), leafMat);
+      const leaf = new THREE.Mesh(new THREE.CircleGeometry(0.04, 10), leafMat);
       leaf.position.set(Math.cos(a) * 0.04, 0.03, Math.sin(a) * 0.04);
       leaf.rotation.x = -Math.PI / 3;
       leaf.rotation.y = a;
@@ -1357,29 +1828,45 @@ export function createGardenScene(container) {
 
     const factionColor = CROP_COLORS[crop.faction] || 0x4a8a4a;
     const cropColor = getEmojiColor(crop.emoji, factionColor);
+    let mesh = null;
 
     switch (crop.faction) {
-      case 'climbers':   return buildClimberMesh(crop, cropColor);
-      case 'fast_cycles': return buildFastCycleMesh(crop, cropColor);
-      case 'greens':     return buildGreensMesh(crop, cropColor);
-      case 'roots':      return buildRootsMesh(crop, cropColor);
-      case 'herbs':      return buildHerbsMesh(crop, cropColor);
-      case 'fruiting':   return buildFruitingMesh(crop, cropColor);
-      case 'brassicas':  return buildBrassicaMesh(crop, cropColor);
-      case 'companions': return buildCompanionMesh(crop, cropColor);
+      case 'climbers':   mesh = buildClimberMesh(crop, cropColor); break;
+      case 'fast_cycles': mesh = buildFastCycleMesh(crop, cropColor); break;
+      case 'greens':     mesh = buildGreensMesh(crop, cropColor); break;
+      case 'roots':      mesh = buildRootsMesh(crop, cropColor); break;
+      case 'herbs':      mesh = buildHerbsMesh(crop, cropColor); break;
+      case 'fruiting':   mesh = buildFruitingMesh(crop, cropColor); break;
+      case 'brassicas':  mesh = buildBrassicaMesh(crop, cropColor); break;
+      case 'companions': mesh = buildCompanionMesh(crop, cropColor); break;
       default: {
         // Fallback: simple sphere
         const g = new THREE.Group();
         const s = new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 8, 6),
+          new THREE.SphereGeometry(0.1, 12, 10),
           new THREE.MeshStandardMaterial({ color: cropColor, roughness: 0.75 })
         );
         s.position.y = 0.08;
         s.castShadow = true;
         g.add(s);
-        return g;
+        mesh = g;
+        break;
       }
     }
+
+    const shadowProfiles = {
+      climbers: { radiusX: 0.085, radiusZ: 0.07, opacity: 0.12 },
+      fast_cycles: { radiusX: 0.1, radiusZ: 0.095, opacity: 0.13 },
+      greens: { radiusX: 0.12, radiusZ: 0.11, opacity: 0.14 },
+      roots: { radiusX: 0.08, radiusZ: 0.075, opacity: 0.11 },
+      herbs: { radiusX: 0.09, radiusZ: 0.08, opacity: 0.11 },
+      fruiting: { radiusX: 0.115, radiusZ: 0.105, opacity: 0.14 },
+      brassicas: { radiusX: 0.12, radiusZ: 0.115, opacity: 0.15 },
+      companions: { radiusX: 0.085, radiusZ: 0.08, opacity: 0.12 },
+      default: { radiusX: 0.1, radiusZ: 0.09, opacity: 0.13 },
+    };
+    addGroundShadow(mesh, shadowProfiles[crop.faction] || shadowProfiles.default);
+    return mesh;
   }
 
   function buildMulchProp() {
@@ -1390,11 +1877,12 @@ export function createGardenScene(container) {
     ];
     chipPositions.forEach(([x, z], index) => {
       const chip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 0.01, 0.03),
+        new THREE.SphereGeometry(0.026, 8, 6),
         chipMat
       );
       chip.position.set(x, 0.006 + (index % 2) * 0.002, z);
       chip.rotation.y = index * 0.55;
+      chip.scale.set(1, 0.22, 0.58);
       group.add(chip);
     });
     return group;
@@ -1406,14 +1894,15 @@ export function createGardenScene(container) {
     const tieMat = new THREE.MeshStandardMaterial({ color: 0xb8a87a, roughness: 0.8 });
 
     for (const [x, z, rot] of [[-0.08, -0.02, 0.1], [0.08, 0.02, -0.1]]) {
-      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.62, 5), stakeMat);
+      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.62, 8), stakeMat);
       stake.position.set(x, 0.31, z);
       stake.rotation.z = rot;
       stake.castShadow = true;
       group.add(stake);
     }
 
-    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.014, 0.014), tieMat);
+    const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.18, 6), tieMat);
+    tie.rotation.z = Math.PI / 2;
     tie.position.set(0, 0.38, 0);
     group.add(tie);
 
@@ -1429,7 +1918,7 @@ export function createGardenScene(container) {
       metalness: 0.15,
       wireframe: true,
     });
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
     dome.rotation.x = Math.PI;
     dome.position.y = 0.17;
     return dome;
@@ -1460,8 +1949,9 @@ export function createGardenScene(container) {
       [0.06, 0.03, -0.5, 0.1],
       [0.02, -0.08, 0.8, 0.08],
     ]) {
-      const crack = new THREE.Mesh(new THREE.BoxGeometry(len, 0.003, 0.008), crackMat);
+      const crack = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, len, 8), crackMat);
       crack.position.set(x, 0.004, z);
+      crack.rotation.z = Math.PI / 2;
       crack.rotation.y = rot;
       group.add(crack);
     }
@@ -1585,8 +2075,12 @@ function getGrowthScale(phase, season) {
   function applyCropDamageState(mesh, damageState, season) {
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
     const dormant = season === 'winter';
-    mesh.rotation.z = damageVisual ? -damageVisual.tilt : (dormant ? -0.04 : 0);
-    mesh.rotation.x = 0;
+    mesh.userData.restRotationZ = damageVisual ? -damageVisual.tilt : (dormant ? -0.04 : 0);
+    mesh.userData.restRotationX = 0;
+    mesh.userData.restRotationY = mesh.userData.basePlacementRotationY ?? 0;
+    mesh.rotation.z = mesh.userData.restRotationZ;
+    mesh.rotation.x = mesh.userData.restRotationX;
+    mesh.rotation.y = mesh.userData.restRotationY;
     mesh.position.y = bed.soilY;
 
     mesh.traverse((child) => {
@@ -1637,7 +2131,17 @@ function getGrowthScale(phase, season) {
       if (cropMeshes.has(key)) {
         const existing = cropMeshes.get(key);
         if (existing.userData.cropId === cell.cropId) {
-          existing.scale.setScalar(growthScale);
+          const row = Math.floor(i / COLS);
+          const col = i % COLS;
+          const cellSize = bed.cellSize;
+          const x = (col - (COLS - 1) / 2) * cellSize;
+          const z = (row - (ROWS - 1) / 2) * cellSize;
+          const anchor = existing.userData.anchor ?? getCellAnchor(i, 'crop');
+          existing.userData.anchor = anchor;
+          existing.userData.basePlacementRotationY = anchor.rotationY;
+          existing.position.x = x + anchor.xOffset;
+          existing.position.z = z + anchor.zOffset;
+          existing.scale.setScalar(growthScale * anchor.scale);
           applyCropDamageState(existing, cell.damageState, season);
           continue;
         }
@@ -1654,8 +2158,11 @@ function getGrowthScale(phase, season) {
       const cellSize = bed.cellSize;
       const x = (col - (COLS - 1) / 2) * cellSize;
       const z = (row - (ROWS - 1) / 2) * cellSize;
-      mesh.position.set(x, bed.soilY, z);
-      mesh.scale.setScalar(growthScale);
+      const anchor = getCellAnchor(i, 'crop');
+      mesh.userData.anchor = anchor;
+      mesh.userData.basePlacementRotationY = anchor.rotationY;
+      mesh.position.set(x + anchor.xOffset, bed.soilY, z + anchor.zOffset);
+      mesh.scale.setScalar(growthScale * anchor.scale);
       mesh.userData.cropId = cell.cropId;
       mesh.userData.cellIndex = i;
       applyCropDamageState(mesh, cell.damageState, season);
@@ -1685,6 +2192,35 @@ function getGrowthScale(phase, season) {
           triggerHarvestFX(i);
         }
       }
+    }
+  }
+
+  function updateCropBreeze(time, breezeStrength) {
+    for (const mesh of cropMeshes.values()) {
+      const sway = mesh.userData.sway;
+      if (!sway) continue;
+
+      const phaseSeed = sway.phase + (mesh.userData.cellIndex ?? 0) * 0.67;
+      const primary = Math.sin(time * sway.speed + phaseSeed);
+      const secondary = Math.sin(time * sway.speed * 0.55 + phaseSeed * 1.4);
+      const tertiary = Math.cos(time * sway.speed * 0.34 + phaseSeed);
+
+      mesh.rotation.x = (mesh.userData.restRotationX ?? 0) + tertiary * sway.tilt * 0.12 * breezeStrength;
+      mesh.rotation.y = (mesh.userData.restRotationY ?? 0) + secondary * sway.yaw * breezeStrength;
+      mesh.rotation.z = (mesh.userData.restRotationZ ?? 0) + primary * sway.tilt * breezeStrength;
+      mesh.position.y = bed.soilY + Math.max(0, primary) * sway.lift * breezeStrength;
+
+      mesh.traverse((child) => {
+        const breeze = child.userData?.breeze;
+        if (!breeze) return;
+
+        const wave = Math.sin(time * breeze.speed + phaseSeed + breeze.phase);
+        const ripple = Math.cos(time * breeze.speed * 0.58 + phaseSeed * 0.7 + breeze.phase);
+        child.rotation.x = breeze.baseRotationX + ripple * breeze.rotX * breezeStrength;
+        child.rotation.y = breeze.baseRotationY + ripple * breeze.rotY * breezeStrength;
+        child.rotation.z = breeze.baseRotationZ + wave * breeze.rotZ * breezeStrength;
+        child.position.y = breeze.basePositionY + Math.max(0, wave) * breeze.lift * breezeStrength;
+      });
     }
   }
 
@@ -1733,7 +2269,9 @@ function getGrowthScale(phase, season) {
       const col = i % COLS;
       const x = (col - (COLS - 1) / 2) * bed.cellSize;
       const z = (row - (ROWS - 1) / 2) * bed.cellSize;
-      propMesh.position.set(x, bed.soilY, z);
+      const anchor = getCellAnchor(i, 'support');
+      propMesh.position.set(x + anchor.xOffset, bed.soilY, z + anchor.zOffset);
+      propMesh.rotation.y = anchor.rotationY;
       propMesh.userData.signature = signature;
       root.add(propMesh);
       supportMeshes.set(key, propMesh);
@@ -1772,6 +2310,22 @@ function getGrowthScale(phase, season) {
     // Update tree foliage colors
     scenery.updateSeason(season);
 
+    // Tint grass sprites by season
+    const grassTints = {
+      spring: { r: 0.3, g: 0.46, b: 0.22 },
+      summer: { r: 0.24, g: 0.4, b: 0.18 },
+      fall:   { r: 0.44, g: 0.38, b: 0.2 },
+      winter: { r: 0.32, g: 0.32, b: 0.28 },
+    };
+    const gTint = grassTints[season] || grassTints.spring;
+    grassGroup.traverse((child) => {
+      if (child.isMesh && child.material?.color) {
+        const v = 0.85 + Math.random() * 0.3;
+        child.material.color.setRGB(gTint.r * v, gTint.g * v, gTint.b * v);
+      }
+    });
+    grassGroup.visible = season !== 'winter';
+
     // ── Atmosphere element visibility by season ────────────────────────────
     fallLeaves.visible   = season === 'fall';
     snowDusting.visible  = season === 'winter';
@@ -1786,6 +2340,76 @@ function getGrowthScale(phase, season) {
     // Scenery puddles: show in spring
     scenery.showPuddles(season === 'spring');
     // ── End season visibility ──────────────────────────────────────────────
+  }
+
+  function applyBedPresentation(styleName = currentSceneStyle) {
+    const presentation = {
+      planner: {
+        gridOpacity: 0.16,
+        guardOpacity: 0.15,
+        trellisOpacity: 0.5,
+        labelsVisible: true,
+        labelOpacity: 0.92,
+        markerOpacity: 1,
+      },
+      story: {
+        gridOpacity: 0.05,
+        guardOpacity: 0.06,
+        trellisOpacity: 0.34,
+        labelsVisible: false,
+        labelOpacity: 0,
+        markerOpacity: 0.34,
+      },
+      celebration: {
+        gridOpacity: 0.035,
+        guardOpacity: 0.04,
+        trellisOpacity: 0.28,
+        labelsVisible: false,
+        labelOpacity: 0,
+        markerOpacity: 0.24,
+      },
+    }[styleName] || {
+      gridOpacity: 0.08,
+      guardOpacity: 0.08,
+      trellisOpacity: 0.38,
+      labelsVisible: false,
+      labelOpacity: 0,
+      markerOpacity: 0.3,
+    };
+
+    bed.gridLineMeshes?.forEach((line) => {
+      line.visible = presentation.gridOpacity > 0.01;
+      if (line.material) {
+        line.material.transparent = true;
+        line.material.opacity = presentation.gridOpacity;
+      }
+    });
+    bed.guardMeshes?.forEach((mesh) => {
+      mesh.visible = presentation.guardOpacity > 0.01;
+      if (mesh.material) {
+        mesh.material.transparent = true;
+        mesh.material.opacity = presentation.guardOpacity;
+      }
+    });
+    bed.trellisWireMeshes?.forEach((wire) => {
+      if (wire.material) {
+        wire.material.transparent = true;
+        wire.material.opacity = presentation.trellisOpacity;
+      }
+    });
+    bed.labelSprites?.forEach((sprite) => {
+      sprite.visible = presentation.labelsVisible;
+      if (sprite.material) {
+        sprite.material.opacity = presentation.labelOpacity;
+      }
+    });
+    bed.labelMarkers?.forEach((marker) => {
+      if (marker.material) {
+        marker.material.transparent = true;
+        marker.material.opacity = presentation.markerOpacity;
+        marker.material.emissiveIntensity = 0.08 + presentation.markerOpacity * 0.18;
+      }
+    });
   }
 
   let lastSeason = null;
@@ -2095,6 +2719,15 @@ function getGrowthScale(phase, season) {
         const season = lastSyncedState?.season?.season ?? 'spring';
         birdGroup.visible = birdVisible && season !== 'winter';
       }
+      if (birdGroup.visible) {
+        birdGroup.position.y = 1.105 + Math.sin(atmosphereTime * 1.7) * 0.008;
+        birdGroup.rotation.z = Math.sin(atmosphereTime * 1.5) * 0.08;
+      }
+
+      const season = lastSyncedState?.season?.season ?? 'spring';
+      const seasonalBreeze = { spring: 0.95, summer: 0.72, fall: 1.08, winter: 0.45 }[season] ?? 0.85;
+      const breezeStrength = seasonalBreeze * (isWindEvent ? 1.9 : 1);
+      updateCropBreeze(atmosphereTime, breezeStrength);
 
       if (sheepdogHoldState.active) {
         sheepdogHoldState.remainingMs -= dt * 1000;
@@ -2243,6 +2876,7 @@ function getGrowthScale(phase, season) {
 
       // ── Scenery per-frame animations ─────────────────────────────────
       scenery.updateClouds(dt);
+      scenery.updateBreeze(atmosphereTime, breezeStrength);
       if (lastSyncedState?.season?.season === 'winter') {
         scenery.updateSmoke(dt);
       }
