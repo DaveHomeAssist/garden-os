@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT } from '../game/state.js';
+import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from '../game/state.js';
 import { Actions, Store, cloneGameState, gameReducer, normalizeGameState } from '../game/store.js';
 import { advance, canAdvance } from '../game/phase-machine.js';
 import { applyEventEffect } from '../game/event-engine.js';
@@ -1304,29 +1304,67 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // 2-F. Save/Load — Phase 2 State
   // -------------------------------------------------------------------------
   describe('Save/Load Phase 2', () => {
-    it.skip('save includes active quests, reputation, and current zone', () => {
-      // TODO: Implement when Phase 2 state shape is finalized
-      // Expected flow:
-      //   1. Accept a quest, earn reputation, enter a zone
-      //   2. Save to slot
-      //   3. Read raw localStorage JSON
-      //   4. Assert quests, reputation, currentZone fields present
+    beforeEach(() => {
+      globalThis.localStorage = createMockStorage();
     });
 
-    it.skip('loading a Phase 2 save restores quest/rep/zone state', () => {
-      // TODO: Implement when LOAD_SAVE handles Phase 2 fields
-      // Expected flow:
-      //   1. Save state with active quest + 25 rep for old_gus + zone "meadow"
-      //   2. Load into fresh store
-      //   3. Assert all values restored
+    afterEach(() => {
+      delete globalThis.localStorage;
     });
 
-    it.skip('loading a pre-Phase-2 save initializes defaults for new fields', () => {
-      // TODO: Implement when normalizeGameState handles Phase 2 migration
-      // Expected flow:
-      //   1. Create a save with no quests/reputation/zone fields
-      //   2. Load it
-      //   3. Assert quests = [], reputation = {}, currentZone = 'player_plot'
+    it('save includes active quests, reputation, and current zone', () => {
+      const state = createGameState();
+      state.campaign.questLog.gus_tomatoes = { state: 'ACCEPTED' };
+      state.campaign.reputation.old_gus = 15;
+      state.campaign.worldState.currentZone = 'neighborhood';
+      state.campaign.worldState.visitedZones.push('neighborhood');
+
+      saveCampaign(state.campaign, 0);
+
+      const raw = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign'));
+      expect(raw.questLog).toBeDefined();
+      expect(raw.questLog.gus_tomatoes.state).toBe('ACCEPTED');
+      expect(raw.reputation).toBeDefined();
+      expect(raw.reputation.old_gus).toBe(15);
+      expect(raw.worldState).toBeDefined();
+      expect(raw.worldState.currentZone).toBe('neighborhood');
+    });
+
+    it('loading a Phase 2 save restores quest/rep/zone state', () => {
+      const state = createGameState();
+      state.campaign.questLog.gus_tomatoes = { state: 'IN_PROGRESS', progress: 2 };
+      state.campaign.reputation.old_gus = 25;
+      state.campaign.worldState.currentZone = 'meadow';
+      state.campaign.worldState.visitedZones.push('meadow');
+
+      saveCampaign(state.campaign, 1);
+      const loaded = loadCampaign(1);
+
+      expect(loaded.questLog.gus_tomatoes.state).toBe('IN_PROGRESS');
+      expect(loaded.questLog.gus_tomatoes.progress).toBe(2);
+      expect(loaded.reputation.old_gus).toBe(25);
+      expect(loaded.reputation.maya).toBe(0);
+      expect(loaded.reputation.lila).toBe(0);
+      expect(loaded.worldState.currentZone).toBe('meadow');
+      expect(loaded.worldState.visitedZones).toContain('meadow');
+      expect(loaded.worldState.visitedZones).toContain('player_plot');
+    });
+
+    it('loading a pre-Phase-2 save initializes defaults for new fields', () => {
+      // Simulate an old save that has no questLog, reputation, or worldState
+      localStorage.setItem('gos-story-slot-2-campaign', JSON.stringify({
+        version: 1,
+        currentChapter: 3,
+        currentSeason: 'fall',
+      }));
+
+      const loaded = loadCampaign(2);
+
+      expect(loaded.questLog).toEqual({});
+      expect(loaded.reputation).toMatchObject(DEFAULT_REPUTATION);
+      expect(loaded.worldState.currentZone).toBe(DEFAULT_WORLD_STATE.currentZone);
+      expect(loaded.worldState.visitedZones).toEqual(DEFAULT_WORLD_STATE.visitedZones);
+      expect(loaded.version).toBe(3);
     });
   });
 });
