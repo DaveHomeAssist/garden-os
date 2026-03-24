@@ -637,11 +637,13 @@
   .cage-bed-shortcuts{display:flex;gap:.25rem;margin-bottom:.4rem;}
   .cage-bed-shortcuts .preset-btn{flex:1;}
 
-  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0;display:flex;gap:0;justify-content:center;font-family:'DM Mono',monospace;font-size:.6rem;}
-  .os-nav a{color:rgba(245,237,224,0.55);text-decoration:none;padding:.35rem .7rem;letter-spacing:.04em;transition:color .15s;}
+  .os-nav{background:var(--soil);border-bottom:1px solid rgba(255,255,255,0.1);padding:0 .55rem;display:flex;gap:0;justify-content:flex-start;font-family:'DM Mono',monospace;font-size:.6rem;overflow-x:auto;scrollbar-width:none;}
+  .os-nav::-webkit-scrollbar{display:none;}
+  .os-nav a{color:rgba(245,237,224,0.55);text-decoration:none;padding:.45rem .9rem;letter-spacing:.04em;transition:color .15s;white-space:nowrap;min-height:46px;display:inline-flex;align-items:center;flex-shrink:0;}
   .os-nav a:hover{color:#f5ede0;}
   .os-nav a.active,
   .os-nav a[aria-current="page"]{color:#f5ede0;border-bottom:2px solid var(--sun);}
+  .os-nav a.nav-utility{margin-left:auto;opacity:.72;}
   .sidebar-toggle{
     display:none;width:100%;padding:.35rem;border:none;border-bottom:1.5px solid var(--border);
     background:var(--panel);cursor:pointer;font-family:'DM Mono',monospace;font-size:.6rem;
@@ -1643,7 +1645,7 @@
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
   <a href="how-it-thinks.html">How It Thinks</a>
-  <a href="scoring-visualizer.html" style="margin-left:auto;opacity:.55">Dev Tools →</a>
+  <a href="scoring-visualizer.html" class="nav-utility">Dev Tools →</a>
 </nav>
 <div class="planner-shell">
 <header class="planner-header">

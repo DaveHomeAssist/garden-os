@@ -317,6 +317,122 @@
     align-items: center;
   }
 
+  .hero-breadcrumb {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .hero-bridge {
+    margin-top: 1.4rem;
+    max-width: 820px;
+    padding: 1.15rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-3);
+    border-radius: var(--radius-lg);
+  }
+
+  .hero-bridge-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--green-3);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+
+  .hero-bridge h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .hero-bridge-copy {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .hero-bridge-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .hero-bridge-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .hero-bridge-card {
+    display: block;
+    text-decoration: none;
+    color: var(--text-primary);
+    background: rgba(15, 24, 20, 0.72);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 0.9rem;
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  }
+
+  .hero-bridge-card:hover {
+    border-color: var(--green-dim);
+    background: rgba(18, 30, 24, 0.88);
+    transform: translateY(-2px);
+  }
+
+  .hero-bridge-card strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .hero-bridge-card span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .os-nav {
+    overflow-x: auto;
+    justify-content: flex-start !important;
+    padding: 0 0.7rem !important;
+    scrollbar-width: none;
+  }
+
+  .os-nav::-webkit-scrollbar { display: none; }
+
+  .os-nav a {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .os-nav a.nav-planner {
+    color: #f5ede0;
+    background: rgba(232, 200, 74, 0.14);
+    border: 1px solid rgba(232, 200, 74, 0.26);
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem !important;
+    height: 36px;
+    align-self: center;
+    margin: 0 0.45rem;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  }
+
+  .os-nav a.nav-home {
+    opacity: 0.82 !important;
+  }
+
   /* ── EXECUTIVE SUMMARY ──────────────────────────────────── */
   .summary-grid {
     display: grid;
@@ -845,6 +961,10 @@
     .footer-meta { text-align: left; }
     h2 { font-size: 1.35rem; }
     .hero-actions { flex-direction: column; align-items: flex-start; }
+    .hero-bridge { padding: 1rem; }
+    .hero-bridge-actions { flex-direction: column; }
+    .hero-bridge-actions .btn { width: 100%; }
+    .hero-bridge-grid { grid-template-columns: 1fr; }
   }
 
   @media (min-width: 1400px) {
@@ -889,12 +1009,14 @@
 <a href="#main" class="skip-link">Skip to main content</a>
 
 <!-- NAV -->
-<nav class="os-nav" role="navigation" aria-label="Garden OS" style="position:sticky;top:0;z-index:20;background:#5c3d1e;border-bottom:3px solid #e8c84a;padding:0;display:flex;gap:0;justify-content:center;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.65rem">
-  <a href="index.html" style="opacity:.55;color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">← Garden</a>
+<nav class="os-nav" role="navigation" aria-label="Garden OS" style="position:sticky;top:0;z-index:20;background:#5c3d1e;border-bottom:3px solid #e8c84a;display:flex;gap:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.65rem">
+  <a href="index.html" class="nav-home" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">Garden OS Home</a>
+  <a href="garden-planner-v4.html" class="nav-planner" style="color:#f5ede0;text-decoration:none;letter-spacing:.04em">Open Planner</a>
+  <a href="how-it-thinks.html" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">How It Thinks</a>
   <a href="scoring-visualizer.html" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">Visualizer</a>
   <a href="scoring-map.html" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">Scoring Map</a>
   <a href="fairness-tester.html" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">Fairness Tester</a>
-  <a href="system-map.html" style="color:#f5ede0;text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;border-bottom:2px solid #e8c84a">System Map</a>
+  <a href="gos-system-map.html" aria-current="page" style="color:#f5ede0;text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em;border-bottom:2px solid #e8c84a">System Map</a>
   <a href="system-topology.html" style="color:rgba(245,237,224,0.6);text-decoration:none;padding:.5rem .8rem;letter-spacing:.04em">Topology</a>
 </nav>
 
@@ -904,6 +1026,7 @@
   <!-- HERO -->
   <section id="hero" aria-labelledby="hero-heading">
     <div class="wrapper">
+      <div class="hero-breadcrumb">Garden OS / Planner Intelligence / System Map</div>
       <div class="hero-eyebrow">
         <span>v4 Architecture</span>
         System Map
@@ -919,9 +1042,34 @@
         Garden OS is an open-source raised bed planning system that runs as a collection of standalone single-file HTML tools with no server, no build step, and no cloud dependency. What began as a layout planner has evolved into a full horticultural reasoning engine — capable of evaluating crop placement, analyzing companion planting compatibility, modeling structural support requirements, and generating diagnostic explanations directly in the browser.
       </div>
       <div class="hero-actions">
-        <a href="https://davehomeassist.github.io/garden-os/" class="btn btn-primary" aria-label="Open Garden OS live demo">↗ Live Demo</a>
+        <a href="garden-planner-v4.html" class="btn btn-primary" aria-label="Open Garden Planner">↗ Open Planner</a>
+        <a href="how-it-thinks.html" class="btn btn-ghost">How It Thinks</a>
         <a href="https://github.com/DaveHomeAssist/garden-os" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
         <a href="index.html" class="btn btn-ghost" aria-label="Go to Garden OS project home">Garden OS Home</a>
+      </div>
+      <div class="hero-bridge" aria-label="Planner handoff">
+        <div class="hero-bridge-kicker">Turn Reference Into Action</div>
+        <h2>Use the System Map to orient yourself, then jump straight back into the working planner.</h2>
+        <p class="hero-bridge-copy">This page explains how Garden OS is built. The Planner is still the main product surface. If you came here from a confusing score, warning, or tool handoff, these are the fastest next moves.</p>
+        <div class="hero-bridge-actions">
+          <a href="garden-planner-v4.html" class="btn btn-primary">Open Planner</a>
+          <a href="scoring-map.html" class="btn btn-ghost">Inspect scoring flow</a>
+          <a href="garden-cage-build-guide.html" class="btn btn-ghost">Build from the plan</a>
+        </div>
+        <div class="hero-bridge-grid">
+          <a href="garden-planner-v4.html" class="hero-bridge-card">
+            <strong>Place crops now</strong>
+            <span>Jump back into the grid, not just the architecture diagram.</span>
+          </a>
+          <a href="how-it-thinks.html" class="hero-bridge-card">
+            <strong>Translate the logic</strong>
+            <span>Switch to the plain-English explainer when a score needs interpretation.</span>
+          </a>
+          <a href="garden-cage-ops-guide.html" class="hero-bridge-card">
+            <strong>Carry the layout forward</strong>
+            <span>Use the ops guide once the bed plan is stable and ready for season work.</span>
+          </a>
+        </div>
       </div>
     </div>
   </section>

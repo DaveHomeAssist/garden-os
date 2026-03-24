@@ -229,11 +229,12 @@ code, kbd, samp {
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
-  padding: 0 1rem;
+  padding: 0 0.85rem;
   overflow-x: auto;
   scrollbar-width: none;
+  scroll-snap-type: x proximity;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -249,9 +250,12 @@ code, kbd, samp {
   text-transform: uppercase;
   padding: 0 0.85rem;
   height: var(--nav-h);
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
+  flex-shrink: 0;
+  scroll-snap-align: start;
   border-bottom: 2px solid transparent;
   transition: color var(--ease), border-color var(--ease);
 }
@@ -266,6 +270,28 @@ code, kbd, samp {
   outline-offset: -4px;
   border-radius: 0;
 }
+
+.os-nav a.os-nav-cta {
+  color: #fff8ef;
+  background: rgba(232, 200, 74, 0.14);
+  border: 1px solid rgba(232, 200, 74, 0.28);
+  border-bottom-width: 1px;
+  border-radius: var(--radius-pill);
+  height: 34px;
+  margin: 0 0.45rem;
+  padding: 0 1rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+.os-nav a.os-nav-cta:hover {
+  color: #fff;
+  background: rgba(232, 200, 74, 0.22);
+  border-color: rgba(232, 200, 74, 0.42);
+}
+.os-nav a.os-nav-utility {
+  margin-left: auto;
+  opacity: 0.72;
+}
+.os-nav a.os-nav-utility:hover { opacity: 1; }
 
 /* Optional nav brand/logo slot */
 .os-nav-brand {
@@ -455,6 +481,20 @@ code, kbd, samp {
 .os-btn--lg {
   padding: 0.7rem 1.6rem;
   font-size: 1rem;
+}
+
+@media (max-width: 720px) {
+  .os-nav {
+    padding: 0 0.55rem;
+  }
+  .os-nav a {
+    padding: 0 0.95rem;
+    font-size: 0.72rem;
+  }
+  .os-nav a.os-nav-cta {
+    height: 36px;
+    margin: 0 0.3rem;
+  }
 }
 
 

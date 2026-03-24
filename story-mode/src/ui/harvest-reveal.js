@@ -1,7 +1,8 @@
 /**
  * Harvest Reveal — animated score breakdown overlay.
- * Shows final score, grade, and per-factor breakdown.
+ * Shows final score, grade, per-factor breakdown, and plain-English explanations.
  */
+import { explainFactor, bedHints } from '../scoring/score-explain.js';
 
 const FACTOR_LABELS = {
   sunFit: { label: 'Sun Fit', emoji: '☀️', weight: '2x' },
@@ -88,9 +89,10 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
           const pct = Math.max(0, Math.min(100, ((val - minVal) / (maxVal - minVal)) * 100));
           const barColor = pct > 70 ? '#5aab6b' : pct > 40 ? '#e8c84a' : '#d44a2a';
           const staggerDelay = factorIdx * 100;
+          const explanation = explainFactor(key, val);
           return `
-            <div class="factor-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;opacity:0;transform:translateY(6px);transition:opacity 0.3s ease ${staggerDelay}ms, transform 0.3s ease ${staggerDelay}ms;">
-              <span style="font-size:16px;width:24px;text-align:center;">${info.emoji}</span>
+            <div class="factor-row" data-factor="${key}" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;opacity:0;transform:translateY(6px);transition:opacity 0.3s ease ${staggerDelay}ms, transform 0.3s ease ${staggerDelay}ms;cursor:pointer;">
+              <span style="font-size:16px;width:24px;text-align:center;margin-top:1px;">${info.emoji}</span>
               <div style="flex:1;">
                 <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
                   <span style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(247,242,234,0.7);">${info.label}</span>
@@ -99,6 +101,12 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
                 <div style="height:6px;border-radius:3px;background:rgba(247,242,234,0.06);overflow:hidden;">
                   <div class="factor-bar-fill" style="height:100%;width:0%;background:${barColor};border-radius:3px;transition:width 0.8s ease-out ${staggerDelay + 200}ms;"></div>
                 </div>
+                ${explanation ? `
+                  <div class="factor-explain" style="display:none;margin-top:6px;padding:8px 10px;border-radius:8px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
+                    <div style="font-size:11px;color:rgba(247,242,234,0.6);line-height:1.5;">${explanation.verdict}</div>
+                    ${explanation.tip ? `<div style="font-size:10px;color:${barColor};margin-top:4px;line-height:1.4;">💡 ${explanation.tip}</div>` : ''}
+                  </div>
+                ` : ''}
               </div>
             </div>
           `;
@@ -131,6 +139,21 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
       ${result.details.fillPenalty > 0 ? `
         <div style="font-size:12px;color:#d44a2a;margin-bottom:4px;">-${result.details.fillPenalty.toFixed(1)} fill penalty</div>
       ` : ''}
+
+      <div style="
+        background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);
+        border-radius:12px;padding:14px;margin-top:14px;margin-bottom:14px;text-align:left;
+      ">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.3);margin-bottom:8px;">How to Improve</div>
+        <div style="display:grid;gap:6px;">
+          ${bedHints(result).map((hint) => `
+            <div style="font-size:12px;line-height:1.5;color:rgba(247,242,234,0.72);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#e8c84a;flex-shrink:0;">→</span>
+              <span>${hint}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
 
       ${recipeNames.length > 0 ? `
         <div style="
@@ -229,6 +252,18 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
       const minVal = key === 'adjacency' ? -2 : 0;
       const pct = Math.max(0, Math.min(100, ((val - minVal) / (maxVal - minVal)) * 100));
       bar.style.width = `${pct}%`;
+    });
+  });
+
+  // Toggle factor explanations on tap/click
+  overlay.querySelectorAll('.factor-row[data-factor]').forEach((row) => {
+    row.addEventListener('click', () => {
+      const explainEl = row.querySelector('.factor-explain');
+      if (!explainEl) return;
+      const isVisible = explainEl.style.display !== 'none';
+      // Close all others first
+      overlay.querySelectorAll('.factor-explain').forEach((el) => { el.style.display = 'none'; });
+      if (!isVisible) explainEl.style.display = 'block';
     });
   });
 
