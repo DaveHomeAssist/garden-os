@@ -1243,11 +1243,64 @@ describe('Phase 1 — Movement, Camera, Tools, Mode Selection', () => {
   // 1-F. Story Mode Regression
   // -------------------------------------------------------------------------
   describe('Story Mode Regression', () => {
-    it.skip('full season still advances through all 6 phases after movement changes', () => {
+    it('full season still advances through all 6 phases after movement changes', () => {
       // Guard: ensure Phase 1 additions do not break the existing season loop.
-      // This mirrors the "Full Season Playthrough" test above but within
-      // the Phase 1 describe block so regressions are caught in context.
-      // TODO: Re-enable once movement controller is integrated
+      // Mirrors the Full Season Playthrough test within the Phase 1 block.
+      globalThis.localStorage = createMockStorage();
+
+      const store = createPlantedStore();
+      let state = store.getState();
+      expect(state.season.phase).toBe(PHASES.PLANNING);
+
+      // PLANNING -> EARLY_SEASON
+      const r1 = advancePhases(store, 1);
+      expect(r1[0].advanced).toBe(true);
+      state = store.getState();
+      expect(state.season.phase).toBe(PHASES.EARLY_SEASON);
+
+      // Resolve early-season event
+      store.dispatch({
+        type: Actions.APPLY_EVENT,
+        payload: { eventActive: null, resolvedEvent: state.season.eventActive, summary: { negativeAffectedCount: 0 } },
+      });
+      store.dispatch({
+        type: Actions.USE_INTERVENTION,
+        payload: { interventionId: 'accept_loss', interventionTokens: state.season.interventionTokens },
+      });
+
+      // EARLY_SEASON -> MID_SEASON
+      const r2 = advancePhases(store, 1);
+      expect(r2[0].advanced).toBe(true);
+      state = store.getState();
+      expect(state.season.phase).toBe(PHASES.MID_SEASON);
+
+      // Resolve mid-season event
+      store.dispatch({ type: Actions.APPLY_EVENT, payload: { eventActive: null } });
+      store.dispatch({ type: Actions.USE_INTERVENTION, payload: { interventionId: 'accept_loss' } });
+
+      // MID_SEASON -> LATE_SEASON
+      const r3 = advancePhases(store, 1);
+      expect(r3[0].advanced).toBe(true);
+      state = store.getState();
+      expect(state.season.phase).toBe(PHASES.LATE_SEASON);
+
+      // Resolve late-season event
+      store.dispatch({ type: Actions.APPLY_EVENT, payload: { eventActive: null } });
+      store.dispatch({ type: Actions.USE_INTERVENTION, payload: { interventionId: 'accept_loss' } });
+
+      // LATE_SEASON -> HARVEST
+      const r4 = advancePhases(store, 1);
+      expect(r4[0].advanced).toBe(true);
+      state = store.getState();
+      expect(state.season.phase).toBe(PHASES.HARVEST);
+
+      // HARVEST -> TRANSITION
+      const r5 = advancePhases(store, 1);
+      expect(r5[0].advanced).toBe(true);
+      state = store.getState();
+      expect(state.season.phase).toBe(PHASES.TRANSITION);
+
+      delete globalThis.localStorage;
     });
 
     it.todo('phase machine transition rules are unchanged from baseline');
@@ -1642,28 +1695,122 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // 2-C. Dialogue Branching
   // -------------------------------------------------------------------------
   describe('Dialogue Branching', () => {
-    it.skip('dialogue with choices presents the correct options', () => {
-      // TODO: Implement when DialogueRunner is built
-      // Expected flow:
-      //   1. Trigger a dialogue node that has "choices" array
-      //   2. Assert all choice labels are rendered
-      //   3. Assert no auto-advance happens (waits for selection)
+    it('dialogue with choices presents the correct options', () => {
+      vi.useFakeTimers();
+      let lastUi = null;
+      const machine = createCutsceneMachine({
+        onStateChange: (ui) => { lastUi = ui; },
+        onFinish: () => {},
+        onEffect: () => {},
+        gardenScene: {},
+      });
+
+      const scene = {
+        id: 'test-choices',
+        priority: 1,
+        skippable: true,
+        beats: [{
+          speaker: 'garden_gurl',
+          text: 'Will you help me?',
+          choices: [
+            { label: 'Yes, I will!', effect: 'accept_quest' },
+            { label: 'Not right now.' },
+          ],
+        }],
+      };
+
+      machine.start(scene);
+      // Run all typing timers to completion
+      vi.runAllTimers();
+
+      expect(lastUi.visible).toBe(true);
+      expect(lastUi.canAdvance).toBe(true);
+      expect(lastUi.choices).not.toBeNull();
+      expect(lastUi.choices).toHaveLength(2);
+      expect(lastUi.choices[0].label).toBe('Yes, I will!');
+      expect(lastUi.choices[1].label).toBe('Not right now.');
+
+      machine.finish();
+      vi.useRealTimers();
     });
 
-    it.skip('selecting "accept quest" choice dispatches ACCEPT_QUEST action', () => {
-      // TODO: Implement when dialogue-quest integration exists
-      // Expected flow:
-      //   1. Open quest-offer dialogue
-      //   2. Select the "accept" choice
-      //   3. Assert ACCEPT_QUEST dispatched with correct questId
+    it('selecting "accept quest" choice dispatches ACCEPT_QUEST effect', () => {
+      vi.useFakeTimers();
+      let firedEffect = null;
+      const machine = createCutsceneMachine({
+        onStateChange: () => {},
+        onFinish: () => {},
+        onEffect: (effect) => { firedEffect = effect; },
+        gardenScene: {},
+      });
+
+      const scene = {
+        id: 'test-accept',
+        priority: 1,
+        skippable: true,
+        beats: [{
+          speaker: 'garden_gurl',
+          text: 'Take this quest?',
+          choices: [
+            { label: 'Accept', effect: { type: 'ACCEPT_QUEST', questId: 'water_101' } },
+            { label: 'Decline' },
+          ],
+        }],
+      };
+
+      machine.start(scene);
+      vi.runAllTimers();
+
+      // Select "Accept" (index 0)
+      const selected = machine.selectChoice(0);
+      expect(selected).toBe(true);
+      expect(firedEffect).toEqual({ type: 'ACCEPT_QUEST', questId: 'water_101' });
+
+      machine.finish();
+      vi.useRealTimers();
     });
 
-    it.skip('branching dialogue follows the correct path based on choice', () => {
-      // TODO: Implement when DialogueRunner branching logic exists
-      // Expected flow:
-      //   1. At branch node, select choice B
-      //   2. Assert next node matches choice B's "next" pointer
-      //   3. Assert choice A's path was not followed
+    it('branching dialogue follows the correct path based on choice', () => {
+      vi.useFakeTimers();
+      let lastUi = null;
+      const machine = createCutsceneMachine({
+        onStateChange: (ui) => { lastUi = ui; },
+        onFinish: () => {},
+        onEffect: () => {},
+        gardenScene: {},
+      });
+
+      const scene = {
+        id: 'test-branch',
+        priority: 1,
+        skippable: true,
+        beats: [{
+          speaker: 'garden_gurl',
+          text: 'Which path?',
+          choices: [
+            { label: 'Path A', branchId: 'branch_a' },
+            { label: 'Path B', branchId: 'branch_b' },
+          ],
+        }],
+        branches: {
+          branch_a: [{ speaker: 'garden_gurl', text: 'You chose path A!' }],
+          branch_b: [{ speaker: 'garden_gurl', text: 'You chose path B!' }],
+        },
+      };
+
+      machine.start(scene);
+      vi.runAllTimers();
+
+      // Select Path B (index 1)
+      machine.selectChoice(1);
+      vi.runAllTimers();
+
+      // The machine should now be on the branch_b beat
+      expect(lastUi.visible).toBe(true);
+      expect(lastUi.textFull).toBe('You chose path B!');
+
+      machine.finish();
+      vi.useRealTimers();
     });
 
     it.todo('linear dialogue (no choices) auto-advances on click/key');
