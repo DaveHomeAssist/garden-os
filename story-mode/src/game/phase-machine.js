@@ -65,8 +65,9 @@ function createEventTrigger(season) {
 
 function assignBeatState(season, beatIndex) {
   season.beatIndex = beatIndex;
+  season.month = beatIndex + 1;
   season.interventionChosen = null;
-  season.eventActive = drawEvent(season.season, season.chapter, season.eventsDrawn);
+  season.eventActive = drawEvent(season.season, season.chapter, season.eventsDrawn, season.month);
 
   if (season.eventActive) {
     season.eventsDrawn.push(season.eventActive.id);

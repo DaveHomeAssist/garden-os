@@ -9,10 +9,11 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from '../game/state.js';
+import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE, GRID_UNLOCKS } from '../game/state.js';
 import { Actions, Store, cloneGameState, gameReducer, normalizeGameState } from '../game/store.js';
 import { advance, canAdvance } from '../game/phase-machine.js';
 import { applyEventEffect } from '../game/event-engine.js';
+import { getMonthlyEvents } from '../data/events.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { scoreBed } from '../scoring/bed-score.js';
 import {
@@ -2056,19 +2057,35 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
   // 3-D. Monthly Event Rotation
   // -------------------------------------------------------------------------
   describe('Monthly Event Rotation', () => {
-    it.skip('month-restricted events only fire during their designated month', () => {
-      // TODO: Implement when monthly rotation logic is built
-      // Expected flow:
-      //   1. Set month to March
-      //   2. Query available events
-      //   3. Assert March-only events included, July-only events excluded
+    it('month-restricted events only fire during their designated month', () => {
+      // S01 has months: [1] (spring, month 1 only)
+      // U05 has months: [2, 3] (summer, months 2-3 only)
+      const chapter = 6;
+
+      // Spring month 1 — S01 should be included
+      const springM1 = getMonthlyEvents('spring', 1, chapter, []).map((e) => e.id);
+      expect(springM1).toContain('S01');
+
+      // Spring month 2 — S01 should be excluded
+      const springM2 = getMonthlyEvents('spring', 2, chapter, []).map((e) => e.id);
+      expect(springM2).not.toContain('S01');
+
+      // Summer month 1 — U05 should be excluded (restricted to months 2-3)
+      const summerM1 = getMonthlyEvents('summer', 1, chapter, []).map((e) => e.id);
+      expect(summerM1).not.toContain('U05');
+
+      // Summer month 2 — U05 should be included
+      const summerM2 = getMonthlyEvents('summer', 2, chapter, []).map((e) => e.id);
+      expect(summerM2).toContain('U05');
     });
 
-    it.skip('general events (no month restriction) can fire in any month', () => {
-      // TODO: Implement when event eligibility checks exist
-      // Expected flow:
-      //   1. Filter EVENT_DECK for events with no monthRestriction
-      //   2. Assert these appear in the eligible pool for every month
+    it('general events (no month restriction) can fire in any month', () => {
+      // U06 has no months field — should appear in every month
+      const chapter = 12;
+      for (let month = 1; month <= 3; month++) {
+        const pool = getMonthlyEvents('summer', month, chapter, []).map((e) => e.id);
+        expect(pool).toContain('U06');
+      }
     });
 
     it.todo('no duplicate events fire within the same season');
@@ -2892,27 +2909,45 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
   // 5-D. Expanded Grid
   // -------------------------------------------------------------------------
   describe('Expanded Grid', () => {
-    it.skip('default garden grid is 8x4 (32 cells)', () => {
-      // TODO: Implement when grid expansion system is built
-      // Expected flow:
-      //   1. Create new game
-      //   2. Assert grid.length === 32 (8 columns x 4 rows)
+    it('default garden grid is 8x4 (32 cells)', () => {
+      const store = new Store(createGameState());
+      const state = store.getState();
+      expect(state.season.grid.length).toBe(32);
+      expect(state.season.gridCols).toBe(8);
+      expect(state.season.gridRows).toBe(4);
     });
 
-    it.skip('first expansion grows grid to 8x6 (48 cells)', () => {
-      // TODO: Implement when EXPAND_GRID action is built
-      // Expected flow:
-      //   1. Dispatch EXPAND_GRID { rows: 6 }
-      //   2. Assert grid.length === 48
-      //   3. Assert new cells are empty with default state
+    it('first expansion grows grid to 8x6 (48 cells)', () => {
+      const store = new Store(createGameState());
+
+      // Plant a crop in the first cell before expanding
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'basil' } });
+
+      const expanded = store.dispatch({ type: Actions.EXPAND_GRID, payload: { rows: 6 } });
+      expect(expanded.season.grid.length).toBe(48);
+      expect(expanded.season.gridRows).toBe(6);
+      expect(expanded.season.gridCols).toBe(8);
+
+      // Existing planted crop is preserved
+      expect(expanded.season.grid[0].cropId).toBe('basil');
+
+      // New cells are empty with default state
+      expect(expanded.season.grid[32].cropId).toBeNull();
+      expect(expanded.season.grid[47].cropId).toBeNull();
     });
 
-    it.skip('maximum expansion reaches 8x8 (64 cells)', () => {
-      // TODO: Implement when grid max size is enforced
-      // Expected flow:
-      //   1. Dispatch EXPAND_GRID { rows: 8 }
-      //   2. Assert grid.length === 64
-      //   3. Dispatch EXPAND_GRID { rows: 10 } → assert rejected (max is 8)
+    it('maximum expansion reaches 8x8 (64 cells)', () => {
+      const store = new Store(createGameState());
+
+      const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
+      const expanded = store.dispatch({ type: Actions.EXPAND_GRID, payload: { rows: maxRows } });
+      expect(expanded.season.grid.length).toBe(64);
+      expect(expanded.season.gridRows).toBe(8);
+
+      // Further expansion beyond max is rejected (state unchanged)
+      const rejected = store.dispatch({ type: Actions.EXPAND_GRID, payload: { rows: 10 } });
+      expect(rejected.season.grid.length).toBe(64);
+      expect(rejected.season.gridRows).toBe(8);
     });
 
     it.todo('grid expansion persists through save/load cycle');
