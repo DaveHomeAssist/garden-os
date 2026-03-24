@@ -34,6 +34,10 @@ import {
   buildMinimalLayout,
   createPlantedStore,
 } from './test-helpers.js';
+import { QuestEngine, QuestStates } from '../game/quest-engine.js';
+import { ReputationSystem, ReputationTiers } from '../game/reputation.js';
+import { NPC_REGISTRY, getNPCsInZone, getNPCGreeting } from '../data/npcs.js';
+import { FESTIVALS } from '../game/festivals.js';
 
 // ---------------------------------------------------------------------------
 // Mock localStorage for save/load tests (node environment has no localStorage)
@@ -1138,76 +1142,370 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // 2-A. Quest Lifecycle
   // -------------------------------------------------------------------------
   describe('Quest Lifecycle', () => {
-    it.skip('quest becomes available when all prerequisites are met', () => {
-      // TODO: Implement when QuestManager is built
-      // Expected flow:
-      //   1. Load quest "gus_tomatoes" from QUEST_DECK.json
-      //   2. Set campaign to chapter 3, season summer
-      //   3. Assert quest status === 'available'
-      //   4. Set campaign to chapter 1 → status should be 'locked'
+    const INTEGRATION_QUEST_DECK = [
+      {
+        id: 'gus_tomatoes',
+        npc: 'old_gus',
+        title: 'Gus Wants Tomatoes',
+        requirements: [{ type: 'crop_harvested', id: 'cherry_tom', count: 3 }],
+        rewards: [
+          { type: 'reputation', id: 'old_gus', amount: 20 },
+          { type: 'seed', id: 'heirloom_tomato', amount: 1 },
+          { type: 'item', id: 'compost', amount: 2 },
+          { type: 'xp', id: 'gardening', amount: 50 },
+        ],
+        prerequisites: { chapter_min: 3, season: 'summer', reputation: {}, quests_completed: [] },
+        timed: false,
+      },
+      {
+        id: 'maya_flowers',
+        npc: 'maya',
+        title: 'Maya Needs Flowers',
+        requirements: [{ type: 'crop_planted', id: 'sunflower', count: 2 }],
+        rewards: [{ type: 'reputation', id: 'maya', amount: 10 }],
+        prerequisites: { chapter_min: 1, season: null, reputation: {}, quests_completed: [] },
+        timed: false,
+      },
+    ];
+
+    function makeIntegrationEngine(storeOverride) {
+      const store = storeOverride ?? new Store(createGameState());
+      return new QuestEngine(store, INTEGRATION_QUEST_DECK);
+    }
+
+    it('getAvailableQuests respects chapter/season prerequisites', () => {
+      const engine = makeIntegrationEngine();
+
+      // Default state: chapter 1, spring -- gus_tomatoes requires chapter 3 + summer
+      const lockedIds = engine.getAvailableQuests().map((q) => q.id);
+      expect(lockedIds).not.toContain('gus_tomatoes');
+      // maya_flowers has no season lock, chapter_min 1, so it should be available
+      expect(lockedIds).toContain('maya_flowers');
+
+      // Advance to chapter 3, summer
+      const state = engine.store.getState();
+      state.campaign.currentChapter = 3;
+      state.season.season = 'summer';
+      engine.store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      const availableIds = engine.getAvailableQuests().map((q) => q.id);
+      expect(availableIds).toContain('gus_tomatoes');
+
+      // Drop back to chapter 1
+      const state2 = engine.store.getState();
+      state2.campaign.currentChapter = 1;
+      engine.store.dispatch({ type: Actions.REPLACE_STATE, payload: { state: state2 } });
+
+      const lockedAgain = engine.getAvailableQuests().map((q) => q.id);
+      expect(lockedAgain).not.toContain('gus_tomatoes');
     });
 
-    it.skip('accepting a quest transitions it from available to active', () => {
-      // TODO: Implement when QuestManager is built
-      // Expected flow:
-      //   1. Dispatch ACCEPT_QUEST { questId: 'gus_tomatoes' }
-      //   2. Assert quest state === 'active'
-      //   3. Assert NPC dialogue switches to progressDialogue
+    it('acceptQuest adds quest to questLog with ACCEPTED status', () => {
+      const store = new Store(createGameState());
+      const state = store.getState();
+      state.campaign.currentChapter = 3;
+      state.season.season = 'summer';
+      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      const engine = makeIntegrationEngine(store);
+      expect(engine.getAvailableQuests().map((q) => q.id)).toContain('gus_tomatoes');
+
+      const accepted = engine.acceptQuest('gus_tomatoes');
+      expect(accepted).toBe(true);
+
+      const entry = engine.store.getState().campaign.questLog.gus_tomatoes;
+      expect(entry).toBeDefined();
+      expect(entry.state).toBe(QuestStates.ACCEPTED);
+      expect(entry.acceptedAt).toBeDefined();
+      expect(entry.acceptedSeason).toBe('summer');
+      expect(entry.acceptedChapter).toBe(3);
+
+      expect(engine.getAvailableQuests().map((q) => q.id)).not.toContain('gus_tomatoes');
     });
 
-    it.skip('planting and harvesting required crops advances quest progress', () => {
-      // TODO: Implement when quest-progress tracking is built
-      // Expected flow:
-      //   1. Accept quest requiring 3 cherry_tom harvests
-      //   2. Dispatch HARVEST_CELL for cherry_tom 3 times
-      //   3. Assert quest.progress.crop_harvested.cherry_tom === 3
-      //   4. Assert quest status === 'ready_to_turn_in'
+    it('evaluateProgress transitions quest to READY_TO_TURN_IN when requirements met', () => {
+      const store = new Store(createGameState());
+      const state = store.getState();
+      state.campaign.currentChapter = 3;
+      state.season.season = 'summer';
+      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      const engine = makeIntegrationEngine(store);
+      engine.acceptQuest('gus_tomatoes');
+      expect(engine.store.getState().campaign.questLog.gus_tomatoes.state).toBe(QuestStates.ACCEPTED);
+
+      // Plant cherry_tom in 3 cells, then harvest each
+      for (let i = 0; i < 3; i++) {
+        store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: i, cropId: 'cherry_tom' } });
+        store.dispatch({ type: Actions.HARVEST_CELL, payload: { cellIndex: i } });
+      }
+
+      expect(engine.store.getState().campaign.pantry.cherry_tom).toBe(3);
+
+      const changes = engine.evaluateProgress();
+      expect(changes).toEqual(
+        expect.arrayContaining([{ questId: 'gus_tomatoes', newState: QuestStates.READY_TO_TURN_IN }]),
+      );
+      expect(engine.store.getState().campaign.questLog.gus_tomatoes.state).toBe(QuestStates.READY_TO_TURN_IN);
     });
 
-    it.skip('turning in a completed quest grants all listed rewards', () => {
-      // TODO: Implement when quest reward system is built
-      // Expected flow:
-      //   1. Complete quest requirements
-      //   2. Dispatch TURN_IN_QUEST
-      //   3. Assert seed reward added to inventory
-      //   4. Assert reputation increased for the quest NPC
-      //   5. Assert quest status === 'completed'
+    it('turnInQuest applies rewards (XP, reputation, items, unlocks)', () => {
+      const store = new Store(createGameState());
+      const state = store.getState();
+      state.campaign.currentChapter = 3;
+      state.season.season = 'summer';
+      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      const engine = makeIntegrationEngine(store);
+      engine.acceptQuest('gus_tomatoes');
+
+      for (let i = 0; i < 3; i++) {
+        store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: i, cropId: 'cherry_tom' } });
+        store.dispatch({ type: Actions.HARVEST_CELL, payload: { cellIndex: i } });
+      }
+      engine.evaluateProgress();
+
+      const beforeState = engine.store.getState();
+      const repBefore = beforeState.campaign.reputation.old_gus ?? 0;
+
+      const rewards = engine.turnInQuest('gus_tomatoes');
+      expect(rewards).not.toBeNull();
+      expect(rewards).toHaveLength(4);
+
+      const afterState = engine.store.getState();
+
+      expect(afterState.campaign.questLog.gus_tomatoes.state).toBe(QuestStates.COMPLETED);
+      expect(afterState.campaign.questLog.gus_tomatoes.completedAt).toBeDefined();
+
+      // Reputation reward: old_gus +20
+      expect(afterState.campaign.reputation.old_gus).toBe(repBefore + 20);
+
+      // Seed reward: heirloom_tomato unlocked
+      expect(afterState.campaign.cropsUnlocked).toContain('heirloom_tomato');
+
+      // Item reward: compost x2 in inventory
+      const compostSlot = afterState.campaign.inventory.slots.find((s) => s?.itemId === 'compost');
+      expect(compostSlot).toBeDefined();
+      expect(compostSlot.count).toBeGreaterThanOrEqual(2);
+
+      // XP reward: gardening skill gained 50 XP
+      const gardeningSkill = afterState.campaign.skills?.gardening;
+      expect(gardeningSkill).toBeDefined();
+      expect(gardeningSkill.xp).toBeGreaterThanOrEqual(50);
     });
 
-    it.todo('quest state persists through save/load cycle');
+    it('quest state persists through save/load cycle', () => {
+      globalThis.localStorage = createMockStorage();
+      try {
+        const store = new Store(createGameState());
+        const state = store.getState();
+        state.campaign.currentChapter = 3;
+        state.season.season = 'summer';
+        store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+        const engine = makeIntegrationEngine(store);
+        engine.acceptQuest('gus_tomatoes');
+
+        const preSaveState = engine.store.getState();
+        expect(preSaveState.campaign.questLog.gus_tomatoes.state).toBe(QuestStates.ACCEPTED);
+
+        const slot = 0;
+        saveCampaign(preSaveState.campaign, slot);
+        saveSeasonState(preSaveState.season, slot);
+
+        const loadedCampaign = loadCampaign(slot);
+        const loadedSeason = loadSeasonState(slot);
+        expect(loadedCampaign).not.toBeNull();
+
+        const freshStore = new Store(createGameState());
+        freshStore.dispatch({
+          type: Actions.LOAD_SAVE,
+          payload: {
+            state: {
+              campaign: loadedCampaign,
+              season: { ...loadedSeason, campaign: loadedCampaign },
+            },
+          },
+        });
+
+        const restoredState = freshStore.getState();
+
+        const restoredEntry = restoredState.campaign.questLog.gus_tomatoes;
+        expect(restoredEntry).toBeDefined();
+        expect(restoredEntry.state).toBe(QuestStates.ACCEPTED);
+        expect(restoredEntry.acceptedSeason).toBe('summer');
+        expect(restoredEntry.acceptedChapter).toBe(3);
+
+        // A new QuestEngine on the restored store should see the quest as active
+        const restoredEngine = new QuestEngine(freshStore, INTEGRATION_QUEST_DECK);
+        const activeIds = restoredEngine.getActiveQuests().map((q) => q.id);
+        expect(activeIds).toContain('gus_tomatoes');
+        expect(restoredEngine.getAvailableQuests().map((q) => q.id)).not.toContain('gus_tomatoes');
+      } finally {
+        delete globalThis.localStorage;
+      }
+    });
   });
 
   // -------------------------------------------------------------------------
   // 2-B. Reputation Integration
   // -------------------------------------------------------------------------
   describe('Reputation Integration', () => {
-    it.skip('completing a quest grants reputation points for the quest NPC', () => {
-      // TODO: Implement when reputation system is built
-      // Expected flow:
-      //   1. Start with 0 rep for old_gus
-      //   2. Complete and turn in gus_tomatoes quest (rewards 15 rep)
-      //   3. Assert reputation.old_gus === 15
+    it('completing a quest grants reputation points for the quest NPC', () => {
+      // Use gus_tomatoes quest: rewards include { type: 'reputation', id: 'old_gus', amount: 15 }
+      const store = createTestStore();
+      const reputation = new ReputationSystem(store);
+      const questDeck = [
+        {
+          id: 'gus_tomatoes',
+          npc: 'old_gus',
+          type: 'discover',
+          title: "Grandpa's Tomatoes",
+          requirements: [{ type: 'crop_harvested', id: 'cherry_tom', count: 3 }],
+          rewards: [
+            { type: 'seed', id: 'heritage_pepper', amount: 1 },
+            { type: 'reputation', id: 'old_gus', amount: 15 },
+          ],
+          prerequisites: { chapter_min: 1, reputation: {}, quests_completed: [] },
+          timed: false,
+        },
+      ];
+      const engine = new QuestEngine(store, questDeck);
+
+      // 1. Start with 0 rep
+      expect(reputation.getReputation('old_gus')).toBe(0);
+
+      // 2. Accept the quest, fulfil requirements, and turn in
+      engine.acceptQuest('gus_tomatoes');
+      // Simulate harvesting 3 cherry_tom into pantry
+      for (let i = 0; i < 3; i++) {
+        store.dispatch({
+          type: Actions.PLANT_CROP,
+          payload: { cellIndex: i, cropId: 'cherry_tom' },
+        });
+        store.dispatch({
+          type: Actions.HARVEST_CELL,
+          payload: { cellIndex: i, yieldCount: 1 },
+        });
+      }
+      engine.evaluateProgress();
+      const rewards = engine.turnInQuest('gus_tomatoes');
+
+      // 3. Assert reputation.old_gus === 15
+      expect(reputation.getReputation('old_gus')).toBe(15);
+      expect(rewards).toEqual(expect.arrayContaining([
+        expect.objectContaining({ type: 'reputation', id: 'old_gus', amount: 15 }),
+      ]));
     });
 
-    it.skip('reputation tier changes at defined thresholds', () => {
-      // TODO: Implement when reputation tiers are built
-      // Expected flow:
-      //   1. Add rep incrementally: 0 → stranger, 25 → acquaintance,
-      //      50 → friend, 100 → trusted
-      //   2. Assert tier label changes at each threshold
+    it('reputation tier changes at defined thresholds', () => {
+      const store = createTestStore();
+      const reputation = new ReputationSystem(store);
+
+      // 0 → stranger
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.STRANGER);
+
+      // Add 25 → acquaintance
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.ACQUAINTANCE);
+
+      // Add 25 more (total 50) → friend
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.FRIEND);
+
+      // Add 25 more (total 75) → trusted
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.TRUSTED);
+
+      // Add 25 more (total 100) → family
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.FAMILY);
     });
 
-    it.skip('higher reputation tiers unlock new quests from that NPC', () => {
-      // TODO: Implement when quest prerequisites check rep tiers
-      // Expected flow:
-      //   1. Quest X requires rep tier "friend" with old_gus
-      //   2. At tier "stranger" → quest locked
-      //   3. Reach "friend" → quest becomes available
+    it('higher reputation tiers unlock new quests from that NPC', () => {
+      // gus_mushroom_logs requires { old_gus: 50 } (friend tier)
+      const store = createTestStore();
+      const reputation = new ReputationSystem(store);
+      const questDeck = [
+        {
+          id: 'gus_mushroom_logs',
+          npc: 'old_gus',
+          type: 'assist',
+          title: 'Mushroom Log Inoculation',
+          requirements: [{ type: 'item_delivered', id: 'wood', count: 4 }],
+          rewards: [{ type: 'reputation', id: 'old_gus', amount: 25 }],
+          prerequisites: { chapter_min: 1, reputation: { old_gus: 50 }, quests_completed: [] },
+          timed: false,
+        },
+      ];
+      const engine = new QuestEngine(store, questDeck);
+
+      // At stranger tier (0 rep) → quest is locked (not available)
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.STRANGER);
+      expect(engine.getAvailableQuests().map((q) => q.id)).not.toContain('gus_mushroom_logs');
+
+      // At acquaintance tier (25 rep) → still locked
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.ACQUAINTANCE);
+      expect(engine.getAvailableQuests().map((q) => q.id)).not.toContain('gus_mushroom_logs');
+
+      // Reach friend tier (50 rep) → quest becomes available
+      reputation.addReputation('old_gus', 25);
+      expect(reputation.getTier('old_gus')).toEqual(ReputationTiers.FRIEND);
+      expect(engine.getAvailableQuests().map((q) => q.id)).toContain('gus_mushroom_logs');
     });
 
-    it.todo('reputation decays slightly at season end if no quests completed');
+    it('reputation decays slightly at season end if no quests completed', () => {
+      const store = createTestStore();
+      const reputation = new ReputationSystem(store);
 
-    it.todo('dialogue options change based on reputation tier');
+      // Build up reputation for two NPCs
+      reputation.addReputation('old_gus', 30);
+      reputation.addReputation('maya', 10);
+      expect(reputation.getReputation('old_gus')).toBe(30);
+      expect(reputation.getReputation('maya')).toBe(10);
+
+      // Apply seasonal decay (reduces each by 1)
+      reputation.applyDecay();
+      expect(reputation.getReputation('old_gus')).toBe(29);
+      expect(reputation.getReputation('maya')).toBe(9);
+
+      // Apply multiple decay cycles — should not go below 0
+      for (let i = 0; i < 15; i++) {
+        reputation.applyDecay();
+      }
+      expect(reputation.getReputation('old_gus')).toBe(14);
+      expect(reputation.getReputation('maya')).toBe(0);
+    });
+
+    it('dialogue options change based on reputation tier', () => {
+      const store = createTestStore();
+      const reputation = new ReputationSystem(store);
+
+      // Stranger tier → stranger greeting
+      const strangerGreeting = getNPCGreeting('old_gus', reputation.getTier('old_gus').id);
+      expect(strangerGreeting).toBe('Hmm? New around here?');
+
+      // Reach acquaintance tier (25)
+      reputation.addReputation('old_gus', 25);
+      const acquaintanceGreeting = getNPCGreeting('old_gus', reputation.getTier('old_gus').id);
+      expect(acquaintanceGreeting).toBe('You again. Good.');
+
+      // Reach friend tier (50)
+      reputation.addReputation('old_gus', 25);
+      const friendGreeting = getNPCGreeting('old_gus', reputation.getTier('old_gus').id);
+      expect(friendGreeting).toBe('Good to see you, kid.');
+
+      // Reach trusted tier (75)
+      reputation.addReputation('old_gus', 25);
+      const trustedGreeting = getNPCGreeting('old_gus', reputation.getTier('old_gus').id);
+      expect(trustedGreeting).toBe("Soil's listening today. Pay attention.");
+
+      // Reach family tier (100)
+      reputation.addReputation('old_gus', 25);
+      const familyGreeting = getNPCGreeting('old_gus', reputation.getTier('old_gus').id);
+      expect(familyGreeting).toBe('There you are. Grab your gloves.');
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -1287,17 +1585,80 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // 2-E. NPC Schedules
   // -------------------------------------------------------------------------
   describe('NPC Schedules', () => {
-    it.skip('NPCs appear in their correct zone based on the current season', () => {
-      // TODO: Implement when NPC schedule system is built
-      // Expected flow:
-      //   1. Set season to spring
-      //   2. Query NPCSchedule for old_gus
-      //   3. Assert old_gus is in "market_square" or his defined spring zone
+    it('getNPCsInZone returns correct NPCs for a given zone and season', () => {
+      // In spring, old_gus, maya, and lila are all in "neighborhood"
+      const springNeighborhood = getNPCsInZone('neighborhood', 'spring');
+      const springIds = springNeighborhood.map((npc) => npc.id);
+      expect(springIds).toContain('old_gus');
+      expect(springIds).toContain('maya');
+      expect(springIds).toContain('lila');
+      expect(springNeighborhood).toHaveLength(3);
+
+      // In fall, old_gus moves to forest_edge — only maya and lila remain in neighborhood
+      const fallNeighborhood = getNPCsInZone('neighborhood', 'fall');
+      const fallIds = fallNeighborhood.map((npc) => npc.id);
+      expect(fallIds).not.toContain('old_gus');
+      expect(fallIds).toContain('maya');
+      expect(fallIds).toContain('lila');
+
+      // old_gus should appear in forest_edge during fall
+      const fallForest = getNPCsInZone('forest_edge', 'fall');
+      const fallForestIds = fallForest.map((npc) => npc.id);
+      expect(fallForestIds).toContain('old_gus');
+
+      // Each returned NPC has its activeSchedule populated
+      const gusInForest = fallForest.find((npc) => npc.id === 'old_gus');
+      expect(gusInForest.activeSchedule).toEqual(NPC_REGISTRY.old_gus.schedule.fall);
     });
 
-    it.todo('NPC greeting dialogue matches the current reputation tier');
+    it('changing season moves NPCs — Maya disappears from all zones in winter', () => {
+      // Maya has winter: null, so she should not appear in any zone during winter
+      const allZones = ['neighborhood', 'forest_edge', 'player_plot', 'meadow', 'riverside', 'greenhouse', 'festival_grounds'];
+      for (const zone of allZones) {
+        const winterNpcs = getNPCsInZone(zone, 'winter');
+        const winterIds = winterNpcs.map((npc) => npc.id);
+        expect(winterIds).not.toContain('maya');
+      }
 
-    it.todo('NPC offers quest dialogue when they have an available quest for the player');
+      // Maya IS present in spring/summer/fall in neighborhood
+      for (const season of ['spring', 'summer', 'fall']) {
+        const npcs = getNPCsInZone('neighborhood', season);
+        const ids = npcs.map((npc) => npc.id);
+        expect(ids).toContain('maya');
+      }
+
+      // Lila stays in neighborhood year-round (including winter)
+      const winterNeighborhood = getNPCsInZone('neighborhood', 'winter');
+      const winterIds = winterNeighborhood.map((npc) => npc.id);
+      expect(winterIds).toContain('lila');
+    });
+
+    it('during a festival, festival data includes NPC dialogue for participating NPCs', () => {
+      // Each festival defines npcDialogue for the three main NPCs
+      const festivalKeys = Object.keys(FESTIVALS);
+      expect(festivalKeys.length).toBeGreaterThanOrEqual(4);
+
+      for (const key of festivalKeys) {
+        const festival = FESTIVALS[key];
+        expect(festival.npcDialogue).toBeDefined();
+
+        // All three core NPCs have festival dialogue
+        expect(festival.npcDialogue.old_gus).toEqual(expect.any(String));
+        expect(festival.npcDialogue.maya).toEqual(expect.any(String));
+        expect(festival.npcDialogue.lila).toEqual(expect.any(String));
+      }
+
+      // Bloom Festival is tied to spring and has specific NPC dialogue
+      const bloom = FESTIVALS.bloom_festival;
+      expect(bloom.season).toBe('spring');
+      expect(bloom.npcDialogue.old_gus).toBeTruthy();
+      expect(bloom.npcDialogue.maya).toBeTruthy();
+      expect(bloom.npcDialogue.lila).toBeTruthy();
+
+      // Verify greeting function still works alongside festival data
+      const gusGreeting = getNPCGreeting('old_gus', 'stranger');
+      expect(gusGreeting).toBe('Hmm? New around here?');
+    });
   });
 
   // -------------------------------------------------------------------------
