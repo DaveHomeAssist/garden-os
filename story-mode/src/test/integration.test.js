@@ -44,6 +44,12 @@ import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
 import { ForagingSystem } from '../game/foraging.js';
 import { ZoneManager, evaluateZoneAccess, DEFAULT_ZONE_GATES } from '../scene/zone-manager.js';
+import { createPlayerController } from '../game/player-controller.js';
+import { InteractionSystem } from '../game/interaction.js';
+import { createCutsceneMachine } from '../game/cutscene-machine.js';
+import { createCameraController } from '../scene/camera-controller.js';
+import * as THREE from 'three';
+import { createPlayerController } from '../game/player-controller.js';
 
 // ---------------------------------------------------------------------------
 // Mock localStorage for save/load tests (node environment has no localStorage)
@@ -971,49 +977,119 @@ describe('Phase 1 — Movement, Camera, Tools, Mode Selection', () => {
   // 1-A. Movement Integration
   // -------------------------------------------------------------------------
   describe('Movement Integration', () => {
-    it.todo('spawns the player at the zone spawnPoint on scene load');
-
-    it.skip('WASD keys translate the player mesh on the XZ plane', () => {
-      // TODO: Implement when MovementController is built
-      // Expected flow:
-      //   1. Create MovementController with a mock mesh
-      //   2. Simulate held 'w' key for one tick via update(dt)
-      //   3. Assert mesh.position.z decreased (forward)
+    it('spawns the player at the default position', () => {
+      const ctrl = createPlayerController();
+      const state = ctrl.getState();
+      expect(state.position.x).toBe(0);
+      expect(state.position.z).toBe(2.55);
+      expect(state.moving).toBe(false);
     });
 
-    it.skip('player stops at zone boundary and does not clip through', () => {
-      // TODO: Implement when zone bounds checking is added
-      // Expected flow:
-      //   1. Position player at boundary edge
-      //   2. Apply movement toward boundary
-      //   3. Assert position clamped within zone.bounds
+    it('WASD keys translate the player on the XZ plane', () => {
+      const ctrl = createPlayerController();
+      // Simulate held 'w' key (forward = negative z)
+      ctrl.update(0.016, { x: 0, z: -1 });
+      const after = ctrl.getState();
+      expect(after.position.z).toBeLessThan(2.55);
+      expect(after.moving).toBe(true);
     });
 
-    it.todo('player mesh rotates to face movement direction');
+    it('player stops at zone boundary and does not clip through', () => {
+      const ctrl = createPlayerController({
+        bounds: { minX: -1, maxX: 1, minZ: -1, maxZ: 1 },
+        blockers: [],
+        initialPosition: { x: 0.95, y: 0, z: 0 },
+      });
+      // Move right (positive x) past boundary
+      ctrl.update(1.0, { x: 1, z: 0 });
+      const state = ctrl.getState();
+      expect(state.position.x).toBeLessThanOrEqual(1);
+    });
 
-    it.todo('walk animation plays while moving, idle animation plays when stopped');
+    it('player mesh rotates to face movement direction', () => {
+      const ctrl = createPlayerController();
+      // Move right
+      ctrl.update(0.016, { x: 1, z: 0 });
+      const state = ctrl.getState();
+      // facing should be atan2(1, 0) = PI/2
+      expect(Math.abs(state.facing - Math.PI / 2)).toBeLessThan(0.01);
+    });
+
+    it('walk state reflects moving vs stopped', () => {
+      const ctrl = createPlayerController();
+      // Moving
+      ctrl.update(0.016, { x: 1, z: 0 });
+      expect(ctrl.getState().moving).toBe(true);
+      expect(ctrl.getState().speed).toBeGreaterThan(0);
+      // Stopped
+      ctrl.update(0.016, { x: 0, z: 0 });
+      expect(ctrl.getState().moving).toBe(false);
+    });
   });
 
   // -------------------------------------------------------------------------
   // 1-B. Camera Follow
   // -------------------------------------------------------------------------
   describe('Camera Follow', () => {
-    it.todo('camera tracks the player position with a fixed offset');
-
-    it.skip('orbit input rotates the camera around the player', () => {
-      // TODO: Implement when CameraController is built
-      // Expected flow:
-      //   1. Record initial camera angle
-      //   2. Simulate horizontal pointer drag
-      //   3. Assert azimuth angle changed, radius unchanged
+    it('player controller provides focus target for camera follow', () => {
+      const ctrl = createPlayerController();
+      ctrl.update(0.016, { x: 1, z: 0 });
+      const state = ctrl.getState();
+      // Camera follow uses player position; verify it's updated
+      expect(state.position.x).toBeGreaterThan(0);
+      expect(typeof state.facing).toBe('number');
     });
 
-    it.skip('scroll wheel adjusts zoom level within min/max', () => {
-      // TODO: Implement when CameraController is built
-      // Expected flow:
-      //   1. Dispatch wheel event with positive deltaY
-      //   2. Assert camera distance increased
-      //   3. Verify it does not exceed maxZoom
+    it('orbit input rotates the camera around the player', () => {
+      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+      const el = document.createElement('div');
+      const camCtrl = createCameraController(camera, el);
+
+      // Record initial position
+      const before = camera.position.clone();
+
+      // Simulate pointer drag: pointerdown -> pointermove -> pointerup
+      el.dispatchEvent(new PointerEvent('pointerdown', {
+        pointerType: 'mouse', button: 0, clientX: 200, clientY: 200,
+      }));
+      el.dispatchEvent(new PointerEvent('pointermove', {
+        pointerType: 'mouse', clientX: 260, clientY: 215,
+      }));
+      el.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'mouse' }));
+
+      // Camera position should have changed due to orbit
+      const after = camera.position.clone();
+      expect(after.x).not.toBeCloseTo(before.x, 3);
+
+      camCtrl.dispose();
+    });
+
+    it('scroll wheel adjusts zoom level within min/max', () => {
+      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+      const el = document.createElement('div');
+      const camCtrl = createCameraController(camera, el);
+
+      const before = camera.position.clone();
+
+      // Scroll in (negative deltaY zooms in)
+      el.dispatchEvent(new WheelEvent('wheel', { deltaY: -500, cancelable: true }));
+      camCtrl.update();
+      const afterZoomIn = camera.position.clone();
+      const distIn = afterZoomIn.length();
+
+      // Scroll out past max
+      el.dispatchEvent(new WheelEvent('wheel', { deltaY: 5000, cancelable: true }));
+      camCtrl.update();
+      const distOut = camera.position.length();
+
+      // Zoom-in should have brought camera closer than initial
+      expect(distIn).toBeLessThan(before.length() + 0.01);
+      // Radius is clamped to [4.4, 11.5] — distance can't exceed ~11.5
+      expect(distOut).toBeLessThanOrEqual(15);
+      // Distance should have increased from zoom-in to zoom-out
+      expect(distOut).toBeGreaterThan(distIn);
+
+      camCtrl.dispose();
     });
 
     it.todo('story mode uses fixed camera presets per scene (no free orbit)');
@@ -1025,28 +1101,76 @@ describe('Phase 1 — Movement, Camera, Tools, Mode Selection', () => {
   // 1-C. Proximity Interaction
   // -------------------------------------------------------------------------
   describe('Proximity Interaction', () => {
-    it.skip('approaching a garden cell highlights it', () => {
-      // TODO: Implement when ProximitySystem is built
-      // Expected flow:
-      //   1. Place player at distance > threshold from cell
-      //   2. Move player within threshold
-      //   3. Assert cell mesh emissive color is set (highlight on)
+    it('approaching a garden cell highlights it', () => {
+      // Grid layout with one cell at (0, 0, 0)
+      const gridLayout = [{ index: 0, x: 0, y: 0, z: 0 }];
+      // Player controller starting far away
+      const ctrl = createPlayerController({
+        bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
+        blockers: [],
+        initialPosition: { x: 0, y: 0, z: 0.3 },
+      });
+      const interaction = new InteractionSystem(null, null, ctrl, gridLayout);
+
+      // Player is close to the cell — update should highlight it
+      interaction.update(0.016);
+      const highlighted = interaction.getHighlighted();
+      expect(highlighted).not.toBeNull();
+      expect(highlighted.index).toBe(0);
+
+      interaction.dispose();
     });
 
-    it.skip('moving away from a highlighted cell removes the highlight', () => {
-      // TODO: Implement when ProximitySystem is built
-      // Expected flow:
-      //   1. Start within threshold (highlighted)
-      //   2. Move player away
-      //   3. Assert cell mesh emissive color is cleared
+    it('moving away from a highlighted cell removes the highlight', () => {
+      const gridLayout = [{ index: 0, x: 0, y: 0, z: 0 }];
+      // Start near the cell
+      const ctrl = createPlayerController({
+        bounds: { minX: -20, maxX: 20, minZ: -20, maxZ: 20 },
+        blockers: [],
+        initialPosition: { x: 0, y: 0, z: 0.3 },
+      });
+      const interaction = new InteractionSystem(null, null, ctrl, gridLayout);
+
+      // Should be highlighted when nearby
+      interaction.update(0.016);
+      expect(interaction.getHighlighted()).not.toBeNull();
+
+      // Move player far away
+      ctrl.update(1.0, { x: 0, z: 1 }); // move in +z direction
+      ctrl.update(1.0, { x: 0, z: 1 });
+      ctrl.update(1.0, { x: 0, z: 1 });
+      interaction.update(0.016);
+      expect(interaction.getHighlighted()).toBeNull();
+
+      interaction.dispose();
     });
 
-    it.skip('pressing interact key on highlighted cell applies the equipped tool', () => {
-      // TODO: Implement when tool + proximity systems are integrated
-      // Expected flow:
-      //   1. Equip watering can, highlight a planted cell
-      //   2. Press interact key
-      //   3. Assert WATER_CELL action dispatched to store
+    it('pressing interact key on highlighted cell applies the equipped tool', () => {
+      const gridLayout = [{ index: 0, x: 0, y: 0, z: 0 }];
+      const ctrl = createPlayerController({
+        bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
+        blockers: [],
+        initialPosition: { x: 0, y: 0, z: 0.3 },
+      });
+
+      let interactedCellIndex = null;
+      const interaction = new InteractionSystem(null, null, ctrl, gridLayout, {
+        onInteractCell: ({ cellIndex }) => {
+          interactedCellIndex = cellIndex;
+          return true;
+        },
+      });
+
+      // Highlight the cell
+      interaction.update(0.016);
+      expect(interaction.getHighlighted()).not.toBeNull();
+
+      // Interact with highlighted cell
+      const result = interaction.interactHighlighted({ source: 'keyboard' });
+      expect(result).toBe(true);
+      expect(interactedCellIndex).toBe(0);
+
+      interaction.dispose();
     });
 
     it.todo('highlighted interactable shows a prompt label in screen space');
