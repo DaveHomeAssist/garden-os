@@ -1,3 +1,5 @@
+import { explainFactor } from '../scoring/score-explain.js';
+
 function cellLabel(index) {
   const row = Math.floor(index / 8) + 1;
   const col = (index % 8) + 1;
@@ -36,18 +38,36 @@ function renderReviewCells(cells, titleColor) {
   if (!cells.length) {
     return `<div style="font-size:12px;color:rgba(247,242,234,0.5);">No planted cells recorded.</div>`;
   }
-  return cells.map((cell) => `
-    <div style="padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);display:flex;justify-content:space-between;gap:12px;align-items:center;">
-      <div>
-        <div style="font-family:'Fraunces',serif;font-size:15px;color:#f7f2ea;">${cell.cropName}</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.5);">${cellLabel(cell.cellIndex)}</div>
+  return cells.map((cell) => {
+    // Find the weakest factor for this cell to show a targeted tip
+    let worstFactor = null;
+    let worstVal = Infinity;
+    if (cell.factors) {
+      for (const [key, val] of Object.entries(cell.factors)) {
+        const threshold = key === 'adjacency' ? 0 : 2.5;
+        if (val < threshold && val < worstVal) {
+          worstVal = val;
+          worstFactor = key;
+        }
+      }
+    }
+    const tip = worstFactor ? explainFactor(worstFactor, worstVal) : null;
+    return `
+    <div style="padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:15px;color:#f7f2ea;">${cell.cropName}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.5);">${cellLabel(cell.cellIndex)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Fraunces',serif;font-size:18px;color:${titleColor};">${cell.total.toFixed(1)}</div>
+          <div style="font-size:10px;color:rgba(247,242,234,0.45);">soil ${Math.round((cell.soilFatigue ?? 0) * 100)}%</div>
+        </div>
       </div>
-      <div style="text-align:right;">
-        <div style="font-family:'Fraunces',serif;font-size:18px;color:${titleColor};">${cell.total.toFixed(1)}</div>
-        <div style="font-size:10px;color:rgba(247,242,234,0.45);">soil ${Math.round((cell.soilFatigue ?? 0) * 100)}%</div>
-      </div>
+      ${tip?.tip ? `<div style="font-size:10px;color:rgba(247,242,234,0.5);margin-top:6px;line-height:1.4;">💡 ${tip.tip}</div>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 export function showWinterReview(container, data, handlers = {}) {
