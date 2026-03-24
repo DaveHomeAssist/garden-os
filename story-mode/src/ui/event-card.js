@@ -78,7 +78,7 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
         const isAccept = iv.id === 'accept_loss';
         const disabled = !isAccept && tokensLeft <= 0;
         return `
-          <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}">
+          <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}" aria-label="${iv.label}: ${iv.desc}">
             <div style="font-size:20px;margin-bottom:4px;">${iv.emoji}</div>
             <div style="font-weight:600;margin-bottom:2px;">${iv.label}</div>
             <div style="font-size:10px;color:rgba(247,242,234,0.4);line-height:1.3;">${iv.desc}</div>

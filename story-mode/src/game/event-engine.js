@@ -58,8 +58,9 @@ function matchesTarget(cell, cellIndex, target, grid) {
   if (type === 'all') return true;
 
   if (type === 'random_cells') {
-    // Apply to roughly half the planted cells at random
-    return Math.random() < 0.5;
+    // Deterministic: use cell index to decide which cells are affected
+    // Alternating pattern seeded by cellIndex ensures same inputs = same outputs
+    return (cellIndex * 2654435761 >>> 0) % 2 === 0;
   }
 
   if (type === 'crop_filter') {

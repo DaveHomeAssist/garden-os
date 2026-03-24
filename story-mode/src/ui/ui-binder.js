@@ -2019,6 +2019,7 @@ function bindUI({
     toolHUD?.dispose();
     touchStick.dispose();
     calendarEl.remove();
+    dialoguePanel?.destroy();
     document.removeEventListener('click', bugPanelOutsideHandler);
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;

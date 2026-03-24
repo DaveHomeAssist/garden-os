@@ -175,7 +175,6 @@ function normalizeSeason(rawSeason, campaign) {
     grid: normalizeGrid(season.grid, fallbackSeason.grid, gridCols, gridRows),
     eventsDrawn: cloneArray(season.eventsDrawn),
     eventTitles: cloneArray(season.eventTitles),
-    beatScores: cloneArray(season.beatScores),
     harvestResult: cloneValue(season.harvestResult),
     lastResolvedEvent: cloneValue(season.lastResolvedEvent),
     lastEventEffectSummary: cloneValue(season.lastEventEffectSummary),
