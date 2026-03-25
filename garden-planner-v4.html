@@ -13,20 +13,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root {
-    --soil:var(--soil);--soil-mid:var(--soil-light);--soil-light:#9a6b42;
-    --leaf:var(--leaf);--leaf-bright:var(--leaf-bright);--leaf-pale:#c8e6c9;
-    --sun:var(--sun-bright);--sun-pale:#fdf3c0;
-    --cream:var(--cream);--cream-dark:var(--cream-mid);--cream-mid:#f0e9de;
-    --text:var(--text);--text-mid:var(--text-mid);--text-light:#7d5f45;
-    --border:var(--border);--border-light:#ddd0b8;
-    --warn:var(--rust-light);--good:var(--leaf);--bad:#b02a1e;--blue:#3a6abf;
-    --panel:#f0e9de;
+    --soil:#3a2510;--soil-mid:#52331a;--soil-light:#7a5230;
+    --leaf:#3a6b2a;--leaf-bright:#4e8c3c;--leaf-pale:#c8e6c0;
+    --sun:#d4a820;--sun-bright:#e8c84a;--sun-pale:#faf0c0;
+    --cream:#f7f3ec;--cream-dark:#ede5d8;--cream-mid:#e4d8c8;
+    --text:#1e1208;--text-mid:#4a3018;--text-light:#6f5840;
+    --border:#c8b090;--border-light:#dfd0b8;
+    --warn:#d4651a;--good:#3a6b2a;--bad:#b02a1e;--blue:#3a6abf;
+    --panel:#fffdf9;
     --radius:8px;
     --shadow:0 2px 12px rgba(0,0,0,.1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(232,200,74,.12), transparent 32%),
+      radial-gradient(circle at 20% 80%, rgba(58,107,42,.08), transparent 28%),
+      linear-gradient(180deg, #fbf8f2 0%, #f3ebdf 100%);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
 
   /* ═══ HEADER ═══ */
   header{
@@ -279,13 +288,61 @@
   }
 
   /* ═══ RIGHT PANE ═══ */
-  .score-hero{display:flex;align-items:center;gap:.8rem;background:white;
-    border:1.5px solid var(--border);border-radius:8px;padding:.75rem;}
+  .score-hero{display:flex;align-items:flex-start;gap:.8rem;background:linear-gradient(180deg,#fffefb,#f5ede1);
+    border:1.5px solid var(--border);border-radius:14px;padding:.8rem;box-shadow:0 4px 14px rgba(44,27,11,.07);}
   .sbig{text-align:center;flex-shrink:0;}
   .snum{font-family:'Fraunces',serif;font-size:2.5rem;font-weight:600;line-height:1;}
   .slbl2{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);}
   .srating{font-size:.65rem;font-weight:500;margin-top:.1rem;}
   .sbars{flex:1;display:flex;flex-direction:column;gap:.35rem;}
+  .score-hero-copy{font-size:.72rem;line-height:1.5;color:var(--text-mid);}
+  .score-model-strip{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.15rem;}
+  .score-model-chip{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:28px;padding:.22rem .55rem;border-radius:999px;
+    border:1px solid var(--border-light);
+    background:rgba(255,255,255,.88);
+    font-family:'DM Mono',monospace;font-size:.54rem;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--soil);
+  }
+  .score-model-chip.rules{background:#eef3e6;color:#34522a;border-color:rgba(58,107,42,.2);}
+  .score-model-chip.planner{background:#f5ead2;color:#7a5612;border-color:rgba(212,168,32,.28);}
+  .score-model-chip.story{background:#eee7f6;color:#5a3b80;border-color:rgba(90,59,128,.2);}
+  .score-breakdown-card{
+    margin-top:.7rem;
+    display:flex;flex-direction:column;gap:.42rem;
+    padding:.78rem .82rem;
+    border:1px solid var(--border-light);
+    border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(248,242,233,.92));
+    box-shadow:0 6px 18px rgba(44,27,11,.05);
+  }
+  .score-breakdown-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;}
+  .score-breakdown-title{font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.1em;color:var(--soil);font-weight:600;}
+  .score-breakdown-note{font-size:.68rem;line-height:1.45;color:var(--text-mid);}
+  .score-breakdown-grid{display:flex;flex-direction:column;gap:.1rem;}
+  .score-breakdown-row{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:.55rem;
+    padding:.36rem 0;border-top:1px dashed #e5d9c7;
+  }
+  .score-breakdown-row:first-child{border-top:none;padding-top:0;}
+  .score-breakdown-label{font-size:.68rem;line-height:1.4;color:var(--text-mid);}
+  .score-breakdown-value{
+    flex-shrink:0;
+    font-family:'DM Mono',monospace;font-size:.64rem;
+    text-transform:uppercase;letter-spacing:.05em;color:var(--soil);
+  }
+  .score-breakdown-value.plus{color:var(--good);}
+  .score-breakdown-value.minus{color:var(--bad);}
+  .score-breakdown-value.neutral{color:var(--soil);}
+  .score-model-note{
+    margin-top:.55rem;
+    padding:.52rem .58rem;
+    border:1px solid var(--border-light);
+    border-radius:12px;
+    background:rgba(255,255,255,.62);
+    font-size:.68rem;line-height:1.5;color:var(--text-mid);
+  }
   .brow{display:flex;align-items:center;gap:.4rem;}
   .blbl{font-size:.62rem;color:var(--text-light);width:50px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .btrk{flex:1;height:4px;background:#ede4d6;border-radius:2px;overflow:hidden;}
@@ -1316,11 +1373,12 @@
   .planner-shell{display:flex;flex-direction:column;min-height:calc(100vh - 24px);}
 
   .planner-header{
-    background:var(--soil);color:#f5ede0;
-    padding:.75rem 1.25rem;
-    border-bottom:3px solid var(--sun);
+    background:linear-gradient(180deg,rgba(41,26,13,.98),rgba(58,37,16,.95));color:#f5ede0;
+    padding:.8rem 1.25rem;
+    border-bottom:1px solid rgba(232,200,74,.34);
     display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
     position:sticky;top:0;z-index:100;
+    box-shadow:0 10px 26px rgba(44,27,11,.16);
   }
   .planner-brand{display:flex;align-items:baseline;gap:.6rem;}
   .planner-status{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-left:auto;margin-right:.75rem;}
@@ -1344,8 +1402,8 @@
 
   .planner-taskbar{
     display:flex;align-items:center;gap:.3rem;
-    padding:.35rem .75rem;
-    background:var(--cream-dark);
+    padding:.4rem .75rem;
+    background:linear-gradient(180deg,rgba(247,243,236,.92),rgba(239,230,214,.95));
     border-bottom:1px solid var(--border-light);
     flex-shrink:0;
     flex-wrap:wrap;
@@ -1355,13 +1413,18 @@
   .planner-taskbar .task-shortcuts{display:flex;gap:.25rem;align-items:center;margin-left:auto;}
   .planner-state-strip{
     display:flex;align-items:center;justify-content:space-between;gap:.75rem;
-    padding:.65rem .85rem;
-    background:#fff;
+    padding:.8rem .85rem;
+    background:linear-gradient(180deg,#fffefb,#f7efe3);
     border-bottom:1px solid var(--border-light);
     flex-wrap:wrap;
   }
   .planner-state-card{
-    display:flex;flex-direction:column;gap:.22rem;min-width:240px;flex:1;
+    display:flex;flex-direction:column;gap:.22rem;min-width:260px;flex:1;
+    background:rgba(255,255,255,.92);
+    border:1px solid var(--border-light);
+    border-radius:16px;
+    padding:.8rem .9rem;
+    box-shadow:0 6px 18px rgba(44,27,11,.08);
   }
   .planner-state-kicker{
     font-family:'DM Mono',monospace;
@@ -1384,6 +1447,9 @@
   }
   .planner-state-actions{
     display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+  }
+  .planner-state-hud{
+    display:flex;align-items:center;justify-content:flex-end;gap:.45rem;flex-wrap:wrap;
   }
   .planner-state-btn{
     border:1.5px solid var(--border);
@@ -1420,7 +1486,13 @@
   .planner-state-chip.state-empty{background:#f3eee4;color:var(--soil);}
   .planner-state-chip.state-active{background:#eaf3de;color:var(--leaf);}
   .planner-state-chip.state-complete{background:#e8f5ea;color:var(--leaf);}
+  .planner-state-chip.state-warn{background:#f6ecd0;color:#7a5612;}
   .planner-state-chip.state-error{background:#faeae8;color:var(--bad);}
+  .planner-state-chip.metric{
+    border:1px solid var(--border-light);
+    background:rgba(255,255,255,.92);
+    color:var(--text-mid);
+  }
 
   .planner-main{
     display:grid;
@@ -1435,19 +1507,27 @@
 
   /* Workspace panel (center) */
   .workspace-panel{display:flex;flex-direction:column;gap:.75rem;align-items:center;padding:1rem clamp(.8rem,1.6vw,1.2rem);overflow-y:auto;min-width:0;}
-  .board-stage{width:100%;max-width:560px;}
+  .board-stage{
+    width:100%;
+    max-width:620px;
+    background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(244,235,222,.9));
+    border:1px solid rgba(223,208,184,.9);
+    border-radius:22px;
+    padding:1rem 1rem .9rem;
+    box-shadow:0 18px 42px rgba(44,27,11,.09);
+  }
   .board-feedback{width:100%;max-width:480px;text-align:center;}
 
   /* Insight panel (right) */
   .insight-panel{
-    background:var(--panel);display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#f6efe3,#f1e7d8);display:flex;flex-direction:column;
     overflow-y:auto;border-left:1.5px solid var(--border);
   }
   .insight-block{border-bottom:1px solid var(--border-light);}
   .insight-block:last-child{border-bottom:none;}
   .insight-header{
     display:flex;align-items:center;justify-content:space-between;
-    width:100%;padding:.5rem .65rem;border:none;background:transparent;
+    width:100%;padding:.58rem .7rem;border:none;background:rgba(255,255,255,.36);
     cursor:pointer;font-family:'DM Mono',monospace;font-size:.58rem;
     text-transform:uppercase;letter-spacing:.08em;color:var(--soil);
     font-weight:600;text-align:left;
@@ -1485,6 +1565,15 @@
   .reasoning-stack-copy{display:flex;flex-direction:column;gap:.14rem;min-width:0;}
   .reasoning-stack-copy strong{font-size:.68rem;color:var(--soil);}
   .reasoning-stack-copy span{font-size:.68rem;line-height:1.4;color:var(--text-mid);}
+  .reasoning-model-list{display:flex;flex-direction:column;gap:.34rem;}
+  .reasoning-model-item{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:.55rem;
+    padding:.38rem .42rem;border-radius:.62rem;
+    background:rgba(255,255,255,.72);border:1px solid var(--border-light);
+  }
+  .reasoning-model-copy{display:flex;flex-direction:column;gap:.12rem;min-width:0;}
+  .reasoning-model-copy strong{font-size:.66rem;color:var(--soil);}
+  .reasoning-model-copy span{font-size:.66rem;line-height:1.4;color:var(--text-mid);}
   .reasoning-actions{display:flex;flex-wrap:wrap;gap:.45rem;}
   .reasoning-btn{
     border:1px solid var(--border);background:var(--cream);color:var(--soil);border-radius:999px;
@@ -1493,7 +1582,7 @@
   .reasoning-btn.primary{background:var(--leaf);color:#fff;border-color:var(--leaf);}
   .reasoning-empty{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem;text-align:center;opacity:.7;}
   .reasoning-empty p{margin:0;font-size:.74rem;line-height:1.45;color:var(--text);}
-  .issue-strip{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.45rem .65rem;border:1px solid var(--border-light);border-radius:999px;background:rgba(255,255,255,.72);margin-top:.55rem;}
+  .issue-strip{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.55rem .7rem;border:1px solid var(--border-light);border-radius:999px;background:rgba(255,255,255,.82);margin-top:.65rem;box-shadow:0 4px 14px rgba(44,27,11,.05);}
   .issue-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;border-radius:999px;font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--border-light);}
   .issue-pill.critical{background:#f4d7d3;color:#7d2419;}
   .issue-pill.medium{background:#f6ecd0;color:#7a5612;}
@@ -1582,6 +1671,8 @@
   .shortcut-item strong{font-size:.72rem;color:var(--soil);}
   .shortcut-item span{display:block;font-size:.66rem;color:var(--text-mid);margin-top:.35rem;line-height:1.45;}
 
+  .planner-mobile-dock{display:none;}
+
   /* ═══ PLANNER SHELL v5 — Responsive ═══ */
   @media(max-width:1180px){
     .planner-main{grid-template-columns:216px minmax(0,1fr) 232px;}
@@ -1591,24 +1682,74 @@
     .workspace-panel{padding:.95rem .75rem;}
   }
   @media(max-width:900px){
+    body{padding-bottom:calc(88px + env(safe-area-inset-bottom));}
     .planner-main{grid-template-columns:1fr;min-height:auto;}
-    .workspace-panel{order:1;padding:.85rem .75rem;}
-    .plan-panel{order:2;border-right:none;border-top:1.5px solid var(--border);max-height:min(40vh,340px);overflow:hidden;}
-    .insight-panel{order:3;border-left:none;border-top:1.5px solid var(--border);max-height:min(50vh,400px);}
+    .planner-header{padding:.72rem .82rem;gap:.45rem;}
+    .planner-brand h1{font-size:1.25rem;}
+    .planner-status{width:100%;margin:0;justify-content:space-between;gap:.35rem;}
+    .planner-status .hsub{flex:1;min-width:0;line-height:1.45;font-size:.54rem;}
+    .workspace-panel{order:1;padding:.85rem .75rem 6rem;}
+    .plan-panel{
+      order:2;border-right:none;border-top:1.5px solid var(--border);max-height:min(44vh,360px);overflow:hidden;
+      border-radius:20px 20px 0 0;box-shadow:0 -10px 24px rgba(44,27,11,.08);
+    }
+    .insight-panel{
+      order:3;border-left:none;border-top:1.5px solid var(--border);max-height:min(56vh,430px);
+      border-radius:20px 20px 0 0;box-shadow:0 -10px 24px rgba(44,27,11,.08);
+    }
     .plan-panel .sidebar-toggle{display:block;}
     .plan-panel.collapsed .plan-panel-tabs,.plan-panel.collapsed .tab-pane{display:none;}
     .plan-panel.collapsed{max-height:2.3rem;overflow:hidden;}
     .insight-panel .sidebar-toggle{display:block;}
     .insight-panel.collapsed .insight-block{display:none;}
     .insight-panel.collapsed{max-height:2.3rem;overflow:hidden;}
-    .planner-taskbar{padding:.35rem .5rem;gap:.2rem;}
+    .sidebar-toggle{
+      position:sticky;top:0;z-index:2;
+      background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+    }
+    .planner-taskbar{padding:.42rem .52rem;gap:.24rem;}
+    .planner-taskbar .tool-group,
+    .planner-taskbar .task-primary-slot,
+    .planner-taskbar .task-shortcuts{flex-wrap:wrap;}
+    .planner-taskbar .task-shortcuts{margin-left:0;width:100%;}
+    .planner-state-strip{padding:.68rem .68rem .58rem;}
+    .planner-state-card{width:100%;min-width:0;padding:.74rem .8rem;}
+    .planner-state-actions .planner-state-btn{flex:1 1 calc(50% - .2rem);justify-content:center;}
+    .planner-state-hud{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.42rem;}
+    .planner-state-chip{justify-content:center;min-height:42px;padding:.38rem .52rem;}
+    .workspace-bar{
+      width:100%;max-width:none;position:sticky;top:.3rem;z-index:5;
+      background:rgba(255,255,255,.88);backdrop-filter:blur(12px);
+    }
+    .board-stage{max-width:none;padding:.82rem .72rem .88rem;border-radius:20px;}
+    .bwrap{max-width:none;padding:.7rem;}
+    .score-hero{padding:.72rem .74rem;border-radius:16px;}
+    .score-breakdown-card{padding:.72rem .74rem;}
+    .issue-strip{
+      justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;
+      padding:.5rem .55rem;scrollbar-width:none;
+    }
+    .issue-strip::-webkit-scrollbar{display:none;}
     .manage-panel{width:100%;border-radius:14px 14px 0 0;top:auto;bottom:0;max-height:70vh;}
+    .planner-mobile-dock{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.45rem;
+      position:fixed;left:.75rem;right:.75rem;
+      bottom:calc(.7rem + env(safe-area-inset-bottom));z-index:160;
+      padding:.45rem;border-radius:18px;
+      background:rgba(41,26,13,.92);border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 18px 36px rgba(25,16,8,.32);backdrop-filter:blur(14px);
+    }
   }
   @media(max-width:600px){
     .planner-taskbar .task-primary-slot{margin-left:.25rem;}
     .planner-taskbar .cbar-btn{padding:.24rem .36rem;font-size:.52rem;}
     .planner-state-strip{padding:.55rem .6rem;}
     .shortcut-grid{grid-template-columns:1fr;}
+    .planner-mobile-dock{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .planner-mobile-btn{font-size:.56rem;}
+    .score-breakdown-head{flex-direction:column;align-items:flex-start;}
+    .score-breakdown-row{gap:.35rem;}
+    .reasoning-row,.reasoning-model-item,.inspect-risk-item{flex-direction:column;}
   }
 
   /* ═══ UNDO TOAST ═══ */
@@ -1634,6 +1775,14 @@
   .help-row{font-size:.76rem;color:var(--text);padding:.15rem 0;display:flex;align-items:center;gap:.4rem;}
   .help-row kbd{font-family:'DM Mono',monospace;font-size:.62rem;background:var(--cream-dark);padding:2px 6px;border-radius:3px;border:1px solid var(--border);min-width:1.4rem;text-align:center;}
   .help-close{display:block;margin:1rem auto 0;background:var(--soil);color:var(--cream);border:none;border-radius:6px;padding:.4rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;}
+  .planner-mobile-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:48px;padding:.55rem .5rem;border-radius:14px;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);
+    color:#f7efe2;font-family:'DM Mono',monospace;font-size:.6rem;
+    text-transform:uppercase;letter-spacing:.08em;cursor:pointer;
+  }
+  .planner-mobile-btn.primary{background:rgba(232,200,74,.16);border-color:rgba(232,200,74,.32);color:#ffe48e;}
 </style>
 </head>
 <body>
@@ -1681,11 +1830,7 @@
 
 <div class="planner-state-strip" aria-live="polite">
   <div class="planner-state-card" id="plannerStateStrip"></div>
-  <div class="planner-state-actions">
-    <span class="planner-state-chip state-active" id="plannerModeChip">Inspect</span>
-    <button class="planner-state-btn" id="focusInspectBtn" type="button">Inspect weakest</button>
-    <button class="planner-state-btn" id="focusManageBtn" type="button">Manage</button>
-  </div>
+  <div class="planner-state-hud" id="plannerStateHud"></div>
 </div>
 
 <div class="planner-main">
@@ -1906,7 +2051,7 @@
   <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle insight panel">&#9662; Insight</button>
 
   <section class="insight-block" id="insightSummary">
-    <button class="insight-header" aria-expanded="true" data-section="summary">Summary</button>
+    <button class="insight-header" aria-expanded="true" data-section="summary">Live score</button>
     <div class="insight-content" aria-live="polite">
       <div id="rpaneScore"></div>
       <div id="rpaneReasoning"></div>
@@ -1914,14 +2059,14 @@
   </section>
 
   <section class="insight-block" id="insightDashboard">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Planner board</button>
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Garden board</button>
     <div class="insight-content" hidden>
       <div id="rpaneDashboard"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightInspect">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Inspect</button>
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Cell inspector</button>
     <div class="insight-content" hidden>
       <div id="rpaneInspect"></div>
       <div id="rpaneCompanions"></div>
@@ -1936,20 +2081,26 @@
   </section>
 
   <section class="insight-block" id="insightHarvest">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest</button>
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest log</button>
     <div class="insight-content" hidden>
       <div id="rpaneHarvest"></div>
     </div>
   </section>
 
   <section class="insight-block" id="insightNotes">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="notes">Notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="notes">Alerts &amp; notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
     <div class="insight-content" hidden>
       <div id="rpaneNotes"></div>
     </div>
   </section>
 </aside>
 </div><!-- /planner-main -->
+<div class="planner-mobile-dock" aria-label="Quick planner actions">
+  <button class="planner-mobile-btn" type="button" data-mobile-action="open-plan">Plan</button>
+  <button class="planner-mobile-btn primary" type="button" data-mobile-action="open-score">Score</button>
+  <button class="planner-mobile-btn" type="button" data-mobile-action="focus-weakest">Weakest</button>
+  <button class="planner-mobile-btn" type="button" data-mobile-action="open-manage">Manage</button>
+</div>
 
 <dialog id="addBedDialog" class="add-bed-dialog">
   <form method="dialog" class="add-bed-wrap" id="addBedForm">
@@ -3608,40 +3759,67 @@ function setPlannerNotice(kind, title, copy, actions=[]){
 }
 function renderPlannerState(){
   const mount=document.getElementById('plannerStateStrip');
-  const chip=document.getElementById('plannerModeChip');
-  const inspectBtn=document.getElementById('focusInspectBtn');
-  if(!mount || !chip) return;
+  const hud=document.getElementById('plannerStateHud');
+  if(!mount || !hud) return;
   const plantedCount = bed.filter(c=>!!c.crop).length;
+  const inputs = inp();
+  const score = plantedCount ? scoreBed(inputs) : 0;
+  const issues = plantedCount ? cellIssues(inputs) : [];
+  const issueCounts = issueCountsBySeverity(issues);
+  const selected = ui.selCell ? bed.find(c=>c.id===ui.selCell) : null;
+  const modeLabel = ui.tool === 'paint' ? 'Paint mode' : ui.tool === 'erase' ? 'Erase mode' : 'Inspect mode';
   let state = null;
   if(_plannerNotice){
     state = _plannerNotice;
   }else if(!plantedCount){
     state = {
       kind:'empty',
-      title:'Start with a crop or draft a layout',
-      copy:'Use Auto fill for a quick first pass or switch to Paint and place crops manually.',
+      title:'Start planning the bed',
+      copy:'Browse crops for a deliberate first move or let Auto fill draft a workable layout. Live score and reasoning wake up as soon as the bed has planted cells.',
       actions:[
-        { id:'stateAutofill', label:'Auto fill', cls:'primary' },
-        { id:'statePalette', label:'Open crops' }
+        { id:'statePalette', label:'Browse crops', cls:'primary' },
+        { id:'stateAutofill', label:'Auto fill' }
       ]
     };
   }else{
-    const selected = ui.selCell ? bed.find(c=>c.id===ui.selCell) : null;
-    const currentTool = ui.tool === 'paint' ? 'Plan' : ui.tool === 'erase' ? 'Manage' : 'Inspect';
     state = {
       kind:'active',
-      title:`${currentTool} is active`,
+      title:selected
+        ? (selected.crop ? `Focus: ${CROPS[selected.crop].name} at ${selected.id}` : `Focus: ${selected.id}`)
+        : `${modeLabel} is live`,
       copy:selected
-        ? (selected.crop ? `Selected ${selected.id}. Inspect score, harvest history, and better placements.` : `Selected ${selected.id}. Place a crop or inspect the cell score context.`)
-        : 'Keep one current task visible. Use Inspect for score details, Plan for placement, and Manage for save, import, and restore.',
+        ? (selected.crop
+          ? `Open the score story to see what is helping, what is hurting, and the fastest fix for ${selected.id}.`
+          : `This cell is open. Browse crops to place with intent or open the score story to read the bed-level pressure first.`)
+        : 'Keep one decision visible at a time. Use the score story for bed pressure, inspect the weakest cell, then make the next change deliberately.',
       actions:[
-        { id:'stateInspect', label:'Inspect weakest', cls:'warn' },
-        { id:'stateManage', label:'Open manage' }
+        { id:'stateScoreStory', label:'Why this score', cls:'primary' },
+        { id:(selected && !selected.crop) ? 'statePalette' : 'stateInspect', label:(selected && !selected.crop) ? 'Browse crops' : 'Inspect weakest' }
       ]
     };
   }
-  chip.textContent = state.kind === 'empty' ? 'Start' : state.kind === 'complete' ? 'Done' : state.kind === 'error' ? 'Recover' : (ui.tool === 'paint' ? 'Plan' : ui.tool === 'erase' ? 'Manage' : 'Inspect');
-  chip.className = `planner-state-chip state-${state.kind}`;
+  const issueText = !plantedCount
+    ? 'score asleep'
+    : issueCounts.critical
+      ? `${issueCounts.critical} critical`
+      : issueCounts.medium
+        ? `${issueCounts.medium} medium`
+        : issues.length
+          ? `${issues.length} advisory`
+          : 'clear layout';
+  const issueState = !plantedCount
+    ? 'state-empty'
+    : issueCounts.critical
+      ? 'state-error'
+      : (issueCounts.medium || issues.length)
+        ? 'state-warn'
+        : 'state-complete';
+  hud.innerHTML = `
+    <span class="planner-state-chip state-${state.kind}">${escapeHtml(state.kind === 'empty' ? 'Start' : modeLabel)}</span>
+    <span class="planner-state-chip metric">${escapeHtml(plantedCount ? `${Math.round(score)} score` : 'score offline')}</span>
+    <span class="planner-state-chip metric">${escapeHtml(`${plantedCount}/${bedW * bedH} filled`)}</span>
+    <span class="planner-state-chip ${issueState}">${escapeHtml(issueText)}</span>
+  `;
   mount.innerHTML = `
     <div class="planner-state-kicker">${escapeHtml(state.kind)}</div>
     <div class="planner-state-title">${escapeHtml(state.title)}</div>
@@ -3662,9 +3840,9 @@ function renderPlannerState(){
       if(id==='statePalette'){ switchLTab('palette'); const search=document.getElementById('psearch'); if(search) search.focus(); }
       if(id==='stateInspect') focusWeakestCell();
       if(id==='stateManage') toggleMenu();
+      if(id==='stateScoreStory') switchRTab('score');
     });
   });
-  if(inspectBtn) inspectBtn.disabled = !plantedCount;
 }
 function focusWeakestCell(){
   const inputs = inp();
@@ -3948,7 +4126,10 @@ function computeScoreBreakdown(ck, cell, inputs){
   }
 
   const weightedCore=(sunFit*2+supFit+shadeFit+accFit+seaFit)/3;
-  const preAdjRaw=weightedCore+structBonus;
+  const sm=c.seasonalMultipliers;
+  const seasonMap={spring:'spring',latesummer:'summer',summer:'summer',fall:'fall'};
+  const seasonMult=sm ? sm[seasonMap[inputs.season]||'summer'] ?? 1.0 : 1.0;
+  const preAdjRaw=weightedCore*seasonMult+structBonus;
   const baseScore=clamp(preAdjRaw,0,10);
   return {
     crop:c, lightHours:l,
@@ -3987,10 +4168,8 @@ function computeAdjacencyBreakdown(cell){
     let delta=0;
     const contributions=[];
     if(c.companions && c.companions.includes(n.crop)){
-      const w=companionWeight(c.category, nc.category);
-      const bonus=0.5*w;
-      delta+=bonus;
-      contributions.push({label:'Companion match', delta:bonus});
+      delta+=0.5;
+      contributions.push({label:'Companion match', delta:0.5});
     }
     if(c.conflicts && c.conflicts.includes(n.crop)){
       delta-=1.2;
@@ -4042,24 +4221,53 @@ function goalBonus(inputs){
   return b;
 }
 
-function scoreBed(inputs){
+function plannerScoreLabel(score){
+  return score>=80?'Excellent':score>=65?'Good':score>=50?'Workable':score>=35?'Risky':'Poor fit';
+}
+
+function getPlannerBedScoreAudit(inputs){
   const occ=bed.filter(c=>c.crop);
-  if(!occ.length) return 0;
-  let score=occ.reduce((s,c)=>s+scoreCell(c,inputs),0)/occ.length*10;
-  const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
-  if(uniq.length>=4) score+=7;
-  else if(uniq.length>=3) score+=5;
-  else if(uniq.length>=2) score+=3;
-  const tall=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].tall);
-  if(tall.length>1) score-=8;
-  const trN=uniq.filter(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired));
-  if(trN.length>1) score-=6;
-  const cool=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].coolSeason);
-  if(inputs.season==='latesummer'&&cool.length) score-=cool.length*4;
-  score+=goalBonus(inputs);
-  const fillPct=occ.length/(bedW*bedH);
-  if(fillPct<1) score-=Math.round((1-Math.sqrt(fillPct))*15);
-  return Math.min(100,Math.max(0,Math.round(score)));
+  const uniq=[...new Set(occ.map(c=>c.crop).filter(Boolean))];
+  const occupiedCount=occ.length;
+  const modelLayers=[
+    { tone:'rules', label:'Rules core', copy:'Sun, support, shade, access, season, and adjacency stay deterministic in the planner.' },
+    { tone:'planner', label:'Planner layer', copy:'This workspace adds cage-aware structure, goal fit, fill pressure, and a 100-point rollup for fast planning.' },
+    { tone:'story', label:'Story Mode later', copy:'Events, interventions, and soil fatigue are not active here. They enter later in Story Mode.' }
+  ];
+  if(!occupiedCount){
+    return {
+      occupiedCount:0,totalCells:bedW*bedH,cellAverage10:0,cellAverage100:0,
+      diversityBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
+      finalScore:0,fillRatio:0,modelLayers
+    };
+  }
+
+  const cellAverage10=occ.reduce((sum,cell)=>sum+scoreCell(cell,inputs),0)/occupiedCount;
+  const cellAverage100=cellAverage10*10;
+  let diversityBonus=0;
+  if(uniq.length>=4) diversityBonus=7;
+  else if(uniq.length>=3) diversityBonus=5;
+  else if(uniq.length>=2) diversityBonus=3;
+  const tallPenalty=uniq.filter(ck=>CROPS[ck]&&CROPS[ck].tall).length>1?-8:0;
+  const trellisPenalty=uniq.filter(ck=>CROPS[ck]&&(CROPS[ck].habit==='vining'||CROPS[ck].trellisRequired)).length>1?-6:0;
+  const lateSummerPenalty=inputs.season==='latesummer'
+    ? uniq.filter(ck=>CROPS[ck]&&CROPS[ck].coolSeason).length*4
+    : 0;
+  const goalBoost=goalBonus(inputs);
+  const fillRatio=occupiedCount/(bedW*bedH);
+  const fillPenalty=fillRatio<1?Math.round((1-Math.sqrt(fillRatio))*15):0;
+  const rolled=cellAverage100+diversityBonus+tallPenalty+trellisPenalty+goalBoost-fillPenalty-lateSummerPenalty;
+  const finalScore=Math.min(100,Math.max(0,Math.round(rolled)));
+
+  return {
+    occupiedCount,totalCells:bedW*bedH,cellAverage10,cellAverage100,
+    diversityBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
+    finalScore,fillRatio,modelLayers
+  };
+}
+
+function scoreBed(inputs){
+  return getPlannerBedScoreAudit(inputs).finalScore;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4245,6 +4453,11 @@ function formatSigned(value, digits=2){
   return `${n>=0?'+':''}${n.toFixed(digits)}`;
 }
 
+function formatSignedWhole(value){
+  const n=Math.round(Number(value)||0);
+  return n===0?'0':(n>0?`+${n}`:`${n}`);
+}
+
 function isFrontAccessCell(cell){
   return !!(cell && Number.isFinite(cell.row) && cell.row===bedH-1);
 }
@@ -4340,9 +4553,18 @@ function renderScoreExplanation(cell, inputs){
 
   const adjClass=adjacency.clamped>0?'good':adjacency.clamped<0?'bad':'mid';
   const finalColor=final>=7?'var(--leaf)':final>=4?'#b07820':'#b02a1e';
+  const modelChips=`
+    <div class="score-model-strip">
+      <span class="score-model-chip rules">Rules core</span>
+      <span class="score-model-chip planner">Planner layer</span>
+      <span class="score-model-chip story">Story Mode later</span>
+    </div>
+    <div class="score-model-note">Deterministic planner readout. This cell uses tuned light and structure heuristics for fast planning feedback. Story Mode later layers events, interventions, and soil fatigue on top of the base layout.</div>
+  `;
 
   return `<div class="score-explain">
     <div class="score-explain-h">Why this score?</div>
+    ${modelChips}
     <div class="factor-list">${factorHtml}</div>
     <div class="adj-wrap">
       <div class="adj-net">
@@ -4352,7 +4574,7 @@ function renderScoreExplanation(cell, inputs){
       ${adjRows}
     </div>
     <div class="score-formula">
-      <div class="formula-k">Formula</div>
+      <div class="formula-k">Planner formula</div>
       <div class="formula-v">(${detail.sunFit.toFixed(2)}×2 + ${detail.supFit.toFixed(2)} + ${detail.shadeFit.toFixed(2)} + ${detail.accFit.toFixed(2)} + ${detail.seaFit.toFixed(2)}) / 3 + ${formatSigned(detail.structBonus,2)} + ${formatSigned(adjacency.clamped,2)}</div>
       <div class="formula-final" style="color:${finalColor}">Final: ${final.toFixed(1)} / 10</div>
     </div>
@@ -4514,7 +4736,7 @@ function buildReasoningSurface(inputs, issues){
   const weakest=weakestCells(inputs,1)[0];
   const target=(selected&&selected.crop)?selected:(weakest?weakest.cell:(planted[0]||null));
   if(!target||!target.crop){
-    pane.innerHTML=`<div class="icard reasoning-card"><div class="ichdr">Reasoning surface</div><div class="reasoning-empty"><span>🧭</span><p>Select a planted cell to see score drivers, top risk, and the next best move in one place.</p><button class="reasoning-btn primary state-action" type="button" data-action="switch-inspect">Switch to Inspect</button></div></div>`;
+    pane.innerHTML=`<div class="icard reasoning-card"><div class="ichdr">Why this score</div><div class="reasoning-empty"><span>🧭</span><p>Select a planted cell to see the exact pressure on the bed, the weakest factor, and the fastest fix in one place.</p><button class="reasoning-btn primary state-action" type="button" data-action="switch-inspect">Switch to Inspect</button></div></div>`;
     return;
   }
   const crop=CROPS[target.crop];
@@ -4563,18 +4785,24 @@ function buildReasoningSurface(inputs, issues){
   const stackHtml=targetIssues.length>1
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Ordered issues</span><div class="reasoning-stack">${targetIssues.slice(0,3).map(issue=>`<div class="reasoning-stack-item"><div class="reasoning-stack-copy"><strong>${escapeHtml(issue.msg)}</strong><span>${escapeHtml(reasonFix(issue,target,inputs))}</span></div><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span></div>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(targetIssues.length+' risks')}</span></div>`
     : '';
+  const modelHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Scoring stack</span><div class="reasoning-model-list">
+    <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Rules core</strong><span>Sun, support, shade, access, season, and adjacency stay deterministic for this cell.</span></div><span class="score-model-chip rules">base</span></div>
+    <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Planner layer</strong><span>Garden planner adds tuned light gradients and cage-aware structure bonuses so placement feedback is immediate.</span></div><span class="score-model-chip planner">planner</span></div>
+    <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Story Mode later</strong><span>Events, interventions, and soil fatigue are off here. They enter after the layout is chosen.</span></div><span class="score-model-chip story">later</span></div>
+  </div></div><span class="reasoning-score">3 layers</span></div>`;
   const tradeHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Tradeoff</span><span class="reasoning-text">${escapeHtml(tradeoff)}</span></div><span class="reasoning-score">${escapeHtml(target.id)}</span></div>`;
   const deltaHtml=delta&&delta.gain>0.15
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score delta</span><span class="reasoning-text">Switching to ${escapeHtml(CROPS[delta.betterCropKey].name)} could raise this cell from ${escapeHtml(delta.current.toFixed(1))} to about ${escapeHtml(delta.betterScore.toFixed(1))}.</span></div><span class="reasoning-score">+${escapeHtml(delta.gain.toFixed(1))}</span></div>`
     : '';
   const nextHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Next move</span><span class="reasoning-text">${escapeHtml(nextMove)}</span></div><span class="reasoning-score">${escapeHtml(crop.short)}</span></div>`;
   pane.innerHTML=`<div class="icard reasoning-card">
-    <div class="ichdr">Reasoning surface</div>
+    <div class="ichdr">Why this score</div>
     <div class="reasoning-target"><span>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)} · ${escapeHtml(target.id)}</span><span class="reasoning-score">${escapeHtml(score.toFixed(1))}/10</span></div>
     <div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score direction</span><span class="reasoning-text">${escapeHtml(scoreDirection)}</span></div><span class="reasoning-score">${escapeHtml(ui.selCell===target.id?'selected':'focus')}</span></div>
     ${factsHtml}
     ${issueHtml}
     ${factorHtml}
+    ${modelHtml}
     ${stackHtml}
     ${tradeHtml}
     ${deltaHtml}
@@ -5399,11 +5627,12 @@ function renderRight(inputs,issues,scoreTotal){
   const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
   const counts=getCounts();
   const bs=Number.isFinite(scoreTotal) ? scoreTotal : scoreBed(inputs);
+  const audit=getPlannerBedScoreAudit(inputs);
   updateActiveBedScoreCache(bs);
   const ws=warnings(inputs,issues);
   const warnCount=ws.filter(w=>w.t==='warn').length;
   const sc=bs>=75?'var(--leaf)':bs>=55?'#b07820':'#b02a1e';
-  const rl=bs>=80?'Excellent':bs>=65?'Good':bs>=50?'Workable':bs>=35?'Risky':'Poor fit';
+  const rl=plannerScoreLabel(bs);
   const badge=document.getElementById('warnBadge');
   if(badge) badge.style.display=warnCount>0?'inline-block':'none';
 
@@ -5424,6 +5653,23 @@ function renderRight(inputs,issues,scoreTotal){
     return`<div class="cchip"><span class="cnum" style="color:${CROPS[ck].color}">${n}</span>
       <span class="ccrp">${escapeHtml(CROPS[ck].short)}<br>plants</span></div>`;
   }).join('');
+  const modelHtml=audit.modelLayers.map(layer=>`<span class="score-model-chip ${escapeHtml(layer.tone)}">${escapeHtml(layer.label)}</span>`).join('');
+  const scoreRows=uniq.length ? [
+    { label:`Cell average (${audit.occupiedCount} planted)`, value:audit.cellAverage100.toFixed(1), tone:'neutral' },
+    { label:'Diversity bonus', value:formatSignedWhole(audit.diversityBonus), tone:audit.diversityBonus>0?'plus':'neutral' },
+    { label:'Goal fit', value:formatSignedWhole(audit.goalBoost), tone:audit.goalBoost>0?'plus':'neutral' },
+    { label:'Late-summer heat', value:formatSignedWhole(-audit.lateSummerPenalty), tone:audit.lateSummerPenalty?'minus':'neutral' },
+    { label:'Fill penalty', value:formatSignedWhole(-audit.fillPenalty), tone:audit.fillPenalty?'minus':'neutral' },
+    { label:'Tall-type penalty', value:formatSignedWhole(audit.tallPenalty), tone:audit.tallPenalty<0?'minus':'neutral' },
+    { label:'Trellis-type penalty', value:formatSignedWhole(audit.trellisPenalty), tone:audit.trellisPenalty<0?'minus':'neutral' }
+  ] : [];
+  const scoreBreakdownHtml=uniq.length ? `<div class="score-breakdown-card">
+    <div class="score-breakdown-head">
+      <div class="score-breakdown-title">Planner rollup</div>
+      <div class="score-breakdown-note">Final = cell average × 10, then planner-level bonuses and penalties shape the bed score.</div>
+    </div>
+    <div class="score-breakdown-grid">${scoreRows.map(row=>`<div class="score-breakdown-row"><span class="score-breakdown-label">${escapeHtml(row.label)}</span><span class="score-breakdown-value ${escapeHtml(row.tone)}">${escapeHtml(row.value)}</span></div>`).join('')}</div>
+  </div>` : '';
   document.getElementById('rpaneScore').innerHTML=`
     <div class="score-hero">
       <div class="sbig">
@@ -5431,11 +5677,28 @@ function renderRight(inputs,issues,scoreTotal){
         <div class="slbl2">/ 100</div>
         <div class="srating" style="color:${sc}">${rl}</div>
       </div>
-      <div class="sbars">${bars||'<em style="font-size:.68rem;color:var(--text-light)">Paint crops to score</em>'}</div>
+      <div class="sbars">
+        <div class="slbl2">Live bed score</div>
+        <div class="score-hero-copy">${
+          uniq.length
+            ? (warnCount
+              ? `${warnCount} active issue${warnCount===1?'':'s'} are shaping this bed right now. Start with the weakest cell to raise the score fastest.`
+              : 'The layout is stable. Use the score story, calendar, and harvest view to refine timing, succession, and variety choices.')
+            : 'Paint crops or auto-fill the bed to activate live scoring, reasoning, and harvest guidance.'
+        }</div>
+        <div class="score-model-strip">${modelHtml}</div>
+        ${bars||'<em style="font-size:.68rem;color:var(--text-light)">Paint crops to score</em>'}
+      </div>
     </div>
     ${uniq.length?`<div class="crow">${chtml}</div>`:''}
+    ${scoreBreakdownHtml}
+    <div class="score-model-note">${
+      uniq.length
+        ? 'Rules core stays deterministic, but this planner intentionally adds tuned light gradients, cage structure, fill pressure, and goal fit so placement decisions feel immediate. Story Mode later layers event, intervention, and soil-fatigue modifiers on top of the saved layout.'
+        : 'Rules core is asleep until the first crop is planted. Once the bed is active, the planner shows both the 100-point rollup and the factor story behind it.'
+    }</div>
     <div style="font-size:.62rem;color:var(--text-light);text-align:center;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;">
-      Bed: ${bedW}×${bedH} ft · ${bed.filter(c=>c.crop).length}/${bedW*bedH} cells filled
+      Workspace · ${bedW}×${bedH} ft · ${bed.filter(c=>c.crop).length}/${bedW*bedH} filled · goal ${escapeHtml(inputs.goal)}
     </div>
   `;
 
@@ -5731,8 +5994,6 @@ document.getElementById('undoBtn').addEventListener('click',undo);
 document.getElementById('redoBtn').addEventListener('click',redo);
 document.getElementById('shareBtn').addEventListener('click',shareLayout);
 document.getElementById('shortcutHelpBtn').addEventListener('click',openShortcutOverlay);
-document.getElementById('focusInspectBtn').addEventListener('click',focusWeakestCell);
-document.getElementById('focusManageBtn').addEventListener('click',toggleMenu);
 document.getElementById('shortcutCloseBtn').addEventListener('click',closeShortcutOverlay);
 document.getElementById('shortcutOverlay').addEventListener('click',e=>{
   if(e.target===e.currentTarget) closeShortcutOverlay();
@@ -5785,6 +6046,42 @@ document.querySelector('.insight-panel').addEventListener('click',function(ev){
   else if(action==='auto-fill'){
     const afBtn = document.getElementById('autoFillBtn');
     if(afBtn) afBtn.click();
+  }
+});
+
+document.addEventListener('click',function(ev){
+  const btn=ev.target.closest('[data-mobile-action]');
+  if(!btn) return;
+  const action=btn.dataset.mobileAction;
+  if(action==='open-plan'){
+    const left=document.querySelector('.plan-panel');
+    if(left){
+      left.classList.remove('collapsed');
+      const toggle=document.getElementById('toggleLeft');
+      if(toggle) toggle.setAttribute('aria-expanded','true');
+    }
+    switchLTab('palette');
+    const search=document.getElementById('psearch');
+    if(search) search.focus();
+  }else if(action==='open-score'){
+    const right=document.querySelector('.insight-panel');
+    if(right){
+      right.classList.remove('collapsed');
+      const toggle=document.getElementById('toggleRight');
+      if(toggle) toggle.setAttribute('aria-expanded','true');
+    }
+    switchRTab('score');
+    render();
+  }else if(action==='focus-weakest'){
+    const right=document.querySelector('.insight-panel');
+    if(right){
+      right.classList.remove('collapsed');
+      const toggle=document.getElementById('toggleRight');
+      if(toggle) toggle.setAttribute('aria-expanded','true');
+    }
+    focusWeakestCell();
+  }else if(action==='open-manage'){
+    toggleMenu();
   }
 });
 

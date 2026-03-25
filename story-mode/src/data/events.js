@@ -38,13 +38,25 @@ function isAvailableForMonth(event, month) {
   return months.includes(month);
 }
 
-function weightedPick(events) {
+function hashSeed(value) {
+  const text = String(value ?? '');
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function weightedPick(events, seed) {
   const totalWeight = events.reduce((sum, event) => sum + (event.drawWeight ?? 1), 0);
   if (totalWeight <= 0) {
-    return events[Math.floor(Math.random() * events.length)] ?? null;
+    if (!events.length) return null;
+    const idx = hashSeed(`${seed}|${events.map((event) => event.id).join(',')}`) % events.length;
+    return events[idx] ?? null;
   }
 
-  let cursor = Math.random() * totalWeight;
+  let cursor = (hashSeed(`${seed}|${events.map((event) => event.id).join(',')}`) / 0xFFFFFFFF) * totalWeight;
   for (const event of events) {
     cursor -= event.drawWeight ?? 1;
     if (cursor <= 0) return event;
@@ -62,7 +74,7 @@ export function drawEvent(season, chapter, alreadyDrawn = [], month = null) {
     return !drawnIds.has(event.id);
   });
 
-  const drawn = weightedPick(pool);
+  const drawn = weightedPick(pool, `${season}|${chapter}|${Array.from(drawnIds).sort().join(',')}`);
   return drawn ? { ...drawn } : null;
 }
 

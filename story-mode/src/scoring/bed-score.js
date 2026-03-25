@@ -43,11 +43,17 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   else if (uniqueCrops.size >= 3) diversityBonus = 0.5;
   else if (uniqueCrops.size >= 2) diversityBonus = 0.3;
 
-  // Recipe bonus
+  // Recipe bonus — checks current bed contents (not pantry)
+  const bedCrops = {};
+  for (const cell of grid) {
+    if (cell && cell.cropId) {
+      bedCrops[cell.cropId] = (bedCrops[cell.cropId] || 0) + 1;
+    }
+  }
   const recipes = getRecipes();
   let recipeBonus = 0;
   for (const recipeId of Object.keys(recipes)) {
-    if (checkRecipeComplete(recipeId, pantry)) recipeBonus += 0.2;
+    if (checkRecipeComplete(recipeId, bedCrops)) recipeBonus += 0.2;
   }
   recipeBonus = Math.min(recipeBonus, 0.8);
 

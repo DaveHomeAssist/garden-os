@@ -47,6 +47,45 @@ function resolveDamageState(event) {
   return 'impact';
 }
 
+function hashSeed(value) {
+  const text = String(value ?? '');
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function matchesRandomFilter(cell, cellIndex, filter) {
+  if (!cell?.cropId) return false;
+  if (!filter || filter === 'planted') return true;
+  if (filter.startsWith('row-')) {
+    const rowNum = Number.parseInt(filter.replace('row-', ''), 10);
+    const cellRow = Math.floor(cellIndex / COLS);
+    return cellRow === rowNum;
+  }
+  return true;
+}
+
+function resolveRandomTargetSet(grid, event, target) {
+  const maxCells = Math.max(1, Number(target?.maxCells) || 1);
+  const filter = target?.filter || 'planted';
+  const candidates = [];
+  for (let i = 0; i < grid.length; i++) {
+    if (matchesRandomFilter(grid[i], i, filter)) candidates.push(i);
+  }
+  const ordered = candidates
+    .map((index) => ({
+      index,
+      weight: hashSeed(`${event?.id ?? 'event'}:${filter}:${index}`),
+    }))
+    .sort((a, b) => a.weight - b.weight)
+    .slice(0, maxCells)
+    .map((entry) => entry.index);
+  return new Set(ordered);
+}
+
 /**
  * Check if a cell's crop matches the event's target criteria.
  */
@@ -109,6 +148,9 @@ export function applyEventEffect(grid, event) {
   }
 
   const { modifier, target } = event.mechanicalEffect;
+  const randomTargetSet = target?.type === 'random_cells'
+    ? resolveRandomTargetSet(grid, event, target)
+    : null;
   const carryForwardType = resolveCarryForwardType(event);
   const damageState = modifier < 0 ? resolveDamageState(event) : null;
   if (modifier === undefined || modifier === null) {
@@ -135,7 +177,8 @@ export function applyEventEffect(grid, event) {
       continue;
     }
 
-    if (matchesTarget(cell, i, target, grid)) {
+    const isMatch = randomTargetSet ? randomTargetSet.has(i) : matchesTarget(cell, i, target, grid);
+    if (isMatch) {
       cell.eventModifier += modifier;
       if (damageState) {
         cell.damageState = damageState;

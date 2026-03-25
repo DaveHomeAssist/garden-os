@@ -22,14 +22,44 @@ const GRADE_COLORS = {
   'F': '#d44a2a',
 };
 
+function ensureHarvestStyles() {
+  if (document.getElementById('harvest-reveal-responsive')) return;
+  const style = document.createElement('style');
+  style.id = 'harvest-reveal-responsive';
+  style.textContent = `
+    @media (max-width: 480px) {
+      .harvest-reveal { padding: 16px !important; }
+      .harvest-reveal .harvest-score-ring {
+        width: 90px !important; height: 90px !important;
+        border-width: 3px !important;
+      }
+      .harvest-reveal .harvest-score-ring > div:first-child {
+        font-size: 28px !important;
+      }
+      .harvest-reveal #grade-badge {
+        font-size: 22px !important;
+        margin-bottom: 14px !important;
+      }
+    }
+    @media (max-width: 380px) {
+      .harvest-reveal .factor-row span:first-child {
+        font-size: 14px !important; width: 20px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 export function showHarvestReveal(container, result, extras = {}, onDismiss) {
+  ensureHarvestStyles();
   const overlay = document.createElement('div');
   overlay.className = 'harvest-reveal';
   overlay.style.cssText = `
     position:absolute;inset:0;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
     background:rgba(30,17,10,0.94);
-    z-index:30;padding:24px;
+    z-index:30;padding:24px;padding-top:max(24px, env(safe-area-inset-top, 0px));
+    padding-bottom:max(24px, env(safe-area-inset-bottom, 0px));
     animation:fadeInIntro 0.5s ease-out both;
     overflow-y:auto;
   `;
