@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
+import { getNPCsInZone } from '../../data/npcs.js';
+import { makeNpcMesh } from './zone-interactables.js';
 
 const ZONE_DEF = {
   id: 'market_square', name: 'Market Square', biome: 'town',
@@ -56,12 +59,24 @@ export function createMarketSquare(store, tracker) {
     lamp.position.set(x, 2.3, z); root.add(lamp);
   });
 
+  const state = store.getState();
+  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
+
   const interactables = [];
   ZONE_DEF.exitPoints.forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+
+  // NPCs scheduled for this zone
+  getNPCsInZone('market_square', season).forEach((npc) => {
+    const mesh = makeNpcMesh(npc); root.add(mesh);
+    interactables.push(mesh.userData.interactable);
+  });
+
+  const hemi = scene.children.find(c => c.isHemisphereLight);
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
   return {
@@ -69,6 +84,10 @@ export function createMarketSquare(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(season) {
+      const s = season || 'spring';
+      applyBase(this, s, ground, hemi, scene.fog);
+    },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

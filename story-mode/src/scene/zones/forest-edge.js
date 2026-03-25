@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
+import { getNPCsInZone } from '../../data/npcs.js';
+import { makeNpcMesh, makeForageSpotMesh } from './zone-interactables.js';
 
 const ZONE_DEF = {
   id: 'forest_edge', name: 'Forest Edge', biome: 'forest',
@@ -17,6 +20,12 @@ function makeTree(x, z) {
   crown.position.y = 1.9; g.add(crown);
   g.position.set(x, 0, z); return g;
 }
+
+const FORAGE_SPOTS = [
+  { id: 'forest_herbs', position: { x: -2.8, z: 0.9 }, type: 'herb_patch' },
+  { id: 'forest_berries', position: { x: 1.9, z: 1.7 }, type: 'berry_bush' },
+  { id: 'forest_mushrooms', position: { x: 0.4, z: -2.1 }, type: 'mushroom_log' },
+];
 
 export function createForestEdge(store, tracker) {
   const scene = new THREE.Scene();
@@ -59,12 +68,32 @@ export function createForestEdge(store, tracker) {
     rock.position.set(x, r * 0.35, z); rock.scale.set(1, 0.6, 1); root.add(rock);
   });
 
+  const state = store.getState();
+  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
+
   const interactables = [];
   ZONE_DEF.exitPoints.forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+
+  // NPCs scheduled for this zone
+  getNPCsInZone('forest_edge', season).forEach((npc) => {
+    const mesh = makeNpcMesh(npc); root.add(mesh);
+    interactables.push(mesh.userData.interactable);
+  });
+
+  // Forage spots
+  FORAGE_SPOTS.forEach((spot) => {
+    const mesh = makeForageSpotMesh(spot); root.add(mesh);
+    interactables.push(mesh.userData.interactable);
+  });
+
+  // Collect tree crowns (cone meshes inside tree groups) for seasonal coloring
+  const crowns = root.children.filter(c => c.isGroup).map(g => g.children.find(m => m.geometry?.type === 'ConeGeometry')).filter(Boolean);
+  const hemi = scene.children.find(c => c.isHemisphereLight);
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
   return {
@@ -72,6 +101,15 @@ export function createForestEdge(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(season) {
+      const s = season || 'spring';
+      applyBase(this, s, ground, hemi, scene.fog);
+      fm.color.setHex(SEASON_PALETTE.foliage[s]);
+      crowns.forEach(c => {
+        c.material.color.setHex(SEASON_PALETTE.foliage[s]);
+        c.visible = s !== 'winter';
+      });
+    },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

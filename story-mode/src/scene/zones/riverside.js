@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
+import { makeForageSpotMesh } from './zone-interactables.js';
 
 const ZONE_DEF = {
   id: 'riverside', name: 'Riverside', biome: 'river',
@@ -10,6 +12,11 @@ const ZONE_DEF = {
       triggerBounds: { minX: 9, maxX: 10, minZ: -1.5, maxZ: 1.5 }, spawnPoint: { x: -8, z: 0 } },
   ],
 };
+
+const FORAGE_SPOTS = [
+  { id: 'riverside_berries', position: { x: -1.4, z: 2.6 }, type: 'berry_bush' },
+  { id: 'riverside_driftwood', position: { x: 2.9, z: -0.7 }, type: 'driftwood' },
+];
 
 export function createRiverside(store, tracker) {
   const scene = new THREE.Scene();
@@ -70,6 +77,15 @@ export function createRiverside(store, tracker) {
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+
+  // Forage spots
+  FORAGE_SPOTS.forEach((spot) => {
+    const mesh = makeForageSpotMesh(spot); root.add(mesh);
+    interactables.push(mesh.userData.interactable);
+  });
+
+  const hemi = scene.children.find(c => c.isHemisphereLight);
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint }, time = 0;
   return {
@@ -77,6 +93,13 @@ export function createRiverside(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(season) {
+      const s = season || 'spring';
+      applyBase(this, s, ground, hemi, scene.fog);
+      water.material.color.setHex(SEASON_PALETTE.water[s]);
+      bm.color.setHex(SEASON_PALETTE.foliage[s]);
+      gm.color.setHex(SEASON_PALETTE.foliage[s]);
+    },
     update(dt) { time += dt; water.position.y = 0.02 + Math.sin(time * 1.5) * 0.04; },
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

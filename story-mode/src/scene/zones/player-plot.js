@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
 
 const ZONE_DEF = {
   id: 'player_plot', name: "Player's Plot", biome: 'garden',
@@ -76,6 +77,8 @@ export function createPlayerPlot(store, tracker) {
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+  const hemi = scene.children.find(c => c.isHemisphereLight);
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
   return {
@@ -83,6 +86,11 @@ export function createPlayerPlot(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(season) {
+      const s = season || 'spring';
+      applyBase(this, s, ground, hemi, scene.fog);
+      gm.color.setHex(SEASON_PALETTE.foliage[s]);
+    },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

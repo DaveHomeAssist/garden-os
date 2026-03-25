@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
 
 const ZONE_DEF = {
   id: 'festival_grounds', name: 'Festival Grounds', biome: 'festival',
@@ -52,11 +53,12 @@ export function createFestivalGrounds(store, tracker) {
 
   // String lights (emissive spheres in a catenary)
   const bc = [0xff6644, 0x44cc66, 0x4488ff, 0xffaa22, 0xff44aa, 0x44dddd];
+  const bulbs = [];
   for (let i = 0; i < 8; i++) {
     const t = i / 7, x = -6 + t * 12, y = 2.8 - Math.sin(t * Math.PI) * 0.4;
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6),
       new THREE.MeshStandardMaterial({ color: bc[i % 6], emissive: bc[i % 6], emissiveIntensity: 0.7 }));
-    bulb.position.set(x, y, 0); root.add(bulb);
+    bulb.position.set(x, y, 0); root.add(bulb); bulbs.push(bulb);
   }
 
   // Hay bale seating
@@ -68,6 +70,8 @@ export function createFestivalGrounds(store, tracker) {
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+  const hemi = scene.children.find(c => c.isHemisphereLight);
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
   return {
@@ -75,6 +79,12 @@ export function createFestivalGrounds(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(season) {
+      const s = season || 'spring';
+      applyBase(this, s, ground, hemi, scene.fog);
+      const intensity = s === 'winter' ? 1.4 : s === 'fall' ? 0.9 : 0.7;
+      bulbs.forEach(b => { b.material.emissiveIntensity = intensity; });
+    },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

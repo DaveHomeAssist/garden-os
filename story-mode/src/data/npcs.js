@@ -55,9 +55,9 @@ const NPC_REGISTRY = {
     defaultEmotion: 'excited',
     portrait: 'maya',
     schedule: {
-      spring: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'maya', { x: 4, z: 2 }) },
-      summer: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'maya', { x: 4, z: 2 }) },
-      fall: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'maya', { x: 4, z: 2 }) },
+      spring: { zone: 'meadow', position: getZoneNpcPosition('meadow', 'maya', { x: -4, z: 3 }) },
+      summer: { zone: 'meadow', position: getZoneNpcPosition('meadow', 'maya', { x: -4, z: 3 }) },
+      fall: { zone: 'market_square', position: getZoneNpcPosition('market_square', 'maya', { x: 3, z: 0 }) },
       winter: null,
     },
     reputation: { initial: 0, decayPerSeason: 1 },
@@ -90,7 +90,7 @@ const NPC_REGISTRY = {
       spring: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'lila', { x: -1, z: -3 }) },
       summer: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'lila', { x: -1, z: -3 }) },
       fall: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'lila', { x: -1, z: -3 }) },
-      winter: { zone: 'neighborhood', position: getZoneNpcPosition('neighborhood', 'lila', { x: -1, z: -3 }) },
+      winter: { zone: 'greenhouse', position: getZoneNpcPosition('greenhouse', 'lila', { x: 0, z: -2 }) },
     },
     reputation: { initial: 0, decayPerSeason: 1 },
     dialogueDefaults: {

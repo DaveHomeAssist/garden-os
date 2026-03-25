@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { getNPCsInZone } from '../../data/npcs.js';
+import { makeNpcMesh } from './zone-interactables.js';
+// Greenhouse intentionally ignores external season — always warm and green inside.
 
 const ZONE_DEF = {
   id: 'greenhouse', name: 'Greenhouse', biome: 'greenhouse',
@@ -64,12 +67,22 @@ export function createGreenhouse(store, tracker) {
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.9, 10), new THREE.MeshStandardMaterial({ color: 0x4466aa, roughness: 0.8 }));
   barrel.position.set(-4, 0.45, -3.5); root.add(barrel);
 
+  const state = store.getState();
+  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
+
   const interactables = [];
   ZONE_DEF.exitPoints.forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+
+  // NPCs scheduled for this zone (Lila in winter)
+  getNPCsInZone('greenhouse', season).forEach((npc) => {
+    const mesh = makeNpcMesh(npc); root.add(mesh);
+    interactables.push(mesh.userData.interactable);
+  });
+
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
   return {
@@ -77,6 +90,10 @@ export function createGreenhouse(store, tracker) {
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
     getPlayerPosition() { return { ...playerPosition }; },
     setPlayerPosition(pos) { if (pos) playerPosition = { ...pos }; },
+    setSeason(/* season */) {
+      // Greenhouse interior stays warm and green regardless of outdoor season.
+      // Only subtle fog change to hint at exterior conditions.
+    },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },

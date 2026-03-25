@@ -2672,19 +2672,20 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // -------------------------------------------------------------------------
   describe('NPC Schedules', () => {
     it('getNPCsInZone returns correct NPCs for a given zone and season', () => {
-      // In spring, old_gus, maya, and lila are all in "neighborhood"
+      // In spring, old_gus and lila are in "neighborhood"; maya is in meadow
       const springNeighborhood = getNPCsInZone('neighborhood', 'spring');
       const springIds = springNeighborhood.map((npc) => npc.id);
       expect(springIds).toContain('old_gus');
-      expect(springIds).toContain('maya');
       expect(springIds).toContain('lila');
-      expect(springNeighborhood).toHaveLength(3);
+      expect(springNeighborhood).toHaveLength(2);
 
-      // In fall, old_gus moves to forest_edge — only maya and lila remain in neighborhood
+      const springMeadow = getNPCsInZone('meadow', 'spring');
+      expect(springMeadow.map((n) => n.id)).toContain('maya');
+
+      // In fall, old_gus moves to forest_edge — only lila remains in neighborhood
       const fallNeighborhood = getNPCsInZone('neighborhood', 'fall');
       const fallIds = fallNeighborhood.map((npc) => npc.id);
       expect(fallIds).not.toContain('old_gus');
-      expect(fallIds).toContain('maya');
       expect(fallIds).toContain('lila');
 
       // old_gus should appear in forest_edge during fall
@@ -2706,17 +2707,19 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
         expect(winterIds).not.toContain('maya');
       }
 
-      // Maya IS present in spring/summer/fall in neighborhood
-      for (const season of ['spring', 'summer', 'fall']) {
-        const npcs = getNPCsInZone('neighborhood', season);
-        const ids = npcs.map((npc) => npc.id);
-        expect(ids).toContain('maya');
-      }
+      // Maya IS present in spring/summer (meadow) and fall (market_square)
+      const springMeadow = getNPCsInZone('meadow', 'spring');
+      expect(springMeadow.map((n) => n.id)).toContain('maya');
+      const summerMeadow = getNPCsInZone('meadow', 'summer');
+      expect(summerMeadow.map((n) => n.id)).toContain('maya');
+      const fallMarket = getNPCsInZone('market_square', 'fall');
+      expect(fallMarket.map((n) => n.id)).toContain('maya');
 
-      // Lila stays in neighborhood year-round (including winter)
-      const winterNeighborhood = getNPCsInZone('neighborhood', 'winter');
-      const winterIds = winterNeighborhood.map((npc) => npc.id);
-      expect(winterIds).toContain('lila');
+      // Lila is in neighborhood spring/summer/fall, greenhouse in winter
+      const fallNeighborhood = getNPCsInZone('neighborhood', 'fall');
+      expect(fallNeighborhood.map((npc) => npc.id)).toContain('lila');
+      expect(getNPCsInZone('neighborhood', 'winter').map((n) => n.id)).not.toContain('lila');
+      expect(getNPCsInZone('greenhouse', 'winter').map((n) => n.id)).toContain('lila');
     });
 
     it('during a festival, festival data includes NPC dialogue for participating NPCs', () => {
@@ -2943,7 +2946,7 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
       delete globalThis.AudioContext;
     });
 
-    it.skip('mute/unmute toggles all audio output — jsdom cannot set volume on mock Audio elements', async () => {
+    it('mute/unmute toggles all audio output', async () => {
       const MockAudioContext = vi.fn().mockImplementation(() => ({
         state: 'running',
         resume: vi.fn().mockResolvedValue(undefined),
@@ -2971,7 +2974,7 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
       await am.init();
 
       // Set up ambient so we can verify volume sync
-      await am.setAmbient('assets/audio/ambient/spring.ogg', { volume: 0.5 });
+      await am.setAmbient('assets/audio/ambient/spring.ogg', { fadeMs: 0, volume: 0.5 });
       expect(am.muted).toBe(false);
       expect(am.ambient.element.volume).toBeGreaterThan(0);
 

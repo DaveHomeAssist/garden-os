@@ -34,6 +34,7 @@ import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
 import { evaluateZoneAccess } from '../scene/zone-manager.js';
 import { DayNightController } from '../game/day-night-controller.js';
+import { AudioManager } from '../audio/audio-manager.js';
 import {
   WORLD_ZONE_INTERACTABLES,
   ZONE_NAMES,
@@ -238,8 +239,20 @@ function bindUI({
   const dialoguePanel = createDialoguePanel(dialogueRoot);
   let phaseRouter = null;
 
+  const ACTION_SFX = {
+    PLANT_CROP: 'plant',
+    WATER_CELL: 'water',
+    HARVEST_CELL: 'harvest',
+    ACCEPT_QUEST: 'quest_accept',
+    COMPLETE_QUEST: 'quest_complete',
+  };
+
   function dispatch(action) {
-    return store.dispatch(action);
+    const result = store.dispatch(action);
+    const sfxId = ACTION_SFX[action.type];
+    if (sfxId && audioInitialized) audioManager.playSFX(sfxId);
+    if (action.type === Actions.ADVANCE_PHASE) syncSeasonalAudio();
+    return result;
   }
 
   function produceState(type, producer, extraPayload = {}, meta = {}) {
@@ -288,6 +301,46 @@ function bindUI({
   const craftingSystem = new CraftingSystem(store, inventory, skillSystem);
   const foragingSystem = new ForagingSystem(store, inventory, skillSystem);
   const dayNightController = new DayNightController(scene, store);
+  const audioManager = new AudioManager();
+  let audioInitialized = false;
+  let lastAudioSeason = null;
+
+  const SEASON_AMBIENT = {
+    spring: 'assets/audio/ambient/spring.ogg',
+    summer: 'assets/audio/ambient/summer.ogg',
+    fall: 'assets/audio/ambient/fall.ogg',
+    winter: 'assets/audio/ambient/winter.ogg',
+  };
+
+  async function ensureAudioInit() {
+    if (audioInitialized) return;
+    audioInitialized = true;
+    await audioManager.init();
+    const settings = state.settings?.audio ?? {};
+    if (settings.muted) audioManager.setMuted(true);
+    if (settings.masterVolume != null) audioManager.setMasterVolume(settings.masterVolume);
+    if (settings.sfxVolume != null) audioManager.setSFXVolume(settings.sfxVolume);
+    if (settings.ambientVolume != null) audioManager.setAmbientVolume(settings.ambientVolume);
+    if (settings.musicVolume != null) audioManager.setMusicVolume(settings.musicVolume);
+  }
+
+  function syncSeasonalAudio() {
+    const season = state.season?.season;
+    if (!season || season === lastAudioSeason) return;
+    lastAudioSeason = season;
+    const url = SEASON_AMBIENT[season];
+    if (url) audioManager.setAmbient(url, { fadeMs: 2000, volume: 0.3 });
+  }
+
+  // Init audio on first user interaction (Web Audio policy)
+  function onFirstInteraction() {
+    ensureAudioInit().then(() => syncSeasonalAudio());
+    document.removeEventListener('pointerdown', onFirstInteraction);
+    document.removeEventListener('keydown', onFirstInteraction);
+  }
+  document.addEventListener('pointerdown', onFirstInteraction, { once: true });
+  document.addEventListener('keydown', onFirstInteraction, { once: true });
+
   let registeredWorldInteractableIds = [];
 
   function getCurrentZoneId() {
@@ -2001,6 +2054,7 @@ function bindUI({
     calendarEl.remove();
     dialoguePanel?.destroy();
     dayNightController?.dispose();
+    audioManager?.dispose();
     document.removeEventListener('click', bugPanelOutsideHandler);
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;
