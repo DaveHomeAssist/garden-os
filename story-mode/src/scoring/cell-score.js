@@ -50,7 +50,7 @@ export function supportFit(crop, hasTrellis) {
  * Factor 3: Shade Tolerance
  */
 export function shadeFit(crop, effectiveLight) {
-  if (effectiveLight < crop.sunMin) return crop.shadeScore * 0.6;
+  if (effectiveLight < crop.sunMin) return Math.max(1.0, crop.shadeScore * 0.6);
   return crop.shadeScore;
 }
 
@@ -64,14 +64,21 @@ export function accessFit(crop, row, totalRows = ROWS) {
 }
 
 /**
- * Factor 5: Season Fit — categorical score based on cool-season flag
+ * Factor 5: Season Fit — categorical score based on cool-season flag.
+ * Matches SCORING_RULES.md §4 Factor 5 exactly.
  */
 export function seasonFit(crop, season) {
-  if (season === 'spring' || season === 'fall') {
+  if (season === 'spring') {
     return crop.coolSeason ? 5.0 : 3.0;
   }
   if (season === 'summer') {
     return crop.coolSeason ? 2.0 : 5.0;
+  }
+  if (season === 'latesummer') {
+    return crop.coolSeason ? 1.0 : 5.0;
+  }
+  if (season === 'fall') {
+    return crop.coolSeason ? 5.0 : 2.0;
   }
   if (season === 'winter') {
     return crop.coolSeason ? 3.0 : 1.0;
@@ -131,7 +138,8 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
   const adj = adjacencyScore(cell.cropId, cellIndex, grid);
 
   const sm = crop.seasonalMultipliers || crop.sm || {};
-  const seasonalMult = sm[season] ?? 0.5;
+  const seasonalKey = season === 'latesummer' ? 'summer' : season;
+  const seasonalMult = sm[seasonalKey] ?? 0.5;
 
   const weightedCore = (sf * 2 + sup + shd + acc + sea) / 3;
   const preAdj = weightedCore * seasonalMult;
