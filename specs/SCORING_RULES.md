@@ -3,7 +3,7 @@ Status: Active
 Document Version: 1.1
 Compatible With: Garden OS v4.3, Season Engine v3, Crop Scoring Data v3
 Owner: Dave Robertson
-Last Updated: 2026-03-22
+Last Updated: 2026-03-24
 Artifact Class: Spec
 ---
 
@@ -113,13 +113,17 @@ Whether a support-requiring crop has access to a trellis.
 if crop.support == true:
     if cell.hasVerticalSupport:
         supFit = 5.0
+    elif cell.isTrellisRow:
+        supFit = 2.0                                   // near trellis but not on support row
     else:
         supFit = 1.0                                   // hard penalty: climber without trellis
 elif crop.support == false:
     supFit = 3.0                                       // neutral: no trellis needed
 ```
 
-**Note**: Placing a non-climber in the trellis row is not penalized in this factor but the trellis row is wasted opportunity (captured by adjacency/crowding dynamics).
+**Note**: The 2.0 intermediate reflects that a vine placed near (but not on) a trellis row still benefits somewhat from proximity — realistic for crops that can lean toward adjacent support. Placing a non-climber in the trellis row is not penalized in this factor but the trellis row is wasted opportunity (captured by adjacency/crowding dynamics).
+
+**Planner extension**: The planner also supports a `trellisRequired` property for crops that absolutely cannot grow without vertical support (e.g., pole beans). Story Mode treats `support == true` uniformly.
 
 ---
 
@@ -217,6 +221,8 @@ adjScore = clamp(rawAdj, -2, +2)
 
 **Note on companion symmetry**: Companions are NOT automatically symmetric. If basil lists cherry_tom as a companion, basil gets +0.5 next to cherry_tom. Cherry_tom only benefits if it also lists basil. (It does, in this roster. But asymmetry is allowed by design.)
 
+**Planner extension — companion weight scaling**: The planner scales the companion bonus by faction pair weight (0.25–0.50) instead of using a flat 0.50. Not all companion relationships are equal — some pairings have stronger real-world synergy. Story Mode uses the flat 0.50 for simplicity.
+
 ---
 
 ## 5. Weighted Cell Score
@@ -243,20 +249,22 @@ weightedCore = (sunFit * 2 + supFit + shadeFit + accFit + seaFit) / 3
 
 This produces a range of roughly 0-10 (theoretical max: 5*6/3 = 10).
 
-### 5c. Seasonal multiplier (from CROP_SCORING_DATA)
+### 5c. Seasonal multiplier (baked into seaFit)
 
-Each crop has per-season multipliers (0.0-1.0) that scale the core score:
+Each crop has per-season multipliers (0.0-1.0). These are applied **within** the season fit factor, not as a scaling factor on the entire weighted core. This keeps seasonal suitability as one balanced input among six rather than an override.
 
 ```
-seasonMult = crop.seasonalMultipliers[site.season]     // spring, summer, or fall
+sm = crop.seasonalMultipliers[site.season]             // spring, summer, fall
                                                        // latesummer uses summer multiplier
+seaFit = clamp(1.0 + sm * 4.0, 1, 5)                  // range 1.0–5.0
 ```
+
+**Design rationale**: The previous model (`weightedCore * sm`) meant a crop with `sm = 0.3` suffered a 70% core reduction — effectively a kill switch. The planner's approach (`1.0 + sm * 4.0`) treats season fit as one factor among six. A crop with `sm = 0.3` gets `seaFit = 2.2` (below average) instead of losing 70% of its total score. This reflects reality: lettuce planted in summer still grows, it just bolts faster.
 
 ### 5d. Adjacency integration
 
 ```
-preAdjScore = weightedCore * seasonMult
-cellScore = clamp(preAdjScore + adjScore, 0, 10)
+cellScore = clamp(weightedCore + adjScore, 0, 10)
 ```
 
 ---
@@ -400,6 +408,7 @@ bedScore = clamp(bedScore, 0, 10)
 ## 11. Grade Thresholds
 
 ```
+A+ : bedScore >= 9.0
 A  : bedScore >= 8.5
 B  : bedScore >= 7.0
 C  : bedScore >= 5.5
@@ -410,6 +419,8 @@ F  : bedScore <  4.0
 Grades are displayed to the player. The grade letter and numeric score are both shown.
 
 **Note:** These thresholds apply to the per-bed score (0-10 scale). The Season Engine (SEASON_ENGINE_SPEC.md §4.4-4.5) scales to a 0-100 season score by multiplying bedAverage × 10, then adds a goal bonus. That spec uses its own grade thresholds on the 100-point scale.
+
+**Planner extensions**: The planner also applies a `goalBonus` (reward for meeting season objectives) and a `latesummer cool penalty` (additional penalty for cool-season crops in late summer). These are documented as optional extensions and are not required in Story Mode.
 
 ---
 
@@ -479,6 +490,7 @@ DIVERSITY_2              = +0.3
 TALL_TYPE_PENALTY        = -0.8      // multiple tall types in one bed
 TRELLIS_TYPE_PENALTY     = -0.6      // multiple trellis types in one bed
 RECIPE_BONUS             = 0.2       // per completed recipe
+GRADE_A_PLUS             = 9.0
 GRADE_A                  = 8.5
 GRADE_B                  = 7.0
 GRADE_C                  = 5.5
@@ -495,3 +507,4 @@ GRADE_D                  = 4.0
 4. **The score cache in the workspace is for display only**. It is regenerated at runtime and never trusted as source of truth.
 5. **Event and intervention state** is stored in the game chapter/round state, not in the workspace schema.
 6. **seasonalMultipliers for "latesummer"** use the `summer` key value.
+7. **Planner structBonus** (trellis-row match, protected-zone, critter-safe, succession) are planner-only extensions that add realism. They are not required in Story Mode but are documented here for completeness.

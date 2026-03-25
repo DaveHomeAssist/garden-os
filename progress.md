@@ -218,6 +218,16 @@ TODO / next-agent suggestions:
 [2026-03-22] [GardenOS] [test] Add Phase 2 coverage in `npcs.test.js`, `reputation.test.js`, `quest-engine.test.js`, `save.test.js`, `zone-manager.test.js`, and expanded `store.test.js`
 [2026-03-22] [GardenOS] [validation] Phase 2 `node --check` passed for code and test files; whitespace/conflict-marker scan passed; targeted vitest remained non-responsive in this shell
 [2026-03-22] [GardenOS] [feat] Add monthly event rotation in `story-mode/src/data/events.js` and month metadata to `specs/EVENT_DECK.json`
+[2026-03-24] [GardenOS] [audit] Compared planner scoring, Story Mode scoring, and `specs/SCORING_RULES.md`
+[2026-03-24] [GardenOS] [doc] Added `docs/SCORING_MISMATCH_REPORT_2026-03-24.md` with canonical source decisions, drift buckets, and convergence path
+[2026-03-24] [GardenOS] [feat] Hardened planner score explanation in `garden-planner-v4.html` with explicit Rules core / Planner layer / Story Mode later provenance, plus a visible planner rollup breakdown card
+[2026-03-24] [GardenOS] [feat] Added mobile quick-action dock and stronger mobile HUD/sheet styling to `garden-planner-v4.html`
+[2026-03-24] [GardenOS] [fix] Story Mode now maps `latesummer` to the `summer` seasonal multiplier key in `story-mode/src/scoring/cell-score.js`
+[2026-03-24] [GardenOS] [fix] Story Mode event targeting no longer uses random per-cell selection; `random_cells` is now deterministic in `story-mode/src/game/event-engine.js`
+[2026-03-24] [GardenOS] [fix] Story Mode event drawing in `story-mode/src/data/events.js` now uses deterministic seeded weighted selection instead of `Math.random()`
+[2026-03-24] [GardenOS] [validation] `node --check` passed for `story-mode/src/scoring/cell-score.js`, `story-mode/src/game/event-engine.js`, and `story-mode/src/data/events.js`
+[2026-03-24] [GardenOS] [validation] Inline planner script parse passed via `new Function(...)` extraction check: `inline-script-parse-ok 2`
+[2026-03-24] [GardenOS] [validation] Browser automation remains blocked in this shell: Playwright MCP crashes on the cached Chrome bundle, and the `develop-web-game` client fails because the local Playwright headless shell is missing
 [2026-03-22] [GardenOS] [feat] Add slot-based inventory core in `story-mode/src/game/inventory.js` with stacking, drag-targetable slot movement helpers, durability fields, and legacy bag migration
 [2026-03-22] [GardenOS] [feat] Add skill progression core in `story-mode/src/game/skills.js` and normalize campaign skill state for XP/level tracking
 [2026-03-22] [GardenOS] [feat] Add recipe crafting system in `story-mode/src/game/crafting.js` and zone foraging system in `story-mode/src/game/foraging.js`
