@@ -87,6 +87,9 @@ const Actions = {
   REPAIR_TOOL: 'REPAIR_TOOL',
   FORAGE: 'FORAGE',
   EXPAND_GRID: 'EXPAND_GRID',
+  UNLOCK_BIOME_CROP: 'UNLOCK_BIOME_CROP',
+  SET_GAME_MODE: 'SET_GAME_MODE',
+  SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
 };
 
 function cloneValue(value) {
@@ -134,6 +137,7 @@ function normalizeCampaign(rawCampaign) {
     recipesCompleted: cloneArray(campaign.recipesCompleted),
     keepsakes: cloneArray(campaign.keepsakes),
     cropsUnlocked: cloneArray(campaign.cropsUnlocked ?? fallbackCampaign.cropsUnlocked),
+    biomeCropsUnlocked: cloneArray(campaign.biomeCropsUnlocked ?? fallbackCampaign.biomeCropsUnlocked),
     journalEntries: cloneArray(campaign.journalEntries),
     seenCutsceneIds: cloneArray(campaign.seenCutsceneIds),
     soilHealth: Array.isArray(campaign.soilHealth)
@@ -741,6 +745,17 @@ function gameReducer(state, action = {}) {
       return nextState;
     }
 
+    case Actions.UNLOCK_BIOME_CROP: {
+      const cropId = payload.cropId;
+      if (!cropId) return state;
+      const nextState = cloneGameState(state);
+      const biomeCrops = nextState.campaign.biomeCropsUnlocked ?? [];
+      if (!biomeCrops.includes(cropId)) {
+        nextState.campaign.biomeCropsUnlocked = [...biomeCrops, cropId];
+      }
+      return nextState;
+    }
+
     case Actions.AWARD_KEEPSAKE:
       return awardKeepsakeToState(state, payload.awarded ?? payload.keepsake, payload.includeSeasonQueue !== false);
 
@@ -805,6 +820,18 @@ function gameReducer(state, action = {}) {
       nextSeason.campaign = nextState.campaign;
       nextState.season = nextSeason;
       nextState.selectedCropId = payload.selectedCropId ?? null;
+      return nextState;
+    }
+
+    case Actions.SET_GAME_MODE: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.gameMode = payload.mode;
+      return nextState;
+    }
+
+    case Actions.SET_ACTIVE_TOOL: {
+      const nextState = cloneGameState(state);
+      nextState.season.activeTool = payload.toolId;
       return nextState;
     }
 
