@@ -2783,6 +2783,17 @@ const SUBS = {
   cherry_tom:{swap:'compact_tomato',reason:'If no trellis available, Compact Tomato is more self-supporting.'},
 };
 
+const PLANNER_RECIPES = {
+  herb_bowl:        { crops:['basil','dill'] },
+  tomato_sandwich:  { crops:['cherry_tom','basil','lettuce'] },
+  weeknight_pasta:  { crops:['cherry_tom','basil','pepper','onion'] },
+  moms_sauce:       { crops:['cherry_tom','basil','pepper','onion','carrot'] },
+  stir_fry:         { crops:['bok_choy','scallion','pepper','garlic'] },
+  garden_salad:     { crops:['lettuce','radish','carrot','chives'] },
+  foragers_stew:    { crops:['wild_garlic','shiitake_mushroom','watercress','prairie_onion'] },
+  garden_deluxe_salsa: { crops:['ghost_pepper','cherry_tom','cilantro','onion'] }
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CROP KEY MIGRATION (Phase 1 — key normalization)
 // Renames old plural/verbose keys to canonical short forms in saved localStorage.
@@ -4259,7 +4270,7 @@ function getPlannerBedScoreAudit(inputs){
   if(!occupiedCount){
     return {
       occupiedCount:0,totalCells:bedW*bedH,cellAverage10:0,cellAverage100:0,
-      diversityBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
+      diversityBonus:0,recipeBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
       finalScore:0,fillRatio:0,modelLayers
     };
   }
@@ -4278,12 +4289,21 @@ function getPlannerBedScoreAudit(inputs){
   const goalBoost=goalBonus(inputs);
   const fillRatio=occupiedCount/(bedW*bedH);
   const fillPenalty=fillRatio<1?Math.round((1-Math.sqrt(fillRatio))*15):0;
-  const rolled=cellAverage100+diversityBonus+tallPenalty+trellisPenalty+goalBoost-fillPenalty-lateSummerPenalty;
+  // Recipe bonus — +2 per completed recipe, capped at 8
+  const bedCrops={};
+  for(const c of occ){ if(c.crop) bedCrops[c.crop]=(bedCrops[c.crop]||0)+1; }
+  let recipeBonus=0;
+  for(const rk of Object.keys(PLANNER_RECIPES)){
+    if(PLANNER_RECIPES[rk].crops.every(ck=>bedCrops[ck])) recipeBonus+=2;
+  }
+  recipeBonus=Math.min(recipeBonus,8);
+
+  const rolled=cellAverage100+diversityBonus+recipeBonus+tallPenalty+trellisPenalty+goalBoost-fillPenalty-lateSummerPenalty;
   const finalScore=Math.min(100,Math.max(0,Math.round(rolled)));
 
   return {
     occupiedCount,totalCells:bedW*bedH,cellAverage10,cellAverage100,
-    diversityBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
+    diversityBonus,recipeBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
     finalScore,fillRatio,modelLayers
   };
 }
