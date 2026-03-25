@@ -8,10 +8,16 @@ function loadRuntimeModules() {
       import('./input/input-manager.js'),
       import('./scene/garden-scene.js'),
       import('./ui/ui-binder.js'),
-    ]).then(([inputManagerModule, sceneModule, uiModule]) => ({
+      import('./scene/zone-manager.js'),
+      import('./scene/zones/zone-registry.js'),
+      import('./scene/resource-tracker.js'),
+    ]).then(([inputManagerModule, sceneModule, uiModule, zmModule, zrModule, rtModule]) => ({
       InputManager: inputManagerModule.InputManager,
       createGardenScene: sceneModule.createGardenScene,
       bindUI: uiModule.bindUI,
+      ZoneManager: zmModule.ZoneManager,
+      registerAllZones: zrModule.registerAllZones,
+      ResourceTracker: rtModule.ResourceTracker,
     }));
   }
   return runtimeModulesPromise;
@@ -56,7 +62,10 @@ async function startSession({ initialState, slot, viewport }) {
   const clearLoading = showViewportLoading(viewport);
 
   try {
-    const { InputManager, createGardenScene, bindUI } = await loadRuntimeModules();
+    const {
+      InputManager, createGardenScene, bindUI,
+      ZoneManager, registerAllZones, ResourceTracker,
+    } = await loadRuntimeModules();
     clearLoading();
 
     if (viewport) {
@@ -67,6 +76,16 @@ async function startSession({ initialState, slot, viewport }) {
     const inputManager = new InputManager(scene.canvas, { keyboardTarget: document });
     const { store, data, cleanup } = initGame(initialState, { slot });
 
+    // Create zone manager and register all zone factories + exit triggers
+    const zoneResourceTracker = new ResourceTracker();
+    const zoneManager = new ZoneManager(null, store, zoneResourceTracker);
+    registerAllZones(zoneManager, store, zoneResourceTracker);
+
+    // Transition to the player's current zone (or default to player_plot)
+    const startZone = initialState.campaign?.worldState?.currentZone ?? 'player_plot';
+    const startSpawn = initialState.campaign?.worldState?.lastSpawnPoint ?? null;
+    zoneManager.transitionTo(startZone, startSpawn);
+
     bindUI({
       store,
       data,
@@ -76,6 +95,7 @@ async function startSession({ initialState, slot, viewport }) {
       slot,
       destroyInit: cleanup,
       remount: mount,
+      zoneManager,
     });
   } catch (err) {
     clearLoading();

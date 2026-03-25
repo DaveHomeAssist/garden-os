@@ -6,6 +6,7 @@ import {
   createSeasonState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
+  getAvailableGridSizes,
   getGridCols,
   getGridRows,
   GRID_UNLOCKS,
@@ -114,7 +115,11 @@ function normalizeGrid(grid, fallbackGrid, cols, rows) {
   const sourceCells = Array.isArray(grid?.cells)
     ? grid.cells
     : (Array.isArray(grid) && grid.length ? grid : fallbackGrid);
-  const nextGrid = sourceCells.map((cell) => normalizeCell(cell));
+  const targetCount = cols * rows;
+  const nextGrid = [];
+  for (let i = 0; i < targetCount; i++) {
+    nextGrid.push(normalizeCell(sourceCells[i] ?? {}));
+  }
   return attachGridMeta(nextGrid, cols, rows);
 }
 
@@ -142,9 +147,15 @@ function normalizeCampaign(rawCampaign) {
     cropsUnlocked: cloneArray(campaign.cropsUnlocked ?? fallbackCampaign.cropsUnlocked),
     journalEntries: cloneArray(campaign.journalEntries),
     seenCutsceneIds: cloneArray(campaign.seenCutsceneIds),
-    soilHealth: Array.isArray(campaign.soilHealth)
-      ? [...campaign.soilHealth]
-      : [...fallbackCampaign.soilHealth],
+    soilHealth: (() => {
+      const base = Array.isArray(campaign.soilHealth) ? [...campaign.soilHealth] : [...fallbackCampaign.soilHealth];
+      const gardeningLevel = (normalizeSkillsState(campaign.skills ?? {})).gardening?.level ?? 1;
+      const sizes = getAvailableGridSizes(campaign.currentChapter ?? 1, gardeningLevel);
+      const best = sizes[sizes.length - 1];
+      const needed = best ? best.cols * best.rows : base.length;
+      while (base.length < needed) base.push(1.0);
+      return base;
+    })(),
     previousGrid: Array.isArray(campaign.previousGrid)
       ? campaign.previousGrid.map((cell) => normalizeCell(cell))
       : null,
@@ -171,8 +182,18 @@ function normalizeCampaign(rawCampaign) {
 function normalizeSeason(rawSeason, campaign) {
   const chapter = rawSeason?.chapter ?? campaign.currentChapter ?? 1;
   const seasonId = rawSeason?.season ?? campaign.currentSeason ?? 'spring';
-  const gridCols = rawSeason?.gridCols ?? rawSeason?.grid?.cols ?? 8;
-  const gridRows = rawSeason?.gridRows ?? rawSeason?.grid?.rows ?? 4;
+  let gridCols = rawSeason?.gridCols ?? rawSeason?.grid?.cols ?? 8;
+  let gridRows = rawSeason?.gridRows ?? rawSeason?.grid?.rows ?? 4;
+
+  // Legacy grid migration: expand grid if chapter warrants larger size
+  const gardeningLevel = campaign.skills?.gardening?.level ?? 1;
+  const available = getAvailableGridSizes(chapter, gardeningLevel);
+  const best = available[available.length - 1];
+  if (best && (best.cols > gridCols || best.rows > gridRows)) {
+    gridCols = Math.max(gridCols, best.cols);
+    gridRows = Math.max(gridRows, best.rows);
+  }
+
   const fallbackSeason = createSeasonState(chapter, seasonId, campaign, gridCols, gridRows);
   const season = rawSeason ?? {};
 

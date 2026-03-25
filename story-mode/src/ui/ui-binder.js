@@ -33,6 +33,7 @@ import { ReputationSystem } from '../game/reputation.js';
 import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
 import { evaluateZoneAccess } from '../scene/zone-manager.js';
+import { DayNightController } from '../game/day-night-controller.js';
 import {
   WORLD_ZONE_INTERACTABLES,
   ZONE_NAMES,
@@ -127,6 +128,7 @@ function bindUI({
   slot,
   destroyInit,
   remount,
+  zoneManager,
 }) {
   const {
     getCropById,
@@ -285,6 +287,7 @@ function bindUI({
   const festivalEngine = new FestivalEngine(store);
   const craftingSystem = new CraftingSystem(store, inventory, skillSystem);
   const foragingSystem = new ForagingSystem(store, inventory, skillSystem);
+  const dayNightController = new DayNightController(scene, store);
   let registeredWorldInteractableIds = [];
 
   function getCurrentZoneId() {
@@ -1933,6 +1936,12 @@ function bindUI({
       }
       interactionSystem.update(dt);
       syncInteractionPresentation();
+      dayNightController.sync();
+      // Check zone exit triggers each frame using the player's current position
+      if (zoneManager && !zoneManager.transitioning) {
+        const pos = playerController.getState().position;
+        zoneManager.checkTriggers(pos);
+      }
     },
   });
 
@@ -1991,11 +2000,13 @@ function bindUI({
     touchStick.dispose();
     calendarEl.remove();
     dialoguePanel?.destroy();
+    dayNightController?.dispose();
     document.removeEventListener('click', bugPanelOutsideHandler);
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;
     delete window.advanceTime;
     delete window.gardenOS;
+    zoneManager?.dispose?.();
     scene.dispose?.();
   }
 

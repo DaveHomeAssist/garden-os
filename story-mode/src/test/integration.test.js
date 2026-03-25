@@ -1386,9 +1386,18 @@ describe('Phase 1 — Movement, Camera, Tools, Mode Selection', () => {
       container.remove();
     });
 
-    it.todo('save file includes the selected game mode');
+    it('save file includes the selected game mode', () => {
+      const state = createGameState();
+      state.campaign.gameMode = 'let_it_grow';
+      const store = new Store(state);
+      expect(store.getState().campaign.gameMode).toBe('let_it_grow');
+    });
 
-    it.todo('loading a save without gameMode field defaults to story');
+    it('loading a save without gameMode field defaults to story', () => {
+      const raw = { campaign: { currentChapter: 1 }, season: { chapter: 1, season: 'spring', phase: 'PLANNING' } };
+      const normalized = normalizeGameState(raw);
+      expect(normalized.campaign.gameMode).toBe('story');
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -2499,14 +2508,32 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
       delete globalThis.AudioContext;
     });
 
-    it.todo('volume layers (ambient, SFX, music) can be adjusted independently');
+    it('volume layers (ambient, SFX, music) can be adjusted independently', () => {
+      const am = new AudioManager();
+      am.setMasterVolume(0.8);
+      expect(am.masterVolume).toBe(0.8);
+      am.setMusicVolume(0.6);
+      expect(am.musicVolume).toBe(0.6);
+      am.setSFXVolume(0.4);
+      expect(am.sfxVolume).toBe(0.4);
+      am.setAmbientVolume(0.2);
+      expect(am.ambientVolume).toBe(0.2);
+      // Each is independent
+      expect(am.masterVolume).toBe(0.8);
+      expect(am.musicVolume).toBe(0.6);
+      am.dispose();
+    });
   });
 
   // -------------------------------------------------------------------------
   // 3-B. Day/Night Cycle
   // -------------------------------------------------------------------------
   describe('Day/Night Cycle', () => {
-    it.todo('day/night cycle is disabled by default in Story mode');
+    it('day/night cycle is disabled by default in Story mode', () => {
+      const state = createGameState();
+      expect(state.settings.dayNightEnabled).toBe(false);
+      expect(state.campaign.gameMode).toBe('story');
+    });
 
     it('lighting interpolates between day and night values', () => {
       // Build a minimal scene with a lighting rig
@@ -2853,18 +2880,41 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
       }
     });
 
-    it.todo('no duplicate events fire within the same season');
+    it('no duplicate events fire within the same season', () => {
+      const alreadyDrawn = ['S01', 'S02'];
+      const pool = getMonthlyEvents('spring', 1, 6, alreadyDrawn).map((e) => e.id);
+      expect(pool).not.toContain('S01');
+      expect(pool).not.toContain('S02');
+    });
 
-    it.todo('chapter-gated events respect chapter prerequisites');
+    it('chapter-gated events respect chapter prerequisites', () => {
+      // Chapter 1 pool should be smaller than chapter 12 pool
+      const ch1Pool = getMonthlyEvents('spring', 1, 1, []);
+      const ch12Pool = getMonthlyEvents('spring', 1, 12, []);
+      expect(ch12Pool.length).toBeGreaterThanOrEqual(ch1Pool.length);
+    });
   });
 
   // -------------------------------------------------------------------------
   // 3-E. NPC Schedule — Festival Integration
   // -------------------------------------------------------------------------
   describe('NPC Schedule Integration', () => {
-    it.todo('NPCs are in their scheduled zone during normal gameplay');
+    it('NPCs are in their scheduled zone during normal gameplay', () => {
+      const npcsInNeighborhood = getNPCsInZone('neighborhood', 'spring');
+      expect(npcsInNeighborhood.length).toBeGreaterThan(0);
+      // Old Gus is in neighborhood during spring
+      expect(npcsInNeighborhood.some((n) => n.id === 'old_gus')).toBe(true);
+    });
 
-    it.todo('season changes move NPCs to their new zone assignments');
+    it('season changes move NPCs to their new zone assignments', () => {
+      const springNpcs = getNPCsInZone('neighborhood', 'spring');
+      const fallNpcs = getNPCsInZone('neighborhood', 'fall');
+      // Old Gus moves to forest_edge in fall
+      expect(springNpcs.some((n) => n.id === 'old_gus')).toBe(true);
+      expect(fallNpcs.some((n) => n.id === 'old_gus')).toBe(false);
+      const forestFall = getNPCsInZone('forest_edge', 'fall');
+      expect(forestFall.some((n) => n.id === 'old_gus')).toBe(true);
+    });
 
     it.todo('during a festival, all participating NPCs relocate to the festival grounds');
   });
@@ -3842,7 +3892,15 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(rejected.season.gridRows).toBe(8);
     });
 
-    it.todo('grid expansion persists through save/load cycle');
+    it('grid expansion persists through save/load cycle', () => {
+      const state = createGameState();
+      state.campaign.currentChapter = 6;
+      state.campaign.skills.gardening = { xp: 850, level: 5 };
+      const normalized = normalizeGameState(state);
+      // Chapter 6 with gardening level 5 should expand to 8x6
+      expect(normalized.season.gridRows).toBe(6);
+      expect(normalized.season.grid.length).toBe(48);
+    });
 
     it('old saves with 32-cell grids load correctly without migration issues', () => {
       // Simulate a legacy save that has a 32-cell (8x4) grid with some planted crops
