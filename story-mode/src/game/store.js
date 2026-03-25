@@ -749,6 +749,17 @@ function gameReducer(state, action = {}) {
       return nextState;
     }
 
+    case Actions.UNLOCK_BIOME_CROP: {
+      const cropId = payload.cropId;
+      if (!cropId) return state;
+      const nextState = cloneGameState(state);
+      const unlocked = new Set(nextState.campaign.biomeCropsUnlocked ?? []);
+      if (unlocked.has(cropId)) return state;
+      unlocked.add(cropId);
+      nextState.campaign.biomeCropsUnlocked = [...unlocked];
+      return nextState;
+    }
+
     case Actions.AWARD_KEEPSAKE:
       return awardKeepsakeToState(state, payload.awarded ?? payload.keepsake, payload.includeSeasonQueue !== false);
 

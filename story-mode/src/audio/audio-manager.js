@@ -38,12 +38,18 @@ export class AudioManager {
     this.audioContext = null;
     this.initialized = false;
     this.masterVolume = 1;
+    this.musicVolume = 0.5;
     this.sfxVolume = 1;
     this.ambientVolume = 0.3;
     this.muted = false;
     this.sfxRegistry = new Map();
     this.sfxLastPlayed = new Map();
     this.ambient = null;
+    this.music = null;
+    this.masterGain = null;
+    this.musicGain = null;
+    this.ambientGain = null;
+    this.sfxGain = null;
     this.visibilityHandler = null;
 
     Object.entries(DEFAULT_SFX_LIBRARY).forEach(([id, options]) => {
@@ -59,6 +65,22 @@ export class AudioManager {
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
+      // 3-layer gain architecture: master → music/ambient/sfx
+      this.masterGain = this.audioContext.createGain();
+      this.masterGain.gain.value = this.masterVolume;
+      this.masterGain.connect(this.audioContext.destination);
+
+      this.musicGain = this.audioContext.createGain();
+      this.musicGain.gain.value = this.musicVolume;
+      this.musicGain.connect(this.masterGain);
+
+      this.ambientGain = this.audioContext.createGain();
+      this.ambientGain.gain.value = this.ambientVolume;
+      this.ambientGain.connect(this.masterGain);
+
+      this.sfxGain = this.audioContext.createGain();
+      this.sfxGain.gain.value = this.sfxVolume;
+      this.sfxGain.connect(this.masterGain);
     }
     this.visibilityHandler = () => {
       if (typeof document === 'undefined') return;
@@ -104,58 +126,120 @@ export class AudioManager {
     return this.playPlaceholder(id, config.pitch);
   }
 
-  async setAmbient(url, { fadeInMs = 2000, volume = 0.3 } = {}) {
+  async crossfadeTo(layer, url, { fadeMs = 2000, volume = 0.3 } = {}) {
+    const current = this[layer];
     const next = createAudioElement(url);
     next.volume = 0;
     next.loop = true;
     await next.play?.().catch?.(() => {
-      console.warn(`[GOS audio] Ambient missing or blocked: ${url}`);
+      console.warn(`[GOS audio] ${layer} missing or blocked: ${url}`);
     });
 
-    const previous = this.ambient;
-    this.ambient = { element: next, url, volume: clamp01(volume) };
-    next.volume = this.muted ? 0 : clamp01(this.masterVolume * this.ambientVolume * volume);
+    const targetVol = this.muted ? 0 : clamp01(volume);
+    this[layer] = { element: next, url, volume: clamp01(volume) };
 
-    if (previous?.element) {
-      globalThis.setTimeout?.(() => {
-        previous.element.pause?.();
-      }, fadeInMs);
+    // No previous track or instant fade — set volume immediately
+    if (!current?.element || !fadeMs || fadeMs <= 50) {
+      next.volume = targetVol;
+      current?.element?.pause?.();
+      current?.element?.remove?.();
+      return;
     }
+
+    // Crossfade: start new track at 0 and ramp up while old fades out
+    next.volume = 0;
+
+    // Fade in the new track, fade out old
+    const steps = Math.max(1, Math.floor(fadeMs / 50));
+    const stepMs = fadeMs / steps;
+    let step = 0;
+    const fadeInterval = globalThis.setInterval?.(() => {
+      step++;
+      const t = Math.min(1, step / steps);
+      next.volume = targetVol * t;
+      if (current?.element) {
+        current.element.volume = Math.max(0, (current.volume ?? 0) * (1 - t));
+      }
+      if (step >= steps) {
+        globalThis.clearInterval?.(fadeInterval);
+        current?.element?.pause?.();
+        current?.element?.remove?.();
+      }
+    }, stepMs);
+  }
+
+  async setAmbient(url, { fadeMs, fadeInMs, volume = 0.3 } = {}) {
+    return this.crossfadeTo('ambient', url, { fadeMs: fadeMs ?? fadeInMs ?? 2000, volume });
+  }
+
+  async setMusic(url, { fadeMs = 2000, volume = 0.5 } = {}) {
+    return this.crossfadeTo('music', url, { fadeMs, volume });
+  }
+
+  stopLayer(layer, fadeOutMs = 2000) {
+    const active = this[layer];
+    if (!active?.element) return;
+    const el = active.element;
+    const startVol = el.volume;
+    const steps = Math.max(1, Math.floor(fadeOutMs / 50));
+    let step = 0;
+    const fadeInterval = globalThis.setInterval?.(() => {
+      step++;
+      el.volume = Math.max(0, startVol * (1 - step / steps));
+      if (step >= steps) {
+        globalThis.clearInterval?.(fadeInterval);
+        el.pause?.();
+        el.remove?.();
+      }
+    }, fadeOutMs / steps);
+    this[layer] = null;
   }
 
   stopAmbient(fadeOutMs = 2000) {
-    if (!this.ambient?.element) return;
-    const active = this.ambient.element;
-    globalThis.setTimeout?.(() => {
-      active.pause?.();
-      active.remove?.();
-    }, fadeOutMs);
-    this.ambient = null;
+    this.stopLayer('ambient', fadeOutMs);
+  }
+
+  stopMusic(fadeOutMs = 2000) {
+    this.stopLayer('music', fadeOutMs);
   }
 
   setMasterVolume(v) {
     this.masterVolume = clamp01(v);
-    this.syncAmbientVolume();
+    if (this.masterGain) this.masterGain.gain.value = this.muted ? 0 : this.masterVolume;
+    this.syncLayerVolumes();
+  }
+
+  setMusicVolume(v) {
+    this.musicVolume = clamp01(v);
+    if (this.musicGain) this.musicGain.gain.value = this.musicVolume;
+    this.syncLayerVolumes();
   }
 
   setSFXVolume(v) {
     this.sfxVolume = clamp01(v);
+    if (this.sfxGain) this.sfxGain.gain.value = this.sfxVolume;
   }
 
   setAmbientVolume(v) {
     this.ambientVolume = clamp01(v);
-    this.syncAmbientVolume();
+    if (this.ambientGain) this.ambientGain.gain.value = this.ambientVolume;
+    this.syncLayerVolumes();
   }
 
-  syncAmbientVolume() {
-    if (!this.ambient?.element) return;
-    const target = this.muted ? 0 : clamp01(this.masterVolume * this.ambientVolume * (this.ambient.volume ?? 1));
-    this.ambient.element.volume = target;
+  syncLayerVolumes() {
+    const masterMult = this.muted ? 0 : this.masterVolume;
+    if (this.ambient?.element) {
+      this.ambient.element.volume = clamp01(masterMult * this.ambientVolume * (this.ambient.volume ?? 1));
+    }
+    if (this.music?.element) {
+      this.music.element.volume = clamp01(masterMult * this.musicVolume * (this.music.volume ?? 1));
+    }
   }
 
   setMuted(muted) {
     this.muted = Boolean(muted);
-    this.syncAmbientVolume();
+    if (this.masterGain) this.masterGain.gain.value = this.muted ? 0 : this.masterVolume;
+    this.syncLayerVolumes();
   }
 
   async suspend() {
@@ -171,8 +255,13 @@ export class AudioManager {
   dispose() {
     document?.removeEventListener?.('visibilitychange', this.visibilityHandler);
     this.stopAmbient(0);
+    this.stopMusic(0);
     this.audioContext?.close?.();
     this.audioContext = null;
+    this.masterGain = null;
+    this.musicGain = null;
+    this.ambientGain = null;
+    this.sfxGain = null;
     this.initialized = false;
   }
 }

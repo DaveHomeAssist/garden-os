@@ -1,6 +1,14 @@
 import { Actions } from './store.js';
+import { getCropById } from '../data/crops.js';
 
 const BASE_COOLDOWN_MS = 300_000;
+
+// Biome crop seeds discoverable through foraging (zone → crop IDs)
+const BIOME_CROP_SEEDS = {
+  meadow: ['wild_clover', 'prairie_onion', 'meadow_sage'],
+  riverside: ['watercress', 'wild_rice', 'marsh_marigold'],
+  forest_edge: ['shiitake_mushroom', 'wild_garlic', 'woodland_strawberry'],
+};
 
 const ZONE_SPOTS = {
   meadow: [
@@ -22,12 +30,12 @@ const ZONE_SPOTS = {
 const LOOT_TABLES = {
   herb_patch: {
     common: [{ itemId: 'basil_seed', count: [1, 3], weight: 40 }, { itemId: 'cilantro_seed', count: [1, 2], weight: 30 }, { itemId: 'dried_herbs', count: [1, 2], weight: 30 }],
-    uncommon: [{ itemId: 'rosemary_seed', count: [1, 1], weight: 20 }],
+    uncommon: [{ itemId: 'rosemary_seed', count: [1, 1], weight: 20 }, { itemId: 'meadow_sage_seed', count: [1, 1], weight: 8, biomeCrop: 'meadow_sage' }],
     rare: [{ itemId: 'heirloom_herb_seed', count: [1, 1], weight: 10 }],
   },
   berry_bush: {
     common: [{ itemId: 'fresh_berries', count: [1, 3], weight: 45 }, { itemId: 'strawberry_seed', count: [1, 2], weight: 30 }],
-    uncommon: [{ itemId: 'blueberry_seed', count: [1, 1], weight: 20 }],
+    uncommon: [{ itemId: 'blueberry_seed', count: [1, 1], weight: 20 }, { itemId: 'woodland_strawberry_seed', count: [1, 1], weight: 8, biomeCrop: 'woodland_strawberry' }],
     rare: [{ itemId: 'rare_earth', count: [1, 1], weight: 5 }],
   },
   rock_pile: {
@@ -37,17 +45,17 @@ const LOOT_TABLES = {
   },
   driftwood: {
     common: [{ itemId: 'wood', count: [1, 3], weight: 55 }, { itemId: 'scrap_metal', count: [1, 2], weight: 25 }],
-    uncommon: [{ itemId: 'festival_seed_bundle', count: [1, 1], weight: 15 }],
-    rare: [{ itemId: 'crystal_shard', count: [1, 1], weight: 5 }],
+    uncommon: [{ itemId: 'festival_seed_bundle', count: [1, 1], weight: 15 }, { itemId: 'watercress_seed', count: [1, 1], weight: 8, biomeCrop: 'watercress' }],
+    rare: [{ itemId: 'crystal_shard', count: [1, 1], weight: 5 }, { itemId: 'wild_rice_seed', count: [1, 1], weight: 4, biomeCrop: 'wild_rice' }],
   },
   mushroom_log: {
     common: [{ itemId: 'mushroom_spores', count: [1, 2], weight: 55 }, { itemId: 'compost', count: [1, 2], weight: 30 }],
-    uncommon: [{ itemId: 'plant_matter', count: [2, 4], weight: 10 }],
-    rare: [{ itemId: 'rare_earth', count: [1, 1], weight: 5 }],
+    uncommon: [{ itemId: 'plant_matter', count: [2, 4], weight: 10 }, { itemId: 'shiitake_seed', count: [1, 1], weight: 8, biomeCrop: 'shiitake_mushroom' }],
+    rare: [{ itemId: 'rare_earth', count: [1, 1], weight: 5 }, { itemId: 'wild_garlic_seed', count: [1, 1], weight: 4, biomeCrop: 'wild_garlic' }],
   },
   wildflower_field: {
     common: [{ itemId: 'plant_matter', count: [1, 3], weight: 50 }, { itemId: 'marigold_seed', count: [1, 2], weight: 35 }],
-    uncommon: [{ itemId: 'lavender_seed', count: [1, 1], weight: 10 }],
+    uncommon: [{ itemId: 'lavender_seed', count: [1, 1], weight: 10 }, { itemId: 'wild_clover_seed', count: [1, 1], weight: 8, biomeCrop: 'wild_clover' }],
     rare: [{ itemId: 'festival_token', count: [1, 1], weight: 5 }],
   },
 };
@@ -152,13 +160,32 @@ export class ForagingSystem {
       payload: { spotId, zoneId, items, xpGained },
     });
 
+    // Unlock biome crops discovered through foraging
+    const biomeCropsFound = [];
+    for (const pull of items) {
+      const lootEntry = lootPool.find((e) => e.itemId === pull.itemId);
+      if (lootEntry?.biomeCrop) {
+        const alreadyUnlocked = new Set(state.campaign.biomeCropsUnlocked ?? []);
+        if (!alreadyUnlocked.has(lootEntry.biomeCrop)) {
+          this.store.dispatch({
+            type: Actions.UNLOCK_BIOME_CROP,
+            payload: { cropId: lootEntry.biomeCrop },
+          });
+          biomeCropsFound.push(lootEntry.biomeCrop);
+        }
+      }
+    }
+
     return {
       success: true,
       items,
       xpGained,
-      message: items.some((entry) => entry.dropped)
-        ? 'Found items, but your pack was full.'
-        : 'Foraging successful.',
+      biomeCropsFound,
+      message: biomeCropsFound.length
+        ? `Discovered ${biomeCropsFound.map((id) => getCropById(id)?.name ?? id).join(', ')}!`
+        : items.some((entry) => entry.dropped)
+          ? 'Found items, but your pack was full.'
+          : 'Foraging successful.',
     };
   }
 
