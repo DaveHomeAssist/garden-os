@@ -53,12 +53,13 @@ function weightedPick(events) {
   return events[events.length - 1] ?? null;
 }
 
-export function drawEvent(season, chapter, alreadyDrawn = []) {
+export function drawEvent(season, chapter, alreadyDrawn = [], month = null) {
   const drawnIds = normalizeAlreadyDrawn(alreadyDrawn);
   const pool = (eventDeck.events ?? []).filter((event) => {
-    return isAvailableForSeason(event, season)
-      && isAvailableForChapter(event, chapter)
-      && !drawnIds.has(event.id);
+    if (!isAvailableForSeason(event, season)) return false;
+    if (!isAvailableForChapter(event, chapter)) return false;
+    if (month !== null && !isAvailableForMonth(event, month)) return false;
+    return !drawnIds.has(event.id);
   });
 
   const drawn = weightedPick(pool);

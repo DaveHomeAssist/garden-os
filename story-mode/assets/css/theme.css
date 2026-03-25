@@ -93,6 +93,46 @@
   background: linear-gradient(180deg, rgba(230, 223, 212, 0.96), rgba(78, 82, 86, 0.98));
 }
 
+.dp-portrait[data-portrait="old_gus"] {
+  background: linear-gradient(180deg, rgba(194, 178, 128, 0.92), rgba(58, 42, 22, 0.96));
+}
+
+.dp-portrait[data-portrait="maya"] {
+  background: linear-gradient(180deg, rgba(120, 160, 200, 0.9), rgba(32, 44, 60, 0.96));
+}
+
+.dp-portrait[data-portrait="lila"] {
+  background: linear-gradient(180deg, rgba(220, 140, 100, 0.9), rgba(62, 30, 22, 0.96));
+}
+
+/* ── Emotion expression states (CSS-only portraits) ──────────────────── */
+.dp-portrait.expr-neutral { filter: none; }
+
+.dp-portrait.expr-warm {
+  filter: brightness(1.12) saturate(1.15);
+  box-shadow: inset 0 0 18px rgba(232, 200, 74, 0.18);
+}
+
+.dp-portrait.expr-sad {
+  filter: brightness(0.88) saturate(0.7);
+  box-shadow: inset 0 0 18px rgba(100, 120, 160, 0.22);
+}
+
+.dp-portrait.expr-surprised {
+  filter: brightness(1.08);
+  animation: dp-pop 0.25s ease-out;
+}
+
+.dp-portrait.expr-emphasis {
+  filter: brightness(1.1) contrast(1.08);
+  box-shadow: inset 0 0 14px rgba(232, 200, 74, 0.24);
+}
+
+.dp-portrait.expr-smirk {
+  filter: brightness(1.04) saturate(1.1);
+  transform: rotate(-1.5deg);
+}
+
 .dp-portrait-layer {
   position: absolute;
   inset: 0;

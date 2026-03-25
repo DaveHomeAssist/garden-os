@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "zones": {
+    "player_plot": {
+      "name": "Player's Plot",
+      "biome": "garden",
+      "bounds": { "minX": -9, "maxX": 9, "minZ": -9, "maxZ": 9 },
+      "spawnPoint": { "x": 0, "z": 3 },
+      "connections": ["neighborhood"],
+      "exitPoints": [
+        {
+          "id": "plot_to_neighborhood",
+          "destination": "neighborhood",
+          "position": { "x": 0, "z": -8.5 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": -9, "maxZ": -8 },
+          "spawnPoint": { "x": 0, "z": 7 }
+        }
+      ]
+    },
+    "neighborhood": {
+      "name": "Neighborhood",
+      "biome": "village",
+      "bounds": { "minX": -9, "maxX": 9, "minZ": -9, "maxZ": 9 },
+      "spawnPoint": { "x": 0, "z": 7 },
+      "connections": ["player_plot", "market_square", "meadow"],
+      "exitPoints": [
+        {
+          "id": "neighborhood_to_plot",
+          "destination": "player_plot",
+          "position": { "x": 0, "z": 8.5 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": 8, "maxZ": 9 },
+          "spawnPoint": { "x": 0, "z": -8 }
+        },
+        {
+          "id": "neighborhood_to_market",
+          "destination": "market_square",
+          "position": { "x": -8.5, "z": 0 },
+          "triggerBounds": { "minX": -9, "maxX": -8, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": 8, "z": 0 }
+        },
+        {
+          "id": "neighborhood_to_meadow",
+          "destination": "meadow",
+          "position": { "x": 8.5, "z": 0 },
+          "triggerBounds": { "minX": 8, "maxX": 9, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": -8, "z": 0 }
+        }
+      ]
+    },
+    "market_square": {
+      "name": "Market Square",
+      "biome": "town",
+      "bounds": { "minX": -9, "maxX": 9, "minZ": -9, "maxZ": 9 },
+      "spawnPoint": { "x": 8, "z": 0 },
+      "connections": ["neighborhood", "greenhouse"],
+      "exitPoints": [
+        {
+          "id": "market_to_neighborhood",
+          "destination": "neighborhood",
+          "position": { "x": 8.5, "z": 0 },
+          "triggerBounds": { "minX": 8, "maxX": 9, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": -8, "z": 0 }
+        },
+        {
+          "id": "market_to_greenhouse",
+          "destination": "greenhouse",
+          "position": { "x": 0, "z": -8.5 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": -9, "maxZ": -8 },
+          "spawnPoint": { "x": 0, "z": 7 }
+        }
+      ]
+    },
+    "meadow": {
+      "name": "Meadow",
+      "biome": "grassland",
+      "bounds": { "minX": -12, "maxX": 12, "minZ": -12, "maxZ": 12 },
+      "spawnPoint": { "x": -8, "z": 0 },
+      "connections": ["neighborhood", "forest_edge", "riverside"],
+      "exitPoints": [
+        {
+          "id": "meadow_to_neighborhood",
+          "destination": "neighborhood",
+          "position": { "x": -8.5, "z": 0 },
+          "triggerBounds": { "minX": -12, "maxX": -11, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": 8, "z": 0 }
+        },
+        {
+          "id": "meadow_to_forest",
+          "destination": "forest_edge",
+          "position": { "x": 8.5, "z": -4 },
+          "triggerBounds": { "minX": 11, "maxX": 12, "minZ": -5.5, "maxZ": -2.5 },
+          "spawnPoint": { "x": -8, "z": 0 }
+        },
+        {
+          "id": "meadow_to_riverside",
+          "destination": "riverside",
+          "position": { "x": 0, "z": -12 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": -12, "maxZ": -11 },
+          "spawnPoint": { "x": 0, "z": 8 }
+        }
+      ]
+    },
+    "forest_edge": {
+      "name": "Forest Edge",
+      "biome": "forest",
+      "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
+      "spawnPoint": { "x": -8, "z": 0 },
+      "connections": ["meadow"],
+      "exitPoints": [
+        {
+          "id": "forest_to_meadow",
+          "destination": "meadow",
+          "position": { "x": -8.5, "z": 0 },
+          "triggerBounds": { "minX": -10, "maxX": -9, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": 8, "z": -4 }
+        }
+      ]
+    },
+    "riverside": {
+      "name": "Riverside",
+      "biome": "river",
+      "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
+      "spawnPoint": { "x": 0, "z": 8 },
+      "connections": ["meadow", "festival_grounds"],
+      "exitPoints": [
+        {
+          "id": "riverside_to_meadow",
+          "destination": "meadow",
+          "position": { "x": 0, "z": 8.5 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": 9, "maxZ": 10 },
+          "spawnPoint": { "x": 0, "z": -11 }
+        },
+        {
+          "id": "riverside_to_festival",
+          "destination": "festival_grounds",
+          "position": { "x": 8.5, "z": 0 },
+          "triggerBounds": { "minX": 9, "maxX": 10, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": -8, "z": 0 }
+        }
+      ]
+    },
+    "greenhouse": {
+      "name": "Greenhouse",
+      "biome": "greenhouse",
+      "bounds": { "minX": -8, "maxX": 8, "minZ": -8, "maxZ": 8 },
+      "spawnPoint": { "x": 0, "z": 7 },
+      "connections": ["market_square"],
+      "exitPoints": [
+        {
+          "id": "greenhouse_to_market",
+          "destination": "market_square",
+          "position": { "x": 0, "z": 7.5 },
+          "triggerBounds": { "minX": -1.5, "maxX": 1.5, "minZ": 7, "maxZ": 8 },
+          "spawnPoint": { "x": 0, "z": -8 }
+        }
+      ]
+    },
+    "festival_grounds": {
+      "name": "Festival Grounds",
+      "biome": "festival",
+      "bounds": { "minX": -12, "maxX": 12, "minZ": -12, "maxZ": 12 },
+      "spawnPoint": { "x": -8, "z": 0 },
+      "connections": ["riverside"],
+      "exitPoints": [
+        {
+          "id": "festival_to_riverside",
+          "destination": "riverside",
+          "position": { "x": -8.5, "z": 0 },
+          "triggerBounds": { "minX": -12, "maxX": -11, "minZ": -1.5, "maxZ": 1.5 },
+          "spawnPoint": { "x": 8, "z": 0 }
+        }
+      ]
+    }
+  }
+}

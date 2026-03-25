@@ -2055,7 +2055,7 @@ export function createGardenScene(container) {
       hasProp = true;
     }
 
-    if ((cell.soilFatigue ?? 0) < -0.1) {
+    if ((cell.soilFatigue ?? 0) > 0.1) {
       group.add(buildFatigueProp());
       hasProp = true;
     }
@@ -2620,6 +2620,9 @@ function getGrowthScale(phase, season) {
     }
   }
 
+  // Apply spring lighting immediately so the first frame isn't dark
+  applySeason('spring');
+
   return {
     canvas: renderer.domElement,
     resize(width, height) {
@@ -2890,6 +2893,7 @@ function getGrowthScale(phase, season) {
 
       renderer.render(scene, camera);
     },
+    applySeason,
     raycastCell,
     getGridLayout,
     projectWorldPosition,

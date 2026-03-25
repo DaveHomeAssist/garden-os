@@ -1,7 +1,7 @@
 /**
  * Phase Machine — implements SEASON_ENGINE_SPEC.md state transitions.
  */
-import { PHASES, BEAT_PHASES, SEASONS, createSeasonState } from './state.js';
+import { PHASES, BEAT_PHASES, SEASONS, createSeasonState, getAvailableGridSizes } from './state.js';
 import { getCropsForChapter } from '../data/crops.js';
 import { drawEvent } from '../data/events.js';
 import { scoreBed } from '../scoring/bed-score.js';
@@ -65,8 +65,9 @@ function createEventTrigger(season) {
 
 function assignBeatState(season, beatIndex) {
   season.beatIndex = beatIndex;
+  season.month = beatIndex + 1;
   season.interventionChosen = null;
-  season.eventActive = drawEvent(season.season, season.chapter, season.eventsDrawn);
+  season.eventActive = drawEvent(season.season, season.chapter, season.eventsDrawn, season.month);
 
   if (season.eventActive) {
     season.eventsDrawn.push(season.eventActive.id);
@@ -230,7 +231,11 @@ function rollCampaignForward(season) {
 
   campaign.cropsUnlocked = getCropsForChapter(nextChapter).map((crop) => crop.id);
 
-  const nextSeasonState = createSeasonState(nextChapter, nextSeason, campaign);
+  // Grid expansion: unlock larger grid at chapter milestones (GRID_UNLOCKS in state.js)
+  const gardeningLevel = campaign.skills?.gardening?.level ?? 1;
+  const availableSizes = getAvailableGridSizes(nextChapter, gardeningLevel);
+  const bestSize = availableSizes[availableSizes.length - 1] ?? { cols: 8, rows: 4 };
+  const nextSeasonState = createSeasonState(nextChapter, nextSeason, campaign, bestSize.cols, bestSize.rows);
 
   // Bug 2: Apply soil fatigue for heavy feeders in the same cell position
   if (campaign.previousGrid) {
@@ -247,6 +252,14 @@ function rollCampaignForward(season) {
   }
 
   Object.assign(season, nextSeasonState);
+
+  // Resize soilHealth array if grid expanded
+  const newCellCount = bestSize.cols * bestSize.rows;
+  if (Array.isArray(campaign.soilHealth) && campaign.soilHealth.length < newCellCount) {
+    while (campaign.soilHealth.length < newCellCount) {
+      campaign.soilHealth.push(1.0);
+    }
+  }
 
   saveCampaign(campaign);
   return { complete: false, chapterChanged: true };

@@ -25,8 +25,46 @@ function getNeighborIndices(index, grid) {
 }
 
 /**
+ * Per-cell light model from SCORING_RULES.md §2.
+ * Wall shadow + tall-crop shading = effectiveLight per cell.
+ */
+export function computeEffectiveLight(cellIndex, grid, siteConfig) {
+  const cols = getGridCols(grid, COLS);
+  const rows = getGridRows(grid, ROWS);
+  const { row, col } = cellToRowCol(cellIndex, grid);
+  const baseSun = siteConfig.sunHours || 6;
+  const wallSide = siteConfig.wallSide || 'back';
+
+  // §2a: Row-based light gradient — wall casts shadow on nearby rows
+  let rowFromWall;
+  if (wallSide === 'back') rowFromWall = row;
+  else if (wallSide === 'front') rowFromWall = (rows - 1) - row;
+  else if (wallSide === 'left') rowFromWall = col;
+  else if (wallSide === 'right') rowFromWall = (cols - 1) - col;
+  else rowFromWall = rows - 1; // no wall = no shadow
+
+  const shadowPenalty = Math.max(0, (2 - rowFromWall) * 0.75);
+  let effective = Math.max(1, baseSun - shadowPenalty);
+
+  // §2b: Tall-crop shading — tall crop in same column, one row closer to wall, shades this cell
+  const tallShadeDir = (wallSide === 'front') ? -1 : 1;
+  const shaderRow = row - tallShadeDir;
+  if (shaderRow >= 0 && shaderRow < rows) {
+    const shaderIndex = shaderRow * cols + col;
+    const shaderCell = grid[shaderIndex];
+    if (shaderCell && shaderCell.cropId) {
+      const shaderCrop = getCropById(shaderCell.cropId);
+      if (shaderCrop && shaderCrop.tall) {
+        effective -= 0.5;
+      }
+    }
+  }
+
+  return Math.max(1, effective);
+}
+
+/**
  * Factor 1: Sun Fit (weight 2x)
- * effectiveLight defaults to site sun hours for now.
  */
 export function sunFit(crop, effectiveLight) {
   if (effectiveLight >= crop.sunIdeal) return 5.0;
@@ -142,8 +180,10 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
 
   const rows = getGridRows(grid, ROWS);
   const { row } = cellToRowCol(cellIndex, grid);
-  const effectiveLight = siteConfig.sunHours || 6;
-  const hasTrellis = row === 0 && (siteConfig.trellis ?? true);
+  const effectiveLight = computeEffectiveLight(cellIndex, grid, siteConfig);
+  const wallSide = siteConfig.wallSide || 'back';
+  const trellisRow = wallSide === 'front' ? rows - 1 : wallSide === 'left' ? 0 : wallSide === 'right' ? rows - 1 : 0;
+  const hasTrellis = row === trellisRow && (siteConfig.trellis ?? true);
 
   const cols = getGridCols(grid, COLS);
   const { col } = cellToRowCol(cellIndex, grid);

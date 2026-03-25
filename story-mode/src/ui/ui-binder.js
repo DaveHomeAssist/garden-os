@@ -33,6 +33,12 @@ import { ReputationSystem } from '../game/reputation.js';
 import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
 import { evaluateZoneAccess } from '../scene/zone-manager.js';
+import {
+  WORLD_ZONE_INTERACTABLES,
+  ZONE_NAMES,
+  applyZoneTravelState,
+  resolveZoneSpawnPoint,
+} from './zone-travel.js';
 
 const FACTION_BADGE_COLORS = {
   climbers: '#2d8a4e',
@@ -83,51 +89,6 @@ const DEFAULT_TOOLS = [
   { id: 'protect', label: 'Protect', icon: '🛡️', shortcut: '5' },
   { id: 'mulch', label: 'Mulch', icon: '🍂', shortcut: '6' },
 ];
-const ZONE_NAMES = {
-  player_plot: 'Player Plot',
-  neighborhood: 'Neighborhood',
-  meadow: 'Meadow',
-  riverside: 'Riverside',
-  forest_edge: 'Forest Edge',
-  greenhouse: 'Greenhouse',
-  festival_grounds: 'Festival Grounds',
-  market_square: 'Market Square',
-};
-const WORLD_ZONE_INTERACTABLES = {
-  player_plot: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Neighborhood Gate', position: { x: 0, y: 0, z: -3.2 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.5, y: 0, z: 1.4 }, radius: 1.1 },
-    { id: 'travel_forest_edge', zoneId: 'forest_edge', label: 'Forest Trail', position: { x: 4.8, y: 0, z: 1.6 }, radius: 1.1 },
-    { id: 'travel_riverside', zoneId: 'riverside', label: 'Riverside Path', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  neighborhood: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Backyard Gate', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_market_square', zoneId: 'market_square', label: 'Market Lane', position: { x: 4.7, y: 0, z: 0.8 }, radius: 1.1 },
-    { id: 'travel_greenhouse', zoneId: 'greenhouse', label: 'Greenhouse Walk', position: { x: -3.8, y: 0, z: -2.4 }, radius: 1.1 },
-    { id: 'travel_festival_grounds', zoneId: 'festival_grounds', label: 'Festival Route', position: { x: -4.5, y: 0, z: 2.4 }, radius: 1.1 },
-  ],
-  meadow: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_forest_edge', zoneId: 'forest_edge', label: 'Forest Trail', position: { x: 4.8, y: 0, z: 0.9 }, radius: 1.1 },
-  ],
-  riverside: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.2, y: 0, z: 0.8 }, radius: 1.1 },
-  ],
-  forest_edge: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.2, y: 0, z: 0.8 }, radius: 1.1 },
-  ],
-  greenhouse: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  festival_grounds: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  market_square: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-};
 
 function hasKeepsake(campaign, keepsakeId) {
   return Array.isArray(campaign.keepsakes) && campaign.keepsakes.some((entry) => entry.id === keepsakeId);
@@ -238,10 +199,19 @@ function bindUI({
   let fabPlantWasVisible = false;
 
   let state = store.getState();
-  const unsubscribeState = store.subscribe((nextState) => {
-    state = nextState;
-  });
+  let interactionSystem = null;
   const playerController = createPlayerController();
+  if (state.campaign.worldState?.lastSpawnPoint) {
+    playerController.reset(state.campaign.worldState.lastSpawnPoint);
+  }
+  const unsubscribeState = store.subscribe((nextState, action) => {
+    state = nextState;
+    if (applyZoneTravelState(action, nextState, { playerController, scene, interactionSystem })) {
+      updateHUD();
+      interactionSystem?.update?.(0);
+      syncInteractionPresentation();
+    }
+  });
   const touchStick = createTouchStick();
   touchStick.mount(document.getElementById('app'));
   const letItGrowInteractionMode = isLetItGrowInteractionMode(state);
@@ -386,9 +356,10 @@ function bindUI({
             showToast(check.blockers[0]?.message ?? 'That area is still locked.', 2200, 'info');
             return;
           }
+          const spawnPoint = resolveZoneSpawnPoint(currentZone, entry.zoneId);
           dispatch({
             type: Actions.ZONE_CHANGED,
-            payload: { fromZone: currentZone, toZone: entry.zoneId, spawnPoint: entry.position },
+            payload: { fromZone: currentZone, toZone: entry.zoneId, spawnPoint },
           });
           showToast(`Entered ${ZONE_NAMES[entry.zoneId] ?? entry.zoneId}.`, 1800, 'success');
           updateHUD();
@@ -523,7 +494,7 @@ function bindUI({
     return cropPaletteOpen ? 'Choose crop' : 'Open seed kit';
   }
 
-  const interactionSystem = new InteractionSystem(
+  interactionSystem = new InteractionSystem(
     store,
     inputManager,
     playerController,
@@ -2019,6 +1990,7 @@ function bindUI({
     toolHUD?.dispose();
     touchStick.dispose();
     calendarEl.remove();
+    dialoguePanel?.destroy();
     document.removeEventListener('click', bugPanelOutsideHandler);
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;

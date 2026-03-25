@@ -116,8 +116,13 @@ function renderTitleScreen(onStart) {
       </div>`;
   }).join('');
 
+  const freshSlots = slotsContainer.cloneNode(true);
+  slotsContainer.parentNode.replaceChild(freshSlots, slotsContainer);
+
   if (modesContainer) {
-    modesContainer.innerHTML = `
+    const freshModes = modesContainer.cloneNode(false);
+    modesContainer.parentNode.replaceChild(freshModes, modesContainer);
+    freshModes.innerHTML = `
       <div class="mode-card mode-card--active" data-mode="story">
         <span class="mode-icon">📖</span>
         <span>Story Mode</span>
@@ -141,11 +146,11 @@ function renderTitleScreen(onStart) {
     `;
 
     let selectedMode = 'story';
-    modesContainer.addEventListener('click', (event) => {
+    freshModes.addEventListener('click', (event) => {
       const card = event.target.closest('[data-mode]');
       if (!card || card.classList.contains('mode-card--locked')) return;
       selectedMode = card.dataset.mode;
-      modesContainer.querySelectorAll('.mode-card').forEach((c) => {
+      freshModes.querySelectorAll('.mode-card').forEach((c) => {
         c.classList.toggle('mode-card--active', c.dataset.mode === selectedMode);
         if (c.dataset.mode && !c.classList.contains('mode-card--locked')) {
           c.classList.toggle('mode-card--selectable', c.dataset.mode !== selectedMode);
@@ -154,6 +159,7 @@ function renderTitleScreen(onStart) {
       updateSlotsVisibility();
     });
 
+    titleScreen.querySelector('.freeplay-start-btn')?.remove();
     const freeplayBtn = document.createElement('button');
     freeplayBtn.type = 'button';
     freeplayBtn.className = 'save-slot-btn save-slot-btn--primary freeplay-start-btn';
@@ -169,13 +175,15 @@ function renderTitleScreen(onStart) {
         });
       });
     });
-    slotsContainer.parentNode.insertBefore(freeplayBtn, slotsContainer.nextSibling);
+    freshSlots.parentNode.insertBefore(freeplayBtn, freshSlots.nextSibling);
 
     function updateSlotsVisibility() {
       const isFreeplay = selectedMode === 'freeplay';
-      slotsContainer.style.display = isFreeplay ? 'none' : '';
+      freshSlots.style.display = isFreeplay ? 'none' : '';
       freeplayBtn.style.display = isFreeplay ? '' : 'none';
     }
+
+    updateSlotsVisibility();
   }
 
   if (actionsContainer) {
@@ -188,9 +196,6 @@ function renderTitleScreen(onStart) {
       });
     }
   }
-
-  const freshSlots = slotsContainer.cloneNode(true);
-  slotsContainer.parentNode.replaceChild(freshSlots, slotsContainer);
 
   freshSlots.addEventListener('click', (event) => {
     const button = event.target.closest('[data-action]');

@@ -98,7 +98,6 @@ function createSeasonState(chapter, season, campaign = null, cols = COLS, rows =
     eventTitles: [],
     eventActive: null,
     interventionChosen: null,
-    beatScores: [],
     harvestResult: null,
     lastResolvedEvent: null,
     lastEventEffectSummary: null,
@@ -160,7 +159,8 @@ function createGameState() {
       dayNightEnabled: false,
       audio: {
         masterVolume: 1,
-        sfxVolume: 1,
+        musicVolume: 0.5,
+        sfxVolume: 0.7,
         ambientVolume: 0.3,
         muted: false,
       },
@@ -171,9 +171,6 @@ function createGameState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: true,
-    settings: {
-      audio: { musicVolume: 0.5, sfxVolume: 0.7, muted: false },
-    },
   };
 }
 

@@ -2,11 +2,13 @@ import {
   attachGridMeta,
   createCampaignState,
   createGameState,
+  createGrid,
   createSeasonState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
   getGridCols,
   getGridRows,
+  GRID_UNLOCKS,
   PHASES,
 } from './state.js';
 import { scoreBed } from '../scoring/bed-score.js';
@@ -84,6 +86,7 @@ const Actions = {
   USE_TOOL: 'USE_TOOL',
   REPAIR_TOOL: 'REPAIR_TOOL',
   FORAGE: 'FORAGE',
+  EXPAND_GRID: 'EXPAND_GRID',
 };
 
 function cloneValue(value) {
@@ -175,7 +178,6 @@ function normalizeSeason(rawSeason, campaign) {
     grid: normalizeGrid(season.grid, fallbackSeason.grid, gridCols, gridRows),
     eventsDrawn: cloneArray(season.eventsDrawn),
     eventTitles: cloneArray(season.eventTitles),
-    beatScores: cloneArray(season.beatScores),
     harvestResult: cloneValue(season.harvestResult),
     lastResolvedEvent: cloneValue(season.lastResolvedEvent),
     lastEventEffectSummary: cloneValue(season.lastEventEffectSummary),
@@ -712,6 +714,30 @@ function gameReducer(state, action = {}) {
           timestamp: Date.now(),
         },
       };
+      return nextState;
+    }
+
+    case Actions.EXPAND_GRID: {
+      const newRows = payload.rows;
+      const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
+      const currentRows = state.season.gridRows ?? state.season.grid?.rows ?? 4;
+      const currentCols = state.season.gridCols ?? state.season.grid?.cols ?? 8;
+
+      if (!Number.isInteger(newRows) || newRows <= currentRows || newRows > maxRows) {
+        return state;
+      }
+
+      const nextState = cloneGameState(state);
+      const newGrid = createGrid(currentCols, newRows);
+
+      // Copy existing cell data into the new grid (preserve planted crops)
+      for (let i = 0; i < nextState.season.grid.length; i++) {
+        newGrid[i] = { ...newGrid[i], ...nextState.season.grid[i] };
+      }
+
+      nextState.season.grid = attachGridMeta(newGrid, currentCols, newRows);
+      nextState.season.gridRows = newRows;
+      nextState.season.gridCols = currentCols;
       return nextState;
     }
 
