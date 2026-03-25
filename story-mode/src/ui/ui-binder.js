@@ -25,6 +25,7 @@ import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
+import { createTouchControls } from '../input/touch-controls.js';
 import { Inventory, getItemDef } from '../game/inventory.js';
 import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
@@ -32,9 +33,12 @@ import { ForagingSystem } from '../game/foraging.js';
 import { ReputationSystem } from '../game/reputation.js';
 import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
-import { evaluateZoneAccess } from '../scene/zone-manager.js';
+import { evaluateZoneAccess, ZoneManager } from '../scene/zone-manager.js';
+import { registerAllZones } from '../scene/zone-factories.js';
 import { DayNightController } from '../game/day-night-controller.js';
 import { AudioManager } from '../audio/audio-manager.js';
+import { registerProceduralSFX } from '../audio/audio-assets.js';
+import { createSeasonalAmbient } from '../audio/ambient-generator.js';
 import {
   WORLD_ZONE_INTERACTABLES,
   ZONE_NAMES,
@@ -217,6 +221,11 @@ function bindUI({
   });
   const touchStick = createTouchStick();
   touchStick.mount(document.getElementById('app'));
+  const touchControls = createTouchControls(document.getElementById('app'), {
+    onOrbitDelta(dTheta, dPhi) {
+      scene.applyCameraOrbitDelta?.(dTheta, dPhi);
+    },
+  });
   const letItGrowInteractionMode = isLetItGrowInteractionMode(state);
   const toolHUD = letItGrowInteractionMode
     ? new ToolHUD(document.getElementById('app'), inputManager, store)
@@ -301,21 +310,26 @@ function bindUI({
   const craftingSystem = new CraftingSystem(store, inventory, skillSystem);
   const foragingSystem = new ForagingSystem(store, inventory, skillSystem);
   const dayNightController = new DayNightController(scene, store);
+
+  // Zone Manager — wires zone factories to the scene renderer
+  const zoneSystems = { reputationSystem, skillSystem, questEngine, festivalEngine };
+  const zoneRenderer = scene.getRenderer?.();
+  const zoneTracker = scene.getResourceTracker?.();
+  const zoneManager = zoneRenderer
+    ? new ZoneManager(zoneRenderer, store, zoneTracker, zoneSystems)
+    : null;
+  if (zoneManager) registerAllZones(zoneManager);
+
   const audioManager = new AudioManager();
   let audioInitialized = false;
   let lastAudioSeason = null;
-
-  const SEASON_AMBIENT = {
-    spring: 'assets/audio/ambient/spring.ogg',
-    summer: 'assets/audio/ambient/summer.ogg',
-    fall: 'assets/audio/ambient/fall.ogg',
-    winter: 'assets/audio/ambient/winter.ogg',
-  };
+  let currentAmbientGen = null;
 
   async function ensureAudioInit() {
     if (audioInitialized) return;
     audioInitialized = true;
     await audioManager.init();
+    registerProceduralSFX(audioManager);
     const settings = state.settings?.audio ?? {};
     if (settings.muted) audioManager.setMuted(true);
     if (settings.masterVolume != null) audioManager.setMasterVolume(settings.masterVolume);
@@ -326,10 +340,16 @@ function bindUI({
 
   function syncSeasonalAudio() {
     const season = state.season?.season;
-    if (!season || season === lastAudioSeason) return;
+    if (!season || season === lastAudioSeason || !audioManager.audioContext) return;
     lastAudioSeason = season;
-    const url = SEASON_AMBIENT[season];
-    if (url) audioManager.setAmbient(url, { fadeMs: 2000, volume: 0.3 });
+    if (currentAmbientGen) {
+      currentAmbientGen.stop();
+      currentAmbientGen = null;
+    }
+    const gen = createSeasonalAmbient(audioManager.audioContext, season);
+    audioManager.setAmbientNode(gen.node);
+    gen.start();
+    currentAmbientGen = gen;
   }
 
   // Init audio on first user interaction (Web Audio policy)
@@ -2051,9 +2071,11 @@ function bindUI({
     interactionPrompt.dispose();
     toolHUD?.dispose();
     touchStick.dispose();
+    touchControls.dispose();
     calendarEl.remove();
     dialoguePanel?.destroy();
     dayNightController?.dispose();
+    zoneManager?.dispose();
     audioManager?.dispose();
     document.removeEventListener('click', bugPanelOutsideHandler);
     window.removeEventListener('resize', resize);

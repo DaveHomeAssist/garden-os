@@ -43,8 +43,10 @@ export class AudioManager {
     this.ambientVolume = 0.3;
     this.muted = false;
     this.sfxRegistry = new Map();
+    this.sfxProceduralRegistry = new Map();
     this.sfxLastPlayed = new Map();
     this.ambient = null;
+    this.ambientNode = null;
     this.music = null;
     this.masterGain = null;
     this.musicGain = null;
@@ -102,6 +104,17 @@ export class AudioManager {
     });
   }
 
+  registerProceduralSound(id, playFn, options = {}) {
+    this.sfxRegistry.set(id, {
+      id,
+      url: null,
+      volume: clamp01(options.volume ?? 1),
+      pitch: options.pitch ?? 1,
+      cooldownMs: options.cooldownMs ?? 0,
+    });
+    this.sfxProceduralRegistry.set(id, playFn);
+  }
+
   playPlaceholder(id, pitch = 1) {
     if (!this.audioContext || this.muted) return false;
     const oscillator = this.audioContext.createOscillator();
@@ -123,6 +136,12 @@ export class AudioManager {
     const now = Date.now();
     if (now - lastPlayed < config.cooldownMs) return false;
     this.sfxLastPlayed.set(id, now);
+    const proceduralFn = this.sfxProceduralRegistry.get(id);
+    if (proceduralFn && this.audioContext) {
+      const vol = clamp01(this.masterVolume * this.sfxVolume * config.volume);
+      proceduralFn(this.audioContext, this.sfxGain ?? this.audioContext.destination, vol);
+      return true;
+    }
     return this.playPlaceholder(id, config.pitch);
   }
 
@@ -170,6 +189,17 @@ export class AudioManager {
 
   async setAmbient(url, { fadeMs, fadeInMs, volume = 0.3 } = {}) {
     return this.crossfadeTo('ambient', url, { fadeMs: fadeMs ?? fadeInMs ?? 2000, volume });
+  }
+
+  setAmbientNode(node) {
+    if (this.ambientNode) {
+      this.ambientNode.disconnect();
+      if (typeof this.ambientNode.stop === 'function') this.ambientNode.stop();
+    }
+    this.ambientNode = node;
+    if (node && this.ambientGain) {
+      node.connect(this.ambientGain);
+    }
   }
 
   async setMusic(url, { fadeMs = 2000, volume = 0.5 } = {}) {
@@ -256,12 +286,18 @@ export class AudioManager {
     document?.removeEventListener?.('visibilitychange', this.visibilityHandler);
     this.stopAmbient(0);
     this.stopMusic(0);
+    if (this.ambientNode) {
+      this.ambientNode.disconnect();
+      if (typeof this.ambientNode.stop === 'function') this.ambientNode.stop();
+      this.ambientNode = null;
+    }
     this.audioContext?.close?.();
     this.audioContext = null;
     this.masterGain = null;
     this.musicGain = null;
     this.ambientGain = null;
     this.sfxGain = null;
+    this.sfxProceduralRegistry.clear();
     this.initialized = false;
   }
 }

@@ -2912,12 +2912,17 @@ function getGrowthScale(phase, season) {
       dayNight.setEnabled(Boolean(enabled));
     },
     setCameraPreset,
+    applyCameraOrbitDelta(dTheta, dPhi) {
+      camCtrl.applyOrbitDelta(dTheta, dPhi);
+    },
     applyMood,
     resetMood,
     pulseEventFocus,
     playSceneCue,
     weather,
     dayNight,
+    getRenderer() { return renderer; },
+    getResourceTracker() { return resourceTracker; },
     dispose() {
       disposeGardenScene({
         container,
