@@ -117,7 +117,7 @@ function createCampaignState() {
   inventory = addItemToInventoryState(inventory, 'pest_spray', 3).inventory;
   inventory = addItemToInventoryState(inventory, 'mulch_bag', 3).inventory;
   return {
-    version: 3,
+    version: 4,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     currentChapter: 1,
