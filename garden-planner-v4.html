@@ -148,6 +148,20 @@
   .pcat{font-size:.52rem;font-family:'DM Mono',monospace;color:var(--text-light);text-transform:uppercase;}
   .pemo{font-size:.82rem;}
 
+  /* ═══ RECENT CROPS STRIP ═══ */
+  .recent-strip{display:flex;align-items:center;gap:.3rem;padding:.25rem .35rem;margin-bottom:.35rem;
+    overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border-light);}
+  .recent-strip::-webkit-scrollbar{height:3px;}
+  .recent-strip::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .recent-label{font-family:'DM Mono',monospace;font-size:.48rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--text-light);flex-shrink:0;margin-right:.15rem;}
+  .recent-btn{display:flex;align-items:center;gap:.22rem;padding:.18rem .32rem;border-radius:4px;
+    cursor:pointer;border:1.5px solid transparent;background:var(--cream-dark);transition:all .1s;flex-shrink:0;}
+  .recent-btn:hover{background:#f5ede2;border-color:var(--border);}
+  .recent-btn.sel{border-color:var(--soil);background:#ede2ce;}
+  .recent-btn .pdot{width:6px;height:6px;border-radius:2px;flex-shrink:0;}
+  .recent-btn .pname{font-size:.62rem;font-weight:500;white-space:nowrap;}
+
   /* ═══ CENTER ═══ */
   .center{display:flex;flex-direction:column;gap:.75rem;align-items:center;padding:1rem clamp(.8rem,1.6vw,1.2rem);overflow-y:auto;min-width:0;}
 
@@ -2001,6 +2015,7 @@
 
   <!-- PALETTE PANE -->
   <div class="tab-pane" id="lpane-palette" role="tabpanel" aria-labelledby="ltab-palette">
+    <div class="recent-strip" id="recentStrip" style="display:none;"></div>
     <input class="psearch" type="text" id="psearch" placeholder="Search 38 crops…" aria-label="Search crops" style="flex-shrink:0;margin-bottom:.35rem;">
     <div class="catf" id="catf" style="flex-shrink:0;"></div>
     <div class="pgrid" id="pgrid"></div>
@@ -2768,6 +2783,17 @@ const SUBS = {
   cherry_tom:{swap:'compact_tomato',reason:'If no trellis available, Compact Tomato is more self-supporting.'},
 };
 
+const PLANNER_RECIPES = {
+  herb_bowl:        { crops:['basil','dill'] },
+  tomato_sandwich:  { crops:['cherry_tom','basil','lettuce'] },
+  weeknight_pasta:  { crops:['cherry_tom','basil','pepper','onion'] },
+  moms_sauce:       { crops:['cherry_tom','basil','pepper','onion','carrot'] },
+  stir_fry:         { crops:['bok_choy','scallion','pepper','garlic'] },
+  garden_salad:     { crops:['lettuce','radish','carrot','chives'] },
+  foragers_stew:    { crops:['wild_garlic','shiitake_mushroom','watercress','prairie_onion'] },
+  garden_deluxe_salsa: { crops:['ghost_pepper','cherry_tom','cilantro','onion'] }
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CROP KEY MIGRATION (Phase 1 — key normalization)
 // Renames old plural/verbose keys to canonical short forms in saved localStorage.
@@ -3297,7 +3323,7 @@ function createMinimalWorkspace(){
     createdAt: now,
     updatedAt: now,
     activeBedId: starter.id,
-    workspaceSettings: { catFilter:'all', rightTab:'score' },
+    workspaceSettings: { catFilter:'all', rightTab:'score', anticipation:{ recentCrops:[] } },
     beds: [starter],
     guideProgress: [],
     harvests: []
@@ -3326,7 +3352,10 @@ function validateWorkspace(ws){
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
     rightTab: ['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
-      : 'score'
+      : 'score',
+    anticipation: normalized.workspaceSettings.anticipation && typeof normalized.workspaceSettings.anticipation==='object'
+      ? { recentCrops: Array.isArray(normalized.workspaceSettings.anticipation.recentCrops) ? normalized.workspaceSettings.anticipation.recentCrops : [] }
+      : { recentCrops: [] }
   };
   normalized.beds = ws.beds.map((b, i)=>normalizeBedRecord(b, i));
   if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
@@ -3380,7 +3409,7 @@ function migrateV0toV1(legacyState){
     createdAt: now,
     updatedAt: now,
     activeBedId: bedRecord.id,
-    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score' },
+    workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score', anticipation:{ recentCrops:[] } },
     beds: [bedRecord],
     guideProgress: []
   };
@@ -3645,7 +3674,11 @@ function applyWorkspaceToUI(ws){
   const cells = normalizeCellArray(p.cells, bedW, bedH);
   cells.forEach((crop, i)=>{ bed[i].crop = crop; });
   resetInteractionState();
-  ui.selectedCrop = (typeof p.selectedCrop==='string' && CROPS[p.selectedCrop]) ? p.selectedCrop : 'lettuce';
+  const recentDefault = ws.workspaceSettings && ws.workspaceSettings.anticipation
+    && Array.isArray(ws.workspaceSettings.anticipation.recentCrops)
+    && ws.workspaceSettings.anticipation.recentCrops[0] && CROPS[ws.workspaceSettings.anticipation.recentCrops[0]]
+    ? ws.workspaceSettings.anticipation.recentCrops[0] : 'lettuce';
+  ui.selectedCrop = (typeof p.selectedCrop==='string' && CROPS[p.selectedCrop]) ? p.selectedCrop : recentDefault;
   ui.tool = VALID_TOOLS.includes(p.activeTool) ? p.activeTool : 'inspect';
   ui.selCell = null;
   syncToolButtons(ui.tool);
@@ -4237,7 +4270,7 @@ function getPlannerBedScoreAudit(inputs){
   if(!occupiedCount){
     return {
       occupiedCount:0,totalCells:bedW*bedH,cellAverage10:0,cellAverage100:0,
-      diversityBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
+      diversityBonus:0,recipeBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
       finalScore:0,fillRatio:0,modelLayers
     };
   }
@@ -4256,12 +4289,21 @@ function getPlannerBedScoreAudit(inputs){
   const goalBoost=goalBonus(inputs);
   const fillRatio=occupiedCount/(bedW*bedH);
   const fillPenalty=fillRatio<1?Math.round((1-Math.sqrt(fillRatio))*15):0;
-  const rolled=cellAverage100+diversityBonus+tallPenalty+trellisPenalty+goalBoost-fillPenalty-lateSummerPenalty;
+  // Recipe bonus — +2 per completed recipe, capped at 8
+  const bedCrops={};
+  for(const c of occ){ if(c.crop) bedCrops[c.crop]=(bedCrops[c.crop]||0)+1; }
+  let recipeBonus=0;
+  for(const rk of Object.keys(PLANNER_RECIPES)){
+    if(PLANNER_RECIPES[rk].crops.every(ck=>bedCrops[ck])) recipeBonus+=2;
+  }
+  recipeBonus=Math.min(recipeBonus,8);
+
+  const rolled=cellAverage100+diversityBonus+recipeBonus+tallPenalty+trellisPenalty+goalBoost-fillPenalty-lateSummerPenalty;
   const finalScore=Math.min(100,Math.max(0,Math.round(rolled)));
 
   return {
     occupiedCount,totalCells:bedW*bedH,cellAverage10,cellAverage100,
-    diversityBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
+    diversityBonus,recipeBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
     finalScore,fillRatio,modelLayers
   };
 }
@@ -5109,6 +5151,16 @@ function placeCropInCell(cellId, opts={}){
   cell.crop = nextCrop;
   ui.selCell = cell.id;
   interaction.focusCellId = cell.id;
+  // Update recent crops for anticipatory UX
+  if(nextCrop && _workspace){
+    const ws = _workspace.workspaceSettings;
+    if(!ws.anticipation) ws.anticipation = { recentCrops:[] };
+    const rc = ws.anticipation.recentCrops;
+    const idx = rc.indexOf(nextCrop);
+    if(idx > -1) rc.splice(idx, 1);
+    rc.unshift(nextCrop);
+    if(rc.length > 10) rc.length = 10;
+  }
   return { changed:true, reason:'updated' };
 }
 function beginPointerPlacement(cellId, pointerId){
@@ -5601,6 +5653,25 @@ function toggleInsightSection(sectionEl){
 }
 
 function renderPalette(){
+  // Render recent crops strip
+  const recentEl=document.getElementById('recentStrip');
+  if(recentEl){
+    const recentCrops=(_workspace && _workspace.workspaceSettings && _workspace.workspaceSettings.anticipation
+      ? _workspace.workspaceSettings.anticipation.recentCrops : []).filter(k=>CROPS[k]).slice(0,5);
+    if(recentCrops.length>0){
+      recentEl.style.display='flex';
+      recentEl.innerHTML='<span class="recent-label">Recent</span>'+recentCrops.map(k=>{
+        const c=CROPS[k];
+        return `<div class="recent-btn ${ui.selectedCrop===k?'sel':''}" data-crop="${escapeHtml(k)}" role="button" tabindex="0" aria-label="${escapeHtml(c.name)}">
+          <div class="pdot" style="background:${c.color}"></div>
+          <span class="pname">${escapeHtml(c.short)}</span>
+        </div>`;
+      }).join('');
+    } else {
+      recentEl.style.display='none';
+      recentEl.innerHTML='';
+    }
+  }
   const f=ui.catFilter;
   const q=(document.getElementById('psearch').value||'').toLowerCase();
   const cats=['all',...new Set(Object.values(CROPS).map(c=>c.category).filter(Boolean))];
@@ -6110,6 +6181,11 @@ document.getElementById('catf').addEventListener('click',e=>{
 
 // Event delegation: crop palette (dynamic items)
 document.getElementById('pgrid').addEventListener('click',e=>{
+  const item=e.target.closest('[data-crop]');
+  if(item) selectCrop(item.dataset.crop);
+});
+// Event delegation: recent crops strip
+document.getElementById('recentStrip').addEventListener('click',e=>{
   const item=e.target.closest('[data-crop]');
   if(item) selectCrop(item.dataset.crop);
 });

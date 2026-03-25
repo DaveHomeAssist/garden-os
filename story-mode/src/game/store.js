@@ -140,7 +140,6 @@ function normalizeCampaign(rawCampaign) {
     recipesCompleted: cloneArray(campaign.recipesCompleted),
     keepsakes: cloneArray(campaign.keepsakes),
     cropsUnlocked: cloneArray(campaign.cropsUnlocked ?? fallbackCampaign.cropsUnlocked),
-    biomeCropsUnlocked: cloneArray(campaign.biomeCropsUnlocked ?? fallbackCampaign.biomeCropsUnlocked),
     journalEntries: cloneArray(campaign.journalEntries),
     seenCutsceneIds: cloneArray(campaign.seenCutsceneIds),
     soilHealth: Array.isArray(campaign.soilHealth)
@@ -747,17 +746,6 @@ function gameReducer(state, action = {}) {
       nextState.season.grid = attachGridMeta(newGrid, currentCols, newRows);
       nextState.season.gridRows = newRows;
       nextState.season.gridCols = currentCols;
-      return nextState;
-    }
-
-    case Actions.UNLOCK_BIOME_CROP: {
-      const cropId = payload.cropId;
-      if (!cropId) return state;
-      const nextState = cloneGameState(state);
-      const biomeCrops = nextState.campaign.biomeCropsUnlocked ?? [];
-      if (!biomeCrops.includes(cropId)) {
-        nextState.campaign.biomeCropsUnlocked = [...biomeCrops, cropId];
-      }
       return nextState;
     }
 

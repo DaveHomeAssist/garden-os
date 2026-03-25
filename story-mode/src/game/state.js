@@ -104,7 +104,6 @@ function createSeasonState(chapter, season, campaign = null, cols = COLS, rows =
     newlyEarnedKeepsakes: [],
     winterReviewSeen: false,
     toolCooldowns: {},
-    activeTool: null,
     campaign,
   };
 }
@@ -131,7 +130,6 @@ function createCampaignState() {
     keepsakes: [],
     sandbox: false,
     cropsUnlocked: getCropsForChapter(1).map((crop) => crop.id),
-    biomeCropsUnlocked: [],
     journalEntries: [],
     lastSeasonReview: null,
     seenCutsceneIds: [],
