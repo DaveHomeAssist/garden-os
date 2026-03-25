@@ -13,7 +13,10 @@ describe('npcs', () => {
 
   it('returns NPCs for a zone and season', () => {
     const springNeighborhood = getNPCsInZone('neighborhood', 'spring').map((npc) => npc.id);
-    expect(springNeighborhood).toEqual(expect.arrayContaining(['old_gus', 'maya', 'lila']));
+    expect(springNeighborhood).toEqual(expect.arrayContaining(['old_gus', 'lila']));
+    // Maya moved to meadow in spring
+    const springMeadow = getNPCsInZone('meadow', 'spring').map((npc) => npc.id);
+    expect(springMeadow).toContain('maya');
   });
 
   it('returns reputation-aware greetings', () => {
