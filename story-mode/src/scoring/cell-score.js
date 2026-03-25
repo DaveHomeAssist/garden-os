@@ -179,15 +179,12 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
   if (!crop) return null;
 
   const rows = getGridRows(grid, ROWS);
-  const { row } = cellToRowCol(cellIndex, grid);
-  const effectiveLight = computeEffectiveLight(cellIndex, grid, siteConfig);
+  const cols = getGridCols(grid, COLS);
+  const { row, col } = cellToRowCol(cellIndex, grid);
   const wallSide = siteConfig.wallSide || 'back';
+  const effectiveLight = computeEffectiveLight(cellIndex, grid, siteConfig);
   const trellisRow = wallSide === 'front' ? rows - 1 : wallSide === 'left' ? 0 : wallSide === 'right' ? rows - 1 : 0;
   const hasTrellis = row === trellisRow && (siteConfig.trellis ?? true);
-
-  const cols = getGridCols(grid, COLS);
-  const { col } = cellToRowCol(cellIndex, grid);
-  const wallSide = siteConfig.wallSide || 'back';
 
   const sf = sunFit(crop, effectiveLight);
   const sup = supportFit(crop, hasTrellis);
