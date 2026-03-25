@@ -90,6 +90,9 @@ const Actions = {
   UNLOCK_BIOME_CROP: 'UNLOCK_BIOME_CROP',
   SET_GAME_MODE: 'SET_GAME_MODE',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
+  ACQUIRE_BED: 'ACQUIRE_BED',
+  SWITCH_BED: 'SWITCH_BED',
+  EXPAND_BED_GRID: 'EXPAND_BED_GRID',
 };
 
 function cloneValue(value) {
@@ -161,6 +164,8 @@ function normalizeCampaign(rawCampaign) {
     skillXp: getSkillXpMap(skills),
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
+    beds: cloneValue(campaign.beds ?? fallbackCampaign.beds ?? {}),
+    activeBedId: campaign.activeBedId ?? fallbackCampaign.activeBedId ?? 'player_plot',
   };
 }
 
@@ -832,6 +837,52 @@ function gameReducer(state, action = {}) {
     case Actions.SET_ACTIVE_TOOL: {
       const nextState = cloneGameState(state);
       nextState.season.activeTool = payload.toolId;
+      return nextState;
+    }
+
+    case Actions.ACQUIRE_BED: {
+      const { bedId, bed } = payload;
+      if (!bedId || !bed) return state;
+      const nextState = cloneGameState(state);
+      nextState.campaign.beds = {
+        ...(nextState.campaign.beds ?? {}),
+        [bedId]: cloneValue(bed),
+      };
+      return nextState;
+    }
+
+    case Actions.SWITCH_BED: {
+      const { bedId } = payload;
+      if (!bedId) return state;
+      const nextState = cloneGameState(state);
+      if (!nextState.campaign.beds?.[bedId]) return state;
+      nextState.campaign.activeBedId = bedId;
+      return nextState;
+    }
+
+    case Actions.EXPAND_BED_GRID: {
+      const { bedId, rows: newRows } = payload;
+      if (!bedId || !Number.isInteger(newRows)) return state;
+      const nextState = cloneGameState(state);
+      const bed = nextState.campaign.beds?.[bedId];
+      if (!bed) return state;
+
+      const currentRows = bed.gridRows ?? 4;
+      const currentCols = bed.gridCols ?? 8;
+      const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
+
+      if (newRows <= currentRows || newRows > maxRows) return state;
+
+      const newGrid = createGrid(currentCols, newRows);
+      // Copy existing cell data into the new grid
+      const oldGrid = bed.grid ?? [];
+      for (let i = 0; i < oldGrid.length; i++) {
+        newGrid[i] = { ...newGrid[i], ...oldGrid[i] };
+      }
+
+      bed.grid = attachGridMeta(newGrid, currentCols, newRows);
+      bed.gridRows = newRows;
+      bed.gridCols = currentCols;
       return nextState;
     }
 

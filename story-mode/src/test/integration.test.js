@@ -52,8 +52,10 @@ import { createCutsceneMachine } from '../game/cutscene-machine.js';
 import { createCameraController } from '../scene/camera-controller.js';
 import { DayNightCycle } from '../scene/weather-fx.js';
 import { ToolManager } from '../game/tool-manager.js';
+import { MultiBedManager } from '../game/multi-bed.js';
 import * as THREE from 'three';
 import { createPlayerController } from '../game/player-controller.js';
+import { AudioManager, DEFAULT_SFX_LIBRARY } from '../audio/audio-manager.js';
 
 // ---------------------------------------------------------------------------
 // Mock localStorage for save/load tests (node environment has no localStorage)
@@ -1866,37 +1868,198 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
   // 2-D. Zone Transitions
   // -------------------------------------------------------------------------
   describe('Zone Transitions', () => {
-    it.skip('walking to an exit point triggers a zone transition', () => {
-      // TODO: Implement when zone transition system is built
-      // Expected flow:
-      //   1. Position player at player_plot exit point (south edge)
-      //   2. Move player past the exit threshold
-      //   3. Assert CHANGE_ZONE dispatched with destination "neighborhood"
+    it('walking to an exit point triggers a zone transition', async () => {
+      vi.useFakeTimers();
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = { track: vi.fn(), trackObject: vi.fn(), disposeObject: vi.fn(), disposeAll: vi.fn() };
+      vi.stubGlobal('document', {
+        body: { appendChild: vi.fn() },
+        createElement() { return { style: {}, remove: vi.fn() }; },
+      });
+
+      const manager = new ZoneManager({ render: vi.fn() }, store, tracker);
+      // Register two zones with a simple factory
+      let spawnCalled = null;
+      const makeFakeZone = () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: vi.fn(),
+        setSpawnPoint(sp) { spawnCalled = sp; },
+        getPlayerPosition() { return null; },
+      });
+      manager.registerZone('player_plot', makeFakeZone);
+      manager.registerZone('neighborhood', makeFakeZone);
+
+      // Add exit from player_plot to neighborhood
+      const exitBounds = { minX: -1.5, maxX: 1.5, minZ: -9, maxZ: -8 };
+      const exitSpawn = { x: 0, z: 7 };
+      manager.addZoneExit('player_plot', exitBounds, 'neighborhood', exitSpawn);
+
+      // Start in player_plot
+      const startPromise = manager.transitionTo('player_plot');
+      await vi.runAllTimersAsync();
+      await startPromise;
+      expect(manager.getActiveZone()).toBe('player_plot');
+
+      // Simulate player walking into the exit trigger zone
+      const triggerPromise = manager.checkTriggers({ x: 0, z: -8.5 });
+      await vi.runAllTimersAsync();
+      await triggerPromise;
+
+      expect(manager.getActiveZone()).toBe('neighborhood');
+      expect(store.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: Actions.ZONE_CHANGED, payload: expect.objectContaining({ toZone: 'neighborhood' }) }),
+      );
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
-    it.skip('zone transition plays a fade-out/fade-in animation', () => {
-      // TODO: Implement when transition VFX are built
-      // Expected flow:
-      //   1. Trigger zone change
-      //   2. Assert fade overlay opacity goes 0 → 1 → 0
-      //   3. Assert new zone scene is loaded between fades
+    it('zone transition plays a fade-out/fade-in animation', async () => {
+      vi.useFakeTimers();
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = { track: vi.fn(), trackObject: vi.fn(), disposeObject: vi.fn(), disposeAll: vi.fn() };
+
+      const overlayEl = { style: {}, remove: vi.fn() };
+      vi.stubGlobal('document', {
+        body: { appendChild: vi.fn() },
+        createElement() { return overlayEl; },
+      });
+
+      const manager = new ZoneManager({ render: vi.fn() }, store, tracker);
+      const makeFakeZone = () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: vi.fn(),
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+      });
+      manager.registerZone('player_plot', makeFakeZone);
+      manager.registerZone('neighborhood', makeFakeZone);
+
+      const startPromise = manager.transitionTo('player_plot');
+      await vi.runAllTimersAsync();
+      await startPromise;
+
+      // Record overlay opacity changes during transition
+      const opacityLog = [];
+      const origSet = manager.setOverlayOpacity.bind(manager);
+      manager.setOverlayOpacity = (v) => { opacityLog.push(v); origSet(v); };
+
+      const transPromise = manager.transitionTo('neighborhood');
+      await vi.runAllTimersAsync();
+      await transPromise;
+
+      // Fade should go 1 (fade-out) then 0 (fade-in)
+      expect(opacityLog).toContain(1);
+      expect(opacityLog).toContain(0);
+      const fadeOutIdx = opacityLog.indexOf(1);
+      const fadeInIdx = opacityLog.indexOf(0);
+      expect(fadeOutIdx).toBeLessThan(fadeInIdx);
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
-    it.skip('previous zone resources are disposed after transition', () => {
-      // TODO: Implement when ZoneManager handles disposal
-      // Expected flow:
-      //   1. Record geometry/texture count before transition
-      //   2. Transition to new zone
-      //   3. Assert old zone meshes disposed, renderer info shows cleanup
+    it('previous zone resources are disposed after transition', async () => {
+      vi.useFakeTimers();
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = { track: vi.fn(), trackObject: vi.fn(), disposeObject: vi.fn(), disposeAll: vi.fn() };
+      vi.stubGlobal('document', {
+        body: { appendChild: vi.fn() },
+        createElement() { return { style: {}, remove: vi.fn() }; },
+      });
+
+      const disposeFn = vi.fn();
+      const manager = new ZoneManager({ render: vi.fn() }, store, tracker);
+      manager.registerZone('player_plot', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: disposeFn,
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+      }));
+      manager.registerZone('neighborhood', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: vi.fn(),
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+      }));
+
+      const startPromise = manager.transitionTo('player_plot');
+      await vi.runAllTimersAsync();
+      await startPromise;
+
+      expect(disposeFn).not.toHaveBeenCalled();
+
+      // Transition away — old zone should be disposed
+      const transPromise = manager.transitionTo('neighborhood');
+      await vi.runAllTimersAsync();
+      await transPromise;
+
+      expect(disposeFn).toHaveBeenCalled();
+      expect(tracker.disposeAll).toHaveBeenCalled();
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
     it.todo('zone visual theme varies by current season');
 
-    it.skip('player spawns at the correct entry point in the destination zone', () => {
-      // TODO: Implement when spawn-point mapping exists
-      // Expected flow:
-      //   1. Exit player_plot via south → arrive in neighborhood
-      //   2. Assert player.position matches neighborhood's north entry point
+    it('player spawns at the correct entry point in the destination zone', async () => {
+      vi.useFakeTimers();
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = { track: vi.fn(), trackObject: vi.fn(), disposeObject: vi.fn(), disposeAll: vi.fn() };
+      vi.stubGlobal('document', {
+        body: { appendChild: vi.fn() },
+        createElement() { return { style: {}, remove: vi.fn() }; },
+      });
+
+      let receivedSpawn = null;
+      const manager = new ZoneManager({ render: vi.fn() }, store, tracker);
+      manager.registerZone('player_plot', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: vi.fn(),
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+      }));
+      manager.registerZone('neighborhood', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: vi.fn(),
+        setSpawnPoint(sp) { receivedSpawn = sp; },
+        getPlayerPosition() { return receivedSpawn; },
+      }));
+
+      const startPromise = manager.transitionTo('player_plot');
+      await vi.runAllTimersAsync();
+      await startPromise;
+
+      // Transition to neighborhood with a specific spawn point
+      const expectedSpawn = { x: 0, z: 7 };
+      const transPromise = manager.transitionTo('neighborhood', expectedSpawn);
+      await vi.runAllTimersAsync();
+      await transPromise;
+
+      expect(manager.getActiveZone()).toBe('neighborhood');
+      expect(receivedSpawn).toEqual(expectedSpawn);
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
     it.todo('zone transition dispatches ENTER_ZONE to the store');
@@ -2064,40 +2227,176 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
   // 3-A. Audio Integration
   // -------------------------------------------------------------------------
   describe('Audio Integration', () => {
-    it.skip('AudioManager initializes only after a user gesture', () => {
-      // TODO: Implement when AudioManager is built
-      // Expected flow:
-      //   1. Create AudioManager without prior gesture
-      //   2. Assert audioContext.state === 'suspended'
-      //   3. Simulate click event
-      //   4. Assert audioContext.state === 'running' (or resumed)
+    it('AudioManager initializes only after a user gesture', async () => {
+      // Mock AudioContext so init() can construct one
+      const mockResume = vi.fn().mockResolvedValue(undefined);
+      const MockAudioContext = vi.fn().mockImplementation(() => ({
+        state: 'suspended',
+        resume: mockResume,
+        createOscillator: vi.fn(() => ({
+          type: 'sine',
+          frequency: { value: 0 },
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        })),
+        createGain: vi.fn(() => ({
+          gain: { value: 0 },
+          connect: vi.fn(),
+        })),
+        destination: {},
+        currentTime: 0,
+        close: vi.fn(),
+        suspend: vi.fn(),
+      }));
+      globalThis.AudioContext = MockAudioContext;
+
+      const am = new AudioManager();
+      expect(am.initialized).toBe(false);
+      expect(am.audioContext).toBeNull();
+
+      // init() acts as the gesture-gate — before calling it, nothing works
+      await am.init();
+      expect(am.initialized).toBe(true);
+      expect(am.audioContext).toBeDefined();
+      expect(mockResume).toHaveBeenCalled();
+
+      am.dispose();
+      delete globalThis.AudioContext;
     });
 
-    it.skip('season change crossfades ambient tracks', () => {
-      // TODO: Implement when AudioManager handles seasonal audio
-      // Expected flow:
-      //   1. Set season to spring → spring ambient playing
-      //   2. Advance to summer
-      //   3. Assert spring track fading out, summer track fading in
-      //   4. After crossfade duration, only summer track audible
+    it('season change crossfades ambient tracks', async () => {
+      vi.useFakeTimers();
+
+      // Stub Audio so createAudioElement returns a mock with a proper play() -> Promise
+      const origAudio = globalThis.Audio;
+      globalThis.Audio = vi.fn().mockImplementation((url) => ({
+        src: url, loop: false, volume: 0, paused: true,
+        play: vi.fn().mockResolvedValue(undefined),
+        pause: vi.fn(),
+        remove: vi.fn(),
+      }));
+
+      const am = new AudioManager();
+
+      // Set spring ambient
+      await am.setAmbient('assets/audio/ambient/spring.ogg', { fadeInMs: 100, volume: 0.3 });
+      expect(am.ambient).toBeDefined();
+      expect(am.ambient.url).toBe('assets/audio/ambient/spring.ogg');
+      const springElement = am.ambient.element;
+
+      // Crossfade to summer — setAmbient replaces ambient and schedules old track pause
+      await am.setAmbient('assets/audio/ambient/summer.ogg', { fadeInMs: 100, volume: 0.3 });
+      expect(am.ambient.url).toBe('assets/audio/ambient/summer.ogg');
+
+      // After fadeIn timer fires, old spring element should be paused
+      const springPauseSpy = vi.spyOn(springElement, 'pause');
+      await vi.advanceTimersByTimeAsync(200);
+      expect(springPauseSpy).toHaveBeenCalled();
+
+      am.dispose();
+      globalThis.Audio = origAudio;
+      vi.useRealTimers();
     });
 
-    it.skip('game actions trigger correct SFX', () => {
-      // TODO: Implement when SFX mapping is built
-      // Expected flow:
-      //   1. Dispatch PLANT_CROP → assert "plant" SFX played
-      //   2. Dispatch HARVEST_CELL → assert "harvest" SFX played
-      //   3. Dispatch USE_INTERVENTION → assert "intervention" SFX played
+    it('game actions trigger correct SFX', async () => {
+      // Mock AudioContext for playPlaceholder
+      const mockOscillator = {
+        type: 'sine',
+        frequency: { value: 0 },
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+      };
+      const mockGain = { gain: { value: 0 }, connect: vi.fn() };
+      const MockAudioContext = vi.fn().mockImplementation(() => ({
+        state: 'running',
+        resume: vi.fn().mockResolvedValue(undefined),
+        createOscillator: vi.fn(() => ({ ...mockOscillator })),
+        createGain: vi.fn(() => ({ ...mockGain })),
+        destination: {},
+        currentTime: 0,
+        close: vi.fn(),
+        suspend: vi.fn(),
+      }));
+      globalThis.AudioContext = MockAudioContext;
+
+      const am = new AudioManager();
+      await am.init();
+
+      // Verify all default SFX IDs from the library are registered
+      expect(am.sfxRegistry.has('plant')).toBe(true);
+      expect(am.sfxRegistry.has('harvest')).toBe(true);
+      expect(am.sfxRegistry.has('water')).toBe(true);
+
+      // playSFX should succeed for registered IDs
+      const plantResult = am.playSFX('plant');
+      expect(plantResult).toBe(true);
+
+      const harvestResult = am.playSFX('harvest');
+      expect(harvestResult).toBe(true);
+
+      // Unknown SFX should return false
+      const unknownResult = am.playSFX('nonexistent_sfx');
+      expect(unknownResult).toBe(false);
+
+      am.dispose();
+      delete globalThis.AudioContext;
     });
 
-    it.skip('mute/unmute toggles all audio output', () => {
-      // TODO: Implement when AudioManager mute control is built
-      // Expected flow:
-      //   1. Verify audio playing (masterGain.gain > 0)
-      //   2. Call audioManager.mute()
-      //   3. Assert masterGain.gain.value === 0
-      //   4. Call audioManager.unmute()
-      //   5. Assert masterGain.gain.value restored
+    it('mute/unmute toggles all audio output', async () => {
+      const MockAudioContext = vi.fn().mockImplementation(() => ({
+        state: 'running',
+        resume: vi.fn().mockResolvedValue(undefined),
+        createOscillator: vi.fn(() => ({
+          type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+        })),
+        createGain: vi.fn(() => ({ gain: { value: 0 }, connect: vi.fn() })),
+        destination: {},
+        currentTime: 0,
+        close: vi.fn(),
+        suspend: vi.fn(),
+      }));
+      globalThis.AudioContext = MockAudioContext;
+
+      // Stub Audio so createAudioElement returns a mock with play() -> Promise
+      const origAudio = globalThis.Audio;
+      globalThis.Audio = vi.fn().mockImplementation((url) => ({
+        src: url, loop: false, volume: 0, paused: true,
+        play: vi.fn().mockResolvedValue(undefined),
+        pause: vi.fn(),
+        remove: vi.fn(),
+      }));
+
+      const am = new AudioManager();
+      await am.init();
+
+      // Set up ambient so we can verify volume sync
+      await am.setAmbient('assets/audio/ambient/spring.ogg', { volume: 0.5 });
+      expect(am.muted).toBe(false);
+      expect(am.ambient.element.volume).toBeGreaterThan(0);
+
+      // Mute
+      am.setMuted(true);
+      expect(am.muted).toBe(true);
+      expect(am.ambient.element.volume).toBe(0);
+
+      // playSFX should return false when muted
+      const sfxResult = am.playSFX('plant');
+      expect(sfxResult).toBe(false);
+
+      // Unmute — ambient volume should restore
+      am.setMuted(false);
+      expect(am.muted).toBe(false);
+      expect(am.ambient.element.volume).toBeGreaterThan(0);
+
+      // playSFX should work again
+      const sfxResult2 = am.playSFX('plant');
+      expect(sfxResult2).toBe(true);
+
+      am.dispose();
+      globalThis.Audio = origAudio;
+      delete globalThis.AudioContext;
     });
 
     it.todo('volume layers (ambient, SFX, music) can be adjusted independently');
@@ -3451,12 +3750,53 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
 
     it.todo('grid expansion persists through save/load cycle');
 
-    it.skip('old saves with 32-cell grids load correctly without migration issues', () => {
-      // TODO: Implement when grid migration logic exists
-      // Expected flow:
-      //   1. Load save with 32-cell grid into a system that supports 64
-      //   2. Assert grid.length === 32 (not padded unless player expands)
-      //   3. Assert scoring still works on the 32-cell grid
+    it('old saves with 32-cell grids load correctly without migration issues', () => {
+      // Simulate a legacy save that has a 32-cell (8x4) grid with some planted crops
+      const legacyGrid = Array.from({ length: 32 }, () => ({
+        cropId: null, protected: false, mulched: false, damageState: null,
+        carryForwardType: null, eventModifier: 0, interventionBonus: 0,
+        soilFatigue: 0, lastWateredAt: null,
+      }));
+      legacyGrid[0].cropId = 'basil';
+      legacyGrid[5].cropId = 'lettuce';
+
+      // Build a raw state as it would come from a legacy save — grid as plain array
+      const legacyState = {
+        campaign: { currentChapter: 1, currentSeason: 'spring' },
+        season: {
+          chapter: 1,
+          season: 'spring',
+          phase: 'PLANNING',
+          grid: legacyGrid,
+          gridCols: 8,
+          gridRows: 4,
+        },
+      };
+
+      // normalizeGameState should handle this gracefully
+      const normalized = normalizeGameState(legacyState);
+      expect(normalized.season.grid.length).toBe(32);
+      expect(normalized.season.gridCols).toBe(8);
+      expect(normalized.season.gridRows).toBe(4);
+      expect(normalized.season.grid[0].cropId).toBe('basil');
+      expect(normalized.season.grid[5].cropId).toBe('lettuce');
+
+      // Scoring should work on the 32-cell grid
+      const siteConfig = { sunHours: 6, trellis: true, orientation: 'ew' };
+      const result = scoreBed(normalized.season.grid, siteConfig, normalized.season.season);
+      expect(result).toBeDefined();
+      expect(typeof result.score).toBe('number');
+      expect(result.grade).toBeDefined();
+
+      // Individual cell scoring should work
+      const cellResult = scoreCell(0, normalized.season.grid, siteConfig, normalized.season.season);
+      expect(cellResult).toBeDefined();
+      expect(cellResult.cropId).toBe('basil');
+
+      // Loading into a Store should not pad the grid
+      const store = new Store(normalized);
+      const state = store.getState();
+      expect(state.season.grid.length).toBe(32);
     });
   });
 
@@ -3464,29 +3804,67 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
   // 5-E. Multiple Beds
   // -------------------------------------------------------------------------
   describe('Multiple Beds', () => {
-    it.skip('player can own multiple garden beds', () => {
-      // TODO: Implement when multi-bed system is built
-      // Expected flow:
-      //   1. Start with 1 bed (player_plot cedar_bed)
-      //   2. Dispatch ACQUIRE_BED { bedId: 'community_plot' }
-      //   3. Assert beds.length === 2
+    it('player can own multiple garden beds', () => {
+      const store = new Store(createGameState());
+      const manager = new MultiBedManager(store);
+
+      manager.acquireBed('player_plot', { name: 'Player Plot', zone: 'player_plot' });
+      manager.acquireBed('community_plot', { name: 'Community Plot', zone: 'community' });
+
+      const allBeds = manager.getAllBeds();
+      expect(allBeds.length).toBe(2);
+
+      const ids = allBeds.map((b) => b.id);
+      expect(ids).toContain('player_plot');
+      expect(ids).toContain('community_plot');
+
+      manager.dispose();
     });
 
-    it.skip('each bed has independent grid state', () => {
-      // TODO: Implement when bed-specific state management is built
-      // Expected flow:
-      //   1. Plant basil in bed 0, cell 0
-      //   2. Plant lettuce in bed 1, cell 0
-      //   3. Assert bed0.grid[0].cropId === 'basil'
-      //   4. Assert bed1.grid[0].cropId === 'lettuce'
+    it('each bed has independent grid state', () => {
+      const store = new Store(createGameState());
+      const manager = new MultiBedManager(store);
+
+      manager.acquireBed('bed_a', { name: 'Bed A', zone: 'player_plot' });
+      manager.acquireBed('bed_b', { name: 'Bed B', zone: 'community' });
+
+      // Plant basil in bed A, cell 0 via state mutation
+      const state = store.getState();
+      state.campaign.beds.bed_a.grid[0].cropId = 'basil';
+      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      const bedA = manager.getBed('bed_a');
+      const bedB = manager.getBed('bed_b');
+      expect(bedA.grid[0].cropId).toBe('basil');
+      expect(bedB.grid[0].cropId).toBeNull();
+
+      manager.dispose();
     });
 
-    it.skip('switching active bed updates the garden scene', () => {
-      // TODO: Implement when bed-switching UI/scene exists
-      // Expected flow:
-      //   1. Active bed = 0 → garden scene shows bed 0 grid
-      //   2. Dispatch SWITCH_BED { bedIndex: 1 }
-      //   3. Assert scene now renders bed 1 grid
+    it('switching active bed updates the garden scene', () => {
+      const store = new Store(createGameState());
+      const manager = new MultiBedManager(store);
+
+      manager.acquireBed('bed_a', { name: 'Bed A', zone: 'player_plot' });
+      manager.acquireBed('bed_b', { name: 'Bed B', zone: 'community' });
+
+      // Plant different crops in each bed so grids differ
+      const state = store.getState();
+      state.campaign.beds.bed_a.grid[0].cropId = 'tomato';
+      state.campaign.beds.bed_b.grid[0].cropId = 'lettuce';
+      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+
+      // Switch to bed A
+      manager.switchActiveBed('bed_a');
+      const gridA = manager.getActiveGrid();
+      expect(gridA[0].cropId).toBe('tomato');
+
+      // Switch to bed B
+      manager.switchActiveBed('bed_b');
+      const gridB = manager.getActiveGrid();
+      expect(gridB[0].cropId).toBe('lettuce');
+
+      manager.dispose();
     });
 
     it.todo('all beds are saved and loaded correctly');

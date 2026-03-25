@@ -149,6 +149,8 @@ function createCampaignState() {
     activeFestival: null,
     lastLevelUp: null,
     gameMode: 'story',
+    beds: {},
+    activeBedId: 'player_plot',
   };
 }
 
