@@ -24,8 +24,8 @@ export function createSeasonCalendar() {
   el.id = 'season-calendar';
   el.style.cssText = `
     position:absolute;
-    top:60px;
-    left:16px;
+    top:calc(60px + env(safe-area-inset-top, 0px));
+    left:calc(16px + env(safe-area-inset-left, 0px));
     z-index:10;
     background:rgba(30,17,10,0.82);
     backdrop-filter:blur(12px);

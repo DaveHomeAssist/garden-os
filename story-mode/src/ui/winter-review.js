@@ -75,7 +75,10 @@ export function showWinterReview(container, data, handlers = {}) {
   overlay.className = 'harvest-reveal';
   overlay.style.cssText = `
     position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
-    background:rgba(20,17,24,0.92);z-index:32;padding:18px;overflow:hidden;
+    background:rgba(20,17,24,0.92);z-index:32;
+    padding:18px;padding-top:max(18px, env(safe-area-inset-top, 0px));
+    padding-bottom:max(18px, env(safe-area-inset-bottom, 0px));
+    overflow:hidden;
     animation:fadeInIntro 0.35s ease-out both;
   `;
 

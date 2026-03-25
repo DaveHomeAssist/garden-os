@@ -521,6 +521,14 @@
     right: 10px;
     min-height: 34px;
   }
+
+  .event-card-sheet {
+    font-size: 13px;
+  }
+
+  .panel-sheet {
+    padding: 14px 12px;
+  }
 }
 
 /* Harvest reveal — A+ confetti burst (CSS-only pseudo-elements) */

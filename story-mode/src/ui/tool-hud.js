@@ -12,7 +12,7 @@ function createShell() {
   root.className = 'tool-hud';
   root.style.position = 'absolute';
   root.style.left = '50%';
-  root.style.bottom = '16px';
+  root.style.bottom = 'calc(16px + env(safe-area-inset-bottom, 0px))';
   root.style.transform = 'translateX(-50%)';
   root.style.display = 'flex';
   root.style.alignItems = 'center';

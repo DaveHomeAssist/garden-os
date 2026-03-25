@@ -32,10 +32,10 @@ export function sunFit(crop, effectiveLight) {
   if (effectiveLight >= crop.sunIdeal) return 5.0;
   if (effectiveLight >= crop.sunMin) {
     const range = crop.sunIdeal - crop.sunMin;
-    return range > 0 ? 3.0 + 2.0 * ((effectiveLight - crop.sunMin) / range) : 5.0;
+    return clamp(range > 0 ? 3.0 + 2.0 * ((effectiveLight - crop.sunMin) / range) : 5.0, 0, 5);
   }
-  const range = crop.sunMin;
-  return range > 0 ? 1.0 + 2.0 * (effectiveLight / range) : 1.0;
+  const range = Math.max(crop.sunMin, 0.1); // div-by-zero guard
+  return clamp(1.0 + Math.max(0, effectiveLight / range) * 2.0, 0, 5);
 }
 
 /**
@@ -57,8 +57,23 @@ export function shadeFit(crop, effectiveLight) {
 /**
  * Factor 4: Access Fit
  */
-export function accessFit(crop, row, totalRows = ROWS) {
-  const accessScore = row / Math.max(1, totalRows - 1);
+export function accessFit(crop, row, col, totalRows = ROWS, totalCols = COLS, wallSide = 'back') {
+  let rowFromFront;
+  if (wallSide === 'back') {
+    rowFromFront = (totalRows - 1) - row;        // front = last row
+  } else if (wallSide === 'front') {
+    rowFromFront = row;                           // front = first row
+  } else if (wallSide === 'left') {
+    rowFromFront = (totalCols - 1) - col;         // access from right
+  } else if (wallSide === 'right') {
+    rowFromFront = col;                           // access from left
+  } else {
+    rowFromFront = totalRows - 1;                 // no wall = all accessible
+  }
+  const maxDist = wallSide === 'left' || wallSide === 'right'
+    ? Math.max(1, totalCols - 1)
+    : Math.max(1, totalRows - 1);
+  const accessScore = rowFromFront / maxDist;
   if (!crop.tall) return 3.0 + accessScore * 2.0;
   return 3.0;
 }
@@ -130,20 +145,26 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
   const effectiveLight = siteConfig.sunHours || 6;
   const hasTrellis = row === 0 && (siteConfig.trellis ?? true);
 
+  const cols = getGridCols(grid, COLS);
+  const { col } = cellToRowCol(cellIndex, grid);
+  const wallSide = siteConfig.wallSide || 'back';
+
   const sf = sunFit(crop, effectiveLight);
   const sup = supportFit(crop, hasTrellis);
   const shd = shadeFit(crop, effectiveLight);
-  const acc = accessFit(crop, row, rows);
-  const sea = seasonFit(crop, season);
+  const acc = accessFit(crop, row, col, rows, cols, wallSide);
+
+  // Seasonal multiplier baked into seaFit (planner model):
+  // seaFit = 1.0 + sm * 4.0 (range 1.0-5.0)
+  const smMap = crop.seasonalMultipliers || crop.sm || {};
+  const seasonalKey = season === 'latesummer' ? 'summer' : season;
+  const smVal = smMap[seasonalKey] ?? 0.5;
+  const sea = clamp(1.0 + smVal * 4.0, 1, 5);
+
   const adj = adjacencyScore(cell.cropId, cellIndex, grid);
 
-  const sm = crop.seasonalMultipliers || crop.sm || {};
-  const seasonalKey = season === 'latesummer' ? 'summer' : season;
-  const seasonalMult = sm[seasonalKey] ?? 0.5;
-
   const weightedCore = (sf * 2 + sup + shd + acc + sea) / 3;
-  const preAdj = weightedCore * seasonalMult;
-  const base = clamp(preAdj + adj, 0, 10);
+  const base = clamp(weightedCore + adj, 0, 10);
 
   const final = clamp(
     base + (cell.eventModifier || 0) + (cell.interventionBonus || 0) - (cell.soilFatigue || 0),
