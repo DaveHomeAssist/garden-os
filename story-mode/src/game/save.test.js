@@ -23,13 +23,13 @@ const localStorageMock = (() => {
 })();
 
 beforeEach(() => {
+  localStorageMock.clear();
   vi.stubGlobal('localStorage', localStorageMock);
-  localStorage.clear();
 });
 
 afterEach(() => {
+  localStorageMock.clear();
   vi.unstubAllGlobals();
-  localStorage.clear();
 });
 
 describe('save', () => {

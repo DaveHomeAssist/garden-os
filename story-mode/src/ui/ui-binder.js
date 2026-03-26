@@ -33,8 +33,7 @@ import { ForagingSystem } from '../game/foraging.js';
 import { ReputationSystem } from '../game/reputation.js';
 import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
-import { evaluateZoneAccess, ZoneManager } from '../scene/zone-manager.js';
-import { registerAllZones } from '../scene/zone-factories.js';
+import { evaluateZoneAccess } from '../scene/zone-manager.js';
 import { DayNightController } from '../game/day-night-controller.js';
 import { AudioManager } from '../audio/audio-manager.js';
 import { registerProceduralSFX } from '../audio/audio-assets.js';
@@ -310,15 +309,6 @@ function bindUI({
   const craftingSystem = new CraftingSystem(store, inventory, skillSystem);
   const foragingSystem = new ForagingSystem(store, inventory, skillSystem);
   const dayNightController = new DayNightController(scene, store);
-
-  // Zone Manager — wires zone factories to the scene renderer
-  const zoneSystems = { reputationSystem, skillSystem, questEngine, festivalEngine };
-  const zoneRenderer = scene.getRenderer?.();
-  const zoneTracker = scene.getResourceTracker?.();
-  const zoneManager = zoneRenderer
-    ? new ZoneManager(zoneRenderer, store, zoneTracker, zoneSystems)
-    : null;
-  if (zoneManager) registerAllZones(zoneManager);
 
   const audioManager = new AudioManager();
   let audioInitialized = false;
