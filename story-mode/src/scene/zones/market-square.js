@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsInZone } from '../../data/npcs.js';
 import { makeNpcMesh } from './zone-interactables.js';
+import { createShopPanel } from '../../ui/shop-panel.js';
 
 const ZONE_DEF = {
   id: 'market_square', name: 'Market Square', biome: 'town',
@@ -35,8 +36,13 @@ export function createMarketSquare(store, tracker) {
   ground.rotation.x = -Math.PI / 2; root.add(ground);
 
   // Market stalls: counter + canopy + poles
-  [{ x: -4, z: -3, c: 0xcc3333 }, { x: 4, z: -3, c: 0x3366cc }, { x: -4, z: 3, c: 0x33aa55 }, { x: 4, z: 3, c: 0xddaa22 }]
-    .forEach(({ x, z, c }) => {
+  const STALLS = [
+    { x: -4, z: -3, c: 0xcc3333, id: 'stall_seeds', name: 'Seed Stall' },
+    { x: 4, z: -3, c: 0x3366cc, id: 'stall_tools', name: 'Tool Stall' },
+    { x: -4, z: 3, c: 0x33aa55, id: 'stall_recipes', name: 'Recipe Stall' },
+    { x: 4, z: 3, c: 0xddaa22, id: 'stall_general', name: 'General Store' },
+  ];
+  STALLS.forEach(({ x, z, c }) => {
       root.add(box(2, 0.9, 1.2, 0x7d5a39, x, 0.45, z));
       root.add(box(2.4, 0.08, 1.6, c, x, 1.7, z));
       root.add(box(0.08, 1.7, 0.08, 0x5d3b22, x - 0.9, 0.85, z - 0.6));
@@ -75,6 +81,31 @@ export function createMarketSquare(store, tracker) {
     interactables.push(mesh.userData.interactable);
   });
 
+  // Shop panel for stall interactions
+  const shopContainer = typeof document !== 'undefined' ? document.body : null;
+  const shopPanel = shopContainer ? createShopPanel(shopContainer) : null;
+
+  // Register each market stall as an interactable that opens the shop
+  STALLS.forEach((stall) => {
+    interactables.push({
+      id: stall.id,
+      type: 'custom',
+      label: stall.name,
+      position: { x: stall.x, y: 0.5, z: stall.z },
+      radius: 1.8,
+      onInteract: ({ store: interactStore }) => {
+        if (shopPanel && !shopPanel.isOpen()) {
+          const currentState = (interactStore ?? store).getState();
+          const chapter = currentState?.campaign?.currentChapter ?? 1;
+          shopPanel.open(
+            { name: stall.name, chapter },
+            interactStore ?? store,
+          );
+        }
+      },
+    });
+  });
+
   const hemi = scene.children.find(c => c.isHemisphereLight);
 
   tracker.track(root);
@@ -90,6 +121,6 @@ export function createMarketSquare(store, tracker) {
     },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
-    dispose() { tracker.disposeObject(root); },
+    dispose() { shopPanel?.dispose(); tracker.disposeObject(root); },
   };
 }

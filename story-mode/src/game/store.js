@@ -94,6 +94,7 @@ const Actions = {
   ACQUIRE_BED: 'ACQUIRE_BED',
   SWITCH_BED: 'SWITCH_BED',
   EXPAND_BED_GRID: 'EXPAND_BED_GRID',
+  SET_TOKENS: 'SET_TOKENS',
 };
 
 function cloneValue(value) {
@@ -174,6 +175,7 @@ function normalizeCampaign(rawCampaign) {
     skillXp: getSkillXpMap(skills),
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
+    tokens: Number(campaign.tokens ?? fallbackCampaign.tokens ?? 0),
     beds: cloneValue(campaign.beds ?? fallbackCampaign.beds ?? {}),
     activeBedId: campaign.activeBedId ?? fallbackCampaign.activeBedId ?? 'player_plot',
   };
@@ -903,6 +905,12 @@ function gameReducer(state, action = {}) {
       bed.grid = attachGridMeta(newGrid, currentCols, newRows);
       bed.gridRows = newRows;
       bed.gridCols = currentCols;
+      return nextState;
+    }
+
+    case Actions.SET_TOKENS: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.tokens = Math.max(0, Number(payload.tokens ?? 0));
       return nextState;
     }
 
