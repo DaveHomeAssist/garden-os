@@ -156,6 +156,7 @@ function bindUI({
   inputManager.registerAction('move_down', { keys: ['s', 'ArrowDown'] });
   inputManager.registerAction('move_left', { keys: ['a', 'ArrowLeft'] });
   inputManager.registerAction('move_right', { keys: ['d', 'ArrowRight'] });
+  inputManager.registerAction('interact', { keys: ['e'] });
 
   inputManager.onPointerMove(({ position }) => {
     if (isProximityInteractionEnabled()) {
@@ -1682,6 +1683,14 @@ function bindUI({
     }
     if (source === 'keyboard') return;
     handleViewportSelection(position.clientX, position.clientY);
+  });
+
+  inputManager.on('interact', (payload) => {
+    if (!isProximityInteractionEnabled()) return;
+    payload.preventDefault();
+    if (interactionSystem.interactHighlighted({ source: 'keyboard' })) {
+      syncInteractionPresentation();
+    }
   });
 
   ['move_up', 'move_down', 'move_left', 'move_right'].forEach((actionName) => {
