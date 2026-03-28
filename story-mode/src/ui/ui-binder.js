@@ -575,6 +575,11 @@ function bindUI({
 
   function syncInteractionPresentation() {
     const highlighted = interactionSystem.getHighlighted();
+    const highlightedCellIndex = highlighted?.type === 'cell' ? highlighted.index : null;
+
+    // Tick cooldown overlays every frame — runs even when no cell is highlighted
+    toolHUD?.syncCooldowns(state.season?.toolCooldowns ?? {}, highlightedCellIndex);
+
     if (!highlighted || !isProximityInteractionEnabled()) {
       scene.clearInteractionHighlight?.();
       interactionPrompt.hide();
