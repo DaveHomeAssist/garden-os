@@ -53,7 +53,6 @@ import { DayNightCycle } from '../scene/weather-fx.js';
 import { ToolManager } from '../game/tool-manager.js';
 import { MultiBedManager } from '../game/multi-bed.js';
 import * as THREE from 'three';
-import { createPlayerController } from '../game/player-controller.js';
 import { AudioManager, DEFAULT_SFX_LIBRARY } from '../audio/audio-manager.js';
 import { ToolHUD } from '../ui/tool-hud.js';
 import { BiomeCropBridge } from '../game/biome-crops.js';
@@ -4620,8 +4619,10 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       // This test can run NOW — it validates the spec file directly.
       const fs = await import('node:fs');
       const path = await import('node:path');
+      const { fileURLToPath } = await import('node:url');
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
       const dataPath = path.resolve(
-        import.meta.dirname, '..', '..', '..', 'specs', 'CROP_SCORING_DATA.json'
+        __dirname, '..', '..', '..', 'specs', 'CROP_SCORING_DATA.json'
       );
       const raw = fs.readFileSync(dataPath, 'utf-8');
       const data = JSON.parse(raw);
@@ -4742,8 +4743,10 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       // This test can run NOW — validates the canonical crop count.
       const fs = await import('node:fs');
       const path = await import('node:path');
+      const { fileURLToPath } = await import('node:url');
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
       const dataPath = path.resolve(
-        import.meta.dirname, '..', '..', '..', 'specs', 'CROP_SCORING_DATA.json'
+        __dirname, '..', '..', '..', 'specs', 'CROP_SCORING_DATA.json'
       );
       const raw = fs.readFileSync(dataPath, 'utf-8');
       const data = JSON.parse(raw);
