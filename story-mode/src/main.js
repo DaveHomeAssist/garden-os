@@ -58,7 +58,7 @@ function showViewportLoading(viewport) {
   return () => loading.remove();
 }
 
-async function startSession({ initialState, slot, viewport }) {
+async function startSession({ initialState, slot, viewport, planner }) {
   const clearLoading = showViewportLoading(viewport);
 
   try {
@@ -75,6 +75,12 @@ async function startSession({ initialState, slot, viewport }) {
     const scene = createGardenScene(viewport);
     const inputManager = new InputManager(scene.canvas, { keyboardTarget: document });
     const { store, data, cleanup } = initGame(initialState, { slot });
+
+    if (planner) {
+      const { bindPlannerUI } = await import('./ui/planner-binder.js');
+      bindPlannerUI(store, scene, inputManager, viewport);
+      return;
+    }
 
     // Create zone manager and register all zone factories + exit triggers
     const zoneResourceTracker = new ResourceTracker();
