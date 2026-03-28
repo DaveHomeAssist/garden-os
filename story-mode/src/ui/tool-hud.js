@@ -185,4 +185,61 @@ export class ToolHUD {
       applyButtonStyles(button, selected);
     });
   }
+
+  /**
+   * Overlay a live countdown on any tool button whose cooldown has not expired.
+   * Call every frame. Pass the highlighted cell index so per-cell cooldowns are
+   * matched correctly; pass null when no cell is highlighted (shows the max
+   * remaining cooldown for that tool across all cells).
+   *
+   * @param {Record<string,number>} toolCooldowns  state.season.toolCooldowns
+   * @param {number|null}           cellIndex       currently highlighted cell or null
+   * @param {number}                [now]           current timestamp (ms)
+   */
+  syncCooldowns(toolCooldowns = {}, cellIndex = null, now = Date.now()) {
+    this.buttons.forEach((button, toolId) => {
+      let cooldownUntil = 0;
+
+      if (cellIndex !== null) {
+        cooldownUntil = toolCooldowns[`${toolId}_${cellIndex}`] ?? 0;
+      } else {
+        // No cell targeted — surface the longest active cooldown for this tool
+        const prefix = `${toolId}_`;
+        for (const [key, until] of Object.entries(toolCooldowns)) {
+          if (key.startsWith(prefix) && until > cooldownUntil) {
+            cooldownUntil = until;
+          }
+        }
+      }
+
+      const remaining = Math.max(0, cooldownUntil - now);
+      const onCooldown = remaining > 0;
+      let overlay = button.querySelector('.tool-hud__cooldown');
+
+      if (onCooldown) {
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'tool-hud__cooldown';
+          overlay.setAttribute('aria-hidden', 'true');
+          overlay.style.cssText = [
+            'position:absolute;inset:0;border-radius:7px',
+            'background:rgba(10,6,3,0.60)',
+            'display:flex;align-items:center;justify-content:center',
+            'pointer-events:none',
+          ].join(';');
+          const timeEl = document.createElement('span');
+          timeEl.className = 'tool-hud__cooldown-time';
+          timeEl.style.cssText = [
+            "font-family:'DM Mono',ui-monospace,monospace",
+            'font-size:11px;color:#f7f2ea;line-height:1',
+          ].join(';');
+          overlay.append(timeEl);
+          button.append(overlay);
+        }
+        overlay.querySelector('.tool-hud__cooldown-time').textContent = `${Math.ceil(remaining / 1000)}s`;
+      } else if (overlay) {
+        overlay.remove();
+      }
+    });
+  }
 }
