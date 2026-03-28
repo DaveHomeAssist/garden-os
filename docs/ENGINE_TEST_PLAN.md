@@ -1,9 +1,11 @@
 # Garden OS Engine — Test Plan
 
-**Target:** `garden-league-simulator-v4.html`
+**Target:** `garden-league-simulator-v4.html` (console tests) + `story-mode/` (Vitest suite)
 **Generated:** 2026-03-16
-**Updated:** 2026-03-17
-**Test Runner:** Browser console diagnostic (`docs/engine-console-tests.js`)
+**Updated:** 2026-03-28
+**Test Runners:**
+- Browser console diagnostic: `docs/engine-console-tests.js` — 36 tests for the v4 simulator engine
+- Vitest (story-mode): `cd story-mode && npm test` — **329 tests across 28 test files**
 
 ---
 
@@ -240,6 +242,49 @@ Expected output:
 │ ... │ ...                                        │ ...  │ ...          │
 └─────┴────────────────────────────────────────────┴──────┴──────────────┘
 ```
+
+---
+
+## Vitest Story-Mode Suite (Option B — Now Active)
+
+**Current count: 329 tests / 28 test files** (as of 2026-03-28)
+
+The story-mode engine has been extracted into testable modules under `story-mode/src/`.
+Run: `cd story-mode && npm test`
+
+### Test Files by Category
+
+| Category | File | Notes |
+|---|---|---|
+| **game/intervention** | `src/game/intervention.test.js` | `canUseTool`, `executeToolAction` — water/harvest/protect/mulch/plant |
+| **game/store** | `src/game/store.test.js` | Reducer, all Actions, subscriber notifications |
+| **game/quest-engine** | `src/game/quest-engine.test.js` | Quest lifecycle: available → active → complete/abandon |
+| **game/festivals** | `src/game/festivals.test.js` | FestivalEngine: start/end/activities |
+| **game/biome-crops** | `src/game/biome-crops.test.js` | BiomeCropBridge: zone lookup, unlock, forage |
+| **game/crafting** | `src/game/crafting.test.js` | CraftingSystem recipe resolution |
+| **game/foraging** | `src/game/foraging.test.js` | Forage actions and zone gating |
+| **game/inventory** | `src/game/inventory.test.js` | Inventory slots, stacking, upgrade |
+| **game/skills** | `src/game/skills.test.js` | SkillSystem XP, level-up, tool bonuses |
+| **game/save** | `src/game/save.test.js` | Save/load round-trips, migration |
+| **game/reputation** | `src/game/reputation.test.js` | Reputation add/decay/clamp |
+| **game/interaction** | `src/game/interaction.test.js` | Proximity interaction engine |
+| **game/player-controller** | `src/game/player-controller.test.js` | WASD/touch movement, collision |
+| **game/tool-manager** | `src/game/tool-manager.test.js` | Tool state, durability, repair |
+| **game/multi-bed** | `src/game/multi-bed.test.js` | Multiple bed acquisition and switching |
+| **game/game-init** | `src/game/game-init.test.js` | Initialization and default state |
+| **scene/camera-controller** | `src/scene/camera-controller.test.js` | Camera follow, clamp, zoom |
+| **scene/zone-manager** | `src/scene/zone-manager.test.js` | Zone transitions and visited tracking |
+| **scene/resource-tracker** | `src/scene/resource-tracker.test.js` | Asset lifecycle and disposal |
+| **scene/scene-style** | `src/scene/scene-style.test.js` | Phase → scene style mapping |
+| **scoring** | `src/scoring/scoring.test.js` | Scoring functions and factor weights |
+| **audio** | `src/audio/audio-manager.test.js` | AudioManager play/stop/mute |
+| **data/events** | `src/data/events.test.js` | Event pool, draw, targeting |
+| **data/npcs** | `src/data/npcs.test.js` | NPC registry, schedules, greetings |
+| **data/cutscenes** | `src/data/cutscenes.test.js` | Cutscene trigger and sequence data |
+| **ui/shop-panel** | `src/ui/shop-panel.test.js` | ShopPanel render and purchase flow |
+| **ui/tool-hud** | `src/ui/tool-hud.test.js` | Tool HUD active-tool display |
+| **ui/zone-travel** | `src/ui/zone-travel.test.js` | Zone travel overlay |
+| **integration** | `src/test/integration.test.js` | Full game-loop E2E across all phases |
 
 ---
 
