@@ -1129,6 +1129,13 @@
       will-change: transform;
     }
 
+    /* ── Reduced motion (inline animations) ── */
+    @media (prefers-reduced-motion: reduce) {
+      #app.is-shaking { animation: none; }
+      .fab-enter { animation: none; }
+      .chapter-intro { animation: none; opacity: 1; }
+    }
+
     /* ── Title Screen ── */
     .title-screen {
       position: fixed;
