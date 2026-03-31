@@ -4,22 +4,18 @@ import { advance, canAdvance, getPhaseLabel } from '../game/phase-machine.js';
 import { createPhaseRouter } from '../game/phase-router.js';
 import { createSeasonState, PHASES, PHASE_ORDER } from '../game/state.js';
 import { scoreBed } from '../scoring/bed-score.js';
-import { deleteCampaign, saveCampaign, saveSeasonState } from '../game/save.js';
+import { saveCampaign, saveSeasonState } from '../game/save.js';
 import { showEventCard } from './event-card.js';
 import { showHarvestReveal } from './harvest-reveal.js';
 import { showBackpackPanel } from './backpack-panel.js';
 import { createDialoguePanel } from './dialogue-panel.js';
 import { showWinterReview } from './winter-review.js';
-import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { createCutsceneMachine } from '../game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './season-calendar.js';
 import {
-  applyIntervention,
   canUseTool,
   executeToolAction,
-  getTargetableCells,
 } from '../game/intervention.js';
-import { applyEventEffect } from '../game/event-engine.js';
 import { createPlayerController } from '../game/player-controller.js';
 import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
@@ -44,84 +40,21 @@ import {
   applyZoneTravelState,
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
-
-const FACTION_BADGE_COLORS = {
-  climbers: '#2d8a4e',
-  fast_cycles: '#6dbf6d',
-  greens: '#3a7a4f',
-  roots: '#c47a3a',
-  herbs: '#7ab85e',
-  fruiting: '#d44a2a',
-  brassicas: '#4a8a6a',
-  companions: '#e8c84a',
-};
-
-const FACTION_NAMES = {
-  climbers: 'Climber',
-  fast_cycles: 'Fast',
-  greens: 'Greens',
-  roots: 'Root',
-  herbs: 'Herb',
-  fruiting: 'Fruit',
-  brassicas: 'Brassica',
-  companions: 'Companion',
-};
-
-const INTERVENTION_LABELS = {
-  protect: 'Protect',
-  mulch: 'Mulch',
-  swap: 'Swap',
-  companion_patch: 'Companion Patch',
-  prune: 'Prune',
-  accept_loss: 'Accept Loss',
-};
-
-const INTERVENTION_PROMPTS = {
-  protect: 'Choose a planted cell to shield from this event.',
-  mulch: 'Choose a planted cell to mulch for this season and next-season carry-forward.',
-  companion_patch: 'Choose a planted cell to patch with an adjacency bonus.',
-  prune: 'Choose a planted cell to remove from the bed.',
-  swap: 'Choose the first planted cell to swap.',
-};
-
-const SEASON_ICONS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: '❄️' };
-const SEASON_LABELS = { spring: 'Spring', summer: 'Summer', fall: 'Fall', winter: 'Winter' };
-const DEFAULT_TOOLS = [
-  { id: 'hand', label: 'Hand', icon: '✋', shortcut: '1' },
-  { id: 'water', label: 'Water', icon: '💧', shortcut: '2' },
-  { id: 'plant', label: 'Plant', icon: '🌱', shortcut: '3' },
-  { id: 'harvest', label: 'Harvest', icon: '🌾', shortcut: '4' },
-  { id: 'protect', label: 'Protect', icon: '🛡️', shortcut: '5' },
-  { id: 'mulch', label: 'Mulch', icon: '🍂', shortcut: '6' },
-];
-
-function hasKeepsake(campaign, keepsakeId) {
-  return Array.isArray(campaign.keepsakes) && campaign.keepsakes.some((entry) => entry.id === keepsakeId);
-}
-
-function getRowAverages(cellScores, rowCount = 4, colCount = 8) {
-  const rows = Array.from({ length: rowCount }, () => ({ total: 0, count: 0 }));
-  cellScores.forEach((cellScore, index) => {
-    if (!cellScore) return;
-    const row = Math.floor(index / colCount);
-    rows[row].total += cellScore.total ?? 0;
-    rows[row].count += 1;
-  });
-  return rows.map((row) => (row.count > 0 ? row.total / row.count : 0));
-}
-
-function getYearForChapter(chapter) {
-  return Math.floor((chapter - 1) / 4) + 1;
-}
-
-function isLetItGrowInteractionMode(state) {
-  if (state?.campaign?.sandbox) return true;
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('mode') === 'let-it-grow') return true;
-  if (params.get('let-it-grow') === '1') return true;
-  if (params.get('proximity') === '1') return true;
-  return window.localStorage?.getItem('garden-os:let-it-grow-mode') === '1';
-}
+import {
+  FACTION_BADGE_COLORS,
+  FACTION_NAMES,
+  SEASON_ICONS,
+  SEASON_LABELS,
+  DEFAULT_TOOLS,
+  hasKeepsake,
+  getRowAverages,
+  getYearForChapter,
+  isLetItGrowInteractionMode,
+} from './ui-constants.js';
+import { createPauseController } from './pause-controller.js';
+import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
+import { createInterventionTargeting } from './intervention-targeting.js';
+import { createOverlayScreens } from './overlay-screens.js';
 
 function bindUI({
   store,
@@ -185,22 +118,14 @@ function bindUI({
   const fabBackpack = document.getElementById('fab-backpack');
   const dialogueRoot = document.getElementById('dialogue-root');
   const cutsceneLayer = document.getElementById('cutscene-layer');
-  const pauseOverlay = document.getElementById('pause-menu');
-  const pauseStatus = document.getElementById('pause-status');
-  const pauseContainer = document.getElementById('panel-container');
-  const fabBug = document.getElementById('fab-bug');
-  const bugPanel = document.getElementById('bug-panel');
-  const bugText = document.getElementById('bug-text');
-  const bugMeta = document.getElementById('bug-meta');
-  const bugSend = document.getElementById('bug-send');
-  const bugCancel = document.getElementById('bug-cancel');
 
   let backpackOpen = false;
   let cropPaletteOpen = false;
   let gameInputEnabled = true;
   let holdTimer = null;
-  let interventionTargetState = null;
-  let pauseMenuOpen = false;
+  const interventionCtx = {};
+  const interventionTargeting = createInterventionTargeting(interventionCtx);
+  
   let fabWasVisible = false;
   let fabPlantWasVisible = false;
 
@@ -471,7 +396,7 @@ function bindUI({
   }
 
   function canMovePlayer() {
-    return gameInputEnabled && !pauseMenuOpen && !cutsceneMachine.isActive() && !interventionTargetState;
+    return gameInputEnabled && !pauseController.isOpen() && !cutsceneMachine.isActive() && !interventionTargeting.isActive();
   }
 
   function isProximityInteractionEnabled() {
@@ -485,9 +410,9 @@ function bindUI({
       toolHUD
       && letItGrowInteractionMode
       && gameInputEnabled
-      && !pauseMenuOpen
+      && !pauseController.isOpen()
       && !cutsceneMachine.isActive()
-      && !interventionTargetState
+      && !interventionTargeting.isActive()
       && !backpackOpen
       && !cropPaletteOpen
       && state.season.phase === PHASES.PLANNING
@@ -795,21 +720,20 @@ function bindUI({
     cropPaletteOpen = false;
     backpackOpen = false;
     fabBackpack?.classList.remove('is-open');
-    if (!interventionTargetState) {
+    if (!interventionTargeting.isActive()) {
       scene.clearTargeting?.();
     }
     syncToolHUDVisibility();
   }
 
   function clearInterventionTargeting() {
-    interventionTargetState = null;
-    scene.clearTargeting?.();
+    interventionTargeting.clear();
     panelContainer?.querySelector('#intervention-target-panel')?.remove();
   }
 
   function updateFAB() {
     if (!fab) return;
-    if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargetState) {
+    if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargeting.isActive()) {
       fab.classList.remove('is-visible');
       fabWasVisible = false;
       if (fabPlant) {
@@ -847,204 +771,20 @@ function bindUI({
     fabBackpack?.classList.remove('is-hidden');
   }
 
-  function getRotatedSeasonLabel(seasonId) {
-    const order = ['spring', 'summer', 'fall', 'winter'];
-    const index = order.indexOf(seasonId);
-    const next = order[(index + 1) % order.length] ?? 'spring';
-    return SEASON_LABELS[next];
-  }
-
   function buildBackpackData() {
-    const inventoryState = inventory.getState();
-    const toolMap = {
-      watering_can: 'water',
-      smart_watering_can: 'water',
-      pruning_shears: 'harvest',
-      pest_spray: 'protect',
-      mulch_bag: 'mulch',
-      fertilizer_bag: 'mulch',
-      soil_scanner: 'hand',
-    };
-    const unlockedKeepsakes = (state.campaign.keepsakes ?? []).map((entry) => ({
-      ...entry,
-      ...(getKeepsakeById(entry.id) ?? {}),
-    }));
-    const recipesCompleted = (state.campaign.recipesCompleted ?? [])
-      .map((recipeId) => ({ id: recipeId, ...(getRecipeById(recipeId) ?? { name: recipeId }) }));
-    const pantryEntries = Object.entries(state.campaign.pantry ?? {})
-      .filter(([, count]) => count > 0)
-      .map(([cropId, count]) => ({
-        id: cropId,
-        name: getCropById(cropId)?.name ?? cropId,
-        count,
-      }))
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-
-    const availableRecipes = craftingSystem.getAvailableRecipes().map((recipe) => ({
-      ...recipe,
-      craftCheck: craftingSystem.canCraft(recipe.id),
-      outputDef: getItemDef(recipe.output?.itemId),
-    }));
-
-    return {
-      inventory: {
-        slots: inventoryState.slots.map((slot, index) => (
-          slot
-            ? { ...slot, index, itemDef: getItemDef(slot.itemId) }
-            : null
-        )),
-        capacity: inventoryState.capacity,
-        tier: inventoryState.tier,
-      },
-      keepsakeSlots: getKeepsakeSlots(),
-      unlockedKeepsakes,
-      recipesCompleted,
-      availableRecipes,
-      totalRecipes: Object.keys(getRecipes()).length,
-      pantryEntries,
-      seasonHistory: state.campaign.seasonHistory ?? [],
-      skills: {
-        crafting: skillSystem.getProgress('crafting'),
-      },
-      getLatest: buildBackpackData,
-      actions: {
-        onMoveSlot(fromIndex, toIndex) {
-          const result = inventory.moveSlot(fromIndex, toIndex);
-          if (result.success) persistState();
-          return result;
-        },
-        onSplitStack(fromIndex, count, toIndex) {
-          const result = inventory.splitStack(fromIndex, count, toIndex);
-          if (result.success) persistState();
-          return result;
-        },
-        onDropItem(slotIndex, count = 1) {
-          const slot = inventory.getSlots()[slotIndex];
-          if (!slot) return { success: false };
-          const result = inventory.removeItem(slot.itemId, count);
-          if (result.removed) persistState();
-          return result;
-        },
-        onUseItem(slotIndex) {
-          const slot = inventory.getSlots()[slotIndex];
-          if (!slot) return { success: false, message: 'Nothing selected.' };
-          const itemDef = getItemDef(slot.itemId);
-          if (itemDef.category === 'seeds' && itemDef.cropId) {
-            store.dispatch({
-              type: Actions.SET_SELECTED_CROP,
-              payload: { cropId: itemDef.cropId },
-            });
-            persistState();
-            return { success: true, message: `${itemDef.name} ready to plant.` };
-          }
-          const mappedTool = toolMap[slot.itemId];
-          if (mappedTool) {
-            toolHUD?.selectTool(mappedTool);
-            syncPlayerTool();
-            return { success: true, message: `${itemDef.name} equipped.` };
-          }
-          return { success: false, message: itemDef.description ?? 'No direct use.' };
-        },
-        onCraftRecipe(recipeId) {
-          const result = craftingSystem.craft(recipeId);
-          showToast(result.message, 1800, result.success ? 'success' : 'info');
-          if (result.success) {
-            updateHUD();
-            persistState();
-          }
-          return result;
-        },
-      },
-    };
+    return buildBackpackData_imported({
+      state, inventory, craftingSystem, skillSystem, toolHUD,
+      getItemDef, getCropById, getRecipeById, getRecipes,
+      getKeepsakeById, getKeepsakeSlots, persistState,
+      syncPlayerTool, showToast, updateHUD, store, Actions,
+    });
   }
+
 
   function buildWinterReviewData() {
-    const year = getYearForChapter(state.campaign.currentChapter);
-    const review = state.campaign.lastSeasonReview ?? {
-      score: 0,
-      grade: '–',
-      eventsEncountered: [],
-      yieldList: [],
-      bestCells: [],
-      worstCells: [],
-    };
-    const yearEntries = (state.campaign.journalEntries ?? [])
-      .filter((entry) => getYearForChapter(entry.chapter) === year)
-      .sort((a, b) => a.chapter - b.chapter);
-
-    const previousGrid = state.campaign.previousGrid ?? [];
-    const soilCells = state.season.grid.map((cell, index) => {
-      const previousCell = previousGrid[index] ?? null;
-      const carryForwardType = previousCell?.carryForwardType ?? null;
-      let carryForward = null;
-      if (carryForwardType === 'mulched') {
-        carryForward = { type: carryForwardType, label: 'Mulched carry-over · +0.25' };
-      } else if (carryForwardType === 'compacted') {
-        carryForward = { type: carryForwardType, label: 'Compacted carry-over · -0.50' };
-      } else if (carryForwardType === 'enriched') {
-        carryForward = { type: carryForwardType, label: 'Enriched carry-over · +0.30' };
-      }
-      return {
-        index,
-        soilFatigue: cell.soilFatigue ?? 0,
-        carryForward,
-      };
-    });
-
-    const maxFatigue = soilCells.reduce((max, cell) => Math.max(max, cell.soilFatigue), 0);
-    const mulchedCount = soilCells.filter((cell) => cell.carryForward?.type === 'mulched').length;
-    const compactedCount = soilCells.filter((cell) => cell.carryForward?.type === 'compacted').length;
-    const enrichedCount = soilCells.filter((cell) => cell.carryForward?.type === 'enriched').length;
-    const recipesCompleted = state.campaign.recipesCompleted?.length ?? 0;
-    const totalRecipes = Object.keys(getRecipes()).length;
-    const keepsakesUnlocked = state.campaign.keepsakes?.length ?? 0;
-    const totalKeepsakes = getKeepsakeSlots().length;
-
-    const decorateCells = (cells) => cells.map((cell) => ({
-      ...cell,
-      cropName: getCropById(cell.cropId)?.name ?? cell.cropId ?? 'Empty',
-    }));
-
-    const hints = [];
-    if (maxFatigue >= 0.6) {
-      hints.push('Several cells are heavily fatigued. Rotate heavy feeders out of the reddest spots next spring.');
-    } else if (maxFatigue >= 0.3) {
-      hints.push('A few cells are getting tired. Spread brassicas and fruiting crops around instead of repeating winners.');
-    } else {
-      hints.push('Soil fatigue is low. You have freedom to chase recipes without fighting the bed too hard.');
-    }
-    if (mulchedCount > 0) {
-      hints.push(`${mulchedCount} cell${mulchedCount === 1 ? '' : 's'} carry mulch into the next season. Those are safe places to restart tender crops.`);
-    }
-    if (compactedCount > 0) {
-      hints.push(`${compactedCount} compacted cell${compactedCount === 1 ? '' : 's'} need relief. Favor roots or low-demand crops there first.`);
-    }
-    if (enrichedCount > 0) {
-      hints.push(`${enrichedCount} enriched cell${enrichedCount === 1 ? '' : 's'} are primed for a push. Save your hungriest crops for those pockets.`);
-    }
-    if ((review.recipeMatches?.length ?? 0) === 0 && recipesCompleted < totalRecipes) {
-      hints.push('No recipe completed last season. Use the pantry list and your strongest cells to aim at one dish on purpose next year.');
-    }
-    if (!hints.length) {
-      hints.push('Nothing urgent is flashing red. Winter is a clean read: preserve what worked and do not overreact.');
-    }
-
-    return {
-      year,
-      yearEntries,
-      soilCells,
-      lastReview: {
-        ...review,
-        bestCells: decorateCells(review.bestCells ?? []),
-        worstCells: decorateCells(review.worstCells ?? []),
-      },
-      recipesCompleted,
-      totalRecipes,
-      keepsakesUnlocked,
-      totalKeepsakes,
-      hints,
-    };
+    return buildWinterReviewData_imported({ state, getCropById, getRecipes, getKeepsakeSlots });
   }
+
 
   function showBackpack() {
     scene.clearTargeting?.();
@@ -1095,157 +835,19 @@ function bindUI({
     return `R${row} · C${col}`;
   }
 
-  function showInterventionTargetPrompt() {
-    if (!interventionTargetState) return;
-    const { interventionId, firstCell } = interventionTargetState;
-    const secondStep = interventionId === 'swap' && firstCell >= 0;
-    const validCells = getTargetableCells(state.season.grid, interventionId, firstCell);
-
-    const sheet = document.createElement('div');
-    sheet.className = 'panel-sheet is-open targeting-sheet';
-    sheet.id = 'intervention-target-panel';
-    sheet.innerHTML = `
-      <div class="panel-handle"></div>
-      <div class="palette-header">
-        <div>
-          <div class="palette-title">${INTERVENTION_LABELS[interventionId]}</div>
-          <div class="targeting-hint">
-            ${secondStep ? `Tap a highlighted neighbor to complete the swap for ${getCellLabel(firstCell)}.` : INTERVENTION_PROMPTS[interventionId]}
-          </div>
-        </div>
-        <button type="button" class="palette-dismiss" id="target-cancel" aria-label="Cancel targeting">&times;</button>
-      </div>
-      <div class="targeting-chip-row">
-        <span class="targeting-chip">${validCells.length} valid target${validCells.length === 1 ? '' : 's'}</span>
-        <span class="targeting-chip">${secondStep ? 'Step 2 of 2' : interventionId === 'swap' ? 'Step 1 of 2' : 'Tap the bed'}</span>
-      </div>
-      <div class="targeting-actions">
-        ${secondStep ? '<button type="button" id="target-back" class="start-choice-btn start-choice-btn--ghost">Back</button>' : ''}
-        <button type="button" id="target-cancel-text" class="start-choice-btn start-choice-btn--ghost">Cancel</button>
-      </div>
-    `;
-
-    sheet.addEventListener('click', (event) => {
-      if (event.target.closest('#target-cancel') || event.target.closest('#target-cancel-text')) {
-        clearInterventionTargeting();
-        setGameInputEnabled(false);
-        openEventCard();
-        return;
-      }
-
-      if (event.target.closest('#target-back') && interventionTargetState?.interventionId === 'swap') {
-        interventionTargetState.firstCell = -1;
-        scene.setTargetableCells(getTargetableCells(state.season.grid, 'swap'));
-        showInterventionTargetPrompt();
-      }
-    });
-
-    if (panelContainer) {
-      panelContainer.innerHTML = '';
-      panelContainer.appendChild(sheet);
-    }
+  // Intervention targeting delegated to intervention-targeting.js
+  function finalizeInterventionChoice(interventionId, targetA, targetB) {
+    interventionTargeting.finalize(interventionId, targetA, targetB);
   }
-
-  function finalizeInterventionChoice(interventionId, targetA = -1, targetB = -1) {
-    clearInterventionTargeting();
-    const targetIndices = [targetA, targetB]
-      .filter((index) => Number.isInteger(index) && index >= 0)
-      .filter((index, position, indices) => indices.indexOf(index) === position);
-    const targetCropNames = targetIndices
-      .map((index) => getCropById(state.season.grid[index]?.cropId)?.name)
-      .filter(Boolean);
-    const resolvedEvent = produceState(Actions.USE_INTERVENTION, (draft) => {
-      draft.season.interventionChosen = interventionId;
-      if (interventionId !== 'accept_loss') {
-        draft.season.interventionTokens = Math.max(0, draft.season.interventionTokens - 1);
-      }
-
-      applyIntervention(draft.season.grid, interventionId, targetA, targetB);
-
-      const nextResolvedEvent = draft.season.eventActive ? { ...draft.season.eventActive } : null;
-      draft.season.lastResolvedEvent = nextResolvedEvent;
-      draft.season.lastEventEffectSummary = applyEventEffect(draft.season.grid, nextResolvedEvent);
-      draft.season.eventActive = null;
-      return nextResolvedEvent;
-    });
-
-    if (targetA >= 0) scene.flashCell(targetA, 0xe8c84a, 450);
-    if (targetB >= 0) scene.flashCell(targetB, 0xe8c84a, 450);
-
-    const targetSummary = interventionId === 'swap' && targetA >= 0 && targetB >= 0
-      ? `${getCellLabel(targetA)} ↔ ${getCellLabel(targetB)}`
-      : targetA >= 0
-        ? getCellLabel(targetA)
-        : '';
-
-    showToast(
-      interventionId === 'accept_loss'
-        ? 'Accepted the loss'
-        : `${INTERVENTION_LABELS[interventionId]}${targetSummary ? ` · ${targetSummary}` : ''}`,
-      2200,
-    );
-    persistState();
-    setGameInputEnabled(false);
-    phaseRouter.handleNarrativeTrigger({
-      type: 'intervention_used',
-      intervention: interventionId,
-      season: state.season.season,
-      chapter: state.season.chapter,
-      eventCategory: resolvedEvent?.category ?? null,
-      eventValence: resolvedEvent?.valence ?? null,
-      eventTitle: resolvedEvent?.title ?? null,
-      targetSummary,
-      targetCount: targetIndices.length,
-      targetCropNames,
-    });
-    updateHUD();
-  }
-
   function beginInterventionTargeting(interventionId) {
-    const validCells = getTargetableCells(state.season.grid, interventionId);
-    if (validCells.length === 0) {
-      showToast(`No valid targets for ${INTERVENTION_LABELS[interventionId]}.`, 2000);
-      setGameInputEnabled(false);
-      openEventCard();
-      return;
-    }
-
-    interventionTargetState = { interventionId, firstCell: -1 };
-    scene.setTargetableCells(validCells);
-    setGameInputEnabled(true);
-    showInterventionTargetPrompt();
-    showToast(
-      interventionId === 'swap'
-        ? 'Tap the first highlighted cell to start the swap.'
-        : 'Tap a highlighted bed cell to apply the intervention.',
-      2200,
-    );
-    updateHUD();
+    interventionTargeting.begin(interventionId);
   }
-
   function handleInterventionTargetClick(cellIndex) {
-    if (!interventionTargetState) return;
-    const { interventionId, firstCell } = interventionTargetState;
-    const validCells = getTargetableCells(state.season.grid, interventionId, firstCell);
-    if (cellIndex < 0 || !validCells.includes(cellIndex)) {
-      showToast('Choose a highlighted cell.', 1400);
-      return;
-    }
-
-    if (interventionId === 'swap' && firstCell < 0) {
-      interventionTargetState.firstCell = cellIndex;
-      scene.setTargetableCells(getTargetableCells(state.season.grid, 'swap', cellIndex));
-      scene.flashCell(cellIndex, 0x8ba8b5, 350);
-      showInterventionTargetPrompt();
-      showToast(`First swap cell locked: ${getCellLabel(cellIndex)}. Choose an adjacent partner.`, 2200);
-      return;
-    }
-
-    finalizeInterventionChoice(interventionId, firstCell >= 0 ? firstCell : cellIndex, cellIndex);
+    interventionTargeting.handleTargetClick(cellIndex);
   }
 
   function toggleBackpack() {
-    if (interventionTargetState) return;
+    if (interventionTargeting.isActive()) return;
     if (backpackOpen) {
       closeBackpackPanel();
     } else {
@@ -1255,7 +857,7 @@ function bindUI({
   }
 
   function openEventCard() {
-    if (!interventionTargetState) {
+    if (!interventionTargeting.isActive()) {
       scene.clearTargeting?.();
     }
     closePanelSheets();
@@ -1409,7 +1011,7 @@ function bindUI({
     if (hudScore) hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
 
     if (hudAction) {
-      const visible = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargetState && canAdvance(state.season);
+      const visible = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargeting.isActive() && canAdvance(state.season);
       hudAction.textContent = getAdvanceLabel();
       hudAction.disabled = !visible;
       hudAction.classList.toggle('is-visible', visible);
@@ -1539,7 +1141,7 @@ function bindUI({
     produceState,
     cutsceneMachine,
     clearSceneTargeting: () => {
-      if (!interventionTargetState) {
+      if (!interventionTargeting.isActive()) {
         scene.clearTargeting?.();
       }
     },
@@ -1611,10 +1213,10 @@ function bindUI({
   }
 
   function handleCellInteraction(cellIndex, source = 'pointer') {
-    if (pauseMenuOpen) return false;
+    if (pauseController.isOpen()) return false;
     if (!gameInputEnabled || cutsceneMachine.isActive()) return false;
 
-    if (interventionTargetState) {
+    if (interventionTargeting.isActive()) {
       handleInterventionTargetClick(cellIndex);
       return true;
     }
@@ -1692,7 +1294,7 @@ function bindUI({
 
   inputManager.on('cancel', (payload) => {
     const { event } = payload;
-    if (interventionTargetState) {
+    if (interventionTargeting.isActive()) {
       payload.preventDefault();
       clearInterventionTargeting();
       setGameInputEnabled(false);
@@ -1725,19 +1327,19 @@ function bindUI({
   });
 
   inputManager.on('advance', (payload) => {
-    if (pauseMenuOpen || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
     payload.preventDefault();
     phaseRouter.doAdvance();
   });
 
   inputManager.on('toggle_palette', (payload) => {
-    if (pauseMenuOpen || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
     payload.preventDefault();
     showCropPalette();
   });
 
   inputManager.on('toggle_backpack', (payload) => {
-    if (pauseMenuOpen || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
     payload.preventDefault();
     toggleBackpack();
   });
@@ -1797,186 +1399,46 @@ function bindUI({
     toggleBackpack();
   });
 
-  function togglePauseMenu() {
-    if (interventionTargetState) return;
-    pauseMenuOpen = !pauseMenuOpen;
-    if (pauseMenuOpen) {
-      bugPanel?.classList.remove('is-open');
-      if (cropPaletteOpen) closePalette();
-      closePanelSheets();
-      if (pauseStatus) {
-        pauseStatus.textContent = state.campaign?.sandbox
-          ? `Free Play · ${getPhaseLabel(state.season.phase)}`
-          : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
-      }
-      pauseOverlay?.classList.add('is-open');
-    } else {
-      pauseOverlay?.classList.remove('is-open');
-    }
-    syncToolHUDVisibility();
-  }
-
-  function closePauseMenu() {
-    pauseMenuOpen = false;
-    pauseOverlay?.classList.remove('is-open');
-  }
-
-  document.getElementById('hud-pause')?.addEventListener('click', (event) => {
-    event.stopPropagation();
-    togglePauseMenu();
+  const pauseController = createPauseController({
+    getState: () => state,
+    dispatch,
+    persistState,
+    showToast,
+    closePalette,
+    closePanelSheets,
+    syncToolHUDVisibility,
+    updateHUD,
+    loop,
+    cleanupGame,
+    remount,
+    slot,
+    isInterventionTargeting: () => !!interventionTargeting.isActive(),
+    isCropPaletteOpen: () => cropPaletteOpen,
   });
+  const togglePauseMenu = pauseController.toggle;
+  const closePauseMenu = pauseController.close;
+  const toggleBugPanel = pauseController.toggleBugPanel;
 
-  document.getElementById('pause-resume')?.addEventListener('click', () => {
-    togglePauseMenu();
-  });
-
-  document.getElementById('pause-journal')?.addEventListener('click', () => {
-    closePauseMenu();
-    showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
-  });
-
-  document.getElementById('pause-bugs')?.addEventListener('click', () => {
-    const bugsKey = 'gos-story-bugs';
-    closePauseMenu();
-    try {
-      const bugs = JSON.parse(localStorage.getItem(bugsKey) || '[]');
-      showBugReportsSheet(pauseContainer, Array.isArray(bugs) ? bugs : []);
-    } catch {
-      showBugReportsSheet(pauseContainer, []);
-    }
-  });
-
-  document.getElementById('pause-restart')?.addEventListener('click', () => {
-    if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
-    dispatch({
-      type: Actions.RESET_SEASON,
-      payload: {
-        season: createSeasonState(state.campaign.currentChapter, state.season.season, state.campaign),
-        selectedCropId: null,
-      },
-    });
-    closePauseMenu();
-    updateHUD();
-    showToast('Chapter restarted.', 1800);
-  });
-
-  document.getElementById('pause-main-menu')?.addEventListener('click', () => {
-    persistState();
-    closePauseMenu();
-    loop.stop();
-    cleanupGame();
-    remount();
-  });
-
-  document.getElementById('pause-new')?.addEventListener('click', () => {
-    if (!confirm('Delete this save slot and return to the title screen? This cannot be undone.')) return;
-    deleteCampaign(slot);
-    closePauseMenu();
-    loop.stop();
-    cleanupGame();
-    remount();
-  });
-
-  document.getElementById('pause-close')?.addEventListener('click', () => {
-    closePauseMenu();
-  });
-
-  pauseOverlay?.addEventListener('click', (event) => {
-    if (event.target === pauseOverlay) {
-      closePauseMenu();
-    }
-  });
-
-  function toggleBugPanel() {
-    if (interventionTargetState) return;
-    if (pauseMenuOpen) {
-      pauseMenuOpen = false;
-      pauseOverlay?.classList.remove('is-open');
-    }
-    const isOpen = bugPanel?.classList.toggle('is-open');
-    if (isOpen) {
-      if (bugText) {
-        bugText.value = '';
-        bugText.focus();
-      }
-      if (bugMeta) {
-        bugMeta.textContent = [
-          `Chapter: ${state.campaign.currentChapter}`,
-          `Phase: ${state.season.phase}`,
-          `Season: ${state.season.season}`,
-          `Crops: ${state.season.grid.filter((cell) => cell.cropId).length}/32`,
-          `Score: ${hudScore?.textContent ?? '--'}`,
-          `Time: ${new Date().toISOString()}`,
-          `UA: ${navigator.userAgent.slice(0, 60)}`,
-        ].join(' · ');
-      }
-    }
-  }
-
-  fabBug?.addEventListener('click', (event) => {
-    event.stopPropagation();
-    toggleBugPanel();
-  });
-
-  bugCancel?.addEventListener('click', () => {
-    bugPanel?.classList.remove('is-open');
-  });
-
-  bugSend?.addEventListener('click', () => {
-    const text = bugText?.value.trim();
-    if (!text) {
-      bugText?.focus();
-      return;
-    }
-
-    const report = {
-      text,
-      chapter: state.campaign.currentChapter,
-      phase: state.season.phase,
-      season: state.season.season,
-      beatIndex: state.season.beatIndex,
-      score: hudScore?.textContent ?? '--',
-      cropsPlanted: state.season.grid.filter((cell) => cell.cropId).map((cell) => cell.cropId),
-      interventionChosen: state.season.interventionChosen,
-      interventionTokens: state.season.interventionTokens,
-      eventActive: state.season.eventActive ? {
-        id: state.season.eventActive.id,
-        title: state.season.eventActive.title,
-      } : null,
-      lastResolvedEvent: state.season.lastResolvedEvent ? {
-        id: state.season.lastResolvedEvent.id,
-        title: state.season.lastResolvedEvent.title,
-      } : null,
-      keepsakes: (state.campaign.keepsakes ?? []).map((entry) => entry.id),
-      recipesCompleted: [...(state.campaign.recipesCompleted ?? [])],
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-    };
-
-    const bugsKey = 'gos-story-bugs';
-    try {
-      const existing = JSON.parse(localStorage.getItem(bugsKey) || '[]');
-      existing.push(report);
-      localStorage.setItem(bugsKey, JSON.stringify(existing));
-    } catch (error) {
-      console.warn('Bug save failed:', error);
-    }
-
-    bugPanel?.classList.remove('is-open');
-    showToast('Bug report saved on this device.', 2500);
-  });
-
-  const bugPanelOutsideHandler = (event) => {
-    if (bugPanel?.classList.contains('is-open') && !bugPanel.contains(event.target) && event.target !== fabBug) {
-      bugPanel.classList.remove('is-open');
-    }
-  };
-  document.addEventListener('click', bugPanelOutsideHandler);
 
   function resize() {
     const rect = viewport.getBoundingClientRect();
     scene.resize(Math.round(rect.width), Math.round(rect.height));
   }
+
+  // Populate lazy intervention context now that all functions are defined
+  Object.assign(interventionCtx, {
+    getState: () => state,
+    scene,
+    panelContainer,
+    showToast,
+    setGameInputEnabled,
+    openEventCard,
+    updateHUD,
+    persistState,
+    produceState,
+    getCropById,
+    phaseRouter,
+  });
 
   window.addEventListener('resize', resize);
   resize();
@@ -2022,7 +1484,7 @@ function bindUI({
       season: state.season.season,
       phase: state.season.phase,
       currentZone: getCurrentZoneId(),
-      pauseMenuOpen,
+      pauseMenuOpen: pauseController.isOpen(),
       cutsceneActive: cutsceneMachine.isActive(),
       selectedCropId: state.selectedCropId,
       plantedCount: plantedCells.length,
@@ -2067,7 +1529,7 @@ function bindUI({
     dayNightController?.dispose();
     zoneManager?.dispose();
     audioManager?.dispose();
-    document.removeEventListener('click', bugPanelOutsideHandler);
+    pauseController.dispose();
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;
     delete window.advanceTime;

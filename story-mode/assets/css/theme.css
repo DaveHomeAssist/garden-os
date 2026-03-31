@@ -1,16 +1,33 @@
 /* Garden OS Story Mode — Design Tokens */
 :root {
+  /* Earth palette */
   --soil: #5c3d1e;
   --soil-dark: #3a2510;
+  --text: #1e110a;
+  --text-mid: #5a3e2b;
+  --text-light: rgba(247, 242, 234, 0.6);
+
+  /* Garden palette */
   --leaf: #3d7a4f;
   --leaf-bright: #5aab6b;
   --sun: #e8c84a;
   --sun-soft: rgba(232, 200, 74, 0.15);
+  --sun-warm: #f0d48e;
+
+  /* Surface palette */
   --cream: #f7f2ea;
   --cream-dark: #ede5d8;
-  --text: #1e110a;
-  --text-mid: #5a3e2b;
-  --text-light: rgba(247, 242, 234, 0.6);
+
+  /* Semantic */
+  --danger: #d44a2a;
+  --info: #8ba8b5;
+  --success: #5aab6b;
+
+  /* Spacing & radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
 }
 
 #cutscene-layer {

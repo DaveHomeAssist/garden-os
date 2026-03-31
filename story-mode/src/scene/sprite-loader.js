@@ -63,6 +63,7 @@ const textureCache = new Map();   // key → THREE.Texture
 const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
 let loaded = false;
 let loadPromise = null;
+let missingAssets = [];
 
 /* ── Texture path resolution ────────────────────────────────────────── */
 
@@ -87,8 +88,8 @@ function loadOne(key, filename) {
       },
       undefined,
       () => {
-        // Asset not yet generated — skip silently, return null placeholder
         console.warn(`[sprite-loader] missing texture: ${filename}`);
+        missingAssets.push(key);
         resolve(null);
       },
     );
@@ -110,6 +111,7 @@ export function loadSprites() {
     ([key, { file }]) => loadOne(key, file),
   );
 
+  missingAssets = [];
   loadPromise = Promise.all([...singles, ...sheets]).then(() => {
     loaded = true;
   });
@@ -228,6 +230,14 @@ export function getSpriteMap() {
     map[key] = textureCache.has(key) && textureCache.get(key) !== null;
   }
   return map;
+}
+
+/**
+ * Returns the list of asset keys that failed to load.
+ * Useful for showing user-facing feedback after loadSprites() resolves.
+ */
+export function getMissingAssets() {
+  return [...missingAssets];
 }
 
 /**

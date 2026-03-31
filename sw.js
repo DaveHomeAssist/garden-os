@@ -7,16 +7,15 @@ const CACHE_NAME = 'garden-os-' + CACHE_VERSION;
 
 const CORE_ASSETS = [
   './',
-  'home.html',
   'index.html',
   'garden-planner-v4.html',
   'garden-league-simulator-v4.html',
   'garden-cage-build-guide.html',
   'garden-cage-ops-guide.html',
-  'how-it-thinks.html',
-  'scoring-visualizer.html',
-  'scoring-map.html',
-  'fairness-tester.html',
+  'tools/how-it-thinks.html',
+  'tools/scoring-visualizer.html',
+  'tools/scoring-map.html',
+  'tools/fairness-tester.html',
   'system-map.html',
   'system-topology.html',
   'manifest.json',
@@ -84,7 +83,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => {
         return caches.match(event.request).then((cached) => {
-          return cached || caches.match('home.html');
+          return cached || caches.match('index.html');
         });
       })
     );
