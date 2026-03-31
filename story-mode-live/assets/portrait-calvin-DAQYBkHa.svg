@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#e6dfd4"/>
+      <stop offset="100%" stop-color="#c4bdb2"/>
+    </radialGradient>
+    <radialGradient id="furLight" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#f5f0e8"/>
+      <stop offset="100%" stop-color="#e6dfd4"/>
+    </radialGradient>
+    <radialGradient id="furDark" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#6b6158"/>
+      <stop offset="100%" stop-color="#3c3129"/>
+    </radialGradient>
+    <radialGradient id="nose" cx="45%" cy="35%" r="50%">
+      <stop offset="0%" stop-color="#333"/>
+      <stop offset="100%" stop-color="#111"/>
+    </radialGradient>
+    <radialGradient id="tongueG" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#e8838a"/>
+      <stop offset="100%" stop-color="#d4616a"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e110a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="url(#bg)"/>
+
+  <!-- Main head shape — large fluffy oval -->
+  <g filter="url(#softShadow)">
+    <!-- Outer fluff silhouette -->
+    <ellipse cx="128" cy="126" rx="88" ry="82" fill="url(#furLight)" stroke="#3c3129" stroke-width="3"/>
+
+    <!-- Fluffy tufts around head -->
+    <!-- Top tufts -->
+    <circle cx="88" cy="58" r="22" fill="#e6dfd4" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="128" cy="48" r="24" fill="#f0ebe3" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="168" cy="58" r="22" fill="#e6dfd4" stroke="#3c3129" stroke-width="2.5"/>
+
+    <!-- Side tufts -->
+    <circle cx="52" cy="100" r="20" fill="#e6dfd4" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="204" cy="100" r="20" fill="#e6dfd4" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="56" cy="140" r="18" fill="#ede7dc" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="200" cy="140" r="18" fill="#ede7dc" stroke="#3c3129" stroke-width="2.5"/>
+
+    <!-- Bottom tufts / chin -->
+    <circle cx="100" cy="196" r="18" fill="#ede7dc" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="128" cy="200" r="20" fill="#f0ebe3" stroke="#3c3129" stroke-width="2.5"/>
+    <circle cx="156" cy="196" r="18" fill="#ede7dc" stroke="#3c3129" stroke-width="2.5"/>
+
+    <!-- Fill in center to cover tuft overlaps -->
+    <ellipse cx="128" cy="126" rx="82" ry="76" fill="url(#furLight)"/>
+
+    <!-- Dark face patch — saddle marking across eyes -->
+    <ellipse cx="128" cy="108" rx="52" ry="36" fill="url(#furDark)"/>
+
+    <!-- Forehead tuft (light, over dark patch) -->
+    <ellipse cx="128" cy="80" rx="28" ry="14" fill="#e6dfd4"/>
+    <circle cx="118" cy="72" r="10" fill="#ede7dc"/>
+    <circle cx="138" cy="72" r="10" fill="#ede7dc"/>
+    <circle cx="128" cy="68" r="11" fill="#f0ebe3"/>
+
+    <!-- Ears — dark, floppy -->
+    <!-- Left ear -->
+    <ellipse cx="68" cy="82" rx="22" ry="32" fill="#4a3f35" stroke="#3c3129" stroke-width="2.5" transform="rotate(-12, 68, 82)"/>
+    <ellipse cx="68" cy="82" rx="14" ry="22" fill="#5c5047" transform="rotate(-12, 68, 82)"/>
+
+    <!-- Right ear -->
+    <ellipse cx="188" cy="82" rx="22" ry="32" fill="#4a3f35" stroke="#3c3129" stroke-width="2.5" transform="rotate(12, 188, 82)"/>
+    <ellipse cx="188" cy="82" rx="14" ry="22" fill="#5c5047" transform="rotate(12, 188, 82)"/>
+
+    <!-- Eyes — black, friendly, peeking through fur -->
+    <!-- Left eye -->
+    <circle cx="106" cy="110" r="10" fill="#171717"/>
+    <circle cx="103" cy="107" r="3.5" fill="#fff" opacity="0.85"/>
+    <circle cx="110" cy="113" r="1.5" fill="#fff" opacity="0.4"/>
+
+    <!-- Right eye -->
+    <circle cx="150" cy="110" r="10" fill="#171717"/>
+    <circle cx="147" cy="107" r="3.5" fill="#fff" opacity="0.85"/>
+    <circle cx="154" cy="113" r="1.5" fill="#fff" opacity="0.4"/>
+
+    <!-- Muzzle area — light fur -->
+    <ellipse cx="128" cy="148" rx="34" ry="26" fill="#f0ebe3" stroke="#3c3129" stroke-width="2"/>
+
+    <!-- Nose -->
+    <ellipse cx="128" cy="138" rx="14" ry="10" fill="url(#nose)" stroke="#111" stroke-width="1.5"/>
+    <!-- Nose highlight -->
+    <ellipse cx="124" cy="135" rx="4" ry="2.5" fill="#555" opacity="0.5"/>
+
+    <!-- Mouth line -->
+    <path d="M 118 148 Q 128 155 138 148" fill="none" stroke="#3c3129" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Tongue -->
+    <ellipse cx="128" cy="164" rx="10" ry="14" fill="url(#tongueG)" stroke="#c4555e" stroke-width="1.5"/>
+    <line x1="128" y1="156" x2="128" y2="172" stroke="#c4555e" stroke-width="1" opacity="0.5"/>
+  </g>
+</svg>

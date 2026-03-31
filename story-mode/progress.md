@@ -119,6 +119,18 @@ Update 2026-03-21 in-scene sheepdog rebuild:
 Update 2026-03-21 winter review usability pass:
 - `story-mode` already had the winter review port in place, but the overlay behaved like another dead screen on laptop-height viewports because the action row could fall below the fold.
 
+Update 2026-03-27 Phase 0 baseline check:
+- Verified `story-mode` production build passes from the current working tree with `npm run build`.
+- Verified `node --check src/ui/ui-binder.js` passes, so the earlier duplicate `zoneManager` parse blocker is no longer present in the current tree.
+- Confirmed `src/game/save.test.js` already contains the intended localStorage teardown ordering fix (`clear()` before `vi.unstubAllGlobals()`), so the code side of the save-harness repair appears to be landed.
+- Full `vitest` runs did not return usable output in this shell, so suite-level verification is still outstanding and should be rerun in a cleaner test shell before declaring Phase 0 fully complete.
+- Did not edit the root docs because `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, and `STATUS_CHECK.md` were already dirty in the repo; treat those as in-progress user-owned changes and align them only after confirming the intended working copy.
+
+TODO / next-agent suggestions:
+- Re-run `npx vitest run src/game/save.test.js` and full `npx vitest run` in a shell that produces deterministic output; capture exact pass/fail counts.
+- Once tests are confirmed, update the already-dirty root docs to reflect the now-green build baseline and the `story-mode/` toolchain reality.
+- After Phase 0 is explicitly closed, take only one new feature slice next: planner What-If / Simulate mode.
+
 Update 2026-03-22 scene/UI polish pass from live screenshot baseline:
 - Removed the clothesline wire + hanging towel from `src/scene/scenery.js` while keeping the poles. In the current camera framing they were reading as stray debug geometry across the yard.
 - Reworked row labels in `src/scene/bed-model.js` into darker pill-backed sprites with brighter text and stronger opacity so `Back (Wall)` / `Front (Access)` remain readable against the soil and gravel.

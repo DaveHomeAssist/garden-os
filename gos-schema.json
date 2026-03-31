@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://davehomeassist.github.io/garden-os/gos-schema.json",
   "title": "Garden OS Workspace",
-  "description": "Canonical schema for Garden OS workspace data. Version 1. Used by Planner, Visualizer, Scoring Map, and Export/Import.",
+  "description": "Canonical schema for Garden OS workspace data. Version 1. Used by Planner, Visualizer, Scoring Map, Export/Import, and seasonal workflow features.",
   "type": "object",
   "required": ["id", "version", "createdAt", "updatedAt", "activeBedId", "workspaceSettings", "beds"],
   "additionalProperties": false,
@@ -48,6 +48,22 @@
       "default": [],
       "description": "IDs of completed onboarding guide steps"
     },
+    "harvests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/HarvestEntry"
+      },
+      "default": [],
+      "description": "Logged harvest entries across all beds."
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExperimentRecord"
+      },
+      "default": [],
+      "description": "A/B experiment links and observations across beds."
+    },
     "exportedAt": {
       "type": "string",
       "format": "date-time",
@@ -67,15 +83,43 @@
       "properties": {
         "catFilter": {
           "type": "string",
-          "enum": ["all", "cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "flowers"],
+          "enum": ["all", "cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "companion", "flowers"],
           "default": "all",
           "description": "Active crop category filter in the left sidebar"
         },
         "rightTab": {
           "type": "string",
-          "enum": ["score", "inspect", "notes"],
+          "enum": ["dashboard", "score", "inspect", "notes", "companions", "calendar", "harvest", "experiment", "retrospective"],
           "default": "score",
           "description": "Active tab in the right sidebar"
+        },
+        "anticipation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "recentCrops": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CropKey"
+              },
+              "default": [],
+              "description": "Most recently placed crops for quick re-selection in the palette."
+            }
+          }
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["", "5", "6", "7", "8", "9", "10"],
+          "default": "",
+          "description": "Workspace-level USDA zone cache used by calendar helpers."
+        },
+        "trashBeds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TrashBedEntry"
+          },
+          "default": [],
+          "description": "Soft-deleted bed snapshots retained for recovery."
         }
       }
     },
@@ -120,6 +164,34 @@
           "type": "string",
           "default": "",
           "description": "Free-text notes for this bed"
+        },
+        "scoreHistory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScoreHistoryEntry"
+          },
+          "default": [],
+          "description": "Rolling score snapshots used by season reporting."
+        },
+        "successionPlan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SuccessionPlanEntry"
+          },
+          "default": [],
+          "description": "Queued future sowing waves for this bed."
+        },
+        "seasonBaseline": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SeasonBaseline"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Captured baseline snapshot for season-over-season comparison."
         }
       }
     },
@@ -265,7 +337,7 @@
             "oneOf": [
               {
                 "type": "string",
-                "description": "A crop key from the CROPS database (e.g., 'leaf_lettuce', 'bush_beans')"
+                "description": "A crop key from the CROPS database (e.g., 'lettuce', 'bush_beans')"
               },
               {
                 "type": "null",
@@ -277,12 +349,12 @@
         },
         "selectedCrop": {
           "type": "string",
-          "default": "leaf_lettuce",
+          "default": "lettuce",
           "description": "Currently selected crop key in the palette"
         },
         "activeTool": {
           "type": "string",
-          "enum": ["paint", "erase"],
+          "enum": ["paint", "erase", "inspect"],
           "default": "paint"
         },
         "site": {
@@ -293,7 +365,7 @@
 
     "SiteSettings": {
       "type": "object",
-      "required": ["sunHours", "orientation", "wallSide", "trellis", "season", "goal", "zone"],
+      "required": ["sunHours", "orientation", "sunDirection", "wallSide", "trellis", "season", "goal", "zone"],
       "additionalProperties": false,
       "properties": {
         "sunHours": {
@@ -308,6 +380,12 @@
           "enum": ["ew", "ns"],
           "default": "ew",
           "description": "Bed orientation: east-west or north-south"
+        },
+        "sunDirection": {
+          "type": "string",
+          "enum": ["south", "west", "east", "north"],
+          "default": "south",
+          "description": "Primary sun exposure direction for score and light interpretation."
         },
         "wallSide": {
           "type": "string",
@@ -337,6 +415,250 @@
           "enum": ["", "5", "6", "7", "8", "9", "10"],
           "default": "",
           "description": "USDA hardiness zone (optional)"
+        },
+        "plantingDate": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$",
+          "default": "",
+          "description": "Optional planting anchor date used by forecast, succession, and retrospective views."
+        }
+      }
+    },
+
+    "TrashBedEntry": {
+      "type": "object",
+      "required": ["deletedAt", "bed"],
+      "additionalProperties": false,
+      "properties": {
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bed": {
+          "$ref": "#/$defs/Bed"
+        }
+      }
+    },
+
+    "ScoreHistoryEntry": {
+      "type": "object",
+      "required": ["at", "date", "score", "plantedCount", "fillRatio", "hash"],
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "plantedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 400
+        },
+        "fillRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "hash": {
+          "type": "string"
+        }
+      }
+    },
+
+    "SuccessionPlanEntry": {
+      "type": "object",
+      "required": ["id", "cropKey", "plannedDate", "harvestStart", "harvestEnd", "sourceCellId", "note", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cropKey": {
+          "$ref": "#/$defs/CropKey"
+        },
+        "plannedDate": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "harvestStart": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "harvestEnd": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "sourceCellId": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "done"],
+          "default": "planned"
+        }
+      }
+    },
+
+    "SeasonBaseline": {
+      "type": "object",
+      "required": ["season", "plantingDate", "capturedAt", "cells", "score", "plantedCount", "notes"],
+      "additionalProperties": false,
+      "properties": {
+        "season": {
+          "type": "string",
+          "enum": ["spring", "summer", "latesummer", "fall"]
+        },
+        "plantingDate": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "capturedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/CropKey"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "plantedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 400
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+
+    "HarvestEntry": {
+      "type": "object",
+      "required": ["id", "cellId", "crop", "date", "amount", "unit", "quality", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cellId": {
+          "type": "string"
+        },
+        "crop": {
+          "$ref": "#/$defs/CropKey"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["lb", "oz", "count", "bunch", "basket"]
+        },
+        "quality": {
+          "type": "string",
+          "enum": ["excellent", "good", "fair", "poor"]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+
+    "ExperimentObservation": {
+      "type": "object",
+      "required": ["id", "bedId", "date", "score", "filled", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "bedId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "filled": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 400
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+
+    "ExperimentRecord": {
+      "type": "object",
+      "required": ["id", "aBedId", "bBedId", "variable", "createdAt", "notes", "observations"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "aBedId": {
+          "type": "string"
+        },
+        "bBedId": {
+          "type": "string"
+        },
+        "variable": {
+          "type": "string",
+          "enum": ["spacing", "mulch", "fertilizer", "variety", "sun exposure", "watering", "protection"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExperimentObservation"
+          },
+          "default": []
         }
       }
     },
@@ -378,15 +700,18 @@
       "description": "Key into the CROPS database object. See CropRecord for the full shape.",
       "enum": [
         "beit_cucumber", "slicing_cucumber", "bush_cucumber",
-        "leaf_lettuce", "head_lettuce", "spinach", "kale", "arugula", "swiss_chard",
+        "lettuce", "head_lettuce", "spinach", "kale", "arugula", "chard",
         "bok_choy", "mustard_greens", "tatsoi", "mizuna",
         "bush_beans", "pole_beans", "peas",
-        "radish", "carrots", "scallions", "beets", "turnips", "onions", "garlic",
+        "radish", "carrot", "scallion", "beet", "turnip", "onion", "garlic",
         "basil", "cilantro", "parsley", "dill", "chives",
-        "peppers", "compact_tomato", "cherry_tomato", "zucchini",
-        "eggplant",
-        "nasturtium", "marigold",
-        "compact_cabbage", "broccoli", "kohlrabi"
+        "pepper", "compact_tomato", "cherry_tom", "eggplant", "zucchini",
+        "compact_cabbage", "broccoli", "kohlrabi",
+        "marigold", "nasturtium", "wild_clover",
+        "prairie_onion", "meadow_sage",
+        "watercress", "wild_rice", "marsh_marigold",
+        "shiitake_mushroom", "wild_garlic", "woodland_strawberry",
+        "vanilla_orchid", "lemon_tree", "ghost_pepper"
       ]
     },
 
@@ -409,7 +734,7 @@
         "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Hex color for grid rendering" },
         "category": {
           "type": "string",
-          "enum": ["cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "flowers"],
+          "enum": ["cucurbit", "greens", "legume", "roots", "herbs", "fruiting", "brassica", "companion"],
           "description": "Crop category — used for filtering, companion/conflict logic, and goal scoring"
         },
         "sunMin": { "type": "number", "minimum": 0, "maximum": 12, "description": "Minimum viable sun hours" },

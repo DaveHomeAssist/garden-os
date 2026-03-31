@@ -1,5 +1,92 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
+**Last verified:** 2026-03-31
+
+## Immediate Stabilization Plan — 2026-03-31
+
+### Verified Baseline
+
+- Fresh clone path: `/Users/daverobertson/Desktop/Code/garden-os-fresh`
+- Active app surface: `story-mode/` Vite + Three.js runtime
+- `npm ci`: complete in `story-mode/`
+- `npm test`: `28` files passed, `329` tests passed, `0` failed
+- `npm run build`: succeeds and writes `dist/build-meta.json`
+- Primary published Story Mode route: `/garden-os/story-mode-live/`
+- Canonical docs now distinguish root static tools from the built `story-mode/` runtime; remaining drift is limited to lower-priority docs and inventory details
+
+### Phase 0 — Fresh Clone Recovery
+
+**Theme:** Restore a clean green baseline before any new feature work.
+**Status:** COMPLETE — 2026-03-31
+
+### 0A. Unblock Story Mode Build
+
+**What:** Remove the duplicate `zoneManager` binding in `src/ui/ui-binder.js`.
+
+**Scope:**
+- Inspect the `bindUI(...)` parameter list and downstream zone-manager wiring
+- Reuse the injected `zoneManager` or rename the local instance so the function has only one binding
+- Re-run `node --check src/ui/ui-binder.js`
+- Re-run `npm run build`
+
+**Why now:** The current source does not parse, so the flagship runtime cannot build or ship.
+
+**Deliverable:** `story-mode` builds successfully from a fresh clone.
+**Status:** complete.
+
+### 0B. Repair Save Test Harness
+
+**What:** Fix the `localStorage` teardown bug in `src/game/save.test.js`.
+
+**Scope:**
+- Stop calling `localStorage.clear()` after `vi.unstubAllGlobals()`
+- Replace the shared mock with a per-test reset path or clear the mock before unstubbing globals
+- Preserve the existing save/load assertions; do not weaken coverage
+- Re-run `npx vitest run src/game/save.test.js`
+
+**Why now:** The suite is mostly green, but the failing save tests hide whether persistence logic is healthy.
+
+**Deliverable:** All 7 save tests pass without warnings caused by the mock lifecycle.
+**Status:** complete.
+
+### 0C. Re-run Full Verification Gate
+
+**What:** Revalidate the fresh clone after the two blocking fixes.
+
+**Scope:**
+- Run `npm test`
+- Run `npm run build`
+- Confirm no new syntax or runtime warnings are introduced by the fixes
+
+**Why now:** The repo needs one trusted baseline before any additional work lands.
+
+**Deliverable:** A fresh-clone verification result with green tests and a passing production build.
+**Status:** complete.
+
+### 0D. Documentation Alignment Pass
+
+**What:** Reconcile the repo instructions after the runtime is healthy again.
+
+**Scope:**
+- Update `STATUS_CHECK.md` with the current test/build expectations if counts have drifted
+- Align public docs and nav links on `/story-mode-live/` and `system-map.html`
+- Reconcile `CLAUDE.md` with the reality documented in `docs/HANDOFF.md` so agents are not told both "no npm" and "use story-mode/"
+- Keep root-tool constraints intact for the static HTML surfaces; only clarify the `story-mode/` exception
+
+**Why now:** The current docs are internally contradictory and will keep producing bad assumptions in future sessions.
+
+**Deliverable:** One coherent instruction set for root tools vs `story-mode/`.
+**Status:** complete.
+
+### Phase 0 Exit Criteria
+
+- `src/ui/ui-binder.js` parses and builds
+- `src/game/save.test.js` passes
+- `npm test` returns green for the fresh clone
+- `npm run build` completes successfully
+- Runtime guidance for `story-mode/` is no longer in conflict across repo docs
+- Public Story Mode and System Map routes are aligned across top-level docs and nav surfaces
+
 ## Progress Log
 
 | Date | Task | Commit | Owner | Notes |
@@ -28,7 +115,7 @@
 | SCHEMA.md | 170 | — | Human-readable schema reference (new) |
 | **Total** | **9,160** | **144** | |
 
-Architecture: zero-backend, single-file HTML tools, localStorage persistence, URL hash sharing, .gos.json file export/import. 38 crops, 8 categories, 5 scoring factors (sun, support, shade, access, season) + structural bonuses + adjacency scoring. Explainable score breakdown in Inspect tab.
+Architecture: zero-backend, single-file HTML tools, localStorage persistence, URL hash sharing, .gos.json file export/import. 50 crops, 8 categories, 5 scoring factors (sun, support, shade, access, season) + structural bonuses + adjacency scoring. Explainable score breakdown in Inspect tab.
 
 ---
 
@@ -111,6 +198,8 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 
 ### 2A. Layout Simulator / What-If Mode (Week 5–7)
 
+**Status:** implemented locally — 2026-03-31
+
 **What:** Add a "Simulate" toggle that lets users try alternative layouts without overwriting their saved bed.
 
 **Scope:**
@@ -120,15 +209,17 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 - "Apply" commits the simulation to the real bed; "Discard" reverts
 - Works entirely in memory — no localStorage writes during simulation
 
-**Why now:** The planner currently has no undo and no safe way to experiment. Users are afraid to move crops because they might lose a good layout. This is the #1 UX friction point.
+**Why now:** The planner now has undo/redo, but it still needed a true scratch mode for risk-free comparison before commit. Users can now trial alternate layouts without touching saved workspace data.
 
-**Deliverable:** ~200 lines JS + CSS in planner. Uses existing `scoreBed()` for comparison.
+**Deliverable:** Planner scratch mode with Simulate / Apply / Discard controls, visible simulation styling, saved-vs-simulated score comparison, and autosave suppression during trials.
 
 **Effort:** 4–5 sessions.
 
 ---
 
 ### 2B. Garden Doctor — Symptom Triage Tool (Week 6–8)
+
+**Status:** implemented locally — 2026-03-31
 
 **What:** New single-file HTML tool. User selects symptoms → gets ranked likely causes + recommended actions.
 
@@ -149,10 +240,12 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 
 ### 2C. Yield Forecast + Harvest Window (Week 7–8)
 
+**Status:** implemented locally — 2026-03-31
+
 **What:** Add a forecast card to the planner showing estimated harvest dates and yield confidence per crop.
 
 **Scope:**
-- Add `daysToMaturity` and `yieldPerSqFt` fields to CROPS database (38 crops)
+- Add `daysToMaturity` and `yieldPerSqFt` fields to CROPS database (50 crops)
 - Calculate harvest window: planting date (user sets or defaults to season start) + days-to-maturity ± variance
 - Show per-crop forecast cards in the Score tab: "Harvest: June 12–25 (high confidence)"
 - Confidence based on: score (high score = high confidence), season fit, sun fit
@@ -167,6 +260,9 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 ---
 
 ### Phase 2 Exit Criteria
+
+**Phase 2 status: COMPLETE — 2026-03-31**
+
 - Users can simulate layout changes risk-free and see score deltas
 - Symptom triage works for the 44 existing crops with no external dependencies
 - Every planted crop shows an estimated harvest window
@@ -179,6 +275,8 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 **Theme:** Add the time dimension. Garden OS starts understanding seasons as arcs, not snapshots.
 
 ### 3A. Experiment Mode — A/B Beds (Week 9–10)
+
+**Status:** implemented locally — 2026-03-31
 
 **What:** Let users tag two beds as an "experiment" pair and track comparative outcomes.
 
@@ -200,6 +298,8 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 
 ### 3B. Succession Planting Timeline (Week 10–11)
 
+**Status:** implemented locally — 2026-03-31
+
 **What:** Visual timeline showing when to replant succession-friendly crops for continuous harvest.
 
 **Scope:**
@@ -209,7 +309,7 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 - "Add next succession" button pre-fills the planting for the next window
 - Integrates with yield forecast from Phase 2
 
-**Why now:** Succession planting is the highest-leverage technique for small raised beds, and 15 of the 38 crops are flagged `successionFriendly`. The data is there, the UI isn't.
+**Why now:** Succession planting is the highest-leverage technique for small raised beds, and 25 of the 50 crops are flagged `successionFriendly`. The data is there, the UI isn't.
 
 **Deliverable:** New panel in planner (~200 lines) or standalone `garden-succession.html`.
 
@@ -218,6 +318,8 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 ---
 
 ### 3C. Season Retrospective View (Week 11–12)
+
+**Status:** implemented locally — 2026-03-31
 
 **What:** End-of-season summary comparing planned vs actual performance.
 
@@ -237,6 +339,9 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 ---
 
 ### Phase 3 Exit Criteria
+
+**Phase 3 status: COMPLETE — 2026-03-31**
+
 - Users can run controlled A/B experiments between beds
 - Succession planting is visually planned, not manually calculated
 - Each season produces a retrospective that informs the next

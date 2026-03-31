@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1e110a" />
+  <meta name="description" content="Garden OS Story Mode: a 12-chapter raised-bed strategy game with Calvin the sheepdog, month-aware seasons, winter review, and a rebuilt 3D backyard scene." />
+  <meta property="og:title" content="Garden OS Story Mode" />
+  <meta property="og:description" content="Plan one raised bed across three years, meet Calvin and the cast, survive month-aware seasons, and use winter review to carry the garden forward." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://davehomeassist.github.io/garden-os/story-mode-live/" />
+  <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Garden OS Story Mode" />
+  <meta name="twitter:description" content="Calvin, month-aware seasons, winter review, and a rebuilt 3D South Philly backyard scene." />
+  <title>Garden OS - Story Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/garden-os/story-mode/assets/index-CnckupkB.js"></script>
+  <link rel="stylesheet" crossorigin href="/garden-os/story-mode/assets/index-B6AB-DzU.css">
+</head>
+<body>
+  <div id="app">
+    <div id="title-screen" class="title-screen">
+      <div class="title-logo">
+        <div class="title-eyebrow">Mom's Backyard</div>
+        <h1 class="title-name">Garden OS</h1>
+        <div class="title-tagline">A 12-chapter story about soil, seasons, and sauce.</div>
+      </div>
+      <div class="save-slots" id="save-slots">
+        <!-- 3 save slot cards rendered by JS -->
+      </div>
+      <div class="title-footer">
+        <div class="title-version">v0.1 &middot; Story Mode</div>
+        <div class="title-footer-actions" id="title-actions">
+          <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="Open how to play guide">
+            <span class="title-link-btn__icon">✦</span>
+            <span>How To Play</span>
+          </button>
+        </div>
+        <div class="title-modes" id="title-modes">
+          <!-- Game mode buttons rendered by JS -->
+        </div>
+      </div>
+    </div>
+    <div id="viewport"></div>
+    <div class="vignette-overlay"></div>
+    <div id="hud">
+      <div class="hud-left">
+        <button id="hud-pause" class="hud-pause-btn" aria-label="Pause menu">☰</button>
+        <span class="hud-pill season-icon" id="hud-season-icon">🌱</span>
+        <span class="hud-pill chapter" id="hud-chapter">Chapter 1</span>
+        <span class="hud-pill" id="hud-phase">Planning</span>
+        <button id="hud-action" class="hud-action-btn" type="button" aria-label="Advance to next phase">Start Season</button>
+        <span class="hud-pill tokens" id="hud-tokens" style="display:none;">
+          <span class="token-dot"></span>
+          <span class="token-dot"></span>
+          <span class="token-dot"></span>
+        </span>
+      </div>
+      <div class="hud-right">
+        <span class="hud-pill" id="hud-crops">0 / 32</span>
+        <div class="hud-score-wrap">
+          <div class="hud-score-label">Score</div>
+          <span class="hud-score" id="hud-score">--</span>
+        </div>
+      </div>
+    </div>
+    <div id="phase-dots"></div>
+    <div id="phase-helper" aria-live="polite"></div>
+    <div id="panel-container"></div>
+    <div id="overlay-container"></div>
+    <div id="cutscene-layer" aria-hidden="true">
+      <div id="dialogue-root"></div>
+    </div>
+    <div class="pause-overlay" id="pause-menu" aria-hidden="true">
+      <div class="pause-shell" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="pause-shell__top">
+          <div>
+            <div class="pause-title" id="pause-title">Garden OS</div>
+            <div class="pause-subtitle" id="pause-status">Chapter 1 · Planning</div>
+          </div>
+          <button type="button" id="pause-close" class="pause-close-btn" aria-label="Close pause menu">×</button>
+        </div>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Session</div>
+          <div class="pause-action-grid">
+            <button id="pause-resume" class="pause-action pause-action--primary" aria-label="Resume game">
+              <span class="pause-action__icon">▶</span>
+              <span>
+                <span class="pause-action__title">Resume</span>
+                <span class="pause-action__copy">Return to the garden without changing state.</span>
+              </span>
+            </button>
+            <button id="pause-main-menu" class="pause-action">
+              <span class="pause-action__icon">⌂</span>
+              <span>
+                <span class="pause-action__title">Main Menu</span>
+                <span class="pause-action__copy">Save this run and return to the title screen.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Story Archive</div>
+          <div class="pause-action-grid">
+            <button id="pause-journal" class="pause-action">
+              <span class="pause-action__icon">📖</span>
+              <span>
+                <span class="pause-action__title">Season Journal</span>
+                <span class="pause-action__copy">Read completed seasons in a clean in-app archive.</span>
+              </span>
+            </button>
+            <button id="pause-bugs" class="pause-action">
+              <span class="pause-action__icon">🦗</span>
+              <span>
+                <span class="pause-action__title">Bug Reports</span>
+                <span class="pause-action__copy">Review saved reports from this device.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="pause-section">
+          <div class="pause-section-label">Danger Zone</div>
+          <div class="pause-action-grid">
+            <button id="pause-restart" class="pause-action pause-action--danger">
+              <span class="pause-action__icon">↺</span>
+              <span>
+                <span class="pause-action__title">Restart Chapter</span>
+                <span class="pause-action__copy">Reset the current chapter and lose bed progress.</span>
+              </span>
+            </button>
+            <button id="pause-new" class="pause-action pause-action--danger">
+              <span class="pause-action__icon">🗑</span>
+              <span>
+                <span class="pause-action__title">Delete Current Save</span>
+                <span class="pause-action__copy">Erase this save slot and return to the title screen.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <div class="pause-footer-note">ESC or Close returns you to play.</div>
+      </div>
+    </div>
+    <button id="fab-bug" aria-label="Report a bug">🦗</button>
+    <div class="bug-report-panel" id="bug-panel">
+      <h3>🦗 Report a Bug</h3>
+      <div class="bug-subtitle">Saved locally on this device for later review</div>
+      <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>
+      <div class="bug-report-actions">
+        <button class="bug-btn-cancel" id="bug-cancel" aria-label="Cancel bug report">Cancel</button>
+        <button class="bug-btn-send" id="bug-send" aria-label="Submit bug report">Save Report</button>
+      </div>
+      <div class="bug-meta" id="bug-meta"></div>
+    </div>
+    <button id="fab-plant" aria-label="Open planting menu"><span aria-hidden="true">🌱</span><span>Plant</span></button>
+    <button id="fab-backpack" aria-label="Open crop backpack">🎒</button>
+    <button id="fab-advance" aria-label="Advance to next phase">Next</button>
+    <div id="toast-container"></div>
+  </div>
+</body>
+</html>

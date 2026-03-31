@@ -4,7 +4,7 @@
 
 ## Level 1 — Quick (About Us)
 
-Garden OS is a free, browser-based raised bed garden planner. Tell it your bed size, sun exposure, and zone — it scores every placement and explains why. No account, no install, no backend. Works offline. Includes a 12-chapter narrative game, build guides for cage construction, and seasonal ops checklists. Everything runs from a single HTML file and stays on your device.
+Garden OS is a free, browser-based raised bed garden planner. Tell it your bed size, sun exposure, and zone — it scores every placement and explains why. No account, no install, no backend. Works offline. Includes a 12-chapter narrative game, build guides for cage construction, and seasonal ops checklists. Most of the suite runs as direct HTML files, and Story Mode ships as a built browser app. Everything stays on your device.
 
 ---
 
@@ -17,18 +17,19 @@ Garden OS is a collection of free, browser-based tools for planning and maintain
 ### The Tools
 
 - **Garden Planner v4.3** — Drag crops into an 8x4 grid. Real-time scoring with factor breakdowns. Export your plan as a file you own.
-- **Season Engine v3** — A 12-chapter narrative strategy game where you inherit a raised bed, survive weather events, earn interventions, and work toward completing Mom's sauce recipe across three growing years.
+- **Story Mode** — A 12-chapter narrative garden game with a Three.js scene, chapter intros, interventions, winter review, and carry-forward state.
+- **Legacy Season Engine v4** — Earlier deterministic season sandbox that remains live as a reference and fallback simulator.
 - **Build Guide** — Step-by-step interactive construction specs for building a cattle panel garden cage with trellis.
 - **Ops Guide** — Seasonal maintenance checklist organized by month and task type.
 - **How It Thinks** — A plain-English walkthrough of how the planner scores placements, written for people who don't care about algorithms but want to understand the advice.
 
 ### How It Works
 
-You open any tool in your browser. No download, no sign-up, no server. Your data saves to your device automatically and can be exported as a `.gos.json` file. Every tool is a single self-contained HTML file — no build step, no dependencies, no infrastructure. Works in Chrome, Safari, Firefox, and Edge. Works offline once loaded.
+You open any tool in your browser. No download, no sign-up, no server. Your data saves to your device automatically and can be exported as a `.gos.json` file. Root tools are self-contained HTML files; Story Mode is built from `story-mode/` with Vite and published as a static bundle. Works in Chrome, Safari, Firefox, and Edge. Works offline once loaded.
 
 ### Who It's For
 
-It was built for a specific person — a mom with a backyard raised bed who wants help figuring out what goes where. But the scoring engine is real: 6 weighted factors, deterministic light modeling, adjacency analysis, soil fatigue tracking, and seasonal multipliers across 20 crops and 8 factions. It's approachable on the surface and precise underneath.
+It was built for a specific person — a mom with a backyard raised bed who wants help figuring out what goes where. But the scoring engine is real: 6 weighted factors, deterministic light modeling, adjacency analysis, soil fatigue tracking, and seasonal multipliers across 50 crops and 8 factions. It's approachable on the surface and precise underneath.
 
 ### What Makes It Different
 
@@ -40,28 +41,29 @@ Most garden planners generate a layout and leave you to trust it. Garden OS expl
 
 ### Identity
 
-Garden OS is a zero-backend, browser-native raised bed garden planning system. Every tool is a single self-contained HTML file deployed via GitHub Pages. No build step, no package manager, no framework, no runtime dependencies. Architecture: vanilla HTML/CSS/JS → localStorage persistence → `.gos.json` file export/import → JSON Schema validation. Offline-capable after first load.
+Garden OS is a zero-backend, browser-native raised bed garden planning system. Most tools are single self-contained HTML files deployed from repo root; Story Mode is a Vite + Three.js runtime built from `story-mode/` and published as a static bundle. Architecture: root HTML/CSS/JS tools + `story-mode/` runtime → localStorage/file persistence → JSON Schema/spec validation. Offline-capable after first load.
 
 **Repository:** `github.com/DaveHomeAssist/garden-os`
 **Live:** `davehomeassist.github.io/garden-os/`
-**Version:** Planner v4.3, Season Engine v3
-**Status:** Phase 1 complete. Phase 2-3 roadmapped.
+**Version:** Planner v4.3, Story Mode v0.1
+**Status:** Phase 0 stabilization complete. Phase 2-3 roadmapped.
 
 ### Tool Inventory
 
 The site uses a two-track navigation system:
 
-**User Track** (nav: Home → Play Game → Planner → Build Guide → Ops Guide → How It Thinks → Dev Tools →)
+**User Track** (nav: Home → Story Mode → Planner → Build Guide → Ops Guide → How It Thinks → Dev Tools →)
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Hub page — Mom's Sanctuary. Card-based launcher for all user tools. |
+| `index.html` | Hub page — launcher for Story Mode, planner, guides, and dev tools. |
+| `story-mode-live/` | Published Story Mode build. Vite + Three.js narrative runtime generated from `story-mode/`. |
 | `garden-planner-v4.html` | Core planner. 8x4 grid, drag-to-place crops, real-time scoring with per-cell factor breakdown, adjacency analysis, export/import as `.gos.json`. |
-| `garden-league-simulator-v3.html` | 12-chapter narrative game. State machine with 8 phases per season. 4 character voices, 40-card event deck, intervention system, carry-forward mechanics. |
+| `garden-league-simulator-v4.html` | Legacy deterministic season sandbox / predecessor to Story Mode. |
 | `garden-cage-build-guide.html` | Interactive construction guide for a cattle panel garden cage. Materials lists, assembly sequence, measurements. |
 | `garden-cage-ops-guide.html` | Seasonal ops checklist. Monthly breakdown of planting, maintenance, harvest, and defense tasks. |
 | `how-it-thinks.html` | Plain-English scoring explanation. Uses everyday analogies to explain the 6 scoring factors. |
-| `home.html` | Alternate marketing home page (test variant). |
+| `home.html` | Compatibility alias that redirects to `index.html`. |
 
 **Dev Track** (nav: ← Garden → Visualizer → Scoring Map → Fairness Tester → System Map → Topology)
 
@@ -87,9 +89,9 @@ The site uses a two-track navigation system:
 
 ### Data Model
 
-**20 crops** across **8 factions** (Climbers, Fast Cycles, Brassicas, Roots, Greens, Herbs, Fruiting, Companions). Each crop record includes: `id`, `name`, `emoji`, `faction`, `sunMin`, `sunIdeal`, `support` (boolean), `shadeScore` (1-5), `coolSeason` (boolean), `tall` (boolean), `water` (1-3), `companions[]`, `conflicts[]`, `chapterUnlock`, `recipes[]`, `eventVulnerabilities[]`, `seasonalMultipliers` (per-season 0-1 floats).
+**50 crops** across **8 factions** (Climbers, Fast Cycles, Brassicas, Roots, Greens, Herbs, Fruiting, Companions). Each crop record includes: `id`, `name`, `emoji`, `faction`, `sunMin`, `sunIdeal`, `support` (boolean), `shadeScore` (1-5), `coolSeason` (boolean), `tall` (boolean), `water` (1-3), `companions[]`, `conflicts[]`, `chapterUnlock`, `recipes[]`, `eventVulnerabilities[]`, `seasonalMultipliers` (per-season 0-1 floats).
 
-**4 recipes:** Herb Bowl, Tomato Sandwich, Weeknight Pasta, Mom's Sauce (the narrative climax).
+**Recipes:** 7 campaign recipes + 5 hidden Mom recipes.
 
 **Canonical data source:** `/specs/CROP_SCORING_DATA.json`
 **Schema:** `/gos-schema.json` (JSON Schema v2020-12, 490 lines)
@@ -149,13 +151,13 @@ Computed at runtime from CageConfig. `isTrellisRow` (from climb zones), `hasVert
 
 ### Deployment
 
-GitHub Pages. Push to `main` → auto-deploys via `.github/workflows/pages.yml`. No build step. Entire repo root served. Local testing: `python3 -m http.server 8000`.
+GitHub Pages. Push to `main` → auto-deploys via `.github/workflows/pages.yml`. Root HTML tools are served directly from repo root. Story Mode builds from `story-mode/` and is copied to `story-mode-live/`. Local testing: `python3 -m http.server 8000` for root tools, `cd story-mode && npm run dev` for Story Mode.
 
 ### Spec & Doc Index
 
 | Path | Content |
 |------|---------|
-| `/specs/CROP_SCORING_DATA.json` | 20 crops, 8 factions, recipes, vulnerabilities |
+| `/specs/CROP_SCORING_DATA.json` | 50 crops, 8 factions, recipes, vulnerabilities |
 | `/specs/SCORING_RULES.md` | Complete deterministic scoring algorithm |
 | `/specs/SEASON_ENGINE_SPEC.md` | State machine, phases, carry-forward |
 | `/specs/NARRATIVE_SPEC.md` | 12 chapters, score targets, story beats |
@@ -181,4 +183,4 @@ GitHub Pages. Push to `main` → auto-deploys via `.github/workflows/pages.yml`.
 
 ### Roadmap
 
-Phase 1 complete. Phase 2 (days 31-60): layout simulator, garden doctor, yield forecast, difficulty presets. Phase 3 (days 61-90): A/B bed experiments, succession planting timeline, season retrospective with print.
+Phase 0 stabilization is complete. Next major product phase is Phase 2 (days 31-60): layout simulator, garden doctor, yield forecast, difficulty presets. Phase 3 (days 61-90): A/B bed experiments, succession planting timeline, season retrospective with print.
