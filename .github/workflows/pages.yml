@@ -35,9 +35,8 @@ jobs:
 
       - name: Stage Story Mode for Pages
         run: |
-          rm -rf story-mode/node_modules story-mode/src story-mode/package*.json story-mode/vite.config.js
-          mv story-mode/dist/* story-mode/
-          rmdir story-mode/dist
+          cp -rf story-mode/dist/* story-mode/
+          rm -rf story-mode/dist story-mode/node_modules story-mode/src story-mode/package*.json story-mode/vite.config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
