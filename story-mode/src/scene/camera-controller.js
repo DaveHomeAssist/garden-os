@@ -40,8 +40,11 @@ export function createCameraController(camera, domElement) {
   }
 
   // Touch/mouse orbit
+  // For touch events, only start orbit if touch is in the right 60% of the screen.
+  // This leaves the left 40% free for the virtual joystick.
   const onPointerDown = (e) => {
     if (e.pointerType === 'touch' && e.isPrimary) {
+      if (e.clientX < window.innerWidth * 0.4) return;
       isDragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -140,6 +143,12 @@ export function createCameraController(camera, domElement) {
         target.lerp(followTarget, followStrength);
         updateOrbit();
       }
+    },
+    applyOrbitDelta(dTheta, dPhi) {
+      theta -= dTheta;
+      phi = Math.max(0.48, Math.min(1.34, phi - dPhi));
+      targetPose = null;
+      updateOrbit();
     },
     getTarget() { return target; },
     dispose() {

@@ -38,10 +38,16 @@ export function saveCampaign(campaign, slot) {
   };
   const toSave = {
     ...campaign,
-    version: 3,
+    version: 4,
     questLog: { ...(campaign.questLog ?? {}) },
     reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },
     worldState,
+    beds: campaign.beds ?? {},
+    activeBedId: campaign.activeBedId ?? 'player_plot',
+    biomeCropsUnlocked: Array.isArray(campaign.biomeCropsUnlocked)
+      ? [...campaign.biomeCropsUnlocked]
+      : [],
+    gameMode: campaign.gameMode ?? 'story',
     updatedAt: new Date().toISOString(),
   };
   try {
@@ -61,7 +67,7 @@ export function loadCampaign(slot) {
     const version = parsed.version ?? 1;
     return {
       ...parsed,
-      version: Math.max(3, version),
+      version: 4,
       questLog: parsed.questLog ?? {},
       reputation: { ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
       worldState: {
@@ -69,6 +75,12 @@ export function loadCampaign(slot) {
         ...(parsed.worldState ?? {}),
         visitedZones: [...new Set(parsed.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
       },
+      beds: parsed.beds ?? {},
+      activeBedId: parsed.activeBedId ?? 'player_plot',
+      biomeCropsUnlocked: Array.isArray(parsed.biomeCropsUnlocked)
+        ? [...parsed.biomeCropsUnlocked]
+        : [],
+      gameMode: parsed.gameMode ?? 'story',
     };
   } catch {
     return null;

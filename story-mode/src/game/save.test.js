@@ -23,13 +23,13 @@ const localStorageMock = (() => {
 })();
 
 beforeEach(() => {
+  localStorageMock.clear();
   vi.stubGlobal('localStorage', localStorageMock);
-  localStorage.clear();
 });
 
 afterEach(() => {
+  localStorageMock.clear();
   vi.unstubAllGlobals();
-  localStorage.clear();
 });
 
 describe('save', () => {
@@ -46,7 +46,7 @@ describe('save', () => {
     expect(loaded.questLog.gus_tomatoes.state).toBe('ACCEPTED');
     expect(loaded.reputation.old_gus).toBe(20);
     expect(loaded.worldState.currentZone).toBe('neighborhood');
-    expect(loaded.version).toBe(3);
+    expect(loaded.version).toBe(4);
   });
 
   it('applies defaults when loading an old-format save', () => {
@@ -97,5 +97,49 @@ describe('save', () => {
     const loaded = loadSeasonState(0);
     expect(loaded.grid.cols).toBe(8);
     expect(loaded.grid.rows).toBe(6);
+  });
+
+  it('v3 save migrates to v4 with new fields', () => {
+    // Simulate a v3 save that lacks beds, activeBedId, biomeCropsUnlocked, gameMode
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify({
+      version: 3,
+      currentChapter: 3,
+      currentSeason: 'fall',
+      questLog: { quest_a: { state: 'ACCEPTED' } },
+      reputation: { old_gus: 10 },
+      worldState: { currentZone: 'player_plot', visitedZones: ['player_plot'] },
+    }));
+
+    const loaded = loadCampaign(0);
+
+    expect(loaded.version).toBe(4);
+    expect(loaded.beds).toEqual({});
+    expect(loaded.activeBedId).toBe('player_plot');
+    expect(loaded.biomeCropsUnlocked).toEqual([]);
+    expect(loaded.gameMode).toBe('story');
+    // Existing fields preserved
+    expect(loaded.currentChapter).toBe(3);
+    expect(loaded.questLog.quest_a.state).toBe('ACCEPTED');
+  });
+
+  it('v4 save round-trips beds and biome crops', () => {
+    const state = createGameState();
+    state.campaign.beds = {
+      forest_bed: { gridCols: 6, gridRows: 3, grid: [], biome: 'forest_edge' },
+    };
+    state.campaign.activeBedId = 'forest_bed';
+    state.campaign.biomeCropsUnlocked = ['wild_garlic', 'shiitake_mushroom'];
+    state.campaign.gameMode = 'sandbox';
+
+    saveCampaign(state.campaign, 1);
+    const loaded = loadCampaign(1);
+
+    expect(loaded.version).toBe(4);
+    expect(loaded.beds).toEqual({
+      forest_bed: { gridCols: 6, gridRows: 3, grid: [], biome: 'forest_edge' },
+    });
+    expect(loaded.activeBedId).toBe('forest_bed');
+    expect(loaded.biomeCropsUnlocked).toEqual(['wild_garlic', 'shiitake_mushroom']);
+    expect(loaded.gameMode).toBe('sandbox');
   });
 });

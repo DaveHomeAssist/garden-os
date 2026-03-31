@@ -19,6 +19,12 @@ export function getCropsForChapter(chapter) {
   return ALL_CROPS.filter(c => c.chapterUnlock <= chapter);
 }
 
+export function getAvailableCrops(chapter, biomeCropsUnlocked = []) {
+  const byChapter = new Set(getCropsForChapter(chapter).map(c => c.id));
+  const byBiome = new Set(biomeCropsUnlocked);
+  return ALL_CROPS.filter(c => byChapter.has(c.id) || byBiome.has(c.id));
+}
+
 export function getCropsByFaction(faction) {
   return ALL_CROPS.filter(c => c.faction === faction);
 }

@@ -574,3 +574,60 @@ TODO / next-agent suggestions:
     - keep this work off the `1G` write path while tool mechanics are being built elsewhere
   - Validation:
     - `node --check story-mode/src/main.js` passed
+
+- 2026-03-31 planner roadmap completion pass in `garden-os-fresh`:
+  - Completed Phase 2B with new standalone `garden-doctor.html`:
+    - crop + season selector tied to planner crop families
+    - 12 symptom toggles
+    - ranked symptom triage with static rule scoring and ops-guide deep links
+  - Completed Phase 2C in `garden-planner-v4.html`:
+    - added planting-date input to site settings
+    - augmented crop production metadata with `daysToMaturity`, `yieldPerSqFt`, and `yieldUnit`
+    - added score-tab harvest forecast cards plus horizontal harvest-window timeline
+  - Completed Phase 3A in `garden-planner-v4.html`:
+    - experiment pair persistence in workspace state
+    - A/B bed comparison panel with controlled-variable tagging, score deltas, and dated observation logging
+  - Completed Phase 3B in `garden-planner-v4.html`:
+    - succession timeline panel under calendar
+    - staged next-wave queue stored on the active bed
+  - Completed Phase 3C in `garden-planner-v4.html`:
+    - auto-captured season baseline per bed
+    - score history snapshots
+    - season retrospective panel + printable report
+  - Navigation updates:
+    - added Garden Doctor links in `index.html`, `garden-planner-v4.html`, `garden-cage-build-guide.html`, and `garden-cage-ops-guide.html`
+  - Validation:
+    - `git diff --check` passed for touched Garden OS files
+    - inline script syntax passed for `garden-planner-v4.html` and `garden-doctor.html`
+    - local static serving returned `200 OK` for `garden-planner-v4.html`, `garden-doctor.html`, and `index.html`
+    - local Playwright runtime pass succeeded against the served pages:
+      - doctor page returned 5 ranked diagnoses for `compact_tomato` + `spots` + `poor_fruit_set`; first result `Blossom-end rot`
+      - planner surfaced planting-date field, forecast cards, succession card, experiment panel, retrospective panel, and 2-bed workspace after duplicate-bed flow
+      - browser console/page error capture returned no errors
+
+Follow-up cleanup:
+- Aligned `gos-schema.json` with the persisted planner workspace shape:
+  - added `harvests` and `experiments` at the workspace level
+  - expanded `workspaceSettings` to cover `anticipation`, `zone`, and soft-delete recovery entries
+  - added bed-level `scoreHistory`, `successionPlan`, and `seasonBaseline`
+  - updated planner/site enums for `inspect`, `sunDirection`, `plantingDate`, and extended right-pane tabs
+- Cleared the Story Mode `picomatch` advisory by updating `story-mode/package-lock.json` to `picomatch@4.0.4`
+- Validation:
+  - `npm audit --audit-level=high` returned `0 vulnerabilities`
+  - `npm run build` succeeded in `story-mode/`
+
+Remaining operational risk:
+- `garden-os-fresh` still has a dirty mixed worktree from prior sessions, so release/deploy should still be cut deliberately rather than assumed clean.
+
+- 2026-03-31 release finalization pass in `garden-os-fresh`:
+  - synced `story-mode-live/` from the freshly verified `story-mode/dist` output so the committed publish bundle matches the current Vite build artifact
+  - fixed `manifest.json` route drift:
+    - `start_url` now points to `/garden-os/index.html`
+    - Story Mode shortcut now points to `/garden-os/story-mode-live/`
+  - Validation:
+    - `git diff --check` passed
+    - `gos-schema.json` and `manifest.json` parsed successfully
+    - `npm test` in `story-mode/` passed with 28 files / 329 tests
+    - `npm run build` in `story-mode/` passed
+    - `npm audit --audit-level=high` in `story-mode/` returned 0 vulnerabilities
+    - local HEAD checks returned `200` for `/garden-os/index.html`, `/garden-os/home.html`, `/garden-os/garden-planner-v4.html`, `/garden-os/garden-doctor.html`, and `/garden-os/story-mode-live/`

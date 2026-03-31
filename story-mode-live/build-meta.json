@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "builtAt": "2026-03-31T08:47:46.082Z",
+  "builtAtMs": 1774946866082,
+  "sourceLatestMtime": "2026-03-31T08:47:17.680Z",
+  "sourceLatestMtimeMs": 1774946837680.1216,
+  "sourceInputs": [
+    "src",
+    "assets",
+    "index.html",
+    "package.json",
+    "vite.config.js"
+  ]
+}

@@ -10,7 +10,7 @@ import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { createPlayerCharacter } from './player-character.js';
 import { ResourceTracker } from './resource-tracker.js';
-import { loadSprites, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
+import { loadSprites, getMissingAssets, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
 
@@ -508,7 +508,20 @@ export function createGardenScene(container) {
   root.add(scenery.group);
 
   // Load sprite textures (async, non-blocking — accents appear once loaded)
-  loadSprites().catch(() => { /* missing assets handled silently by sprite-loader */ });
+  loadSprites().then(() => {
+    const missing = getMissingAssets();
+    if (missing.length > 0) {
+      const toast = document.getElementById('toast-container');
+      if (toast) {
+        const el = document.createElement('div');
+        el.className = 'toast-notification toast--info';
+        el.textContent = `${missing.length} sprite${missing.length === 1 ? '' : 's'} unavailable \u2014 some visuals may be simplified`;
+        toast.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('is-visible'));
+        setTimeout(() => { el.classList.remove('is-visible'); setTimeout(() => el.remove(), 300); }, 4000);
+      }
+    }
+  }).catch(() => {});
 
   // ── Creature meshes ──────────────────────────────────────────────────────
   // Cat silhouette on fence
@@ -2912,12 +2925,17 @@ function getGrowthScale(phase, season) {
       dayNight.setEnabled(Boolean(enabled));
     },
     setCameraPreset,
+    applyCameraOrbitDelta(dTheta, dPhi) {
+      camCtrl.applyOrbitDelta(dTheta, dPhi);
+    },
     applyMood,
     resetMood,
     pulseEventFocus,
     playSceneCue,
     weather,
     dayNight,
+    getRenderer() { return renderer; },
+    getResourceTracker() { return resourceTracker; },
     dispose() {
       disposeGardenScene({
         container,

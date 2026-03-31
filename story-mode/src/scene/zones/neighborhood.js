@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SEASON_PALETTE, applyBase } from './season-palette.js';
 
 import { getNPCsInZone } from '../../data/npcs.js';
 
@@ -154,6 +155,10 @@ export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone
     destination: 'player_plot',
   });
 
+  // Collect tree crowns for seasonal recoloring
+  const crowns = root.children.filter(c => c.isGroup && c.children.length === 2)
+    .map(g => g.children.find(m => m.geometry?.type === 'ConeGeometry')).filter(Boolean);
+
   tracker.track(root);
 
   let time = 0;
@@ -161,6 +166,14 @@ export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone
     scene,
     camera,
     interactables,
+    setSeason(s) {
+      const season = s || 'spring';
+      applyBase(this, season, ground, hemi, scene.fog);
+      crowns.forEach(c => {
+        c.material.color.setHex(SEASON_PALETTE.foliage[season]);
+        c.visible = season !== 'winter';
+      });
+    },
     update(dt) {
       time += dt;
       root.children.forEach((child) => {

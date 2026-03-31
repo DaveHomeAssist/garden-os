@@ -11,14 +11,14 @@ Garden OS status check. Report the following:
 
 1. **Branch & dirty state** — current branch, uncommitted file count, any stashed work
 2. **Last 5 commits** — one-line format
-3. **Test health** — run `npx vitest run` from `story-mode/`, report pass/fail/skip counts
-4. **Build health** — run `npx vite build` from `story-mode/`, report success or errors
+3. **Test health** — run `npm test` from `story-mode/`, report pass/fail/skip counts
+4. **Build health** — run `npm run build` from `story-mode/`, report success or errors
 5. **Sandbox mode** — does `state.js` export `createSandboxState`? Is it wired into `game-init.js`?
 6. **Sky rendering** — check `garden-scene.js` sky canvas: does `fillRect` width match `skyCanvas.width`?
 7. **Open UX items** — grep for `TODO|FIXME|HACK` across `src/ui/` and `src/scene/`
 8. **Spec drift** — count crops in `CROP_SCORING_DATA.json` vs what `getCropsForChapter(12)` returns. Match?
 
-Working directory: garden-os-windows/story-mode/
+Working directory: `<repo-root>/story-mode/`
 ```
 
 ---
@@ -27,8 +27,8 @@ Working directory: garden-os-windows/story-mode/
 
 ```
 Branch: main (clean)
-Tests:  17 passed, 107 green, 0 failed
-Build:  vite build success
+Tests:  28 files passed, 329 tests passed, 0 failed
+Build:  npm run build success
 Sky:    fillRect covers full canvas width
 Specs:  crop count matches
 ```

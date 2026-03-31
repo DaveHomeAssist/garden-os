@@ -234,7 +234,7 @@ Garden OS should be mapped as:
 - **shared resources stored by scope, not by version label**
 - and **specs/docs as the actual canonical backbone**
 
-That is the clearest description of the repo as it exists on 2026-03-23.
+That is the clearest description of the repo as it exists on 2026-03-31.
 
 ---
 
@@ -245,7 +245,7 @@ That is the clearest description of the repo as it exists on 2026-03-23.
 | Node | Runtime | File | Lines | Description |
 |------|---------|------|-------|-------------|
 | Hub | Root | `index.html` | 409 | Public launcher with Story Mode as primary CTA |
-| Story Mode | Vite | `story-mode/` | app | Three.js 3D garden, HUD, dialogue, panels |
+| Story Mode | Vite | `story-mode-live/` | app | Published Three.js 3D garden, HUD, dialogue, panels built from `story-mode/` |
 | Planner v4.3 | Root | `garden-planner-v4.html` | 6,076 | Grid UI, scoring panel, export/import |
 | Legacy Sandbox | Root | `garden-league-simulator-v4.html` | 2,971 | Chapter-based season sandbox |
 | Build Guide | Root | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |

@@ -6,6 +6,7 @@ import {
   createSeasonState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
+  getAvailableGridSizes,
   getGridCols,
   getGridRows,
   GRID_UNLOCKS,
@@ -87,6 +88,13 @@ const Actions = {
   REPAIR_TOOL: 'REPAIR_TOOL',
   FORAGE: 'FORAGE',
   EXPAND_GRID: 'EXPAND_GRID',
+  UNLOCK_BIOME_CROP: 'UNLOCK_BIOME_CROP',
+  SET_GAME_MODE: 'SET_GAME_MODE',
+  SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
+  ACQUIRE_BED: 'ACQUIRE_BED',
+  SWITCH_BED: 'SWITCH_BED',
+  EXPAND_BED_GRID: 'EXPAND_BED_GRID',
+  SET_TOKENS: 'SET_TOKENS',
 };
 
 function cloneValue(value) {
@@ -108,7 +116,11 @@ function normalizeGrid(grid, fallbackGrid, cols, rows) {
   const sourceCells = Array.isArray(grid?.cells)
     ? grid.cells
     : (Array.isArray(grid) && grid.length ? grid : fallbackGrid);
-  const nextGrid = sourceCells.map((cell) => normalizeCell(cell));
+  const targetCount = cols * rows;
+  const nextGrid = [];
+  for (let i = 0; i < targetCount; i++) {
+    nextGrid.push(normalizeCell(sourceCells[i] ?? {}));
+  }
   return attachGridMeta(nextGrid, cols, rows);
 }
 
@@ -136,9 +148,15 @@ function normalizeCampaign(rawCampaign) {
     cropsUnlocked: cloneArray(campaign.cropsUnlocked ?? fallbackCampaign.cropsUnlocked),
     journalEntries: cloneArray(campaign.journalEntries),
     seenCutsceneIds: cloneArray(campaign.seenCutsceneIds),
-    soilHealth: Array.isArray(campaign.soilHealth)
-      ? [...campaign.soilHealth]
-      : [...fallbackCampaign.soilHealth],
+    soilHealth: (() => {
+      const base = Array.isArray(campaign.soilHealth) ? [...campaign.soilHealth] : [...fallbackCampaign.soilHealth];
+      const gardeningLevel = (normalizeSkillsState(campaign.skills ?? {})).gardening?.level ?? 1;
+      const sizes = getAvailableGridSizes(campaign.currentChapter ?? 1, gardeningLevel);
+      const best = sizes[sizes.length - 1];
+      const needed = best ? best.cols * best.rows : base.length;
+      while (base.length < needed) base.push(1.0);
+      return base;
+    })(),
     previousGrid: Array.isArray(campaign.previousGrid)
       ? campaign.previousGrid.map((cell) => normalizeCell(cell))
       : null,
@@ -157,14 +175,27 @@ function normalizeCampaign(rawCampaign) {
     skillXp: getSkillXpMap(skills),
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
+    tokens: Number(campaign.tokens ?? fallbackCampaign.tokens ?? 0),
+    beds: cloneValue(campaign.beds ?? fallbackCampaign.beds ?? {}),
+    activeBedId: campaign.activeBedId ?? fallbackCampaign.activeBedId ?? 'player_plot',
   };
 }
 
 function normalizeSeason(rawSeason, campaign) {
   const chapter = rawSeason?.chapter ?? campaign.currentChapter ?? 1;
   const seasonId = rawSeason?.season ?? campaign.currentSeason ?? 'spring';
-  const gridCols = rawSeason?.gridCols ?? rawSeason?.grid?.cols ?? 8;
-  const gridRows = rawSeason?.gridRows ?? rawSeason?.grid?.rows ?? 4;
+  let gridCols = rawSeason?.gridCols ?? rawSeason?.grid?.cols ?? 8;
+  let gridRows = rawSeason?.gridRows ?? rawSeason?.grid?.rows ?? 4;
+
+  // Legacy grid migration: expand grid if chapter warrants larger size
+  const gardeningLevel = campaign.skills?.gardening?.level ?? 1;
+  const available = getAvailableGridSizes(chapter, gardeningLevel);
+  const best = available[available.length - 1];
+  if (best && (best.cols > gridCols || best.rows > gridRows)) {
+    gridCols = Math.max(gridCols, best.cols);
+    gridRows = Math.max(gridRows, best.rows);
+  }
+
   const fallbackSeason = createSeasonState(chapter, seasonId, campaign, gridCols, gridRows);
   const season = rawSeason ?? {};
 
@@ -741,6 +772,17 @@ function gameReducer(state, action = {}) {
       return nextState;
     }
 
+    case Actions.UNLOCK_BIOME_CROP: {
+      const cropId = payload.cropId;
+      if (!cropId) return state;
+      const nextState = cloneGameState(state);
+      const unlocked = new Set(nextState.campaign.biomeCropsUnlocked ?? []);
+      if (unlocked.has(cropId)) return state;
+      unlocked.add(cropId);
+      nextState.campaign.biomeCropsUnlocked = [...unlocked];
+      return nextState;
+    }
+
     case Actions.AWARD_KEEPSAKE:
       return awardKeepsakeToState(state, payload.awarded ?? payload.keepsake, payload.includeSeasonQueue !== false);
 
@@ -805,6 +847,70 @@ function gameReducer(state, action = {}) {
       nextSeason.campaign = nextState.campaign;
       nextState.season = nextSeason;
       nextState.selectedCropId = payload.selectedCropId ?? null;
+      return nextState;
+    }
+
+    case Actions.SET_GAME_MODE: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.gameMode = payload.mode;
+      return nextState;
+    }
+
+    case Actions.SET_ACTIVE_TOOL: {
+      const nextState = cloneGameState(state);
+      nextState.season.activeTool = payload.toolId;
+      return nextState;
+    }
+
+    case Actions.ACQUIRE_BED: {
+      const { bedId, bed } = payload;
+      if (!bedId || !bed) return state;
+      const nextState = cloneGameState(state);
+      nextState.campaign.beds = {
+        ...(nextState.campaign.beds ?? {}),
+        [bedId]: cloneValue(bed),
+      };
+      return nextState;
+    }
+
+    case Actions.SWITCH_BED: {
+      const { bedId } = payload;
+      if (!bedId) return state;
+      const nextState = cloneGameState(state);
+      if (!nextState.campaign.beds?.[bedId]) return state;
+      nextState.campaign.activeBedId = bedId;
+      return nextState;
+    }
+
+    case Actions.EXPAND_BED_GRID: {
+      const { bedId, rows: newRows } = payload;
+      if (!bedId || !Number.isInteger(newRows)) return state;
+      const nextState = cloneGameState(state);
+      const bed = nextState.campaign.beds?.[bedId];
+      if (!bed) return state;
+
+      const currentRows = bed.gridRows ?? 4;
+      const currentCols = bed.gridCols ?? 8;
+      const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
+
+      if (newRows <= currentRows || newRows > maxRows) return state;
+
+      const newGrid = createGrid(currentCols, newRows);
+      // Copy existing cell data into the new grid
+      const oldGrid = bed.grid ?? [];
+      for (let i = 0; i < oldGrid.length; i++) {
+        newGrid[i] = { ...newGrid[i], ...oldGrid[i] };
+      }
+
+      bed.grid = attachGridMeta(newGrid, currentCols, newRows);
+      bed.gridRows = newRows;
+      bed.gridCols = currentCols;
+      return nextState;
+    }
+
+    case Actions.SET_TOKENS: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.tokens = Math.max(0, Number(payload.tokens ?? 0));
       return nextState;
     }
 
