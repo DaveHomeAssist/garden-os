@@ -126,6 +126,20 @@ Update 2026-03-27 Phase 0 baseline check:
 - Full `vitest` runs did not return usable output in this shell, so suite-level verification is still outstanding and should be rerun in a cleaner test shell before declaring Phase 0 fully complete.
 - Did not edit the root docs because `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, and `STATUS_CHECK.md` were already dirty in the repo; treat those as in-progress user-owned changes and align them only after confirming the intended working copy.
 
+Update 2026-04-02 shared-theme + live-preview consolidation:
+- Linked `story-mode/index.html` to the repo-level `garden-os-theme.css` and moved Story Mode toward shared alias tokens instead of maintaining a fully separate surface vocabulary.
+- Added shared artifact/kicker/stamp helper classes plus alias variables in `garden-os-theme.css` so planner and Story Mode can converge on the same paper/journal primitives.
+- Patched `scripts/local-dist-transform-server.mjs` to serve both `/garden-os/story-mode-live/...` and Vite's emitted `/garden-os/story-mode/...` asset paths from the same `dist/` tree, which fixes the prior local-preview 404 mismatch after builds.
+- Validation:
+  - `npm run build` passed on 2026-04-02 after the shared-theme import and preview-server patch.
+  - `curl -I http://127.0.0.1:4174/garden-os/story-mode-live/` returned `200`.
+  - `curl -I http://127.0.0.1:4174/garden-os/story-mode/` returned `200`.
+  - `curl -I` against emitted JS assets under `/garden-os/story-mode/assets/...` returned `200`, confirming dynamic-import/base-path compatibility on the local preview server.
+- Remaining blockers:
+  - Full `vitest` still needs a deterministic shell; Phase 0 test closure is still open.
+  - Browser-tool visual QA is still limited by the current Playwright MCP environment, so final headed/manual sign-off remains outstanding.
+  - Shared visual tokens now exist, but planner and Story Mode still carry large local CSS blocks; a true token cleanup pass is still a separate refactor, not done by this patch.
+
 TODO / next-agent suggestions:
 - Re-run `npx vitest run src/game/save.test.js` and full `npx vitest run` in a shell that produces deterministic output; capture exact pass/fail counts.
 - Once tests are confirmed, update the already-dirty root docs to reflect the now-green build baseline and the `story-mode/` toolchain reality.

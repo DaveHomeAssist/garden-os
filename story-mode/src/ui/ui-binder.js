@@ -996,6 +996,9 @@ function bindUI({
   }
 
   function updateHUD() {
+    document.body.dataset.storyScreen = 'play';
+    document.body.dataset.season = state.season.season ?? 'spring';
+    document.body.dataset.phase = state.season.phase ?? '';
     scene.setScenePhase?.(cutsceneMachine.isActive() ? 'CUTSCENE' : state.season.phase);
     syncWorldInteractables();
 

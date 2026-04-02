@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="var(--soil)">
+<link rel="stylesheet" href="garden-os-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root {
@@ -1622,6 +1623,45 @@
 
   /* ═══ PLANNER SHELL v5 — Section 1 Refactor ═══ */
   .planner-shell{display:flex;flex-direction:column;min-height:calc(100vh - 24px);}
+  @media(min-width:901px){
+    .planner-shell{
+      height:calc(100vh - 47px);
+      height:calc(100dvh - 47px);
+      min-height:calc(100vh - 47px);
+      min-height:calc(100dvh - 47px);
+      overflow:hidden;
+    }
+    .planner-main{
+      column-gap:1rem;
+      padding:1rem 1rem 1.2rem;
+      overflow:hidden;
+      align-items:start;
+    }
+    .plan-panel,
+    .workspace-panel,
+    .insight-panel{
+      min-height:0;
+      max-height:100%;
+    }
+    .workspace-panel{
+      padding:0;
+    }
+    .insight-panel{
+      align-self:start;
+      height:auto;
+      margin-top:5.15rem;
+      max-height:calc(100% - 5.15rem);
+      border:1px solid rgba(92,61,30,.14);
+      border-radius:24px;
+      background:
+        linear-gradient(180deg, rgba(255,252,246,.97), rgba(244,235,222,.95)),
+        radial-gradient(circle at top left, rgba(255,255,255,.46), transparent 42%);
+      box-shadow:0 18px 36px rgba(44,27,11,.08);
+      overscroll-behavior:contain;
+      scrollbar-gutter:stable;
+      scrollbar-width:thin;
+    }
+  }
 
   .planner-header{
     background:linear-gradient(180deg,rgba(41,26,13,.98),rgba(58,37,16,.95));color:#f5ede0;
@@ -2049,6 +2089,451 @@
     text-transform:uppercase;letter-spacing:.08em;cursor:pointer;
   }
   .planner-mobile-btn.primary{background:rgba(232,200,74,.16);border-color:rgba(232,200,74,.32);color:#ffe48e;}
+
+  /* ═══ GRAPHICAL OVERHAUL — PHASE 1 ═══ */
+  :root{
+    --paper-base:#fffaf2;
+    --paper-ink:#3d2a18;
+    --paper-shadow:#e7dac4;
+    --paper-fiber:rgba(92,61,30,.055);
+    --season-sky-top:#f6f0e6;
+    --season-sky-bottom:#ece1d2;
+    --season-glow:rgba(232,200,74,.14);
+    --season-leaf-mist:rgba(58,107,42,.1);
+    --season-panel-wash:rgba(255,251,244,.88);
+    --season-stage-accent:rgba(58,107,42,.12);
+    --season-chip-bg:rgba(58,107,42,.12);
+    --season-chip-fg:#35522d;
+    --city-brick-rgb:126,76,50;
+  }
+  body{
+    position:relative;
+    background:
+      radial-gradient(circle at 18% 14%, var(--season-glow), transparent 30%),
+      radial-gradient(circle at 78% 24%, var(--season-leaf-mist), transparent 28%),
+      linear-gradient(180deg, var(--season-sky-top) 0%, var(--season-sky-bottom) 100%);
+  }
+  body[data-season="spring"]{
+    --season-sky-top:#f3efe5;
+    --season-sky-bottom:#e4ddd0;
+    --season-glow:rgba(196,208,160,.18);
+    --season-leaf-mist:rgba(122,150,103,.12);
+    --season-panel-wash:rgba(251,249,241,.9);
+    --season-stage-accent:rgba(122,150,103,.16);
+    --season-chip-bg:rgba(122,150,103,.14);
+    --season-chip-fg:#4c643f;
+  }
+  body[data-season="summer"]{
+    --season-sky-top:#fbf2df;
+    --season-sky-bottom:#ecdab9;
+    --season-glow:rgba(232,170,48,.2);
+    --season-leaf-mist:rgba(61,122,79,.12);
+    --season-panel-wash:rgba(255,249,237,.9);
+    --season-stage-accent:rgba(232,170,48,.16);
+    --season-chip-bg:rgba(200,120,26,.14);
+    --season-chip-fg:#84511a;
+  }
+  body[data-season="latesummer"]{
+    --season-sky-top:#f9ecd8;
+    --season-sky-bottom:#e7d2b2;
+    --season-glow:rgba(184,96,34,.18);
+    --season-leaf-mist:rgba(117,96,44,.14);
+    --season-panel-wash:rgba(255,247,236,.9);
+    --season-stage-accent:rgba(184,96,34,.16);
+    --season-chip-bg:rgba(184,96,34,.12);
+    --season-chip-fg:#8a4c1e;
+  }
+  body[data-season="fall"]{
+    --season-sky-top:#f2e7d8;
+    --season-sky-bottom:#ddc8b0;
+    --season-glow:rgba(166,88,42,.16);
+    --season-leaf-mist:rgba(110,88,48,.12);
+    --season-panel-wash:rgba(252,246,237,.9);
+    --season-stage-accent:rgba(166,88,42,.16);
+    --season-chip-bg:rgba(166,88,42,.12);
+    --season-chip-fg:#7e4324;
+  }
+  .planner-shell{
+    position:relative;
+    isolation:isolate;
+    overflow:hidden;
+  }
+  .planner-shell::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:-2;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.3), transparent 24%),
+      repeating-linear-gradient(0deg, transparent 0 32px, rgba(var(--city-brick-rgb),.035) 32px 34px),
+      repeating-linear-gradient(90deg, transparent 0 64px, rgba(var(--city-brick-rgb),.04) 64px 66px);
+    opacity:.75;
+  }
+  .planner-shell::after{
+    content:'';
+    position:absolute;
+    right:-6%;
+    bottom:-14%;
+    width:min(42vw,520px);
+    height:min(42vw,520px);
+    pointer-events:none;
+    z-index:-1;
+    border-radius:38% 62% 60% 40%;
+    background:
+      repeating-linear-gradient(45deg, rgba(122,158,126,.1) 0 2px, transparent 2px 16px),
+      repeating-linear-gradient(-45deg, rgba(122,158,126,.08) 0 2px, transparent 2px 16px);
+    opacity:.34;
+    transform:rotate(8deg);
+    filter:blur(.2px);
+  }
+  .sl,.sr,
+  .plan-panel,
+  .insight-panel{
+    background:
+      linear-gradient(180deg, var(--season-panel-wash), rgba(244,235,222,.94)),
+      radial-gradient(circle at top left, rgba(255,255,255,.42), transparent 46%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  .tab-bar,
+  .workspace-bar,
+  .cbar,
+  .bwrap,
+  .score-hero,
+  .simulation-score-card,
+  .score-breakdown-card,
+  .icard,
+  .dash-card,
+  .issue-strip{
+    position:relative;
+    overflow:hidden;
+  }
+  .tab-bar::before,
+  .workspace-bar::before,
+  .bwrap::before,
+  .score-hero::before,
+  .simulation-score-card::before,
+  .score-breakdown-card::before,
+  .icard::before,
+  .dash-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.22), transparent 34%),
+      radial-gradient(circle at 14% 12%, rgba(255,255,255,.18), transparent 28%),
+      radial-gradient(circle at 86% 82%, var(--paper-fiber), transparent 26%);
+    opacity:.8;
+  }
+  .workspace-bar,
+  .cbar{
+    border-color:rgba(92,61,30,.16);
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.96), rgba(247,238,224,.96)),
+      radial-gradient(circle at top right, rgba(255,255,255,.42), transparent 40%);
+    box-shadow:0 10px 28px rgba(44,27,11,.08);
+  }
+  .workspace-bar::after{
+    content:attr(data-season-label);
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:.2rem .55rem;
+    border-radius:999px;
+    background:var(--season-chip-bg);
+    border:1px solid rgba(92,61,30,.12);
+    color:var(--season-chip-fg);
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .workspace-label{
+    color:var(--paper-ink);
+    letter-spacing:.12em;
+  }
+  .board-stage{
+    position:relative;
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.82), rgba(246,235,217,.92)),
+      radial-gradient(circle at top left, rgba(255,255,255,.4), transparent 40%);
+    border:1px solid rgba(92,61,30,.12);
+    box-shadow:0 24px 48px rgba(44,27,11,.1);
+  }
+  .board-stage > *{
+    position:relative;
+    z-index:1;
+  }
+  .board-stage::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.18), transparent 22%),
+      repeating-linear-gradient(0deg, transparent 0 22px, rgba(var(--city-brick-rgb),.035) 22px 24px),
+      repeating-linear-gradient(90deg, transparent 0 56px, rgba(var(--city-brick-rgb),.05) 56px 58px);
+    opacity:.45;
+  }
+  .board-stage::after{
+    content:'';
+    position:absolute;
+    right:-4%;
+    top:12%;
+    width:220px;
+    height:220px;
+    pointer-events:none;
+    background:
+      repeating-linear-gradient(45deg, rgba(122,158,126,.16) 0 2px, transparent 2px 14px),
+      repeating-linear-gradient(-45deg, rgba(122,158,126,.12) 0 2px, transparent 2px 14px);
+    opacity:.22;
+    transform:rotate(6deg);
+    filter:blur(.25px);
+  }
+  .bwrap{
+    background:
+      linear-gradient(180deg, rgba(255,253,248,.98), rgba(248,239,225,.98)),
+      radial-gradient(circle at 18% 14%, rgba(255,255,255,.24), transparent 28%);
+    border-color:rgba(92,61,30,.14);
+    box-shadow:
+      0 10px 22px rgba(44,27,11,.09),
+      inset 0 0 0 1px rgba(255,255,255,.55);
+  }
+  .wlbl,
+  .flbl{
+    display:inline-flex;
+    align-self:center;
+    padding:.18rem .55rem;
+    border-radius:999px;
+    background:rgba(255,250,242,.84);
+    border:1px solid rgba(92,61,30,.1);
+    color:var(--paper-ink);
+    box-shadow:0 4px 12px rgba(44,27,11,.04);
+  }
+  .chint{
+    margin-top:.35rem;
+    padding:.15rem .45rem;
+    border-radius:999px;
+    color:var(--text-mid);
+    background:rgba(255,255,255,.42);
+  }
+  .placement-status{
+    max-width:560px;
+    color:var(--paper-ink);
+    letter-spacing:.08em;
+  }
+  .bc{
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .bc:hover{
+    transform:translateY(-1px) scale(1.04);
+    box-shadow:0 10px 18px rgba(44,27,11,.12), inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .bc.has-row-band{
+    padding-left:12px;
+  }
+  .row-zone-band{
+    position:absolute;
+    left:1px;
+    top:1px;
+    bottom:1px;
+    width:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:5px 0 0 5px;
+    font-family:'DM Mono',monospace;
+    font-size:.4rem;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#fffaf2;
+    text-shadow:0 1px 2px rgba(0,0,0,.12);
+  }
+  .row-zone-band.trellis{
+    background:linear-gradient(180deg, rgba(176,120,32,.96), rgba(138,92,18,.96));
+  }
+  .row-zone-band.protected{
+    background:linear-gradient(180deg, rgba(74,116,82,.94), rgba(46,84,54,.94));
+  }
+  .bc.trellis-zone{
+    box-shadow:
+      inset 12px 0 0 rgba(212,160,23,.11),
+      inset 0 0 0 1px rgba(232,200,74,.32);
+  }
+  .bc.protected-zone{
+    box-shadow:
+      inset 12px 0 0 rgba(122,158,126,.12),
+      inset 0 0 0 1px rgba(61,122,79,.22);
+  }
+  .score-hero{
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.98), rgba(246,236,221,.95)),
+      radial-gradient(circle at top right, var(--season-stage-accent), transparent 32%);
+    border-color:rgba(92,61,30,.14);
+    box-shadow:0 12px 24px rgba(44,27,11,.08);
+  }
+  .simulation-score-card,
+  .score-breakdown-card,
+  .icard,
+  .dash-card{
+    border-color:rgba(92,61,30,.12);
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.97), rgba(246,237,224,.96)),
+      radial-gradient(circle at top left, rgba(255,255,255,.28), transparent 30%);
+  }
+  .wi{
+    position:relative;
+    border:1px solid rgba(92,61,30,.12);
+    border-left-width:5px;
+    border-radius:10px;
+    box-shadow:0 6px 14px rgba(44,27,11,.05);
+  }
+  .issue-strip{
+    border-color:rgba(92,61,30,.12);
+    background:
+      linear-gradient(180deg, rgba(255,252,247,.92), rgba(247,239,226,.94));
+    box-shadow:0 8px 18px rgba(44,27,11,.06);
+  }
+  .insight-header{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.58), rgba(244,236,224,.44));
+    border-top:1px solid rgba(255,255,255,.48);
+  }
+  .cast-board{
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+    padding:.82rem .86rem;
+    border:1px solid rgba(92,61,30,.12);
+    border-radius:16px;
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.98), rgba(246,236,221,.96)),
+      radial-gradient(circle at top right, var(--season-stage-accent), transparent 34%);
+    box-shadow:0 10px 24px rgba(44,27,11,.08);
+  }
+  .cast-board.embedded{
+    padding:0;
+    border:none;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .cast-board-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.65rem;
+  }
+  .cast-board-kicker{
+    font-family:'DM Mono',monospace;
+    font-size:.52rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--text-light);
+  }
+  .cast-board-title{
+    font-family:'Fraunces',serif;
+    font-size:1rem;
+    color:var(--soil);
+  }
+  .cast-board-note{
+    font-size:.68rem;
+    line-height:1.45;
+    color:var(--text-mid);
+    max-width:280px;
+  }
+  .cast-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:.55rem;
+  }
+  .cast-board.compact .cast-grid{
+    grid-template-columns:1fr;
+  }
+  .cast-card{
+    --cast-accent:var(--leaf);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    padding:.72rem .74rem;
+    border-radius:14px;
+    border:1px solid rgba(92,61,30,.12);
+    border-left:5px solid var(--cast-accent);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.88), rgba(249,242,231,.92)),
+      radial-gradient(circle at 88% 16%, rgba(255,255,255,.28), transparent 28%);
+    box-shadow:0 8px 18px rgba(44,27,11,.06);
+  }
+  .cast-card-top{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+  .cast-portrait{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg, var(--cast-accent), rgba(255,255,255,.94));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 12px rgba(44,27,11,.1);
+    font-size:1.05rem;
+  }
+  .cast-name{
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--soil);
+  }
+  .cast-note{
+    font-family:'DM Mono',monospace;
+    font-size:.48rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+    margin-top:.08rem;
+  }
+  .cast-line{
+    font-size:.72rem;
+    line-height:1.5;
+    color:var(--text-mid);
+  }
+  .dash-card.dash-card-cast{
+    padding:.8rem .82rem;
+  }
+  @media(max-width:900px){
+    .workspace-bar::after{
+      display:none;
+    }
+    .planner-shell::after{
+      width:280px;
+      height:280px;
+      right:-16%;
+      bottom:-8%;
+    }
+    .board-stage::after{
+      width:160px;
+      height:160px;
+      right:-10%;
+      top:auto;
+      bottom:10%;
+    }
+    .row-zone-band{
+      width:11px;
+      font-size:.36rem;
+    }
+    .bc.has-row-band{
+      padding-left:10px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -6362,6 +6847,73 @@ function selectCrop(ck){
   render();
 }
 
+function plannerSeasonBanner(season){
+  return {
+    spring:'Spring field notes',
+    summer:'High summer layout',
+    latesummer:'Late-summer salvage',
+    fall:'Fall reset window'
+  }[season] || 'Seasonal layout';
+}
+
+function syncPlannerTheme(inputs){
+  const season = VALID_SEASONS.includes(inputs && inputs.season) ? inputs.season : 'summer';
+  document.body.dataset.season = season;
+  const shell = document.querySelector('.planner-shell');
+  if(shell) shell.dataset.season = season;
+  const workspaceBar = document.querySelector('.workspace-bar');
+  if(workspaceBar){
+    const goalLabel = inputs && inputs.goal ? inputs.goal.replace(/_/g, ' ') : 'balanced';
+    workspaceBar.dataset.seasonLabel = `${plannerSeasonBanner(season)} · ${goalLabel}`;
+  }
+}
+
+function getRowZoneBand(cell){
+  if(!cell || cell.col !== 0) return null;
+  if(cell.isTrellisRow) return { label:'trellis', cls:'trellis' };
+  if(cell.isProtected) return { label:'protected', cls:'protected' };
+  return null;
+}
+
+function plannerVoiceDescriptor(key){
+  return {
+    gurl:'clipboard brief',
+    onion:'kitchen note',
+    vegeman:'hot take',
+    critters:'margin warning'
+  }[key] || 'field note';
+}
+
+function renderCastBoard(voices, options={}){
+  if(!Array.isArray(voices) || !voices.length) return '';
+  const title = options.title || 'Voice dispatch';
+  const note = options.note || 'Printed yard notes from the current bed.';
+  const classes = [
+    'cast-board',
+    options.compact ? 'compact' : '',
+    options.embedded ? 'embedded' : ''
+  ].filter(Boolean).join(' ');
+  return `<section class="${classes}">
+    <div class="cast-board-head">
+      <div>
+        <div class="cast-board-kicker">Cast dispatch</div>
+        <div class="cast-board-title">${escapeHtml(title)}</div>
+      </div>
+      <div class="cast-board-note">${escapeHtml(note)}</div>
+    </div>
+    <div class="cast-grid">${voices.map(voice=>`<article class="cast-card ${escapeHtml(voice.key)}" style="--cast-accent:${escapeHtml(String(voice.color || 'var(--leaf)'))}">
+      <div class="cast-card-top">
+        <div class="cast-portrait" aria-hidden="true">${escapeHtml(voice.emoji || '•')}</div>
+        <div>
+          <div class="cast-name">${escapeHtml(voice.name)}</div>
+          <div class="cast-note">${escapeHtml(plannerVoiceDescriptor(voice.key))}</div>
+        </div>
+      </div>
+      <div class="cast-line">${escapeHtml(voice.line)}</div>
+    </article>`).join('')}</div>
+  </section>`;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6369,6 +6921,7 @@ function render(){
   syncSimulationUI();
   const ctx = buildRenderContext();
   const inputs = ctx.inputs;
+  syncPlannerTheme(inputs);
   renderBed(inputs,ctx.issues);
   renderRight(inputs,ctx.issues,ctx.scoreTotal);
   renderIssueSummaryStrip(ctx.issues);
@@ -6428,6 +6981,7 @@ function renderBed(inputs,issues,opts={}){
     const weak=!skipScores && cell.crop&&cs<4;
     const sel=cell.id===ui.selCell;
     const kbFocus = interaction.keyboardMode && cell.id===getFocusedCellId();
+    const rowBand = getRowZoneBand(cell);
     const c=cell.crop?CROPS[cell.crop]:null;
     const bg=c?c.color+'28':'#f2ebe0';
     const bdc=c?c.color+'88':'var(--border)';
@@ -6440,6 +6994,7 @@ function renderBed(inputs,issues,opts={}){
     if(cell.isTrellisRow) zoneClass=' trellis-zone';
     else if(cell.isProtected) zoneClass=' protected-zone';
     if(kbFocus) zoneClass += ' kb-focus';
+    if(rowBand) zoneClass += ' has-row-band';
     zoneClass += ui.tool==='erase' ? ' preview-erase' : ui.tool==='inspect' ? ' preview-inspect' : ' preview-paint';
     const v = cell.crop ? cropValidity(cell.crop, cell, inputs) : null;
     if(v && v.severity==='hard') zoneClass+=' hard-invalid';
@@ -6460,7 +7015,9 @@ function renderBed(inputs,issues,opts={}){
       : `Empty cell, row ${cell.row+1}, column ${cell.col+1}`);
     el.style.background=bg; el.style.borderColor=bdc;
     const issueIcon=issues.length?`<span class="cell-issue">${escapeHtml(issues[0])}</span>`:'';
+    const rowBandHtml=rowBand?`<span class="row-zone-band ${escapeHtml(rowBand.cls)}">${escapeHtml(rowBand.label)}</span>`:'';
     el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
+      ${rowBandHtml}
       ${issueIcon}
       <span class="cemo">${c?escapeHtml(c.emoji):''}</span>
       ${c?`<span class="cname">${escapeHtml(c.short)}</span>`:''}
@@ -6600,7 +7157,31 @@ function renderRight(inputs,issues,scoreTotal){
   const bs=Number.isFinite(scoreTotal) ? scoreTotal : scoreBed(inputs);
   const simSummary=getSimulationSummary(bs);
   const forecast=buildYieldForecast(inputs);
+  const dashboardForecast=getDashboardHarvestForecast(parseInt(getCalendarZone(), 10));
   const audit=getPlannerBedScoreAudit(inputs);
+  const plantedCells=bed.filter(cell=>cell.crop);
+  const strongest=plantedCells.map(cell=>({ cell, score:scoreCell(cell,inputs) }))
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,3);
+  const weakest=weakestCells(inputs,3);
+  const harvestSummary=getHarvestSummary();
+  const voiceSnapshot={
+    inputs,
+    score:bs,
+    plantedCount:plantedCells.length,
+    fillRatio:plantedCells.length ? plantedCells.length / (bedW * bedH) : 0,
+    strongest,
+    weakest,
+    forecast:dashboardForecast,
+    harvestCount:harvestSummary.total || 0
+  };
+  const voiceDispatchHtml=renderCastBoard(buildDashboardVoices(voiceSnapshot),{
+    title:'Voice dispatch',
+    note:plantedCells.length
+      ? `${plannerSeasonBanner(inputs.season)} · four reads on the current bed before Story Mode adds events, interventions, and soil fatigue.`
+      : 'The cast wakes up after the first planted cell. Until then, the planner is just blank paper and a bed frame.',
+    compact:true
+  });
   updateActiveBedScoreCache(bs);
   const ws=warnings(inputs,issues);
   const warnCount=ws.filter(w=>w.t==='warn').length;
@@ -6715,6 +7296,7 @@ function renderRight(inputs,issues,scoreTotal){
     </div>
     ${simulationHtml}
     ${forecastHtml}
+    ${voiceDispatchHtml}
     ${uniq.length?`<div class="crow">${chtml}</div>`:''}
     ${scoreBreakdownHtml}
     <div class="score-model-note">${
@@ -8740,10 +9322,11 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
     : '<div class="dash-empty"><strong>Nothing to score yet.</strong> Paint the bed or use Auto-fill to unlock row health, harvest timing, and live voice notes.<br><button class="state-action" data-action="auto-fill">Auto-fill bed</button></div>';
 
   const weakestAction = weakest[0] ? `<button class="dash-action primary" type="button" data-dashboard-action="inspect-weakest" data-cell-id="${escapeHtml(weakest[0].cell.id)}">Inspect weakest cell</button>` : '';
-  const voicesHtml = voices.map(voice => `<div class="dash-voice">
-    <div class="dash-voice-head" style="color:${voice.color}">${escapeHtml(voice.emoji)} ${escapeHtml(voice.name)}</div>
-    <div class="dash-voice-body">${escapeHtml(voice.line)}</div>
-  </div>`).join('');
+  const voicesHtml = renderCastBoard(voices, {
+    title:'Character board',
+    note:'Four takes on the same bed state. Use them as guidance, not consensus.',
+    embedded:true
+  });
 
   pane.innerHTML = `<div class="dash-stack">
     <section class="dash-hero">
@@ -8788,9 +9371,8 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
         <div class="dash-section-title">Live alerts</div>
         <div>${alertHtml}</div>
       </article>
-      <article class="dash-card full">
-        <div class="dash-section-title">Character board</div>
-        <div class="dash-voices">${voicesHtml}</div>
+      <article class="dash-card full dash-card-cast">
+        ${voicesHtml}
       </article>
     </section>
   </div>`;

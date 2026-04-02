@@ -89,6 +89,7 @@
   --warn:           #c45a18;
   --bad:            #a82018;
   --info:           #3a6abf;
+  --accent-rain:    #8ba8b5;
 
   /* Shadows */
   --shadow-xs:      0 1px 3px rgba(44, 27, 11, 0.06);
@@ -120,6 +121,26 @@
   /* Transitions */
   --ease:           0.18s ease;
   --ease-out:       0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Shared story / planner artifact layer */
+  --paper:               var(--panel);
+  --paper-strong:        rgba(255, 253, 249, 0.96);
+  --paper-soft:          rgba(255, 253, 249, 0.74);
+  --ink:                 var(--text);
+  --ink-soft:            var(--text-soft);
+  --artifact-line:       rgba(104, 68, 40, 0.22);
+  --artifact-line-strong: rgba(104, 68, 40, 0.38);
+  --artifact-shadow:     0 24px 68px rgba(14, 8, 4, 0.34);
+  --artifact-shadow-soft: 0 12px 30px rgba(14, 8, 4, 0.22);
+  --accent-good:         var(--leaf-bright);
+  --accent-warn:         var(--sun-bright);
+  --accent-bad:          var(--rust-light);
+
+  /* Alias tokens for runtimes that still use older naming */
+  --danger:              var(--rust-light);
+  --success:             var(--leaf-light);
+  --radius-md:           14px;
+  --radius-lg:           24px;
 }
 
 
@@ -481,6 +502,51 @@ code, kbd, samp {
 .os-btn--lg {
   padding: 0.7rem 1.6rem;
   font-size: 1rem;
+}
+
+
+/* ── ARTIFACT HELPERS ──────────────────────────────────────
+   Shared paper / stamp layer for planner and Story Mode
+──────────────────────────────────────────────────────────── */
+.os-artifact {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0)),
+    var(--paper-strong);
+  border: 1px solid var(--artifact-line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--artifact-shadow);
+  color: var(--ink);
+}
+
+.os-artifact--soft {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
+    var(--paper-soft);
+  box-shadow: var(--artifact-shadow-soft);
+}
+
+.os-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.os-stamp {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 0.8rem;
+  border-radius: var(--radius-pill);
+  background: rgba(212, 168, 32, 0.08);
+  border: 1px solid rgba(212, 168, 32, 0.16);
+  color: var(--soil-mid);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 @media (max-width: 720px) {

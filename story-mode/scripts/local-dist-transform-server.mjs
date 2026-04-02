@@ -6,10 +6,13 @@ import { getBuildStatusSnapshot } from './dist-build-meta.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const distDir = resolve(__dirname, '..', 'dist');
+const repoRootThemePath = resolve(__dirname, '..', '..', 'garden-os-theme.css');
 const host = '127.0.0.1';
 const port = 4174;
 const basePath = '/garden-os/story-mode-live';
+const distBasePath = '/garden-os/story-mode';
 const buildStatusPath = `${basePath}/__build`;
+const sharedThemePaths = new Set(['/garden-os/garden-os-theme.css', '/garden-os-theme.css']);
 
 const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
@@ -104,8 +107,11 @@ function normalizeRequestPath(urlPath) {
   if (urlPath.startsWith('/assets/')) {
     return urlPath.replace(/^[/\\]+/, '');
   }
-  if (!urlPath.startsWith(basePath)) return null;
-  const remainder = urlPath.slice(basePath.length) || '/';
+  const matchedBase = [basePath, distBasePath].find(
+    (candidate) => urlPath === candidate || urlPath.startsWith(`${candidate}/`),
+  );
+  if (!matchedBase) return null;
+  const remainder = urlPath.slice(matchedBase.length) || '/';
   const target = remainder === '/' ? '/index.html' : remainder;
   return normalize(target).replace(/^[/\\]+/, '').replace(/^(\.\.[/\\])+/, '');
 }
@@ -124,6 +130,14 @@ const server = createServer(async (req, res) => {
       const buildStatus = await getBuildStatusCached(true);
       res.writeHead(200, createBuildHeaders('application/json; charset=utf-8', buildStatus));
       res.end(`${JSON.stringify(buildStatus, null, 2)}\n`);
+      return;
+    }
+
+    if (sharedThemePaths.has(url.pathname)) {
+      const buildStatus = await getBuildStatusCached();
+      const body = await readFile(repoRootThemePath);
+      res.writeHead(200, createBuildHeaders('text/css; charset=utf-8', buildStatus));
+      res.end(body);
       return;
     }
 

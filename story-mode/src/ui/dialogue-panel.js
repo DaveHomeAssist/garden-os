@@ -7,8 +7,8 @@ function ensureChoiceStyles() {
   style.textContent = `
     .dp-choice-row {
       display: none;
-      gap: 8px;
-      padding: 12px 16px 0;
+      gap: 10px;
+      padding: 8px 0 0;
       flex-wrap: wrap;
       align-items: stretch;
     }
@@ -17,29 +17,39 @@ function ensureChoiceStyles() {
     }
     .dp-choice-btn {
       min-height: 44px;
-      background: var(--soil, #5c3d1e);
-      color: var(--cream, #f7f0da);
-      border: 1px solid var(--sun, #e8c84a);
-      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0)),
+        rgba(255, 249, 242, 0.58);
+      color: rgba(38, 22, 10, 0.92);
+      border: 1px solid rgba(104, 68, 40, 0.16);
+      border-radius: 999px;
       padding: 10px 16px;
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       opacity: 0;
       transform: translateY(8px);
       animation: dp-choice-in 180ms ease forwards;
+      box-shadow: 0 10px 24px rgba(18, 11, 5, 0.14);
     }
     .dp-choice-btn:hover {
-      background: var(--sun, #e8c84a);
-      color: var(--text, #1f1a14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0)),
+        rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.18);
+      border-color: rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.34);
+      color: rgba(38, 22, 10, 0.96);
     }
     .dp-choice-btn:focus-visible {
-      outline: 2px solid var(--sun, #e8c84a);
+      outline: 2px solid rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.9);
       outline-offset: 2px;
     }
     .dp-choice-btn.is-selected {
-      background: var(--leaf-bright, #8bcf5a);
-      color: var(--text, #1f1a14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0)),
+        rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.22);
+      border-color: rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.4);
+      color: rgba(34, 20, 10, 0.96);
     }
     @keyframes dp-choice-in {
       to {

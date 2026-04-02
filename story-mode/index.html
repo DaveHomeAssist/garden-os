@@ -18,30 +18,48 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../garden-os-theme.css" />
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
 </head>
 <body>
   <div id="app">
     <div id="title-screen" class="title-screen">
-      <div class="title-logo">
-        <div class="title-eyebrow">Mom's Backyard</div>
-        <h1 class="title-name">Garden OS</h1>
-        <div class="title-tagline">A 12-chapter story about soil, seasons, and sauce.</div>
+      <div class="title-screen__atmosphere" aria-hidden="true">
+        <div class="title-screen__sun"></div>
+        <div class="title-screen__grid"></div>
+        <div class="title-screen__stamp title-screen__stamp--north">South Philly Soil Ledger</div>
+        <div class="title-screen__stamp title-screen__stamp--south">12 Chapters · One Raised Bed</div>
       </div>
-      <div class="save-slots" id="save-slots">
-        <!-- 3 save slot cards rendered by JS -->
-      </div>
-      <div class="title-footer">
-        <div class="title-version">v0.1 &middot; Story Mode</div>
-        <div class="title-footer-actions" id="title-actions">
-          <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="Open how to play guide">
-            <span class="title-link-btn__icon">✦</span>
-            <span>How To Play</span>
-          </button>
+      <div class="title-screen__poster">
+        <div class="title-screen__rail">
+          <span class="title-screen__issue">Story Mode · Field Journal</span>
+          <span class="title-screen__issue">Neighborhood Garden Campaign</span>
         </div>
-        <div class="title-modes" id="title-modes">
-          <!-- Game mode buttons rendered by JS -->
+        <div class="title-logo">
+          <div class="title-eyebrow">Mom's Backyard</div>
+          <h1 class="title-name">Garden OS</h1>
+          <div class="title-tagline">A 12-chapter story about soil, seasons, and sauce.</div>
+        </div>
+        <div class="title-ledger">
+          <span class="title-ledger__item">Seasonal scorecards</span>
+          <span class="title-ledger__item">Neighborhood cast</span>
+          <span class="title-ledger__item">Three-year archive</span>
+        </div>
+        <div class="save-slots" id="save-slots">
+          <!-- 3 save slot cards rendered by JS -->
+        </div>
+        <div class="title-footer">
+          <div class="title-version">v0.1 &middot; Story Mode</div>
+          <div class="title-footer-actions" id="title-actions">
+            <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="Open how to play guide">
+              <span class="title-link-btn__icon">✦</span>
+              <span>How To Play</span>
+            </button>
+          </div>
+          <div class="title-modes" id="title-modes">
+            <!-- Game mode buttons rendered by JS -->
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,13 @@
 import { explainFactor } from '../scoring/score-explain.js';
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function cellLabel(index) {
   const row = Math.floor(index / 8) + 1;
   const col = (index % 8) + 1;
@@ -10,36 +18,46 @@ function seasonLabel(season) {
   return season ? season.charAt(0).toUpperCase() + season.slice(1) : 'Season';
 }
 
-function gradeColor(grade) {
-  if (grade === 'A+' || grade === 'A') return '#8fd39b';
-  if (grade === 'B') return '#e8c84a';
-  if (grade === 'C') return '#d8aa68';
-  return '#d67d64';
+function fatigueTone(fatigue) {
+  if (fatigue >= 60) return 'bad';
+  if (fatigue >= 30) return 'warn';
+  return 'good';
 }
 
 function renderSoilCells(cells) {
   return cells.map((cell) => {
     const fatigue = Math.round((cell.soilFatigue ?? 0) * 100);
-    const carry = cell.carryForward?.label ?? '';
-    const emphasis = fatigue >= 60 ? '#d67d64' : fatigue >= 30 ? '#d8aa68' : '#8fd39b';
+    const carry = cell.carryForward?.label ?? 'No carry-forward effect';
+    const tone = fatigueTone(fatigue);
     return `
-      <div style="padding:8px;border-radius:10px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);min-height:74px;">
-        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;">
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.55);">${cellLabel(cell.index)}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:${emphasis};">FT ${fatigue}%</span>
+      <article class="winter-review__soil-card" data-tone="${tone}">
+        <div class="winter-review__soil-top">
+          <span class="winter-review__mini-label">${escapeHtml(cellLabel(cell.index))}</span>
+          <span class="winter-review__soil-fatigue">FT ${fatigue}%</span>
         </div>
-        <div style="font-size:11px;color:rgba(247,242,234,0.72);line-height:1.35;">${carry || 'No carry-forward effect'}</div>
-      </div>
+        <div class="winter-review__soil-carry">${escapeHtml(carry)}</div>
+      </article>
     `;
   }).join('');
 }
 
-function renderReviewCells(cells, titleColor) {
-  if (!cells.length) {
-    return `<div style="font-size:12px;color:rgba(247,242,234,0.5);">No planted cells recorded.</div>`;
+function renderEventList(events) {
+  if (!events.length) {
+    return '<div class="winter-review__empty-note">Quiet season. No events recorded.</div>';
   }
+  return `
+    <div class="winter-review__event-list">
+      ${events.map((eventTitle) => `<div class="winter-review__event-item">${escapeHtml(eventTitle)}</div>`).join('')}
+    </div>
+  `;
+}
+
+function renderReviewCells(cells, tone) {
+  if (!cells.length) {
+    return '<div class="winter-review__empty-note">No planted cells recorded.</div>';
+  }
+
   return cells.map((cell) => {
-    // Find the weakest factor for this cell to show a targeted tip
     let worstFactor = null;
     let worstVal = Infinity;
     if (cell.factors) {
@@ -51,133 +69,128 @@ function renderReviewCells(cells, titleColor) {
         }
       }
     }
+
     const tip = worstFactor ? explainFactor(worstFactor, worstVal) : null;
+    const fatigue = Math.round((cell.soilFatigue ?? 0) * 100);
+
     return `
-    <div style="padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
-      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-        <div>
-          <div style="font-family:'Fraunces',serif;font-size:15px;color:#f7f2ea;">${cell.cropName}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.5);">${cellLabel(cell.cellIndex)}</div>
+      <article class="winter-review__review-card" data-tone="${tone}">
+        <div class="winter-review__review-top">
+          <div>
+            <div class="winter-review__review-crop">${escapeHtml(cell.cropName)}</div>
+            <div class="winter-review__mini-label">${escapeHtml(cellLabel(cell.cellIndex))}</div>
+          </div>
+          <div class="winter-review__review-score">
+            <div class="winter-review__review-total">${cell.total.toFixed(1)}</div>
+            <div class="winter-review__review-soil">soil ${fatigue}%</div>
+          </div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-family:'Fraunces',serif;font-size:18px;color:${titleColor};">${cell.total.toFixed(1)}</div>
-          <div style="font-size:10px;color:rgba(247,242,234,0.45);">soil ${Math.round((cell.soilFatigue ?? 0) * 100)}%</div>
-        </div>
-      </div>
-      ${tip?.tip ? `<div style="font-size:10px;color:rgba(247,242,234,0.5);margin-top:6px;line-height:1.4;">💡 ${tip.tip}</div>` : ''}
-    </div>
-  `;
+        ${tip?.tip ? `<div class="winter-review__review-tip">Tip: ${escapeHtml(tip.tip)}</div>` : ''}
+      </article>
+    `;
   }).join('');
+}
+
+function renderYearEntries(entries) {
+  return entries.map((entry) => `
+    <article class="winter-review__entry" data-grade="${escapeHtml(entry.grade)}">
+      <div class="winter-review__entry-top">
+        <span class="winter-review__mini-label">${escapeHtml(seasonLabel(entry.season))}</span>
+        <span class="winter-review__entry-grade">${escapeHtml(entry.grade)}</span>
+      </div>
+      <div class="winter-review__entry-score">${escapeHtml(entry.score)}</div>
+      <div class="winter-review__entry-meta">${entry.eventsEncountered.length} events · ${entry.cropsPlanted.length} crops</div>
+    </article>
+  `).join('');
 }
 
 export function showWinterReview(container, data, handlers = {}) {
   const overlay = document.createElement('div');
-  overlay.className = 'harvest-reveal';
-  overlay.style.cssText = `
-    position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
-    background:rgba(20,17,24,0.92);z-index:32;
-    padding:18px;padding-top:max(18px, env(safe-area-inset-top, 0px));
-    padding-bottom:max(18px, env(safe-area-inset-bottom, 0px));
-    overflow:hidden;
-    animation:fadeInIntro 0.35s ease-out both;
-  `;
+  overlay.className = 'winter-review winter-review-overlay';
 
   overlay.innerHTML = `
-    <div style="width:min(1040px,100%);max-height:calc(100vh - 36px);display:flex;flex-direction:column;gap:14px;border-radius:18px;background:rgba(24,21,29,0.9);border:1px solid rgba(247,242,234,0.08);box-shadow:0 28px 90px rgba(0,0,0,0.42);backdrop-filter:blur(10px);overflow:hidden;">
-      <div style="text-align:center;padding:18px 20px 0;flex:0 0 auto;">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,242,234,0.4);margin-bottom:6px;">Winter Review</div>
-        <h2 style="margin:0;font-family:'Fraunces',serif;font-size:34px;color:#f7f2ea;">Year ${data.year} in the bed</h2>
-        <p style="margin:10px auto 0;max-width:640px;font-size:15px;line-height:1.6;color:rgba(247,242,234,0.72);">
-          Review the last year, inspect tired soil, read carry-forward effects, and leave winter with a plan.
+    <div class="winter-review__shell">
+      <header class="winter-review__header">
+        <div class="winter-review__eyebrow">Winter Review</div>
+        <h2 class="winter-review__title">Year ${escapeHtml(data.year)} in the bed</h2>
+        <p class="winter-review__dek">
+          Review the last year, inspect tired soil, read carry-forward effects, and leave winter with a cleaner spring plan.
         </p>
-      </div>
+      </header>
 
-      <div style="padding:0 20px 10px;display:grid;gap:16px;overflow-y:auto;min-height:0;flex:1 1 auto;">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-        ${data.yearEntries.map((entry) => `
-          <div style="padding:14px;border-radius:12px;background:rgba(247,242,234,0.05);border:1px solid rgba(247,242,234,0.08);">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
-              <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.45);">${seasonLabel(entry.season)}</span>
-              <span style="font-family:'Fraunces',serif;font-size:20px;color:${gradeColor(entry.grade)};">${entry.grade}</span>
-            </div>
-            <div style="font-family:'Fraunces',serif;font-size:26px;color:#f7f2ea;">${entry.score}</div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.56);margin-top:4px;">${entry.eventsEncountered.length} events · ${entry.cropsPlanted.length} crops</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:16px;">
-        <section style="padding:16px;border-radius:14px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.38);margin-bottom:10px;">Soil + Carry Forward</div>
-          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
-            ${renderSoilCells(data.soilCells)}
-          </div>
+      <div class="winter-review__body">
+        <section class="winter-review__entry-grid">
+          ${renderYearEntries(data.yearEntries)}
         </section>
 
-        <section style="padding:16px;border-radius:14px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);display:grid;gap:14px;">
-          <div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.38);margin-bottom:8px;">Last Harvest</div>
-            <div style="display:flex;gap:16px;align-items:baseline;">
-              <div style="font-family:'Fraunces',serif;font-size:34px;color:#f7f2ea;">${data.lastReview.score ?? '--'}</div>
-              <div style="font-family:'Fraunces',serif;font-size:24px;color:${gradeColor(data.lastReview.grade)};">${data.lastReview.grade ?? '–'}</div>
+        <div class="winter-review__two-up">
+          <section class="winter-review__panel">
+            <div class="winter-review__section-label">Soil + Carry Forward</div>
+            <div class="winter-review__soil-grid">
+              ${renderSoilCells(data.soilCells)}
             </div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.56);margin-top:4px;">${data.lastReview.eventsEncountered.length} events · ${data.lastReview.yieldList.length} harvested crops</div>
-          </div>
+          </section>
 
-          <div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.38);margin-bottom:8px;">Recipes + Keepsakes</div>
-            <div style="font-size:14px;color:#f7f2ea;line-height:1.55;">
-              ${data.recipesCompleted} / ${data.totalRecipes} recipes complete<br />
-              ${data.keepsakesUnlocked} / ${data.totalKeepsakes} keepsakes found
+          <section class="winter-review__panel winter-review__panel--summary" data-grade="${escapeHtml(data.lastReview.grade ?? 'F')}">
+            <div class="winter-review__section-label">Last Harvest</div>
+            <div class="winter-review__summary-row">
+              <div class="winter-review__summary-score">${escapeHtml(data.lastReview.score ?? '--')}</div>
+              <div class="winter-review__summary-grade">${escapeHtml(data.lastReview.grade ?? '–')}</div>
             </div>
-          </div>
-
-          <div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.38);margin-bottom:8px;">Season Events</div>
-            <div style="display:grid;gap:6px;">
-              ${data.lastReview.eventsEncountered.length
-                ? data.lastReview.eventsEncountered.map((eventTitle) => `<div style="font-size:12px;color:rgba(247,242,234,0.7);">${eventTitle}</div>`).join('')
-                : '<div style="font-size:12px;color:rgba(247,242,234,0.5);">Quiet season. No events recorded.</div>'}
+            <div class="winter-review__summary-meta">
+              ${data.lastReview.eventsEncountered.length} events · ${data.lastReview.yieldList.length} harvested crops
             </div>
-          </div>
-        </section>
-      </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <section style="padding:16px;border-radius:14px;background:rgba(90,171,107,0.08);border:1px solid rgba(90,171,107,0.18);">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(143,211,155,0.78);margin-bottom:8px;">Strongest Cells</div>
-          <div style="display:grid;gap:8px;">${renderReviewCells(data.lastReview.bestCells, '#8fd39b')}</div>
-        </section>
-        <section style="padding:16px;border-radius:14px;background:rgba(214,125,100,0.08);border:1px solid rgba(214,125,100,0.18);">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(214,125,100,0.8);margin-bottom:8px;">Weakest Cells</div>
-          <div style="display:grid;gap:8px;">${renderReviewCells(data.lastReview.worstCells, '#d67d64')}</div>
-        </section>
-      </div>
+            <div class="winter-review__summary-block">
+              <div class="winter-review__section-label">Recipes + Keepsakes</div>
+              <div class="winter-review__summary-copy">
+                ${escapeHtml(data.recipesCompleted)} / ${escapeHtml(data.totalRecipes)} recipes complete<br />
+                ${escapeHtml(data.keepsakesUnlocked)} / ${escapeHtml(data.totalKeepsakes)} keepsakes found
+              </div>
+            </div>
 
-      <section style="padding:16px;border-radius:14px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.38);margin-bottom:10px;">Next Spring Hints</div>
-        <div style="display:grid;gap:8px;">
-          ${data.hints.map((hint) => `<div style="font-size:14px;line-height:1.55;color:rgba(247,242,234,0.8);">${hint}</div>`).join('')}
+            <div class="winter-review__summary-block">
+              <div class="winter-review__section-label">Season Events</div>
+              ${renderEventList(data.lastReview.eventsEncountered)}
+            </div>
+          </section>
         </div>
-      </section>
 
+        <div class="winter-review__review-grid">
+          <section class="winter-review__panel winter-review__panel--spotlight" data-tone="good">
+            <div class="winter-review__section-label">Strongest Cells</div>
+            <div class="winter-review__card-stack">${renderReviewCells(data.lastReview.bestCells, 'good')}</div>
+          </section>
+
+          <section class="winter-review__panel winter-review__panel--spotlight" data-tone="bad">
+            <div class="winter-review__section-label">Weakest Cells</div>
+            <div class="winter-review__card-stack">${renderReviewCells(data.lastReview.worstCells, 'bad')}</div>
+          </section>
+        </div>
+
+        <section class="winter-review__panel winter-review__panel--hints">
+          <div class="winter-review__section-label">Next Spring Hints</div>
+          <div class="winter-review__hint-list">
+            ${data.hints.map((hint) => `<div class="winter-review__hint-item">${escapeHtml(hint)}</div>`).join('')}
+          </div>
+        </section>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px 18px;border-top:1px solid rgba(247,242,234,0.08);background:linear-gradient(180deg, rgba(24,21,29,0.15) 0%, rgba(24,21,29,0.95) 28%);flex:0 0 auto;">
-        <div style="font-size:12px;line-height:1.5;color:rgba(247,242,234,0.56);max-width:520px;">
-          Winter is review-only. When you continue, the game rolls straight into the next chapter with this soil and carry-forward state in mind.
+      <footer class="winter-review__footer">
+        <div class="winter-review__footer-copy">
+          Winter is review-only. When you continue, the game rolls into the next chapter with this soil and carry-forward state in mind.
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
-        ${handlers.onViewBackpack ? `
-          <button type="button" id="winter-review-backpack" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(247,242,234,0.18);background:rgba(247,242,234,0.08);color:#f7f2ea;font-size:14px;cursor:pointer;">
-            Open Backpack
+        <div class="winter-review__actions">
+          ${handlers.onViewBackpack ? `
+            <button type="button" id="winter-review-backpack" class="winter-review__button winter-review__button--secondary">
+              Open Backpack
+            </button>
+          ` : ''}
+          <button type="button" id="winter-review-continue" class="winter-review__button winter-review__button--primary">
+            Continue
           </button>
-        ` : ''}
-        <button type="button" id="winter-review-continue" style="padding:12px 20px;border-radius:10px;border:none;background:#e8c84a;color:#1e110a;font-size:14px;font-weight:600;cursor:pointer;">
-          Continue
-        </button>
         </div>
-      </div>
+      </footer>
     </div>
   `;
 

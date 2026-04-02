@@ -62,7 +62,13 @@ function createInitialState(slot, savedCampaign) {
   return initialState;
 }
 
+function formatSeasonLabel(season) {
+  if (!season) return 'Spring';
+  return season.charAt(0).toUpperCase() + season.slice(1);
+}
+
 function dismissTitleScreen(titleScreen, callback) {
+  document.body.dataset.storyScreen = 'play';
   titleScreen.classList.add('is-exiting');
   setTimeout(() => {
     titleScreen.style.display = 'none';
@@ -77,6 +83,8 @@ function renderTitleScreen(onStart) {
   const actionsContainer = document.getElementById('title-actions');
   if (!titleScreen || !slotsContainer) return;
 
+  document.body.dataset.storyScreen = 'title';
+  delete document.body.dataset.season;
   titleScreen.classList.remove('is-exiting');
   titleScreen.style.display = '';
 
@@ -86,6 +94,7 @@ function renderTitleScreen(onStart) {
       return `
         <div class="save-slot-card save-slot-card--empty" data-slot="${entry.slot}">
           <div class="save-slot-label">Slot ${entry.slot + 1}</div>
+          <div class="save-slot-empty-copy">Start a fresh neighborhood garden ledger.</div>
           <div class="save-slot-empty-label">Empty Slot</div>
           <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="new" data-slot="${entry.slot}">New Game</button>
         </div>`;
@@ -97,16 +106,27 @@ function renderTitleScreen(onStart) {
     }).join('');
     const dateStr = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : 'unknown';
     const progressCls = getProgressClass(entry.campaign);
+    const seasonLabel = formatSeasonLabel(entry.season);
+    const gradeLabel = entry.grade ? `Last grade ${entry.grade}` : 'No harvest grade yet';
 
     return `
       <div class="save-slot-card save-slot-card--occupied ${progressCls}" data-slot="${entry.slot}">
         <div>
           <div class="save-slot-label">Slot ${entry.slot + 1}</div>
+          <div class="save-slot-stamps">
+            <span class="save-slot-stamp">${seasonLabel}</span>
+            <span class="save-slot-stamp">${gradeLabel}</span>
+          </div>
           <div class="save-slot-chapter">
             <span class="season-emoji">${entry.seasonEmoji}</span>
             Chapter ${entry.chapter}
           </div>
-          <div class="save-slot-meta">Score: ${entry.score} &middot; ${dateStr}</div>
+          <div class="save-slot-meta">Score ${entry.score} &middot; Updated ${dateStr}</div>
+          <div class="save-slot-ledger">
+            <span>Quests ${entry.activeQuests}</span>
+            <span>Zones ${entry.zonesVisited}</span>
+            <span>Archive ${(entry.gradeHistory ?? []).length}</span>
+          </div>
           ${sparkline ? `<div class="save-slot-sparkline">${sparkline}</div>` : ''}
         </div>
         <div class="save-slot-actions">
