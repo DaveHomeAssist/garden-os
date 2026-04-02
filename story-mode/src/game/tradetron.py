@@ -38,6 +38,7 @@ warnings.filterwarnings('ignore')
 
 DEFAULT_BOT_CONFIG = {
     'symbol': 'BTC/USDT',
+    'strategy_profile': 'Balanced',
     'position_size': 0.001,
     'stop_loss': 0.05,
     'take_profit': 0.10,
@@ -55,6 +56,11 @@ DEFAULT_BOT_CONFIG = {
     'min_signal_confidence': 62.0,
     'max_daily_loss': 0.02,
     'max_concurrent_trades': 3,
+    'market_history_limit': 360,
+    'trade_cooldown_minutes': 20,
+    'max_hold_hours': 24.0,
+    'pause_after_loss_streak': 3,
+    'loss_streak_cooldown_minutes': 180,
     'min_volume': 1000000,
     'max_portfolio_exposure': 0.25,
     'max_symbol_exposure': 0.10,
@@ -160,6 +166,7 @@ class CryptoTradingBot:
         self.api_secret = (api_secret or "").strip()
         self.runtime_dir = resolve_config_path(config_file).parent
         self.runtime_dir.mkdir(parents=True, exist_ok=True)
+        self.state_path = self.runtime_dir / 'tradetron_state.json'
         
         # Initialize exchange connection
         exchange_factory = getattr(ccxt, exchange_name, None)
@@ -198,6 +205,11 @@ class CryptoTradingBot:
         self.latest_signal_snapshot = {}
         self.last_preflight = {}
         self.paper_state = {}
+        self.last_daily_reset_date = datetime.now().date().isoformat()
+        self.cooldown_until = None
+        self.pause_until = None
+        self.next_cycle_due_at = None
+        self.last_cycle_completed_at = None
         
         # Initialize logging
         self.setup_logging()
@@ -220,6 +232,7 @@ class CryptoTradingBot:
             'loss_streak': 0,
             'last_trade_time': None
         }
+        self.load_runtime_state()
         
         self.logger.info("Crypto Trading Bot initialized successfully")
     
@@ -231,6 +244,7 @@ class CryptoTradingBot:
         """Refresh runtime fields from the current config object."""
         self.symbol = self.config.get('symbol', 'BTC/USDT')
         self.position_size = self.config.get('position_size', 0.001)
+        self.strategy_profile = self.config.get('strategy_profile', 'Balanced')
         self.stop_loss = self.config.get('stop_loss', 0.05)
         self.take_profit = self.config.get('take_profit', 0.10)
         self.position_sizing_method = self.config.get('position_sizing_method', 'risk_adjusted')
@@ -250,6 +264,11 @@ class CryptoTradingBot:
 
         self.max_daily_loss = self.config.get('max_daily_loss', 0.02)
         self.max_concurrent_trades = self.config.get('max_concurrent_trades', 3)
+        self.market_history_limit = max(int(self.config.get('market_history_limit', 360) or 360), self.sma_long * 4, 120)
+        self.trade_cooldown_minutes = max(float(self.config.get('trade_cooldown_minutes', 20) or 0.0), 0.0)
+        self.max_hold_hours = max(float(self.config.get('max_hold_hours', 24.0) or 0.0), 0.0)
+        self.pause_after_loss_streak = max(int(self.config.get('pause_after_loss_streak', 3) or 0), 0)
+        self.loss_streak_cooldown_minutes = max(float(self.config.get('loss_streak_cooldown_minutes', 180) or 0.0), 0.0)
         self.min_volume = self.config.get('min_volume', 1000000)
         self.max_portfolio_exposure = self.config.get('max_portfolio_exposure', 0.25)
         self.max_symbol_exposure = self.config.get('max_symbol_exposure', 0.10)
@@ -269,6 +288,163 @@ class CryptoTradingBot:
         self.sync_runtime_settings()
         if hasattr(self, 'paper_state'):
             self.initialize_paper_trading_state()
+        self.save_runtime_state()
+
+    def _serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """Serialize datetimes for the runtime state file."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+
+    def _deserialize_datetime(self, value) -> Optional[datetime]:
+        """Best-effort datetime parser for persisted runtime state."""
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str) and value:
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
+
+    def _serialize_position(self, position: Dict) -> Dict:
+        """Convert a live position record into a JSON-safe structure."""
+        payload = copy.deepcopy(position)
+        payload['timestamp'] = self._serialize_datetime(payload.get('timestamp'))
+        return payload
+
+    def _deserialize_position(self, position: Dict) -> Dict:
+        """Convert persisted position data back into runtime form."""
+        payload = copy.deepcopy(position)
+        payload['timestamp'] = self._deserialize_datetime(payload.get('timestamp')) or datetime.now()
+        return payload
+
+    def save_runtime_state(self):
+        """Persist runtime status so paper sessions can resume cleanly."""
+        state_payload = {
+            'symbol': self.symbol,
+            'strategy_profile': self.strategy_profile,
+            'daily_loss': self.daily_loss,
+            'total_trades': self.total_trades,
+            'win_trades': self.win_trades,
+            'loss_trades': self.loss_trades,
+            'trade_history': self.trade_history[-300:],
+            'open_positions': {order_id: self._serialize_position(position) for order_id, position in self.open_positions.items()},
+            'metrics': {
+                **self.metrics,
+                'last_trade_time': self._serialize_datetime(self.metrics.get('last_trade_time')),
+            },
+            'paper_state': self.paper_state,
+            'last_daily_reset_date': self.last_daily_reset_date,
+            'cooldown_until': self._serialize_datetime(self.cooldown_until),
+            'pause_until': self._serialize_datetime(self.pause_until),
+            'next_cycle_due_at': self._serialize_datetime(self.next_cycle_due_at),
+            'last_cycle_completed_at': self._serialize_datetime(self.last_cycle_completed_at),
+        }
+
+        try:
+            with self.state_path.open('w', encoding='utf-8') as file_handle:
+                json.dump(state_payload, file_handle, indent=2)
+        except Exception as exc:
+            logger = getattr(self, 'logger', None)
+            if logger:
+                logger.error(f"Failed to save runtime state: {exc}")
+
+    def load_runtime_state(self):
+        """Restore persisted runtime state when it matches the current symbol."""
+        if not self.state_path.exists():
+            return
+
+        try:
+            with self.state_path.open('r', encoding='utf-8') as file_handle:
+                state_payload = json.load(file_handle)
+        except Exception as exc:
+            self.logger.error(f"Failed to load runtime state: {exc}")
+            return
+
+        if state_payload.get('symbol') and state_payload.get('symbol') != self.symbol:
+            self.logger.info(
+                f"Runtime state file is for {state_payload.get('symbol')} and will not be applied to {self.symbol}."
+            )
+            return
+
+        self.daily_loss = float(state_payload.get('daily_loss', self.daily_loss) or 0.0)
+        self.total_trades = int(state_payload.get('total_trades', self.total_trades) or 0)
+        self.win_trades = int(state_payload.get('win_trades', self.win_trades) or 0)
+        self.loss_trades = int(state_payload.get('loss_trades', self.loss_trades) or 0)
+        self.trade_history = list(state_payload.get('trade_history', self.trade_history))
+        self.open_positions = {
+            order_id: self._deserialize_position(position)
+            for order_id, position in state_payload.get('open_positions', {}).items()
+        }
+        persisted_metrics = state_payload.get('metrics', {})
+        if persisted_metrics:
+            self.metrics.update(persisted_metrics)
+            self.metrics['last_trade_time'] = self._deserialize_datetime(self.metrics.get('last_trade_time'))
+        self.paper_state = state_payload.get('paper_state', self.paper_state)
+        self.last_daily_reset_date = state_payload.get('last_daily_reset_date', self.last_daily_reset_date)
+        self.cooldown_until = self._deserialize_datetime(state_payload.get('cooldown_until'))
+        self.pause_until = self._deserialize_datetime(state_payload.get('pause_until'))
+        self.next_cycle_due_at = self._deserialize_datetime(state_payload.get('next_cycle_due_at'))
+        self.last_cycle_completed_at = self._deserialize_datetime(state_payload.get('last_cycle_completed_at'))
+        self.initialize_paper_trading_state()
+        self.logger.info("Runtime state restored from disk")
+
+    def _minutes_until(self, target: Optional[datetime]) -> float:
+        """Return remaining minutes until a future timestamp."""
+        if not target:
+            return 0.0
+        return max(0.0, (target - datetime.now()).total_seconds() / 60.0)
+
+    def format_minutes_remaining(self, minutes_remaining: float) -> str:
+        """Format remaining minutes as a short human-readable label."""
+        if minutes_remaining <= 0:
+            return "Ready"
+        if minutes_remaining < 1:
+            return "<1 min"
+        if minutes_remaining < 60:
+            return f"{minutes_remaining:.0f} min"
+        return f"{minutes_remaining / 60.0:.1f} hr"
+
+    def reset_daily_guardrails_if_needed(self):
+        """Reset daily loss controls when the calendar day changes."""
+        today = datetime.now().date().isoformat()
+        if self.last_daily_reset_date == today:
+            return
+
+        self.daily_loss = 0.0
+        self.last_daily_reset_date = today
+        self.logger.info("Daily risk controls reset for a new trading day")
+        self.save_runtime_state()
+
+    def get_entry_restrictions(self) -> List[str]:
+        """Report any non-market reasons why new entries are paused."""
+        restrictions = []
+        cooldown_remaining = self._minutes_until(self.cooldown_until)
+        pause_remaining = self._minutes_until(self.pause_until)
+
+        if cooldown_remaining > 0:
+            restrictions.append(f"Trade cooldown active for {self.format_minutes_remaining(cooldown_remaining)}")
+        if pause_remaining > 0:
+            restrictions.append(f"Loss-streak pause active for {self.format_minutes_remaining(pause_remaining)}")
+
+        return restrictions
+
+    def set_trade_cooldown(self, minutes: float, reason: str):
+        """Hold new entries for a cooling-off period."""
+        if minutes <= 0:
+            return
+        self.cooldown_until = datetime.now() + timedelta(minutes=float(minutes))
+        self.logger.info(f"Trade cooldown started for {minutes:.0f} minutes: {reason}")
+        self.save_runtime_state()
+
+    def set_loss_streak_pause(self, minutes: float, reason: str):
+        """Pause new entries after repeated losses."""
+        if minutes <= 0:
+            return
+        self.pause_until = datetime.now() + timedelta(minutes=float(minutes))
+        self.logger.warning(f"Loss-streak pause started for {minutes:.0f} minutes: {reason}")
+        self.save_runtime_state()
 
     def _parse_symbol_components(self, symbol: str) -> Tuple[str, str]:
         """Split the configured symbol into base and quote currency codes."""
@@ -364,6 +540,35 @@ class CryptoTradingBot:
             'base_currency': self.base_currency,
             'quote_currency': self.quote_currency,
         }
+
+    def reset_paper_account(self):
+        """Reset the simulated account, open positions, and in-memory performance counters."""
+        if not self.config.get('enable_paper_trading', False):
+            raise ValueError("Paper account reset is only available in paper trading mode.")
+
+        self.open_positions = {}
+        self.trade_history = []
+        self.daily_loss = 0.0
+        self.total_trades = 0
+        self.win_trades = 0
+        self.loss_trades = 0
+        self.cooldown_until = None
+        self.pause_until = None
+        self.next_cycle_due_at = None
+        self.metrics.update(
+            {
+                'total_profit_loss': 0.0,
+                'equity_peak': 0.0,
+                'max_drawdown': 0.0,
+                'win_streak': 0,
+                'loss_streak': 0,
+                'last_trade_time': None,
+            }
+        )
+        self.paper_state = {}
+        self.initialize_paper_trading_state()
+        self.save_runtime_state()
+        self.logger.info("Paper account reset to starting conditions")
 
     def _execute_paper_order(self, side: str, amount: float, price: Optional[float] = None) -> Dict:
         """Simulate an order fill against the paper ledger using public pricing."""
@@ -482,6 +687,16 @@ class CryptoTradingBot:
             issues.append("Sell score threshold should remain between 50 and 95.")
         if self.min_signal_confidence < 50 or self.min_signal_confidence > 95:
             issues.append("Minimum signal confidence should remain between 50 and 95.")
+        if self.market_history_limit < max(self.sma_long * 4, 120):
+            issues.append("Market history limit should be large enough to support the configured indicators.")
+        if self.trade_cooldown_minutes < 0:
+            issues.append("Trade cooldown cannot be negative.")
+        if self.max_hold_hours < 0:
+            issues.append("Max hold hours cannot be negative.")
+        if self.pause_after_loss_streak < 0:
+            issues.append("Loss-streak pause threshold cannot be negative.")
+        if self.loss_streak_cooldown_minutes < 0:
+            issues.append("Loss-streak cooldown minutes cannot be negative.")
 
         return issues
     
@@ -521,7 +736,7 @@ class CryptoTradingBot:
             self.logger.error(f"Failed to connect to exchange: {e}")
             raise Exception(f"Exchange connection failed: {e}")
     
-    def get_market_data(self, limit: int = 150) -> pd.DataFrame:
+    def get_market_data(self, limit: Optional[int] = None) -> pd.DataFrame:
         """
         Get historical market data
         
@@ -532,6 +747,7 @@ class CryptoTradingBot:
             pd.DataFrame: Historical OHLCV data
         """
         try:
+            limit = max(int(limit or self.market_history_limit), self.sma_long * 4, 120)
             ohlcv = self.exchange.fetch_ohlcv(self.symbol, self.timeframe, limit=limit)
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
@@ -731,6 +947,13 @@ class CryptoTradingBot:
         stop_price = current_price * (1 - stop_distance_pct)
         target_price = current_price * (1 + max(self.take_profit, stop_distance_pct * self.config.get('risk_reward_ratio', 1.0)))
         trailing_stop_price = current_price * (1 - max(atr_percent * self.trailing_stop_multiple, self.stop_loss * 0.7))
+        position_age_hours = 0.0
+
+        if position:
+            opened_at = position.get('timestamp')
+            opened_at = opened_at if isinstance(opened_at, datetime) else self._deserialize_datetime(opened_at)
+            if opened_at:
+                position_age_hours = max(0.0, (datetime.now() - opened_at).total_seconds() / 3600.0)
 
         reasons = []
         if trend_component > 0.15:
@@ -786,12 +1009,19 @@ class CryptoTradingBot:
         if risk_reward < 1.0:
             buy_blockers.append(f"Risk-reward is below 1.0. Current ratio is {risk_reward:.2f}.")
             buy_blocker_tags.append("r:r")
+        for restriction in self.get_entry_restrictions():
+            buy_blockers.append(restriction)
+            buy_blocker_tags.append("timing")
 
         action = 'HOLD'
         if bias >= 6 and buy_score >= self.buy_score_threshold and confidence >= self.min_signal_confidence and trend_pass and volume_pass and volatility_pass:
             action = 'BUY'
-            buy_blockers = ["Buy setup is active now."]
-            buy_blocker_tags = ["ready"]
+            if not self.get_entry_restrictions() and recommended_size > 0 and risk_reward >= 1.0:
+                buy_blockers = ["Buy setup is active now."]
+                buy_blocker_tags = ["ready"]
+            else:
+                buy_blockers.insert(0, "Market setup is active, but an execution gate is still blocking entry.")
+                buy_blocker_tags.insert(0, "gate")
         elif entry_price is not None:
             unrealized_return = self._safe_div(current_price - entry_price, entry_price, 0.0)
             if unrealized_return <= -stop_distance_pct:
@@ -809,6 +1039,12 @@ class CryptoTradingBot:
                 if current_price <= trailing_stop_price:
                     action = 'SELL'
                     risk_flags.append("Trailing stop breached")
+                if self.max_hold_hours > 0 and position_age_hours >= self.max_hold_hours:
+                    action = 'SELL'
+                    risk_flags.append("Max hold time reached")
+                    reasons.append(f"Position age reached {position_age_hours:.1f} hours.")
+
+        buy_gate_ready = action == 'BUY' and not self.get_entry_restrictions() and recommended_size > 0 and risk_reward >= 1.0
 
         return {
             'timestamp': datetime.now().isoformat(),
@@ -831,12 +1067,13 @@ class CryptoTradingBot:
             'stop_price': stop_price,
             'target_price': target_price,
             'trailing_stop_price': trailing_stop_price,
+            'position_age_hours': position_age_hours,
             'bias': round(bias, 2),
             'reasons': reasons,
             'risk_flags': risk_flags,
             'buy_blockers': buy_blockers,
             'buy_blocker_tags': buy_blocker_tags,
-            'buy_gate_status': 'READY' if action == 'BUY' else 'WAITING',
+            'buy_gate_status': 'READY' if buy_gate_ready else 'WAITING',
             'filters': {
                 'trend_pass': trend_pass,
                 'volume_pass': volume_pass,
@@ -844,10 +1081,10 @@ class CryptoTradingBot:
             },
         }
 
-    def analyze_market(self, refresh: bool = True, limit: int = 240, entry_price: Optional[float] = None, position: Optional[Dict] = None) -> Dict:
+    def analyze_market(self, refresh: bool = True, limit: Optional[int] = None, entry_price: Optional[float] = None, position: Optional[Dict] = None) -> Dict:
         """Refresh market data and produce the latest signal snapshot."""
         if refresh or self.latest_market_frame.empty:
-            df = self.get_market_data(limit=max(limit, self.sma_long * 4))
+            df = self.get_market_data(limit=max(int(limit or self.market_history_limit), self.sma_long * 4, 120))
             if df.empty:
                 self.latest_market_frame = pd.DataFrame()
                 self.latest_signal_snapshot = self.build_signal_snapshot(df, entry_price=entry_price, position=position)
@@ -871,7 +1108,7 @@ class CryptoTradingBot:
             return False
         
         signal_snapshot = signal_snapshot or self.build_signal_snapshot(df)
-        buy_signal = signal_snapshot.get('action') == 'BUY'
+        buy_signal = signal_snapshot.get('action') == 'BUY' and signal_snapshot.get('buy_gate_status') == 'READY'
 
         if buy_signal:
             self.logger.info(
@@ -1062,8 +1299,14 @@ class CryptoTradingBot:
             current_drawdown = self.metrics['equity_peak'] - self.metrics['total_profit_loss']
             self.metrics['max_drawdown'] = max(self.metrics['max_drawdown'], current_drawdown)
             self.metrics['last_trade_time'] = datetime.now()
+            if profit_loss < 0 and self.pause_after_loss_streak > 0 and self.metrics['loss_streak'] >= self.pause_after_loss_streak:
+                self.set_loss_streak_pause(
+                    self.loss_streak_cooldown_minutes,
+                    f"Loss streak reached {self.metrics['loss_streak']} closed trades.",
+                )
         
         self.logger.info(f"Trade recorded: {trade_type} {amount} {self.symbol} at {price}")
+        self.save_runtime_state()
     
     def get_account_balance(self) -> Dict:
         """Get current account balance"""
@@ -1184,6 +1427,12 @@ class CryptoTradingBot:
                 f"{paper_snapshot.get('cash_balance', 0.0):.2f} {self.quote_currency} cash | "
                 f"{paper_snapshot.get('asset_balance', 0.0):.6f} {self.base_currency} inventory"
             ) if self.config.get('enable_paper_trading', False) else 'Live settlement handled by exchange account.',
+        })
+        entry_restrictions = self.get_entry_restrictions()
+        capability_checks.append({
+            'name': 'Execution Timing',
+            'passed': not entry_restrictions,
+            'detail': 'Entries are clear to proceed.' if not entry_restrictions else "; ".join(entry_restrictions),
         })
         capability_checks.append({
             'name': 'Exposure Envelope',
@@ -1325,6 +1574,7 @@ class CryptoTradingBot:
         """Ask the trading loop to stop after the current operation."""
         self.stop_requested = True
         self.logger.info("Stop requested by controller")
+        self.save_runtime_state()
 
     def sleep_with_stop(self, seconds: float):
         """Sleep in short intervals so external controllers can stop the loop."""
@@ -1335,6 +1585,13 @@ class CryptoTradingBot:
                 break
             time.sleep(min(1.0, max(0.0, deadline - time.time())))
 
+    def schedule_next_cycle_wait(self, seconds: float):
+        """Record when the next scan should occur and persist it for the UI."""
+        wait_seconds = max(0.0, float(seconds))
+        self.last_cycle_completed_at = datetime.now()
+        self.next_cycle_due_at = self.last_cycle_completed_at + timedelta(seconds=wait_seconds)
+        self.save_runtime_state()
+
     def get_command_deck_payload(self, refresh_market_data: bool = True) -> Dict:
         """Assemble a single payload tailored for the round-two dashboard."""
         signal_snapshot = self.analyze_market(refresh=refresh_market_data)
@@ -1342,6 +1599,7 @@ class CryptoTradingBot:
         metrics = self.get_bot_metrics()
         stats = self.get_trade_statistics()
         paper_line = ""
+        recent_trades_text = self.render_recent_trades()
 
         if self.config.get('enable_paper_trading', False):
             paper_line = (
@@ -1393,8 +1651,28 @@ class CryptoTradingBot:
             'executive_brief': executive_brief,
             'signal_stack': signal_stack,
             'preflight_text': preflight_text,
+            'recent_trades_text': recent_trades_text,
             'report': self.generate_report(),
         }
+
+    def render_recent_trades(self, limit: int = 8) -> str:
+        """Render a concise recent-trades ledger for the dashboard."""
+        if not self.trade_history:
+            return "No trades have been recorded in this session yet."
+
+        lines = []
+        for trade in reversed(self.trade_history[-limit:]):
+            pnl_text = "--"
+            if trade.get('type') == 'sell':
+                pnl_text = f"{float(trade.get('profit_loss', 0.0)) * 100:.2f}%"
+            lines.append(
+                f"{str(trade.get('timestamp', ''))[:19]} | "
+                f"{str(trade.get('type', '')).upper():4} | "
+                f"{float(trade.get('amount', 0.0)):.6f} @ {float(trade.get('price', 0.0)):,.2f} | "
+                f"P/L {pnl_text}"
+            )
+
+        return "\n".join(lines)
     
     def get_bot_metrics(self) -> Dict:
         """Get comprehensive bot metrics"""
@@ -1405,6 +1683,13 @@ class CryptoTradingBot:
         preflight = self.last_preflight or self.get_preflight_status(signal_snapshot)
         exposure_value = self.get_total_exposure()
         exposure_ratio = self._safe_div(exposure_value, portfolio_value, 0.0)
+        cooldown_remaining = self._minutes_until(self.cooldown_until)
+        pause_remaining = self._minutes_until(self.pause_until)
+        next_scan_seconds = 0.0
+        if self.next_cycle_due_at:
+            next_scan_seconds = max(0.0, (self.next_cycle_due_at - datetime.now()).total_seconds())
+        last_trade_time = self.metrics.get('last_trade_time')
+        last_trade_label = last_trade_time.strftime('%Y-%m-%d %H:%M:%S') if isinstance(last_trade_time, datetime) else "None yet"
         
         return {
             'portfolio_value': portfolio_value,
@@ -1439,6 +1724,13 @@ class CryptoTradingBot:
             'paper_unrealized_pnl': paper_snapshot.get('unrealized_pnl_quote', 0.0),
             'quote_currency': self.quote_currency,
             'base_currency': self.base_currency,
+            'cooldown_remaining_minutes': cooldown_remaining,
+            'cooldown_label': self.format_minutes_remaining(cooldown_remaining),
+            'pause_remaining_minutes': pause_remaining,
+            'pause_label': self.format_minutes_remaining(pause_remaining),
+            'next_scan_seconds': next_scan_seconds,
+            'next_scan_label': self.format_minutes_remaining(next_scan_seconds / 60.0),
+            'last_trade_label': last_trade_label,
         }
     
     def run_trading_cycle(self):
@@ -1447,30 +1739,37 @@ class CryptoTradingBot:
         """
         self.logger.info("Starting trading bot...")
         self.stop_requested = False
+        self.next_cycle_due_at = None
         
         while not self.stop_requested:
             try:
+                self.reset_daily_guardrails_if_needed()
+                self.next_cycle_due_at = None
                 config_issues = self.validate_config()
                 if config_issues:
                     self.logger.error(f"Config validation failed: {'; '.join(config_issues)}")
+                    self.schedule_next_cycle_wait(60)
                     self.sleep_with_stop(60)
                     continue
 
                 # Check if trading is enabled
                 if not self.config.get('trading_enabled', True):
                     self.logger.info("Trading disabled in config")
+                    self.schedule_next_cycle_wait(60)
                     self.sleep_with_stop(60)
                     continue
                 
                 # Check daily loss limit
                 if self.check_daily_loss_limit():
                     self.logger.warning("Daily loss limit reached, skipping trades")
+                    self.schedule_next_cycle_wait(300)
                     self.sleep_with_stop(300)  # Wait 5 minutes
                     continue
                 
                 # Get market data
-                df = self.get_market_data(limit=150)
+                df = self.get_market_data(limit=self.market_history_limit)
                 if df.empty:
+                    self.schedule_next_cycle_wait(60)
                     self.sleep_with_stop(60)
                     continue
                 
@@ -1480,13 +1779,17 @@ class CryptoTradingBot:
                 market_signal = self.build_signal_snapshot(df)
                 self.latest_signal_snapshot = market_signal
                 self.get_preflight_status(market_signal)
+                entry_restrictions = self.get_entry_restrictions()
                 
                 # Check for buy signals
                 if len(self.open_positions) < self.max_concurrent_trades:
-                    if self.should_buy(df, market_signal):
+                    if entry_restrictions:
+                        self.logger.info(f"Entry pause active: {'; '.join(entry_restrictions)}")
+                    elif self.should_buy(df, market_signal):
                         trade_amount = market_signal.get('recommended_size', 0.0)
                         if trade_amount <= 0:
                             self.logger.warning("Signal approved but recommended position size is zero.")
+                            self.schedule_next_cycle_wait(self.config.get('check_interval', 60))
                             self.sleep_with_stop(self.config.get('check_interval', 60))
                             continue
                         # Place buy order
@@ -1512,6 +1815,7 @@ class CryptoTradingBot:
                                 'entry_fee_quote': float(order.get('fee', {}).get('cost', 0.0) or 0.0),
                             }
                             self.update_trade_history('buy', filled_amount, entry_price, order_id=order['id'])
+                            self.set_trade_cooldown(self.trade_cooldown_minutes, "Entry executed")
                             
                             # Send notification
                             self.send_email_notification(
@@ -1547,6 +1851,7 @@ class CryptoTradingBot:
                                 
                                 # Update trade history
                                 self.update_trade_history('sell', filled_amount, exit_price, profit_loss, order_id=order['id'])
+                                self.set_trade_cooldown(self.trade_cooldown_minutes, "Exit executed")
                                 
                                 # Remove from open positions
                                 del self.open_positions[order_id]
@@ -1573,17 +1878,22 @@ class CryptoTradingBot:
                                    f"Win Streak: {stats['win_streak']}")
                 
                 # Wait before next check
-                self.logger.info(f"Waiting {self.config.get('check_interval', 60)} seconds...")
-                self.sleep_with_stop(self.config.get('check_interval', 60))
+                wait_seconds = self.config.get('check_interval', 60)
+                self.schedule_next_cycle_wait(wait_seconds)
+                self.logger.info(f"Waiting {wait_seconds} seconds...")
+                self.sleep_with_stop(wait_seconds)
                 
             except KeyboardInterrupt:
                 self.logger.info("Bot stopped by user")
                 break
             except Exception as e:
                 self.logger.error(f"Error in trading cycle: {e}")
+                self.schedule_next_cycle_wait(60)
                 self.sleep_with_stop(60)  # Wait before retrying
 
         self.logger.info("Trading loop stopped")
+        self.next_cycle_due_at = None
+        self.save_runtime_state()
     
     def generate_report(self) -> str:
         """Generate a trading report"""
@@ -1612,6 +1922,7 @@ Mission Status:
 - Running since: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}
 - Uptime: {metrics['uptime']}
 - Current Symbol: {self.symbol}
+- Strategy Profile: {self.strategy_profile}
 - Market Regime: {metrics['regime']}
 - Recommended Action: {metrics['signal_action']}
 - Signal Confidence: {metrics['signal_confidence']:.2f}
@@ -1619,6 +1930,8 @@ Mission Status:
 - Readiness Status: {metrics['readiness_status']}
 - Risk Posture: {metrics['risk_posture']}
 - Open Positions: {len(self.open_positions)}
+- Last Trade: {metrics['last_trade_label']}
+- Next Scan: {metrics['next_scan_label']}
 
 Signal Stack:
 - Buy Score: {signal_snapshot.get('buy_score', 0):.2f}
@@ -1648,9 +1961,15 @@ Risk Envelope:
 - Daily Loss Limit: {self.max_daily_loss*100:.2f}%
 - Current Daily Loss: {self.daily_loss*100:.2f}%
 - Max Concurrent Trades: {self.max_concurrent_trades}
+- Market History Limit: {self.market_history_limit} candles
+- Trade Cooldown: {self.trade_cooldown_minutes:.0f} minutes
+- Max Hold Window: {self.max_hold_hours:.1f} hours
+- Loss-Streak Pause: {self.pause_after_loss_streak} losses -> {self.loss_streak_cooldown_minutes:.0f} minutes
 - Exposure: ${metrics['exposure_value']:.2f} ({metrics['exposure_ratio']*100:.2f}% of portfolio)
 - Stop Distance: {signal_snapshot.get('stop_distance_pct', self.stop_loss)*100:.2f}%
 - Take Profit Target: {self.take_profit*100:.2f}%
+- Entry Cooldown Remaining: {metrics['cooldown_label']}
+- Pause Remaining: {metrics['pause_label']}
 
 Portfolio:
 - Portfolio Value: ${metrics['portfolio_value']:.2f}

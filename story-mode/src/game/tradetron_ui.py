@@ -27,6 +27,71 @@ class QueueLogHandler(logging.Handler):
 
 
 class TradeTronDashboard:
+    PROFILE_PRESETS = {
+        "Balanced": {
+            "strategy_profile": "Balanced",
+            "timeframe": "1h",
+            "buy_score_threshold": 64.0,
+            "sell_score_threshold": 60.0,
+            "min_signal_confidence": 62.0,
+            "volume_surge_threshold": 1.1,
+            "position_sizing_method": "risk_adjusted",
+            "risk_per_trade": 0.005,
+            "max_position_size": 0.01,
+            "max_concurrent_trades": 3,
+            "max_portfolio_exposure": 0.25,
+            "max_symbol_exposure": 0.10,
+            "trade_cooldown_minutes": 20,
+            "max_hold_hours": 24.0,
+            "pause_after_loss_streak": 3,
+            "loss_streak_cooldown_minutes": 180,
+            "market_history_limit": 360,
+            "use_volatility_filter": True,
+            "use_trend_filter": True,
+        },
+        "Conservative": {
+            "strategy_profile": "Conservative",
+            "timeframe": "4h",
+            "buy_score_threshold": 70.0,
+            "sell_score_threshold": 58.0,
+            "min_signal_confidence": 68.0,
+            "volume_surge_threshold": 1.2,
+            "position_sizing_method": "risk_adjusted",
+            "risk_per_trade": 0.0035,
+            "max_position_size": 0.0075,
+            "max_concurrent_trades": 2,
+            "max_portfolio_exposure": 0.18,
+            "max_symbol_exposure": 0.08,
+            "trade_cooldown_minutes": 45,
+            "max_hold_hours": 36.0,
+            "pause_after_loss_streak": 2,
+            "loss_streak_cooldown_minutes": 240,
+            "market_history_limit": 480,
+            "use_volatility_filter": True,
+            "use_trend_filter": True,
+        },
+        "Active": {
+            "strategy_profile": "Active",
+            "timeframe": "15m",
+            "buy_score_threshold": 58.0,
+            "sell_score_threshold": 56.0,
+            "min_signal_confidence": 57.0,
+            "volume_surge_threshold": 1.0,
+            "position_sizing_method": "risk_adjusted",
+            "risk_per_trade": 0.0075,
+            "max_position_size": 0.015,
+            "max_concurrent_trades": 4,
+            "max_portfolio_exposure": 0.35,
+            "max_symbol_exposure": 0.14,
+            "trade_cooldown_minutes": 8,
+            "max_hold_hours": 8.0,
+            "pause_after_loss_streak": 4,
+            "loss_streak_cooldown_minutes": 90,
+            "market_history_limit": 600,
+            "use_volatility_filter": True,
+            "use_trend_filter": False,
+        },
+    }
     MODEL_FIELDS = [
         ("symbol", "Symbol", "string"),
         ("timeframe", "Timeframe", "string"),
@@ -53,6 +118,11 @@ class TradeTronDashboard:
         ("max_concurrent_trades", "Max Trades", "int"),
         ("max_portfolio_exposure", "Max Portfolio Exposure", "float"),
         ("max_symbol_exposure", "Max Symbol Exposure", "float"),
+        ("market_history_limit", "History Candles", "int"),
+        ("trade_cooldown_minutes", "Trade Cooldown", "float"),
+        ("max_hold_hours", "Max Hold Hours", "float"),
+        ("pause_after_loss_streak", "Loss Pause After", "int"),
+        ("loss_streak_cooldown_minutes", "Loss Pause Min", "float"),
         ("check_interval", "Check Interval", "int"),
         ("paper_fee_rate", "Paper Fee", "float"),
         ("paper_slippage_bps", "Paper Slip bps", "float"),
@@ -71,6 +141,7 @@ class TradeTronDashboard:
         "Risk Posture",
         "Current Price",
         "Would Buy At",
+        "Next Scan",
         "Portfolio Value",
         "Paper Cash",
         "Paper Inventory",
@@ -84,8 +155,11 @@ class TradeTronDashboard:
         "Win Rate",
         "Daily Loss",
         "Max Drawdown",
+        "Cooldown",
+        "Pause",
         "Paper Fees",
         "Paper P&L",
+        "Last Trade",
         "Why Hold",
     ]
 
@@ -120,6 +194,7 @@ class TradeTronDashboard:
 
         self.config_path_var = tk.StringVar(value=config_file)
         self.exchange_var = tk.StringVar(value=exchange_name)
+        self.profile_var = tk.StringVar(value="Balanced")
         self.api_key_var = tk.StringVar()
         self.api_secret_var = tk.StringVar()
         self.connection_var = tk.StringVar(value="Disconnected")
@@ -247,6 +322,7 @@ class TradeTronDashboard:
         self.start_button = ttk.Button(actions, text="Start Auto Trading", style="Accent.TButton", command=self.start_bot)
         self.stop_button = ttk.Button(actions, text="Stop Auto Trading", style="Alert.TButton", command=self.stop_bot)
         self.refresh_button = ttk.Button(actions, text="Refresh Analysis", style="Ghost.TButton", command=self.refresh_snapshot)
+        self.reset_button = ttk.Button(actions, text="Reset Paper Account", style="Ghost.TButton", command=self.reset_paper_account)
         self.export_button = ttk.Button(actions, text="Export Report", style="Ghost.TButton", command=self.export_report)
 
         buttons = [
@@ -255,6 +331,7 @@ class TradeTronDashboard:
             self.start_button,
             self.stop_button,
             self.refresh_button,
+            self.reset_button,
             self.export_button,
         ]
         for index, button in enumerate(buttons):
@@ -272,13 +349,18 @@ class TradeTronDashboard:
         ttk.Button(card, text="Browse", style="Ghost.TButton", command=self._browse_config).grid(row=3, column=2, sticky="ew", padx=(8, 0))
         ttk.Label(card, text="API fields are optional when Paper Trading is enabled.", style="Muted.TLabel").grid(row=4, column=0, columnspan=3, sticky="w", pady=(4, 0))
 
+        ttk.Label(card, text="Preset", style="Body.TLabel").grid(row=5, column=0, sticky="w", pady=6)
+        profile_combo = ttk.Combobox(card, textvariable=self.profile_var, values=list(self.PROFILE_PRESETS.keys()), state="readonly", style="Deck.TCombobox")
+        profile_combo.grid(row=5, column=1, sticky="ew", pady=6)
+        ttk.Button(card, text="Apply Preset", style="Ghost.TButton", command=self.apply_profile_preset).grid(row=5, column=2, sticky="ew", padx=(8, 0))
+
         mode_frame = ttk.LabelFrame(card, text="Execution Modes", style="Card.TLabelframe", padding=12)
-        mode_frame.grid(row=5, column=0, columnspan=3, sticky="ew", pady=(14, 0))
+        mode_frame.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(14, 0))
         for index, (field_name, label) in enumerate(self.BOOL_FIELDS):
             ttk.Checkbutton(mode_frame, text=label, variable=self.form_vars[field_name], style="Deck.TCheckbutton").grid(row=index // 2, column=index % 2, sticky="w", padx=(0, 16), pady=4)
 
         status_band = tk.Frame(card, bg=self.colors["panel"], pady=10)
-        status_band.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(14, 0))
+        status_band.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(14, 0))
         status_band.columnconfigure(0, weight=1)
         status_band.columnconfigure(1, weight=1)
 
@@ -334,19 +416,23 @@ class TradeTronDashboard:
 
         signal_tab = ttk.Frame(notebooks, style="Deck.TFrame", padding=6)
         report_tab = ttk.Frame(notebooks, style="Deck.TFrame", padding=6)
+        trades_tab = ttk.Frame(notebooks, style="Deck.TFrame", padding=6)
         log_tab = ttk.Frame(notebooks, style="Deck.TFrame", padding=6)
         notebooks.add(signal_tab, text="Signal Stack")
         notebooks.add(report_tab, text="Executive Report")
+        notebooks.add(trades_tab, text="Recent Trades")
         notebooks.add(log_tab, text="Activity Log")
 
         self.signal_text = self._build_single_tab_text(signal_tab, "Signal Stack")
         self.report_text = self._build_single_tab_text(report_tab, "Executive Report")
+        self.trades_text = self._build_single_tab_text(trades_tab, "Recent Trades")
         self.log_text = self._build_single_tab_text(log_tab, "Activity Log", foreground=self.colors["accent"])
 
         self._set_text(self.brief_text, "Connect to the bot to generate a directive.")
         self._set_text(self.preflight_text, "Preflight checks will appear here after connection.")
         self._set_text(self.signal_text, "Signal stack will populate after market analysis.")
         self._set_text(self.report_text, "Executive report will populate here after connection.")
+        self._set_text(self.trades_text, "Recent trades will appear here after the first entry or exit.")
         self._set_text(self.log_text, "TradeTron round two command center ready.")
 
     def _build_text_panel(self, parent, column, title):
@@ -391,6 +477,9 @@ class TradeTronDashboard:
         signal_action = self.card_vars["Directive"].get()
         estimated_buy_at = self.card_vars["Would Buy At"].get()
         hold_summary = self.card_vars["Why Hold"].get()
+        next_scan = self.card_vars["Next Scan"].get()
+        cooldown = self.card_vars["Cooldown"].get()
+        pause = self.card_vars["Pause"].get()
 
         if is_connecting:
             self.status_headline_var.set("Connecting to exchange and loading market data")
@@ -414,7 +503,7 @@ class TradeTronDashboard:
                 self.status_detail_var.set(
                     f"The bot is connected and scanning every Check Interval seconds. "
                     f"If a setup appears, the estimated paper entry is {estimated_buy_at}. "
-                    f"Current blockers: {hold_summary}."
+                    f"Current blockers: {hold_summary}. Cooldown: {cooldown}. Pause: {pause}. Next scan: {next_scan}."
                 )
             return
 
@@ -422,7 +511,7 @@ class TradeTronDashboard:
         self.status_detail_var.set(
             f"You are connected and analysis is working. Click Start Auto Trading to begin the continuous loop. "
             f"Right now the model directive is {signal_action}. Estimated paper entry is {estimated_buy_at}. "
-            f"Current blockers: {hold_summary}."
+            f"Current blockers: {hold_summary}. Cooldown: {cooldown}. Pause: {pause}. Next scan: {next_scan}."
         )
 
     def _browse_config(self):
@@ -445,14 +534,28 @@ class TradeTronDashboard:
             return
 
         self._append_log(f"Using config file: {resolve_config_path(config_path)}")
+        self.profile_var.set(config.get("strategy_profile", self.profile_var.get() or "Balanced"))
 
         for field_name, _, _ in [*self.MODEL_FIELDS, *self.RISK_FIELDS]:
             self.form_vars[field_name].set(str(config.get(field_name, "")))
         for field_name, _ in self.BOOL_FIELDS:
             self.form_vars[field_name].set(bool(config.get(field_name, False)))
 
+    def apply_profile_preset(self):
+        profile_name = self.profile_var.get().strip()
+        preset = self.PROFILE_PRESETS.get(profile_name)
+        if not preset:
+            messagebox.showerror("Preset Error", f"Unknown profile preset: {profile_name}")
+            return
+
+        for field_name, value in preset.items():
+            if field_name in self.form_vars:
+                self.form_vars[field_name].set(value)
+        self._append_log(f"Applied {profile_name} preset to the form.")
+
     def _collect_form_config(self):
         config = load_bot_config_file(self.config_path_var.get().strip() or "bot_config.json")
+        config["strategy_profile"] = self.profile_var.get().strip() or "Balanced"
 
         for field_name, label, field_type in [*self.MODEL_FIELDS, *self.RISK_FIELDS]:
             raw_value = self.form_vars[field_name].get().strip()
@@ -482,6 +585,10 @@ class TradeTronDashboard:
             raise ValueError("Max Symbol Exposure cannot exceed Max Portfolio Exposure.")
         if config["check_interval"] <= 0:
             raise ValueError("Check Interval must be greater than zero.")
+        if config["market_history_limit"] < max(config["sma_long"] * 4, 120):
+            raise ValueError("History Candles must be at least max(SMA Long * 4, 120).")
+        if config["pause_after_loss_streak"] < 0:
+            raise ValueError("Loss Pause After cannot be negative.")
 
         return config
 
@@ -625,6 +732,27 @@ class TradeTronDashboard:
         except Exception as exc:
             messagebox.showerror("Export Failed", str(exc))
 
+    def reset_paper_account(self):
+        if not self.bot:
+            messagebox.showinfo("Connect First", "Connect to a paper session before resetting the paper account.")
+            return
+        if not self.bot.config.get("enable_paper_trading", False):
+            messagebox.showinfo("Paper Mode Only", "Reset Paper Account is only available in paper trading mode.")
+            return
+        if self.bot_thread and self.bot_thread.is_alive():
+            messagebox.showinfo("Stop First", "Stop auto trading before resetting the paper account.")
+            return
+        if not messagebox.askyesno("Reset Paper Account", "Reset the simulated account, positions, and session stats back to the starting balance?"):
+            return
+
+        try:
+            self.bot.reset_paper_account()
+            payload = self.bot.get_command_deck_payload(refresh_market_data=False)
+            self.event_queue.put(("payload", payload))
+            self._append_log("Paper account reset to starting conditions.")
+        except Exception as exc:
+            messagebox.showerror("Reset Failed", str(exc))
+
     def _apply_payload(self, payload):
         metrics = payload["metrics"]
         stats = payload["stats"]
@@ -645,6 +773,7 @@ class TradeTronDashboard:
             "Risk Posture": metrics["risk_posture"],
             "Current Price": f"${signal['current_price']:,.2f}" if signal["current_price"] else "Unavailable",
             "Would Buy At": f"${signal['estimated_entry_price']:,.2f}" if signal.get("estimated_entry_price") else "Unavailable",
+            "Next Scan": metrics["next_scan_label"],
             "Portfolio Value": f"${metrics['portfolio_value']:,.2f}",
             "Paper Cash": (
                 f"{metrics['paper_cash']:,.2f} {metrics['quote_currency']}"
@@ -666,6 +795,8 @@ class TradeTronDashboard:
             "Win Rate": f"{stats['win_rate'] * 100:.2f}%",
             "Daily Loss": f"{metrics['daily_loss'] * 100:.2f}%",
             "Max Drawdown": f"{stats['max_drawdown'] * 100:.2f}%",
+            "Cooldown": metrics["cooldown_label"],
+            "Pause": metrics["pause_label"],
             "Paper Fees": (
                 f"{metrics['paper_fees_paid']:,.2f} {metrics['quote_currency']}"
                 if self.bot and self.bot.config.get("enable_paper_trading", False)
@@ -676,6 +807,7 @@ class TradeTronDashboard:
                 if self.bot and self.bot.config.get("enable_paper_trading", False)
                 else "--"
             ),
+            "Last Trade": metrics["last_trade_label"],
             "Why Hold": "READY NOW" if signal.get("action") == "BUY" else blocker_summary or "WAITING",
         }
         for key, value in card_values.items():
@@ -693,6 +825,7 @@ class TradeTronDashboard:
         self._set_text(self.preflight_text, payload["preflight_text"])
         self._set_text(self.signal_text, payload["signal_stack"])
         self._set_text(self.report_text, payload["report"])
+        self._set_text(self.trades_text, payload.get("recent_trades_text", "No trades have been recorded in this session yet."))
 
     def _update_buttons(self):
         is_connecting = self.connect_thread and self.connect_thread.is_alive()
@@ -704,6 +837,7 @@ class TradeTronDashboard:
         self.start_button.state(["!disabled"] if has_bot and not is_running else ["disabled"])
         self.stop_button.state(["!disabled"] if has_bot and is_running else ["disabled"])
         self.refresh_button.state(["!disabled"] if has_bot else ["disabled"])
+        self.reset_button.state(["!disabled"] if has_bot and not is_running else ["disabled"])
         self.export_button.state(["!disabled"] if has_bot else ["disabled"])
         self._refresh_status_banner()
 
