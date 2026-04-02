@@ -38,6 +38,14 @@ jobs:
           cp -rf story-mode/dist/* story-mode/
           rm -rf story-mode/dist story-mode/node_modules story-mode/src story-mode/package*.json story-mode/vite.config.js
 
+      - name: Stage Story Mode Live copy
+        run: |
+          rm -rf story-mode-live/assets
+          cp -rf story-mode/assets story-mode-live/assets
+          cp story-mode/index.html story-mode-live/index.html
+          sed -i 's|/garden-os/story-mode/|/garden-os/story-mode-live/|g' story-mode-live/index.html
+          find story-mode-live/assets -name '*.js' -exec sed -i 's|/garden-os/story-mode/|/garden-os/story-mode-live/|g' {} +
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
