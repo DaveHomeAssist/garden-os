@@ -13,7 +13,7 @@ export function createPauseController({
   closePanelSheets,
   syncToolHUDVisibility,
   updateHUD,
-  loop,
+  stopLoop,
   cleanupGame,
   remount,
   slot,
@@ -107,7 +107,7 @@ export function createPauseController({
   document.getElementById('pause-main-menu')?.addEventListener('click', () => {
     persistState();
     closePauseMenu();
-    loop.stop();
+    stopLoop();
     cleanupGame();
     remount();
   });
@@ -116,7 +116,7 @@ export function createPauseController({
     if (!confirm('Delete this save slot and return to the title screen? This cannot be undone.')) return;
     deleteCampaign(slot);
     closePauseMenu();
-    loop.stop();
+    stopLoop();
     cleanupGame();
     remount();
   });

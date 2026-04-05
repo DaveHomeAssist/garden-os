@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#f0e8d8"/>
+      <stop offset="100%" stop-color="#d8cbb4"/>
+    </radialGradient>
+    <radialGradient id="onionSkin" cx="50%" cy="35%" r="50%">
+      <stop offset="0%" stop-color="#f5e8c8"/>
+      <stop offset="100%" stop-color="#d4b878"/>
+    </radialGradient>
+    <radialGradient id="onionInner" cx="50%" cy="40%" r="45%">
+      <stop offset="0%" stop-color="#faf2dc"/>
+      <stop offset="100%" stop-color="#e8d8a8"/>
+    </radialGradient>
+    <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d4616a" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#d4616a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e110a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle — warm parchment -->
+  <circle cx="128" cy="128" r="120" fill="url(#bg)"/>
+
+  <g filter="url(#softShadow)">
+    <!-- Onion body — the character IS an onion -->
+    <!-- Outer skin layers -->
+    <ellipse cx="128" cy="130" rx="75" ry="80" fill="url(#onionSkin)" stroke="#a08848" stroke-width="2.5"/>
+    <!-- Inner skin highlight -->
+    <ellipse cx="128" cy="126" rx="62" ry="68" fill="url(#onionInner)"/>
+
+    <!-- Onion layer lines -->
+    <path d="M68 110 Q128 85 188 110" fill="none" stroke="#c4a868" stroke-width="1.5" opacity="0.4"/>
+    <path d="M72 140 Q128 120 184 140" fill="none" stroke="#c4a868" stroke-width="1.5" opacity="0.3"/>
+    <path d="M78 168 Q128 150 178 168" fill="none" stroke="#c4a868" stroke-width="1" opacity="0.25"/>
+
+    <!-- Onion sprout top — green shoots -->
+    <path d="M118 52 Q115 20 120 8" fill="none" stroke="#5aab6b" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M128 50 Q128 14 130 4" fill="none" stroke="#3d7a4f" stroke-width="4" stroke-linecap="round"/>
+    <path d="M138 52 Q141 20 136 8" fill="none" stroke="#5aab6b" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Sprout base -->
+    <ellipse cx="128" cy="56" rx="16" ry="8" fill="#4a8a58"/>
+
+    <!-- Eyebrows — perpetually worried/grumpy -->
+    <path d="M94 96 Q104 88 114 94" fill="none" stroke="#6b5828" stroke-width="3" stroke-linecap="round"/>
+    <path d="M142 94 Q152 88 162 96" fill="none" stroke="#6b5828" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Eyes — droopy, soulful, slightly watery -->
+    <!-- Left eye -->
+    <ellipse cx="106" cy="110" rx="12" ry="10" fill="#fff" stroke="#a08848" stroke-width="1.5"/>
+    <circle cx="106" cy="112" r="6" fill="#5c4828"/>
+    <circle cx="106" cy="112" r="3" fill="#2a1e0e"/>
+    <circle cx="103" cy="109" r="2.5" fill="#fff" opacity="0.8"/>
+    <!-- Teardrop hint -->
+    <ellipse cx="96" cy="118" rx="2" ry="3" fill="#a8d4f0" opacity="0.4"/>
+
+    <!-- Right eye -->
+    <ellipse cx="150" cy="110" rx="12" ry="10" fill="#fff" stroke="#a08848" stroke-width="1.5"/>
+    <circle cx="150" cy="112" r="6" fill="#5c4828"/>
+    <circle cx="150" cy="112" r="3" fill="#2a1e0e"/>
+    <circle cx="147" cy="109" r="2.5" fill="#fff" opacity="0.8"/>
+    <!-- Teardrop hint -->
+    <ellipse cx="160" cy="118" rx="2" ry="3" fill="#a8d4f0" opacity="0.4"/>
+
+    <!-- Cheek blush -->
+    <circle cx="88" cy="132" r="14" fill="url(#cheek)"/>
+    <circle cx="168" cy="132" r="14" fill="url(#cheek)"/>
+
+    <!-- Nose — small round onion nose -->
+    <ellipse cx="128" cy="130" rx="8" ry="6" fill="#d4b878" stroke="#a08848" stroke-width="1.5"/>
+    <ellipse cx="126" cy="128" rx="2.5" ry="1.5" fill="#e8d8a8" opacity="0.5"/>
+
+    <!-- Mouth — downturned, melancholic -->
+    <path d="M112 152 Q120 148 128 150 Q136 148 144 152" fill="none" stroke="#8a6838" stroke-width="2.2" stroke-linecap="round"/>
+
+    <!-- Tiny onion arms/hands peeking from sides -->
+    <ellipse cx="56" cy="156" rx="10" ry="8" fill="#e8d8a8" stroke="#a08848" stroke-width="1.5"/>
+    <ellipse cx="200" cy="156" rx="10" ry="8" fill="#e8d8a8" stroke="#a08848" stroke-width="1.5"/>
+
+    <!-- Onion root wisps at bottom -->
+    <path d="M108 206 Q106 220 100 228" fill="none" stroke="#c4a868" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M128 210 Q128 224 128 234" fill="none" stroke="#c4a868" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M148 206 Q150 220 156 228" fill="none" stroke="#c4a868" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  </g>
+</svg>

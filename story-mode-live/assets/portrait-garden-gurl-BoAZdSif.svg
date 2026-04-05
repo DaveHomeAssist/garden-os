@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#e8f0e4"/>
+      <stop offset="100%" stop-color="#c4d8bc"/>
+    </radialGradient>
+    <radialGradient id="skin" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#f5dcc0"/>
+      <stop offset="100%" stop-color="#e8c8a0"/>
+    </radialGradient>
+    <radialGradient id="hair" cx="50%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#5c3d1e"/>
+      <stop offset="100%" stop-color="#3c2510"/>
+    </radialGradient>
+    <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8838a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#e8838a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e110a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle — garden green -->
+  <circle cx="128" cy="128" r="120" fill="url(#bg)"/>
+
+  <g filter="url(#softShadow)">
+    <!-- Hair — dark brown, full volume -->
+    <ellipse cx="128" cy="100" rx="78" ry="72" fill="url(#hair)" stroke="#2a1808" stroke-width="2.5"/>
+    <!-- Hair volume top -->
+    <circle cx="90" cy="52" r="24" fill="#4a2e14"/>
+    <circle cx="128" cy="42" r="26" fill="#5c3d1e"/>
+    <circle cx="166" cy="52" r="24" fill="#4a2e14"/>
+    <!-- Side hair -->
+    <ellipse cx="56" cy="110" rx="20" ry="30" fill="#4a2e14" stroke="#2a1808" stroke-width="2"/>
+    <ellipse cx="200" cy="110" rx="20" ry="30" fill="#4a2e14" stroke="#2a1808" stroke-width="2"/>
+    <!-- Hair drape over shoulders -->
+    <ellipse cx="68" cy="170" rx="16" ry="28" fill="#3c2510"/>
+    <ellipse cx="188" cy="170" rx="16" ry="28" fill="#3c2510"/>
+
+    <!-- Face shape -->
+    <ellipse cx="128" cy="130" rx="60" ry="65" fill="url(#skin)" stroke="#c4a882" stroke-width="2"/>
+
+    <!-- Leaf hair clip — left side -->
+    <g transform="translate(74, 62) rotate(-20)">
+      <path d="M0 12 Q8 -2 20 0 Q12 10 0 12Z" fill="#3d7a4f" stroke="#2d5a3a" stroke-width="1.5"/>
+      <path d="M2 10 Q10 2 18 2" fill="none" stroke="#5aab6b" stroke-width="1" opacity="0.6"/>
+    </g>
+
+    <!-- Eyebrows — expressive, slightly arched -->
+    <path d="M96 104 Q106 98 116 102" fill="none" stroke="#3c2510" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M140 102 Q150 98 160 104" fill="none" stroke="#3c2510" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Eyes — warm brown, bright -->
+    <!-- Left eye -->
+    <ellipse cx="106" cy="116" rx="10" ry="11" fill="#fff" stroke="#c4a882" stroke-width="1"/>
+    <circle cx="107" cy="117" r="6.5" fill="#4a2e14"/>
+    <circle cx="107" cy="117" r="3.5" fill="#1e110a"/>
+    <circle cx="104" cy="114" r="2.5" fill="#fff" opacity="0.85"/>
+    <circle cx="110" cy="119" r="1" fill="#fff" opacity="0.4"/>
+    <!-- Right eye -->
+    <ellipse cx="150" cy="116" rx="10" ry="11" fill="#fff" stroke="#c4a882" stroke-width="1"/>
+    <circle cx="149" cy="117" r="6.5" fill="#4a2e14"/>
+    <circle cx="149" cy="117" r="3.5" fill="#1e110a"/>
+    <circle cx="146" cy="114" r="2.5" fill="#fff" opacity="0.85"/>
+    <circle cx="152" cy="119" r="1" fill="#fff" opacity="0.4"/>
+
+    <!-- Cheek blush -->
+    <circle cx="88" cy="134" r="14" fill="url(#cheek)"/>
+    <circle cx="168" cy="134" r="14" fill="url(#cheek)"/>
+
+    <!-- Nose -->
+    <path d="M124 128 Q128 138 132 128" fill="none" stroke="#c4a882" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- Mouth — confident half-smile -->
+    <path d="M112 150 Q120 158 128 156 Q136 158 144 150" fill="none" stroke="#a0705a" stroke-width="2.2" stroke-linecap="round"/>
+
+    <!-- Neck hint -->
+    <rect x="116" y="190" width="24" height="16" rx="4" fill="#e8c8a0"/>
+
+    <!-- Shirt collar — garden green -->
+    <path d="M92 200 Q108 190 128 194 Q148 190 164 200 L168 220 Q128 210 88 220Z" fill="#3d7a4f" stroke="#2d5a3a" stroke-width="2"/>
+
+    <!-- Bandana detail on shirt -->
+    <path d="M110 198 L128 206 L146 198" fill="none" stroke="#5aab6b" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>

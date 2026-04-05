@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#dcecd4"/>
+      <stop offset="100%" stop-color="#b8d4a8"/>
+    </radialGradient>
+    <radialGradient id="leafSkin" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#6aaa58"/>
+      <stop offset="100%" stop-color="#3d7a4f"/>
+    </radialGradient>
+    <radialGradient id="leafHighlight" cx="40%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#8ac878"/>
+      <stop offset="100%" stop-color="#5a9a48"/>
+    </radialGradient>
+    <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3d5a28" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3d5a28" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e110a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle — fresh green -->
+  <circle cx="128" cy="128" r="120" fill="url(#bg)"/>
+
+  <g filter="url(#softShadow)">
+    <!-- Body — large leafy cabbage/lettuce shape -->
+    <ellipse cx="128" cy="138" rx="72" ry="74" fill="url(#leafSkin)" stroke="#2d5a3a" stroke-width="2.5"/>
+
+    <!-- Leaf layers wrapping around — gives cabbage texture -->
+    <path d="M62 120 Q80 90 128 85 Q176 90 194 120" fill="url(#leafHighlight)" stroke="#2d5a3a" stroke-width="2"/>
+    <path d="M70 100 Q95 75 128 72 Q161 75 186 100" fill="none" stroke="#4a8a58" stroke-width="1.5" opacity="0.5"/>
+    <path d="M78 150 Q100 135 128 132 Q156 135 178 150" fill="none" stroke="#2d5a3a" stroke-width="1" opacity="0.3"/>
+
+    <!-- Outer leaf accents — sticking out like a ruff -->
+    <ellipse cx="56" cy="128" rx="18" ry="24" fill="#5a9a48" stroke="#2d5a3a" stroke-width="2" transform="rotate(-15, 56, 128)"/>
+    <ellipse cx="200" cy="128" rx="18" ry="24" fill="#5a9a48" stroke="#2d5a3a" stroke-width="2" transform="rotate(15, 200, 128)"/>
+    <!-- Top leaves -->
+    <ellipse cx="92" cy="58" rx="20" ry="14" fill="#6aaa58" stroke="#2d5a3a" stroke-width="2" transform="rotate(-10, 92, 58)"/>
+    <ellipse cx="164" cy="58" rx="20" ry="14" fill="#6aaa58" stroke="#2d5a3a" stroke-width="2" transform="rotate(10, 164, 58)"/>
+    <ellipse cx="128" cy="48" rx="22" ry="12" fill="#7aba68" stroke="#2d5a3a" stroke-width="2"/>
+
+    <!-- Face highlight area — lighter green -->
+    <ellipse cx="128" cy="124" rx="50" ry="48" fill="url(#leafHighlight)" opacity="0.6"/>
+
+    <!-- Leaf vein lines on face — subtle -->
+    <path d="M128 80 L128 110" stroke="#4a8a58" stroke-width="1" opacity="0.25"/>
+    <path d="M128 110 L108 140" stroke="#4a8a58" stroke-width="0.8" opacity="0.2"/>
+    <path d="M128 110 L148 140" stroke="#4a8a58" stroke-width="0.8" opacity="0.2"/>
+
+    <!-- Eyebrows — bold, cocky arch -->
+    <path d="M92 94 Q102 86 116 92" fill="none" stroke="#2d5a3a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M140 92 Q154 86 164 94" fill="none" stroke="#2d5a3a" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Eyes — bright, confident -->
+    <!-- Left eye -->
+    <ellipse cx="106" cy="108" rx="11" ry="12" fill="#fff" stroke="#2d5a3a" stroke-width="1.5"/>
+    <circle cx="108" cy="109" r="7" fill="#1e4a28"/>
+    <circle cx="108" cy="109" r="3.5" fill="#0a2010"/>
+    <circle cx="105" cy="106" r="2.8" fill="#fff" opacity="0.85"/>
+    <circle cx="111" cy="112" r="1.2" fill="#fff" opacity="0.4"/>
+    <!-- Right eye -->
+    <ellipse cx="150" cy="108" rx="11" ry="12" fill="#fff" stroke="#2d5a3a" stroke-width="1.5"/>
+    <circle cx="148" cy="109" r="7" fill="#1e4a28"/>
+    <circle cx="148" cy="109" r="3.5" fill="#0a2010"/>
+    <circle cx="145" cy="106" r="2.8" fill="#fff" opacity="0.85"/>
+    <circle cx="151" cy="112" r="1.2" fill="#fff" opacity="0.4"/>
+
+    <!-- Cheek shadows -->
+    <circle cx="86" cy="128" r="12" fill="url(#cheek)"/>
+    <circle cx="170" cy="128" r="12" fill="url(#cheek)"/>
+
+    <!-- Nose — strong, angular -->
+    <path d="M124 118 L128 134 L132 118" fill="none" stroke="#2d5a3a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Mouth — big confident grin -->
+    <path d="M106 148 Q118 162 128 160 Q138 162 150 148" fill="#2d5a3a" stroke="#1a3a22" stroke-width="2" stroke-linecap="round"/>
+    <!-- Teeth -->
+    <rect x="114" y="148" width="28" height="8" rx="2" fill="#f0f5e8" opacity="0.9"/>
+
+    <!-- Stem/leaf on top — like a crown -->
+    <path d="M128 48 Q122 28 130 12" fill="none" stroke="#3d7a4f" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="130" cy="12" rx="8" ry="5" fill="#5aab6b"/>
+
+    <!-- Leafy arm/cape hints -->
+    <path d="M56 148 Q48 170 52 190" fill="none" stroke="#4a8a58" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M200 148 Q208 170 204 190" fill="none" stroke="#4a8a58" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>

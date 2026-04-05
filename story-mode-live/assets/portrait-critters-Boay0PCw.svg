@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#e8e0d0"/>
+      <stop offset="100%" stop-color="#d0c4b0"/>
+    </radialGradient>
+    <radialGradient id="bugBody" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#5a8a48"/>
+      <stop offset="100%" stop-color="#3a6430"/>
+    </radialGradient>
+    <radialGradient id="bugBelly" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c8e0a0"/>
+      <stop offset="100%" stop-color="#a0c478"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e110a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle — earthy -->
+  <circle cx="128" cy="128" r="120" fill="url(#bg)"/>
+
+  <g filter="url(#softShadow)">
+    <!-- MAIN BUG — a chubby caterpillar-like critter, front and center -->
+
+    <!-- Body segments -->
+    <circle cx="128" cy="180" r="26" fill="url(#bugBody)" stroke="#2a4820" stroke-width="2"/>
+    <circle cx="128" cy="152" r="28" fill="url(#bugBody)" stroke="#2a4820" stroke-width="2"/>
+    <circle cx="128" cy="122" r="30" fill="url(#bugBody)" stroke="#2a4820" stroke-width="2"/>
+
+    <!-- Head — largest segment -->
+    <circle cx="128" cy="90" r="36" fill="url(#bugBody)" stroke="#2a4820" stroke-width="2.5"/>
+
+    <!-- Belly spots on segments -->
+    <circle cx="128" cy="180" r="12" fill="url(#bugBelly)" opacity="0.7"/>
+    <circle cx="128" cy="152" r="14" fill="url(#bugBelly)" opacity="0.7"/>
+    <circle cx="128" cy="122" r="16" fill="url(#bugBelly)" opacity="0.7"/>
+
+    <!-- Antennae -->
+    <path d="M112 62 Q104 34 96 24" fill="none" stroke="#3a6430" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="96" cy="24" r="6" fill="#e8c84a" stroke="#a08848" stroke-width="1.5"/>
+    <path d="M144 62 Q152 34 160 24" fill="none" stroke="#3a6430" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="160" cy="24" r="6" fill="#e8c84a" stroke="#a08848" stroke-width="1.5"/>
+
+    <!-- Eyes — big, round, mischievous -->
+    <!-- Left eye -->
+    <circle cx="112" cy="84" r="14" fill="#fff" stroke="#2a4820" stroke-width="1.5"/>
+    <circle cx="114" cy="86" r="8" fill="#1e110a"/>
+    <circle cx="110" cy="82" r="3.5" fill="#fff" opacity="0.85"/>
+    <circle cx="117" cy="89" r="1.5" fill="#fff" opacity="0.4"/>
+    <!-- Right eye -->
+    <circle cx="144" cy="84" r="14" fill="#fff" stroke="#2a4820" stroke-width="1.5"/>
+    <circle cx="142" cy="86" r="8" fill="#1e110a"/>
+    <circle cx="140" cy="82" r="3.5" fill="#fff" opacity="0.85"/>
+    <circle cx="145" cy="89" r="1.5" fill="#fff" opacity="0.4"/>
+
+    <!-- Cheeks -->
+    <circle cx="98" cy="98" r="8" fill="#c8e0a0" opacity="0.4"/>
+    <circle cx="158" cy="98" r="8" fill="#c8e0a0" opacity="0.4"/>
+
+    <!-- Mouth — tiny smirk -->
+    <path d="M120 106 Q128 112 136 106" fill="none" stroke="#2a4820" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Tiny legs — 3 pairs -->
+    <line x1="100" y1="128" x2="78" y2="136" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="156" y1="128" x2="178" y2="136" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="98" y1="156" x2="76" y2="162" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="158" y1="156" x2="180" y2="162" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="102" y1="182" x2="82" y2="192" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="154" y1="182" x2="174" y2="192" stroke="#3a6430" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Tiny feet -->
+    <circle cx="78" cy="136" r="3" fill="#5a8a48"/>
+    <circle cx="178" cy="136" r="3" fill="#5a8a48"/>
+    <circle cx="76" cy="162" r="3" fill="#5a8a48"/>
+    <circle cx="180" cy="162" r="3" fill="#5a8a48"/>
+    <circle cx="82" cy="192" r="3" fill="#5a8a48"/>
+    <circle cx="174" cy="192" r="3" fill="#5a8a48"/>
+
+    <!-- SMALL COMPANION BUGS — background friends -->
+
+    <!-- Tiny ladybug top-right -->
+    <g transform="translate(190, 60)">
+      <circle cx="0" cy="0" r="10" fill="#d44" stroke="#8a2222" stroke-width="1.5"/>
+      <line x1="-1" y1="-10" x2="-1" y2="10" stroke="#1e110a" stroke-width="1.2"/>
+      <circle cx="-4" cy="-3" r="2" fill="#1e110a"/>
+      <circle cx="4" cy="3" r="2" fill="#1e110a"/>
+      <circle cx="-3" cy="5" r="1.5" fill="#1e110a"/>
+    </g>
+
+    <!-- Tiny ant bottom-left -->
+    <g transform="translate(60, 200)">
+      <circle cx="0" cy="0" r="5" fill="#3c2510"/>
+      <circle cx="8" cy="-2" r="4" fill="#3c2510"/>
+      <circle cx="14" cy="-1" r="3.5" fill="#3c2510"/>
+      <line x1="14" y1="-4" x2="18" y2="-10" stroke="#3c2510" stroke-width="1" stroke-linecap="round"/>
+      <line x1="16" y1="-3" x2="22" y2="-8" stroke="#3c2510" stroke-width="1" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

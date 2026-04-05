@@ -1411,7 +1411,7 @@ function bindUI({
     closePanelSheets,
     syncToolHUDVisibility,
     updateHUD,
-    loop,
+    stopLoop: () => loop.stop(),
     cleanupGame,
     remount,
     slot,
