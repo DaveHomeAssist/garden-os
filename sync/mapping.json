@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Garden OS Planner -> Notion Outdoor Plant Beds Tracker field mapping",
+  "notionDatabase": {
+    "name": "Outdoor Plant Beds Tracker",
+    "dataSourceId": "b3b7e442-ee69-4d47-83d5-5e987334d390",
+    "plantsDbId": "2b4255fc-8f44-8165-888b-000bb839f683"
+  },
+  "syncKey": "Planting ID",
+  "fields": [
+    {
+      "planner": "plantingId",
+      "notion": "Planting ID",
+      "notionType": "text",
+      "transform": "direct",
+      "required": true,
+      "notes": "Sync key — must be unique per planting. Added as new Notion property."
+    },
+    {
+      "planner": "bedId",
+      "notion": "Bed ID",
+      "notionType": "text",
+      "transform": "direct",
+      "required": false,
+      "notes": "Round-trip identifier for bed. Added as new Notion property."
+    },
+    {
+      "planner": "cropName",
+      "notion": "Plant",
+      "notionType": "relation",
+      "transform": "name_lookup",
+      "lookupDb": "plantsDbId",
+      "lookupField": "Common Name",
+      "required": true,
+      "notes": "Resolve Plant page ID by matching cropName against Common Name in DB | Plants."
+    },
+    {
+      "planner": "cropName",
+      "notion": "Planting",
+      "notionType": "title",
+      "transform": "format",
+      "format": "{cropName} — {bedName}",
+      "required": true,
+      "notes": "Title field. Format: 'Lettuce — Main Bed'."
+    },
+    {
+      "planner": "bedName",
+      "notion": "Bed",
+      "notionType": "select",
+      "transform": "direct",
+      "required": true,
+      "notes": "Must match existing select options. Auto-create option if missing."
+    },
+    {
+      "planner": "status",
+      "notion": "Status",
+      "notionType": "select",
+      "transform": "status_map",
+      "required": true,
+      "notes": "Maps planner statuses to Notion select values."
+    },
+    {
+      "planner": "plantedAt",
+      "notion": "Planted On",
+      "notionType": "date",
+      "transform": "strip_time",
+      "required": false,
+      "notes": "Extract YYYY-MM-DD from ISO timestamp. Null plantedAt -> null."
+    },
+    {
+      "planner": "season",
+      "notion": "Season",
+      "notionType": "select",
+      "transform": "capitalize",
+      "required": false,
+      "notes": "Capitalize first letter: 'spring' -> 'Spring 2026'."
+    },
+    {
+      "planner": "cellId",
+      "notion": "Bed Location",
+      "notionType": "text",
+      "transform": "format_position",
+      "format": "Row {row+1}, Col {col+1}",
+      "required": false,
+      "notes": "Human-readable grid position."
+    },
+    {
+      "planner": ["events", "notes"],
+      "notion": "Notes",
+      "notionType": "text",
+      "transform": "flatten_events",
+      "required": false,
+      "notes": "Flatten events to '[date] emoji: note' lines, then append plantingNotes below divider."
+    }
+  ],
+  "statusMap": {
+    "plannerToNotion": {
+      "planned": "Planned",
+      "started_indoors": "Planted",
+      "direct_sown": "Planted",
+      "transplanted": "Planted",
+      "growing": "Growing",
+      "harvesting": "Harvesting",
+      "finished": "Done",
+      "failed": "Failed"
+    },
+    "notionToPlanner": {
+      "Planned": "planned",
+      "Planted": "transplanted",
+      "Sprouted": "growing",
+      "Growing": "growing",
+      "Producing": "harvesting",
+      "Harvesting": "harvesting",
+      "Done": "finished",
+      "Failed": "failed"
+    }
+  },
+  "archivePolicy": "mark_inactive",
+  "notionOnlyFields": ["Issue", "Expected Window", "Yield Rating", "Harvest Start", "Photos"],
+  "plannerOnlyFields": ["row", "col", "bedSize", "orientation", "zone", "sunHours", "crop"],
+  "newNotionProperties": [
+    { "name": "Planting ID", "type": "text", "description": "Sync key from planner plantingId" },
+    { "name": "Bed ID", "type": "text", "description": "Planner bed identifier for round-trip" }
+  ]
+}

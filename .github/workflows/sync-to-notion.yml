@@ -1,0 +1,47 @@
+name: Sync Planner to Notion
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: 'Path to snapshot JSON (relative to repo root)'
+        type: string
+        default: 'sync/snapshot/latest.json'
+      apply:
+        description: 'Apply changes (false = dry run)'
+        type: boolean
+        default: false
+  push:
+    paths:
+      - 'sync/snapshot/*.json'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: cd sync && npm ci
+
+      - name: Run schema guard
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_OUTDOOR_DB_ID }}
+        run: node sync/schema-guard.js
+
+      - name: Sync to Notion
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_OUTDOOR_DB_ID: ${{ secrets.NOTION_OUTDOOR_DB_ID }}
+          NOTION_PLANTS_DB_ID: ${{ secrets.NOTION_PLANTS_DB_ID }}
+        run: |
+          SNAPSHOT="${{ github.event.inputs.snapshot || 'sync/snapshot/latest.json' }}"
+          FLAGS="--verbose"
+          if [ "${{ github.event.inputs.apply }}" = "true" ]; then
+            FLAGS="$FLAGS --apply"
+          fi
+          node sync/connector.js "$SNAPSHOT" $FLAGS

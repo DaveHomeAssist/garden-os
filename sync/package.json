@@ -1,0 +1,15 @@
+{
+  "name": "garden-os-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Garden OS Planner → Notion sync connector",
+  "main": "connector.js",
+  "scripts": {
+    "sync": "node connector.js",
+    "sync:dry": "node connector.js --dry-run",
+    "guard": "node schema-guard.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.0"
+  }
+}

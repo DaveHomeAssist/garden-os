@@ -1179,6 +1179,15 @@
   .evt-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
   .evt-date{margin-left:auto;font-family:'DM Mono',monospace;font-size:.52rem;color:var(--text-light);}
   .evt-empty{font-size:.6rem;color:var(--text-light);font-style:italic;padding:.2rem 0;}
+  .evt-delete-btn{background:none;border:none;color:var(--text-light);cursor:pointer;font-size:.7rem;
+    padding:0 .2rem;opacity:.5;transition:opacity .1s;}
+  .evt-delete-btn:hover{opacity:1;color:var(--bad);}
+  .planting-status-sel{font-size:.68rem;padding:.2rem .4rem;font-family:'DM Mono',monospace;}
+  .planting-date-input{font-size:.68rem;padding:.2rem .4rem;font-family:'DM Mono',monospace;
+    border:1.5px solid var(--border);border-radius:5px;}
+  .planting-notes-input{width:100%;min-height:40px;border:1.5px solid var(--border);border-radius:5px;
+    font-family:'DM Sans',sans-serif;font-size:.7rem;padding:.3rem .4rem;resize:vertical;}
+  .planting-notes-input:focus,.planting-date-input:focus{outline:none;border-color:var(--soil);}
 
   /* ═══ STATUS HEATMAP ═══ */
   .bed-view-toggle{display:flex;gap:2px;justify-content:center;margin:.3rem 0 .1rem;}
@@ -3930,7 +3939,7 @@ const MAX_HISTORY = 40;
 
 function createEmptyBed(w, h){
   const a = [];
-  for(let r=0;r<h;r++) for(let c=0;c<w;c++) a.push({id:`r${r}c${c}`,row:r,col:c,crop:null,plantingId:null,plantedAt:null,status:null,events:[],plantingNotes:''});
+  for(let r=0;r<h;r++) for(let c=0;c<w;c++) a.push({id:`r${r}c${c}`,row:r,col:c,crop:null,plantingId:null,plantedAt:null,status:null,events:[],plantingNotes:'',tasks:[]});
   return a;
 }
 function getCell(r,c){ return bed.find(x=>x.row===r&&x.col===c)||null; }
@@ -3965,7 +3974,7 @@ function safeRemoveStorageKey(key){
 }
 
 // Undo/redo
-function bedSnapshot(){ return bed.map(c=>({crop:c.crop, plantingId:c.plantingId||null, plantedAt:c.plantedAt||null, status:c.status||null, events:c.events?c.events.slice():[], plantingNotes:c.plantingNotes||''})); }
+function bedSnapshot(){ return bed.map(c=>({crop:c.crop, plantingId:c.plantingId||null, plantedAt:c.plantedAt||null, status:c.status||null, events:c.events?c.events.slice():[], plantingNotes:c.plantingNotes||'', tasks:c.tasks?JSON.parse(JSON.stringify(c.tasks)):[]})); }
 function restoreSnapshot(snap){
   if(!Array.isArray(snap) || snap.length!==bed.length) return false;
   bed.forEach((c,i)=>{
@@ -3977,6 +3986,7 @@ function restoreSnapshot(snap){
     c.status = nextCrop ? (s.status || 'planned') : null;
     c.events = nextCrop && Array.isArray(s.events) ? s.events : [];
     c.plantingNotes = nextCrop && typeof s.plantingNotes==='string' ? s.plantingNotes : '';
+    c.tasks = nextCrop && Array.isArray(s.tasks) ? s.tasks : [];
   });
   normalizeSelectionState();
   return true;
@@ -4169,7 +4179,10 @@ function normalizePlantingCell(raw){
       events: Array.isArray(raw.events) ? raw.events.filter(e =>
         e && typeof e === 'object' && typeof e.date === 'string' && VALID_EVENT_TYPES.includes(e.type)
       ).map(e => ({ type: e.type, date: e.date, note: typeof e.note === 'string' ? e.note : '' })) : [],
-      notes: typeof raw.notes === 'string' ? raw.notes : ''
+      notes: typeof raw.notes === 'string' ? raw.notes : '',
+      tasks: Array.isArray(raw.tasks) ? raw.tasks.filter(t =>
+        t && typeof t === 'object' && typeof t.id === 'string'
+      ).map(t => ({ id: t.id, type: t.type || 'custom', intervalDays: Math.max(1, parseInt(t.intervalDays) || 7), lastDone: typeof t.lastDone === 'string' ? t.lastDone : null, label: typeof t.label === 'string' ? t.label : '' })) : []
     };
   }
   return null;
@@ -4698,7 +4711,8 @@ function saveState(){
     plantedAt: c.plantedAt || null,
     status: VALID_PLANTING_STATUSES.includes(c.status) ? c.status : 'planned',
     events: Array.isArray(c.events) ? c.events : [],
-    notes: typeof c.plantingNotes === 'string' ? c.plantingNotes : ''
+    notes: typeof c.plantingNotes === 'string' ? c.plantingNotes : '',
+    tasks: Array.isArray(c.tasks) ? c.tasks : []
   } : null);
   b.plannerState.selectedCrop = ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'lettuce';
   b.plannerState.activeTool = VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint';
@@ -4941,6 +4955,7 @@ function applyWorkspaceToUI(ws){
       bed[i].status = pc.status;
       bed[i].events = pc.events;
       bed[i].plantingNotes = pc.notes;
+      bed[i].tasks = pc.tasks || [];
     } else {
       bed[i].crop = null;
       bed[i].plantingId = null;
@@ -4948,6 +4963,7 @@ function applyWorkspaceToUI(ws){
       bed[i].status = null;
       bed[i].events = [];
       bed[i].plantingNotes = '';
+      bed[i].tasks = [];
     }
   });
   resetInteractionState();
@@ -7566,7 +7582,9 @@ function renderRight(inputs,issues,scoreTotal){
       </div>
       <button class="harvest-log-btn" id="inspectHarvestBtn">🌾 Log Harvest</button>
       <div id="inspectHarvestForm"></div>
-      ${renderEventLogger(selCell)}`;
+      ${renderPlantingDetail(selCell)}
+      ${renderEventLogger(selCell)}
+      ${renderTaskManager(selCell)}`;
   } else if(selCell){
     inspHtml=`<div class="insp">
       <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
@@ -7586,11 +7604,34 @@ function renderRight(inputs,issues,scoreTotal){
       renderHarvestForm(selCell);
     });
   }
-  // Bind event logger buttons
+  // Bind planting detail panel
+  const detailCard = document.getElementById('plantingDetailCard');
+  if(detailCard && selCell && selCell.crop){
+    const statusSel = detailCard.querySelector('.planting-status-sel');
+    if(statusSel) statusSel.addEventListener('change',function(){updateCellStatus(this.dataset.cell,this.value);});
+    const dateInput = detailCard.querySelector('.planting-date-input');
+    if(dateInput) dateInput.addEventListener('change',function(){updateCellPlantedAt(this.dataset.cell,this.value);});
+    const notesInput = detailCard.querySelector('.planting-notes-input');
+    if(notesInput) notesInput.addEventListener('blur',function(){updateCellNotes(this.dataset.cell,this.value);});
+  }
+  // Bind event logger buttons + delete
   const evtCard = document.getElementById('eventLoggerCard');
   if(evtCard && selCell && selCell.crop){
     evtCard.querySelectorAll('.evt-btn').forEach(function(btn){
       btn.addEventListener('click',function(){logCellEvent(selCell.id,this.dataset.evt);});
+    });
+    evtCard.querySelectorAll('.evt-delete-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){deleteCellEvent(selCell.id,parseInt(this.dataset.evtIdx,10));});
+    });
+  }
+  // Bind task manager
+  const taskCard = document.getElementById('taskManagerCard');
+  if(taskCard && selCell && selCell.crop){
+    taskCard.querySelectorAll('.add-task-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){addCellTask(selCell.id,this.dataset.taskType,7,'');render();});
+    });
+    taskCard.querySelectorAll('.evt-delete-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){removeCellTask(selCell.id,this.dataset.taskId);render();});
     });
   }
 
@@ -9385,14 +9426,17 @@ function renderEventLogger(cell){
     html+='<button class="evt-btn" data-evt="'+et+'" aria-label="Log '+et.replace(/_/g,' ')+'">'+escapeHtml(EVENT_LABELS[et]||et)+'</button>';
   });
   html+='</div>';
-  const evts=(cell.events||[]).slice().reverse().slice(0,8);
+  const allEvts=cell.events||[];
+  const evts=allEvts.slice().reverse().slice(0,8);
   if(evts.length){
     html+='<div class="evt-timeline">';
     evts.forEach(function(e){
+      const origIdx=allEvts.indexOf(e);
       const ec=STATUS_COLORS[STATUS_TRANSITION[e.type]]||STATUS_COLORS.planned;
       html+='<div class="evt-entry"><span class="evt-type-dot" style="background:'+ec.bar+'"></span>'
         +'<span>'+escapeHtml(EVENT_LABELS[e.type]||e.type)+'</span>'
-        +'<span class="evt-date">'+escapeHtml(formatEventDate(e.date))+'</span></div>';
+        +'<span class="evt-date">'+escapeHtml(formatEventDate(e.date))+'</span>'
+        +'<button class="evt-delete-btn" data-evt-idx="'+origIdx+'" title="Delete event">\u00D7</button></div>';
     });
     html+='</div>';
   }else{
@@ -9464,47 +9508,44 @@ function exportSyncSnapshot(){
 // ═══════════════════════════════════════════════════════════════════════════════
 function getTodayNeedsAttention(){
   const now=Date.now(), DAY=86400000, items=[];
-  bed.forEach(function(cell){
-    if(!cell.crop) return;
-    const evts=cell.events||[];
-    if(cell.status==='finished'||cell.status==='failed') return;
+  getAllPlantingsAcrossBeds().forEach(function(p){
+    if(p.status==='finished'||p.status==='failed') return;
+    var evts=p.events||[];
     if(evts.length===0){
-      const plantedMs=cell.plantedAt?new Date(cell.plantedAt).getTime():0;
-      const daysOld=plantedMs?Math.floor((now-plantedMs)/DAY):0;
-      if(cell.status==='planned'&&daysOld>14){
-        items.push({cellId:cell.id,crop:cell.crop,reason:'Still planned after '+daysOld+'d',stale:daysOld});
+      var plantedMs=p.plantedAt?new Date(p.plantedAt).getTime():0;
+      var daysOld=plantedMs?Math.floor((now-plantedMs)/DAY):0;
+      if(p.status==='planned'&&daysOld>14){
+        items.push({cellId:p.cellId,bedId:p.bedId,bedName:p.bedName,crop:p.crop,reason:'Still planned after '+daysOld+'d',stale:daysOld});
       }else{
-        items.push({cellId:cell.id,crop:cell.crop,reason:'No events logged',stale:daysOld||999});
+        items.push({cellId:p.cellId,bedId:p.bedId,bedName:p.bedName,crop:p.crop,reason:'No events logged',stale:daysOld||999});
       }
       return;
     }
-    const newest=evts.reduce(function(a,b){return(a.date||'')>(b.date||'')?a:b;});
-    const newestMs=new Date(newest.date).getTime();
-    const daysSince=Math.floor((now-newestMs)/DAY);
+    var newest=evts.reduce(function(a,b){return(a.date||'')>(b.date||'')?a:b;});
+    var newestMs=new Date(newest.date).getTime();
+    var daysSince=Math.floor((now-newestMs)/DAY);
     if(daysSince>=7){
-      items.push({cellId:cell.id,crop:cell.crop,reason:'No activity in '+daysSince+'d',stale:daysSince});
+      items.push({cellId:p.cellId,bedId:p.bedId,bedName:p.bedName,crop:p.crop,reason:'No activity in '+daysSince+'d',stale:daysSince});
     }
   });
   items.sort(function(a,b){return b.stale-a.stale;});
   return items;
 }
 function getTodayRecentActivity(){
-  const all=[];
-  bed.forEach(function(cell){
-    if(!cell.crop) return;
-    (cell.events||[]).forEach(function(e){
-      all.push({cellId:cell.id,crop:cell.crop,event:e});
+  var all=[];
+  getAllPlantingsAcrossBeds().forEach(function(p){
+    (p.events||[]).forEach(function(e){
+      all.push({cellId:p.cellId,bedId:p.bedId,bedName:p.bedName,crop:p.crop,event:e});
     });
   });
   all.sort(function(a,b){return(b.event.date||'').localeCompare(a.event.date||'');});
   return all.slice(0,10);
 }
 function getTodayQuickStats(){
-  const stats={totalPlanted:0,byStatus:{},bedsActive:0};
-  bed.forEach(function(cell){
-    if(!cell.crop) return;
+  var stats={totalPlanted:0,byStatus:{},bedsActive:0};
+  getAllPlantingsAcrossBeds().forEach(function(p){
     stats.totalPlanted++;
-    const st=cell.status||'planned';
+    var st=p.status||'planned';
     stats.byStatus[st]=(stats.byStatus[st]||0)+1;
   });
   if(_workspace&&_workspace.beds){
@@ -9514,8 +9555,12 @@ function getTodayQuickStats(){
   }
   return stats;
 }
-function navigateToCell(cellId){
-  const target=bed.find(function(c){return c.id===cellId;});
+function navigateToCell(cellId, bedId){
+  if(bedId&&_workspace&&_workspace.activeBedId!==bedId){
+    var targetBed=_workspace.beds.find(function(b){return b.id===bedId;});
+    if(targetBed) setActiveBed(bedId);
+  }
+  var target=bed.find(function(c){return c.id===cellId;});
   if(!target) return;
   ui.selCell=cellId;
   ui.tool='inspect';
@@ -9524,28 +9569,46 @@ function navigateToCell(cellId){
   render();
 }
 function renderTodayTab(){
-  const pane=document.getElementById('rpaneToday');
+  var pane=document.getElementById('rpaneToday');
   if(!pane) return;
-  const attention=getTodayNeedsAttention();
-  const activity=getTodayRecentActivity();
-  const stats=getTodayQuickStats();
-  let html='';
+  var overdue=getOverdueTasks();
+  var attention=getTodayNeedsAttention();
+  var activity=getTodayRecentActivity();
+  var stats=getTodayQuickStats();
+  var multiBed=_workspace&&_workspace.beds&&_workspace.beds.length>1;
+  var html='';
   // Quick stats
   html+='<div class="today-section"><div class="today-section-title">Quick stats</div>';
   html+='<div class="today-stat">Planted: <strong>'+stats.totalPlanted+'</strong> cells across <strong>'+stats.bedsActive+'</strong> bed'+(stats.bedsActive!==1?'s':'')+'</div>';
   Object.keys(stats.byStatus).forEach(function(st){
-    const sc=STATUS_COLORS[st]||STATUS_COLORS.planned;
+    var sc=STATUS_COLORS[st]||STATUS_COLORS.planned;
     html+='<div class="today-stat"><span class="evt-status-badge" style="background:'+sc.bar+';font-size:.48rem;padding:.1rem .3rem;">'+escapeHtml(sc.label)+'</span> <strong>'+stats.byStatus[st]+'</strong></div>';
   });
   html+='</div>';
+  // Tasks due
+  if(overdue.length){
+    html+='<div class="today-section"><div class="today-section-title">Tasks due</div>';
+    overdue.slice(0,8).forEach(function(item){
+      var c=CROPS[item.crop];
+      var label=TASK_LABELS_MAP[item.task.type]||item.task.type;
+      html+='<div class="today-attention-item" data-cell-id="'+escapeHtml(item.cellId)+'" data-bed-id="'+escapeHtml(item.bedId)+'" data-task-id="'+escapeHtml(item.task.id)+'">'
+        +'<span>'+(c?c.emoji:'')+'</span>'
+        +'<span>'+escapeHtml(label)+'</span>'
+        +(multiBed?'<span class="evt-date">'+escapeHtml(item.bedName)+'</span>':'')
+        +'<span class="today-attention-reason">'+item.daysSince+'d overdue</span>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
   // Needs attention
   html+='<div class="today-section"><div class="today-section-title">Needs attention</div>';
   if(attention.length){
     attention.slice(0,8).forEach(function(item){
-      const c=CROPS[item.crop];
-      html+='<div class="today-attention-item" data-cell-id="'+escapeHtml(item.cellId)+'">'
+      var c=CROPS[item.crop];
+      html+='<div class="today-attention-item" data-cell-id="'+escapeHtml(item.cellId)+'" data-bed-id="'+escapeHtml(item.bedId||'')+'">'
         +'<span>'+(c?c.emoji:'')+'</span>'
         +'<span>'+escapeHtml(c?c.short:item.crop)+'</span>'
+        +(multiBed&&item.bedName?'<span class="evt-date">'+escapeHtml(item.bedName)+'</span>':'')
         +'<span class="today-attention-reason">'+escapeHtml(item.reason)+'</span>'
         +'</div>';
     });
@@ -9559,10 +9622,11 @@ function renderTodayTab(){
   html+='<div class="today-section"><div class="today-section-title">Recent activity</div>';
   if(activity.length){
     activity.forEach(function(item){
-      const c=CROPS[item.crop];
+      var c=CROPS[item.crop];
       html+='<div class="today-activity-item">'
         +'<span>'+(c?c.emoji:'')+'</span>'
         +'<span>'+escapeHtml(EVENT_LABELS[item.event.type]||item.event.type)+'</span>'
+        +(multiBed&&item.bedName?'<span class="evt-date">'+escapeHtml(item.bedName)+'</span>':'')
         +'<span class="evt-date">'+escapeHtml(formatEventDate(item.event.date))+'</span>'
         +'</div>';
     });
@@ -9571,9 +9635,9 @@ function renderTodayTab(){
   }
   html+='</div>';
   pane.innerHTML=html;
-  // Wire attention item clicks
+  // Wire attention + task item clicks
   pane.querySelectorAll('.today-attention-item').forEach(function(el){
-    el.addEventListener('click',function(){navigateToCell(this.dataset.cellId);});
+    el.addEventListener('click',function(){navigateToCell(this.dataset.cellId,this.dataset.bedId);});
   });
 }
 
@@ -9649,6 +9713,162 @@ function renderSeasonReview(){
       +escapeHtml(notes[cd.cropKey]||'')+'</textarea></div></div>';
   });
   html+='</div><button class="harvest-log-btn" id="exportSeasonBtn">\u{1F4CA} Export Season Review</button></div><div class="season-divider"></div>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANTING DETAIL PANEL (Step 2)
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderPlantingDetail(cell){
+  if(!cell||!cell.crop) return '';
+  const st=cell.status||'planned';
+  const dateVal=cell.plantedAt?cell.plantedAt.split('T')[0]:'';
+  let html='<div class="icard" id="plantingDetailCard"><div class="ichdr">Planting details</div><div class="icbody">';
+  html+='<div class="irow"><span class="ikey">Status</span><select class="planting-status-sel" data-cell="'+escapeHtml(cell.id)+'">';
+  VALID_PLANTING_STATUSES.forEach(function(s){
+    const sc=STATUS_COLORS[s]||STATUS_COLORS.planned;
+    html+='<option value="'+s+'"'+(s===st?' selected':'')+'>'+escapeHtml(sc.label)+'</option>';
+  });
+  html+='</select></div>';
+  html+='<div class="irow"><span class="ikey">Planted</span><input type="date" class="planting-date-input" data-cell="'+escapeHtml(cell.id)+'" value="'+escapeHtml(dateVal)+'"></div>';
+  html+='<div class="irow" style="flex-direction:column;align-items:stretch;"><span class="ikey">Notes</span>';
+  html+='<textarea class="planting-notes-input" data-cell="'+escapeHtml(cell.id)+'" maxlength="2000" placeholder="Per-planting notes...">'+escapeHtml(cell.plantingNotes||'')+'</textarea></div>';
+  html+='</div></div>';
+  return html;
+}
+function updateCellStatus(cellId, newStatus){
+  if(!VALID_PLANTING_STATUSES.includes(newStatus)) return;
+  const cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop) return;
+  pushUndo();
+  cell.status=newStatus;
+  saveState();render();
+}
+function updateCellPlantedAt(cellId, dateStr){
+  const cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop) return;
+  pushUndo();
+  cell.plantedAt=dateStr?new Date(dateStr+'T12:00:00').toISOString():null;
+  saveState();render();
+}
+function updateCellNotes(cellId, text){
+  const cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop) return;
+  cell.plantingNotes=(text||'').slice(0,2000);
+  saveState();
+}
+function deleteCellEvent(cellId, eventIndex){
+  const cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop||!Array.isArray(cell.events)) return;
+  if(eventIndex<0||eventIndex>=cell.events.length) return;
+  pushUndo();
+  cell.events.splice(eventIndex,1);
+  saveState();render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MULTI-BED TODAY VIEW (Step 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+function getAllPlantingsAcrossBeds(){
+  if(!_workspace||!_workspace.beds) return [];
+  // Save active bed state first so it's current
+  var activeB=activeBed();
+  if(activeB){
+    activeB.plannerState=activeB.plannerState||{};
+    activeB.plannerState.cells=bed.map(function(c){return c.crop?{
+      crop:c.crop,plantingId:c.plantingId||null,plantedAt:c.plantedAt||null,
+      status:c.status||'planned',events:c.events||[],notes:c.plantingNotes||''
+    }:null;});
+  }
+  var all=[];
+  _workspace.beds.forEach(function(b){
+    var cols=b.size?b.size.cols:8, rows=b.size?b.size.rows:4;
+    var cells=normalizeCellArray(b.plannerState?b.plannerState.cells:[], cols, rows);
+    cells.forEach(function(pc, i){
+      if(!pc||!pc.crop) return;
+      all.push({
+        bedId:b.id, bedName:b.name||'Bed',
+        cellId:'r'+Math.floor(i/cols)+'c'+(i%cols),
+        crop:pc.crop, status:pc.status||'planned',
+        plantedAt:pc.plantedAt, events:pc.events||[],
+        tasks:pc.tasks||[],
+        isActiveBed:b.id===_workspace.activeBedId
+      });
+    });
+  });
+  return all;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TASK SCHEDULER (Step 4)
+// ═══════════════════════════════════════════════════════════════════════════════
+var VALID_TASK_TYPES=['water','fertilize','inspect','prune','custom'];
+var TASK_LABELS_MAP={water:'\u{1F4A7} Water',fertilize:'\u{1F9EA} Fertilize',inspect:'\u{1F50D} Inspect',prune:'\u2702 Prune',custom:'\u{1F4CB} Custom'};
+
+function addCellTask(cellId, type, intervalDays, label){
+  if(!VALID_TASK_TYPES.includes(type)) return null;
+  var cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop) return null;
+  cell.tasks=cell.tasks||[];
+  var task={id:uniqueId('t'),type:type,intervalDays:Math.max(1,Math.floor(intervalDays||7)),lastDone:null,label:label||''};
+  cell.tasks.push(task);
+  saveState();
+  return task;
+}
+function completeCellTask(cellId, taskId){
+  var cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop||!Array.isArray(cell.tasks)) return false;
+  var task=cell.tasks.find(function(t){return t.id===taskId;});
+  if(!task) return false;
+  task.lastDone=new Date().toISOString();
+  saveState();
+  return true;
+}
+function removeCellTask(cellId, taskId){
+  var cell=bed.find(function(c){return c.id===cellId;});
+  if(!cell||!cell.crop||!Array.isArray(cell.tasks)) return false;
+  var idx=cell.tasks.findIndex(function(t){return t.id===taskId;});
+  if(idx<0) return false;
+  cell.tasks.splice(idx,1);
+  saveState();
+  return true;
+}
+function getOverdueTasks(){
+  var now=Date.now(), DAY=86400000, overdue=[];
+  var all=getAllPlantingsAcrossBeds();
+  all.forEach(function(p){
+    (p.tasks||[]).forEach(function(task){
+      var daysSince=task.lastDone?Math.floor((now-new Date(task.lastDone).getTime())/DAY):999;
+      if(daysSince>=task.intervalDays){
+        overdue.push({bedId:p.bedId,bedName:p.bedName,cellId:p.cellId,crop:p.crop,task:task,daysSince:daysSince});
+      }
+    });
+  });
+  overdue.sort(function(a,b){return b.daysSince-a.daysSince;});
+  return overdue;
+}
+function renderTaskManager(cell){
+  if(!cell||!cell.crop) return '';
+  var tasks=cell.tasks||[];
+  var html='<div class="icard" id="taskManagerCard"><div class="ichdr">Tasks</div><div class="icbody">';
+  if(tasks.length){
+    tasks.forEach(function(t,i){
+      var label=TASK_LABELS_MAP[t.type]||t.type;
+      var lastStr=t.lastDone?formatEventDate(t.lastDone):'never';
+      html+='<div class="evt-entry" style="justify-content:space-between;">'
+        +'<span>'+escapeHtml(label)+' every '+t.intervalDays+'d</span>'
+        +'<span class="evt-date">last: '+escapeHtml(lastStr)+'</span>'
+        +'<button class="evt-delete-btn" data-task-id="'+escapeHtml(t.id)+'" title="Remove task">\u00D7</button>'
+        +'</div>';
+    });
+  }else{
+    html+='<div class="evt-empty">No recurring tasks</div>';
+  }
+  html+='<div style="margin-top:.3rem;display:flex;gap:.2rem;flex-wrap:wrap;">';
+  VALID_TASK_TYPES.forEach(function(tt){
+    html+='<button class="evt-btn add-task-btn" data-task-type="'+tt+'">+ '+escapeHtml(TASK_LABELS_MAP[tt]||tt)+'</button>';
+  });
+  html+='</div></div></div>';
   return html;
 }
 
