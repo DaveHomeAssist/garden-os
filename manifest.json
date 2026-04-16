@@ -2,7 +2,7 @@
   "name": "Garden OS — Story Mode and Planner",
   "short_name": "Garden OS",
   "description": "Local-first raised bed garden app with a Story Mode that opens on Calvin, month-aware seasons, winter review, richer 3D scenes and dialogue, plus planner and build guides. Zero backend. Works offline.",
-  "start_url": "/garden-os/story-mode/",
+  "start_url": "/garden-os/index.html",
   "scope": "/garden-os/",
   "display": "standalone",
   "orientation": "any",
@@ -20,7 +20,7 @@
   "shortcuts": [
     {
       "name": "Play Story Mode",
-      "url": "/garden-os/story-mode/",
+      "url": "/garden-os/story-mode-live/",
       "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
     },
     {

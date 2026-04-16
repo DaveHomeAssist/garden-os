@@ -35,38 +35,31 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     : event.valence === 'mixed' ? '~'
     : '·';
 
+  sheet.style.setProperty('--event-accent', valenceColor);
+  sheet.dataset.valence = event.valence ?? 'neutral';
+
   sheet.innerHTML = `
     <div class="panel-handle"></div>
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+    <div class="event-card__header">
       <div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:4px;">Season Event</div>
-        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:23px;color:#f7f2ea;line-height:1.3;">${escapeHtml(event.title)}</div>
+        <div class="event-card__eyebrow">Season Event</div>
+        <div class="event-card__title">${escapeHtml(event.title)}</div>
       </div>
-      <span style="
-        display:inline-flex;align-items:center;justify-content:center;
-        width:32px;height:32px;border-radius:50%;
-        background:${valenceColor}22;border:1px solid ${valenceColor}44;
-        color:${valenceColor};font-weight:700;font-size:18px;
-        flex-shrink:0;
-      ">${valenceLabel}</span>
+      <span class="event-card__valence">${valenceLabel}</span>
     </div>
 
-    <p style="font-size:14px;line-height:1.65;color:rgba(247,242,234,0.7);margin-bottom:16px;">
+    <p class="event-card__body">
       ${escapeHtml(event.description)}
     </p>
 
     ${event.mechanicalEffect ? `
-      <div style="
-        background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);
-        border-radius:8px;padding:10px 12px;margin-bottom:16px;
-        font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.5);
-      ">
-        <div style="margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em;font-size:9px;color:rgba(247,242,234,0.3);">Effect</div>
+      <div class="event-card__effect">
+        <div class="event-card__effect-label">Effect</div>
         ${event.mechanicalEffect.modifier > 0 ? '+' : ''}${event.mechanicalEffect.modifier} · ${event.mechanicalEffect.duration || 'this beat'}
       </div>
     ` : ''}
 
-    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,242,234,0.35);margin-bottom:8px;">
+    <div class="event-card__response">
       Response · ${tokensLeft} token${tokensLeft !== 1 ? 's' : ''} left
     </div>
     <div class="targeting-hint" style="margin-bottom:10px;">
@@ -79,9 +72,9 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
         const disabled = !isAccept && tokensLeft <= 0;
         return `
           <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}" aria-label="${iv.label}: ${iv.desc}">
-            <div style="font-size:20px;margin-bottom:4px;">${iv.emoji}</div>
-            <div style="font-weight:600;margin-bottom:2px;">${iv.label}</div>
-            <div style="font-size:10px;color:rgba(247,242,234,0.4);line-height:1.3;">${iv.desc}</div>
+            <div class="event-card__intervention-icon">${iv.emoji}</div>
+            <div class="event-card__intervention-title">${iv.label}</div>
+            <div class="event-card__intervention-copy">${iv.desc}</div>
           </button>
         `;
       }).join('')}

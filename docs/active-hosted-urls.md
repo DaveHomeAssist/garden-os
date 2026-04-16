@@ -2,7 +2,7 @@
 
 > **Account:** [github.com/DaveHomeAssist](https://github.com/DaveHomeAssist)
 > **Total repos:** 15 | **Pages enabled:** 14 | **Archived:** 2 | **No Pages:** 1
-> **Last audited:** 2026-03-21
+> **Last audited:** 2026-03-31
 
 ---
 
@@ -59,7 +59,7 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | Path | Description |
 |------|-------------|
 | [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
-| [`/story-mode/`](https://davehomeassist.github.io/garden-os/story-mode/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
+| [`/story-mode-live/`](https://davehomeassist.github.io/garden-os/story-mode-live/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
 | [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Legacy season sandbox / predecessor to Story Mode |
 | [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.3 |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
@@ -105,7 +105,7 @@ A master project registry is maintained in Notion:
 
 - **Garden OS uses a two-track nav** — user track (6 items) and dev track (5 items) with bridge links between them.
 - **All filenames are now kebab-case.** Snake_case duplicates have been removed.
-- **`home.html` is archived.** It no longer appears in public entry routes and should not be linked from the active nav.
+- **`home.html` is now a compatibility alias.** It redirects to the active hub and should not be treated as the primary public entry route.
 - **All live projects are listed on the root index.** Freelance, Contractor, Elysium, and Shieldbox added 2026-03-16.
 - **Elysium duplication:** Both the standalone `elysium-landing` repo and a subfolder in `DaveHomeAssist.github.io` serve to the same path. The standalone repo takes precedence.
 - **2 archived repos still serving:** `garden-cage-build-guide` and `garden-planner` are archived but their Pages remain live and accessible.

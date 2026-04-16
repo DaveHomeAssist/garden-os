@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="var(--soil)">
+<link rel="stylesheet" href="garden-os-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
   :root {
@@ -225,16 +226,26 @@
   .cbar-btn:disabled{opacity:.3;cursor:default;}
   .cbar-sep{width:1px;height:14px;background:var(--border);flex-shrink:0;margin:0 .08rem;}
   .cbar-gap{flex:1;}
+  .planner-shell.simulation-live .cbar-btn:not(:disabled):not(.active):not(.act-leaf){
+    border-color:rgba(232,200,74,.45);
+    background:rgba(255,249,236,.95);
+  }
 
   /* Bed wrap */
   .bwrap{background:white;border:2px solid var(--border);border-radius:10px;padding:.75rem;
     width:100%;max-width:560px;box-shadow:var(--shadow);}
+  .planner-shell.simulation-live .bwrap{
+    background:linear-gradient(180deg,#fffef9,#fbf4df);
+    border-style:dashed;
+    border-color:rgba(232,200,74,.7);
+  }
   .wlbl{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;
     color:var(--text-light);text-align:center;margin-bottom:.3rem;}
   .bedge{display:grid;gap:4px;}
   .bc{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;
     justify-content:center;cursor:pointer;border:2px solid transparent;transition:transform .1s, border-color .1s;
     position:relative;min-height:0;user-select:none;}
+  .planner-shell.simulation-live .bc{border-style:dashed;}
   .bc.kb-focus{
     border-color:#1f5fbf !important;
     box-shadow:0 0 0 2px rgba(31,95,191,.28);
@@ -322,6 +333,32 @@
   .score-model-chip.rules{background:#eef3e6;color:#34522a;border-color:rgba(58,107,42,.2);}
   .score-model-chip.planner{background:#f5ead2;color:#7a5612;border-color:rgba(212,168,32,.28);}
   .score-model-chip.story{background:#eee7f6;color:#5a3b80;border-color:rgba(90,59,128,.2);}
+  .simulation-score-card{
+    margin-top:.7rem;
+    display:flex;flex-direction:column;gap:.55rem;
+    padding:.78rem .82rem;
+    border:1px solid rgba(232,200,74,.45);
+    border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,250,238,.96),rgba(250,241,216,.92));
+    box-shadow:0 8px 20px rgba(92,61,30,.08);
+  }
+  .simulation-score-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;}
+  .simulation-score-title{font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.1em;color:var(--soil);font-weight:600;}
+  .simulation-score-note{font-size:.68rem;line-height:1.45;color:var(--text-mid);}
+  .simulation-score-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;}
+  .simulation-score-block{
+    display:flex;flex-direction:column;gap:.18rem;
+    padding:.62rem .68rem;border-radius:12px;
+    border:1px solid var(--border-light);background:rgba(255,255,255,.84);
+  }
+  .simulation-score-block.current{border-color:rgba(61,122,79,.22);background:rgba(234,243,222,.72);}
+  .simulation-score-block.delta{border-style:dashed;}
+  .simulation-score-label{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-light);}
+  .simulation-score-value{font-family:'Fraunces',serif;font-size:1.7rem;line-height:1;color:var(--soil);}
+  .simulation-score-meta{font-size:.66rem;line-height:1.4;color:var(--text-mid);}
+  .simulation-score-block.delta.gain .simulation-score-value{color:var(--leaf);}
+  .simulation-score-block.delta.loss .simulation-score-value{color:var(--bad);}
+  .simulation-score-block.delta.flat .simulation-score-value{color:#7a5612;}
   .score-breakdown-card{
     margin-top:.7rem;
     display:flex;flex-direction:column;gap:.42rem;
@@ -924,6 +961,207 @@
     color: var(--leaf); font-family: 'DM Mono', monospace; font-size: .54rem; text-transform: uppercase;
     letter-spacing: .05em; cursor: pointer; margin-top: 6px; width: 100%; }
   .harvest-log-btn:hover { background: var(--leaf); color: white; }
+  .forecast-card,
+  .experiment-card,
+  .retrospective-card,
+  .succession-card{
+    background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,242,232,.9));
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    padding:.72rem;
+    box-shadow:0 8px 20px rgba(53,34,15,.04);
+  }
+  .forecast-card + .forecast-card,
+  .experiment-card + .experiment-card,
+  .retrospective-card + .retrospective-card,
+  .succession-card + .succession-card{margin-top:.55rem;}
+  .forecast-head,
+  .experiment-head,
+  .retrospective-head,
+  .succession-head{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.45rem;
+  }
+  .forecast-title,
+  .experiment-title,
+  .retrospective-title,
+  .succession-title{
+    font-family:'Fraunces',serif;font-size:.92rem;color:var(--soil);line-height:1.15;
+  }
+  .forecast-kicker,
+  .experiment-kicker,
+  .retrospective-kicker,
+  .succession-kicker{
+    font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);
+  }
+  .forecast-meta,
+  .experiment-meta,
+  .retrospective-meta,
+  .succession-meta{
+    font-family:'DM Mono',monospace;font-size:.53rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;
+  }
+  .forecast-list,
+  .report-list,
+  .experiment-list,
+  .succession-list{display:flex;flex-direction:column;gap:.45rem;}
+  .forecast-row,
+  .report-row,
+  .experiment-row,
+  .succession-row{
+    border:1px solid rgba(92,61,30,.08);
+    border-radius:7px;
+    background:rgba(255,255,255,.75);
+    padding:.55rem;
+  }
+  .forecast-row-head,
+  .succession-row-head{
+    display:flex;justify-content:space-between;gap:.55rem;align-items:flex-start;margin-bottom:.28rem;
+  }
+  .forecast-name,
+  .succession-name{font-size:.76rem;font-weight:600;color:var(--soil);}
+  .forecast-date,
+  .succession-date{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-mid);white-space:nowrap;}
+  .forecast-sub,
+  .succession-sub{font-size:.64rem;color:var(--text-mid);line-height:1.45;}
+  .forecast-pill-row,
+  .experiment-pill-row,
+  .report-pill-row{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.38rem;}
+  .forecast-pill,
+  .experiment-pill,
+  .report-pill{
+    display:inline-flex;align-items:center;gap:.28rem;
+    font-family:'DM Mono',monospace;font-size:.52rem;
+    text-transform:uppercase;letter-spacing:.05em;
+    border-radius:999px;padding:.24rem .42rem;border:1px solid rgba(92,61,30,.12);
+    background:rgba(248,242,232,.95);color:var(--text-mid);
+  }
+  .forecast-pill.good,
+  .experiment-pill.good,
+  .report-pill.good{background:#e8f5ea;color:var(--leaf);border-color:rgba(58,107,66,.18);}
+  .forecast-pill.warn,
+  .experiment-pill.warn,
+  .report-pill.warn{background:#fff3cd;color:#7a5612;border-color:rgba(232,200,74,.28);}
+  .forecast-pill.bad,
+  .experiment-pill.bad,
+  .report-pill.bad{background:#faeae8;color:var(--bad);border-color:rgba(176,42,30,.15);}
+  .forecast-timeline{
+    margin-top:.5rem;
+    display:flex;flex-direction:column;gap:.4rem;
+  }
+  .timeline-axis{
+    display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));
+    gap:.35rem;align-items:center;
+  }
+  .timeline-axis span{
+    font-family:'DM Mono',monospace;font-size:.5rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;
+    text-align:center;
+  }
+  .timeline-axis span:first-child{text-align:left;}
+  .timeline-row{
+    display:grid;grid-template-columns:120px minmax(0,1fr);
+    gap:.45rem;align-items:center;
+  }
+  .timeline-label{
+    font-size:.64rem;color:var(--soil);line-height:1.35;
+  }
+  .timeline-track{
+    position:relative;height:22px;border-radius:999px;background:rgba(92,61,30,.08);overflow:hidden;
+  }
+  .timeline-bar,
+  .succession-bar{
+    position:absolute;top:4px;height:14px;border-radius:999px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'DM Mono',monospace;font-size:.46rem;color:white;padding:0 .35rem;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .timeline-bar.secondary,
+  .succession-bar.secondary{top:8px;height:10px;opacity:.82;}
+  .experiment-grid,
+  .report-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;
+  }
+  .experiment-stat,
+  .report-stat{
+    border:1px solid rgba(92,61,30,.08);border-radius:7px;background:white;padding:.55rem;
+  }
+  .experiment-stat-value,
+  .report-stat-value{
+    font-family:'Fraunces',serif;font-size:1.05rem;color:var(--soil);line-height:1;
+  }
+  .experiment-stat-label,
+  .report-stat-label{
+    margin-top:.18rem;font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);
+  }
+  .experiment-form,
+  .report-form{
+    display:flex;flex-direction:column;gap:.45rem;margin-top:.55rem;
+  }
+  .experiment-form-row,
+  .report-form-row{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;
+  }
+  .experiment-form label,
+  .report-form label{
+    display:block;font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:.15rem;
+  }
+  .experiment-form input,
+  .experiment-form select,
+  .experiment-form textarea,
+  .report-form input,
+  .report-form select,
+  .report-form textarea{
+    width:100%;padding:.42rem .48rem;border:1px solid var(--border);border-radius:6px;background:white;
+    font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text);
+  }
+  .experiment-form textarea,
+  .report-form textarea{min-height:72px;resize:vertical;}
+  .experiment-actions,
+  .report-actions,
+  .succession-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.42rem;}
+  .mini-btn{
+    border:1.5px solid var(--border);background:white;color:var(--soil);
+    border-radius:999px;padding:.36rem .65rem;font-family:'DM Mono',monospace;font-size:.53rem;
+    text-transform:uppercase;letter-spacing:.06em;cursor:pointer;
+  }
+  .mini-btn.primary{background:var(--soil);border-color:var(--soil);color:var(--sun);}
+  .mini-btn.warn{background:#fff3cd;border-color:rgba(232,200,74,.45);color:#7a5612;}
+  .mini-btn:disabled{opacity:.45;cursor:not-allowed;}
+  .experiment-log,
+  .report-log{display:flex;flex-direction:column;gap:.4rem;margin-top:.55rem;}
+  .experiment-log-entry,
+  .report-log-entry{
+    border-left:3px solid rgba(92,61,30,.14);
+    background:rgba(248,242,232,.7);
+    padding:.45rem .55rem;border-radius:0 7px 7px 0;
+  }
+  .experiment-log-head,
+  .report-log-head{display:flex;justify-content:space-between;gap:.5rem;font-family:'DM Mono',monospace;font-size:.52rem;color:var(--text-light);margin-bottom:.16rem;}
+  .empty-state-card{
+    border:1.5px dashed rgba(92,61,30,.18);
+    border-radius:8px;padding:.85rem;background:rgba(248,242,232,.66);
+    text-align:center;color:var(--text-mid);font-size:.7rem;
+  }
+  .empty-state-card strong{display:block;color:var(--soil);margin-bottom:.18rem;}
+  .report-trend{
+    display:flex;align-items:flex-end;gap:.18rem;height:66px;margin-top:.55rem;padding-top:.35rem;border-top:1px solid rgba(92,61,30,.08);
+  }
+  .report-trend-bar{
+    flex:1;min-width:8px;border-radius:999px 999px 3px 3px;background:linear-gradient(180deg, var(--leaf), var(--leaf-bright));
+    position:relative;
+  }
+  .report-trend-bar span{
+    position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+    font-family:'DM Mono',monospace;font-size:.46rem;color:var(--text-light);margin-bottom:.2rem;white-space:nowrap;
+  }
+  .succession-queue{
+    margin-top:.52rem;padding-top:.48rem;border-top:1px solid rgba(92,61,30,.08);
+    display:flex;flex-direction:column;gap:.35rem;
+  }
+  .succession-queue-item{
+    display:flex;justify-content:space-between;gap:.45rem;align-items:flex-start;
+    padding:.45rem .5rem;border-radius:7px;background:rgba(255,255,255,.78);border:1px solid rgba(92,61,30,.08);
+  }
+  .succession-queue-item strong{display:block;font-size:.68rem;color:var(--soil);}
+  .succession-queue-item span{font-size:.6rem;color:var(--text-mid);line-height:1.4;}
   .dash-stack{display:flex;flex-direction:column;gap:.55rem;}
   .dash-hero{
     background:
@@ -1385,6 +1623,45 @@
 
   /* ═══ PLANNER SHELL v5 — Section 1 Refactor ═══ */
   .planner-shell{display:flex;flex-direction:column;min-height:calc(100vh - 24px);}
+  @media(min-width:901px){
+    .planner-shell{
+      height:calc(100vh - 47px);
+      height:calc(100dvh - 47px);
+      min-height:calc(100vh - 47px);
+      min-height:calc(100dvh - 47px);
+      overflow:hidden;
+    }
+    .planner-main{
+      column-gap:1rem;
+      padding:1rem 1rem 1.2rem;
+      overflow:hidden;
+      align-items:start;
+    }
+    .plan-panel,
+    .workspace-panel,
+    .insight-panel{
+      min-height:0;
+      max-height:100%;
+    }
+    .workspace-panel{
+      padding:0;
+    }
+    .insight-panel{
+      align-self:start;
+      height:auto;
+      margin-top:5.15rem;
+      max-height:calc(100% - 5.15rem);
+      border:1px solid rgba(92,61,30,.14);
+      border-radius:24px;
+      background:
+        linear-gradient(180deg, rgba(255,252,246,.97), rgba(244,235,222,.95)),
+        radial-gradient(circle at top left, rgba(255,255,255,.46), transparent 42%);
+      box-shadow:0 18px 36px rgba(44,27,11,.08);
+      overscroll-behavior:contain;
+      scrollbar-gutter:stable;
+      scrollbar-width:thin;
+    }
+  }
 
   .planner-header{
     background:linear-gradient(180deg,rgba(41,26,13,.98),rgba(58,37,16,.95));color:#f5ede0;
@@ -1424,13 +1701,20 @@
   }
   .planner-taskbar .tool-group{display:flex;gap:.25rem;align-items:center;}
   .planner-taskbar .task-primary-slot{display:flex;gap:.25rem;align-items:center;margin-left:.5rem;}
+  .planner-taskbar .task-sim-slot{display:flex;gap:.25rem;align-items:center;}
   .planner-taskbar .task-shortcuts{display:flex;gap:.25rem;align-items:center;margin-left:auto;}
+  .planner-shell.simulation-live .planner-taskbar{
+    background:linear-gradient(180deg,rgba(255,248,231,.97),rgba(247,236,204,.95));
+  }
   .planner-state-strip{
     display:flex;align-items:center;justify-content:space-between;gap:.75rem;
     padding:.8rem .85rem;
     background:linear-gradient(180deg,#fffefb,#f7efe3);
     border-bottom:1px solid var(--border-light);
     flex-wrap:wrap;
+  }
+  .planner-shell.simulation-live .planner-state-strip{
+    background:linear-gradient(180deg,#fffbf1,#f8edd1);
   }
   .planner-state-card{
     display:flex;flex-direction:column;gap:.22rem;min-width:260px;flex:1;
@@ -1502,6 +1786,7 @@
   .planner-state-chip.state-complete{background:#e8f5ea;color:var(--leaf);}
   .planner-state-chip.state-warn{background:#f6ecd0;color:#7a5612;}
   .planner-state-chip.state-error{background:#faeae8;color:var(--bad);}
+  .planner-state-chip.state-sim{background:#fff3cd;color:#7a5612;border:1px solid rgba(232,200,74,.45);}
   .planner-state-chip.metric{
     border:1px solid var(--border-light);
     background:rgba(255,255,255,.92);
@@ -1529,6 +1814,10 @@
     border-radius:22px;
     padding:1rem 1rem .9rem;
     box-shadow:0 18px 42px rgba(44,27,11,.09);
+  }
+  .planner-shell.simulation-live .board-stage{
+    border-color:rgba(232,200,74,.58);
+    box-shadow:0 18px 42px rgba(44,27,11,.09),0 0 0 3px rgba(232,200,74,.18);
   }
   .board-feedback{width:100%;max-width:480px;text-align:center;}
 
@@ -1724,6 +2013,7 @@
     .planner-taskbar{padding:.42rem .52rem;gap:.24rem;}
     .planner-taskbar .tool-group,
     .planner-taskbar .task-primary-slot,
+    .planner-taskbar .task-sim-slot,
     .planner-taskbar .task-shortcuts{flex-wrap:wrap;}
     .planner-taskbar .task-shortcuts{margin-left:0;width:100%;}
     .planner-state-strip{padding:.68rem .68rem .58rem;}
@@ -1738,6 +2028,7 @@
     .board-stage{max-width:none;padding:.82rem .72rem .88rem;border-radius:20px;}
     .bwrap{max-width:none;padding:.7rem;}
     .score-hero{padding:.72rem .74rem;border-radius:16px;}
+    .simulation-score-card{padding:.72rem .74rem;border-radius:16px;}
     .score-breakdown-card{padding:.72rem .74rem;}
     .issue-strip{
       justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;
@@ -1758,6 +2049,7 @@
     .planner-taskbar .task-primary-slot{margin-left:.25rem;}
     .planner-taskbar .cbar-btn{padding:.24rem .36rem;font-size:.52rem;}
     .planner-state-strip{padding:.55rem .6rem;}
+    .simulation-score-grid{grid-template-columns:1fr;}
     .shortcut-grid{grid-template-columns:1fr;}
     .planner-mobile-dock{grid-template-columns:repeat(2,minmax(0,1fr));}
     .planner-mobile-btn{font-size:.56rem;}
@@ -1797,6 +2089,451 @@
     text-transform:uppercase;letter-spacing:.08em;cursor:pointer;
   }
   .planner-mobile-btn.primary{background:rgba(232,200,74,.16);border-color:rgba(232,200,74,.32);color:#ffe48e;}
+
+  /* ═══ GRAPHICAL OVERHAUL — PHASE 1 ═══ */
+  :root{
+    --paper-base:#fffaf2;
+    --paper-ink:#3d2a18;
+    --paper-shadow:#e7dac4;
+    --paper-fiber:rgba(92,61,30,.055);
+    --season-sky-top:#f6f0e6;
+    --season-sky-bottom:#ece1d2;
+    --season-glow:rgba(232,200,74,.14);
+    --season-leaf-mist:rgba(58,107,42,.1);
+    --season-panel-wash:rgba(255,251,244,.88);
+    --season-stage-accent:rgba(58,107,42,.12);
+    --season-chip-bg:rgba(58,107,42,.12);
+    --season-chip-fg:#35522d;
+    --city-brick-rgb:126,76,50;
+  }
+  body{
+    position:relative;
+    background:
+      radial-gradient(circle at 18% 14%, var(--season-glow), transparent 30%),
+      radial-gradient(circle at 78% 24%, var(--season-leaf-mist), transparent 28%),
+      linear-gradient(180deg, var(--season-sky-top) 0%, var(--season-sky-bottom) 100%);
+  }
+  body[data-season="spring"]{
+    --season-sky-top:#f3efe5;
+    --season-sky-bottom:#e4ddd0;
+    --season-glow:rgba(196,208,160,.18);
+    --season-leaf-mist:rgba(122,150,103,.12);
+    --season-panel-wash:rgba(251,249,241,.9);
+    --season-stage-accent:rgba(122,150,103,.16);
+    --season-chip-bg:rgba(122,150,103,.14);
+    --season-chip-fg:#4c643f;
+  }
+  body[data-season="summer"]{
+    --season-sky-top:#fbf2df;
+    --season-sky-bottom:#ecdab9;
+    --season-glow:rgba(232,170,48,.2);
+    --season-leaf-mist:rgba(61,122,79,.12);
+    --season-panel-wash:rgba(255,249,237,.9);
+    --season-stage-accent:rgba(232,170,48,.16);
+    --season-chip-bg:rgba(200,120,26,.14);
+    --season-chip-fg:#84511a;
+  }
+  body[data-season="latesummer"]{
+    --season-sky-top:#f9ecd8;
+    --season-sky-bottom:#e7d2b2;
+    --season-glow:rgba(184,96,34,.18);
+    --season-leaf-mist:rgba(117,96,44,.14);
+    --season-panel-wash:rgba(255,247,236,.9);
+    --season-stage-accent:rgba(184,96,34,.16);
+    --season-chip-bg:rgba(184,96,34,.12);
+    --season-chip-fg:#8a4c1e;
+  }
+  body[data-season="fall"]{
+    --season-sky-top:#f2e7d8;
+    --season-sky-bottom:#ddc8b0;
+    --season-glow:rgba(166,88,42,.16);
+    --season-leaf-mist:rgba(110,88,48,.12);
+    --season-panel-wash:rgba(252,246,237,.9);
+    --season-stage-accent:rgba(166,88,42,.16);
+    --season-chip-bg:rgba(166,88,42,.12);
+    --season-chip-fg:#7e4324;
+  }
+  .planner-shell{
+    position:relative;
+    isolation:isolate;
+    overflow:hidden;
+  }
+  .planner-shell::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:-2;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.3), transparent 24%),
+      repeating-linear-gradient(0deg, transparent 0 32px, rgba(var(--city-brick-rgb),.035) 32px 34px),
+      repeating-linear-gradient(90deg, transparent 0 64px, rgba(var(--city-brick-rgb),.04) 64px 66px);
+    opacity:.75;
+  }
+  .planner-shell::after{
+    content:'';
+    position:absolute;
+    right:-6%;
+    bottom:-14%;
+    width:min(42vw,520px);
+    height:min(42vw,520px);
+    pointer-events:none;
+    z-index:-1;
+    border-radius:38% 62% 60% 40%;
+    background:
+      repeating-linear-gradient(45deg, rgba(122,158,126,.1) 0 2px, transparent 2px 16px),
+      repeating-linear-gradient(-45deg, rgba(122,158,126,.08) 0 2px, transparent 2px 16px);
+    opacity:.34;
+    transform:rotate(8deg);
+    filter:blur(.2px);
+  }
+  .sl,.sr,
+  .plan-panel,
+  .insight-panel{
+    background:
+      linear-gradient(180deg, var(--season-panel-wash), rgba(244,235,222,.94)),
+      radial-gradient(circle at top left, rgba(255,255,255,.42), transparent 46%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  .tab-bar,
+  .workspace-bar,
+  .cbar,
+  .bwrap,
+  .score-hero,
+  .simulation-score-card,
+  .score-breakdown-card,
+  .icard,
+  .dash-card,
+  .issue-strip{
+    position:relative;
+    overflow:hidden;
+  }
+  .tab-bar::before,
+  .workspace-bar::before,
+  .bwrap::before,
+  .score-hero::before,
+  .simulation-score-card::before,
+  .score-breakdown-card::before,
+  .icard::before,
+  .dash-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.22), transparent 34%),
+      radial-gradient(circle at 14% 12%, rgba(255,255,255,.18), transparent 28%),
+      radial-gradient(circle at 86% 82%, var(--paper-fiber), transparent 26%);
+    opacity:.8;
+  }
+  .workspace-bar,
+  .cbar{
+    border-color:rgba(92,61,30,.16);
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.96), rgba(247,238,224,.96)),
+      radial-gradient(circle at top right, rgba(255,255,255,.42), transparent 40%);
+    box-shadow:0 10px 28px rgba(44,27,11,.08);
+  }
+  .workspace-bar::after{
+    content:attr(data-season-label);
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:.2rem .55rem;
+    border-radius:999px;
+    background:var(--season-chip-bg);
+    border:1px solid rgba(92,61,30,.12);
+    color:var(--season-chip-fg);
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .workspace-label{
+    color:var(--paper-ink);
+    letter-spacing:.12em;
+  }
+  .board-stage{
+    position:relative;
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.82), rgba(246,235,217,.92)),
+      radial-gradient(circle at top left, rgba(255,255,255,.4), transparent 40%);
+    border:1px solid rgba(92,61,30,.12);
+    box-shadow:0 24px 48px rgba(44,27,11,.1);
+  }
+  .board-stage > *{
+    position:relative;
+    z-index:1;
+  }
+  .board-stage::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.18), transparent 22%),
+      repeating-linear-gradient(0deg, transparent 0 22px, rgba(var(--city-brick-rgb),.035) 22px 24px),
+      repeating-linear-gradient(90deg, transparent 0 56px, rgba(var(--city-brick-rgb),.05) 56px 58px);
+    opacity:.45;
+  }
+  .board-stage::after{
+    content:'';
+    position:absolute;
+    right:-4%;
+    top:12%;
+    width:220px;
+    height:220px;
+    pointer-events:none;
+    background:
+      repeating-linear-gradient(45deg, rgba(122,158,126,.16) 0 2px, transparent 2px 14px),
+      repeating-linear-gradient(-45deg, rgba(122,158,126,.12) 0 2px, transparent 2px 14px);
+    opacity:.22;
+    transform:rotate(6deg);
+    filter:blur(.25px);
+  }
+  .bwrap{
+    background:
+      linear-gradient(180deg, rgba(255,253,248,.98), rgba(248,239,225,.98)),
+      radial-gradient(circle at 18% 14%, rgba(255,255,255,.24), transparent 28%);
+    border-color:rgba(92,61,30,.14);
+    box-shadow:
+      0 10px 22px rgba(44,27,11,.09),
+      inset 0 0 0 1px rgba(255,255,255,.55);
+  }
+  .wlbl,
+  .flbl{
+    display:inline-flex;
+    align-self:center;
+    padding:.18rem .55rem;
+    border-radius:999px;
+    background:rgba(255,250,242,.84);
+    border:1px solid rgba(92,61,30,.1);
+    color:var(--paper-ink);
+    box-shadow:0 4px 12px rgba(44,27,11,.04);
+  }
+  .chint{
+    margin-top:.35rem;
+    padding:.15rem .45rem;
+    border-radius:999px;
+    color:var(--text-mid);
+    background:rgba(255,255,255,.42);
+  }
+  .placement-status{
+    max-width:560px;
+    color:var(--paper-ink);
+    letter-spacing:.08em;
+  }
+  .bc{
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .bc:hover{
+    transform:translateY(-1px) scale(1.04);
+    box-shadow:0 10px 18px rgba(44,27,11,.12), inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .bc.has-row-band{
+    padding-left:12px;
+  }
+  .row-zone-band{
+    position:absolute;
+    left:1px;
+    top:1px;
+    bottom:1px;
+    width:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:5px 0 0 5px;
+    font-family:'DM Mono',monospace;
+    font-size:.4rem;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#fffaf2;
+    text-shadow:0 1px 2px rgba(0,0,0,.12);
+  }
+  .row-zone-band.trellis{
+    background:linear-gradient(180deg, rgba(176,120,32,.96), rgba(138,92,18,.96));
+  }
+  .row-zone-band.protected{
+    background:linear-gradient(180deg, rgba(74,116,82,.94), rgba(46,84,54,.94));
+  }
+  .bc.trellis-zone{
+    box-shadow:
+      inset 12px 0 0 rgba(212,160,23,.11),
+      inset 0 0 0 1px rgba(232,200,74,.32);
+  }
+  .bc.protected-zone{
+    box-shadow:
+      inset 12px 0 0 rgba(122,158,126,.12),
+      inset 0 0 0 1px rgba(61,122,79,.22);
+  }
+  .score-hero{
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.98), rgba(246,236,221,.95)),
+      radial-gradient(circle at top right, var(--season-stage-accent), transparent 32%);
+    border-color:rgba(92,61,30,.14);
+    box-shadow:0 12px 24px rgba(44,27,11,.08);
+  }
+  .simulation-score-card,
+  .score-breakdown-card,
+  .icard,
+  .dash-card{
+    border-color:rgba(92,61,30,.12);
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.97), rgba(246,237,224,.96)),
+      radial-gradient(circle at top left, rgba(255,255,255,.28), transparent 30%);
+  }
+  .wi{
+    position:relative;
+    border:1px solid rgba(92,61,30,.12);
+    border-left-width:5px;
+    border-radius:10px;
+    box-shadow:0 6px 14px rgba(44,27,11,.05);
+  }
+  .issue-strip{
+    border-color:rgba(92,61,30,.12);
+    background:
+      linear-gradient(180deg, rgba(255,252,247,.92), rgba(247,239,226,.94));
+    box-shadow:0 8px 18px rgba(44,27,11,.06);
+  }
+  .insight-header{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.58), rgba(244,236,224,.44));
+    border-top:1px solid rgba(255,255,255,.48);
+  }
+  .cast-board{
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+    padding:.82rem .86rem;
+    border:1px solid rgba(92,61,30,.12);
+    border-radius:16px;
+    background:
+      linear-gradient(180deg, rgba(255,252,246,.98), rgba(246,236,221,.96)),
+      radial-gradient(circle at top right, var(--season-stage-accent), transparent 34%);
+    box-shadow:0 10px 24px rgba(44,27,11,.08);
+  }
+  .cast-board.embedded{
+    padding:0;
+    border:none;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .cast-board-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.65rem;
+  }
+  .cast-board-kicker{
+    font-family:'DM Mono',monospace;
+    font-size:.52rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--text-light);
+  }
+  .cast-board-title{
+    font-family:'Fraunces',serif;
+    font-size:1rem;
+    color:var(--soil);
+  }
+  .cast-board-note{
+    font-size:.68rem;
+    line-height:1.45;
+    color:var(--text-mid);
+    max-width:280px;
+  }
+  .cast-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:.55rem;
+  }
+  .cast-board.compact .cast-grid{
+    grid-template-columns:1fr;
+  }
+  .cast-card{
+    --cast-accent:var(--leaf);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    padding:.72rem .74rem;
+    border-radius:14px;
+    border:1px solid rgba(92,61,30,.12);
+    border-left:5px solid var(--cast-accent);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.88), rgba(249,242,231,.92)),
+      radial-gradient(circle at 88% 16%, rgba(255,255,255,.28), transparent 28%);
+    box-shadow:0 8px 18px rgba(44,27,11,.06);
+  }
+  .cast-card-top{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+  .cast-portrait{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg, var(--cast-accent), rgba(255,255,255,.94));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 12px rgba(44,27,11,.1);
+    font-size:1.05rem;
+  }
+  .cast-name{
+    font-family:'DM Mono',monospace;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--soil);
+  }
+  .cast-note{
+    font-family:'DM Mono',monospace;
+    font-size:.48rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+    margin-top:.08rem;
+  }
+  .cast-line{
+    font-size:.72rem;
+    line-height:1.5;
+    color:var(--text-mid);
+  }
+  .dash-card.dash-card-cast{
+    padding:.8rem .82rem;
+  }
+  @media(max-width:900px){
+    .workspace-bar::after{
+      display:none;
+    }
+    .planner-shell::after{
+      width:280px;
+      height:280px;
+      right:-16%;
+      bottom:-8%;
+    }
+    .board-stage::after{
+      width:160px;
+      height:160px;
+      right:-10%;
+      top:auto;
+      bottom:10%;
+    }
+    .row-zone-band{
+      width:11px;
+      font-size:.36rem;
+    }
+    .bc.has-row-band{
+      padding-left:10px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1805,6 +2542,7 @@
   <a href="index.html">Hub</a>
   <a href="garden-league-simulator-v4.html">Play Game</a>
   <a href="garden-planner-v4.html" class="active" aria-current="page">Planner</a>
+  <a href="garden-doctor.html">Garden Doctor</a>
   <a href="garden-cage-build-guide.html">Build Guide</a>
   <a href="garden-cage-ops-guide.html">Ops Guide</a>
   <a href="how-it-thinks.html">How It Thinks</a>
@@ -1833,6 +2571,11 @@
   <div class="task-primary-slot">
     <button class="cbar-btn act-leaf" id="autoFillBtn" aria-label="Auto-fill bed with recommended crops">✦ Auto-fill</button>
     <button class="cbar-btn danger" id="clearBtn" aria-label="Clear all crops from bed">✕ Clear</button>
+  </div>
+  <div class="task-sim-slot">
+    <button class="cbar-btn" id="simulateBtn" aria-label="Start layout simulation">◇ Simulate</button>
+    <button class="cbar-btn act-leaf" id="simulateApplyBtn" aria-label="Apply simulated layout" hidden>✓ Apply</button>
+    <button class="cbar-btn" id="simulateDiscardBtn" aria-label="Discard simulated layout" hidden>↺ Discard</button>
   </div>
   <div class="task-shortcuts">
     <button class="cbar-btn" id="undoBtn" disabled title="Ctrl+Z">↩ Undo</button>
@@ -1945,6 +2688,11 @@
         <option value="9">Zone 9</option>
         <option value="10">Zone 10</option>
       </select>
+    </div>
+    <div class="fg">
+      <label>Planting start date</label>
+      <input type="date" id="plantingDate">
+      <div class="calendar-note" style="text-align:left;margin-top:6px;">Defaults to the season window if left blank. Forecasts, succession, and retrospective snapshots all use this anchor.</div>
     </div>
   </div>
 
@@ -2099,6 +2847,20 @@
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest log</button>
     <div class="insight-content" hidden>
       <div id="rpaneHarvest"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightExperiment">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="experiment">Experiments</button>
+    <div class="insight-content" hidden>
+      <div id="rpaneExperiment"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightRetrospective">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="retrospective">Season report</button>
+    <div class="insight-content" hidden>
+      <div id="rpaneRetrospective"></div>
     </div>
   </section>
 
@@ -2282,10 +3044,12 @@ const VALID_ZONES=['','5','6','7','8','9','10'];
 const VALID_TOOLS=['paint','erase','inspect'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
+const VALID_RIGHT_TABS=['dashboard','score','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
+const EXPERIMENT_VARIABLES=['spacing','mulch','fertilizer','variety','sun exposure','watering','protection'];
 const MAX_SHARE_PAYLOAD=50000;
 const MAX_IMPORT_FILE_BYTES=500*1024;
 const WORKSPACE_VERSION = 1;
-const APP_VERSION = '4.3';
+const APP_VERSION = '4.4';
 
 const CROPS = {
   // ── CUCURBITS ──────────────────────────────────────────────────────────────
@@ -2514,7 +3278,7 @@ const CROPS = {
     companionTags:['greens'],conflictTags:['dill'],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Chantenay',desc:'Stubby, ideal for raised bed soil depth.'},
       {name:'Danvers 126',desc:'Reliable, tolerates heavier soils.'}]},
-  scallions:{id:'scallions',name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
+  scallion:{id:'scallion',name:'Scallions',short:'Scallion',emoji:'🧅',color:'#9c6e3c',
     faction:'roots',support:false,tall:false,water:2,
     companions:['carrot','lettuce'],conflicts:['peas','bush_beans'],
     chapterUnlock:3,recipes:[],
@@ -2538,7 +3302,7 @@ const CROPS = {
     companionTags:['greens'],conflictTags:[],replacementCategory:'roots',successionFriendly:true,
     varieties:[{name:'Detroit Dark Red',desc:'Classic. Reliable yields, beautiful color.'},
       {name:'Chioggia',desc:'Candy-striped Italian heirloom. Mild taste.'}]},
-  turnips:{id:'turnips',name:'Turnips',short:'Turnips',emoji:'🥔',color:'#c98ec2',
+  turnip:{id:'turnip',name:'Turnips',short:'Turnip',emoji:'🥔',color:'#c98ec2',
     faction:'roots',support:false,tall:false,water:2,
     companions:['peas','lettuce'],conflicts:[],
     chapterUnlock:3,recipes:[],
@@ -2771,6 +3535,151 @@ const CROPS = {
     varieties:[{name:'Empress of India',desc:'Compact, bushy plants with dark leaves and red flowers.'},
       {name:'Alaska',desc:'Variegated foliage; semi-trailing habit.'},
       {name:'Whirlybird',desc:'Semi-double flowers on dwarf plants.'}]},
+  // ── BIOME / SPECIALIST ────────────────────────────────────────────────────
+  wild_clover:{id:'wild_clover',name:'Wild Clover',short:'CLV',emoji:'☘️',color:'#5ea85d',
+    faction:'companions',support:false,tall:false,water:1,
+    companions:['cherry_tom','pepper','carrot','lettuce'],conflicts:[],
+    chapterUnlock:10,recipes:[],
+    eventVulnerabilities:['frost-hardy','heat-tolerant','pest-repellent'],
+    seasonalMultipliers:{spring:1,summer:0.8,fall:0.7},
+    category:'companion',sunMin:4,sunIdeal:7,height:'very low',habit:'sprawling',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
+    shadeScore:3,spacingPerSqFt:9,coolSeason:false,heatTolerance:5,waterNeed:'low',
+    companionTags:['fruiting','roots','greens'],conflictTags:[],replacementCategory:'companion',successionFriendly:true,
+    varieties:[{name:'Dutch White',desc:'Nitrogen-fixing ground cover that threads through open bed edges.'},
+      {name:'Micro Clover',desc:'Compact habit with pollinator-friendly blooms and dense living mulch.'}]},
+  prairie_onion:{id:'prairie_onion',name:'Prairie Onion',short:'PON',emoji:'🧅',color:'#8d6a52',
+    faction:'roots',support:false,tall:false,water:1,
+    companions:['carrot','beet','wild_clover'],conflicts:['peas','bush_beans'],
+    chapterUnlock:10,recipes:['foragers_stew'],
+    eventVulnerabilities:['frost-hardy','heat-tolerant'],
+    seasonalMultipliers:{spring:0.6,summer:0.5,fall:1},
+    category:'roots',sunMin:5,sunIdeal:7,height:'low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:3,spacingPerSqFt:12,coolSeason:true,heatTolerance:3,waterNeed:'low',
+    companionTags:['roots','companion'],conflictTags:['legume'],replacementCategory:'roots',successionFriendly:true,
+    varieties:[{name:'Prairie Cluster',desc:'Slim bulbs with strong fall performance and meadow resilience.'},
+      {name:'Sun Ribbon',desc:'Tall greens and tidy bunching habit for compact beds.'}]},
+  meadow_sage:{id:'meadow_sage',name:'Meadow Sage',short:'MSG',emoji:'🌾',color:'#7a74b8',
+    faction:'herbs',support:false,tall:false,water:1,
+    companions:['cherry_tom','pepper','marigold','wild_clover'],conflicts:[],
+    chapterUnlock:10,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant','pest-repellent'],
+    seasonalMultipliers:{spring:0.7,summer:1,fall:0.6},
+    category:'herbs',sunMin:5,sunIdeal:8,height:'medium',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
+    shadeScore:2,spacingPerSqFt:4,coolSeason:false,heatTolerance:5,waterNeed:'low',
+    companionTags:['fruiting','companion'],conflictTags:[],replacementCategory:'herbs',successionFriendly:true,
+    varieties:[{name:'Blue Spire',desc:'Pollinator-heavy spikes with drought-tough stems.'},
+      {name:'Prairie Bloom',desc:'Compact sage with aromatic foliage and long bloom window.'}]},
+  watercress:{id:'watercress',name:'Watercress',short:'WCR',emoji:'💧',color:'#4f9d7a',
+    faction:'greens',support:false,tall:false,water:4,
+    companions:['wild_rice','marsh_marigold'],conflicts:[],
+    chapterUnlock:10,recipes:['foragers_stew'],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:1,summer:0.4,fall:0.9},
+    category:'greens',sunMin:3,sunIdeal:5,height:'very low',habit:'rosette',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:5,spacingPerSqFt:9,coolSeason:true,heatTolerance:1,waterNeed:'high',
+    companionTags:['roots','companion'],conflictTags:[],replacementCategory:'greens',successionFriendly:true,
+    varieties:[{name:'Brookline',desc:'Fast, peppery greens that thrive in damp, cool beds.'},
+      {name:'Spring Run',desc:'Low mat-forming cress for shallow trays and wet corners.'}]},
+  wild_rice:{id:'wild_rice',name:'Wild Rice',short:'WRC',emoji:'🌾',color:'#8f9c4c',
+    faction:'roots',support:false,tall:true,water:4,
+    companions:['watercress','marsh_marigold'],conflicts:[],
+    chapterUnlock:10,recipes:[],
+    eventVulnerabilities:['frost-sensitive','heat-tolerant'],
+    seasonalMultipliers:{spring:0.5,summer:1,fall:0.7},
+    category:'roots',sunMin:5,sunIdeal:7,height:'tall',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
+    shadeScore:3,spacingPerSqFt:1,coolSeason:false,heatTolerance:4,waterNeed:'high',
+    companionTags:['greens','companion'],conflictTags:[],replacementCategory:'roots',successionFriendly:false,
+    varieties:[{name:'River Tall',desc:'Wet-soil grain with strong summer push and tall seed heads.'},
+      {name:'Marsh Bronze',desc:'Bronze-tinted panicles and sturdy riverside performance.'}]},
+  marsh_marigold:{id:'marsh_marigold',name:'Marsh Marigold',short:'MMR',emoji:'🌼',color:'#e0b84a',
+    faction:'companions',support:false,tall:false,water:4,
+    companions:['watercress','wild_rice'],conflicts:[],
+    chapterUnlock:10,recipes:[],
+    eventVulnerabilities:['heat-sensitive','frost-hardy','pest-repellent'],
+    seasonalMultipliers:{spring:1,summer:0.2,fall:0.3},
+    category:'companion',sunMin:3,sunIdeal:6,height:'low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:4,spacingPerSqFt:4,coolSeason:true,heatTolerance:1,waterNeed:'high',
+    companionTags:['greens','roots'],conflictTags:[],replacementCategory:'companion',successionFriendly:true,
+    varieties:[{name:'Golden Fen',desc:'Spring-heavy blooms that like cool, wet soil.'},
+      {name:'Bog Lantern',desc:'Rounded habit with bright flowers and strong pest-deterrent value.'}]},
+  shiitake_mushroom:{id:'shiitake_mushroom',name:'Shiitake Mushroom',short:'SHI',emoji:'🍄',color:'#8f6a4a',
+    faction:'roots',support:false,tall:false,water:3,
+    companions:['wild_garlic','woodland_strawberry'],conflicts:[],
+    chapterUnlock:11,recipes:['foragers_stew'],
+    eventVulnerabilities:['heat-sensitive','frost-hardy'],
+    seasonalMultipliers:{spring:0.8,summer:0.7,fall:0.9},
+    category:'roots',sunMin:1,sunIdeal:3,height:'very low',habit:'compact',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:8,spacingPerSqFt:6,coolSeason:false,heatTolerance:1,waterNeed:'high',
+    companionTags:['herbs','fruiting'],conflictTags:[],replacementCategory:'roots',successionFriendly:false,
+    varieties:[{name:'Oak Log',desc:'Dense caps suited to shady woodland beds and cool spells.'},
+      {name:'Forest Brown',desc:'Reliable flushes in damp shade with rich umami flavor.'}]},
+  wild_garlic:{id:'wild_garlic',name:'Wild Garlic',short:'WGA',emoji:'🧄',color:'#6e9b54',
+    faction:'herbs',support:false,tall:false,water:2,
+    companions:['shiitake_mushroom','woodland_strawberry','lettuce'],conflicts:['peas','bush_beans'],
+    chapterUnlock:11,recipes:['foragers_stew'],
+    eventVulnerabilities:['frost-hardy','heat-sensitive','pest-repellent'],
+    seasonalMultipliers:{spring:1,summer:0.5,fall:0.8},
+    category:'herbs',sunMin:2,sunIdeal:4,height:'low',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:7,spacingPerSqFt:12,coolSeason:true,heatTolerance:1,waterNeed:'medium',
+    companionTags:['roots','fruiting','greens'],conflictTags:['legume'],replacementCategory:'herbs',successionFriendly:true,
+    varieties:[{name:'Ramsons',desc:'Broad leaves, strong aroma, thrives in cool spring shade.'},
+      {name:'Woodland Patch',desc:'Dense clumps that bridge spring forage and fall flavor.'}]},
+  woodland_strawberry:{id:'woodland_strawberry',name:'Woodland Strawberry',short:'WST',emoji:'🍓',color:'#d7686b',
+    faction:'fruiting',support:false,tall:false,water:2,
+    companions:['wild_garlic','shiitake_mushroom','lettuce'],conflicts:[],
+    chapterUnlock:11,recipes:[],
+    eventVulnerabilities:['frost-sensitive','pest-target'],
+    seasonalMultipliers:{spring:0.8,summer:1,fall:0.6},
+    category:'fruiting',sunMin:2,sunIdeal:5,height:'low',habit:'sprawling',trellisRequired:false,
+    trellisZone:false,protectedZone:true,
+    shadeScore:6,spacingPerSqFt:4,coolSeason:false,heatTolerance:3,waterNeed:'medium',
+    companionTags:['herbs','greens'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'Alpine Trail',desc:'Tiny sweet berries that crop in part shade.'},
+      {name:'Forest Gem',desc:'Runner-friendly plants with steady midsummer fruit.'}]},
+  vanilla_orchid:{id:'vanilla_orchid',name:'Vanilla Orchid',short:'VAN',emoji:'🌺',color:'#b890d8',
+    faction:'climbers',support:true,tall:true,water:3,
+    companions:['lemon_tree','basil'],conflicts:[],
+    chapterUnlock:12,recipes:[],
+    eventVulnerabilities:['heat-tolerant','frost-immune'],
+    seasonalMultipliers:{spring:0.7,summer:0.9,fall:0.7},
+    category:'companion',sunMin:4,sunIdeal:6,height:'tall',habit:'vining',trellisRequired:true,
+    trellisZone:true,protectedZone:true,
+    shadeScore:4,spacingPerSqFt:1,coolSeason:false,heatTolerance:5,waterNeed:'high',
+    companionTags:['fruiting','herbs'],conflictTags:[],replacementCategory:'companion',successionFriendly:false,
+    varieties:[{name:'Glasshouse Vine',desc:'Long-season orchid that rewards protected warm structures.'},
+      {name:'Cream Lantern',desc:'High-value blooms with climbing habit and aromatic pods.'}]},
+  lemon_tree:{id:'lemon_tree',name:'Lemon Tree',short:'LEM',emoji:'🍋',color:'#d7c34b',
+    faction:'fruiting',support:false,tall:true,water:3,
+    companions:['vanilla_orchid','basil','marigold'],conflicts:[],
+    chapterUnlock:12,recipes:[],
+    eventVulnerabilities:['heat-tolerant','frost-immune'],
+    seasonalMultipliers:{spring:0.8,summer:1,fall:0.8},
+    category:'fruiting',sunMin:6,sunIdeal:9,height:'tall',habit:'upright',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
+    shadeScore:1,spacingPerSqFt:0.25,coolSeason:false,heatTolerance:5,waterNeed:'high',
+    companionTags:['herbs','companion'],conflictTags:[],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'Patio Meyer',desc:'Compact citrus with repeat fruit set in warm seasons.'},
+      {name:'Bright Peel',desc:'Tall container lemon with fragrant blossoms and heavy sun needs.'}]},
+  ghost_pepper:{id:'ghost_pepper',name:'Ghost Pepper',short:'GHP',emoji:'🌶️',color:'#c3422f',
+    faction:'fruiting',support:false,tall:false,water:2,
+    companions:['basil','marigold','lemon_tree'],conflicts:['peas'],
+    chapterUnlock:12,recipes:['garden_deluxe_salsa'],
+    eventVulnerabilities:['heat-tolerant','frost-immune'],
+    seasonalMultipliers:{spring:0.3,summer:1,fall:0.2},
+    category:'fruiting',sunMin:7,sunIdeal:10,height:'medium',habit:'bush',trellisRequired:false,
+    trellisZone:false,protectedZone:false,
+    shadeScore:0,spacingPerSqFt:1,coolSeason:false,heatTolerance:5,waterNeed:'medium',
+    companionTags:['herbs','companion','fruiting'],conflictTags:['legume'],replacementCategory:'fruiting',successionFriendly:false,
+    varieties:[{name:'Bhut Jolokia',desc:'Extreme heat pepper that wants full sun and long warmth.'},
+      {name:'Red Ember',desc:'Compact superhot selection with intense late-season yield.'}]},
 };
 
 const SUBS = {
@@ -2805,8 +3714,10 @@ const PLANNER_RECIPES = {
     leaf_lettuce:  'lettuce',
     swiss_chard:   'chard',
     carrots:       'carrot',
+    scallions:     'scallion',
     onions:        'onion',
     beets:         'beet',
+    turnips:       'turnip',
     peppers:       'pepper',
   };
   const OLD_KEYS = Object.keys(KEY_MAP);
@@ -3009,6 +3920,7 @@ let _plannerNotice = null;
 let _plannerNoticeTimer = null;
 let _actionBannerTimer = null;
 let _shortcutTrigger = null;
+let _simulation = null;
 
 function cloneData(value){
   try{
@@ -3025,6 +3937,81 @@ function clampInt(n, min, max, fallback){
 function uniqueId(prefix){
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
 }
+function normalizeISODate(value){
+  return typeof value==='string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+}
+function normalizeScoreHistoryEntries(entries){
+  return (Array.isArray(entries) ? entries : []).slice(-36).map(entry=>{
+    if(!entry || typeof entry!=='object') return null;
+    return {
+      at: typeof entry.at==='string' ? entry.at : new Date().toISOString(),
+      date: normalizeISODate(entry.date),
+      score: Number.isFinite(+entry.score) ? +entry.score : 0,
+      plantedCount: clampInt(entry.plantedCount, 0, 400, 0),
+      fillRatio: Number.isFinite(+entry.fillRatio) ? clamp(+entry.fillRatio, 0, 1) : 0,
+      hash: typeof entry.hash==='string' ? entry.hash : ''
+    };
+  }).filter(Boolean);
+}
+function normalizeSuccessionPlanEntries(entries){
+  return (Array.isArray(entries) ? entries : []).slice(-24).map(entry=>{
+    if(!entry || typeof entry!=='object') return null;
+    const cropKey = typeof entry.cropKey==='string' && CROPS[entry.cropKey] ? entry.cropKey : '';
+    if(!cropKey) return null;
+    return {
+      id: typeof entry.id==='string' ? entry.id : uniqueId('succ'),
+      cropKey,
+      plannedDate: normalizeISODate(entry.plannedDate),
+      harvestStart: normalizeISODate(entry.harvestStart),
+      harvestEnd: normalizeISODate(entry.harvestEnd),
+      sourceCellId: typeof entry.sourceCellId==='string' ? entry.sourceCellId : '',
+      note: typeof entry.note==='string' ? entry.note.slice(0, 240) : '',
+      status: entry.status === 'done' ? 'done' : 'planned'
+    };
+  }).filter(Boolean);
+}
+function normalizeSeasonBaseline(raw){
+  if(!raw || typeof raw!=='object') return null;
+  return {
+    season: VALID_SEASONS.includes(raw.season) ? raw.season : 'summer',
+    plantingDate: normalizeISODate(raw.plantingDate),
+    capturedAt: typeof raw.capturedAt==='string' ? raw.capturedAt : new Date().toISOString(),
+    cells: Array.isArray(raw.cells) ? raw.cells.map(c=>(typeof c==='string' && CROPS[c]) ? c : null) : [],
+    score: Number.isFinite(+raw.score) ? +raw.score : 0,
+    plantedCount: clampInt(raw.plantedCount, 0, 400, 0),
+    notes: typeof raw.notes==='string' ? raw.notes.slice(0, 500) : ''
+  };
+}
+function normalizeExperimentObservation(raw, validBedIds){
+  if(!raw || typeof raw!=='object') return null;
+  const bedId = typeof raw.bedId==='string' ? raw.bedId : '';
+  if(!validBedIds.includes(bedId)) return null;
+  return {
+    id: typeof raw.id==='string' ? raw.id : uniqueId('obs'),
+    bedId,
+    date: normalizeISODate(raw.date) || new Date().toISOString().slice(0, 10),
+    score: Number.isFinite(+raw.score) ? +raw.score : 0,
+    filled: clampInt(raw.filled, 0, 400, 0),
+    note: typeof raw.note==='string' ? raw.note.slice(0, 500) : ''
+  };
+}
+function normalizeExperimentRecord(raw, validBedIds){
+  if(!raw || typeof raw!=='object') return null;
+  const aBedId = typeof raw.aBedId==='string' ? raw.aBedId : '';
+  const bBedId = typeof raw.bBedId==='string' ? raw.bBedId : '';
+  if(!validBedIds.includes(aBedId) || !validBedIds.includes(bBedId) || aBedId===bBedId) return null;
+  return {
+    id: typeof raw.id==='string' ? raw.id : uniqueId('exp'),
+    aBedId,
+    bBedId,
+    variable: EXPERIMENT_VARIABLES.includes(raw.variable) ? raw.variable : 'spacing',
+    createdAt: typeof raw.createdAt==='string' ? raw.createdAt : new Date().toISOString(),
+    notes: typeof raw.notes==='string' ? raw.notes.slice(0, 500) : '',
+    observations: (Array.isArray(raw.observations) ? raw.observations : [])
+      .map(entry=>normalizeExperimentObservation(entry, validBedIds))
+      .filter(Boolean)
+  };
+}
 function normalizeSiteSettings(site){
   const s = site && typeof site==='object' ? site : {};
   const sun = parseFloat(s.sunHours);
@@ -3036,7 +4023,8 @@ function normalizeSiteSettings(site){
     trellis: typeof s.trellis==='boolean' ? s.trellis : true,
     season: VALID_SEASONS.includes(s.season) ? s.season : 'summer',
     goal: VALID_GOALS.includes(s.goal) ? s.goal : 'balanced',
-    zone: VALID_ZONES.includes(s.zone) ? s.zone : ''
+    zone: VALID_ZONES.includes(s.zone) ? s.zone : '',
+    plantingDate: normalizeISODate(s.plantingDate)
   };
 }
 function defaultSiteSettingsFromUI(){
@@ -3049,7 +4037,8 @@ function defaultSiteSettingsFromUI(){
     trellis: document.getElementById('trellisToggle') ? document.getElementById('trellisToggle').classList.contains('on') : true,
     season: document.getElementById('season') ? document.getElementById('season').value : 'summer',
     goal: document.getElementById('goal') ? document.getElementById('goal').value : 'balanced',
-    zone: document.getElementById('zone') ? document.getElementById('zone').value : ''
+    zone: document.getElementById('zone') ? document.getElementById('zone').value : '',
+    plantingDate: document.getElementById('plantingDate') ? document.getElementById('plantingDate').value : ''
   });
 }
 function normalizeCellArray(cells, cols, rows){
@@ -3190,8 +4179,8 @@ function mergeRuntimeCageWithExisting(existingCage, rows){
   }
   return cfg;
 }
-function rawCageToRuntime(raw){
-  const cfg = normalizeCageConfig(raw, bedH || 4);
+function rawCageToRuntimeForRows(raw, rows){
+  const cfg = normalizeCageConfig(raw, rows);
   return {
     enabled: !!cfg.enabled,
     rearTrellis: !!cfg.trellis.enabled,
@@ -3199,6 +4188,9 @@ function rawCageToRuntime(raw){
     height: String(clampInt(cfg.protection.lowerBandHeightIn, 18, 36, 24)),
     doorStyle: VALID_DOOR_STYLES.includes(cfg.doors.style) ? cfg.doors.style : 'double'
   };
+}
+function rawCageToRuntime(raw){
+  return rawCageToRuntimeForRows(raw, bedH || 4);
 }
 function deriveBedTraits(bedRecord){
   const rows = clampInt(bedRecord?.size?.rows, 2, 10, 4);
@@ -3256,7 +4248,10 @@ function createBed(name, size, cageConfig){
       site: defaultSiteSettingsFromUI()
     },
     scoreSummaryCache: { invalidatedAt: now },
-    notes: ''
+    notes: '',
+    scoreHistory: [],
+    successionPlan: [],
+    seasonBaseline: null
   };
 }
 function duplicateBed(bedId){
@@ -3309,7 +4304,10 @@ function normalizeBedRecord(rawBed, index){
     scoreSummaryCache: rawBed?.scoreSummaryCache && typeof rawBed.scoreSummaryCache==='object'
       ? rawBed.scoreSummaryCache
       : { invalidatedAt: now },
-    notes: typeof rawBed?.notes==='string' ? rawBed.notes : ''
+    notes: typeof rawBed?.notes==='string' ? rawBed.notes : '',
+    scoreHistory: normalizeScoreHistoryEntries(rawBed?.scoreHistory),
+    successionPlan: normalizeSuccessionPlanEntries(rawBed?.successionPlan),
+    seasonBaseline: normalizeSeasonBaseline(rawBed?.seasonBaseline)
   };
 }
 function createMinimalWorkspace(){
@@ -3326,7 +4324,8 @@ function createMinimalWorkspace(){
     workspaceSettings: { catFilter:'all', rightTab:'score', anticipation:{ recentCrops:[] } },
     beds: [starter],
     guideProgress: [],
-    harvests: []
+    harvests: [],
+    experiments: []
   };
 }
 function validateWorkspace(ws){
@@ -3343,14 +4342,15 @@ function validateWorkspace(ws){
     workspaceSettings: ws.workspaceSettings && typeof ws.workspaceSettings==='object' ? ws.workspaceSettings : {},
     beds: [],
     guideProgress: Array.isArray(ws.guideProgress) ? ws.guideProgress : [],
-    harvests: Array.isArray(ws.harvests) ? ws.harvests : []
+    harvests: Array.isArray(ws.harvests) ? ws.harvests : [],
+    experiments: []
   };
   if(!Array.isArray(ws.beds) || !ws.beds.length){
     return { ok:false, errors:['beds array missing or empty'] };
   }
   normalized.workspaceSettings = {
     catFilter: typeof normalized.workspaceSettings.catFilter==='string' ? normalized.workspaceSettings.catFilter : 'all',
-    rightTab: ['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(normalized.workspaceSettings.rightTab)
+    rightTab: VALID_RIGHT_TABS.includes(normalized.workspaceSettings.rightTab)
       ? normalized.workspaceSettings.rightTab
       : 'score',
     anticipation: normalized.workspaceSettings.anticipation && typeof normalized.workspaceSettings.anticipation==='object'
@@ -3361,6 +4361,10 @@ function validateWorkspace(ws){
   if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
     normalized.activeBedId = normalized.beds[0].id;
   }
+  const validBedIds = normalized.beds.map(b=>b.id);
+  normalized.experiments = (Array.isArray(ws.experiments) ? ws.experiments : [])
+    .map(exp=>normalizeExperimentRecord(exp, validBedIds))
+    .filter(Boolean);
   return { ok:true, workspace:normalized };
 }
 function migrateV0toV1(legacyState){
@@ -3378,7 +4382,8 @@ function migrateV0toV1(legacyState){
       },
       beds: legacyState.beds.map((b, i)=>normalizeBedRecord(b, i)),
       guideProgress: Array.isArray(legacyState.guideProgress) ? legacyState.guideProgress : [],
-      harvests: Array.isArray(legacyState.harvests) ? legacyState.harvests : []
+      harvests: Array.isArray(legacyState.harvests) ? legacyState.harvests : [],
+      experiments: Array.isArray(legacyState.experiments) ? legacyState.experiments : []
     };
     if(!migrated.beds.find(b=>b.id===migrated.activeBedId)) migrated.activeBedId = migrated.beds[0]?.id || '';
     return migrated;
@@ -3411,7 +4416,8 @@ function migrateV0toV1(legacyState){
     activeBedId: bedRecord.id,
     workspaceSettings: { catFilter: typeof legacyUi.catFilter==='string' ? legacyUi.catFilter : 'all', rightTab:'score', anticipation:{ recentCrops:[] } },
     beds: [bedRecord],
-    guideProgress: []
+    guideProgress: [],
+    experiments: []
   };
 }
 function parseShareHashWorkspace(){
@@ -3469,6 +4475,7 @@ function loadWorkspace(){
 let _saveTimer = null;
 function saveWorkspace(workspace){
   if(!workspace || typeof workspace!=='object') return;
+  if(isSimulationActive()) return;
   try{
     workspace.updatedAt = new Date().toISOString();
     localStorage.setItem(LS_KEY, JSON.stringify(workspace));
@@ -3481,6 +4488,7 @@ function saveWorkspace(workspace){
 }
 function saveWorkspaceDebounced(workspace){
   clearTimeout(_saveTimer);
+  if(isSimulationActive()) return;
   _saveTimer = setTimeout(()=> saveWorkspace(workspace), 50);
 }
 function showStorageWarning(err){
@@ -3498,6 +4506,7 @@ function renderWorkspaceSwitcher(){
   if(!sel) return;
   if(!_workspace || !_workspace.beds.length){
     sel.innerHTML = '';
+    sel.disabled = isSimulationActive();
     if(dup) dup.disabled = true;
     return;
   }
@@ -3508,9 +4517,11 @@ function renderWorkspaceSwitcher(){
     return `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)} · ${b.size.cols}×${b.size.rows}${score || ''}</option>`;
   }).join('');
   sel.value = _workspace.activeBedId;
-  if(dup) dup.disabled = !_workspace.beds.length;
+  sel.disabled = isSimulationActive();
+  if(dup) dup.disabled = isSimulationActive() || !_workspace.beds.length;
 }
 function setActiveBed(bedId){
+  if(blockWhileSimulating('Bed switching')) return;
   if(!_workspace || !bedId || _workspace.activeBedId===bedId) return;
   const target = _workspace.beds.find(b=>b.id===bedId);
   if(!target) return;
@@ -3558,15 +4569,122 @@ function saveState(){
     trellis: document.getElementById('trellisToggle').classList.contains('on'),
     season: document.getElementById('season').value,
     goal: document.getElementById('goal').value,
-    zone: document.getElementById('zone').value
+    zone: document.getElementById('zone').value,
+    plantingDate: document.getElementById('plantingDate').value
   });
   b.cage = mergeRuntimeCageWithExisting(b.cage, b.size.rows);
   _workspace.workspaceSettings = _workspace.workspaceSettings || {};
   _workspace.workspaceSettings.catFilter = ui.catFilter;
   _workspace.workspaceSettings.rightTab = ui.rTab;
   invalidateScoreCache(b.id);
+  syncActiveBedSeasonArtifacts();
   saveWorkspaceDebounced(_workspace);
   renderWorkspaceSwitcher();
+}
+function getBedById(bedId){
+  return _workspace && Array.isArray(_workspace.beds)
+    ? (_workspace.beds.find(b=>b.id===bedId) || null)
+    : null;
+}
+function syncActiveBedSeasonArtifacts(forceBaseline=false){
+  if(!_workspace || isSimulationActive()) return;
+  const b = activeBed();
+  if(!b) return;
+  const inputs = inp();
+  const plantedCount = bed.filter(cell=>!!cell.crop).length;
+  const score = scoreBed(inputs);
+  const plantingDate = normalizeISODate(inputs.plantingDate) || getEffectivePlantingDate(inputs);
+  const history = normalizeScoreHistoryEntries(b.scoreHistory);
+  const hash = currentBedHash();
+  const last = history[history.length - 1];
+  if(!last || last.hash !== hash || Math.abs(last.score - score) >= 1){
+    history.push({
+      at: new Date().toISOString(),
+      date: toISODate(new Date()),
+      score,
+      plantedCount,
+      fillRatio: bed.length ? plantedCount / bed.length : 0,
+      hash
+    });
+  }
+  b.scoreHistory = history.slice(-36);
+  if(forceBaseline || !b.seasonBaseline || b.seasonBaseline.season !== inputs.season){
+    b.seasonBaseline = {
+      season: inputs.season,
+      plantingDate,
+      capturedAt: new Date().toISOString(),
+      cells: bed.map(cell=>cell.crop),
+      score,
+      plantedCount,
+      notes: ''
+    };
+  } else if(!b.seasonBaseline.plantingDate && plantingDate){
+    b.seasonBaseline.plantingDate = plantingDate;
+  }
+}
+function resetActiveBedSeasonBaseline(){
+  const b = activeBed();
+  if(!b) return;
+  syncActiveBedSeasonArtifacts(true);
+  saveWorkspace(_workspace);
+  render();
+}
+function getExperiments(){
+  if(!_workspace) return [];
+  _workspace.experiments = Array.isArray(_workspace.experiments) ? _workspace.experiments : [];
+  return _workspace.experiments;
+}
+function getExperimentForBedId(bedId){
+  return getExperiments().find(exp=>exp.aBedId===bedId || exp.bBedId===bedId) || null;
+}
+function saveExperimentRecord(record){
+  if(!_workspace || !record) return;
+  const experiments = getExperiments();
+  const index = experiments.findIndex(item=>item.id===record.id);
+  if(index >= 0) experiments[index] = record;
+  else experiments.push(record);
+  saveWorkspace(_workspace);
+}
+function upsertExperiment(activeId, partnerId, variable){
+  if(!_workspace || !activeId || !partnerId || activeId===partnerId) return null;
+  const experiments = getExperiments();
+  const existing = experiments.find(exp=>
+    (exp.aBedId===activeId && exp.bBedId===partnerId) ||
+    (exp.aBedId===partnerId && exp.bBedId===activeId)
+  );
+  if(existing){
+    existing.variable = EXPERIMENT_VARIABLES.includes(variable) ? variable : existing.variable;
+    saveWorkspace(_workspace);
+    return existing;
+  }
+  const record = {
+    id: uniqueId('exp'),
+    aBedId: activeId,
+    bBedId: partnerId,
+    variable: EXPERIMENT_VARIABLES.includes(variable) ? variable : 'spacing',
+    createdAt: new Date().toISOString(),
+    notes: '',
+    observations: []
+  };
+  experiments.push(record);
+  saveWorkspace(_workspace);
+  return record;
+}
+function addExperimentObservation(expId, bedId, note, date){
+  const experiment = getExperiments().find(exp=>exp.id===expId);
+  if(!experiment) return null;
+  const analysis = analyzeBedRecord(getBedById(bedId));
+  const observation = {
+    id: uniqueId('obs'),
+    bedId,
+    date: normalizeISODate(date) || toISODate(new Date()),
+    score: analysis ? analysis.scoreTotal : 0,
+    filled: analysis ? analysis.plantedCount : 0,
+    note: typeof note==='string' ? note.trim().slice(0, 500) : ''
+  };
+  experiment.observations.push(observation);
+  saveWorkspace(_workspace);
+  return observation;
 }
 function showRecoveryBanner(){
   if(_recoveryBanner || !_recoveryPayload) return;
@@ -3684,7 +4802,7 @@ function applyWorkspaceToUI(ws){
   syncToolButtons(ui.tool);
   if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
     if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
-    if(['dashboard','score','inspect','notes','companions','calendar','harvest'].includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
+    if(VALID_RIGHT_TABS.includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
   }
   document.getElementById('sunHours').value = site.sunHours;
   document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
@@ -3697,6 +4815,7 @@ function applyWorkspaceToUI(ws){
   document.getElementById('season').value = site.season;
   document.getElementById('goal').value = site.goal;
   document.getElementById('zone').value = site.zone;
+  document.getElementById('plantingDate').value = site.plantingDate || '';
   cage = rawCageToRuntime(b.cage);
   syncCageUI();
   normalizeSelectionState();
@@ -3761,7 +4880,9 @@ function saveRestoreSnapshot(label='Restore point'){
     savedAt:new Date().toISOString(),
     workspace:cloneData(_workspace)
   };
-  try{ localStorage.setItem(LS_KEY_RESTORE, JSON.stringify(snapshot)); }catch(e){}
+  if(!isSimulationActive()){
+    try{ localStorage.setItem(LS_KEY_RESTORE, JSON.stringify(snapshot)); }catch(e){}
+  }
   return snapshot;
 }
 function restoreSnapshotFromData(snapshot){
@@ -3776,8 +4897,162 @@ function restoreSnapshotFromData(snapshot){
   updateUndoButtons();
   saveWorkspace(_workspace);
   renderPalette();
+  syncSimulationUI();
   render();
   return true;
+}
+function isSimulationActive(){
+  return !!(_simulation && _simulation.active);
+}
+function currentBedHash(){
+  return JSON.stringify(bed.map(c=>c.crop));
+}
+function capturePlannerSessionSnapshot(label='Restore point'){
+  if(!_workspace) _workspace = createMinimalWorkspace();
+  return {
+    label,
+    savedAt:new Date().toISOString(),
+    workspace:cloneData(_workspace),
+    undoStack:cloneData(undoStack),
+    redoStack:cloneData(redoStack),
+    lastShareSnapshot:_lastShareSnapshot
+  };
+}
+function restorePlannerSessionSnapshot(snapshot, opts={}){
+  if(!snapshot || !snapshot.workspace) return false;
+  const check = validateWorkspace(snapshot.workspace);
+  if(!check.ok) return false;
+  _workspace = check.workspace;
+  applyWorkspaceToUI(_workspace);
+  renderWorkspaceSwitcher();
+  undoStack = Array.isArray(snapshot.undoStack) ? cloneData(snapshot.undoStack) : [];
+  redoStack = Array.isArray(snapshot.redoStack) ? cloneData(snapshot.redoStack) : [];
+  updateUndoButtons();
+  _lastShareSnapshot = snapshot.lastShareSnapshot || null;
+  if(opts.persist!==false) saveWorkspace(_workspace);
+  renderPalette();
+  syncSimulationUI();
+  render();
+  return true;
+}
+function getSimulationSummary(currentScore){
+  if(!isSimulationActive()) return null;
+  const currentFilled = bed.filter(c=>!!c.crop).length;
+  const delta = Math.round((Number(currentScore)||0) - (_simulation.baselineScore || 0));
+  return {
+    baselineScore:_simulation.baselineScore || 0,
+    currentScore:Number(currentScore) || 0,
+    delta,
+    baselineFilled:_simulation.baselineFilled || 0,
+    currentFilled,
+    changed:currentBedHash() !== _simulation.baselineHash,
+    baselineBedName:_simulation.baselineBedName || 'Active bed'
+  };
+}
+function syncSimulationUI(){
+  const active = isSimulationActive();
+  const shell = document.querySelector('.planner-shell');
+  if(shell) shell.classList.toggle('simulation-live', active);
+  const changed = active ? currentBedHash() !== _simulation.baselineHash : false;
+  const simulateBtn = document.getElementById('simulateBtn');
+  const applyBtn = document.getElementById('simulateApplyBtn');
+  const discardBtn = document.getElementById('simulateDiscardBtn');
+  if(simulateBtn){
+    simulateBtn.hidden = active;
+    simulateBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+  if(applyBtn){
+    applyBtn.hidden = !active;
+    applyBtn.disabled = !changed;
+  }
+  if(discardBtn) discardBtn.hidden = !active;
+  ['shareBtn','openManagePanel','bedSwitcher','addBedBtn','duplicateBedBtn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = active;
+  });
+  [
+    'bedW','bedH','sunHours','wallSide','orientation','sunDirection','trellisToggle',
+    'season','goal','zone','cageEnabled','cageRearTrellis','cageWireSides','cageHeight','doorStyle',
+    'cageBed4x4','cageBed4x8'
+  ].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = active;
+  });
+  document.querySelectorAll('#bedPresets [data-pw]').forEach(btn=>{
+    btn.disabled = active;
+  });
+  document.querySelectorAll('[data-mobile-action="open-manage"]').forEach(btn=>{
+    btn.disabled = active;
+  });
+  const autoSaveBadge = document.getElementById('menuAutoSaveBadge');
+  if(autoSaveBadge) autoSaveBadge.textContent = active ? 'paused' : 'auto';
+}
+function blockWhileSimulating(actionLabel){
+  if(!isSimulationActive()) return false;
+  setPlannerNotice('active','Simulation is live',`${actionLabel} is paused while the scratch layout is unsaved. Apply the simulation to keep it or discard it to return to the saved bed.`,[
+    { id:'stateApplySimulation', label:'Apply simulation', cls:'primary', action:()=>applySimulation() },
+    { id:'stateDiscardSimulation', label:'Discard simulation', cls:'warn', action:()=>discardSimulation() }
+  ]);
+  showActionBanner(`${actionLabel} is disabled during simulation`, 'Discard', ()=>discardSimulation(), 7000);
+  return true;
+}
+function startSimulation(){
+  if(isSimulationActive()) return;
+  clearTimeout(_saveTimer);
+  if(!_workspace) _workspace = createMinimalWorkspace();
+  saveState();
+  if(_workspace) saveWorkspace(_workspace);
+  const baselineScore = bed.some(c=>!!c.crop) ? scoreBed(inp()) : 0;
+  _simulation = {
+    active:true,
+    startedAt:new Date().toISOString(),
+    baseline:capturePlannerSessionSnapshot('Layout simulation'),
+    baselineScore,
+    baselineFilled:bed.filter(c=>!!c.crop).length,
+    baselineHash:currentBedHash(),
+    baselineBedName:(activeBed() && activeBed().name) || 'Active bed'
+  };
+  undoStack = [];
+  redoStack = [];
+  updateUndoButtons();
+  closeMenu({ restoreFocus:false });
+  syncSimulationUI();
+  setPlannerNotice('active','Simulation is live','Try edits, auto-fill, clear, or tune the active bed without writing to local storage. Apply commits the scratch layout. Discard restores the saved bed.',[
+    { id:'stateApplySimulation', label:'Apply simulation', cls:'primary', action:()=>applySimulation() },
+    { id:'stateDiscardSimulation', label:'Discard', cls:'warn', action:()=>discardSimulation() }
+  ]);
+  showActionBanner('Simulation is live. Changes stay in memory until you apply them.', 'Discard', ()=>discardSimulation(), 9000);
+  render();
+}
+function applySimulation(){
+  if(!isSimulationActive()) return;
+  const summary = getSimulationSummary(bed.some(c=>!!c.crop) ? scoreBed(inp()) : 0);
+  _simulation = null;
+  clearTimeout(_saveTimer);
+  syncSimulationUI();
+  saveState();
+  if(_workspace) saveWorkspace(_workspace);
+  render();
+  setPlannerNotice('complete','Simulation applied',`The scratch layout is now saved to ${activeBed()?.name || 'the active bed'}. Score delta ${formatSignedWhole(summary ? summary.delta : 0)}.`,[
+    { id:'stateScoreStory', label:'Why this score', cls:'primary' },
+    { id:'stateInspect', label:'Inspect weakest' }
+  ]);
+  showActionBanner(`Simulation applied ${formatSignedWhole(summary ? summary.delta : 0)}`);
+}
+function discardSimulation(){
+  if(!isSimulationActive()) return;
+  const baseline = _simulation.baseline;
+  _simulation = null;
+  clearTimeout(_saveTimer);
+  const restored = restorePlannerSessionSnapshot(baseline, { persist:true });
+  syncSimulationUI();
+  if(!restored){
+    setPlannerNotice('error','Simulation restore failed','Garden OS could not restore the saved baseline. Reload the page or import your latest export.');
+    showActionBanner('Simulation restore failed');
+    return;
+  }
+  setPlannerNotice('complete','Simulation discarded','The planner is back on the saved bed. Scratch changes were never written to local storage.');
+  showActionBanner('Simulation discarded');
 }
 function setPlannerNotice(kind, title, copy, actions=[]){
   clearTimeout(_plannerNoticeTimer);
@@ -3801,9 +5076,22 @@ function renderPlannerState(){
   const issueCounts = issueCountsBySeverity(issues);
   const selected = ui.selCell ? bed.find(c=>c.id===ui.selCell) : null;
   const modeLabel = ui.tool === 'paint' ? 'Paint mode' : ui.tool === 'erase' ? 'Erase mode' : 'Inspect mode';
+  const simulation = getSimulationSummary(score);
   let state = null;
   if(_plannerNotice){
     state = _plannerNotice;
+  }else if(simulation){
+    state = {
+      kind:'active',
+      title:`Simulation is live for ${simulation.baselineBedName}`,
+      copy:simulation.changed
+        ? `Compare the saved bed against the scratch layout before you commit. Nothing in this trial is saved until you click Apply.`
+        : 'The scratch copy still matches the saved bed. Make a change, auto fill, or clear the bed to test a different layout safely.',
+      actions:[
+        { id:'stateApplySimulation', label:'Apply simulation', cls:'primary' },
+        { id:'stateDiscardSimulation', label:'Discard', cls:'warn' }
+      ]
+    };
   }else if(!plantedCount){
     state = {
       kind:'empty',
@@ -3847,12 +5135,24 @@ function renderPlannerState(){
       : (issueCounts.medium || issues.length)
         ? 'state-warn'
         : 'state-complete';
-  hud.innerHTML = `
-    <span class="planner-state-chip state-${state.kind}">${escapeHtml(state.kind === 'empty' ? 'Start' : modeLabel)}</span>
-    <span class="planner-state-chip metric">${escapeHtml(plantedCount ? `${Math.round(score)} score` : 'score offline')}</span>
-    <span class="planner-state-chip metric">${escapeHtml(`${plantedCount}/${bedW * bedH} filled`)}</span>
-    <span class="planner-state-chip ${issueState}">${escapeHtml(issueText)}</span>
-  `;
+  if(simulation){
+    const deltaState = simulation.delta > 0 ? 'state-complete' : simulation.delta < 0 ? 'state-error' : 'state-sim';
+    hud.innerHTML = `
+      <span class="planner-state-chip state-sim">Simulation live</span>
+      <span class="planner-state-chip metric">${escapeHtml(`Saved ${Math.round(simulation.baselineScore)}`)}</span>
+      <span class="planner-state-chip metric">${escapeHtml(`Trial ${Math.round(simulation.currentScore)}`)}</span>
+      <span class="planner-state-chip ${deltaState}">${escapeHtml(`${formatSignedWhole(simulation.delta)} delta`)}</span>
+      <span class="planner-state-chip metric">${escapeHtml(`${simulation.currentFilled}/${bedW * bedH} filled`)}</span>
+      <span class="planner-state-chip ${issueState}">${escapeHtml(issueText)}</span>
+    `;
+  }else{
+    hud.innerHTML = `
+      <span class="planner-state-chip state-${state.kind}">${escapeHtml(state.kind === 'empty' ? 'Start' : modeLabel)}</span>
+      <span class="planner-state-chip metric">${escapeHtml(plantedCount ? `${Math.round(score)} score` : 'score offline')}</span>
+      <span class="planner-state-chip metric">${escapeHtml(`${plantedCount}/${bedW * bedH} filled`)}</span>
+      <span class="planner-state-chip ${issueState}">${escapeHtml(issueText)}</span>
+    `;
+  }
   mount.innerHTML = `
     <div class="planner-state-kicker">${escapeHtml(state.kind)}</div>
     <div class="planner-state-title">${escapeHtml(state.title)}</div>
@@ -3870,6 +5170,8 @@ function renderPlannerState(){
         return;
       }
       if(id==='stateAutofill') loadRec();
+      if(id==='stateApplySimulation') applySimulation();
+      if(id==='stateDiscardSimulation') discardSimulation();
       if(id==='statePalette'){ switchLTab('palette'); const search=document.getElementById('psearch'); if(search) search.focus(); }
       if(id==='stateInspect') focusWeakestCell();
       if(id==='stateManage') toggleMenu();
@@ -3905,6 +5207,7 @@ function closeShortcutOverlay(){
   _shortcutTrigger = null;
 }
 function cycleBeds(step){
+  if(blockWhileSimulating('Bed switching')) return;
   if(!_workspace || !_workspace.beds.length) return;
   const idx = _workspace.beds.findIndex(b=>b.id===_workspace.activeBedId);
   const next = _workspace.beds[(idx + step + _workspace.beds.length) % _workspace.beds.length];
@@ -3955,6 +5258,7 @@ function inp(){
     season:document.getElementById('season').value,
     goal:document.getElementById('goal').value,
     zone:document.getElementById('zone').value,
+    plantingDate:document.getElementById('plantingDate').value,
     cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
     bedW, bedH
   };
@@ -4188,14 +5492,23 @@ function cropValidity(ck, cell, inputs){
   return {valid:true,severity:null,code:null,reason:''};
 }
 
+function getCellFromCollection(cells, rows, cols, r, c){
+  if(r < 0 || c < 0 || r >= rows || c >= cols) return null;
+  return cells.find(cell=>cell.row === r && cell.col === c) || null;
+}
+function neighborsFromCollection(cells, rows, cols, cell){
+  return [[-1,0],[1,0],[0,-1],[0,1]]
+    .map(([dr, dc])=>getCellFromCollection(cells, rows, cols, cell.row + dr, cell.col + dc))
+    .filter(Boolean);
+}
 function neighbors(r,c){ return[[-1,0],[1,0],[0,-1],[0,1]].map(([dr,dc])=>getCell(r+dr,c+dc)).filter(Boolean); }
 
-function computeAdjacencyBreakdown(cell){
+function computeAdjacencyBreakdownForCells(cells, cell, rows, cols){
   if(!cell||!cell.crop||!CROPS[cell.crop]) return {raw:0,clamped:0,interactions:[]};
   const c=CROPS[cell.crop];
   const interactions=[];
   let raw=0;
-  neighbors(cell.row,cell.col).forEach(n=>{
+  neighborsFromCollection(cells, rows, cols, cell).forEach(n=>{
     if(!n.crop||!CROPS[n.crop]) return;
     const nc=CROPS[n.crop];
     let delta=0;
@@ -4226,24 +5539,33 @@ function computeAdjacencyBreakdown(cell){
   });
   return {raw,clamped:clamp(raw,-2,2),interactions};
 }
-
+function computeAdjacencyBreakdown(cell){
+  return computeAdjacencyBreakdownForCells(bed, cell, bedH, bedW);
+}
+function adjScoreForCells(cells, cell, rows, cols){
+  return computeAdjacencyBreakdownForCells(cells, cell, rows, cols).clamped;
+}
 function adjScore(cell){
   return computeAdjacencyBreakdown(cell).clamped;
 }
-
-function scoreCell(cell, inputs){
+function scoreCellInCollection(cells, cell, inputs, rows, cols){
   if(!cell.crop) return 0;
-  return Math.min(10,Math.max(0,scoreCropInCell(cell.crop,cell,inputs)+adjScore(cell)));
+  return Math.min(10,Math.max(0,scoreCropInCell(cell.crop,cell,inputs)+adjScoreForCells(cells, cell, rows, cols)));
 }
-
+function scoreCell(cell, inputs){
+  return scoreCellInCollection(bed, cell, inputs, bedH, bedW);
+}
+function scoreCropPlacementForCells(cells, ck, inputs, rows, cols){
+  const cropCells=cells.filter(c=>c.crop===ck);
+  if(!cropCells.length) return 0;
+  return cropCells.reduce((sum, cell)=>sum + scoreCellInCollection(cells, cell, inputs, rows, cols), 0) / cropCells.length;
+}
 function scoreCropPlacement(ck, inputs){
-  const cells=bed.filter(c=>c.crop===ck);
-  if(!cells.length) return 0;
-  return cells.reduce((s,c)=>s+scoreCell(c,inputs),0)/cells.length;
+  return scoreCropPlacementForCells(bed, ck, inputs, bedH, bedW);
 }
 
-function goalBonus(inputs){
-  const u=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
+function goalBonusForKeys(inputs, cropKeys){
+  const u=[...new Set(cropKeys.filter(Boolean))];
   let b=0;
   if(inputs.goal==='salad'&&u.some(ck=>['lettuce','arugula','spinach','mizuna','tatsoi','bok_choy'].includes(ck))) b+=5;
   if(inputs.goal==='pickling'&&u.some(ck=>ck.includes('cucumber'))) b+=5;
@@ -4253,13 +5575,17 @@ function goalBonus(inputs){
   if(inputs.goal==='sanctuary'&&u.some(ck=>ck==='cherry_tom')&&u.some(ck=>ck==='basil')&&u.some(ck=>ck==='nasturtium')) b+=5;
   return b;
 }
+function goalBonus(inputs){
+  return goalBonusForKeys(inputs, bed.map(c=>c.crop));
+}
 
 function plannerScoreLabel(score){
   return score>=80?'Excellent':score>=65?'Good':score>=50?'Workable':score>=35?'Risky':'Poor fit';
 }
 
-function getPlannerBedScoreAudit(inputs){
-  const occ=bed.filter(c=>c.crop);
+function getPlannerBedScoreAuditForCells(cells, inputs, dims){
+  const totalCells = Math.max(1, (dims && dims.cols ? dims.cols : bedW) * (dims && dims.rows ? dims.rows : bedH));
+  const occ=cells.filter(c=>c.crop);
   const uniq=[...new Set(occ.map(c=>c.crop).filter(Boolean))];
   const occupiedCount=occ.length;
   const modelLayers=[
@@ -4269,13 +5595,15 @@ function getPlannerBedScoreAudit(inputs){
   ];
   if(!occupiedCount){
     return {
-      occupiedCount:0,totalCells:bedW*bedH,cellAverage10:0,cellAverage100:0,
+      occupiedCount:0,totalCells,cellAverage10:0,cellAverage100:0,
       diversityBonus:0,recipeBonus:0,goalBoost:0,lateSummerPenalty:0,fillPenalty:0,tallPenalty:0,trellisPenalty:0,
       finalScore:0,fillRatio:0,modelLayers
     };
   }
 
-  const cellAverage10=occ.reduce((sum,cell)=>sum+scoreCell(cell,inputs),0)/occupiedCount;
+  const rows = (dims && dims.rows) || bedH;
+  const cols = (dims && dims.cols) || bedW;
+  const cellAverage10=occ.reduce((sum,cell)=>sum+scoreCellInCollection(cells, cell, inputs, rows, cols),0)/occupiedCount;
   const cellAverage100=cellAverage10*10;
   let diversityBonus=0;
   if(uniq.length>=4) diversityBonus=7;
@@ -4286,8 +5614,8 @@ function getPlannerBedScoreAudit(inputs){
   const lateSummerPenalty=inputs.season==='latesummer'
     ? uniq.filter(ck=>CROPS[ck]&&CROPS[ck].coolSeason).length*4
     : 0;
-  const goalBoost=goalBonus(inputs);
-  const fillRatio=occupiedCount/(bedW*bedH);
+  const goalBoost=goalBonusForKeys(inputs, cells.map(c=>c.crop));
+  const fillRatio=occupiedCount/totalCells;
   const fillPenalty=fillRatio<1?Math.round((1-Math.sqrt(fillRatio))*15):0;
   // Recipe bonus — +2 per completed recipe, capped at 8
   const bedCrops={};
@@ -4302,14 +5630,57 @@ function getPlannerBedScoreAudit(inputs){
   const finalScore=Math.min(100,Math.max(0,Math.round(rolled)));
 
   return {
-    occupiedCount,totalCells:bedW*bedH,cellAverage10,cellAverage100,
+    occupiedCount,totalCells,cellAverage10,cellAverage100,
     diversityBonus,recipeBonus,goalBoost,lateSummerPenalty,fillPenalty,tallPenalty,trellisPenalty,
     finalScore,fillRatio,modelLayers
   };
 }
+function getPlannerBedScoreAudit(inputs){
+  return getPlannerBedScoreAuditForCells(bed, inputs, { rows:bedH, cols:bedW });
+}
 
 function scoreBed(inputs){
   return getPlannerBedScoreAudit(inputs).finalScore;
+}
+function buildWorkingBedFromRecord(bedRecord){
+  if(!bedRecord) return null;
+  const cols = clampInt(bedRecord?.size?.cols, 2, 10, 8);
+  const rows = clampInt(bedRecord?.size?.rows, 2, 10, 4);
+  const cells = createEmptyBed(cols, rows);
+  normalizeCellArray(bedRecord?.plannerState?.cells, cols, rows).forEach((crop, index)=>{
+    cells[index].crop = crop;
+  });
+  const site = normalizeSiteSettings(bedRecord?.plannerState?.site);
+  const inputs = {
+    ...site,
+    cage: rawCageToRuntimeForRows(bedRecord.cage, rows),
+    bedW: cols,
+    bedH: rows
+  };
+  const traits = deriveBedTraits(bedRecord);
+  const zones = buildZoneMap(inputs, traits);
+  cells.forEach((cell, index)=>{
+    if(zones[index]) Object.assign(cell, zones[index]);
+  });
+  return { cells, inputs, rows, cols };
+}
+function analyzeBedRecord(bedRecord){
+  const working = buildWorkingBedFromRecord(bedRecord);
+  if(!working) return null;
+  const { cells, inputs, rows, cols } = working;
+  const audit = getPlannerBedScoreAuditForCells(cells, inputs, { rows, cols });
+  const scored = cells.filter(cell=>cell.crop).map(cell=>({
+    cell,
+    score: scoreCellInCollection(cells, cell, inputs, rows, cols)
+  })).sort((a, b)=>b.score - a.score);
+  return {
+    ...working,
+    audit,
+    scoreTotal: audit.finalScore,
+    plantedCount: audit.occupiedCount,
+    strongest: scored.slice(0, 3),
+    weakest: [...scored].reverse().slice(0, 3)
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4937,6 +6308,7 @@ function workspaceExportFileName(){
 }
 
 function exportWorkspaceFile(){
+  if(blockWhileSimulating('Exporting the workspace')) return;
   saveState();
   if(!_workspace){
     setPlannerNotice('error','Nothing to export','Create or import a workspace before exporting.');
@@ -4966,6 +6338,7 @@ function exportWorkspaceFile(){
 }
 
 function openWorkspaceImportPicker(){
+  if(blockWhileSimulating('Importing a workspace')) return;
   const picker=document.getElementById('importWorkspaceFile');
   if(!picker) return;
   picker.value='';
@@ -4973,6 +6346,7 @@ function openWorkspaceImportPicker(){
 }
 
 async function handleWorkspaceImportFile(event){
+  if(blockWhileSimulating('Importing a workspace')) return;
   const picker=event.target;
   const file=picker && picker.files && picker.files[0] ? picker.files[0] : null;
   if(!file) return;
@@ -5044,6 +6418,7 @@ async function handleWorkspaceImportFile(event){
 
 let _lastShareSnapshot = null;
 function shareLayout(){
+  if(blockWhileSimulating('Sharing the layout')) return;
   // Share uses workspace envelope, stripped of transient metadata.
   if(!_workspace) return;
   saveState();
@@ -5279,15 +6654,16 @@ function renderBedFrame(opts={}){
 function renderPlacementStatus(){
   const el = document.getElementById('placementStatus');
   if(!el) return;
+  const simPrefix = isSimulationActive() ? '🧪 Simulation — ' : '';
   if(ui.tool==='inspect'){
-    el.textContent = '\uD83D\uDD0D Inspect mode \u2014 click any cell to view details. Press P to paint.';
+    el.textContent = simPrefix + '\uD83D\uDD0D Inspect mode \u2014 click any cell to view details. Press P to paint.';
     el.style.color='';
   }else if(ui.tool==='erase'){
-    el.textContent = '\u2716 Erase mode \u2014 click or drag to remove crops. Press Esc to stop.';
+    el.textContent = simPrefix + '\u2716 Erase mode \u2014 click or drag to remove crops. Press Esc to stop.';
     el.style.color='var(--sem-hard,#c24d4d)';
   }else{
     const cn = ui.selectedCrop && CROPS[ui.selectedCrop] ? CROPS[ui.selectedCrop].name : 'no crop selected';
-    el.textContent = '\uD83D\uDD8C Editing: ' + cn + ' \u2014 click or drag to place. Press Esc to stop.';
+    el.textContent = simPrefix + '\uD83D\uDD8C Editing: ' + cn + ' \u2014 click or drag to place. Press Esc to stop.';
     el.style.color='var(--char-gurl,var(--leaf))';
   }
 }
@@ -5295,6 +6671,7 @@ let _dialogTrigger = null;
 let _menuTrigger = null;
 let _confirmTrigger = null;
 function openAddBedDialog(){
+  if(blockWhileSimulating('Creating beds')) return;
   const dlg = document.getElementById('addBedDialog');
   if(!dlg) return;
   _dialogTrigger = document.activeElement;
@@ -5314,6 +6691,7 @@ function closeAddBedDialog(){
   _dialogTrigger = null;
 }
 function commitAddBed(name, cols, rows){
+  if(blockWhileSimulating('Creating beds')) return;
   if(!_workspace) _workspace = createMinimalWorkspace();
   saveState();
   const created = createBed(name, { cols, rows }, runtimeCageToRaw(rows));
@@ -5328,6 +6706,7 @@ function commitAddBed(name, cols, rows){
   render();
 }
 function handleDuplicateActiveBed(){
+  if(blockWhileSimulating('Duplicating beds')) return;
   if(!_workspace) return;
   saveState();
   const copy = duplicateBed(_workspace.activeBedId);
@@ -5416,6 +6795,7 @@ function resetBedToDefaults(){
   });
 }
 function softDeleteActiveBed(){
+  if(blockWhileSimulating('Deleting beds')) return;
   if(!_workspace) return;
   if(_workspace.beds.length<2){
     setPlannerNotice('error','Keep one bed available','Delete is disabled while the workspace only has one bed.');
@@ -5467,12 +6847,81 @@ function selectCrop(ck){
   render();
 }
 
+function plannerSeasonBanner(season){
+  return {
+    spring:'Spring field notes',
+    summer:'High summer layout',
+    latesummer:'Late-summer salvage',
+    fall:'Fall reset window'
+  }[season] || 'Seasonal layout';
+}
+
+function syncPlannerTheme(inputs){
+  const season = VALID_SEASONS.includes(inputs && inputs.season) ? inputs.season : 'summer';
+  document.body.dataset.season = season;
+  const shell = document.querySelector('.planner-shell');
+  if(shell) shell.dataset.season = season;
+  const workspaceBar = document.querySelector('.workspace-bar');
+  if(workspaceBar){
+    const goalLabel = inputs && inputs.goal ? inputs.goal.replace(/_/g, ' ') : 'balanced';
+    workspaceBar.dataset.seasonLabel = `${plannerSeasonBanner(season)} · ${goalLabel}`;
+  }
+}
+
+function getRowZoneBand(cell){
+  if(!cell || cell.col !== 0) return null;
+  if(cell.isTrellisRow) return { label:'trellis', cls:'trellis' };
+  if(cell.isProtected) return { label:'protected', cls:'protected' };
+  return null;
+}
+
+function plannerVoiceDescriptor(key){
+  return {
+    gurl:'clipboard brief',
+    onion:'kitchen note',
+    vegeman:'hot take',
+    critters:'margin warning'
+  }[key] || 'field note';
+}
+
+function renderCastBoard(voices, options={}){
+  if(!Array.isArray(voices) || !voices.length) return '';
+  const title = options.title || 'Voice dispatch';
+  const note = options.note || 'Printed yard notes from the current bed.';
+  const classes = [
+    'cast-board',
+    options.compact ? 'compact' : '',
+    options.embedded ? 'embedded' : ''
+  ].filter(Boolean).join(' ');
+  return `<section class="${classes}">
+    <div class="cast-board-head">
+      <div>
+        <div class="cast-board-kicker">Cast dispatch</div>
+        <div class="cast-board-title">${escapeHtml(title)}</div>
+      </div>
+      <div class="cast-board-note">${escapeHtml(note)}</div>
+    </div>
+    <div class="cast-grid">${voices.map(voice=>`<article class="cast-card ${escapeHtml(voice.key)}" style="--cast-accent:${escapeHtml(String(voice.color || 'var(--leaf)'))}">
+      <div class="cast-card-top">
+        <div class="cast-portrait" aria-hidden="true">${escapeHtml(voice.emoji || '•')}</div>
+        <div>
+          <div class="cast-name">${escapeHtml(voice.name)}</div>
+          <div class="cast-note">${escapeHtml(plannerVoiceDescriptor(voice.key))}</div>
+        </div>
+      </div>
+      <div class="cast-line">${escapeHtml(voice.line)}</div>
+    </article>`).join('')}</div>
+  </section>`;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
 function render(){
+  syncSimulationUI();
   const ctx = buildRenderContext();
   const inputs = ctx.inputs;
+  syncPlannerTheme(inputs);
   renderBed(inputs,ctx.issues);
   renderRight(inputs,ctx.issues,ctx.scoreTotal);
   renderIssueSummaryStrip(ctx.issues);
@@ -5501,6 +6950,7 @@ function render(){
   if(fb) fb.style.width=Math.round(fill*100)+'%';
   renderPlacementStatus();
   syncShareStaleness();
+  syncSimulationUI();
 }
 
 function renderBed(inputs,issues,opts={}){
@@ -5531,6 +6981,7 @@ function renderBed(inputs,issues,opts={}){
     const weak=!skipScores && cell.crop&&cs<4;
     const sel=cell.id===ui.selCell;
     const kbFocus = interaction.keyboardMode && cell.id===getFocusedCellId();
+    const rowBand = getRowZoneBand(cell);
     const c=cell.crop?CROPS[cell.crop]:null;
     const bg=c?c.color+'28':'#f2ebe0';
     const bdc=c?c.color+'88':'var(--border)';
@@ -5543,6 +6994,7 @@ function renderBed(inputs,issues,opts={}){
     if(cell.isTrellisRow) zoneClass=' trellis-zone';
     else if(cell.isProtected) zoneClass=' protected-zone';
     if(kbFocus) zoneClass += ' kb-focus';
+    if(rowBand) zoneClass += ' has-row-band';
     zoneClass += ui.tool==='erase' ? ' preview-erase' : ui.tool==='inspect' ? ' preview-inspect' : ' preview-paint';
     const v = cell.crop ? cropValidity(cell.crop, cell, inputs) : null;
     if(v && v.severity==='hard') zoneClass+=' hard-invalid';
@@ -5563,7 +7015,9 @@ function renderBed(inputs,issues,opts={}){
       : `Empty cell, row ${cell.row+1}, column ${cell.col+1}`);
     el.style.background=bg; el.style.borderColor=bdc;
     const issueIcon=issues.length?`<span class="cell-issue">${escapeHtml(issues[0])}</span>`:'';
+    const rowBandHtml=rowBand?`<span class="row-zone-band ${escapeHtml(rowBand.cls)}">${escapeHtml(rowBand.label)}</span>`:'';
     el.innerHTML=`<div class="ctip">${tipLines.filter(Boolean).join(' · ')}</div>
+      ${rowBandHtml}
       ${issueIcon}
       <span class="cemo">${c?escapeHtml(c.emoji):''}</span>
       ${c?`<span class="cname">${escapeHtml(c.short)}</span>`:''}
@@ -5596,6 +7050,7 @@ const INSIGHT_SECTION_MAP = {
   score:'insightSummary', dashboard:'insightDashboard',
   inspect:'insightInspect', companions:'insightInspect',
   calendar:'insightCalendar', harvest:'insightHarvest',
+  experiment:'insightExperiment', retrospective:'insightRetrospective',
   notes:'insightNotes'
 };
 
@@ -5638,6 +7093,8 @@ function switchRTab(t, persist=true){
   if(t==='companions') renderCompanionPanel();
   if(t==='calendar') renderCalendarPanel();
   if(t==='harvest') renderHarvestTab();
+  if(t==='experiment') renderExperimentPanel();
+  if(t==='retrospective') renderRetrospectivePanel();
 }
 
 function toggleInsightSection(sectionEl){
@@ -5698,7 +7155,33 @@ function renderRight(inputs,issues,scoreTotal){
   const uniq=[...new Set(bed.map(c=>c.crop).filter(Boolean))];
   const counts=getCounts();
   const bs=Number.isFinite(scoreTotal) ? scoreTotal : scoreBed(inputs);
+  const simSummary=getSimulationSummary(bs);
+  const forecast=buildYieldForecast(inputs);
+  const dashboardForecast=getDashboardHarvestForecast(parseInt(getCalendarZone(), 10));
   const audit=getPlannerBedScoreAudit(inputs);
+  const plantedCells=bed.filter(cell=>cell.crop);
+  const strongest=plantedCells.map(cell=>({ cell, score:scoreCell(cell,inputs) }))
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,3);
+  const weakest=weakestCells(inputs,3);
+  const harvestSummary=getHarvestSummary();
+  const voiceSnapshot={
+    inputs,
+    score:bs,
+    plantedCount:plantedCells.length,
+    fillRatio:plantedCells.length ? plantedCells.length / (bedW * bedH) : 0,
+    strongest,
+    weakest,
+    forecast:dashboardForecast,
+    harvestCount:harvestSummary.total || 0
+  };
+  const voiceDispatchHtml=renderCastBoard(buildDashboardVoices(voiceSnapshot),{
+    title:'Voice dispatch',
+    note:plantedCells.length
+      ? `${plannerSeasonBanner(inputs.season)} · four reads on the current bed before Story Mode adds events, interventions, and soil fatigue.`
+      : 'The cast wakes up after the first planted cell. Until then, the planner is just blank paper and a bed frame.',
+    compact:true
+  });
   updateActiveBedScoreCache(bs);
   const ws=warnings(inputs,issues);
   const warnCount=ws.filter(w=>w.t==='warn').length;
@@ -5741,6 +7224,56 @@ function renderRight(inputs,issues,scoreTotal){
     </div>
     <div class="score-breakdown-grid">${scoreRows.map(row=>`<div class="score-breakdown-row"><span class="score-breakdown-label">${escapeHtml(row.label)}</span><span class="score-breakdown-value ${escapeHtml(row.tone)}">${escapeHtml(row.value)}</span></div>`).join('')}</div>
   </div>` : '';
+  const simulationHtml=simSummary ? `<div class="simulation-score-card">
+    <div class="simulation-score-head">
+      <div class="simulation-score-title">Layout simulator</div>
+      <div class="simulation-score-note">Scratch edits stay local until you apply them. Compare the saved bed against the current trial before you commit.</div>
+    </div>
+    <div class="simulation-score-grid">
+      <div class="simulation-score-block">
+        <span class="simulation-score-label">Saved</span>
+        <strong class="simulation-score-value">${Math.round(simSummary.baselineScore)}</strong>
+        <span class="simulation-score-meta">${simSummary.baselineFilled}/${bedW*bedH} filled</span>
+      </div>
+      <div class="simulation-score-block current">
+        <span class="simulation-score-label">Simulated</span>
+        <strong class="simulation-score-value">${Math.round(simSummary.currentScore)}</strong>
+        <span class="simulation-score-meta">${simSummary.currentFilled}/${bedW*bedH} filled</span>
+      </div>
+      <div class="simulation-score-block delta ${simSummary.delta>0?'gain':simSummary.delta<0?'loss':'flat'}">
+        <span class="simulation-score-label">Delta</span>
+        <strong class="simulation-score-value">${formatSignedWhole(simSummary.delta)}</strong>
+        <span class="simulation-score-meta">${simSummary.changed?'Ready to apply or discard':'No layout change yet'}</span>
+      </div>
+    </div>
+  </div>` : '';
+  const forecastHtml=forecast.length ? `<div class="forecast-card">
+    <div class="forecast-head">
+      <div>
+        <div class="forecast-kicker">Phase 2C</div>
+        <div class="forecast-title">Harvest forecast</div>
+      </div>
+      <div class="forecast-meta">${escapeHtml(formatShortDate(getEffectivePlantingDate(inputs)))} planting anchor</div>
+    </div>
+    <div class="forecast-list">${forecast.slice(0, 5).map(item=>{
+      const crop = CROPS[item.cropKey];
+      if(!crop) return '';
+      return `<div class="forecast-row">
+        <div class="forecast-row-head">
+          <div class="forecast-name">${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)}</div>
+          <div class="forecast-date">${escapeHtml(formatDateWindow(item.startDate, item.endDate))}</div>
+        </div>
+        <div class="forecast-sub">${escapeHtml(formatYieldEstimate(item.yieldEstimate, item.yieldUnit))} projected · ${escapeHtml(item.daysToMaturity + ' days to maturity')} · ${escapeHtml(item.count + ' planted cells')}</div>
+        <div class="forecast-pill-row">
+          <span class="forecast-pill ${escapeHtml(item.confidence.tone)}">${escapeHtml(item.confidence.label)}</span>
+          <span class="forecast-pill">avg ${escapeHtml(item.avgScore.toFixed(1))}/10</span>
+          <span class="forecast-pill">sun ${escapeHtml(item.avgSunFit.toFixed(1))}</span>
+          <span class="forecast-pill">season ${escapeHtml(item.avgSeasonFit.toFixed(1))}</span>
+        </div>
+      </div>`;
+    }).join('')}</div>
+    ${buildForecastTimelineHtml(forecast)}
+  </div>` : '';
   document.getElementById('rpaneScore').innerHTML=`
     <div class="score-hero">
       <div class="sbig">
@@ -5761,6 +7294,9 @@ function renderRight(inputs,issues,scoreTotal){
         ${bars||'<em style="font-size:.68rem;color:var(--text-light)">Paint crops to score</em>'}
       </div>
     </div>
+    ${simulationHtml}
+    ${forecastHtml}
+    ${voiceDispatchHtml}
     ${uniq.length?`<div class="crow">${chtml}</div>`:''}
     ${scoreBreakdownHtml}
     <div class="score-model-note">${
@@ -5873,6 +7409,8 @@ function renderRight(inputs,issues,scoreTotal){
 
   buildReasoningSurface(inputs, issues);
   renderDashboardTab(inputs, issues, bs);
+  renderExperimentPanel();
+  renderRetrospectivePanel();
 
   // CALENDAR pane — re-render if active
   if(ui.rTab==='calendar') renderCalendarPanel();
@@ -6027,6 +7565,7 @@ document.getElementById('trellisToggle').addEventListener('click',function(){thi
 document.getElementById('season').addEventListener('change',()=>onSite());
 document.getElementById('goal').addEventListener('change',()=>onSite());
 document.getElementById('zone').addEventListener('change',()=>onSite());
+document.getElementById('plantingDate').addEventListener('change',()=>onSite());
 
 // Cage controls
 document.getElementById('cageEnabled').addEventListener('click',function(){
@@ -6061,6 +7600,9 @@ document.getElementById('clearBtn').addEventListener('click',clearBed);
 document.getElementById('toolPaint').addEventListener('click',()=>setTool('paint'));
 document.getElementById('toolErase').addEventListener('click',()=>setTool('erase'));
 document.getElementById('toolInspect').addEventListener('click',()=>setTool('inspect'));
+document.getElementById('simulateBtn').addEventListener('click',startSimulation);
+document.getElementById('simulateApplyBtn').addEventListener('click',applySimulation);
+document.getElementById('simulateDiscardBtn').addEventListener('click',discardSimulation);
 document.getElementById('undoBtn').addEventListener('click',undo);
 document.getElementById('redoBtn').addEventListener('click',redo);
 document.getElementById('shareBtn').addEventListener('click',shareLayout);
@@ -6083,6 +7625,8 @@ document.querySelectorAll('.insight-header').forEach(hdr=>{
     if(key==='notes') switchRTab('notes', false);
     if(key==='calendar') switchRTab('calendar', false);
     if(key==='harvest') switchRTab('harvest', false);
+    if(key==='experiment') switchRTab('experiment', false);
+    if(key==='retrospective') switchRTab('retrospective', false);
   });
 });
 
@@ -6232,9 +7776,9 @@ var CROP_TIMING = {
   // Roots
   radish:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 4 },
   carrot:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 10 },
-  scallions:          { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
+  scallion:           { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 8 },
   beet:               { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 8 },
-  turnips:            { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 7 },
+  turnip:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 7 },
   onion:              { indoorWeeks: -10, transplantWeeks: -2, directSow: false, harvestWeeks: 14 },
   garlic:             { indoorWeeks: null, transplantWeeks: null, directSow: true, harvestWeeks: 20 },
   // Herbs
@@ -6255,11 +7799,90 @@ var CROP_TIMING = {
   kohlrabi:           { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 7 },
   // Companion
   marigold:           { indoorWeeks: -4, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
-  nasturtium:         { indoorWeeks: -3, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 }
+  nasturtium:         { indoorWeeks: -3, transplantWeeks: 0,  directSow: true,  harvestWeeks: 8 },
+  // Biome / specialist
+  wild_clover:        { indoorWeeks: null, transplantWeeks: null, directSow: true,  harvestWeeks: 6 },
+  prairie_onion:      { indoorWeeks: -8, transplantWeeks: -2, directSow: true,  harvestWeeks: 10 },
+  meadow_sage:        { indoorWeeks: -6, transplantWeeks: 0,  directSow: true,  harvestWeeks: 9 },
+  watercress:         { indoorWeeks: -4, transplantWeeks: -2, directSow: true,  harvestWeeks: 5 },
+  wild_rice:          { indoorWeeks: -4, transplantWeeks: 2,  directSow: true,  harvestWeeks: 16 },
+  marsh_marigold:     { indoorWeeks: -4, transplantWeeks: -1, directSow: true,  harvestWeeks: 7 },
+  shiitake_mushroom:  { indoorWeeks: null, transplantWeeks: 0,  directSow: false, harvestWeeks: 12 },
+  wild_garlic:        { indoorWeeks: -6, transplantWeeks: -2, directSow: true,  harvestWeeks: 10 },
+  woodland_strawberry: { indoorWeeks: -8, transplantWeeks: 0,  directSow: false, harvestWeeks: 12 },
+  vanilla_orchid:     { indoorWeeks: -10, transplantWeeks: 4, directSow: false, harvestWeeks: 24 },
+  lemon_tree:         { indoorWeeks: -12, transplantWeeks: 6, directSow: false, harvestWeeks: 28 },
+  ghost_pepper:       { indoorWeeks: -10, transplantWeeks: 3, directSow: false, harvestWeeks: 14 }
 };
+
+const CATEGORY_YIELD_DEFAULTS = {
+  cucurbit: 1.8,
+  greens: 0.9,
+  legume: 0.8,
+  roots: 1.4,
+  herbs: 0.45,
+  fruiting: 2.4,
+  brassica: 1.2,
+  companion: 0.25
+};
+const CATEGORY_YIELD_UNITS = {
+  cucurbit: 'lb',
+  greens: 'lb',
+  legume: 'lb',
+  roots: 'lb',
+  herbs: 'bunch',
+  fruiting: 'lb',
+  brassica: 'lb',
+  companion: 'blooms'
+};
+Object.keys(CROPS).forEach(ck=>{
+  const crop = CROPS[ck];
+  const timing = CROP_TIMING[ck];
+  if(!Number.isFinite(crop.daysToMaturity)){
+    crop.daysToMaturity = timing && Number.isFinite(timing.harvestWeeks) ? timing.harvestWeeks * 7 : 56;
+  }
+  if(!Number.isFinite(crop.yieldPerSqFt)){
+    crop.yieldPerSqFt = CATEGORY_YIELD_DEFAULTS[crop.category] || 0.8;
+  }
+  if(!crop.yieldUnit){
+    crop.yieldUnit = CATEGORY_YIELD_UNITS[crop.category] || 'lb';
+  }
+});
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+function parseISODate(value){
+  const iso = normalizeISODate(value);
+  if(!iso) return null;
+  const [year, month, day] = iso.split('-').map(Number);
+  if(!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+function toISODate(date){
+  if(!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+function addDays(date, days){
+  const d = new Date(date.getTime());
+  d.setDate(d.getDate() + days);
+  return d;
+}
+function diffDays(start, end){
+  const a = parseISODate(start);
+  const b = parseISODate(end);
+  if(!a || !b) return 0;
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+function formatShortDate(value){
+  const d = parseISODate(value);
+  if(!d) return '—';
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+function formatDateWindow(start, end){
+  if(!start && !end) return '—';
+  if(start && end) return `${formatShortDate(start)}–${formatShortDate(end)}`;
+  return formatShortDate(start || end);
+}
 function parseFrostDate(dateStr){
   // e.g. "Apr 15" → Date object in current year
   const parts = dateStr.split(' ');
@@ -6274,8 +7897,133 @@ function weekToMonth(weekOffset, lastFrostDate){
   d.setDate(d.getDate() + weekOffset * 7);
   return d.getMonth() + d.getDate() / 31;
 }
+function getFrostWindow(inputsArg){
+  const zone = parseInt((inputsArg && inputsArg.zone) || getCalendarZone(), 10);
+  return FROST_DATES[zone] || FROST_DATES[6] || null;
+}
+function getEffectivePlantingDate(inputsArg){
+  const explicit = normalizeISODate(inputsArg && inputsArg.plantingDate);
+  if(explicit) return explicit;
+  const frost = getFrostWindow(inputsArg);
+  if(frost){
+    const last = parseFrostDate(frost.lastFrost);
+    const first = parseFrostDate(frost.firstFrost);
+    if(inputsArg && inputsArg.season === 'spring') return toISODate(addDays(last, -7));
+    if(inputsArg && inputsArg.season === 'summer') return toISODate(addDays(last, 21));
+    if(inputsArg && inputsArg.season === 'latesummer') return toISODate(addDays(first, -84));
+    if(inputsArg && inputsArg.season === 'fall') return toISODate(addDays(first, -63));
+  }
+  const now = new Date();
+  const seasonMonth = { spring:2, summer:4, latesummer:7, fall:8 }[(inputsArg && inputsArg.season) || 'summer'];
+  return toISODate(new Date(now.getFullYear(), seasonMonth, 1));
+}
+function getSeasonWindowEnd(inputsArg){
+  const planting = parseISODate(getEffectivePlantingDate(inputsArg));
+  if(!planting) return '';
+  const frost = getFrostWindow(inputsArg);
+  if(frost && ((inputsArg && inputsArg.season === 'latesummer') || (inputsArg && inputsArg.season === 'fall'))){
+    return toISODate(parseFrostDate(frost.firstFrost));
+  }
+  const horizonDays = (inputsArg && inputsArg.season === 'spring') ? 90
+    : (inputsArg && inputsArg.season === 'summer') ? 120
+    : 95;
+  return toISODate(addDays(planting, horizonDays));
+}
+function estimateForecastConfidence(avgScore, avgSunFit, avgSeasonFit){
+  const pct = clamp(Math.round(34 + (avgScore * 4.8) + ((avgSunFit - 3) * 6) + ((avgSeasonFit - 3) * 7)), 28, 95);
+  if(pct >= 78) return { label:'High confidence', pct, tone:'good' };
+  if(pct >= 60) return { label:'Medium confidence', pct, tone:'warn' };
+  return { label:'Low confidence', pct, tone:'bad' };
+}
+function formatYieldEstimate(amount, unit){
+  const rounded = unit === 'blooms' || unit === 'bunch'
+    ? Math.max(1, Math.round(amount))
+    : Math.max(0.1, Math.round(amount * 10) / 10);
+  return `${rounded} ${unit}`;
+}
+function buildYieldForecast(inputsArg){
+  const inputs = inputsArg || inp();
+  const plantingDate = getEffectivePlantingDate(inputs);
+  const planting = parseISODate(plantingDate);
+  if(!planting) return [];
+  const counts = collectDashboardCounts();
+  return Object.keys(counts).map(ck=>{
+    const crop = CROPS[ck];
+    const cells = bed.filter(cell=>cell.crop===ck);
+    if(!crop || !cells.length) return null;
+    const avgScore = cells.reduce((sum, cell)=>sum + scoreCell(cell, inputs), 0) / cells.length;
+    const breakdowns = cells.map(cell=>computeScoreBreakdown(ck, cell, inputs)).filter(Boolean);
+    const avgSunFit = breakdowns.length ? breakdowns.reduce((sum, detail)=>sum + detail.sunFit, 0) / breakdowns.length : 3;
+    const avgSeasonFit = breakdowns.length ? breakdowns.reduce((sum, detail)=>sum + detail.seaFit, 0) / breakdowns.length : 3;
+    const confidence = estimateForecastConfidence(avgScore, avgSunFit, avgSeasonFit);
+    const varianceDays = confidence.pct >= 78 ? 5 : confidence.pct >= 60 ? 9 : 14;
+    const startDate = toISODate(addDays(planting, crop.daysToMaturity - varianceDays));
+    const endDate = toISODate(addDays(planting, crop.daysToMaturity + varianceDays));
+    const yieldMultiplier = clamp((confidence.pct / 82), 0.55, 1.18);
+    const yieldEstimate = crop.yieldPerSqFt * counts[ck] * yieldMultiplier;
+    return {
+      cropKey: ck,
+      count: counts[ck],
+      plantingDate,
+      daysToMaturity: crop.daysToMaturity,
+      startDate,
+      endDate,
+      confidence,
+      avgScore,
+      avgSunFit,
+      avgSeasonFit,
+      yieldEstimate,
+      yieldUnit: crop.yieldUnit
+    };
+  }).filter(Boolean).sort((a, b)=>a.startDate.localeCompare(b.startDate));
+}
+function getForecastTimelineBounds(items){
+  if(!items.length) return null;
+  const start = parseISODate(items[0].startDate);
+  const end = parseISODate(items[items.length - 1].endDate);
+  if(!start || !end) return null;
+  return {
+    start: toISODate(addDays(start, -10)),
+    end: toISODate(addDays(end, 10))
+  };
+}
+function getTimelinePct(value, start, end){
+  const total = Math.max(1, diffDays(start, end));
+  const offset = clamp(diffDays(start, value), 0, total);
+  return (offset / total) * 100;
+}
+function getTimelineWidth(startValue, endValue, start, end){
+  const total = Math.max(1, diffDays(start, end));
+  const span = clamp(diffDays(startValue, endValue), 1, total);
+  return (span / total) * 100;
+}
+function buildSuccessionTimeline(inputsArg){
+  const inputs = inputsArg || inp();
+  const seasonEnd = parseISODate(getSeasonWindowEnd(inputs));
+  if(!seasonEnd) return [];
+  return buildYieldForecast(inputs).filter(item=>CROPS[item.cropKey] && CROPS[item.cropKey].successionFriendly).map(item=>{
+    const firstHarvest = parseISODate(item.startDate);
+    const lastHarvest = parseISODate(item.endDate);
+    if(!firstHarvest || !lastHarvest) return null;
+    const nextSow = addDays(firstHarvest, 7);
+    const nextHarvestStart = addDays(nextSow, item.daysToMaturity - 4);
+    const nextHarvestEnd = addDays(nextSow, item.daysToMaturity + 6);
+    if(nextHarvestStart > seasonEnd) return null;
+    return {
+      ...item,
+      nextSowDate: toISODate(nextSow),
+      nextHarvestStart: toISODate(nextHarvestStart),
+      nextHarvestEnd: toISODate(nextHarvestEnd)
+    };
+  }).filter(Boolean);
+}
 
 function getCalendarZone(){
+  const zoneField = document.getElementById('zone');
+  if(zoneField && zoneField.value) return zoneField.value;
+  const b = activeBed();
+  const siteZone = b && b.plannerState && b.plannerState.site && b.plannerState.site.zone;
+  if(siteZone) return siteZone;
   if(_workspace && _workspace.workspaceSettings && _workspace.workspaceSettings.zone){
     return _workspace.workspaceSettings.zone;
   }
@@ -6285,9 +8033,16 @@ function getCalendarZone(){
 function setCalendarZone(z){
   if(_workspace){
     _workspace.workspaceSettings = _workspace.workspaceSettings || {};
-    _workspace.workspaceSettings.zone = z;
+    _workspace.workspaceSettings.zone = String(z);
+    const b = activeBed();
+    if(b){
+      b.plannerState = b.plannerState || {};
+      b.plannerState.site = normalizeSiteSettings({ ...(b.plannerState.site || {}), zone:String(z) });
+    }
     saveWorkspace(_workspace);
   }
+  const zoneField = document.getElementById('zone');
+  if(zoneField) zoneField.value = String(z);
 }
 
 function renderCalendarPanel(){
@@ -6303,6 +8058,8 @@ function renderCalendarPanel(){
 
   const lastFrostDate = parseFrostDate(frost.lastFrost);
   const firstFrostDate = parseFrostDate(frost.firstFrost);
+  const calendarInputs = { ...inp(), zone:String(zone) };
+  const plantingAnchor = getEffectivePlantingDate(calendarInputs);
 
   // Unique crops on the grid
   const cropsOnGrid = [...new Set(bed.map(c=>c.crop).filter(Boolean))];
@@ -6430,8 +8187,84 @@ function renderCalendarPanel(){
   html += '<div class="calendar-legend-item"><div class="calendar-legend-swatch" style="background:var(--sun)"></div> Transplant / sow</div>';
   html += '<div class="calendar-legend-item"><div class="calendar-legend-swatch" style="background:var(--warn)"></div> Harvest</div>';
   html += '</div>';
+  const forecast = buildYieldForecast(calendarInputs);
+  if(forecast.length){
+    html += `<div class="forecast-card">
+      <div class="forecast-head">
+        <div>
+          <div class="forecast-kicker">Phase 2C</div>
+          <div class="forecast-title">Yield forecast + harvest window</div>
+        </div>
+        <div class="forecast-meta">Planting anchor ${escapeHtml(formatShortDate(plantingAnchor))}</div>
+      </div>
+      <div class="forecast-list">${forecast.slice(0, 6).map(item=>{
+        const crop = CROPS[item.cropKey];
+        if(!crop) return '';
+        return `<div class="forecast-row">
+          <div class="forecast-row-head">
+            <div class="forecast-name">${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)}</div>
+            <div class="forecast-date">${escapeHtml(formatDateWindow(item.startDate, item.endDate))}</div>
+          </div>
+          <div class="forecast-sub">${escapeHtml(item.daysToMaturity + ' days to maturity')} · ${escapeHtml(formatYieldEstimate(item.yieldEstimate, item.yieldUnit))} estimated across ${escapeHtml(String(item.count))} planted cells</div>
+          <div class="forecast-pill-row">
+            <span class="forecast-pill ${escapeHtml(item.confidence.tone)}">${escapeHtml(item.confidence.label)}</span>
+            <span class="forecast-pill">avg ${escapeHtml(item.avgScore.toFixed(1))}/10</span>
+            <span class="forecast-pill">sun ${escapeHtml(item.avgSunFit.toFixed(1))}</span>
+            <span class="forecast-pill">season ${escapeHtml(item.avgSeasonFit.toFixed(1))}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      ${buildForecastTimelineHtml(forecast)}
+    </div>`;
+  }
+  const succession = buildSuccessionTimeline(calendarInputs);
+  if(succession.length){
+    const staged = getActiveSuccessionPlan();
+    const bounds = getForecastTimelineBounds(succession.map(item=>({
+      startDate:item.startDate,
+      endDate:item.nextHarvestEnd
+    })));
+    const axisLabels = bounds ? buildTimelineAxisLabels(bounds) : [];
+    html += `<div class="succession-card">
+      <div class="succession-head">
+        <div>
+          <div class="succession-kicker">Phase 3B</div>
+          <div class="succession-title">Succession timeline</div>
+        </div>
+        <div class="succession-meta">${escapeHtml(formatShortDate(plantingAnchor))} → ${escapeHtml(formatShortDate(getSeasonWindowEnd(calendarInputs)))}</div>
+      </div>
+      ${bounds ? `<div class="timeline-axis"><span>Next waves</span>${axisLabels.map(label=>`<span>${escapeHtml(label)}</span>`).join('')}</div>` : ''}
+      <div class="succession-list">${succession.map(item=>{
+        const crop = CROPS[item.cropKey];
+        if(!crop) return '';
+        const isStaged = staged.some(entry=>entry.cropKey===item.cropKey && entry.plannedDate===item.nextSowDate);
+        const currentLeft = bounds ? getTimelinePct(item.startDate, bounds.start, bounds.end) : 0;
+        const currentWidth = bounds ? getTimelineWidth(item.startDate, item.endDate, bounds.start, bounds.end) : 32;
+        const nextLeft = bounds ? getTimelinePct(item.nextHarvestStart, bounds.start, bounds.end) : 38;
+        const nextWidth = bounds ? getTimelineWidth(item.nextHarvestStart, item.nextHarvestEnd, bounds.start, bounds.end) : 28;
+        return `<div class="succession-row">
+          <div class="succession-row-head">
+            <div class="succession-name">${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)}</div>
+            <div class="succession-date">${escapeHtml(formatShortDate(item.nextSowDate))} next sow</div>
+          </div>
+          <div class="succession-sub">Current window ${escapeHtml(formatDateWindow(item.startDate, item.endDate))} · next wave ${escapeHtml(formatDateWindow(item.nextHarvestStart, item.nextHarvestEnd))}</div>
+          ${bounds ? `<div class="timeline-track">
+            <div class="succession-bar" style="left:${currentLeft}%;width:${Math.max(currentWidth, 8)}%;background:${crop.color};">current</div>
+            <div class="succession-bar secondary" style="left:${nextLeft}%;width:${Math.max(nextWidth, 8)}%;background:${crop.color};">next</div>
+          </div>` : ''}
+          <div class="succession-actions">
+            <button class="mini-btn ${isStaged ? 'warn' : 'primary'}" type="button" data-succession-action="toggle" data-crop-key="${escapeHtml(item.cropKey)}" data-next-sow="${escapeHtml(item.nextSowDate)}" data-next-start="${escapeHtml(item.nextHarvestStart)}" data-next-end="${escapeHtml(item.nextHarvestEnd)}">${isStaged ? 'Remove staged wave' : 'Stage next wave'}</button>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      ${staged.length ? `<div class="succession-queue">${staged.map(entry=>{
+        const crop = CROPS[entry.cropKey];
+        return `<div class="succession-queue-item"><div><strong>${escapeHtml(crop ? crop.name : entry.cropKey)}</strong><span>${escapeHtml(formatShortDate(entry.plannedDate))} sow · ${escapeHtml(formatDateWindow(entry.harvestStart, entry.harvestEnd))}</span></div><button class="mini-btn" type="button" data-succession-action="toggle" data-crop-key="${escapeHtml(entry.cropKey)}" data-next-sow="${escapeHtml(entry.plannedDate)}" data-next-start="${escapeHtml(entry.harvestStart)}" data-next-end="${escapeHtml(entry.harvestEnd)}">Remove</button></div>`;
+      }).join('')}</div>` : ''}
+    </div>`;
+  }
 
-  html += '<div class="calendar-note">Zone '+zone+' · Last frost: '+escapeHtml(frost.lastFrost)+' · First frost: '+escapeHtml(frost.firstFrost)+' · Dates are estimated averages</div>';
+  html += '<div class="calendar-note">Zone '+zone+' · Last frost: '+escapeHtml(frost.lastFrost)+' · First frost: '+escapeHtml(frost.firstFrost)+' · Planting anchor: '+escapeHtml(formatShortDate(plantingAnchor))+' · Dates are estimated averages</div>';
 
   html += '</div>';
   pane.innerHTML = html;
@@ -6444,6 +8277,16 @@ function renderCalendarPanel(){
   }
 
   bindCalendarZoneSelect();
+  pane.querySelectorAll('[data-succession-action="toggle"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      toggleSuccessionPlanEntry({
+        cropKey: btn.dataset.cropKey,
+        nextSowDate: btn.dataset.nextSow,
+        nextHarvestStart: btn.dataset.nextStart,
+        nextHarvestEnd: btn.dataset.nextEnd
+      });
+    });
+  });
 }
 
 function addFrostLine(gridEl, frostMonth, startMonth, monthCount, label){
@@ -6915,6 +8758,353 @@ function renderHarvestForm(cell){
   });
 }
 
+function buildTimelineAxisLabels(bounds){
+  const total = Math.max(1, diffDays(bounds.start, bounds.end));
+  const labels = [];
+  for(let i = 0; i < 6; i++){
+    const date = addDays(parseISODate(bounds.start), Math.round((total * i) / 5));
+    labels.push(formatShortDate(toISODate(date)));
+  }
+  return labels;
+}
+function buildForecastTimelineHtml(items){
+  const bounds = getForecastTimelineBounds(items);
+  if(!bounds) return '';
+  const axisLabels = buildTimelineAxisLabels(bounds);
+  return `<div class="forecast-timeline">
+    <div class="timeline-axis"><span>Harvest window</span>${axisLabels.map(label=>`<span>${escapeHtml(label)}</span>`).join('')}</div>
+    ${items.map(item=>{
+      const crop = CROPS[item.cropKey];
+      if(!crop) return '';
+      const left = getTimelinePct(item.startDate, bounds.start, bounds.end);
+      const width = getTimelineWidth(item.startDate, item.endDate, bounds.start, bounds.end);
+      return `<div class="timeline-row">
+        <div class="timeline-label"><strong>${escapeHtml(crop.emoji)} ${escapeHtml(crop.short)}</strong><br>${escapeHtml(formatYieldEstimate(item.yieldEstimate, item.yieldUnit))}</div>
+        <div class="timeline-track">
+          <div class="timeline-bar" style="left:${left}%;width:${Math.max(width, 8)}%;background:${crop.color};">${escapeHtml(item.confidence.label)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+function getActiveSuccessionPlan(){
+  const b = activeBed();
+  if(!b) return [];
+  b.successionPlan = normalizeSuccessionPlanEntries(b.successionPlan);
+  return b.successionPlan;
+}
+function toggleSuccessionPlanEntry(item){
+  const b = activeBed();
+  if(!b || !item) return;
+  b.successionPlan = getActiveSuccessionPlan();
+  const index = b.successionPlan.findIndex(entry=>entry.cropKey===item.cropKey && entry.plannedDate===item.nextSowDate);
+  if(index >= 0){
+    b.successionPlan.splice(index, 1);
+    setPlannerNotice('complete','Succession stage cleared',`${CROPS[item.cropKey].name} is no longer staged for the next wave.`);
+  } else {
+    b.successionPlan.push({
+      id: uniqueId('succ'),
+      cropKey: item.cropKey,
+      plannedDate: item.nextSowDate,
+      harvestStart: item.nextHarvestStart,
+      harvestEnd: item.nextHarvestEnd,
+      sourceCellId: '',
+      note: 'Staged from succession timeline',
+      status: 'planned'
+    });
+    setPlannerNotice('active','Succession wave staged',`${CROPS[item.cropKey].name} is queued for ${formatShortDate(item.nextSowDate)}.`);
+  }
+  saveState();
+  renderCalendarPanel();
+  render();
+}
+function describeAnalysisWeakLink(analysis){
+  if(!analysis || !analysis.weakest || !analysis.weakest[0]) return 'not enough planted cells yet';
+  const entry = analysis.weakest[0];
+  const detail = computeScoreBreakdown(entry.cell.crop, entry.cell, analysis.inputs);
+  if(!detail) return `low score at ${entry.cell.id}`;
+  const factors = [
+    { label:'sun fit', value:detail.sunFit },
+    { label:'support fit', value:detail.supFit },
+    { label:'shade tolerance', value:detail.shadeFit },
+    { label:'access fit', value:detail.accFit },
+    { label:'season fit', value:detail.seaFit }
+  ].sort((a, b)=>a.value - b.value);
+  return `${factors[0].label} at ${entry.cell.id}`;
+}
+function getExperimentPeerId(experiment, bedId){
+  if(!experiment) return '';
+  return experiment.aBedId===bedId ? experiment.bBedId : experiment.aBedId;
+}
+function clearExperiment(experimentId){
+  if(!_workspace || !_workspace.experiments) return;
+  _workspace.experiments = _workspace.experiments.filter(exp=>exp.id!==experimentId);
+  saveWorkspace(_workspace);
+}
+function renderExperimentPanel(){
+  const pane = document.getElementById('rpaneExperiment');
+  if(!pane) return;
+  if(!_workspace || !_workspace.beds.length || _workspace.beds.length < 2){
+    pane.innerHTML = '<div class="empty-state-card"><strong>Experiments need two beds.</strong>Add or duplicate a bed, then link the pair around one controlled variable like spacing or mulch.</div>';
+    return;
+  }
+  const active = activeBed();
+  if(!active){
+    pane.innerHTML = '<div class="empty-state-card"><strong>No active bed.</strong>Select a bed to compare experiments.</div>';
+    return;
+  }
+  const partners = _workspace.beds.filter(b=>b.id!==active.id);
+  const experiment = getExperimentForBedId(active.id);
+  const partnerId = experiment ? getExperimentPeerId(experiment, active.id) : (partners[0] ? partners[0].id : '');
+  const partner = getBedById(partnerId);
+  const activeAnalysis = analyzeBedRecord(active);
+  const partnerAnalysis = partner ? analyzeBedRecord(partner) : null;
+  const leader = activeAnalysis && partnerAnalysis
+    ? (activeAnalysis.scoreTotal >= partnerAnalysis.scoreTotal ? active : partner)
+    : null;
+  const scoreDelta = activeAnalysis && partnerAnalysis ? activeAnalysis.scoreTotal - partnerAnalysis.scoreTotal : 0;
+  const why = experiment && activeAnalysis && partnerAnalysis
+    ? `${leader ? leader.name : 'This pair'} currently leads, with the weaker bed still losing ground on ${describeAnalysisWeakLink(scoreDelta >= 0 ? partnerAnalysis : activeAnalysis)}.`
+    : 'Link two beds to compare one variable while the score engine keeps everything else readable.';
+  const obsList = experiment && Array.isArray(experiment.observations)
+    ? [...experiment.observations].sort((a, b)=>b.date.localeCompare(a.date)).slice(0, 6)
+    : [];
+
+  pane.innerHTML = `<div class="experiment-card">
+    <div class="experiment-head">
+      <div>
+        <div class="experiment-kicker">Phase 3A</div>
+        <div class="experiment-title">A/B bed comparison</div>
+      </div>
+      <div class="experiment-meta">${escapeHtml(active.name)}</div>
+    </div>
+    <div class="experiment-form">
+      <div class="experiment-form-row">
+        <div>
+          <label for="experimentPartner">Comparison bed</label>
+          <select id="experimentPartner">${partners.map(b=>`<option value="${escapeHtml(b.id)}"${b.id===partnerId?' selected':''}>${escapeHtml(b.name)}</option>`).join('')}</select>
+        </div>
+        <div>
+          <label for="experimentVariable">Controlled variable</label>
+          <select id="experimentVariable">${EXPERIMENT_VARIABLES.map(item=>`<option value="${escapeHtml(item)}"${experiment && experiment.variable===item?' selected':''}>${escapeHtml(item)}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="experiment-actions">
+        <button class="mini-btn primary" type="button" id="experimentLinkBtn">${experiment ? 'Update experiment' : 'Link beds'}</button>
+        ${experiment ? '<button class="mini-btn" type="button" id="experimentClearBtn">Clear link</button>' : ''}
+      </div>
+    </div>
+  </div>
+  ${experiment && activeAnalysis && partnerAnalysis ? `<div class="experiment-card">
+    <div class="experiment-head">
+      <div>
+        <div class="experiment-kicker">Controlled variable</div>
+        <div class="experiment-title">${escapeHtml(experiment.variable)}</div>
+      </div>
+      <div class="experiment-meta">${escapeHtml(formatSignedWhole(scoreDelta))} score delta</div>
+    </div>
+    <div class="experiment-grid">
+      <div class="experiment-stat"><div class="experiment-stat-value">${activeAnalysis.scoreTotal}</div><div class="experiment-stat-label">${escapeHtml(active.name)}</div></div>
+      <div class="experiment-stat"><div class="experiment-stat-value">${partnerAnalysis.scoreTotal}</div><div class="experiment-stat-label">${escapeHtml(partner.name)}</div></div>
+      <div class="experiment-stat"><div class="experiment-stat-value">${activeAnalysis.plantedCount}</div><div class="experiment-stat-label">${escapeHtml(active.name)} planted cells</div></div>
+      <div class="experiment-stat"><div class="experiment-stat-value">${partnerAnalysis.plantedCount}</div><div class="experiment-stat-label">${escapeHtml(partner.name)} planted cells</div></div>
+    </div>
+    <div class="experiment-pill-row">
+      <span class="experiment-pill ${scoreDelta===0?'warn':scoreDelta>0?'good':'bad'}">${escapeHtml((leader ? leader.name : 'No bed') + ' leads')}</span>
+      <span class="experiment-pill warn">${escapeHtml('Likely due to ' + describeAnalysisWeakLink(scoreDelta >= 0 ? partnerAnalysis : activeAnalysis))}</span>
+      <span class="experiment-pill">${escapeHtml((experiment.observations || []).length + ' observations logged')}</span>
+    </div>
+    <div class="forecast-sub" style="margin-top:.45rem;">${escapeHtml(why)}</div>
+    <div class="experiment-form">
+      <div class="experiment-form-row">
+        <div>
+          <label for="experimentObsDate">Observation date</label>
+          <input type="date" id="experimentObsDate" value="${toISODate(new Date())}">
+        </div>
+        <div>
+          <label for="experimentObsBed">Record against</label>
+          <select id="experimentObsBed">
+            <option value="${escapeHtml(active.id)}">${escapeHtml(active.name)}</option>
+            <option value="${escapeHtml(partner.id)}">${escapeHtml(partner.name)}</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="experimentObsNote">Observation</label>
+        <textarea id="experimentObsNote" placeholder="Weekly note, outcome, or visible difference"></textarea>
+      </div>
+      <div class="experiment-actions">
+        <button class="mini-btn primary" type="button" id="experimentSaveObsBtn">Save observation</button>
+      </div>
+    </div>
+    ${obsList.length ? `<div class="experiment-log">${obsList.map(obs=>{
+      const bedRef = getBedById(obs.bedId);
+      return `<div class="experiment-log-entry">
+        <div class="experiment-log-head"><span>${escapeHtml(obs.date)}</span><span>${escapeHtml(bedRef ? bedRef.name : obs.bedId)} · ${escapeHtml(String(obs.score))}/100</span></div>
+        <div>${escapeHtml(obs.note || 'No note recorded.')}</div>
+      </div>`;
+    }).join('')}</div>` : ''}
+  </div>` : '<div class="empty-state-card"><strong>No experiment linked yet.</strong>Choose a comparison bed and one variable to start an A/B test. Score snapshots and observations will accumulate here.</div>'}`;
+
+  const linkBtn = document.getElementById('experimentLinkBtn');
+  if(linkBtn){
+    linkBtn.addEventListener('click', ()=>{
+      const selectedPartner = document.getElementById('experimentPartner').value;
+      const variable = document.getElementById('experimentVariable').value;
+      const record = upsertExperiment(active.id, selectedPartner, variable);
+      if(record){
+        setPlannerNotice('complete','Experiment linked',`${active.name} and ${(getBedById(selectedPartner) || {}).name || 'comparison bed'} are now tracking ${variable}.`);
+        renderExperimentPanel();
+      }
+    });
+  }
+  const clearBtn = document.getElementById('experimentClearBtn');
+  if(clearBtn && experiment){
+    clearBtn.addEventListener('click', ()=>{
+      clearExperiment(experiment.id);
+      setPlannerNotice('complete','Experiment removed','The bed link is cleared. Observations were removed with it.');
+      renderExperimentPanel();
+      render();
+    });
+  }
+  const saveObsBtn = document.getElementById('experimentSaveObsBtn');
+  if(saveObsBtn && experiment){
+    saveObsBtn.addEventListener('click', ()=>{
+      const note = document.getElementById('experimentObsNote').value;
+      const date = document.getElementById('experimentObsDate').value;
+      const bedId = document.getElementById('experimentObsBed').value;
+      const obs = addExperimentObservation(experiment.id, bedId, note, date);
+      if(obs){
+        setPlannerNotice('active','Observation logged','The experiment now has a dated score snapshot and note.');
+        renderExperimentPanel();
+      }
+    });
+  }
+}
+function buildRetrospectiveSnapshot(){
+  const b = activeBed();
+  if(!b) return null;
+  const baseline = normalizeSeasonBaseline(b.seasonBaseline);
+  const analysis = analyzeBedRecord(b);
+  const history = normalizeScoreHistoryEntries(b.scoreHistory).slice(-8);
+  const baselineCells = baseline && Array.isArray(baseline.cells) ? baseline.cells : [];
+  const currentCells = bed.map(cell=>cell.crop);
+  const total = Math.max(baselineCells.length, currentCells.length);
+  let stayed = 0, replaced = 0, removed = 0, added = 0;
+  for(let i = 0; i < total; i++){
+    const before = baselineCells[i] || null;
+    const after = currentCells[i] || null;
+    if(before && after && before === after) stayed++;
+    else if(before && after && before !== after) replaced++;
+    else if(before && !after) removed++;
+    else if(!before && after) added++;
+  }
+  return {
+    bed: b,
+    baseline,
+    analysis,
+    history,
+    stayed,
+    replaced,
+    removed,
+    added,
+    delta: baseline ? analysis.scoreTotal - baseline.score : 0
+  };
+}
+function printSeasonReport(){
+  const snapshot = buildRetrospectiveSnapshot();
+  if(!snapshot || !snapshot.analysis) return;
+  const popup = window.open('', '_blank', 'width=980,height=780');
+  if(!popup) return;
+  const best = snapshot.analysis.strongest[0];
+  const weak = snapshot.analysis.weakest[0];
+  popup.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Season Report</title><style>
+    body{font-family:Georgia,serif;color:#2d1a0e;background:#faf8f4;padding:32px;line-height:1.5}
+    h1,h2{margin:0 0 12px}
+    .meta{font-family:monospace;font-size:12px;color:#7a5230;margin-bottom:18px;text-transform:uppercase;letter-spacing:.08em}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+    .card{background:white;border:1px solid #ddd0b8;border-radius:10px;padding:14px}
+    .value{font-size:28px;font-weight:700}
+    .label{font-family:monospace;font-size:11px;text-transform:uppercase;color:#7a5230;letter-spacing:.08em}
+    .list{margin-top:18px}
+    .row{padding:10px 0;border-bottom:1px solid #eee}
+  </style></head><body>
+    <h1>Garden OS Season Report</h1>
+    <div class="meta">${escapeHtml(snapshot.bed.name)} · ${escapeHtml((snapshot.baseline && snapshot.baseline.season) || inp().season)} · printed ${escapeHtml(new Date().toLocaleDateString())}</div>
+    <div class="grid">
+      <div class="card"><div class="value">${snapshot.analysis.scoreTotal}</div><div class="label">Current score</div></div>
+      <div class="card"><div class="value">${snapshot.baseline ? snapshot.baseline.score : '—'}</div><div class="label">Season start score</div></div>
+      <div class="card"><div class="value">${snapshot.stayed}</div><div class="label">Cells unchanged</div></div>
+      <div class="card"><div class="value">${snapshot.replaced}</div><div class="label">Cells replaced</div></div>
+    </div>
+    <div class="list">
+      <div class="row"><strong>Best cell now:</strong> ${best ? escapeHtml(best.cell.id + ' · ' + CROPS[best.cell.crop].name + ' · ' + best.score.toFixed(1) + '/10') : '—'}</div>
+      <div class="row"><strong>Weakest cell now:</strong> ${weak ? escapeHtml(weak.cell.id + ' · ' + CROPS[weak.cell.crop].name + ' · ' + weak.score.toFixed(1) + '/10') : '—'}</div>
+      <div class="row"><strong>Added since baseline:</strong> ${snapshot.added}</div>
+      <div class="row"><strong>Removed since baseline:</strong> ${snapshot.removed}</div>
+    </div>
+  </body></html>`);
+  popup.document.close();
+  popup.focus();
+  setTimeout(()=>popup.print(), 250);
+}
+function renderRetrospectivePanel(){
+  const pane = document.getElementById('rpaneRetrospective');
+  if(!pane) return;
+  const snapshot = buildRetrospectiveSnapshot();
+  if(!snapshot || !snapshot.analysis){
+    pane.innerHTML = '<div class="empty-state-card"><strong>No season report yet.</strong>Make a few bed changes, then return to compare current performance against the season-start snapshot.</div>';
+    return;
+  }
+  const best = snapshot.analysis.strongest[0];
+  const weak = snapshot.analysis.weakest[0];
+  const history = snapshot.history.length ? snapshot.history : [{ score:snapshot.analysis.scoreTotal, at:new Date().toISOString() }];
+  const maxScore = Math.max(...history.map(item=>item.score), 1);
+  pane.innerHTML = `<div class="retrospective-card">
+    <div class="retrospective-head">
+      <div>
+        <div class="retrospective-kicker">Phase 3C</div>
+        <div class="retrospective-title">Season retrospective</div>
+      </div>
+      <div class="retrospective-meta">${escapeHtml(snapshot.bed.name)}</div>
+    </div>
+    <div class="report-grid">
+      <div class="report-stat"><div class="report-stat-value">${snapshot.analysis.scoreTotal}</div><div class="report-stat-label">Current score</div></div>
+      <div class="report-stat"><div class="report-stat-value">${snapshot.baseline ? snapshot.baseline.score : '—'}</div><div class="report-stat-label">Season start score</div></div>
+      <div class="report-stat"><div class="report-stat-value">${snapshot.stayed}</div><div class="report-stat-label">Stayed in place</div></div>
+      <div class="report-stat"><div class="report-stat-value">${snapshot.replaced}</div><div class="report-stat-label">Replaced cells</div></div>
+    </div>
+    <div class="report-pill-row">
+      <span class="report-pill ${snapshot.delta >= 0 ? 'good' : 'bad'}">${escapeHtml(formatSignedWhole(snapshot.delta) + ' vs season start')}</span>
+      <span class="report-pill">${escapeHtml((snapshot.baseline && snapshot.baseline.plantingDate) ? 'Started ' + formatShortDate(snapshot.baseline.plantingDate) : 'Season baseline auto-captured')}</span>
+      <span class="report-pill warn">${escapeHtml('Weak link: ' + describeAnalysisWeakLink(snapshot.analysis))}</span>
+    </div>
+    <div class="report-trend">${history.map(item=>{
+      const h = Math.max(18, Math.round((item.score / maxScore) * 100));
+      return `<div class="report-trend-bar" style="height:${h}%"><span>${escapeHtml(String(item.score))}</span></div>`;
+    }).join('')}</div>
+    <div class="report-list">
+      <div class="report-row"><strong>Best cell now</strong><br>${best ? escapeHtml(best.cell.id + ' · ' + CROPS[best.cell.crop].name + ' · ' + best.score.toFixed(1) + '/10') : '—'}</div>
+      <div class="report-row"><strong>Weakest cell now</strong><br>${weak ? escapeHtml(weak.cell.id + ' · ' + CROPS[weak.cell.crop].name + ' · ' + weak.score.toFixed(1) + '/10') : '—'}</div>
+      <div class="report-row"><strong>Added since baseline</strong><br>${escapeHtml(String(snapshot.added))} new planted cells · ${escapeHtml(String(snapshot.removed))} removed</div>
+    </div>
+    <div class="report-actions">
+      <button class="mini-btn primary" type="button" id="printSeasonReportBtn">Print report</button>
+      <button class="mini-btn" type="button" id="resetSeasonBaselineBtn">Capture fresh baseline</button>
+    </div>
+  </div>`;
+  const printBtn = document.getElementById('printSeasonReportBtn');
+  if(printBtn) printBtn.addEventListener('click', printSeasonReport);
+  const resetBtn = document.getElementById('resetSeasonBaselineBtn');
+  if(resetBtn){
+    resetBtn.addEventListener('click', ()=>{
+      resetActiveBedSeasonBaseline();
+      setPlannerNotice('complete','Season baseline refreshed','The current layout is now the new season-start reference point.');
+      renderRetrospectivePanel();
+    });
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD TAB — summary layer over the live planner state
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6939,28 +9129,15 @@ function collectDashboardCounts(){
 }
 
 function getDashboardHarvestForecast(zone){
-  const frost = FROST_DATES[zone] || FROST_DATES[6] || null;
-  if(!frost) return [];
-  const lastFrostDate = parseFrostDate(frost.lastFrost);
-  const counts = collectDashboardCounts();
-  return Object.keys(counts).map(ck => {
-    const timing = CROP_TIMING[ck];
-    if(!timing) return null;
-    const sowWeek = timing.indoorWeeks !== null ? (timing.transplantWeeks || 0) : -2;
-    const harvestWeek = timing.transplantWeeks !== null
-      ? timing.transplantWeeks + timing.harvestWeeks
-      : (timing.directSow ? sowWeek + timing.harvestWeeks : null);
-    if(!Number.isFinite(harvestWeek)) return null;
-    const harvestMonth = weekToMonth(harvestWeek, lastFrostDate);
-    return {
-      cropKey: ck,
-      count: counts[ck],
-      harvestWeeks: timing.harvestWeeks,
-      harvestMonth,
-      harvestLabel: monthLabelFromFloat(harvestMonth),
-      logged: getHarvestsByCrop(ck).length
-    };
-  }).filter(Boolean).sort((a, b) => a.harvestMonth - b.harvestMonth || a.harvestWeeks - b.harvestWeeks);
+  return buildYieldForecast({ ...inp(), zone:String(zone || getCalendarZone()) }).map(item=>({
+    cropKey: item.cropKey,
+    count: item.count,
+    harvestWeeks: Math.round(item.daysToMaturity / 7),
+    harvestMonth: parseISODate(item.startDate) ? (parseISODate(item.startDate).getMonth() + (parseISODate(item.startDate).getDate() / 31)) : 0,
+    harvestLabel: formatDateWindow(item.startDate, item.endDate),
+    logged: getHarvestsByCrop(item.cropKey).length,
+    confidence: item.confidence
+  }));
 }
 
 function buildDashboardRowSummary(inputs){
@@ -7145,10 +9322,11 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
     : '<div class="dash-empty"><strong>Nothing to score yet.</strong> Paint the bed or use Auto-fill to unlock row health, harvest timing, and live voice notes.<br><button class="state-action" data-action="auto-fill">Auto-fill bed</button></div>';
 
   const weakestAction = weakest[0] ? `<button class="dash-action primary" type="button" data-dashboard-action="inspect-weakest" data-cell-id="${escapeHtml(weakest[0].cell.id)}">Inspect weakest cell</button>` : '';
-  const voicesHtml = voices.map(voice => `<div class="dash-voice">
-    <div class="dash-voice-head" style="color:${voice.color}">${escapeHtml(voice.emoji)} ${escapeHtml(voice.name)}</div>
-    <div class="dash-voice-body">${escapeHtml(voice.line)}</div>
-  </div>`).join('');
+  const voicesHtml = renderCastBoard(voices, {
+    title:'Character board',
+    note:'Four takes on the same bed state. Use them as guidance, not consensus.',
+    embedded:true
+  });
 
   pane.innerHTML = `<div class="dash-stack">
     <section class="dash-hero">
@@ -7172,6 +9350,8 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
       <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="notes">Open notes</button>
       <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="harvest">Open harvest</button>
       <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="calendar">Open calendar</button>
+      <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="experiment">Open experiments</button>
+      <button class="dash-action" type="button" data-dashboard-action="tab" data-target-tab="retrospective">Open season report</button>
     </div>
 
     <section class="dash-grid">
@@ -7191,9 +9371,8 @@ function renderDashboardTab(inputsArg, issuesArg, scoreArg){
         <div class="dash-section-title">Live alerts</div>
         <div>${alertHtml}</div>
       </article>
-      <article class="dash-card full">
-        <div class="dash-section-title">Character board</div>
-        <div class="dash-voices">${voicesHtml}</div>
+      <article class="dash-card full dash-card-cast">
+        ${voicesHtml}
       </article>
     </section>
   </div>`;
@@ -7552,6 +9731,7 @@ if(!localStorage.getItem(TUTORIAL_KEY)&&!hadSaved){
 // SETTINGS MENU
 // ═══════════════════════════════════════════════════════════════════════════════
 function toggleMenu(){
+  if(!document.getElementById('managePanel')?.hasAttribute('data-open') && blockWhileSimulating('Manage actions')) return;
   const ov=document.getElementById('menuOverlay');
   const pn=document.getElementById('managePanel');
   const btn=document.getElementById('openManagePanel');

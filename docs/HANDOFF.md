@@ -1,9 +1,9 @@
 ---
 Status: Active
-Document Version: 1.2
+Document Version: 1.3
 Compatible With: Garden OS v4.3, Story Mode v0.1, Schema v1, Season Engine v4
 Owner: Dave Robertson
-Last Updated: 2026-03-23
+Last Updated: 2026-03-31
 Artifact Class: Ref
 ---
 
@@ -19,7 +19,7 @@ Artifact Class: Ref
 Garden OS is now a hybrid browser-native repo with two active product layers:
 
 1. **Root static tool suite**: planner, legacy season simulator, guides, explainers, and dev tools shipped as direct HTML files from repo root.
-2. **`story-mode/` app**: a Three.js + Vite story-driven prototype served at `/garden-os/story-mode/`.
+2. **`story-mode/` app**: a Three.js + Vite story-driven prototype published at `/garden-os/story-mode-live/` from the `story-mode/` source tree.
 
 The core mission remains the same: make garden decisions explainable, playable, and reusable across planning, simulation, and narrative surfaces.
 
@@ -47,14 +47,14 @@ The core mission remains the same: make garden decisions explainable, playable, 
 ### What Is Actually Live
 
 - Primary public entry: `index.html` with Story Mode as the lead CTA.
-- Current flagship playable build: `/story-mode/`.
+- Current flagship playable build: `/story-mode-live/`.
 - Root planner and legacy season simulator remain live, but Story Mode is the active evolution path.
 - Dev track tools remain important for inspection and validation, but the current `system-map.html` is planner-centric and no longer reflects the full repo accurately (see `docs/SYSTEM_MAP_PROPOSAL.md` for the redesign plan).
 
 ### Important Reality Checks
 
-- Root `CLAUDE.md` still describes a no-build, single-file HTML world. That is true for root tools, but **not** for `story-mode/`, which intentionally uses Vite, Three.js, and Vitest.
-- The repo now has two active simulation surfaces: `garden-league-simulator-v4.html` as the legacy deterministic season sandbox, and `story-mode/` as the active narrative/3D branch.
+- Root `CLAUDE.md` now documents the `story-mode/` exception correctly. Older notes may still refer to the retired `/story-mode/` publish route or the renamed `system-map.html` route.
+- The repo now has two active simulation surfaces: `garden-league-simulator-v4.html` as the legacy deterministic season sandbox, and Story Mode as the active narrative/3D branch built from `story-mode/` and published at `/story-mode-live/`.
 
 ---
 
@@ -67,7 +67,7 @@ The core mission remains the same: make garden decisions explainable, playable, 
 | Tool | File | Lines | Purpose |
 |------|------|-------|---------|
 | Hub | `index.html` | 409 | Public Garden OS launcher with Story Mode as primary CTA |
-| Story Mode | `story-mode/` | app | Active Vite/Three.js narrative prototype |
+| Story Mode | `story-mode-live/` | app | Published Vite/Three.js narrative prototype generated from `story-mode/` |
 | Planner v4.3 | `garden-planner-v4.html` | 6,076 | Core placement UI, scoring breakdown, export/import |
 | Legacy Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | Prior chapter-based season sandbox; still live, no longer the flagship branch |
 | Build Guide | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |
@@ -89,9 +89,10 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 | Area | Path | Purpose |
 |------|------|---------|
-| App entry | `story-mode/index.html` | Story Mode shell served on GitHub Pages |
+| App entry | `story-mode/index.html` | Source shell used for local dev and Vite build entry |
 | Runtime source | `story-mode/src/` | Scene, game, scoring, sync, data, and UI logic |
 | Build output | `story-mode/dist/` | Generated deployable bundle |
+| Published bundle | `story-mode-live/` | GitHub Pages deployment target copied from `story-mode/dist/` |
 | Package manifest | `story-mode/package.json` | Vite + Three.js + Vitest toolchain |
 | Implementation log | `story-mode/progress.md` | Most current build chronology |
 
@@ -341,7 +342,7 @@ Fixed speaking order. Deterministic triggers — no random chatter. 80+ triggers
 - **Vite v7** for dev/build
 - **Vitest** for unit tests
 - **Three.js v0.180** for 3D rendering
-- Output: `/dist/` → deployed to `/story-mode/` on GitHub Pages via `.github/workflows/pages.yml`
+- Output: `/dist/` → staged to `/story-mode-live/` on GitHub Pages via `.github/workflows/pages.yml`
 - Node.js v22 required
 
 ### Key State Objects
@@ -448,7 +449,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 **GitHub Pages:** Push to `main` → auto-deploys via `.github/workflows/pages.yml`.
 
 - Root tools: no build step, served directly from repo root at `davehomeassist.github.io/garden-os/`
-- Story Mode: Vite build → `story-mode/dist/` → served at `davehomeassist.github.io/garden-os/story-mode/`
+- Story Mode: Vite build → `story-mode/dist/` → copied to `story-mode-live/` → served at `davehomeassist.github.io/garden-os/story-mode-live/`
 
 **Testing locally:**
 - Root tools: `python3 -m http.server 8000` from repo root

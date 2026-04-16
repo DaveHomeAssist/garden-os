@@ -3,697 +3,1466 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Garden OS starts with the Garden Planner: place crops, understand the scoring logic, then move into Story Mode, build guides, and ops checklists.">
-<title>Garden OS — Plan, place, and run your raised bed</title>
-<meta property="og:title" content="Garden OS — Plan, place, and run your raised bed">
-<meta property="og:description" content="Open the Garden Planner first, understand the scoring logic, then move into Story Mode, build guides, and ops checklists.">
+<meta name="description" content="Garden OS is a local-first raised bed planner with explainable scoring, build guides, seasonal ops, and Story Mode.">
+<meta property="og:title" content="Garden OS — Plan Your Raised Bed Garden">
+<meta property="og:description" content="Plan a raised bed with explainable scoring, then move into build guides, seasonal ops, and Story Mode.">
 <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davehomeassist.github.io/garden-os/index.html">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Garden OS — Plan, place, and run your raised bed">
-<meta name="twitter:description" content="Garden OS starts with the planner, then connects that layout to Story Mode, build guides, and ops checklists.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Garden OS — Plan Your Raised Bed Garden">
+<meta name="twitter:description" content="Explainable raised-bed planning, build guides, seasonal ops, and Story Mode in one local-first system.">
 <link rel="canonical" href="https://davehomeassist.github.io/garden-os/index.html">
 <link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="var(--soil)">
-<!-- Shared theme — tokens, nav, cards, badges, base styles -->
-<link rel="stylesheet" href="garden-os-theme.css">
-
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5c3d1e">
+<title>Garden OS — Plan Your Raised Bed Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* ── index.html only ─────────────────────────────────────
-     Everything here is unique to this page.
-     Shared styles live in garden-os-theme.css.
-  ──────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   GARDEN OS — REDESIGNED LANDING PAGE
+   Built from brand guide tokens + UX audit recommendations
+   ═══════════════════════════════════════════════════════════════ */
 
-  /* Masthead — centered layout for the home page */
-  .site-masthead {
-    background: var(--soil);
-    background-image:
-      repeating-linear-gradient(
-        90deg,
-        rgba(255,255,255,0.015) 0px,
-        rgba(255,255,255,0.015) 1px,
-        transparent 1px,
-        transparent 40px
-      );
-    border-bottom: 3px solid var(--sun-bright);
-    color: #f5ede0;
-    padding: 2rem 1.5rem 1.75rem;
-    text-align: center;
-  }
+:root {
+  /* Soil */
+  --soil-900: #0f0804; --soil-800: #1a0f07; --soil-700: #2d1a0e;
+  --soil-600: #3d2210; --soil-500: #5c3d1e; --soil-400: #7a5230;
+  --soil-300: #9a6b42; --soil-200: #c8a882; --soil-100: #e8d5b8;
 
-  .site-masthead h1 {
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 5vw, 2.8rem);
-    font-weight: 600;
-    color: #f5ede0;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    margin-bottom: 0.35rem;
-  }
+  /* Leaf */
+  --leaf-900: #0d1f10; --leaf-800: #1a3520; --leaf-700: #2a5030;
+  --leaf-600: #3a6b42; --leaf-500: #52924a; --leaf-400: #6aaa60;
+  --leaf-300: #8aba80; --leaf-200: #b8d8b0; --leaf-100: #dff0dc;
 
-  .site-masthead-sub {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: rgba(245, 237, 224, 0.5);
-  }
+  /* Sun */
+  --sun-900: #3d2000; --sun-800: #6a3800; --sun-700: #9a5800;
+  --sun-600: #c8781a; --sun-500: #e8a030; --sun-400: #f5c14a;
+  --sun-300: #f8d470; --sun-200: #fbe8a8; --sun-100: #fdf5dc;
 
-  .planner-launch {
-    max-width: 980px;
-    margin: 1.35rem auto 0;
-    padding: 0 1.25rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
-    gap: 1rem;
-  }
+  /* Cream */
+  --cream-900: #2a2018; --cream-800: #4a3828; --cream-700: #6a5540;
+  --cream-600: #8a7258; --cream-500: #aa9070; --cream-400: #c8b090;
+  --cream-300: #ddd0b8; --cream-200: #ede5d8; --cream-100: #f7f2ea;
+  --cream-50: #faf8f4;
 
-  .planner-launch-main,
-  .planner-launch-side {
-    border-radius: var(--radius-lg);
-    border: 1.5px solid var(--border-soft);
-    background: var(--panel);
-    box-shadow: var(--shadow-sm);
-  }
+  /* Semantic */
+  --bg: #faf8f4; --bg-panel: #f7f2ea; --bg-card: #ffffff;
+  --text: #2d1a0e; --text-mid: #7a5230; --text-dim: #8a7258;
+  --text-link: #3a6b42; --border: #ddd0b8; --border-mid: #c8b090;
+  --accent: #c8781a; --accent-soft: #fdf5dc;
+  --good: #3a6b42; --warn: #c85820; --bad: #b02a1e;
 
-  .planner-launch-main {
-    padding: 1.45rem 1.5rem;
-    background:
-      linear-gradient(135deg, rgba(78, 140, 60, 0.08), rgba(232, 200, 74, 0.12)),
-      var(--panel);
-  }
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
+  --shadow-md: 0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,.1);
+  --shadow-lift: 0 8px 32px rgba(0,0,0,.12);
 
-  .planner-launch-side {
-    padding: 1.3rem 1.35rem;
-  }
+  /* Radius */
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px; --r-full: 9999px;
+}
 
-  .planner-launch-kicker,
-  .workflow-kicker {
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--leaf);
-    margin-bottom: 0.45rem;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .planner-launch h2 {
-    font-size: clamp(1.35rem, 3vw, 2rem);
-    margin-bottom: 0.6rem;
-  }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
-  .planner-launch p {
-    color: var(--text-soft);
-    max-width: 58ch;
-  }
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
 
-  .planner-launch-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -48px;
+  z-index: 200;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--soil-700);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: top 0.2s ease;
+}
 
-  .planner-launch-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    margin-top: 1rem;
-  }
+.skip-link:focus {
+  top: 16px;
+}
 
-  .planner-launch-side h3 {
-    font-size: 1rem;
-    margin-bottom: 0.45rem;
-  }
+/* ─── NAV ─── */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(250, 248, 244, 0.92);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 0.3s;
+}
+.nav.scrolled { box-shadow: var(--shadow-md); }
+.nav-inner {
+  max-width: 1120px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--text);
+}
+.nav-logo-mark {
+  width: 32px; height: 32px; border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--leaf-600), var(--leaf-400));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.nav-logo-text {
+  font-family: 'Fraunces', serif; font-weight: 400; font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.nav-links { display: flex; align-items: center; gap: 8px; }
+.nav-link {
+  font-size: 13px; font-weight: 500; color: var(--text-mid);
+  text-decoration: none; padding: 6px 14px; border-radius: var(--r-full);
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--text); background: var(--cream-200); }
+.nav-cta {
+  font-size: 13px; font-weight: 600; color: white;
+  background: var(--soil-500); text-decoration: none;
+  padding: 8px 20px; border-radius: var(--r-full);
+  transition: all 0.25s;
+}
+.nav-cta:hover { background: var(--soil-600); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
-  .planner-launch-side p {
-    color: var(--text-soft);
-    font-size: 0.84rem;
-    margin-bottom: 0.5rem;
-  }
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 80%, rgba(182,216,176,0.25), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(253,245,220,0.5), transparent),
+    radial-gradient(ellipse 50% 60% at 50% 50%, rgba(200,168,130,0.08), transparent);
+  pointer-events: none;
+}
+.hero-inner {
+  max-width: 1120px; width: 100%; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px;
+  align-items: center; position: relative; z-index: 1;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--leaf-600); background: var(--leaf-100);
+  padding: 5px 14px; border-radius: var(--r-full);
+  margin-bottom: 20px;
+}
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--leaf-500); animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+.hero h1 {
+  font-family: 'Fraunces', serif; font-weight: 200;
+  font-size: clamp(36px, 5vw, 56px); line-height: 1.1;
+  letter-spacing: -1.5px; color: var(--soil-700);
+  margin-bottom: 20px;
+}
+.hero h1 em {
+  font-style: italic; font-weight: 300;
+  color: var(--leaf-600);
+}
+.hero-sub {
+  font-size: 19px; line-height: 1.7; color: var(--text-mid);
+  max-width: 500px; margin-bottom: 32px;
+}
+.hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600;
+  color: white; background: var(--sun-600);
+  padding: 16px 36px; border-radius: var(--r-full);
+  text-decoration: none; border: none; cursor: pointer;
+  transition: all 0.25s; box-shadow: 0 4px 16px rgba(200,120,26,0.25);
+}
+.btn-primary:hover {
+  background: var(--sun-700); transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(200,120,26,0.3);
+}
+.btn-primary svg { transition: transform 0.2s; }
+.btn-primary:hover svg { transform: translateX(3px); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 600; color: var(--soil-500);
+  text-decoration: none; padding: 13px 24px;
+  border: 2px solid var(--soil-200); border-radius: var(--r-full);
+  background: rgba(232,213,184,0.15);
+  transition: all 0.25s;
+}
+.btn-secondary:hover { border-color: var(--soil-400); color: var(--soil-600); background: rgba(232,213,184,0.3); transform: translateY(-1px); }
+.hero-micro {
+  font-size: 12px; color: var(--text-dim);
+  margin-top: 12px; font-family: 'DM Mono', monospace;
+  letter-spacing: 0.3px;
+}
+.hero-trust-bar {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 28px; margin-bottom: 20px;
+}
+.trust-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 500; color: var(--leaf-700);
+  background: var(--leaf-100); border: 1px solid var(--leaf-200);
+  padding: 6px 14px; border-radius: var(--r-full);
+}
+.hero-proof {
+  display: flex; align-items: center; gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.hero-proof-stat { text-align: center; }
+.hero-proof-stat strong {
+  display: block; font-family: 'Fraunces', serif; font-weight: 600;
+  font-size: 22px; color: var(--soil-600);
+}
+.hero-proof-stat span {
+  font-size: 11px; color: var(--text-dim);
+  font-family: 'DM Mono', monospace; text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.hero-proof-divider {
+  width: 1px; height: 36px; background: var(--border);
+}
 
-  .planner-launch-steps {
-    display: grid;
-    gap: 0.7rem;
-    margin-top: 0.8rem;
-  }
+/* Hero Screenshot */
+.hero-visual {
+  position: relative; border-radius: var(--r-xl);
+  overflow: hidden;
+}
+.hero-screenshot {
+  width: 100%; border-radius: var(--r-xl);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+.screenshot-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; background: var(--cream-100);
+  border-bottom: 1px solid var(--border);
+}
+.screenshot-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.screenshot-url {
+  flex: 1; margin-left: 8px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text-dim); background: var(--cream-200);
+  padding: 3px 10px; border-radius: var(--r-sm);
+}
+.screenshot-grid {
+  padding: 20px; display: grid;
+  grid-template-columns: 100px 1fr; gap: 16px;
+  min-height: 320px;
+}
+.screenshot-sidebar {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.screenshot-crop {
+  padding: 8px 10px; border-radius: var(--r-md);
+  font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  cursor: default; transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.screenshot-crop:hover { background: var(--cream-100); }
+.screenshot-crop.active { background: var(--leaf-100); border-color: var(--leaf-300); color: var(--leaf-700); }
+.screenshot-crop-dot {
+  width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+}
+.screenshot-bed {
+  background: var(--cream-100); border-radius: var(--r-md);
+  border: 1.5px solid var(--border);
+  display: grid; grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(4, 1fr); gap: 3px; padding: 8px;
+  position: relative;
+}
+.bed-cell {
+  aspect-ratio: 1; border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; position: relative;
+  transition: all 0.3s ease;
+}
+.bed-cell.filled { cursor: default; }
+.bed-cell.empty { background: var(--cream-200); }
+.bed-cell .score-pip {
+  position: absolute; bottom: 1px; right: 1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  font-size: 0; border: 1.5px solid white;
+}
+.screenshot-tooltip {
+  position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+  background: var(--soil-700); color: white;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+  padding: 6px 14px; border-radius: var(--r-full);
+  box-shadow: var(--shadow-lg);
+  font-family: 'DM Sans', sans-serif;
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+.screenshot-bed:hover .screenshot-tooltip { opacity: 1; }
+.bed-label {
+  position: absolute; top: -28px; left: 8px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.bed-score-bar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px 0; border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.bed-score-item {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text-dim); display: flex; align-items: center; gap: 4px;
+}
+.bed-score-val {
+  font-weight: 500; padding: 1px 6px; border-radius: var(--r-sm);
+}
+.floating-tag {
+  position: absolute; padding: 5px 12px; border-radius: var(--r-full);
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+  box-shadow: var(--shadow-md); pointer-events: none;
+  animation: floatIn 0.8s ease both;
+}
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  .planner-launch-step {
-    padding-top: 0.7rem;
-    border-top: 1px solid var(--border-subtle);
-  }
+/* ─── BENEFITS SECTION ─── */
+.benefits {
+  padding: 100px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.benefits-inner {
+  max-width: 1120px; margin: 0 auto;
+}
+.benefits-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+  margin-top: 48px;
+}
+.benefit-card {
+  padding: 32px; border-radius: var(--r-lg);
+  background: var(--bg);
+  border-left: 4px solid var(--border);
+  transition: all 0.3s;
+}
+.benefit-card:nth-child(1) { border-left-color: var(--sun-500); }
+.benefit-card:nth-child(2) { border-left-color: var(--leaf-500); }
+.benefit-card:nth-child(3) { border-left-color: var(--soil-500); }
+.benefit-card:hover {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.benefit-card h3 {
+  font-family: 'Fraunces', serif; font-weight: 400;
+  font-size: 18px; color: var(--soil-600); margin-bottom: 12px;
+}
+.benefit-card p {
+  font-size: 14px; color: var(--text-mid); line-height: 1.65;
+}
 
-  .planner-launch-step strong {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.98rem;
-    color: var(--text);
-    margin-bottom: 0.2rem;
-  }
+/* ─── HOW IT WORKS ─── */
+.how-section {
+  padding: 100px 24px;
+  background: white;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.section-inner { max-width: 1120px; margin: 0 auto; }
+.section-label {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--sun-600); margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Fraunces', serif; font-weight: 300;
+  font-size: clamp(28px, 3.5vw, 40px); line-height: 1.2;
+  letter-spacing: -0.8px; color: var(--soil-700);
+  margin-bottom: 12px;
+}
+.section-sub {
+  font-size: 17px; color: var(--text-mid);
+  max-width: 580px; margin-bottom: 48px; line-height: 1.65;
+}
+.steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+  position: relative;
+}
+.steps::before {
+  content: ''; position: absolute; top: 44px; left: 15%; right: 15%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 8px, transparent 8px, transparent 16px);
+}
+.step {
+  text-align: center; position: relative; z-index: 1;
+}
+.step-num {
+  width: 64px; height: 64px; margin: 0 auto 20px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif; font-weight: 600; font-size: 24px;
+  transition: all 0.3s;
+}
+.step:nth-child(1) .step-num { background: var(--sun-100); color: var(--sun-700); border: 2px solid var(--sun-300); }
+.step:nth-child(2) .step-num { background: var(--leaf-100); color: var(--leaf-700); border: 2px solid var(--leaf-300); }
+.step:nth-child(3) .step-num { background: var(--soil-100); color: var(--soil-500); border: 2px solid var(--soil-200); }
+.step:hover .step-num { transform: scale(1.08); box-shadow: var(--shadow-md); }
+.step-icon { font-size: 26px; margin-bottom: 4px; }
+.step h3 {
+  font-family: 'Fraunces', serif; font-weight: 400;
+  font-size: 20px; color: var(--soil-600); margin-bottom: 8px;
+}
+.step p {
+  font-size: 15px; color: var(--text-mid); line-height: 1.65;
+  max-width: 300px; margin: 0 auto;
+}
 
-  .planner-launch-step span {
-    display: block;
-    color: var(--text-soft);
-    font-size: 0.82rem;
-    line-height: 1.55;
-  }
+/* ─── PLANNER SPOTLIGHT ─── */
+.spotlight {
+  padding: 100px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.spotlight::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 70% 40%, rgba(223,240,220,0.4), transparent);
+  pointer-events: none;
+}
+.spotlight-inner {
+  max-width: 1120px; margin: 0 auto; position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+}
+.feature-list { display: flex; flex-direction: column; gap: 20px; margin: 32px 0; }
+.feature-item {
+  display: flex; gap: 16px; padding: 16px;
+  border-radius: var(--r-lg); transition: all 0.2s;
+}
+.feature-item:hover { background: white; box-shadow: var(--shadow-sm); }
+.feature-icon {
+  width: 44px; height: 44px; border-radius: var(--r-md); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.feature-item:nth-child(1) .feature-icon { background: var(--sun-100); }
+.feature-item:nth-child(2) .feature-icon { background: var(--leaf-100); }
+.feature-item:nth-child(3) .feature-icon { background: #f0e8f8; }
+.feature-item:nth-child(4) .feature-icon { background: var(--cream-200); }
+.feature-text h4 {
+  font-family: 'Fraunces', serif; font-weight: 400;
+  font-size: 16px; color: var(--soil-600); margin-bottom: 4px;
+}
+.feature-text p { font-size: 14px; color: var(--text-mid); line-height: 1.6; }
 
-  /* Hero video */
-  .hero-video-wrap {
-    max-width: 740px;
-    margin: 2rem auto 0;
-    padding: 0 1.25rem;
-  }
-  .hero-video-wrap video {
-    width: 100%;
-    border-radius: var(--radius-lg);
-    border: 2px solid var(--border-soft);
-    display: block;
-    box-shadow: var(--shadow-md);
-  }
+.spotlight-visual {
+  background: white; border-radius: var(--r-xl);
+  border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+  padding: 24px; position: relative;
+}
+.scoring-demo { display: flex; flex-direction: column; gap: 16px; }
+.scoring-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.scoring-header h4 {
+  font-family: 'Fraunces', serif; font-weight: 400; font-size: 16px;
+  color: var(--soil-600);
+}
+.scoring-crop {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: var(--r-full);
+  background: var(--leaf-100); border: 1px solid var(--leaf-300);
+  font-size: 13px; font-weight: 500; color: var(--leaf-700);
+}
+.score-bars { display: flex; flex-direction: column; gap: 10px; }
+.score-row {
+  display: flex; align-items: center; gap: 12px;
+}
+.score-label {
+  width: 100px; font-size: 12px; font-weight: 500;
+  color: var(--text-mid); text-align: right;
+}
+.score-track {
+  flex: 1; height: 8px; border-radius: var(--r-full);
+  background: var(--cream-200); overflow: hidden; position: relative;
+}
+.score-fill {
+  height: 100%; border-radius: var(--r-full);
+  transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+.score-val {
+  width: 36px; font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 500;
+}
+.scoring-verdict {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 18px; border-radius: var(--r-md);
+  background: var(--leaf-100); border: 1px solid var(--leaf-200);
+  font-size: 14px; color: var(--leaf-700); font-weight: 500;
+  line-height: 1.55; margin-bottom: 12px;
+}
+.output-bar {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 10px 14px; border-top: 1px solid var(--border);
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text-dim);
+}
+.output-bar span { display: flex; align-items: center; gap: 4px; }
 
-  /* Section header above the hub */
-  .hub-header {
-    max-width: 740px;
-    margin: 2.5rem auto 0.75rem;
-    padding: 0 1.25rem;
-  }
-  .hub-header-label {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--text-muted);
-    margin-bottom: 0.2rem;
-  }
-  .hub-header-title {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.01em;
-  }
+/* ─── GUIDES ─── */
+.guides {
+  padding: 100px 24px;
+  background: white;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.guide-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  margin-top: 48px;
+}
+.guide-card {
+  padding: 32px; border-radius: var(--r-xl);
+  border: 1px solid var(--border); background: var(--bg);
+  transition: all 0.3s; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 16px;
+  position: relative; overflow: hidden;
+}
+.guide-card::after {
+  content: '→'; position: absolute; top: 32px; right: 32px;
+  font-size: 20px; color: var(--border-mid);
+  transition: all 0.25s;
+}
+.guide-card:hover {
+  border-color: var(--border-mid); background: white;
+  box-shadow: var(--shadow-md); transform: translateY(-2px);
+}
+.guide-card:hover::after { color: var(--accent); transform: translateX(4px); }
+.guide-icon {
+  width: 48px; height: 48px; border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.guide-card:nth-child(1) .guide-icon { background: var(--soil-100); }
+.guide-card:nth-child(2) .guide-icon { background: var(--leaf-100); }
+.guide-card h3 {
+  font-family: 'Fraunces', serif; font-weight: 400;
+  font-size: 20px; color: var(--soil-600);
+}
+.guide-card p { font-size: 14px; color: var(--text-mid); line-height: 1.6; }
+.guide-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-dim); padding: 3px 10px;
+  background: var(--cream-200); border-radius: var(--r-full);
+  align-self: flex-start;
+}
 
-  .tool-card--planner-featured {
-    background:
-      linear-gradient(135deg, rgba(78, 140, 60, 0.12), rgba(232, 200, 74, 0.18)),
-      var(--panel);
-    border-color: rgba(78, 140, 60, 0.28);
-    box-shadow: 0 18px 32px rgba(58, 107, 42, 0.12);
-  }
+/* ─── RESULTS / WHAT YOU GET ─── */
+.results {
+  padding: 100px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.results-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px;
+  margin-top: 48px;
+}
+.result-item {
+  padding: 32px; border-radius: var(--r-lg);
+  border: 1px solid var(--border); background: var(--bg);
+  transition: all 0.3s;
+}
+.result-item:hover {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-mid);
+}
+.result-item h3 {
+  font-family: 'Fraunces', serif; font-weight: 400;
+  font-size: 18px; color: var(--soil-600); margin-bottom: 12px;
+}
+.result-item p {
+  font-size: 14px; color: var(--text-mid); line-height: 1.65;
+}
 
-  /* Hub grid */
-  .hub {
-    max-width: 740px;
-    margin: 0 auto 3rem;
-    padding: 0 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-  }
+/* ─── STORY MODE ─── */
+.story {
+  padding: 100px 24px;
+  position: relative;
+}
+.story-card {
+  max-width: 1120px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px;
+  align-items: center;
+  padding: 48px; border-radius: var(--r-xl);
+  background: linear-gradient(135deg, var(--soil-800), var(--soil-700));
+  color: white; position: relative; overflow: hidden;
+}
+.story-card::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(106,170,96,0.15), transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(200,120,26,0.1), transparent 50%);
+  pointer-events: none;
+}
+.story-content { position: relative; z-index: 1; }
+.story-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--sun-400); background: rgba(245,193,74,0.12);
+  padding: 4px 12px; border-radius: var(--r-full);
+  margin-bottom: 16px;
+}
+.story-content h2 {
+  font-family: 'Fraunces', serif; font-weight: 300;
+  font-size: 32px; line-height: 1.2; letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+.story-content p {
+  font-size: 15px; line-height: 1.7;
+  color: rgba(255,255,255,0.7); margin-bottom: 28px;
+  max-width: 420px;
+}
+.btn-story {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--sun-400);
+  background: rgba(245,193,74,0.12); border: 1px solid rgba(245,193,74,0.25);
+  padding: 10px 24px; border-radius: var(--r-full);
+  text-decoration: none; transition: all 0.25s;
+}
+.btn-story:hover {
+  background: rgba(245,193,74,0.2); border-color: rgba(245,193,74,0.4);
+  transform: translateY(-1px);
+}
+.story-preview {
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,0.06); border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 24px; display: flex; flex-direction: column; gap: 16px;
+}
+.story-chapter {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: var(--r-md);
+  transition: all 0.2s;
+}
+.story-chapter:hover { background: rgba(255,255,255,0.05); }
+.story-chapter.active { background: rgba(106,170,96,0.15); border: 1px solid rgba(106,170,96,0.25); }
+.story-ch-num {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: rgba(255,255,255,0.35); width: 20px;
+}
+.story-ch-title { font-size: 13px; font-weight: 500; flex: 1; }
+.story-ch-season {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: rgba(255,255,255,0.4); padding: 2px 8px;
+  background: rgba(255,255,255,0.06); border-radius: var(--r-sm);
+}
 
-  /* Tool cards — extend .os-card */
-  .tool-card {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    text-decoration: none;
-    color: var(--text);
-    background: var(--panel);
-    border: 1.5px solid var(--border-soft);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.3rem;
-    transition: transform var(--ease-out), box-shadow var(--ease-out), border-color var(--ease);
-  }
-  .tool-card--featured {
-    background:
-      linear-gradient(135deg, rgba(112, 78, 33, 0.22), rgba(37, 61, 40, 0.2)),
-      var(--panel);
-    border-color: rgba(232, 200, 74, 0.34);
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
-  }
-  .tool-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--border);
-    text-decoration: none;
-  }
-  .tool-card:focus-visible {
-    outline: 3px solid var(--leaf-bright);
-    outline-offset: 3px;
-  }
+/* ─── SOCIAL PROOF ─── */
+.proof {
+  padding: 100px 24px;
+  background: white;
+  border-top: 1px solid var(--border);
+}
+.proof-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  margin-top: 48px;
+}
+.proof-card {
+  padding: 28px; border-radius: var(--r-xl);
+  border: 1px solid var(--border); background: var(--bg);
+}
+.proof-quote {
+  font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+  font-size: 16px; line-height: 1.6; color: var(--soil-600);
+  margin-bottom: 20px; position: relative; padding-left: 20px;
+}
+.proof-quote::before {
+  content: '"'; position: absolute; left: 0; top: -4px;
+  font-size: 32px; color: var(--sun-400); font-style: normal;
+  font-weight: 600; line-height: 1;
+}
+.proof-author {
+  display: flex; align-items: center; gap: 12px;
+}
+.proof-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; color: white;
+}
+.proof-name {
+  font-size: 13px; font-weight: 600; color: var(--soil-600);
+}
+.proof-role {
+  font-size: 11px; color: var(--text-dim);
+}
+.proof-outcome {
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--leaf-600);
+  display: flex; align-items: center; gap: 6px;
+}
+.proof-outcome::before {
+  content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--leaf-100); color: var(--leaf-600);
+  font-size: 10px; flex-shrink: 0;
+}
+.proof-stats-bar {
+  display: flex; align-items: center; justify-content: center; gap: 32px;
+  padding: 24px 0; border-top: 1px solid var(--border);
+  margin-top: 32px; font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text-dim);
+}
+.proof-stats-bar span { display: flex; align-items: center; gap: 4px; }
 
-  .tool-card-icon {
-    font-size: 1.9rem;
-    flex-shrink: 0;
-    width: 48px;
-    text-align: center;
-    line-height: 1;
+/* ─── FINAL CTA ─── */
+.final-cta {
+  padding: 120px 24px; background: var(--soil-800);
+  color: white; text-align: center; position: relative; overflow: hidden;
+}
+.final-cta::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(106,170,96,0.08), transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(200,120,26,0.08), transparent 50%);
+  pointer-events: none;
+}
+.final-cta-inner {
+  max-width: 700px; margin: 0 auto; position: relative; z-index: 1;
+}
+.final-cta h2 {
+  font-family: 'Fraunces', serif; font-weight: 300;
+  font-size: clamp(36px, 5vw, 48px); line-height: 1.2;
+  letter-spacing: -1px; margin-bottom: 20px;
+}
+.final-cta p {
+  font-size: 18px; line-height: 1.7; margin-bottom: 40px;
+  color: rgba(255,255,255,0.8);
+}
+.final-cta .btn-primary {
+  margin-bottom: 28px;
+}
+.final-cta-sub {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.3px;
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  padding: 60px 24px 40px;
+  border-top: 1px solid var(--border);
+}
+.footer-inner {
+  max-width: 1120px; margin: 0 auto;
+  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px;
+}
+.footer-brand p {
+  font-size: 13px; color: var(--text-dim); line-height: 1.6;
+  margin-top: 12px; max-width: 280px;
+}
+.footer-col h4 {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-dim); margin-bottom: 16px;
+}
+.footer-col a {
+  display: block; font-size: 13px; color: var(--text-mid);
+  text-decoration: none; padding: 4px 0; transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--text-link); }
+.footer-bottom {
+  max-width: 1120px; margin: 40px auto 0;
+  padding-top: 20px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-bottom span {
+  font-size: 12px; color: var(--text-dim);
+}
+.footer-badge {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text-dim); background: var(--cream-200);
+  padding: 4px 12px; border-radius: var(--r-full);
+}
+
+/* ─── STICKY CTA ─── */
+.sticky-cta {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 99;
+  background: rgba(250,248,244,0.95);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.sticky-cta.visible { transform: translateY(0); }
+.sticky-inner {
+  max-width: 1120px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sticky-text {
+  font-size: 14px; font-weight: 500; color: var(--text-mid);
+}
+.sticky-text strong { color: var(--text); }
+.btn-sticky {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: white;
+  background: var(--sun-600); padding: 10px 24px;
+  border-radius: var(--r-full); text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-sticky:hover { background: var(--sun-700); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-visual { max-width: 560px; }
+  .steps { grid-template-columns: 1fr; gap: 24px; }
+  .steps::before { display: none; }
+  .spotlight-inner { grid-template-columns: 1fr; }
+  .guide-grid { grid-template-columns: 1fr; }
+  .results-grid { grid-template-columns: 1fr; }
+  .story-card { grid-template-columns: 1fr; }
+  .proof-grid { grid-template-columns: 1fr; }
+  .benefits-grid { grid-template-columns: 1fr; }
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .nav-links { display: flex; }
+  .nav-link { display: none; }
+  .proof-stats-bar { flex-direction: column; gap: 12px; }
+}
+@media (max-width: 500px) {
+  .hero { padding: 100px 16px 60px; }
+  .hero h1 { font-size: 32px; }
+  .hero-trust-bar { flex-direction: column; }
+  .hero-proof { flex-wrap: wrap; gap: 12px; }
+  .footer-inner { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .btn-primary, .btn-secondary { justify-content: center; }
+  .proof-grid { gap: 16px; }
+  .benefits-grid { grid-template-columns: 1fr; }
+  .results-grid { grid-template-columns: 1fr; }
+  .output-bar { flex-direction: column; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
   }
-
-  .tool-card-body { flex: 1; min-width: 0; }
-
-  .tool-card-title {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.2rem;
-    letter-spacing: -0.01em;
-  }
-
-  .tool-card-desc {
-    font-size: 0.8rem;
-    color: var(--text-soft);
-    line-height: 1.55;
-    margin-bottom: 0.45rem;
-  }
-
-  .tool-card-desc strong {
-    color: var(--text);
-    font-weight: 600;
-  }
-
-  /* Chevron arrow */
-  .tool-card-arrow {
-    font-size: 1rem;
-    color: var(--border);
-    flex-shrink: 0;
-    transition: color var(--ease), transform var(--ease);
-  }
-  .tool-card:hover .tool-card-arrow {
-    color: var(--leaf-bright);
-    transform: translateX(3px);
-  }
-
-  .workflow-strip {
-    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(242, 232, 216, 0.65));
-    border: 1.5px solid var(--border-soft);
-    border-radius: var(--radius-lg);
-    padding: 1.2rem 1.25rem;
-    box-shadow: var(--shadow-xs);
-  }
-
-  .workflow-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.9rem;
-  }
-
-  .workflow-title {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .workflow-copy {
-    color: var(--text-soft);
-    font-size: 0.84rem;
-    max-width: 38ch;
-  }
-
-  .workflow-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-  }
-
-  .workflow-card {
-    display: block;
-    text-decoration: none;
-    color: var(--text);
-    background: rgba(255,255,255,0.78);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius);
-    padding: 0.9rem 0.95rem;
-    transition: transform var(--ease-out), border-color var(--ease), box-shadow var(--ease-out);
-  }
-
-  .workflow-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border);
-    box-shadow: var(--shadow-sm);
-    text-decoration: none;
-  }
-
-  .workflow-step {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--leaf);
-    margin-bottom: 0.35rem;
-  }
-
-  .workflow-card strong {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.98rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .workflow-card span:last-child {
-    display: block;
-    color: var(--text-soft);
-    font-size: 0.8rem;
-    line-height: 1.55;
-  }
-
-  /* Divider between tool groups */
-  .hub-divider {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem 0;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--text-muted);
-  }
-  .hub-divider::before,
-  .hub-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border-subtle);
-  }
-
-  .os-nav-back {
-    color: rgba(245, 237, 224, 0.35);
-    text-decoration: none;
-    font-size: .7rem;
-    letter-spacing: .04em;
-    margin-right: .5rem;
-    transition: color var(--ease, .18s ease);
-  }
-  .os-nav-back:hover { color: rgba(245, 237, 224, 0.8); }
-
-  .os-badge--story {
-    background: rgba(232, 200, 74, 0.14);
-    color: #f5ede0;
-    border: 1px solid rgba(232, 200, 74, 0.24);
-  }
-
-  @media (max-width: 900px) {
-    .planner-launch {
-      grid-template-columns: 1fr;
-    }
-
-    .workflow-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 500px) {
-    .planner-launch,
-    .hero-video-wrap,
-    .hub-header,
-    .hub {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .planner-launch-main,
-    .planner-launch-side,
-    .workflow-strip {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .planner-launch-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .planner-launch-actions .os-btn {
-      justify-content: center;
-      width: 100%;
-    }
-
-    .tool-card { flex-direction: column; text-align: center; }
-    .tool-card-icon { width: auto; }
-    .tool-card-arrow { display: none; }
-    .workflow-grid { grid-template-columns: 1fr; }
-  }
+}
 </style>
 </head>
-<body>
-<a href="#hub" class="skip-link">Skip to tools</a>
+<body id="top">
 
-<!-- Shared nav -->
-<nav class="os-nav" aria-label="Garden OS tools">
-  <a href="https://davehomeassist.github.io/" class="os-nav-back">&larr; All Projects</a>
-  <a href="story-mode/">Story Mode</a>
-  <a href="index.html" class="active" aria-current="page">Hub</a>
-  <a href="garden-planner-v4.html" class="os-nav-cta">Open Planner</a>
-  <a href="garden-cage-build-guide.html">Build Guide</a>
-  <a href="garden-cage-ops-guide.html">Ops Guide</a>
-  <a href="brand-guide.html">Brand Guide</a>
-  <a href="how-it-thinks.html">How It Thinks</a>
-  <a href="scoring-visualizer.html" class="os-nav-utility">Dev Tools →</a>
-</nav>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
-<!-- Masthead -->
-<header class="site-masthead" role="banner">
-  <img src="images/gos-logo-mark.png" alt="Garden OS logo" width="56" height="56" style="border-radius:8px;margin-bottom:0.5rem">
-  <h1>Garden OS</h1>
-  <p class="site-masthead-sub">Mom's Sanctuary &nbsp;·&nbsp; Planner-First Hub &nbsp;·&nbsp; Story Mode &amp; Build Guides</p>
-</header>
-
-<section class="planner-launch" aria-labelledby="planner-launch-title">
-  <div class="planner-launch-main">
-    <div class="planner-launch-kicker">Fastest Way In</div>
-    <h2 id="planner-launch-title">Open the Garden Planner first if you want a layout, not a tour.</h2>
-    <p>The Planner is the shortest path to a useful Garden OS outcome: place crops, see live fit and companion guidance, then branch into Story Mode, build instructions, or seasonal ops once the bed is real.</p>
-    <div class="planner-launch-actions">
-      <a class="os-btn os-btn--primary os-btn--lg" href="garden-planner-v4.html">Open Garden Planner</a>
-      <a class="os-btn os-btn--outline" href="how-it-thinks.html">See why placements score well</a>
-      <a class="os-btn os-btn--ghost" href="garden-cage-build-guide.html">Build from a finished plan</a>
-    </div>
-    <div class="planner-launch-tags" aria-label="Planner highlights">
-      <span class="os-badge os-badge--planner">Live crop placement</span>
-      <span class="os-badge os-badge--good">Instant fit feedback</span>
-      <span class="os-badge os-badge--ref">Square-level explanations</span>
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#top" aria-label="Garden OS home">
+      <div class="nav-logo-mark">🌱</div>
+      <span class="nav-logo-text">Garden OS</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="#how">How It Works</a>
+      <a class="nav-link" href="#features">Features</a>
+      <a class="nav-link" href="#guides">Guides</a>
+      <a class="nav-link" href="garden-doctor.html">Garden Doctor</a>
+      <a class="nav-cta" href="garden-planner-v4.html">Open Planner</a>
     </div>
   </div>
-  <aside class="planner-launch-side" aria-label="Recommended path">
-    <div class="planner-launch-kicker">Recommended Path</div>
-    <h3>Plan first, then deepen.</h3>
-    <p>Garden OS is broad now. This gets a first-time visitor to a working bed without wandering through every document first.</p>
-    <div class="planner-launch-steps">
-      <div class="planner-launch-step">
-        <strong>1. Place crops in the Planner</strong>
-        <span>Start with a bed that exists, not abstract architecture.</span>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<main id="main-content">
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge">Free &amp; Open-Source Tool</div>
+      <h1>Catch spacing mistakes, companion conflicts, and timing gaps <em>— before you plant</em></h1>
+      <p class="hero-sub">
+        Garden OS is a free raised bed planner with built-in layout logic. Drop crops onto your 8×4 grid and get instant scoring on sun, spacing, companions, and season fit — with plain-English explanations for every square.
+      </p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="garden-planner-v4.html">
+          Build Your Garden Plan
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn-secondary" href="#how">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          See how it works
+        </a>
       </div>
-      <div class="planner-launch-step">
-        <strong>2. Open “How It Thinks” if a score surprises you</strong>
-        <span>Use the plain-English explainer only when you need the reasoning unpacked.</span>
+      <div class="hero-micro">Open instantly — no signup, no download, no data collected</div>
+      <div class="hero-trust-bar">
+        <div class="trust-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          100% browser-based — your layout stays on your device
+        </div>
+        <div class="trust-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          No account or install needed
+        </div>
+        <div class="trust-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--leaf-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Open source — zero tracking, zero ads
+        </div>
       </div>
-      <div class="planner-launch-step">
-        <strong>3. Move into build and ops guides</strong>
-        <span>Turn the saved layout into a cage build, maintenance plan, and season workflow.</span>
+      <div class="hero-proof">
+        <div class="hero-proof-stat">
+          <strong>4×8 / 8×4</strong>
+          <span>Bed Layouts</span>
+        </div>
+        <div class="hero-proof-divider"></div>
+        <div class="hero-proof-stat">
+          <strong>32</strong>
+          <span>Cells Modeled</span>
+        </div>
+        <div class="hero-proof-divider"></div>
+        <div class="hero-proof-stat">
+          <strong>Explainable</strong>
+          <span>Placement Logic</span>
+        </div>
+        <div class="hero-proof-divider"></div>
+        <div class="hero-proof-stat">
+          <strong>Local-First</strong>
+          <span>Saved In Browser</span>
+        </div>
       </div>
     </div>
-  </aside>
+
+    <!-- Simulated Planner Screenshot -->
+    <div class="hero-visual">
+      <div class="hero-screenshot">
+        <div class="screenshot-bar">
+          <div class="screenshot-dot" style="background:#E85D5D"></div>
+          <div class="screenshot-dot" style="background:#E8A84C"></div>
+          <div class="screenshot-dot" style="background:#6ECF8A"></div>
+          <span class="screenshot-url">garden-planner-v4.html</span>
+        </div>
+        <div class="screenshot-grid">
+          <div class="screenshot-sidebar">
+            <div class="screenshot-crop active"><div class="screenshot-crop-dot" style="background:#E85050"></div>Tomato</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#7BC67B"></div>Basil</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#E8A030"></div>Pepper</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#8B6FC0"></div>Eggplant</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#50B8E8"></div>Lettuce</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#E8884C"></div>Carrot</div>
+            <div class="screenshot-crop"><div class="screenshot-crop-dot" style="background:#C8A060"></div>Beans</div>
+          </div>
+          <div style="position:relative;">
+            <div class="screenshot-bed" id="gardenBed">
+              <span class="bed-label">8 × 4 Raised Bed — Spring Layout</span>
+              <!-- Row 1 -->
+              <div class="bed-cell filled" style="background:#fde8e8">🍅<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fde8e8">🍅<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff5e0">🌶️<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#f0e8f8">🍆<span class="score-pip" style="background:#e8a030"></span></div>
+              <div class="bed-cell filled" style="background:#fff5e0">🌶️<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <!-- Row 2 -->
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fde8e8">🍅<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff5e0">🌶️<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#f0e8f8">🍆<span class="score-pip" style="background:#e8a030"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff0e0">🥕<span class="score-pip" style="background:#52924a"></span></div>
+              <!-- Row 3 -->
+              <div class="bed-cell filled" style="background:#fff5e0">🌶️<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fde8e8">🍅<span class="score-pip" style="background:#e8a030"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff0e0">🥕<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff0e0">🥕<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#f5ecd8">🫘<span class="score-pip" style="background:#52924a"></span></div>
+              <!-- Row 4 -->
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fde8e8">🍅<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e8f5e8">🌿<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#fff0e0">🥕<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#f5ecd8">🫘<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#f5ecd8">🫘<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <div class="bed-cell filled" style="background:#e0f0f8">🥬<span class="score-pip" style="background:#52924a"></span></div>
+              <!-- Score bar -->
+              <div class="bed-score-bar">
+                <div class="bed-score-item">☀️ Sun <span class="bed-score-val" style="background:var(--leaf-100);color:var(--leaf-700)">94</span></div>
+                <div class="bed-score-item">🤝 Companion <span class="bed-score-val" style="background:var(--leaf-100);color:var(--leaf-700)">88</span></div>
+                <div class="bed-score-item">📏 Spacing <span class="bed-score-val" style="background:var(--sun-100);color:var(--sun-700)">76</span></div>
+                <div class="bed-score-item">📅 Season <span class="bed-score-val" style="background:var(--leaf-100);color:var(--leaf-700)">91</span></div>
+              </div>
+            </div>
+            <div class="screenshot-tooltip">✓ Tomato + Basil — excellent companions · Sun fit: 94</div>
+          </div>
+        </div>
+      </div>
+      <!-- Floating tags -->
+      <div class="floating-tag" style="top:-10px;right:20px;background:var(--leaf-100);color:var(--leaf-700);border:1px solid var(--leaf-300);animation-delay:0.3s">
+        ✓ Companion match
+      </div>
+      <div class="floating-tag" style="bottom:40px;left:-16px;background:var(--sun-100);color:var(--sun-700);border:1px solid var(--sun-300);animation-delay:0.6s">
+        ☀️ Full sun zone
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- Hero video -->
-<div class="hero-video-wrap">
-  <video autoplay muted loop playsinline preload="none" poster="images/gos-full-scene.png" aria-label="Garden OS Story Mode preview">
-    <source src="assets/hero-wow.mp4" type="video/mp4">
-  </video>
-</div>
-
-<!-- Hub label -->
-<div class="hub-header" aria-hidden="true">
-  <div class="hub-header-label">Quick routes</div>
-  <div class="hub-header-title">Choose a path: plan a bed, open the story world, or move straight into build and operations</div>
-</div>
-
-<!-- Tool hub -->
-<main class="hub" id="hub" aria-label="Garden OS tools">
-
-  <!-- GROUP 1: Start here -->
-  <div class="hub-divider" aria-hidden="true">Start here</div>
-
-  <a class="tool-card tool-card--featured tool-card--planner-featured" href="garden-planner-v4.html">
-    <div class="tool-card-icon" aria-hidden="true">🌱</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Garden Planner</div>
-      <div class="tool-card-desc"><strong>The main working surface.</strong> Plan your raised bed layout, place crops, and get instant feedback on spacing, companions, protection zones, shade, access, and planting timing while the bed is still easy to change.</div>
-      <span class="os-badge os-badge--planner">Planner · v4.3</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="story-mode/">
-    <div class="tool-card-icon" aria-hidden="true">🌿</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Story Mode</div>
-      <div class="tool-card-desc"><strong>Calvin and the sheepdog intro</strong> kick off the current Garden OS campaign: a 12-chapter story with month-aware seasons, winter review, richer 3D yard staging, and reactive dialogue tied to the run you are actually playing.</div>
-      <span class="os-badge os-badge--story">Story Layer</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <section class="workflow-strip" aria-labelledby="workflow-title">
-    <div class="workflow-head">
-      <div>
-        <div class="workflow-kicker">Most Used Flow</div>
-        <div class="workflow-title" id="workflow-title">From first layout to working garden system</div>
+<!-- ═══ CORE BENEFITS ═══ -->
+<section class="benefits">
+  <div class="benefits-inner">
+    <div class="section-label">Why This Exists</div>
+    <h2 class="section-title">Stop guessing. Start knowing.</h2>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <h3>Fewer planting mistakes</h3>
+        <p>The scoring engine flags bad companions, overcrowded squares, and shade conflicts before they cost you a season.</p>
       </div>
-      <p class="workflow-copy">If you are new here, this is the shortest route to a useful result without guessing which document matters next.</p>
+      <div class="benefit-card">
+        <h3>Setup-to-harvest guidance</h3>
+        <p>One planner connects to build instructions, seasonal checklists, and maintenance schedules — not five disconnected apps.</p>
+      </div>
+      <div class="benefit-card">
+        <h3>Logic you can read</h3>
+        <p>Every score comes with a plain-English explanation. You learn why a placement works, not just whether it does.</p>
+      </div>
     </div>
-    <div class="workflow-grid">
-      <a class="workflow-card" href="garden-planner-v4.html">
-        <span class="workflow-step">Step 1</span>
-        <strong>Plan a bed</strong>
-        <span>Place crops, test fit, and get live guidance on every square.</span>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="how-section" id="how">
+  <div class="section-inner">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title">From empty bed to harvest-ready<br>in three steps</h2>
+    <p class="section-sub">No account, no backend, and no server round-trips. The core tools are browser-native HTML pages, and Story Mode is the richer runtime exception — but the whole system stays local-first.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">
+          <div class="step-icon">📐</div>
+        </div>
+        <h3>Plan a bed that works</h3>
+        <p>Place crops on a grid that mirrors your real bed. Every square is scored for sun, spacing, companions, and timing — mistakes are flagged instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">
+          <div class="step-icon">🔨</div>
+        </div>
+        <h3>Build the structure</h3>
+        <p>Follow cut lists, hardware specs, and assembly steps for the 8×4 cattle panel cage. Designed so a weekend builder can finish without rework.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">
+          <div class="step-icon">🌱</div>
+        </div>
+        <h3>Run the season</h3>
+        <p>Monthly checklists for planting, critter defense, maintenance, and harvest. The system you wished you had last spring.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLANNER SPOTLIGHT ═══ -->
+<section class="spotlight" id="features">
+  <div class="spotlight-inner">
+    <div>
+      <div class="section-label">The Planner</div>
+      <h2 class="section-title">Every square gets<br>a reason to exist</h2>
+      <p class="section-sub">The planner doesn't just place crops — it explains why each placement works or doesn't, so you learn as you design. Printable layouts. Saveable plans. Real logic, not decoration.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">☀️</div>
+          <div class="feature-text">
+            <h4>Sun exposure scoring</h4>
+            <p>Each cell knows its position relative to trellises and tall crops. North-side shade is flagged before you plant.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🤝</div>
+          <div class="feature-text">
+            <h4>Companion intelligence</h4>
+            <p>Tomato next to basil? Bonus. Tomato next to fennel? Warning. Every adjacency is scored with real companion data.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📅</div>
+          <div class="feature-text">
+            <h4>Season-aware timing</h4>
+            <p>The planner knows what month it is and adjusts scores for planting windows, frost dates, and succession opportunities.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💬</div>
+          <div class="feature-text">
+            <h4>Plain-English explanations</h4>
+            <p>No mystery scores. Click any cell and read exactly why it scored the way it did — in words, not just numbers.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🩺</div>
+          <div class="feature-text">
+            <h4>Garden Doctor triage</h4>
+            <p>Leaf curl, spots, holes, blossom drop, and wilt now route through a local-first symptom checker instead of a separate search spiral.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spotlight-visual">
+      <div class="scoring-demo">
+        <div class="scoring-header">
+          <h4>Live Score Breakdown</h4>
+          <div class="scoring-crop">🍅 Tomato — Cell B2</div>
+        </div>
+        <div class="score-bars">
+          <div class="score-row">
+            <span class="score-label">Sun Fit</span>
+            <div class="score-track"><div class="score-fill" style="width:94%;background:var(--leaf-500)"></div></div>
+            <span class="score-val" style="color:var(--leaf-600)">94</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">Companion</span>
+            <div class="score-track"><div class="score-fill" style="width:88%;background:var(--leaf-500)"></div></div>
+            <span class="score-val" style="color:var(--leaf-600)">88</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">Spacing</span>
+            <div class="score-track"><div class="score-fill" style="width:76%;background:var(--sun-500)"></div></div>
+            <span class="score-val" style="color:var(--sun-600)">76</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">Season Fit</span>
+            <div class="score-track"><div class="score-fill" style="width:91%;background:var(--leaf-500)"></div></div>
+            <span class="score-val" style="color:var(--leaf-600)">91</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">Access</span>
+            <div class="score-track"><div class="score-fill" style="width:82%;background:var(--leaf-500)"></div></div>
+            <span class="score-val" style="color:var(--leaf-600)">82</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label">Protection</span>
+            <div class="score-track"><div class="score-fill" style="width:70%;background:var(--sun-500)"></div></div>
+            <span class="score-val" style="color:var(--sun-600)">70</span>
+          </div>
+        </div>
+        <div class="scoring-verdict">
+          ✓ &nbsp;Strong placement — basil neighbor boosts companion score. Consider trellis for better sun access to row behind.
+        </div>
+        <div class="output-bar">
+          <span>📄 Printable layout</span>
+          <span>·</span>
+          <span>💾 Save to browser</span>
+          <span>·</span>
+          <span>📊 Score summary</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ GUIDES ═══ -->
+<section class="guides" id="guides">
+  <div class="section-inner">
+    <div class="section-label">Guides</div>
+    <h2 class="section-title">Turn your plan into a real garden</h2>
+    <p class="section-sub">Once the planner gives you a layout, these two guides take you from lumber to harvest.</p>
+    <div class="guide-grid">
+      <a class="guide-card" href="garden-cage-build-guide.html">
+        <div class="guide-icon">🔨</div>
+        <div class="guide-tag">Build</div>
+        <h3>Cage Build Guide</h3>
+        <p>Complete step-by-step instructions for the 8×4 ft cattle panel cage — lumber cuts, hardware list, assembly sequence, and trellis attachment.</p>
       </a>
-      <a class="workflow-card" href="how-it-thinks.html">
-        <span class="workflow-step">Step 2</span>
-        <strong>Understand the logic</strong>
-        <span>Open the explainer when you want the scoring model translated into plain English.</span>
-      </a>
-      <a class="workflow-card" href="garden-cage-build-guide.html">
-        <span class="workflow-step">Step 3</span>
-        <strong>Build the structure</strong>
-        <span>Turn the layout into lumber cuts, assembly steps, and trellis setup.</span>
-      </a>
-      <a class="workflow-card" href="garden-cage-ops-guide.html">
-        <span class="workflow-step">Step 4</span>
-        <strong>Run the season</strong>
-        <span>Use the ops guide for maintenance, critter defense, and harvest rhythm.</span>
+      <a class="guide-card" href="garden-cage-ops-guide.html">
+        <div class="guide-icon">📋</div>
+        <div class="guide-tag">Operate</div>
+        <h3>Seasonal Ops Guide</h3>
+        <p>Planting zone checklists, critter defense protocols, monthly maintenance schedules, and harvest tracking for every season of the year.</p>
       </a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- GROUP 2: Build & operate -->
-  <a class="tool-card" href="garden-league-simulator-v4.html">
-    <div class="tool-card-icon" aria-hidden="true">🧪</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Legacy Season Sandbox</div>
-      <div class="tool-card-desc">The predecessor simulator is still here as a rules sandbox for testing layouts, month flow, and season-engine ideas outside the new story-mode presentation.</div>
-      <span class="os-badge os-badge--planner">Sandbox</span>
+<!-- ═══ WHAT YOU GET ═══ -->
+<section class="results">
+  <div class="section-inner">
+    <div class="section-label">The Result</div>
+    <h2 class="section-title">A complete garden plan — not just a pretty grid</h2>
+    <div class="results-grid">
+      <div class="result-item">
+        <h3>Scored bed layout</h3>
+        <p>Every square has a score and explanation you can review before planting.</p>
+      </div>
+      <div class="result-item">
+        <h3>Printable plan</h3>
+        <p>Take your layout to the hardware store or tape it inside your shed.</p>
+      </div>
+      <div class="result-item">
+        <h3>Build-ready dimensions</h3>
+        <p>Lumber cuts, hardware lists, and assembly steps matched to your layout.</p>
+      </div>
+      <div class="result-item">
+        <h3>Seasonal playbook</h3>
+        <p>Month-by-month checklists from first plant to last harvest.</p>
+      </div>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  </div>
+</section>
 
-  <div class="hub-divider" aria-hidden="true">Build & operate</div>
-
-  <a class="tool-card" href="garden-cage-build-guide.html">
-    <div class="tool-card-icon" aria-hidden="true">🔨</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Cage Build Guide</div>
-      <div class="tool-card-desc">Step-by-step guide for building the 8×4 ft cattle panel cage — lumber cuts, hardware list, assembly sequence, and trellis setup.</div>
-      <span class="os-badge os-badge--build">Build Guide</span>
+<!-- ═══ STORY MODE ═══ -->
+<section class="story">
+  <div class="story-card">
+    <div class="story-content">
+      <div class="story-badge">✦ Optional: Narrative Mode</div>
+      <h2>Want to learn by doing?<br>There's a story for that.</h2>
+      <p>A 12-chapter campaign that walks you through a full garden year — decisions, seasonal shifts, and 3D yard staging tied to your actual plan. Start here if you prefer guided exploration over open-ended planning.</p>
+      <a class="btn-story" href="story-mode-live/">
+        Enter Story Mode
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="garden-cage-ops-guide.html">
-    <div class="tool-card-icon" aria-hidden="true">📋</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Cage Ops Guide</div>
-      <div class="tool-card-desc">Seasonal checklists for the finished cage — planting zones, critter defense, maintenance schedule, and harvest tracking.</div>
-      <span class="os-badge os-badge--ops">Ops Guide</span>
+    <div class="story-preview">
+      <div class="story-chapter active">
+        <span class="story-ch-num">01</span>
+        <span class="story-ch-title">The Yard Assessment</span>
+        <span class="story-ch-season">Mar</span>
+      </div>
+      <div class="story-chapter">
+        <span class="story-ch-num">02</span>
+        <span class="story-ch-title">First Bed Placement</span>
+        <span class="story-ch-season">Mar</span>
+      </div>
+      <div class="story-chapter">
+        <span class="story-ch-num">03</span>
+        <span class="story-ch-title">The Spring Planting</span>
+        <span class="story-ch-season">Apr</span>
+      </div>
+      <div class="story-chapter">
+        <span class="story-ch-num">04</span>
+        <span class="story-ch-title">Companion Strategy</span>
+        <span class="story-ch-season">Apr</span>
+      </div>
+      <div class="story-chapter">
+        <span class="story-ch-num">05</span>
+        <span class="story-ch-title">The Critter Problem</span>
+        <span class="story-ch-season">May</span>
+      </div>
+      <div class="story-chapter">
+        <span class="story-ch-num">06</span>
+        <span class="story-ch-title">Midsummer Audit</span>
+        <span class="story-ch-season">Jun</span>
+      </div>
+      <div class="story-chapter" style="opacity:0.4">
+        <span class="story-ch-num">…</span>
+        <span class="story-ch-title">6 more chapters through winter review</span>
+        <span class="story-ch-season"></span>
+      </div>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  </div>
+</section>
 
-  <!-- GROUP 3: Learn & inspect -->
-  <div class="hub-divider" aria-hidden="true">Learn & inspect</div>
-
-  <a class="tool-card" href="how-it-thinks.html">
-    <div class="tool-card-icon" aria-hidden="true">🧠</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">How It Thinks</div>
-      <div class="tool-card-desc">Learn how the planner scores your layout — sun fit, support, shade tolerance, access, season fit, and adjacency bonuses explained.</div>
-      <span class="os-badge os-badge--ref">Explainer</span>
+<!-- ═══ SOCIAL PROOF ═══ -->
+<section class="proof">
+  <div class="section-inner">
+    <div class="section-label">Product Proof</div>
+    <h2 class="section-title">Built around practical raised-bed work,<br>not generic garden dashboards</h2>
+    <p class="section-sub">Garden OS connects planning, reasoning, build guidance, and seasonal follow-through in one local-first system.</p>
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-quote">Cell-level scoring surfaces sun fit, spacing pressure, companion effects, and seasonal timing before planting day.</div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:var(--leaf-500)">P</div>
+          <div>
+            <div class="proof-name">Explainable Planner</div>
+            <div class="proof-role">Reasoning you can inspect square by square</div>
+          </div>
+        </div>
+        <div class="proof-outcome">Opaque scores replaced with readable tradeoffs</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-quote">The planner feeds directly into cage-build and ops guides, so a saved layout can become a real bed, maintenance routine, and harvest workflow.</div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:var(--sun-500)">B</div>
+          <div>
+            <div class="proof-name">Planner-To-Build Path</div>
+            <div class="proof-role">Layout, structure, operations, and follow-through</div>
+          </div>
+        </div>
+        <div class="proof-outcome">One system instead of disconnected docs and apps</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-quote">The root tools stay browser-native and zero-backend, while Story Mode extends the same garden logic into a richer guided runtime.</div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:var(--soil-400)">L</div>
+          <div>
+            <div class="proof-name">Local-First Runtime</div>
+            <div class="proof-role">No account, no server dependency, GitHub Pages deploy</div>
+          </div>
+        </div>
+        <div class="proof-outcome">Planner and runtime stay aligned to the same garden model</div>
+      </div>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="brand-guide.html">
-    <div class="tool-card-icon" aria-hidden="true">🎨</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Brand Guide</div>
-      <div class="tool-card-desc">Canonical visual token reference for Garden OS — soil, leaf, sun, and cream scales, type system, spacing, and interface patterns.</div>
-      <span class="os-badge os-badge--ref">Reference</span>
+    <div class="proof-stats-bar">
+      <span>Designed for 4×8 and 8×4 beds</span>
+      <span>·</span>
+      <span>Explainable scoring and guides</span>
+      <span>·</span>
+      <span>Zero-backend and local-first</span>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  </div>
+</section>
 
-  <a class="tool-card" href="scoring-visualizer.html">
-    <div class="tool-card-icon" aria-hidden="true">🔬</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Scoring Visualizer</div>
-      <div class="tool-card-desc">Interactive debug tool — pick a crop, adjust site inputs, and watch scores update across the grid in real time.</div>
-      <span class="os-badge os-badge--ref">Tool</span>
+<!-- ═══ FINAL CTA ═══ -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2>Your spring planting window is open</h2>
+    <p>The planner takes five minutes. The mistakes it catches last a whole season.</p>
+    <a class="btn-primary" href="garden-planner-v4.html">
+      Build Your Garden Plan →
+    </a>
+    <div class="final-cta-sub">Open in browser · No account · Local-first</div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="nav-logo" href="#top" style="margin-bottom:4px" aria-label="Back to top">
+        <div class="nav-logo-mark">🌱</div>
+        <span class="nav-logo-text">Garden OS</span>
+      </a>
+      <p>Free, open-source garden planning tools that run entirely in your browser. No account. No backend. No tracking.</p>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="scoring-map.html">
-    <div class="tool-card-icon" aria-hidden="true">🧮</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Scoring System Map</div>
-      <div class="tool-card-desc">Architecture reference for the planner's trait-based scoring engine — data flow, derived cell traits, and the decision funnel.</div>
-      <span class="os-badge os-badge--ref">Reference</span>
+    <div class="footer-col">
+      <h4>Tools</h4>
+      <a href="garden-planner-v4.html">Garden Planner</a>
+      <a href="garden-doctor.html">Garden Doctor</a>
+      <a href="story-mode-live/">Story Mode</a>
+      <a href="garden-league-simulator-v4.html">Season Sandbox</a>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <!-- GROUP 4: Developer references -->
-  <div class="hub-divider" aria-hidden="true">Developer references</div>
-
-  <a class="tool-card" href="fairness-tester.html">
-    <div class="tool-card-icon" aria-hidden="true">⚖️</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">Fairness Tester</div>
-      <div class="tool-card-desc">Validate the scoring algorithm — run crops through all positions and check for bias, outliers, and edge cases.</div>
-      <span class="os-badge os-badge--ref">Tool</span>
+    <div class="footer-col">
+      <h4>Guides</h4>
+      <a href="garden-cage-build-guide.html">Build Guide</a>
+      <a href="garden-cage-ops-guide.html">Ops Guide</a>
+      <a href="how-it-thinks.html">How Scoring Works</a>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
-
-  <a class="tool-card" href="system-map.html">
-    <div class="tool-card-icon" aria-hidden="true">🗺️</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">System Map</div>
-      <div class="tool-card-desc">Full architecture reference — system layers, data flow, engineering principles, and the complete tool ecosystem.</div>
-      <span class="os-badge os-badge--ref">Reference</span>
+    <div class="footer-col">
+      <h4>Under the Hood</h4>
+      <a href="brand-guide.html">Brand Guide</a>
+      <a href="scoring-visualizer.html">Scoring Visualizer</a>
+      <a href="scoring-map.html">Scoring Map</a>
+      <a href="system-map.html">System Map</a>
+      <a href="system-topology.html">Topology</a>
+      <a href="fairness-tester.html">Fairness Tester</a>
     </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+  </div>
+  <div class="footer-bottom">
+    <span>Garden OS &copy; 2026</span>
+    <span class="footer-badge">Zero-backend · Local-first · GitHub Pages</span>
+  </div>
+</footer>
 
-  <a class="tool-card" href="system-topology.html">
-    <div class="tool-card-icon" aria-hidden="true">🔗</div>
-    <div class="tool-card-body">
-      <div class="tool-card-title">System Topology</div>
-      <div class="tool-card-desc">Network diagram showing how all Garden OS components connect — data dependencies, shared schemas, and page relationships.</div>
-      <span class="os-badge os-badge--ref">Reference</span>
-    </div>
-    <span class="tool-card-arrow" aria-hidden="true">›</span>
-  </a>
+<!-- ═══ STICKY CTA ═══ -->
+<div class="sticky-cta" id="stickyCta">
+  <div class="sticky-inner">
+    <span class="sticky-text">Ready to plan? <strong>The planner is free and runs in your browser.</strong></span>
+    <a class="btn-sticky" href="garden-planner-v4.html">
+      Open Planner
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</div>
 
 </main>
 
-<footer class="os-footer">
-  Garden OS &middot; Zero-backend single-file tools &middot; GitHub Pages
-</footer>
+<script>
+// Nav shadow on scroll
+const nav = document.getElementById('mainNav');
+const sticky = document.getElementById('stickyCta');
+let heroBottom = 0;
 
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
+function updateHeroBottom() {
+  const hero = document.querySelector('.hero');
+  if (hero) heroBottom = hero.offsetTop + hero.offsetHeight;
+}
+updateHeroBottom();
+window.addEventListener('resize', updateHeroBottom);
+
+window.addEventListener('scroll', () => {
+  // Nav shadow
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+  // Sticky CTA after hero
+  sticky.classList.toggle('visible', window.scrollY > heroBottom - 200);
+}, { passive: true });
+
+// Animate score bars on scroll into view
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.score-fill').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => { bar.style.width = w; });
+        });
+      });
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+const scoringDemo = document.querySelector('.scoring-demo');
+if (scoringDemo) observer.observe(scoringDemo);
+
+// Subtle bed cell hover interaction
+document.querySelectorAll('.bed-cell.filled').forEach(cell => {
+  cell.addEventListener('mouseenter', () => {
+    cell.style.transform = 'scale(1.12)';
+    cell.style.zIndex = '2';
+    cell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+  });
+  cell.addEventListener('mouseleave', () => {
+    cell.style.transform = '';
+    cell.style.zIndex = '';
+    cell.style.boxShadow = '';
+  });
+});
+</script>
 </body>
 </html>

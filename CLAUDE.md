@@ -3,9 +3,10 @@
 ## Architecture — Hard Constraints
 
 - **Zero backend.** No servers, no APIs, no databases. Everything runs in the browser.
-- **Single-file HTML tools.** Each tool is one self-contained `.html` file with inline CSS and JS. No external JS/CSS files, no imports, no modules.
-- **No build step.** No npm, no bundlers, no transpilers, no frameworks. Vanilla HTML/CSS/JS only.
-- **No dependencies.** No React, Vue, Svelte, Tailwind, Bootstrap, jQuery, or any library unless already present in the file (D3 is used in system-topology.html only).
+- **Root tool suite stays single-file HTML.** Repo-root tools are self-contained `.html` files with inline CSS and JS. No external JS/CSS files, no imports, no modules for those root surfaces.
+- **`story-mode/` is the single runtime exception.** It is an active Vite + Three.js app with Vitest coverage and its own `package.json`.
+- **Build tooling is allowed only inside `story-mode/`.** Use `npm ci` or `npm install`, `npm test`, `npm run build`, and `npm run dev` from `story-mode/` when working on that app surface.
+- **No new framework/toolchain sprawl outside `story-mode/`.** Do not introduce React, Vue, Svelte, Tailwind, Bootstrap, jQuery, or additional bundlers into the root tool suite unless the implementation plan explicitly changes.
 - **localStorage persistence.** All state saved to localStorage. Cross-tool data exchange via `.gos.json` file export/import.
 - **Offline-capable.** Every tool must work without network access (except Google Fonts, which degrade gracefully).
 - **Schema-first.** All tools validate against `gos-schema.json`. Increment the version field on breaking changes. See `docs/MIGRATION-CONTRACT.md` for migration rules.
@@ -15,7 +16,7 @@
 - **Deterministic.** Same inputs must always produce the same outputs. Never add randomness to scoring.
 - **Six factors:** sun fit (2x weight), support fit, shade tolerance, access fit, season fit, adjacency (additive).
 - **Canonical spec:** `specs/SCORING_RULES.md` is the single source of truth for the algorithm. If code and spec disagree, the spec wins — fix the code.
-- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 38 crops, 8 factions, 6 recipes.
+- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 50 crops, 8 factions, 8 recipes.
 
 ## Navigation — Two-Track Model
 
@@ -51,7 +52,8 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 
 - GitHub Pages from `main` branch, repo root. Auto-deploys on push via `.github/workflows/pages.yml`.
 - Live at: `davehomeassist.github.io/garden-os/`
-- Test locally: `python3 -m http.server 8000`
+- Root tools local test: `python3 -m http.server 8000`
+- `story-mode/` local runtime: run from `story-mode/` with `npm run dev`, `npm test`, and `npm run build`
 - After pushing, provide the live URL.
 
 ## Key References
@@ -100,8 +102,8 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 ## What Not To Do
 
 - Do not add a backend, database, or server requirement.
-- Do not introduce npm, package.json, or any build tooling.
-- Do not add external JS/CSS dependencies.
+- Do not introduce new npm/build-tool requirements for the repo-root HTML tools.
+- Do not add external JS/CSS dependencies to the repo-root HTML tools.
 - Do not merge the user and dev nav tracks.
 - Do not add randomness to scoring.
 - Do not modify specs/ JSON files without updating the corresponding HTML tool.

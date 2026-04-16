@@ -537,7 +537,6 @@ const C={
 cherry_tom:{id:'cherry_tom',name:'Cherry Tomato (climbing)',emoji:'\u{1F345}',short:'CT',faction:'fruiting',sunMin:7,sunIdeal:9,support:true,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['basil','marigold','carrot'],conflicts:['broccoli','kale','dill'],chapterUnlock:2,recipes:['tomato_sandwich','weeknight_pasta','moms_sauce'],ev:['pest-target','blight-prone','heat-tolerant'],sm:{spring:.5,summer:1,fall:.3}},
 pole_beans:{id:'pole_beans',name:'Pole Beans',emoji:'\u{1FAD8}',short:'PB',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:2,companions:['carrot','basil'],conflicts:['onion','garlic'],chapterUnlock:2,recipes:[],ev:['frost-hardy','wind-sensitive'],sm:{spring:.9,summer:.8,fall:.7}},
 peas:{id:'peas',name:'Peas',emoji:'\u{1FADB}',short:'PEA',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:3,coolSeason:true,tall:true,water:2,companions:['carrot','lettuce','radish'],conflicts:['onion','pepper','garlic'],chapterUnlock:2,recipes:[],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.3,fall:.9}},
-cucumber:{id:'cucumber',name:'Cucumber',emoji:'\u{1F952}',short:'CUC',faction:'climbers',sunMin:6,sunIdeal:8,support:true,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['nasturtium','dill'],conflicts:['kale'],chapterUnlock:2,recipes:[],ev:['pest-target','frost-sensitive','heat-tolerant'],sm:{spring:.4,summer:1,fall:.5}},
 beit_cucumber:{id:'beit_cucumber',name:'Beit Alpha Cucumber',emoji:'\u{1F952}',short:'BEIT',faction:'climbers',sunMin:5.5,sunIdeal:7,support:false,shadeScore:2,coolSeason:false,tall:true,water:3,companions:['lettuce','bush_beans','radish'],conflicts:[],chapterUnlock:7,recipes:[],ev:['frost-sensitive','heat-tolerant','pest-target'],sm:{spring:.4,summer:1,fall:.3}},
 slicing_cucumber:{id:'slicing_cucumber',name:'Slicing Cucumber',emoji:'\u{1F952}',short:'SLIC',faction:'climbers',sunMin:6,sunIdeal:8,support:false,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['lettuce','pole_beans','marigold'],conflicts:[],chapterUnlock:7,recipes:[],ev:['frost-sensitive','heat-tolerant','pest-target'],sm:{spring:.4,summer:1,fall:.3}},
 /* --- Fast Cycles --- */
@@ -579,7 +578,19 @@ compact_tomato:{id:'compact_tomato',name:'Compact Tomato',emoji:'\u{1F345}',shor
 eggplant:{id:'eggplant',name:'Eggplant',emoji:'\u{1F346}',short:'EGG',faction:'fruiting',sunMin:6,sunIdeal:8,support:true,shadeScore:1,coolSeason:false,tall:false,water:2,companions:['basil','pepper','marigold'],conflicts:[],chapterUnlock:6,recipes:[],ev:['frost-sensitive','heat-tolerant','pest-target'],sm:{spring:.4,summer:1,fall:.3}},
 /* --- Companions --- */
 marigold:{id:'marigold',name:'Marigold',emoji:'\u{1F33C}',short:'MAR',faction:'companions',sunMin:4,sunIdeal:7,support:false,shadeScore:3,coolSeason:false,tall:false,water:2,companions:['cherry_tom','pepper','broccoli'],conflicts:[],chapterUnlock:1,recipes:[],ev:['heat-tolerant','pest-repellent'],sm:{spring:.6,summer:1,fall:.5}},
-nasturtium:{id:'nasturtium',name:'Nasturtium',emoji:'\u{1F338}',short:'NAS',faction:'companions',sunMin:4,sunIdeal:6,support:false,shadeScore:4,coolSeason:false,tall:false,water:2,companions:['zucchini','compact_cabbage'],conflicts:[],chapterUnlock:9,recipes:[],ev:['frost-sensitive','pest-decoy'],sm:{spring:.5,summer:1,fall:.4}}
+nasturtium:{id:'nasturtium',name:'Nasturtium',emoji:'\u{1F338}',short:'NAS',faction:'companions',sunMin:4,sunIdeal:6,support:false,shadeScore:4,coolSeason:false,tall:false,water:2,companions:['zucchini','compact_cabbage'],conflicts:[],chapterUnlock:9,recipes:[],ev:['frost-sensitive','pest-decoy'],sm:{spring:.5,summer:1,fall:.4}},
+wild_clover:{id:'wild_clover',name:'Wild Clover',emoji:'☘️',short:'CLV',faction:'companions',sunMin:4,sunIdeal:7,support:false,shadeScore:3,coolSeason:false,tall:false,water:1,companions:['cherry_tom','pepper','carrot','lettuce'],conflicts:[],chapterUnlock:10,recipes:[],ev:['frost-hardy','heat-tolerant','pest-repellent'],sm:{spring:1,summer:.8,fall:.7}},
+prairie_onion:{id:'prairie_onion',name:'Prairie Onion',emoji:'🧅',short:'PON',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:true,tall:false,water:1,companions:['carrot','beet','wild_clover'],conflicts:['peas','bush_beans'],chapterUnlock:10,recipes:['foragers_stew'],ev:['frost-hardy','heat-tolerant'],sm:{spring:.6,summer:.5,fall:1}},
+meadow_sage:{id:'meadow_sage',name:'Meadow Sage',emoji:'🌾',short:'MSG',faction:'herbs',sunMin:5,sunIdeal:8,support:false,shadeScore:2,coolSeason:false,tall:false,water:1,companions:['cherry_tom','pepper','marigold','wild_clover'],conflicts:[],chapterUnlock:10,recipes:[],ev:['frost-sensitive','heat-tolerant','pest-repellent'],sm:{spring:.7,summer:1,fall:.6}},
+watercress:{id:'watercress',name:'Watercress',emoji:'💧',short:'WCR',faction:'greens',sunMin:3,sunIdeal:5,support:false,shadeScore:5,coolSeason:true,tall:false,water:4,companions:['wild_rice','marsh_marigold'],conflicts:[],chapterUnlock:10,recipes:['foragers_stew'],ev:['heat-sensitive','frost-hardy'],sm:{spring:1,summer:.4,fall:.9}},
+wild_rice:{id:'wild_rice',name:'Wild Rice',emoji:'🌾',short:'WRC',faction:'roots',sunMin:5,sunIdeal:7,support:false,shadeScore:3,coolSeason:false,tall:true,water:4,companions:['watercress','marsh_marigold'],conflicts:[],chapterUnlock:10,recipes:[],ev:['frost-sensitive','heat-tolerant'],sm:{spring:.5,summer:1,fall:.7}},
+marsh_marigold:{id:'marsh_marigold',name:'Marsh Marigold',emoji:'🌼',short:'MMR',faction:'companions',sunMin:3,sunIdeal:6,support:false,shadeScore:4,coolSeason:true,tall:false,water:4,companions:['watercress','wild_rice'],conflicts:[],chapterUnlock:10,recipes:[],ev:['heat-sensitive','frost-hardy','pest-repellent'],sm:{spring:1,summer:.2,fall:.3}},
+shiitake_mushroom:{id:'shiitake_mushroom',name:'Shiitake Mushroom',emoji:'🍄',short:'SHI',faction:'roots',sunMin:1,sunIdeal:3,support:false,shadeScore:8,coolSeason:false,tall:false,water:3,companions:['wild_garlic','woodland_strawberry'],conflicts:[],chapterUnlock:11,recipes:['foragers_stew'],ev:['heat-sensitive','frost-hardy'],sm:{spring:.8,summer:.7,fall:.9}},
+wild_garlic:{id:'wild_garlic',name:'Wild Garlic',emoji:'🧄',short:'WGA',faction:'herbs',sunMin:2,sunIdeal:4,support:false,shadeScore:7,coolSeason:true,tall:false,water:2,companions:['shiitake_mushroom','woodland_strawberry','lettuce'],conflicts:['peas','bush_beans'],chapterUnlock:11,recipes:['foragers_stew'],ev:['frost-hardy','heat-sensitive','pest-repellent'],sm:{spring:1,summer:.5,fall:.8}},
+woodland_strawberry:{id:'woodland_strawberry',name:'Woodland Strawberry',emoji:'🍓',short:'WST',faction:'fruiting',sunMin:2,sunIdeal:5,support:false,shadeScore:6,coolSeason:false,tall:false,water:2,companions:['wild_garlic','shiitake_mushroom','lettuce'],conflicts:[],chapterUnlock:11,recipes:[],ev:['frost-sensitive','pest-target'],sm:{spring:.8,summer:1,fall:.6}},
+vanilla_orchid:{id:'vanilla_orchid',name:'Vanilla Orchid',emoji:'🌺',short:'VAN',faction:'climbers',sunMin:4,sunIdeal:6,support:true,shadeScore:4,coolSeason:false,tall:true,water:3,companions:['lemon_tree','basil'],conflicts:[],chapterUnlock:12,recipes:[],ev:['heat-tolerant','frost-immune'],sm:{spring:.7,summer:.9,fall:.7}},
+lemon_tree:{id:'lemon_tree',name:'Lemon Tree',emoji:'🍋',short:'LEM',faction:'fruiting',sunMin:6,sunIdeal:9,support:false,shadeScore:1,coolSeason:false,tall:true,water:3,companions:['vanilla_orchid','basil','marigold'],conflicts:[],chapterUnlock:12,recipes:[],ev:['heat-tolerant','frost-immune'],sm:{spring:.8,summer:1,fall:.8}},
+ghost_pepper:{id:'ghost_pepper',name:'Ghost Pepper',emoji:'🌶️',short:'GHP',faction:'fruiting',sunMin:7,sunIdeal:10,support:false,shadeScore:0,coolSeason:false,tall:false,water:2,companions:['basil','marigold','lemon_tree'],conflicts:['peas'],chapterUnlock:12,recipes:['garden_deluxe_salsa'],ev:['heat-tolerant','frost-immune'],sm:{spring:.3,summer:1,fall:.2}}
 };
 
 const RECIPES={
@@ -588,7 +599,9 @@ tomato_sandwich:{name:'Tomato Sandwich',crops:['cherry_tom','basil','lettuce']},
 weeknight_pasta:{name:'Weeknight Pasta',crops:['cherry_tom','basil','pepper','onion']},
 moms_sauce:{name:"Mom's Sauce",crops:['cherry_tom','basil','pepper','onion','carrot']},
 stir_fry:{name:'Stir Fry',crops:['bok_choy','scallion','pepper','garlic']},
-garden_salad:{name:'Garden Salad',crops:['lettuce','radish','carrot','chives']}
+garden_salad:{name:'Garden Salad',crops:['lettuce','radish','carrot','chives']},
+foragers_stew:{name:"Forager's Stew",crops:['wild_garlic','shiitake_mushroom','watercress','prairie_onion']},
+garden_deluxe_salsa:{name:'Garden Deluxe Salsa',crops:['ghost_pepper','cherry_tom','cilantro','onion']}
 };
 
 /* ===== EVENT DECK ===== */
@@ -776,12 +789,16 @@ const KEEPSAKES={
 };
 
 /* ===== RECIPE LADDER (display order) ===== */
-const RECIPE_LADDER=['herb_bowl','tomato_sandwich','weeknight_pasta','moms_sauce'];
+const RECIPE_LADDER=['herb_bowl','tomato_sandwich','weeknight_pasta','moms_sauce','stir_fry','garden_salad','foragers_stew','garden_deluxe_salsa'];
 const RECIPE_DISPLAY={
   herb_bowl:{name:'Herb Bowl',ingredients:['basil','dill']},
   tomato_sandwich:{name:'Tomato Sandwich',ingredients:['cherry_tom','basil','lettuce']},
   weeknight_pasta:{name:'Weeknight Pasta',ingredients:['cherry_tom','basil','pepper','onion']},
-  moms_sauce:{name:"Mom's Sauce",ingredients:['cherry_tom','basil','pepper','onion','carrot']}
+  moms_sauce:{name:"Mom's Sauce",ingredients:['cherry_tom','basil','pepper','onion','carrot']},
+  stir_fry:{name:'Stir Fry',ingredients:['bok_choy','scallion','pepper','garlic']},
+  garden_salad:{name:'Garden Salad',ingredients:['lettuce','radish','carrot','chives']},
+  foragers_stew:{name:"Forager's Stew",ingredients:['wild_garlic','shiitake_mushroom','watercress','prairie_onion']},
+  garden_deluxe_salsa:{name:'Garden Deluxe Salsa',ingredients:['ghost_pepper','cherry_tom','cilantro','onion']}
 };
 
 /* ===== SAUCE INGREDIENTS ===== */
@@ -3537,7 +3554,7 @@ function completeChapter(){
     }
   }
 
-  // Keepsake: block_party_plate on completing all 4 recipes
+  // Keepsake: block_party_plate on completing the full recipe ladder
   if(!CAM.keepsakes.block_party_plate&&CAM.recipesCompleted.length>=RECIPE_LADDER.length){
     CAM.keepsakes.block_party_plate={earnedCh:ch,timestamp:Date.now()};
   }

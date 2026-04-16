@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Garden Doctor is Garden OS symptom triage for raised-bed problems: choose crop, season, and symptoms to get ranked likely causes and next actions.">
+<title>Garden Doctor — Garden OS Symptom Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --soil:#2d1a0e;
+  --soil-soft:#7a5230;
+  --leaf:#3a6b42;
+  --leaf-soft:#dff0dc;
+  --sun:#d88b24;
+  --sun-soft:#fff1cf;
+  --cream:#faf6ef;
+  --panel:#fffdf8;
+  --line:#d8c9b4;
+  --warn:#b35c20;
+  --bad:#a63b2b;
+  --shadow:0 18px 40px rgba(45,26,14,.08);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'DM Sans',sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(223,240,220,.7), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(255,241,207,.75), transparent 30%),
+    var(--cream);
+  color:var(--soil);
+}
+.os-nav{
+  background:rgba(45,26,14,.94);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:0 .6rem;
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+  font-family:'DM Mono',monospace;
+  font-size:.63rem;
+  scrollbar-width:none;
+}
+.os-nav::-webkit-scrollbar{display:none}
+.os-nav a{
+  color:rgba(245,237,224,.6);
+  text-decoration:none;
+  padding:.55rem .9rem;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  min-height:46px;
+}
+.os-nav a:hover,.os-nav a[aria-current="page"]{
+  color:#f5ede0;
+  border-bottom:2px solid var(--sun);
+}
+.os-nav a.nav-utility{margin-left:auto;opacity:.75}
+.page{
+  max-width:1200px;
+  margin:0 auto;
+  padding:2rem 1rem 3rem;
+}
+.hero{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);
+  gap:1.2rem;
+  align-items:start;
+}
+.hero-card,.panel{
+  background:rgba(255,253,248,.94);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+.hero-copy{
+  padding:1.4rem 1.35rem 1.3rem;
+}
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.28rem .7rem;
+  border-radius:999px;
+  background:var(--leaf-soft);
+  color:var(--leaf);
+  font-family:'DM Mono',monospace;
+  font-size:.58rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+h1{
+  margin:.8rem 0 .7rem;
+  font-family:'Fraunces',serif;
+  font-size:clamp(2.2rem,4vw,3.6rem);
+  line-height:1.02;
+  letter-spacing:-.03em;
+}
+.hero-copy p{
+  margin:0 0 1rem;
+  max-width:58ch;
+  color:var(--soil-soft);
+  font-size:1rem;
+  line-height:1.7;
+}
+.hero-list{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.65rem;
+  margin-top:1.1rem;
+}
+.hero-list div{
+  padding:.8rem;
+  border-radius:14px;
+  border:1px solid rgba(45,26,14,.08);
+  background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(250,246,239,.9));
+}
+.hero-list strong{
+  display:block;
+  font-size:.9rem;
+  margin-bottom:.25rem;
+}
+.hero-list span{
+  color:var(--soil-soft);
+  font-size:.85rem;
+  line-height:1.45;
+}
+.controls{
+  padding:1.15rem;
+}
+.controls h2,.results h2{
+  margin:0 0 .9rem;
+  font-family:'Fraunces',serif;
+  font-size:1.35rem;
+}
+.field-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.8rem;
+  margin-bottom:.9rem;
+}
+.field label{
+  display:block;
+  margin-bottom:.25rem;
+  font-family:'DM Mono',monospace;
+  font-size:.58rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--soil-soft);
+}
+.field select{
+  width:100%;
+  padding:.72rem .82rem;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:white;
+  font:inherit;
+  color:var(--soil);
+}
+.symptoms{
+  margin-top:.45rem;
+}
+.symptom-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.55rem;
+}
+.symptom-btn{
+  border:1px solid rgba(45,26,14,.1);
+  border-radius:14px;
+  padding:.72rem .75rem;
+  background:white;
+  text-align:left;
+  cursor:pointer;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease;
+}
+.symptom-btn:hover{transform:translateY(-1px);border-color:rgba(216,139,36,.45)}
+.symptom-btn.active{
+  background:linear-gradient(180deg, rgba(216,139,36,.12), rgba(255,255,255,.98));
+  border-color:rgba(216,139,36,.55);
+}
+.symptom-btn strong{
+  display:block;
+  font-size:.9rem;
+  margin-bottom:.14rem;
+}
+.symptom-btn span{
+  display:block;
+  font-size:.8rem;
+  line-height:1.45;
+  color:var(--soil-soft);
+}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem;
+  margin-top:1rem;
+}
+.btn{
+  border:none;
+  border-radius:999px;
+  padding:.82rem 1.1rem;
+  font:600 .84rem 'DM Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  cursor:pointer;
+}
+.btn-primary{background:var(--soil);color:#ffefcf}
+.btn-secondary{background:white;color:var(--soil);border:1px solid var(--line)}
+.results{
+  margin-top:1.2rem;
+  padding:1.15rem;
+}
+.results-top{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:flex-start;
+  margin-bottom:.95rem;
+}
+.results-sub{
+  color:var(--soil-soft);
+  max-width:60ch;
+  line-height:1.6;
+}
+.diagnosis-list{
+  display:grid;
+  gap:.8rem;
+}
+.diagnosis{
+  border:1px solid rgba(45,26,14,.08);
+  border-radius:16px;
+  padding:1rem;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,246,239,.92));
+}
+.diagnosis-head{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:flex-start;
+}
+.diagnosis h3{
+  margin:0 0 .28rem;
+  font-size:1.02rem;
+}
+.meta{
+  font-family:'DM Mono',monospace;
+  font-size:.62rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--soil-soft);
+}
+.confidence{
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;
+  padding:.34rem .62rem;
+  border-radius:999px;
+  font-family:'DM Mono',monospace;
+  font-size:.58rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.confidence.high{background:#e8f5ea;color:var(--leaf)}
+.confidence.medium{background:var(--sun-soft);color:#8b5a14}
+.confidence.low{background:#fae8e3;color:var(--bad)}
+.reason{
+  margin:.65rem 0;
+  color:var(--soil-soft);
+  line-height:1.6;
+}
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.42rem;
+  margin:.55rem 0 .7rem;
+}
+.chip{
+  padding:.26rem .52rem;
+  border-radius:999px;
+  background:rgba(45,26,14,.06);
+  font-family:'DM Mono',monospace;
+  font-size:.56rem;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.actions-list{
+  margin:.55rem 0 0;
+  padding-left:1.1rem;
+  line-height:1.6;
+  color:var(--soil);
+}
+.ops-link{
+  display:inline-flex;
+  margin-top:.72rem;
+  color:var(--leaf);
+  font-weight:600;
+  text-decoration:none;
+}
+.empty{
+  padding:1.3rem;
+  border:1px dashed rgba(45,26,14,.16);
+  border-radius:14px;
+  text-align:center;
+  color:var(--soil-soft);
+  background:rgba(255,255,255,.62);
+}
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  .field-grid,.hero-list,.symptom-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav class="os-nav" aria-label="Garden OS">
+  <a href="index.html">Hub</a>
+  <a href="garden-planner-v4.html">Planner</a>
+  <a href="garden-doctor.html" aria-current="page">Garden Doctor</a>
+  <a href="garden-cage-build-guide.html">Build Guide</a>
+  <a href="garden-cage-ops-guide.html">Ops Guide</a>
+  <a href="how-it-thinks.html">How It Thinks</a>
+  <a href="scoring-visualizer.html" class="nav-utility">Dev Tools →</a>
+</nav>
+
+<main class="page">
+  <section class="hero">
+    <div class="hero-card hero-copy">
+      <div class="eyebrow">Garden OS · Phase 2B</div>
+      <h1>Garden Doctor keeps symptom triage inside Garden OS.</h1>
+      <p>Select the crop, season, and visible symptoms. Garden Doctor ranks the most likely causes, shows why they fit, and points you to the next checklist instead of sending you back to search-engine roulette.</p>
+      <p>The logic is static and local-first. No API calls, no backend, and no black box: every diagnosis is just symptom rules cross-checked against the same crop families Garden OS already uses for planning.</p>
+      <div class="hero-list">
+        <div><strong>12 symptom toggles</strong><span>Fast triage for the problems people actually notice first.</span></div>
+        <div><strong>Crop-aware rules</strong><span>Brassicas, cucurbits, fruiting crops, roots, greens, herbs, and companions score differently.</span></div>
+        <div><strong>Ops guide links</strong><span>Every ranked cause ends with a next action and the right checklist anchor.</span></div>
+      </div>
+    </div>
+
+    <div class="panel controls">
+      <h2>Symptom intake</h2>
+      <div class="field-grid">
+        <div class="field">
+          <label for="cropSelect">Crop</label>
+          <select id="cropSelect"></select>
+        </div>
+        <div class="field">
+          <label for="seasonSelect">Season</label>
+          <select id="seasonSelect">
+            <option value="spring">Spring</option>
+            <option value="summer" selected>Summer</option>
+            <option value="latesummer">Late Summer</option>
+            <option value="fall">Fall</option>
+          </select>
+        </div>
+      </div>
+      <div class="symptoms">
+        <div class="field"><label>Visible symptoms</label></div>
+        <div class="symptom-grid" id="symptomGrid"></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="diagnoseBtn" type="button">Run triage</button>
+        <button class="btn btn-secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel results">
+    <div class="results-top">
+      <div>
+        <h2>Ranked likely causes</h2>
+        <div class="results-sub" id="resultsSub">Pick a crop and at least one symptom. Garden Doctor will rank the most likely issues and show the first corrective move for each.</div>
+      </div>
+    </div>
+    <div id="resultsMount" class="empty"><strong>Waiting on symptoms.</strong><br>Choose what you can see on the plant right now.</div>
+  </section>
+</main>
+
+<script>
+const CROP_OPTIONS = [{"id":"beit_cucumber","name":"Beit Alpha Cucumber","category":"cucurbit"},{"id":"slicing_cucumber","name":"Slicing Cucumber","category":"cucurbit"},{"id":"bush_cucumber","name":"Bush Pickle Cucumber","category":"cucurbit"},{"id":"lettuce","name":"Leaf Lettuce","category":"greens"},{"id":"head_lettuce","name":"Head Lettuce","category":"greens"},{"id":"spinach","name":"Spinach","category":"greens"},{"id":"kale","name":"Kale","category":"greens"},{"id":"arugula","name":"Arugula","category":"greens"},{"id":"chard","name":"Swiss Chard","category":"greens"},{"id":"bok_choy","name":"Bok Choy","category":"greens"},{"id":"mustard_greens","name":"Mustard Greens","category":"greens"},{"id":"tatsoi","name":"Tatsoi","category":"greens"},{"id":"mizuna","name":"Mizuna","category":"greens"},{"id":"bush_beans","name":"Bush Green Beans","category":"legume"},{"id":"pole_beans","name":"Pole Beans","category":"legume"},{"id":"peas","name":"Peas","category":"legume"},{"id":"radish","name":"Radish","category":"roots"},{"id":"carrot","name":"Carrots","category":"roots"},{"id":"scallion","name":"Scallions","category":"roots"},{"id":"beet","name":"Beets","category":"roots"},{"id":"turnip","name":"Turnips","category":"roots"},{"id":"onion","name":"Onions","category":"roots"},{"id":"garlic","name":"Garlic","category":"roots"},{"id":"basil","name":"Basil","category":"herbs"},{"id":"cilantro","name":"Cilantro","category":"herbs"},{"id":"parsley","name":"Parsley","category":"herbs"},{"id":"dill","name":"Dill","category":"herbs"},{"id":"chives","name":"Chives","category":"herbs"},{"id":"pepper","name":"Peppers","category":"fruiting"},{"id":"compact_tomato","name":"Compact Tomato","category":"fruiting"},{"id":"cherry_tom","name":"Cherry Tomato (climbing)","category":"fruiting"},{"id":"eggplant","name":"Eggplant","category":"fruiting"},{"id":"zucchini","name":"Zucchini","category":"fruiting"},{"id":"compact_cabbage","name":"Compact Cabbage","category":"brassica"},{"id":"broccoli","name":"Broccoli","category":"brassica"},{"id":"kohlrabi","name":"Kohlrabi","category":"brassica"},{"id":"marigold","name":"Marigold","category":"companion"},{"id":"nasturtium","name":"Nasturtium","category":"companion"},{"id":"wild_clover","name":"Wild Clover","category":"companion"},{"id":"prairie_onion","name":"Prairie Onion","category":"roots"},{"id":"meadow_sage","name":"Meadow Sage","category":"herbs"},{"id":"watercress","name":"Watercress","category":"greens"},{"id":"wild_rice","name":"Wild Rice","category":"roots"},{"id":"marsh_marigold","name":"Marsh Marigold","category":"companion"},{"id":"shiitake_mushroom","name":"Shiitake Mushroom","category":"roots"},{"id":"wild_garlic","name":"Wild Garlic","category":"herbs"},{"id":"woodland_strawberry","name":"Woodland Strawberry","category":"fruiting"},{"id":"vanilla_orchid","name":"Vanilla Orchid","category":"companion"},{"id":"lemon_tree","name":"Lemon Tree","category":"fruiting"},{"id":"ghost_pepper","name":"Ghost Pepper","category":"fruiting"}];
+
+const SYMPTOMS = [
+  { id:'yellowing', label:'Yellowing', desc:'Leaves pale or chlorotic.' },
+  { id:'wilting', label:'Wilting', desc:'Droop even when planted normally.' },
+  { id:'spots', label:'Leaf spots', desc:'Brown, black, or water-soaked marks.' },
+  { id:'holes', label:'Holes', desc:'Chewed leaves or shot-hole damage.' },
+  { id:'powdery', label:'Powdery coating', desc:'White dusty growth on leaves.' },
+  { id:'curl', label:'Leaf curl', desc:'Twisting, cupping, or puckering.' },
+  { id:'stunting', label:'Stunting', desc:'Plant stays undersized or stalls.' },
+  { id:'blossom_drop', label:'Blossom drop', desc:'Flowers abort before fruit sets.' },
+  { id:'poor_fruit_set', label:'Poor fruit set', desc:'Few fruits despite flowers.' },
+  { id:'bolting', label:'Bolting', desc:'Premature flower stalk or bitterness.' },
+  { id:'mushy_stem', label:'Mushy stem', desc:'Stem base soft or collapsing.' },
+  { id:'chewed_edges', label:'Chewed edges', desc:'Large bites or clipped seedlings.' }
+];
+
+const OPS_LINKS = {
+  seasonal: 'garden-cage-ops-guide.html#seasonal',
+  maintenance: 'garden-cage-ops-guide.html#maintenance',
+  defense: 'garden-cage-ops-guide.html#defense',
+  harvest: 'garden-cage-ops-guide.html#harvest',
+  shutdown: 'garden-cage-ops-guide.html#shutdown'
+};
+
+const RULES = [
+  { id:'underwatering', title:'Underwatering / inconsistent moisture', base:48, symptoms:['wilting','curl','blossom_drop'], seasons:['summer','latesummer'], categories:['fruiting','cucurbit','greens'], actions:['Deep-water the root zone instead of misting the top inch.','Mulch the bed so moisture loss slows down between checks.','Check again in the evening before changing fertilizer or spraying anything.'], link:'maintenance', why:'Hot-season wilting plus leaf curl or dropped blossoms usually points to moisture swings first.' },
+  { id:'overwatering', title:'Overwatering / root oxygen stress', base:44, symptoms:['yellowing','wilting','mushy_stem'], seasons:['spring','summer'], categories:['greens','herbs','fruiting'], actions:['Let the surface dry slightly before the next irrigation cycle.','Check drainage and avoid watering on a fixed clock if soil is still cool and wet.','Pull back mulch from the stem crown if it is staying damp all day.'], link:'maintenance', why:'Yellowing with wilt and soft stems often means roots are drowning, not thirsty.' },
+  { id:'heat_stress', title:'Heat stress', base:46, symptoms:['wilting','curl','blossom_drop','poor_fruit_set'], seasons:['summer','latesummer'], categories:['greens','fruiting','cucurbit','herbs'], actions:['Add temporary afternoon shade or cloth if the bed gets hammered after lunch.','Water earlier in the day and avoid heavy pruning during the heat wave.','Harvest aggressively so the plant carries less stress load.'], link:'seasonal', why:'Mid- and late-summer wilt, curl, and flower loss often show up before disease does.' },
+  { id:'cold_stress', title:'Cold snap / temperature shock', base:38, symptoms:['yellowing','stunting','spots'], seasons:['spring','fall'], categories:['fruiting','cucurbit','herbs'], actions:['Wait out the cold swing before fertilizing.','Use row cover or close the cage when overnight lows dip.','Reassess in 48 hours before removing plants.'], link:'seasonal', why:'Warm-loving crops can stall hard after one cold stretch.' },
+  { id:'nitrogen_deficiency', title:'Nitrogen deficiency', base:34, symptoms:['yellowing','stunting'], seasons:['spring','summer','fall'], categories:['greens','brassica','fruiting'], actions:['Feed lightly with a nitrogen-forward amendment instead of blasting the whole bed.','Check whether the crop is simply crowded and unable to use what is already there.','Log the correction so the season report can compare outcomes later.'], link:'maintenance', why:'Uniform yellowing and slow growth often starts with low available nitrogen.' },
+  { id:'potassium_deficiency', title:'Potassium deficiency / fruiting slowdown', base:28, symptoms:['yellowing','poor_fruit_set','spots'], seasons:['summer','latesummer'], categories:['fruiting','cucurbit'], actions:['Use a fruiting-safe feed instead of more nitrogen.','Keep watering consistent so nutrients stay mobile.','Remove damaged lower leaves if they are no longer contributing.'], link:'maintenance', why:'Poor set plus tired leaf margins can show up when fruiting crops run short on potassium.' },
+  { id:'magnesium_deficiency', title:'Magnesium deficiency', base:24, symptoms:['yellowing','spots'], seasons:['summer'], categories:['fruiting','greens'], actions:['Confirm the yellowing is between veins before correcting.','Use a gentle magnesium correction only if the pattern fits.','Avoid stacking multiple amendments the same week.'], link:'maintenance', why:'Interveinal yellowing on older leaves is usually nutrient, not pest, driven.' },
+  { id:'calcium_deficiency', title:'Calcium uptake issue', base:26, symptoms:['blossom_drop','poor_fruit_set','spots'], seasons:['summer'], categories:['fruiting'], actions:['Stabilize watering first because calcium problems are usually uptake problems.','Mulch exposed soil and avoid feast-famine watering cycles.','Check fast-growing fruit first for soft-end damage.'], link:'maintenance', why:'Fruiting crops show calcium issues fastest when water delivery is inconsistent.' },
+  { id:'aphids', title:'Aphids', base:42, symptoms:['yellowing','curl','stunting'], seasons:['spring','summer'], categories:['greens','herbs','fruiting'], actions:['Inspect tender new growth and leaf undersides before spraying anything broad-spectrum.','Blast the colony off with water first if the plant can handle it.','Improve airflow and reduce nearby weed cover.'], link:'defense', why:'Leaf curl plus stalled growth on soft tissue often starts with aphids.' },
+  { id:'flea_beetles', title:'Flea beetles', base:39, symptoms:['holes','stunting'], seasons:['spring','summer'], categories:['brassica','greens'], actions:['Look for shotgun-style holes on young leaves.','Use row cover on the next wave or on staged succession plantings.','Keep the bed weeded so pressure does not build around seedlings.'], link:'defense', why:'Tiny shot holes and seedling slowdown are classic flea beetle damage.' },
+  { id:'cabbage_worms', title:'Cabbage worms / brassica caterpillars', base:46, symptoms:['holes','chewed_edges'], seasons:['spring','summer','fall'], categories:['brassica'], actions:['Inspect the underside of brassica leaves for eggs and green larvae.','Hand-pick first if pressure is still light.','Protect the next brassica wave early instead of waiting for visible damage.'], link:'defense', why:'Brassica holes are caterpillars until proven otherwise.' },
+  { id:'cucumber_beetles', title:'Cucumber beetles', base:43, symptoms:['holes','yellowing','wilting'], seasons:['summer'], categories:['cucurbit'], actions:['Check blossoms and leaf bases for striped or spotted beetles.','Protect young cucurbits sooner on the next planting window.','Watch for wilt progression because beetles can vector disease.'], link:'defense', why:'Cucurbits with chew damage and sudden stress often have beetle pressure behind it.' },
+  { id:'squash_vine_borer', title:'Squash vine borer', base:45, symptoms:['wilting','mushy_stem'], seasons:['summer'], cropIds:['zucchini','bush_cucumber'], actions:['Inspect the stem base for frass or entry holes right away.','Remove badly hit vines so the problem does not sit hidden.','Protect the next sowing earlier in the season.'], link:'defense', why:'Fast wilt plus stem collapse on squash-family crops is a major red flag for vine borers.' },
+  { id:'spider_mites', title:'Spider mites', base:36, symptoms:['yellowing','curl','stunting'], seasons:['summer','latesummer'], categories:['fruiting','cucurbit'], actions:['Check hot, dusty leaves for stippling and fine webbing.','Increase wash-down frequency and humidity around the plant zone if possible.','Remove the worst leaves if they are beyond recovery.'], link:'maintenance', why:'Hot dry weather plus pale stippled leaves often signals mite pressure.' },
+  { id:'thrips', title:'Thrips', base:31, symptoms:['spots','curl','poor_fruit_set'], seasons:['summer'], cropIds:['onion','garlic','scallion','chives','prairie_onion','wild_garlic'], actions:['Inspect narrow leaves and flowers closely for tiny fast-moving insects.','Reduce plant stress with consistent water while pressure is low.','Remove heavily scarred tissue if it is no longer productive.'], link:'defense', why:'Alliums and blossoms can take subtle but real thrips damage before it is obvious.' },
+  { id:'slugs_snails', title:'Slugs / snails', base:38, symptoms:['holes','chewed_edges','mushy_stem'], seasons:['spring','fall'], categories:['greens','herbs','companion'], actions:['Check at dusk or early morning instead of assuming the culprit is gone.','Remove hiding cover and keep mulch off stems.','Protect tender succession plantings first.'], link:'defense', why:'Ragged chewing plus soft young tissue usually means nighttime feeding.' },
+  { id:'cutworms', title:'Cutworms or clipping pests', base:40, symptoms:['mushy_stem','chewed_edges'], seasons:['spring'], categories:['greens','brassica','fruiting'], actions:['Look at the soil line around clipped seedlings.','Use collars or physical barriers on the next planting wave.','Replace seedlings quickly so the bed does not lose the whole slot.'], link:'defense', why:'Freshly clipped stems are almost never a nutrient problem.' },
+  { id:'powdery_mildew', title:'Powdery mildew', base:47, symptoms:['powdery','yellowing','spots'], seasons:['summer','latesummer','fall'], categories:['cucurbit','fruiting','companion'], actions:['Remove the worst infected leaves to reopen airflow.','Water the soil, not the foliage, during evening humidity.','Avoid crowding the next succession wave into the same stagnant pocket.'], link:'maintenance', why:'White dusty growth is one of the clearer pattern matches in the garden.' },
+  { id:'downy_mildew', title:'Downy mildew / wet-leaf fungal pressure', base:34, symptoms:['yellowing','spots'], seasons:['spring','fall'], categories:['greens','cucurbit','herbs'], actions:['Thin dense growth and reduce overhead watering.','Check whether the bed is drying slowly after rain or dew.','Treat this as an airflow problem first, not a fertilizer problem.'], link:'maintenance', why:'Cooler wet weather plus blotchy yellowing often points to mildew pressure.' },
+  { id:'early_blight', title:'Early blight / lower-leaf tomato disease', base:42, symptoms:['spots','yellowing'], seasons:['summer','latesummer'], cropIds:['compact_tomato','cherry_tom','pepper','eggplant'], actions:['Prune infected lower leaves out of the splash zone.','Keep irrigation off foliage.','Do not compost badly infected tissue in-place.'], link:'maintenance', why:'Fruiting crops with lower-leaf spotting in humid weather often trend fungal first.' },
+  { id:'bacterial_leaf_spot', title:'Bacterial leaf spot', base:30, symptoms:['spots','yellowing'], seasons:['summer'], cropIds:['pepper','compact_tomato','cherry_tom'], actions:['Avoid handling wet plants.','Sanitize pruners before moving bed to bed.','Remove the worst tissue and keep foliage dry.'], link:'maintenance', why:'Dark water-soaked spotting on peppers and tomatoes can be bacterial rather than fungal.' },
+  { id:'stem_rot', title:'Damping off / stem rot', base:33, symptoms:['mushy_stem','wilting'], seasons:['spring'], categories:['greens','herbs','brassica'], actions:['Improve drainage and back off surface watering frequency.','Space the next wave more cleanly.','Remove collapsed plants fast so rot is not sitting in the bed.'], link:'maintenance', why:'Soft collapsing stems at the base usually start with moisture and airflow, not insects.' },
+  { id:'fusarium_wilt', title:'Fusarium or vascular wilt pressure', base:28, symptoms:['yellowing','wilting','stunting'], seasons:['summer','latesummer'], cropIds:['compact_tomato','cherry_tom','pepper','eggplant'], actions:['Rule out simple watering issues first.','Remove one test plant if wilt keeps progressing despite moisture being correct.','Avoid replanting the same family into the same stressed slot immediately.'], link:'shutdown', why:'Persistent wilt on solanaceous crops can move past simple heat stress.' },
+  { id:'blossom_end_rot', title:'Blossom-end rot', base:41, symptoms:['poor_fruit_set','spots'], seasons:['summer'], cropIds:['pepper','compact_tomato','cherry_tom','eggplant'], actions:['Stabilize water delivery before adding more amendments.','Harvest damaged fruit and redirect energy to healthy set.','Mulch exposed soil around the plant.'], link:'maintenance', why:'Fruit problems on peppers and tomatoes are often watering inconsistency showing up as calcium stress.' },
+  { id:'poor_pollination', title:'Poor pollination', base:35, symptoms:['poor_fruit_set','blossom_drop'], seasons:['summer'], categories:['fruiting','cucurbit'], actions:['Check whether flowers are present but aborting in heat.','Support pollinators or hand-pollinate if needed.','Avoid spraying during bloom windows.'], link:'harvest', why:'Fruiting crops can look healthy and still fail to set if pollination is weak.' },
+  { id:'bolting', title:'Bolting / heat-triggered flowering', base:49, symptoms:['bolting','stunting'], seasons:['summer','latesummer'], categories:['greens','herbs','roots'], actions:['Harvest immediately if the crop is still usable.','Swap the next wave toward heat-tolerant varieties or a shadier lane.','Use succession timing instead of trying to rescue a finished spring crop.'], link:'harvest', why:'Premature flowering in greens and herbs is usually a seasonal timing issue, not a cureable disease.' },
+  { id:'crowding', title:'Crowding / poor airflow', base:27, symptoms:['spots','powdery','stunting'], seasons:['summer','latesummer'], categories:['greens','fruiting','cucurbit','brassica'], actions:['Thin the canopy before reaching for sprays.','Use the planner to check whether this bed is overfilled for the goal.','Open the cage doors or airflow path more consistently.'], link:'maintenance', why:'A lot of “disease” is really cramped wet foliage.' },
+  { id:'root_maggots', title:'Root maggots', base:26, symptoms:['yellowing','stunting','wilting'], seasons:['spring','fall'], categories:['roots','brassica'], actions:['Lift one suspect plant to check the root zone before treating the whole bed.','Keep the next sowing protected earlier.','Remove badly compromised plants so they do not keep drawing pest pressure.'], link:'defense', why:'Roots and brassicas can show above-ground stress while the real damage is underground.' },
+  { id:'clubroot', title:'Clubroot / root distortion stress', base:22, symptoms:['yellowing','stunting','wilting'], seasons:['spring','fall'], categories:['brassica'], actions:['Inspect one plant’s roots if the whole brassica lane is underperforming.','Do not immediately replant the same family into the same stressed slot.','Use the season report to mark the affected row for next cycle planning.'], link:'shutdown', why:'Brassicas that keep stalling despite good surface care may be fighting root disease.' },
+  { id:'browse_damage', title:'Rabbit or deer browse', base:44, symptoms:['chewed_edges','stunting'], seasons:['spring','summer','fall'], categories:['greens','companion','herbs'], actions:['Check fence gaps and door closures before blaming insects.','Move the next tender wave deeper into protected lanes.','Harvest what is recoverable and log the exposure in notes.'], link:'defense', why:'Large bites and clean clipping usually come from bigger mouths than insects.' },
+  { id:'sunscald', title:'Sunscald / direct exposure shock', base:24, symptoms:['spots','poor_fruit_set'], seasons:['summer','latesummer'], categories:['fruiting','cucurbit'], actions:['Do not strip all shade leaves off exposed fruiting plants.','Use temporary cloth if one heat wave pushed the bed over the edge.','Let new leaf cover re-establish before hard pruning again.'], link:'seasonal', why:'Sudden pale or scorched tissue can come from exposure, not pathogen spread.' },
+  { id:'nutrient_lockout', title:'pH drift or nutrient lockout', base:20, symptoms:['yellowing','stunting','spots'], seasons:['spring','summer','fall'], categories:['fruiting','greens','brassica'], actions:['Correct one variable at a time instead of stacking multiple feeds.','Compare this bed against a second bed if you have one.','Use the experiment panel to log the response after any correction.'], link:'maintenance', why:'Mixed deficiency-looking symptoms across one bed can mean the nutrients are present but unavailable.' }
+];
+
+const state = {
+  selectedCropId: CROP_OPTIONS[0].id,
+  season: 'summer',
+  symptoms: new Set()
+};
+
+function renderCropOptions(){
+  const select = document.getElementById('cropSelect');
+  select.innerHTML = CROP_OPTIONS.map(crop => `<option value="${crop.id}">${crop.name} · ${crop.category}</option>`).join('');
+  select.value = state.selectedCropId;
+}
+
+function renderSymptoms(){
+  const mount = document.getElementById('symptomGrid');
+  mount.innerHTML = SYMPTOMS.map(item => `
+    <button class="symptom-btn ${state.symptoms.has(item.id) ? 'active' : ''}" type="button" data-symptom="${item.id}">
+      <strong>${item.label}</strong>
+      <span>${item.desc}</span>
+    </button>
+  `).join('');
+  mount.querySelectorAll('[data-symptom]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.symptom;
+      if (state.symptoms.has(key)) state.symptoms.delete(key);
+      else state.symptoms.add(key);
+      renderSymptoms();
+    });
+  });
+}
+
+function confidenceFor(score){
+  if (score >= 86) return { label:'High confidence', cls:'high' };
+  if (score >= 68) return { label:'Medium confidence', cls:'medium' };
+  return { label:'Low confidence', cls:'low' };
+}
+
+function evaluateRules(){
+  const crop = CROP_OPTIONS.find(item => item.id === state.selectedCropId);
+  if (!crop || state.symptoms.size === 0) return [];
+  const chosen = [...state.symptoms];
+  return RULES.map(rule => {
+    const symptomHits = chosen.filter(symptom => rule.symptoms.includes(symptom));
+    if (!symptomHits.length) return null;
+    let score = rule.base + (symptomHits.length * 16);
+    if (rule.categories && rule.categories.includes(crop.category)) score += 9;
+    if (rule.cropIds && rule.cropIds.includes(crop.id)) score += 13;
+    if (rule.seasons && rule.seasons.includes(state.season)) score += 7;
+    if (rule.categories && !rule.categories.includes(crop.category) && !rule.cropIds) score -= 10;
+    return {
+      ...rule,
+      symptomHits,
+      crop,
+      score: Math.max(24, Math.min(97, score))
+    };
+  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 5);
+}
+
+function renderResults(){
+  const crop = CROP_OPTIONS.find(item => item.id === state.selectedCropId);
+  const results = evaluateRules();
+  const resultsSub = document.getElementById('resultsSub');
+  const mount = document.getElementById('resultsMount');
+  if (!crop || state.symptoms.size === 0) {
+    resultsSub.textContent = 'Pick a crop and at least one visible symptom. Garden Doctor ranks causes only after it has something concrete to evaluate.';
+    mount.className = 'empty';
+    mount.innerHTML = '<strong>Waiting on symptoms.</strong><br>Choose what you can actually see on the plant right now.';
+    return;
+  }
+  resultsSub.textContent = `${crop.name} in ${state.season.replace('late', 'late ')} with ${state.symptoms.size} selected symptom${state.symptoms.size === 1 ? '' : 's'}. Ranked causes below are static rule matches, not black-box guesses.`;
+  if (!results.length) {
+    mount.className = 'empty';
+    mount.innerHTML = '<strong>No strong rule match yet.</strong><br>Try one more visible symptom or re-check that the selected crop is correct.';
+    return;
+  }
+  mount.className = 'diagnosis-list';
+  mount.innerHTML = results.map(result => {
+    const confidence = confidenceFor(result.score);
+    const symptomLabels = result.symptomHits.map(hit => SYMPTOMS.find(item => item.id === hit)?.label || hit);
+    return `<article class="diagnosis">
+      <div class="diagnosis-head">
+        <div>
+          <h3>${result.title}</h3>
+          <div class="meta">${crop.category} · ${result.score}/100 triage fit</div>
+        </div>
+        <div class="confidence ${confidence.cls}">${confidence.label}</div>
+      </div>
+      <div class="reason">${result.why}</div>
+      <div class="chips">
+        ${symptomLabels.map(label => `<span class="chip">${label}</span>`).join('')}
+        <span class="chip">${crop.name}</span>
+        <span class="chip">${state.season.replace('latesummer', 'late summer')}</span>
+      </div>
+      <ol class="actions-list">
+        ${result.actions.map(action => `<li>${action}</li>`).join('')}
+      </ol>
+      <a class="ops-link" href="${OPS_LINKS[result.link] || 'garden-cage-ops-guide.html'}">Open matching ops checklist →</a>
+    </article>`;
+  }).join('');
+}
+
+function resetForm(){
+  state.selectedCropId = CROP_OPTIONS[0].id;
+  state.season = 'summer';
+  state.symptoms = new Set();
+  document.getElementById('cropSelect').value = state.selectedCropId;
+  document.getElementById('seasonSelect').value = state.season;
+  renderSymptoms();
+  renderResults();
+}
+
+renderCropOptions();
+renderSymptoms();
+renderResults();
+
+document.getElementById('cropSelect').addEventListener('change', event => {
+  state.selectedCropId = event.target.value;
+  renderResults();
+});
+document.getElementById('seasonSelect').addEventListener('change', event => {
+  state.season = event.target.value;
+  renderResults();
+});
+document.getElementById('diagnoseBtn').addEventListener('click', renderResults);
+document.getElementById('resetBtn').addEventListener('click', resetForm);
+</script>
+</body>
+</html>
