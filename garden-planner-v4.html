@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-<title>Garden OS · Raised Bed Planner v4.3</title>
+<title>Garden OS · Raised Bed Planner v4.4</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
@@ -1162,6 +1162,65 @@
   }
   .succession-queue-item strong{display:block;font-size:.68rem;color:var(--soil);}
   .succession-queue-item span{font-size:.6rem;color:var(--text-mid);line-height:1.4;}
+
+  /* ═══ EVENT LOGGER ═══ */
+  .evt-status-row{margin-bottom:.3rem;}
+  .evt-status-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;
+    letter-spacing:.06em;padding:.15rem .45rem;border-radius:3px;color:white;font-weight:500;}
+  .evt-btns{display:flex;flex-wrap:wrap;gap:.22rem;margin-bottom:.35rem;}
+  .evt-btn{font-family:'DM Mono',monospace;font-size:.48rem;text-transform:uppercase;letter-spacing:.04em;
+    padding:.18rem .35rem;border-radius:3px;border:1px solid var(--border);background:white;
+    color:var(--text-light);cursor:pointer;transition:all .1s;white-space:nowrap;}
+  .evt-btn:hover{background:var(--cream-dark);border-color:var(--soil-light);color:var(--text);}
+  .evt-btn:focus-visible{outline:2px solid var(--soil);outline-offset:1px;}
+  .evt-timeline{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+  .evt-entry{display:flex;align-items:center;gap:.35rem;font-size:.62rem;padding:.2rem .3rem;
+    background:var(--cream);border-radius:3px;}
+  .evt-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .evt-date{margin-left:auto;font-family:'DM Mono',monospace;font-size:.52rem;color:var(--text-light);}
+  .evt-empty{font-size:.6rem;color:var(--text-light);font-style:italic;padding:.2rem 0;}
+
+  /* ═══ STATUS HEATMAP ═══ */
+  .bed-view-toggle{display:flex;gap:2px;justify-content:center;margin:.3rem 0 .1rem;}
+  .bvt-pill{font-family:'DM Mono',monospace;font-size:.5rem;text-transform:uppercase;letter-spacing:.06em;
+    padding:.15rem .45rem;border-radius:3px;border:1px solid var(--border);background:white;
+    color:var(--text-light);cursor:pointer;transition:all .1s;}
+  .bvt-pill.active{background:var(--soil);color:var(--sun);border-color:var(--soil);}
+  .bvt-pill:focus-visible{outline:2px solid var(--soil);outline-offset:1px;}
+
+  /* ═══ TODAY VIEW ═══ */
+  .today-section{margin-bottom:.5rem;}
+  .today-section-title{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--soil-mid);font-weight:600;padding-bottom:.2rem;
+    border-bottom:1px solid var(--border-light);margin-bottom:.3rem;}
+  .today-attention-item{display:flex;align-items:center;gap:.4rem;padding:.3rem .35rem;border-radius:5px;
+    cursor:pointer;border:1px solid var(--border-light);background:white;transition:all .1s;font-size:.68rem;margin-bottom:.2rem;}
+  .today-attention-item:hover{background:var(--cream-dark);border-color:var(--border);}
+  .today-attention-reason{font-size:.56rem;color:var(--text-light);font-family:'DM Mono',monospace;}
+  .today-activity-item{display:flex;align-items:center;gap:.35rem;padding:.22rem .3rem;font-size:.64rem;
+    border-bottom:1px solid var(--border-light);}
+  .today-stat{font-size:.7rem;padding:.15rem 0;}
+  .today-stat strong{font-family:'DM Mono',monospace;color:var(--soil);}
+  .today-empty{font-size:.62rem;color:var(--text-light);text-align:center;padding:8px;font-style:italic;}
+
+  /* ═══ SEASON REVIEW ═══ */
+  .season-review{margin-bottom:.75rem;}
+  .season-review-title{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--soil-mid);font-weight:600;padding-bottom:.2rem;
+    border-bottom:1px solid var(--border-light);margin-bottom:.35rem;}
+  .season-review-grid{display:flex;flex-direction:column;gap:.35rem;}
+  .season-crop-card{background:white;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+  .season-crop-header{display:flex;justify-content:space-between;align-items:center;padding:.4rem .55rem;
+    cursor:pointer;font-size:.72rem;font-weight:500;transition:background .1s;}
+  .season-crop-header:hover{background:var(--cream);}
+  .season-crop-summary{padding:.2rem .55rem .4rem;font-size:.62rem;color:var(--text-mid);}
+  .season-crop-detail{padding:.35rem .55rem;border-top:1px solid var(--border-light);}
+  .season-note{width:100%;min-height:48px;border:1.5px solid var(--border);border-radius:5px;
+    font-family:'DM Sans',sans-serif;font-size:.7rem;padding:.3rem .4rem;resize:vertical;}
+  .season-note:focus{outline:none;border-color:var(--soil);}
+  .season-divider{height:1px;background:var(--border-light);margin:.5rem 0;}
+  .season-crop-toggle{font-size:.7rem;color:var(--text-light);transition:transform .15s;}
+
   .dash-stack{display:flex;flex-direction:column;gap:.55rem;}
   .dash-hero{
     background:
@@ -2797,6 +2856,10 @@
       <div class="flbl">▼ Front (access side)</div>
       <div class="chint" id="chint"></div>
       <div class="fillbar"><div class="fillbar-fill" id="fillbarFill" style="width:0%"></div></div>
+      <div class="bed-view-toggle" id="bedViewToggle">
+        <button class="bvt-pill active" data-view="score">Score</button>
+        <button class="bvt-pill" data-view="status">Status</button>
+      </div>
       <div class="zone-legend" id="zoneLegend" style="display:none">
         <span class="zleg"><span class="zleg-dot" style="background:#d4a017"></span>Trellis</span>
         <span class="zleg"><span class="zleg-dot" style="background:#7a9e7e"></span>Protected</span>
@@ -2825,6 +2888,13 @@
     <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Garden board</button>
     <div class="insight-content" hidden>
       <div id="rpaneDashboard"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightToday">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="today">Today</button>
+    <div class="insight-content" hidden>
+      <div id="rpaneToday"></div>
     </div>
   </section>
 
@@ -2926,6 +2996,11 @@
     <span class="menu-row-icon" style="background:#e8f0fe"></span>
     Import plan
     <span class="menu-row-sub">&uarr;</span>
+  </button>
+  <button class="menu-row" id="menuSyncExport">
+    <span class="menu-row-icon" style="background:#e0f0e8"></span>
+    Export for sync (.json)
+    <span class="menu-row-sub">&darr;</span>
   </button>
   <button class="menu-row" id="menuDuplicateBed">
     <span class="menu-row-icon" style="background:#f3eee4"></span>
@@ -3044,11 +3119,33 @@ const VALID_ZONES=['','5','6','7','8','9','10'];
 const VALID_TOOLS=['paint','erase','inspect'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
-const VALID_RIGHT_TABS=['dashboard','score','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
+const VALID_PLANTING_STATUSES=['planned','started_indoors','direct_sown','transplanted','growing','harvesting','finished','failed'];
+const VALID_EVENT_TYPES=['seed_started','transplanted','direct_sown','germinated','thinned','trellised','fertilized','pest_issue','disease_issue','harvested','removed','note'];
+const STATUS_COLORS={
+  planned:{bg:'#bbb',bar:'#999',label:'Planned'},
+  started_indoors:{bg:'#a8d8f0',bar:'#5ba3d9',label:'Started indoors'},
+  direct_sown:{bg:'#d9c89e',bar:'#b5a06a',label:'Direct sown'},
+  transplanted:{bg:'#c8a8e0',bar:'#9570c0',label:'Transplanted'},
+  growing:{bg:'#90c890',bar:'#4e8c3c',label:'Growing'},
+  harvesting:{bg:'#e8c84a',bar:'#c8a020',label:'Harvesting'},
+  finished:{bg:'#a0c0a0',bar:'#6a8a6a',label:'Finished'},
+  failed:{bg:'#e09090',bar:'#b02a1e',label:'Failed'}
+};
+const STATUS_TRANSITION={
+  seed_started:'started_indoors',direct_sown:'direct_sown',transplanted:'transplanted',
+  germinated:'growing',harvested:'harvesting',removed:'finished'
+};
+const EVENT_LABELS={
+  seed_started:'\u{1F331} Seed',transplanted:'\u{1F504} Transplant',direct_sown:'\u{1F33F} Direct sow',
+  germinated:'\u{1F331} Germ',thinned:'\u2702 Thin',trellised:'\u{1FAB4} Trellis',
+  fertilized:'\u{1F9EA} Fert',pest_issue:'\u{1F41B} Pest',disease_issue:'\u{1F9A0} Disease',
+  harvested:'\u{1F33E} Harvest',removed:'\u{1F5D1} Remove',note:'\u{1F4DD} Note'
+};
+const VALID_RIGHT_TABS=['dashboard','score','inspect','notes','companions','calendar','harvest','today','experiment','retrospective'];
 const EXPERIMENT_VARIABLES=['spacing','mulch','fertilizer','variety','sun exposure','watering','protection'];
 const MAX_SHARE_PAYLOAD=50000;
 const MAX_IMPORT_FILE_BYTES=500*1024;
-const WORKSPACE_VERSION = 1;
+const WORKSPACE_VERSION = 2;
 const APP_VERSION = '4.4';
 
 const CROPS = {
@@ -3726,9 +3823,12 @@ const PLANNER_RECIPES = {
   function renameCropInCells(cells) {
     if (!Array.isArray(cells)) return false;
     let changed = false;
-    cells.forEach(function(cell) {
-      if (cell && typeof cell.crop === 'string' && KEY_MAP[cell.crop]) {
+    cells.forEach(function(cell, i) {
+      if (cell && typeof cell === 'object' && typeof cell.crop === 'string' && KEY_MAP[cell.crop]) {
         cell.crop = KEY_MAP[cell.crop];
+        changed = true;
+      } else if (typeof cell === 'string' && KEY_MAP[cell]) {
+        cells[i] = KEY_MAP[cell];
         changed = true;
       }
     });
@@ -3751,13 +3851,16 @@ const PLANNER_RECIPES = {
       if (!data || typeof data !== 'object') return;
       var dirty = false;
 
-      // Workspace format: { beds: { [id]: { cells: [...], plannerState: {...} } } }
+      // Workspace format: { beds: [...] or { [id]: { cells, plannerState } } }
       if (data.beds && typeof data.beds === 'object') {
-        Object.keys(data.beds).forEach(function(bedId) {
-          var bed = data.beds[bedId];
+        var bedList = Array.isArray(data.beds) ? data.beds : Object.keys(data.beds).map(function(k){ return data.beds[k]; });
+        bedList.forEach(function(bed) {
           if (bed) {
             if (renameCropInCells(bed.cells)) dirty = true;
-            if (bed.plannerState && migrateSelectedCrop(bed.plannerState)) dirty = true;
+            if (bed.plannerState) {
+              if (renameCropInCells(bed.plannerState.cells)) dirty = true;
+              if (migrateSelectedCrop(bed.plannerState)) dirty = true;
+            }
           }
         });
       }
@@ -3781,7 +3884,7 @@ const PLANNER_RECIPES = {
 //
 // Mutable top-level state:
 //   bedW, bedH        — current bed dimensions (2-10 each)
-//   bed[]             — flat array of {id, row, col, crop} cells
+//   bed[]             — flat array of {id, row, col, crop, plantingId, plantedAt, status, events, plantingNotes} cells
 //   ui                — {selectedCrop, tool, selCell, catFilter, rTab}
 //   undoStack[]       — bed snapshots (max 40)
 //   redoStack[]       — bed snapshots for redo
@@ -3797,7 +3900,7 @@ const PLANNER_RECIPES = {
 //   _saveTimer        — debounce timer ID
 //
 // localStorage keys:
-//   gardenOS_workspace   (LS_KEY)        — current workspace (v1 schema)
+//   gardenOS_workspace   (LS_KEY)        — current workspace (v2 schema, auto-migrates v1)
 //   gardenOS             (LS_KEY_LEGACY) — legacy v0, migrated then removed
 //   gardenOS_v4          (LS_KEY_LEGACY_V4) — legacy v4, migrated then removed
 //   gardenOS_tutorialDone (TUTORIAL_KEY) — boolean tutorial completion flag
@@ -3827,7 +3930,7 @@ const MAX_HISTORY = 40;
 
 function createEmptyBed(w, h){
   const a = [];
-  for(let r=0;r<h;r++) for(let c=0;c<w;c++) a.push({id:`r${r}c${c}`,row:r,col:c,crop:null});
+  for(let r=0;r<h;r++) for(let c=0;c<w;c++) a.push({id:`r${r}c${c}`,row:r,col:c,crop:null,plantingId:null,plantedAt:null,status:null,events:[],plantingNotes:''});
   return a;
 }
 function getCell(r,c){ return bed.find(x=>x.row===r&&x.col===c)||null; }
@@ -3862,12 +3965,18 @@ function safeRemoveStorageKey(key){
 }
 
 // Undo/redo
-function bedSnapshot(){ return bed.map(c=>({crop:c.crop})); }
+function bedSnapshot(){ return bed.map(c=>({crop:c.crop, plantingId:c.plantingId||null, plantedAt:c.plantedAt||null, status:c.status||null, events:c.events?c.events.slice():[], plantingNotes:c.plantingNotes||''})); }
 function restoreSnapshot(snap){
   if(!Array.isArray(snap) || snap.length!==bed.length) return false;
   bed.forEach((c,i)=>{
-    const nextCrop = snap[i] && typeof snap[i]==='object' ? snap[i].crop : null;
-    c.crop = (typeof nextCrop==='string' && CROPS[nextCrop]) ? nextCrop : null;
+    const s = snap[i] && typeof snap[i]==='object' ? snap[i] : {};
+    const nextCrop = typeof s.crop==='string' && CROPS[s.crop] ? s.crop : null;
+    c.crop = nextCrop;
+    c.plantingId = nextCrop ? (s.plantingId || null) : null;
+    c.plantedAt = nextCrop ? (s.plantedAt || null) : null;
+    c.status = nextCrop ? (s.status || 'planned') : null;
+    c.events = nextCrop && Array.isArray(s.events) ? s.events : [];
+    c.plantingNotes = nextCrop && typeof s.plantingNotes==='string' ? s.plantingNotes : '';
   });
   normalizeSelectionState();
   return true;
@@ -4041,12 +4150,36 @@ function defaultSiteSettingsFromUI(){
     plantingDate: document.getElementById('plantingDate') ? document.getElementById('plantingDate').value : ''
   });
 }
+function normalizePlantingCell(raw){
+  // Accept string (legacy v1), object (v2), or null
+  if(raw === null || raw === undefined) return null;
+  if(typeof raw === 'string'){
+    // Legacy v1: bare crop key string → upgrade to rich cell
+    if(!CROPS[raw]) return null;
+    return { crop: raw, plantingId: uniqueId('pl'), plantedAt: null, status: 'planned', events: [], notes: '' };
+  }
+  if(typeof raw === 'object' && raw !== null){
+    const crop = (typeof raw.crop === 'string' && CROPS[raw.crop]) ? raw.crop : null;
+    if(!crop) return null;
+    return {
+      crop,
+      plantingId: (typeof raw.plantingId === 'string' && raw.plantingId) ? raw.plantingId : uniqueId('pl'),
+      plantedAt: typeof raw.plantedAt === 'string' ? raw.plantedAt : null,
+      status: VALID_PLANTING_STATUSES.includes(raw.status) ? raw.status : 'planned',
+      events: Array.isArray(raw.events) ? raw.events.filter(e =>
+        e && typeof e === 'object' && typeof e.date === 'string' && VALID_EVENT_TYPES.includes(e.type)
+      ).map(e => ({ type: e.type, date: e.date, note: typeof e.note === 'string' ? e.note : '' })) : [],
+      notes: typeof raw.notes === 'string' ? raw.notes : ''
+    };
+  }
+  return null;
+}
 function normalizeCellArray(cells, cols, rows){
   const expected = cols * rows;
   const source = Array.isArray(cells) ? cells : [];
   const normalized = source
     .slice(0, expected)
-    .map(c=>(typeof c==='string' && CROPS[c]) ? c : null);
+    .map(c => normalizePlantingCell(c));
   if(normalized.length < expected){
     normalized.push(...new Array(expected - normalized.length).fill(null));
   }
@@ -4321,10 +4454,11 @@ function createMinimalWorkspace(){
     createdAt: now,
     updatedAt: now,
     activeBedId: starter.id,
-    workspaceSettings: { catFilter:'all', rightTab:'score', anticipation:{ recentCrops:[] } },
+    workspaceSettings: { catFilter:'all', rightTab:'score', anticipation:{ recentCrops:[] }, bedView:'score' },
     beds: [starter],
     guideProgress: [],
     harvests: [],
+    seasonNotes: {},
     experiments: []
   };
 }
@@ -4335,7 +4469,7 @@ function validateWorkspace(ws){
   const now = new Date().toISOString();
   const normalized = {
     id: typeof ws.id==='string' && ws.id ? ws.id : uniqueId('workspace'),
-    version: clampInt(ws.version, 1, WORKSPACE_VERSION, WORKSPACE_VERSION),
+    version: WORKSPACE_VERSION,
     createdAt: typeof ws.createdAt==='string' ? ws.createdAt : now,
     updatedAt: now,
     activeBedId: typeof ws.activeBedId==='string' ? ws.activeBedId : '',
@@ -4343,7 +4477,8 @@ function validateWorkspace(ws){
     beds: [],
     guideProgress: Array.isArray(ws.guideProgress) ? ws.guideProgress : [],
     harvests: Array.isArray(ws.harvests) ? ws.harvests : [],
-    experiments: []
+    seasonNotes: ws.seasonNotes && typeof ws.seasonNotes==='object' ? ws.seasonNotes : {},
+    experiments: Array.isArray(ws.experiments) ? ws.experiments : []
   };
   if(!Array.isArray(ws.beds) || !ws.beds.length){
     return { ok:false, errors:['beds array missing or empty'] };
@@ -4355,7 +4490,8 @@ function validateWorkspace(ws){
       : 'score',
     anticipation: normalized.workspaceSettings.anticipation && typeof normalized.workspaceSettings.anticipation==='object'
       ? { recentCrops: Array.isArray(normalized.workspaceSettings.anticipation.recentCrops) ? normalized.workspaceSettings.anticipation.recentCrops : [] }
-      : { recentCrops: [] }
+      : { recentCrops: [] },
+    bedView: ['score','status'].includes(normalized.workspaceSettings.bedView) ? normalized.workspaceSettings.bedView : 'score'
   };
   normalized.beds = ws.beds.map((b, i)=>normalizeBedRecord(b, i));
   if(!normalized.beds.find(b=>b.id===normalized.activeBedId)){
@@ -4556,7 +4692,14 @@ function saveState(){
   b.size.cols = bedW;
   b.size.rows = bedH;
   b.plannerState = b.plannerState || {};
-  b.plannerState.cells = bed.map(c=>c.crop);
+  b.plannerState.cells = bed.map(c => c.crop ? {
+    crop: c.crop,
+    plantingId: c.plantingId || uniqueId('pl'),
+    plantedAt: c.plantedAt || null,
+    status: VALID_PLANTING_STATUSES.includes(c.status) ? c.status : 'planned',
+    events: Array.isArray(c.events) ? c.events : [],
+    notes: typeof c.plantingNotes === 'string' ? c.plantingNotes : ''
+  } : null);
   b.plannerState.selectedCrop = ui.selectedCrop && CROPS[ui.selectedCrop] ? ui.selectedCrop : 'lettuce';
   b.plannerState.activeTool = VALID_TOOLS.includes(ui.tool) ? ui.tool : 'paint';
   const wallEl = document.getElementById('wallSide');
@@ -4790,7 +4933,23 @@ function applyWorkspaceToUI(ws){
   const p = b.plannerState || {};
   const site = normalizeSiteSettings(p.site);
   const cells = normalizeCellArray(p.cells, bedW, bedH);
-  cells.forEach((crop, i)=>{ bed[i].crop = crop; });
+  cells.forEach((pc, i)=>{
+    if(pc){
+      bed[i].crop = pc.crop;
+      bed[i].plantingId = pc.plantingId;
+      bed[i].plantedAt = pc.plantedAt;
+      bed[i].status = pc.status;
+      bed[i].events = pc.events;
+      bed[i].plantingNotes = pc.notes;
+    } else {
+      bed[i].crop = null;
+      bed[i].plantingId = null;
+      bed[i].plantedAt = null;
+      bed[i].status = null;
+      bed[i].events = [];
+      bed[i].plantingNotes = '';
+    }
+  });
   resetInteractionState();
   const recentDefault = ws.workspaceSettings && ws.workspaceSettings.anticipation
     && Array.isArray(ws.workspaceSettings.anticipation.recentCrops)
@@ -5795,7 +5954,15 @@ function loadRec(skipUndo){
   if(!skipUndo) pushUndo();
   const inputs=inp();
   const grid=buildRec(inputs);
-  bed.forEach((cell,i)=>{cell.crop=grid[i];});
+  const now = new Date().toISOString();
+  bed.forEach((cell,i)=>{
+    cell.crop=grid[i]||null;
+    if(cell.crop){
+      cell.plantingId=uniqueId('pl'); cell.plantedAt=now; cell.status='planned'; cell.events=[]; cell.plantingNotes='';
+    } else {
+      cell.plantingId=null; cell.plantedAt=null; cell.status=null; cell.events=[]; cell.plantingNotes='';
+    }
+  });
   saveState(); render();
 }
 
@@ -6524,6 +6691,19 @@ function placeCropInCell(cellId, opts={}){
   }
   if(opts.withUndo) pushUndo();
   cell.crop = nextCrop;
+  if(nextCrop){
+    cell.plantingId = uniqueId('pl');
+    cell.plantedAt = new Date().toISOString();
+    cell.status = 'planned';
+    cell.events = [];
+    cell.plantingNotes = '';
+  } else {
+    cell.plantingId = null;
+    cell.plantedAt = null;
+    cell.status = null;
+    cell.events = [];
+    cell.plantingNotes = '';
+  }
   ui.selCell = cell.id;
   interaction.focusCellId = cell.id;
   // Update recent crops for anticipatory UX
@@ -6724,7 +6904,7 @@ function handleDuplicateActiveBed(){
 function clearBed(opts={}){
   const snapshot = bedSnapshot();
   pushUndo();
-  bed.forEach(c=>c.crop=null);
+  bed.forEach(c=>{c.crop=null;c.plantingId=null;c.plantedAt=null;c.status=null;c.events=[];c.plantingNotes='';});
   saveState();
   render();
   if(opts.showUndo!==false){
@@ -6753,7 +6933,7 @@ function resetBedToDefaults(){
   const snapshot = saveRestoreSnapshot('Reset bed');
   pushUndo();
   setPreset(4,8);
-  bed.forEach(c=>{c.crop=null;});
+  bed.forEach(c=>{c.crop=null;c.plantingId=null;c.plantedAt=null;c.status=null;c.events=[];c.plantingNotes='';});
   const ce=document.getElementById('cageEnabled');
   if(ce&&ce.classList.contains('on')){ce.classList.remove('on');ce.setAttribute('aria-pressed','false');}
   const ct=document.getElementById('cageRearTrellis');
@@ -6951,6 +7131,12 @@ function render(){
   renderPlacementStatus();
   syncShareStaleness();
   syncSimulationUI();
+  // Sync bed view toggle state
+  const bvt=document.getElementById('bedViewToggle');
+  if(bvt){
+    const view=_workspace&&_workspace.workspaceSettings?_workspace.workspaceSettings.bedView||'score':'score';
+    bvt.querySelectorAll('.bvt-pill').forEach(function(p){p.classList.toggle('active',p.dataset.view===view);});
+  }
 }
 
 function renderBed(inputs,issues,opts={}){
@@ -6983,9 +7169,11 @@ function renderBed(inputs,issues,opts={}){
     const kbFocus = interaction.keyboardMode && cell.id===getFocusedCellId();
     const rowBand = getRowZoneBand(cell);
     const c=cell.crop?CROPS[cell.crop]:null;
-    const bg=c?c.color+'28':'#f2ebe0';
-    const bdc=c?c.color+'88':'var(--border)';
-    const sbc=skipScores ? '#8a6a50' : (cs>=7?'var(--leaf)':cs>=4.5?'var(--sun-bright)':'var(--rust-light)');
+    const statusView=_workspace&&_workspace.workspaceSettings&&_workspace.workspaceSettings.bedView==='status';
+    const sv=statusView&&c?getStatusVisuals(cell.status):null;
+    const bg=sv?sv.bg:(c?c.color+'28':'#f2ebe0');
+    const bdc=sv?(sv.bar+'88'):(c?c.color+'88':'var(--border)');
+    const sbc=sv?sv.bar:(skipScores ? '#8a6a50' : (cs>=7?'var(--leaf)':cs>=4.5?'var(--sun-bright)':'var(--rust-light)'));
     const issues=issueMap[cell.id]||[];
     const tipLines=c
       ?[escapeHtml(c.name),`☀ ${cell.effectiveLight.toFixed(1)} hrs`,skipScores?'Scoring updates on drag end':`Score: ${cs.toFixed(1)}/10`,cell.hasVerticalSupport?'🪴 Trellis':'',cell.isCritterSafe?'🛡':'',issues.length?issues.join(' '):'']
@@ -7051,7 +7239,7 @@ const INSIGHT_SECTION_MAP = {
   inspect:'insightInspect', companions:'insightInspect',
   calendar:'insightCalendar', harvest:'insightHarvest',
   experiment:'insightExperiment', retrospective:'insightRetrospective',
-  notes:'insightNotes'
+  notes:'insightNotes', today:'insightToday'
 };
 
 function setInsightSectionState(sectionEl, expanded){
@@ -7095,6 +7283,7 @@ function switchRTab(t, persist=true){
   if(t==='harvest') renderHarvestTab();
   if(t==='experiment') renderExperimentPanel();
   if(t==='retrospective') renderRetrospectivePanel();
+  if(t==='today') renderTodayTab();
 }
 
 function toggleInsightSection(sectionEl){
@@ -7376,7 +7565,8 @@ function renderRight(inputs,issues,scoreTotal){
         <div class="icbody">${vhtml||'<em style="font-size:.7rem;color:var(--text-light)">No varieties listed.</em>'}</div>
       </div>
       <button class="harvest-log-btn" id="inspectHarvestBtn">🌾 Log Harvest</button>
-      <div id="inspectHarvestForm"></div>`;
+      <div id="inspectHarvestForm"></div>
+      ${renderEventLogger(selCell)}`;
   } else if(selCell){
     inspHtml=`<div class="insp">
       <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
@@ -7394,6 +7584,13 @@ function renderRight(inputs,issues,scoreTotal){
   if(harvestBtn && selCell && selCell.crop){
     harvestBtn.addEventListener('click', () => {
       renderHarvestForm(selCell);
+    });
+  }
+  // Bind event logger buttons
+  const evtCard = document.getElementById('eventLoggerCard');
+  if(evtCard && selCell && selCell.crop){
+    evtCard.querySelectorAll('.evt-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){logCellEvent(selCell.id,this.dataset.evt);});
     });
   }
 
@@ -7417,6 +7614,9 @@ function renderRight(inputs,issues,scoreTotal){
 
   // HARVEST pane — re-render if active
   if(ui.rTab==='harvest') renderHarvestTab();
+
+  // TODAY pane — re-render if active
+  if(ui.rTab==='today') renderTodayTab();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -8673,7 +8873,8 @@ function renderHarvestTab(){
   });
   listHtml += '</div>';
 
-  pane.innerHTML = summaryHtml + listHtml;
+  const seasonHtml = renderSeasonReview();
+  pane.innerHTML = seasonHtml + summaryHtml + listHtml;
 
   // Bind delete buttons
   pane.querySelectorAll('.harvest-delete-btn').forEach(btn => {
@@ -8686,6 +8887,24 @@ function renderHarvestTab(){
       }
     });
   });
+  // Bind season review card toggles
+  pane.querySelectorAll('.season-crop-header').forEach(function(hdr){
+    hdr.addEventListener('click',function(){
+      const detail=this.parentElement.querySelector('.season-crop-detail');
+      if(detail){
+        const show=detail.hidden;
+        detail.hidden=!show;
+        this.querySelector('.season-crop-toggle').textContent=show?'\u25B4':'\u25BE';
+      }
+    });
+  });
+  // Bind season note saves
+  pane.querySelectorAll('.season-note').forEach(function(ta){
+    ta.addEventListener('blur',function(){saveSeasonNote(this.dataset.crop,this.value);});
+  });
+  // Bind export season review
+  var exportSeasonBtn=document.getElementById('exportSeasonBtn');
+  if(exportSeasonBtn) exportSeasonBtn.addEventListener('click',exportSeasonReview);
 }
 function renderHarvestForm(cell){
   if(!cell || !cell.crop) return;
@@ -9126,6 +9345,311 @@ function collectDashboardCounts(){
     if(cell.crop) counts[cell.crop] = (counts[cell.crop] || 0) + 1;
   });
   return counts;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EVENT LOGGER (Feature 1)
+// ═══════════════════════════════════════════════════════════════════════════════
+function formatEventDate(iso){
+  if(!iso) return '';
+  const d=new Date(iso), now=new Date();
+  const diffMs=now-d, diffDays=Math.floor(diffMs/(1000*60*60*24));
+  if(diffDays===0) return 'today';
+  if(diffDays===1) return '1d ago';
+  if(diffDays<14) return diffDays+'d ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function autoTransitionStatus(cell, eventType){
+  const next=STATUS_TRANSITION[eventType];
+  if(next) cell.status=next;
+}
+function logCellEvent(cellId, eventType){
+  if(!VALID_EVENT_TYPES.includes(eventType)) return;
+  const cell=bed.find(c=>c.id===cellId);
+  if(!cell||!cell.crop) return;
+  pushUndo();
+  cell.events=cell.events||[];
+  cell.events.push({type:eventType,date:new Date().toISOString(),note:''});
+  autoTransitionStatus(cell,eventType);
+  saveState();
+  render();
+}
+function renderEventLogger(cell){
+  if(!cell||!cell.crop) return '';
+  const st=cell.status||'planned';
+  const sc=STATUS_COLORS[st]||STATUS_COLORS.planned;
+  let html='<div class="icard" id="eventLoggerCard"><div class="ichdr">Activity tracker</div><div class="icbody">';
+  html+='<div class="evt-status-row"><span class="evt-status-badge" style="background:'+sc.bar+'">'+escapeHtml(sc.label)+'</span></div>';
+  html+='<div class="evt-btns">';
+  VALID_EVENT_TYPES.forEach(function(et){
+    html+='<button class="evt-btn" data-evt="'+et+'" aria-label="Log '+et.replace(/_/g,' ')+'">'+escapeHtml(EVENT_LABELS[et]||et)+'</button>';
+  });
+  html+='</div>';
+  const evts=(cell.events||[]).slice().reverse().slice(0,8);
+  if(evts.length){
+    html+='<div class="evt-timeline">';
+    evts.forEach(function(e){
+      const ec=STATUS_COLORS[STATUS_TRANSITION[e.type]]||STATUS_COLORS.planned;
+      html+='<div class="evt-entry"><span class="evt-type-dot" style="background:'+ec.bar+'"></span>'
+        +'<span>'+escapeHtml(EVENT_LABELS[e.type]||e.type)+'</span>'
+        +'<span class="evt-date">'+escapeHtml(formatEventDate(e.date))+'</span></div>';
+    });
+    html+='</div>';
+  }else{
+    html+='<div class="evt-empty">No events yet</div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATUS HEATMAP (Feature 2)
+// ═══════════════════════════════════════════════════════════════════════════════
+function getStatusVisuals(status){
+  const s=STATUS_COLORS[status||'planned']||STATUS_COLORS.planned;
+  return {bg:s.bg+'44',bar:s.bar};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SYNC SNAPSHOT EXPORT (Feature 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildSyncPayload(){
+  if(!_workspace) return {plantings:[],meta:{}};
+  saveState();
+  const plantings=[];
+  (_workspace.beds||[]).forEach(function(b){
+    const site=b.plannerState&&b.plannerState.site?b.plannerState.site:{};
+    const cells=b.plannerState&&Array.isArray(b.plannerState.cells)?b.plannerState.cells:[];
+    const cols=b.size?b.size.cols:8, rows=b.size?b.size.rows:4;
+    cells.forEach(function(pc,i){
+      if(!pc||!pc.crop) return;
+      const row=Math.floor(i/cols), col=i%cols;
+      plantings.push({
+        plantingId:pc.plantingId||'',bedId:b.id,bedName:b.name||'',
+        cellId:'r'+row+'c'+col,row:row,col:col,
+        crop:pc.crop,cropName:(CROPS[pc.crop]?CROPS[pc.crop].name:pc.crop),
+        status:pc.status||'planned',plantedAt:pc.plantedAt||null,
+        events:JSON.parse(JSON.stringify(pc.events||[])),
+        notes:pc.notes||'',
+        bedSize:{cols:cols,rows:rows},
+        orientation:site.orientation||'ew',zone:site.zone||'',
+        sunHours:site.sunHours||6,season:site.season||'summer'
+      });
+    });
+  });
+  return {
+    plantings:plantings,
+    meta:{exportedAt:new Date().toISOString(),appVersion:APP_VERSION,workspaceId:_workspace.id||''}
+  };
+}
+function exportSyncSnapshot(){
+  if(!_workspace){
+    setPlannerNotice('error','Nothing to export','Create or import a workspace before exporting.');
+    return;
+  }
+  const payload=buildSyncPayload();
+  try{localStorage.setItem('gardenOS_lastSync',JSON.stringify({timestamp:new Date().toISOString(),count:payload.plantings.length}));}catch(e){}
+  const day=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='garden-os-sync-'+day+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+  showShareBanner('Sync snapshot exported ('+payload.plantings.length+' plantings)');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TODAY VIEW (Feature 4)
+// ═══════════════════════════════════════════════════════════════════════════════
+function getTodayNeedsAttention(){
+  const now=Date.now(), DAY=86400000, items=[];
+  bed.forEach(function(cell){
+    if(!cell.crop) return;
+    const evts=cell.events||[];
+    if(cell.status==='finished'||cell.status==='failed') return;
+    if(evts.length===0){
+      const plantedMs=cell.plantedAt?new Date(cell.plantedAt).getTime():0;
+      const daysOld=plantedMs?Math.floor((now-plantedMs)/DAY):0;
+      if(cell.status==='planned'&&daysOld>14){
+        items.push({cellId:cell.id,crop:cell.crop,reason:'Still planned after '+daysOld+'d',stale:daysOld});
+      }else{
+        items.push({cellId:cell.id,crop:cell.crop,reason:'No events logged',stale:daysOld||999});
+      }
+      return;
+    }
+    const newest=evts.reduce(function(a,b){return(a.date||'')>(b.date||'')?a:b;});
+    const newestMs=new Date(newest.date).getTime();
+    const daysSince=Math.floor((now-newestMs)/DAY);
+    if(daysSince>=7){
+      items.push({cellId:cell.id,crop:cell.crop,reason:'No activity in '+daysSince+'d',stale:daysSince});
+    }
+  });
+  items.sort(function(a,b){return b.stale-a.stale;});
+  return items;
+}
+function getTodayRecentActivity(){
+  const all=[];
+  bed.forEach(function(cell){
+    if(!cell.crop) return;
+    (cell.events||[]).forEach(function(e){
+      all.push({cellId:cell.id,crop:cell.crop,event:e});
+    });
+  });
+  all.sort(function(a,b){return(b.event.date||'').localeCompare(a.event.date||'');});
+  return all.slice(0,10);
+}
+function getTodayQuickStats(){
+  const stats={totalPlanted:0,byStatus:{},bedsActive:0};
+  bed.forEach(function(cell){
+    if(!cell.crop) return;
+    stats.totalPlanted++;
+    const st=cell.status||'planned';
+    stats.byStatus[st]=(stats.byStatus[st]||0)+1;
+  });
+  if(_workspace&&_workspace.beds){
+    stats.bedsActive=_workspace.beds.filter(function(b){
+      return b.plannerState&&Array.isArray(b.plannerState.cells)&&b.plannerState.cells.some(function(c){return c&&c.crop;});
+    }).length;
+  }
+  return stats;
+}
+function navigateToCell(cellId){
+  const target=bed.find(function(c){return c.id===cellId;});
+  if(!target) return;
+  ui.selCell=cellId;
+  ui.tool='inspect';
+  syncToolButtons('inspect');
+  switchRTab('inspect');
+  render();
+}
+function renderTodayTab(){
+  const pane=document.getElementById('rpaneToday');
+  if(!pane) return;
+  const attention=getTodayNeedsAttention();
+  const activity=getTodayRecentActivity();
+  const stats=getTodayQuickStats();
+  let html='';
+  // Quick stats
+  html+='<div class="today-section"><div class="today-section-title">Quick stats</div>';
+  html+='<div class="today-stat">Planted: <strong>'+stats.totalPlanted+'</strong> cells across <strong>'+stats.bedsActive+'</strong> bed'+(stats.bedsActive!==1?'s':'')+'</div>';
+  Object.keys(stats.byStatus).forEach(function(st){
+    const sc=STATUS_COLORS[st]||STATUS_COLORS.planned;
+    html+='<div class="today-stat"><span class="evt-status-badge" style="background:'+sc.bar+';font-size:.48rem;padding:.1rem .3rem;">'+escapeHtml(sc.label)+'</span> <strong>'+stats.byStatus[st]+'</strong></div>';
+  });
+  html+='</div>';
+  // Needs attention
+  html+='<div class="today-section"><div class="today-section-title">Needs attention</div>';
+  if(attention.length){
+    attention.slice(0,8).forEach(function(item){
+      const c=CROPS[item.crop];
+      html+='<div class="today-attention-item" data-cell-id="'+escapeHtml(item.cellId)+'">'
+        +'<span>'+(c?c.emoji:'')+'</span>'
+        +'<span>'+escapeHtml(c?c.short:item.crop)+'</span>'
+        +'<span class="today-attention-reason">'+escapeHtml(item.reason)+'</span>'
+        +'</div>';
+    });
+  }else if(stats.totalPlanted>0){
+    html+='<div class="today-empty">Everything looks good</div>';
+  }else{
+    html+='<div class="today-empty">Plant some crops to get started</div>';
+  }
+  html+='</div>';
+  // Recent activity
+  html+='<div class="today-section"><div class="today-section-title">Recent activity</div>';
+  if(activity.length){
+    activity.forEach(function(item){
+      const c=CROPS[item.crop];
+      html+='<div class="today-activity-item">'
+        +'<span>'+(c?c.emoji:'')+'</span>'
+        +'<span>'+escapeHtml(EVENT_LABELS[item.event.type]||item.event.type)+'</span>'
+        +'<span class="evt-date">'+escapeHtml(formatEventDate(item.event.date))+'</span>'
+        +'</div>';
+    });
+  }else{
+    html+='<div class="today-empty">No events yet</div>';
+  }
+  html+='</div>';
+  pane.innerHTML=html;
+  // Wire attention item clicks
+  pane.querySelectorAll('.today-attention-item').forEach(function(el){
+    el.addEventListener('click',function(){navigateToCell(this.dataset.cellId);});
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEASON REVIEW (Feature 5)
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildSeasonReview(){
+  const harvests=getHarvests();
+  if(!harvests.length) return null;
+  const cropMap={};
+  harvests.forEach(function(h){
+    if(!h.crop) return;
+    if(!cropMap[h.crop]) cropMap[h.crop]={cropKey:h.crop,totalByUnit:{},harvestCount:0,qualitySum:0,qualityCount:0};
+    const cd=cropMap[h.crop];
+    cd.harvestCount++;
+    if(h.amount&&h.unit){cd.totalByUnit[h.unit]=(cd.totalByUnit[h.unit]||0)+parseFloat(h.amount)||0;}
+    const qMap={excellent:4,good:3,fair:2,poor:1};
+    if(h.quality&&qMap[h.quality]){cd.qualitySum+=qMap[h.quality];cd.qualityCount++;}
+  });
+  // Add success/fail counts from bed cells
+  bed.forEach(function(cell){
+    if(!cell.crop||!cropMap[cell.crop]) return;
+    if(cell.status==='finished') cropMap[cell.crop].successCount=(cropMap[cell.crop].successCount||0)+1;
+    if(cell.status==='failed') cropMap[cell.crop].failCount=(cropMap[cell.crop].failCount||0)+1;
+  });
+  const crops=Object.values(cropMap).map(function(cd){
+    const avg=cd.qualityCount?cd.qualitySum/cd.qualityCount:0;
+    cd.avgQuality=avg;
+    cd.avgQualityLabel=avg>=3.5?'excellent':avg>=2.5?'good':avg>=1.5?'fair':'poor';
+    cd.successCount=cd.successCount||0;
+    cd.failCount=cd.failCount||0;
+    return cd;
+  }).sort(function(a,b){return b.harvestCount-a.harvestCount;});
+  return {crops:crops};
+}
+function saveSeasonNote(cropKey,text){
+  if(!_workspace) return;
+  _workspace.seasonNotes=_workspace.seasonNotes||{};
+  _workspace.seasonNotes[cropKey]=(text||'').slice(0,2000);
+  saveWorkspaceDebounced(_workspace);
+}
+function exportSeasonReview(){
+  const review=buildSeasonReview();
+  if(!review){setPlannerNotice('error','No harvests','Log some harvests before exporting a season review.');return;}
+  const payload={review:review,seasonNotes:(_workspace?_workspace.seasonNotes:{})||{},
+    meta:{exportedAt:new Date().toISOString(),appVersion:APP_VERSION}};
+  const day=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='garden-os-season-review-'+day+'.json';
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  showShareBanner('Season review exported');
+}
+function renderSeasonReview(){
+  const review=buildSeasonReview();
+  if(!review) return '';
+  const notes=(_workspace?_workspace.seasonNotes:{})||{};
+  let html='<div class="season-review"><div class="season-review-title">Season overview</div><div class="season-review-grid">';
+  review.crops.forEach(function(cd){
+    const c=CROPS[cd.cropKey];
+    const emoji=c?c.emoji:'';
+    const name=c?c.name:cd.cropKey;
+    const amounts=Object.entries(cd.totalByUnit).map(function(p){return p[1]+' '+p[0];}).join(', ')||'—';
+    html+='<div class="season-crop-card"><div class="season-crop-header" data-crop="'+escapeHtml(cd.cropKey)+'">'
+      +'<span>'+emoji+' '+escapeHtml(name)+'</span>'
+      +'<span class="season-crop-toggle">\u25BE</span></div>'
+      +'<div class="season-crop-summary">'+escapeHtml(amounts)+' \u00B7 '+cd.harvestCount+' harvest'+(cd.harvestCount!==1?'es':'')
+      +' \u00B7 quality: '+escapeHtml(cd.avgQualityLabel)
+      +(cd.successCount||cd.failCount?' \u00B7 '+cd.successCount+' done / '+cd.failCount+' failed':'')
+      +'</div>'
+      +'<div class="season-crop-detail" hidden>'
+      +'<textarea class="season-note" data-crop="'+escapeHtml(cd.cropKey)+'" placeholder="Season notes\u2026">'
+      +escapeHtml(notes[cd.cropKey]||'')+'</textarea></div></div>';
+  });
+  html+='</div><button class="harvest-log-btn" id="exportSeasonBtn">\u{1F4CA} Export Season Review</button></div><div class="season-divider"></div>';
+  return html;
 }
 
 function getDashboardHarvestForecast(zone){
@@ -9857,9 +10381,25 @@ document.getElementById('menuImport').addEventListener('click',function(){
   closeMenu();
   openWorkspaceImportPicker();
 });
+document.getElementById('menuSyncExport').addEventListener('click',function(){
+  closeMenu();
+  exportSyncSnapshot();
+});
 document.getElementById('menuDuplicateBed').addEventListener('click',function(){
   closeMenu();
   handleDuplicateActiveBed();
+});
+
+// Bed view toggle (Score/Status heatmap)
+document.getElementById('bedViewToggle').addEventListener('click',function(e){
+  const pill=e.target.closest('.bvt-pill');
+  if(!pill) return;
+  const view=pill.dataset.view;
+  if(!_workspace) return;
+  _workspace.workspaceSettings=_workspace.workspaceSettings||{};
+  _workspace.workspaceSettings.bedView=view;
+  this.querySelectorAll('.bvt-pill').forEach(function(p){p.classList.toggle('active',p.dataset.view===view);});
+  saveState();render();
 });
 
 // Learn
