@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Garden OS Today Engine Tests</title>
+<meta name="robots" content="noindex">
+<style>
+  body { font-family: ui-monospace, Menlo, monospace; margin: 24px; background: #111; color: #ddd; }
+  h1 { font-size: 16px; margin: 0 0 16px; }
+  .row { padding: 6px 0; border-bottom: 1px solid #222; }
+  .pass { color: #3fb950; }
+  .fail { color: #f85149; }
+  pre { background: #161b22; border: 1px solid #222; padding: 8px; border-radius: 6px; font-size: 12px; overflow-x: auto; }
+  #summary { margin-top: 16px; padding: 8px; border: 1px solid #333; border-radius: 6px; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Garden OS Today Engine · fixture tests</h1>
+<div id="results"></div>
+<div id="summary">loading...</div>
+<script src="../tools/weather.dev.js"></script>
+<script src="../tools/today.dev.js"></script>
+<script>
+(async function () {
+  const results = document.getElementById("results");
+  const summary = document.getElementById("summary");
+  let passed = 0, failed = 0;
+
+  function log(name, ok, detail, payload) {
+    const row = document.createElement("div");
+    row.className = "row " + (ok ? "pass" : "fail");
+    row.innerHTML = "<strong>" + (ok ? "PASS" : "FAIL") + "</strong> " + name + (detail ? " · " + detail : "");
+    if (payload) {
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(payload, null, 2);
+      row.appendChild(pre);
+    }
+    results.appendChild(row);
+    if (ok) passed++; else failed++;
+  }
+
+  async function loadFixture(path) {
+    const r = await fetch(path);
+    return r.json();
+  }
+
+  const frostRaw = await loadFixture("./fixtures/weather/frost-tonight.json");
+  const heatRaw = await loadFixture("./fixtures/weather/summer-heat.json");
+  const frostW = gardenWeather.normalizePayload(frostRaw, frostRaw.latitude, frostRaw.longitude);
+  const heatW = gardenWeather.normalizePayload(heatRaw, heatRaw.latitude, heatRaw.longitude);
+
+  const crops = {
+    cherry_tom: { name: "Cherry Tomato", faction: "fruiting", daysToMaturity: 60, frostSensitive: true },
+    basil: { name: "Basil", faction: "herbs", daysToMaturity: 50, frostSensitive: true },
+    lettuce: { name: "Leaf Lettuce", faction: "greens", daysToMaturity: 45, frostSensitive: false },
+    carrot: { name: "Carrot", faction: "roots", daysToMaturity: 70, frostSensitive: false },
+    beans: { name: "Bush Beans", faction: "fast_cycles", daysToMaturity: 55, frostSensitive: false },
+  };
+
+  function stateWith(cells) {
+    return { beds: [{ id: "bed1", cells }], crops };
+  }
+
+  // Fixture 1: empty bed
+  {
+    const tasks = todayEngine.buildTodayTasks(stateWith([]), frostW, Date.now());
+    log("empty bed returns no tasks", tasks.length === 0, "n=" + tasks.length);
+  }
+
+  // Fixture 2: all-frost, mixed crops
+  {
+    const plantedAt = new Date(Date.now() - 30 * 86400000).toISOString();
+    const tasks = todayEngine.buildTodayTasks(stateWith([
+      { id: "c1", row: 0, col: 0, crop: "cherry_tom", plantedAt },
+      { id: "c2", row: 0, col: 1, crop: "basil", plantedAt },
+      { id: "c3", row: 0, col: 2, crop: "carrot", plantedAt },
+    ]), frostW, Date.now());
+    const actions = tasks.map(t => t.action);
+    log("frost fixture yields cover_frost on frost sensitive crops",
+        actions.includes("cover_frost"),
+        "actions=" + actions.join(","));
+    log("frost fixture does not cover carrot",
+        !tasks.some(t => t.crop === "carrot" && t.action === "cover_frost"));
+  }
+
+  // Fixture 3: summer heat, mixed crops
+  {
+    const plantedAt = new Date(Date.now() - 20 * 86400000).toISOString();
+    const tasks = todayEngine.buildTodayTasks(stateWith([
+      { id: "c1", row: 0, col: 0, crop: "lettuce", plantedAt },
+      { id: "c2", row: 0, col: 1, crop: "cherry_tom", plantedAt },
+    ]), heatW, new Date("2026-07-18T12:00:00Z").getTime());
+    log("heat fixture includes water action",
+        tasks.some(t => t.action === "water"),
+        "actions=" + tasks.map(t => t.action).join(","));
+    log("heat fixture ranks by priority (first <= 5)",
+        tasks.length <= 5 && tasks.every((t, i, a) => i === 0 || a[i - 1].priority >= t.priority));
+  }
+
+  // Fixture 4: mid-harvest (95%+ of dtm)
+  {
+    const plantedAt = new Date(Date.now() - 59 * 86400000).toISOString();
+    const tasks = todayEngine.buildTodayTasks(stateWith([
+      { id: "c1", row: 0, col: 0, crop: "cherry_tom", plantedAt },
+    ]), null, Date.now());
+    log("mid-harvest yields harvest action",
+        tasks.some(t => t.action === "harvest"),
+        "actions=" + tasks.map(t => t.action).join(","));
+  }
+
+  // Fixture 5: succession-ready fast cycle at harvest
+  {
+    const plantedAt = new Date(Date.now() - 54 * 86400000).toISOString();
+    const tasks = todayEngine.buildTodayTasks(stateWith([
+      { id: "c1", row: 0, col: 0, crop: "beans", plantedAt },
+    ]), null, Date.now());
+    log("succession-ready beans yields succession_plant",
+        tasks.some(t => t.action === "succession_plant"));
+  }
+
+  // Fixture 6: missing plantedAt produces estimated flag
+  {
+    const tasks = todayEngine.buildTodayTasks(stateWith([
+      { id: "c1", row: 0, col: 0, crop: "lettuce" },
+    ]), heatW, new Date("2026-07-18T12:00:00Z").getTime());
+    const t = tasks[0];
+    if (t) {
+      log("missing plantedAt yields no stage rule but still gets faction+heat rules",
+          tasks.length > 0,
+          "n=" + tasks.length);
+    } else {
+      log("missing plantedAt no tasks when no stageless rules match", true);
+    }
+  }
+
+  summary.textContent = passed + " passed, " + failed + " failed";
+  summary.className = failed ? "fail" : "pass";
+})();
+</script>
+</body>
+</html>

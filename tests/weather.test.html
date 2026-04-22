@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Garden OS Weather Module Tests</title>
+<meta name="robots" content="noindex">
+<style>
+  body { font-family: ui-monospace, Menlo, monospace; margin: 24px; background: #111; color: #ddd; }
+  h1 { font-size: 16px; margin: 0 0 16px; }
+  .row { padding: 6px 0; border-bottom: 1px solid #222; display: flex; gap: 12px; }
+  .pass { color: #3fb950; }
+  .fail { color: #f85149; }
+  .name { flex: 1; }
+  .val { font-variant-numeric: tabular-nums; }
+  #summary { margin-top: 16px; padding: 8px; border: 1px solid #333; border-radius: 6px; }
+</style>
+</head>
+<body>
+<h1>Garden OS Weather Module · fixture tests</h1>
+<div id="results"></div>
+<div id="summary">loading...</div>
+<script src="../tools/weather.dev.js"></script>
+<script>
+(async function () {
+  const results = document.getElementById("results");
+  const summary = document.getElementById("summary");
+  let passed = 0, failed = 0;
+
+  function log(name, ok, detail) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const n = document.createElement("div"); n.className = "name"; n.textContent = name;
+    const v = document.createElement("div"); v.className = "val " + (ok ? "pass" : "fail");
+    v.textContent = (ok ? "PASS " : "FAIL ") + (detail || "");
+    row.appendChild(n); row.appendChild(v);
+    results.appendChild(row);
+    if (ok) passed++; else failed++;
+  }
+
+  async function loadFixture(path) {
+    const r = await fetch(path);
+    return r.json();
+  }
+
+  const frostRaw = await loadFixture("./fixtures/weather/frost-tonight.json");
+  const heatRaw = await loadFixture("./fixtures/weather/summer-heat.json");
+  const frost = gardenWeather.normalizePayload(frostRaw, frostRaw.latitude, frostRaw.longitude);
+  const heat  = gardenWeather.normalizePayload(heatRaw, heatRaw.latitude, heatRaw.longitude);
+
+  // Frost fixture: min 1.1C = ~34F, below default 36F threshold
+  log("frost fixture: isFrostTonight default threshold",
+      gardenWeather.isFrostTonight(frost) === true,
+      "minF=" + frost.daily.tMinF[0].toFixed(1));
+
+  log("frost fixture: isFrostTonight with threshold=30",
+      gardenWeather.isFrostTonight(frost, 30) === false,
+      "30 is below 34");
+
+  // Heat fixture: max 35.5C = ~95.9F, above default 92F threshold
+  log("heat fixture: heatIndexNext24 > 92",
+      gardenWeather.heatIndexNext24(heat) > 92,
+      "heatF=" + gardenWeather.heatIndexNext24(heat).toFixed(1));
+
+  log("heat fixture: classifyHeatHigh24 default",
+      gardenWeather.classifyHeatHigh24(heat) === true);
+
+  log("heat fixture: isFrostTonight false",
+      gardenWeather.isFrostTonight(heat) === false);
+
+  log("frost fixture: rainProbNext24 <= 25",
+      gardenWeather.rainProbNext24(frost) <= 25,
+      "p=" + gardenWeather.rainProbNext24(frost));
+
+  log("null snapshot: isFrostTonight returns false",
+      gardenWeather.isFrostTonight(null) === false);
+
+  log("null snapshot: heatIndexNext24 returns 0",
+      gardenWeather.heatIndexNext24(null) === 0);
+
+  summary.textContent = passed + " passed, " + failed + " failed";
+  summary.className = failed ? "fail" : "pass";
+})();
+</script>
+</body>
+</html>
