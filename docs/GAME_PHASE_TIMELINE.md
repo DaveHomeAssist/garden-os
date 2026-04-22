@@ -88,6 +88,17 @@ Risk Ledger     : Scene dispose leaks if any zone retains references. Memory bud
 Test Gate       : Zone navigation integration test, dispose tracking assertion, smoke script: travel 6 zones, forage in 3, return and verify bed state
 ```
 
+Status on 2026-04-22:
+- Phase 5 contract work is complete for the current implementation slices.
+- `specs/WORLD_MAP.json` is now the runtime exit contract for zone registration and scene exit markers.
+- Trigger-driven `player_plot -> neighborhood -> player_plot` roundtrip coverage is green in `story-mode/src/test/integration.test.js`.
+- `activeBedId` now follows zone travel when a matching per-zone bed exists.
+- Forage cooldown/history now persist in `campaign.worldState.forageState` and survive save/load.
+- Remaining v1.0 work is content breadth and player-facing map polish:
+  - travel smoke beyond the home/neighborhood loop
+  - world map UI
+  - broader biome scene and crop rollout against the locked contract
+
 ### Phase 6 · v1.1 · Narrative Depth
 
 ```

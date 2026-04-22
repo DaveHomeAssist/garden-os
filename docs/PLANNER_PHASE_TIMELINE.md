@@ -89,7 +89,7 @@ Test Gate       : Numeric score parity across locked fixtures, reasoning attachm
 
 ```text
 Goal            : Reasoner accepts current season and produces season-appropriate findings and suggestions.
-Duration        : 5 weeks
+Duration        : 5 weeks (contract lock, season-context surface, succession hints, and seasonal smoke refresh landed 2026-04-22)
 Dependencies    : Phase 5 shipped
 Exit Criteria   :
   1. Derived-zone and fit assessment accept season as an explicit input parameter
@@ -98,9 +98,19 @@ Exit Criteria   :
   4. Succession hints appear when a crop is near end of viable window
   5. plannerState.site.season remains the canonical persisted field unless a separate migration phase is approved
 Deliverables    : garden-planner-v4.html seasonal reasoning and inspect context, docs/phase-reasoning-smoke.mjs, specs/CROP_SCORING_DATA.json if new seasonal metadata is required
-Risk Ledger     : Main risk is inventing a second season field. Mitigation: keep plannerState.site.season authoritative; require explicit migration review before any schema change.
-Test Gate       : Seasonal fixture suite, no-migration default, rollback dry run if schema moves
+Risk Ledger     : Main risk is inventing a second season field. Mitigation: keep plannerState.site.season authoritative; require explicit migration review before any schema change. 2026-04-22 audit result: existing seasonal metadata in specs/CROP_SCORING_DATA.json was sufficient, so no schema change was introduced for the first temporal-reasoning pass.
+Test Gate       : Seasonal fixture suite, no-migration default, rollback dry run if schema moves. Current locked checks cover spring/summer/fall fixture cases, explicit succession-window hints on summer cool-season crops, and the weakest-cell auto-fill smoke. `output/web-game/planner-phase4-contract/phase-reasoning-results.json` is the refreshed artifact for this ship state.
 ```
+
+Current status: complete for the current planner scope
+
+- Complete in this pass:
+  - `plannerState.site.season` stayed authoritative
+  - `garden-planner-v4.html` now derives a shared season-context payload
+  - inspect and reasoning panels both render season context explicitly
+  - summer cool-season placements now surface an explicit succession hint when the viable window is closing
+  - `docs/phase-reasoning-smoke.mjs` now locks spring, summer, and fall fixture expectations around the shared season-context payload
+  - the long-form smoke artifact set was refreshed end to end after the wrapper cleanup and assertion updates
 
 ### Phase 7 · v0.7 · Multi Plot and Companion Logic
 
