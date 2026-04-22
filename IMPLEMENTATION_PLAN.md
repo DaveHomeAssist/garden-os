@@ -1,6 +1,6 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-03-31
+**Last verified:** 2026-04-20
 
 ## Immediate Stabilization Plan — 2026-03-31
 
@@ -264,7 +264,7 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 **Phase 2 status: COMPLETE — 2026-03-31**
 
 - Users can simulate layout changes risk-free and see score deltas
-- Symptom triage works for the 44 existing crops with no external dependencies
+- Symptom triage works for the 50 existing crops with no external dependencies
 - Every planted crop shows an estimated harvest window
 - Still zero-backend, still single-file per tool
 
@@ -360,3 +360,175 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 **Constraints held throughout:** zero backend, single-file tools, localStorage + file export, no frameworks, no CDN dependencies.
 
 **Explicitly deferred:** weather APIs, photo processing, ML recommendations, public API, gamification. These require a backend decision that isn't on the table yet.
+
+---
+
+## Planner Intelligence Track — Execution Plan (2026-04-20)
+
+### Request Summary
+
+- Create a phased implementation plan for the planner intelligence track with milestones, resources, timeline, owner, dependencies, and open risks.
+- Inspect repo reality first, then define the next concrete execution step inside the canonical plan.
+- Keep Phase 4 additive: no save migration, no scoring-contract break, no architecture rewrite.
+
+### Current State Snapshot
+
+- Phases 1 through 3 above remain the canonical shipped baseline.
+- `garden-planner-v4.html` already reflects `v4.4`, dynamic 50-crop copy, explanation-first inspect UI, and strict better-fit suggestions.
+- `phase4-demo.html` exists as a deterministic structure-aware planner demo and is useful as a visual spec, not as the production surface.
+- Phase 4A now has a dedicated browser contract in `docs/phase-reasoning-smoke.mjs`, but the derivation and reasoner logic is still inline in the planner and rollback rehearsal is still pending.
+- No Phase 4 save-format change is required.
+
+### Owner Model
+
+- Product owner / approval: user
+- Implementation owner: Codex
+- Verification owner: user + Codex
+
+### Shared Resources
+
+| Resource | Role in the track |
+|---|---|
+| `specs/CROP_SCORING_DATA.json` | Canonical crop fields and faction data |
+| `specs/SCORING_RULES.md` | Scoring contract that must not drift in Phases 4 and 5 |
+| `IMPLEMENTATION_PLAN.md` | Canonical execution plan and ship-gate record |
+| `docs/PLANNER_PHASE_TIMELINE_TEMPLATE.md` | Planner-track scaffold and default week shape |
+| `docs/phase-reasoning-smoke.mjs` | Locked browser fixtures for Phase 4 fit, caution, and conflict states |
+| `garden-planner-v4.html` | Production planner surface |
+| `phase4-demo.html` | Deterministic demo for Phase 4 behavior and UI expectations |
+| Local browser verification | Manual validation for inspect UI, offline behavior, and regressions |
+
+### Phase Windows, Milestones, Dependencies, and Risks
+
+| Phase | Timeline | Owner | Milestones | Dependencies | Resources | Open risks |
+|---|---|---|---|---|---|---|
+| Phase 4 — Structure-Aware Planner | 2026-04-20 to 2026-05-08 | Codex implementation, user approval | 4A contract lock; 4B production extraction; 4C validation + rollback dry run | Phase 3 complete; current inspect pass stable | `garden-planner-v4.html`, `phase4-demo.html`, `specs/CROP_SCORING_DATA.json`, `docs/phase-reasoning-smoke.mjs` | Inline logic drift during extraction; rollback path not rehearsed |
+| Phase 5 — Scoring Integration | 2026-05-11 to 2026-05-29 | Codex implementation, user approval | 5A reasoner payload shape; 5B score-breakdown wiring; 5C score-parity gate | Phase 4 shipped and deterministic | `garden-planner-v4.html`, `specs/SCORING_RULES.md`, `docs/phase-reasoning-smoke.mjs`, current score breakdown UI | Duplicate logic between inspect and score story until unified; numeric score drift if reasoning leaks into calculation |
+| Phase 6 — Temporal Reasoning | 2026-06-01 to 2026-07-03 | Codex implementation, user approval | 6A season-input contract; 6B succession-context validation; 6C migration review only if required | Phase 5 shipped; season contract reviewed before build | `garden-planner-v4.html`, `plannerState.site.season`, `specs/CROP_SCORING_DATA.json`, current yield + succession features | Duplicate season fields if migration is attempted without review; fixture coverage needs expansion |
+| Phase 7 — Multi Plot and Companion Logic | 2026-07-06 to 2026-07-31 | Codex implementation, user approval | 7A bed-context contract; 7B neighbor findings UI; 7C perf budget validation | Phase 6 shipped cleanly | Existing multi-bed planner state, adjacency code, inspect UI | Cross-bed cache drift and performance regressions on larger layouts |
+| Phase 8 — Reasoned Export | 2026-08-03 to 2026-08-21 | Codex implementation, user approval | 8A derived export contract; 8B determinism gate; 8C optional replay scope decision | Phase 7 shipped; export contract frozen before code changes | `.gos.json` export/import path, `gos-schema.json`, planner reasoner output | Secondary export format drifting from authoritative workspace export |
+
+### Immediate Next Step — Phase 4A Contract Lock
+
+**Owner:** Codex
+**Window:** 2026-04-20 to 2026-04-22
+**Goal:** Freeze the Phase 4 contract before any deeper extraction or UI expansion lands.
+**Status:** COMPLETE — 2026-04-20
+
+**Tasks:**
+- Lock the production outputs for four Phase 4 surfaces: derived zone, derived traits, fit status, and strict suggestions.
+- Capture fixed planner fixtures for at least three cells: one fit, one caution, one conflict.
+- Define the rollback rule: if extracted reasoner output diverges from the current planner behavior, fall back to the existing inline inspect output with no save impact.
+- Keep numeric scoring untouched and treat reasoning as a sibling output only.
+
+**Validation:**
+- Fixed inputs return identical outputs across refresh.
+- Existing numeric score totals remain unchanged.
+- No save schema fields are added or removed.
+- Inspect panel still renders a primary reason, derived zone, derived traits, and strict suggestions for the selected cell.
+
+**Evidence:**
+- `docs/phase-reasoning-smoke.mjs` now locks three browser fixtures against exact Phase 4 outputs:
+  - fit: trellis-row `cherry_tom` (`8.3` cell / `72` bed)
+  - caution: trellis-row `lettuce` (`2.2` cell / `11` bed)
+  - conflict: off-trellis `cherry_tom` (`4.2` cell / `31` bed)
+- Artifacts written to `output/web-game/planner-phase4-contract/` including screenshots and `phase-reasoning-results.json`.
+
+### Phase 4B Extraction
+
+**Owner:** Codex
+**Window:** 2026-04-20
+**Goal:** Extract the current inline reasoning helpers behind one stable planner payload without changing any locked Phase 4 fixture output.
+**Status:** COMPLETE — 2026-04-20
+
+**Tasks:**
+- Build one planner-side reasoning snapshot object for selected cells that owns derived zone, derived traits, fit status, primary reason, and strict suggestions.
+- Route both the inspect surface and score-story reasoning surface through that shared payload instead of parallel helper chains.
+- Keep numeric score calculations and save behavior unchanged.
+- Preserve the current rollback path by keeping the existing inline render available until fixture parity is proven.
+
+**Validation:**
+- `docs/phase-reasoning-smoke.mjs` passes with no fixture changes.
+- Locked cell scores, bed scores, status chips, and best-fit candidates remain identical.
+- No save schema fields or workspace export shape change.
+
+**Evidence:**
+- `garden-planner-v4.html` now builds a shared planner-side reasoning snapshot and routes both the inspect surface and the score-story surface through it.
+- The locked browser contract stayed green with unchanged outputs for:
+  - fit: trellis-row `cherry_tom` (`8.3` cell / `72` bed)
+  - caution: trellis-row `lettuce` (`2.2` cell / `11` bed)
+  - conflict: off-trellis `cherry_tom` (`4.2` cell / `31` bed)
+- Refreshed artifacts were written to `output/web-game/planner-phase4-contract/` including updated screenshots and `phase-reasoning-results.json`.
+
+### Phase 4C Validation and Rollback Rehearsal
+
+**Owner:** Codex
+**Window:** 2026-04-20
+**Goal:** Prove the extracted reasoning path is safe to keep by broadening validation beyond the three locked fixtures, rehearsing rollback, and documenting any deferred planner risks.
+**Status:** COMPLETE — 2026-04-20
+
+**Tasks:**
+- Broaden planner verification beyond the three locked cells by validating the weakest cell in an auto-filled bed.
+- Rehearse rollback by comparing the extracted shared snapshot against a recomputed legacy helper snapshot inside the browser harness.
+- Diagnose the browser automation timeout on `#autoFillBtn` and classify whether it is a planner regression or a harness issue.
+- Log the deferred automation risk in the repo trackers instead of masking it with a silent workaround.
+
+**Validation:**
+- The three locked fixtures stayed identical after the broader smoke pass.
+- Shared vs legacy snapshot parity held for the locked fixtures and for the weakest auto-filled cell.
+- The broader planner smoke still reached a 32/32 filled bed and rendered the weakest-cell inspect and score-story surfaces.
+- The `#autoFillBtn` browser-click timeout remained reproducible, but DOM-triggered autofill still filled the bed, confirming planner behavior stayed intact and the remaining issue is automation-side.
+
+**Evidence:**
+- `docs/phase-reasoning-smoke.mjs` now includes broader planner smoke coverage, shared-vs-legacy parity checks, and a generic client diagnosis path for `#autoFillBtn`.
+- `output/web-game/planner-phase4-contract/broader_autofill_weakest.png` captures the broadened weakest-cell review surface.
+- `output/web-game/planner-phase4-contract/phase-reasoning-results.json` records the earlier 4C broadened smoke and generic-client diagnosis.
+- Direct browser verification re-ran the locked fixtures after the Phase 5A refactor and kept:
+  - fit: trellis-row `cherry_tom` (`8.3` cell / `72` bed)
+  - caution: trellis-row `lettuce` (`2.2` cell / `11` bed)
+  - conflict: off-trellis `cherry_tom` (`4.2` cell / `31` bed)
+
+### Phase 5A Score Payload Contract
+
+**Owner:** Codex
+**Window:** 2026-04-20
+**Goal:** Start Phase 5 by moving selected-cell scoring metadata behind one planner-side score payload without changing any numeric score outputs.
+**Status:** COMPLETE — 2026-04-20
+
+**Tasks:**
+- Extract the selected-cell score metadata into one planner-side score payload helper.
+- Compose the existing reasoning snapshot from that score payload instead of reassembling score metadata inline.
+- Route the inspect hero score chip through the shared payload so the selected-cell score no longer comes from an ad hoc `scoreCell(...)` call.
+- Keep numeric scoring, save behavior, and workspace export shape unchanged.
+
+**Validation:**
+- The locked fixtures kept the same status, zone, score, bed total, and best-fit outputs after the refactor.
+- The inspect hero score chip now matches the shared snapshot score for the selected cell.
+- The broader auto-fill smoke still reaches 32 filled cells and preserves the `Why this score` / `Inspect & explain` surfaces for the weakest cell.
+
+**Evidence:**
+- `garden-planner-v4.html` now builds a dedicated `buildPlannerScorePayload(...)` helper and composes `buildPlannerReasoningSnapshot(...)` from it.
+- Direct browser verification after the refactor kept the locked fixture outputs unchanged and confirmed the inspect score chip reads `8.3/10`, `2.2/10`, and `4.2/10` for the three locked cells.
+
+### Next Concrete Step — Phase 5B Score Breakdown Wiring
+
+**Owner:** Codex
+**Window:** 2026-04-21 to 2026-04-24
+**Goal:** Finish the selected-cell Phase 5 path by routing the remaining score-breakdown surface through the shared score payload and then remove the last duplicate score assembly only after parity stays locked.
+
+**Tasks:**
+- Route score-breakdown rendering through the shared score payload instead of assembling factor state ad hoc at render time.
+- Expand planner verification so the selected-cell score payload, breakdown UI, and inspect hero stay numerically aligned.
+- Decide whether to harden or replace the browser-click step used for `#autoFillBtn` verification without hiding the current automation issue.
+
+**Validation:**
+- Locked fixture scores and reasoning stay identical after the score-breakdown wiring pass.
+- The inspect hero, score story, and score breakdown all read the same selected-cell score payload.
+- Deferred automation risk remains explicitly tracked until the click path is stable.
+
+### Ship Gates For This Track
+
+- Do not extend the stored crop or cell schema in Phase 4.
+- Do not change scoring totals while reasoning is still being separated from the UI layer.
+- Do not ship a save migration in the same pass as a new reasoning contract unless rollback has been rehearsed.
+- Keep planner-track work additive to the existing planner surface; no file rename and no product-surface split during this track.

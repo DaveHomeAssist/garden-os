@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden OS · Phase 4 Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --soil: #5c3d1e;
+  --leaf: #3d7a4f;
+  --sun: #e8c84a;
+  --cream: #f7f2ea;
+  --ink: #222;
+  --muted: #777;
+  --good: #2f7d32;
+  --bad: #b02a1e;
+  --warn: #c07a1a;
+  --tip: #3a6abf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+header {
+  background: var(--soil);
+  color: white;
+  padding: 1rem;
+}
+header h1 {
+  font-family: 'Fraunces', serif;
+  margin: 0;
+  font-size: 1.25rem;
+}
+header .sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+.container {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  align-items: center;
+}
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.legend {
+  display: flex;
+  gap: 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-left: auto;
+}
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.zone-trellis { background: rgba(232, 200, 74, 0.28); }
+.zone-protected { background: rgba(61, 122, 79, 0.18); }
+.zone-access { background: rgba(120, 120, 120, 0.08); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+}
+.cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 22px;
+  border: 2px solid transparent;
+  position: relative;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+.cell:hover { transform: scale(1.04); }
+.cell.selected { border-color: var(--soil); }
+.cell .flag {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 9px;
+  font-family: 'DM Mono', monospace;
+  background: var(--bad);
+  color: white;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1;
+}
+.panel {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 400px;
+  font-size: 13px;
+}
+.panel h2 {
+  font-family: 'Fraunces', serif;
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.panel section { border-top: 1px solid #eee; padding-top: 0.6rem; }
+.panel section:first-of-type { border-top: none; padding-top: 0; }
+.panel h3 {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 0.4rem 0;
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 2px 0;
+  line-height: 1.4;
+}
+.row .tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: white;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.tag.good { background: var(--good); }
+.tag.bad { background: var(--bad); }
+.tag.warn { background: var(--warn); }
+.tag.info { background: var(--tip); }
+.tag.neutral { background: var(--muted); }
+.empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+}
+.sugg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #fafafa;
+  margin-bottom: 3px;
+}
+.sugg .name { flex: 1; text-transform: capitalize; }
+.sugg .score {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.footer {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 0.5rem 0 1rem;
+}
+@media (max-width: 760px) {
+  .container { grid-template-columns: 1fr; }
+  .panel { min-height: 300px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Garden OS · Phase 4 Demo</h1>
+  <div class="sub">Derived zones. Derived traits. Deterministic reasoner.</div>
+</header>
+<div class="container">
+  <div>
+    <div class="controls">
+      <label><input type="checkbox" id="toggleZones" checked> Show zones</label>
+      <label><input type="checkbox" id="toggleExploratory"> Exploratory suggestions</label>
+      <div class="legend">
+        <span><i class="zone-trellis"></i> trellis</span>
+        <span><i class="zone-protected"></i> protected</span>
+        <span><i class="zone-access"></i> access</span>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <aside class="panel" id="panel">
+    <div class="empty">Select a cell to inspect.</div>
+  </aside>
+  <div class="footer">Phase 4 exit criterion: every cell shows derived zone plus trait reasons with no save migration required.</div>
+</div>
+<script>
+// ---------- DATA ----------
+// Crop definitions. Fields are intrinsic. Traits below are derived from these.
+const CROPS = {
+  tomato:  { emoji: '🍅', sun: 7, needsTrellis: true,  harvestFreq: 'high',   maintenance: 'medium' },
+  lettuce: { emoji: '🥬', sun: 4, needsTrellis: false, harvestFreq: 'high',   maintenance: 'low' },
+  beans:   { emoji: '🫘', sun: 5, needsTrellis: true,  harvestFreq: 'medium', maintenance: 'low' },
+  basil:   { emoji: '🌿', sun: 6, needsTrellis: false, harvestFreq: 'medium', maintenance: 'low' },
+  pepper:  { emoji: '🌶', sun: 7, needsTrellis: false, harvestFreq: 'medium', maintenance: 'medium' },
+  carrot:  { emoji: '🥕', sun: 5, needsTrellis: false, harvestFreq: 'low',    maintenance: 'low' }
+};
+
+// Fixed layout. Reproducible. Includes intentional structural conflicts so the reasoner has something to say.
+// Rows: 0 is trellis (back), 1 and 2 are protected (middle), 3 is access (front).
+const INITIAL_PLOT = [
+  ['tomato',  'beans',  'beans',  'tomato', 'basil',  'beans',  'tomato', 'beans'],
+  ['pepper',  'basil',  'tomato', 'pepper', 'carrot', 'tomato', 'basil',  'pepper'],
+  ['carrot',  'lettuce','basil',  'basil',  'carrot', 'basil',  'lettuce','carrot'],
+  ['lettuce', 'lettuce','carrot', 'lettuce','lettuce','carrot', 'lettuce','pepper']
+];
+
+// ---------- DERIVATION LAYER ----------
+// Pure. Zone comes from position. Traits come from crop fields.
+function deriveZone(row) {
+  if (row === 0) return { type: 'trellis',   sun: 'full',    shade: 'none',     reach: 'hard'   };
+  if (row === 3) return { type: 'access',    sun: 'partial', shade: 'low',      reach: 'easy'   };
+  return           { type: 'protected', sun: 'partial', shade: 'moderate', reach: 'medium' };
+}
+
+function deriveTraits(crop) {
+  const traits = [];
+  if (crop.sun >= 7)      traits.push({ label: 'sun hungry',     reason: 'wants 7 or more hours of direct sun' });
+  else if (crop.sun <= 4) traits.push({ label: 'shade tolerant', reason: 'accepts partial shade' });
+  if (crop.needsTrellis)  traits.push({ label: 'vertical',       reason: 'requires vertical support' });
+  if (crop.harvestFreq === 'high')   traits.push({ label: 'pick often',   reason: 'yields best when harvested multiple times a week' });
+  if (crop.maintenance === 'medium') traits.push({ label: 'medium care',  reason: 'responds to weekly pruning or feeding' });
+  return traits;
+}
+
+// ---------- REASONER ----------
+// Deterministic. Separates structural fit (binding) from soft preference.
+function assessFit(crop, zone) {
+  const findings = [];
+
+  // Structural: trellis requirement
+  if (crop.needsTrellis && zone.type !== 'trellis') {
+    findings.push({ kind: 'bad',  text: 'needs trellis row but placed in ' + zone.type + ' zone' });
+  } else if (crop.needsTrellis && zone.type === 'trellis') {
+    findings.push({ kind: 'good', text: 'matched to trellis row' });
+  }
+
+  // Structural: sun demand vs zone sun
+  if (crop.sun >= 7 && zone.sun !== 'full') {
+    findings.push({ kind: 'bad',  text: 'sun hungry crop in ' + zone.sun + ' sun zone' });
+  } else if (crop.sun >= 7 && zone.sun === 'full') {
+    findings.push({ kind: 'good', text: 'full sun matches crop demand' });
+  } else if (crop.sun <= 4 && zone.sun === 'full') {
+    findings.push({ kind: 'warn', text: 'shade tolerant crop exposed to full sun, bolting risk' });
+  }
+
+  // Soft: harvest reach
+  if (crop.harvestFreq === 'high' && zone.reach !== 'easy') {
+    findings.push({ kind: 'warn', text: 'frequent harvest crop not in access row' });
+  } else if (crop.harvestFreq === 'high' && zone.reach === 'easy') {
+    findings.push({ kind: 'good', text: 'easy reach for frequent picks' });
+  }
+
+  const hasBad  = findings.some(f => f.kind === 'bad');
+  const hasWarn = findings.some(f => f.kind === 'warn');
+  const status = hasBad ? 'conflict' : hasWarn ? 'caution' : 'fit';
+  return { status, findings };
+}
+
+// Strict mode: only alternatives with zero structural conflicts.
+// Exploratory mode: include caution tier, so near misses surface with their tradeoff visible.
+function suggestAlternatives(zone, mode) {
+  const ranked = Object.entries(CROPS).map(([name, crop]) => {
+    const { status, findings } = assessFit(crop, zone);
+    const goods = findings.filter(f => f.kind === 'good').length;
+    const warns = findings.filter(f => f.kind === 'warn').length;
+    const bads  = findings.filter(f => f.kind === 'bad').length;
+    const score = goods * 2 - warns - bads * 5;
+    return { name, crop, status, score };
+  });
+  const filtered = mode === 'strict'
+    ? ranked.filter(r => r.status === 'fit')
+    : ranked.filter(r => r.status !== 'conflict');
+  return filtered.sort((a, b) => b.score - a.score).slice(0, 4);
+}
+
+// ---------- RENDER ----------
+const gridEl  = document.getElementById('grid');
+const panelEl = document.getElementById('panel');
+let selected = null;
+
+function applyZoneClass(cell, zoneType, show) {
+  cell.classList.remove('zone-trellis', 'zone-protected', 'zone-access');
+  if (show) cell.classList.add('zone-' + zoneType);
+}
+
+function buildGrid() {
+  gridEl.innerHTML = '';
+  const showZones = document.getElementById('toggleZones').checked;
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 8; c++) {
+      const cropName = INITIAL_PLOT[r][c];
+      const crop = CROPS[cropName];
+      const zone = deriveZone(r);
+      const fit  = assessFit(crop, zone);
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.dataset.crop = cropName;
+      applyZoneClass(cell, zone.type, showZones);
+      cell.textContent = crop.emoji;
+
+      if (fit.status === 'conflict') {
+        const flag = document.createElement('span');
+        flag.className = 'flag';
+        flag.textContent = '!';
+        flag.title = 'structural conflict';
+        cell.appendChild(flag);
+      }
+      cell.addEventListener('click', () => inspect(cell));
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+function inspect(cell) {
+  if (selected) selected.classList.remove('selected');
+  selected = cell;
+  cell.classList.add('selected');
+
+  const row = parseInt(cell.dataset.row, 10);
+  const cropName = cell.dataset.crop;
+  const crop = CROPS[cropName];
+  const zone = deriveZone(row);
+  const traits = deriveTraits(crop);
+  const fit = assessFit(crop, zone);
+  const mode = document.getElementById('toggleExploratory').checked ? 'exploratory' : 'strict';
+  const suggestions = suggestAlternatives(zone, mode).filter(s => s.name !== cropName);
+
+  renderPanel({ cropName, crop, zone, traits, fit, suggestions, mode });
+}
+
+function escapeText(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+function renderPanel(ctx) {
+  const { cropName, crop, zone, traits, fit, suggestions, mode } = ctx;
+  const statusTag = {
+    fit:      '<span class="tag good">fit</span>',
+    caution:  '<span class="tag warn">caution</span>',
+    conflict: '<span class="tag bad">conflict</span>'
+  }[fit.status];
+
+  panelEl.innerHTML = `
+    <h2>${crop.emoji} <span style="text-transform:capitalize">${escapeText(cropName)}</span> ${statusTag}</h2>
+
+    <section>
+      <h3>Derived zone</h3>
+      <div class="row"><span class="tag info">zone</span>${escapeText(zone.type)}</div>
+      <div class="row"><span class="tag neutral">sun</span>${escapeText(zone.sun)}</div>
+      <div class="row"><span class="tag neutral">reach</span>${escapeText(zone.reach)}</div>
+    </section>
+
+    <section>
+      <h3>Derived traits</h3>
+      ${traits.length
+        ? traits.map(t => `<div class="row"><span class="tag info">${escapeText(t.label)}</span>${escapeText(t.reason)}</div>`).join('')
+        : '<div class="empty">No notable traits.</div>'}
+    </section>
+
+    <section>
+      <h3>Placement reasoning</h3>
+      ${fit.findings.length
+        ? fit.findings.map(f => `<div class="row"><span class="tag ${f.kind}">${f.kind}</span>${escapeText(f.text)}</div>`).join('')
+        : '<div class="empty">No reasoning findings for this cell.</div>'}
+    </section>
+
+    <section>
+      <h3>Signals (informational)</h3>
+      <div class="row"><span class="tag neutral">harvest</span>${escapeText(crop.harvestFreq)} frequency</div>
+      <div class="row"><span class="tag neutral">maintenance</span>${escapeText(crop.maintenance)}</div>
+    </section>
+
+    <section>
+      <h3>Better fits · ${mode}</h3>
+      ${suggestions.length
+        ? suggestions.map(s => `
+            <div class="sugg">
+              <span>${s.crop.emoji}</span>
+              <span class="name">${escapeText(s.name)}</span>
+              <span class="score">${escapeText(s.status)}</span>
+            </div>`).join('')
+        : '<div class="empty">No alternatives fit this zone cleanly. Toggle exploratory to see near misses.</div>'}
+    </section>
+  `;
+}
+
+// ---------- WIRING ----------
+document.getElementById('toggleZones').addEventListener('change', (e) => {
+  const show = e.target.checked;
+  document.querySelectorAll('.cell').forEach(cell => {
+    const zone = deriveZone(parseInt(cell.dataset.row, 10));
+    applyZoneClass(cell, zone.type, show);
+  });
+});
+
+document.getElementById('toggleExploratory').addEventListener('change', () => {
+  if (selected) inspect(selected);
+});
+
+buildGrid();
+</script>
+</body>
+</html>

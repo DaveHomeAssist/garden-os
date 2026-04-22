@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
-<title>Garden OS · Raised Bed Planner v4.3</title>
+<title>Garden OS · Raised Bed Planner v4.4</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
@@ -1896,6 +1896,57 @@
   .inspect-next-actions{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.55rem;}
   .inspect-action-btn{border:1px solid var(--border);background:var(--cream);color:var(--soil);border-radius:999px;padding:.45rem .75rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;min-height:36px;}
   .inspect-action-btn.primary{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+  .inspect-hero-card{gap:0;}
+  .inspect-hero-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.65rem;}
+  .inspect-hero-title{font-family:'Fraunces',serif;font-size:1rem;color:var(--soil);line-height:1.2;}
+  .inspect-kicker{
+    font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--text-light);margin-top:.1rem;
+  }
+  .inspect-lead{font-size:.76rem;line-height:1.55;color:var(--text);margin-top:.38rem;}
+  .inspect-meta-chips,.inspect-zone-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem;}
+  .inspect-meta-chip{
+    display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .45rem;border-radius:999px;
+    border:1px solid var(--border-light);background:rgba(255,255,255,.82);
+    font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.05em;color:var(--text-mid);
+  }
+  .inspect-status-chip{
+    display:inline-flex;align-items:center;justify-content:center;padding:.2rem .5rem;border-radius:999px;
+    font-family:'DM Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;
+  }
+  .inspect-status-chip.fit{background:#e8f5ea;color:#2f6a41;}
+  .inspect-status-chip.caution{background:#f6ecd0;color:#7a5612;}
+  .inspect-status-chip.conflict{background:#f4d7d3;color:#7d2419;}
+  .inspect-section-title{font-family:'Fraunces',serif;font-size:.95rem;color:var(--soil);line-height:1.2;}
+  .inspect-section-copy{font-size:.73rem;line-height:1.5;color:var(--text-mid);margin-top:.28rem;}
+  .inspect-trait-list{display:flex;flex-direction:column;gap:.45rem;}
+  .inspect-trait-item{
+    display:flex;align-items:flex-start;gap:.5rem;padding:.45rem .5rem;border-radius:.7rem;
+    background:rgba(255,255,255,.76);border:1px solid var(--border-light);
+  }
+  .inspect-trait-label{
+    display:inline-flex;align-items:center;justify-content:center;padding:.16rem .42rem;border-radius:999px;
+    font-family:'DM Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;
+  }
+  .inspect-trait-label.fit{background:#e8f5ea;color:#2f6a41;}
+  .inspect-trait-label.watch{background:#f6ecd0;color:#7a5612;}
+  .inspect-trait-label.info{background:#eef3ff;color:#355f9d;}
+  .inspect-trait-copy{display:flex;flex-direction:column;gap:.14rem;min-width:0;}
+  .inspect-trait-copy strong{font-size:.72rem;color:var(--soil);}
+  .inspect-trait-copy span{font-size:.7rem;line-height:1.45;color:var(--text-mid);}
+  .inspect-suggestion-list{display:flex;flex-direction:column;gap:.4rem;}
+  .inspect-suggestion-item{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:.55rem;padding:.48rem .52rem;
+    border-radius:.72rem;background:rgba(255,255,255,.8);border:1px solid var(--border-light);
+  }
+  .inspect-suggestion-copy{display:flex;flex-direction:column;gap:.14rem;min-width:0;}
+  .inspect-suggestion-copy strong{font-size:.72rem;color:var(--soil);}
+  .inspect-suggestion-copy span{font-size:.69rem;line-height:1.45;color:var(--text-mid);}
+  .inspect-suggestion-score{
+    display:inline-flex;align-items:center;justify-content:center;padding:.18rem .46rem;border-radius:999px;
+    background:#e8f5ea;color:#2f6a41;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.05em;white-space:nowrap;
+  }
+  .inspect-quiet{font-size:.72rem;line-height:1.5;color:var(--text-mid);}
 
   /* Manage panel (right-side drawer) */
   .manage-panel{
@@ -2552,10 +2603,10 @@
 <header class="planner-header">
   <div class="planner-brand">
     <h1>Garden OS</h1>
-    <span class="hv">v4.3</span>
+    <span class="hv">v4.4</span>
   </div>
   <div class="planner-status">
-    <p class="hsub">Raised Bed Planner · 38 crops · Variable beds · Cage-aware · Live scoring</p>
+    <p class="hsub" id="plannerSubtitle">Raised Bed Planner · 50 crops · Variable beds · Cage-aware · Live scoring</p>
     <button class="hd-btn btn-print" id="printPlanBtn" type="button" title="Print garden plan" aria-label="Print garden plan">Print</button>
   </div>
   <button id="openManagePanel" class="planner-manage-btn" type="button" aria-label="Open manage panel" aria-haspopup="true" aria-expanded="false">Manage</button>
@@ -2764,7 +2815,7 @@
   <!-- PALETTE PANE -->
   <div class="tab-pane" id="lpane-palette" role="tabpanel" aria-labelledby="ltab-palette">
     <div class="recent-strip" id="recentStrip" style="display:none;"></div>
-    <input class="psearch" type="text" id="psearch" placeholder="Search 38 crops…" aria-label="Search crops" style="flex-shrink:0;margin-bottom:.35rem;">
+    <input class="psearch" type="text" id="psearch" placeholder="Search 50 crops…" aria-label="Search crops" style="flex-shrink:0;margin-bottom:.35rem;">
     <div class="catf" id="catf" style="flex-shrink:0;"></div>
     <div class="pgrid" id="pgrid"></div>
   </div>
@@ -2814,7 +2865,7 @@
   <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle insight panel">&#9662; Insight</button>
 
   <section class="insight-block" id="insightSummary">
-    <button class="insight-header" aria-expanded="true" data-section="summary">Live score</button>
+    <button class="insight-header" aria-expanded="true" data-section="summary">Score story</button>
     <div class="insight-content" aria-live="polite">
       <div id="rpaneScore"></div>
       <div id="rpaneReasoning"></div>
@@ -2829,7 +2880,7 @@
   </section>
 
   <section class="insight-block" id="insightInspect">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Cell inspector</button>
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Inspect & explain</button>
     <div class="insight-content" hidden>
       <div id="rpaneInspect"></div>
       <div id="rpaneCompanions"></div>
@@ -3023,7 +3074,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-// CROP DATABASE — 38 crops across 8 categories
+// CROP DATABASE — 50 crops across 8 categories
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY HELPERS
@@ -3702,6 +3753,19 @@ const PLANNER_RECIPES = {
   foragers_stew:    { crops:['wild_garlic','shiitake_mushroom','watercress','prairie_onion'] },
   garden_deluxe_salsa: { crops:['ghost_pepper','cherry_tom','cilantro','onion'] }
 };
+
+const PLANNER_CROP_COUNT = Object.keys(CROPS).length;
+
+function syncPlannerMetaCopy(){
+  const subtitle=document.getElementById('plannerSubtitle');
+  if(subtitle){
+    subtitle.textContent=`Raised Bed Planner · ${PLANNER_CROP_COUNT} crops · Variable beds · Cage-aware · Live scoring`;
+  }
+  const search=document.getElementById('psearch');
+  if(search){
+    search.placeholder=`Search ${PLANNER_CROP_COUNT} crops…`;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CROP KEY MIGRATION (Phase 1 — key normalization)
@@ -5110,9 +5174,9 @@ function renderPlannerState(){
         : `${modeLabel} is live`,
       copy:selected
         ? (selected.crop
-          ? `Open the score story to see what is helping, what is hurting, and the fastest fix for ${selected.id}.`
-          : `This cell is open. Browse crops to place with intent or open the score story to read the bed-level pressure first.`)
-        : 'Keep one decision visible at a time. Use the score story for bed pressure, inspect the weakest cell, then make the next change deliberately.',
+          ? `Start with the primary reason for ${selected.id}, then use the score story to compare factors, alternatives, and timing.`
+          : `This cell is open. Read the derived zone first, then browse crops that actually fit the lane you selected.`)
+        : 'Keep one decision visible at a time. Read the score story for bed pressure, inspect the weakest cell, then make the next change deliberately.',
       actions:[
         { id:'stateScoreStory', label:'Why this score', cls:'primary' },
         { id:(selected && !selected.crop) ? 'statePalette' : 'stateInspect', label:(selected && !selected.crop) ? 'Browse crops' : 'Inspect weakest' }
@@ -5700,25 +5764,11 @@ function weakestCells(inputs, n=2){
 }
 
 function betterCropForCell(cell, inputs){
-  if(!cell.crop) return null;
-  const curScore=scoreCell(cell,inputs);
-  let best=null, bs=curScore+0.5;
-  const reasons=[];
-  const testCell={...cell};
-  Object.keys(CROPS).forEach(ck=>{
-    if(ck===cell.crop) return;
-    testCell.crop=ck;
-    const s=scoreCropInCell(ck,testCell,inputs)+adjScore(testCell);
-    if(s>bs){ bs=s; best=ck; }
-  });
-  if(!best) return null;
-  const cur=CROPS[cell.crop], cnd=CROPS[best], light=cell.effectiveLight||0;
-  if(cnd.sunMin<=light&&cur.sunMin>light) reasons.push('+light');
-  if(!cell.hasVerticalSupport&&cur.habit==='vining'&&cnd.habit!=='vining') reasons.push('+no-trellis');
-  const nbrs=neighbors(cell.row,cell.col).filter(n=>n.crop);
-  if(nbrs.some(n=>cnd.companionTags.some(t=>CROPS[n.crop]&&CROPS[n.crop].category===t))) reasons.push('+companions');
-  if(inputs.season==='latesummer'&&cur.coolSeason&&!cnd.coolSeason) reasons.push('+heat-ok');
-  return {cropKey:best, score:bs, reasons};
+  if(!cell || !cell.crop) return null;
+  const ranked=rankFitCandidatesForCell(cell, inputs, { mode:'strict', limit:1 });
+  if(!ranked.length) return null;
+  const best=ranked[0];
+  return { cropKey:best.cropKey, score:best.score, reasons:[best.reason, ...best.notes].filter(Boolean) };
 }
 
 function subs(inputs){
@@ -5754,7 +5804,7 @@ function buildRec(inputs){
   const sortedZones=[...zones].map((z,i)=>({...z,idx:i}))
     .sort((a,b)=>b.effectiveLight-a.effectiveLight);
   const grid=Array(total).fill(null);
-  // Cage-aware: use derived traits to prioritize placement (v4.3)
+  // Cage-aware: use derived traits to prioritize placement (v4.4)
   const hasCageZones = zones.some(z=>z.isTrellisRow);
   if(hasCageZones){
     sortedZones.forEach(z=>{
@@ -5879,18 +5929,360 @@ function isTallCrop(crop){
   return !!(crop && crop.height==='tall');
 }
 
+function describeDerivedZone(cell){
+  const chips=[`${(cell.effectiveLight||0).toFixed(1)} hrs sun`];
+  let label='Open interior cell';
+  let reason='Zone is derived from bed geometry and structure, not stored in the save payload.';
+  if(cell.isTrellisRow){
+    label='Trellis row';
+    reason='Derived from cage geometry so climbers and supported growers claim the structure-first lane.';
+  }else if(isFrontAccessCell(cell)){
+    label='Access row';
+    reason='Derived from front-edge reach so quick harvests and succession crops stay easy to reach.';
+  }else if(cell.isProtected){
+    label='Protected row';
+    reason='Derived from shelter depth so vulnerable crops sit away from the exposed edge.';
+  }
+  if(cell.hasVerticalSupport) chips.push('support ready');
+  if(cell.isCritterSafe) chips.push('critter-safe');
+  if((cell.accessPriority||0)>=0.75) chips.push('quick access');
+  return { label, reason, chips };
+}
+
+function deriveInspectTraits(ck, cell, inputs){
+  const crop=CROPS[ck];
+  if(!crop) return [];
+  const traits=[];
+  const pushTrait=(label, reason, tone='info')=>{
+    if(!traits.some(trait=>trait.label===label)) traits.push({ label, reason, tone });
+  };
+  const light=cell.effectiveLight||0;
+  if(crop.sunMin>=6){
+    pushTrait(
+      'Sun hungry',
+      `Needs ${crop.sunMin.toFixed(1)}+ hrs and peaks near ${crop.sunIdeal.toFixed(1)} hrs of direct light.`,
+      light>=crop.sunMin?'fit':'watch'
+    );
+  }else if(crop.sunMin<=4 || crop.coolSeason){
+    pushTrait(
+      'Lower-light tolerant',
+      `Can keep working around ${crop.sunMin.toFixed(1)} hrs and does not need the brightest slot in the bed.`,
+      light>=crop.sunMin?'fit':'info'
+    );
+  }else{
+    pushTrait(
+      'Mid-light grower',
+      `Scores best between ${crop.sunMin.toFixed(1)} and ${crop.sunIdeal.toFixed(1)} hrs of direct sun.`,
+      light>=crop.sunMin?'fit':'watch'
+    );
+  }
+  if(crop.trellisRequired || crop.trellisZone || crop.habit==='vining'){
+    pushTrait(
+      'Vertical grower',
+      crop.trellisRequired
+        ? 'Needs vertical support to score cleanly and avoid structural penalties.'
+        : 'Uses the trellis lane best even when support is optional.',
+      cell.hasVerticalSupport?'fit':'watch'
+    );
+  }else if(crop.height==='tall'){
+    pushTrait(
+      'Canopy builder',
+      'Tall growth can cast shade, so the front access lane is usually the wrong place for it.',
+      isFrontAccessCell(cell)&&!cell.isTrellisRow?'watch':'info'
+    );
+  }
+  if(crop.protectedZone){
+    pushTrait(
+      'Protected-zone crop',
+      'Prefers sheltered or critter-safe cells over exposed structure lanes.',
+      (cell.isProtected||cell.isCritterSafe)?'fit':'watch'
+    );
+  }
+  if(crop.successionFriendly){
+    pushTrait(
+      'Succession friendly',
+      'Fast turnover rewards quick access and repeat sowing through the season.',
+      (cell.accessPriority||0)>=0.75?'fit':'info'
+    );
+  }
+  pushTrait(
+    crop.coolSeason ? 'Cool season window' : 'Warm season window',
+    crop.coolSeason
+      ? 'Best in spring and fall; heat narrows the margin fast.'
+      : 'Wants sustained warmth before it reaches its full ceiling.',
+    crop.coolSeason
+      ? ((inputs.season==='spring'||inputs.season==='fall')?'fit':'watch')
+      : ((inputs.season==='summer'||inputs.season==='latesummer')?'fit':'info')
+  );
+  if(crop.waterNeed==='high'){
+    pushTrait('High water demand','Needs steadier moisture than low-demand neighbors, so irrigation mismatches show up quickly.','info');
+  }else if(crop.waterNeed==='low'){
+    pushTrait('Low water demand','Handles drier spacing better than thirsty neighbors and can be overwatered in crowded mixes.','info');
+  }
+  return traits.slice(0,5);
+}
+
+function summarizeInspectLead(cell, inputs, issues){
+  const crop=CROPS[cell.crop];
+  const breakdown=getScoreBreakdown(cell, inputs);
+  const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
+  const primaryIssue=targetIssues[0]||null;
+  const score=scoreCell(cell, inputs);
+  const factors=breakdown&&Array.isArray(breakdown.factors)?breakdown.factors:[];
+  const weakestFactor=factors
+    .filter(factor=>typeof factor.value==='number'&&typeof factor.weight==='number')
+    .map(factor=>({ ...factor, ratio:clamp(factor.value/5,0,1) }))
+    .sort((a,b)=>a.ratio-b.ratio)[0]||null;
+  if(primaryIssue){
+    return {
+      status:primaryIssue.severity==='critical'?'conflict':'caution',
+      kicker:primaryIssue.severity==='critical'?'Needs intervention':'Watch this placement',
+      summary:`${primaryIssue.msg} ${reasonFix(primaryIssue, cell, inputs)}`,
+      score
+    };
+  }
+  if(weakestFactor){
+    return {
+      status:score>=7?'fit':'caution',
+      kicker:score>=7?'Strong fit':'Pressure is building',
+      summary:score>=7
+        ? `${weakestFactor.label} is the soft limiter now. ${weakestFactor.description||'Use the score story to raise the ceiling.'}`
+        : `${weakestFactor.label} is dragging this cell down. ${weakestFactor.description||'Tighten this first before tuning varieties.'}`,
+      score
+    };
+  }
+  return {
+    status:score>=7?'fit':'caution',
+    kicker:score>=7?'Stable placement':'Mixed placement',
+    summary:score>=7
+      ? `${crop.name} is stable here. Use the score story and better fits only if you want a higher ceiling.`
+      : `${crop.name} is workable here, but the fit is still carrying preventable friction.`,
+    score
+  };
+}
+
+function assessPlacementFit(ck, cell, inputs){
+  const crop=CROPS[ck];
+  if(!crop) return { status:'conflict', notes:['missing crop data'] };
+  const notes=[];
+  let status='fit';
+  const light=(cell.effectiveLight||0);
+  const lightDeficit=crop.sunMin-light;
+  if(crop.trellisRequired && !cell.hasVerticalSupport) return { status:'conflict', notes:['requires support'] };
+  if(crop.habit==='vining' && !cell.hasVerticalSupport){
+    status='caution';
+    notes.push('vining crop without support');
+  }
+  if(crop.trellisZone && inputs.cage&&inputs.cage.enabled && !cell.isTrellisRow){
+    status='caution';
+    notes.push('off trellis row');
+  }
+  if(crop.protectedZone && cell.isTrellisRow){
+    status='caution';
+    notes.push('uses trellis lane');
+  }
+  if(lightDeficit>0.6) return { status:'conflict', notes:['light shortfall'] };
+  if(lightDeficit>0){
+    status='caution';
+    notes.push('light is tight');
+  }
+  if(crop.coolSeason && inputs.season==='latesummer') return { status:'conflict', notes:['late-summer heat'] };
+  if(crop.coolSeason && inputs.season==='summer'){
+    status='caution';
+    notes.push('summer heat pressure');
+  }
+  if(isTallCrop(crop) && isFrontAccessCell(cell) && !cell.isTrellisRow){
+    status='caution';
+    notes.push('front access blocker');
+  }
+  return { status, notes };
+}
+
+function summarizeFitReason(ck, cell, inputs){
+  const crop=CROPS[ck];
+  if(!crop) return 'holds a cleaner fit in this cell';
+  if(crop.trellisZone && cell.isTrellisRow) return 'matches the derived trellis lane';
+  if(crop.protectedZone && (cell.isProtected||cell.isCritterSafe)) return 'uses the sheltered lane well';
+  if((cell.effectiveLight||0)>=crop.sunMin) return 'fits the current light window';
+  if(crop.successionFriendly && (cell.accessPriority||0)>=0.75) return 'benefits from quick access';
+  if(crop.coolSeason && (inputs.season==='spring'||inputs.season==='fall')) return 'matches the cool-season window';
+  if(!crop.coolSeason && (inputs.season==='summer'||inputs.season==='latesummer')) return 'matches the warm-season window';
+  return 'clears the current placement friction';
+}
+
+function rankFitCandidatesForCell(cell, inputs, opts={}){
+  if(!cell) return [];
+  const mode=opts.mode||'strict';
+  const limit=Number.isFinite(opts.limit)?opts.limit:3;
+  const minGain=opts.minGain!==undefined ? opts.minGain : (cell.crop ? 0.15 : -Infinity);
+  const current=cell.crop ? scoreCell(cell, inputs) : 0;
+  const testCell={...cell};
+  return Object.keys(CROPS)
+    .filter(ck=>ck!==cell.crop)
+    .map(ck=>{
+      testCell.crop=ck;
+      const fit=assessPlacementFit(ck, testCell, inputs);
+      const score=clamp(scoreCropInCell(ck, testCell, inputs)+adjScore(testCell),0,10);
+      return {
+        cropKey:ck,
+        score,
+        gain:score-current,
+        fit:fit.status,
+        reason:summarizeFitReason(ck, testCell, inputs),
+        notes:fit.notes
+      };
+    })
+    .filter(candidate=>mode==='exploratory' ? candidate.fit!=='conflict' : candidate.fit==='fit')
+    .filter(candidate=>candidate.gain>minGain)
+    .sort((a,b)=>b.gain-a.gain || b.score-a.score || CROPS[a.cropKey].name.localeCompare(CROPS[b.cropKey].name))
+    .slice(0,limit);
+}
+
+function buildReasoningDelta(currentScore, strictFits){
+  const best=Array.isArray(strictFits)?strictFits[0]:null;
+  if(!best||!Number.isFinite(best.score)) return null;
+  return {
+    current:currentScore,
+    betterCropKey:best.cropKey,
+    betterScore:best.score,
+    gain:best.score-currentScore,
+    reasons:[best.reason, ...best.notes].filter(Boolean)
+  };
+}
+
+function buildPlannerScorePayload(cell, inputs, strictFits, primaryIssue){
+  const scoreBreakdown=getScoreBreakdown(cell, inputs);
+  const currentScore=scoreCell(cell, inputs);
+  const score=scoreBreakdown?scoreBreakdown.total:currentScore;
+  const delta=buildReasoningDelta(score, strictFits);
+  const factorRows=scoreBreakdown&&Array.isArray(scoreBreakdown.factors)?scoreBreakdown.factors:[];
+  const scoredFactors=factorRows
+    .filter(factor=>typeof factor.value==='number'&&typeof factor.weight==='number')
+    .map(factor=>({
+      label:factor.label,
+      ratio:clamp(factor.value/5,0,1),
+      description:factor.description
+    }))
+    .sort((a,b)=>a.ratio-b.ratio);
+  const weakestFactor=scoredFactors[0]||null;
+  const strongestFactor=[...scoredFactors].sort((a,b)=>b.ratio-a.ratio)[0]||null;
+  const scoreDirection=score>=7
+    ? 'Stable. The current placement is working, but one weak factor still limits upside.'
+    : score>=4
+      ? 'Mixed. This cell is workable, but one structural or environmental penalty is dragging it down.'
+      : 'At risk. This placement is losing points fast and should be corrected before it compounds.';
+  const tradeoff=primaryIssue
+    ? `${primaryIssue.msg} ${reasonFix(primaryIssue, cell, inputs)}`
+    : weakestFactor&&strongestFactor&&weakestFactor.label!==strongestFactor.label
+      ? `${strongestFactor.label} is carrying this cell, but ${weakestFactor.label} is limiting the score.`
+      : 'No major violation is active. Use the score breakdown to fine tune the placement.';
+  const nextMove=reasonFix(primaryIssue, cell, inputs);
+  const scoreTone=score>=7?'Stable score':score>=4?'Mixed score':'At risk score';
+  return {
+    scoreBreakdown,
+    score,
+    delta,
+    weakestFactor,
+    strongestFactor,
+    scoreDirection,
+    tradeoff,
+    nextMove,
+    scoreTone
+  };
+}
+
+function buildPlannerReasoningSnapshot(cell, inputs, issues){
+  if(!cell) return null;
+  const crop=cell.crop&&CROPS[cell.crop]?CROPS[cell.crop]:null;
+  const derivedZone=describeDerivedZone(cell);
+  const strictFits=rankFitCandidatesForCell(
+    cell,
+    inputs,
+    cell.crop
+      ? { mode:'strict', limit:3 }
+      : { mode:'strict', limit:3, minGain:-Infinity }
+  );
+  const supportStatus=cell.hasVerticalSupport
+    ? 'support ready'
+    : crop&&crop.trellisRequired
+      ? 'support missing'
+      : 'no support needed';
+  const cellFacts=[
+    `${(cell.effectiveLight||0).toFixed(1)} hrs sun`,
+    isFrontAccessCell(cell)?'front access row':(cell.isTrellisRow?'trellis row':'interior row'),
+    supportStatus
+  ];
+  if(!crop){
+    return {
+      cell,
+      crop:null,
+      inputs,
+      derivedZone,
+      strictFits,
+      supportStatus,
+      cellFacts,
+      targetIssues:[],
+      primaryIssue:null,
+      inspectLead:null,
+      derivedTraits:[],
+      score:null,
+      delta:null,
+      scoreBreakdown:null,
+      weakestFactor:null,
+      strongestFactor:null,
+      scoreDirection:'',
+      tradeoff:'',
+      nextMove:'',
+      scoreTone:''
+    };
+  }
+
+  const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
+  const primaryIssue=targetIssues[0]||null;
+  const inspectLead=summarizeInspectLead(cell, inputs, issues);
+  const derivedTraits=deriveInspectTraits(cell.crop, cell, inputs);
+  const scorePayload=buildPlannerScorePayload(cell, inputs, strictFits, primaryIssue);
+  return {
+    cell,
+    crop,
+    inputs,
+    derivedZone,
+    strictFits,
+    supportStatus,
+    cellFacts,
+    targetIssues,
+    primaryIssue,
+    inspectLead,
+    derivedTraits,
+    scorePayload,
+    score:scorePayload.score,
+    delta:scorePayload.delta,
+    scoreBreakdown:scorePayload.scoreBreakdown,
+    weakestFactor:scorePayload.weakestFactor,
+    strongestFactor:scorePayload.strongestFactor,
+    scoreDirection:scorePayload.scoreDirection,
+    tradeoff:scorePayload.tradeoff,
+    nextMove:scorePayload.nextMove,
+    scoreTone:scorePayload.scoreTone
+  };
+}
+
 function scoreBandByRatio(ratio){
   if(ratio>=0.7) return 'good';
   if(ratio>=0.45) return 'mid';
   return 'low';
 }
 
-function renderScoreExplanation(cell, inputs){
+function renderScoreExplanation(snapshot, inputs){
+  const ctx=snapshot&&snapshot.cell?snapshot:null;
+  const cell=ctx?ctx.cell:snapshot;
+  const activeInputs=ctx?ctx.inputs:inputs;
   if(!cell||!cell.crop) return '';
-  const detail=computeScoreBreakdown(cell.crop, cell, inputs);
-  if(!detail) return '';
-  const adjacency=computeAdjacencyBreakdown(cell);
-  const final=clamp(detail.baseScore+adjacency.clamped,0,10);
+  const breakdown=ctx?ctx.scoreBreakdown:getScoreBreakdown(cell, activeInputs);
+  if(!breakdown) return '';
+  const detail=breakdown.detail;
+  const adjacency=breakdown.adjacency;
+  const final=breakdown.total;
   const crop=detail.crop;
 
   const lightVsMin=detail.lightHours-crop.sunMin;
@@ -5908,7 +6300,7 @@ function renderScoreExplanation(cell, inputs){
   const accessMsg=(crop.height==='low'||crop.height==='very low')
     ? `Low profile crop gains access bonus from cell access score ${(cell.accessScore||0).toFixed(2)}.`
     : 'Taller crop uses baseline access score.';
-  const seasonMsg=`${inputs.season} season ${crop.coolSeason?'cool-season':'warm-season'} fit.`;
+  const seasonMsg=`${activeInputs.season} season ${crop.coolSeason?'cool-season':'warm-season'} fit.`;
   const structMsg=detail.structContrib.length
     ? detail.structContrib.map(item=>`${item.label} ${formatSigned(item.delta,2)}`).join(' · ')
     : 'No structural bonus or penalty in this cell.';
@@ -6005,7 +6397,7 @@ function cellIssues(inputs){
     const highAccessCell=(cell.accessPriority||0)>=0.75;
     if(c.habit==='vining'&&!cell.hasVerticalSupport)
       issues.push({cellId:cell.id,icon:'🪴',msg:`${c.short} is a vine but not in a trellis zone — yields will be lower.`,code:'UNSUPPORTED_CLIMBER',severity:'critical'});
-    // Trait-based validity issues (v4.3)
+    // Trait-based validity issues (v4.4)
     const v=cropValidity(cell.crop, cell, inputs);
     if(v.severity==='hard')
       issues.push({cellId:cell.id,icon:'⛔',msg:v.reason,code:v.code,severity:'critical'});
@@ -6148,70 +6540,37 @@ function buildReasoningSurface(inputs, issues){
   const planted=bed.filter(c=>c.crop);
   const weakest=weakestCells(inputs,1)[0];
   const target=(selected&&selected.crop)?selected:(weakest?weakest.cell:(planted[0]||null));
-  if(!target||!target.crop){
+  const reasoningSnapshot=buildPlannerReasoningSnapshot(target, inputs, issues);
+  if(!reasoningSnapshot||!reasoningSnapshot.crop){
     pane.innerHTML=`<div class="icard reasoning-card"><div class="ichdr">Why this score</div><div class="reasoning-empty"><span>🧭</span><p>Select a planted cell to see the exact pressure on the bed, the weakest factor, and the fastest fix in one place.</p><button class="reasoning-btn primary state-action" type="button" data-action="switch-inspect">Switch to Inspect</button></div></div>`;
     return;
   }
-  const crop=CROPS[target.crop];
-  const breakdown=getScoreBreakdown(target,inputs);
-  const targetIssues=(issues||[]).filter(issue=>issue.cellId===target.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
-  const primaryIssue=targetIssues[0]||null;
-  const factorRows=breakdown&&Array.isArray(breakdown.factors)?breakdown.factors:[];
-  const scoredFactors=factorRows
-    .filter(f=>typeof f.value==='number'&&typeof f.weight==='number')
-    .map(f=>({label:f.label,ratio:Math.max(0,Math.min(1,f.value/5)),description:f.description}))
-    .sort((a,b)=>a.ratio-b.ratio);
-  const weakestFactor=scoredFactors[0]||null;
-  const strongestFactor=[...scoredFactors].sort((a,b)=>b.ratio-a.ratio)[0]||null;
-  const score=breakdown?breakdown.total:scoreCell(target,inputs);
-  const delta=cellScoreDelta(target,inputs);
-  const supportFact=target.hasVerticalSupport
-    ? 'support ready'
-    : crop.trellisRequired
-      ? 'support missing'
-      : 'no support needed';
-  const cellFacts=[
-    `${(target.effectiveLight||0).toFixed(1)} hrs sun`,
-    isFrontAccessCell(target)?'front access row':(target.isTrellisRow?'trellis row':'interior row'),
-    supportFact
-  ];
-  const scoreDirection=score>=7
-    ? 'Stable. The current placement is working, but one weak factor still limits upside.'
-    : score>=4
-      ? 'Mixed. This cell is workable, but one structural or environmental penalty is dragging it down.'
-      : 'At risk. This placement is losing points fast and should be corrected before it compounds.';
-  const tradeoff=primaryIssue
-    ? `${primaryIssue.msg} ${reasonFix(primaryIssue,target,inputs)}`
-    : weakestFactor&&strongestFactor&&weakestFactor.label!==strongestFactor.label
-      ? `${strongestFactor.label} is carrying this cell, but ${weakestFactor.label} is limiting the score.`
-      : 'No major violation is active. Use the score breakdown to fine tune the placement.';
-  const nextMove=reasonFix(primaryIssue,target,inputs);
-  const scoreTone=score>=7?'Stable score':score>=4?'Mixed score':'At risk score';
+  const { cell, crop, targetIssues, primaryIssue, weakestFactor, score, delta, cellFacts, scoreDirection, tradeoff, nextMove, scoreTone }=reasoningSnapshot;
   const severity=issueSeverityLabel(primaryIssue);
   const issueHtml=primaryIssue
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Top risk</span><span class="reasoning-text">${escapeHtml(primaryIssue.msg)}</span></div><span class="reasoning-badge ${escapeHtml(severity)}">${escapeHtml(severity)}</span></div>`
     : `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Top risk</span><span class="reasoning-text">No hard violation is active on this cell. Focus on score tuning and harvest timing.</span></div><span class="reasoning-badge low">clear</span></div>`;
-  const factsHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Cell facts</span><div class="reasoning-facts">${cellFacts.map(fact=>`<span class="reasoning-fact">${escapeHtml(fact)}</span>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(target.id)}</span></div>`;
+  const factsHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Cell facts</span><div class="reasoning-facts">${cellFacts.map(fact=>`<span class="reasoning-fact">${escapeHtml(fact)}</span>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(cell.id)}</span></div>`;
   const factorHtml=weakestFactor
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Weakest factor</span><span class="reasoning-text">${escapeHtml(weakestFactor.label)}. ${escapeHtml(weakestFactor.description||'')}</span></div><span class="reasoning-score">${escapeHtml(scoreTone)}</span></div>`
     : '';
   const stackHtml=targetIssues.length>1
-    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Ordered issues</span><div class="reasoning-stack">${targetIssues.slice(0,3).map(issue=>`<div class="reasoning-stack-item"><div class="reasoning-stack-copy"><strong>${escapeHtml(issue.msg)}</strong><span>${escapeHtml(reasonFix(issue,target,inputs))}</span></div><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span></div>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(targetIssues.length+' risks')}</span></div>`
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Ordered issues</span><div class="reasoning-stack">${targetIssues.slice(0,3).map(issue=>`<div class="reasoning-stack-item"><div class="reasoning-stack-copy"><strong>${escapeHtml(issue.msg)}</strong><span>${escapeHtml(reasonFix(issue,cell,inputs))}</span></div><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span></div>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(targetIssues.length+' risks')}</span></div>`
     : '';
   const modelHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Scoring stack</span><div class="reasoning-model-list">
     <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Rules core</strong><span>Sun, support, shade, access, season, and adjacency stay deterministic for this cell.</span></div><span class="score-model-chip rules">base</span></div>
     <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Planner layer</strong><span>Garden planner adds tuned light gradients and cage-aware structure bonuses so placement feedback is immediate.</span></div><span class="score-model-chip planner">planner</span></div>
     <div class="reasoning-model-item"><div class="reasoning-model-copy"><strong>Story Mode later</strong><span>Events, interventions, and soil fatigue are off here. They enter after the layout is chosen.</span></div><span class="score-model-chip story">later</span></div>
   </div></div><span class="reasoning-score">3 layers</span></div>`;
-  const tradeHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Tradeoff</span><span class="reasoning-text">${escapeHtml(tradeoff)}</span></div><span class="reasoning-score">${escapeHtml(target.id)}</span></div>`;
+  const tradeHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Tradeoff</span><span class="reasoning-text">${escapeHtml(tradeoff)}</span></div><span class="reasoning-score">${escapeHtml(cell.id)}</span></div>`;
   const deltaHtml=delta&&delta.gain>0.15
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score delta</span><span class="reasoning-text">Switching to ${escapeHtml(CROPS[delta.betterCropKey].name)} could raise this cell from ${escapeHtml(delta.current.toFixed(1))} to about ${escapeHtml(delta.betterScore.toFixed(1))}.</span></div><span class="reasoning-score">+${escapeHtml(delta.gain.toFixed(1))}</span></div>`
     : '';
   const nextHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Next move</span><span class="reasoning-text">${escapeHtml(nextMove)}</span></div><span class="reasoning-score">${escapeHtml(crop.short)}</span></div>`;
   pane.innerHTML=`<div class="icard reasoning-card">
     <div class="ichdr">Why this score</div>
-    <div class="reasoning-target"><span>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)} · ${escapeHtml(target.id)}</span><span class="reasoning-score">${escapeHtml(score.toFixed(1))}/10</span></div>
-    <div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score direction</span><span class="reasoning-text">${escapeHtml(scoreDirection)}</span></div><span class="reasoning-score">${escapeHtml(ui.selCell===target.id?'selected':'focus')}</span></div>
+    <div class="reasoning-target"><span>${escapeHtml(crop.emoji)} ${escapeHtml(crop.name)} · ${escapeHtml(cell.id)}</span><span class="reasoning-score">${escapeHtml(score.toFixed(1))}/10</span></div>
+    <div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Score direction</span><span class="reasoning-text">${escapeHtml(scoreDirection)}</span></div><span class="reasoning-score">${escapeHtml(ui.selCell===cell.id?'selected':'focus')}</span></div>
     ${factsHtml}
     ${issueHtml}
     ${factorHtml}
@@ -6221,8 +6580,8 @@ function buildReasoningSurface(inputs, issues){
     ${deltaHtml}
     ${nextHtml}
     <div class="reasoning-actions">
-      <button class="reasoning-btn primary" type="button" data-reasoning-action="focus-cell" data-cell-id="${escapeHtml(target.id)}">Inspect this cell</button>
-      ${delta&&delta.gain>0.15?`<button class="reasoning-btn" type="button" data-reasoning-action="best-fit" data-cell-id="${escapeHtml(target.id)}" data-crop-key="${escapeHtml(delta.betterCropKey)}">Queue best fit</button>`:''}
+      <button class="reasoning-btn primary" type="button" data-reasoning-action="focus-cell" data-cell-id="${escapeHtml(cell.id)}">Inspect this cell</button>
+      ${delta&&delta.gain>0.15?`<button class="reasoning-btn" type="button" data-reasoning-action="best-fit" data-cell-id="${escapeHtml(cell.id)}" data-crop-key="${escapeHtml(delta.betterCropKey)}">Queue best fit</button>`:''}
       <button class="reasoning-btn" type="button" data-reasoning-action="open-notes">Open notes</button>
     </div>
   </div>`;
@@ -6255,7 +6614,7 @@ function warnings(inputs,issues){
   }
   if(inputs.goal==='sanctuary'&&!(inputs.cage&&inputs.cage.enabled))
     w.push({t:'tip',msg:'Mom\'s Sanctuary works best with the cage structure enabled — turn it on in the Cage tab.'});
-  // Trait-based validity warnings — aggregate by code (v4.3)
+  // Trait-based validity warnings — aggregate by code (v4.4)
   const vCounts={};
   bed.forEach(cell=>{
     if(!cell.crop) return;
@@ -6918,6 +7277,7 @@ function renderCastBoard(voices, options={}){
 // RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
 function render(){
+  syncPlannerMetaCopy();
   syncSimulationUI();
   const ctx = buildRenderContext();
   const inputs = ctx.inputs;
@@ -7313,13 +7673,6 @@ function renderRight(inputs,issues,scoreTotal){
   const selCell=ui.selCell?bed.find(c=>c.id===ui.selCell):null;
   let inspHtml='';
   if(selCell&&selCell.crop){
-    const cs=scoreCell(selCell,inputs);
-    const bt=betterCropForCell(selCell,inputs);
-    const targetIssues=(issues||[]).filter(issue=>issue.cellId===selCell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
-    const primaryIssue=targetIssues[0]||null;
-    const delta=cellScoreDelta(selCell,inputs);
-    const btLabel=bt?`${escapeHtml(CROPS[bt.cropKey].name)} (~${bt.score.toFixed(1)})${bt.reasons&&bt.reasons.length
-      ?' <span style="font-size:.58rem;color:var(--leaf);font-family:\'DM Mono\',monospace">['+escapeHtml(bt.reasons.join(' '))+']</span>':''}`:'';
     const ck=selCell.crop;
     const rv=rankVar(ck,inputs);
     const vhtml=rv.map((v,i)=>`<div class="vitem">
@@ -7329,29 +7682,43 @@ function renderRight(inputs,issues,scoreTotal){
       </span>
       <span class="vdesc">${escapeHtml(v.desc)}</span>
     </div>`).join('');
-    const waterIcon={'low':'💧','medium':'💧💧','high':'💧💧💧'}[CROPS[ck].waterNeed]||'💧💧';
-      inspHtml=`
-      <div class="insp">
-        <div class="insph">${escapeHtml(CROPS[ck].emoji)} ${escapeHtml(CROPS[ck].name)} · ${escapeHtml(selCell.id)}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
+    const reasoningSnapshot=buildPlannerReasoningSnapshot(selCell, inputs, issues);
+    const { inspectLead, derivedZone, derivedTraits, strictFits, supportStatus, targetIssues, primaryIssue, delta, score }=reasoningSnapshot;
+    inspHtml=`
+      <div class="insp inspect-hero-card">
+        <div class="insph">Inspect & explain</div>
         <div class="inspb">
-          <div class="irow"><span class="ikey">Effective light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
-          <div class="irow"><span class="ikey">Cell score</span>
-            <span class="ival" style="color:${cs>=7?'var(--leaf)':cs>=4?'#b07820':'#b02a1e'}">${cs.toFixed(1)}/10</span>
+          <div class="inspect-hero-head">
+            <div>
+              <div class="inspect-hero-title">${escapeHtml(CROPS[ck].emoji)} ${escapeHtml(CROPS[ck].name)} · ${escapeHtml(selCell.id)}</div>
+              <div class="inspect-kicker">${escapeHtml(inspectLead.kicker)}</div>
+            </div>
+            <span class="inspect-status-chip ${escapeHtml(inspectLead.status)}">${escapeHtml(inspectLead.status)}</span>
           </div>
-          <div class="irow"><span class="ikey">Water need</span><span class="ival">${waterIcon} ${CROPS[ck].waterNeed}</span></div>
-          <div class="irow"><span class="ikey">Succession</span><span class="ival">${CROPS[ck].successionFriendly?'✓ yes':'—'}</span></div>
-          <div class="irow"><span class="ikey">Traits</span><span class="ival">${
-            selCell.isTrellisRow?'<span class="zone-badge trellis">TRELLIS ROW</span> ':''
-          }${selCell.isProtected?'<span class="zone-badge protected">PROTECTED</span> ':''
-          }${selCell.hasVerticalSupport?'🪴 ':''
-          }${selCell.isCritterSafe?'🛡 ':''
-          }${!(selCell.isTrellisRow||selCell.isProtected||selCell.hasVerticalSupport||selCell.isCritterSafe)?'—':''
-          }</span></div>
-          ${delta&&delta.gain>0.15?`<div class="irow"><span class="ikey">Score delta</span><span class="ival" style="color:var(--leaf);font-size:.65rem">+${escapeHtml(delta.gain.toFixed(1))} with ${escapeHtml(CROPS[delta.betterCropKey].name)}</span></div>`:''}
-          ${bt?`<div class="irow"><span class="ikey">Better here</span><span class="ival" style="color:var(--leaf);font-size:.65rem">${btLabel}</span></div>`:''}
+          <div class="inspect-lead">${escapeHtml(inspectLead.summary)}</div>
+          <div class="inspect-meta-chips">
+            <span class="inspect-meta-chip">${escapeHtml(score.toFixed(1))}/10 cell score</span>
+            <span class="inspect-meta-chip">${escapeHtml((selCell.effectiveLight||0).toFixed(1))} hrs sun</span>
+            <span class="inspect-meta-chip">${escapeHtml(supportStatus)}</span>
+            ${delta&&delta.gain>0.15?`<span class="inspect-meta-chip">best fit ${escapeHtml(formatSigned(delta.gain,1))}</span>`:''}
+          </div>
         </div>
       </div>
-      ${renderScoreExplanation(selCell, inputs)}
+      <div class="icard">
+        <div class="ichdr">Derived zone</div>
+        <div class="icbody">
+          <div class="inspect-section-title">${escapeHtml(derivedZone.label)}</div>
+          <div class="inspect-section-copy">${escapeHtml(derivedZone.reason)}</div>
+          <div class="inspect-zone-chips">${derivedZone.chips.map(chip=>`<span class="inspect-meta-chip">${escapeHtml(chip)}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="ichdr">Derived traits</div>
+        <div class="icbody inspect-trait-list">
+          ${derivedTraits.map(trait=>`<div class="inspect-trait-item"><span class="inspect-trait-label ${escapeHtml(trait.tone)}">${escapeHtml(trait.tone)}</span><div class="inspect-trait-copy"><strong>${escapeHtml(trait.label)}</strong><span>${escapeHtml(trait.reason)}</span></div></div>`).join('')}
+        </div>
+      </div>
+      ${renderScoreExplanation(reasoningSnapshot)}
       <div class="icard">
         <div class="ichdr">Priority risks</div>
         <div class="icbody">
@@ -7372,20 +7739,55 @@ function renderRight(inputs,issues,scoreTotal){
           </div>
         </div>
       </div>
+      <div class="icard">
+        <div class="ichdr">Better fits · strict</div>
+        <div class="icbody inspect-suggestion-list">
+          ${strictFits.length
+            ? strictFits.map(candidate=>`<div class="inspect-suggestion-item"><div class="inspect-suggestion-copy"><strong>${escapeHtml(CROPS[candidate.cropKey].emoji)} ${escapeHtml(CROPS[candidate.cropKey].name)}</strong><span>${escapeHtml(candidate.reason)}.</span></div><span class="inspect-suggestion-score">${escapeHtml(formatSigned(candidate.gain,1))}</span></div>`).join('')
+            : '<div class="inspect-quiet">No clean alternative clears this cell better than the current crop yet. Leave exploratory swaps for a later phase.</div>'}
+        </div>
+      </div>
       <div class="icard"><div class="ichdr">Varieties · ranked for your site</div>
         <div class="icbody">${vhtml||'<em style="font-size:.7rem;color:var(--text-light)">No varieties listed.</em>'}</div>
       </div>
       <button class="harvest-log-btn" id="inspectHarvestBtn">🌾 Log Harvest</button>
       <div id="inspectHarvestForm"></div>`;
   } else if(selCell){
-    inspHtml=`<div class="insp">
-      <div class="insph">Row ${selCell.row+1} · Col ${selCell.col+1}${selCell.hasVerticalSupport?' 🪴':''}${selCell.isCritterSafe?' 🛡':''}</div>
+    const reasoningSnapshot=buildPlannerReasoningSnapshot(selCell, inputs, issues);
+    const { derivedZone, strictFits:openFits }=reasoningSnapshot;
+    inspHtml=`<div class="insp inspect-hero-card">
+      <div class="insph">Inspect & explain</div>
       <div class="inspb">
-        <div class="irow"><span class="ikey">Light</span><span class="ival">${(selCell.effectiveLight||0).toFixed(1)} hrs</span></div>
-        <div class="irow"><span class="ikey">Status</span><span class="ival" style="color:var(--text-light)">— Empty —</span></div>
-      </div></div>`;
+        <div class="inspect-hero-head">
+          <div>
+            <div class="inspect-hero-title">Open cell · ${escapeHtml(selCell.id)}</div>
+            <div class="inspect-kicker">This lane is empty</div>
+          </div>
+          <span class="inspect-status-chip fit">open</span>
+        </div>
+        <div class="inspect-lead">Read the derived zone first, then pick a crop that fits the lane instead of forcing the lane to fit the crop.</div>
+        <div class="inspect-meta-chips">
+          <span class="inspect-meta-chip">${escapeHtml((selCell.effectiveLight||0).toFixed(1))} hrs sun</span>
+          <span class="inspect-meta-chip">${escapeHtml(derivedZone.label)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="icard">
+      <div class="ichdr">Derived zone</div>
+      <div class="icbody">
+        <div class="inspect-section-title">${escapeHtml(derivedZone.label)}</div>
+        <div class="inspect-section-copy">${escapeHtml(derivedZone.reason)}</div>
+        <div class="inspect-zone-chips">${derivedZone.chips.map(chip=>`<span class="inspect-meta-chip">${escapeHtml(chip)}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="icard">
+      <div class="ichdr">What fits here · strict</div>
+      <div class="icbody inspect-suggestion-list">
+        ${openFits.map(candidate=>`<div class="inspect-suggestion-item"><div class="inspect-suggestion-copy"><strong>${escapeHtml(CROPS[candidate.cropKey].emoji)} ${escapeHtml(CROPS[candidate.cropKey].name)}</strong><span>${escapeHtml(candidate.reason)}.</span></div><span class="inspect-suggestion-score">${escapeHtml(candidate.score.toFixed(1))}</span></div>`).join('')}
+      </div>
+    </div>`;
   } else {
-    inspHtml=`<div class="inspect-empty"><span>🔍</span><p>Select a cell to see its score, light, and traits</p><button class="state-action" data-action="switch-inspect">Switch to Inspect tool</button></div>`;
+    inspHtml=`<div class="inspect-empty"><span>🔍</span><p>Select a cell to read its derived zone, primary reason, and cleanest next move.</p><button class="state-action" data-action="switch-inspect">Switch to Inspect tool</button></div>`;
   }
   document.getElementById('rpaneInspect').innerHTML=inspHtml;
 
@@ -9690,9 +10092,16 @@ if(_origPlaceCrop){
   placeCropInCell=function(){const r=_wrappedPlace.apply(this,arguments);setTimeout(checkTutorialCondition,50);return r};
 }
 
-// Check after handleCellPointerDown inspect path
+// Check after handleCellPointerDown inspect path + tutorial cell lock
 const _origHandleCell=handleCellPointerDown;
-handleCellPointerDown=function(e,cellId){_origHandleCell(e,cellId);setTimeout(checkTutorialCondition,50)};
+handleCellPointerDown=function(e,cellId){
+  if(tutorial.active&&tutorial.step<TUTORIAL_STEPS.length&&ui.tool!=='inspect'){
+    const s=TUTORIAL_STEPS[tutorial.step];
+    const targetEl=s.target?s.target():null;
+    if(targetEl&&targetEl.id&&cellId!==targetEl.id) return;
+  }
+  _origHandleCell(e,cellId);setTimeout(checkTutorialCondition,50);
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BOOT
