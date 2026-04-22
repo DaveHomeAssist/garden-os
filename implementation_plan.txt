@@ -1,341 +1,306 @@
-GARDEN OS — CROP DATA RECONCILIATION
-Implementation Plan
-Generated: 2026-03-20
-
-════════════════════════════════════════════════════════════════════════════════
-PROBLEM STATEMENT
-════════════════════════════════════════════════════════════════════════════════
-
-The canonical spec (CROP_SCORING_DATA.json) defines 19 crops with a full
-scoring schema. The planner (garden-planner-v4.html) has grown to 38 crops
-using an incompatible schema. The league simulator (19 crops) is aligned
-with the spec.
-
-This is not a simple "add missing crops" task. The planner's schema has
-drifted at the field level — companions are category-based instead of
-crop-keyed, water is text instead of numeric, height is an enum instead
-of boolean, and five critical fields are missing entirely.
-
-════════════════════════════════════════════════════════════════════════════════
-SCOPE
-════════════════════════════════════════════════════════════════════════════════
-
-Files touched:
-  1. specs/CROP_SCORING_DATA.json     ← expand from 19 → 38 crops
-  2. garden-planner-v4.html           ← realign CROPS object + scoring fns
-  3. garden-league-simulator-v4.html  ← expand from 19 → 38 crops (C object)
-  4. CLAUDE.md                        ← update "19 crops" references
-
-Files read-only (validation targets):
-  - specs/SCORING_RULES.md            ← algorithm contract, do not change
-  - specs/EVENT_DECK.json             ← event vulnerability references
-  - gos-schema.json                   ← crop validation schema
-
-════════════════════════════════════════════════════════════════════════════════
-PHASE 1 — KEY NORMALIZATION
-════════════════════════════════════════════════════════════════════════════════
-
-Milestone: All three files use identical crop keys.
-Effort: Small
-Risk: Low (mechanical rename, fully testable)
-
-Resolve the 7 key mismatches. Spec keys win (singular form, abbreviated).
-
-  Spec Key (keep)    Planner Key (rename)     Action
-  ─────────────────  ─────────────────────    ──────────────────────────
-  cherry_tom         cherry_tomato            Rename in planner
-  carrot             carrots                  Rename in planner
-  onion              onions                   Rename in planner
-  beet               beets                    Rename in planner
-  pepper             peppers                  Rename in planner
-  lettuce            leaf_lettuce             Rename in planner (merge)
-  chard              swiss_chard              Rename in planner
-
-head_lettuce stays as a NEW crop (not merged with lettuce).
-
-Search scope for each rename:
-  - CROPS object key
-  - All string literals referencing the crop (goalBonus, presets, etc.)
-  - companionTags/conflictTags arrays that reference category names
-  - localStorage migration note (users with saved beds use old keys)
-
-Migration concern: Users who have saved bed layouts in localStorage will
-reference old keys. Add a one-time key migration function that runs on
-load, mapping old keys → new keys in any saved bed data.
-
-Deliverable: Single commit. Planner keys match spec keys for all 19
-             overlapping crops. Saved beds still load correctly.
-
-════════════════════════════════════════════════════════════════════════════════
-PHASE 2 — SCHEMA ALIGNMENT (PLANNER → SPEC SHAPE)
-════════════════════════════════════════════════════════════════════════════════
-
-Milestone: Every planner crop has all fields the scoring algorithm needs.
-Effort: Medium-Large (38 crops × 6 new/changed fields)
-Risk: Medium (data authoring required — values must be botanically sane)
-
-For each of the 38 planner crops, add or convert these fields:
-
-  Field                    Current Planner        Target (Spec)
-  ───────────────────────  ─────────────────────  ───────────────────────
-  id                       (implicit from key)    Explicit string
-  faction                  category (9 values)    faction (8 values)
-  support                  trellisRequired        Boolean (true/false)
-  tall                     height (enum)          Boolean
-  water                    waterNeed (text)       Numeric (2 or 3)
-  companions               companionTags (cats)   Crop ID array
-  conflicts                conflictTags (cats)    Crop ID array
-  chapterUnlock            MISSING                Integer (1-9)
-  recipes                  MISSING                String array
-  eventVulnerabilities     MISSING                String array
-  seasonalMultipliers      MISSING                {spring, summer, fall}
-
-Conversion rules:
-
-  faction mapping:
-    cucurbit  → climbers    (vining cucurbits)
-    cucurbit  → fruiting    (bush cucurbits — zucchini already there)
-    legume    → climbers    (pole_beans, peas)
-    legume    → fast_cycles (bush_beans — short, quick harvest)
-    greens    → greens      (spinach, chard) OR fast_cycles (lettuce, arugula)
-    roots     → roots
-    herbs     → herbs
-    brassica  → brassicas
-    companion → companions
-    flowers   → companions
-
-  tall mapping:
-    height === 'tall'  → tall: true
-    everything else    → tall: false
-
-  water mapping:
-    waterNeed === 'high'   → water: 3
-    waterNeed === 'medium' → water: 2
-    waterNeed === 'low'    → water: 2
-
-  support mapping:
-    trellisRequired === true → support: true
-    everything else          → support: false
-
-  companions/conflicts:
-    Must be authored per-crop as specific crop IDs.
-    Use horticultural companion planting references:
-    - Carrots & Onions (mutual companions)
-    - Tomatoes & Basil (mutual companions)
-    - Beans & Onions (mutual conflict)
-    - Brassicas & Tomatoes (mutual conflict)
-    Each new crop needs 1-3 companions and 0-2 conflicts.
-
-  chapterUnlock:
-    Tier crops by complexity for the Season Engine progression.
-    1 = starter (lettuce, radish, basil, spinach, arugula, marigold)
-    2 = easy (bush_beans, peas, pole_beans, cherry_tom)
-    3 = intermediate roots (carrot, onion, beet, scallion, turnip)
-    4 = intermediate greens (bok_choy, mustard_greens, tatsoi, mizuna)
-    5 = brassicas + herbs (broccoli, kale, dill, cilantro, parsley, chives)
-    6 = fruiting (pepper, eggplant, compact_tomato, zucchini)
-    7 = cucurbits (beit_cucumber, slicing_cucumber, bush_cucumber)
-    8 = advanced brassicas (compact_cabbage, kohlrabi)
-    9 = specialists (nasturtium, garlic, head_lettuce, chard)
-
-  eventVulnerabilities:
-    Valid tags (from EVENT_DECK.json):
-      pest-target, pest-repellent, pest-decoy
-      blight-prone
-      frost-sensitive, frost-hardy
-      heat-sensitive, heat-tolerant
-      wind-sensitive
-    Assign 1-3 tags per crop based on botanical reality.
-
-  seasonalMultipliers:
-    {spring, summer, fall} — each 0.0 to 1.0.
-    Cool-season crops: spring ~1.0, summer ~0.3, fall ~0.9
-    Warm-season crops: spring ~0.4, summer ~1.0, fall ~0.3
-    All-season crops: spring ~0.7, summer ~0.8, fall ~0.7
-
-The planner keeps its EXTRA fields (trellisZone, protectedZone, habit,
-height, spacingPerSqFt, waterNeed, companionTags, conflictTags,
-varieties, successionFriendly, replacementCategory, heatTolerance, color,
-category) — these are planner-specific UI/UX fields. But the SPEC fields
-must also be present so scoring functions can reference them.
-
-Deliverable: All 38 planner crops have both the planner-specific fields
-             AND the full spec schema fields. No field is missing.
-
-════════════════════════════════════════════════════════════════════════════════
-PHASE 3 — SCORING FUNCTION MIGRATION
-════════════════════════════════════════════════════════════════════════════════
-
-Milestone: Planner scoring uses spec-compatible fields, not planner-only fields.
-Effort: Medium
-Risk: High (scoring determinism is sacred — must not change existing scores
-      for the original 19 crops)
-
-Functions to update in garden-planner-v4.html:
-
-  computeScoreBreakdown() — line 3643
-    Currently uses:
-      c.habit === 'vining'       → change to: c.support === true
-      c.trellisRequired          → keep (also add c.support check)
-      c.height === 'low'         → change to: c.tall === false
-      c.height === 'tall'        → change to: c.tall === true
-
-  computeAdjacencyBreakdown() — line 3712
-    Currently uses:
-      c.companionTags.some(t => nc.category === t)   → REPLACE with:
-        c.companions.includes(nc_key)
-      c.conflictTags.some(t => ...)                   → REPLACE with:
-        c.conflicts.includes(nc_key)
-      nc.height === 'tall' && c.height === 'tall'     → change to:
-        nc.tall && c.tall
-      waterMap[c.waterNeed]                            → change to:
-        c.water (already numeric)
-
-  scoreBed() — line 3779
-    Currently uses:
-      CROPS[ck].height === 'tall'    → change to: CROPS[ck].tall
-      CROPS[ck].habit === 'vining'   → keep (planner-specific trellis check)
-
-  goalBonus() — line 3767
-    Currently hardcodes crop keys for goal matching.
-    Update to include new crop keys where relevant.
-
-  seaFit in computeScoreBreakdown() — line 3662
-    Currently uses only c.coolSeason (boolean, rough).
-    UPGRADE to: use c.seasonalMultipliers when available.
-    Formula: seaFit = 1.0 + (c.seasonalMultipliers[season] * 4.0)
-    This matches SCORING_RULES.md section 5c.
-    Fallback to current coolSeason logic if multipliers missing.
-
-CRITICAL CONSTRAINT: For the original 19 crops, the new scoring path
-must produce identical or near-identical scores to the current path.
-Write a validation function that computes scores for all 19 crops in
-all 32 cells under default inputs using BOTH the old and new logic,
-then asserts max delta < 0.01.
-
-Deliverable: Scoring functions use spec fields. Regression test passes.
-
-════════════════════════════════════════════════════════════════════════════════
-PHASE 4 — SPEC FILE UPDATE
-════════════════════════════════════════════════════════════════════════════════
-
-Milestone: CROP_SCORING_DATA.json is the single source of truth for 38 crops.
-Effort: Small (data is authored in Phase 2; this is the write)
-Risk: Low
-
-  1. Update specs/CROP_SCORING_DATA.json:
-     - Bump version to 2
-     - Update description: "38 crops"
-     - Update lastUpdated
-     - Add all 19 new crops with full schema
-     - Add new recipes if applicable (e.g., stir_fry with bok_choy)
-
-  2. Update garden-league-simulator-v4.html C object:
-     - Add all 19 new crops with league-compatible fields
-     - Assign factions to new crops
-     - Verify ev[] and sm{} present on each
-
-  3. Update CLAUDE.md:
-     - Change "19 crops, 8 factions, 4 recipes" → "38 crops, 8 factions, N recipes"
-
-  4. Update gos-schema.json if it has a crop key whitelist.
-
-Deliverable: All files agree on 38 crops. Spec is canonical again.
-
-════════════════════════════════════════════════════════════════════════════════
-PHASE 5 — VALIDATION & CLEANUP
-════════════════════════════════════════════════════════════════════════════════
-
-Milestone: Everything works, nothing regressed.
-Effort: Small
-Risk: Low
-
-  1. Scoring regression test:
-     - For each of the original 19 crops, compute scores across all 32 cells
-       with default site settings (6 hrs sun, back wall, spring season).
-     - Compare against pre-migration baseline.
-     - Max acceptable delta: 0.5 points per cell (to account for companion
-       changes from category→crop-keyed).
-
-  2. Visual inspection:
-     - Open planner, place each of the 38 crops, verify:
-       □ Crop appears in palette
-       □ Drops onto grid
-       □ Score displays (non-zero, reasonable)
-       □ Inspect panel shows correct data
-       □ Companion/conflict highlighting works
-
-  3. localStorage migration:
-     - Load a saved bed with old keys (cherry_tomato, carrots, etc.)
-     - Verify auto-migration converts to new keys
-     - Verify bed score unchanged
-
-  4. League simulator:
-     - Start a new game
-     - Verify all 38 crops appear in roster
-     - Verify faction assignments display correctly
-
-Deliverable: Final commit with regression test results in commit message.
-
-════════════════════════════════════════════════════════════════════════════════
-EXECUTION ORDER & DEPENDENCIES
-════════════════════════════════════════════════════════════════════════════════
-
-  Phase 1 (key normalization)    → no deps, start here
-      ↓
-  Phase 2 (schema alignment)     → depends on Phase 1 keys
-      ↓
-  Phase 3 (scoring migration)    → depends on Phase 2 fields
-      ↓
-  Phase 4 (spec file update)     → depends on Phase 2 data
-      ↓
-  Phase 5 (validation)           → depends on all above
-
-Phases 2 and 4 can overlap (author data once, write to both planner and spec).
-Phase 3 is the riskiest — do it carefully with regression checks.
-
-════════════════════════════════════════════════════════════════════════════════
-COMMIT PLAN
-════════════════════════════════════════════════════════════════════════════════
-
-  Commit 1: "fix: normalize crop keys — align planner with spec naming"
-            Phase 1. Key renames + localStorage migration function.
-
-  Commit 2: "feat: expand crop schema — add spec fields to all 38 planner crops"
-            Phase 2. Schema alignment in planner.
-
-  Commit 3: "refactor: migrate scoring to spec-compatible fields"
-            Phase 3. Scoring function updates + regression validation.
-
-  Commit 4: "feat: expand CROP_SCORING_DATA.json to 38 crops"
-            Phase 4. Spec + league simulator + CLAUDE.md updates.
-
-  Commit 5: "test: validate crop reconciliation — 38 crops across all files"
-            Phase 5. Final validation pass.
-
-════════════════════════════════════════════════════════════════════════════════
-RISK REGISTER
-════════════════════════════════════════════════════════════════════════════════
-
-  Risk                                    Severity  Mitigation
-  ──────────────────────────────────────  ────────  ─────────────────────────
-  Scoring regression for original 19      HIGH      Baseline snapshot + delta
-                                                    test before/after Phase 3
-
-  Companion data quality (crop-keyed)     MEDIUM    Use horticultural refs;
-                                                    err conservative (fewer
-                                                    companions > wrong ones)
-
-  localStorage saved beds break           MEDIUM    Migration function in
-                                                    Phase 1; test with real
-                                                    saved data
-
-  Season multiplier values wrong          LOW       Use existing spec values
-                                                    as templates; new crops
-                                                    follow same patterns
-
-  League simulator faction balance        MEDIUM    19 new crops across 8
-                                                    factions; verify no
-                                                    faction gets >7 crops
-
-════════════════════════════════════════════════════════════════════════════════
+# Garden OS — Current Implementation Plan
+
+Last verified: 2026-04-22
+
+## 1. Project Summary
+
+### Objective
+
+Advance Garden OS from the recent stabilization, documentation, and repo-cleanup work into the next executable delivery cycle: finish planner Track Phase 5 scoring integration, close Story Mode Game Track Phase 4 against its published exit criteria, and prepare the cross-track gate for Game Track Phase 5 open-world work.
+
+### Key outcomes
+
+- Re-establish one trusted baseline for both active surfaces:
+  - repo-root planner and static tools
+  - `story-mode/` Vite + Three.js runtime
+- Complete planner Phase 5 so numeric scoring and reasoning read from one selected-cell payload with no score drift
+- Harden planner verification so the known `#autoFillBtn` automation flake stops masking regressions
+- Close Game Track Phase 4 with explicit proof for inventory, skills, crafting, durability, and save round-trip behavior
+- Enter Game Track Phase 5 with a reviewed scene, save, and shared-data preproduction package instead of starting code blindly
+
+### Assumptions
+
+- Repo-root HTML tools remain zero-backend and must not gain a build step.
+- `story-mode/` remains the only bundled runtime and continues to use Vite, Vitest, and Three.js.
+- Planner logic stays in `garden-planner-v4.html` until Phase 5 parity proves extraction is safe.
+- Any change to shared save, crop, or scoring contracts follows `docs/TRACK_COORDINATION.md`.
+- Archive handling, old assets, and other non-product cleanup are out of scope for this implementation cycle.
+
+## 2. Phased Implementation Plan
+
+### Phase 1 — Baseline Revalidation and Contract Lock
+
+**Goal**
+Reconfirm that the repo is green after the recent Garden OS slices and lock the current planner and Story Mode verification baselines before additional feature work lands.
+
+**Key Milestones**
+
+- Run `npm ci`, `npm test`, and `npm run build` in `story-mode/` from the current workspace and record the passing baseline.
+- Re-run the planner browser contract in `docs/phase-reasoning-smoke.mjs` and preserve the current fit, caution, and conflict outputs.
+- Verify the recent shipped slices are intact:
+  - planner Phase 4/5 groundwork
+  - Season Engine inspect and accessibility pass
+  - surface registry and cache map refresh
+  - Story Mode perf HUD debug overlay
+- Record the current known harness issue: Playwright browser clicks on `#autoFillBtn` can still flake even when planner behavior is correct.
+- Confirm the repo remains clean before feature changes begin.
+
+**Dependencies**
+
+- Current `main` branch with the recent Garden OS commits already pushed
+- Existing planner fixtures and Story Mode tests available locally
+
+**Required Resources**
+
+- Codex
+- User approval for any baseline changes discovered during verification
+- `docs/phase-reasoning-smoke.mjs`
+- `story-mode/package.json`
+- Local browser and Node/npm toolchain
+
+**Estimated Timeline**
+
+- 1 to 2 working sessions
+
+**Owner / Responsible Party**
+
+- Implementation and verification: Codex
+- Approval on any discovered drift: User
+
+**Risks / Failure Points**
+
+- False confidence if the planner harness flake is ignored instead of documented
+- Hidden runtime drift if Story Mode tests are green but production build is not
+- Accidental baseline reset if current fixture outputs are overwritten without comparison
+
+### Phase 2 — Planner Phase 5 Scoring Integration
+
+**Goal**
+Complete the active planner Phase 5 work so score explanation and reasoning are produced from one selected-cell payload without changing numeric score results.
+
+**Key Milestones**
+
+- Audit the current selected-cell helper chain in `garden-planner-v4.html` and identify every code path that still computes score or reasoning separately.
+- Expand the existing selected-cell payload builder so it returns:
+  - numeric score data
+  - derived zone
+  - derived traits
+  - fit state
+  - primary issue
+  - strict suggestions
+- Rewire Inspect and score-story rendering to consume the same payload instead of parallel logic.
+- Keep the existing fallback path in place until fixture parity is proven.
+- Re-run locked planner fixtures after every integration step and capture before/after parity evidence.
+
+**Dependencies**
+
+- Phase 1 baseline complete
+- `specs/SCORING_RULES.md` unchanged as the numeric source of truth
+
+**Required Resources**
+
+- Codex
+- `garden-planner-v4.html`
+- `docs/phase-reasoning-smoke.mjs`
+- Existing fixture artifacts under `output/web-game/`
+- User approval if parity breaks and rollback is required
+
+**Estimated Timeline**
+
+- 3 to 5 working sessions
+
+**Owner / Responsible Party**
+
+- Implementation: Codex
+- Numeric parity gate approval: User
+
+**Risks / Failure Points**
+
+- Numeric score drift while unifying the payload
+- Hidden coupling between Inspect UI and score explanation
+- Premature cleanup that removes the rollback path before parity is proven
+
+### Phase 3 — Planner Harness Hardening and Phase 6 Readiness
+
+**Goal**
+Close the remaining planner verification gap and prepare the next planner phase so Phase 6 can start without schema confusion or test ambiguity.
+
+**Key Milestones**
+
+- Fix or replace the flaky Playwright click path for `#autoFillBtn` with a deterministic verification path that matches real planner behavior.
+- Add or refresh fixture coverage for the shared selected-cell payload created in Phase 2.
+- Define the Phase 6 season-input gate explicitly:
+  - `plannerState.site.season` stays canonical by default
+  - no second persisted season field is introduced without a separate migration review
+- Update planner-facing documentation to reflect the completed Phase 5 contract and the approved Phase 6 entry conditions.
+- Record deferred harness risks in the issue tracker instead of leaving them implied.
+
+**Dependencies**
+
+- Phase 2 complete
+- Current planner contract fixtures preserved
+
+**Required Resources**
+
+- Codex
+- `docs/phase-reasoning-smoke.mjs`
+- `garden-planner-v4.html`
+- `docs/PLANNER_PHASE_TIMELINE.md`
+- `docs/UI_ISSUES_TABLE.html`
+
+**Estimated Timeline**
+
+- 2 to 4 working sessions
+
+**Owner / Responsible Party**
+
+- Implementation and documentation: Codex
+- Migration-policy approval: User
+
+**Risks / Failure Points**
+
+- Mistaking a harness problem for an application regression
+- Introducing season-state drift before a migration plan exists
+- Leaving Phase 5 marked “done” without a stronger regression gate
+
+### Phase 4 — Game Track Phase 4 Closure
+
+**Goal**
+Prove that Story Mode Phase 4 is truly complete by validating the shipped inventory, skills, crafting, durability, and save behavior against the published game-track exit criteria.
+
+**Key Milestones**
+
+- Audit current Game Track Phase 4 code and tests against the exit criteria in `docs/GAME_PHASE_TIMELINE.md`.
+- Identify and close any remaining gaps in:
+  - inventory slot behavior
+  - skill XP and buff thresholds
+  - crafting bench flow
+  - tool durability and repair
+  - save round-trip for all Phase 4 systems
+- Add one clear player smoke script covering plant, harvest, craft, repair, save, and reload.
+- Re-run full Story Mode tests and production build after Phase 4 fixes land.
+- Verify the new perf HUD remains debug-only and does not leak into normal gameplay or save state.
+
+**Dependencies**
+
+- Phase 1 baseline complete
+- Planner Phase 2 merged before any Game Track changes that affect shared scoring outputs
+
+**Required Resources**
+
+- Codex
+- `story-mode/src/game/*`
+- `story-mode/src/ui/*`
+- `story-mode/src/scoring/*`
+- `docs/GAME_PHASE_TIMELINE.md`
+- Vitest and Vite build pipeline
+- User approval if any save-shape change is proposed
+
+**Estimated Timeline**
+
+- 5 to 8 working sessions
+
+**Owner / Responsible Party**
+
+- Implementation: Codex
+- Phase-gate approval: User
+
+**Risks / Failure Points**
+
+- Save migration breakage hidden behind passing local feature tests
+- Skill buffs drifting the shared scoring contract without planner sign-off
+- UI completeness lagging behind underlying data models
+
+### Phase 5 — Game Track Phase 5 Preproduction and Cross-Track Gate
+
+**Goal**
+Prepare open-world work as a controlled Phase 5 start package instead of beginning scene and save changes without agreed contracts.
+
+**Key Milestones**
+
+- Define the Phase 5 implementation slice order:
+  - zone registry
+  - world map flow
+  - scene dispose contract
+  - multi-bed persistence
+  - foraging/material loop
+- Review every shared contract that Phase 5 can touch:
+  - `specs/CROP_SCORING_DATA.json`
+  - scoring function inputs
+  - save namespaces
+  - world/zone metadata
+- Write the required migration and rollback strategy before any shared save or crop schema change lands.
+- Create the initial smoke script for Phase 5:
+  - travel
+  - forage
+  - return
+  - verify bed persistence
+- Break the open-world phase into the first implementation-ready tickets or slices so coding can begin without re-planning.
+
+**Dependencies**
+
+- Phase 3 complete for planner-side contract stability
+- Phase 4 complete for game-side save and system stability
+- Cross-track review performed per `docs/TRACK_COORDINATION.md`
+
+**Required Resources**
+
+- Codex
+- User approval on shared schema and rollout decisions
+- `docs/GAME_PHASE_TIMELINE.md`
+- `docs/TRACK_COORDINATION.md`
+- `specs/UPGRADE_PHASES.md`
+- Existing Story Mode scene, save, and world-map modules
+
+**Estimated Timeline**
+
+- 3 to 5 working sessions for preproduction and gate approval
+
+**Owner / Responsible Party**
+
+- Preproduction and technical planning: Codex
+- Shared-contract approval: User
+
+**Risks / Failure Points**
+
+- Starting open-world scene work before save and dispose rules are locked
+- Shared crop/scoring changes landing without planner review
+- Phase 5 expanding into content production before the technical gate is closed
+
+## 3. Execution Notes
+
+### Critical sequencing constraints
+
+- Do not start shared save or crop-schema changes before Phase 2 and Phase 4 are both stable enough to survive a rollback.
+- Do not remove any planner fallback path until locked fixture parity is documented.
+- Do not begin Game Track Phase 5 implementation until the cross-track review has explicitly approved save, scoring, and crop-data touch points.
+- Keep repo-root planner work build-free; any extraction or cleanup must preserve the no-build execution model.
+
+### Parallelizable work
+
+- Phase 4 gap analysis and smoke-script drafting can run in parallel with Phase 2 once Phase 1 baseline is locked.
+- Phase 5 preproduction document drafting can begin during late Phase 4, but no shared-contract code should land until Phase 4 is fully gated.
+- Documentation updates can happen alongside each phase as long as they describe merged behavior, not planned behavior.
+
+### Quick wins vs long-lead tasks
+
+**Quick wins**
+
+- Reconfirm Story Mode test/build baseline
+- Re-run planner fixtures and archive the current outputs
+- Fix the `#autoFillBtn` harness path
+- Document the canonical season-state rule for planner Phase 6
+
+**Long-lead tasks**
+
+- Finishing Game Track Phase 4 if save or scoring edge cases remain
+- Preparing open-world scene, save, and multi-bed contracts for Phase 5
+- Any cross-track schema work touching crop, scoring, or save contracts
+
+## 4. Next Actions
+
+1. Run `npm ci`, `npm test`, and `npm run build` in `story-mode/` and record the passing baseline in the current execution notes.
+2. Run `docs/phase-reasoning-smoke.mjs` against the current planner and save the current fit, caution, and conflict outputs for parity comparison.
+3. Inventory every selected-cell score and reasoning helper in `garden-planner-v4.html` and mark which ones still feed Inspect and score-story separately.
+4. Expand the existing selected-cell payload builder so it can return both numeric score data and reasoning data without removing the current fallback path.
+5. Audit current Story Mode inventory, skills, crafting, durability, and save tests against the Game Track Phase 4 exit criteria and write the first concrete gap list.

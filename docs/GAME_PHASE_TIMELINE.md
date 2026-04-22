@@ -3,7 +3,7 @@
 Canonical scaffold for the Let It Grow game expansion track.
 Uses the same template as the planner intelligence track. Phases listed here correspond to UPGRADE_PHASES.md plus three post v1.0 additions.
 
-Last verified: 2026-04-20
+Last verified: 2026-04-22
 
 ---
 
@@ -57,7 +57,7 @@ Short phases fold W3 and W4. Open world phase adds a second W4 for biome content
 
 ```
 Goal            : Player manages a slot based inventory, earns XP across 6 skills, crafts tools, and watches them degrade.
-Duration        : 6 weeks (in progress, many tasks completed 2026-03-22)
+Duration        : 6 weeks (shipped and revalidated 2026-04-22)
 Dependencies    : Phase 3 festivals and day/night stable
 Exit Criteria   :
   1. Slot grid inventory with drag and drop works at 20 to 40 slots
@@ -65,9 +65,9 @@ Exit Criteria   :
   3. Crafting bench consumes materials, produces tools, and records recipe use
   4. Tool durability degrades on use, repair mechanic restores it
   5. Save round trip preserves inventory, skill XP, crafting log, durability
-Deliverables    : src/game/inventory.js, src/game/skills.js, src/game/crafting.js, src/ui/backpack-panel.js, src/ui/skill-panel.js, src/ui/crafting-panel.js, specs/SKILL_TREE.json, specs/CRAFTING_RECIPES.json
-Risk Ledger     : First save schema extension since Phase 2. Migration for existing saves with no inventory. Rollback: feature flag hides inventory UI but leaves data dormant.
-Test Gate       : inventory.test.js, skills.test.js, crafting.test.js, save round trip, smoke script: plant, harvest, craft, repair
+Deliverables    : src/game/inventory.js, src/game/skills.js, src/game/crafting.js, src/game/tool-manager.js, src/ui/backpack-panel.js, src/ui/skill-panel.js, src/ui/crafting-panel.js, specs/SKILL_TREE.json, specs/CRAFTING_RECIPES.json, story-mode/src/test/integration.test.js
+Risk Ledger     : First save schema extension since Phase 2. Migration for existing saves with no inventory was validated through the v3 -> v4 save tests, and the perf HUD remains debug-only so it does not leak into normal play or save state. Rollback: feature flag hides inventory UI but leaves data dormant.
+Test Gate       : inventory.test.js, skills.test.js, crafting.test.js, tool-manager.test.js, save.test.js, and integration smoke `plant -> harvest -> XP -> craft -> use tool -> repair -> quest complete`
 ```
 
 ### Phase 5 · v1.0 · Open World Expansion
@@ -147,8 +147,8 @@ Default assumes sequential delivery. Content heavy phases (5 and 8) include cont
 
 | Phase | Version | Start | Ship gate | Cumulative weeks |
 |-------|---------|-------|-----------|------------------|
-| 4 | v0.4 | 2026-03-09 | 2026-04-20 | 6 |
-| 5 | v1.0 | 2026-04-20 | 2026-06-29 | 16 |
+| 4 | v0.4 | 2026-03-09 | 2026-04-22 | 6 |
+| 5 | v1.0 | 2026-04-22 | 2026-07-01 | 16 |
 | 6 | v1.1 | 2026-06-29 | 2026-08-10 | 22 |
 | 7 | v1.2 | 2026-08-10 | 2026-09-14 | 27 |
 | 8 | v1.3 | 2026-09-14 | 2026-11-02 | 34 |

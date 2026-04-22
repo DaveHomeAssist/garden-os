@@ -3,7 +3,7 @@
 Active repo-grounded phase timeline for the planner intelligence track.
 Use `PLANNER_PHASE_TIMELINE_TEMPLATE.md` when drafting a new scaffold.
 
-Last verified: 2026-04-20
+Last verified: 2026-04-22
 
 ---
 
@@ -73,7 +73,7 @@ Test Gate       : Browser contract fixtures for fit, caution, and conflict stay 
 
 ```text
 Goal            : Reasoning becomes a sibling payload of scoring inside the repo-root planner without altering numeric scores.
-Duration        : 3 weeks (5A selected-cell score payload contract complete 2026-04-20)
+Duration        : 3 weeks (5A selected-cell score payload contract complete 2026-04-20; inspect and score-story convergence complete 2026-04-22)
 Dependencies    : Phase 4 shipped
 Exit Criteria   :
   1. Shared planner helpers return numeric score data and reasoning from one call path for selected cells
@@ -81,8 +81,8 @@ Exit Criteria   :
   3. Inspect panel and score story read from the same reasoning payload, not parallel logic
   4. No new build step or framework is introduced for the repo-root planner
 Deliverables    : garden-planner-v4.html scoring and reasoning helpers, docs/phase-reasoning-smoke.mjs, fixture parity artifacts in output/web-game/
-Risk Ledger     : Duplicate logic risk between getScoreBreakdown(), renderScoreExplanation(), and reasoning helpers. Mitigation: one payload object, fixture parity before cleanup.
-Test Gate       : Numeric score parity across locked fixtures, reasoning attachment assertions, browser smoke pass
+Risk Ledger     : Duplicate logic risk between getScoreBreakdown(), renderScoreExplanation(), and reasoning helpers. Mitigation: selected-cell score payload now feeds both the inspect lead and score story, fixture parity held, and the smoke harness has a deterministic DOM-trigger fallback when the generic browser click path stalls on #autoFillBtn.
+Test Gate       : Numeric score parity across locked fixtures, reasoning attachment assertions, browser smoke pass with deterministic fallback allowed for the auto-fill harness path
 ```
 
 ### Phase 6 · v0.6 · Temporal Reasoning

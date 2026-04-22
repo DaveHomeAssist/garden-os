@@ -530,6 +530,33 @@ async function diagnoseGenericClientAutoFill() {
       shimClick.error = String(error);
     }
 
+    let fallbackClick = { clicked: false, error: null, filled: null };
+    if (!shimClick.clicked) {
+      fallbackClick = await page.evaluate(() => {
+        const btn = document.getElementById('autoFillBtn');
+        if (!btn) {
+          return { clicked: false, error: 'missing #autoFillBtn', filled: null };
+        }
+        try {
+          btn.click();
+          const state = typeof window.render_game_to_text === 'function'
+            ? JSON.parse(window.render_game_to_text())
+            : null;
+          return {
+            clicked: true,
+            error: null,
+            filled: state?.filled ?? null
+          };
+        } catch (error) {
+          return {
+            clicked: false,
+            error: String(error),
+            filled: null
+          };
+        }
+      });
+    }
+
     await page.close();
     return {
       mode: 'generic-client-emulation',
@@ -539,8 +566,11 @@ async function diagnoseGenericClientAutoFill() {
       topAlwaysButton,
       samples,
       shimClick,
-      conclusion: !shimClick.clicked && rectStable && topAlwaysButton
-        ? 'The timeout reproduces under the generic client timing/shim model in bundled Chromium; direct planner clicks under the repo smoke harness still work, so this is a harness issue rather than a planner regression.'
+      fallbackClick,
+      conclusion: !shimClick.clicked && fallbackClick.clicked && fallbackClick.filled === 32
+        ? 'The timeout reproduces under the generic client timing/shim model in bundled Chromium, but the DOM-trigger fallback still fills the bed to 32/32. Treat this as a harness-path issue, not a planner regression.'
+        : !shimClick.clicked && rectStable && topAlwaysButton
+          ? 'The timeout reproduces under the generic client timing/shim model in bundled Chromium; direct planner clicks under the repo smoke harness still work, so this is a harness issue rather than a planner regression.'
         : 'The generic client timeout did not reproduce under the bundled-browser emulation.'
     };
   } finally {

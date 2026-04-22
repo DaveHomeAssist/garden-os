@@ -88,3 +88,39 @@ Player Plot (start)
 | Player movement feel — janky on mobile | Start with simple top-down, iterate on feel |
 | State complexity — zone + quest + inventory | Central state store, strict mutation flow |
 | Backward compat — Story Mode breaks | Story Mode runs as isolated mode, shared data only |
+
+## Current Phase 5 Preproduction Gate
+
+### Slice Order
+
+1. Zone registry and world map contract
+   - Lock zone ids, gate metadata, and travel graph in `specs/WORLD_MAP.json`
+   - Keep current `player_plot` and `neighborhood` ids stable as the migration baseline
+2. Scene dispose and navigation smoke
+   - Define the load, unload, and dispose contract for every zone scene before content expansion
+   - Add one smoke path that travels away from `player_plot`, returns, and verifies no leaked references or broken HUD state
+3. Multi-bed persistence contract
+   - Treat per-zone beds as additive save data under the existing game namespace
+   - Keep `activeBedId` authoritative for the currently mounted bed
+4. Foraging and material loop
+   - Introduce foraging as the first open-world gameplay loop because it feeds crafting without changing the core scoring contract
+   - Validate material pickup, inventory entry, and save round-trip before biome crop expansion
+5. Biome crop rollout
+   - Add biome crops to the shared crop data only after zone, bed, and foraging persistence are stable
+   - Keep additions additive so planner and Story Mode can read the same data without a rename window
+
+### Migration and Rollback Rules
+
+- `specs/CROP_SCORING_DATA.json` remains additive-only during Phase 5
+- Shared scoring function inputs stay frozen after planner Phase 5; game-side biome work may add inputs but not remove or rename them
+- Save changes stay inside the game namespace unless a separate cross-track review approves a shared-field change
+- Rollback path for partial open-world work is single-bed mode with the new zone data ignored on load
+
+### First Smoke Script
+
+1. Start in `player_plot`
+2. Travel to one unlocked non-home zone
+3. Forage one material pickup
+4. Return to the home plot
+5. Save and reload
+6. Verify active zone, inventory pickup, and home bed state persisted

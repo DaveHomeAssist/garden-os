@@ -6022,17 +6022,20 @@ function deriveInspectTraits(ck, cell, inputs){
   return traits.slice(0,5);
 }
 
-function summarizeInspectLead(cell, inputs, issues){
+function summarizeInspectLead(cell, inputs, issues, scorePayload){
   const crop=CROPS[cell.crop];
-  const breakdown=getScoreBreakdown(cell, inputs);
   const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
   const primaryIssue=targetIssues[0]||null;
-  const score=scoreCell(cell, inputs);
-  const factors=breakdown&&Array.isArray(breakdown.factors)?breakdown.factors:[];
-  const weakestFactor=factors
-    .filter(factor=>typeof factor.value==='number'&&typeof factor.weight==='number')
-    .map(factor=>({ ...factor, ratio:clamp(factor.value/5,0,1) }))
-    .sort((a,b)=>a.ratio-b.ratio)[0]||null;
+  const score=scorePayload&&Number.isFinite(scorePayload.score)?scorePayload.score:scoreCell(cell, inputs);
+  let weakestFactor=scorePayload&&scorePayload.weakestFactor?scorePayload.weakestFactor:null;
+  if(!weakestFactor){
+    const breakdown=getScoreBreakdown(cell, inputs);
+    const factors=breakdown&&Array.isArray(breakdown.factors)?breakdown.factors:[];
+    weakestFactor=factors
+      .filter(factor=>typeof factor.value==='number'&&typeof factor.weight==='number')
+      .map(factor=>({ ...factor, ratio:clamp(factor.value/5,0,1) }))
+      .sort((a,b)=>a.ratio-b.ratio)[0]||null;
+  }
   if(primaryIssue){
     return {
       status:primaryIssue.severity==='critical'?'conflict':'caution',
@@ -6239,9 +6242,9 @@ function buildPlannerReasoningSnapshot(cell, inputs, issues){
 
   const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
   const primaryIssue=targetIssues[0]||null;
-  const inspectLead=summarizeInspectLead(cell, inputs, issues);
   const derivedTraits=deriveInspectTraits(cell.crop, cell, inputs);
   const scorePayload=buildPlannerScorePayload(cell, inputs, strictFits, primaryIssue);
+  const inspectLead=summarizeInspectLead(cell, inputs, issues, scorePayload);
   return {
     cell,
     crop,
