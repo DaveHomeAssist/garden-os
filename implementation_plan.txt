@@ -1,306 +1,427 @@
-# Garden OS — Current Implementation Plan
-
-Last verified: 2026-04-22
-
-## 1. Project Summary
-
-### Objective
-
-Advance Garden OS from the recent stabilization, documentation, and repo-cleanup work into the next executable delivery cycle: finish planner Track Phase 5 scoring integration, close Story Mode Game Track Phase 4 against its published exit criteria, and prepare the cross-track gate for Game Track Phase 5 open-world work.
-
-### Key outcomes
-
-- Re-establish one trusted baseline for both active surfaces:
-  - repo-root planner and static tools
-  - `story-mode/` Vite + Three.js runtime
-- Complete planner Phase 5 so numeric scoring and reasoning read from one selected-cell payload with no score drift
-- Harden planner verification so the known `#autoFillBtn` automation flake stops masking regressions
-- Close Game Track Phase 4 with explicit proof for inventory, skills, crafting, durability, and save round-trip behavior
-- Enter Game Track Phase 5 with a reviewed scene, save, and shared-data preproduction package instead of starting code blindly
-
-### Assumptions
-
-- Repo-root HTML tools remain zero-backend and must not gain a build step.
-- `story-mode/` remains the only bundled runtime and continues to use Vite, Vitest, and Three.js.
-- Planner logic stays in `garden-planner-v4.html` until Phase 5 parity proves extraction is safe.
-- Any change to shared save, crop, or scoring contracts follows `docs/TRACK_COORDINATION.md`.
-- Archive handling, old assets, and other non-product cleanup are out of scope for this implementation cycle.
-
-## 2. Phased Implementation Plan
-
-### Phase 1 — Baseline Revalidation and Contract Lock
-
-**Goal**
-Reconfirm that the repo is green after the recent Garden OS slices and lock the current planner and Story Mode verification baselines before additional feature work lands.
-
-**Key Milestones**
-
-- Run `npm ci`, `npm test`, and `npm run build` in `story-mode/` from the current workspace and record the passing baseline.
-- Re-run the planner browser contract in `docs/phase-reasoning-smoke.mjs` and preserve the current fit, caution, and conflict outputs.
-- Verify the recent shipped slices are intact:
-  - planner Phase 4/5 groundwork
-  - Season Engine inspect and accessibility pass
-  - surface registry and cache map refresh
-  - Story Mode perf HUD debug overlay
-- Record the current known harness issue: Playwright browser clicks on `#autoFillBtn` can still flake even when planner behavior is correct.
-- Confirm the repo remains clean before feature changes begin.
-
-**Dependencies**
-
-- Current `main` branch with the recent Garden OS commits already pushed
-- Existing planner fixtures and Story Mode tests available locally
-
-**Required Resources**
-
-- Codex
-- User approval for any baseline changes discovered during verification
-- `docs/phase-reasoning-smoke.mjs`
-- `story-mode/package.json`
-- Local browser and Node/npm toolchain
-
-**Estimated Timeline**
-
-- 1 to 2 working sessions
-
-**Owner / Responsible Party**
-
-- Implementation and verification: Codex
-- Approval on any discovered drift: User
-
-**Risks / Failure Points**
-
-- False confidence if the planner harness flake is ignored instead of documented
-- Hidden runtime drift if Story Mode tests are green but production build is not
-- Accidental baseline reset if current fixture outputs are overwritten without comparison
-
-### Phase 2 — Planner Phase 5 Scoring Integration
-
-**Goal**
-Complete the active planner Phase 5 work so score explanation and reasoning are produced from one selected-cell payload without changing numeric score results.
-
-**Key Milestones**
-
-- Audit the current selected-cell helper chain in `garden-planner-v4.html` and identify every code path that still computes score or reasoning separately.
-- Expand the existing selected-cell payload builder so it returns:
-  - numeric score data
-  - derived zone
-  - derived traits
-  - fit state
-  - primary issue
-  - strict suggestions
-- Rewire Inspect and score-story rendering to consume the same payload instead of parallel logic.
-- Keep the existing fallback path in place until fixture parity is proven.
-- Re-run locked planner fixtures after every integration step and capture before/after parity evidence.
-
-**Dependencies**
-
-- Phase 1 baseline complete
-- `specs/SCORING_RULES.md` unchanged as the numeric source of truth
-
-**Required Resources**
-
-- Codex
-- `garden-planner-v4.html`
-- `docs/phase-reasoning-smoke.mjs`
-- Existing fixture artifacts under `output/web-game/`
-- User approval if parity breaks and rollback is required
-
-**Estimated Timeline**
-
-- 3 to 5 working sessions
-
-**Owner / Responsible Party**
-
-- Implementation: Codex
-- Numeric parity gate approval: User
-
-**Risks / Failure Points**
-
-- Numeric score drift while unifying the payload
-- Hidden coupling between Inspect UI and score explanation
-- Premature cleanup that removes the rollback path before parity is proven
-
-### Phase 3 — Planner Harness Hardening and Phase 6 Readiness
-
-**Goal**
-Close the remaining planner verification gap and prepare the next planner phase so Phase 6 can start without schema confusion or test ambiguity.
-
-**Key Milestones**
-
-- Fix or replace the flaky Playwright click path for `#autoFillBtn` with a deterministic verification path that matches real planner behavior.
-- Add or refresh fixture coverage for the shared selected-cell payload created in Phase 2.
-- Define the Phase 6 season-input gate explicitly:
-  - `plannerState.site.season` stays canonical by default
-  - no second persisted season field is introduced without a separate migration review
-- Update planner-facing documentation to reflect the completed Phase 5 contract and the approved Phase 6 entry conditions.
-- Record deferred harness risks in the issue tracker instead of leaving them implied.
-
-**Dependencies**
-
-- Phase 2 complete
-- Current planner contract fixtures preserved
-
-**Required Resources**
-
-- Codex
-- `docs/phase-reasoning-smoke.mjs`
-- `garden-planner-v4.html`
-- `docs/PLANNER_PHASE_TIMELINE.md`
-- `docs/UI_ISSUES_TABLE.html`
-
-**Estimated Timeline**
-
-- 2 to 4 working sessions
-
-**Owner / Responsible Party**
-
-- Implementation and documentation: Codex
-- Migration-policy approval: User
-
-**Risks / Failure Points**
-
-- Mistaking a harness problem for an application regression
-- Introducing season-state drift before a migration plan exists
-- Leaving Phase 5 marked “done” without a stronger regression gate
-
-### Phase 4 — Game Track Phase 4 Closure
-
-**Goal**
-Prove that Story Mode Phase 4 is truly complete by validating the shipped inventory, skills, crafting, durability, and save behavior against the published game-track exit criteria.
-
-**Key Milestones**
-
-- Audit current Game Track Phase 4 code and tests against the exit criteria in `docs/GAME_PHASE_TIMELINE.md`.
-- Identify and close any remaining gaps in:
-  - inventory slot behavior
-  - skill XP and buff thresholds
-  - crafting bench flow
-  - tool durability and repair
-  - save round-trip for all Phase 4 systems
-- Add one clear player smoke script covering plant, harvest, craft, repair, save, and reload.
-- Re-run full Story Mode tests and production build after Phase 4 fixes land.
-- Verify the new perf HUD remains debug-only and does not leak into normal gameplay or save state.
-
-**Dependencies**
-
-- Phase 1 baseline complete
-- Planner Phase 2 merged before any Game Track changes that affect shared scoring outputs
-
-**Required Resources**
-
-- Codex
-- `story-mode/src/game/*`
-- `story-mode/src/ui/*`
-- `story-mode/src/scoring/*`
-- `docs/GAME_PHASE_TIMELINE.md`
-- Vitest and Vite build pipeline
-- User approval if any save-shape change is proposed
-
-**Estimated Timeline**
-
-- 5 to 8 working sessions
-
-**Owner / Responsible Party**
-
-- Implementation: Codex
-- Phase-gate approval: User
-
-**Risks / Failure Points**
-
-- Save migration breakage hidden behind passing local feature tests
-- Skill buffs drifting the shared scoring contract without planner sign-off
-- UI completeness lagging behind underlying data models
-
-### Phase 5 — Game Track Phase 5 Preproduction and Cross-Track Gate
-
-**Goal**
-Prepare open-world work as a controlled Phase 5 start package instead of beginning scene and save changes without agreed contracts.
-
-**Key Milestones**
-
-- Define the Phase 5 implementation slice order:
-  - zone registry
-  - world map flow
-  - scene dispose contract
-  - multi-bed persistence
-  - foraging/material loop
-- Review every shared contract that Phase 5 can touch:
-  - `specs/CROP_SCORING_DATA.json`
-  - scoring function inputs
-  - save namespaces
-  - world/zone metadata
-- Write the required migration and rollback strategy before any shared save or crop schema change lands.
-- Create the initial smoke script for Phase 5:
-  - travel
-  - forage
-  - return
-  - verify bed persistence
-- Break the open-world phase into the first implementation-ready tickets or slices so coding can begin without re-planning.
-
-**Dependencies**
-
-- Phase 3 complete for planner-side contract stability
-- Phase 4 complete for game-side save and system stability
-- Cross-track review performed per `docs/TRACK_COORDINATION.md`
-
-**Required Resources**
-
-- Codex
-- User approval on shared schema and rollout decisions
-- `docs/GAME_PHASE_TIMELINE.md`
-- `docs/TRACK_COORDINATION.md`
-- `specs/UPGRADE_PHASES.md`
-- Existing Story Mode scene, save, and world-map modules
-
-**Estimated Timeline**
-
-- 3 to 5 working sessions for preproduction and gate approval
-
-**Owner / Responsible Party**
-
-- Preproduction and technical planning: Codex
-- Shared-contract approval: User
-
-**Risks / Failure Points**
-
-- Starting open-world scene work before save and dispose rules are locked
-- Shared crop/scoring changes landing without planner review
-- Phase 5 expanding into content production before the technical gate is closed
-
-## 3. Execution Notes
-
-### Critical sequencing constraints
-
-- Do not start shared save or crop-schema changes before Phase 2 and Phase 4 are both stable enough to survive a rollback.
-- Do not remove any planner fallback path until locked fixture parity is documented.
-- Do not begin Game Track Phase 5 implementation until the cross-track review has explicitly approved save, scoring, and crop-data touch points.
-- Keep repo-root planner work build-free; any extraction or cleanup must preserve the no-build execution model.
-
-### Parallelizable work
-
-- Phase 4 gap analysis and smoke-script drafting can run in parallel with Phase 2 once Phase 1 baseline is locked.
-- Phase 5 preproduction document drafting can begin during late Phase 4, but no shared-contract code should land until Phase 4 is fully gated.
-- Documentation updates can happen alongside each phase as long as they describe merged behavior, not planned behavior.
-
-### Quick wins vs long-lead tasks
-
-**Quick wins**
-
-- Reconfirm Story Mode test/build baseline
-- Re-run planner fixtures and archive the current outputs
-- Fix the `#autoFillBtn` harness path
-- Document the canonical season-state rule for planner Phase 6
-
-**Long-lead tasks**
-
-- Finishing Game Track Phase 4 if save or scoring edge cases remain
-- Preparing open-world scene, save, and multi-bed contracts for Phase 5
-- Any cross-track schema work touching crop, scoring, or save contracts
-
-## 4. Next Actions
-
-1. Run `npm ci`, `npm test`, and `npm run build` in `story-mode/` and record the passing baseline in the current execution notes.
-2. Run `docs/phase-reasoning-smoke.mjs` against the current planner and save the current fit, caution, and conflict outputs for parity comparison.
-3. Inventory every selected-cell score and reasoning helper in `garden-planner-v4.html` and mark which ones still feed Inspect and score-story separately.
-4. Expand the existing selected-cell payload builder so it can return both numeric score data and reasoning data without removing the current fallback path.
-5. Audit current Story Mode inventory, skills, crafting, durability, and save tests against the Game Track Phase 4 exit criteria and write the first concrete gap list.
+Garden OS v4.5 "Today" — Implementation Plan
+Scope: Feature 1 (Today's Garden Coach) + Feature 2 (Weather and Frost Awareness)
+Target surface: garden-planner-v4.html (root single-file tool)
+Plan date: 2026-04-22
+Supersedes prior implementation_plan.txt content.
+
+Status check 2026-04-22: this plan has been reconciled against
+IMPLEMENTATION_PLAN.md. Phase 5B is now complete and the selected-cell
+score payload contract is closed. The v4.5 gate is open. One earlier
+assumption was wrong: there is no pre-existing `today` accordion row in
+the live planner markup, so the feature must anchor to the actual
+insight-panel structure instead of a missing section stub.
+
+==============================================================================
+1. PROJECT SUMMARY
+==============================================================================
+
+OBJECTIVE
+- Ship a combined v4.5 release that turns garden-planner-v4.html from a
+  static plan surface into an active daily coach. Headline moment: user
+  opens the planner, sees 3 to 5 concrete tasks for today, derived from
+  cell state plus a live local weather forecast.
+
+KEY OUTCOMES
+- Inline weather module fetches a 7-day forecast from Open-Meteo
+  (free, CORS, no key) with a 6-hour localStorage cache and offline
+  fallback.
+- Inline `buildTodayTasks(state, weather, now)` returns up to 5 ranked
+  tasks. Pure function; deterministic given inputs.
+- `today` accordion row renders a weather strip, a task list with
+  mark-done and snooze, and a top-of-page frost banner.
+- Frost-sensitive crops get a per-cell ghost overlay on frost nights,
+  after the canonical `frostSensitive` patch lands (Phase 4 in this plan).
+- Optional local notification opt-in for frost alerts (no push server,
+  no backend).
+- Tests exercise `buildTodayTasks` with fixture state plus fixture
+  weather JSON.
+- Everything inline. Zero backend, zero new external deps,
+  offline-capable except for the explicit Open-Meteo call.
+
+ASSUMPTIONS (explicitly resolved)
+- Repo root: `/Users/daverobertson/Desktop/Code/10-projects/active/garden-os`.
+- Root-tool constraint: no imports, no modules, no bundler. All JS
+  inlined inside `garden-planner-v4.html` script block.
+- There is no existing `today` accordion row in the planner. Phase 0
+  must choose a real mount point inside the current insight panel or
+  planner-state area before any integration write.
+- `specs/CROP_SCORING_DATA.json` is canonical; `daysToMaturity` from
+  Phase 2C is the crop timing source. `frostSensitive` boolean is
+  NOT yet on the crop schema and will be added in a dedicated phase
+  AFTER the Phase 5B track lands.
+- Phase 5B is closed, but the working tree still has unrelated planner
+  and Story Mode drift. Integration commits must stay narrowly scoped.
+- Phase 4 and 5 ship gates from IMPLEMENTATION_PLAN.md apply:
+    * Do not extend the stored crop or cell schema in Phase 4.
+    * Do not ship a save migration in the same pass as a new reasoning
+      contract unless rollback has been rehearsed.
+    * Keep planner-track work additive.
+- Target browsers: Safari iOS 16+, Chrome Android current, Chrome and
+  Safari desktop current.
+- No geolocation prompt. User enters lat/lon; Open-Meteo geocoding
+  endpoint resolves ZIP or city when used.
+- Default thresholds: frost at 36F low, heat at 92F high. User-overridable.
+- Session log path: `/Users/daverobertson/Desktop/Code/90-governance/
+  docs/today.csv`. CLAUDE.md hint of `95-docs-personal` is stale.
+
+==============================================================================
+2. PHASED IMPLEMENTATION PLAN
+==============================================================================
+
+--------------------------------------------------------------------------
+PHASE 0 — Coordination and baseline
+--------------------------------------------------------------------------
+Goal: capture real planner insertion anchors and replace the stale
+`today`-row assumption before any integration write.
+
+Key milestones
+- Read IMPLEMENTATION_PLAN.md and confirm the Phase 5B closeout notes
+  match the live planner file before starting v4.5 integration.
+- `story-mode/` green: `npm ci && npm test && npm run build` all pass.
+- Record read-only anchors in this plan block: actual insight-panel
+  mount point, `workspaceSettings`, `loadWorkspace`, `saveWorkspace`,
+  and settings-panel insertion points.
+- Snapshot current `WORKSPACE_VERSION` string and the crop count in
+  `CROP_SCORING_DATA.json` (expected 50).
+- Verify session log path writes work against
+  `90-governance/docs/today.csv`.
+
+Dependencies
+- Working tree clean. No other agent editing planner at same time.
+
+Required resources
+- Node 22+, repo checkout, editor.
+
+Estimated timeline: 0.5 day.
+
+Owner: implementer.
+
+Risks and failure points
+- Mount-point assumption drift. Mitigation: pick the real planner anchor
+  before any inline weather or task-engine integration.
+
+--------------------------------------------------------------------------
+PHASE 1 — Weather module, author and test in isolation
+--------------------------------------------------------------------------
+Goal: working, tested weather module as a standalone script, NOT yet
+inlined into the planner.
+
+Key milestones
+- Author `tools/weather.dev.js` (dev-only, not part of shipped root
+  surface) exposing:
+    weather.fetchForecast()    -> Promise<WeatherSnapshot | null>
+    weather.isFrostTonight(s, frostThresholdF) -> boolean
+    weather.heatIndexNext24(s) -> number
+    weather.rainProbNext24(s)  -> number
+- Open-Meteo endpoint:
+    https://api.open-meteo.com/v1/forecast
+      ?latitude=<lat>&longitude=<lon>
+      &daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max
+      &hourly=temperature_2m,precipitation_probability
+      &timezone=auto
+- Cache: localStorage key `gardenOS_weather_v1`, 6-hour TTL,
+  stale-while-revalidate.
+- Two committed fixtures under `tests/fixtures/weather/`:
+  `frost-tonight.json`, `summer-heat.json`.
+- Simple test harness at `tests/weather.test.html` that loads the
+  fixtures and asserts boolean and number outputs.
+- Error contract: no location or fetch failure returns `null`.
+
+Dependencies
+- Phase 0 complete. Does NOT require Phase 5B to be merged.
+
+Required resources
+- Open-Meteo public APIs (no key).
+
+Estimated timeline: 1 day.
+
+Owner: implementer.
+
+Risks and failure points
+- CORS regression on older Safari. Mitigation: iOS 16 and 17 smoke.
+- Open-Meteo rate limits. Mitigation: 6h cache, single request per load.
+
+--------------------------------------------------------------------------
+PHASE 2 — Today engine, author and test in isolation
+--------------------------------------------------------------------------
+Goal: pure function `buildTodayTasks` produced and tested against
+fixtures, NOT yet inlined into the planner.
+
+Key milestones
+- Task schema:
+    { id, cellId, crop, action, priority, reason, factors[], dueWindow }
+- Action enum v1: `water`, `check`, `harvest`, `cover_frost`,
+  `shade_heat`, `succession_plant`, `thin`, `trellis_check`.
+- Inline `TASK_RULES` as a JSON literal keyed by
+  `(cropFaction, cropStage, weatherSignal) -> candidateAction`.
+  v1 coverage: 8 factions x 3 stages (sprout, growing, harvest-ready)
+  x 4 weather signals (frostTonight, heatHigh24, rainHigh24, calm).
+  Treat `frostSensitive` as `null` for now; Phase 4 promotes it once
+  the data patch lands.
+- `buildTodayTasks(state, weather, now)`:
+    * Iterate cells with a crop.
+    * Derive stage from `plantedAt` and `daysToMaturity`.
+    * Evaluate rules, sort by priority, cap at 5.
+    * If `plantedAt` is absent, estimate from workspace creation time
+      and tag the task reason with `estimated=true`.
+- Persistence shape drafted (but not yet written): `gardenOS_tasks`
+  keyed by `YYYY-MM-DD:taskId`.
+- Standalone harness `tests/today.test.html` covers 5 fixtures: empty
+  bed, all-frost, summer heat, mid-harvest, succession-ready.
+
+Dependencies
+- Phase 1 complete OR a weather fixture stub in place.
+- Does NOT require Phase 5B to be merged.
+
+Required resources
+- `CROP_SCORING_DATA.json` read access (canonical). Do NOT patch it
+  here; that is Phase 4 scope.
+
+Estimated timeline: 1 to 1.5 days.
+
+Owner: implementer.
+
+Risks and failure points
+- `plantedAt` missing on older workspaces. Mitigation: graceful
+  estimate plus clear reason text.
+
+--------------------------------------------------------------------------
+PHASE 3 — Planner integration, after Phase 5B merge
+--------------------------------------------------------------------------
+Goal: inline the tested modules into `garden-planner-v4.html` and light
+up the today tab, weather strip, and frost banner.
+
+Key milestones
+- Confirm IMPLEMENTATION_PLAN.md marks Phase 5B COMPLETE before any
+  write to `garden-planner-v4.html`. If still open, block and wait.
+- Inline the weather namespace into the planner script block.
+- Inline the today engine and `TASK_RULES`.
+- Extend `workspaceSettings` with `weather: { lat, lon, tz,
+  frostThresholdF: 36, heatThresholdF: 92 }`.
+- Bump `WORKSPACE_VERSION` per `docs/MIGRATION-CONTRACT.md`. One-line
+  migration initializes the block to null when missing. Rehearse
+  rollback by exporting a v4.4 workspace, importing into v4.5, and
+  exporting again; confirm round-trip.
+- Add "Garden location" settings form (lat, lon, label, Look up
+  button calling Open-Meteo geocoding).
+- Render weather strip, task chips, and top-of-page frost banner.
+- Per-cell ghost overlay: deferred to Phase 4 (requires
+  `frostSensitive`).
+- Accessibility: banner `role="alert"`, chips as buttons with
+  `aria-pressed`, focus ring visible.
+- `prefers-reduced-motion` respected on banner and chip transitions.
+
+Dependencies
+- Phases 1 and 2 complete and tested.
+- Phase 5B merged into `garden-planner-v4.html` main track.
+
+Required resources
+- Existing design tokens.
+
+Estimated timeline: 1 day.
+
+Owner: implementer.
+
+Risks and failure points
+- Migration rollback fails on a real user workspace. Mitigation:
+  backups plus explicit rehearsal above.
+- Phase 5B rolls a second time and forces a rebase. Mitigation:
+  keep the integration commit small and clean.
+
+--------------------------------------------------------------------------
+PHASE 4 — Crop data patch: frostSensitive field
+--------------------------------------------------------------------------
+Goal: add `frostSensitive: boolean` to every crop and wire it into
+the task rules. This is the ONLY phase that touches the crop schema;
+it runs after the Phase 4 and Phase 5 reasoning track is safely
+landed to honor the ship gate "do not extend the stored crop or cell
+schema in Phase 4."
+
+Key milestones
+- Confirm IMPLEMENTATION_PLAN.md reasoning track is marked done end to
+  end before any edit to `specs/CROP_SCORING_DATA.json`.
+- Patch `specs/CROP_SCORING_DATA.json` with per-crop `frostSensitive`.
+  Bump the spec version field.
+- Update `specs/SCORING_RULES.md` to state `frostSensitive` is
+  informational only; does not affect score.
+- Update every consumer of the crop table in lockstep:
+  `garden-planner-v4.html` task rules, `garden-doctor.html` symptom
+  logic (if applicable), `scoring-visualizer.html` display, and
+  `fairness-tester.html`. Specs override code; consumers must match.
+- Promote the `TASK_RULES` entries that were null-guarded in Phase 2
+  to active frost rules.
+- Enable per-cell ghost overlay on frost-sensitive crops.
+
+Dependencies
+- Phase 3 merged. IMPLEMENTATION_PLAN.md Phase 4 and 5 reasoning
+  track marked done.
+
+Required resources
+- Canonical crop knowledge for the `frostSensitive` classification.
+
+Estimated timeline: 1 day.
+
+Owner: implementer plus Dave for the frost-sensitive call per crop.
+
+Risks and failure points
+- Schema drift across consumers. Mitigation: lockstep edit in a
+  single PR.
+
+--------------------------------------------------------------------------
+PHASE 5 — Optional local notifications for frost alerts
+--------------------------------------------------------------------------
+Goal: user receives a frost warning even when the planner tab is
+backgrounded, without any push server.
+
+Key milestones
+- Settings toggle "Notify me on frost". Calls
+  `Notification.requestPermission()` only on explicit user tap.
+- Register service worker `periodicsync` where available
+  (Chrome Android): daily 6pm local check reads the cached forecast
+  and fires a local notification if `isFrostTonight` is true.
+- Fallback where `periodicsync` is unavailable: on-open check between
+  4pm and 10pm local; if permission is granted and frost is forecast,
+  fire an in-tab notification.
+- Deduplicate per calendar date via
+  `gardenOS_notify_last_date` in localStorage.
+- UI reflects live permission state on each load.
+
+Dependencies
+- Phase 4 complete.
+
+Required resources
+- Existing `sw.js`.
+
+Estimated timeline: 1 day.
+
+Owner: implementer.
+
+Risks and failure points
+- iOS Safari lacks `periodicsync`. Mitigation: on-open fallback.
+- Permission revocation mid-session. Mitigation: re-check per load.
+
+--------------------------------------------------------------------------
+PHASE 6 — Verification, documentation, release
+--------------------------------------------------------------------------
+Goal: green tests, coherent docs, version bump, ship to Pages.
+
+Key milestones
+- Tests under `tests/` exercise the inlined today engine against
+  5 fixtures (empty bed, all-frost, summer heat, mid-harvest,
+  succession-ready) plus the weather module.
+- Update `docs/HANDOFF.md` to document the weather module, today
+  engine, settings form, and `frostSensitive` crop field.
+- Update `IMPLEMENTATION_PLAN.md` with a new "Phase 5C Today plus
+  Weather" block marked complete.
+- Update `docs/FEATURES.md` with Today's Garden Coach and Weather
+  entries.
+- Bump planner title string to `v4.5` in garden-planner-v4.html.
+- Bump `sw.js` precache version; no new root paths required.
+- Append one session log row to
+  `/Users/daverobertson/Desktop/Code/90-governance/docs/today.csv`.
+- Optional `v4.5` tag on `main`.
+
+Dependencies
+- Phases 1 through 5 complete with manual smoke passes.
+
+Required resources
+- Local Node, iOS and Android devices for smoke.
+
+Estimated timeline: 0.5 day.
+
+Owner: implementer plus Dave for final doc review.
+
+Risks and failure points
+- Docs drift from v4.4 era still partial. Mitigation: only reconcile
+  what v4.5 changes touch.
+
+==============================================================================
+3. EXECUTION NOTES
+==============================================================================
+
+CRITICAL SEQUENCING CONSTRAINTS
+- Phases 1 and 2 DO NOT touch `garden-planner-v4.html`. They author
+  and test inside `tools/` and `tests/` only. They can proceed even
+  while Phase 5B is in flight.
+- Phase 3 REQUIRES IMPLEMENTATION_PLAN.md Phase 5B to be merged. Block
+  and wait if not.
+- Phase 4 REQUIRES IMPLEMENTATION_PLAN.md Phase 4 and Phase 5 reasoning
+  track to be fully closed before any `specs/CROP_SCORING_DATA.json`
+  edit, per the "do not extend stored crop schema in Phase 4" gate.
+- Phase 5 only after Phase 4 because permission gating depends on
+  final UI paths.
+- Phase 6 last; no scope creep.
+
+PARALLELIZABLE WORK
+- Phases 1 and 2 can run in parallel if two implementers exist, once
+  Phase 0 is done.
+- Test fixture authoring for Phase 6 can begin during Phase 1.
+- Documentation drafts for Phase 6 can begin during Phase 3.
+
+QUICK WINS
+- Standalone weather module plus fixtures (Phase 1) gives a testable
+  artifact in one day without risking any merge conflict.
+- Standalone today engine fixtures (Phase 2) prove the rule set
+  before integration.
+
+LONG-LEAD TASKS
+- Rule set coverage across all 8 factions and all stages.
+- `frostSensitive` per-crop classification call (Phase 4) needs human
+  input for the borderline crops.
+- Cross-browser notification behavior (iOS Safari quirks) in Phase 5.
+
+NON-GOALS FOR v4.5
+- Photo harvest log (Feature 3). Deferred.
+- Visitor mode share link (Feature 4). Deferred.
+- Cross-season memory overlay (Feature 5). Deferred.
+- Server push notifications. Prohibited by zero-backend rule.
+- Any change under `story-mode/`. Separate track.
+- Any change to scoring numbers, total calculations, or reasoning
+  path. Phase 5B owns that space through 2026-04-24.
+
+HARD CONSTRAINTS (from CLAUDE.md, not negotiable)
+- No backend, servers, APIs, or databases.
+- Root tools stay single-file HTML. No imports, no modules, no bundler
+  at the root.
+- Offline-capable except for the explicit Open-Meteo fetch.
+- Specs override code. When `specs/CROP_SCORING_DATA.json` changes
+  (Phase 4), every consumer updates in lockstep.
+- No randomness in scoring. This plan does not touch scoring.
+
+SHIP GATES (from IMPLEMENTATION_PLAN.md reasoning track)
+- Do not extend the stored crop or cell schema in Phase 4.
+- Do not change scoring totals while reasoning is still being
+  separated from the UI layer.
+- Do not ship a save migration in the same pass as a new reasoning
+  contract unless rollback has been rehearsed.
+- Keep planner-track work additive to the existing planner surface.
+
+==============================================================================
+4. NEXT ACTIONS (first 5, atomic, immediate)
+==============================================================================
+
+1. Read `IMPLEMENTATION_PLAN.md` Phase 5B block today (2026-04-22) and
+   record its status (not started, in progress, or complete) in a
+   one-line note at the top of this file. If 5B is still in progress,
+   Phases 3 through 6 stay blocked. Phases 0 through 2 proceed.
+
+2. Without editing `garden-planner-v4.html`, grep for
+   `data-row="today"` and `workspaceSettings` to capture exact line
+   ranges into this plan as read-only anchors for Phase 3.
+
+3. Scaffold `tools/weather.dev.js` with `fetchForecast(lat, lon)`, the
+   6-hour localStorage cache at key `gardenOS_weather_v1`, and the
+   three derived helpers `isFrostTonight`, `heatIndexNext24`,
+   `rainProbNext24`. Commit alone; no planner edits yet.
+
+4. Commit two fixture JSON files at `tests/fixtures/weather/`:
+   `frost-tonight.json` and `summer-heat.json`. Wire a minimal
+   `tests/weather.test.html` that loads each fixture and asserts the
+   boolean and number outputs.
+
+5. Draft the first 24 rows of `TASK_RULES` inline in
+   `tools/today.dev.js` covering 8 factions at stages sprout, growing,
+   harvest-ready, plus heat and rain signals only (hold frost rules
+   for Phase 4 after `frostSensitive` lands). Author
+   `buildTodayTasks(state, weather, now)` against the rules. Commit
+   alone; no planner edits yet.
