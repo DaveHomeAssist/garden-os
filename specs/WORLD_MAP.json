@@ -21,7 +21,7 @@
       "bounds": { "minX": -2.5, "maxX": 2.5, "minZ": -2.0, "maxZ": 2.0 },
       "spawnPoint": { "x": 0, "z": 0 },
       "exitPoints": [
-        { "edge": "south", "position": { "x": 0, "z": -2.0 }, "destination": "neighborhood" }
+        { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": 7 } }
       ],
       "foraging": false,
       "npcSlots": [],
@@ -55,11 +55,11 @@
       "bounds": { "minX": -8, "maxX": 8, "minZ": -8, "maxZ": 8 },
       "spawnPoint": { "x": 0, "z": 0 },
       "exitPoints": [
-        { "edge": "north", "position": { "x": 0, "z": 8 }, "destination": "player_plot" },
-        { "edge": "east", "position": { "x": 8, "z": 0 }, "destination": "meadow" },
-        { "edge": "west", "position": { "x": -8, "z": 0 }, "destination": "forest_edge" },
-        { "edge": "south", "position": { "x": 0, "z": -8 }, "destination": "market_square" },
-        { "edge": "east", "position": { "x": 5, "z": -8 }, "destination": "festival_grounds" }
+        { "edge": "north", "position": { "x": 0, "z": 7.5 }, "destination": "player_plot", "spawnPoint": { "x": 0, "z": 3 } },
+        { "edge": "east", "position": { "x": 8.5, "z": 1.4 }, "destination": "meadow", "spawnPoint": { "x": -8, "z": 0 } },
+        { "edge": "west", "position": { "x": -8.5, "z": 1.4 }, "destination": "forest_edge", "spawnPoint": { "x": 8, "z": 0 } },
+        { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "market_square", "spawnPoint": { "x": 0, "z": 6.5 } },
+        { "edge": "south", "position": { "x": 5, "z": -8.5 }, "destination": "festival_grounds", "spawnPoint": { "x": 0, "z": 10 } }
       ],
       "foraging": false,
       "npcSlots": [
@@ -102,8 +102,8 @@
       "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
       "spawnPoint": { "x": -8, "z": 0 },
       "exitPoints": [
-        { "edge": "west", "position": { "x": -10, "z": 0 }, "destination": "neighborhood" },
-        { "edge": "east", "position": { "x": 10, "z": 0 }, "destination": "riverside" }
+        { "edge": "west", "position": { "x": -11.5, "z": 0 }, "destination": "neighborhood", "spawnPoint": { "x": 8.5, "z": 1.4 } },
+        { "edge": "east", "position": { "x": 11.5, "z": 0 }, "destination": "riverside", "spawnPoint": { "x": -6, "z": 0 } }
       ],
       "foraging": {
         "enabled": true,
@@ -148,7 +148,7 @@
       "bounds": { "minX": -8, "maxX": 8, "minZ": -12, "maxZ": 12 },
       "spawnPoint": { "x": -6, "z": 0 },
       "exitPoints": [
-        { "edge": "west", "position": { "x": -8, "z": 0 }, "destination": "meadow" }
+        { "edge": "west", "position": { "x": -8.5, "z": 0 }, "destination": "meadow", "spawnPoint": { "x": 8, "z": 0 } }
       ],
       "foraging": {
         "enabled": true,
@@ -193,8 +193,8 @@
       "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
       "spawnPoint": { "x": 8, "z": 0 },
       "exitPoints": [
-        { "edge": "east", "position": { "x": 10, "z": 0 }, "destination": "neighborhood" },
-        { "edge": "south", "position": { "x": 0, "z": -10 }, "destination": "greenhouse" }
+        { "edge": "east", "position": { "x": 8.5, "z": 0 }, "destination": "neighborhood", "spawnPoint": { "x": -8.5, "z": 1.4 } },
+        { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "greenhouse", "spawnPoint": { "x": 0, "z": 6.5 } }
       ],
       "foraging": {
         "enabled": true,
@@ -241,7 +241,7 @@
       "bounds": { "minX": -6, "maxX": 6, "minZ": -8, "maxZ": 8 },
       "spawnPoint": { "x": 0, "z": 6 },
       "exitPoints": [
-        { "edge": "north", "position": { "x": 0, "z": 8 }, "destination": "forest_edge" }
+        { "edge": "north", "position": { "x": 0, "z": 7.5 }, "destination": "forest_edge", "spawnPoint": { "x": 0, "z": -8 } }
       ],
       "foraging": false,
       "npcSlots": [
@@ -282,7 +282,7 @@
       "bounds": { "minX": -12, "maxX": 12, "minZ": -12, "maxZ": 12 },
       "spawnPoint": { "x": 0, "z": -10 },
       "exitPoints": [
-        { "edge": "south", "position": { "x": 0, "z": -12 }, "destination": "neighborhood" }
+        { "edge": "south", "position": { "x": 0, "z": -11.5 }, "destination": "neighborhood", "spawnPoint": { "x": 5, "z": -7 } }
       ],
       "foraging": false,
       "npcSlots": [
@@ -325,7 +325,7 @@
       "bounds": { "minX": -8, "maxX": 8, "minZ": -6, "maxZ": 6 },
       "spawnPoint": { "x": 0, "z": 5 },
       "exitPoints": [
-        { "edge": "north", "position": { "x": 0, "z": 6 }, "destination": "neighborhood" }
+        { "edge": "north", "position": { "x": 0, "z": 8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": -7 } }
       ],
       "foraging": false,
       "npcSlots": [

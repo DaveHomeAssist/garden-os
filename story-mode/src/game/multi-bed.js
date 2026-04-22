@@ -78,6 +78,15 @@ class MultiBedManager {
   }
 
   /**
+   * Get all beds in a specific zone.
+   * @param {string} zoneId
+   * @returns {BedState[]}
+   */
+  getBedsForZone(zoneId) {
+    return this.getAllBeds().filter((bed) => bed?.zone === zoneId);
+  }
+
+  /**
    * Get the currently active bed.
    * @returns {BedState|null}
    */
@@ -105,6 +114,20 @@ class MultiBedManager {
     });
 
     return true;
+  }
+
+  /**
+   * Switch the active bed to the first bed assigned to a zone.
+   * Returns the bed that became active or null when no bed exists in the zone.
+   * @param {string} zoneId
+   * @returns {BedState|null}
+   */
+  syncActiveBedToZone(zoneId) {
+    if (this._disposed) return null;
+    const nextBed = this.getBedsForZone(zoneId)[0] ?? null;
+    if (!nextBed) return null;
+    this.switchActiveBed(nextBed.id);
+    return this.getBed(nextBed.id);
   }
 
   /**

@@ -1,15 +1,12 @@
 import * as THREE from 'three';
 import { getNPCsInZone } from '../../data/npcs.js';
 import { makeNpcMesh } from './zone-interactables.js';
+import { getZoneExitPoints } from './world-zone-contract.js';
 // Greenhouse intentionally ignores external season — always warm and green inside.
 
 const ZONE_DEF = {
   id: 'greenhouse', name: 'Greenhouse', biome: 'greenhouse',
   spawnPoint: { x: 0, z: 7 },
-  exitPoints: [{
-    id: 'greenhouse_to_market', destination: 'market_square', position: { x: 0, z: 7.5 },
-    triggerBounds: { minX: -1.5, maxX: 1.5, minZ: 7, maxZ: 8 }, spawnPoint: { x: 0, z: -8 },
-  }],
 };
 
 function box(sx, sy, sz, color, x, y, z) {
@@ -71,7 +68,7 @@ export function createGreenhouse(store, tracker) {
   const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
-  ZONE_DEF.exitPoints.forEach((exit) => {
+  getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });

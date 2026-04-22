@@ -187,6 +187,57 @@ describe('gameReducer', () => {
     expect(visited.campaign.worldState.visitedZones).toEqual(['player_plot', 'neighborhood']);
   });
 
+  it('switches the active bed when entering a zone with an owned bed', () => {
+    const state = makeState();
+    state.campaign.beds = {
+      player_plot: { id: 'player_plot', zone: 'player_plot', grid: [], gridCols: 8, gridRows: 4 },
+      meadow_bed: { id: 'meadow_bed', zone: 'meadow', grid: [], gridCols: 8, gridRows: 4 },
+    };
+    state.campaign.activeBedId = 'player_plot';
+
+    const changed = gameReducer(state, {
+      type: Actions.ZONE_CHANGED,
+      payload: { fromZone: 'player_plot', toZone: 'meadow', spawnPoint: { x: -6, z: 0 } },
+    });
+
+    expect(changed.campaign.activeBedId).toBe('meadow_bed');
+    expect(changed.campaign.worldState.currentZone).toBe('meadow');
+  });
+
+  it('persists forage cooldown and history into worldState', () => {
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+
+    const next = gameReducer(makeState(), {
+      type: Actions.FORAGE,
+      payload: {
+        spotId: 'meadow_herbs',
+        zoneId: 'meadow',
+        items: [{ itemId: 'basil_seed', count: 2 }],
+        xpGained: 20,
+        timestamp: now,
+        cooldownUntil: now + 300_000,
+      },
+    });
+
+    expect(next.campaign.worldState.lastForage).toEqual({
+      spotId: 'meadow_herbs',
+      zoneId: 'meadow',
+      items: [{ itemId: 'basil_seed', count: 2 }],
+      xpGained: 20,
+      timestamp: now,
+    });
+    expect(next.campaign.worldState.forageState.cooldowns.meadow_herbs).toBe(now + 300_000);
+    expect(next.campaign.worldState.forageState.history.meadow_herbs).toEqual({
+      zoneId: 'meadow',
+      items: [{ itemId: 'basil_seed', count: 2 }],
+      xpGained: 20,
+      timestamp: now,
+    });
+
+    vi.restoreAllMocks();
+  });
+
   it('handles keepsakes, journal entries, and reducer-level reset helpers', () => {
     const awarded = gameReducer(makeState(), {
       type: Actions.AWARD_KEEPSAKE,

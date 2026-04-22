@@ -1,15 +1,10 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
+import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
   id: 'player_plot', name: "Player's Plot", biome: 'garden',
   spawnPoint: { x: 0, z: 3 },
-  exitPoints: [{
-    id: 'plot_to_neighborhood', destination: 'neighborhood',
-    position: { x: 0, z: -8.5 },
-    triggerBounds: { minX: -1.5, maxX: 1.5, minZ: -9, maxZ: -8 },
-    spawnPoint: { x: 0, z: 7 },
-  }],
 };
 
 function box(sx, sy, sz, color, x, y, z) {
@@ -72,7 +67,7 @@ export function createPlayerPlot(store, tracker) {
   for (let i = 0; i < 3; i++) root.add(box(3, 0.2, 1.2, 0x5b3a1e, 3.5, 0.1, -2 + i * 2.5));
 
   const interactables = [];
-  ZONE_DEF.exitPoints.forEach((exit) => {
+  getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });

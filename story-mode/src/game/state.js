@@ -32,6 +32,10 @@ const DEFAULT_WORLD_STATE = {
   currentZone: 'player_plot',
   visitedZones: ['player_plot'],
   lastSpawnPoint: null,
+  forageState: {
+    cooldowns: {},
+    history: {},
+  },
 };
 
 // All phases in order for progress indicator

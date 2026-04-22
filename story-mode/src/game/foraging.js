@@ -85,6 +85,7 @@ export class ForagingSystem {
     this.inventory = inventory;
     this.skillSystem = skillSystem;
     this.cooldowns = new Map();
+    this.loadPersistedCooldowns();
   }
 
   getCurrentZoneId() {
@@ -101,6 +102,20 @@ export class ForagingSystem {
 
   isAvailable(spotId) {
     return (this.cooldowns.get(spotId) ?? 0) <= Date.now();
+  }
+
+  loadPersistedCooldowns() {
+    this.cooldowns.clear();
+    const persisted = this.store.getState().campaign.worldState?.forageState?.cooldowns ?? {};
+    Object.entries(persisted).forEach(([spotId, until]) => {
+      if (Number.isFinite(until) && until > Date.now()) {
+        this.cooldowns.set(spotId, until);
+      }
+    });
+  }
+
+  serializeCooldowns() {
+    return Object.fromEntries(this.cooldowns.entries());
   }
 
   getSeasonalLoot(zoneId, season) {
@@ -122,9 +137,10 @@ export class ForagingSystem {
       return { success: false, items: [], xpGained: 0, message: 'This patch needs time to recover.' };
     }
 
+    const timestamp = Date.now();
     const season = state.season.season ?? 'spring';
     const level = this.skillSystem.getLevel('foraging');
-    const dayNumber = Math.floor(Date.now() / 86_400_000);
+    const dayNumber = Math.floor(timestamp / 86_400_000);
     const seedBase = hashString(`${zoneId}:${spotId}:${season}:${dayNumber}:${level}`);
     const table = LOOT_TABLES[spot.type] ?? { common: [] };
     const commonPool = [...(table.common ?? [])];
@@ -154,10 +170,18 @@ export class ForagingSystem {
     }
 
     const xpGained = 20 + (items.some((entry) => entry.itemId === 'rare_earth') ? 10 : 0);
-    this.cooldowns.set(spotId, Date.now() + BASE_COOLDOWN_MS);
+    const cooldownUntil = timestamp + BASE_COOLDOWN_MS;
+    this.cooldowns.set(spotId, cooldownUntil);
     this.store.dispatch({
       type: Actions.FORAGE,
-      payload: { spotId, zoneId, items, xpGained },
+      payload: {
+        spotId,
+        zoneId,
+        items,
+        xpGained,
+        timestamp,
+        cooldownUntil,
+      },
     });
 
     // Unlock biome crops discovered through foraging

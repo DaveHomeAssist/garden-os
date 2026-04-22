@@ -2,18 +2,11 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsInZone } from '../../data/npcs.js';
 import { makeNpcMesh, makeForageSpotMesh } from './zone-interactables.js';
+import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
   id: 'meadow', name: 'Meadow', biome: 'grassland',
   spawnPoint: { x: -8, z: 0 },
-  exitPoints: [
-    { id: 'meadow_to_neighborhood', destination: 'neighborhood', position: { x: -8.5, z: 0 },
-      triggerBounds: { minX: -12, maxX: -11, minZ: -1.5, maxZ: 1.5 }, spawnPoint: { x: 8, z: 0 } },
-    { id: 'meadow_to_forest', destination: 'forest_edge', position: { x: 8.5, z: -4 },
-      triggerBounds: { minX: 11, maxX: 12, minZ: -5.5, maxZ: -2.5 }, spawnPoint: { x: -8, z: 0 } },
-    { id: 'meadow_to_riverside', destination: 'riverside', position: { x: 0, z: -12 },
-      triggerBounds: { minX: -1.5, maxX: 1.5, minZ: -12, maxZ: -11 }, spawnPoint: { x: 0, z: 8 } },
-  ],
 };
 
 const FORAGE_SPOTS = [
@@ -70,7 +63,7 @@ export function createMeadow(store, tracker) {
   const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
-  ZONE_DEF.exitPoints.forEach((exit) => {
+  getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });

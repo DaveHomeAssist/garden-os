@@ -33,6 +33,20 @@ describe('ForagingSystem', () => {
     expect(second.success).toBe(false);
   });
 
+  it('hydrates persisted cooldowns from campaign world state', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+    const { store, inventory, skillSystem, foraging } = makeForaging(1);
+    const first = foraging.forage('meadow_rocks');
+
+    expect(first.success).toBe(true);
+
+    const reloaded = new ForagingSystem(store, inventory, skillSystem);
+    const blocked = reloaded.forage('meadow_rocks');
+
+    expect(reloaded.serializeCooldowns().meadow_rocks).toBeGreaterThan(1_700_000_000_000);
+    expect(blocked.success).toBe(false);
+  });
+
   it('increases loot output at higher foraging levels', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
     const low = makeForaging(1).foraging.forage('meadow_flowers');

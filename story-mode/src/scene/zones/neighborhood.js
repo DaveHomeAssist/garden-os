@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
+import { getZoneExitPoints } from './world-zone-contract.js';
 
 import { getNPCsInZone } from '../../data/npcs.js';
 
@@ -146,13 +147,15 @@ export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone
     interactables.push(marker.userData.interactable);
   });
 
-  interactables.push({
-    id: 'return_to_plot',
-    type: 'exit',
-    label: 'Back to Plot',
-    position: { x: 0, z: 7.1 },
-    radius: 1.4,
-    destination: 'player_plot',
+  getZoneExitPoints('neighborhood').forEach((exit) => {
+    interactables.push({
+      id: exit.id,
+      type: 'exit',
+      label: exit.destination,
+      position: { ...exit.position },
+      radius: 1.4,
+      destination: exit.destination,
+    });
   });
 
   // Collect tree crowns for seasonal recoloring
@@ -162,10 +165,27 @@ export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone
   tracker.track(root);
 
   let time = 0;
+  let spawnPoint = { x: 0, z: 0 };
+  let playerPosition = { ...spawnPoint };
   return {
     scene,
     camera,
     interactables,
+    spawnPoints: { ...spawnPoint },
+    setSpawnPoint(point) {
+      if (point) {
+        spawnPoint = { ...point };
+        playerPosition = { ...point };
+      }
+    },
+    getPlayerPosition() {
+      return { ...playerPosition };
+    },
+    setPlayerPosition(position) {
+      if (position) {
+        playerPosition = { ...position };
+      }
+    },
     setSeason(s) {
       const season = s || 'spring';
       applyBase(this, season, ground, hemi, scene.fog);
