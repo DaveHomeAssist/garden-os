@@ -510,21 +510,38 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 - `garden-planner-v4.html` now builds a dedicated `buildPlannerScorePayload(...)` helper and composes `buildPlannerReasoningSnapshot(...)` from it.
 - Direct browser verification after the refactor kept the locked fixture outputs unchanged and confirmed the inspect score chip reads `8.3/10`, `2.2/10`, and `4.2/10` for the three locked cells.
 
-### Next Concrete Step — Phase 5B Score Breakdown Wiring
+### Phase 5B Score Breakdown Wiring
 
 **Owner:** Codex
-**Window:** 2026-04-21 to 2026-04-24
-**Goal:** Finish the selected-cell Phase 5 path by routing the remaining score-breakdown surface through the shared score payload and then remove the last duplicate score assembly only after parity stays locked.
+**Window:** 2026-04-22
+**Goal:** Finish the selected-cell Phase 5 path by routing the remaining score-breakdown surface through the shared score payload and then pin score alignment across the selected-cell UI.
+**Status:** COMPLETE — 2026-04-22
 
 **Tasks:**
-- Route score-breakdown rendering through the shared score payload instead of assembling factor state ad hoc at render time.
-- Expand planner verification so the selected-cell score payload, breakdown UI, and inspect hero stay numerically aligned.
-- Decide whether to harden or replace the browser-click step used for `#autoFillBtn` verification without hiding the current automation issue.
+- Confirm the selected-cell score-breakdown surface reads the shared `buildPlannerReasoningSnapshot(...)` payload instead of assembling factor state ad hoc at render time.
+- Expand planner verification so the selected-cell score payload, breakdown UI, inspect hero, and reasoning card stay numerically aligned.
+- Keep the `#autoFillBtn` automation issue explicit instead of masking it during the score wiring closeout.
 
 **Validation:**
-- Locked fixture scores and reasoning stay identical after the score-breakdown wiring pass.
-- The inspect hero, score story, and score breakdown all read the same selected-cell score payload.
+- The selected-cell breakdown path now has one live call site: `renderScoreExplanation(reasoningSnapshot)` in the inspect surface.
+- `docs/phase-reasoning-smoke.mjs` now asserts that `snapshot.score`, `snapshot.scoreBreakdown.total`, the inspect hero score chip, the breakdown formula final, and the reasoning-card score all match.
+- Targeted direct browser verification confirmed the locked `fit_trellis_cherry` fixture stayed aligned end to end at `8.3`.
 - Deferred automation risk remains explicitly tracked until the click path is stable.
+
+**Evidence:**
+- `garden-planner-v4.html` keeps the selected-cell score breakdown on the shared `buildPlannerReasoningSnapshot(...)` path and no longer has a second selected-cell breakdown render path.
+- `docs/phase-reasoning-smoke.mjs` now captures and asserts score alignment across the inspect hero chip, the breakdown formula final, and the reasoning target card.
+
+### Next Concrete Step — Re-open planner feature work
+
+**Owner:** Claude Code
+**Window:** 2026-04-22 onward
+**Goal:** Re-anchor the v4.5 Today plus Weather feature work against the live planner markup now that the selected-cell score payload contract is stable.
+
+**Tasks:**
+- Update `implementation_plan.txt` so it no longer treats Phase 5B as an active blocker.
+- Re-anchor the planned Today plus Weather mount point against the real insight-panel structure in `garden-planner-v4.html`.
+- Keep the weather and task-engine integration additive and outside any schema or save migration until the new anchors are confirmed.
 
 ### Ship Gates For This Track
 

@@ -85,6 +85,82 @@ const PLANNER_FIXTURES = [
       bedScore: 31,
       bestFitCrop: 'woodland_strawberry'
     }
+  },
+  {
+    key: 'fit_interior_lettuce_spring',
+    size: { cols: 4, rows: 4 },
+    inputs: {
+      sunHours: 8,
+      orientation: 'eastwest',
+      sunDirection: 'south',
+      season: 'spring',
+      goal: 'balanced',
+      zone: '7a',
+      trellis: false,
+      cage: { enabled: false, rearTrellis: false, wireSides: false, height: '24', doorStyle: 'mesh' }
+    },
+    cells: [{ cellId: 'r1c1', cropKey: 'lettuce' }],
+    targetCellId: 'r1c1',
+    expected: {
+      status: 'fit',
+      zoneLabel: 'Open interior cell',
+      minTraits: 4,
+      cellScore: 9.1,
+      bedScore: 80,
+      bestFitCrop: 'wild_garlic',
+      seasonKicker: 'In season'
+    }
+  },
+  {
+    key: 'caution_interior_lettuce_summer',
+    size: { cols: 4, rows: 4 },
+    inputs: {
+      sunHours: 8,
+      orientation: 'eastwest',
+      sunDirection: 'south',
+      season: 'summer',
+      goal: 'balanced',
+      zone: '7a',
+      trellis: false,
+      cage: { enabled: false, rearTrellis: false, wireSides: false, height: '24', doorStyle: 'mesh' }
+    },
+    cells: [{ cellId: 'r1c1', cropKey: 'lettuce' }],
+    targetCellId: 'r1c1',
+    expected: {
+      status: 'caution',
+      zoneLabel: 'Open interior cell',
+      minTraits: 4,
+      cellScore: 2.6,
+      bedScore: 15,
+      bestFitCrop: 'woodland_strawberry',
+      seasonKicker: 'Heat pressure',
+      hasSuccessionHint: true
+    }
+  },
+  {
+    key: 'caution_trellis_cherry_fall',
+    size: { cols: 4, rows: 4 },
+    inputs: {
+      sunHours: 8,
+      orientation: 'eastwest',
+      sunDirection: 'south',
+      season: 'fall',
+      goal: 'balanced',
+      zone: '7a',
+      trellis: true,
+      cage: { enabled: true, rearTrellis: true, wireSides: true, height: '24', doorStyle: 'mesh' }
+    },
+    cells: [{ cellId: 'r0c0', cropKey: 'cherry_tom' }],
+    targetCellId: 'r0c0',
+    expected: {
+      status: 'caution',
+      zoneLabel: 'Trellis row',
+      minTraits: 4,
+      cellScore: 3.3,
+      bedScore: 22,
+      bestFitCrop: 'peas',
+      seasonKicker: 'Cooling down'
+    }
   }
 ];
 
@@ -94,6 +170,14 @@ function assert(condition, message) {
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+async function closeBrowserSafely(browser, timeoutMs = 2000) {
+  if (!browser) return;
+  await Promise.race([
+    browser.close().catch(() => {}),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs))
+  ]);
 }
 
 async function capturePage(page, filename) {
@@ -154,6 +238,10 @@ function makeGenericClientShim() {
 
 async function readPlannerReasoningState(page, targetCellId) {
   return page.evaluate((targetCellId) => {
+    const parseScoreValue = (text) => {
+      const match = String(text || '').match(/-?\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : null;
+    };
     const serializeFits = (fits) => (Array.isArray(fits) ? fits : []).map((candidate) => ({
       cropKey: candidate.cropKey,
       score: Number(candidate.score.toFixed(1)),
@@ -187,61 +275,51 @@ async function readPlannerReasoningState(page, targetCellId) {
       label: factor.label,
       description: factor.description || ''
     } : null;
+    const serializeSeasonContext = (seasonContext) => seasonContext ? {
+      season: seasonContext.season || '',
+      mappedSeason: seasonContext.mappedSeason || '',
+      seasonMultiplier: seasonContext.seasonMultiplier == null ? null : Number(seasonContext.seasonMultiplier.toFixed(2)),
+      tone: seasonContext.tone || '',
+      level: seasonContext.level || '',
+      kicker: seasonContext.kicker || '',
+      summary: seasonContext.summary || '',
+      action: seasonContext.action || '',
+      successionHint: seasonContext.successionHint || '',
+      chips: Array.isArray(seasonContext.chips) ? [...seasonContext.chips] : []
+    } : null;
 
     const buildLegacySnapshot = (target, inputs, issueList) => {
       const targetIssues = (issueList || [])
         .filter((issue) => issue.cellId === target.id)
         .sort((a, b) => issueSeverityRank(a) - issueSeverityRank(b));
       const primaryIssue = targetIssues[0] || null;
-      const inspectLead = summarizeInspectLead(target, inputs, issueList);
+      const crop = target.crop && CROPS[target.crop] ? CROPS[target.crop] : null;
+      const strictFits = rankFitCandidatesForCell(target, inputs, { mode: 'strict', limit: 3 });
+      const seasonContext = crop ? buildSeasonContext(crop, target, inputs) : null;
+      const scorePayload = buildPlannerScorePayload(target, inputs, strictFits, primaryIssue);
+      const inspectLead = summarizeInspectLead(target, inputs, issueList, scorePayload, seasonContext);
       const derivedZone = describeDerivedZone(target);
       const derivedTraits = deriveInspectTraits(target.crop, target, inputs);
-      const strictFits = rankFitCandidatesForCell(target, inputs, { mode: 'strict', limit: 3 });
-      const scoreBreakdown = getScoreBreakdown(target, inputs);
-      const currentScore = scoreCell(target, inputs);
-      const score = scoreBreakdown ? scoreBreakdown.total : currentScore;
-      const delta = cellScoreDelta(target, inputs);
-      const factorRows = scoreBreakdown && Array.isArray(scoreBreakdown.factors) ? scoreBreakdown.factors : [];
-      const scoredFactors = factorRows
-        .filter((factor) => typeof factor.value === 'number' && typeof factor.weight === 'number')
-        .map((factor) => ({
-          label: factor.label,
-          ratio: clamp(factor.value / 5, 0, 1),
-          description: factor.description
-        }))
-        .sort((a, b) => a.ratio - b.ratio);
-      const weakestFactor = scoredFactors[0] || null;
-      const strongestFactor = [...scoredFactors].sort((a, b) => b.ratio - a.ratio)[0] || null;
-      const scoreDirection = score >= 7
-        ? 'Stable. The current placement is working, but one weak factor still limits upside.'
-        : score >= 4
-          ? 'Mixed. This cell is workable, but one structural or environmental penalty is dragging it down.'
-          : 'At risk. This placement is losing points fast and should be corrected before it compounds.';
-      const tradeoff = primaryIssue
-        ? `${primaryIssue.msg} ${reasonFix(primaryIssue, target, inputs)}`
-        : weakestFactor && strongestFactor && weakestFactor.label !== strongestFactor.label
-          ? `${strongestFactor.label} is carrying this cell, but ${weakestFactor.label} is limiting the score.`
-          : 'No major violation is active. Use the score breakdown to fine tune the placement.';
-      const nextMove = reasonFix(primaryIssue, target, inputs);
-      const scoreTone = score >= 7 ? 'Stable score' : score >= 4 ? 'Mixed score' : 'At risk score';
       return {
         inspectLead: inspectLead ? {
           status: inspectLead.status,
           kicker: inspectLead.kicker,
           summary: inspectLead.summary
         } : null,
+        seasonContext: serializeSeasonContext(seasonContext),
         derivedZone: serializeZone(derivedZone),
         derivedTraits: serializeTraits(derivedTraits),
         strictFits: serializeFits(strictFits),
         primaryIssue: serializeIssue(primaryIssue),
-        score: Number(score.toFixed(1)),
-        delta: serializeDelta(delta),
-        weakestFactor: serializeFactor(weakestFactor),
-        strongestFactor: serializeFactor(strongestFactor),
-        scoreDirection,
-        tradeoff,
-        nextMove,
-        scoreTone
+        score: scorePayload?.score == null ? null : Number(scorePayload.score.toFixed(1)),
+        scoreBreakdownTotal: scorePayload?.scoreBreakdown?.total == null ? null : Number(scorePayload.scoreBreakdown.total.toFixed(1)),
+        delta: serializeDelta(scorePayload?.delta),
+        weakestFactor: serializeFactor(scorePayload?.weakestFactor),
+        strongestFactor: serializeFactor(scorePayload?.strongestFactor),
+        scoreDirection: scorePayload?.scoreDirection || '',
+        tradeoff: scorePayload?.tradeoff || '',
+        nextMove: scorePayload?.nextMove || '',
+        scoreTone: scorePayload?.scoreTone || ''
       };
     };
 
@@ -251,11 +329,13 @@ async function readPlannerReasoningState(page, targetCellId) {
         kicker: snapshot.inspectLead.kicker,
         summary: snapshot.inspectLead.summary
       } : null,
+      seasonContext: serializeSeasonContext(snapshot?.seasonContext),
       derivedZone: serializeZone(snapshot?.derivedZone),
       derivedTraits: serializeTraits(snapshot?.derivedTraits),
       strictFits: serializeFits(snapshot?.strictFits),
       primaryIssue: serializeIssue(snapshot?.primaryIssue),
       score: snapshot?.score == null ? null : Number(snapshot.score.toFixed(1)),
+      scoreBreakdownTotal: snapshot?.scoreBreakdown?.total == null ? null : Number(snapshot.scoreBreakdown.total.toFixed(1)),
       delta: serializeDelta(snapshot?.delta),
       weakestFactor: serializeFactor(snapshot?.weakestFactor),
       strongestFactor: serializeFactor(snapshot?.strongestFactor),
@@ -280,6 +360,18 @@ async function readPlannerReasoningState(page, targetCellId) {
     const inspectRoot = document.getElementById('rpaneInspect');
     const reasoningRoot = document.getElementById('rpaneReasoning');
     const reasoningText = reasoningRoot?.innerText || '';
+    const inspectCards = Array.from(inspectRoot?.querySelectorAll('.icard') || []);
+    const seasonCard = inspectCards.find((card) => {
+      const header = card.querySelector('.ichdr');
+      return /season context/i.test(header?.textContent || '');
+    }) || null;
+    const reasoningRows = Array.from(reasoningRoot?.querySelectorAll('.reasoning-row') || []);
+    const reasoningSeasonRow = reasoningRows.find((row) => /season context/i.test(row.textContent || '')) || null;
+    const heroScoreChipText = Array.from(inspectRoot?.querySelectorAll('.inspect-meta-chip') || [])
+      .map((chip) => chip.textContent?.trim() || '')
+      .find((text) => /\/10 cell score$/i.test(text)) || '';
+    const formulaFinalText = inspectRoot?.querySelector('.formula-final')?.textContent?.trim() || '';
+    const reasoningTargetScoreText = reasoningRoot?.querySelector('.reasoning-target .reasoning-score')?.textContent?.trim() || '';
 
     return {
       targetCellId,
@@ -303,6 +395,19 @@ async function readPlannerReasoningState(page, targetCellId) {
         statusChip: inspectRoot?.querySelector('.inspect-status-chip')?.textContent?.trim().toLowerCase() || '',
         lead: inspectRoot?.querySelector('.inspect-lead')?.textContent?.trim() || '',
         derivedZoneLabel: inspectRoot?.querySelector('.inspect-section-title')?.textContent?.trim() || '',
+        seasonHeader: seasonCard?.querySelector('.ichdr')?.textContent?.trim() || '',
+        seasonTitle: seasonCard?.querySelector('.inspect-section-title')?.textContent?.trim() || '',
+        seasonText: seasonCard?.innerText?.trim() || '',
+        heroScoreChipText,
+        heroScoreChipValue: parseScoreValue(heroScoreChipText),
+        formulaFinalText,
+        formulaFinalValue: parseScoreValue(formulaFinalText),
+        reasoningTargetScoreText,
+        reasoningTargetScoreValue: parseScoreValue(reasoningTargetScoreText),
+        heroSeasonChip: Array.from(inspectRoot?.querySelectorAll('.inspect-meta-chip') || [])
+          .map((chip) => chip.textContent?.trim() || '')
+          .find((text) => /season|heat|window|risk|pressure|push/i.test(text)) || '',
+        reasoningSeasonText: reasoningSeasonRow?.innerText?.trim() || '',
         traitCount: inspectRoot?.querySelectorAll('.inspect-trait-item').length || 0,
         suggestionCount: inspectRoot?.querySelectorAll('.inspect-suggestion-item').length || 0,
         hasQuietSuggestion: Boolean(inspectRoot?.querySelector('.inspect-quiet')),
@@ -380,6 +485,26 @@ async function capturePlannerFixture(browser, fixture) {
   assert(result.dom.statusChip === fixture.expected.status, `${fixture.key}: inspect chip expected ${fixture.expected.status}, got ${result.dom.statusChip}`);
   assert(result.internal.zone.label === fixture.expected.zoneLabel, `${fixture.key}: expected zone ${fixture.expected.zoneLabel}, got ${result.internal.zone.label}`);
   assert(result.dom.derivedZoneLabel === fixture.expected.zoneLabel, `${fixture.key}: DOM zone expected ${fixture.expected.zoneLabel}, got ${result.dom.derivedZoneLabel}`);
+  assert(result.parity.shared.seasonContext?.season === fixture.inputs.season, `${fixture.key}: shared season context expected ${fixture.inputs.season}, got ${result.parity.shared.seasonContext?.season}`);
+  if (fixture.expected.seasonKicker) {
+    assert(result.parity.shared.seasonContext?.kicker === fixture.expected.seasonKicker, `${fixture.key}: expected season kicker ${fixture.expected.seasonKicker}, got ${result.parity.shared.seasonContext?.kicker}`);
+    assert(result.dom.seasonTitle === fixture.expected.seasonKicker, `${fixture.key}: DOM season title expected ${fixture.expected.seasonKicker}, got ${result.dom.seasonTitle}`);
+  }
+  if (fixture.expected.hasSuccessionHint) {
+    assert(result.parity.shared.seasonContext?.successionHint?.length > 0, `${fixture.key}: succession hint missing from season context`);
+    assert(result.dom.seasonText.includes(result.parity.shared.seasonContext.successionHint), `${fixture.key}: succession hint missing from DOM season card`);
+    assert(result.dom.reasoningSeasonText.includes(result.parity.shared.seasonContext.successionHint), `${fixture.key}: succession hint missing from reasoning row`);
+  }
+  assert(result.dom.seasonHeader === 'Season context', `${fixture.key}: season card missing`);
+  assert(result.dom.seasonTitle.length > 0, `${fixture.key}: season title missing`);
+  assert(result.dom.seasonText.length > 0, `${fixture.key}: season copy missing`);
+  assert(result.dom.heroSeasonChip.length > 0, `${fixture.key}: season hero chip missing`);
+  assert(/season context/i.test(result.dom.reasoningSeasonText), `${fixture.key}: reasoning season row missing`);
+  assert(result.parity.shared.score === result.parity.shared.scoreBreakdownTotal, `${fixture.key}: shared score drifted from score breakdown total`);
+  assert(result.parity.legacy.score === result.parity.legacy.scoreBreakdownTotal, `${fixture.key}: legacy score drifted from score breakdown total`);
+  assert(result.dom.heroScoreChipValue === result.parity.shared.score, `${fixture.key}: inspect hero score chip expected ${result.parity.shared.score}, got ${result.dom.heroScoreChipText}`);
+  assert(result.dom.formulaFinalValue === result.parity.shared.scoreBreakdownTotal, `${fixture.key}: breakdown final expected ${result.parity.shared.scoreBreakdownTotal}, got ${result.dom.formulaFinalText}`);
+  assert(result.dom.reasoningTargetScoreValue === result.parity.shared.score, `${fixture.key}: reasoning target score expected ${result.parity.shared.score}, got ${result.dom.reasoningTargetScoreText}`);
   assert(result.internal.traitCount >= fixture.expected.minTraits, `${fixture.key}: internal trait count too low`);
   assert(result.dom.traitCount >= fixture.expected.minTraits, `${fixture.key}: DOM trait count too low`);
   assert(result.internal.strictFits.every((candidate) => candidate.fit === 'fit'), `${fixture.key}: strict suggestions included a non-fit candidate`);
@@ -444,6 +569,14 @@ async function capturePlannerBroaderSmoke(browser) {
   assert(reasoning.dom.reasoningTitle === 'Why this score', 'broader smoke: reasoning title mismatch');
   assert(reasoning.dom.inspectHeader === 'Inspect & explain', 'broader smoke: inspect header mismatch');
   assert(reasoning.dom.hasReasoningSections, 'broader smoke: reasoning sections missing');
+  assert(reasoning.parity.shared.seasonContext?.season?.length > 0, 'broader smoke: season context missing from shared snapshot');
+  assert(reasoning.dom.seasonHeader === 'Season context', 'broader smoke: season card missing');
+  assert(reasoning.dom.reasoningSeasonText.length > 0, 'broader smoke: season reasoning row missing');
+  assert(reasoning.parity.shared.seasonContext?.successionHint?.length > 0, 'broader smoke: succession hint missing');
+  assert(reasoning.parity.shared.score === reasoning.parity.shared.scoreBreakdownTotal, 'broader smoke: shared score drifted from score breakdown total');
+  assert(reasoning.dom.heroScoreChipValue === reasoning.parity.shared.score, 'broader smoke: inspect hero score drifted from shared payload');
+  assert(reasoning.dom.formulaFinalValue === reasoning.parity.shared.scoreBreakdownTotal, 'broader smoke: formula final drifted from shared payload');
+  assert(reasoning.dom.reasoningTargetScoreValue === reasoning.parity.shared.score, 'broader smoke: reasoning target score drifted from shared payload');
 
   const screenshot = await capturePage(page, 'broader_autofill_weakest.png');
   await page.close();
@@ -451,7 +584,7 @@ async function capturePlannerBroaderSmoke(browser) {
     ...prep,
     reasoning,
     screenshot,
-    notes: 'Auto-fill click succeeded under the repo smoke harness and the weakest-cell inspect surface stayed in parity with the legacy helper chain.'
+    notes: 'Auto-fill click succeeded under the repo smoke harness and the weakest-cell inspect hero, score breakdown, and reasoning card stayed aligned with the shared payload.'
   };
 }
 
@@ -574,7 +707,7 @@ async function diagnoseGenericClientAutoFill() {
         : 'The generic client timeout did not reproduce under the bundled-browser emulation.'
     };
   } finally {
-    await harnessBrowser.close();
+    await closeBrowserSafely(harnessBrowser);
   }
 }
 
@@ -614,11 +747,13 @@ async function main() {
     );
     console.log(JSON.stringify(output, null, 2));
   } finally {
-    await browser.close();
+    await closeBrowserSafely(browser);
   }
 }
 
-main().catch((error) => {
-  console.error(error.message || error);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error.message || error);
+    process.exit(1);
+  });

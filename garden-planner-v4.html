@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com;">
 <title>Garden OS · Raised Bed Planner v4.4</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
@@ -1792,6 +1792,175 @@
     background:rgba(255,255,255,.92);
     color:var(--text-mid);
   }
+  .planner-weather-alert{
+    margin:.65rem .85rem 0;
+    border:1px solid rgba(191,70,61,.22);
+    border-left:5px solid #bf463d;
+    border-radius:14px;
+    background:linear-gradient(180deg,#fff6f4,#fbe9e6);
+    box-shadow:0 8px 18px rgba(44,27,11,.06);
+    padding:.75rem .9rem;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.75rem;
+  }
+  .planner-weather-alert-copy{
+    display:flex;
+    flex-direction:column;
+    gap:.18rem;
+  }
+  .planner-weather-alert-kicker{
+    font-family:'DM Mono',monospace;
+    font-size:.54rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#9e3f35;
+  }
+  .planner-weather-alert-title{
+    font-family:'Fraunces',serif;
+    font-size:.96rem;
+    color:#7d2e26;
+  }
+  .planner-weather-alert-text{
+    font-size:.7rem;
+    line-height:1.5;
+    color:var(--text-mid);
+  }
+  .planner-weather-alert-actions{
+    display:flex;
+    gap:.35rem;
+    flex-wrap:wrap;
+  }
+  .weather-lookup-row{
+    display:flex;
+    gap:.45rem;
+    align-items:center;
+  }
+  .weather-lookup-row input{
+    flex:1;
+  }
+  .weather-site-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.5rem .6rem;
+  }
+  .today-shell{
+    display:flex;
+    flex-direction:column;
+    gap:.75rem;
+  }
+  .today-weather-card,
+  .today-task-card{
+    background:white;
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    padding:.8rem .84rem;
+    box-shadow:0 6px 16px rgba(44,27,11,.05);
+  }
+  .today-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.6rem;
+    margin-bottom:.55rem;
+  }
+  .today-card-title{
+    font-family:'Fraunces',serif;
+    font-size:.94rem;
+    color:var(--soil);
+  }
+  .today-card-kicker{
+    font-family:'DM Mono',monospace;
+    font-size:.54rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+  }
+  .today-weather-grid,
+  .today-task-list{
+    display:grid;
+    gap:.55rem;
+  }
+  .today-weather-grid{
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  }
+  .today-weather-stat{
+    border:1px solid var(--border-light);
+    border-radius:10px;
+    padding:.58rem .62rem;
+    background:var(--cream);
+  }
+  .today-weather-label{
+    font-family:'DM Mono',monospace;
+    font-size:.5rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-light);
+  }
+  .today-weather-value{
+    margin-top:.18rem;
+    font-size:.92rem;
+    color:var(--soil);
+    font-weight:600;
+  }
+  .today-signal-row,
+  .today-task-meta,
+  .today-task-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.35rem;
+  }
+  .today-signal,
+  .today-task-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.2rem .42rem;
+    border-radius:999px;
+    background:var(--cream-dark);
+    color:var(--text-mid);
+    font-family:'DM Mono',monospace;
+    font-size:.52rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .today-signal.warn,
+  .today-task-pill.warn{
+    background:#f6ecd0;
+    color:#7a5612;
+  }
+  .today-signal.alert,
+  .today-task-pill.alert{
+    background:#faeae8;
+    color:var(--bad);
+  }
+  .today-task-card{
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+  }
+  .today-task-title{
+    font-size:.82rem;
+    color:var(--soil);
+    font-weight:600;
+    line-height:1.4;
+  }
+  .today-task-copy{
+    font-size:.7rem;
+    color:var(--text-mid);
+    line-height:1.5;
+  }
+  .today-task-actions .planner-state-btn{
+    min-height:32px;
+    font-size:.54rem;
+    padding:.28rem .5rem;
+  }
+  .today-empty{
+    font-size:.72rem;
+    color:var(--text-mid);
+    line-height:1.55;
+  }
 
   .planner-main{
     display:grid;
@@ -2640,6 +2809,7 @@
   <div class="planner-state-card" id="plannerStateStrip"></div>
   <div class="planner-state-hud" id="plannerStateHud"></div>
 </div>
+<div id="plannerWeatherAlert" aria-live="polite"></div>
 
 <div class="planner-main">
 <!-- LEFT: Plan Panel -->
@@ -2745,6 +2915,38 @@
       <input type="date" id="plantingDate">
       <div class="calendar-note" style="text-align:left;margin-top:6px;">Defaults to the season window if left blank. Forecasts, succession, and retrospective snapshots all use this anchor.</div>
     </div>
+    <div class="slabel">Daily weather</div>
+    <div class="fg">
+      <label for="weatherLookup">Location lookup</label>
+      <div class="weather-lookup-row">
+        <input type="text" id="weatherLookup" placeholder="ZIP or city">
+        <button type="button" class="cbar-btn" id="weatherLookupBtn">Look up</button>
+      </div>
+      <div class="calendar-note" style="text-align:left;margin-top:6px;">Uses Open-Meteo only when location is set. No backend.</div>
+    </div>
+    <div class="weather-site-grid">
+      <div class="fg">
+        <label for="weatherLabel">Location label</label>
+        <input type="text" id="weatherLabel" placeholder="Garden location">
+      </div>
+      <div class="fg">
+        <label for="weatherLat">Latitude</label>
+        <input type="number" id="weatherLat" step="any" placeholder="39.9526">
+      </div>
+      <div class="fg">
+        <label for="weatherLon">Longitude</label>
+        <input type="number" id="weatherLon" step="any" placeholder="-75.1652">
+      </div>
+      <div class="fg">
+        <label for="frostThresholdF">Frost alert °F</label>
+        <input type="number" id="frostThresholdF" step="1" min="20" max="45" value="36">
+      </div>
+      <div class="fg">
+        <label for="heatThresholdF">Heat alert °F</label>
+        <input type="number" id="heatThresholdF" step="1" min="70" max="110" value="92">
+      </div>
+    </div>
+    <input type="hidden" id="weatherTz">
   </div>
 
   <!-- CAGE PANE -->
@@ -2869,6 +3071,13 @@
     <div class="insight-content" aria-live="polite">
       <div id="rpaneScore"></div>
       <div id="rpaneReasoning"></div>
+    </div>
+  </section>
+
+  <section class="insight-block" id="insightToday">
+    <button class="insight-header is-collapsed" aria-expanded="false" data-section="today">Today</button>
+    <div class="insight-content" hidden>
+      <div id="rpaneToday"></div>
     </div>
   </section>
 
@@ -3095,7 +3304,7 @@ const VALID_ZONES=['','5','6','7','8','9','10'];
 const VALID_TOOLS=['paint','erase','inspect'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
-const VALID_RIGHT_TABS=['dashboard','score','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
+const VALID_RIGHT_TABS=['dashboard','score','today','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
 const EXPERIMENT_VARIABLES=['spacing','mulch','fertilizer','variety','sun exposure','watering','protection'];
 const MAX_SHARE_PAYLOAD=50000;
 const MAX_IMPORT_FILE_BYTES=500*1024;
@@ -4079,6 +4288,10 @@ function normalizeExperimentRecord(raw, validBedIds){
 function normalizeSiteSettings(site){
   const s = site && typeof site==='object' ? site : {};
   const sun = parseFloat(s.sunHours);
+  const weatherLat = Number.isFinite(+s.weatherLat) ? +s.weatherLat : null;
+  const weatherLon = Number.isFinite(+s.weatherLon) ? +s.weatherLon : null;
+  const frostThresholdF = Number.isFinite(+s.frostThresholdF) ? clamp(+s.frostThresholdF, 20, 45) : 36;
+  const heatThresholdF = Number.isFinite(+s.heatThresholdF) ? clamp(+s.heatThresholdF, 70, 110) : 92;
   return {
     sunHours: (Number.isFinite(sun) && sun >= 2 && sun <= 10) ? sun : 6,
     orientation: VALID_ORIENTATIONS.includes(s.orientation) ? s.orientation : 'ew',
@@ -4088,7 +4301,13 @@ function normalizeSiteSettings(site){
     season: VALID_SEASONS.includes(s.season) ? s.season : 'summer',
     goal: VALID_GOALS.includes(s.goal) ? s.goal : 'balanced',
     zone: VALID_ZONES.includes(s.zone) ? s.zone : '',
-    plantingDate: normalizeISODate(s.plantingDate)
+    plantingDate: normalizeISODate(s.plantingDate),
+    weatherLabel: typeof s.weatherLabel==='string' ? s.weatherLabel.slice(0, 120) : '',
+    weatherTz: typeof s.weatherTz==='string' ? s.weatherTz.slice(0, 80) : '',
+    weatherLat,
+    weatherLon,
+    frostThresholdF,
+    heatThresholdF
   };
 }
 function defaultSiteSettingsFromUI(){
@@ -4102,7 +4321,13 @@ function defaultSiteSettingsFromUI(){
     season: document.getElementById('season') ? document.getElementById('season').value : 'summer',
     goal: document.getElementById('goal') ? document.getElementById('goal').value : 'balanced',
     zone: document.getElementById('zone') ? document.getElementById('zone').value : '',
-    plantingDate: document.getElementById('plantingDate') ? document.getElementById('plantingDate').value : ''
+    plantingDate: document.getElementById('plantingDate') ? document.getElementById('plantingDate').value : '',
+    weatherLabel: document.getElementById('weatherLabel') ? document.getElementById('weatherLabel').value : '',
+    weatherTz: document.getElementById('weatherTz') ? document.getElementById('weatherTz').value : '',
+    weatherLat: document.getElementById('weatherLat') ? document.getElementById('weatherLat').value : '',
+    weatherLon: document.getElementById('weatherLon') ? document.getElementById('weatherLon').value : '',
+    frostThresholdF: document.getElementById('frostThresholdF') ? document.getElementById('frostThresholdF').value : 36,
+    heatThresholdF: document.getElementById('heatThresholdF') ? document.getElementById('heatThresholdF').value : 92
   });
 }
 function normalizeCellArray(cells, cols, rows){
@@ -4634,7 +4859,13 @@ function saveState(){
     season: document.getElementById('season').value,
     goal: document.getElementById('goal').value,
     zone: document.getElementById('zone').value,
-    plantingDate: document.getElementById('plantingDate').value
+    plantingDate: document.getElementById('plantingDate').value,
+    weatherLabel: document.getElementById('weatherLabel').value,
+    weatherTz: document.getElementById('weatherTz').value,
+    weatherLat: document.getElementById('weatherLat').value,
+    weatherLon: document.getElementById('weatherLon').value,
+    frostThresholdF: document.getElementById('frostThresholdF').value,
+    heatThresholdF: document.getElementById('heatThresholdF').value
   });
   b.cage = mergeRuntimeCageWithExisting(b.cage, b.size.rows);
   _workspace.workspaceSettings = _workspace.workspaceSettings || {};
@@ -4880,6 +5111,12 @@ function applyWorkspaceToUI(ws){
   document.getElementById('goal').value = site.goal;
   document.getElementById('zone').value = site.zone;
   document.getElementById('plantingDate').value = site.plantingDate || '';
+  document.getElementById('weatherLabel').value = site.weatherLabel || '';
+  document.getElementById('weatherTz').value = site.weatherTz || '';
+  document.getElementById('weatherLat').value = site.weatherLat == null ? '' : String(site.weatherLat);
+  document.getElementById('weatherLon').value = site.weatherLon == null ? '' : String(site.weatherLon);
+  document.getElementById('frostThresholdF').value = site.frostThresholdF == null ? '36' : String(site.frostThresholdF);
+  document.getElementById('heatThresholdF').value = site.heatThresholdF == null ? '92' : String(site.heatThresholdF);
   cage = rawCageToRuntime(b.cage);
   syncCageUI();
   normalizeSelectionState();
@@ -5178,7 +5415,8 @@ function renderPlannerState(){
           : `This cell is open. Read the derived zone first, then browse crops that actually fit the lane you selected.`)
         : 'Keep one decision visible at a time. Read the score story for bed pressure, inspect the weakest cell, then make the next change deliberately.',
       actions:[
-        { id:'stateScoreStory', label:'Why this score', cls:'primary' },
+        { id:'stateToday', label:'Today', cls:'primary' },
+        { id:'stateScoreStory', label:'Why this score' },
         { id:(selected && !selected.crop) ? 'statePalette' : 'stateInspect', label:(selected && !selected.crop) ? 'Browse crops' : 'Inspect weakest' }
       ]
     };
@@ -5239,6 +5477,7 @@ function renderPlannerState(){
       if(id==='statePalette'){ switchLTab('palette'); const search=document.getElementById('psearch'); if(search) search.focus(); }
       if(id==='stateInspect') focusWeakestCell();
       if(id==='stateManage') toggleMenu();
+      if(id==='stateToday') switchRTab('today');
       if(id==='stateScoreStory') switchRTab('score');
     });
   });
@@ -5323,6 +5562,12 @@ function inp(){
     goal:document.getElementById('goal').value,
     zone:document.getElementById('zone').value,
     plantingDate:document.getElementById('plantingDate').value,
+    weatherLabel:document.getElementById('weatherLabel').value,
+    weatherTz:document.getElementById('weatherTz').value,
+    weatherLat:parseFloat(document.getElementById('weatherLat').value),
+    weatherLon:parseFloat(document.getElementById('weatherLon').value),
+    frostThresholdF:parseFloat(document.getElementById('frostThresholdF').value),
+    heatThresholdF:parseFloat(document.getElementById('heatThresholdF').value),
     cage: { enabled:cage.enabled, rearTrellis:cage.rearTrellis, wireSides:cage.wireSides, height:cage.height, doorStyle:cage.doorStyle },
     bedW, bedH
   };
@@ -6022,7 +6267,107 @@ function deriveInspectTraits(ck, cell, inputs){
   return traits.slice(0,5);
 }
 
-function summarizeInspectLead(cell, inputs, issues, scorePayload){
+function seasonContextLevel(tone){
+  if(tone==='fit') return 'fit';
+  if(tone==='watch') return 'caution';
+  return 'info';
+}
+
+function buildSeasonContext(crop, cell, inputs){
+  if(!crop) return null;
+  const rawSeason=VALID_SEASONS.includes(inputs&&inputs.season) ? inputs.season : 'summer';
+  const mappedSeason=rawSeason==='latesummer' ? 'summer' : rawSeason;
+  const seasonalMultipliers=crop.seasonalMultipliers||null;
+  const seasonMultiplier=seasonalMultipliers&&Number.isFinite(seasonalMultipliers[mappedSeason])
+    ? seasonalMultipliers[mappedSeason]
+    : null;
+  const accessPriority=cell&&Number.isFinite(cell.accessPriority) ? cell.accessPriority : 0;
+  const quickAccess=accessPriority>=0.75;
+  let kicker='Season stable';
+  let tone='info';
+  let summary='';
+  let action='';
+  let successionHint='';
+
+  if(crop.coolSeason){
+    if(rawSeason==='spring'||rawSeason==='fall'){
+      kicker='In season';
+      tone='fit';
+      summary=`${crop.name} is inside its best ${rawSeason} window, so the planner should reward steady growth and cleaner harvest timing.`;
+      action=crop.successionFriendly
+        ? 'Keep a quick-access lane open if you want repeat sowings before the window closes.'
+        : 'Hold this placement and tune light or support only if another factor stays weaker.';
+    }else if(rawSeason==='summer'){
+      kicker='Heat pressure';
+      tone='watch';
+      summary=`${crop.name} is a cool-season crop in summer. It can still work, but heat is shrinking the margin and the season fit will stay under pressure.`;
+      action='Prefer a cooler slot, a faster harvest plan, or a more heat-tolerant swap before bolting compounds.';
+      successionHint=crop.successionFriendly
+        ? 'Queue the next sowing now so a fall reset is ready before the summer window fully collapses.'
+        : '';
+    }else{
+      kicker='Late-season risk';
+      tone='watch';
+      summary=`${crop.name} is past its best window in late summer. The planner is flagging a narrow recovery path rather than a stable placement.`;
+      action='Treat this as a salvage window or rotate to a warm-season crop until the fall reset.';
+      successionHint=crop.successionFriendly
+        ? 'Use this as a handoff moment for the next succession instead of expecting a long recovery run.'
+        : '';
+    }
+  }else if(rawSeason==='spring'){
+    kicker='Warming up';
+    tone='watch';
+    summary=`${crop.name} is a warm-season crop in spring, so it needs more heat than the default spring window usually provides.`;
+    action='Hold for warmer weather, add protection, or accept a slower ramp while other fit factors carry the score.';
+  }else if(rawSeason==='fall'){
+    kicker='Cooling down';
+    tone='watch';
+    summary=`${crop.name} is moving out of its warm-season window in fall. Yield can still hold for a while, but the planner should not treat this as peak timing.`;
+    action='Use this slot for finishing fruit set or prepare to swap in a cool-season follow-up.';
+    successionHint=crop.successionFriendly&&seasonMultiplier!==null&&seasonMultiplier<0.75
+      ? 'Only start one last succession here if you can finish it under protection before the cool-down steepens.'
+      : '';
+  }else if(rawSeason==='latesummer'&&seasonMultiplier!==null&&seasonMultiplier<0.55){
+    kicker='Late push';
+    tone='watch';
+    summary=`${crop.name} still prefers warmth, but late-summer timing is already tapering the seasonal ceiling for this crop.`;
+    action='Push harvest timing now rather than assuming a long second wave.';
+    successionHint=crop.successionFriendly
+      ? 'Treat this as the last practical succession handoff before the next seasonal reset.'
+      : '';
+  }else{
+    kicker='Warm window';
+    tone='fit';
+    summary=`${crop.name} is in a productive warm-season window, so seasonal pressure should not be the limiting factor unless heat becomes extreme.`;
+    action=quickAccess&&crop.successionFriendly
+      ? 'Use the access advantage for succession timing instead of moving the crop out of this lane.'
+      : 'Let light, support, and adjacency drive the next decision unless the weather shifts.';
+  }
+
+  const chips=[
+    rawSeason==='latesummer' ? 'late-summer heat' : `${rawSeason} window`
+  ];
+  if(seasonMultiplier!==null) chips.push(`${Math.round(seasonMultiplier*100)}% seasonal ceiling`);
+  if(crop.coolSeason) chips.push('cool-season crop');
+  else chips.push('warm-season crop');
+  if(crop.successionFriendly) chips.push(quickAccess ? 'succession lane ready' : 'succession-capable');
+  if(successionHint) chips.push('succession window active');
+
+  return {
+    season:rawSeason,
+    mappedSeason,
+    seasonMultiplier,
+    tone,
+    level:seasonContextLevel(tone),
+    kicker,
+    summary,
+    action,
+    successionHint,
+    chips
+  };
+}
+
+function summarizeInspectLead(cell, inputs, issues, scorePayload, seasonContext){
   const crop=CROPS[cell.crop];
   const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
   const primaryIssue=targetIssues[0]||null;
@@ -6045,12 +6390,15 @@ function summarizeInspectLead(cell, inputs, issues, scorePayload){
     };
   }
   if(weakestFactor){
+    const seasonSummary=weakestFactor.label==='Season Fit'&&seasonContext
+      ? `${seasonContext.summary} ${seasonContext.successionHint||seasonContext.action}`.trim()
+      : '';
     return {
       status:score>=7?'fit':'caution',
       kicker:score>=7?'Strong fit':'Pressure is building',
       summary:score>=7
-        ? `${weakestFactor.label} is the soft limiter now. ${weakestFactor.description||'Use the score story to raise the ceiling.'}`
-        : `${weakestFactor.label} is dragging this cell down. ${weakestFactor.description||'Tighten this first before tuning varieties.'}`,
+        ? (seasonSummary || `${weakestFactor.label} is the soft limiter now. ${weakestFactor.description||'Use the score story to raise the ceiling.'}`)
+        : (seasonSummary || `${weakestFactor.label} is dragging this cell down. ${weakestFactor.description||'Tighten this first before tuning varieties.'}`),
       score
     };
   }
@@ -6243,8 +6591,9 @@ function buildPlannerReasoningSnapshot(cell, inputs, issues){
   const targetIssues=(issues||[]).filter(issue=>issue.cellId===cell.id).sort((a,b)=>issueSeverityRank(a)-issueSeverityRank(b));
   const primaryIssue=targetIssues[0]||null;
   const derivedTraits=deriveInspectTraits(cell.crop, cell, inputs);
+  const seasonContext=buildSeasonContext(crop, cell, inputs);
   const scorePayload=buildPlannerScorePayload(cell, inputs, strictFits, primaryIssue);
-  const inspectLead=summarizeInspectLead(cell, inputs, issues, scorePayload);
+  const inspectLead=summarizeInspectLead(cell, inputs, issues, scorePayload, seasonContext);
   return {
     cell,
     crop,
@@ -6256,6 +6605,7 @@ function buildPlannerReasoningSnapshot(cell, inputs, issues){
     targetIssues,
     primaryIssue,
     inspectLead,
+    seasonContext,
     derivedTraits,
     scorePayload,
     score:scorePayload.score,
@@ -6303,7 +6653,12 @@ function renderScoreExplanation(snapshot, inputs){
   const accessMsg=(crop.height==='low'||crop.height==='very low')
     ? `Low profile crop gains access bonus from cell access score ${(cell.accessScore||0).toFixed(2)}.`
     : 'Taller crop uses baseline access score.';
-  const seasonMsg=`${activeInputs.season} season ${crop.coolSeason?'cool-season':'warm-season'} fit.`;
+  const seasonContext=ctx&&ctx.seasonContext
+    ? ctx.seasonContext
+    : buildSeasonContext(crop, cell, activeInputs);
+  const seasonMsg=seasonContext
+    ? `${seasonContext.summary} ${seasonContext.action} ${seasonContext.successionHint||''}`.trim()
+    : `${activeInputs.season} season ${crop.coolSeason?'cool-season':'warm-season'} fit.`;
   const structMsg=detail.structContrib.length
     ? detail.structContrib.map(item=>`${item.label} ${formatSigned(item.delta,2)}`).join(' · ')
     : 'No structural bonus or penalty in this cell.';
@@ -6548,7 +6903,7 @@ function buildReasoningSurface(inputs, issues){
     pane.innerHTML=`<div class="icard reasoning-card"><div class="ichdr">Why this score</div><div class="reasoning-empty"><span>🧭</span><p>Select a planted cell to see the exact pressure on the bed, the weakest factor, and the fastest fix in one place.</p><button class="reasoning-btn primary state-action" type="button" data-action="switch-inspect">Switch to Inspect</button></div></div>`;
     return;
   }
-  const { cell, crop, targetIssues, primaryIssue, weakestFactor, score, delta, cellFacts, scoreDirection, tradeoff, nextMove, scoreTone }=reasoningSnapshot;
+  const { cell, crop, targetIssues, primaryIssue, weakestFactor, score, delta, cellFacts, scoreDirection, tradeoff, nextMove, scoreTone, seasonContext }=reasoningSnapshot;
   const severity=issueSeverityLabel(primaryIssue);
   const issueHtml=primaryIssue
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Top risk</span><span class="reasoning-text">${escapeHtml(primaryIssue.msg)}</span></div><span class="reasoning-badge ${escapeHtml(severity)}">${escapeHtml(severity)}</span></div>`
@@ -6556,6 +6911,9 @@ function buildReasoningSurface(inputs, issues){
   const factsHtml=`<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Cell facts</span><div class="reasoning-facts">${cellFacts.map(fact=>`<span class="reasoning-fact">${escapeHtml(fact)}</span>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(cell.id)}</span></div>`;
   const factorHtml=weakestFactor
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Weakest factor</span><span class="reasoning-text">${escapeHtml(weakestFactor.label)}. ${escapeHtml(weakestFactor.description||'')}</span></div><span class="reasoning-score">${escapeHtml(scoreTone)}</span></div>`
+    : '';
+  const seasonHtml=seasonContext
+    ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Season context</span><span class="reasoning-text">${escapeHtml(seasonContext.summary)} ${escapeHtml(seasonContext.action)} ${seasonContext.successionHint?`<strong>${escapeHtml(seasonContext.successionHint)}</strong>`:''}</span></div><span class="reasoning-score">${escapeHtml(seasonContext.kicker)}</span></div>`
     : '';
   const stackHtml=targetIssues.length>1
     ? `<div class="reasoning-row"><div class="reasoning-copy"><span class="reasoning-label">Ordered issues</span><div class="reasoning-stack">${targetIssues.slice(0,3).map(issue=>`<div class="reasoning-stack-item"><div class="reasoning-stack-copy"><strong>${escapeHtml(issue.msg)}</strong><span>${escapeHtml(reasonFix(issue,cell,inputs))}</span></div><span class="reasoning-badge ${escapeHtml(issueSeverityLabel(issue))}">${escapeHtml(issueSeverityLabel(issue))}</span></div>`).join('')}</div></div><span class="reasoning-score">${escapeHtml(targetIssues.length+' risks')}</span></div>`
@@ -6577,6 +6935,7 @@ function buildReasoningSurface(inputs, issues){
     ${factsHtml}
     ${issueHtml}
     ${factorHtml}
+    ${seasonHtml}
     ${modelHtml}
     ${stackHtml}
     ${tradeHtml}
@@ -7276,6 +7635,375 @@ function renderCastBoard(voices, options={}){
   </section>`;
 }
 
+const WEATHER_CACHE_KEY='gardenOS_weather_v1';
+const WEATHER_TASK_STATE_KEY='gardenOS_tasks_v1';
+const WEATHER_CACHE_TTL_MS=6*60*60*1000;
+const TODAY_ACTION_LABELS={
+  water:'Water tonight',
+  check:'Check bed',
+  harvest:'Harvest now',
+  cover_frost:'Cover before dusk',
+  shade_heat:'Add shade',
+  succession_plant:'Plant next round',
+  thin:'Thin seedlings',
+  trellis_check:'Check trellis'
+};
+const TODAY_TASK_RULES=[
+  { when:{ faction:'greens', signal:'heatHigh24' }, action:'water', priority:90, reasonTemplate:'High heat forecast. Water ${crop} deeply tonight.' },
+  { when:{ faction:'fruiting', signal:'heatHigh24' }, action:'water', priority:85, reasonTemplate:'High heat forecast. Water ${crop} deeply tonight.' },
+  { when:{ faction:'brassicas', signal:'heatHigh24' }, action:'shade_heat', priority:82, reasonTemplate:'Heat stress risk. Shade ${crop} this afternoon.' },
+  { when:{ faction:'roots', signal:'heatHigh24' }, action:'water', priority:70, reasonTemplate:'Keep ${crop} soil evenly moist during heat.' },
+  { when:{ faction:'herbs', signal:'heatHigh24' }, action:'water', priority:60, reasonTemplate:'Water ${crop} at the base to prevent leaf scorch.' },
+  { when:{ faction:'climbers', signal:'heatHigh24' }, action:'water', priority:78, reasonTemplate:'Heat today. Water ${crop} and check trellis shade.' },
+  { when:{ faction:'companions', signal:'heatHigh24' }, action:'water', priority:55, reasonTemplate:'Water companion ${crop} during heat.' },
+  { when:{ faction:'fast_cycles', signal:'heatHigh24' }, action:'water', priority:75, reasonTemplate:'Fast cycle ${crop} bolts under heat. Water and check.' },
+  { when:{ faction:'brassicas', signal:'rainHigh24' }, action:'check', priority:40, reasonTemplate:'Rain incoming. Check ${crop} for splash damage tomorrow.' },
+  { when:{ faction:'fruiting', signal:'rainHigh24' }, action:'check', priority:50, reasonTemplate:'Rain incoming. Stake or support ${crop}.' },
+  { when:{ faction:'herbs', signal:'rainHigh24' }, action:'check', priority:30, reasonTemplate:'Rain soon. Check ${crop} for rot risk.' },
+  { when:{ faction:'fast_cycles', signal:'rainHigh24' }, action:'check', priority:45, reasonTemplate:'Rain soon. Fast cycle ${crop} benefits. Check drainage.' },
+  { when:{ stage:'harvest' }, action:'harvest', priority:95, reasonTemplate:'${crop} is in its harvest window.' },
+  { when:{ stage:'sprout', signal:'calm' }, action:'check', priority:35, reasonTemplate:'Check ${crop} sprouts for thinning and pest pressure.' },
+  { when:{ faction:'roots', stage:'sprout' }, action:'thin', priority:50, reasonTemplate:'Thin ${crop} seedlings to target spacing.' },
+  { when:{ faction:'greens', stage:'sprout' }, action:'thin', priority:45, reasonTemplate:'Thin ${crop} to the healthiest starts.' },
+  { when:{ faction:'climbers', stage:'growing' }, action:'trellis_check', priority:48, reasonTemplate:'Guide ${crop} up the trellis and check ties.' },
+  { when:{ faction:'fruiting', stage:'growing', signal:'calm' }, action:'check', priority:38, reasonTemplate:'Check ${crop} for early fruit set.' },
+  { when:{ faction:'fast_cycles', stage:'harvest' }, action:'succession_plant', priority:65, reasonTemplate:'${crop} is finishing. Plant the next succession now.' },
+  { when:{ faction:'greens', stage:'harvest' }, action:'succession_plant', priority:60, reasonTemplate:'${crop} is finishing. Start a new round now.' },
+  { when:{ signal:'frostTonight', requiresFrostSensitive:true }, action:'cover_frost', priority:99, reasonTemplate:'Frost tonight. Cover ${crop} before sundown.' }
+];
+let _plannerWeatherState={ key:'', snapshot:null, loading:false, error:'', lookupBusy:false };
+
+function todayWeatherCoordsReady(site){
+  return Number.isFinite(site && site.weatherLat) && Number.isFinite(site && site.weatherLon);
+}
+function todayWeatherKey(site){
+  if(!todayWeatherCoordsReady(site)) return '';
+  return `${site.weatherLat.toFixed(4)}:${site.weatherLon.toFixed(4)}`;
+}
+function readTodayWeatherCache(){
+  try{
+    const raw=localStorage.getItem(WEATHER_CACHE_KEY);
+    if(!raw) return null;
+    const parsed=JSON.parse(raw);
+    return parsed && typeof parsed==='object' ? parsed : null;
+  }catch(e){
+    return null;
+  }
+}
+function writeTodayWeatherCache(entry){
+  try{ localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(entry)); }catch(e){}
+}
+function weatherFfromC(c){
+  return c*(9/5)+32;
+}
+function normalizePlannerWeatherPayload(payload, lat, lon){
+  if(!payload || typeof payload!=='object') return null;
+  const daily=payload.daily||{};
+  const hourly=payload.hourly||{};
+  return {
+    schema:'weather-1.0.0',
+    lat, lon,
+    tz: payload.timezone || '',
+    fetchedAt: Date.now(),
+    daily:{
+      time:Array.isArray(daily.time)?daily.time.slice():[],
+      tMinF:Array.isArray(daily.temperature_2m_min)?daily.temperature_2m_min.map(weatherFfromC):[],
+      tMaxF:Array.isArray(daily.temperature_2m_max)?daily.temperature_2m_max.map(weatherFfromC):[],
+      rainProb:Array.isArray(daily.precipitation_probability_max)?daily.precipitation_probability_max.slice():[]
+    },
+    hourly:{
+      time:Array.isArray(hourly.time)?hourly.time.slice():[],
+      tF:Array.isArray(hourly.temperature_2m)?hourly.temperature_2m.map(weatherFfromC):[],
+      rainProb:Array.isArray(hourly.precipitation_probability)?hourly.precipitation_probability.slice():[]
+    }
+  };
+}
+async function fetchPlannerWeather(lat, lon, force=false){
+  if(!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const cached=readTodayWeatherCache();
+  if(!force && cached && cached.lat===lat && cached.lon===lon && Date.now()-cached.fetchedAt<WEATHER_CACHE_TTL_MS){
+    return cached;
+  }
+  try{
+    const q=new URLSearchParams({
+      latitude:String(lat),
+      longitude:String(lon),
+      daily:'temperature_2m_min,temperature_2m_max,precipitation_probability_max',
+      hourly:'temperature_2m,precipitation_probability',
+      timezone:'auto'
+    });
+    const resp=await fetch(`https://api.open-meteo.com/v1/forecast?${q.toString()}`,{ cache:'no-store' });
+    if(!resp.ok) return cached || null;
+    const payload=await resp.json();
+    const normalized=normalizePlannerWeatherPayload(payload, lat, lon);
+    if(normalized) writeTodayWeatherCache(normalized);
+    return normalized || cached || null;
+  }catch(e){
+    return cached || null;
+  }
+}
+async function lookupPlannerWeatherLocation(query){
+  if(!query || !query.trim()) return null;
+  const attempts=[query.trim()];
+  if(query.includes(',')){
+    const shortQuery=query.split(',')[0].trim();
+    if(shortQuery && !attempts.includes(shortQuery)) attempts.push(shortQuery);
+  }
+  for(const attempt of attempts){
+    try{
+      const q=new URLSearchParams({ name:attempt, count:'5', language:'en', format:'json' });
+      const resp=await fetch(`https://geocoding-api.open-meteo.com/v1/search?${q.toString()}`);
+      if(!resp.ok) continue;
+      const data=await resp.json();
+      const top=Array.isArray(data && data.results) ? data.results[0] : null;
+      if(!top) continue;
+      return {
+        label:[top.name, top.admin1, top.country_code].filter(Boolean).join(', '),
+        lat:top.latitude,
+        lon:top.longitude,
+        tz:top.timezone || ''
+      };
+    }catch(e){
+      return null;
+    }
+  }
+  return null;
+}
+function plannerWeatherTodayMin(snapshot){
+  return snapshot && snapshot.daily && snapshot.daily.tMinF && snapshot.daily.tMinF.length ? snapshot.daily.tMinF[0] : null;
+}
+function plannerWeatherTodayMax(snapshot){
+  return snapshot && snapshot.daily && snapshot.daily.tMaxF && snapshot.daily.tMaxF.length ? snapshot.daily.tMaxF[0] : null;
+}
+function plannerWeatherRainNext24(snapshot){
+  if(!snapshot) return 0;
+  const hourly=snapshot.hourly && Array.isArray(snapshot.hourly.rainProb) ? snapshot.hourly.rainProb.slice(0,24) : [];
+  if(hourly.length) return hourly.reduce((max,value)=>typeof value==='number'&&value>max?value:max,0);
+  const daily=snapshot.daily && Array.isArray(snapshot.daily.rainProb) ? snapshot.daily.rainProb : [];
+  return daily.length && typeof daily[0]==='number' ? daily[0] : 0;
+}
+function plannerWeatherHeatNext24(snapshot){
+  if(!snapshot) return 0;
+  const hourly=snapshot.hourly && Array.isArray(snapshot.hourly.tF) ? snapshot.hourly.tF.slice(0,24) : [];
+  if(hourly.length) return hourly.reduce((max,value)=>typeof value==='number'&&value>max?value:max,-Infinity);
+  const daily=plannerWeatherTodayMax(snapshot);
+  return Number.isFinite(daily) ? daily : 0;
+}
+function plannerWeatherSignals(snapshot, site){
+  const signals=[];
+  if(snapshot && Number.isFinite(plannerWeatherTodayMin(snapshot)) && plannerWeatherTodayMin(snapshot) < site.frostThresholdF) signals.push('frostTonight');
+  if(snapshot && plannerWeatherHeatNext24(snapshot) > site.heatThresholdF) signals.push('heatHigh24');
+  if(snapshot && plannerWeatherRainNext24(snapshot) >= 60) signals.push('rainHigh24');
+  if(!signals.length) signals.push('calm');
+  return signals;
+}
+function isTodayCropFrostSensitive(crop){
+  return Array.isArray(crop && crop.eventVulnerabilities) && crop.eventVulnerabilities.includes('frost-sensitive');
+}
+function deriveTodayStage(crop, plantedAtIso, nowMs){
+  if(!crop || !Number.isFinite(crop.daysToMaturity) || crop.daysToMaturity<=0 || !plantedAtIso) return null;
+  const planted=Date.parse(plantedAtIso);
+  if(Number.isNaN(planted)) return null;
+  const pct=Math.max(0,(nowMs-planted)/(24*60*60*1000))/crop.daysToMaturity;
+  if(pct < 0.15) return 'sprout';
+  if(pct < 0.95) return 'growing';
+  return 'harvest';
+}
+function renderTodayReason(template, vars){
+  return template.replace(/\$\{(\w+)\}/g,(_,key)=>vars[key]!=null?String(vars[key]):'');
+}
+function readTodayTaskState(){
+  try{
+    const raw=localStorage.getItem(WEATHER_TASK_STATE_KEY);
+    if(!raw) return {};
+    const parsed=JSON.parse(raw);
+    return parsed && typeof parsed==='object' ? parsed : {};
+  }catch(e){
+    return {};
+  }
+}
+function writeTodayTaskState(state){
+  try{ localStorage.setItem(WEATHER_TASK_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function setTodayTaskDisposition(dateKey, taskId, disposition){
+  const state=readTodayTaskState();
+  const day=state[dateKey] && typeof state[dateKey]==='object' ? state[dateKey] : {};
+  if(disposition) day[taskId]=disposition;
+  else delete day[taskId];
+  state[dateKey]=day;
+  writeTodayTaskState(state);
+}
+function getTodayTaskDisposition(dateKey, taskId){
+  const state=readTodayTaskState();
+  return state[dateKey] && state[dateKey][taskId] ? state[dateKey][taskId] : '';
+}
+function buildTodayTasksForActiveBed(inputs, snapshot){
+  const site=normalizeSiteSettings(inputs);
+  const plantingDate=normalizeISODate(site.plantingDate) || getEffectivePlantingDate(inputs);
+  const signals=plannerWeatherSignals(snapshot, site);
+  const nowMs=Date.now();
+  const candidates=[];
+  bed.forEach(cell=>{
+    if(!cell.crop || !CROPS[cell.crop]) return;
+    const crop=CROPS[cell.crop];
+    const stage=deriveTodayStage(crop, plantingDate, nowMs);
+    TODAY_TASK_RULES.forEach(rule=>{
+      if(rule.when.faction && rule.when.faction!==crop.faction) return;
+      if(rule.when.stage && rule.when.stage!==stage) return;
+      if(rule.when.signal && !signals.includes(rule.when.signal)) return;
+      if(rule.when.requiresFrostSensitive && !isTodayCropFrostSensitive(crop)) return;
+      const id=`${activeBed()?.id || 'bed'}:${cell.id}:${rule.action}`;
+      candidates.push({
+        id,
+        cellId:cell.id,
+        cropKey:cell.crop,
+        cropName:crop.name,
+        action:rule.action,
+        priority:rule.priority,
+        reason:renderTodayReason(rule.reasonTemplate,{ crop:crop.name }),
+        stage:stage || 'unknown',
+        signals:[...signals],
+        estimated:!normalizeISODate(site.plantingDate)
+      });
+    });
+  });
+  candidates.sort((a,b)=>b.priority-a.priority || a.cellId.localeCompare(b.cellId));
+  const seen=new Set();
+  return candidates.filter(task=>{
+    const key=`${task.cellId}:${task.action}`;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0,5);
+}
+function openTodayWeatherSettings(){
+  const left=document.querySelector('.plan-panel');
+  if(left){
+    left.classList.remove('collapsed');
+    const toggle=document.getElementById('toggleLeft');
+    if(toggle) toggle.setAttribute('aria-expanded','true');
+  }
+  switchLTab('site');
+  const target=document.getElementById('weatherLookup');
+  if(target) target.focus();
+}
+function ensurePlannerWeather(inputs, force=false){
+  const site=normalizeSiteSettings(inputs);
+  if(!todayWeatherCoordsReady(site)){
+    _plannerWeatherState={ key:'', snapshot:null, loading:false, error:'', lookupBusy:_plannerWeatherState.lookupBusy };
+    return;
+  }
+  const key=todayWeatherKey(site);
+  if(!force && _plannerWeatherState.key===key && (_plannerWeatherState.loading || _plannerWeatherState.snapshot || _plannerWeatherState.error)) return;
+  _plannerWeatherState={ ..._plannerWeatherState, key, loading:true, error:'', snapshot:force?null:_plannerWeatherState.snapshot };
+  fetchPlannerWeather(site.weatherLat, site.weatherLon, force).then(snapshot=>{
+    if(_plannerWeatherState.key!==key) return;
+    _plannerWeatherState.loading=false;
+    _plannerWeatherState.snapshot=snapshot;
+    _plannerWeatherState.error=snapshot ? '' : 'Weather unavailable';
+    render();
+  });
+}
+function renderPlannerWeatherAlert(inputs){
+  const mount=document.getElementById('plannerWeatherAlert');
+  if(!mount) return;
+  const site=normalizeSiteSettings(inputs);
+  const snapshot=_plannerWeatherState.snapshot;
+  const frostTonight=snapshot && Number.isFinite(plannerWeatherTodayMin(snapshot)) && plannerWeatherTodayMin(snapshot) < site.frostThresholdF;
+  if(!frostTonight){
+    mount.innerHTML='';
+    return;
+  }
+  const label=site.weatherLabel || `${site.weatherLat?.toFixed(2)}, ${site.weatherLon?.toFixed(2)}`;
+  mount.innerHTML=`<div class="planner-weather-alert" role="alert">
+    <div class="planner-weather-alert-copy">
+      <span class="planner-weather-alert-kicker">Weather alert</span>
+      <span class="planner-weather-alert-title">Frost tonight at ${escapeHtml(label)}</span>
+      <span class="planner-weather-alert-text">Low of ${escapeHtml(plannerWeatherTodayMin(snapshot).toFixed(1))}°F against an alert threshold of ${escapeHtml(site.frostThresholdF.toFixed(0))}°F. Open Today to see the current task stack before dusk.</span>
+    </div>
+    <div class="planner-weather-alert-actions">
+      <button type="button" class="planner-state-btn primary" data-state-action="stateToday">Open Today</button>
+      <button type="button" class="planner-state-btn" data-today-action="focus-weather-settings">Location</button>
+    </div>
+  </div>`;
+  const todayBtn=mount.querySelector('[data-state-action="stateToday"]');
+  if(todayBtn) todayBtn.addEventListener('click',()=>{ switchRTab('today'); render(); });
+  const settingsBtn=mount.querySelector('[data-today-action="focus-weather-settings"]');
+  if(settingsBtn) settingsBtn.addEventListener('click',()=>openTodayWeatherSettings());
+}
+function renderTodayPanel(inputs){
+  const mount=document.getElementById('rpaneToday');
+  if(!mount) return;
+  const site=normalizeSiteSettings(inputs);
+  const plantedCount=bed.filter(cell=>!!cell.crop).length;
+  if(!plantedCount){
+    mount.innerHTML=`<div class="today-shell"><div class="today-weather-card"><div class="today-card-head"><div><div class="today-card-kicker">Today</div><div class="today-card-title">Nothing to coach yet</div></div></div><div class="today-empty">Plant the first crops in this bed and the daily coach will turn on with weather, task priority, and harvest timing.</div></div></div>`;
+    return;
+  }
+  if(todayWeatherCoordsReady(site)) ensurePlannerWeather(site);
+  const snapshot=_plannerWeatherState.snapshot;
+  const loading=_plannerWeatherState.loading;
+  const weatherReady=todayWeatherCoordsReady(site);
+  if(!weatherReady){
+    mount.innerHTML=`<div class="today-shell"><div class="today-weather-card"><div class="today-card-head"><div><div class="today-card-kicker">Today</div><div class="today-card-title">Add a garden location</div></div></div><div class="today-empty">Today plus Weather needs a location before it can pull a local forecast. Add a ZIP or city in the Site pane, or enter latitude and longitude directly.</div><div class="today-task-actions"><button type="button" class="planner-state-btn primary" data-today-action="focus-weather-settings">Open Site settings</button></div></div></div>`;
+    return;
+  }
+  if(loading && !snapshot){
+    mount.innerHTML=`<div class="today-shell"><div class="today-weather-card"><div class="today-card-head"><div><div class="today-card-kicker">Today</div><div class="today-card-title">Loading local forecast</div></div></div><div class="today-empty">Garden OS is fetching the daily forecast for ${escapeHtml(site.weatherLabel || `${site.weatherLat.toFixed(2)}, ${site.weatherLon.toFixed(2)}`)}.</div></div></div>`;
+    return;
+  }
+  if(!snapshot){
+    mount.innerHTML=`<div class="today-shell"><div class="today-weather-card"><div class="today-card-head"><div><div class="today-card-kicker">Today</div><div class="today-card-title">Weather unavailable</div></div></div><div class="today-empty">${escapeHtml(_plannerWeatherState.error || 'Garden OS could not load the local forecast right now.')} You can retry now or keep working offline.</div><div class="today-task-actions"><button type="button" class="planner-state-btn primary" data-today-action="retry-weather">Retry</button><button type="button" class="planner-state-btn" data-today-action="focus-weather-settings">Location</button></div></div></div>`;
+    return;
+  }
+  const dateKey=(snapshot.daily && snapshot.daily.time && snapshot.daily.time[0]) || new Date().toISOString().slice(0,10);
+  const signalTone=plannerWeatherSignals(snapshot, site);
+  const tasks=buildTodayTasksForActiveBed(inputs, snapshot).filter(task=>getTodayTaskDisposition(dateKey, task.id)!=='snoozed');
+  const weatherLabel=site.weatherLabel || `${site.weatherLat.toFixed(2)}, ${site.weatherLon.toFixed(2)}`;
+  const weatherCard=`<div class="today-weather-card">
+    <div class="today-card-head">
+      <div>
+        <div class="today-card-kicker">Today</div>
+        <div class="today-card-title">${escapeHtml(weatherLabel)}</div>
+      </div>
+      <div class="today-task-actions">
+        <button type="button" class="planner-state-btn" data-today-action="retry-weather">Refresh</button>
+      </div>
+    </div>
+    <div class="today-weather-grid">
+      <div class="today-weather-stat"><div class="today-weather-label">Low tonight</div><div class="today-weather-value">${escapeHtml(plannerWeatherTodayMin(snapshot).toFixed(1))}°F</div></div>
+      <div class="today-weather-stat"><div class="today-weather-label">High today</div><div class="today-weather-value">${escapeHtml(plannerWeatherTodayMax(snapshot).toFixed(1))}°F</div></div>
+      <div class="today-weather-stat"><div class="today-weather-label">Rain next 24h</div><div class="today-weather-value">${escapeHtml(String(Math.round(plannerWeatherRainNext24(snapshot))))}%</div></div>
+    </div>
+    <div class="today-signal-row">${signalTone.map(signal=>`<span class="today-signal ${signal==='frostTonight'?'alert':signal==='heatHigh24'?'warn':''}">${escapeHtml(signal)}</span>`).join('')}</div>
+  </div>`;
+  const taskCards=tasks.length ? tasks.map(task=>{
+    const disposition=getTodayTaskDisposition(dateKey, task.id);
+    const done=disposition==='done';
+    return `<div class="today-task-card">
+      <div class="today-card-head">
+        <div>
+          <div class="today-card-kicker">${escapeHtml(task.cellId)}</div>
+          <div class="today-card-title">${escapeHtml(TODAY_ACTION_LABELS[task.action] || task.action)} · ${escapeHtml(task.cropName)}</div>
+        </div>
+        <span class="today-task-pill ${task.action==='cover_frost'?'alert':task.action==='shade_heat'?'warn':''}">${escapeHtml(task.priority)} priority</span>
+      </div>
+      <div class="today-task-copy">${escapeHtml(task.reason)}${task.estimated?' Planting date is estimated from the current season anchor.':''}</div>
+      <div class="today-task-meta">
+        <span class="today-task-pill">${escapeHtml(task.stage)}</span>
+        ${task.signals.map(signal=>`<span class="today-task-pill ${signal==='frostTonight'?'alert':signal==='heatHigh24'?'warn':''}">${escapeHtml(signal)}</span>`).join('')}
+      </div>
+      <div class="today-task-actions">
+        ${done
+          ? `<button type="button" class="planner-state-btn primary" data-today-action="undo-task" data-task-id="${escapeHtml(task.id)}" data-task-date="${escapeHtml(dateKey)}">Undo done</button>`
+          : `<button type="button" class="planner-state-btn primary" data-today-action="done-task" data-task-id="${escapeHtml(task.id)}" data-task-date="${escapeHtml(dateKey)}">Mark done</button>
+             <button type="button" class="planner-state-btn" data-today-action="snooze-task" data-task-id="${escapeHtml(task.id)}" data-task-date="${escapeHtml(dateKey)}">Snooze</button>`}
+      </div>
+    </div>`;
+  }).join('') : `<div class="today-task-card"><div class="today-card-head"><div><div class="today-card-kicker">Today</div><div class="today-card-title">No urgent tasks</div></div></div><div class="today-empty">The current bed is calm against today’s weather. Use Score story for the next layout move or Harvest log for what is already ready.</div></div>`;
+  mount.innerHTML=`<div class="today-shell">${weatherCard}<div class="today-task-list">${taskCards}</div></div>`;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -7289,6 +8017,8 @@ function render(){
   renderRight(inputs,ctx.issues,ctx.scoreTotal);
   renderIssueSummaryStrip(ctx.issues);
   renderPlannerState();
+  renderTodayPanel(inputs);
+  renderPlannerWeatherAlert(inputs);
   // Wall label
   const lm={back:'▲ Wall / Trellis Zone (Row 1)',front:'▼ Wall / Trellis Zone (last row)',left:'◀ Wall (Col 1)',right:'▶ Wall (last col)',none:'○ No wall'};
   document.getElementById('wtop').textContent=lm[inputs.wallSide]||'▲ Wall';
@@ -7410,7 +8140,7 @@ function switchLTab(t){
 }
 // Insight section map: old tab names → section IDs
 const INSIGHT_SECTION_MAP = {
-  score:'insightSummary', dashboard:'insightDashboard',
+  score:'insightSummary', today:'insightToday', dashboard:'insightDashboard',
   inspect:'insightInspect', companions:'insightInspect',
   calendar:'insightCalendar', harvest:'insightHarvest',
   experiment:'insightExperiment', retrospective:'insightRetrospective',
@@ -7453,6 +8183,7 @@ function switchRTab(t, persist=true){
     syncInsightRail();
   }
   if(t==='dashboard') renderDashboardTab();
+  if(t==='today') renderTodayPanel(inp());
   if(t==='companions') renderCompanionPanel();
   if(t==='calendar') renderCalendarPanel();
   if(t==='harvest') renderHarvestTab();
@@ -7686,7 +8417,7 @@ function renderRight(inputs,issues,scoreTotal){
       <span class="vdesc">${escapeHtml(v.desc)}</span>
     </div>`).join('');
     const reasoningSnapshot=buildPlannerReasoningSnapshot(selCell, inputs, issues);
-    const { inspectLead, derivedZone, derivedTraits, strictFits, supportStatus, targetIssues, primaryIssue, delta, score }=reasoningSnapshot;
+    const { inspectLead, derivedZone, derivedTraits, strictFits, supportStatus, targetIssues, primaryIssue, delta, score, seasonContext }=reasoningSnapshot;
     inspHtml=`
       <div class="insp inspect-hero-card">
         <div class="insph">Inspect & explain</div>
@@ -7703,6 +8434,7 @@ function renderRight(inputs,issues,scoreTotal){
             <span class="inspect-meta-chip">${escapeHtml(score.toFixed(1))}/10 cell score</span>
             <span class="inspect-meta-chip">${escapeHtml((selCell.effectiveLight||0).toFixed(1))} hrs sun</span>
             <span class="inspect-meta-chip">${escapeHtml(supportStatus)}</span>
+            ${seasonContext?`<span class="inspect-meta-chip">${escapeHtml(seasonContext.kicker)}</span>`:''}
             ${delta&&delta.gain>0.15?`<span class="inspect-meta-chip">best fit ${escapeHtml(formatSigned(delta.gain,1))}</span>`:''}
           </div>
         </div>
@@ -7713,6 +8445,16 @@ function renderRight(inputs,issues,scoreTotal){
           <div class="inspect-section-title">${escapeHtml(derivedZone.label)}</div>
           <div class="inspect-section-copy">${escapeHtml(derivedZone.reason)}</div>
           <div class="inspect-zone-chips">${derivedZone.chips.map(chip=>`<span class="inspect-meta-chip">${escapeHtml(chip)}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="ichdr">Season context</div>
+        <div class="icbody">
+          <div class="inspect-section-title">${escapeHtml(seasonContext.kicker)}</div>
+          <div class="inspect-section-copy">${escapeHtml(seasonContext.summary)}</div>
+          <div class="inspect-section-copy">${escapeHtml(seasonContext.action)}</div>
+          ${seasonContext.successionHint?`<div class="inspect-section-copy"><strong>${escapeHtml(seasonContext.successionHint)}</strong></div>`:''}
+          <div class="inspect-zone-chips">${seasonContext.chips.map(chip=>`<span class="inspect-meta-chip">${escapeHtml(chip)}</span>`).join('')}</div>
         </div>
       </div>
       <div class="icard">
@@ -7971,6 +8713,52 @@ document.getElementById('season').addEventListener('change',()=>onSite());
 document.getElementById('goal').addEventListener('change',()=>onSite());
 document.getElementById('zone').addEventListener('change',()=>onSite());
 document.getElementById('plantingDate').addEventListener('change',()=>onSite());
+document.getElementById('weatherLabel').addEventListener('change',()=>onSite());
+document.getElementById('weatherLat').addEventListener('change',()=>onSite());
+document.getElementById('weatherLon').addEventListener('change',()=>onSite());
+document.getElementById('frostThresholdF').addEventListener('change',()=>onSite());
+document.getElementById('heatThresholdF').addEventListener('change',()=>onSite());
+const weatherLookupInput = document.getElementById('weatherLookup');
+const weatherLookupBtn = document.getElementById('weatherLookupBtn');
+if(weatherLookupInput && weatherLookupBtn){
+  weatherLookupInput.addEventListener('keydown',ev=>{
+    if(ev.key!=='Enter') return;
+    ev.preventDefault();
+    weatherLookupBtn.click();
+  });
+  weatherLookupBtn.addEventListener('click',async ()=>{
+    const query = weatherLookupInput.value.trim();
+    if(!query){
+      openTodayWeatherSettings();
+      setPlannerNotice('error','Location required','Enter a ZIP code or city before looking up the forecast.');
+      return;
+    }
+    if(_plannerWeatherState.lookupBusy) return;
+    const originalText = weatherLookupBtn.textContent;
+    _plannerWeatherState = { ..._plannerWeatherState, lookupBusy:true, error:'' };
+    weatherLookupBtn.disabled = true;
+    weatherLookupBtn.textContent = 'Looking up...';
+    try{
+      const match = await lookupPlannerWeatherLocation(query);
+      if(!match){
+        setPlannerNotice('error','Location not found','Try a ZIP code or a city with state.');
+        return;
+      }
+      document.getElementById('weatherLabel').value = match.label || query;
+      document.getElementById('weatherLat').value = Number.isFinite(match.lat) ? String(match.lat) : '';
+      document.getElementById('weatherLon').value = Number.isFinite(match.lon) ? String(match.lon) : '';
+      document.getElementById('weatherTz').value = match.tz || '';
+      saveState();
+      ensurePlannerWeather(inp(), true);
+      render();
+      setPlannerNotice('complete','Location updated',`Daily weather is now using ${match.label || query}.`);
+    }finally{
+      _plannerWeatherState = { ..._plannerWeatherState, lookupBusy:false };
+      weatherLookupBtn.disabled = false;
+      weatherLookupBtn.textContent = originalText || 'Look up';
+    }
+  });
+}
 
 // Cage controls
 document.getElementById('cageEnabled').addEventListener('click',function(){
@@ -8025,6 +8813,7 @@ document.querySelectorAll('.insight-header').forEach(hdr=>{
     if(!expanded) return;
     const key = hdr.getAttribute('data-section');
     if(key==='summary') switchRTab('score', false);
+    if(key==='today') switchRTab('today', false);
     if(key==='dashboard') switchRTab('dashboard', false);
     if(key==='inspect') switchRTab('inspect', false);
     if(key==='notes') switchRTab('notes', false);
@@ -8050,6 +8839,24 @@ document.querySelector('.insight-panel').addEventListener('click',function(ev){
       setPlannerNotice('active','Best fit queued','Paint mode is ready with the suggested crop for this cell.');
     }else if(action==='open-notes'){
       switchRTab('notes');
+      render();
+    }
+    return;
+  }
+  const todayBtn=ev.target.closest('[data-today-action]');
+  if(todayBtn){
+    const action=todayBtn.dataset.todayAction;
+    if(action==='focus-weather-settings'){
+      openTodayWeatherSettings();
+    }else if(action==='retry-weather'){
+      ensurePlannerWeather(inp(), true);
+      render();
+    }else if((action==='done-task' || action==='snooze-task' || action==='undo-task') && todayBtn.dataset.taskId && todayBtn.dataset.taskDate){
+      setTodayTaskDisposition(
+        todayBtn.dataset.taskDate,
+        todayBtn.dataset.taskId,
+        action==='done-task' ? 'done' : action==='snooze-task' ? 'snoozed' : ''
+      );
       render();
     }
     return;

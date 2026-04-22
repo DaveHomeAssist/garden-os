@@ -218,6 +218,10 @@ TODO / next-agent suggestions:
 [2026-03-22] [GardenOS] [test] Add Phase 2 coverage in `npcs.test.js`, `reputation.test.js`, `quest-engine.test.js`, `save.test.js`, `zone-manager.test.js`, and expanded `store.test.js`
 [2026-03-22] [GardenOS] [validation] Phase 2 `node --check` passed for code and test files; whitespace/conflict-marker scan passed; targeted vitest remained non-responsive in this shell
 [2026-03-22] [GardenOS] [feat] Add monthly event rotation in `story-mode/src/data/events.js` and month metadata to `specs/EVENT_DECK.json`
+[2026-04-22] [GardenOS] [feat] Unify world-map exit contract across zone registration and scene markers
+[2026-04-22] [GardenOS] [feat] Add trigger-driven `player_plot -> neighborhood -> player_plot` roundtrip coverage
+[2026-04-22] [GardenOS] [feat] Persist per-zone active bed selection and forage cooldown/history through save/load
+[2026-04-22] [GardenOS] [validation] `npm --prefix story-mode test -- src/scene/zone-manager.test.js src/test/integration.test.js src/game/store.test.js src/game/save.test.js src/game/foraging.test.js src/game/multi-bed.test.js` passed `204/204`
 [2026-04-20] [GardenOS] [phase-4A] Lock planner reasoning contract with browser fixtures
 - Replaced `docs/phase-reasoning-smoke.mjs` so it no longer checks stale "Reasoning surface" copy.
 - Added three fixed planner fixtures against the real inspect surface:
@@ -685,3 +689,54 @@ Remaining operational risk:
     - `npm run build` in `story-mode/` passed
     - `npm audit --audit-level=high` in `story-mode/` returned 0 vulnerabilities
     - local HEAD checks returned `200` for `/garden-os/index.html`, `/garden-os/home.html`, `/garden-os/garden-planner-v4.html`, `/garden-os/garden-doctor.html`, and `/garden-os/story-mode-live/`
+
+- 2026-04-22 planner Phase 6 season-context pass in `garden-os`:
+  - audited `specs/CROP_SCORING_DATA.json` for temporal reasoning inputs and confirmed the current seasonal metadata was sufficient for the first Phase 6 slice
+  - added a shared `seasonContext` payload in `garden-planner-v4.html` so the inspect lead, score story, inspect card, and reasoning surface all read from the same season-aware source
+  - added explicit succession-window hints for summer cool-season crops that are approaching the end of their viable window
+  - pinned the new season-context contract in `docs/phase-reasoning-smoke.mjs`, including spring, summer, and fall fixture expectations plus succession-hint assertions
+  - preserved the pre-Phase-6 baseline under `output/web-game/planner-phase4-contract/pre-phase6-baseline-2026-04-22/`
+  - targeted Playwright verification passed for:
+    - locked fit/caution/conflict fixtures
+    - new `fit_interior_lettuce_spring`, `caution_interior_lettuce_summer`, and `caution_trellis_cherry_fall` temporal fixtures
+    - broader weakest-cell auto-fill smoke, which now surfaces `Season context` and the new succession hint for the weakest slot
+  - full planner smoke wrapper now passes and refreshed `output/web-game/planner-phase4-contract/phase-reasoning-results.json`
+
+- 2026-04-22 planner Phase 5B closure pass in `garden-os`:
+  - confirmed the selected-cell score breakdown now has a single live render path: `renderScoreExplanation(reasoningSnapshot)` is the only selected-cell breakdown call site and it reads the shared `buildPlannerReasoningSnapshot(...)` payload
+  - extended `docs/phase-reasoning-smoke.mjs` so the harness now pins `score`, `scoreBreakdown.total`, the inspect hero score chip, the breakdown formula final, and the reasoning-card score to the same value
+  - targeted direct browser verification in the local planner confirmed the locked `fit_trellis_cherry` fixture stays aligned end to end: shared payload `8.3`, inspect hero `8.3/10 cell score`, breakdown final `Final: 8.3 / 10`, reasoning card `8.3/10`
+  - kept the `#autoFillBtn` automation issue explicit; no attempt was made to hide or rewrite that harness path during 5B closure
+
+TODO / next-agent suggestions:
+- Re-anchor the v4.5 Today plus Weather plan against the real planner markup. There is no pre-existing `today` insight section in `garden-planner-v4.html`.
+- Use the new score-alignment assertions in `docs/phase-reasoning-smoke.mjs` on the next full planner browser run once the long-lived shell browser hang is out of the way.
+
+- 2026-04-22 open-world contract and roundtrip pass in `garden-os`:
+  - aligned the open-world transition docs to the live eight-zone contract in `specs/WORLD_MAP.json`
+  - changed `story-mode/src/scene/zone-manager.js` so the default gate map is derived from `specs/WORLD_MAP.json` instead of a second hard-coded source
+  - normalized festival access by mapping `WORLD_MAP.json` `event` gates with `activeFestival` requirements into the runtime `festival` blocker path
+  - added contract coverage in `story-mode/src/scene/zone-manager.test.js` to pin the runtime gate map to the spec
+  - added a manager-layer roundtrip smoke and a real registered-zone roundtrip smoke in `story-mode/src/test/integration.test.js` for `player_plot -> neighborhood -> player_plot`
+  - validation:
+    - `npm --prefix story-mode test -- src/scene/zone-manager.test.js src/test/integration.test.js` passed with 156/156 tests
+
+- 2026-04-22 Today plus Weather integration pass in `garden-os`:
+  - added the planner-side Site controls for weather lookup, location label, latitude, longitude, frost threshold, and heat threshold in `garden-planner-v4.html`
+  - wired the new weather fields through `normalizeSiteSettings`, `saveState()`, `applyWorkspaceToUI()`, and `inp()` so they persist on `plannerState.site`
+  - added the new `Today` insight section, top-of-page frost alert banner, weather summary card, and task stack with `done`, `snooze`, and `undo` task dispositions
+  - wired live Open-Meteo geocoding and forecast fetches, then fixed the planner CSP so the page can reach only `api.open-meteo.com` and `geocoding-api.open-meteo.com`
+  - hardened geocoding so `City, ST` input falls back to `City` when the upstream geocoder rejects the comma-form query
+  - validation:
+    - inline planner script parse passed for `garden-planner-v4.html`
+    - deterministic Playwright pass verified the no-location Today state, seeded frost forecast state, frost alert banner, and `Mark done -> Undo done` task transition with no console or page errors
+    - live Playwright lookup using `Philadelphia, PA` now fills `weatherLabel`, `weatherLat`, `weatherLon`, and `weatherTz` with no console errors
+    - visual artifacts written under `output/planner-today-weather/`:
+      - `today-no-location-panel.png`
+      - `today-panel-frost.png`
+      - `today-alert-banner.png`
+      - `report.json`
+
+TODO / next-agent suggestions:
+- Decide whether to fold the deterministic Today plus Weather browser checks into `docs/phase-reasoning-smoke.mjs` or keep them as a separate planner verification script.
+- Phase 4 local notifications and any crop-schema expansion are still deferred; do not mix them into the current shipped Today pass without a separate gate.
