@@ -1,9 +1,10 @@
 # Garden OS — Complete Feature Set
 
-> **Version:** 1.0
-> **Updated:** 2026-03-16
-> **Architecture:** Static web app, vanilla JS, single-file HTML, GitHub Pages, zero backend
-> **Live:** https://davehomeassist.github.io/garden-os/
+> **Version:** 1.1
+> **Updated:** 2026-03-16 original; partial refresh 2026-04-20
+> **Last verified:** 2026-04-20 (scope-limited: crop count, simulator version, application map)
+> **Architecture:** Static HTML root tools + `story-mode/` Vite and Three.js runtime. GitHub Pages, zero backend for the product.
+> **Live:** https://davehomeassist.github.io/garden-os/ (hub) · https://davehomeassist.github.io/garden-os/story-mode-live/ (flagship runtime)
 
 ---
 
@@ -16,8 +17,10 @@ Garden OS is a collection of single-file HTML tools for raised bed garden planni
 | File | Purpose | State |
 |------|---------|-------|
 | `index.html` | Hub / landing page | Static |
-| `garden-planner-v4.html` | Grid planner + scoring engine | Active development |
-| `garden-league-simulator-v3.html` | Season Engine narrative game | Active development |
+| `garden-planner-v4.html` | Grid planner + scoring engine (v4.4) | Active. Phases 1 to 3 complete 2026-03-31 |
+| `garden-league-simulator-v4.html` | Legacy deterministic season simulator | Stable, still playable |
+| `story-mode-live/` | Flagship Story Mode runtime (12 chapter campaign) | Active. Vite + Three.js + Vitest (329 tests passing) |
+| `garden-doctor.html` | Symptom triage tool (Phase 2B) | Shipped 2026-03-31 |
 | `scoring-visualizer.html` | Debug tool for scoring | Reference |
 | `fairness-tester.html` | Algorithm validation | Reference |
 | `garden-cage-build-guide.html` | Physical build instructions | Static |
@@ -29,7 +32,7 @@ Garden OS is a collection of single-file HTML tools for raised bed garden planni
 |------|---------|
 | `garden-os-theme.css` | Design tokens (colors, fonts, spacing) |
 | `specs/SCORING_RULES.md` | Canonical scoring algorithm |
-| `specs/CROP_SCORING_DATA.json` | 20-crop roster with full metadata |
+| `specs/CROP_SCORING_DATA.json` | 50-crop roster with full metadata (v3 schema, 2026-03-22) |
 
 ---
 
@@ -73,14 +76,11 @@ Score range: 0-10 per cell. Bed average reported as overall score.
 }
 ```
 
-### Crop Roster (20 crops, 4 factions)
+### Crop Roster (50 crops, 8 factions)
 
-| Faction | Crops |
-|---------|-------|
-| Climbers | Cherry Tomato, Pole Beans, Peas, Indeterminate Tomato |
-| Greens | Leaf Lettuce, Spinach, Kale, Arugula, Chard, Bok Choy, Mustard Greens, Tatsoi, Mizuna |
-| Roots | Carrot, Beet, Radish, Onion |
-| Herbs | Basil, Dill, Parsley, Cilantro |
+Canonical roster in `specs/CROP_SCORING_DATA.json` (v3, last updated 2026-03-22). Factions: `brassicas`, `climbers`, `companions`, `fast_cycles`, `fruiting`, `greens`, `herbs`, `roots`. The earlier 20 crop, 4 faction roster below is historical from the v1.0 era of this doc and is retained as an audit trail only; do not treat it as current.
+
+**Historical v1.0 roster (superseded):** Climbers (Cherry Tomato, Pole Beans, Peas, Indeterminate Tomato), Greens (Leaf Lettuce, Spinach, Kale, Arugula, Chard, Bok Choy, Mustard Greens, Tatsoi, Mizuna), Roots (Carrot, Beet, Radish, Onion), Herbs (Basil, Dill, Parsley, Cilantro).
 
 ### Crop Properties
 

@@ -133,3 +133,15 @@ Issues tracked in `docs/UI_ISSUES_TABLE.html`. The table below is a historical a
 - Do not add randomness to scoring.
 - Do not modify specs/ JSON files without updating the corresponding HTML tool.
 - Do not create new overview/summary docs — `docs/HANDOFF.md` is the intake document.
+
+## Source of Truth Hierarchy
+
+1. specs/
+2. IMPLEMENTATION_PLAN.md
+3. Code (HTML/JS)
+4. Notion
+
+Rules:
+- Specs override code
+- Code must match IMPLEMENTATION_PLAN
+- Notion is a reporting layer, not authoritative

@@ -4,7 +4,7 @@
 
 **Purpose:** Browser-based garden planning ecosystem — a suite of single-file HTML tools plus a Three.js Story Mode game. Covers garden layout planning, scoring, build guides, operations guides, and a narrative-driven simulation.
 
-**Status:** Phase 1 complete (Trust the Score). Story Mode actively developed with title screen, cutscenes, inventory, and crop interaction. Live at davehomeassist.github.io/garden-os/.
+**Status:** Phases 1 through 3 complete as of 2026-03-31 (Trust the Score, What If?, Season Intelligence). Story Mode flagship runtime with title screen, 12 chapter framing, cutscenes, inventory, and crop interaction. Tests 329/329 passing (2026-04-19). Live at davehomeassist.github.io/garden-os/.
 
 ---
 
@@ -77,7 +77,7 @@
 | Project Name | Garden OS |
 | Epic / Track | UI + DATA + WEB + DOCS |
 | Owner | Dave Robertson |
-| Status | IN PROGRESS (Phase 2 next) |
+| Status | IN PROGRESS (Phases 1 to 3 complete 2026-03-31; Phase 4 scope open) |
 | Priority | HIGH |
 | Target Ship | Story Mode polish pass, then Phase 2 (What If?) |
 | Source of Truth | specs/SCORING_RULES.md (scoring), docs/HANDOFF.md (architecture), IMPLEMENTATION_PLAN.md (roadmap) |

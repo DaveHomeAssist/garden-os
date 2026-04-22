@@ -61,7 +61,7 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
 | [`/story-mode-live/`](https://davehomeassist.github.io/garden-os/story-mode-live/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
 | [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Legacy season sandbox / predecessor to Story Mode |
-| [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.3 |
+| [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.4 |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
 | [`/how-it-thinks.html`](https://davehomeassist.github.io/garden-os/how-it-thinks.html) | How the planner thinks |
@@ -75,6 +75,14 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | [`/fairness-tester.html`](https://davehomeassist.github.io/garden-os/fairness-tester.html) | Fairness tester |
 | [`/system-map.html`](https://davehomeassist.github.io/garden-os/system-map.html) | System map |
 | [`/system-topology.html`](https://davehomeassist.github.io/garden-os/system-topology.html) | System topology |
+
+**Internal / Unlinked** (not part of the primary user or dev nav)
+
+| Path | Description |
+|------|-------------|
+| [`/system-map%20copy.html`](https://davehomeassist.github.io/garden-os/system-map%20copy.html) | Draft system-map variant retained for internal reference |
+| [`/garden-os-sprite-viewer.html`](https://davehomeassist.github.io/garden-os/garden-os-sprite-viewer.html) | Sprite viewer for internal asset inspection |
+| [`/prompt-explorer.html`](https://davehomeassist.github.io/garden-os/prompt-explorer.html) | Prompt explorer for internal testing |
 
 **Legacy / Unlinked**
 
