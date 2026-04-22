@@ -26,6 +26,28 @@ These are canonical. Do not duplicate their content elsewhere — point to them.
 | [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice & tone | docs/ |
 | [HANDOFF.md](./HANDOFF.md) | AI project intake (full context) | docs/ |
 
+## Product Surfaces
+
+Use these categories when discussing the primary repo-root HTML surfaces.
+
+### User
+
+- `index.html`
+- `garden-planner-v4.html`
+- `garden-cage-build-guide.html`
+- `garden-cage-ops-guide.html`
+
+### Dev
+
+- `scoring-map.html`
+- `fairness-tester.html`
+
+### Internal
+
+- `system-map copy.html`
+- `garden-os-sprite-viewer.html`
+- `prompt-explorer.html`
+
 ## Core Design Docs (`docs/`)
 
 | Document | One-line description | Status |
@@ -37,6 +59,8 @@ These are canonical. Do not duplicate their content elsewhere — point to them.
 | [GAME_DESIGN_CRITIQUE.md](./GAME_DESIGN_CRITIQUE.md) | Brutal risk audit with anti-boring redesign recommendations. | Committed |
 | [GAME_FEEL.md](./GAME_FEEL.md) | Feedback/motion/microinteraction spec for tasteful juice. | Committed |
 | [MARKETING_STRATEGY.md](./MARKETING_STRATEGY.md) | Steam/trailer/store-facing framing, tags, hooks. | Committed |
+| [PLANNER_PHASE_TIMELINE.md](./PLANNER_PHASE_TIMELINE.md) | Active planner intelligence timeline with current phase state, ship gates, and milestone sequencing. | Active |
+| [PLANNER_PHASE_TIMELINE_TEMPLATE.md](./PLANNER_PHASE_TIMELINE_TEMPLATE.md) | Scaffold for drafting future planner intelligence phases. | Active |
 | [RESOURCE_STORAGE_POLICY.md](./RESOURCE_STORAGE_POLICY.md) | Scope and lifecycle rules for storing shared, runtime-local, generated, and archived resources. | Active |
 | [SYSTEM_MAP_PROPOSAL.md](./SYSTEM_MAP_PROPOSAL.md) | Proposal for updating the system map around the hybrid root-tools plus story-mode architecture. | Active |
 | [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Progression architecture without grind loops. | Committed |

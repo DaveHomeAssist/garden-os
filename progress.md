@@ -218,6 +218,60 @@ TODO / next-agent suggestions:
 [2026-03-22] [GardenOS] [test] Add Phase 2 coverage in `npcs.test.js`, `reputation.test.js`, `quest-engine.test.js`, `save.test.js`, `zone-manager.test.js`, and expanded `store.test.js`
 [2026-03-22] [GardenOS] [validation] Phase 2 `node --check` passed for code and test files; whitespace/conflict-marker scan passed; targeted vitest remained non-responsive in this shell
 [2026-03-22] [GardenOS] [feat] Add monthly event rotation in `story-mode/src/data/events.js` and month metadata to `specs/EVENT_DECK.json`
+[2026-04-20] [GardenOS] [phase-4A] Lock planner reasoning contract with browser fixtures
+- Replaced `docs/phase-reasoning-smoke.mjs` so it no longer checks stale "Reasoning surface" copy.
+- Added three fixed planner fixtures against the real inspect surface:
+  - `fit_trellis_cherry` -> `r0c0` `cherry_tom`, status `fit`, zone `Trellis row`, score `8.3`, bed `72`
+  - `caution_trellis_lettuce` -> `r0c1` `lettuce`, status `caution`, zone `Trellis row`, score `2.2`, bed `11`
+  - `conflict_off_trellis_cherry` -> `r1c1` `cherry_tom`, status `conflict`, zone `Protected row`, score `4.2`, bed `31`
+- Smoke still retains the legacy simulator review migration checks for chapter 3 -> `HARVEST_REVIEW` and chapter 4 -> `WINTER_REVIEW`.
+- Browser artifacts:
+  - `output/web-game/planner-phase4-contract/phase-reasoning-results.json`
+  - `output/web-game/planner-phase4-contract/fit_trellis_cherry.png`
+  - `output/web-game/planner-phase4-contract/caution_trellis_lettuce.png`
+  - `output/web-game/planner-phase4-contract/conflict_off_trellis_cherry.png`
+- Standard develop-web-game client also produced:
+  - `output/web-game/planner-phase4-skill/shot-0.png`
+  - `output/web-game/planner-phase4-skill/state-0.json`
+- Note: the generic client reported a `#autoFillBtn` click timeout while still exporting a filled-bed state and a clean screenshot. Worth diagnosing if the shared client becomes the primary planner harness.
+
+TODO / next-agent suggestions:
+- Phase 4B should extract the current derived-zone / derived-trait / fit-status logic into stable helper boundaries without changing any of the locked fixture outputs above.
+- If the generic Playwright client is going to stay in the loop for planner work, investigate why `page.click('#autoFillBtn')` times out even though the planner state shows a full auto-filled bed.
+
+- 2026-04-20 roadmap alignment pass after phase review:
+  - Split the planner timeline docs so `docs/PLANNER_PHASE_TIMELINE.md` now carries the repo-grounded Phase 4 to 8 plan and `docs/PLANNER_PHASE_TIMELINE_TEMPLATE.md` is back to being a true scaffold.
+  - Phase 4 now reflects the completed 4A browser contract lock instead of the old `phase4-demo.html` status line.
+  - Phase 6 no longer invents a duplicate `currentSeason` field; `plannerState.site.season` stays canonical unless a separate migration phase is approved.
+  - Phase 7 now targets reasoning across the existing multi-bed workspace rather than adding a second bed manager layer.
+  - Phase 8 now defines reasoning export as a derived format alongside `.gos.json`, not a replacement for the existing workspace contract.
+  - Synced `IMPLEMENTATION_PLAN.md` current-state snapshot and phase table to the same reality, and added a new next-step entry for Phase 4B extraction.
+- 2026-04-20 Phase 4B extraction complete:
+  - Added a shared planner-side reasoning snapshot in `garden-planner-v4.html` so the inspect surface and the score-story surface now consume the same derived zone, derived traits, issue stack, strict suggestions, and next-move payload.
+  - Kept numeric scoring and workspace persistence unchanged; this pass only changed the reasoning data flow.
+  - Re-ran `docs/phase-reasoning-smoke.mjs` against the local static server with Playwright and kept all three locked fixtures identical:
+    - `fit_trellis_cherry` -> `8.3` / `72`
+    - `caution_trellis_lettuce` -> `2.2` / `11`
+    - `conflict_off_trellis_cherry` -> `4.2` / `31`
+  - Refreshed browser artifacts under `output/web-game/planner-phase4-contract/`.
+
+TODO / next-agent suggestions:
+- Phase 4C should broaden validation beyond the three locked fixtures and rehearse rollback for the extracted reasoning path.
+- Investigate why the generic planner automation still times out on `#autoFillBtn` even when the state export shows a filled bed.
+
+- 2026-04-20 Phase 4C validation complete and Phase 5A started:
+  - Broadened planner verification beyond the three locked cells by validating the weakest cell in an auto-filled bed (`r0c5`, `1.8`) and confirming the `Inspect & explain` / `Why this score` surfaces still render cleanly at 32/32 filled cells.
+  - Rehearsed rollback inside `docs/phase-reasoning-smoke.mjs` by comparing the extracted shared snapshot against a recomputed legacy helper snapshot for locked fixtures and broader smoke paths.
+  - Reproduced the `#autoFillBtn` browser-click timeout again under automation while confirming DOM-triggered autofill still fills the bed, so the remaining defect is tracked as a harness issue rather than a planner regression.
+  - Started Phase 5 by extracting selected-cell score metadata into `buildPlannerScorePayload(...)` and routing the inspect hero score chip through the shared payload instead of a separate `scoreCell(...)` call.
+  - Direct browser verification after the refactor kept the locked fixture outputs unchanged:
+    - `fit_trellis_cherry` -> `8.3` / `72`
+    - `caution_trellis_lettuce` -> `2.2` / `11`
+    - `conflict_off_trellis_cherry` -> `4.2` / `31`
+
+TODO / next-agent suggestions:
+- Phase 5B should route the remaining selected-cell score-breakdown surface through the shared score payload and keep the fixture outputs locked.
+- Decide whether to harden or replace the browser-click step used for `#autoFillBtn` verification without masking the current automation issue.
 [2026-03-24] [GardenOS] [audit] Compared planner scoring, Story Mode scoring, and `specs/SCORING_RULES.md`
 [2026-03-24] [GardenOS] [doc] Added `docs/SCORING_MISMATCH_REPORT_2026-03-24.md` with canonical source decisions, drift buckets, and convergence path
 [2026-03-24] [GardenOS] [feat] Hardened planner score explanation in `garden-planner-v4.html` with explicit Rules core / Planner layer / Story Mode later provenance, plus a visible planner rollup breakdown card
