@@ -1,7 +1,13 @@
 // today.dev.js
-// Dev-only today engine for Garden OS v4.5, Phase 2.
-// Not inlined into garden-planner-v4.html yet (Phase 3 + gated on
-// IMPLEMENTATION_PLAN.md Phase 5B merging first).
+// REFERENCE ONLY as of Garden OS v4.5 (2026-04-22).
+// The authoritative today engine is now inlined inside
+// garden-planner-v4.html (Phase 3 shipped together with 5B closure).
+// This module stays checked in as:
+//   1. A clean reference of the TASK_RULES table and pure
+//      buildTodayTasks(state, weather, now) contract.
+//   2. The harness backing for tests/today.test.html.
+// If you change behavior, update BOTH the inlined copy in the planner
+// and this file; otherwise the reference drifts.
 //
 // Pure function:
 //   todayEngine.buildTodayTasks(state, weather, now, opts?) -> Task[]

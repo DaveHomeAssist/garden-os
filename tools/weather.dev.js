@@ -1,7 +1,12 @@
 // weather.dev.js
-// Dev-only weather module for Garden OS v4.5 Today plan, Phase 1.
-// Not inlined into garden-planner-v4.html yet; that is Phase 3 and gates
-// on IMPLEMENTATION_PLAN.md Phase 5B merging first.
+// REFERENCE ONLY as of Garden OS v4.5 (2026-04-22).
+// The authoritative weather implementation is now inlined inside
+// garden-planner-v4.html (Phase 3 shipped together with 5B closure).
+// This module stays checked in as:
+//   1. A clean, testable reference of the Open-Meteo fetch contract.
+//   2. The harness backing for tests/weather.test.html.
+// If you change behavior, update BOTH the inlined copy in the planner
+// and this file; otherwise the reference drifts.
 //
 // Contract:
 //   weather.fetchForecast(lat, lon, opts?) -> Promise<WeatherSnapshot | null>
