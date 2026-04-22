@@ -271,7 +271,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="os-nav" id="navBar" aria-label="Garden OS"></nav>
-<main id="main" data-last-verified="2026-03-22">
+<main id="main" data-last-verified="2026-04-20">
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow"></div>
@@ -649,112 +649,119 @@
     {
       "id": "028",
       "severity": "P2",
-      "status": "partial",
+      "status": "deferred",
       "area": "Interaction",
       "tool": "engine",
       "title": "Mulch/protect is per-cell only, no drag paint",
       "impact": "Zone edits are painful",
-      "notes": "Shift+click multi-select works, drag not implemented"
+      "notes": "Legacy engine. Story Mode is the active path. Shift+click multi-select works, drag not implemented"
     },
     {
       "id": "029",
       "severity": "P2",
-      "status": "partial",
+      "status": "deferred",
       "area": "Interaction",
       "tool": "engine",
       "title": "No multi-cell selection or batch actions",
       "impact": "Row/zone workflows slow",
-      "notes": "Interventions only, not general-purpose"
+      "notes": "Legacy engine. Story Mode is the active path. Interventions only, not general-purpose"
     },
     {
       "id": "030",
       "severity": "P2",
-      "status": "partial",
+      "status": "deferred",
       "area": "Resource clarity",
       "tool": "engine",
       "title": "Token economy is opaque",
       "impact": "Strategy collapses, users cannot plan",
-      "notes": "Count shown but rules not explained"
+      "notes": "Legacy engine. Story Mode is the active path. Count shown but rules not explained"
     },
     {
       "id": "031",
       "severity": "P2",
-      "status": "partial",
+      "status": "deferred",
       "area": "Goals",
       "tool": "engine",
       "title": "No persistent scoreboard / objective HUD",
       "impact": "Users do not know how to win",
-      "notes": "Target in results panel, scrolls away"
+      "notes": "Legacy engine. Story Mode is the active path. Target in results panel, scrolls away"
     },
     {
       "id": "032",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Accessibility",
       "tool": "engine",
       "title": "Full-screen story modes lack landmark roles",
-      "impact": "Screen readers get no context that view changed (chapter end, epilogue, sauce)",
-      "location": "Season Engine chapter/winter/sauce/epilogue screens"
+      "fix": "Added role=region to chapter end, sauce, epilogue, and winter review screens. Restored role=main on gameplay. Added role=status and aria-live=polite to narrator areas.",
+      "location": "Season Engine chapter/winter/sauce/epilogue screens",
+      "resolved": "2026-04-18"
     },
     {
       "id": "033",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Mode safety",
       "tool": "engine",
       "title": "Season Engine has no inspect mode",
-      "impact": "Clicking places if crop selected \u2014 trust breaker, inconsistent with Planner",
-      "location": "Season Engine cellClick()"
+      "fix": "Added inspect mode guard in cellClick(). When no crop is selected and eraser is off, clicks select the cell without placing. Matches planner pattern.",
+      "location": "Season Engine cellClick()",
+      "resolved": "2026-04-18"
     },
     {
       "id": "034",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Discoverability",
       "tool": "engine",
       "title": "No visible inspect button or panel in Engine",
-      "impact": "Cell inspection hidden, users must discover by clicking",
-      "location": "Season Engine toolbar"
+      "fix": "Added Inspect (I) button above eraser in left toolbar with aria-pressed state. Three mutually exclusive modes: inspect, paint, erase.",
+      "location": "Season Engine renderCtrl()",
+      "resolved": "2026-04-18"
     },
     {
       "id": "035",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Layout",
       "tool": "engine",
       "title": "Results panel info below scroll fold",
-      "impact": "Factor bars, event details, narrator text can be invisible without scrolling",
-      "location": "Season Engine right panel"
+      "fix": "Made score ring sticky at top of results panel. Wrapped harvest timeline in collapsible accSection. Event history, interventions, pantry, and history already collapsible.",
+      "location": "Season Engine results panel CSS and renderRes()",
+      "resolved": "2026-04-18"
     },
     {
       "id": "036",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Tutorial",
       "tool": "planner",
       "title": "Steps 2 & 4 do not lock clicks to target cell",
-      "impact": "User places crops in wrong cells, breaks narrative and subsequent steps",
-      "location": "Planner TUTORIAL_STEPS[1] and [3]"
+      "fix": "Added tutorial cell lock in wrapped handleCellPointerDown. During paint/erase mode, clicks on non-target cells are blocked. Inspect mode clicks still allowed.",
+      "location": "Planner tutorial wrapper around handleCellPointerDown",
+      "resolved": "2026-04-18"
     },
     {
       "id": "037",
       "severity": "P3",
-      "status": "open",
+      "status": "done",
       "area": "Tutorial",
       "tool": "planner",
       "title": "First-run prompt uses raw browser confirm()",
-      "impact": "Breaks warm aesthetic, feels like system error",
-      "location": "Planner boot sequence"
+      "verification": "No confirm() calls exist in the current planner. Boot sequence uses custom dialog via confirmAction() pattern.",
+      "location": "Planner boot sequence",
+      "resolved": "2026-04-18"
     },
     {
       "id": "038",
       "severity": "P3",
-      "status": "open",
+      "status": "done",
       "area": "Keyboard",
       "tool": "engine",
       "title": "No keyboard shortcut for inspect/neutral mode",
-      "impact": "Power users cannot switch modes via keyboard",
-      "location": "Season Engine"
+      "fix": "Added I key shortcut for inspect mode during planning phase. Updated shortcuts array in How to Play.",
+      "location": "Season Engine keyboard handler",
+      "resolved": "2026-04-18"
     },
     {
       "id": "039",
@@ -809,6 +816,15 @@
       "tool": "engine",
       "title": "Cache bedScore() during planning and reuse it in render",
       "notes": "Performance optimization is sequenced after correctness, interaction safety, and content wiring. Source: Season Engine patch plan Phase 4D"
+    },
+    {
+      "id": "045",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Tool parity",
+      "tool": "planner",
+      "title": "Playwright browser click on #autoFillBtn times out in automation",
+      "notes": "Automation-only issue. The button remains visible, enabled, and top-most; DOM-triggered autofill still fills the bed to 32/32 and planner behavior is intact. Track as harness hardening, not a live user-facing planner regression."
     }
   ]
 }

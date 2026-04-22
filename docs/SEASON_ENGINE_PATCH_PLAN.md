@@ -9,6 +9,8 @@ Artifact Class: SOP
 
 # Season Engine — Phased Patch Plan
 
+> **Status note:** Historical patch plan. Current phase tracking is superseded by `IMPLEMENTATION_PLAN.md` (System A).
+
 Post-brand-refactor roadmap for garden-league-simulator-v4.html.
 Engine integrity fixes first, then quality, then features, then UX polish.
 
@@ -116,7 +118,7 @@ Documented opportunities, not committed work.
 ## Execution Order
 
 Phase 1 → done.
-Phase 2 next — smallest scope, highest structural impact.
+Phase 2 was the next step at draft time — smallest scope, highest structural impact.
 Phase 3 alongside 2 — both are hardening, clean test surface.
 Phase 4 before 5 — activate what's built before porting new features.
 Phase 5 is the UX polish pass.

@@ -239,7 +239,7 @@ h3{font-family:var(--ff-body);font-size:0.8rem;font-weight:600;letter-spacing:0.
 .btn.danger{background:linear-gradient(180deg,#c26759 0%,#a75248 100%);color:#fff6f2;border-color:#9d4b44}
 .help-btn{background:var(--cream-dark);border-color:var(--border)}
 .help-btn:hover{filter:brightness(1.05)}
-.score-ring-wrap{text-align:center;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.score-ring-wrap{text-align:center;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;position:sticky;top:0;z-index:2;background:var(--surface)}
 .score-ring{position:relative;width:84px;height:84px;display:grid;place-items:center;flex-shrink:0}
 .score-ring svg{width:84px;height:84px;transform:rotate(-90deg);position:absolute;inset:0}
 .ring-track{fill:none;stroke:#dbc39e;stroke-width:8}
@@ -512,6 +512,7 @@ const HOWTO_SECTIONS=[
     shortcuts:[
       ['E','Toggle eraser in Planning.'],
       ['R','Advance to next month.'],
+      ['I','Enter inspect mode (neutral).'],
       ['Esc','Clear current selection or close overlays.'],
       ['H','Open How to Play overlay.']
     ]
@@ -1685,6 +1686,13 @@ function startChapter(ch){
 function renderCtrl(){
   const f=document.createDocumentFragment();
   f.appendChild(h('h2',null,'Crops'));
+  const isInspect=!S.selectedCrop&&!S.eraserMode;
+  const ib=h('button','eraser-btn'+(isInspect?' selected':''),'Inspect (I)');
+  ib.disabled=S.phase!==PHASES.PLANNING;
+  ib.setAttribute('aria-pressed',isInspect?'true':'false');
+  ib.setAttribute('aria-label','Inspect mode (I)');
+  ib.onclick=()=>{setInspectMode();render()};
+  f.appendChild(ib);
   const eb=h('button','eraser-btn'+(S.eraserMode?' selected':''),'Eraser (E)');
   eb.disabled=S.phase!==PHASES.PLANNING;
   eb.setAttribute('aria-pressed',S.eraserMode?'true':'false');
@@ -1749,6 +1757,7 @@ function renderBoard(){
   el.ctrl.style.display='';
   el.res.style.display='';
   el.board.setAttribute('aria-label','Garden bed');
+  el.board.setAttribute('role','main');
 
   const f=document.createDocumentFragment();
   // Season calendar strip
@@ -2313,7 +2322,7 @@ function renderRes(){
 
   // Yield / Harvest Timeline
   if(sd.yieldList.length){
-    f.appendChild(h('h3',null,'Harvest Timeline'));
+    const yieldItems=[];
     const crops=sd.yieldList.map(cid=>C[cid]).filter(Boolean).sort((a,b)=>(a.sm[S.season]||0.5)-(b.sm[S.season]||0.5));
     for(const cr of crops){
       const row=h('div','');
@@ -2329,8 +2338,9 @@ function renderRes(){
       const val=h('span','',sm>=0.8?'Peak':sm>=0.5?'Fair':'Poor');
       val.style.cssText='font-family:var(--ff-mono);font-size:var(--type-label);color:var(--text-muted);min-width:32px;text-align:right';
       row.appendChild(name);row.appendChild(barWrap);row.appendChild(val);
-      f.appendChild(row);
+      yieldItems.push(row);
     }
+    f.appendChild(accSection('Harvest Timeline ('+crops.length+')',yieldItems,true));
   }
   // ── Utility accordion: collapsible secondary sections ──
   if(sd.recipeMatches.length){
@@ -2436,6 +2446,7 @@ function renderChapterEnd(){
   el.ctrl.style.display='none';
   el.res.style.display='none';
   el.board.setAttribute('aria-label','Chapter end screen');
+  el.board.setAttribute('role','region');
 
   // Show the COMPLETED chapter, not the next one
   const ch=Math.max(1,CAM.currentChapter-1);
@@ -2454,6 +2465,7 @@ function renderChapterEnd(){
 
   // Resolution dialogue
   const na=h('div','narrator-area');
+  na.setAttribute('role','status');na.setAttribute('aria-live','polite');
   const gurlLine=passed?meta.successGurl:meta.failGurl;
   const onionLine=passed?meta.successOnion:meta.failOnion;
 
@@ -2536,6 +2548,8 @@ function renderWinterReview(){
   el.app.classList.add('menu-mode');
   el.ctrl.style.display='none';
   el.res.style.display='none';
+  el.board.setAttribute('aria-label','Winter review screen');
+  el.board.setAttribute('role','region');
 
   const ch=CAM.currentChapter;
   const meta=CHAPTERS[ch];
@@ -2551,6 +2565,7 @@ function renderWinterReview(){
 
   // Narrator intro
   const na=h('div','narrator-area');
+  na.setAttribute('role','status');na.setAttribute('aria-live','polite');
   if(meta.gurlIntro){
     const gs=h('div','narrator-slot visible');
     const gh=h('div','char-head');
@@ -2745,6 +2760,7 @@ function renderWinterReview(){
   const passed=yearAvg>=50;
 
   const na2=h('div','narrator-area');
+  na2.setAttribute('role','status');na2.setAttribute('aria-live','polite');
   na2.style.marginTop='10px';
   const gl=passed?meta.successGurl:meta.failGurl;
   const ol=passed?meta.successOnion:meta.failOnion;
@@ -2820,6 +2836,7 @@ function renderSauceSequence(){
   el.ctrl.style.display='none';
   el.res.style.display='none';
   el.board.setAttribute('aria-label','Sauce recipe sequence');
+  el.board.setAttribute('role','region');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 11'));
@@ -2936,6 +2953,7 @@ function renderEpilogue(){
   el.ctrl.style.display='none';
   el.res.style.display='none';
   el.board.setAttribute('aria-label','Epilogue');
+  el.board.setAttribute('role','region');
 
   el.meta.replaceChildren();
   el.meta.appendChild(h('span','chip','Chapter 12'));
@@ -3009,6 +3027,7 @@ function renderEpilogue(){
   // GURL final assessment
   const epilogueMoment=DIALOGUE_DB.chapter_12_epilogue||{};
   const na=h('div','narrator-area');
+  na.setAttribute('role','status');na.setAttribute('aria-live','polite');
   const gurlSlot=h('div','narrator-slot visible');
   const gh=h('div','char-head');
   gh.appendChild(h('span','char-emoji','\u{1F33F}'));
@@ -3281,6 +3300,9 @@ function cellClick(i){
   S._cachedBedScore=null;
   if(S.interventionMode){execIntervention(i);return}
   if(S.phase===PHASES.PLANNING){
+    if(!S.selectedCrop&&!S.eraserMode){
+      S.selectedCell=i;render();return;
+    }
     const prevCropId=S.grid[i].cropId;
     let changed=false;
     if(S.eraserMode){
@@ -3642,6 +3664,7 @@ document.addEventListener('keydown',e=>{
   if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo();return}
   if(e.key==='e'||e.key==='E'){if(S.phase===PHASES.PLANNING){toggleEraserTool();render()}}
   if(e.key==='r'||e.key==='R'){if(BEAT_PHASES.includes(S.phase)&&(!S.beatTokenAvailable||!S.currentEvent))advanceBeat()}
+  if(e.key==='i'||e.key==='I'){if(S&&S.phase===PHASES.PLANNING){setInspectMode();render()}}
   if(e.key==='Escape'){if(S){setInspectMode();render()}}
 });
 document.addEventListener('keydown',e=>{
