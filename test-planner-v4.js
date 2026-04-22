@@ -233,6 +233,10 @@ const wrappedScript = `
   __test_exports.normalizeSiteSettings = typeof normalizeSiteSettings !== 'undefined' ? normalizeSiteSettings : null;
   __test_exports.saveState = typeof saveState !== 'undefined' ? saveState : null;
   __test_exports.pushUndo = typeof pushUndo !== 'undefined' ? pushUndo : null;
+  __test_exports.validateFamilyRecipeSnapshot = typeof validateFamilyRecipeSnapshot !== 'undefined' ? validateFamilyRecipeSnapshot : null;
+  __test_exports.loadFamilyRecipeSnapshot = typeof loadFamilyRecipeSnapshot !== 'undefined' ? loadFamilyRecipeSnapshot : null;
+  __test_exports.saveFamilyRecipeSnapshot = typeof saveFamilyRecipeSnapshot !== 'undefined' ? saveFamilyRecipeSnapshot : null;
+  __test_exports.matchFamilyRecipes = typeof matchFamilyRecipes !== 'undefined' ? matchFamilyRecipes : null;
   __test_exports.INSIGHT_SECTION_MAP = typeof INSIGHT_SECTION_MAP !== 'undefined' ? INSIGHT_SECTION_MAP : {};
 `;
 
@@ -1130,6 +1134,64 @@ suite('27. uniqueId generation');
   const sample = T.uniqueId('pl');
   assert(sample.startsWith('pl-'), 'ID starts with prefix');
   assert(sample.length > 8, 'ID has reasonable length');
+}
+
+suite('28. Family recipe bridge');
+
+assertType(T.validateFamilyRecipeSnapshot, 'function', 'validateFamilyRecipeSnapshot');
+assertType(T.matchFamilyRecipes, 'function', 'matchFamilyRecipes');
+
+{
+  const valid = T.validateFamilyRecipeSnapshot({
+    schemaVersion: 1,
+    exportedAt: '2026-04-20T12:00:00.000Z',
+    recipes: [
+      {
+        id: 'family-moms-sauce',
+        name: "Mom's Sunday Sauce",
+        url: 'https://example.com/recipes/family-moms-sauce',
+        ingredients_raw: ['tomatoes', 'basil', 'salt'],
+        garden_ingredient_tokens: ['tomato', 'basil'],
+        tags: ['family'],
+      },
+    ],
+  });
+  assert(valid.ok, 'valid family recipe snapshot accepted');
+}
+
+{
+  const invalid = T.validateFamilyRecipeSnapshot({ schemaVersion: 99, recipes: [] });
+  assert(!invalid.ok, 'unsupported schema version rejected');
+}
+
+{
+  const ws = makeTestWorkspace({ crops: ['cherry_tom', 'basil', 'onion'] });
+  setupRuntime(ws);
+  const result = T.matchFamilyRecipes(T.getBed(), {
+    schemaVersion: 1,
+    exportedAt: '2026-04-20T12:00:00.000Z',
+    recipes: [
+      {
+        id: 'family-moms-sauce',
+        name: "Mom's Sunday Sauce",
+        url: 'https://example.com/recipes/family-moms-sauce',
+        ingredients_raw: ['tomatoes', 'basil', 'salt'],
+        garden_ingredient_tokens: ['tomato', 'basil'],
+        tags: ['family'],
+      },
+      {
+        id: 'family-salsa',
+        name: 'Fresh Garden Salsa',
+        url: 'https://example.com/recipes/family-salsa',
+        ingredients_raw: ['tomatoes', 'cilantro', 'hot pepper'],
+        garden_ingredient_tokens: ['tomato', 'cilantro', 'pepper'],
+        tags: ['family'],
+      },
+    ],
+  });
+
+  assertEq(result.fullMatches.length, 1, 'one full family recipe match found');
+  assertEq(result.fullMatches[0].id, 'family-moms-sauce', 'matching recipe ID preserved');
 }
 
 

@@ -3973,6 +3973,107 @@ function safeRemoveStorageKey(key){
   try{ localStorage.removeItem(key); }catch(e){}
 }
 
+function validateFamilyRecipeSnapshot(raw){
+  if(!raw || typeof raw!=='object' || Array.isArray(raw)){
+    return { ok:false, error:'Expected a family recipe snapshot object.' };
+  }
+  if(Number(raw.schemaVersion)!==FAMILY_RECIPE_SCHEMA_VERSION){
+    return { ok:false, error:`Unsupported family recipe snapshot version: ${raw.schemaVersion}` };
+  }
+  if(!Array.isArray(raw.recipes)){
+    return { ok:false, error:'Family recipe snapshot must include a recipes array.' };
+  }
+  const warnings = [];
+  const recipes = raw.recipes.flatMap((recipe, index)=>{
+    const hasRequiredFields =
+      recipe &&
+      typeof recipe.id==='string' &&
+      typeof recipe.name==='string' &&
+      typeof recipe.url==='string' &&
+      Array.isArray(recipe.ingredients_raw) &&
+      Array.isArray(recipe.garden_ingredient_tokens);
+    if(!hasRequiredFields){
+      warnings.push(`Skipped malformed recipe at index ${index}.`);
+      return [];
+    }
+    return [{
+      id:recipe.id,
+      name:recipe.name,
+      url:recipe.url,
+      ingredients_raw:recipe.ingredients_raw.map(item=>String(item)),
+      garden_ingredient_tokens:recipe.garden_ingredient_tokens.map(item=>String(item)),
+      tags:Array.isArray(recipe.tags) ? recipe.tags.map(item=>String(item)) : []
+    }];
+  });
+  return {
+    ok:true,
+    warnings,
+    snapshot:{
+      schemaVersion:FAMILY_RECIPE_SCHEMA_VERSION,
+      exportedAt:String(raw.exportedAt || ''),
+      recipes
+    }
+  };
+}
+
+function loadFamilyRecipeSnapshot(){
+  try{
+    const raw = localStorage.getItem(LS_KEY_FAMILY_RECIPES);
+    if(!raw) return { ok:false, error:'No family recipe snapshot loaded yet.' };
+    return validateFamilyRecipeSnapshot(JSON.parse(raw));
+  }catch(e){
+    return { ok:false, error:'Stored family recipe snapshot is invalid JSON.' };
+  }
+}
+
+function saveFamilyRecipeSnapshot(snapshot){
+  try{
+    localStorage.setItem(LS_KEY_FAMILY_RECIPES, JSON.stringify(snapshot));
+    return { ok:true };
+  }catch(e){
+    return { ok:false, error:'Unable to store the family recipe snapshot locally.' };
+  }
+}
+
+function getPlantedCropKeys(runtimeBed){
+  return [...new Set((runtimeBed || []).map(cell=>cell && cell.crop).filter(Boolean))];
+}
+
+function getSatisfiedGardenTokens(plantedCropKeys){
+  const planted = new Set(plantedCropKeys || []);
+  return new Set(
+    Object.entries(FAMILY_RECIPE_ALIAS_MAP)
+      .filter(([, cropKeys])=>cropKeys.some(cropKey=>planted.has(cropKey)))
+      .map(([token])=>token)
+  );
+}
+
+function matchFamilyRecipes(runtimeBed, snapshot){
+  const plantedCropKeys = getPlantedCropKeys(runtimeBed);
+  const satisfiedTokens = getSatisfiedGardenTokens(plantedCropKeys);
+  const fullMatches = [];
+  const partialMatches = [];
+  (snapshot && Array.isArray(snapshot.recipes) ? snapshot.recipes : []).forEach(recipe=>{
+    const recipeTokens = Array.isArray(recipe.garden_ingredient_tokens) ? recipe.garden_ingredient_tokens : [];
+    const missingTokens = recipeTokens.filter(token=>!satisfiedTokens.has(token));
+    const matchedCropIds = plantedCropKeys.filter(cropKey=>
+      recipeTokens.some(token=>(FAMILY_RECIPE_ALIAS_MAP[token] || []).includes(cropKey))
+    );
+    const record = {
+      id:recipe.id,
+      name:recipe.name,
+      url:recipe.url,
+      tags:Array.isArray(recipe.tags) ? recipe.tags : [],
+      matchedCropIds,
+      matchedTokens:recipeTokens.filter(token=>satisfiedTokens.has(token)),
+      missingTokens
+    };
+    if(!missingTokens.length) fullMatches.push(record);
+    else partialMatches.push(record);
+  });
+  return { fullMatches, partialMatches };
+}
+
 // Undo/redo
 function bedSnapshot(){ return bed.map(c=>({crop:c.crop, plantingId:c.plantingId||null, plantedAt:c.plantedAt||null, status:c.status||null, events:c.events?c.events.slice():[], plantingNotes:c.plantingNotes||'', tasks:c.tasks?JSON.parse(JSON.stringify(c.tasks)):[]})); }
 function restoreSnapshot(snap){
@@ -4030,6 +4131,19 @@ const LS_KEY = 'gardenOS_workspace';
 const LS_KEY_LEGACY = 'gardenOS';
 const LS_KEY_LEGACY_V4 = 'gardenOS_v4';
 const LS_KEY_RESTORE = 'gardenOS_workspace_restore_v1';
+const FAMILY_RECIPE_SCHEMA_VERSION = 1;
+const LS_KEY_FAMILY_RECIPES = 'gardenOS_familyRecipes_v1';
+const FAMILY_RECIPE_ALIAS_MAP = {
+  tomato:['cherry_tom','compact_tomato'],
+  basil:['basil'],
+  onion:['onion','scallion','prairie_onion'],
+  carrot:['carrot'],
+  lettuce:['lettuce','head_lettuce'],
+  radish:['radish'],
+  chive:['chives'],
+  cilantro:['cilantro'],
+  pepper:['pepper','ghost_pepper']
+};
 let _workspace = null;
 let _activeBedTraits = null;
 let _recoveryPayload = null;

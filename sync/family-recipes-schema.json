@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "type": "garden-os-family-recipes-snapshot",
+  "required": ["schemaVersion", "exportedAt", "recipes"],
+  "recipeRequired": ["id", "name", "url", "ingredients_raw", "garden_ingredient_tokens"]
+}
