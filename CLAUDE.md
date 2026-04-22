@@ -1,5 +1,26 @@
 # Garden OS — Agent Instructions
 
+## Project Overview
+
+Browser-based garden planning game and tool suite. Deterministic crop scoring engine, season simulator, character dialogue system, and a set of standalone planning tools. All surfaces run entirely in the browser with no server dependency.
+
+## Stack
+
+- Vanilla HTML/CSS/JS (root tool suite: self-contained single-file `.html` apps)
+- Vite + Three.js + Vitest (`story-mode/` only)
+- localStorage persistence, `.gos.json` export/import for cross-tool data exchange
+- GitHub Pages deployment from `main`
+- Google Fonts (DM Sans, DM Mono, Fraunces) with graceful offline degradation
+
+## Key Decisions
+
+- Zero backend constraint is permanent. No servers, APIs, or databases.
+- Root tools must remain single-file HTML. Build tooling allowed only inside `story-mode/`.
+- Scoring is strictly deterministic with six fixed weighted factors. No randomness.
+- Schema-first: all tools validate against `gos-schema.json`. Specs in `specs/` are canonical over code.
+- Two permanent nav tracks (User and Dev) that connect via bridge links but do not merge.
+- Character dialogue is trigger-driven and deterministic. No random chatter.
+
 ## Architecture — Hard Constraints
 
 - **Zero backend.** No servers, no APIs, no databases. Everything runs in the browser.
@@ -77,6 +98,10 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 - **Session log**: Append to `/Users/daverobertson/Desktop/Code/95-docs-personal/today.csv` after each meaningful change
 - **Implementation plan**: `IMPLEMENTATION_PLAN.md` — update `Last verified:` date when reviewing
 - **Handoff**: `docs/HANDOFF.md` — update when architecture or key decisions change
+
+## Issue Tracker
+
+Issues tracked in `docs/UI_ISSUES_TABLE.html`. The table below is a historical archive only.
 
 ## Issue Archive (from AGENTS.md)
 
