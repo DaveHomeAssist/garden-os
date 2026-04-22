@@ -3,16 +3,11 @@ import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsInZone } from '../../data/npcs.js';
 import { makeNpcMesh } from './zone-interactables.js';
 import { createShopPanel } from '../../ui/shop-panel.js';
+import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
   id: 'market_square', name: 'Market Square', biome: 'town',
   spawnPoint: { x: 8, z: 0 },
-  exitPoints: [
-    { id: 'market_to_neighborhood', destination: 'neighborhood', position: { x: 8.5, z: 0 },
-      triggerBounds: { minX: 8, maxX: 9, minZ: -1.5, maxZ: 1.5 }, spawnPoint: { x: -8, z: 0 } },
-    { id: 'market_to_greenhouse', destination: 'greenhouse', position: { x: 0, z: -8.5 },
-      triggerBounds: { minX: -1.5, maxX: 1.5, minZ: -9, maxZ: -8 }, spawnPoint: { x: 0, z: 7 } },
-  ],
 };
 
 function box(sx, sy, sz, color, x, y, z) {
@@ -69,7 +64,7 @@ export function createMarketSquare(store, tracker) {
   const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
-  ZONE_DEF.exitPoints.forEach((exit) => {
+  getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
     const mk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });

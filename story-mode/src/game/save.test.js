@@ -142,4 +142,36 @@ describe('save', () => {
     expect(loaded.biomeCropsUnlocked).toEqual(['wild_garlic', 'shiitake_mushroom']);
     expect(loaded.gameMode).toBe('sandbox');
   });
+
+  it('round-trips forage cooldown and history state inside worldState', () => {
+    const state = createGameState();
+    state.campaign.worldState.currentZone = 'meadow';
+    state.campaign.worldState.forageState = {
+      cooldowns: {
+        meadow_herbs: 1_700_000_300_000,
+      },
+      history: {
+        meadow_herbs: {
+          zoneId: 'meadow',
+          items: [{ itemId: 'basil_seed', count: 2 }],
+          xpGained: 20,
+          timestamp: 1_700_000_000_000,
+        },
+      },
+    };
+
+    saveCampaign(state.campaign, 2);
+    const loaded = loadCampaign(2);
+
+    expect(loaded.worldState.currentZone).toBe('meadow');
+    expect(loaded.worldState.forageState.cooldowns).toEqual({
+      meadow_herbs: 1_700_000_300_000,
+    });
+    expect(loaded.worldState.forageState.history.meadow_herbs).toEqual({
+      zoneId: 'meadow',
+      items: [{ itemId: 'basil_seed', count: 2 }],
+      xpGained: 20,
+      timestamp: 1_700_000_000_000,
+    });
+  });
 });

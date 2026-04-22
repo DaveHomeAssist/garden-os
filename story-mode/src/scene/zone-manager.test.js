@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import WORLD_MAP from 'specs/WORLD_MAP.json';
 
-import { ZoneManager } from './zone-manager.js';
+import { ZoneManager, DEFAULT_ZONE_GATES, buildZoneGateRequirements } from './zone-manager.js';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -71,5 +72,36 @@ describe('ZoneManager', () => {
     expect(manager.canEnterZone('forest_edge').allowed).toBe(false);
     expect(manager.canEnterZone('meadow').allowed).toBe(false);
     expect(manager.canEnterZone('festival_grounds').allowed).toBe(false);
+  });
+
+  it('derives the default zone gate map from WORLD_MAP.json', () => {
+    expect(DEFAULT_ZONE_GATES).toEqual(buildZoneGateRequirements(WORLD_MAP));
+    expect(Object.keys(DEFAULT_ZONE_GATES).sort()).toEqual(Object.keys(WORLD_MAP.zones).sort());
+    expect(DEFAULT_ZONE_GATES.player_plot).toEqual({});
+    expect(DEFAULT_ZONE_GATES.neighborhood).toEqual({});
+    expect(DEFAULT_ZONE_GATES.meadow).toEqual({
+      message: WORLD_MAP.zones.meadow.gate.blockerMessage,
+      skills: { foraging: 3 },
+    });
+    expect(DEFAULT_ZONE_GATES.riverside).toEqual({
+      message: WORLD_MAP.zones.riverside.gate.blockerMessage,
+      quests: ['gus_river_path'],
+    });
+    expect(DEFAULT_ZONE_GATES.forest_edge).toEqual({
+      message: WORLD_MAP.zones.forest_edge.gate.blockerMessage,
+      reputation: { old_gus: 'friend' },
+    });
+    expect(DEFAULT_ZONE_GATES.greenhouse).toEqual({
+      message: WORLD_MAP.zones.greenhouse.gate.blockerMessage,
+      skills: { crafting: 5 },
+    });
+    expect(DEFAULT_ZONE_GATES.market_square).toEqual({
+      message: WORLD_MAP.zones.market_square.gate.blockerMessage,
+      skills: { social: 2 },
+    });
+    expect(DEFAULT_ZONE_GATES.festival_grounds).toEqual({
+      message: WORLD_MAP.zones.festival_grounds.gate.blockerMessage,
+      festival: true,
+    });
   });
 });

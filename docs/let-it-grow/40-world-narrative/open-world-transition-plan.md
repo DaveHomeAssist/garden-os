@@ -31,21 +31,35 @@
 ### Zones
 
 ```
-Player Plot (start)
-├── Front Yard → Neighborhood Hub
-│   ├── Old Gus's Garden (reputation-gated)
-│   ├── Maya's Workshop (quest-gated)
-│   ├── Lila's Kitchen Garden (chapter-gated)
-│   └── Community Plot (seasonal events)
-├── Back Gate → Expansion Zones
-│   ├── Meadow (Foraging 3 required)
-│   ├── Riverside (Exploration quest)
-│   ├── Forest Edge (Reputation: Gus Friend)
-│   └── Greenhouse (Crafting 5 required)
-└── Side Path → Event Areas
-    ├── Festival Grounds (seasonal)
-    └── Market Square (trading)
+player_plot
+└── neighborhood
+    ├── meadow → riverside
+    ├── forest_edge → greenhouse
+    ├── market_square
+    └── festival_grounds
 ```
+
+### Locked Zone Contract
+
+- Stable ids:
+  - `player_plot`
+  - `neighborhood`
+  - `meadow`
+  - `riverside`
+  - `forest_edge`
+  - `greenhouse`
+  - `market_square`
+  - `festival_grounds`
+- Source of truth:
+  - `specs/WORLD_MAP.json` owns zone ids, connections, gate metadata, biome tags, and narrative descriptions.
+  - `story-mode/src/scene/zone-manager.js` derives default access rules from `specs/WORLD_MAP.json` so gate requirements do not drift.
+- Current gate map:
+  - `meadow`: foraging level 3
+  - `riverside`: quest `gus_river_path`
+  - `forest_edge`: `old_gus` reputation tier `friend`
+  - `greenhouse`: crafting level 5
+  - `market_square`: social level 2
+  - `festival_grounds`: active festival required
 
 ### Zone Loading Strategy
 - Each zone is an independent Three.js scene
@@ -91,6 +105,22 @@ Player Plot (start)
 
 ## Current Phase 5 Preproduction Gate
 
+### Status on 2026-04-22
+
+- Slice 1 complete at the contract level:
+  - `specs/WORLD_MAP.json` is the source of truth for zone ids and gate metadata
+  - `story-mode/src/scene/zone-manager.js` now derives its default gate map from `specs/WORLD_MAP.json`
+  - zone gate assumptions are pinned by `story-mode/src/scene/zone-manager.test.js`
+- Slice 2 complete for the current navigation gate:
+  - `story-mode/src/scene/zones/world-zone-contract.js` derives trigger bounds from the canonical world-map exit contract
+  - scene exit markers and zone registration now read the same `specs/WORLD_MAP.json` exit graph
+  - `story-mode/src/test/integration.test.js` now drives `player_plot -> neighborhood -> player_plot` through real trigger checks instead of hand-calling `transitionTo(...)`
+  - the roundtrip asserts clean disposal, repeatable transition dispatch, successful return to the home plot, and a valid render/update pass after coming home
+- Slice 3 complete for the first persistence gate:
+  - zone changes now move `activeBedId` to the owned bed for the entered zone when one exists
+  - forage cooldowns and pickup history now persist under `campaign.worldState.forageState`
+  - save/load verification now proves current zone, active bed, and forage cooldown state survive a reload
+
 ### Slice Order
 
 1. Zone registry and world map contract
@@ -119,8 +149,8 @@ Player Plot (start)
 ### First Smoke Script
 
 1. Start in `player_plot`
-2. Travel to one unlocked non-home zone
+2. Travel to one unlocked non-home zone through a real registered exit
 3. Forage one material pickup
-4. Return to the home plot
+4. Return to the home plot through a real registered exit
 5. Save and reload
-6. Verify active zone, inventory pickup, and home bed state persisted
+6. Verify active zone, active bed, inventory pickup, and forage cooldown state persisted

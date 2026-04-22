@@ -1,4 +1,3 @@
-import WORLD_MAP from 'specs/WORLD_MAP.json';
 import { createPlayerPlot } from './player-plot.js';
 import { createNeighborhood } from './neighborhood.js';
 import { createMarketSquare } from './market-square.js';
@@ -7,6 +6,7 @@ import { createForestEdge } from './forest-edge.js';
 import { createRiverside } from './riverside.js';
 import { createGreenhouse } from './greenhouse.js';
 import { createFestivalGrounds } from './festival-grounds.js';
+import { WORLD_MAP, getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_FACTORIES = {
   player_plot: createPlayerPlot,
@@ -28,8 +28,7 @@ export function registerAllZones(zoneManager, store, tracker) {
 
     zoneManager.registerZone(zoneId, () => factory(store, tracker));
 
-    const zoneDef = zones[zoneId];
-    (zoneDef.exitPoints ?? []).forEach((exit) => {
+    getZoneExitPoints(zoneId, WORLD_MAP).forEach((exit) => {
       zoneManager.addZoneExit(
         zoneId,
         exit.triggerBounds,

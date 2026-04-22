@@ -45,6 +45,7 @@ import { CraftingSystem } from '../game/crafting.js';
 import { ForagingSystem } from '../game/foraging.js';
 import { ZoneManager, evaluateZoneAccess, DEFAULT_ZONE_GATES } from '../scene/zone-manager.js';
 import * as ZONE_REGISTRY from '../scene/zones/zone-registry.js';
+import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
 import { createPlayerController } from '../game/player-controller.js';
 import { InteractionSystem } from '../game/interaction.js';
 import { createCutsceneMachine } from '../game/cutscene-machine.js';
@@ -2549,6 +2550,77 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
       vi.unstubAllGlobals();
     });
 
+    it('player_plot -> neighborhood -> player_plot roundtrip keeps transitions and disposal clean', async () => {
+      vi.useFakeTimers();
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = { track: vi.fn(), trackObject: vi.fn(), disposeObject: vi.fn(), disposeAll: vi.fn() };
+      vi.stubGlobal('document', {
+        body: { appendChild: vi.fn() },
+        createElement() { return { style: {}, remove: vi.fn() }; },
+      });
+
+      const plotDispose = vi.fn();
+      const neighborhoodDispose = vi.fn();
+      const manager = new ZoneManager({ render: vi.fn() }, store, tracker);
+      manager.registerZone('player_plot', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: plotDispose,
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+        update: vi.fn(),
+      }));
+      manager.registerZone('neighborhood', () => ({
+        scene: new THREE.Scene(),
+        camera: new THREE.PerspectiveCamera(),
+        dispose: neighborhoodDispose,
+        setSpawnPoint: vi.fn(),
+        getPlayerPosition() { return null; },
+        update: vi.fn(),
+      }));
+
+      const toPlot = manager.transitionTo('player_plot');
+      await vi.runAllTimersAsync();
+      await toPlot;
+      expect(manager.getActiveZone()).toBe('player_plot');
+      expect(plotDispose).not.toHaveBeenCalled();
+      expect(neighborhoodDispose).not.toHaveBeenCalled();
+
+      const toNeighborhood = manager.transitionTo('neighborhood', { x: 1, z: 2 });
+      await vi.runAllTimersAsync();
+      await toNeighborhood;
+      expect(manager.getActiveZone()).toBe('neighborhood');
+      expect(plotDispose).toHaveBeenCalledTimes(1);
+      expect(neighborhoodDispose).not.toHaveBeenCalled();
+
+      const backHome = manager.transitionTo('player_plot', { x: 0, z: 1 });
+      await vi.runAllTimersAsync();
+      await backHome;
+      expect(manager.getActiveZone()).toBe('player_plot');
+      expect(plotDispose).toHaveBeenCalledTimes(1);
+      expect(neighborhoodDispose).toHaveBeenCalledTimes(1);
+      expect(tracker.disposeAll).toHaveBeenCalledTimes(3);
+
+      manager.update(0.016);
+      manager.render();
+
+      const zoneChanges = store.dispatch.mock.calls
+        .map(([action]) => action)
+        .filter((action) => action?.type === Actions.ZONE_CHANGED);
+      expect(zoneChanges).toHaveLength(3);
+      expect(zoneChanges.at(-1)?.payload).toEqual({
+        fromZone: 'neighborhood',
+        toZone: 'player_plot',
+        spawnPoint: { x: 0, z: 1 },
+      });
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
     it('zone visual theme varies by current season', () => {
       // Zone factories produce distinct visual themes per zone.
       // Verify that each zone factory in ZONE_FACTORIES exists and that
@@ -4086,9 +4158,8 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       await first;
       expect(manager.getActiveZone()).toBe('player_plot');
 
-      // The player_plot exit to neighborhood has triggerBounds { minX: -1.5, maxX: 1.5, minZ: -9, maxZ: -8 }
-      const exitDef = WORLD_MAP.zones.player_plot.exitPoints[0];
-      const insideExit = { x: 0, z: -8.5 };
+      const exitDef = getZoneExitPoints('player_plot', WORLD_MAP)[0];
+      const insideExit = { x: exitDef.position.x, z: exitDef.position.z };
 
       // Verify exits are registered for player_plot
       const registeredExits = manager.zoneExits.get('player_plot');
@@ -4099,11 +4170,9 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(manager.factories.has(exitDef.destination), `factory for ${exitDef.destination} must be registered`).toBe(true);
       expect(manager.transitioning, 'manager should not be mid-transition').toBe(false);
 
-      // Directly transition via transitionTo to the destination zone
-      // (simulating what checkTriggers does when player is inside exit bounds)
-      const transitionResult = manager.transitionTo(exitDef.destination, exitDef.spawnPoint);
+      manager.activeZoneInstance.setPlayerPosition(insideExit);
+      manager.update(0.016);
       await vi.runAllTimersAsync();
-      await transitionResult;
 
       expect(manager.getActiveZone()).toBe(exitDef.destination);
 
@@ -4159,6 +4228,73 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
           expect(pos.z).toBe(customSpawn.z);
         }
       }
+
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it('real zone registry supports a player_plot -> neighborhood -> player_plot roundtrip', async () => {
+      const store = {
+        getState: () => ({ campaign: { reputation: {}, skills: {}, questLog: {}, activeFestival: null }, season: {} }),
+        dispatch: vi.fn(),
+      };
+      const tracker = {
+        track: vi.fn(),
+        trackObject: vi.fn(),
+        disposeObject: vi.fn(),
+        disposeAll: vi.fn(),
+      };
+
+      vi.useFakeTimers();
+      const body = { appendChild: vi.fn() };
+      const mockCtx = {
+        fillStyle: '', strokeStyle: '', lineWidth: 0, font: '', textAlign: '', textBaseline: '',
+        fillRect: vi.fn(), strokeRect: vi.fn(), fillText: vi.fn(),
+      };
+      vi.stubGlobal('document', {
+        body,
+        createElement(tag) {
+          if (tag === 'canvas') return { width: 0, height: 0, style: {}, remove: vi.fn(), getContext: () => mockCtx };
+          return { style: {}, remove: vi.fn() };
+        },
+      });
+
+      const renderer = { render: vi.fn() };
+      const manager = new ZoneManager(renderer, store, tracker);
+      ZONE_REGISTRY.registerAllZones(manager, store, tracker);
+
+      const toPlot = manager.transitionTo('player_plot', { x: 0, z: 3 });
+      await vi.runAllTimersAsync();
+      await toPlot;
+      expect(manager.getActiveZone()).toBe('player_plot');
+
+      const toNeighborhoodExit = getZoneExitPoints('player_plot')[0];
+      manager.activeZoneInstance.setPlayerPosition({ ...toNeighborhoodExit.position });
+      manager.update(0.016);
+      await vi.runAllTimersAsync();
+      expect(manager.getActiveZone()).toBe('neighborhood');
+
+      const backHomeExit = getZoneExitPoints('neighborhood').find((exit) => exit.destination === 'player_plot');
+      manager.activeZoneInstance.setPlayerPosition({ ...backHomeExit.position });
+      manager.update(0.016);
+      await vi.runAllTimersAsync();
+      expect(manager.getActiveZone()).toBe('player_plot');
+
+      manager.update(0.016);
+      manager.render();
+
+      expect(renderer.render).toHaveBeenCalled();
+      expect(tracker.disposeAll).toHaveBeenCalledTimes(3);
+
+      const zoneChanges = store.dispatch.mock.calls
+        .map(([action]) => action)
+        .filter((action) => action?.type === Actions.ZONE_CHANGED);
+      expect(zoneChanges).toHaveLength(3);
+      expect(zoneChanges.at(-1)?.payload).toEqual({
+        fromZone: 'neighborhood',
+        toZone: 'player_plot',
+        spawnPoint: backHomeExit.spawnPoint,
+      });
 
       vi.useRealTimers();
       vi.unstubAllGlobals();
@@ -4608,6 +4744,59 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(loaded.beds.bed_b.grid[0].cropId).toBe('lettuce');
 
       manager.dispose();
+      delete globalThis.localStorage;
+    });
+
+    it('zone travel and save/load preserve per-zone active beds and forage cooldowns', () => {
+      globalThis.localStorage = createMockStorage();
+      const now = 1_700_000_000_000;
+      vi.spyOn(Date, 'now').mockReturnValue(now);
+
+      const state = createGameState();
+      state.campaign.skills.foraging = { xp: 0, level: 3 };
+      const store = new Store(state);
+      const manager = new MultiBedManager(store);
+
+      manager.acquireBed('player_plot', { name: 'Player Plot', zone: 'player_plot' });
+      manager.acquireBed('meadow_bed', { name: 'Meadow Bed', zone: 'meadow' });
+
+      store.dispatch({
+        type: Actions.ZONE_CHANGED,
+        payload: { fromZone: 'player_plot', toZone: 'meadow', spawnPoint: { x: -6, z: 0 } },
+      });
+
+      expect(store.getState().campaign.activeBedId).toBe('meadow_bed');
+
+      const inventory = new Inventory(store);
+      const skillSystem = new SkillSystem(store);
+      const foraging = new ForagingSystem(store, inventory, skillSystem);
+      const forageResult = foraging.forage('meadow_herbs');
+
+      expect(forageResult.success).toBe(true);
+
+      const saved = saveCampaign(store.getState().campaign, 0);
+      expect(saved).not.toBeNull();
+
+      const loaded = loadCampaign(0);
+      expect(loaded.activeBedId).toBe('meadow_bed');
+      expect(loaded.worldState.currentZone).toBe('meadow');
+      expect(loaded.worldState.forageState.cooldowns.meadow_herbs).toBeGreaterThan(now);
+      expect(loaded.worldState.forageState.history.meadow_herbs.zoneId).toBe('meadow');
+
+      const reloadedState = createGameState();
+      reloadedState.campaign = loaded;
+      reloadedState.season.campaign = loaded;
+      const reloadedStore = new Store(reloadedState);
+      const reloadedInventory = new Inventory(reloadedStore);
+      const reloadedSkillSystem = new SkillSystem(reloadedStore);
+      const reloadedForaging = new ForagingSystem(reloadedStore, reloadedInventory, reloadedSkillSystem);
+      const blocked = reloadedForaging.forage('meadow_herbs');
+
+      expect(blocked.success).toBe(false);
+      expect(blocked.message).toContain('recover');
+
+      manager.dispose();
+      vi.restoreAllMocks();
       delete globalThis.localStorage;
     });
   });

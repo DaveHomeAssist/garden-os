@@ -70,6 +70,15 @@ describe('MultiBedManager', () => {
       expect(ids).toContain('bed_1');
       expect(ids).toContain('bed_2');
     });
+
+    it('returns only the beds assigned to a zone', () => {
+      manager.acquireBed('bed_1', { name: 'Bed 1', zone: 'meadow' });
+      manager.acquireBed('bed_2', { name: 'Bed 2', zone: 'forest_edge' });
+      manager.acquireBed('bed_3', { name: 'Bed 3', zone: 'meadow' });
+
+      const meadowBeds = manager.getBedsForZone('meadow');
+      expect(meadowBeds.map((bed) => bed.id)).toEqual(['bed_1', 'bed_3']);
+    });
   });
 
   describe('getActiveBed / switchActiveBed', () => {
@@ -90,6 +99,16 @@ describe('MultiBedManager', () => {
 
     it('returns false when switching to non-existent bed', () => {
       expect(manager.switchActiveBed('ghost_bed')).toBe(false);
+    });
+
+    it('syncs the active bed to the current zone bed', () => {
+      manager.acquireBed('plot_bed', { name: 'Plot Bed', zone: 'player_plot' });
+      manager.acquireBed('meadow_bed', { name: 'Meadow Bed', zone: 'meadow' });
+
+      const synced = manager.syncActiveBedToZone('meadow');
+
+      expect(synced?.id).toBe('meadow_bed');
+      expect(manager.getActiveBed()?.id).toBe('meadow_bed');
     });
   });
 

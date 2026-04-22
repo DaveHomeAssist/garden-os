@@ -1,18 +1,38 @@
 import { Actions } from '../game/store.js';
 import { ReputationTiers } from '../game/reputation.js';
+import WORLD_MAP from 'specs/WORLD_MAP.json';
 
 const FADE_DURATION_MS = 300;
 const TIER_THRESHOLDS = Object.fromEntries(Object.values(ReputationTiers).map((tier) => [tier.id, tier.threshold]));
-const DEFAULT_ZONE_GATES = {
-  player_plot: {},
-  neighborhood: {},
-  meadow: { skills: { foraging: 3 } },
-  riverside: { quests: ['gus_river_path'] },
-  forest_edge: { reputation: { old_gus: 'friend' } },
-  greenhouse: { skills: { crafting: 5 } },
-  festival_grounds: { festival: true },
-  market_square: { skills: { social: 2 } },
-};
+
+function buildZoneGateRequirements(worldMap = WORLD_MAP) {
+  return Object.fromEntries(
+    Object.entries(worldMap?.zones ?? {}).map(([zoneId, zoneDef]) => {
+      const gate = zoneDef?.gate;
+      if (!gate) {
+        return [zoneId, {}];
+      }
+
+      const requirement = gate.requirement ?? {};
+      const next = {};
+      if (gate.blockerMessage) next.message = gate.blockerMessage;
+
+      if (gate.type === 'skill' && requirement.skill) {
+        next.skills = { [requirement.skill]: requirement.level ?? 1 };
+      } else if (gate.type === 'quest' && requirement.quest) {
+        next.quests = [requirement.quest];
+      } else if (gate.type === 'reputation' && requirement.npc) {
+        next.reputation = { [requirement.npc]: requirement.tier ?? requirement.minValue ?? 0 };
+      } else if (gate.type === 'festival' || (gate.type === 'event' && requirement.activeFestival)) {
+        next.festival = true;
+      }
+
+      return [zoneId, next];
+    }),
+  );
+}
+
+const DEFAULT_ZONE_GATES = buildZoneGateRequirements(WORLD_MAP);
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,6 +51,7 @@ function isInsideBounds(position, bounds) {
 function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZONE_GATES) {
   const requirements = zoneGates[zoneId] ?? {};
   const blockers = [];
+  const blockerMessage = requirements.message ?? null;
   const reputationSystem = systems.reputationSystem ?? null;
   const skillSystem = systems.skillSystem ?? null;
   const questEngine = systems.questEngine ?? null;
@@ -45,7 +66,7 @@ function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZON
         requirement: `${npcId} reputation`,
         current,
         needed,
-        message: `This area requires ${tierName} standing with ${npcId}.`,
+        message: blockerMessage ?? `This area requires ${tierName} standing with ${npcId}.`,
       });
     }
   });
@@ -58,7 +79,7 @@ function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZON
         requirement: `${skillId} level`,
         current,
         needed: level,
-        message: `This area requires ${skillId.replace(/_/g, ' ')} level ${level}.`,
+        message: blockerMessage ?? `This area requires ${skillId.replace(/_/g, ' ')} level ${level}.`,
       });
     }
   });
@@ -71,7 +92,7 @@ function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZON
         requirement: questId,
         current: stateValue ?? 'UNSTARTED',
         needed: 'COMPLETED',
-        message: `Complete ${questId} to enter this area.`,
+        message: blockerMessage ?? `Complete ${questId} to enter this area.`,
       });
     }
   });
@@ -84,7 +105,7 @@ function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZON
         requirement: 'active festival',
         current: null,
         needed: true,
-        message: 'This area only opens during an active festival.',
+        message: blockerMessage ?? 'This area only opens during an active festival.',
       });
     }
   }
@@ -232,5 +253,6 @@ export class ZoneManager {
 
 export {
   DEFAULT_ZONE_GATES,
+  buildZoneGateRequirements,
   evaluateZoneAccess,
 };

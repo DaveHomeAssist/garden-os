@@ -124,6 +124,30 @@ function normalizeGrid(grid, fallbackGrid, cols, rows) {
   return attachGridMeta(nextGrid, cols, rows);
 }
 
+function normalizeForageState(rawForageState) {
+  return {
+    ...cloneValue(DEFAULT_WORLD_STATE.forageState),
+    ...(rawForageState ?? {}),
+    cooldowns: {
+      ...(DEFAULT_WORLD_STATE.forageState?.cooldowns ?? {}),
+      ...(rawForageState?.cooldowns ?? {}),
+    },
+    history: {
+      ...(DEFAULT_WORLD_STATE.forageState?.history ?? {}),
+      ...(rawForageState?.history ?? {}),
+    },
+  };
+}
+
+function findPreferredBedIdForZone(campaign, zoneId) {
+  const beds = campaign?.beds ?? {};
+  if (campaign?.activeBedId && beds[campaign.activeBedId]?.zone === zoneId) {
+    return campaign.activeBedId;
+  }
+
+  return Object.entries(beds).find(([, bed]) => bed?.zone === zoneId)?.[0] ?? null;
+}
+
 function normalizeCampaign(rawCampaign) {
   const fallbackCampaign = createCampaignState();
   const campaign = rawCampaign ?? {};
@@ -167,6 +191,7 @@ function normalizeCampaign(rawCampaign) {
       ...worldState,
       currentZone,
       visitedZones,
+      forageState: normalizeForageState(worldState.forageState),
     },
     activeNeighbors: cloneArray(campaign.activeNeighbors ?? fallbackCampaign.activeNeighbors),
     inventory: normalizeInventoryState(campaign.inventory ?? fallbackCampaign.inventory),
@@ -675,7 +700,12 @@ function gameReducer(state, action = {}) {
         currentZone: toZone,
         visitedZones: [...visitedZones],
         lastSpawnPoint: payload.spawnPoint ?? null,
+        forageState: normalizeForageState(nextState.campaign.worldState?.forageState),
       };
+      const preferredBedId = findPreferredBedIdForZone(nextState.campaign, toZone);
+      if (preferredBedId) {
+        nextState.campaign.activeBedId = preferredBedId;
+      }
       return nextState;
     }
 
@@ -689,6 +719,7 @@ function gameReducer(state, action = {}) {
         ...DEFAULT_WORLD_STATE,
         ...(nextState.campaign.worldState ?? {}),
         visitedZones: [...visitedZones],
+        forageState: normalizeForageState(nextState.campaign.worldState?.forageState),
       };
       return nextState;
     }
@@ -734,6 +765,8 @@ function gameReducer(state, action = {}) {
     case Actions.FORAGE: {
       if (!payload.items?.length) return state;
       const nextState = cloneGameState(state);
+      const timestamp = payload.timestamp ?? Date.now();
+      const forageState = normalizeForageState(nextState.campaign.worldState?.forageState);
       nextState.campaign.worldState = {
         ...DEFAULT_WORLD_STATE,
         ...(nextState.campaign.worldState ?? {}),
@@ -742,7 +775,23 @@ function gameReducer(state, action = {}) {
           zoneId: payload.zoneId,
           items: cloneValue(payload.items),
           xpGained: payload.xpGained ?? 0,
-          timestamp: Date.now(),
+          timestamp,
+        },
+        forageState: {
+          ...forageState,
+          cooldowns: {
+            ...(forageState.cooldowns ?? {}),
+            [payload.spotId]: payload.cooldownUntil ?? timestamp,
+          },
+          history: {
+            ...(forageState.history ?? {}),
+            [payload.spotId]: {
+              zoneId: payload.zoneId,
+              items: cloneValue(payload.items),
+              xpGained: payload.xpGained ?? 0,
+              timestamp,
+            },
+          },
         },
       };
       return nextState;
