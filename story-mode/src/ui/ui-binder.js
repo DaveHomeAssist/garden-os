@@ -55,6 +55,7 @@ import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
+import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 
 function bindUI({
   store,
@@ -1445,6 +1446,7 @@ function bindUI({
 
   window.addEventListener('resize', resize);
   resize();
+  const perfHud = isPerfDebugEnabled() ? createPerfHud({ renderer: scene.getRenderer?.() }) : null;
 
   const loop = createLoop({
     scene,
@@ -1470,6 +1472,9 @@ function bindUI({
         const pos = playerController.getState().position;
         zoneManager.checkTriggers(pos);
       }
+    },
+    onFrame: ({ dt }) => {
+      perfHud?.sample({ dt });
     },
   });
 
@@ -1533,6 +1538,7 @@ function bindUI({
     zoneManager?.dispose();
     audioManager?.dispose();
     pauseController.dispose();
+    perfHud?.dispose();
     window.removeEventListener('resize', resize);
     delete window.render_game_to_text;
     delete window.advanceTime;

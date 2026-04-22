@@ -7,11 +7,12 @@ export function createLoop(services) {
   let lastTime = performance.now();
   let running = false;
 
-  function runStep(dt) {
-    services.update?.(dt);
-    services.scene.sync(services.getState());
-    services.scene.render();
-  }
+function runStep(dt) {
+  services.update?.(dt);
+  services.scene.sync(services.getState());
+  services.scene.render();
+  services.onFrame?.({ dt });
+}
 
   function frame(now) {
     if (!running) return;
