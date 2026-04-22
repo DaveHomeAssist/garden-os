@@ -558,6 +558,43 @@ PLANNING → (place crops) → SIMULATION → (events fire) → HARVEST → (sco
 | `--fall` | `#d4854a` | Calendar harvest |
 | `--winter` | `#8fa3b8` | Frost markers |
 
+---
+
+## Feature: Today's Garden Coach + Weather (v4.5)
+
+**Shipped:** 2026-04-22
+
+### What it does
+Opens the planner to a ranked list of 3 to 5 concrete tasks for today: water, check, harvest, cover for frost, shade for heat, succession plant, thin, trellis check. Tasks derive from crop stage plus a live local weather forecast.
+
+### Data sources
+- Open-Meteo public API for 7-day forecast and geocoding (CORS, no key required)
+- Local crop state from the workspace (`plantedAt`, `daysToMaturity`)
+
+### Storage
+- `workspaceSettings.weather`: `{ lat, lon, tz, label, frostThresholdF, heatThresholdF }`
+- Task completion state per calendar date in a dedicated localStorage key
+- Weather forecast cached in localStorage at `gardenOS_weather_v1` with 6-hour TTL
+
+### UI surfaces
+- New `today` insight section inside the existing accordion row
+- Top-of-page frost alert banner when tonight's forecast is below threshold
+- Settings form for location (lat, lon, or City, ST with geocoder fallback)
+- Task chips with Mark done, Snooze, Undo done
+
+### Contracts
+- Task shape: `{ id, cellId, crop, action, priority, reason, factors, dueWindow }`
+- `TASK_RULES` table keyed by `(cropFaction, cropStage, weatherSignal)`
+- `buildTodayTasks(state, weather, now)` is pure and deterministic
+- CSP scoped to `api.open-meteo.com` and `geocoding-api.open-meteo.com`
+
+### Reference implementations
+Clean reference copies of the weather fetch and today engine live at `tools/weather.dev.js` and `tools/today.dev.js`, with fixtures at `tests/fixtures/weather/` and test harnesses at `tests/weather.test.html` and `tests/today.test.html`. The authoritative logic is inlined in `garden-planner-v4.html`.
+
+### Deferred (v4.6 candidates)
+- `frostSensitive: boolean` crop schema patch to narrow cover-frost tasks
+- Opt-in local notifications for frost alerts (`Notification` API; `periodicSync` where supported)
+
 ### Typography
 
 | Token | Value | Usage |
