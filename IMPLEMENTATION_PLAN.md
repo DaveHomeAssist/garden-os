@@ -1,6 +1,6 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-03-31
+**Last verified:** 2026-04-24
 
 ## Immediate Stabilization Plan — 2026-03-31
 
@@ -9,9 +9,9 @@
 - Fresh clone path: `/Users/daverobertson/Desktop/Code/garden-os-fresh`
 - Active app surface: `story-mode/` Vite + Three.js runtime
 - `npm ci`: complete in `story-mode/`
-- `npm test`: `28` files passed, `329` tests passed, `0` failed
-- `npm run build`: succeeds and writes `dist/build-meta.json`
-- Primary published Story Mode route: `/garden-os/story-mode-live/`
+- `npm test`: `28` files passed, `329` tests passed, `0` failed (re-verified 2026-04-24)
+- `npm run build`: succeeds and writes `dist/build-meta.json` (re-verified 2026-04-24, source mtime 2026-04-16)
+- Primary published Story Mode route: `/garden-os/story-mode-live/` (CI re-stages from `story-mode/dist/` on every push to `main` via `.github/workflows/pages.yml` — committed `story-mode-live/` checkpoint may lag locally)
 - Canonical docs now distinguish root static tools from the built `story-mode/` runtime; remaining drift is limited to lower-priority docs and inventory details
 
 ### Phase 0 — Fresh Clone Recovery
