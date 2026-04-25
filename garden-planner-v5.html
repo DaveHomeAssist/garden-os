@@ -36,6 +36,17 @@
       align-items: center;
     }
   }
+  /* Tablet+: drop the iPhone bezel and let the column breathe to a real reading width. */
+  @media (min-width: 900px) {
+    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-phone {
+      width: 100% !important;
+      height: min(100vh - 64px, 1000px) !important;
+      max-height: calc(100vh - 64px) !important;
+      border-radius: 16px !important;
+    }
+    .v5-status { display: none !important; }
+  }
   /* Eyebrow link back to the rest of Garden OS, only visible on desktop */
   .v5-eyebrow {
     display: none;
@@ -100,7 +111,20 @@ const CROPS = {
   chv: { name:'Chives',   mono:'Ch', color:'#6aab4a', family:'Allium',     sowWeek: 8, transplantWeek:null, harvestStart:18, harvestEnd:48, daysToMaturity:80, sun:'full' },
   mar: { name:'Marigold', mono:'Ma', color:'#e8c84a', family:'Flower',     sowWeek:14, transplantWeek:18, harvestStart:22, harvestEnd:44, daysToMaturity:50, sun:'full' },
 };
-const WEEK_NOW = 17;
+function isoWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+const TODAY = new Date();
+const WEEK_NOW = isoWeek(TODAY);
+const DAY_OF_SEASON = (() => {
+  const yearStart = new Date(TODAY.getFullYear(), 0, 1);
+  return Math.floor((TODAY - yearStart) / 86400000) + 1;
+})();
+const TODAY_LABEL = TODAY.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 const BED = [
   { r:0, c:0, crop:'tom', plantedWeek:16 }, { r:0, c:1, crop:'tom', plantedWeek:16 },
   { r:0, c:2, crop:'tom', plantedWeek:16 }, { r:0, c:3, crop:'cuc', plantedWeek:16 },
@@ -119,7 +143,50 @@ const BED = [
   { r:3, c:4, crop:'rad', plantedWeek:15 }, { r:3, c:5, crop:'rad', plantedWeek:15 },
   { r:3, c:6, crop:'let', plantedWeek:14 }, { r:3, c:7, crop:'let', plantedWeek:14 },
 ];
-const SEASON = { name:'Late Spring', zone:'7a', location:'Philadelphia, PA', today:'Thu · Apr 23', dayOfSeason:36 };
+const SEASON = { name:'Late Spring', zone:'7a', location:'Philadelphia, PA', today: TODAY_LABEL.replace(',', ' ·'), dayOfSeason: DAY_OF_SEASON };
+
+// ── Bed + event-log persistence ─────────────────────────────────────────────
+const BED_STORAGE_KEY = 'gos.planner-v5.bed';
+const EVENTS_STORAGE_KEY = 'gos.planner-v5.events';
+
+function loadBed() {
+  try {
+    const raw = window.localStorage.getItem(BED_STORAGE_KEY);
+    if (!raw) return BED;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : BED;
+  } catch (_) { return BED; }
+}
+function saveBed(bed) {
+  try { window.localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(bed)); } catch (_) {}
+}
+function loadEvents() {
+  try {
+    const raw = window.localStorage.getItem(EVENTS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) { return []; }
+}
+function saveEvents(evs) {
+  try { window.localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(evs)); } catch (_) {}
+}
+// Find the first open cell row-by-row, returns {r, c} or null if full.
+function firstOpenCell(bed) {
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (!bed.find(x => x.r === r && x.c === c)) return { r, c };
+    }
+  }
+  return null;
+}
+// Latest event for a crop key, optional type filter.
+function latestEvent(events, cropKey, type) {
+  for (let i = events.length - 1; i >= 0; i--) {
+    if (events[i].cropKey === cropKey && (!type || events[i].type === type)) return events[i];
+  }
+  return null;
+}
 
 const CALENDAR = (() => {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -252,7 +319,7 @@ function Stat({ label, value, unit }) {
 function FakeStatusBar() {
   const fg = T.text;
   return (
-    <div style={{
+    <div className="v5-status" style={{
       height: 44, padding: '0 20px', display: 'flex',
       alignItems: 'flex-end', justifyContent: 'space-between',
       paddingBottom: 4, flexShrink: 0,
@@ -269,6 +336,7 @@ function TabBar({ active }) {
   const tabs = [
     { id: 'hub',     label: 'Hub',     href: 'index-v5.html' },
     { id: 'planner', label: 'Plan',    href: '#' },
+    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
     { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
     { id: 'journal', label: 'Journal', href: 'how-it-thinks-v5.html' },
   ];
@@ -293,10 +361,10 @@ function TabBar({ active }) {
   );
 }
 function PhoneFrame({ children }) {
-  // Match the 390-wide design canvas inside a soft pedestal on desktop;
-  // on actual phones the frame collapses to full-bleed 100vh.
+  // Phone width (390) on small viewports; tablet/desktop breakpoint at 900px
+  // drops the bezel via CSS overrides on .v5-phone.
   return (
-    <div style={{
+    <div className="v5-frame-outer" style={{
       width: 'min(100vw, 410px)',
       maxWidth: 410,
       display: 'flex',
@@ -497,8 +565,8 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim }) {
 }
 
 // ── In-ground strip — the bed reduced to a 4×8 ribbon ───────────────────────
-function InGroundStrip({ onPickCrop }) {
-  const total = BED.length;
+function InGroundStrip({ bed, onPickCrop }) {
+  const total = bed.length;
   return (
     <div style={{
       margin: '8px 14px', padding: '8px 12px 10px',
@@ -529,7 +597,7 @@ function InGroundStrip({ onPickCrop }) {
               fontFamily: T.fontMono, fontSize: 8, color: T.textMuted, fontWeight: 500,
             }}>{r + 1}</div>
             {Array.from({ length: 8 }).map((_, c) => {
-              const cell = BED.find(x => x.r === r && x.c === c);
+              const cell = bed.find(x => x.r === r && x.c === c);
               const crop = cell && CROPS[cell.crop];
               return (
                 <div key={r + '-' + c}
@@ -599,18 +667,30 @@ function CropLife({ c, today }) {
     </div>
   );
 }
-function CropSheet({ cropKey, today, onClose }) {
+function CropSheet({ cropKey, today, bed, events, onClose, onRecord, onRemove }) {
   const c = CROPS[cropKey];
-  const cells = BED.filter(x => x.crop === cropKey);
-  const stage = today < c.sowWeek ? 'upcoming'
-              : today < (c.transplantWeek || c.harvestStart) ? 'sowing'
-              : today < c.harvestStart ? 'growing'
-              : today <= c.harvestEnd ? 'harvesting'
-              : 'done';
+  const cells = bed.filter(x => x.crop === cropKey);
+  const sownEv = latestEvent(events, cropKey, 'sown');
+  const transEv = latestEvent(events, cropKey, 'transplanted');
+  const harvEv  = latestEvent(events, cropKey, 'harvested');
+  // Stage prefers recorded events; falls back to schedule.
+  const stage = (() => {
+    if (harvEv && today > c.harvestEnd) return 'done';
+    if (harvEv) return 'harvesting';
+    if (transEv) return today < c.harvestStart ? 'growing' : 'harvesting';
+    if (sownEv) return today < (c.transplantWeek || c.harvestStart) ? 'sowing' : 'growing';
+    if (today < c.sowWeek) return 'upcoming';
+    if (today < (c.transplantWeek || c.harvestStart)) return 'sowing';
+    if (today < c.harvestStart) return 'growing';
+    if (today <= c.harvestEnd) return 'harvesting';
+    return 'done';
+  })();
   const stageLabel = { upcoming: 'NOT YET', sowing: 'SOWING', growing: 'GROWING', harvesting: 'HARVEST WINDOW', done: 'SEASON CLOSED' }[stage];
   const stageColor = { upcoming: T.textMuted, sowing: T.leaf, growing: T.sun, harvesting: T.rust, done: T.textMuted }[stage];
   const weeksIn = Math.max(0, today - c.sowWeek);
   const weeksToHarv = Math.max(0, c.harvestStart - today);
+  const harvCount = events.filter(e => e.cropKey === cropKey && e.type === 'harvested').length;
+  const inBed = cells.length > 0;
   return (
     <>
       <div onClick={onClose} style={{
@@ -664,18 +744,125 @@ function CropSheet({ cropKey, today, onClose }) {
             color: T.text, lineHeight: 1.35, fontStyle: 'italic',
           }}>{nextMoveFor(c, stage, today)}</div>
         </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          {!sownEv && (stage === 'upcoming' || stage === 'sowing') && (
+            <ActionBtn primary onClick={() => onRecord(cropKey, 'sown', today)}>
+              Mark sown · W{today}
+            </ActionBtn>
+          )}
+          {sownEv && !transEv && c.transplantWeek && stage !== 'harvesting' && stage !== 'done' && (
+            <ActionBtn primary onClick={() => onRecord(cropKey, 'transplanted', today)}>
+              Mark transplanted · W{today}
+            </ActionBtn>
+          )}
+          {(stage === 'harvesting' || (stage === 'growing' && today >= c.harvestStart - 1)) && (
+            <ActionBtn primary onClick={() => onRecord(cropKey, 'harvested', today)}>
+              {harvCount ? `Pick again (${harvCount})` : 'Mark harvested'}
+            </ActionBtn>
+          )}
+          {inBed && (
+            <ActionBtn onClick={() => { onRemove(cropKey); onClose(); }}>
+              Remove from bed
+            </ActionBtn>
+          )}
+        </div>
+        {(sownEv || transEv || harvEv) && (
+          <div style={{
+            marginTop: 10, fontFamily: T.fontMono, fontSize: 9,
+            color: T.textMuted, letterSpacing: 0.1,
+          }}>
+            {sownEv && <span>SOWN W{sownEv.week}</span>}
+            {transEv && <span> · TRANSPLANTED W{transEv.week}</span>}
+            {harvEv && <span> · LAST PICK W{harvEv.week}{harvCount > 1 ? ` (×${harvCount})` : ''}</span>}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function ActionBtn({ children, onClick, primary }) {
+  return (
+    <button onClick={onClick} style={{
+      flex: '1 1 auto', minWidth: 120, padding: '10px 14px',
+      borderRadius: 8, cursor: 'pointer',
+      fontFamily: T.fontSans, fontSize: 13, fontWeight: 500,
+      background: primary ? T.leaf : 'transparent',
+      color: primary ? '#fff' : T.textMid,
+      border: `1px solid ${primary ? T.leaf : T.borderSoft}`,
+    }}>{children}</button>
+  );
+}
+
+// ── Add-crop sheet ──────────────────────────────────────────────────────────
+function AddCropSheet({ bed, today, onAdd, onClose }) {
+  const open = firstOpenCell(bed);
+  const order = Object.keys(CROPS).sort((a, b) => {
+    const fa = CROPS[a].family, fb = CROPS[b].family;
+    if (fa !== fb) return fa.localeCompare(fb);
+    return CROPS[a].name.localeCompare(CROPS[b].name);
+  });
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.55)', zIndex: 40,
+      }}/>
+      <div role="dialog" aria-modal="true" aria-label="Add crop to bed" style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 41,
+        background: T.cream, borderRadius: '20px 20px 0 0',
+        padding: '10px 20px 24px', maxHeight: '78%',
+        boxShadow: '0 -8px 40px rgba(44,27,11,0.3)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ width: 40, height: 4, background: T.border, borderRadius: 2, margin: '0 auto 12px' }}/>
+        <Disp size={20}>Add a crop</Disp>
+        <div style={{ marginTop: 4, marginBottom: 12 }}>
+          <Label size={10} color={T.textMuted}>
+            {open
+              ? `Lands at row ${open.r + 1}, col ${open.c + 1} · sown W${today}`
+              : 'Bed is full — remove a crop first.'}
+          </Label>
+        </div>
+        <div style={{ overflowY: 'auto', flex: 1, marginRight: -4, paddingRight: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {order.map(k => {
+              const cr = CROPS[k];
+              return (
+                <button key={k}
+                  disabled={!open}
+                  onClick={() => { onAdd(k); onClose(); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', borderRadius: 10,
+                    background: T.panel,
+                    border: `1px solid ${T.borderSoft}`,
+                    opacity: open ? 1 : 0.45,
+                    cursor: open ? 'pointer' : 'not-allowed',
+                    textAlign: 'left',
+                  }}>
+                  <CropChip crop={k} size={28}/>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text }}>{cr.name}</div>
+                    <Label size={8} color={T.textMuted}>{cr.family.toUpperCase()}</Label>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </>
   );
 }
 
 // ── Main planner composition ────────────────────────────────────────────────
-function Planner({ tweak, onOpenTweaks }) {
+function Planner({ tweak, bed, events, onOpenTweaks, onAdd, onRecord, onRemove }) {
   const density = tweak.density || 'comfortable';
   const showEnded = tweak.showEnded !== false;
   const weekOffset = tweak.weekOffset || 0;
   const today = WEEK_NOW + weekOffset;
   const [picked, setPicked] = React.useState(null);
+  const [addOpen, setAddOpen] = React.useState(false);
 
   const wStart = 8, wEnd = 44;
   const weekCount = wEnd - wStart + 1;
@@ -728,7 +915,7 @@ function Planner({ tweak, onOpenTweaks }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0,
           }}>{Icons.gear(14, T.soil)}</button>
-          <button aria-label="Add crop" style={{
+          <button aria-label="Add crop" onClick={() => setAddOpen(true)} style={{
             width: 32, height: 32, borderRadius: 8,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -793,10 +980,19 @@ function Planner({ tweak, onOpenTweaks }) {
         </div>
       </section>
 
-      <InGroundStrip onPickCrop={setPicked}/>
+      <InGroundStrip bed={bed} onPickCrop={setPicked}/>
       <TabBar active="planner"/>
 
-      {picked && <CropSheet cropKey={picked} today={today} onClose={() => setPicked(null)}/>}
+      {picked && (
+        <CropSheet cropKey={picked} today={today} bed={bed} events={events}
+          onRecord={onRecord} onRemove={onRemove}
+          onClose={() => setPicked(null)}/>
+      )}
+      {addOpen && (
+        <AddCropSheet bed={bed} today={today}
+          onAdd={(k) => onAdd(k, today)}
+          onClose={() => setAddOpen(false)}/>
+      )}
     </div>
   );
 }
@@ -918,9 +1114,31 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
 function App() {
   const [tweak, setTweak] = React.useState(loadTweaks);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  const [bed, setBed] = React.useState(loadBed);
+  const [events, setEvents] = React.useState(loadEvents);
+
+  const addCrop = (cropKey, week) => {
+    const open = firstOpenCell(bed);
+    if (!open) return;
+    const nextBed = [...bed, { ...open, crop: cropKey, plantedWeek: week }];
+    setBed(nextBed); saveBed(nextBed);
+    const nextEvents = [...events, { cropKey, type: 'sown', week, ts: Date.now() }];
+    setEvents(nextEvents); saveEvents(nextEvents);
+  };
+  const removeCrop = (cropKey) => {
+    const nextBed = bed.filter(x => x.crop !== cropKey);
+    setBed(nextBed); saveBed(nextBed);
+  };
+  const recordEvent = (cropKey, type, week) => {
+    const next = [...events, { cropKey, type, week, ts: Date.now() }];
+    setEvents(next); saveEvents(next);
+  };
+
   return (
     <PhoneFrame>
-      <Planner tweak={tweak} onOpenTweaks={() => setTweaksOpen(true)}/>
+      <Planner tweak={tweak} bed={bed} events={events}
+        onOpenTweaks={() => setTweaksOpen(true)}
+        onAdd={addCrop} onRecord={recordEvent} onRemove={removeCrop}/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
     </PhoneFrame>
   );

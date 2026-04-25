@@ -23,6 +23,16 @@
   #shell { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 0; }
   #root { display: contents; }
   @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
+  @media (min-width: 900px) {
+    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-phone {
+      width: 100% !important;
+      height: min(100vh - 64px, 1000px) !important;
+      max-height: calc(100vh - 64px) !important;
+      border-radius: 16px !important;
+    }
+    .v5-status { display: none !important; }
+  }
   button:focus-visible, a:focus-visible { outline: 2.5px solid #4e8c3c; outline-offset: 2px; border-radius: 6px; }
   .v5-eyebrow {
     display: none; position: fixed; top: 16px; left: 24px;
@@ -122,7 +132,7 @@ function CropChip({ crop, size = 24 }) {
 function FakeStatusBar() {
   const fg = T.text;
   return (
-    <div style={{
+    <div className="v5-status" style={{
       height: 44, padding: '0 20px', display: 'flex',
       alignItems: 'flex-end', justifyContent: 'space-between',
       paddingBottom: 4, flexShrink: 0,
@@ -139,6 +149,7 @@ function TabBar({ active }) {
   const tabs = [
     { id:'hub',     label:'Hub',     href:'index-v5.html' },
     { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -164,8 +175,8 @@ function TabBar({ active }) {
 }
 function PhoneFrame({ children }) {
   return (
-    <div style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
-      <div style={{
+    <div className="v5-frame-outer" style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
+      <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
         background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
