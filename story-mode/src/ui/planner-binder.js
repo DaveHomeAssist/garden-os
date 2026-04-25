@@ -178,7 +178,7 @@ function createCropPalette(viewport, store) {
  *  - Show crop palette for placement
  *  - Wire canvas click → plant / remove crop
  */
-export function bindPlannerUI(store, scene, inputManager, viewport) {
+export function bindPlannerUI(store, scene, viewport) {
   // 1. Apply planner scene style
   scene.setSceneStyle?.('planner');
 
