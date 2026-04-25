@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Garden OS Doctor: tap symptoms, get ranked likely causes and action steps in under 30 seconds.">
+<title>Garden OS · Doctor (mobile beta)</title>
+
+<link rel="stylesheet" href="garden-os-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--cream, #f7f3ec);
+    background-image:
+      radial-gradient(ellipse at 10% 90%, rgba(58, 107, 42, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 5%, rgba(139, 94, 60, 0.04) 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #shell { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 0; }
+  #root { display: contents; }
+  @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
+  button:focus-visible, a:focus-visible { outline: 2.5px solid #4e8c3c; outline-offset: 2px; border-radius: 6px; }
+  .v5-eyebrow {
+    display: none; position: fixed; top: 16px; left: 24px;
+    font-family: 'DM Mono', ui-monospace, monospace; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(74, 48, 24, 0.62); text-decoration: none; z-index: 100;
+  }
+  .v5-eyebrow:hover { color: #1e1208; }
+  @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
+<div id="shell"><div id="root"></div></div>
+
+<script type="text/babel" data-presets="react">
+'use strict';
+
+const T = {
+  soil:'#3a2510', soilMid:'#52331a',
+  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
+  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0', leafWash:'#edf5e8',
+  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0', sunWash:'#fdf8e8',
+  rust:'#b84a1a', rustLight:'#d4651a', rustPale:'#f5d8c8', rustWash:'#fdf0e8',
+  cream:'#f7f3ec', creamMid:'#ede5d8', panel:'#fffdf9',
+  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
+  border:'#c8b090', borderSoft:'#dfd0b8',
+  fontDisp: "'Fraunces', Georgia, serif",
+  fontSerif:"'Lora', Georgia, serif",
+  fontSans: "'DM Sans', system-ui, sans-serif",
+  fontMono: "'DM Mono', ui-monospace, monospace",
+};
+
+const CROPS = {
+  tom: { name:'Tomato',   mono:'To', color:'#c8412a' },
+  bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c' },
+  let: { name:'Lettuce',  mono:'Le', color:'#6aab4a' },
+  car: { name:'Carrot',   mono:'Ca', color:'#d4651a' },
+  pep: { name:'Pepper',   mono:'Pe', color:'#c45a18' },
+};
+
+const SYMPTOMS = [
+  { id:'curl',   label:'Leaf curl' },
+  { id:'yellow', label:'Yellowing' },
+  { id:'wilt',   label:'Wilting' },
+  { id:'spots',  label:'Spots' },
+  { id:'holes',  label:'Holes' },
+  { id:'stunt',  label:'Stunting' },
+  { id:'drop',   label:'Blossom drop' },
+  { id:'scorch', label:'Scorching' },
+];
+
+const DocIcons = {
+  curl:    (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 14c2-1 3-4 4-7"/><path d="M8 7c1.5 1 3 3 4 5 1.5 3 3 4 4 4"/><path d="M16 16c-2 0-3-2-2-4"/></svg>,
+  yellow:  (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 3c-3 4-5 6-5 9a5 5 0 0 0 10 0c0-3-2-5-5-9z" fill={T.sunPale}/><path d="M8 11c0 1 .5 2 2 2"/></svg>,
+  wilt:    (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 4v8"/><path d="M10 12c-3 0-5 1-5 3"/><path d="M10 12c3 0 5 1 5 3"/><path d="M6 7c-1 1-1.5 2-1 3"/></svg>,
+  spots:   (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 10c2-4 6-6 9-6 4 0 5 2 5 5s-3 7-7 7c-3 0-7-2-7-6z" fill="none"/><circle cx="8" cy="9" r="1.2" fill={c}/><circle cx="13" cy="11" r="0.9" fill={c}/><circle cx="10" cy="13" r="0.7" fill={c}/></svg>,
+  holes:   (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 10c2-4 6-6 9-6 4 0 5 2 5 5s-3 7-7 7c-3 0-7-2-7-6z"/><circle cx="9" cy="9" r="1.6" fill={T.cream}/><circle cx="13" cy="12" r="1.1" fill={T.cream}/></svg>,
+  stunt:   (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 16h10"/><path d="M10 16v-4"/><path d="M10 12c-2 0-3-1-3-2.5S8 7 10 7s3 1 3 2.5"/><path d="M14 4l-1 2M16 5l-1 1.5"/></svg>,
+  drop:    (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 3c1.5 0 3 1 3 3 0 2-1.5 4-3 4S7 8 7 6c0-2 1.5-3 3-3z" fill={T.rustPale}/><path d="M9 13l-2 4M11 13l2 4M10 12v5"/></svg>,
+  scorch:  (s = 20, c = T.text) => <svg width={s} height={s} viewBox="0 0 20 20" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 4c-2 3-4 5-4 8a4 4 0 0 0 8 0c0-3-2-5-4-8z" fill={T.rustPale}/><path d="M3 16h14"/></svg>,
+};
+
+const Icons = {
+  gear: (s = 14, c = T.text) => <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="2.2" fill="none"/><path d="M7 1.4v1.5M7 11.1v1.5M1.4 7h1.5M11.1 7h1.5M3 3l1.05 1.05M9.95 9.95L11 11M3 11l1.05-1.05M9.95 4.05L11 3"/></svg>,
+  close: (s = 14, c = T.text) => <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>,
+};
+
+// ── Diagnosis engine ────────────────────────────────────────────────────────
+function rankDiagnoses(symptomIds) {
+  const all = [
+    { id:'fusarium', cause:'Fusarium wilt', confidence:0.78, tone:'bad',  prob:78,
+      action:"Remove affected plant. Don't replant nightshades here for 2 seasons. Solarize the soil if possible.",
+      ref:'fusarium', triggers:['wilt','yellow'] },
+    { id:'water', cause:'Heat stress + uneven watering', confidence:0.62, tone:'warn', prob:62,
+      action:'Deep-water at dawn for 3 days, mulch 2″. If recovery within 48h, this is it.',
+      ref:'water', triggers:['wilt','curl','scorch'] },
+    { id:'septoria', cause:'Septoria leaf spot', confidence:0.55, tone:'warn', prob:55,
+      action:'Remove lower leaves with spots. Mulch to prevent splash. Copper spray if rain continues.',
+      ref:'septoria', triggers:['spots','yellow'] },
+    { id:'pest', cause:'Cabbage looper or hornworm', confidence:0.71, tone:'warn', prob:71,
+      action:'Inspect undersides at dawn. Hand-pick. BT spray for repeat damage.',
+      ref:'pests', triggers:['holes'] },
+    { id:'cal', cause:'Calcium uptake (blossom-end)', confidence:0.48, tone:'warn', prob:48,
+      action:'Even watering > calcium. Mulch to stabilize moisture. Test pH at 6.5.',
+      ref:'calcium', triggers:['drop','scorch'] },
+    { id:'cold', cause:'Cold-soil shock', confidence:0.42, tone:'warn', prob:42,
+      action:'Soil under 60°F holds growth. Wait, mulch black, or row-cover.',
+      ref:'cold', triggers:['stunt','curl'] },
+  ];
+  if (symptomIds.length === 0) return [];
+  const scored = all.map(d => {
+    const hits = d.triggers.filter(t => symptomIds.includes(t)).length;
+    return { ...d, score: hits + (hits ? d.confidence : 0) };
+  }).filter(d => d.score > 0);
+  return scored.sort((a, b) => b.score - a.score).slice(0, 3);
+}
+
+// ── Primitives ──────────────────────────────────────────────────────────────
+function Label({ children, color = T.textSoft, size = 10, style = {} }) {
+  return <span style={{
+    fontFamily: T.fontMono, fontSize: size, fontWeight: 500,
+    textTransform: 'uppercase', letterSpacing: 0.12, color, ...style,
+  }}>{children}</span>;
+}
+function Disp({ children, size = 22, weight = 600, style = {} }) {
+  return <span style={{
+    fontFamily: T.fontDisp, fontSize: size, fontWeight: weight,
+    letterSpacing: -0.015, lineHeight: 1.08, color: T.text, ...style,
+  }}>{children}</span>;
+}
+function CropChip({ crop, size = 24 }) {
+  const c = CROPS[crop];
+  if (!c) return null;
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: '50%',
+      background: c.color, color: '#fff',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: T.fontMono, fontSize: size * 0.42, fontWeight: 500,
+      letterSpacing: -0.3, lineHeight: 1, flexShrink: 0,
+      boxShadow: 'inset 0 -1.5px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22)',
+    }}>{c.mono}</span>
+  );
+}
+
+function FakeStatusBar() {
+  const fg = T.text;
+  return (
+    <div style={{
+      height: 44, padding: '0 20px', display: 'flex',
+      alignItems: 'flex-end', justifyContent: 'space-between',
+      paddingBottom: 4, flexShrink: 0,
+    }}>
+      <span style={{ fontFamily: '-apple-system, system-ui', fontSize: 14, fontWeight: 600, color: fg }}>9:41</span>
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+        <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="6" width="2.5" height="4" rx="0.5" fill={fg}/><rect x="4" y="4" width="2.5" height="6" rx="0.5" fill={fg}/><rect x="8" y="2" width="2.5" height="8" rx="0.5" fill={fg}/><rect x="12" y="0" width="2.5" height="10" rx="0.5" fill={fg}/></svg>
+        <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2.5" stroke={fg} fill="none"/><rect x="2" y="2" width="14" height="6" rx="1" fill={fg}/></svg>
+      </div>
+    </div>
+  );
+}
+function TabBar({ active }) {
+  const tabs = [
+    { id:'hub',     label:'Hub',     href:'index-v5.html' },
+    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
+    { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
+  ];
+  return (
+    <nav style={{
+      flexShrink: 0, height: 66, background: T.panel,
+      borderTop: `1px solid ${T.borderSoft}`,
+      display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+    }}>
+      {tabs.map(t => (
+        <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
+          flex: 1, textAlign: 'center', padding: '4px 0',
+          borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
+          marginTop: -9, paddingTop: 11, textDecoration: 'none',
+          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+        }}>
+          <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
+            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+        </a>
+      ))}
+    </nav>
+  );
+}
+function PhoneFrame({ children }) {
+  return (
+    <div style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
+      <div style={{
+        width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
+        background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
+        boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
+      }}>{children}</div>
+    </div>
+  );
+}
+
+// ── Tweaks panel ────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = { confidenceThreshold: 40, showProbs: true };
+const TWEAK_KEY = 'gos.doctor.tweaks';
+const SAVED_KEY = 'gos.doctor.saved';
+const LAST_QUERY_KEY = 'gos.doctor.lastQuery';
+
+function loadTweaks() {
+  try {
+    const raw = window.localStorage.getItem(TWEAK_KEY);
+    if (!raw) return TWEAK_DEFAULTS;
+    return { ...TWEAK_DEFAULTS, ...JSON.parse(raw) };
+  } catch (_) { return TWEAK_DEFAULTS; }
+}
+function saveTweaks(t) {
+  try { window.localStorage.setItem(TWEAK_KEY, JSON.stringify(t)); } catch (_) {}
+}
+function loadLastQuery() {
+  try {
+    const raw = window.localStorage.getItem(LAST_QUERY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_) { return null; }
+}
+function saveLastQuery(q) {
+  try { window.localStorage.setItem(LAST_QUERY_KEY, JSON.stringify(q)); } catch (_) {}
+}
+function appendSaved(entry) {
+  try {
+    const raw = window.localStorage.getItem(SAVED_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    arr.unshift(entry);
+    window.localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0, 50)));
+  } catch (_) {}
+}
+function popSaved(id) {
+  try {
+    const raw = window.localStorage.getItem(SAVED_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    const filtered = arr.filter(e => e.id !== id);
+    window.localStorage.setItem(SAVED_KEY, JSON.stringify(filtered));
+  } catch (_) {}
+}
+function Seg({ value, opts, onChange }) {
+  return (
+    <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
+      {opts.map(([val, lab]) => (
+        <button key={val} onClick={() => onChange(val)} style={{
+          flex: 1, padding: '5px 8px', borderRadius: 4, border: 'none',
+          background: value === val ? T.panel : 'transparent',
+          fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
+          color: value === val ? T.text : T.textSoft,
+          boxShadow: value === val ? '0 1px 2px rgba(44,27,11,0.1)' : 'none',
+          cursor: 'pointer', minHeight: 28,
+        }}>{lab}</button>
+      ))}
+    </div>
+  );
+}
+function TweaksPanel({ tweak, setTweak, onClose }) {
+  const setKey = (k, v) => { const next = { ...tweak, [k]: v }; setTweak(next); saveTweaks(next); };
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)', zIndex: 50 }}/>
+      <div role="dialog" aria-modal="true" aria-label="Tweaks" style={{
+        position: 'absolute', top: 60, right: 12, zIndex: 51,
+        width: 264, maxWidth: 'calc(100% - 24px)',
+        background: T.panel, borderRadius: 12, border: `1px solid ${T.border}`,
+        boxShadow: '0 16px 48px rgba(44,27,11,0.28)', padding: '14px 16px 16px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+          <Disp size={17}>Tweaks</Disp>
+          <button onClick={onClose} aria-label="Close tweaks" style={{
+            width: 24, height: 24, borderRadius: 6, padding: 0, background: 'transparent',
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', color: T.textSoft,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Label size={9} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>
+            Confidence threshold · {tweak.confidenceThreshold}%
+          </Label>
+          <input type="range" min="0" max="80" step="10" value={tweak.confidenceThreshold}
+            onChange={e => setKey('confidenceThreshold', Number(e.target.value))}
+            style={{ width: '100%', accentColor: T.leaf }}
+            aria-label="Confidence threshold percent"/>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Label size={9} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>Show probabilities</Label>
+          <Seg value={tweak.showProbs ? 'on' : 'off'} opts={[['on', 'On'], ['off', 'Off']]}
+            onChange={v => setKey('showProbs', v === 'on')}/>
+        </div>
+        <button onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
+          width: '100%', padding: '6px 10px', background: 'transparent',
+          border: `1px solid ${T.borderSoft}`, borderRadius: 6, cursor: 'pointer',
+          fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15, textTransform: 'uppercase',
+          color: T.textSoft, fontWeight: 500,
+        }}>Reset to defaults</button>
+      </div>
+    </>
+  );
+}
+
+// ── Doctor pieces ───────────────────────────────────────────────────────────
+function CropPicker({ cropId, onPick }) {
+  const recent = ['tom', 'bas', 'let', 'car', 'pep'];
+  return (
+    <div style={{ marginTop: 6 }}>
+      <Label size={9} style={{ marginLeft: 2 }}>ON WHICH CROP?</Label>
+      <div style={{ marginTop: 6, display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+        {recent.map(k => {
+          const on = cropId === k;
+          const c = CROPS[k];
+          if (!c) return null;
+          return (
+            <button key={k} onClick={() => onPick(k)} aria-pressed={on} style={{
+              flex: '0 0 auto', padding: '7px 11px 7px 7px', borderRadius: 999,
+              border: `1.5px solid ${on ? T.soil : T.borderSoft}`,
+              background: on ? T.soil : T.panel,
+              color: on ? '#f5ede0' : T.text,
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 36,
+            }}>
+              <CropChip crop={k} size={20}/>
+              <span>{c.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DiagCard({ diag, rank, showProbs }) {
+  const dotColor = diag.tone === 'bad' ? T.rust : (diag.tone === 'warn' ? T.sun : T.leaf);
+  const wash = diag.tone === 'bad' ? T.rustWash : (diag.tone === 'warn' ? T.sunWash : T.leafWash);
+  return (
+    <div style={{
+      background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 12,
+      padding: '12px 14px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: dotColor, marginTop: 6, flexShrink: 0 }}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600, color: T.text, letterSpacing: -0.2 }}>
+              {diag.cause}
+            </span>
+            {showProbs ? (
+              <Label size={10} color={T.textSoft} style={{ flexShrink: 0 }}>{diag.prob}%</Label>
+            ) : (
+              <Label size={10} color={dotColor} style={{ flexShrink: 0 }}>
+                {diag.tone === 'bad' ? 'LIKELY' : (diag.tone === 'warn' ? 'POSSIBLE' : 'WORTH CHECK')}
+              </Label>
+            )}
+          </div>
+          <div style={{ fontSize: 12.5, color: T.textMid, lineHeight: 1.5, marginTop: 4 }}>
+            {diag.action}
+          </div>
+          <a href={`garden-cage-ops-guide.html#${diag.ref}`} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8,
+            padding: '4px 8px', borderRadius: 6, background: wash,
+            fontFamily: T.fontMono, fontSize: 9.5, color: T.soilMid,
+            letterSpacing: 0.1, textTransform: 'uppercase', textDecoration: 'none',
+          }}>open ops guide ›</a>
+        </div>
+        <Label size={11} color={T.textMuted} style={{ flexShrink: 0 }}>#{rank}</Label>
+      </div>
+    </div>
+  );
+}
+
+// ── Doctor screen ───────────────────────────────────────────────────────────
+function Doctor() {
+  const [tweak, setTweak] = React.useState(loadTweaks);
+  const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  const last = loadLastQuery();
+  const [symptoms, setSymptoms] = React.useState(() => last?.symptoms || []);
+  const [cropId, setCropId] = React.useState(() => last?.cropId || 'tom');
+  const [season, setSeason] = React.useState(() => last?.season || 'late-spring');
+  const [diagnosed, setDiagnosed] = React.useState(false);
+  const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
+
+  const toggle = (id) => setSymptoms(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const ranked = diagnosed ? rankDiagnoses(symptoms).filter(d => d.prob >= tweak.confidenceThreshold) : [];
+
+  React.useEffect(() => {
+    saveLastQuery({ symptoms, cropId, season });
+  }, [symptoms, cropId, season]);
+
+  React.useEffect(() => {
+    if (!savedState.id) return;
+    const ms = savedState.until - Date.now();
+    if (ms <= 0) { setSavedState({ id: null, until: 0 }); return; }
+    const t = setTimeout(() => setSavedState({ id: null, until: 0 }), ms);
+    return () => clearTimeout(t);
+  }, [savedState]);
+
+  const handleSave = () => {
+    if (!diagnosed || ranked.length === 0) return;
+    const id = `d${Date.now()}`;
+    appendSaved({ id, savedAt: Date.now(), query: { symptoms, cropId, season }, diagnoses: ranked });
+    setSavedState({ id, until: Date.now() + 8000 });
+  };
+  const handleUndo = () => {
+    if (!savedState.id) return;
+    popSaved(savedState.id);
+    setSavedState({ id: null, until: 0 });
+  };
+
+  const saveActive = !!savedState.id;
+  const saveLabel = saveActive ? 'Saved · Undo' : 'Save to journal';
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', background: T.cream,
+      fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', position: 'relative',
+    }}>
+      <FakeStatusBar/>
+
+      <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <Label size={9} color={T.soilMid}>DOCTOR</Label>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <Label size={9} color={T.soilMid}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
+            <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
+              width: 26, height: 26, borderRadius: 6, padding: 0, background: T.panel,
+              border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>{Icons.gear(12, T.soil)}</button>
+          </div>
+        </div>
+        <div style={{
+          fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
+          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, marginTop: 2,
+        }}>
+          I see <span style={{ fontStyle: 'italic', color: T.rust }}>something</span>.
+        </div>
+      </header>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
+        <CropPicker cropId={cropId} onPick={setCropId}/>
+
+        <div style={{ marginTop: 14 }}>
+          <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>WHAT'S WRONG?</Label>
+          <div style={{ marginTop: 6, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+            {SYMPTOMS.map(s => {
+              const on = symptoms.includes(s.id);
+              return (
+                <button key={s.id} onClick={() => { toggle(s.id); setDiagnosed(false); }} aria-pressed={on} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 10px', borderRadius: 12,
+                  background: on ? T.leafWash : T.panel,
+                  border: `1.5px solid ${on ? T.leafBright : T.borderSoft}`,
+                  fontFamily: T.fontSans, fontSize: 12.5, fontWeight: on ? 600 : 500,
+                  color: on ? T.leaf : T.text, cursor: 'pointer',
+                  minHeight: 44, textAlign: 'left',
+                }}>
+                  {DocIcons[s.id](20, on ? T.leaf : T.textMid)}
+                  <span>{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>SEASON</Label>
+          <div style={{ marginTop: 6, display: 'flex', gap: 4, padding: 3, background: T.cedarWash, borderRadius: 10 }}>
+            {[
+              ['early-spring', 'Early spr'],
+              ['late-spring',  'Late spr'],
+              ['summer',       'Summer'],
+              ['fall',         'Fall'],
+            ].map(([k, lab]) => (
+              <button key={k} onClick={() => setSeason(k)} aria-pressed={season === k} style={{
+                flex: 1, minHeight: 36, borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: season === k ? T.panel : 'transparent',
+                color: season === k ? T.text : T.textSoft,
+                fontFamily: T.fontSans, fontSize: 11, fontWeight: season === k ? 600 : 500,
+                boxShadow: season === k ? '0 1px 2px rgba(44,27,11,0.1)' : 'none',
+              }}>{lab}</button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          disabled={symptoms.length === 0}
+          onClick={() => setDiagnosed(true)}
+          style={{
+            marginTop: 14, width: '100%', padding: '14px 16px', borderRadius: 12,
+            background: symptoms.length === 0 ? T.cream : T.leafBright,
+            color: symptoms.length === 0 ? T.textMuted : '#fff',
+            border: symptoms.length === 0 ? `1px solid ${T.borderSoft}` : 'none',
+            fontFamily: T.fontSans, fontSize: 14, fontWeight: 600,
+            cursor: symptoms.length === 0 ? 'not-allowed' : 'pointer',
+            minHeight: 48,
+            boxShadow: symptoms.length === 0 ? 'none' : '0 2px 8px rgba(78,140,60,0.25)',
+          }}>
+          {symptoms.length === 0 ? 'Pick at least one symptom' : `Diagnose ${CROPS[cropId]?.name || 'plant'}`}
+        </button>
+
+        {diagnosed && ranked.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>RANKED · {ranked.length} {ranked.length === 1 ? 'MATCH' : 'MATCHES'}</Label>
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {ranked.map((d, i) => <DiagCard key={d.id} diag={d} rank={i + 1} showProbs={tweak.showProbs}/>)}
+            </div>
+            <button onClick={saveActive ? handleUndo : handleSave} aria-pressed={saveActive} style={{
+              marginTop: 10, width: '100%', padding: '10px 12px', borderRadius: 10,
+              background: saveActive ? T.leafWash : T.panel,
+              border: `1px solid ${saveActive ? T.leafBright : T.borderSoft}`,
+              fontFamily: T.fontSans, fontSize: 13, fontWeight: 500,
+              color: saveActive ? T.leaf : T.text, cursor: 'pointer', minHeight: 44,
+              transition: 'background 0.18s, border-color 0.18s',
+            }}>{saveLabel}</button>
+          </div>
+        )}
+
+        {diagnosed && ranked.length === 0 && (
+          <div style={{
+            marginTop: 16, padding: '14px 16px', background: T.panel,
+            border: `1px dashed ${T.border}`, borderRadius: 12,
+            fontSize: 13, color: T.textSoft, textAlign: 'center', fontStyle: 'italic',
+            fontFamily: T.fontSerif,
+          }}>
+            No clean match. Try removing one symptom or pick a different season.
+          </div>
+        )}
+      </div>
+
+      <TabBar active="doctor"/>
+      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Doctor/></PhoneFrame>);
+</script>
+</body>
+</html>
