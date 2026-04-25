@@ -78,7 +78,11 @@ async function startSession({ initialState, slot, viewport, planner }) {
 
     if (planner) {
       const { bindPlannerUI } = await import('./ui/planner-binder.js');
-      bindPlannerUI(store, scene, inputManager, viewport);
+      // Planner mode exits only via page refresh today, so the dispose handle
+      // returned by bindPlannerUI and the cleanup from initGame are not wired.
+      // When a back-to-title flow is added, capture both and invoke them before
+      // re-mounting the title screen.
+      bindPlannerUI(store, scene, viewport);
       return;
     }
 
