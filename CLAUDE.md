@@ -6,7 +6,7 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 
 ## Stack
 
-- Vanilla HTML/CSS/JS (root tool suite: self-contained single-file `.html` apps)
+- HTML/CSS/JS at the repo root (vanilla single-file or React via CDN, both fine)
 - Vite + Three.js + Vitest (`story-mode/` only)
 - localStorage persistence, `.gos.json` export/import for cross-tool data exchange
 - GitHub Pages deployment from `main`
@@ -15,7 +15,7 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 ## Key Decisions
 
 - Zero backend constraint is permanent. No servers, APIs, or databases.
-- Root tools must remain single-file HTML. Build tooling allowed only inside `story-mode/`.
+- Build tooling lives in `story-mode/`. Root tools may be single-file HTML or React via CDN — either is fine.
 - Scoring is strictly deterministic with six fixed weighted factors. No randomness.
 - Schema-first: all tools validate against `gos-schema.json`. Specs in `specs/` are canonical over code.
 - Two permanent nav tracks (User and Dev) that connect via bridge links but do not merge.
@@ -24,10 +24,8 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 ## Architecture — Hard Constraints
 
 - **Zero backend.** No servers, no APIs, no databases. Everything runs in the browser.
-- **Root tool suite stays single-file HTML.** Repo-root tools are self-contained `.html` files with inline CSS and JS. No external JS/CSS files, no imports, no modules for those root surfaces.
-- **`story-mode/` is the single runtime exception.** It is an active Vite + Three.js app with Vitest coverage and its own `package.json`.
+- **`story-mode/` is the build-tooling runtime.** It is an active Vite + Three.js app with Vitest coverage and its own `package.json`.
 - **Build tooling is allowed only inside `story-mode/`.** Use `npm ci` or `npm install`, `npm test`, `npm run build`, and `npm run dev` from `story-mode/` when working on that app surface.
-- **No new framework/toolchain sprawl outside `story-mode/`.** Do not introduce React, Vue, Svelte, Tailwind, Bootstrap, jQuery, or additional bundlers into the root tool suite unless the implementation plan explicitly changes.
 - **localStorage persistence.** All state saved to localStorage. Cross-tool data exchange via `.gos.json` file export/import.
 - **Offline-capable.** Every tool must work without network access (except Google Fonts, which degrade gracefully).
 - **Schema-first.** All tools validate against `gos-schema.json`. Increment the version field on breaking changes. See `docs/MIGRATION-CONTRACT.md` for migration rules.
@@ -127,8 +125,6 @@ Issues tracked in `docs/UI_ISSUES_TABLE.html`. The table below is a historical a
 ## What Not To Do
 
 - Do not add a backend, database, or server requirement.
-- Do not introduce new npm/build-tool requirements for the repo-root HTML tools.
-- Do not add external JS/CSS dependencies to the repo-root HTML tools.
 - Do not merge the user and dev nav tracks.
 - Do not add randomness to scoring.
 - Do not modify specs/ JSON files without updating the corresponding HTML tool.

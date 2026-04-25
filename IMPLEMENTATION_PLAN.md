@@ -115,7 +115,7 @@
 | SCHEMA.md | 170 | — | Human-readable schema reference (new) |
 | **Total** | **9,160** | **144** | |
 
-Architecture: zero-backend, single-file HTML tools, localStorage persistence, URL hash sharing, .gos.json file export/import. 50 crops, 8 categories, 5 scoring factors (sun, support, shade, access, season) + structural bonuses + adjacency scoring. Explainable score breakdown in Inspect tab.
+Architecture: zero-backend, browser-only tools, localStorage persistence, URL hash sharing, .gos.json file export/import. 50 crops, 8 categories, 5 scoring factors (sun, support, shade, access, season) + structural bonuses + adjacency scoring. Explainable score breakdown in Inspect tab.
 
 ---
 
@@ -266,7 +266,7 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 - Users can simulate layout changes risk-free and see score deltas
 - Symptom triage works for the 50 existing crops with no external dependencies
 - Every planted crop shows an estimated harvest window
-- Still zero-backend, still single-file per tool
+- Still zero-backend
 
 ---
 
@@ -357,7 +357,7 @@ Architecture: zero-backend, single-file HTML tools, localStorage persistence, UR
 | **2** | 31–60 | What If? | Layout simulator, Garden Doctor, yield forecast | `garden-doctor.html` |
 | **3** | 61–90 | Season Intelligence | A/B experiments, succession timeline, retrospective | None (all in planner) |
 
-**Constraints held throughout:** zero backend, single-file tools, localStorage + file export, no frameworks, no CDN dependencies.
+**Constraints held throughout:** zero backend, localStorage + file export. Frameworks and CDN scripts are fine where they pay for themselves.
 
 **Explicitly deferred:** weather APIs, photo processing, ML recommendations, public API, gamification. These require a backend decision that isn't on the table yet.
 
