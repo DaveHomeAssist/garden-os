@@ -1993,21 +1993,20 @@
   /* Insight panel (right) */
   .insight-panel{
     background:linear-gradient(180deg,#f6efe3,#f1e7d8);display:flex;flex-direction:column;
-    overflow-y:auto;border-left:1.5px solid var(--border);
+    overflow:hidden;border-left:1.5px solid var(--border);
   }
+  .insight-panel-tabs{display:flex;gap:2px;background:rgba(0,0,0,.08);border-radius:6px;padding:3px;margin:.6rem;flex-shrink:0;}
+  .insight-panel .tab-pane{padding:0;}
   .insight-block{border-bottom:1px solid var(--border-light);}
   .insight-block:last-child{border-bottom:none;}
-  .insight-header{
+  .insight-section-label{
     display:flex;align-items:center;justify-content:space-between;
-    width:100%;padding:.58rem .7rem;border:none;background:rgba(255,255,255,.36);
-    cursor:pointer;font-family:'DM Mono',monospace;font-size:.58rem;
-    text-transform:uppercase;letter-spacing:.08em;color:var(--soil);
+    padding:.5rem .7rem .3rem;background:transparent;
+    font-family:'DM Mono',monospace;font-size:.58rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);
     font-weight:600;text-align:left;
   }
-  .insight-header::after{content:'▾';font-size:.7rem;margin-left:.3rem;color:var(--text-light);}
-  .insight-header.is-collapsed::after{content:'▸';}
-  .insight-content{padding:.5rem .65rem;display:flex;flex-direction:column;gap:.5rem;}
-  .insight-content[hidden]{display:none;}
+  .insight-content{padding:.3rem .65rem .7rem;display:flex;flex-direction:column;gap:.5rem;}
   .insight-badge{
     display:inline-block;width:5px;height:5px;background:var(--warn);border-radius:50%;
     margin-left:5px;vertical-align:middle;position:relative;top:-1px;
@@ -2224,7 +2223,8 @@
     .plan-panel.collapsed .plan-panel-tabs,.plan-panel.collapsed .tab-pane{display:none;}
     .plan-panel.collapsed{max-height:2.3rem;overflow:hidden;}
     .insight-panel .sidebar-toggle{display:block;}
-    .insight-panel.collapsed .insight-block{display:none;}
+    .insight-panel.collapsed .insight-panel-tabs,
+    .insight-panel.collapsed .tab-pane{display:none;}
     .insight-panel.collapsed{max-height:2.3rem;overflow:hidden;}
     .sidebar-toggle{
       position:sticky;top:0;z-index:2;
@@ -2619,11 +2619,6 @@
     background:
       linear-gradient(180deg, rgba(255,252,247,.92), rgba(247,239,226,.94));
     box-shadow:0 8px 18px rgba(44,27,11,.06);
-  }
-  .insight-header{
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.58), rgba(244,236,224,.44));
-    border-top:1px solid rgba(255,255,255,.48);
   }
   .cast-board{
     display:flex;
@@ -3065,71 +3060,85 @@
 <!-- RIGHT: Insight Panel -->
 <aside class="insight-panel sr collapsed" aria-label="Inspect and review">
   <button class="sidebar-toggle" id="toggleRight" aria-expanded="false" aria-label="Toggle insight panel">&#9662; Insight</button>
+  <div class="insight-panel-tabs tab-bar" role="tablist" aria-label="Insight panels">
+    <button class="tab-btn active" id="rtab-score" role="tab" aria-selected="true" aria-controls="rpane-score">Score <span class="tab-badge" id="scoreTabBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
+    <button class="tab-btn" id="rtab-plan" role="tab" aria-selected="false" aria-controls="rpane-plan">Plan</button>
+    <button class="tab-btn" id="rtab-results" role="tab" aria-selected="false" aria-controls="rpane-results">Results</button>
+  </div>
 
-  <section class="insight-block" id="insightSummary">
-    <button class="insight-header" aria-expanded="true" data-section="summary">Score story</button>
-    <div class="insight-content" aria-live="polite">
-      <div id="rpaneScore"></div>
-      <div id="rpaneReasoning"></div>
-    </div>
-  </section>
+  <!-- SCORE PANE -->
+  <div class="tab-pane on" id="rpane-score" role="tabpanel" aria-labelledby="rtab-score">
+    <section class="insight-block" id="insightSummary">
+      <div class="insight-section-label" data-section="summary">Score story</div>
+      <div class="insight-content" aria-live="polite">
+        <div id="rpaneScore"></div>
+        <div id="rpaneReasoning"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightToday">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="today">Today</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneToday"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightNotes">
+      <div class="insight-section-label" data-section="notes">Alerts &amp; notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></div>
+      <div class="insight-content">
+        <div id="rpaneNotes"></div>
+      </div>
+    </section>
+  </div>
 
-  <section class="insight-block" id="insightDashboard">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="dashboard">Garden board</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneDashboard"></div>
-    </div>
-  </section>
+  <!-- PLAN PANE -->
+  <div class="tab-pane" id="rpane-plan" role="tabpanel" aria-labelledby="rtab-plan">
+    <section class="insight-block" id="insightToday">
+      <div class="insight-section-label" data-section="today">Today</div>
+      <div class="insight-content">
+        <div id="rpaneToday"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightInspect">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="inspect">Inspect & explain</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneInspect"></div>
-      <div id="rpaneCompanions"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightInspect">
+      <div class="insight-section-label" data-section="inspect">Inspect &amp; explain</div>
+      <div class="insight-content">
+        <div id="rpaneInspect"></div>
+        <div id="rpaneCompanions"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightCalendar">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="calendar">Calendar</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneCalendar"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightCalendar">
+      <div class="insight-section-label" data-section="calendar">Calendar</div>
+      <div class="insight-content">
+        <div id="rpaneCalendar"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightHarvest">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="harvest">Harvest log</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneHarvest"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightDashboard">
+      <div class="insight-section-label" data-section="dashboard">Garden board</div>
+      <div class="insight-content">
+        <div id="rpaneDashboard"></div>
+      </div>
+    </section>
+  </div>
 
-  <section class="insight-block" id="insightExperiment">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="experiment">Experiments</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneExperiment"></div>
-    </div>
-  </section>
+  <!-- RESULTS PANE -->
+  <div class="tab-pane" id="rpane-results" role="tabpanel" aria-labelledby="rtab-results">
+    <section class="insight-block" id="insightHarvest">
+      <div class="insight-section-label" data-section="harvest">Harvest log</div>
+      <div class="insight-content">
+        <div id="rpaneHarvest"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightRetrospective">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="retrospective">Season report</button>
-    <div class="insight-content" hidden>
-      <div id="rpaneRetrospective"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightExperiment">
+      <div class="insight-section-label" data-section="experiment">Experiments</div>
+      <div class="insight-content">
+        <div id="rpaneExperiment"></div>
+      </div>
+    </section>
 
-  <section class="insight-block" id="insightNotes">
-    <button class="insight-header is-collapsed" aria-expanded="false" data-section="notes">Alerts &amp; notes <span class="insight-badge" id="warnBadge" style="display:none" aria-label="Warnings present" role="status"></span></button>
-    <div class="insight-content" hidden>
-      <div id="rpaneNotes"></div>
-    </div>
-  </section>
+    <section class="insight-block" id="insightRetrospective">
+      <div class="insight-section-label" data-section="retrospective">Season report</div>
+      <div class="insight-content">
+        <div id="rpaneRetrospective"></div>
+      </div>
+    </section>
+  </div>
 </aside>
 </div><!-- /planner-main -->
 <div class="planner-mobile-dock" aria-label="Quick planner actions">
@@ -3304,7 +3313,9 @@ const VALID_ZONES=['','5','6','7','8','9','10'];
 const VALID_TOOLS=['paint','erase','inspect'];
 const VALID_CAGE_HEIGHTS=['18','24','36'];
 const VALID_DOOR_STYLES=['double','single','none'];
-const VALID_RIGHT_TABS=['dashboard','score','today','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
+// Includes both the new tab groups (score/plan/results) and legacy
+// section-level values so saved workspaces from prior versions still load.
+const VALID_RIGHT_TABS=['score','plan','results','dashboard','today','inspect','notes','companions','calendar','harvest','experiment','retrospective'];
 const EXPERIMENT_VARIABLES=['spacing','mulch','fertilizer','variety','sun exposure','watering','protection'];
 const MAX_SHARE_PAYLOAD=50000;
 const MAX_IMPORT_FILE_BYTES=500*1024;
@@ -5097,7 +5108,9 @@ function applyWorkspaceToUI(ws){
   syncToolButtons(ui.tool);
   if(ws.workspaceSettings && typeof ws.workspaceSettings==='object'){
     if(typeof ws.workspaceSettings.catFilter==='string') ui.catFilter = ws.workspaceSettings.catFilter;
-    if(VALID_RIGHT_TABS.includes(ws.workspaceSettings.rightTab)) ui.rTab = ws.workspaceSettings.rightTab;
+    if(VALID_RIGHT_TABS.includes(ws.workspaceSettings.rightTab)){
+      ui.rTab = resolveRightTabGroup(ws.workspaceSettings.rightTab);
+    }
   }
   document.getElementById('sunHours').value = site.sunHours;
   document.getElementById('sunVal').textContent = site.sunHours + ' hrs';
@@ -8138,69 +8151,84 @@ function switchLTab(t){
     document.getElementById('lpane-'+id).classList.toggle('on',id===t);
   });
 }
-// Insight section map: old tab names → section IDs
+// Map legacy rightTab values (section-level) to the three tab groups.
+const RIGHT_TAB_GROUPS = ['score','plan','results'];
+const RIGHT_TAB_GROUP_MAP = {
+  score:'score', notes:'score',
+  today:'plan', inspect:'plan', companions:'plan', calendar:'plan', dashboard:'plan',
+  harvest:'results', experiment:'results', retrospective:'results'
+};
+// Kept for any legacy reader; maps group ids to the primary section inside them.
 const INSIGHT_SECTION_MAP = {
-  score:'insightSummary', today:'insightToday', dashboard:'insightDashboard',
-  inspect:'insightInspect', companions:'insightInspect',
-  calendar:'insightCalendar', harvest:'insightHarvest',
-  experiment:'insightExperiment', retrospective:'insightRetrospective',
-  notes:'insightNotes'
+  score:'insightSummary', plan:'insightToday', results:'insightHarvest'
 };
 
-function setInsightSectionState(sectionEl, expanded){
-  if(!sectionEl) return;
-  const hdr = sectionEl.querySelector('.insight-header');
-  const content = sectionEl.querySelector('.insight-content');
-  if(!hdr || !content) return;
-  content.hidden = !expanded;
-  hdr.classList.toggle('is-collapsed', !expanded);
-  hdr.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+function resolveRightTabGroup(t){
+  if(RIGHT_TAB_GROUPS.includes(t)) return t;
+  return RIGHT_TAB_GROUP_MAP[t] || 'score';
 }
 
-function syncInsightRail(targetSectionId){
-  const keepOpen = new Set(targetSectionId ? ['insightSummary', targetSectionId] : ['insightSummary']);
-  document.querySelectorAll('.insight-block').forEach(section=>{
-    setInsightSectionState(section, keepOpen.has(section.id));
+function setRightTabActive(group){
+  RIGHT_TAB_GROUPS.forEach(id=>{
+    const btn = document.getElementById('rtab-'+id);
+    const pane = document.getElementById('rpane-'+id);
+    if(btn){
+      btn.classList.toggle('active', id===group);
+      btn.setAttribute('aria-selected', id===group ? 'true' : 'false');
+    }
+    if(pane) pane.classList.toggle('on', id===group);
   });
 }
 
-function switchRTab(t, persist=true){
-  ui.rTab=t;
-  if(persist && _workspace){
-    _workspace.workspaceSettings = _workspace.workspaceSettings || {};
-    _workspace.workspaceSettings.rightTab = t;
-    saveWorkspace(_workspace);
+function syncInsightRail(targetSectionId){
+  // Preserved as a no-op wrapper for legacy callers; tab switching is now
+  // the primary control. If a specific section was requested, resolve it
+  // to its tab group and activate that tab.
+  if(!targetSectionId){
+    setRightTabActive(resolveRightTabGroup(ui.rTab || 'score'));
+    return;
   }
-  // Expand the target insight section if collapsed
-  const sectionId = INSIGHT_SECTION_MAP[t];
-  if(sectionId){
-    const section = document.getElementById(sectionId);
-    if(section){
-      syncInsightRail(sectionId);
-      section.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }
-  }else{
-    syncInsightRail();
+  const section = document.getElementById(targetSectionId);
+  if(!section) return;
+  // Find which tab-pane contains the section.
+  const pane = section.closest('.tab-pane');
+  if(pane && pane.id && pane.id.startsWith('rpane-')){
+    setRightTabActive(pane.id.slice('rpane-'.length));
   }
-  if(t==='dashboard') renderDashboardTab();
-  if(t==='today') renderTodayPanel(inp());
-  if(t==='companions') renderCompanionPanel();
-  if(t==='calendar') renderCalendarPanel();
-  if(t==='harvest') renderHarvestTab();
-  if(t==='experiment') renderExperimentPanel();
-  if(t==='retrospective') renderRetrospectivePanel();
 }
 
-function toggleInsightSection(sectionEl){
-  const content = sectionEl.querySelector('.insight-content');
-  if(!content) return false;
-  const expanding = content.hidden;
-  if(expanding){
-    syncInsightRail(sectionEl.id);
-    return true;
+function switchRTab(t, persist=true){
+  const group = resolveRightTabGroup(t);
+  ui.rTab = group;
+  if(persist && _workspace){
+    _workspace.workspaceSettings = _workspace.workspaceSettings || {};
+    _workspace.workspaceSettings.rightTab = group;
+    saveWorkspace(_workspace);
   }
-  setInsightSectionState(sectionEl, false);
-  return false;
+  setRightTabActive(group);
+  // Render on-demand content for whichever group is now active.
+  if(group==='plan'){
+    renderTodayPanel(inp());
+    renderCompanionPanel();
+    renderCalendarPanel();
+    renderDashboardTab();
+  }else if(group==='results'){
+    renderHarvestTab();
+    renderExperimentPanel();
+    renderRetrospectivePanel();
+  }
+  // If a legacy section-level key came in, scroll that section into view.
+  const legacySectionMap = {
+    today:'insightToday', inspect:'insightInspect', companions:'insightInspect',
+    calendar:'insightCalendar', dashboard:'insightDashboard',
+    harvest:'insightHarvest', experiment:'insightExperiment',
+    retrospective:'insightRetrospective', notes:'insightNotes', score:'insightSummary'
+  };
+  const sectionId = legacySectionMap[t];
+  if(sectionId && sectionId !== 'insightSummary'){
+    const section = document.getElementById(sectionId);
+    if(section) section.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
 }
 
 function renderPalette(){
@@ -8283,6 +8311,8 @@ function renderRight(inputs,issues,scoreTotal){
   const rl=plannerScoreLabel(bs);
   const badge=document.getElementById('warnBadge');
   if(badge) badge.style.display=warnCount>0?'inline-block':'none';
+  const tabBadge=document.getElementById('scoreTabBadge');
+  if(tabBadge) tabBadge.style.display=warnCount>0?'inline-block':'none';
 
   // SCORE pane
   const bars=uniq.map(ck=>{
@@ -8805,23 +8835,10 @@ document.getElementById('shortcutOverlay').addEventListener('click',e=>{
   if(e.target===e.currentTarget) closeShortcutOverlay();
 });
 
-// Insight section collapse/expand handlers
-document.querySelectorAll('.insight-header').forEach(hdr=>{
-  hdr.addEventListener('click',()=>{
-    const section = hdr.closest('.insight-block');
-    const expanded = section ? toggleInsightSection(section) : false;
-    if(!expanded) return;
-    const key = hdr.getAttribute('data-section');
-    if(key==='summary') switchRTab('score', false);
-    if(key==='today') switchRTab('today', false);
-    if(key==='dashboard') switchRTab('dashboard', false);
-    if(key==='inspect') switchRTab('inspect', false);
-    if(key==='notes') switchRTab('notes', false);
-    if(key==='calendar') switchRTab('calendar', false);
-    if(key==='harvest') switchRTab('harvest', false);
-    if(key==='experiment') switchRTab('experiment', false);
-    if(key==='retrospective') switchRTab('retrospective', false);
-  });
+// Right-panel tab click handlers
+RIGHT_TAB_GROUPS.forEach(id=>{
+  const btn = document.getElementById('rtab-'+id);
+  if(btn) btn.addEventListener('click', ()=>switchRTab(id));
 });
 
 // Event delegation: state-action buttons in insight/dashboard panels
