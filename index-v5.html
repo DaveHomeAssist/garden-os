@@ -23,6 +23,16 @@
   #shell { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 0; }
   #root { display: contents; }
   @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
+  @media (min-width: 900px) {
+    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-phone {
+      width: 100% !important;
+      height: min(100vh - 64px, 1000px) !important;
+      max-height: calc(100vh - 64px) !important;
+      border-radius: 16px !important;
+    }
+    .v5-status { display: none !important; }
+  }
   button:focus-visible, a:focus-visible { outline: 2.5px solid #4e8c3c; outline-offset: 2px; border-radius: 6px; }
   .v5-eyebrow {
     display: none; position: fixed; top: 16px; left: 24px;
@@ -63,6 +73,20 @@ const T = {
   fontMono: "'DM Mono', ui-monospace, monospace",
 };
 
+// ── Date helpers ────────────────────────────────────────────────────────────
+function isoWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+const TODAY = new Date();
+const WEEK_NOW = isoWeek(TODAY);
+const DAY_OF_SEASON = Math.floor((TODAY - new Date(TODAY.getFullYear(), 0, 1)) / 86400000) + 1;
+const WEEKDAY = TODAY.toLocaleDateString('en-US', { weekday: 'long' });
+const MONTH_DAY = TODAY.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
 // ── Primitives ──────────────────────────────────────────────────────────────
 function Label({ children, color = T.textSoft, size = 10, style = {} }) {
   return <span style={{
@@ -81,7 +105,7 @@ function Disp({ children, size = 22, weight = 600, style = {} }) {
 function FakeStatusBar() {
   const fg = T.text;
   return (
-    <div style={{
+    <div className="v5-status" style={{
       height: 44, padding: '0 20px', display: 'flex',
       alignItems: 'flex-end', justifyContent: 'space-between',
       paddingBottom: 4, flexShrink: 0,
@@ -98,6 +122,7 @@ function TabBar({ active }) {
   const tabs = [
     { id:'hub',     label:'Hub',     href:'index-v5.html' },
     { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -123,8 +148,8 @@ function TabBar({ active }) {
 }
 function PhoneFrame({ children }) {
   return (
-    <div style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
-      <div style={{
+    <div className="v5-frame-outer" style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
+      <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
         background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
@@ -383,9 +408,9 @@ function Hub() {
 
       <header style={{ padding: '2px 22px 10px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Label size={9} color={T.soilMid}>GARDEN OS · W17</Label>
+          <Label size={9} color={T.soilMid}>GARDEN OS · W{WEEK_NOW}</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <Label size={9} color={T.soilMid}>ZONE 7a · DAY 36</Label>
+            <Label size={9} color={T.soilMid}>ZONE 7a · DAY {DAY_OF_SEASON}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
@@ -397,7 +422,7 @@ function Hub() {
           fontFamily: T.fontDisp, fontSize: 30, fontWeight: 600,
           letterSpacing: -0.5, color: T.soil, lineHeight: 1.05, marginTop: 2,
         }}>
-          Thursday, <span style={{ fontStyle: 'italic', color: T.leaf }}>April&nbsp;23.</span>
+          {WEEKDAY}, <span style={{ fontStyle: 'italic', color: T.leaf }}>{MONTH_DAY}.</span>
         </div>
         <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft, fontStyle: 'italic' }}>
           Late spring. Soil warm. Last frost five days behind us.
