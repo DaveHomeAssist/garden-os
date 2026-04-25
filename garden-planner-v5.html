@@ -160,6 +160,17 @@ const Icons = {
       <path d="M7 2v10M2 7h10"/>
     </svg>
   ),
+  gear: (s = 14, c = T.text) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="7" r="2.2" fill="none"/>
+      <path d="M7 1.4v1.5M7 11.1v1.5M1.4 7h1.5M11.1 7h1.5M3 3l1.05 1.05M9.95 9.95L11 11M3 11l1.05-1.05M9.95 4.05L11 3"/>
+    </svg>
+  ),
+  close: (s = 14, c = T.text) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round">
+      <path d="M3 3l8 8M11 3l-8 8"/>
+    </svg>
+  ),
 };
 
 // ── Primitives: Label, Disp, CropChip, KeyDot, Chip, Stat ───────────────────
@@ -659,16 +670,22 @@ function CropSheet({ cropKey, today, onClose }) {
 }
 
 // ── Main planner composition ────────────────────────────────────────────────
-function Planner() {
-  const today = WEEK_NOW;
+function Planner({ tweak, onOpenTweaks }) {
+  const density = tweak.density || 'comfortable';
+  const showEnded = tweak.showEnded !== false;
+  const weekOffset = tweak.weekOffset || 0;
+  const today = WEEK_NOW + weekOffset;
   const [picked, setPicked] = React.useState(null);
 
   const wStart = 8, wEnd = 44;
   const weekCount = wEnd - wStart + 1;
-  const timelineH = 520;
+  const timelineH = density === 'compact' ? 440 : 520;
   const pxPerWeek = timelineH / weekCount;
 
-  const crops = Object.keys(CROPS).sort((a, b) => {
+  const crops = Object.keys(CROPS).filter(k => {
+    if (!showEnded) return CROPS[k].harvestEnd >= today;
+    return true;
+  }).sort((a, b) => {
     const fa = CROPS[a].family, fb = CROPS[b].family;
     if (fa !== fb) return fa.localeCompare(fb);
     return CROPS[a].sowWeek - CROPS[b].sowWeek;
@@ -705,6 +722,12 @@ function Planner() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
+          <button aria-label="Tweaks" onClick={onOpenTweaks} style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: T.panel, border: `1px solid ${T.borderSoft}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+          }}>{Icons.gear(14, T.soil)}</button>
           <button aria-label="Add crop" style={{
             width: 32, height: 32, borderRadius: 8,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
@@ -778,8 +801,129 @@ function Planner() {
   );
 }
 
+// ── Tweaks panel ────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = { density: 'comfortable', showEnded: true, weekOffset: 0 };
+const TWEAK_STORAGE_KEY = 'gos.planner-v5.tweaks';
+
+function loadTweaks() {
+  try {
+    const raw = window.localStorage.getItem(TWEAK_STORAGE_KEY);
+    if (!raw) return TWEAK_DEFAULTS;
+    return { ...TWEAK_DEFAULTS, ...JSON.parse(raw) };
+  } catch (_) {
+    return TWEAK_DEFAULTS;
+  }
+}
+function saveTweaks(t) {
+  try { window.localStorage.setItem(TWEAK_STORAGE_KEY, JSON.stringify(t)); } catch (_) {}
+}
+
+function Seg({ value, opts, onChange }) {
+  return (
+    <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
+      {opts.map(([val, lab]) => (
+        <button key={val} onClick={() => onChange(val)} style={{
+          flex: 1, padding: '5px 8px', borderRadius: 4, border: 'none',
+          background: value === val ? T.panel : 'transparent',
+          fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
+          color: value === val ? T.text : T.textSoft,
+          boxShadow: value === val ? '0 1px 2px rgba(44,27,11,0.1)' : 'none',
+          cursor: 'pointer',
+        }}>{lab}</button>
+      ))}
+    </div>
+  );
+}
+
+function TweakRow({ label, children }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <Label size={9} color={T.textSoft} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function TweaksPanel({ tweak, setTweak, onClose }) {
+  const setKey = (k, v) => {
+    const next = { ...tweak, [k]: v };
+    setTweak(next);
+    saveTweaks(next);
+  };
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)', zIndex: 50,
+      }}/>
+      <div role="dialog" aria-modal="true" aria-label="Tweaks" style={{
+        position: 'absolute', top: 60, right: 12, zIndex: 51,
+        width: 264, maxWidth: 'calc(100% - 24px)',
+        background: T.panel, borderRadius: 12,
+        border: `1px solid ${T.border}`,
+        boxShadow: '0 16px 48px rgba(44,27,11,0.28), 0 2px 6px rgba(44,27,11,0.12)',
+        padding: '14px 16px 16px',
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+          marginBottom: 12,
+        }}>
+          <Disp size={17}>Tweaks</Disp>
+          <button onClick={onClose} aria-label="Close tweaks" style={{
+            width: 24, height: 24, borderRadius: 6, padding: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.textSoft,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+        <TweakRow label="Density">
+          <Seg value={tweak.density}
+            opts={[['comfortable', 'Comfortable'], ['compact', 'Compact']]}
+            onChange={v => setKey('density', v)}/>
+        </TweakRow>
+        <TweakRow label="Finished crops">
+          <Seg value={tweak.showEnded ? 'true' : 'false'}
+            opts={[['true', 'Show'], ['false', 'Hide']]}
+            onChange={v => setKey('showEnded', v === 'true')}/>
+        </TweakRow>
+        <TweakRow label="Season position">
+          <input type="range" min="-10" max="20" step="1" value={tweak.weekOffset}
+            onChange={e => setKey('weekOffset', +e.target.value)}
+            style={{ width: '100%', accentColor: T.leaf }}
+            aria-label="Season position offset in weeks"/>
+          <div style={{
+            fontFamily: T.fontMono, fontSize: 9, color: T.textSoft,
+            letterSpacing: 0.1, marginTop: 4,
+          }}>
+            {tweak.weekOffset === 0
+              ? `Today · W${WEEK_NOW}`
+              : `W${WEEK_NOW + tweak.weekOffset} · ${tweak.weekOffset > 0 ? '+' : ''}${tweak.weekOffset}w`}
+          </div>
+        </TweakRow>
+        <button onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
+          width: '100%', padding: '6px 10px',
+          background: 'transparent', border: `1px solid ${T.borderSoft}`,
+          borderRadius: 6, cursor: 'pointer',
+          fontFamily: T.fontMono, fontSize: 9,
+          letterSpacing: 0.15, textTransform: 'uppercase',
+          color: T.textSoft, fontWeight: 500,
+        }}>Reset to defaults</button>
+      </div>
+    </>
+  );
+}
+
+// ── Root ────────────────────────────────────────────────────────────────────
 function App() {
-  return <PhoneFrame><Planner/></PhoneFrame>;
+  const [tweak, setTweak] = React.useState(loadTweaks);
+  const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  return (
+    <PhoneFrame>
+      <Planner tweak={tweak} onOpenTweaks={() => setTweaksOpen(true)}/>
+      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
+    </PhoneFrame>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
