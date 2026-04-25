@@ -182,6 +182,44 @@ function createGameState() {
   };
 }
 
+function createPlannerState() {
+  const campaign = createCampaignState();
+  const PLANNER_COLS = 8;
+  const PLANNER_ROWS = 6;
+  campaign.sandbox = false;
+  campaign.plannerMode = true;
+  campaign.currentChapter = 1;
+  campaign.cropsUnlocked = getAllCrops().map((c) => c.id);
+  campaign.soilHealth = Array(PLANNER_COLS * PLANNER_ROWS).fill(1.0);
+  campaign.gameMode = 'planner';
+  const season = createSeasonState(1, 'spring', campaign, PLANNER_COLS, PLANNER_ROWS);
+  // Lock phase to PLANNING — planner never advances
+  season.phase = PHASES.PLANNING;
+  season.interventionTokens = 0;
+  season.eventsDrawn = [];
+  season.eventActive = null;
+  return {
+    campaign,
+    season,
+    settings: {
+      dayNightEnabled: false,
+      audio: {
+        masterVolume: 1,
+        musicVolume: 0.5,
+        sfxVolume: 0.7,
+        ambientVolume: 0.3,
+        muted: false,
+      },
+    },
+    selectedCropId: null,
+    cameraMode: 'overview',
+    cameraWeight: 'overview',
+    selectedWeight: 'overview',
+    panelOpen: null,
+    showChapterIntro: false,
+  };
+}
+
 function createSandboxState() {
   const campaign = createCampaignState();
   const SANDBOX_COLS = 8;
@@ -229,6 +267,7 @@ export {
   createCampaignState,
   createGameState,
   createSandboxState,
+  createPlannerState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
   getGridCols,

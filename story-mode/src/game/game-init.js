@@ -1,4 +1,4 @@
-import { createGameState, createSandboxState, createSeasonState } from './state.js';
+import { createGameState, createSandboxState, createSeasonState, createPlannerState } from './state.js';
 import { Store } from './store.js';
 import {
   deleteCampaign,
@@ -151,6 +151,11 @@ function renderTitleScreen(onStart) {
         <span class="mode-icon">🌿</span>
         <span>Free Play</span>
       </div>
+      <div class="mode-card mode-card--selectable" data-mode="planner">
+        <span class="mode-icon">📐</span>
+        <span>Planner</span>
+        <span class="mode-desc">Design your bed. See instant score feedback. No seasons, no pressure.</span>
+      </div>
       <div class="mode-card mode-card--locked">
         <span class="mode-icon">📅</span>
         <span>Daily Challenge</span>
@@ -197,10 +202,30 @@ function renderTitleScreen(onStart) {
     });
     freshSlots.parentNode.insertBefore(freeplayBtn, freshSlots.nextSibling);
 
+    titleScreen.querySelector('.planner-start-btn')?.remove();
+    const plannerBtn = document.createElement('button');
+    plannerBtn.type = 'button';
+    plannerBtn.className = 'save-slot-btn save-slot-btn--primary planner-start-btn';
+    plannerBtn.textContent = 'Start Planner';
+    plannerBtn.style.display = 'none';
+    plannerBtn.addEventListener('click', () => {
+      dismissTitleScreen(titleScreen, () => {
+        onStart({
+          slot: -1,
+          viewport: document.getElementById('viewport'),
+          initialState: createPlannerState(),
+          planner: true,
+        });
+      });
+    });
+    freshSlots.parentNode.insertBefore(plannerBtn, freshSlots.nextSibling);
+
     function updateSlotsVisibility() {
       const isFreeplay = selectedMode === 'freeplay';
-      freshSlots.style.display = isFreeplay ? 'none' : '';
+      const isPlanner = selectedMode === 'planner';
+      freshSlots.style.display = (isFreeplay || isPlanner) ? 'none' : '';
       freeplayBtn.style.display = isFreeplay ? '' : 'none';
+      plannerBtn.style.display = isPlanner ? '' : 'none';
     }
 
     updateSlotsVisibility();
