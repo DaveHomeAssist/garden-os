@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Garden OS Journal: how the score decides, plain English. Try-it mini-bed, six factor cards, link to specs.">
+<title>Garden OS · Journal (mobile beta)</title>
+
+<link rel="stylesheet" href="garden-os-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--cream, #f7f3ec);
+    background-image:
+      radial-gradient(ellipse at 10% 90%, rgba(58, 107, 42, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 5%, rgba(139, 94, 60, 0.04) 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #shell { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 0; }
+  #root { display: contents; }
+  @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
+  button:focus-visible, a:focus-visible { outline: 2.5px solid #4e8c3c; outline-offset: 2px; border-radius: 6px; }
+  .v5-eyebrow {
+    display: none; position: fixed; top: 16px; left: 24px;
+    font-family: 'DM Mono', ui-monospace, monospace; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(74, 48, 24, 0.62); text-decoration: none; z-index: 100;
+  }
+  .v5-eyebrow:hover { color: #1e1208; }
+  @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
+<div id="shell"><div id="root"></div></div>
+
+<script type="text/babel" data-presets="react">
+'use strict';
+
+const T = {
+  soil:'#3a2510', soilMid:'#52331a',
+  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
+  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0', leafWash:'#edf5e8',
+  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0',
+  rust:'#b84a1a', rustLight:'#d4651a',
+  cream:'#f7f3ec', creamMid:'#ede5d8', panel:'#fffdf9',
+  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
+  border:'#c8b090', borderSoft:'#dfd0b8',
+  fontDisp: "'Fraunces', Georgia, serif",
+  fontSerif:"'Lora', Georgia, serif",
+  fontSans: "'DM Sans', system-ui, sans-serif",
+  fontMono: "'DM Mono', ui-monospace, monospace",
+};
+
+const CROPS = {
+  tom: { name:'Tomato',  mono:'To', color:'#c8412a' },
+  let: { name:'Lettuce', mono:'Le', color:'#6aab4a' },
+  bas: { name:'Basil',   mono:'Ba', color:'#4e8c3c' },
+};
+
+const FACTORS = [
+  { id:'sun',     title:'Sun fit',         weight: 24,
+    plain:'This cell gets 6h direct light. Tomatoes want 8h, so a tomato here loses points. Lettuce gains them.',
+    num:'sun_score = clamp((cell_hours / crop_min) ^ 0.7, 0, 1) → 0.78 → +14 pts' },
+  { id:'support', title:'Support',         weight: 18,
+    plain:"A trellis along this row means vining crops climb instead of sprawl. Cucumbers and tomatoes love it.",
+    num:'support_match = vine_crop ? 1.0 : 0.4 → +12 pts when matched' },
+  { id:'shade',   title:'Shade tolerance', weight: 14,
+    plain:"When sun drops below crop minimum we don't hard-fail. Leafy greens still earn partial points.",
+    num:'if sun < min: score *= shade_tolerance[crop] → varies' },
+  { id:'access',  title:'Access',          weight: 12,
+    plain:"Cells you can actually reach beat back-row cells you can't. Front edge gets a quiet bonus.",
+    num:'reach_factor = 1 - (depth_from_path / 4) → 0.5–1.0' },
+  { id:'season',  title:'Season fit',      weight: 18,
+    plain:"It's week 17. Lettuce is still happy, peppers are eager. Brassicas are losing daylight.",
+    num:'season_match = bell(week, crop.peak, σ=4) → 0.0–1.0' },
+  { id:'adj',     title:'Adjacency',       weight: 14,
+    plain:'Basil next to tomato earns. Onions next to legumes lose. Marigolds help everyone except themselves.',
+    num:'Σ pairwise(crop, neighbor) → -2..+3 per neighbor' },
+];
+
+const Icons = {
+  gear: (s = 14, c = T.text) => <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="2.2" fill="none"/><path d="M7 1.4v1.5M7 11.1v1.5M1.4 7h1.5M11.1 7h1.5M3 3l1.05 1.05M9.95 9.95L11 11M3 11l1.05-1.05M9.95 4.05L11 3"/></svg>,
+  close: (s = 14, c = T.text) => <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>,
+};
+
+function Label({ children, color = T.textSoft, size = 10, style = {} }) {
+  return <span style={{
+    fontFamily: T.fontMono, fontSize: size, fontWeight: 500,
+    textTransform: 'uppercase', letterSpacing: 0.12, color, ...style,
+  }}>{children}</span>;
+}
+function Disp({ children, size = 22, weight = 600, style = {} }) {
+  return <span style={{
+    fontFamily: T.fontDisp, fontSize: size, fontWeight: weight,
+    letterSpacing: -0.015, lineHeight: 1.08, color: T.text, ...style,
+  }}>{children}</span>;
+}
+function CropChip({ crop, size = 24 }) {
+  const c = CROPS[crop];
+  if (!c) return null;
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: '50%',
+      background: c.color, color: '#fff',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: T.fontMono, fontSize: size * 0.42, fontWeight: 500,
+      letterSpacing: -0.3, lineHeight: 1, flexShrink: 0,
+      boxShadow: 'inset 0 -1.5px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22)',
+    }}>{c.mono}</span>
+  );
+}
+
+function FakeStatusBar() {
+  const fg = T.text;
+  return (
+    <div style={{
+      height: 44, padding: '0 20px', display: 'flex',
+      alignItems: 'flex-end', justifyContent: 'space-between',
+      paddingBottom: 4, flexShrink: 0,
+    }}>
+      <span style={{ fontFamily: '-apple-system, system-ui', fontSize: 14, fontWeight: 600, color: fg }}>9:41</span>
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+        <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="6" width="2.5" height="4" rx="0.5" fill={fg}/><rect x="4" y="4" width="2.5" height="6" rx="0.5" fill={fg}/><rect x="8" y="2" width="2.5" height="8" rx="0.5" fill={fg}/><rect x="12" y="0" width="2.5" height="10" rx="0.5" fill={fg}/></svg>
+        <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2.5" stroke={fg} fill="none"/><rect x="2" y="2" width="14" height="6" rx="1" fill={fg}/></svg>
+      </div>
+    </div>
+  );
+}
+function TabBar({ active }) {
+  const tabs = [
+    { id:'hub',     label:'Hub',     href:'index-v5.html' },
+    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
+    { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
+  ];
+  return (
+    <nav style={{
+      flexShrink: 0, height: 66, background: T.panel,
+      borderTop: `1px solid ${T.borderSoft}`,
+      display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+    }}>
+      {tabs.map(t => (
+        <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
+          flex: 1, textAlign: 'center', padding: '4px 0',
+          borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
+          marginTop: -9, paddingTop: 11, textDecoration: 'none',
+          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+        }}>
+          <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
+            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+        </a>
+      ))}
+    </nav>
+  );
+}
+function PhoneFrame({ children }) {
+  return (
+    <div style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
+      <div style={{
+        width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
+        background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
+        boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
+      }}>{children}</div>
+    </div>
+  );
+}
+
+// ── Tweaks ──────────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = { detailLevel: 'standard' };
+const TWEAK_KEY = 'gos.journal.tweaks';
+const TRY_IT_KEY = 'gos.journal.tryIt';
+
+function loadTweaks() {
+  try { const raw = window.localStorage.getItem(TWEAK_KEY); if (!raw) return TWEAK_DEFAULTS; return { ...TWEAK_DEFAULTS, ...JSON.parse(raw) }; }
+  catch (_) { return TWEAK_DEFAULTS; }
+}
+function saveTweaks(t) { try { window.localStorage.setItem(TWEAK_KEY, JSON.stringify(t)); } catch (_) {} }
+function loadTryIt() {
+  try { const raw = window.localStorage.getItem(TRY_IT_KEY); if (!raw) return null; return JSON.parse(raw); }
+  catch (_) { return null; }
+}
+function saveTryIt(state) { try { window.localStorage.setItem(TRY_IT_KEY, JSON.stringify(state)); } catch (_) {} }
+
+function Seg({ value, opts, onChange }) {
+  return (
+    <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
+      {opts.map(([val, lab]) => (
+        <button key={val} onClick={() => onChange(val)} style={{
+          flex: 1, padding: '5px 8px', borderRadius: 4, border: 'none',
+          background: value === val ? T.panel : 'transparent',
+          fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
+          color: value === val ? T.text : T.textSoft,
+          boxShadow: value === val ? '0 1px 2px rgba(44,27,11,0.1)' : 'none',
+          cursor: 'pointer', minHeight: 28,
+        }}>{lab}</button>
+      ))}
+    </div>
+  );
+}
+function TweaksPanel({ tweak, setTweak, onClose }) {
+  const setKey = (k, v) => { const next = { ...tweak, [k]: v }; setTweak(next); saveTweaks(next); };
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)', zIndex: 50 }}/>
+      <div role="dialog" aria-modal="true" aria-label="Tweaks" style={{
+        position: 'absolute', top: 60, right: 12, zIndex: 51,
+        width: 264, maxWidth: 'calc(100% - 24px)',
+        background: T.panel, borderRadius: 12, border: `1px solid ${T.border}`,
+        boxShadow: '0 16px 48px rgba(44,27,11,0.28)', padding: '14px 16px 16px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+          <Disp size={17}>Tweaks</Disp>
+          <button onClick={onClose} aria-label="Close tweaks" style={{
+            width: 24, height: 24, borderRadius: 6, padding: 0, background: 'transparent',
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', color: T.textSoft,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Label size={9} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>Detail level</Label>
+          <Seg value={tweak.detailLevel}
+            opts={[['skim', 'Skim'], ['standard', 'Standard'], ['deep', 'Deep']]}
+            onChange={v => setKey('detailLevel', v)}/>
+        </div>
+        <button onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
+          width: '100%', padding: '6px 10px', background: 'transparent',
+          border: `1px solid ${T.borderSoft}`, borderRadius: 6, cursor: 'pointer',
+          fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15, textTransform: 'uppercase',
+          color: T.textSoft, fontWeight: 500,
+        }}>Reset to defaults</button>
+      </div>
+    </>
+  );
+}
+
+// ── Try-it mini-bed ─────────────────────────────────────────────────────────
+const DEFAULT_PLACEMENTS = {
+  '0-0':'tom', '0-1':'tom', '0-2':null,
+  '1-0':'bas', '1-1':null,  '1-2':'let',
+  '2-0':null,  '2-1':'let', '2-2':'let',
+};
+
+function Bar({ label, pct, color }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Label size={9} color={T.textSoft} style={{ width: 48, flexShrink: 0 }}>{label}</Label>
+      <div style={{
+        flex: 1, height: 6, background: T.cream, borderRadius: 3, overflow: 'hidden',
+        border: `1px solid ${T.borderSoft}`,
+      }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: color }}/>
+      </div>
+      <span style={{ fontFamily: T.fontMono, fontSize: 9, color: T.textSoft, width: 26, textAlign: 'right' }}>{pct}</span>
+    </div>
+  );
+}
+
+function TryItBed() {
+  const presets = ['tom', 'let', 'bas'];
+  const [placements, setPlacements] = React.useState(() => loadTryIt() || DEFAULT_PLACEMENTS);
+  const [active, setActive] = React.useState('tom');
+
+  React.useEffect(() => { saveTryIt(placements); }, [placements]);
+
+  const place = (k) => {
+    setPlacements(p => ({ ...p, [k]: p[k] === active ? null : active }));
+  };
+  const reset = () => setPlacements(DEFAULT_PLACEMENTS);
+
+  const score = React.useMemo(() => {
+    const cells = Object.values(placements);
+    const filled = cells.filter(Boolean).length;
+    let s = 30 + filled * 5;
+    Object.entries(placements).forEach(([k, v]) => {
+      if (v !== 'tom') return;
+      const [r, c] = k.split('-').map(Number);
+      const neigh = [`${r - 1}-${c}`, `${r + 1}-${c}`, `${r}-${c - 1}`, `${r}-${c + 1}`];
+      neigh.forEach(n => { if (placements[n] === 'bas') s += 4; });
+    });
+    return Math.min(100, s);
+  }, [placements]);
+
+  const tone = score >= 75 ? 'good' : (score >= 50 ? 'warn' : 'bad');
+  const toneColor = tone === 'good' ? T.leaf : (tone === 'warn' ? T.sun : T.rust);
+
+  return (
+    <section style={{
+      marginTop: 14, padding: '14px', background: T.panel,
+      border: `1px solid ${T.borderSoft}`, borderRadius: 14,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div>
+          <Label size={9} color={T.leaf}>TRY IT</Label>
+          <div style={{ fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600, marginTop: 1 }}>
+            Tap cells. See the score move.
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <span style={{ fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600, color: toneColor, letterSpacing: -0.5 }}>{score}</span>
+          <Label size={9} color={T.textSoft}>/ 100</Label>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'flex-start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: 4, flexShrink: 0 }}>
+          {Array.from({ length: 9 }).map((_, i) => {
+            const r = Math.floor(i / 3), c = i % 3, k = `${r}-${c}`;
+            const crop = placements[k];
+            const cropColor = crop ? CROPS[crop].color : null;
+            return (
+              <button key={k} onClick={() => place(k)} aria-label={`Cell row ${r + 1}, column ${c + 1}`} style={{
+                width: 44, height: 44, borderRadius: 6,
+                background: crop ? cropColor + '22' : T.cream,
+                border: `1.5px solid ${crop ? cropColor : T.borderSoft}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', padding: 0,
+              }}>
+                {crop ? (
+                  <span style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 600, color: cropColor, letterSpacing: -0.2 }}>
+                    {CROPS[crop].mono}
+                  </span>
+                ) : (
+                  <span style={{ fontFamily: T.fontMono, fontSize: 14, color: T.textMuted }}>+</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Label size={9} color={T.textSoft}>BRUSH</Label>
+          <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+            {presets.map(k => (
+              <button key={k} onClick={() => setActive(k)} aria-pressed={active === k} style={{
+                padding: '4px 8px 4px 4px', borderRadius: 999,
+                background: active === k ? T.soil : T.cream,
+                border: `1px solid ${active === k ? T.soil : T.borderSoft}`,
+                color: active === k ? '#f5ede0' : T.text,
+                display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+                fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, minHeight: 28,
+              }}>
+                <CropChip crop={k} size={16}/>
+                <span>{CROPS[k].name}</span>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <Label size={9} color={T.textSoft}>BREAKDOWN</Label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}>
+              <Bar label="Sun fit" pct={Math.round(score * 0.78)} color={T.leaf}/>
+              <Bar label="Adj"     pct={Math.round(score * 0.62)} color={T.leaf}/>
+              <Bar label="Season"  pct={Math.round(score * 0.88)} color={T.leaf}/>
+              <Bar label="Access"  pct={Math.round(score * 0.45)} color={T.sun}/>
+            </div>
+          </div>
+
+          <button onClick={reset} style={{
+            marginTop: 10, padding: '5px 10px',
+            background: 'transparent', border: `1px solid ${T.borderSoft}`,
+            borderRadius: 6, cursor: 'pointer',
+            fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15,
+            textTransform: 'uppercase', color: T.textSoft, fontWeight: 500,
+          }}>Reset bed</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Factor card ─────────────────────────────────────────────────────────────
+function FactorBar({ weight }) {
+  return (
+    <div style={{
+      width: 18, height: 24, background: T.cream, borderRadius: 4,
+      border: `1px solid ${T.borderSoft}`, position: 'relative', overflow: 'hidden',
+      flexShrink: 0,
+    }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0,
+        height: `${weight * 2.4}%`, background: T.leafBright }}/>
+    </div>
+  );
+}
+function FactorCard({ factor, open, detailLevel, onToggle }) {
+  const showNum = detailLevel === 'deep';
+  const showPlain = detailLevel !== 'skim' || open;
+
+  return (
+    <div style={{
+      background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 12,
+      overflow: 'hidden',
+    }}>
+      <button onClick={onToggle} aria-expanded={open} style={{
+        width: '100%', padding: '12px 14px', background: 'transparent', border: 'none',
+        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+        textAlign: 'left', fontFamily: T.fontSans, minHeight: 44,
+      }}>
+        <FactorBar weight={factor.weight}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <span style={{ fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600, color: T.text, letterSpacing: -0.2 }}>
+              {factor.title}
+            </span>
+            <Label size={9} color={T.textSoft}>{factor.weight}% weight</Label>
+          </div>
+          {!open && detailLevel !== 'deep' && (
+            <div style={{
+              fontSize: 12, color: T.textSoft, marginTop: 2,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{factor.plain}</div>
+          )}
+        </div>
+        <span style={{
+          color: T.textMuted, fontFamily: T.fontMono, fontSize: 12,
+          transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.18s',
+        }}>›</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 14px 14px 36px', borderTop: `1px solid ${T.borderSoft}` }}>
+          {showPlain && (
+            <p style={{ fontFamily: T.fontSerif, fontSize: 13.5, color: T.textMid, lineHeight: 1.6, margin: '10px 0 0' }}>
+              {factor.plain}
+            </p>
+          )}
+          {(showNum || detailLevel === 'deep') && (
+            <div style={{
+              marginTop: 10, padding: '8px 10px', background: T.cream, borderRadius: 8,
+              fontFamily: T.fontMono, fontSize: 11, color: T.soilMid, lineHeight: 1.5,
+              border: `1px solid ${T.borderSoft}`,
+            }}>{factor.num}</div>
+          )}
+          <a href={`specs/SCORING_RULES.md#${factor.id}`} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8,
+            fontFamily: T.fontMono, fontSize: 10, color: T.leaf,
+            letterSpacing: 0.1, textTransform: 'uppercase', textDecoration: 'none',
+          }}>SCORING_RULES.md#{factor.id} →</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Journal screen ──────────────────────────────────────────────────────────
+function Journal() {
+  const [tweak, setTweak] = React.useState(loadTweaks);
+  const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  const [openId, setOpenId] = React.useState('sun');
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', background: T.cream,
+      fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', position: 'relative',
+    }}>
+      <FakeStatusBar/>
+
+      <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <Label size={9} color={T.soilMid}>JOURNAL</Label>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <Label size={9} color={T.soilMid}>{tweak.detailLevel.toUpperCase()}</Label>
+            <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
+              width: 26, height: 26, borderRadius: 6, padding: 0, background: T.panel,
+              border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>{Icons.gear(12, T.soil)}</button>
+          </div>
+        </div>
+        <div style={{
+          fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
+          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, marginTop: 2,
+        }}>
+          How it <span style={{ fontStyle: 'italic', color: T.leaf }}>thinks</span>.
+        </div>
+        <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft, fontStyle: 'italic', marginTop: 2 }}>
+          Six factors. Same math every time.
+        </div>
+      </header>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
+        <TryItBed/>
+
+        <Label size={9} color={T.textSoft} style={{ marginLeft: 2, marginTop: 18, display: 'block' }}>SIX FACTORS</Label>
+        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {FACTORS.map(f => (
+            <FactorCard
+              key={f.id}
+              factor={f}
+              open={openId === f.id}
+              detailLevel={tweak.detailLevel}
+              onToggle={() => setOpenId(openId === f.id ? null : f.id)}
+            />
+          ))}
+        </div>
+
+        <section style={{
+          marginTop: 18, padding: '12px 14px', borderRadius: 12,
+          background: T.cedarWash, border: `1px dashed ${T.cedarPale}`,
+        }}>
+          <Label size={9} color={T.cedar}>WHAT WE DON'T KNOW</Label>
+          <ul style={{ margin: '6px 0 0 18px', padding: 0, fontSize: 12.5,
+            color: T.textMid, lineHeight: 1.6, fontFamily: T.fontSerif }}>
+            <li>Microclimate, the heat off your house wall.</li>
+            <li>Soil biology beyond what you've told us.</li>
+            <li>Pest pressure unique to your block.</li>
+          </ul>
+        </section>
+
+        <a href="specs/SCORING_RULES.md" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14,
+          fontFamily: T.fontMono, fontSize: 11, color: T.leaf,
+          textDecoration: 'none', letterSpacing: 0.1,
+        }}>See specs/SCORING_RULES.md →</a>
+      </div>
+
+      <TabBar active="journal"/>
+      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Journal/></PhoneFrame>);
+</script>
+</body>
+</html>
