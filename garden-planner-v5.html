@@ -68,6 +68,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index.html">← Garden OS</a>
@@ -1142,6 +1143,16 @@ function App() {
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
     </PhoneFrame>
   );
+}
+
+// gos-bed.js wiring: report active bed for verification (no rendering change)
+if (typeof GosBed !== 'undefined') {
+  const _activeBed = GosBed.getActive();
+  if (_activeBed) {
+    console.log('Active bed loaded: ' + _activeBed.name);
+  } else {
+    console.log('No bed found — using fixture data');
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
