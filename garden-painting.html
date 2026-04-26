@@ -77,6 +77,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="gos-bed.js"></script>
+<script src="gos-suitability.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index.html">← Garden OS</a>
@@ -162,35 +163,72 @@ const BEDS = [
   },
 ];
 
-// ── Cell-level scoring (mirrors src/paint-data.jsx) ─────────────────────────
-// Pure scoring kernel: given a bed, a cell coord, and a candidate crop id,
-// returns a 1-10 score. Used both by recsForCell (try every crop in an empty
-// cell) and by computeBedScore (score the actual placed crop in each cell).
+// ── Suitability adapter (delegates to GosSuitability) ──────────────────────
+// Painting's internal bed shape is {cols, rows, sun, painted: [{r,c,crop}]}.
+// GosSuitability operates on the canonical GosBed shape (painted entries with
+// {cell:"rRcC", cropId, ...} and bed-level wallSide / sunHoursNumeric / etc).
+// This adapter bridges them so the UI keeps its existing function signatures
+// while the realism model is computed centrally.
+
+function paintingBedToGos(bed) {
+  if (!bed) return null;
+  const sunInternal = bed.sun || 'full';
+  const sunCanonical = sunInternal === 'part' ? 'partial' : sunInternal;
+  return {
+    shape: bed.cols + 'x' + bed.rows,
+    sun: sunCanonical,
+    wallSide: bed.wallSide,                          // optional, may be undefined
+    sunHoursNumeric: bed.sunHoursNumeric,            // optional
+    painted: (bed.painted || []).map(p => ({
+      cell: 'r' + p.r + 'c' + p.c,
+      cropId: p.crop,
+    })),
+  };
+}
+
+function paintingGetCrop(cropId) {
+  const c = CROPS[cropId];
+  if (!c) return null;
+  return {
+    sun: c.sun,
+    family: c.family,
+    sowWeek: c.sowWeek,
+    transplantWeek: c.transplantWeek,
+    harvestStart: c.harvestStart,
+    harvestEnd: c.harvestEnd,
+  };
+}
+
+function currentIsoWeekSafe() {
+  if (typeof GosBed !== 'undefined' && typeof GosBed.currentIsoWeek === 'function') {
+    return GosBed.currentIsoWeek();
+  }
+  return null;
+}
+
+// Pure scoring kernel kept stable for callers (recsForCell, computeBedScore):
+// given a bed, a cell coord, and a candidate crop id, returns 0–10. When
+// GosSuitability is unavailable (e.g., it failed to load), return a neutral
+// midpoint so the UI keeps rendering rather than crashing.
 function scoreCropCell(bed, r, c, cropId) {
   if (!bed || !cropId) return 5;
-  const cd = CROPS[cropId];
-  if (!cd) return 5;
-  const neighbors = [];
-  [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
-    const nr = r + dr, nc = c + dc;
-    const cell = (bed.painted || []).find(p => p.r === nr && p.c === nc);
-    if (cell) neighbors.push(cell.crop);
+  if (typeof GosSuitability === 'undefined') return 5;
+  const gosBed = paintingBedToGos(bed);
+  if (!gosBed) return 5;
+  // Build a synthetic painted entry for this candidate at (r,c). Replace any
+  // existing entry at the same cell so the candidate is what the scorer sees.
+  const cellStr = 'r' + r + 'c' + c;
+  const synthPainted = (gosBed.painted || []).filter(p => p.cell !== cellStr);
+  synthPainted.push({ cell: cellStr, cropId: cropId });
+  const synth = Object.assign({}, gosBed, { painted: synthPainted });
+  const result = GosSuitability.scoreCell({
+    bed: synth,
+    cellEntry: { cell: cellStr, cropId: cropId },
+    getCrop: paintingGetCrop,
+    currentWeek: currentIsoWeekSafe(),
   });
-  const isBack = r === 0;
-  const isFront = r === (bed.rows - 1);
-  const k = cropId;
-  let score = 5;
-  if (isBack && (k === 'tom' || k === 'cuc' || k === 'pep')) score += 2;
-  if (isFront && (k === 'let' || k === 'rad' || k === 'spi')) score += 1.8;
-  if (cd.sun === 'full' && bed.sun === 'full') score += 0.7;
-  if (cd.sun === 'part' && bed.sun === 'part') score += 1.2;
-  if (cd.sun === 'full' && bed.sun === 'part') score -= 1.5;
-  if (neighbors.includes('tom') && (k === 'bas' || k === 'mar')) score += 1.5;
-  if (neighbors.includes('car') && k === 'oni') score += 0.8;
-  if (neighbors.includes(k)) score += 0.5;
-  if (neighbors.includes('oni') && k === 'bas') score -= 1;
-  if (k === 'tom' || k === 'cuc' || k === 'pep') score += 0.5;
-  return Math.max(1, Math.min(10, score));
+  if (!result) return 5;
+  return Math.max(0, Math.min(10, result.total));
 }
 
 function recsForCell(bed, r, c) {
@@ -201,29 +239,21 @@ function recsForCell(bed, r, c) {
 
 // Aggregate the bed's score from all occupied cells. Returns:
 //   { score: 0-100 number | null, weakestCells: ["r0c2", ...] }
-// score = round(avg cell score * 10) on the 1-10 -> 0-100 mapping.
-// weakestCells = cells more than 15 pts (in 0-100 space) below avg, OR
-// the bottom 20 percent (min 1) when none qualify.
 function computeBedScore(bed) {
   if (!bed) return { score: null, weakestCells: [] };
-  const occupied = (bed.painted || []).filter(p => p && p.crop);
-  if (!occupied.length) return { score: null, weakestCells: [] };
-  const scored = occupied.map(cell => ({
-    r: cell.r, c: cell.c,
-    score10: scoreCropCell(bed, cell.r, cell.c, cell.crop),
-  }));
-  const avg10 = scored.reduce((acc, x) => acc + x.score10, 0) / scored.length;
-  const bedScore = Math.round(avg10 * 10);
-  const threshold10 = avg10 - 1.5;
-  let weak = scored.filter(x => x.score10 < threshold10);
-  if (weak.length === 0) {
-    const sorted = [...scored].sort((a, b) => a.score10 - b.score10);
-    const n = Math.max(1, Math.floor(scored.length * 0.2));
-    weak = sorted.slice(0, n);
+  if (typeof GosSuitability === 'undefined') {
+    return { score: null, weakestCells: [] };
   }
+  const gosBed = paintingBedToGos(bed);
+  if (!gosBed) return { score: null, weakestCells: [] };
+  const result = GosSuitability.scoreBed({
+    bed: gosBed,
+    getCrop: paintingGetCrop,
+    currentWeek: currentIsoWeekSafe(),
+  });
   return {
-    score: bedScore,
-    weakestCells: weak.map(x => 'r' + x.r + 'c' + x.c),
+    score: result.score,
+    weakestCells: result.weakestCells || [],
   };
 }
 
@@ -622,6 +652,12 @@ function gosBedToInternal(gosBed) {
     cols, rows,
     location: sunInternal === 'part' ? 'Part shade' : (sunInternal === 'shade' ? 'Shade' : 'Full sun'),
     sun: sunInternal,
+    // bedContext fields — pass through so suitability can use real site data.
+    zone: gosBed.zone,
+    wallSide: gosBed.wallSide,
+    sunHoursNumeric: gosBed.sunHoursNumeric,
+    water: gosBed.water,
+    orientation: gosBed.orientation,
     rowLabels: Array.from({ length: rows }, (_, i) => 'Row ' + (i + 1)),
     shape: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1)),
     painted: (gosBed.painted || []).map(p => {
