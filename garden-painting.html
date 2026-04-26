@@ -634,24 +634,58 @@ function gosBedToInternal(gosBed) {
 }
 
 // Serialize internal painted state plus active-bed metadata into the canonical
-// GosBed schema for write-back.
+// GosBed schema for write-back. Preserves plantedAt/plantedWeek for cells whose
+// cropId hasn't changed since the last save; stamps now for newly-painted or
+// changed cells. Carries forward existing bedContext fields untouched.
 function internalToGosBed(activeBed, internalPaintedArr) {
-  return {
+  const prev = (typeof GosBed !== 'undefined') ? GosBed.read(activeBed.id) : null;
+  const prevByCellCrop = new Map();
+  if (prev && Array.isArray(prev.painted)) {
+    prev.painted.forEach(p => {
+      if (p && p.cell && p.cropId) prevByCellCrop.set(p.cell + '::' + p.cropId, p);
+    });
+  }
+  const nowIso = (typeof GosBed !== 'undefined') ? GosBed.currentIsoDate() : new Date().toISOString();
+  const nowWeek = (typeof GosBed !== 'undefined') ? GosBed.currentIsoWeek() : null;
+
+  const out = {
     id: activeBed.id,
     name: activeBed.name,
     shape: activeBed.cols + 'x' + activeBed.rows,
     sun: activeBed.sun === 'part' ? 'partial' : (activeBed.sun || 'full'),
     painted: (internalPaintedArr || []).map(p => {
       const c = CROPS[p.crop];
-      return {
-        cell: GosBed.formatCell(p.r, p.c),
+      const cellStr = GosBed.formatCell(p.r, p.c);
+      const entry = {
+        cell: cellStr,
         cropId: p.crop,
         cropName: (c && c.name) || p.crop,
         cropIcon: (c && c.mono) || '',
         cropColor: (c && c.color) || '#888',
       };
+      const prior = prevByCellCrop.get(cellStr + '::' + p.crop);
+      if (prior && prior.plantedAt) {
+        entry.plantedAt = prior.plantedAt;
+        if (typeof prior.plantedWeek === 'number') entry.plantedWeek = prior.plantedWeek;
+      } else {
+        entry.plantedAt = nowIso;
+        if (nowWeek != null) entry.plantedWeek = nowWeek;
+      }
+      return entry;
     })
   };
+
+  // Carry forward bedContext fields the user previously set; the painting
+  // surface doesn't yet have UI to edit them, so we mustn't drop them on
+  // autosave.
+  if (prev) {
+    if (typeof prev.zone === 'string' && prev.zone) out.zone = prev.zone;
+    if (typeof prev.wallSide === 'string' && prev.wallSide) out.wallSide = prev.wallSide;
+    if (typeof prev.sunHoursNumeric === 'number') out.sunHoursNumeric = prev.sunHoursNumeric;
+    if (typeof prev.water === 'string' && prev.water) out.water = prev.water;
+    if (typeof prev.orientation === 'string' && prev.orientation) out.orientation = prev.orientation;
+  }
+  return out;
 }
 
 function loadActiveBedAsInternal() {

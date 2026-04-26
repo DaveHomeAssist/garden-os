@@ -157,18 +157,28 @@ const CONCURRENT_WRITE_MSG = 'Could not save — another window is active. Reloa
 
 // Translate a GosBed bed (canonical schema, painted[] uses {cell:"r0c2",
 // cropId, ...} snapshots) into the internal shape the Planner components
-// already consume (array of {r, c, crop, plantedWeek}).
+// already consume (array of {r, c, crop, plantedWeek, plantedAt, isScheduled}).
+//
+// Realism: prefer the bed's recorded plantedWeek/plantedAt. Only fall back to
+// the crop catalog's ideal sowWeek when the bed lacks real timing — and tag
+// such entries with isScheduled so the UI can surface "(scheduled)" rather
+// than pretend a textbook timeline is the gardener's actual one.
 function bedFromGos(gosBed) {
   if (!gosBed || !Array.isArray(gosBed.painted)) return [];
   return gosBed.painted.map(p => {
     const cell = (typeof GosBed !== 'undefined') ? GosBed.parseCell(p.cell) : null;
     if (!cell) return null;
+    const realWeek = (typeof GosBed !== 'undefined' && GosBed.plantedWeekOf)
+      ? GosBed.plantedWeekOf(p)
+      : (typeof p.plantedWeek === 'number' ? p.plantedWeek : null);
     const fallbackWeek = (CROPS[p.cropId] && CROPS[p.cropId].sowWeek) || WEEK_NOW;
     return {
       r: cell.r,
       c: cell.c,
       crop: p.cropId,
-      plantedWeek: typeof p.plantedWeek === 'number' ? p.plantedWeek : fallbackWeek,
+      plantedWeek: realWeek != null ? realWeek : fallbackWeek,
+      plantedAt: typeof p.plantedAt === 'string' ? p.plantedAt : null,
+      isScheduled: realWeek == null,
     };
   }).filter(Boolean);
 }
@@ -328,6 +338,11 @@ const Icons = {
   plus: (s = 14, c = T.text) => (
     <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round">
       <path d="M7 2v10M2 7h10"/>
+    </svg>
+  ),
+  check: (s = 14, c = '#fff') => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.5 7.5l3 3 6-6.5"/>
     </svg>
   ),
   gear: (s = 14, c = T.text) => (
@@ -613,7 +628,7 @@ function TodayLine({ today, wStart, pxPerWeek }) {
     </div>
   );
 }
-function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done }) {
+function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done, actualPlantedWeeks = [] }) {
   const c = CROPS[cropKey];
   const sowTop  = 22 + (c.sowWeek - wStart) * pxPerWeek;
   const growTop = 22 + ((c.transplantWeek || c.sowWeek) - wStart) * pxPerWeek;
@@ -623,9 +638,14 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done }) {
   const growH = harvTop - growTop;
   const harvH = harvBot - harvTop;
   const effectiveOpacity = done ? 0.6 : (dim ? 0.35 : 1);
+  // De-dupe actual planting weeks so multiple cells of the same crop sown in
+  // the same ISO week render as one marker.
+  const uniqueActual = Array.from(new Set(actualPlantedWeeks.filter(w =>
+    typeof w === 'number' && w >= wStart && w <= (wStart + 36)
+  )));
   return (
     <div onClick={onPick} role="button"
-      aria-label={`${c.name}${done ? ' (marked done)' : ''}`}
+      aria-label={`${c.name}${done ? ' (marked done)' : ''}${uniqueActual.length ? ' (planted W' + uniqueActual.join(', W') + ')' : ''}`}
       tabIndex={0}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick && onPick(); } }}
       style={{
@@ -668,16 +688,32 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done }) {
           background: T.cream, border: `2px solid ${T.leaf}`, zIndex: 7,
         }}/>
       )}
+      {/* Realism: filled markers at the actual planting weeks recorded on the
+          bed. Distinct from the catalog "today" hollow dot above so the user
+          can tell ideal vs actual at a glance. */}
+      {uniqueActual.map(w => (
+        <div key={'planted-' + w} aria-hidden="true" style={{
+          position: 'absolute', left: '50%',
+          top: 22 + (w - wStart) * pxPerWeek - 3,
+          transform: 'translateX(-50%)',
+          width: 7, height: 7,
+          background: c.color,
+          border: '1.5px solid #fff',
+          borderRadius: '50%',
+          boxShadow: '0 0 0 1px rgba(44,27,11,0.35)',
+          zIndex: 6,
+        }}/>
+      ))}
       {done && (
         <div aria-hidden="true" style={{
           position: 'absolute', top: 26, left: '50%',
           transform: 'translateX(-50%)',
           width: 14, height: 14, borderRadius: '50%',
-          background: T.leafBright, color: '#fff',
+          background: T.leafBright,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 9, fontWeight: 700, zIndex: 8,
+          zIndex: 8,
           boxShadow: '0 1px 2px rgba(44,27,11,0.25)',
-        }}>✓</div>
+        }}>{Icons.check(9, '#fff')}</div>
       )}
     </div>
   );
@@ -795,15 +831,33 @@ function formatEventDate(iso) {
 }
 
 function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
+                    isPreview = false, weekOffset = 0,
                     onClose, onMarkDone, onHarvest, onUndoDone, onRemove }) {
   const c = CROPS[cropKey];
   const cells = bed.filter(x => x.crop === cropKey);
   const inBed = cells.length > 0;
   const doneEvent = findDoneEventThisSeason(events, cropKey, season);
+
+  // Earliest real planting date for this crop in the active bed. Cells flagged
+  // isScheduled fall back to the catalog and don't count as actual plantings.
+  const realCells = cells.filter(x => !x.isScheduled && x.plantedAt);
+  const earliestPlantedAt = realCells.length
+    ? realCells.reduce((acc, x) => (acc == null || x.plantedAt < acc ? x.plantedAt : acc), null)
+    : null;
+  const earliestPlantedWeek = realCells.length
+    ? realCells.reduce((acc, x) => (acc == null || x.plantedWeek < acc ? x.plantedWeek : acc), null)
+    : null;
   const [showHarvestForm, setShowHarvestForm] = React.useState(false);
   const [qty, setQty] = React.useState('');
   const [unit, setUnit] = React.useState('');
   const [notes, setNotes] = React.useState('');
+
+  // If the user opens the harvest form then scrubs the season position into
+  // preview mode, snap the form closed so the next render falls into the
+  // preview banner branch instead of capturing input that can't be saved.
+  React.useEffect(() => {
+    if (isPreview && showHarvestForm) setShowHarvestForm(false);
+  }, [isPreview, showHarvestForm]);
 
   // Stage prefers a recorded done event; otherwise falls back to schedule.
   const stage = (() => {
@@ -852,6 +906,16 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             <div style={{ marginTop: 2 }}>
               <Label size={10} color={T.textMuted}>{c.family.toUpperCase()} · {c.daysToMaturity} DAYS · {c.sun.toUpperCase()} SUN</Label>
             </div>
+            {earliestPlantedAt && (
+              <Label size={10} color={T.leaf} style={{ display: 'block', marginTop: 3, fontWeight: 600 }}>
+                PLANTED {formatEventDate(earliestPlantedAt)}{earliestPlantedWeek != null ? ` · W${earliestPlantedWeek}` : ''}
+              </Label>
+            )}
+            {!earliestPlantedAt && inBed && !isFixture && (
+              <Label size={10} color={T.textMuted} style={{ display: 'block', marginTop: 3, fontStyle: 'italic' }}>
+                Planting date not recorded (scheduled timing)
+              </Label>
+            )}
           </div>
           <div style={{
             background: stageColor, color: '#fff',
@@ -938,8 +1002,8 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             <span style={{
               width: 28, height: 28, borderRadius: '50%', background: T.leafBright, color: '#fff',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, fontWeight: 700, flexShrink: 0,
-            }}>✓</span>
+              flexShrink: 0,
+            }}>{Icons.check(16, '#fff')}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text }}>
                 Marked {doneEvent.type === 'harvest' ? 'harvested' : 'done'} {formatEventDate(doneEvent.timestamp)}.
@@ -952,12 +1016,41 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
                 </Label>
               )}
             </div>
-            <ActionBtn onClick={() => { onUndoDone(cropKey); onClose(); }}>Undo</ActionBtn>
+            {!isPreview && (
+              <ActionBtn onClick={() => { onUndoDone(cropKey); onClose(); }}>Undo</ActionBtn>
+            )}
+          </div>
+        ) : isPreview ? (
+          // Preview mode: the user has scrubbed the season position. Care
+          // actions write wall-clock-now timestamps regardless of the scrub,
+          // which would silently corrupt the garden log. Show a notice
+          // instead and hide the action buttons.
+          <div role="status" style={{
+            marginTop: 14, padding: '12px 14px', background: T.sunPale,
+            border: `1px solid ${T.sunBright}`, borderRadius: 10,
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+          }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%', background: T.sun,
+              color: '#fff', display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontFamily: T.fontDisp, fontSize: 13, fontWeight: 700, flexShrink: 0,
+            }}>i</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, lineHeight: 1.35 }}>
+                Previewing W{today} ({weekOffset > 0 ? '+' : ''}{weekOffset}w from today).
+              </div>
+              <Label size={9} color={T.textSoft} style={{ display: 'block', marginTop: 3 }}>
+                Reset Season position in Tweaks to log care actions.
+              </Label>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <ActionBtn primary onClick={() => { onMarkDone(cropKey); onClose(); }}>
-              ✓ Done today
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {Icons.check(13, '#fff')} Done today
+              </span>
             </ActionBtn>
             <ActionBtn onClick={() => setShowHarvestForm(true)}>
               Harvested — log yield
@@ -1091,6 +1184,20 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
     });
   const families = [...new Set(crops.map(k => CROPS[k].family))];
   const thisWeek = CALENDAR.find(w => w.week === today) || CALENDAR[0];
+
+  // Map of cropId → array of actual planting ISO weeks pulled from the bed.
+  // Cells flagged isScheduled (i.e. catalog fallback, no real plantedAt on
+  // disk) are excluded so the markers only render genuine gardener data.
+  const cropToActualWeeks = React.useMemo(() => {
+    const map = {};
+    bed.forEach(c => {
+      if (!c || !c.crop || c.isScheduled) return;
+      if (typeof c.plantedWeek !== 'number') return;
+      if (!map[c.crop]) map[c.crop] = [];
+      map[c.crop].push(c.plantedWeek);
+    });
+    return map;
+  }, [bed]);
 
   // Set of crop ids that have a mark_done or harvest event this season.
   const doneCrops = React.useMemo(() => {
@@ -1234,6 +1341,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
                           <CropLane key={k} cropKey={k} today={today}
                             wStart={wStart} pxPerWeek={pxPerWeek}
                             onPick={() => setPicked(k)}
+                            actualPlantedWeeks={cropToActualWeeks[k] || []}
                             dim={CROPS[k].harvestEnd < today}
                             done={doneCrops.has(k)}/>
                         ))}
@@ -1253,6 +1361,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
       {picked && (
         <CropSheet cropKey={picked} today={today} bed={bed} events={events}
           season={season} gosBed={gosBed} isFixture={isFixture}
+          isPreview={weekOffset !== 0} weekOffset={weekOffset}
           onMarkDone={onMarkDone}
           onHarvest={onHarvest}
           onUndoDone={onUndoDone}
