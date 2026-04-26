@@ -28,6 +28,21 @@
     padding: 0;
   }
   #root { display: contents; }
+  /* Bed-wide score badge highlight: weakest cells get a sun-colored outline. */
+  .gos-cell-weak {
+    outline: 2px solid #f5a623;
+    background-color: rgba(245, 166, 35, 0.15);
+    position: relative;
+  }
+  .gos-cell-weak::after {
+    content: "↓";
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 10px;
+    color: #f5a623;
+    pointer-events: none;
+  }
   @media (min-width: 480px) {
     #shell { padding: 32px 16px 64px; align-items: center; }
   }
@@ -147,33 +162,69 @@ const BEDS = [
   },
 ];
 
-// ── Cell-level recommendation scoring (mirrors src/paint-data.jsx) ──────────
-function recsForCell(bed, r, c) {
+// ── Cell-level scoring (mirrors src/paint-data.jsx) ─────────────────────────
+// Pure scoring kernel: given a bed, a cell coord, and a candidate crop id,
+// returns a 1-10 score. Used both by recsForCell (try every crop in an empty
+// cell) and by computeBedScore (score the actual placed crop in each cell).
+function scoreCropCell(bed, r, c, cropId) {
+  if (!bed || !cropId) return 5;
+  const cd = CROPS[cropId];
+  if (!cd) return 5;
   const neighbors = [];
-  [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => {
-    const cell = bed.painted.find(p => p.r === r+dr && p.c === c+dc);
+  [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
+    const nr = r + dr, nc = c + dc;
+    const cell = (bed.painted || []).find(p => p.r === nr && p.c === nc);
     if (cell) neighbors.push(cell.crop);
   });
   const isBack = r === 0;
-  const isFront = r === bed.rows - 1;
-  const allCrops = Object.keys(CROPS);
-  const scored = allCrops.map(k => {
-    const c = CROPS[k];
-    let score = 5;
-    if (isBack && (k === 'tom' || k === 'cuc' || k === 'pep')) score += 2;
-    if (isFront && (k === 'let' || k === 'rad' || k === 'spi')) score += 1.8;
-    if (c.sun === 'full' && bed.sun === 'full') score += 0.7;
-    if (c.sun === 'part' && bed.sun === 'part') score += 1.2;
-    if (c.sun === 'full' && bed.sun === 'part') score -= 1.5;
-    if (neighbors.includes('tom') && (k === 'bas' || k === 'mar')) score += 1.5;
-    if (neighbors.includes('car') && k === 'oni') score += 0.8;
-    if (neighbors.includes(k)) score += 0.5;
-    if (neighbors.includes('oni') && k === 'bas') score -= 1;
-    if (k === 'tom' || k === 'cuc' || k === 'pep') score += 0.5;
-    score = Math.max(1, Math.min(10, score));
-    return { crop: k, score };
-  });
-  return scored.sort((a, b) => b.score - a.score);
+  const isFront = r === (bed.rows - 1);
+  const k = cropId;
+  let score = 5;
+  if (isBack && (k === 'tom' || k === 'cuc' || k === 'pep')) score += 2;
+  if (isFront && (k === 'let' || k === 'rad' || k === 'spi')) score += 1.8;
+  if (cd.sun === 'full' && bed.sun === 'full') score += 0.7;
+  if (cd.sun === 'part' && bed.sun === 'part') score += 1.2;
+  if (cd.sun === 'full' && bed.sun === 'part') score -= 1.5;
+  if (neighbors.includes('tom') && (k === 'bas' || k === 'mar')) score += 1.5;
+  if (neighbors.includes('car') && k === 'oni') score += 0.8;
+  if (neighbors.includes(k)) score += 0.5;
+  if (neighbors.includes('oni') && k === 'bas') score -= 1;
+  if (k === 'tom' || k === 'cuc' || k === 'pep') score += 0.5;
+  return Math.max(1, Math.min(10, score));
+}
+
+function recsForCell(bed, r, c) {
+  return Object.keys(CROPS)
+    .map(k => ({ crop: k, score: scoreCropCell(bed, r, c, k) }))
+    .sort((a, b) => b.score - a.score);
+}
+
+// Aggregate the bed's score from all occupied cells. Returns:
+//   { score: 0-100 number | null, weakestCells: ["r0c2", ...] }
+// score = round(avg cell score * 10) on the 1-10 -> 0-100 mapping.
+// weakestCells = cells more than 15 pts (in 0-100 space) below avg, OR
+// the bottom 20 percent (min 1) when none qualify.
+function computeBedScore(bed) {
+  if (!bed) return { score: null, weakestCells: [] };
+  const occupied = (bed.painted || []).filter(p => p && p.crop);
+  if (!occupied.length) return { score: null, weakestCells: [] };
+  const scored = occupied.map(cell => ({
+    r: cell.r, c: cell.c,
+    score10: scoreCropCell(bed, cell.r, cell.c, cell.crop),
+  }));
+  const avg10 = scored.reduce((acc, x) => acc + x.score10, 0) / scored.length;
+  const bedScore = Math.round(avg10 * 10);
+  const threshold10 = avg10 - 1.5;
+  let weak = scored.filter(x => x.score10 < threshold10);
+  if (weak.length === 0) {
+    const sorted = [...scored].sort((a, b) => a.score10 - b.score10);
+    const n = Math.max(1, Math.floor(scored.length * 0.2));
+    weak = sorted.slice(0, n);
+  }
+  return {
+    score: bedScore,
+    weakestCells: weak.map(x => 'r' + x.r + 'c' + x.c),
+  };
 }
 
 // ── Tiny SVG icon set ───────────────────────────────────────────────────────
@@ -1053,6 +1104,164 @@ function GhostHint({ onDismiss }) {
   );
 }
 
+// ── Bed-wide score badge (build-order item #3) ─────────────────────────────
+// Persistent floating badge that shows an aggregate score for the active bed.
+// Tap toggles a weakest-cell highlight pass on the canvas.
+//
+// Reads bed state via the getCurrentBed prop (which knows the live painted
+// state). Falls back to GosBed.getActive() when an event arrives without a
+// payload. Two custom window events feed it:
+//   - gosBedChanged       (fired by Painting.handleCreatorComplete)
+//   - gosPaintedChanged   (fired by Painting whenever painted[] mutates)
+// Two custom window events come out of it:
+//   - gosHighlightCells   { detail: { cells: ["r0c2", ...] } }
+const SCORE_TIER_COLORS = { green: '#4caf50', amber: '#f5a623', red: '#e53935', gray: '#9e9e9e' };
+function tierFor(score) {
+  if (score === null || score === undefined) return 'gray';
+  if (score >= 90) return 'green';
+  if (score >= 70) return 'amber';
+  return 'red';
+}
+
+function ScoreBadge({ getCurrentBed }) {
+  const [score, setScore] = React.useState(null);
+  const [weakestCells, setWeakestCells] = React.useState([]);
+  const [highlightMode, setHighlightMode] = React.useState(false);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  const tooltipTimerRef = React.useRef(null);
+  const highlightModeRef = React.useRef(highlightMode);
+  React.useEffect(() => { highlightModeRef.current = highlightMode; }, [highlightMode]);
+
+  const recompute = React.useCallback((bedSource) => {
+    const bed = bedSource || (getCurrentBed && getCurrentBed()) ||
+                ((typeof GosBed !== 'undefined') ? GosBed.getActive() : null);
+    const result = computeBedScore(bed);
+    setScore(result.score);
+    setWeakestCells(result.weakestCells);
+    return result;
+  }, [getCurrentBed]);
+
+  // Initial compute on mount.
+  React.useEffect(() => { recompute(); }, [recompute]);
+
+  // Listen for bed-changed and painted-changed events.
+  React.useEffect(() => {
+    const onBedChanged = (e) => {
+      const result = recompute(e && e.detail && e.detail.bed);
+      if (highlightModeRef.current) {
+        try {
+          window.dispatchEvent(new CustomEvent('gosHighlightCells',
+            { detail: { cells: result.weakestCells } }));
+        } catch (_) {}
+      }
+    };
+    const onPaintedChanged = (e) => {
+      const bedFromDetail = e && e.detail && e.detail.bed;
+      const result = recompute(bedFromDetail);
+      if (highlightModeRef.current) {
+        try {
+          window.dispatchEvent(new CustomEvent('gosHighlightCells',
+            { detail: { cells: result.weakestCells } }));
+        } catch (_) {}
+      }
+    };
+    window.addEventListener('gosBedChanged', onBedChanged);
+    window.addEventListener('gosPaintedChanged', onPaintedChanged);
+    return () => {
+      window.removeEventListener('gosBedChanged', onBedChanged);
+      window.removeEventListener('gosPaintedChanged', onPaintedChanged);
+    };
+  }, [recompute]);
+
+  React.useEffect(() => {
+    return () => { if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current); };
+  }, []);
+
+  const handleClick = () => {
+    if (score === null) {
+      setShowTooltip(true);
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 2400);
+      return;
+    }
+    const next = !highlightMode;
+    setHighlightMode(next);
+    try {
+      window.dispatchEvent(new CustomEvent('gosHighlightCells',
+        { detail: { cells: next ? weakestCells : [] } }));
+    } catch (_) {}
+  };
+
+  const handleDismiss = () => {
+    setHighlightMode(false);
+    try {
+      window.dispatchEvent(new CustomEvent('gosHighlightCells', { detail: { cells: [] } }));
+    } catch (_) {}
+  };
+
+  const tier = tierFor(score);
+  const bg = SCORE_TIER_COLORS[tier];
+
+  return (
+    <>
+      <button onClick={handleClick} aria-pressed={highlightMode}
+        aria-label={score === null ? 'Bed score: no crops yet' : 'Bed score ' + score + ' of 100'}
+        style={{
+          position: 'absolute', top: 96, right: 14, zIndex: 50,
+          width: 56, height: 56, minWidth: 48, minHeight: 48,
+          borderRadius: '50%', background: bg, color: '#fff',
+          border: highlightMode ? `2px solid ${T.soil}` : '2px solid transparent',
+          cursor: 'pointer', padding: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          fontFamily: T.fontDisp,
+          boxShadow: '0 4px 14px rgba(44,27,11,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
+          transition: 'transform 0.18s, border-color 0.18s',
+        }}>
+        <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1, letterSpacing: -0.5 }}>
+          {score === null ? '—' : score}
+        </span>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 9, fontWeight: 500,
+          letterSpacing: 0.1, opacity: 0.88, marginTop: 2, textTransform: 'uppercase',
+        }}>bed score</span>
+      </button>
+
+      {showTooltip && (
+        <div role="status" style={{
+          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 220,
+          background: T.panel, border: `1px solid ${T.borderSoft}`,
+          borderRadius: 10, padding: '8px 12px',
+          fontFamily: T.fontSans, fontSize: 12, color: T.text,
+          boxShadow: '0 6px 14px rgba(44,27,11,0.18)',
+        }}>
+          Place some crops first.
+        </div>
+      )}
+
+      {highlightMode && weakestCells.length > 0 && (
+        <div role="status" style={{
+          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 260,
+          background: T.panel, border: `1px solid ${SCORE_TIER_COLORS.amber}`,
+          borderRadius: 10, padding: '8px 8px 8px 12px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 6px 14px rgba(44,27,11,0.18)',
+        }}>
+          <span style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.text, lineHeight: 1.35, flex: 1 }}>
+            <b>{weakestCells.length}</b> cell{weakestCells.length === 1 ? '' : 's'} dragging your score down. Tap a highlighted cell to see why.
+          </span>
+          <button onClick={handleDismiss} aria-label="Dismiss highlight" style={{
+            width: 28, height: 28, minWidth: 28, minHeight: 28,
+            borderRadius: 6, padding: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: T.textSoft, flexShrink: 0,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── Main painting flow (Direction 1: Brush) ─────────────────────────────────
 function Painting({ tweak, onOpenTweaks }) {
   const [activeBed, setActiveBed] = React.useState(loadActiveBedAsInternal);
@@ -1089,6 +1298,46 @@ function Painting({ tweak, onOpenTweaks }) {
     return () => clearTimeout(t);
   }, [painted, activeBed]);
 
+  // Synchronously dispatch gosPaintedChanged on every painted-state mutation
+  // so ScoreBadge can recompute against the live bed without waiting for the
+  // 500ms autosave to flush. Detail carries a synthetic bed snapshot so any
+  // listener can score from the live state.
+  React.useEffect(() => {
+    if (!activeBed) return;
+    const list = painted[activeBed.id];
+    if (!list) return;
+    try {
+      const liveBed = Object.assign({}, activeBed, { painted: list });
+      window.dispatchEvent(new CustomEvent('gosPaintedChanged',
+        { detail: { id: activeBed.id, bed: liveBed } }));
+    } catch (_) {}
+  }, [painted, activeBed]);
+
+  // Cell highlight handler: toggle .gos-cell-weak on cells matching the
+  // payload from gosHighlightCells. Empty array clears all. Existing
+  // BedCell elements expose data-cell="r-c"; weakest cells arrive in
+  // "rRcC" form (matching the GosBed schema), so we translate at the
+  // boundary and leave BedCell untouched.
+  React.useEffect(() => {
+    const handler = (e) => {
+      const cells = (e && e.detail && Array.isArray(e.detail.cells))
+        ? e.detail.cells : [];
+      const targets = new Set();
+      cells.forEach(s => {
+        const m = String(s).match(/^r(\d+)c(\d+)$/);
+        if (m) targets.add(m[1] + '-' + m[2]);
+      });
+      const all = document.querySelectorAll('[data-cell]');
+      all.forEach(el => {
+        const dc = el.getAttribute('data-cell');
+        if (targets.has(dc)) el.classList.add('gos-cell-weak');
+        else el.classList.remove('gos-cell-weak');
+      });
+    };
+    window.addEventListener('gosHighlightCells', handler);
+    return () => window.removeEventListener('gosHighlightCells', handler);
+  }, []);
+
   const handleCreatorComplete = () => {
     const fresh = loadActiveBedAsInternal();
     if (!fresh) return;
@@ -1097,6 +1346,11 @@ function Painting({ tweak, onOpenTweaks }) {
     setPainted(prev => Object.assign({}, prev, { [fresh.id]: fresh.painted }));
     setCreatorOpen(false);
     setTimeout(() => setGhostVisible(true), 300);
+    // Notify ScoreBadge (and any other listeners) that the active bed changed.
+    try {
+      window.dispatchEvent(new CustomEvent('gosBedChanged',
+        { detail: { id: fresh.id, bed: fresh } }));
+    } catch (_) {}
   };
 
   const handleCreatorCancel = () => {
@@ -1280,6 +1534,7 @@ function Painting({ tweak, onOpenTweaks }) {
 
       <TabBar active="paint"/>
 
+      <ScoreBadge getCurrentBed={() => Object.assign({}, activeBed, { painted: painted[activeBedId] || [] })}/>
       {ghostVisible && <GhostHint onDismiss={() => setGhostVisible(false)}/>}
       {creatorOpen && <BedCreator hasInitialBeds={true} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>}
     </div>
