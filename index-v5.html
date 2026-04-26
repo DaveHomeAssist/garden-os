@@ -47,6 +47,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index.html">← Legacy launcher</a>
@@ -466,6 +467,12 @@ function Hub() {
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
     </div>
   );
+}
+
+// gos-bed.js wiring: report saved beds for verification
+if (typeof GosBed !== 'undefined') {
+  const beds = GosBed.readAll();
+  console.log('Garden OS: ' + beds.length + ' bed(s) found');
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Hub/></PhoneFrame>);

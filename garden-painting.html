@@ -61,6 +61,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index.html">← Garden OS</a>
@@ -554,18 +555,175 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
   );
 }
 
+// ── gos-bed.js wiring helpers ───────────────────────────────────────────────
+// Convert the canonical GosBed record into the internal format the existing
+// Painting components expect (cols/rows ints, 2D shape grid, painted as
+// {r,c,crop} entries).
+function gosBedToInternal(gosBed) {
+  if (!gosBed) return null;
+  const dims = (typeof GosBed !== 'undefined' && GosBed.parseShape(gosBed.shape))
+    || { cols: 4, rows: 8 };
+  const cols = dims.cols, rows = dims.rows;
+  const sunInternal = gosBed.sun === 'partial' ? 'part' : gosBed.sun;
+  return {
+    id: gosBed.id,
+    name: gosBed.name || gosBed.id,
+    cols, rows,
+    location: sunInternal === 'part' ? 'Part shade' : (sunInternal === 'shade' ? 'Shade' : 'Full sun'),
+    sun: sunInternal,
+    rowLabels: Array.from({ length: rows }, (_, i) => 'Row ' + (i + 1)),
+    shape: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1)),
+    painted: (gosBed.painted || []).map(p => {
+      const cell = GosBed.parseCell(p.cell);
+      if (!cell) return null;
+      if (cell.r >= rows || cell.c >= cols) return null;
+      return { r: cell.r, c: cell.c, crop: p.cropId };
+    }).filter(Boolean),
+  };
+}
+
+// Serialize internal painted state plus active-bed metadata into the canonical
+// GosBed schema for write-back.
+function internalToGosBed(activeBed, internalPaintedArr) {
+  return {
+    id: activeBed.id,
+    name: activeBed.name,
+    shape: activeBed.cols + 'x' + activeBed.rows,
+    sun: activeBed.sun === 'part' ? 'partial' : (activeBed.sun || 'full'),
+    painted: (internalPaintedArr || []).map(p => {
+      const c = CROPS[p.crop];
+      return {
+        cell: GosBed.formatCell(p.r, p.c),
+        cropId: p.crop,
+        cropName: (c && c.name) || p.crop,
+        cropIcon: (c && c.mono) || '',
+        cropColor: (c && c.color) || '#888',
+      };
+    })
+  };
+}
+
+function loadActiveBedAsInternal() {
+  if (typeof GosBed === 'undefined') return null;
+  return gosBedToInternal(GosBed.getActive());
+}
+
+// First-run stub. Creates a default 4×8 bed via the pending-then-commit flow
+// so the data primitive is exercised end to end. Full creator UI is next task.
+function SetupStub({ onCreated }) {
+  const handleCreate = () => {
+    if (typeof GosBed === 'undefined') {
+      alert('Bed storage unavailable.');
+      return;
+    }
+    GosBed.writePending({
+      id: 'my-first-bed',
+      name: 'My First Bed',
+      shape: '4x8',
+      sun: 'full',
+      painted: [],
+    });
+    console.log('pending bed created');
+    try {
+      GosBed.commitPending();
+    } catch (e) {
+      alert(e.message);
+      return;
+    }
+    GosBed.setActive('my-first-bed');
+    onCreated();
+  };
+  return (
+    <div style={{
+      width: '100%', height: '100%', background: T.cream,
+      fontFamily: T.fontSans, color: T.text,
+      display: 'flex', flexDirection: 'column', position: 'relative',
+    }}>
+      <FakeStatusBar/>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+      }}>
+        <div style={{
+          background: T.panel, border: `1px solid ${T.borderSoft}`,
+          borderRadius: 14, padding: '22px 22px 18px', maxWidth: 320,
+          textAlign: 'center', boxShadow: '0 1px 3px rgba(44,27,11,0.05)',
+        }}>
+          <Label size={9} color={T.leaf} style={{ display: 'block', marginBottom: 6 }}>
+            FIRST RUN
+          </Label>
+          <div style={{
+            fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
+            letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 8,
+          }}>
+            Set up your first bed.
+          </div>
+          <div style={{
+            fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft,
+            lineHeight: 1.55, marginBottom: 16, fontStyle: 'italic',
+          }}>
+            We'll start you with a 4×8 full-sun bed. Full editor lands next.
+          </div>
+          <button onClick={handleCreate} style={{
+            width: '100%', padding: '12px 14px', borderRadius: 12,
+            background: T.leafBright, border: 'none', color: '#fff',
+            fontFamily: T.fontSans, fontSize: 14, fontWeight: 600,
+            cursor: 'pointer', minHeight: 44,
+            boxShadow: '0 2px 8px rgba(78,140,60,0.25)',
+          }}>Create default 4×8 bed</button>
+        </div>
+      </div>
+      <TabBar active="planner"/>
+    </div>
+  );
+}
+
 // ── Main painting flow (Direction 1: Brush) ─────────────────────────────────
 function Painting({ tweak, onOpenTweaks }) {
-  const [activeBedId, setActiveBedId] = React.useState('main');
+  const [activeBed, setActiveBed] = React.useState(loadActiveBedAsInternal);
+  const [activeBedId, setActiveBedId] = React.useState(activeBed ? activeBed.id : '');
   const [tool, setTool] = React.useState('paint');
   const [brush, setBrush] = React.useState('bas');
-  const [painted, setPainted] = React.useState(() =>
-    Object.fromEntries(BEDS.map(b => [b.id, [...b.painted]]))
-  );
+  const [painted, setPainted] = React.useState(() => {
+    if (!activeBed) return {};
+    return { [activeBed.id]: activeBed.painted };
+  });
   const [history, setHistory] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
 
-  const bed = BEDS.find(b => b.id === activeBedId);
+  // Claim the session lock once per tab on mount.
+  React.useEffect(() => {
+    if (typeof GosBed !== 'undefined') GosBed.initSessionLock();
+  }, []);
+
+  // Debounced autosave: serialize current painted state to GosBed.
+  React.useEffect(() => {
+    if (!activeBed || typeof GosBed === 'undefined') return;
+    const list = painted[activeBed.id];
+    if (!list) return;
+    const t = setTimeout(() => {
+      try {
+        GosBed.write(internalToGosBed(activeBed, list));
+      } catch (e) {
+        console.warn('GosBed.write failed:', e.message);
+        try { alert(e.message); } catch (_) {}
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [painted, activeBed]);
+
+  if (!activeBed) {
+    return <SetupStub onCreated={() => {
+      const fresh = loadActiveBedAsInternal();
+      if (fresh) {
+        setActiveBed(fresh);
+        setActiveBedId(fresh.id);
+        setPainted({ [fresh.id]: fresh.painted });
+      }
+    }}/>;
+  }
+
+  const beds = [activeBed];
+  const bed = activeBed;
   const bedPainted = painted[activeBedId];
   const totalCells = bed.shape.flat().reduce((s, x) => s + x, 0);
   const filled = bedPainted.length;
@@ -626,7 +784,8 @@ function Painting({ tweak, onOpenTweaks }) {
         </div>
       </header>
 
-      <BedSwitcher beds={BEDS} painted={painted} activeId={activeBedId} onPick={setActiveBedId}/>
+      <BedSwitcher beds={beds} painted={painted} activeId={activeBedId} onPick={setActiveBedId}
+        onAdd={() => alert('Multi-bed editor lands in the next pass.')}/>
 
       <div style={{ display: 'flex', gap: 6, padding: '8px 14px 4px', flexShrink: 0 }}>
         <ToolBtn label="Paint"   active={tool === 'paint'}   onClick={() => setTool('paint')}   icon={Icons.paint(13, 'currentColor')}/>
