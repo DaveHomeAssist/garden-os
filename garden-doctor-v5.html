@@ -47,6 +47,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -261,6 +262,93 @@ function popSaved(id) {
     window.localStorage.setItem(SAVED_KEY, JSON.stringify(filtered));
   } catch (_) {}
 }
+
+// ── Retrospective helpers (item #6) ────────────────────────────────────────
+function readActiveBed() {
+  if (typeof GosBed === 'undefined') return null;
+  try { return GosBed.getActive(); } catch (_) { return null; }
+}
+function relativeDate(timestamp) {
+  if (!timestamp) return '';
+  try {
+    const ms = Date.now() - new Date(timestamp).getTime();
+    if (Number.isNaN(ms) || ms < 0) return '';
+    const days = Math.floor(ms / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return days + 'd ago';
+    if (days < 30) return Math.floor(days / 7) + 'w ago';
+    return Math.floor(days / 30) + 'mo ago';
+  } catch (_) { return ''; }
+}
+function distinctSeasonsWithEvents(bed) {
+  if (!bed || !Array.isArray(bed.events)) return [];
+  const set = new Set();
+  bed.events.forEach(function (e) {
+    if (e && e.season) set.add(String(e.season));
+  });
+  return Array.from(set).sort();
+}
+function eventsForSeason(bed, season) {
+  if (!bed || !Array.isArray(bed.events)) return [];
+  return bed.events.filter(function (e) { return e && e.season === season; });
+}
+function summarizeEvents(events) {
+  const cropIds = new Set();
+  let markDone = 0;
+  let harvests = 0;
+  events.forEach(function (e) {
+    if (!e) return;
+    if (e.cropSnapshot && e.cropSnapshot.cropId) cropIds.add(e.cropSnapshot.cropId);
+    if (e.type === 'mark_done') markDone++;
+    if (e.type === 'harvest') harvests++;
+  });
+  return { cropsGrown: cropIds.size, markDone, harvests };
+}
+function harvestTotalsByCrop(events) {
+  const byCrop = new Map();
+  events.forEach(function (e) {
+    if (!e || e.type !== 'harvest' || !e.cropSnapshot) return;
+    const key = e.cropSnapshot.cropId || e.cropSnapshot.cropName || 'unknown';
+    if (!byCrop.has(key)) {
+      byCrop.set(key, {
+        key,
+        cropName: e.cropSnapshot.cropName || 'Unknown',
+        cropIcon: e.cropSnapshot.cropIcon,
+        cropColor: e.cropSnapshot.cropColor,
+        units: new Map(),
+        unrecorded: 0,
+        total: 0,
+      });
+    }
+    const g = byCrop.get(key);
+    g.total++;
+    if (e.quantity == null || e.unit == null) {
+      g.unrecorded++;
+    } else {
+      const cur = g.units.get(e.unit) || { quantity: 0, count: 0 };
+      cur.quantity += Number(e.quantity) || 0;
+      cur.count++;
+      g.units.set(e.unit, cur);
+    }
+  });
+  const out = [];
+  byCrop.forEach(function (g) {
+    out.push({
+      key: g.key,
+      cropName: g.cropName,
+      cropIcon: g.cropIcon,
+      cropColor: g.cropColor,
+      total: g.total,
+      unrecorded: g.unrecorded,
+      units: Array.from(g.units.entries()).map(function (entry) {
+        return { unit: entry[0], quantity: entry[1].quantity, count: entry[1].count };
+      }),
+    });
+  });
+  out.sort(function (a, b) { return b.total - a.total; });
+  return out;
+}
 function Seg({ value, opts, onChange }) {
   return (
     <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
@@ -390,6 +478,435 @@ function DiagCard({ diag, rank, showProbs }) {
   );
 }
 
+// ── Retrospective view ─────────────────────────────────────────────────────
+const RetroIcons = {
+  leaf: (s = 14, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 12c0-5 3-8 9-9-1 6-4 9-9 9z" fill={c} fillOpacity="0.15"/>
+      <path d="M2 12c2-3 4-5 8-7"/>
+    </svg>
+  ),
+  check: (s = 14, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 7.2l3 3 5-6"/>
+    </svg>
+  ),
+  basket: (s = 14, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 5.5h10l-1 6.5H3z" fill={c} fillOpacity="0.12"/>
+      <path d="M5 5.5L7 2l2 3.5"/>
+      <path d="M5.5 7.5v3M8.5 7.5v3"/>
+    </svg>
+  ),
+  arrow: (s = 14, c = T.text, dir = 'right') => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+         style={{ transform: dir === 'left' ? 'rotate(180deg)' : 'none' }}>
+      <path d="M5 3l4 4-4 4"/>
+    </svg>
+  ),
+  empty: (s = 36, c = T.cedarPale) => (
+    <svg width={s} height={s} viewBox="0 0 36 36" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 30c0-12 6-19 22-21-2 14-9 21-22 21z" fill={c} fillOpacity="0.18"/>
+      <path d="M6 30c4-7 10-13 18-17"/>
+    </svg>
+  ),
+};
+
+function ViewSegment({ value, onChange }) {
+  const opts = [['diag', 'Diagnose'], ['retro', 'Retrospective']];
+  return (
+    <div role="tablist" aria-label="Doctor view" style={{
+      margin: '0 18px 12px', display: 'flex', gap: 4,
+      padding: 3, background: T.cedarWash, borderRadius: 10,
+    }}>
+      {opts.map(function (o) {
+        const active = value === o[0];
+        return (
+          <button key={o[0]} role="tab" aria-selected={active}
+            onClick={function () { onChange(o[0]); }}
+            style={{
+              flex: 1, minHeight: 36, borderRadius: 8, border: 'none',
+              cursor: 'pointer',
+              background: active ? T.panel : 'transparent',
+              color: active ? T.text : T.textSoft,
+              fontFamily: T.fontSans, fontSize: 12,
+              fontWeight: active ? 600 : 500,
+              boxShadow: active ? '0 1px 2px rgba(44,27,11,0.1)' : 'none',
+            }}>{o[1]}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SeasonSelector({ years, selected, onSelect }) {
+  const i = years.indexOf(selected);
+  const hasPrev = i > 0;
+  const hasNext = i >= 0 && i < years.length - 1;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      gap: 8, padding: '4px 6px', background: T.cedarWash,
+      borderRadius: 999, marginTop: 2,
+    }}>
+      <button
+        onClick={function () { if (hasPrev) onSelect(years[i - 1]); }}
+        aria-label={hasPrev ? 'Previous season ' + years[i - 1] : 'No earlier season'}
+        disabled={!hasPrev}
+        style={{
+          width: 32, height: 32, borderRadius: 16,
+          border: 'none', cursor: hasPrev ? 'pointer' : 'default',
+          background: hasPrev ? T.panel : 'transparent',
+          color: hasPrev ? T.text : 'transparent',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>{hasPrev ? RetroIcons.arrow(13, T.text, 'left') : null}</button>
+      <span style={{
+        fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600,
+        color: T.text, letterSpacing: -0.2, flex: 1, textAlign: 'center',
+      }}>{selected}</span>
+      <button
+        onClick={function () { if (hasNext) onSelect(years[i + 1]); }}
+        aria-label={hasNext ? 'Next season ' + years[i + 1] : 'No later season'}
+        disabled={!hasNext}
+        style={{
+          width: 32, height: 32, borderRadius: 16,
+          border: 'none', cursor: hasNext ? 'pointer' : 'default',
+          background: hasNext ? T.panel : 'transparent',
+          color: hasNext ? T.text : 'transparent',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>{hasNext ? RetroIcons.arrow(13, T.text, 'right') : null}</button>
+    </div>
+  );
+}
+
+function StatChip({ icon, count, label }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+      gap: 4, padding: '10px 12px', borderRadius: 999,
+      background: T.leafWash, border: `1px solid ${T.leafPale}`,
+      minWidth: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {icon}
+        <span style={{
+          fontFamily: T.fontDisp, fontSize: 18, fontWeight: 600,
+          color: T.text, letterSpacing: -0.3, lineHeight: 1,
+        }}>{count}</span>
+      </div>
+      <Label size={9} color={T.textSoft} style={{ lineHeight: 1.2 }}>{label}</Label>
+    </div>
+  );
+}
+
+function StatChips({ summary }) {
+  return (
+    <div style={{ marginTop: 12, display: 'flex', gap: 6 }}>
+      <StatChip icon={RetroIcons.leaf(14, T.leaf)} count={summary.cropsGrown} label="CROPS GROWN"/>
+      <StatChip icon={RetroIcons.check(14, T.leaf)} count={summary.markDone} label="MARK-DONE"/>
+      <StatChip icon={RetroIcons.basket(14, T.leaf)} count={summary.harvests} label="HARVESTS"/>
+    </div>
+  );
+}
+
+function EventCropIcon({ snapshot, size = 24 }) {
+  if (!snapshot) {
+    return (
+      <span style={{
+        width: size, height: size, borderRadius: '50%', background: T.cedarWash,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}/>
+    );
+  }
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: '50%',
+      background: snapshot.cropColor || T.leafPale,
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: Math.round(size * 0.55), lineHeight: 1, flexShrink: 0,
+      color: '#fff',
+      boxShadow: 'inset 0 -1.5px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22)',
+    }}>{snapshot.cropIcon || (snapshot.cropName ? snapshot.cropName.charAt(0).toUpperCase() : '?')}</span>
+  );
+}
+
+function HarvestTotalsTable({ groups }) {
+  if (!groups || groups.length === 0) return null;
+  return (
+    <section style={{ marginTop: 16 }}>
+      <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>HARVEST TOTALS</Label>
+      <div style={{
+        marginTop: 6, background: T.panel, borderRadius: 12,
+        border: `1px solid ${T.borderSoft}`, overflow: 'hidden',
+      }}>
+        {groups.map(function (g, gi) {
+          const onlyUnrecorded = g.units.length === 0 && g.unrecorded > 0;
+          const lastGroup = gi === groups.length - 1;
+          return (
+            <div key={g.key} style={{
+              padding: '10px 12px',
+              borderBottom: lastGroup ? 'none' : `1px solid ${T.borderSoft}`,
+              background: gi % 2 === 1 ? T.cedarWash + '55' : 'transparent',
+            }}>
+              {onlyUnrecorded ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <EventCropIcon snapshot={{
+                    cropName: g.cropName, cropIcon: g.cropIcon, cropColor: g.cropColor,
+                  }} size={22}/>
+                  <span style={{ fontFamily: T.fontDisp, fontSize: 14, fontWeight: 600, color: T.text }}>
+                    {g.cropName}
+                  </span>
+                  <span style={{
+                    flex: 1, fontFamily: T.fontSerif, fontSize: 12, fontStyle: 'italic',
+                    color: T.textSoft, textAlign: 'right',
+                  }}>
+                    harvested {g.unrecorded} time{g.unrecorded === 1 ? '' : '(s)'} — quantity not recorded
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <EventCropIcon snapshot={{
+                      cropName: g.cropName, cropIcon: g.cropIcon, cropColor: g.cropColor,
+                    }} size={22}/>
+                    <span style={{ fontFamily: T.fontDisp, fontSize: 14, fontWeight: 600, color: T.text, flex: 1 }}>
+                      {g.cropName}
+                    </span>
+                    <Label size={9} color={T.textMuted}>
+                      {g.total} HARVEST{g.total === 1 ? '' : 'S'}
+                    </Label>
+                  </div>
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 32 }}>
+                    {g.units.map(function (u) {
+                      return (
+                        <div key={u.unit} style={{
+                          display: 'flex', justifyContent: 'space-between',
+                          fontFamily: T.fontMono, fontSize: 11, color: T.textMid,
+                        }}>
+                          <span>{u.quantity} {u.unit}</span>
+                          <span style={{ color: T.textMuted }}>
+                            {u.count} harvest{u.count === 1 ? '' : 's'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {g.unrecorded > 0 && (
+                      <div style={{
+                        fontFamily: T.fontSerif, fontSize: 11, fontStyle: 'italic',
+                        color: T.textSoft,
+                      }}>
+                        + {g.unrecorded} harvest{g.unrecorded === 1 ? '' : 's'} without quantity
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ActivityTimeline({ events }) {
+  const [openId, setOpenId] = React.useState(null);
+  if (!events || events.length === 0) return null;
+  return (
+    <section style={{ marginTop: 16 }}>
+      <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>ACTIVITY · {events.length}</Label>
+      <div style={{
+        marginTop: 6, background: T.panel, borderRadius: 12,
+        border: `1px solid ${T.borderSoft}`, overflow: 'hidden',
+      }}>
+        {events.map(function (e, i) {
+          const id = (e.timestamp || '') + ':' + i;
+          const open = openId === id;
+          const isHarvest = e.type === 'harvest';
+          const typeLabel = isHarvest ? 'Harvested' : (e.type === 'mark_done' ? 'Marked done' : e.type);
+          const when = relativeDate(e.timestamp);
+          const qty = isHarvest && e.quantity != null && e.unit
+            ? ' · ' + e.quantity + ' ' + e.unit : '';
+          const hasNotes = e.notes && String(e.notes).trim().length > 0;
+          const last = i === events.length - 1;
+          return (
+            <div key={id} style={{
+              borderBottom: last ? 'none' : `1px solid ${T.borderSoft}`,
+            }}>
+              <button
+                onClick={function () { if (hasNotes) setOpenId(open ? null : id); }}
+                aria-expanded={hasNotes ? open : undefined}
+                disabled={!hasNotes}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 12px', minHeight: 48,
+                  background: 'transparent', border: 'none',
+                  cursor: hasNotes ? 'pointer' : 'default',
+                  textAlign: 'left', fontFamily: T.fontSans, color: T.text,
+                }}>
+                <EventCropIcon snapshot={e.cropSnapshot} size={22}/>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: T.fontDisp, fontSize: 14, fontWeight: 600,
+                    color: T.text, letterSpacing: -0.1,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {(e.cropSnapshot && e.cropSnapshot.cropName) || 'Unknown crop'}
+                  </div>
+                  <div style={{
+                    fontSize: 11.5, color: T.textSoft, lineHeight: 1.3, marginTop: 1,
+                  }}>
+                    <span style={{ color: isHarvest ? T.leaf : T.cedar, fontWeight: 500 }}>{typeLabel}</span>
+                    {qty}
+                    {when ? ' · ' + when : ''}
+                  </div>
+                </div>
+                {hasNotes && (
+                  <span style={{
+                    fontFamily: T.fontMono, fontSize: 9, color: T.textMuted,
+                    letterSpacing: 0.1, textTransform: 'uppercase',
+                  }}>{open ? 'HIDE' : 'NOTE'}</span>
+                )}
+              </button>
+              {open && hasNotes && (
+                <div style={{
+                  padding: '0 12px 12px 44px',
+                  fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
+                  color: T.textMid, lineHeight: 1.5,
+                }}>{e.notes}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function RetroEmptyNoBed() {
+  return (
+    <div style={{
+      marginTop: 12, padding: '20px 18px', background: T.panel,
+      border: `1px dashed ${T.cedarPale}`, borderRadius: 12,
+      textAlign: 'center',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        {RetroIcons.empty(40, T.cedarPale)}
+      </div>
+      <Disp size={17}>No bed set up yet.</Disp>
+      <div style={{
+        fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
+        color: T.textSoft, lineHeight: 1.5, marginTop: 6,
+      }}>
+        Paint a bed first, then come back here to see your season summary.
+      </div>
+      <a href="garden-painting.html" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        marginTop: 12, padding: '8px 14px', borderRadius: 999,
+        background: T.leafBright, color: '#fff',
+        fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
+        textDecoration: 'none', minHeight: 36,
+      }}>Go to Painting →</a>
+    </div>
+  );
+}
+
+function RetroEmptyNoEvents({ year }) {
+  return (
+    <div style={{
+      marginTop: 14, padding: '20px 18px', background: T.panel,
+      border: `1px dashed ${T.cedarPale}`, borderRadius: 12,
+      textAlign: 'center',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        {RetroIcons.empty(40, T.leafPale)}
+      </div>
+      <Disp size={17}>Nothing recorded yet for {year}.</Disp>
+      <div style={{
+        fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
+        color: T.textSoft, lineHeight: 1.5, marginTop: 6,
+      }}>
+        Mark crops as done or log a harvest in your Plan to see your season summary here.
+      </div>
+      <a href="garden-planner-v5.html" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        marginTop: 12, padding: '8px 14px', borderRadius: 999,
+        background: T.leafBright, color: '#fff',
+        fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
+        textDecoration: 'none', minHeight: 36,
+      }}>Go to Plan →</a>
+    </div>
+  );
+}
+
+function Retrospective() {
+  const [bed, setBed] = React.useState(readActiveBed);
+  const allYears = distinctSeasonsWithEvents(bed);
+  const currentYear = String(new Date().getFullYear());
+  const initialYear = allYears.length ? allYears[allYears.length - 1] : currentYear;
+  const [year, setYear] = React.useState(initialYear);
+
+  React.useEffect(() => {
+    function refresh() { setBed(readActiveBed()); }
+    function onStorage(e) {
+      if (!e || !e.key) { refresh(); return; }
+      if (e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
+    }
+    window.addEventListener('gosBedChanged', refresh);
+    window.addEventListener('storage', onStorage);
+    return function () {
+      window.removeEventListener('gosBedChanged', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const fresh = distinctSeasonsWithEvents(bed);
+    if (fresh.length === 0) return;
+    if (fresh.indexOf(year) === -1) {
+      setYear(fresh[fresh.length - 1]);
+    }
+  }, [bed]);
+
+  if (!bed) return <RetroEmptyNoBed/>;
+
+  const events = eventsForSeason(bed, year);
+  const sortedEvents = events.slice().sort(function (a, b) {
+    return (b.timestamp || '').localeCompare(a.timestamp || '');
+  });
+  const showSelector = allYears.length > 0;
+  const displayYear = allYears.length ? year : currentYear;
+
+  return (
+    <div>
+      {showSelector && (
+        <SeasonSelector years={allYears} selected={year} onSelect={setYear}/>
+      )}
+      {events.length === 0 ? (
+        <RetroEmptyNoEvents year={displayYear}/>
+      ) : (
+        <>
+          <StatChips summary={summarizeEvents(events)}/>
+          <HarvestTotalsTable groups={harvestTotalsByCrop(events)}/>
+          <ActivityTimeline events={sortedEvents}/>
+          <div style={{
+            marginTop: 16, padding: '10px 12px', borderRadius: 8,
+            background: T.cedarWash,
+            fontFamily: T.fontMono, fontSize: 10.5,
+            color: T.textSoft, letterSpacing: 0.04,
+          }}>
+            Bed score: <span style={{ color: T.textMuted }}>—</span>
+            {' '}<span style={{ color: T.textMuted }}>(open Painting to refresh)</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Doctor screen ───────────────────────────────────────────────────────────
 function Doctor() {
   const [tweak, setTweak] = React.useState(loadTweaks);
@@ -400,6 +917,7 @@ function Doctor() {
   const [season, setSeason] = React.useState(() => last?.season || 'late-spring');
   const [diagnosed, setDiagnosed] = React.useState(false);
   const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
+  const [view, setView] = React.useState('diag');
 
   const toggle = (id) => setSymptoms(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   const ranked = diagnosed ? rankDiagnoses(symptoms).filter(d => d.prob >= tweak.confidenceThreshold) : [];
@@ -443,7 +961,11 @@ function Doctor() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Label size={9} color={T.soilMid}>DOCTOR</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <Label size={9} color={T.soilMid}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
+            {view === 'diag' ? (
+              <Label size={9} color={T.soilMid}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
+            ) : (
+              <Label size={9} color={T.soilMid}>SEASON LOG</Label>
+            )}
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0, background: T.panel,
               border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
@@ -455,11 +977,16 @@ function Doctor() {
           fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
           letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, marginTop: 2,
         }}>
-          I see <span style={{ fontStyle: 'italic', color: T.rust }}>something</span>.
+          {view === 'diag'
+            ? <>I see <span style={{ fontStyle: 'italic', color: T.rust }}>something</span>.</>
+            : <>Looking <span style={{ fontStyle: 'italic', color: T.leaf }}>back</span>.</>}
         </div>
       </header>
 
+      <ViewSegment value={view} onChange={setView}/>
+
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
+        {view === 'retro' ? <Retrospective/> : (<>
         <CropPicker cropId={cropId} onPick={setCropId}/>
 
         <div style={{ marginTop: 14 }}>
@@ -548,6 +1075,7 @@ function Doctor() {
             No clean match. Try removing one symptom or pick a different season.
           </div>
         )}
+        </>)}
       </div>
 
       <TabBar active="doctor"/>
