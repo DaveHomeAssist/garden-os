@@ -5,15 +5,26 @@
  * any React + Babel CDN bundles on the page; React surfaces can read and
  * write through GosBed.* without taking a dependency on it.
  *
- * Schema (v1):
+ * Schema (v1, additive across releases):
  *   localStorage["gos.bed.<id>"] = {
  *     schemaVersion: 1,
  *     id: "front-bed",
  *     name: "Front Bed",
- *     shape: "4x8",        // "<cols>x<rows>"
- *     sun: "full",         // "full" | "partial" | "shade"
+ *     shape: "4x8",            // "<cols>x<rows>"
+ *     sun: "full",             // "full" | "partial" | "shade"
+ *
+ *     // Optional site context — round-tripped if present. Surfaces fall
+ *     // back to defaults when absent so old beds keep working.
+ *     zone:           "7a",    // USDA hardiness zone label
+ *     wallSide:       "back",  // "back" | "front" | "left" | "right" | "none"
+ *     sunHoursNumeric: 6,      // measured/estimated daily sun hours
+ *     water:          "drip",  // "drip" | "manual" | "rainfed" | "unknown"
+ *     orientation:    "ew",    // "ew" (long side faces south) | "ns"
+ *
  *     painted: [
- *       { cell: "r0c2", cropId, cropName, cropIcon, cropColor }, ...
+ *       { cell: "r0c2", cropId, cropName, cropIcon, cropColor,
+ *         plantedAt: "<ISO8601>",   // optional, when this cell was sown
+ *         plantedWeek: 16 }, ...    // optional ISO week of plantedAt
  *     ],
  *     events: [                  // appended by item #4 (Plan timeline)
  *       { type: "mark_done"|"harvest", bedId, season, cropSnapshot,
@@ -94,22 +105,59 @@
     }
   }
 
+  // Allowed enum values for optional bedContext fields. We accept anything
+  // the caller passes (kept loose so future values don't require a writer
+  // change), but document the canonical set so surfaces agree on shape.
+  var WALL_SIDES   = ['back', 'front', 'left', 'right', 'none'];
+  var WATER_KINDS  = ['drip', 'manual', 'rainfed', 'unknown'];
+  var ORIENTATIONS = ['ew', 'ns'];
+
+  function copyPaintedEntry(p) {
+    if (!p || typeof p !== 'object') return p;
+    var out = {
+      cell: p.cell,
+      cropId: p.cropId,
+      cropName: p.cropName,
+      cropIcon: p.cropIcon,
+      cropColor: p.cropColor
+    };
+    // Round-trip optional planting timestamp + ISO week when present.
+    // Surfaces that don't set these (older code, fixtures) stay back-compat.
+    if (typeof p.plantedAt === 'string' && p.plantedAt) out.plantedAt = p.plantedAt;
+    if (typeof p.plantedWeek === 'number' && isFinite(p.plantedWeek)) {
+      out.plantedWeek = p.plantedWeek;
+    }
+    return out;
+  }
+
   function writeBed(bedData) {
     validateBedShape(bedData);
     checkLock();
     var now = new Date().toISOString();
+    var paintedSrc = Array.isArray(bedData.painted) ? bedData.painted : [];
     var record = {
       schemaVersion: SCHEMA_VERSION,
       id: bedData.id,
       name: bedData.name || bedData.id,
       shape: bedData.shape,
       sun: bedData.sun,
-      painted: Array.isArray(bedData.painted) ? bedData.painted : [],
+      painted: paintedSrc.map(copyPaintedEntry),
       events: Array.isArray(bedData.events) ? bedData.events : [],
       lastEdited: now,
       ruleVersion: bedData.ruleVersion != null ? bedData.ruleVersion : null,
       seasonStart: bedData.seasonStart || 'standard'
     };
+    // Optional bedContext — only persist if the caller supplied it. Keeps
+    // pre-context beds visually identical when re-saved.
+    if (typeof bedData.zone === 'string' && bedData.zone) record.zone = bedData.zone;
+    if (typeof bedData.wallSide === 'string' && bedData.wallSide) record.wallSide = bedData.wallSide;
+    if (typeof bedData.sunHoursNumeric === 'number' && isFinite(bedData.sunHoursNumeric)) {
+      record.sunHoursNumeric = bedData.sunHoursNumeric;
+    }
+    if (typeof bedData.water === 'string' && bedData.water) record.water = bedData.water;
+    if (typeof bedData.orientation === 'string' && bedData.orientation) {
+      record.orientation = bedData.orientation;
+    }
     var ok = safeSet(BED_PREFIX + bedData.id, JSON.stringify(record));
     if (!ok) {
       throw new Error('GosBed.write: localStorage write failed (quota or disabled)');
@@ -247,6 +295,219 @@
     return 'r' + r + 'c' + c;
   }
 
+  // ISO week of the year for `date`. Matches the Planner's existing helper so
+  // surfaces compute plantedWeek from plantedAt the same way without copy-
+  // pasting the algorithm.
+  function isoWeek(date) {
+    var d = (date instanceof Date) ? date : new Date(date);
+    if (isNaN(d.getTime())) return null;
+    var utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var dayNum = utc.getUTCDay() || 7;
+    utc.setUTCDate(utc.getUTCDate() + 4 - dayNum);
+    var yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+  }
+
+  function currentIsoDate() { return new Date().toISOString(); }
+  function currentIsoWeek() { return isoWeek(new Date()); }
+
+  // Best-effort: return a numeric ISO week for a painted entry. Prefers an
+  // explicit plantedWeek; falls back to deriving from plantedAt; returns null
+  // if neither is present so callers can decide their own catalog fallback.
+  function plantedWeekOf(painted) {
+    if (!painted || typeof painted !== 'object') return null;
+    if (typeof painted.plantedWeek === 'number' && isFinite(painted.plantedWeek)) {
+      return painted.plantedWeek;
+    }
+    if (typeof painted.plantedAt === 'string' && painted.plantedAt) {
+      return isoWeek(painted.plantedAt);
+    }
+    return null;
+  }
+
+  // ── Cross-device sync (optional) ────────────────────────────────────────
+  // Stores per-bed sync metadata in localStorage["gos.sync.<bedId>"]:
+  //   { code, secret, workerUrl, lastPushedAt }
+  // The workspace-level default Worker URL (used by Join flows) lives in
+  //   localStorage["gos.sync.workerUrl"]
+  // No method changes the core GosBed.* API; sync is purely additive.
+
+  var SYNC_PREFIX  = 'gos.sync.';
+  var SYNC_DEFAULT = 'gos.sync.workerUrl';
+
+  function syncKey(bedId) { return SYNC_PREFIX + bedId; }
+
+  function readSyncMeta(bedId) {
+    if (!bedId) return null;
+    return parseJson(safeGet(syncKey(bedId)));
+  }
+  function writeSyncMeta(bedId, meta) {
+    if (!bedId) return false;
+    return safeSet(syncKey(bedId), JSON.stringify(meta));
+  }
+  function clearSyncMeta(bedId) {
+    if (!bedId) return false;
+    return safeRemove(syncKey(bedId));
+  }
+
+  function trimWorkerUrl(workerUrl) {
+    if (typeof workerUrl !== 'string') return '';
+    return workerUrl.replace(/\/+$/, '');
+  }
+
+  async function postBeds(workerUrl, payload) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.create failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function putBed(workerUrl, code, payload) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.push failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function getBed(workerUrl, code) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, { method: 'GET' });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.pull failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function deleteBedRemote(workerUrl, code, secret) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: secret }),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      var errorCode = json && json.error ? json.error : null;
+      var err = new Error('GosBed.sync.revoke failed: ' + (errorCode || res.status));
+      err.status = res.status;
+      err.errorCode = errorCode;
+      throw err;
+    }
+    return json;
+  }
+
+  async function syncCreate(bedId, workerUrl) {
+    var bed = readBed(bedId);
+    if (!bed) throw new Error('GosBed.sync.create: no bed with id ' + bedId);
+    if (!workerUrl) throw new Error('GosBed.sync.create: workerUrl is required');
+    var resp = await postBeds(workerUrl, { data: bed });
+    var meta = {
+      code: resp.code,
+      secret: resp.secret,
+      workerUrl: trimWorkerUrl(workerUrl),
+      lastPushedAt: resp.updatedAt || new Date().toISOString(),
+    };
+    writeSyncMeta(bedId, meta);
+    return { code: meta.code, url: resp.url };
+  }
+
+  async function syncPush(bedId) {
+    var meta = readSyncMeta(bedId);
+    if (!meta || !meta.code) throw new Error('No sync code for this bed');
+    var bed = readBed(bedId);
+    if (!bed) throw new Error('GosBed.sync.push: no bed with id ' + bedId);
+    var resp = await putBed(meta.workerUrl, meta.code, { data: bed, secret: meta.secret });
+    meta.lastPushedAt = resp.updatedAt || new Date().toISOString();
+    writeSyncMeta(bedId, meta);
+    return { ok: true, updatedAt: meta.lastPushedAt };
+  }
+
+  async function syncPull(code, workerUrl) {
+    if (!code || !workerUrl) {
+      throw new Error('GosBed.sync.pull: code and workerUrl are required');
+    }
+    var resp = await getBed(workerUrl, code);
+    return resp.data;
+  }
+
+  function generateUniqueImportedBedId(baseId) {
+    if (!readBed(baseId)) return baseId;
+    var firstAttempt = baseId + '-imported';
+    if (!readBed(firstAttempt)) return firstAttempt;
+    for (var i = 2; i < 100; i++) {
+      var candidate = baseId + '-imported-' + i;
+      if (!readBed(candidate)) return candidate;
+    }
+    return baseId + '-imported-' + Date.now().toString(36);
+  }
+
+  async function syncImportFromCode(code, workerUrl, options) {
+    options = options || {};
+    var bed = await syncPull(code, workerUrl);
+    if (!bed || typeof bed !== 'object' || !bed.id) {
+      throw new Error('GosBed.sync.importFromCode: invalid bed payload');
+    }
+    var existing = readBed(bed.id);
+    if (existing && options.onCollision !== 'overwrite' && options.onCollision !== 'rename') {
+      var err = new Error('A local bed already exists with id "' + bed.id + '"');
+      err.code = 'collision';
+      err.existingBedId = bed.id;
+      err.existingBedName = existing.name || existing.id;
+      err.incomingBedName = bed.name || bed.id;
+      throw err;
+    }
+    if (existing && options.onCollision === 'rename') {
+      var newId = generateUniqueImportedBedId(bed.id);
+      bed.id = newId;
+      bed.name = (bed.name || newId) + ' (imported)';
+    }
+    writeBed(bed);
+    setActive(bed.id);
+    return bed;
+  }
+
+  function syncGetCode(bedId) {
+    return readSyncMeta(bedId);
+  }
+
+  async function syncRevoke(bedId) {
+    var meta = readSyncMeta(bedId);
+    if (!meta || !meta.code) throw new Error('GosBed.sync.revoke: no sync metadata for ' + bedId);
+    try {
+      await deleteBedRemote(meta.workerUrl, meta.code, meta.secret);
+    } catch (e) {
+      // If the remote record is already gone (expired or previously revoked),
+      // clearing local metadata is safe — there is nothing to retry against.
+      if (e && e.errorCode === 'not_found') {
+        clearSyncMeta(bedId);
+        return { ok: true, alreadyGone: true };
+      }
+      // Otherwise preserve metadata so the user can retry — the shared link
+      // may still be live and the secret is the only way to revoke it.
+      throw e;
+    }
+    clearSyncMeta(bedId);
+    return { ok: true };
+  }
+
+  function syncGetDefaultWorkerUrl() {
+    var v = safeGet(SYNC_DEFAULT);
+    return v || '';
+  }
+  function syncSetDefaultWorkerUrl(workerUrl) {
+    var trimmed = trimWorkerUrl(workerUrl);
+    if (!trimmed) return false;
+    return safeSet(SYNC_DEFAULT, trimmed);
+  }
+
   global.GosBed = {
     SCHEMA_VERSION: SCHEMA_VERSION,
     write: writeBed,
@@ -263,6 +524,23 @@
     parseShape: parseShape,
     parseCell: parseCell,
     formatCell: formatCell,
+    isoWeek: isoWeek,
+    currentIsoDate: currentIsoDate,
+    currentIsoWeek: currentIsoWeek,
+    plantedWeekOf: plantedWeekOf,
+    WALL_SIDES: WALL_SIDES,
+    WATER_KINDS: WATER_KINDS,
+    ORIENTATIONS: ORIENTATIONS,
+    sync: {
+      create: syncCreate,
+      push: syncPush,
+      pull: syncPull,
+      importFromCode: syncImportFromCode,
+      getCode: syncGetCode,
+      revoke: syncRevoke,
+      getDefaultWorkerUrl: syncGetDefaultWorkerUrl,
+      setDefaultWorkerUrl: syncSetDefaultWorkerUrl,
+    },
     _tabId: function () { return TAB_ID; }
   };
 })(typeof window !== 'undefined' ? window : this);
