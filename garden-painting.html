@@ -1238,6 +1238,31 @@ function ScoreBadge({ getCurrentBed }) {
         </div>
       )}
 
+      {/* PR #24: cross-surface link to Doctor. Option B chosen — small
+          button below the badge that only appears when score is in the red
+          tier (<70). Long-press (Option A) was rejected because the badge
+          already has a tap handler (toggle highlight / show tooltip) and
+          long-press on a 56x56 round button on desktop is awkward.
+          Positioned below the tooltip/highlight banner slot (top:158) so
+          they coexist when highlight mode is engaged. */}
+      {score !== null && score < 70 && (
+        <a href="garden-doctor-v5.html" aria-label="Open Doctor for diagnosis"
+           style={{
+          position: 'absolute',
+          top: (showTooltip || (highlightMode && weakestCells.length > 0)) ? 222 : 158,
+          right: 14, zIndex: 49,
+          minWidth: 110, minHeight: 44,
+          padding: '8px 12px', borderRadius: 999,
+          background: T.panel, color: T.rust,
+          border: `1.5px solid ${SCORE_TIER_COLORS.red || '#b85a3c'}`,
+          fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
+          textDecoration: 'none',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          boxShadow: '0 4px 10px rgba(184,90,60,0.18)',
+          transition: 'top 0.18s',
+        }}>See Doctor →</a>
+      )}
+
       {highlightMode && weakestCells.length > 0 && (
         <div role="status" style={{
           position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 260,
