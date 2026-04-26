@@ -5,15 +5,26 @@
  * any React + Babel CDN bundles on the page; React surfaces can read and
  * write through GosBed.* without taking a dependency on it.
  *
- * Schema (v1):
+ * Schema (v1, additive across releases):
  *   localStorage["gos.bed.<id>"] = {
  *     schemaVersion: 1,
  *     id: "front-bed",
  *     name: "Front Bed",
- *     shape: "4x8",        // "<cols>x<rows>"
- *     sun: "full",         // "full" | "partial" | "shade"
+ *     shape: "4x8",            // "<cols>x<rows>"
+ *     sun: "full",             // "full" | "partial" | "shade"
+ *
+ *     // Optional site context — round-tripped if present. Surfaces fall
+ *     // back to defaults when absent so old beds keep working.
+ *     zone:           "7a",    // USDA hardiness zone label
+ *     wallSide:       "back",  // "back" | "front" | "left" | "right" | "none"
+ *     sunHoursNumeric: 6,      // measured/estimated daily sun hours
+ *     water:          "drip",  // "drip" | "manual" | "rainfed" | "unknown"
+ *     orientation:    "ew",    // "ew" (long side faces south) | "ns"
+ *
  *     painted: [
- *       { cell: "r0c2", cropId, cropName, cropIcon, cropColor }, ...
+ *       { cell: "r0c2", cropId, cropName, cropIcon, cropColor,
+ *         plantedAt: "<ISO8601>",   // optional, when this cell was sown
+ *         plantedWeek: 16 }, ...    // optional ISO week of plantedAt
  *     ],
  *     events: [                  // appended by item #4 (Plan timeline)
  *       { type: "mark_done"|"harvest", bedId, season, cropSnapshot,
@@ -94,22 +105,59 @@
     }
   }
 
+  // Allowed enum values for optional bedContext fields. We accept anything
+  // the caller passes (kept loose so future values don't require a writer
+  // change), but document the canonical set so surfaces agree on shape.
+  var WALL_SIDES   = ['back', 'front', 'left', 'right', 'none'];
+  var WATER_KINDS  = ['drip', 'manual', 'rainfed', 'unknown'];
+  var ORIENTATIONS = ['ew', 'ns'];
+
+  function copyPaintedEntry(p) {
+    if (!p || typeof p !== 'object') return p;
+    var out = {
+      cell: p.cell,
+      cropId: p.cropId,
+      cropName: p.cropName,
+      cropIcon: p.cropIcon,
+      cropColor: p.cropColor
+    };
+    // Round-trip optional planting timestamp + ISO week when present.
+    // Surfaces that don't set these (older code, fixtures) stay back-compat.
+    if (typeof p.plantedAt === 'string' && p.plantedAt) out.plantedAt = p.plantedAt;
+    if (typeof p.plantedWeek === 'number' && isFinite(p.plantedWeek)) {
+      out.plantedWeek = p.plantedWeek;
+    }
+    return out;
+  }
+
   function writeBed(bedData) {
     validateBedShape(bedData);
     checkLock();
     var now = new Date().toISOString();
+    var paintedSrc = Array.isArray(bedData.painted) ? bedData.painted : [];
     var record = {
       schemaVersion: SCHEMA_VERSION,
       id: bedData.id,
       name: bedData.name || bedData.id,
       shape: bedData.shape,
       sun: bedData.sun,
-      painted: Array.isArray(bedData.painted) ? bedData.painted : [],
+      painted: paintedSrc.map(copyPaintedEntry),
       events: Array.isArray(bedData.events) ? bedData.events : [],
       lastEdited: now,
       ruleVersion: bedData.ruleVersion != null ? bedData.ruleVersion : null,
       seasonStart: bedData.seasonStart || 'standard'
     };
+    // Optional bedContext — only persist if the caller supplied it. Keeps
+    // pre-context beds visually identical when re-saved.
+    if (typeof bedData.zone === 'string' && bedData.zone) record.zone = bedData.zone;
+    if (typeof bedData.wallSide === 'string' && bedData.wallSide) record.wallSide = bedData.wallSide;
+    if (typeof bedData.sunHoursNumeric === 'number' && isFinite(bedData.sunHoursNumeric)) {
+      record.sunHoursNumeric = bedData.sunHoursNumeric;
+    }
+    if (typeof bedData.water === 'string' && bedData.water) record.water = bedData.water;
+    if (typeof bedData.orientation === 'string' && bedData.orientation) {
+      record.orientation = bedData.orientation;
+    }
     var ok = safeSet(BED_PREFIX + bedData.id, JSON.stringify(record));
     if (!ok) {
       throw new Error('GosBed.write: localStorage write failed (quota or disabled)');
@@ -245,6 +293,36 @@
 
   function formatCell(r, c) {
     return 'r' + r + 'c' + c;
+  }
+
+  // ISO week of the year for `date`. Matches the Planner's existing helper so
+  // surfaces compute plantedWeek from plantedAt the same way without copy-
+  // pasting the algorithm.
+  function isoWeek(date) {
+    var d = (date instanceof Date) ? date : new Date(date);
+    if (isNaN(d.getTime())) return null;
+    var utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var dayNum = utc.getUTCDay() || 7;
+    utc.setUTCDate(utc.getUTCDate() + 4 - dayNum);
+    var yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+  }
+
+  function currentIsoDate() { return new Date().toISOString(); }
+  function currentIsoWeek() { return isoWeek(new Date()); }
+
+  // Best-effort: return a numeric ISO week for a painted entry. Prefers an
+  // explicit plantedWeek; falls back to deriving from plantedAt; returns null
+  // if neither is present so callers can decide their own catalog fallback.
+  function plantedWeekOf(painted) {
+    if (!painted || typeof painted !== 'object') return null;
+    if (typeof painted.plantedWeek === 'number' && isFinite(painted.plantedWeek)) {
+      return painted.plantedWeek;
+    }
+    if (typeof painted.plantedAt === 'string' && painted.plantedAt) {
+      return isoWeek(painted.plantedAt);
+    }
+    return null;
   }
 
   // ── Cross-device sync (optional) ────────────────────────────────────────
@@ -446,6 +524,13 @@
     parseShape: parseShape,
     parseCell: parseCell,
     formatCell: formatCell,
+    isoWeek: isoWeek,
+    currentIsoDate: currentIsoDate,
+    currentIsoWeek: currentIsoWeek,
+    plantedWeekOf: plantedWeekOf,
+    WALL_SIDES: WALL_SIDES,
+    WATER_KINDS: WATER_KINDS,
+    ORIENTATIONS: ORIENTATIONS,
     sync: {
       create: syncCreate,
       push: syncPush,
