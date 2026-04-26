@@ -317,7 +317,11 @@
     });
     var json = await res.json().catch(function () { return null; });
     if (!res.ok || !json || !json.ok) {
-      throw new Error('GosBed.sync.revoke failed: ' + (json && json.error ? json.error : res.status));
+      var errorCode = json && json.error ? json.error : null;
+      var err = new Error('GosBed.sync.revoke failed: ' + (errorCode || res.status));
+      err.status = res.status;
+      err.errorCode = errorCode;
+      throw err;
     }
     return json;
   }
@@ -356,10 +360,36 @@
     return resp.data;
   }
 
-  async function syncImportFromCode(code, workerUrl) {
+  function generateUniqueImportedBedId(baseId) {
+    if (!readBed(baseId)) return baseId;
+    var firstAttempt = baseId + '-imported';
+    if (!readBed(firstAttempt)) return firstAttempt;
+    for (var i = 2; i < 100; i++) {
+      var candidate = baseId + '-imported-' + i;
+      if (!readBed(candidate)) return candidate;
+    }
+    return baseId + '-imported-' + Date.now().toString(36);
+  }
+
+  async function syncImportFromCode(code, workerUrl, options) {
+    options = options || {};
     var bed = await syncPull(code, workerUrl);
     if (!bed || typeof bed !== 'object' || !bed.id) {
       throw new Error('GosBed.sync.importFromCode: invalid bed payload');
+    }
+    var existing = readBed(bed.id);
+    if (existing && options.onCollision !== 'overwrite' && options.onCollision !== 'rename') {
+      var err = new Error('A local bed already exists with id "' + bed.id + '"');
+      err.code = 'collision';
+      err.existingBedId = bed.id;
+      err.existingBedName = existing.name || existing.id;
+      err.incomingBedName = bed.name || bed.id;
+      throw err;
+    }
+    if (existing && options.onCollision === 'rename') {
+      var newId = generateUniqueImportedBedId(bed.id);
+      bed.id = newId;
+      bed.name = (bed.name || newId) + ' (imported)';
     }
     writeBed(bed);
     setActive(bed.id);
@@ -375,11 +405,18 @@
     if (!meta || !meta.code) throw new Error('GosBed.sync.revoke: no sync metadata for ' + bedId);
     try {
       await deleteBedRemote(meta.workerUrl, meta.code, meta.secret);
-    } finally {
-      // Always clear local metadata even if the remote delete fails — caller
-      // can manually retry from the dashboard.
-      clearSyncMeta(bedId);
+    } catch (e) {
+      // If the remote record is already gone (expired or previously revoked),
+      // clearing local metadata is safe — there is nothing to retry against.
+      if (e && e.errorCode === 'not_found') {
+        clearSyncMeta(bedId);
+        return { ok: true, alreadyGone: true };
+      }
+      // Otherwise preserve metadata so the user can retry — the shared link
+      // may still be live and the secret is the only way to revoke it.
+      throw e;
     }
+    clearSyncMeta(bedId);
     return { ok: true };
   }
 

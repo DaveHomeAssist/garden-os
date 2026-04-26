@@ -10,7 +10,8 @@
 //   DELETE /beds/:code          → delete bed (validates secret)
 //
 // Storage shape:
-//   KV "bed:<code>"    = { data: <bed JSON>, updatedAt: <ISO> }   (90-day TTL)
+//   KV "bed:<code>"    = { data: <bed JSON>, updatedAt: <ISO> }   (rolling
+//                        90-day TTL; refreshed on every GET, PUT, or POST)
 //   KV "secret:<code>" = "<32 hex chars>"                          (no TTL)
 //
 // CORS: every response sets Access-Control-Allow-Origin: * so a static page
@@ -107,6 +108,13 @@ async function handle(request, env) {
       let parsed;
       try { parsed = JSON.parse(raw); }
       catch (_) { return jsonResponse({ ok: false, error: 'corrupt_record' }, 500); }
+      // Refresh the TTL so a bed actively in use across devices doesn't
+      // silently expire. KV doesn't support extending TTL in place, so write
+      // the same record back with a fresh expirationTtl. Best-effort: if the
+      // refresh fails, still return the data — the read itself succeeded.
+      try {
+        await env.GOS_SYNC.put('bed:' + code, raw, { expirationTtl: TTL_SECONDS });
+      } catch (_) { /* swallow — read result is still valid */ }
       return jsonResponse({
         ok: true,
         data: parsed.data,
