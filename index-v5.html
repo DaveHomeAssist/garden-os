@@ -42,6 +42,8 @@
   }
   .v5-eyebrow:hover { color: #1e1208; }
   @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
+  @keyframes gos-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .gos-fade-in { animation: gos-fade-in 180ms ease; }
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
@@ -204,6 +206,49 @@ const Icons = {
       <path d="M5 3l4 4-4 4"/>
     </svg>
   ),
+  build: (s = 22, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="6.5" width="15" height="12" rx="1.4" fill={c} fillOpacity="0.06"/>
+      <path d="M3.5 10.5h15M7 6.5V4M15 6.5V4M7 14h3M13 14h2M7 17h6"/>
+    </svg>
+  ),
+  ops: (s = 22, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="14" height="15" rx="1.4" fill={c} fillOpacity="0.06"/>
+      <path d="M7 8h8M7 11h8M7 14h5"/>
+      <circle cx="6" cy="8" r="0.7" fill={c}/>
+      <circle cx="6" cy="11" r="0.7" fill={c}/>
+      <circle cx="6" cy="14" r="0.7" fill={c}/>
+    </svg>
+  ),
+  story: (s = 22, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7.5" fill={c} fillOpacity="0.06"/>
+      <path d="M9 7.5l5 3.5-5 3.5z" fill={c} fillOpacity="0.4"/>
+    </svg>
+  ),
+  code: (s = 22, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="4.5" width="15" height="13" rx="1.4" fill={c} fillOpacity="0.06"/>
+      <path d="M9 9l-2 2 2 2M13 9l2 2-2 2"/>
+    </svg>
+  ),
+  trash: (s = 14, c = T.rust) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 4.5h8M5.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5V12a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V4.5"/>
+    </svg>
+  ),
+  download: (s = 14, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 2v7M4 6.5L7 9.5l3-3M3 11.5h8"/>
+    </svg>
+  ),
+  log: (s = 16, c = T.leaf) => (
+    <svg width={s} height={s} viewBox="0 0 16 16" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 3h10v10H3z" fill={c} fillOpacity="0.06"/>
+      <path d="M5.5 6h5M5.5 8.5h5M5.5 11h3"/>
+    </svg>
+  ),
 };
 
 // ── Tweaks panel ────────────────────────────────────────────────────────────
@@ -228,6 +273,47 @@ function loadRecents() {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
   } catch (_) { return []; }
+}
+
+// ── GosBed-derived hub state ───────────────────────────────────────────────
+function loadActiveBedSummary() {
+  if (typeof GosBed === 'undefined') return null;
+  try {
+    const bed = GosBed.getActive();
+    if (!bed) return null;
+    const currentYear = String(new Date().getFullYear());
+    const events = Array.isArray(bed.events) ? bed.events : [];
+    const seasonEvents = events.filter(function (e) {
+      return e && e.season === currentYear &&
+        (e.type === 'mark_done' || e.type === 'harvest');
+    });
+    const lastEvent = seasonEvents.length
+      ? seasonEvents.reduce(function (a, b) {
+          return (a.timestamp || '') > (b.timestamp || '') ? a : b;
+        }, seasonEvents[0])
+      : null;
+    return {
+      bedId: bed.id,
+      bedName: bed.name || bed.id,
+      seasonCount: seasonEvents.length,
+      lastEvent,
+      currentYear,
+    };
+  } catch (_) { return null; }
+}
+
+function relativeDays(timestamp) {
+  if (!timestamp) return '';
+  try {
+    const ms = Date.now() - new Date(timestamp).getTime();
+    if (Number.isNaN(ms) || ms < 0) return '';
+    const days = Math.floor(ms / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return days + 'd ago';
+    if (days < 30) return Math.floor(days / 7) + 'w ago';
+    return Math.floor(days / 30) + 'mo ago';
+  } catch (_) { return ''; }
 }
 function Seg({ value, opts, onChange }) {
   return (
@@ -393,11 +479,554 @@ function WelcomeCard() {
   );
 }
 
+// ── Season log tile ────────────────────────────────────────────────────────
+function SeasonLogTile({ summary, compact }) {
+  if (!summary) return null;
+  const empty = summary.seasonCount === 0;
+  const last = summary.lastEvent;
+  const lastWhen = last ? relativeDays(last.timestamp) : '';
+  const lastVerb = last && last.type === 'harvest' ? 'harvested' : 'marked done';
+  const lastCrop = last && last.cropSnapshot ? last.cropSnapshot.cropName : '';
+  return (
+    <a href="garden-planner-v5.html" aria-label="Open season log in Plan" style={{
+      display: 'block', textDecoration: 'none', color: T.text,
+      marginTop: compact ? 10 : 12,
+      background: T.panel, borderRadius: 12,
+      border: `1px solid ${T.borderSoft}`,
+      padding: compact ? '10px 12px' : '12px 14px',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Label size={9} color={T.textSoft}>SEASON LOG · {summary.currentYear}</Label>
+        <span style={{
+          fontFamily: T.fontDisp, fontSize: 18, fontWeight: 600,
+          color: empty ? T.textMuted : T.leaf, letterSpacing: -0.2,
+        }}>{summary.seasonCount}</span>
+      </div>
+      <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ display: 'inline-flex' }}>{Icons.log(14, empty ? T.textMuted : T.leaf)}</span>
+        <span style={{
+          fontFamily: T.fontSerif, fontSize: 13, color: empty ? T.textMuted : T.textSoft,
+          fontStyle: 'italic', lineHeight: 1.4, flex: 1, minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {empty
+            ? <>No events yet on <span style={{ color: T.text, fontStyle: 'normal', fontWeight: 500 }}>{summary.bedName}</span> &mdash; mark a crop done in Plan.</>
+            : <><span style={{ color: T.text, fontStyle: 'normal', fontWeight: 500 }}>{summary.bedName}</span> &middot; last: {lastCrop} {lastVerb} {lastWhen}.</>
+          }
+        </span>
+        <span style={{ display: 'inline-flex' }}>{Icons.arrow(12, T.textMuted)}</span>
+      </div>
+    </a>
+  );
+}
+
+// ── More tools sheet + Dev Tools overlay ───────────────────────────────────
+function MoreToolsRow({ icon, title, subtitle, href, onClick, last }) {
+  const Tag = href ? 'a' : 'button';
+  const props = href ? { href } : { onClick, type: 'button' };
+  return (
+    <Tag {...props} style={{
+      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+      padding: '12px 18px', minHeight: 56, cursor: 'pointer',
+      background: 'transparent', border: 'none',
+      borderBottom: last ? 'none' : `1px solid ${T.borderSoft}`,
+      textAlign: 'left', fontFamily: T.fontSans, color: T.text,
+      textDecoration: 'none',
+    }}>
+      <span style={{
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        background: T.leafPale + '55', display: 'inline-flex',
+        alignItems: 'center', justifyContent: 'center',
+      }}>{icon(20, T.leaf)}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          display: 'block', fontFamily: T.fontDisp, fontSize: 16,
+          fontWeight: 600, color: T.text, letterSpacing: -0.1,
+        }}>{title}</span>
+        <span style={{
+          display: 'block', fontSize: 12, color: T.textSoft, lineHeight: 1.35, marginTop: 1,
+        }}>{subtitle}</span>
+      </span>
+      <span style={{ display: 'inline-flex' }}>{Icons.arrow(14, T.textMuted)}</span>
+    </Tag>
+  );
+}
+
+function MoreToolsSheet({ onClose, onOpenDevTools }) {
+  const [phase, setPhase] = React.useState('entering');
+  const [translateY, setTranslateY] = React.useState(0);
+  const dragRef = React.useRef({ startY: 0, dragging: false });
+
+  React.useEffect(() => {
+    const id = window.requestAnimationFrame(function () { setPhase('idle'); });
+    return function () { window.cancelAnimationFrame(id); };
+  }, []);
+
+  function close() {
+    setPhase('exiting');
+    window.setTimeout(onClose, 200);
+  }
+
+  function onPointerDown(e) {
+    if (phase !== 'idle') return;
+    dragRef.current = { startY: e.clientY, dragging: true };
+    if (e.currentTarget.setPointerCapture) {
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    setPhase('dragging');
+  }
+  function onPointerMove(e) {
+    if (!dragRef.current.dragging) return;
+    const dy = Math.max(0, e.clientY - dragRef.current.startY);
+    setTranslateY(dy);
+  }
+  function onPointerUp(e) {
+    if (!dragRef.current.dragging) return;
+    const dy = e.clientY - dragRef.current.startY;
+    dragRef.current.dragging = false;
+    if (dy > 80) {
+      close();
+    } else {
+      setPhase('idle');
+      setTranslateY(0);
+    }
+  }
+
+  const transform = (phase === 'entering' || phase === 'exiting')
+    ? 'translateY(100%)'
+    : (phase === 'dragging' ? `translateY(${translateY}px)` : 'translateY(0)');
+  const transition = phase === 'dragging' ? 'none' : 'transform 200ms ease';
+
+  return (
+    <>
+      <div onClick={close} className="gos-fade-in" style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)',
+        zIndex: 60,
+      }}/>
+      <div role="dialog" aria-modal="true" aria-label="More tools" style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 61,
+        background: T.panel,
+        borderTopLeftRadius: 18, borderTopRightRadius: 18,
+        boxShadow: '0 -12px 36px rgba(44,27,11,0.18)',
+        maxHeight: '80%', display: 'flex', flexDirection: 'column',
+        transform, transition, willChange: 'transform',
+      }}>
+        <div onPointerDown={onPointerDown} onPointerMove={onPointerMove}
+             onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+             style={{
+               padding: '10px 0 4px', cursor: 'grab',
+               touchAction: 'none', flexShrink: 0,
+             }}>
+          <div style={{
+            width: 36, height: 4, borderRadius: 2,
+            background: T.border, margin: '0 auto',
+          }}/>
+        </div>
+        <div style={{
+          padding: '4px 18px 10px', flexShrink: 0,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+        }}>
+          <Disp size={18}>More tools</Disp>
+          <button onClick={close} aria-label="Close more tools" style={{
+            width: 28, height: 28, borderRadius: 6, padding: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: T.textSoft,
+          }}>{Icons.close(14, T.textSoft)}</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 18 }}>
+          <MoreToolsRow icon={Icons.build} title="Build Guide"
+            subtitle="Pick a bed, list materials" href="build-guide.html"/>
+          <MoreToolsRow icon={Icons.ops}   title="Ops Guide"
+            subtitle="Weekly garden ops" href="ops-guide.html"/>
+          <MoreToolsRow icon={Icons.story} title="Story Mode"
+            subtitle="Play through a season" href="story-mode/"/>
+          <MoreToolsRow icon={Icons.code}  title="Dev Tools"
+            subtitle="Beds · storage · raw log" onClick={onOpenDevTools} last/>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Dev Tools overlay ──────────────────────────────────────────────────────
+function exportAllBedsToFile() {
+  if (typeof GosBed === 'undefined') return false;
+  const beds = GosBed.readAll();
+  const payload = {
+    schemaVersion: GosBed.SCHEMA_VERSION || 1,
+    exportedAt: new Date().toISOString(),
+    beds,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'garden-os-export-' + today + '.gos.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.setTimeout(function () { URL.revokeObjectURL(url); }, 100);
+  return true;
+}
+
+function DevToolsBedRow({ bed, isActive, onMakeActive, onDelete, confirming, onConfirm, onCancelConfirm }) {
+  const painted = Array.isArray(bed.painted) ? bed.painted.length : 0;
+  const events = Array.isArray(bed.events) ? bed.events.length : 0;
+  return (
+    <div style={{
+      padding: '10px 12px', borderBottom: `1px solid ${T.borderSoft}`,
+      background: isActive ? T.leafWash : 'transparent',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontFamily: T.fontDisp, fontSize: 14, fontWeight: 600,
+          color: T.text, flex: 1, minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{bed.name || bed.id}</span>
+        {isActive && (
+          <span style={{
+            fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.12,
+            textTransform: 'uppercase', color: T.leaf, fontWeight: 600,
+          }}>ACTIVE</span>
+        )}
+      </div>
+      <div style={{
+        fontFamily: T.fontMono, fontSize: 10, color: T.textSoft, marginTop: 2,
+      }}>
+        {bed.shape} · {bed.sun} · {painted} crop{painted === 1 ? '' : 's'} · {events} event{events === 1 ? '' : 's'}
+      </div>
+      {confirming ? (
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <span style={{
+            flex: 1, fontFamily: T.fontSans, fontSize: 12, color: T.rust,
+            display: 'flex', alignItems: 'center',
+          }}>Delete &ldquo;{bed.name || bed.id}&rdquo;?</span>
+          <button onClick={onConfirm} style={{
+            padding: '4px 10px', borderRadius: 6, border: 'none',
+            background: T.rust, color: '#fff', cursor: 'pointer',
+            fontFamily: T.fontMono, fontSize: 10, fontWeight: 600,
+            letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 28,
+          }}>Delete</button>
+          <button onClick={onCancelConfirm} style={{
+            padding: '4px 10px', borderRadius: 6,
+            border: `1px solid ${T.borderSoft}`,
+            background: T.panel, color: T.textSoft, cursor: 'pointer',
+            fontFamily: T.fontMono, fontSize: 10, fontWeight: 500,
+            letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 28,
+          }}>Cancel</button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <button onClick={onMakeActive} disabled={isActive} style={{
+            padding: '4px 10px', borderRadius: 6,
+            border: `1px solid ${isActive ? T.borderSoft : T.leaf}`,
+            background: isActive ? T.cedarWash : T.panel,
+            color: isActive ? T.textMuted : T.leaf,
+            cursor: isActive ? 'default' : 'pointer',
+            fontFamily: T.fontMono, fontSize: 10, fontWeight: 600,
+            letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 28,
+          }}>{isActive ? 'Active' : 'Make active'}</button>
+          <button onClick={onDelete} aria-label={`Delete ${bed.name || bed.id}`} style={{
+            padding: '4px 10px', borderRadius: 6,
+            border: `1px solid ${T.borderSoft}`,
+            background: T.panel, color: T.rust, cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontFamily: T.fontMono, fontSize: 10, fontWeight: 500,
+            letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 28,
+          }}>{Icons.trash(11, T.rust)} Delete</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DevToolsOverlay({ onClose }) {
+  const [phase, setPhase] = React.useState('entering');
+  const [beds, setBeds] = React.useState(function () {
+    return typeof GosBed !== 'undefined' ? GosBed.readAll() : [];
+  });
+  const [activeId, setActiveId] = React.useState(function () {
+    if (typeof GosBed === 'undefined') return null;
+    const a = GosBed.getActive();
+    return a ? a.id : null;
+  });
+  const [usage, setUsage] = React.useState(function () {
+    return typeof GosBed !== 'undefined'
+      ? GosBed.estimateStorageUsage()
+      : { usedBytes: 0, warningThreshold: 4000000, isOverThreshold: false };
+  });
+  const [confirmId, setConfirmId] = React.useState(null);
+  const [showAllSeasons, setShowAllSeasons] = React.useState(false);
+  const [exportNote, setExportNote] = React.useState('');
+
+  React.useEffect(() => {
+    const id = window.requestAnimationFrame(function () { setPhase('idle'); });
+    return function () { window.cancelAnimationFrame(id); };
+  }, []);
+
+  function refresh() {
+    if (typeof GosBed === 'undefined') return;
+    setBeds(GosBed.readAll());
+    setUsage(GosBed.estimateStorageUsage());
+    const a = GosBed.getActive();
+    setActiveId(a ? a.id : null);
+  }
+
+  function close() {
+    setPhase('exiting');
+    window.setTimeout(onClose, 180);
+  }
+
+  function handleMakeActive(id) {
+    if (typeof GosBed === 'undefined') return;
+    GosBed.setActive(id);
+    refresh();
+    try {
+      window.dispatchEvent(new CustomEvent('gosBedChanged', { detail: { reason: 'set-active', id } }));
+    } catch (_) {}
+  }
+  function handleConfirmDelete(id) {
+    if (typeof GosBed === 'undefined') return;
+    GosBed.delete(id);
+    setConfirmId(null);
+    refresh();
+    try {
+      window.dispatchEvent(new CustomEvent('gosBedChanged', { detail: { reason: 'delete', id } }));
+    } catch (_) {}
+  }
+
+  function handleExport() {
+    const ok = exportAllBedsToFile();
+    setExportNote(ok ? 'Exported.' : 'Export failed.');
+    window.setTimeout(function () { setExportNote(''); }, 2500);
+  }
+
+  const activeBed = beds.find(function (b) { return b.id === activeId; }) || null;
+  const allEvents = activeBed && Array.isArray(activeBed.events) ? activeBed.events : [];
+  const currentYear = String(new Date().getFullYear());
+  const visibleEvents = showAllSeasons
+    ? allEvents
+    : allEvents.filter(function (e) { return e && e.season === currentYear; });
+  const sortedEvents = visibleEvents.slice().sort(function (a, b) {
+    return (b.timestamp || '').localeCompare(a.timestamp || '');
+  });
+
+  const usedKb = (usage.usedBytes / 1024).toFixed(1);
+  const limitKb = (usage.warningThreshold / 1024).toFixed(0);
+  const pct = Math.min(100, Math.round((usage.usedBytes / usage.warningThreshold) * 100));
+
+  const opacity = phase === 'idle' ? 1 : 0;
+  return (
+    <>
+      <div onClick={close} style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.5)',
+        zIndex: 70, opacity, transition: 'opacity 180ms ease',
+      }}/>
+      <div role="dialog" aria-modal="true" aria-label="Dev tools" style={{
+        position: 'absolute', inset: 0, zIndex: 71,
+        background: T.cream, opacity,
+        transition: 'opacity 180ms ease',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <header style={{
+          flexShrink: 0, padding: '14px 18px 10px',
+          borderBottom: `1px solid ${T.borderSoft}`, background: T.panel,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <Disp size={18}>Dev Tools</Disp>
+          <button onClick={close} aria-label="Close dev tools" style={{
+            width: 30, height: 30, borderRadius: 6, padding: 0,
+            background: 'transparent', border: `1px solid ${T.borderSoft}`,
+            cursor: 'pointer', display: 'inline-flex',
+            alignItems: 'center', justifyContent: 'center', color: T.textSoft,
+          }}>{Icons.close(14, T.textSoft)}</button>
+        </header>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 24px' }}>
+          {/* Beds */}
+          <section style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Label size={9} color={T.textSoft}>BEDS · {beds.length}</Label>
+              <button onClick={handleExport} style={{
+                padding: '4px 8px', borderRadius: 6,
+                border: `1px solid ${T.borderSoft}`,
+                background: T.panel, color: T.leaf, cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontFamily: T.fontMono, fontSize: 9, fontWeight: 600,
+                letterSpacing: 0.12, textTransform: 'uppercase',
+              }}>{Icons.download(11, T.leaf)} Export all</button>
+            </div>
+            {exportNote && (
+              <div style={{
+                fontFamily: T.fontMono, fontSize: 10, color: T.leaf,
+                marginBottom: 6, padding: '4px 8px',
+                background: T.leafWash, borderRadius: 4,
+              }}>{exportNote}</div>
+            )}
+            {beds.length === 0 ? (
+              <div style={{
+                padding: '14px 12px', background: T.panel,
+                border: `1px dashed ${T.borderSoft}`, borderRadius: 8,
+                fontFamily: T.fontSerif, fontSize: 12, color: T.textSoft, fontStyle: 'italic',
+              }}>No beds yet. Create one in Paint.</div>
+            ) : (
+              <div style={{
+                background: T.panel, borderRadius: 8,
+                border: `1px solid ${T.borderSoft}`, overflow: 'hidden',
+              }}>
+                {beds.map(function (b) {
+                  return (
+                    <DevToolsBedRow key={b.id} bed={b}
+                      isActive={b.id === activeId}
+                      onMakeActive={function () { handleMakeActive(b.id); }}
+                      onDelete={function () { setConfirmId(b.id); }}
+                      confirming={confirmId === b.id}
+                      onConfirm={function () { handleConfirmDelete(b.id); }}
+                      onCancelConfirm={function () { setConfirmId(null); }}/>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Storage */}
+          <section style={{ marginBottom: 14 }}>
+            <Label size={9} color={T.textSoft} style={{ display: 'block', marginBottom: 6 }}>STORAGE</Label>
+            <div style={{
+              padding: '12px', background: T.panel,
+              borderRadius: 8, border: `1px solid ${T.borderSoft}`,
+            }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between',
+                fontFamily: T.fontMono, fontSize: 11, color: T.textSoft, marginBottom: 6,
+              }}>
+                <span>{usedKb} KB used</span>
+                <span>of ~{limitKb} KB</span>
+              </div>
+              <div style={{
+                width: '100%', height: 6, borderRadius: 3,
+                background: T.cedarWash, overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: pct + '%', height: '100%',
+                  background: usage.isOverThreshold ? T.rust : T.leaf,
+                  transition: 'width 200ms ease',
+                }}/>
+              </div>
+              {usage.isOverThreshold && (
+                <div style={{
+                  fontFamily: T.fontSans, fontSize: 11, color: T.rust,
+                  marginTop: 6, fontWeight: 500,
+                }}>Over threshold. Consider exporting + clearing old beds.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Raw log */}
+          <section>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', marginBottom: 6,
+            }}>
+              <Label size={9} color={T.textSoft}>
+                RAW LOG{activeBed ? ' · ' + (activeBed.name || activeBed.id) : ''}
+              </Label>
+              <label style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontFamily: T.fontMono, fontSize: 10, color: T.textSoft,
+                cursor: 'pointer',
+              }}>
+                <input type="checkbox" checked={showAllSeasons}
+                  onChange={function (e) { setShowAllSeasons(e.target.checked); }}
+                  style={{ margin: 0 }}/>
+                Show all seasons
+              </label>
+            </div>
+            <div style={{
+              background: T.panel, borderRadius: 8,
+              border: `1px solid ${T.borderSoft}`, overflow: 'hidden',
+            }}>
+              {sortedEvents.length === 0 ? (
+                <div style={{
+                  padding: '14px 12px',
+                  fontFamily: T.fontSerif, fontSize: 12, color: T.textSoft, fontStyle: 'italic',
+                }}>
+                  {activeBed
+                    ? (showAllSeasons ? 'No events on this bed yet.' : 'No events this season.')
+                    : 'No active bed.'}
+                </div>
+              ) : (
+                <div style={{ fontFamily: T.fontMono, fontSize: 10.5 }}>
+                  {sortedEvents.map(function (ev, i) {
+                    const dt = ev.timestamp ? new Date(ev.timestamp) : null;
+                    const dateStr = dt
+                      ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
+                      : '—';
+                    const cropName = ev.cropSnapshot ? ev.cropSnapshot.cropName : '?';
+                    const qty = ev.quantity != null && ev.unit
+                      ? ` · ${ev.quantity} ${ev.unit}`
+                      : '';
+                    return (
+                      <div key={i} style={{
+                        padding: '6px 12px',
+                        borderBottom: i === sortedEvents.length - 1
+                          ? 'none' : `1px solid ${T.borderSoft}`,
+                        color: T.textMid,
+                      }}>
+                        <span style={{ color: T.soilMid }}>{dateStr}</span>
+                        {' · '}
+                        <span style={{ color: ev.type === 'harvest' ? T.leaf : T.cedar, fontWeight: 600 }}>
+                          {(ev.type || '').toUpperCase()}
+                        </span>
+                        {' · '}
+                        <span style={{ color: T.text }}>{cropName}</span>
+                        {ev.cell ? <> · <span>{ev.cell}</span></> : null}
+                        {qty}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function Hub() {
   const [tweak, setTweak] = React.useState(loadTweaks);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
   const [recents] = React.useState(loadRecents);
+  const [bedSummary, setBedSummary] = React.useState(loadActiveBedSummary);
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [devOpen, setDevOpen] = React.useState(false);
   const compact = tweak.density === 'compact';
+
+  React.useEffect(() => {
+    function refresh() { setBedSummary(loadActiveBedSummary()); }
+    function onStorage(e) {
+      if (!e.key) { refresh(); return; }
+      if (e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
+    }
+    function onFocus() { refresh(); }
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('gosBedChanged', refresh);
+    window.addEventListener('focus', onFocus);
+    return function () {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('gosBedChanged', refresh);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
+
+  function openDevTools() {
+    setMoreOpen(false);
+    setDevOpen(true);
+  }
 
   return (
     <div style={{
@@ -433,6 +1062,8 @@ function Hub() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
         <ThisWeekCapsule compact={compact}/>
 
+        <SeasonLogTile summary={bedSummary} compact={compact}/>
+
         <section style={{ marginTop: compact ? 10 : 14 }}>
           <Label size={9} color={T.textSoft} style={{ marginLeft: 4 }}>WHERE TO</Label>
           <div style={{
@@ -445,6 +1076,30 @@ function Hub() {
             <Tile title="Journal" subtitle="How scoring decides"         icon={Icons.journal} href="how-it-thinks-v5.html"   compact={compact}/>
           </div>
         </section>
+
+        <button onClick={() => setMoreOpen(true)} style={{
+          marginTop: compact ? 10 : 12, width: '100%',
+          padding: '12px 14px', borderRadius: 12,
+          background: T.panel, border: `1px solid ${T.borderSoft}`,
+          display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+          fontFamily: T.fontSans, color: T.text, textAlign: 'left', minHeight: 48,
+        }}>
+          <span style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: T.cedarWash, display: 'inline-flex',
+            alignItems: 'center', justifyContent: 'center',
+          }}>{Icons.code(16, T.soil)}</span>
+          <span style={{ flex: 1 }}>
+            <span style={{
+              display: 'block', fontFamily: T.fontDisp, fontSize: 14,
+              fontWeight: 600, color: T.text, letterSpacing: -0.1,
+            }}>More tools</span>
+            <span style={{ display: 'block', fontSize: 11, color: T.textSoft, lineHeight: 1.3, marginTop: 1 }}>
+              Build, Ops, Story Mode, Dev
+            </span>
+          </span>
+          <span style={{ display: 'inline-flex' }}>{Icons.arrow(13, T.textMuted)}</span>
+        </button>
 
         {tweak.showRecent && (recents.length > 0 ? (
           <section style={{ marginTop: compact ? 12 : 16 }}>
@@ -465,6 +1120,8 @@ function Hub() {
 
       <TabBar active="hub"/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
+      {moreOpen && <MoreToolsSheet onClose={() => setMoreOpen(false)} onOpenDevTools={openDevTools}/>}
+      {devOpen && <DevToolsOverlay onClose={() => setDevOpen(false)}/>}
     </div>
   );
 }
@@ -473,17 +1130,9 @@ function Hub() {
 if (typeof GosBed !== 'undefined') {
   const beds = GosBed.readAll();
   console.log('Garden OS: ' + beds.length + ' bed(s) found');
-  // Build-order item #4: count this season's mark_done/harvest events on the
-  // active bed. The Hub UI surfacing this lands in item #5; for now we just
-  // log so the data is reachable.
-  const _activeForEvents = GosBed.getActive();
-  if (_activeForEvents && Array.isArray(_activeForEvents.events)) {
-    const _currentYear = String(new Date().getFullYear());
-    const _seasonEvents = _activeForEvents.events.filter(function (e) {
-      return e && e.season === _currentYear &&
-        (e.type === 'mark_done' || e.type === 'harvest');
-    });
-    console.log('Garden OS: ' + _seasonEvents.length + ' events logged this season');
+  const _summary = loadActiveBedSummary();
+  if (_summary) {
+    console.log('Garden OS: ' + _summary.seasonCount + ' events logged this season');
   }
 }
 
