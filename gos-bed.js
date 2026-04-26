@@ -247,6 +247,152 @@
     return 'r' + r + 'c' + c;
   }
 
+  // ── Cross-device sync (optional) ────────────────────────────────────────
+  // Stores per-bed sync metadata in localStorage["gos.sync.<bedId>"]:
+  //   { code, secret, workerUrl, lastPushedAt }
+  // The workspace-level default Worker URL (used by Join flows) lives in
+  //   localStorage["gos.sync.workerUrl"]
+  // No method changes the core GosBed.* API; sync is purely additive.
+
+  var SYNC_PREFIX  = 'gos.sync.';
+  var SYNC_DEFAULT = 'gos.sync.workerUrl';
+
+  function syncKey(bedId) { return SYNC_PREFIX + bedId; }
+
+  function readSyncMeta(bedId) {
+    if (!bedId) return null;
+    return parseJson(safeGet(syncKey(bedId)));
+  }
+  function writeSyncMeta(bedId, meta) {
+    if (!bedId) return false;
+    return safeSet(syncKey(bedId), JSON.stringify(meta));
+  }
+  function clearSyncMeta(bedId) {
+    if (!bedId) return false;
+    return safeRemove(syncKey(bedId));
+  }
+
+  function trimWorkerUrl(workerUrl) {
+    if (typeof workerUrl !== 'string') return '';
+    return workerUrl.replace(/\/+$/, '');
+  }
+
+  async function postBeds(workerUrl, payload) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.create failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function putBed(workerUrl, code, payload) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.push failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function getBed(workerUrl, code) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, { method: 'GET' });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.pull failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+  async function deleteBedRemote(workerUrl, code, secret) {
+    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: secret }),
+    });
+    var json = await res.json().catch(function () { return null; });
+    if (!res.ok || !json || !json.ok) {
+      throw new Error('GosBed.sync.revoke failed: ' + (json && json.error ? json.error : res.status));
+    }
+    return json;
+  }
+
+  async function syncCreate(bedId, workerUrl) {
+    var bed = readBed(bedId);
+    if (!bed) throw new Error('GosBed.sync.create: no bed with id ' + bedId);
+    if (!workerUrl) throw new Error('GosBed.sync.create: workerUrl is required');
+    var resp = await postBeds(workerUrl, { data: bed });
+    var meta = {
+      code: resp.code,
+      secret: resp.secret,
+      workerUrl: trimWorkerUrl(workerUrl),
+      lastPushedAt: resp.updatedAt || new Date().toISOString(),
+    };
+    writeSyncMeta(bedId, meta);
+    return { code: meta.code, url: resp.url };
+  }
+
+  async function syncPush(bedId) {
+    var meta = readSyncMeta(bedId);
+    if (!meta || !meta.code) throw new Error('No sync code for this bed');
+    var bed = readBed(bedId);
+    if (!bed) throw new Error('GosBed.sync.push: no bed with id ' + bedId);
+    var resp = await putBed(meta.workerUrl, meta.code, { data: bed, secret: meta.secret });
+    meta.lastPushedAt = resp.updatedAt || new Date().toISOString();
+    writeSyncMeta(bedId, meta);
+    return { ok: true, updatedAt: meta.lastPushedAt };
+  }
+
+  async function syncPull(code, workerUrl) {
+    if (!code || !workerUrl) {
+      throw new Error('GosBed.sync.pull: code and workerUrl are required');
+    }
+    var resp = await getBed(workerUrl, code);
+    return resp.data;
+  }
+
+  async function syncImportFromCode(code, workerUrl) {
+    var bed = await syncPull(code, workerUrl);
+    if (!bed || typeof bed !== 'object' || !bed.id) {
+      throw new Error('GosBed.sync.importFromCode: invalid bed payload');
+    }
+    writeBed(bed);
+    setActive(bed.id);
+    return bed;
+  }
+
+  function syncGetCode(bedId) {
+    return readSyncMeta(bedId);
+  }
+
+  async function syncRevoke(bedId) {
+    var meta = readSyncMeta(bedId);
+    if (!meta || !meta.code) throw new Error('GosBed.sync.revoke: no sync metadata for ' + bedId);
+    try {
+      await deleteBedRemote(meta.workerUrl, meta.code, meta.secret);
+    } finally {
+      // Always clear local metadata even if the remote delete fails — caller
+      // can manually retry from the dashboard.
+      clearSyncMeta(bedId);
+    }
+    return { ok: true };
+  }
+
+  function syncGetDefaultWorkerUrl() {
+    var v = safeGet(SYNC_DEFAULT);
+    return v || '';
+  }
+  function syncSetDefaultWorkerUrl(workerUrl) {
+    var trimmed = trimWorkerUrl(workerUrl);
+    if (!trimmed) return false;
+    return safeSet(SYNC_DEFAULT, trimmed);
+  }
+
   global.GosBed = {
     SCHEMA_VERSION: SCHEMA_VERSION,
     write: writeBed,
@@ -263,6 +409,16 @@
     parseShape: parseShape,
     parseCell: parseCell,
     formatCell: formatCell,
+    sync: {
+      create: syncCreate,
+      push: syncPush,
+      pull: syncPull,
+      importFromCode: syncImportFromCode,
+      getCode: syncGetCode,
+      revoke: syncRevoke,
+      getDefaultWorkerUrl: syncGetDefaultWorkerUrl,
+      setDefaultWorkerUrl: syncSetDefaultWorkerUrl,
+    },
     _tabId: function () { return TAB_ID; }
   };
 })(typeof window !== 'undefined' ? window : this);

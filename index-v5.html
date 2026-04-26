@@ -742,6 +742,199 @@ function DevToolsBedRow({ bed, isActive, onMakeActive, onDelete, confirming, onC
   );
 }
 
+// ── Cross-device sync UI (Dev Tools section) ──────────────────────────────
+function SyncBedRow({ bed, meta, defaultWorkerUrl, onChanged, onToast }) {
+  const [busy, setBusy] = React.useState(null);
+  async function ensureWorkerUrl() {
+    if (defaultWorkerUrl) return defaultWorkerUrl;
+    const entered = window.prompt(
+      'Enter your Cloudflare Worker URL (e.g. https://garden-os-sync.example.workers.dev). ' +
+      'Saved as the workspace default; you only set this once.', ''
+    );
+    if (!entered || !/^https?:\/\//.test(entered)) {
+      onToast('Need a valid Worker URL');
+      return null;
+    }
+    GosBed.sync.setDefaultWorkerUrl(entered);
+    return entered;
+  }
+  async function handleEnable() {
+    setBusy('enable');
+    try {
+      const url = await ensureWorkerUrl();
+      if (!url) return;
+      const res = await GosBed.sync.create(bed.id, url);
+      onToast('Sync code created: ' + res.code);
+    } catch (e) {
+      onToast('Enable failed: ' + (e.message || e));
+    } finally {
+      setBusy(null);
+      onChanged();
+    }
+  }
+  async function handlePush() {
+    setBusy('push');
+    try { await GosBed.sync.push(bed.id); onToast('Pushed ✔'); }
+    catch (e) { onToast('Push failed: ' + (e.message || e)); }
+    finally { setBusy(null); onChanged(); }
+  }
+  async function handlePull() {
+    setBusy('pull');
+    try {
+      const updated = await GosBed.sync.pull(meta.code, meta.workerUrl);
+      if (!updated || !updated.id) {
+        onToast('Pull returned an empty bed');
+      } else {
+        GosBed.write(updated);
+        try {
+          window.dispatchEvent(new CustomEvent('gosBedChanged',
+            { detail: { reason: 'sync-pull', id: updated.id } }));
+        } catch (_) {}
+        onToast('Pulled ✔');
+      }
+    } catch (e) { onToast('Pull failed: ' + (e.message || e)); }
+    finally { setBusy(null); onChanged(); }
+  }
+  async function handleRevoke() {
+    if (!window.confirm('Revoke sync code for "' + (bed.name || bed.id) +
+      '"? The shared link will stop working.')) return;
+    setBusy('revoke');
+    try { await GosBed.sync.revoke(bed.id); onToast('Revoked.'); }
+    catch (e) { onToast('Revoke failed: ' + (e.message || e)); }
+    finally { setBusy(null); onChanged(); }
+  }
+  async function copyShareUrl() {
+    const url = (meta.workerUrl || '').replace(/\/+$/, '') + '/beds/' + meta.code;
+    try {
+      await navigator.clipboard.writeText(url);
+      onToast('Copied share URL');
+    } catch (_) {
+      onToast(url);
+    }
+  }
+  const baseBtn = {
+    padding: '4px 10px', borderRadius: 6,
+    border: `1px solid ${T.borderSoft}`,
+    background: T.panel, color: T.text, cursor: 'pointer',
+    fontFamily: T.fontMono, fontSize: 10, fontWeight: 600,
+    letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 28,
+  };
+  return (
+    <div style={{ padding: '10px 12px', borderBottom: `1px solid ${T.borderSoft}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontFamily: T.fontDisp, fontSize: 13, fontWeight: 600,
+          color: T.text, flex: 1, minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{bed.name || bed.id}</span>
+        {meta && meta.code && (
+          <span style={{
+            fontFamily: T.fontMono, fontSize: 10, fontWeight: 600,
+            color: T.leaf, letterSpacing: 0.04,
+          }}>{meta.code}</span>
+        )}
+      </div>
+      {!meta || !meta.code ? (
+        <div style={{ marginTop: 6 }}>
+          <button onClick={handleEnable} disabled={busy === 'enable'}
+            style={{ ...baseBtn, color: T.leaf, borderColor: T.leaf,
+              opacity: busy ? 0.6 : 1 }}>
+            {busy === 'enable' ? 'Enabling…' : '☁ Enable sync'}
+          </button>
+        </div>
+      ) : (
+        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <button onClick={copyShareUrl} style={baseBtn}>Copy URL</button>
+          <button onClick={handlePush} disabled={busy === 'push'}
+            style={{ ...baseBtn, opacity: busy ? 0.6 : 1 }}>
+            {busy === 'push' ? '…pushing' : '↑ Push'}
+          </button>
+          <button onClick={handlePull} disabled={busy === 'pull'}
+            style={{ ...baseBtn, opacity: busy ? 0.6 : 1 }}>
+            {busy === 'pull' ? '…pulling' : '↓ Pull'}
+          </button>
+          <button onClick={handleRevoke} disabled={busy === 'revoke'}
+            style={{ ...baseBtn, color: T.rust, borderColor: T.borderSoft,
+              opacity: busy ? 0.6 : 1 }}>
+            {busy === 'revoke' ? '…revoking' : 'Revoke'}
+          </button>
+        </div>
+      )}
+      {meta && meta.lastPushedAt && (
+        <div style={{
+          marginTop: 4, fontFamily: T.fontMono, fontSize: 9, color: T.textMuted,
+          letterSpacing: 0.04,
+        }}>last pushed: {new Date(meta.lastPushedAt).toLocaleString()}</div>
+      )}
+    </div>
+  );
+}
+
+function JoinSharedBed({ defaultWorkerUrl, onChanged, onToast }) {
+  const [code, setCode] = React.useState('');
+  const [workerUrl, setWorkerUrl] = React.useState(defaultWorkerUrl || '');
+  const [busy, setBusy] = React.useState(false);
+  React.useEffect(() => { setWorkerUrl(defaultWorkerUrl || ''); }, [defaultWorkerUrl]);
+  async function handleImport() {
+    if (!code || !workerUrl) {
+      onToast('Code and Worker URL are both required');
+      return;
+    }
+    setBusy(true);
+    try {
+      const bed = await GosBed.sync.importFromCode(code.trim().toUpperCase(),
+        workerUrl.trim());
+      if (workerUrl && workerUrl !== defaultWorkerUrl) {
+        GosBed.sync.setDefaultWorkerUrl(workerUrl.trim());
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('gosBedChanged',
+          { detail: { reason: 'sync-import', id: bed.id } }));
+      } catch (_) {}
+      onToast('Imported as active bed');
+      setCode('');
+    } catch (e) {
+      onToast('Import failed: ' + (e.message || e));
+    } finally {
+      setBusy(false);
+      onChanged();
+    }
+  }
+  const inputStyle = {
+    width: '100%', padding: '8px 10px', borderRadius: 6,
+    border: `1px solid ${T.borderSoft}`, background: T.panel,
+    fontFamily: T.fontMono, fontSize: 11, color: T.text,
+    boxSizing: 'border-box',
+  };
+  return (
+    <div style={{
+      padding: '10px 12px', background: T.panel,
+      border: `1px solid ${T.borderSoft}`, borderRadius: 8,
+    }}>
+      <Label size={9} color={T.textSoft} style={{ display: 'block', marginBottom: 6 }}>
+        JOIN A SHARED BED
+      </Label>
+      <input type="text" placeholder="Sync code (e.g. ROSE-K7X2)"
+        value={code} onChange={(e) => setCode(e.target.value)}
+        style={inputStyle}/>
+      <input type="text" placeholder="Worker URL"
+        value={workerUrl} onChange={(e) => setWorkerUrl(e.target.value)}
+        style={{ ...inputStyle, marginTop: 6 }}/>
+      <button onClick={handleImport} disabled={busy}
+        style={{
+          marginTop: 8, padding: '6px 12px', borderRadius: 6,
+          border: 'none', background: T.leafBright, color: '#fff',
+          cursor: busy ? 'default' : 'pointer',
+          fontFamily: T.fontMono, fontSize: 10, fontWeight: 600,
+          letterSpacing: 0.1, textTransform: 'uppercase', minHeight: 32,
+          opacity: busy ? 0.6 : 1,
+        }}>
+        {busy ? '…importing' : 'Import'}
+      </button>
+    </div>
+  );
+}
+
 function DevToolsOverlay({ onClose }) {
   const [phase, setPhase] = React.useState('entering');
   const [beds, setBeds] = React.useState(function () {
@@ -760,10 +953,35 @@ function DevToolsOverlay({ onClose }) {
   const [confirmId, setConfirmId] = React.useState(null);
   const [showAllSeasons, setShowAllSeasons] = React.useState(false);
   const [exportNote, setExportNote] = React.useState('');
+  const [syncMetaByBed, setSyncMetaByBed] = React.useState(function () {
+    if (typeof GosBed === 'undefined' || !GosBed.sync) return {};
+    const map = {};
+    GosBed.readAll().forEach(function (b) {
+      map[b.id] = GosBed.sync.getCode(b.id);
+    });
+    return map;
+  });
+  const [defaultWorkerUrl, setDefaultWorkerUrl] = React.useState(function () {
+    return typeof GosBed !== 'undefined' && GosBed.sync
+      ? GosBed.sync.getDefaultWorkerUrl() : '';
+  });
+  const [toast, setToast] = React.useState('');
+  const toastTimerRef = React.useRef(null);
+  function showToast(msg) {
+    setToast(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
+  }
 
   React.useEffect(() => {
     const id = window.requestAnimationFrame(function () { setPhase('idle'); });
     return function () { window.cancelAnimationFrame(id); };
+  }, []);
+
+  React.useEffect(() => {
+    return function () {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
   }, []);
 
   function refresh() {
@@ -772,6 +990,14 @@ function DevToolsOverlay({ onClose }) {
     setUsage(GosBed.estimateStorageUsage());
     const a = GosBed.getActive();
     setActiveId(a ? a.id : null);
+    if (GosBed.sync) {
+      const next = {};
+      GosBed.readAll().forEach(function (b) {
+        next[b.id] = GosBed.sync.getCode(b.id);
+      });
+      setSyncMetaByBed(next);
+      setDefaultWorkerUrl(GosBed.sync.getDefaultWorkerUrl() || '');
+    }
   }
 
   function close() {
@@ -991,7 +1217,50 @@ function DevToolsOverlay({ onClose }) {
               )}
             </div>
           </section>
+
+          {/* Sync & Share — cross-device sync via Cloudflare Worker + KV */}
+          <section style={{ marginTop: 14 }}>
+            <Label size={9} color={T.textSoft} style={{ display: 'block', marginBottom: 6 }}>
+              SYNC &amp; SHARE
+            </Label>
+            {beds.length === 0 ? (
+              <div style={{
+                padding: '12px', background: T.panel,
+                borderRadius: 8, border: `1px dashed ${T.borderSoft}`,
+                fontFamily: T.fontSerif, fontSize: 12, color: T.textSoft,
+                fontStyle: 'italic',
+              }}>No beds to sync yet.</div>
+            ) : (
+              <div style={{
+                background: T.panel, borderRadius: 8,
+                border: `1px solid ${T.borderSoft}`, overflow: 'hidden',
+              }}>
+                {beds.map(function (b) {
+                  return (
+                    <SyncBedRow key={b.id} bed={b}
+                      meta={syncMetaByBed[b.id]}
+                      defaultWorkerUrl={defaultWorkerUrl}
+                      onChanged={refresh}
+                      onToast={showToast}/>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <JoinSharedBed defaultWorkerUrl={defaultWorkerUrl}
+                onChanged={refresh} onToast={showToast}/>
+            </div>
+          </section>
         </div>
+        {toast && (
+          <div role="status" style={{
+            position: 'absolute', left: 18, right: 18, bottom: 18, zIndex: 80,
+            padding: '8px 12px', background: T.soil, color: '#f5ede0',
+            borderRadius: 8, fontFamily: T.fontMono, fontSize: 11,
+            letterSpacing: 0.04, textAlign: 'center',
+            boxShadow: '0 6px 16px rgba(44,27,11,0.28)',
+          }}>{toast}</div>
+        )}
       </div>
     </>
   );
