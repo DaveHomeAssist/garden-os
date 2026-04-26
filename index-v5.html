@@ -122,8 +122,8 @@ function FakeStatusBar() {
 function TabBar({ active }) {
   const tabs = [
     { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
     { id:'paint',   label:'Paint',   href:'garden-painting.html' },
+    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -469,13 +469,28 @@ function Hub() {
   );
 }
 
+// Cold-start route (PR #21): if no active bed lives in localStorage, send
+// the user to Painting before any Hub UI renders. The flag suppresses the
+// ReactDOM render so there's no flash of Hub during the navigation. Fails
+// open with a console warning if gos-bed.js failed to load — better to show
+// a Hub with empty data than to lock the user in a redirect loop.
+let __coldStartRedirecting = false;
+if (typeof GosBed === 'undefined' || typeof GosBed.getActive !== 'function') {
+  console.warn('Garden OS: GosBed not available — skipping cold-start guard');
+} else if (GosBed.getActive() === null) {
+  __coldStartRedirecting = true;
+  location.replace('garden-painting.html');
+}
+
 // gos-bed.js wiring: report saved beds for verification
 if (typeof GosBed !== 'undefined') {
   const beds = GosBed.readAll();
   console.log('Garden OS: ' + beds.length + ' bed(s) found');
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Hub/></PhoneFrame>);
+if (!__coldStartRedirecting) {
+  ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Hub/></PhoneFrame>);
+}
 </script>
 </body>
 </html>
