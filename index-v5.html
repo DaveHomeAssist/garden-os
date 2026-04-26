@@ -473,6 +473,18 @@ function Hub() {
 if (typeof GosBed !== 'undefined') {
   const beds = GosBed.readAll();
   console.log('Garden OS: ' + beds.length + ' bed(s) found');
+  // Build-order item #4: count this season's mark_done/harvest events on the
+  // active bed. The Hub UI surfacing this lands in item #5; for now we just
+  // log so the data is reachable.
+  const _activeForEvents = GosBed.getActive();
+  if (_activeForEvents && Array.isArray(_activeForEvents.events)) {
+    const _currentYear = String(new Date().getFullYear());
+    const _seasonEvents = _activeForEvents.events.filter(function (e) {
+      return e && e.season === _currentYear &&
+        (e.type === 'mark_done' || e.type === 'harvest');
+    });
+    console.log('Garden OS: ' + _seasonEvents.length + ' events logged this season');
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Hub/></PhoneFrame>);

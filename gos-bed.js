@@ -15,6 +15,10 @@
  *     painted: [
  *       { cell: "r0c2", cropId, cropName, cropIcon, cropColor }, ...
  *     ],
+ *     events: [                  // appended by item #4 (Plan timeline)
+ *       { type: "mark_done"|"harvest", bedId, season, cropSnapshot,
+ *         cell, timestamp, quantity, unit, notes }, ...
+ *     ],
  *     lastEdited: "<ISO8601>",
  *     ruleVersion: null,
  *     seasonStart: "standard"   // "standard" | "retroactive"
@@ -101,6 +105,7 @@
       shape: bedData.shape,
       sun: bedData.sun,
       painted: Array.isArray(bedData.painted) ? bedData.painted : [],
+      events: Array.isArray(bedData.events) ? bedData.events : [],
       lastEdited: now,
       ruleVersion: bedData.ruleVersion != null ? bedData.ruleVersion : null,
       seasonStart: bedData.seasonStart || 'standard'
