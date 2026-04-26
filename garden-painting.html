@@ -295,6 +295,12 @@ const Icons = {
       <path d="M5 5L3 7L5 9"/>
     </svg>
   ),
+  site: (s = 14, c = T.text) => (
+    <svg width={s} height={s} viewBox="0 0 14 14" fill="none" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 1.5C9 4 11 5.6 11 8a4 4 0 0 1-8 0c0-2.4 2-4 4-6.5z" fill="none"/>
+      <circle cx="7" cy="8" r="1.4" fill={c} stroke="none"/>
+    </svg>
+  ),
 };
 
 // ── Primitives ──────────────────────────────────────────────────────────────
@@ -585,6 +591,124 @@ function Seg({ value, opts, onChange }) {
     </div>
   );
 }
+// ── Site context panel ──────────────────────────────────────────────────────
+// Lets the gardener record real bedContext: USDA zone, which side has the
+// wall (drives sun/access modeling), sun hours measured at the bed, water
+// source, and orientation. All fields are optional. Suitability uses what's
+// set and falls back to defaults for the rest.
+function SitePanel({ bed, onChange, onClose }) {
+  if (!bed) return null;
+  const set = (key, value) => {
+    const next = Object.assign({}, bed);
+    if (value === '' || value == null) {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+    onChange(next);
+  };
+  const inputStyle = {
+    width: '100%', padding: '6px 8px', borderRadius: 6,
+    border: `1px solid ${T.borderSoft}`, background: T.panel,
+    fontFamily: T.fontMono, fontSize: 11, color: T.text,
+    boxSizing: 'border-box', minHeight: 32,
+  };
+  const selectStyle = Object.assign({}, inputStyle, { cursor: 'pointer' });
+  const rowStyle = { marginBottom: 12 };
+  const labelStyle = { display: 'block', marginBottom: 4, fontWeight: 500 };
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)', zIndex: 50,
+      }}/>
+      <div role="dialog" aria-modal="true" aria-label="Site context" style={{
+        position: 'absolute', top: 60, right: 12, zIndex: 51,
+        width: 280, maxWidth: 'calc(100% - 24px)',
+        background: T.panel, borderRadius: 12,
+        border: `1px solid ${T.border}`,
+        boxShadow: '0 16px 48px rgba(44,27,11,0.28), 0 2px 6px rgba(44,27,11,0.12)',
+        padding: '14px 16px 16px',
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8,
+        }}>
+          <Disp size={17}>Site</Disp>
+          <button onClick={onClose} aria-label="Close site panel" style={{
+            width: 24, height: 24, borderRadius: 6, padding: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.textSoft,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+        <Label size={9} color={T.textMuted} style={{ display: 'block', marginBottom: 12 }}>
+          REAL CONDITIONS · USED BY SUITABILITY
+        </Label>
+
+        <div style={rowStyle}>
+          <Label size={9} color={T.textSoft} style={labelStyle}>USDA ZONE</Label>
+          <input type="text" placeholder="e.g. 7a" maxLength={4}
+            value={bed.zone || ''} onChange={e => set('zone', e.target.value.trim())}
+            style={inputStyle}/>
+        </div>
+
+        <div style={rowStyle}>
+          <Label size={9} color={T.textSoft} style={labelStyle}>WALL SIDE</Label>
+          <select value={bed.wallSide || ''} onChange={e => set('wallSide', e.target.value)}
+            style={selectStyle}>
+            <option value="">(unknown)</option>
+            <option value="back">Back</option>
+            <option value="front">Front</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+
+        <div style={rowStyle}>
+          <Label size={9} color={T.textSoft} style={labelStyle}>
+            SUN HOURS{bed.sunHoursNumeric != null ? ' · ' + bed.sunHoursNumeric.toFixed(1) + 'H' : ''}
+          </Label>
+          <input type="range" min="2" max="12" step="0.5"
+            value={bed.sunHoursNumeric != null ? bed.sunHoursNumeric : ''}
+            onChange={e => set('sunHoursNumeric', e.target.value === '' ? null : Number(e.target.value))}
+            style={{ width: '100%', accentColor: T.leaf }}
+            aria-label="Daily sun hours"/>
+          {bed.sunHoursNumeric != null && (
+            <button onClick={() => set('sunHoursNumeric', null)} style={{
+              marginTop: 4, padding: '2px 6px', borderRadius: 4,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontFamily: T.fontMono, fontSize: 9, color: T.textMuted,
+              letterSpacing: 0.1, textTransform: 'uppercase',
+            }}>clear</button>
+          )}
+        </div>
+
+        <div style={rowStyle}>
+          <Label size={9} color={T.textSoft} style={labelStyle}>WATER</Label>
+          <select value={bed.water || ''} onChange={e => set('water', e.target.value)}
+            style={selectStyle}>
+            <option value="">(unknown)</option>
+            <option value="drip">Drip</option>
+            <option value="manual">Manual / hand</option>
+            <option value="rainfed">Rain-fed</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div style={rowStyle}>
+          <Label size={9} color={T.textSoft} style={labelStyle}>ORIENTATION</Label>
+          <select value={bed.orientation || ''} onChange={e => set('orientation', e.target.value)}
+            style={selectStyle}>
+            <option value="">(unknown)</option>
+            <option value="ew">East–West (long side faces south)</option>
+            <option value="ns">North–South</option>
+          </select>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function TweaksPanel({ tweak, setTweak, onClose }) {
   const setKey = (k, v) => {
     const next = { ...tweak, [k]: v };
@@ -711,16 +835,26 @@ function internalToGosBed(activeBed, internalPaintedArr) {
     })
   };
 
-  // Carry forward bedContext fields the user previously set; the painting
-  // surface doesn't yet have UI to edit them, so we mustn't drop them on
-  // autosave.
-  if (prev) {
-    if (typeof prev.zone === 'string' && prev.zone) out.zone = prev.zone;
-    if (typeof prev.wallSide === 'string' && prev.wallSide) out.wallSide = prev.wallSide;
-    if (typeof prev.sunHoursNumeric === 'number') out.sunHoursNumeric = prev.sunHoursNumeric;
-    if (typeof prev.water === 'string' && prev.water) out.water = prev.water;
-    if (typeof prev.orientation === 'string' && prev.orientation) out.orientation = prev.orientation;
+  // bedContext fields: prefer the live activeBed value (user just edited it
+  // in Painting). Fall back to prev so autosave doesn't drop fields the user
+  // hasn't touched this session.
+  function ctx(field, validator) {
+    if (validator(activeBed[field])) return activeBed[field];
+    if (prev && validator(prev[field])) return prev[field];
+    return undefined;
   }
+  const isStr = v => typeof v === 'string' && v.length > 0;
+  const isNum = v => typeof v === 'number' && isFinite(v);
+  const zone        = ctx('zone',            isStr);
+  const wallSide    = ctx('wallSide',        isStr);
+  const sunHoursN   = ctx('sunHoursNumeric', isNum);
+  const water       = ctx('water',           isStr);
+  const orientation = ctx('orientation',     isStr);
+  if (zone        !== undefined) out.zone            = zone;
+  if (wallSide    !== undefined) out.wallSide        = wallSide;
+  if (sunHoursN   !== undefined) out.sunHoursNumeric = sunHoursN;
+  if (water       !== undefined) out.water           = water;
+  if (orientation !== undefined) out.orientation     = orientation;
   return out;
 }
 
@@ -1346,6 +1480,21 @@ function Painting({ tweak, onOpenTweaks }) {
   const [selected, setSelected] = React.useState(null);
   const [creatorOpen, setCreatorOpen] = React.useState(activeBed === null);
   const [ghostVisible, setGhostVisible] = React.useState(false);
+  const [siteOpen, setSiteOpen] = React.useState(false);
+
+  // Apply user edits from the Site panel: merge into activeBed and let the
+  // existing autosave effect write through to GosBed. The internalToGosBed
+  // serializer prefers activeBed values for bedContext fields.
+  const handleSiteChange = React.useCallback((nextBed) => {
+    setActiveBed(nextBed);
+  }, []);
+  // True when the bed has any non-default site context — drives the small
+  // green dot on the Site button so the user can tell at a glance.
+  const hasSiteContext = !!(activeBed && (
+    activeBed.zone || activeBed.wallSide ||
+    activeBed.sunHoursNumeric != null ||
+    activeBed.water || activeBed.orientation
+  ));
 
   // Claim the session lock once per tab on mount.
   React.useEffect(() => {
@@ -1512,6 +1661,22 @@ function Painting({ tweak, onOpenTweaks }) {
           <Disp size={24}>Paint</Disp>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <Label size={9} color={T.textMuted}>BRUSH MODE · {filled}/{totalCells}</Label>
+            <button aria-label={hasSiteContext ? 'Site context (set)' : 'Site context (not set)'}
+              onClick={() => setSiteOpen(true)} style={{
+              width: 26, height: 26, borderRadius: 6, padding: 0,
+              background: T.panel, border: `1px solid ${T.borderSoft}`,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', marginLeft: 4, position: 'relative',
+            }}>
+              {Icons.site(12, T.soil)}
+              {hasSiteContext && (
+                <span aria-hidden="true" style={{
+                  position: 'absolute', top: 2, right: 2,
+                  width: 5, height: 5, borderRadius: '50%',
+                  background: T.leafBright,
+                }}/>
+              )}
+            </button>
             <button aria-label="Tweaks" onClick={onOpenTweaks} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
@@ -1607,6 +1772,7 @@ function Painting({ tweak, onOpenTweaks }) {
       <ScoreBadge getCurrentBed={() => Object.assign({}, activeBed, { painted: painted[activeBedId] || [] })}/>
       {ghostVisible && <GhostHint onDismiss={() => setGhostVisible(false)}/>}
       {creatorOpen && <BedCreator hasInitialBeds={true} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>}
+      {siteOpen && <SitePanel bed={activeBed} onChange={handleSiteChange} onClose={() => setSiteOpen(false)}/>}
     </div>
   );
 }
