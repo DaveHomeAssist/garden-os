@@ -48,6 +48,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="gos-bed.js"></script>
+<script src="gos-suitability.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -71,16 +72,12 @@ const T = {
   fontMono: "'DM Mono', ui-monospace, monospace",
 };
 
-// Crop images live in story-mode/assets/textures/crop-<id>.png (256x256 PNG).
-// Only crops with a real file in that directory carry a path here; the rest are
-// null and fall back to the Chips visual per spec ("If a crop has no image:
-// fall back gracefully to the Chips pill for that crop only").
 const CROPS = {
-  tom: { name:'Tomato',   mono:'To', color:'#c8412a', image: null },
-  bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c', image: 'story-mode/assets/textures/crop-basil.png' },
-  let: { name:'Lettuce',  mono:'Le', color:'#6aab4a', image: 'story-mode/assets/textures/crop-lettuce.png' },
-  car: { name:'Carrot',   mono:'Ca', color:'#d4651a', image: null },
-  pep: { name:'Pepper',   mono:'Pe', color:'#c45a18', image: null },
+  tom: { name:'Tomato',   mono:'To', color:'#c8412a' },
+  bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c' },
+  let: { name:'Lettuce',  mono:'Le', color:'#6aab4a' },
+  car: { name:'Carrot',   mono:'Ca', color:'#d4651a' },
+  pep: { name:'Pepper',   mono:'Pe', color:'#c45a18' },
 };
 
 const SYMPTOMS = [
@@ -187,8 +184,8 @@ function FakeStatusBar() {
 function TabBar({ active }) {
   const tabs = [
     { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
     { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -229,21 +226,6 @@ const TWEAK_DEFAULTS = { confidenceThreshold: 40, showProbs: true };
 const TWEAK_KEY = 'gos.doctor.tweaks';
 const SAVED_KEY = 'gos.doctor.saved';
 const LAST_QUERY_KEY = 'gos.doctor.lastQuery';
-const VARIANT_KEY = 'gos.doctor.tweaks.variant';
-const VARIANT_DEFAULT = 'chips';
-
-function loadVariant() {
-  try {
-    const v = window.localStorage.getItem(VARIANT_KEY);
-    return v === 'photo' ? 'photo' : VARIANT_DEFAULT;
-  } catch (_) { return VARIANT_DEFAULT; }
-}
-function saveVariant(v) {
-  try { window.localStorage.setItem(VARIANT_KEY, v); } catch (_) {}
-}
-function clearVariant() {
-  try { window.localStorage.removeItem(VARIANT_KEY); } catch (_) {}
-}
 
 function loadTweaks() {
   try {
@@ -286,6 +268,61 @@ function popSaved(id) {
 function readActiveBed() {
   if (typeof GosBed === 'undefined') return null;
   try { return GosBed.getActive(); } catch (_) { return null; }
+}
+
+// Minimal scoring crop catalog. Doctor's local CROPS dict only has the chip
+// fields; this adapter supplies the timing/sun fields GosSuitability needs
+// for the 12 crops the v5 surfaces share. A crop missing here just returns a
+// stub with neutral scoring; missing crops don't crash the bed score.
+const DOCTOR_CROP_SCORING = {
+  tom: { sun: 'full', sowWeek:  8, harvestStart: 26, harvestEnd: 38 },
+  bas: { sun: 'full', sowWeek: 12, harvestStart: 22, harvestEnd: 38 },
+  let: { sun: 'part', sowWeek: 10, harvestStart: 16, harvestEnd: 22 },
+  rad: { sun: 'full', sowWeek: 10, harvestStart: 14, harvestEnd: 18 },
+  car: { sun: 'full', sowWeek: 12, harvestStart: 22, harvestEnd: 30 },
+  pep: { sun: 'full', sowWeek:  8, harvestStart: 30, harvestEnd: 40 },
+  cuc: { sun: 'full', sowWeek: 16, harvestStart: 26, harvestEnd: 36 },
+  kal: { sun: 'part', sowWeek: 10, harvestStart: 22, harvestEnd: 48 },
+  oni: { sun: 'full', sowWeek:  6, harvestStart: 32, harvestEnd: 36 },
+  spi: { sun: 'part', sowWeek:  8, harvestStart: 14, harvestEnd: 20 },
+  chv: { sun: 'full', sowWeek:  8, harvestStart: 18, harvestEnd: 48 },
+  mar: { sun: 'full', sowWeek: 14, harvestStart: 22, harvestEnd: 44 },
+};
+function doctorGetCrop(cropId) {
+  return DOCTOR_CROP_SCORING[cropId] || { sun: 'full' };
+}
+function doctorCurrentIsoWeek() {
+  if (typeof GosBed !== 'undefined' && typeof GosBed.currentIsoWeek === 'function') {
+    return GosBed.currentIsoWeek();
+  }
+  return null;
+}
+
+// Compute the suitability score for a GosBed record using the shared
+// realism model. Returns null if scoring is unavailable or the bed is empty.
+function computeBedSuitability(gosBed) {
+  if (!gosBed || typeof GosSuitability === 'undefined') return null;
+  const result = GosSuitability.scoreBed({
+    bed: gosBed,
+    getCrop: doctorGetCrop,
+    currentWeek: doctorCurrentIsoWeek(),
+  });
+  if (!result || result.score == null) return null;
+  return result;
+}
+
+// Crops with a mark_done or harvest event in the given season — i.e. crops
+// the gardener has actually been tending. Used to weight diagnostic
+// suggestions toward what's currently growing.
+function activeCropsFromLog(bed, season) {
+  if (!bed || !Array.isArray(bed.events)) return new Set();
+  const out = new Set();
+  bed.events.forEach(function (e) {
+    if (!e || e.season !== season) return;
+    if (e.type !== 'mark_done' && e.type !== 'harvest') return;
+    if (e.cropSnapshot && e.cropSnapshot.cropId) out.add(e.cropSnapshot.cropId);
+  });
+  return out;
 }
 function relativeDate(timestamp) {
   if (!timestamp) return '';
@@ -384,15 +421,8 @@ function Seg({ value, opts, onChange }) {
     </div>
   );
 }
-function TweaksPanel({ tweak, setTweak, variant, setVariant, onClose }) {
+function TweaksPanel({ tweak, setTweak, onClose }) {
   const setKey = (k, v) => { const next = { ...tweak, [k]: v }; setTweak(next); saveTweaks(next); };
-  const handleVariant = (v) => { setVariant(v); saveVariant(v); };
-  const handleReset = () => {
-    setTweak(TWEAK_DEFAULTS);
-    saveTweaks(TWEAK_DEFAULTS);
-    setVariant(VARIANT_DEFAULT);
-    clearVariant();
-  };
   return (
     <>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.42)', zIndex: 50 }}/>
@@ -411,11 +441,6 @@ function TweaksPanel({ tweak, setTweak, variant, setVariant, onClose }) {
           }}>{Icons.close(12, T.textSoft)}</button>
         </div>
         <div style={{ marginBottom: 14 }}>
-          <Label size={9} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>Crop selector</Label>
-          <Seg value={variant} opts={[['chips', 'A · Chips'], ['photo', 'B · Photo']]}
-            onChange={handleVariant}/>
-        </div>
-        <div style={{ marginBottom: 14 }}>
           <Label size={9} style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>
             Confidence threshold · {tweak.confidenceThreshold}%
           </Label>
@@ -429,7 +454,7 @@ function TweaksPanel({ tweak, setTweak, variant, setVariant, onClose }) {
           <Seg value={tweak.showProbs ? 'on' : 'off'} opts={[['on', 'On'], ['off', 'Off']]}
             onChange={v => setKey('showProbs', v === 'on')}/>
         </div>
-        <button onClick={handleReset} style={{
+        <button onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
           width: '100%', padding: '6px 10px', background: 'transparent',
           border: `1px solid ${T.borderSoft}`, borderRadius: 6, cursor: 'pointer',
           fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15, textTransform: 'uppercase',
@@ -441,108 +466,65 @@ function TweaksPanel({ tweak, setTweak, variant, setVariant, onClose }) {
 }
 
 // ── Doctor pieces ───────────────────────────────────────────────────────────
-const CROP_LIST = ['tom', 'bas', 'let', 'car', 'pep'];
-
-function ChipsPicker({ cropId, onPick }) {
-  return (
-    <div style={{ marginTop: 6, display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-      {CROP_LIST.map(k => {
-        const on = cropId === k;
-        const c = CROPS[k];
-        if (!c) return null;
-        return (
-          <button key={k} onClick={() => onPick(k)} aria-pressed={on} style={{
-            flex: '0 0 auto', padding: '7px 11px 7px 7px', borderRadius: 999,
-            border: `1.5px solid ${on ? T.soil : T.borderSoft}`,
-            background: on ? T.soil : T.panel,
-            color: on ? '#f5ede0' : T.text,
-            display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-            fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 36,
-          }}>
-            <CropChip crop={k} size={20}/>
-            <span>{c.name}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function PhotoCard({ id, on, onPick, failed, onImgError }) {
-  const c = CROPS[id];
-  if (!c) return null;
-  const showImage = c.image && !failed;
-  // Selected state uses the crop's accent color (same token as Chips selected).
-  const ringColor = on ? c.color : T.borderSoft;
-  return (
-    <button onClick={() => onPick(id)} aria-pressed={on} aria-label={'Select ' + c.name} style={{
-      padding: 0, borderRadius: 12,
-      border: `2px solid ${ringColor}`,
-      background: T.panel, cursor: 'pointer',
-      display: 'flex', flexDirection: 'column', alignItems: 'stretch',
-      overflow: 'hidden', textAlign: 'center',
-      boxShadow: on ? `0 0 0 2px ${c.color}33` : 'none',
-      transition: 'box-shadow 0.18s, border-color 0.18s',
-    }}>
-      <div style={{
-        width: '100%', aspectRatio: '1 / 1',
-        background: showImage ? T.cream : (c.color + '14'),
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden',
-      }}>
-        {showImage ? (
-          <img src={c.image} alt="" loading="lazy" onError={() => onImgError(id)} style={{
-            width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-          }}/>
-        ) : (
-          <CropChip crop={id} size={56}/>
-        )}
-      </div>
-      <div style={{
-        padding: '8px 6px', background: T.panel,
-        fontFamily: T.fontSans, fontSize: 12, fontWeight: on ? 600 : 500,
-        color: on ? c.color : T.text, lineHeight: 1.2,
-        borderTop: `1px solid ${T.borderSoft}`,
-      }}>{c.name}</div>
-    </button>
-  );
-}
-
-function PhotoPicker({ cropId, onPick }) {
-  const [failed, setFailed] = React.useState(() => new Set());
-  const handleImgError = React.useCallback((id) => {
-    setFailed(prev => {
-      if (prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }, []);
-  return (
-    <div style={{
-      marginTop: 6,
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-      gap: 8,
-    }}>
-      {CROP_LIST.map(k => (
-        <PhotoCard key={k} id={k}
-          on={cropId === k}
-          onPick={onPick}
-          failed={failed.has(k)}
-          onImgError={handleImgError}/>
-      ))}
-    </div>
-  );
-}
-
-function CropPicker({ cropId, onPick, variant }) {
+// Realism: the picker reflects what's actually in the active bed and which
+// crops the gardener has been logging care actions on. Crops with recent
+// log entries this season get a green "tending" dot so the user can pick
+// from real context, not a hardcoded fallback list.
+function CropPicker({ cropId, onPick, bed }) {
+  const fallback = ['tom', 'bas', 'let', 'car', 'pep'];
+  const inBed = React.useMemo(() => {
+    if (!bed || !Array.isArray(bed.painted)) return [];
+    const seen = new Set();
+    bed.painted.forEach(p => { if (p && p.cropId) seen.add(p.cropId); });
+    return Array.from(seen);
+  }, [bed]);
+  const tending = React.useMemo(() => {
+    return activeCropsFromLog(bed, String(new Date().getFullYear()));
+  }, [bed]);
+  // Prefer in-bed crops; fall back to the static list when there's no bed.
+  // Sort so tended crops come first.
+  const order = inBed.length
+    ? inBed.slice().sort((a, b) => {
+        const at = tending.has(a) ? 0 : 1;
+        const bt = tending.has(b) ? 0 : 1;
+        if (at !== bt) return at - bt;
+        return a.localeCompare(b);
+      })
+    : fallback;
   return (
     <div style={{ marginTop: 6 }}>
       <Label size={9} style={{ marginLeft: 2 }}>ON WHICH CROP?</Label>
-      {variant === 'photo'
-        ? <PhotoPicker cropId={cropId} onPick={onPick}/>
-        : <ChipsPicker cropId={cropId} onPick={onPick}/>}
+      <div style={{ marginTop: 6, display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+        {order.map(k => {
+          const on = cropId === k;
+          const c = CROPS[k];
+          if (!c) return null;
+          const isTending = tending.has(k);
+          return (
+            <button key={k} onClick={() => onPick(k)} aria-pressed={on}
+              aria-label={c.name + (isTending ? ' (tending this season)' : '')}
+              style={{
+                flex: '0 0 auto', padding: '7px 11px 7px 7px', borderRadius: 999,
+                border: `1.5px solid ${on ? T.soil : T.borderSoft}`,
+                background: on ? T.soil : T.panel,
+                color: on ? '#f5ede0' : T.text,
+                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 36,
+                position: 'relative',
+              }}>
+              <CropChip crop={k} size={20}/>
+              <span>{c.name}</span>
+              {isTending && (
+                <span aria-hidden="true" style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: on ? T.leafBright : T.leaf,
+                  marginLeft: 2, flexShrink: 0,
+                }}/>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -950,6 +932,59 @@ function RetroEmptyNoEvents({ year }) {
   );
 }
 
+function BedSuitabilityCard({ bed }) {
+  const result = React.useMemo(() => computeBedSuitability(bed), [bed]);
+  if (!result) {
+    return (
+      <div style={{
+        marginTop: 16, padding: '10px 12px', borderRadius: 8,
+        background: T.cedarWash,
+        fontFamily: T.fontMono, fontSize: 10.5,
+        color: T.textSoft, letterSpacing: 0.04,
+      }}>
+        Suitability: <span style={{ color: T.textMuted }}>—</span>
+        {' '}<span style={{ color: T.textMuted }}>(no crops placed yet)</span>
+      </div>
+    );
+  }
+  const score = result.score;
+  const tone = score >= 75 ? T.leaf : score >= 55 ? T.sun : T.rust;
+  const weakLabels = (result.weakestCells || []).slice(0, 3).join(' · ');
+  const cropName = (id) => {
+    const crop = (typeof CROPS !== 'undefined' && CROPS[id]) || null;
+    return (crop && crop.name) || id;
+  };
+  // Map weakest cells to their crop names so the card explains why.
+  const weakCells = (result.cells || [])
+    .filter(c => (result.weakestCells || []).indexOf(c.cell) !== -1)
+    .map(c => cropName(c.cropId) + ' ' + c.cell);
+  return (
+    <div style={{
+      marginTop: 16, padding: '12px 14px', borderRadius: 10,
+      background: T.panel, border: `1px solid ${T.borderSoft}`,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+      }}>
+        <Label size={9} color={T.soilMid}>SUITABILITY</Label>
+        <span style={{
+          fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
+          color: tone, lineHeight: 1, letterSpacing: -0.4,
+        }}>{score}<span style={{ fontSize: 12, color: T.textMuted, fontWeight: 500 }}>/100</span></span>
+      </div>
+      {weakCells.length > 0 && (
+        <div style={{
+          marginTop: 6, fontFamily: T.fontMono, fontSize: 10,
+          color: T.textSoft, letterSpacing: 0.04,
+        }}>
+          <span style={{ color: T.textMuted }}>WEAKEST · </span>
+          {weakCells.join(' · ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Retrospective() {
   const [bed, setBed] = React.useState(readActiveBed);
   const allYears = distinctSeasonsWithEvents(bed);
@@ -1000,15 +1035,7 @@ function Retrospective() {
           <StatChips summary={summarizeEvents(events)}/>
           <HarvestTotalsTable groups={harvestTotalsByCrop(events)}/>
           <ActivityTimeline events={sortedEvents}/>
-          <div style={{
-            marginTop: 16, padding: '10px 12px', borderRadius: 8,
-            background: T.cedarWash,
-            fontFamily: T.fontMono, fontSize: 10.5,
-            color: T.textSoft, letterSpacing: 0.04,
-          }}>
-            Bed score: <span style={{ color: T.textMuted }}>—</span>
-            {' '}<span style={{ color: T.textMuted }}>(open Painting to refresh)</span>
-          </div>
+          <BedSuitabilityCard bed={bed}/>
         </>
       )}
     </div>
@@ -1019,7 +1046,6 @@ function Retrospective() {
 function Doctor() {
   const [tweak, setTweak] = React.useState(loadTweaks);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
-  const [variant, setVariant] = React.useState(loadVariant);
   const last = loadLastQuery();
   const [symptoms, setSymptoms] = React.useState(() => last?.symptoms || []);
   const [cropId, setCropId] = React.useState(() => last?.cropId || 'tom');
@@ -1027,6 +1053,22 @@ function Doctor() {
   const [diagnosed, setDiagnosed] = React.useState(false);
   const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
   const [view, setView] = React.useState('diag');
+  // Read the active bed so the picker can prioritize what's actually planted
+  // and tended this season. Refreshed on cross-surface change events.
+  const [bed, setBed] = React.useState(readActiveBed);
+  React.useEffect(() => {
+    function refresh() { setBed(readActiveBed()); }
+    function onStorage(e) {
+      if (!e || !e.key) { refresh(); return; }
+      if (e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
+    }
+    window.addEventListener('gosBedChanged', refresh);
+    window.addEventListener('storage', onStorage);
+    return function () {
+      window.removeEventListener('gosBedChanged', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const toggle = (id) => setSymptoms(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   const ranked = diagnosed ? rankDiagnoses(symptoms).filter(d => d.prob >= tweak.confidenceThreshold) : [];
@@ -1096,7 +1138,7 @@ function Doctor() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
         {view === 'retro' ? <Retrospective/> : (<>
-        <CropPicker cropId={cropId} onPick={setCropId} variant={variant}/>
+        <CropPicker cropId={cropId} onPick={setCropId} bed={bed}/>
 
         <div style={{ marginTop: 14 }}>
           <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>WHAT'S WRONG?</Label>
@@ -1188,7 +1230,7 @@ function Doctor() {
       </div>
 
       <TabBar active="doctor"/>
-      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} variant={variant} setVariant={setVariant} onClose={() => setTweaksOpen(false)}/>}
+      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
     </div>
   );
 }
