@@ -1108,7 +1108,7 @@ async function loadMomGardenPayload() {
 }
 
 async function resetMomGardenAndReload() {
-  const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 13 plantings.');
+  const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 44 planted cells.');
   if (!ok) return;
   await loadMomGardenData(true);
   window.location.href = 'garden-painting.html';
@@ -2166,7 +2166,7 @@ function Painting({ tweak, onOpenTweaks }) {
   const handleLoadMomGarden = async (overwrite) => {
     const shouldOverwrite = !!overwrite;
     if (shouldOverwrite) {
-      const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 13 plantings.');
+      const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 44 planted cells.');
       if (!ok) return;
     }
     try {

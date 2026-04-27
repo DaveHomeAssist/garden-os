@@ -11,6 +11,7 @@
   var TYPES = ['note', 'harvest', 'maintenance', 'observation', 'system'];
   var SOURCES = ['manual', 'planner', 'system'];
   var SEVERITIES = ['info', 'success', 'warning', 'urgent'];
+  var SORTS = ['newest', 'oldest', 'type', 'source', 'bed'];
   var UNITS = ['', 'lb', 'oz', 'g', 'kg', 'bunch', 'bunches', 'each', 'basket', 'cups'];
   var CELL_RE = /^r\d+c\d+$/;
 
@@ -169,11 +170,34 @@
   function readRawArray() {
     return currentEnvelope().entries;
   }
-  function sortEntries(entries) {
+  function compareNewest(a, b) {
+    if (!!a.deletedAt !== !!b.deletedAt) return a.deletedAt ? 1 : -1;
+    return (b.eventDate || '').localeCompare(a.eventDate || '') ||
+      (b.createdAt || '').localeCompare(a.createdAt || '') ||
+      (b.updatedAt || '').localeCompare(a.updatedAt || '') ||
+      (a.title || '').localeCompare(b.title || '');
+  }
+  function compareAlpha(a, b, fields) {
+    for (var i = 0; i < fields.length; i++) {
+      var diff = String(a[fields[i]] || '').localeCompare(String(b[fields[i]] || ''));
+      if (diff) return diff;
+    }
+    return compareNewest(a, b);
+  }
+  function sortEntries(entries, sortMode) {
+    var mode = SORTS.indexOf(sortMode) >= 0 ? sortMode : 'newest';
     return entries.slice().sort(function (a, b) {
       if (!!a.deletedAt !== !!b.deletedAt) return a.deletedAt ? 1 : -1;
-      return (b.eventDate || '').localeCompare(a.eventDate || '') ||
-        (b.createdAt || '').localeCompare(a.createdAt || '');
+      if (mode === 'oldest') {
+        return (a.eventDate || '').localeCompare(b.eventDate || '') ||
+          (a.createdAt || '').localeCompare(b.createdAt || '') ||
+          (a.updatedAt || '').localeCompare(b.updatedAt || '') ||
+          (a.title || '').localeCompare(b.title || '');
+      }
+      if (mode === 'type') return compareAlpha(a, b, ['type']);
+      if (mode === 'source') return compareAlpha(a, b, ['source']);
+      if (mode === 'bed') return compareAlpha(a, b, ['bedName', 'bedId']);
+      return compareNewest(a, b);
     });
   }
   function readAll() {
@@ -215,16 +239,17 @@
   }
   function query(filters) {
     filters = filters || {};
-    return readAll().filter(function (entry) {
+    return sortEntries(readAll().filter(function (entry) {
       if (filters.type && entry.type !== filters.type) return false;
       if (filters.source && entry.source !== filters.source) return false;
       if (filters.bedId && entry.bedId !== filters.bedId) return false;
       if (filters.cropId && entry.cropId !== filters.cropId) return false;
+      if (filters.severity && entry.severity !== filters.severity) return false;
       if (filters.showDeleted !== true && entry.deletedAt) return false;
       if (filters.systemInbox && entry.type === 'system' && entry.dismissedAt) return false;
       if (filters.hideDismissedSystem !== false && entry.type === 'system' && entry.dismissedAt) return false;
       return true;
-    });
+    }), filters.sort);
   }
   function exportEntries() {
     return readAll();
@@ -396,6 +421,8 @@
     SCHEMA_VERSION: SCHEMA_VERSION,
     types: TYPES.slice(),
     sources: SOURCES.slice(),
+    severities: SEVERITIES.slice(),
+    sorts: SORTS.slice(),
     readAll: readAll,
     append: append,
     update: update,

@@ -541,7 +541,7 @@
         momGarden: true,
         painted: painted,
         events: [createJournalEvent(
-          'Loaded Mom Garden data (' + plantingCount + ' plantings, ' + data.beds.length + ' beds)',
+          'Loaded Mom Garden data (' + plantingCount + ' planted cells, ' + data.beds.length + ' beds)',
           srcBed.id,
           loadedAt,
           { plantingCount: plantingCount, bedCount: data.beds.length }

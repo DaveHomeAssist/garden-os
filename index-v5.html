@@ -541,7 +541,7 @@ function MomGardenTile({ compact, onLoaded }) {
       window.location.href = 'garden-painting.html';
       return;
     }
-    const ok = window.confirm("Load Mom Garden? This adds 3 beds and 40 planted cells.");
+    const ok = window.confirm("Load Mom Garden? This adds 3 beds and 44 planted cells.");
     if (!ok) return;
     try {
       const result = await loadMomGardenDataFromHub();
@@ -573,7 +573,7 @@ function MomGardenTile({ compact, onLoaded }) {
           Mom's Garden
         </span>
         <span style={{ display: 'block', fontSize: 12, color: T.textSoft, lineHeight: 1.35, marginTop: 1 }}>
-          40 planted cells · 3 beds · Real active garden
+          44 planted cells · 3 beds · Real active garden
         </span>
       </span>
       <span style={{ display: 'inline-flex' }}>{Icons.arrow(13, T.leaf)}</span>

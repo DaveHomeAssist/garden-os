@@ -11,7 +11,7 @@
     ],
     "sourceExportCounts": {
       "mainBed": {
-        "planted": 28,
+        "planted": 32,
         "total": 32
       },
       "growBags": {
@@ -114,8 +114,26 @@
           "cols": 4
         },
         "wallSide": "back",
-        "comment": "Right half of the 8x4 Main Bed in garden planner sample.json. The source export has row 1 empty on this half.",
+        "comment": "Right half of the 8x4 Main Bed in garden planner sample.json.",
         "plantings": [
+          {
+            "id": "mom_right_snap_peas",
+            "cropId": "peas",
+            "displayName": "Snap Peas",
+            "varietyName": null,
+            "status": "Sprouted",
+            "bedLocation": "Main Bed row 1, right half",
+            "cells": [
+              "r0c0",
+              "r0c1",
+              "r0c2",
+              "r0c3"
+            ],
+            "plantedOnStart": "2026-04-11",
+            "plantedOnEnd": "2026-04-19",
+            "season": "Spring 2026",
+            "notes": "Filled the four previously-unfilled source cells in the right half of the main bed."
+          },
           {
             "id": "mom_right_onion_rows_2_3",
             "cropId": "oni",

@@ -239,7 +239,7 @@ Make Garden OS v5 immediately useful for Mom by loading her actual planted crops
 }
 ```
 
-**Total: 13 plantings across 3 beds, 8 distinct vegetables.**
+**Total: 13 planting groups across 3 beds, 44 planted cells, 8 distinct vegetables.**
 
 Cell placement notes:
 - Where `bedLocation` includes "Row N", map to row N-1 of the bed.
@@ -292,7 +292,7 @@ Cell placement notes:
 ### 4. Journal page
 
 - On Mom data load, append two kinds of entries:
-  - 1 system entry: "Loaded Mom Garden data (13 plantings, 3 beds)" with timestamp.
+  - 1 system entry: "Loaded Mom Garden data (44 planted cells, 3 beds)" with timestamp.
   - 1 entry per planting: "{displayName} {varietyName} {status.toLowerCase()} in {bedName}." Examples:
     - "Pea, Snap Cascadia sprouted in Raised Bed Right."
     - "Garlic growing in Grow Bags (Bag 1)."
@@ -318,8 +318,8 @@ Cell placement notes:
 
 ### 7. Hub
 
-- Add a Mom Garden tile near the top: green badge, label "Mom's Garden", subtitle "13 plantings · 3 beds · Real active garden".
-- Tap → if Mom data not loaded, prompt "Load Mom Garden? This adds 3 beds and 13 plantings." → Load → navigate to Painting.
+- Add a Mom Garden tile near the top: green badge, label "Mom's Garden", subtitle "44 planted cells · 3 beds · Real active garden".
+- Tap → if Mom data not loaded, prompt "Load Mom Garden? This adds 3 beds and 44 planted cells." → Load → navigate to Painting.
 - Tap when already loaded → navigate to Painting with the first Mom bed selected.
 
 ### 8. Service worker
@@ -431,7 +431,7 @@ If both clones get edits in parallel, expect merge conflicts on `garden-planner-
 Codex should respond with:
 
 1. Files changed (paths + lines added/removed).
-2. Mom crop data loaded — confirm the 13 plantings rendered.
+2. Mom crop data loaded — confirm the 13 planting groups / 44 planted cells rendered.
 3. How beds are represented — confirm 3-bed model with grow bags as 1x6 virtual bed.
 4. How varieties are displayed — confirm chip placement.
 5. Any unplaced or ambiguous records — list cells where placement was best-effort vs source-explicit.

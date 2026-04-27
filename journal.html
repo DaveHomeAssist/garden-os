@@ -91,36 +91,57 @@
     padding: 12px 14px; background: var(--panel); border-bottom: 1px solid var(--border-soft);
     display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
   }
+  .filter-group { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; padding-right: 6px; }
+  .filter-group.secondary { flex-basis: 100%; padding-top: 2px; }
+  .filter-label {
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-muted); margin-right: 1px;
+  }
+  .filter-more {
+    flex-basis: 100%; border: 0; padding: 0; margin: 0; min-width: 0;
+  }
+  .filter-more summary {
+    width: fit-content; cursor: pointer; list-style: none; min-height: 32px; display: flex; align-items: center;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft);
+  }
+  .filter-more summary::-webkit-details-marker { display: none; }
+  .filter-more summary::after { content: '+'; margin-left: 6px; color: var(--leaf); }
+  .filter-more[open] summary::after { content: '-'; }
+  .filter-more-body { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 4px; }
   .chip {
     border: 1px solid var(--border-soft); border-radius: 999px; background: #fff;
     color: var(--text-soft); min-height: 32px; padding: 6px 10px; cursor: pointer;
     font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   }
   .chip[aria-pressed="true"] { background: var(--leaf); color: #fff; border-color: var(--leaf); }
+  .quick-strip {
+    padding: 10px 14px; border-bottom: 1px solid var(--border-soft); background: rgba(255,253,249,.88);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
   .timeline-wrap { min-height: 0; overflow-y: auto; }
-  .timeline { padding: 14px; max-width: 720px; margin: 0 auto; }
+  .timeline { padding: 10px; max-width: 820px; margin: 0 auto; }
   .entry {
     background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px;
-    padding: 12px 13px; margin-bottom: 10px; display: grid; grid-template-columns: 34px 1fr; gap: 10px;
+    padding: 8px 10px; margin-bottom: 6px; display: grid; grid-template-columns: 26px 1fr; gap: 8px;
   }
   .entry.system { border-left: 4px solid var(--info); }
   .entry.warning { border-left: 4px solid var(--sun); }
   .entry.urgent { border-left: 4px solid var(--bad); }
   .entry.success { border-left: 4px solid var(--leaf-bright); }
   .icon {
-    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    background: var(--leaf-wash); color: var(--leaf); font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--leaf-wash); color: var(--leaf); font-family: var(--font-mono); font-size: 8px; font-weight: 700;
   }
   .entry-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-  .entry-title { font-weight: 700; line-height: 1.25; color: var(--text); }
+  .entry-title { font-weight: 700; line-height: 1.2; color: var(--text); font-size: 14px; }
   .meta {
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
     letter-spacing: .06em; text-transform: uppercase; margin-top: 3px;
   }
-  .body { margin-top: 8px; color: var(--text-mid); font-family: var(--font-serif); font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
-  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+  .body { margin-top: 4px; color: var(--text-mid); font-family: var(--font-serif); font-size: 12px; line-height: 1.3; white-space: pre-wrap; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
   .tag { font-family: var(--font-mono); font-size: 9px; color: var(--text-soft); background: var(--cedar-wash); padding: 2px 6px; border-radius: 999px; }
-  .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
   .small-btn {
     min-height: 30px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-soft);
     background: transparent; color: var(--text-soft); cursor: pointer;
@@ -160,6 +181,8 @@
     .timeline-wrap { overflow: visible; }
     .top { align-items: flex-start; flex-direction: column; }
     .top-actions { justify-content: flex-start; }
+    .quick-strip { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+    .chip, .filter-more summary, .small-btn { min-height: 44px; }
   }
 </style>
 <script src="gos-bed.js"></script>
@@ -246,6 +269,7 @@
 
       <section aria-label="Journal timeline" style="min-width:0; display:flex; flex-direction:column; min-height:0">
         <div class="filters" id="filters" aria-label="Timeline filters"></div>
+        <div class="quick-strip" id="quickStrip" aria-label="Quick journal entries" hidden></div>
         <div class="timeline-wrap">
           <div class="timeline" id="timeline"></div>
         </div>
@@ -266,16 +290,41 @@
 (function () {
   'use strict';
 
-  var state = { type: 'all', source: 'all', showDismissed: false };
+  var DEFAULT_STATE = { preset: 'newest', type: 'all', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+  var UI_PREFS_KEY = 'gos.journal.uiPrefs.v1';
+  var LAST_MANUAL_DEFAULTS_KEY = 'gos.journal.lastManualDefaults.v1';
+  var QUICK_ACTIONS_KEY = 'gos.journal.recentQuickActions.v1';
+  var LAST_CONTEXT_KEY = 'gos.journal.lastContext.v1';
+  var DAY_MS = 86400000;
+  var state = Object.assign({}, DEFAULT_STATE);
+  var sessionSystemDismissals = 0;
+  var filterToggleTimes = [];
   var typeLabels = ['all', 'note', 'observation', 'harvest', 'maintenance', 'system'];
   var sourceLabels = ['all', 'manual', 'planner', 'system'];
+  var severityLabels = ['all', 'info', 'success', 'warning', 'urgent'];
+  var presetLabels = [
+    { id: 'active', label: 'Active' },
+    { id: 'thisBed', label: 'This Bed' },
+    { id: 'harvests', label: 'Harvests' },
+    { id: 'warnings', label: 'Warnings' },
+    { id: 'mom', label: 'Mom Garden' },
+  ];
+  var sortLabels = [
+    { id: 'newest', label: 'newest' },
+    { id: 'oldest', label: 'oldest' },
+    { id: 'type', label: 'type' },
+    { id: 'source', label: 'source' },
+    { id: 'bed', label: 'bed' },
+  ];
   var timeline = document.getElementById('timeline');
   var filters = document.getElementById('filters');
+  var quickStrip = document.getElementById('quickStrip');
   var form = document.getElementById('entryForm');
   var typeInput = document.getElementById('entryType');
   var harvestFields = document.querySelector('.harvest-fields');
   var live = document.getElementById('live');
   var lastDeleted = null;
+  var MOM_SYSTEM_DISMISSED_KEY = 'gos.journal.dismissedMomSystem.v1';
 
   function say(message, action) {
     live.textContent = message;
@@ -310,6 +359,150 @@
       hasLocation: !!(bed && ((bed.location && bed.location.trim()) || (bed.zone && bed.zone.trim()))),
       gosBed: bed
     };
+  }
+  function safeReadJson(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+  function safeWriteJson(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (_) {}
+  }
+  function isFresh(value, ttlDays) {
+    if (!value || !value.updatedAt) return false;
+    var t = new Date(value.updatedAt).getTime();
+    return isFinite(t) && Date.now() - t <= ttlDays * DAY_MS;
+  }
+  function cleanString(value, max) {
+    return String(value || '').trim().slice(0, max || 80);
+  }
+  function readUrlContext() {
+    var params = new URLSearchParams(window.location.search || '');
+    var bedId = cleanString(params.get('bedId') || params.get('bed'), 80);
+    var cropId = cleanString(params.get('cropId') || params.get('crop'), 80);
+    var cell = cleanString(params.get('cell'), 16);
+    if (!bedId && !cropId && !cell) return null;
+    return { bedId: bedId, cropId: cropId, cell: cell, updatedAt: new Date().toISOString() };
+  }
+  function readLastContext() {
+    var stored = safeReadJson(LAST_CONTEXT_KEY, null);
+    if (!isFresh(stored, 7)) return null;
+    return {
+      bedId: cleanString(stored.bedId, 80),
+      cropId: cleanString(stored.cropId, 80),
+      cell: cleanString(stored.cell, 16),
+      updatedAt: stored.updatedAt
+    };
+  }
+  function resolveContext() {
+    var urlContext = readUrlContext();
+    if (urlContext) {
+      safeWriteJson(LAST_CONTEXT_KEY, urlContext);
+      return urlContext;
+    }
+    return readLastContext();
+  }
+  function hasDismissedSystemEntries() {
+    if (readDismissedMomSystemIds().length > 0) return true;
+    try {
+      return GardenJournal.readAll().some(function (entry) { return entry.type === 'system' && entry.dismissedAt; });
+    } catch (_) {
+      return false;
+    }
+  }
+  function readUiPrefs() {
+    var prefs = safeReadJson(UI_PREFS_KEY, null);
+    if (!prefs || typeof prefs !== 'object') return null;
+    var filtersObj = prefs.filters && typeof prefs.filters === 'object' ? prefs.filters : {};
+    return {
+      preset: cleanString(prefs.preset || 'newest', 20),
+      sort: sortLabels.some(function (s) { return s.id === prefs.sort; }) ? prefs.sort : 'newest',
+      type: typeLabels.indexOf(filtersObj.type) >= 0 ? filtersObj.type : 'all',
+      source: sourceLabels.indexOf(filtersObj.source) >= 0 ? filtersObj.source : 'all',
+      severity: severityLabels.indexOf(filtersObj.severity) >= 0 ? filtersObj.severity : 'all',
+      showDismissed: prefs.showDismissed === true
+    };
+  }
+  function saveUiPrefs() {
+    safeWriteJson(UI_PREFS_KEY, {
+      preset: state.preset,
+      sort: state.sort,
+      filters: { type: state.type, source: state.source, severity: state.severity },
+      showDismissed: state.showDismissed
+    });
+  }
+  function readLastManualDefaults() {
+    var defaults = safeReadJson(LAST_MANUAL_DEFAULTS_KEY, null);
+    if (!isFresh(defaults, 30)) return null;
+    return {
+      type: typeLabels.indexOf(defaults.type) >= 0 && defaults.type !== 'all' ? defaults.type : 'observation',
+      severity: severityLabels.indexOf(defaults.severity) >= 0 && defaults.severity !== 'all' ? defaults.severity : 'info',
+      tags: Array.isArray(defaults.tags) ? defaults.tags.map(function (x) { return cleanString(x, 32); }).filter(Boolean).slice(0, 8) : [],
+      updatedAt: defaults.updatedAt
+    };
+  }
+  function saveLastManualDefaults(entryDraft) {
+    if (!entryDraft || entryDraft.source !== 'manual') return;
+    safeWriteJson(LAST_MANUAL_DEFAULTS_KEY, {
+      type: entryDraft.type,
+      severity: entryDraft.severity,
+      tags: Array.isArray(entryDraft.tags) ? entryDraft.tags.filter(function (tag) { return tag !== entryDraft.type; }).slice(0, 8) : [],
+      updatedAt: new Date().toISOString()
+    });
+  }
+  function readQuickActions() {
+    var stored = safeReadJson(QUICK_ACTIONS_KEY, null);
+    if (!isFresh(stored, 60)) return {};
+    var updated = new Date(stored.updatedAt).getTime();
+    if (isFinite(updated) && Date.now() - updated > 30 * DAY_MS) {
+      ['watered', 'harvested', 'checked', 'issue'].forEach(function (id) {
+        if (stored[id] != null) stored[id] = Math.floor((parseInt(stored[id], 10) || 0) / 2);
+      });
+      stored.updatedAt = new Date().toISOString();
+      safeWriteJson(QUICK_ACTIONS_KEY, stored);
+    }
+    return stored;
+  }
+  function bumpQuickAction(id) {
+    var stored = readQuickActions();
+    stored[id] = Math.max(0, parseInt(stored[id], 10) || 0) + 1;
+    stored.updatedAt = new Date().toISOString();
+    safeWriteJson(QUICK_ACTIONS_KEY, stored);
+  }
+  function resolveInitialState() {
+    var context = resolveContext();
+    var prefs = readUiPrefs();
+    if (prefs) return Object.assign({}, DEFAULT_STATE, prefs, { context: context });
+    var preset = context ? 'thisBed' : (hasDismissedSystemEntries() ? 'active' : 'newest');
+    return Object.assign({}, DEFAULT_STATE, presetState(preset), { preset: preset, context: context });
+  }
+  function presetState(preset) {
+    if (preset === 'thisBed') return { type: 'all', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+    if (preset === 'harvests') return { type: 'harvest', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+    if (preset === 'warnings') return { type: 'all', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+    if (preset === 'mom') return { type: 'system', source: 'system', severity: 'all', sort: 'newest', showDismissed: false };
+    if (preset === 'active') return { type: 'all', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+    return { type: 'all', source: 'all', severity: 'all', sort: 'newest', showDismissed: false };
+  }
+  function setState(patch, options) {
+    options = options || {};
+    Object.assign(state, patch);
+    if (options.trackToggle) {
+      var now = Date.now();
+      filterToggleTimes = filterToggleTimes.filter(function (t) { return now - t <= 10000; });
+      filterToggleTimes.push(now);
+      if (filterToggleTimes.length >= 2) state.showPresets = true;
+    }
+    if (options.persist !== false) saveUiPrefs();
+    render();
+  }
+  function applyPreset(preset) {
+    setState(Object.assign({ preset: preset }, presetState(preset)), { trackToggle: true });
   }
   function isoWeek(date) {
     var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -398,24 +591,68 @@
     btn.addEventListener('click', onClick);
     return btn;
   }
+  function makeGroup(label, children) {
+    var group = document.createElement('div');
+    group.className = 'filter-group';
+    group.setAttribute('aria-label', label);
+    var text = document.createElement('span');
+    text.className = 'filter-label';
+    text.textContent = label;
+    group.appendChild(text);
+    children.forEach(function (child) { group.appendChild(child); });
+    return group;
+  }
+  function filtersAreDefault() {
+    return state.type === 'all' && state.source === 'all' && state.severity === 'all' &&
+      state.sort === 'newest' && state.showDismissed === false &&
+      (state.preset === 'newest' || state.preset === 'active');
+  }
   function renderFilters() {
     filters.textContent = '';
-    typeLabels.forEach(function (type) {
-      filters.appendChild(makeButton(type, state.type === type, function () {
-        state.type = type;
-        render();
+    filters.appendChild(makeGroup('view', presetLabels.map(function (preset) {
+      return makeButton(preset.label, state.preset === preset.id, function () {
+        applyPreset(preset.id);
+      });
+    })));
+    filters.appendChild(makeGroup('sort', sortLabels.map(function (sort) {
+      return makeButton(sort.label, state.sort === sort.id, function () {
+        setState({ sort: sort.id }, { trackToggle: true });
+      });
+    })));
+    if (!filtersAreDefault()) {
+      filters.appendChild(makeButton('clear', false, function () {
+        applyPreset('newest');
       }));
-    });
-    sourceLabels.forEach(function (source) {
-      filters.appendChild(makeButton(source, state.source === source, function () {
-        state.source = source;
-        render();
-      }));
-    });
-    filters.appendChild(makeButton('history', state.showDismissed, function () {
-      state.showDismissed = !state.showDismissed;
-      render();
-    }));
+    }
+
+    var more = document.createElement('details');
+    more.className = 'filter-more';
+    if (state.preset === 'custom' || state.showPresets) more.open = true;
+    var summary = document.createElement('summary');
+    summary.textContent = 'Filters';
+    more.appendChild(summary);
+    var body = document.createElement('div');
+    body.className = 'filter-more-body';
+    body.appendChild(makeGroup('type', typeLabels.map(function (type) {
+      return makeButton(type, state.type === type, function () {
+        setState({ preset: 'custom', type: type }, { trackToggle: true });
+      });
+    })));
+    body.appendChild(makeGroup('source', sourceLabels.map(function (source) {
+      return makeButton(source, state.source === source, function () {
+        setState({ preset: 'custom', source: source }, { trackToggle: true });
+      });
+    })));
+    body.appendChild(makeGroup('severity', severityLabels.map(function (severity) {
+      return makeButton(severity, state.severity === severity, function () {
+        setState({ preset: 'custom', severity: severity }, { trackToggle: true });
+      });
+    })));
+    body.appendChild(makeGroup('history', [makeButton('dismissed', state.showDismissed, function () {
+      setState({ preset: 'custom', showDismissed: !state.showDismissed }, { trackToggle: true });
+    })]));
+    more.appendChild(body);
+    filters.appendChild(more);
   }
   function iconFor(type) {
     return { note: 'NO', observation: 'OB', harvest: 'HA', maintenance: 'MT', system: 'SY' }[type] || 'JR';
@@ -428,14 +665,76 @@
   function entryMatches(entry) {
     if (state.type !== 'all' && entry.type !== state.type) return false;
     if (state.source !== 'all' && entry.source !== state.source) return false;
+    if (state.severity !== 'all' && entry.severity !== state.severity) return false;
+    if (state.preset === 'thisBed') {
+      var ctx = state.context || activeBedContext();
+      if (ctx.bedId && entry.bedId !== ctx.bedId) return false;
+      if (ctx.cropId && entry.cropId !== ctx.cropId) return false;
+      if (ctx.cell && (!Array.isArray(entry.cells) || entry.cells.indexOf(ctx.cell) < 0)) return false;
+    }
+    if (state.preset === 'warnings' && entry.severity !== 'warning' && entry.severity !== 'urgent') return false;
+    if (state.preset === 'mom') {
+      var tags = Array.isArray(entry.tags) ? entry.tags : [];
+      if (entry.id.indexOf('mom:') !== 0 && tags.indexOf('Mom Garden') < 0 && tags.indexOf('mom garden') < 0) return false;
+    }
     if (entry.deletedAt) return false;
     if (!state.showDismissed && entry.type === 'system' && entry.dismissedAt) return false;
     return true;
+  }
+  function compareNewest(a, b) {
+    if (!!a.deletedAt !== !!b.deletedAt) return a.deletedAt ? 1 : -1;
+    return (b.eventDate || '').localeCompare(a.eventDate || '') ||
+      (b.createdAt || '').localeCompare(a.createdAt || '') ||
+      (b.updatedAt || '').localeCompare(a.updatedAt || '') ||
+      (a.title || '').localeCompare(b.title || '');
+  }
+  function compareAlpha(a, b, fields) {
+    for (var i = 0; i < fields.length; i++) {
+      var diff = String(a[fields[i]] || '').localeCompare(String(b[fields[i]] || ''));
+      if (diff) return diff;
+    }
+    return compareNewest(a, b);
+  }
+  function sortTimelineEntries(entries) {
+    return entries.slice().sort(function (a, b) {
+      if (!!a.deletedAt !== !!b.deletedAt) return a.deletedAt ? 1 : -1;
+      if (state.sort === 'oldest') {
+        return (a.eventDate || '').localeCompare(b.eventDate || '') ||
+          (a.createdAt || '').localeCompare(b.createdAt || '') ||
+          (a.updatedAt || '').localeCompare(b.updatedAt || '') ||
+          (a.title || '').localeCompare(b.title || '');
+      }
+      if (state.sort === 'type') return compareAlpha(a, b, ['type']);
+      if (state.sort === 'source') return compareAlpha(a, b, ['source']);
+      if (state.sort === 'bed') return compareAlpha(a, b, ['bedName', 'bedId']);
+      return compareNewest(a, b);
+    });
+  }
+  function readDismissedMomSystemIds() {
+    try {
+      var parsed = JSON.parse(window.localStorage.getItem(MOM_SYSTEM_DISMISSED_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed.filter(function (id) { return typeof id === 'string' && id; }) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+  function writeDismissedMomSystemIds(ids) {
+    try {
+      window.localStorage.setItem(MOM_SYSTEM_DISMISSED_KEY, JSON.stringify(ids));
+    } catch (_) {}
+  }
+  function dismissMomSystemEntry(entryId) {
+    var ids = readDismissedMomSystemIds();
+    if (ids.indexOf(entryId) < 0) ids.push(entryId);
+    writeDismissedMomSystemIds(ids);
+    return { id: entryId, dismissedAt: new Date().toISOString() };
   }
   function readMomJournalEntries() {
     if (typeof GosBed === 'undefined' || !GosBed.readAll) return [];
     var seen = {};
     var entries = [];
+    var dismissedIds = readDismissedMomSystemIds();
+    var validIds = [];
     GosBed.readAll().forEach(function (bed) {
       (bed.events || []).forEach(function (event) {
         if (!event || event.source !== 'mom-garden-data.json v2' || event.type !== 'journal') return;
@@ -444,8 +743,10 @@
           : [bed.id, event.message].join(':');
         if (seen[key]) return;
         seen[key] = true;
+        var id = 'mom:' + key;
+        validIds.push(id);
         entries.push({
-          id: 'mom:' + key,
+          id: id,
           type: 'system',
           severity: 'info',
           source: 'system',
@@ -455,9 +756,14 @@
           bedName: bed.name || bed.id,
           eventDate: String(event.timestamp || new Date().toISOString()).slice(0, 10),
           tags: ['Mom Garden'],
+          dismissedAt: dismissedIds.indexOf(id) >= 0 ? event.timestamp || new Date().toISOString() : null,
         });
       });
     });
+    if (dismissedIds.length) {
+      var pruned = dismissedIds.filter(function (id) { return validIds.indexOf(id) >= 0; });
+      if (pruned.length !== dismissedIds.length) writeDismissedMomSystemIds(pruned);
+    }
     return entries;
   }
   function renderEntry(entry) {
@@ -509,7 +815,14 @@
       dismiss.className = 'small-btn';
       dismiss.textContent = 'Dismiss';
       dismiss.addEventListener('click', function () {
-        GardenJournal.dismiss(entry.id);
+        var dismissed = entry.id.indexOf('mom:') === 0
+          ? dismissMomSystemEntry(entry.id)
+          : GardenJournal.dismiss(entry.id);
+        if (!dismissed) {
+          say('System entry could not be dismissed.');
+          render();
+          return;
+        }
         say('System entry dismissed.');
         render();
       });
@@ -545,10 +858,72 @@
     article.appendChild(content);
     return article;
   }
+  function quickActionDefs() {
+    return [
+      { id: 'watered', label: 'Watered', type: 'maintenance', severity: 'info', title: 'Watered', tags: ['watering'] },
+      { id: 'harvested', label: 'Harvested', type: 'harvest', severity: 'success', title: 'Harvested', tags: ['harvest'] },
+      { id: 'checked', label: 'Checked', type: 'observation', severity: 'info', title: 'Checked bed', tags: ['checked'] },
+      { id: 'issue', label: 'Issue', type: 'observation', severity: 'warning', title: 'Needs attention', tags: ['issue'] },
+    ];
+  }
+  function sortedQuickActions() {
+    var counts = readQuickActions();
+    return quickActionDefs().sort(function (a, b) {
+      return (parseInt(counts[b.id], 10) || 0) - (parseInt(counts[a.id], 10) || 0);
+    });
+  }
+  function addQuickEntry(action) {
+    var context = activeBedContext();
+    var today = new Date().toISOString().slice(0, 10);
+    var draft = {
+      type: action.type,
+      source: 'manual',
+      title: action.title,
+      body: '',
+      createdAt: new Date().toISOString(),
+      eventDate: today,
+      seasonYear: currentSeasonYear(today),
+      bedId: context.bedId,
+      bedName: context.bedName,
+      severity: action.severity,
+      tags: action.tags.concat([action.type]),
+      payload: {}
+    };
+    if (action.id === 'harvested') draft.payload = { amount: null, unit: '' };
+    var entry = GardenJournal.append(draft);
+    if (!entry) {
+      say('Quick entry could not be saved.');
+      return;
+    }
+    bumpQuickAction(action.id);
+    saveLastManualDefaults(draft);
+    say(action.label + ' entry saved.');
+    render();
+  }
+  function renderQuickStrip(manualEntryCount) {
+    quickStrip.textContent = '';
+    var isMobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    if (manualEntryCount > 0 && !isMobile) {
+      quickStrip.hidden = true;
+      return;
+    }
+    quickStrip.hidden = false;
+    var label = document.createElement('span');
+    label.className = 'filter-label';
+    label.textContent = 'quick';
+    quickStrip.appendChild(label);
+    sortedQuickActions().forEach(function (action) {
+      quickStrip.appendChild(makeButton(action.label, false, function () {
+        addQuickEntry(action);
+      }));
+    });
+  }
   function render() {
     renderFilters();
     timeline.textContent = '';
-    var entries = GardenJournal.readAll().concat(readMomJournalEntries()).filter(entryMatches);
+    var storedEntries = GardenJournal.readAll();
+    renderQuickStrip(storedEntries.filter(function (entry) { return entry.source === 'manual' && !entry.deletedAt; }).length);
+    var entries = sortTimelineEntries(storedEntries.concat(readMomJournalEntries()).filter(entryMatches));
     if (!entries.length) {
       var empty = document.createElement('div');
       empty.className = 'empty';
@@ -569,6 +944,16 @@
   function currentSeasonYear(date) {
     return new Date(date + 'T12:00:00').getFullYear();
   }
+  function applyManualDefaults() {
+    var defaults = readLastManualDefaults();
+    if (!defaults) return;
+    document.getElementById('entryType').value = defaults.type;
+    document.getElementById('entrySeverity').value = defaults.severity;
+    document.getElementById('entryTags').value = defaults.tags.join(', ');
+    harvestFields.hidden = defaults.type !== 'harvest';
+  }
+  state = resolveInitialState();
+  applyManualDefaults();
   typeInput.addEventListener('change', function () {
     harvestFields.hidden = typeInput.value !== 'harvest';
     if (typeInput.value === 'harvest') document.getElementById('entrySeverity').value = 'success';
@@ -585,23 +970,24 @@
       payload.unit = String(data.get('unit') || '').slice(0, 16);
     }
     var entry = null;
+    var draft = {
+      type: data.get('type'),
+      source: 'manual',
+      title: data.get('title'),
+      body: data.get('body'),
+      createdAt: new Date().toISOString(),
+      eventDate: eventDate,
+      seasonYear: currentSeasonYear(eventDate),
+      bedId: context.bedId,
+      bedName: context.bedName,
+      cropId: data.get('cropId'),
+      cells: parseList(data.get('cells')),
+      severity: data.get('severity'),
+      tags: parseList(data.get('tags')).concat([data.get('type')]),
+      payload: payload
+    };
     try {
-      entry = GardenJournal.append({
-        type: data.get('type'),
-        source: 'manual',
-        title: data.get('title'),
-        body: data.get('body'),
-        createdAt: new Date().toISOString(),
-        eventDate: eventDate,
-        seasonYear: currentSeasonYear(eventDate),
-        bedId: context.bedId,
-        bedName: context.bedName,
-        cropId: data.get('cropId'),
-        cells: parseList(data.get('cells')),
-        severity: data.get('severity'),
-        tags: parseList(data.get('tags')).concat([data.get('type')]),
-        payload: payload
-      });
+      entry = GardenJournal.append(draft);
     } catch (e) {
       say(e && e.code === 'JOURNAL_CONFLICT' ? 'Journal changed in another tab. Reloaded timeline.' : 'Entry could not be saved.');
       render();
@@ -611,9 +997,11 @@
       say('Entry could not be saved.');
       return;
     }
+    saveLastManualDefaults(draft);
     form.reset();
     document.getElementById('entryDate').value = new Date().toISOString().slice(0, 10);
     harvestFields.hidden = true;
+    applyManualDefaults();
     say('Journal entry saved.');
     render();
   });

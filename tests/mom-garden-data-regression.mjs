@@ -22,8 +22,8 @@ assert.equal(momData.version, 2, "Mom data version should be 2");
 assert.match(momDataJs, /window\.GOS_MOM_GARDEN_DATA\s*=/, "Mom data JS should expose a global fallback");
 assert.match(momDataJs, /Marvel of Four Seasons/, "Mom data JS should mirror the JSON payload");
 assert.equal(momData.beds.length, 3, "Mom data should define 3 beds");
-assert.equal(plantings.length, 12, "Mom data should define 12 planting groups");
-assert.equal(placementCount, 40, "Mom data should preserve 40 planted cell placements from the JSON exports");
+assert.equal(plantings.length, 13, "Mom data should define 13 planting groups");
+assert.equal(placementCount, 44, "Mom data should preserve 44 planted cell placements from the JSON exports");
 assert.deepEqual(
   momData.beds.map((bed) => [bed.id, bed.dimensions.rows, bed.dimensions.cols]),
   [
@@ -92,8 +92,8 @@ const builtBeds = context.GosBed.mom.buildBedsFromData(momData, { loadedAt: "202
 assert.equal(builtBeds.length, 3, "Mom loader should build 3 GosBed records");
 assert.equal(
   builtBeds.reduce((sum, bed) => sum + bed.painted.length, 0),
-  40,
-  "Mom loader should expand planting groups into all 40 cell placements",
+  44,
+  "Mom loader should expand planting groups into all 44 cell placements",
 );
 
 const growBags = builtBeds.find((bed) => bed.id === "grow_bags");
@@ -118,12 +118,24 @@ assert.equal(rightOnions[0].cropId, "oni");
 assert.equal(rightOnions[0].displayName, "Onion");
 assert.equal(rightOnions[0].placementConfidence, "explicit-cell");
 
+const rightSnapPeas = builtBeds
+  .find((bed) => bed.id === "raised_bed_right")
+  .painted.filter((p) => p.sourcePlantingId === "mom_right_snap_peas");
+assert.equal(rightSnapPeas.length, 4, "Right bed should fill the four formerly-empty blocks with snap peas");
+assert.equal(
+  JSON.stringify(rightSnapPeas.map((p) => p.cell)),
+  JSON.stringify(["r0c0", "r0c1", "r0c2", "r0c3"]),
+  "Right bed snap peas should occupy row 1 of the right half",
+);
+assert.equal(rightSnapPeas[0].cropId, "peas");
+assert.equal(rightSnapPeas[0].displayName, "Snap Peas");
+
 const loadResult = context.GosBed.mom.loadFromData(momData, {
   loadedAt: "2026-04-27T12:00:00.000Z",
   overwrite: true,
 });
 assert.equal(loadResult.beds.length, 3, "Loading Mom data should write 3 beds");
-assert.equal(loadResult.plantingCount, 40, "Loading Mom data should report 40 planted cells");
+assert.equal(loadResult.plantingCount, 44, "Loading Mom data should report 44 planted cells");
 assert.equal(context.GosBed.readAll().length, 3, "GosBed.readAll should return Mom beds after load");
 assert.equal(context.GosBed.mom.isLoaded(), true, "GosBed.mom.isLoaded should detect loaded Mom beds");
 
@@ -159,12 +171,13 @@ assert.match(painting, /rows > 1 \? cell\.r : cell\.c/, "Beds page should render
 
 const hub = readFileSync(new URL("index-v5.html", repo), "utf8");
 assert.match(hub, /Mom's Garden/, "Hub should include a Mom's Garden tile");
-assert.match(hub, /40 planted cells/, "Hub Mom tile should summarize planted cell count");
+assert.match(hub, /44 planted cells/, "Hub Mom tile should summarize planted cell count");
 
 const journal = readFileSync(new URL("journal.html", repo), "utf8");
 assert.match(journal, /gos-bed\.js/, "Journal should load GosBed data");
 assert.match(journal, /readMomJournalEntries/, "Journal should surface Mom data events");
 assert.match(journal, /mom-garden-data\.json v2/, "Journal should dedupe and display Mom load events");
+assert.match(journal, /dismissMomSystemEntry/, "Journal should persist dismissal state for virtual Mom system entries");
 
 const doctor = readFileSync(new URL("garden-doctor-v5.html", repo), "utf8");
 assert.match(doctor, /URLSearchParams/, "Doctor should read Planner URL context");
