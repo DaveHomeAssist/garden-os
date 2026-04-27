@@ -136,9 +136,11 @@ try {
     const sheetText = await sheet.textContent();
     note('Planner CropSheet shows PER-CELL LOG section', /PER-CELL LOG · 3 CELLS/i.test(sheetText || ''));
 
-    // Click the r0c0 chip to mark that single cell done.
+    // Click the r0c0 chip to open its action sheet, then "Mark done".
     const r0c0Btn = page.locator('button[aria-label^="r0c0"]').first();
     await r0c0Btn.click();
+    await page.waitForTimeout(200);
+    await page.locator('[role="dialog"][aria-label="r0c0 actions"] button:has-text("Mark done")').click();
     await page.waitForTimeout(500);
 
     const events1 = await page.evaluate(() => {
@@ -149,8 +151,10 @@ try {
       events1.length === 1 && events1[0].type === 'mark_done' && events1[0].cell === 'r0c0',
       `events=${JSON.stringify(events1.map(e => ({ t: e.type, cell: e.cell })))}`);
 
-    // Tap r0c0 again to undo.
+    // Re-open the action sheet on r0c0 and "Undo".
     await page.locator('button[aria-label^="r0c0"]').first().click();
+    await page.waitForTimeout(200);
+    await page.locator('[role="dialog"][aria-label="r0c0 actions"] button:has-text("Undo")').click();
     await page.waitForTimeout(500);
     const events2 = await page.evaluate(() => {
       const raw = window.localStorage.getItem('gos.bed.percelltest');

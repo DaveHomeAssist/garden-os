@@ -461,19 +461,8 @@ function removeMostRecentDoneEvent(cropId, season, expectedRevision) {
   return res.ok ? { ok: true, removed: true } : res;
 }
 
-// Per-cell variants of the helpers above. Used when the gardener wants to
+// Per-cell variant of the helpers above. Used when the gardener wants to
 // log a care action against a specific cell rather than the whole crop.
-function findDoneEventForCell(events, cellStr, cropId, season) {
-  if (!Array.isArray(events) || !cellStr) return null;
-  for (let i = events.length - 1; i >= 0; i--) {
-    const e = events[i];
-    if (!e || e.season !== season) continue;
-    if (DONE_TYPES.indexOf(e.type) < 0) continue;
-    if (e.cell === cellStr && eventCropId(e) === cropId) return e;
-  }
-  return null;
-}
-
 function removeMostRecentDoneEventForCell(cellStr, cropId, season, expectedRevision) {
   const gosBed = typeof GosBed !== 'undefined' ? GosBed.getActive() : null;
   if (!gosBed) return { ok: false, error: 'No active bed' };
@@ -1506,6 +1495,21 @@ function PerCellLogStrip({ cells, cropKey, events, season, isPreview,
   // Order cells row-major (top-left first).
   const ordered = cells.slice().sort((a, b) => a.r === b.r ? a.c - b.c : a.r - b.r);
   const [actionCell, setActionCell] = React.useState(null);
+  // doneCells: cellStr -> 'mark_done' | 'harvest' for this crop + season.
+  // One backward sweep, most-recent-wins (we walk newest first and set on
+  // first hit only). Replaces a per-cell linear scan inside the chip render.
+  const doneCells = React.useMemo(() => {
+    const map = new Map();
+    if (!Array.isArray(events)) return map;
+    for (let i = events.length - 1; i >= 0; i--) {
+      const e = events[i];
+      if (!e || e.season !== season) continue;
+      if (DONE_TYPES.indexOf(e.type) < 0) continue;
+      if (!e.cell || eventCropId(e) !== cropKey) continue;
+      if (!map.has(e.cell)) map.set(e.cell, e.type);
+    }
+    return map;
+  }, [events, season, cropKey]);
   return (
     <div style={{
       marginTop: 14, padding: '10px 12px',
@@ -1521,8 +1525,7 @@ function PerCellLogStrip({ cells, cropKey, events, season, isPreview,
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {ordered.map(c => {
           const cellStr = 'r' + c.r + 'c' + c.c;
-          const ev = findDoneEventForCell(events, cellStr, cropKey, season);
-          const state = ev ? ev.type : null; // 'mark_done' | 'harvest' | null
+          const state = doneCells.get(cellStr) || null; // 'mark_done' | 'harvest' | null
           const bg = state === 'harvest' ? T.sunBright
                    : state === 'mark_done' ? T.leafBright
                    : T.cedarWash;
@@ -1678,13 +1681,17 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
     return map;
   }, [bed]);
 
-  // Set of crop ids that have a mark_done or harvest event this season.
+  // Set of crop ids whose *whole crop* has been marked done or harvested this
+  // season. Cell-scoped events stay local to their cells — marking r0c0 done
+  // does not dim the entire crop lane in the timeline. Mirrors the gate in
+  // findDoneEventThisSeason so legacy unscoped events still count as crop-level.
   const doneCrops = React.useMemo(() => {
     const set = new Set();
     if (!Array.isArray(events)) return set;
     events.forEach(e => {
       if (!e || e.season !== season) return;
       if (DONE_TYPES.indexOf(e.type) < 0) return;
+      if (e.scope && e.scope !== 'crop') return;
       const id = eventCropId(e);
       if (id) set.add(id);
     });
