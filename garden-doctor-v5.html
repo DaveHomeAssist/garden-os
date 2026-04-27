@@ -47,6 +47,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -280,6 +281,64 @@ function popSaved(id) {
     window.localStorage.setItem(SAVED_KEY, JSON.stringify(filtered));
   } catch (_) {}
 }
+
+// ── GosBed integration (PR #22) ────────────────────────────────────────────
+// Doctor's static CROPS dict uses 3-letter keys (tom/bas/let/car/pep). Bed
+// snapshots from Painting use snake_case ids (tomato/basil/...). To unify the
+// two ID spaces without imposing a static map, we name-match: a static crop
+// is "in the bed" when its name (case-insensitive) appears in any painted
+// cropName. The unified cropMap keeps both kinds of ids resolvable for
+// rendering.
+function readActiveBed() {
+  if (typeof GosBed === 'undefined') return null;
+  try { return GosBed.getActive(); } catch (_) { return null; }
+}
+function dedupePainted(painted) {
+  if (!Array.isArray(painted)) return [];
+  const seen = new Set();
+  const out = [];
+  painted.forEach(p => {
+    if (!p || !p.cropId || seen.has(p.cropId)) return;
+    seen.add(p.cropId);
+    out.push(p);
+  });
+  return out;
+}
+function buildCropMap(paintedCrops) {
+  const map = {};
+  Object.keys(CROPS).forEach(k => {
+    map[k] = {
+      id: k,
+      name: CROPS[k].name,
+      color: CROPS[k].color,
+      mono: CROPS[k].mono,
+      icon: null,
+      image: CROPS[k].image,
+      fromBed: false,
+    };
+  });
+  paintedCrops.forEach(p => {
+    if (map[p.cropId]) return;
+    const fallbackInitial = (p.cropName || p.cropId || '?').slice(0, 2);
+    map[p.cropId] = {
+      id: p.cropId,
+      name: p.cropName || p.cropId,
+      color: p.cropColor || T.leaf,
+      mono: fallbackInitial,
+      icon: p.cropIcon || null,
+      image: null,
+      fromBed: true,
+    };
+  });
+  return map;
+}
+function buildOtherCropIds(paintedCrops) {
+  const paintedNames = new Set(paintedCrops.map(p => (p.cropName || '').toLowerCase()));
+  return Object.keys(CROPS).filter(k => {
+    const c = CROPS[k];
+    return c && !paintedNames.has(c.name.toLowerCase());
+  });
+}
 function Seg({ value, opts, onChange }) {
   return (
     <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
@@ -355,13 +414,34 @@ function TweaksPanel({ tweak, setTweak, variant, setVariant, onClose }) {
 // ── Doctor pieces ───────────────────────────────────────────────────────────
 const CROP_LIST = ['tom', 'bas', 'let', 'car', 'pep'];
 
-function ChipsPicker({ cropId, onPick }) {
+// Visual badge for either a static CROPS entry (mono initials) or a bed
+// snapshot (cropIcon emoji or fallback). Replaces the older CropChip-only
+// path so chips/cards work for arbitrary painted cropIds, not just the five
+// hardcoded keys.
+function CropBadge({ entry, size = 20 }) {
+  if (!entry) return null;
+  const glyph = entry.icon || entry.mono || (entry.name ? entry.name.charAt(0) : '?');
+  const fontSize = entry.icon ? Math.round(size * 0.62) : size * 0.42;
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: '50%',
+      background: entry.color, color: '#fff',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: entry.icon ? T.fontSans : T.fontMono,
+      fontSize, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1,
+      flexShrink: 0,
+      boxShadow: 'inset 0 -1.5px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22)',
+    }}>{glyph}</span>
+  );
+}
+
+function ChipsSection({ ids, cropMap, cropId, onPick }) {
   return (
     <div style={{ marginTop: 6, display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-      {CROP_LIST.map(k => {
+      {ids.map(k => {
+        const entry = cropMap[k];
+        if (!entry) return null;
         const on = cropId === k;
-        const c = CROPS[k];
-        if (!c) return null;
         return (
           <button key={k} onClick={() => onPick(k)} aria-pressed={on} style={{
             flex: '0 0 auto', padding: '7px 11px 7px 7px', borderRadius: 999,
@@ -371,8 +451,8 @@ function ChipsPicker({ cropId, onPick }) {
             display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
             fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 36,
           }}>
-            <CropChip crop={k} size={20}/>
-            <span>{c.name}</span>
+            <CropBadge entry={entry} size={20}/>
+            <span>{entry.name}</span>
           </button>
         );
       })}
@@ -380,47 +460,45 @@ function ChipsPicker({ cropId, onPick }) {
   );
 }
 
-function PhotoCard({ id, on, onPick, failed, onImgError }) {
-  const c = CROPS[id];
-  if (!c) return null;
-  const showImage = c.image && !failed;
-  // Selected state uses the crop's accent color (same token as Chips selected).
-  const ringColor = on ? c.color : T.borderSoft;
+function PhotoCard({ id, entry, on, onPick, failed, onImgError }) {
+  if (!entry) return null;
+  const showImage = entry.image && !failed;
+  const ringColor = on ? entry.color : T.borderSoft;
   return (
-    <button onClick={() => onPick(id)} aria-pressed={on} aria-label={'Select ' + c.name} style={{
+    <button onClick={() => onPick(id)} aria-pressed={on} aria-label={'Select ' + entry.name} style={{
       padding: 0, borderRadius: 12,
       border: `2px solid ${ringColor}`,
       background: T.panel, cursor: 'pointer',
       display: 'flex', flexDirection: 'column', alignItems: 'stretch',
       overflow: 'hidden', textAlign: 'center',
-      boxShadow: on ? `0 0 0 2px ${c.color}33` : 'none',
+      boxShadow: on ? `0 0 0 2px ${entry.color}33` : 'none',
       transition: 'box-shadow 0.18s, border-color 0.18s',
     }}>
       <div style={{
         width: '100%', aspectRatio: '1 / 1',
-        background: showImage ? T.cream : (c.color + '14'),
+        background: showImage ? T.cream : (entry.color + '14'),
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
       }}>
         {showImage ? (
-          <img src={c.image} alt="" loading="lazy" onError={() => onImgError(id)} style={{
+          <img src={entry.image} alt="" loading="lazy" onError={() => onImgError(id)} style={{
             width: '100%', height: '100%', objectFit: 'cover', display: 'block',
           }}/>
         ) : (
-          <CropChip crop={id} size={56}/>
+          <CropBadge entry={entry} size={56}/>
         )}
       </div>
       <div style={{
         padding: '8px 6px', background: T.panel,
         fontFamily: T.fontSans, fontSize: 12, fontWeight: on ? 600 : 500,
-        color: on ? c.color : T.text, lineHeight: 1.2,
+        color: on ? entry.color : T.text, lineHeight: 1.2,
         borderTop: `1px solid ${T.borderSoft}`,
-      }}>{c.name}</div>
+      }}>{entry.name}</div>
     </button>
   );
 }
 
-function PhotoPicker({ cropId, onPick }) {
+function PhotoSection({ ids, cropMap, cropId, onPick }) {
   const [failed, setFailed] = React.useState(() => new Set());
   const handleImgError = React.useCallback((id) => {
     setFailed(prev => {
@@ -437,8 +515,8 @@ function PhotoPicker({ cropId, onPick }) {
       gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
       gap: 8,
     }}>
-      {CROP_LIST.map(k => (
-        <PhotoCard key={k} id={k}
+      {ids.map(k => (
+        <PhotoCard key={k} id={k} entry={cropMap[k]}
           on={cropId === k}
           onPick={onPick}
           failed={failed.has(k)}
@@ -448,13 +526,48 @@ function PhotoPicker({ cropId, onPick }) {
   );
 }
 
-function CropPicker({ cropId, onPick, variant }) {
+function CropPicker({ cropId, onPick, variant, paintedCrops, hasBed, bedHasNoCrops }) {
+  const cropMap = React.useMemo(() => buildCropMap(paintedCrops), [paintedCrops]);
+  const yourIds = paintedCrops.map(p => p.cropId);
+  const otherIds = React.useMemo(() => buildOtherCropIds(paintedCrops), [paintedCrops]);
+  const Section = variant === 'photo' ? PhotoSection : ChipsSection;
+  const showSections = hasBed && !bedHasNoCrops && yourIds.length > 0;
+
   return (
     <div style={{ marginTop: 6 }}>
       <Label size={9} style={{ marginLeft: 2 }}>ON WHICH CROP?</Label>
-      {variant === 'photo'
-        ? <PhotoPicker cropId={cropId} onPick={onPick}/>
-        : <ChipsPicker cropId={cropId} onPick={onPick}/>}
+
+      {hasBed && bedHasNoCrops && (
+        <div style={{
+          marginTop: 6, padding: '10px 12px',
+          background: T.cedarWash, border: `1px dashed ${T.cedarPale}`,
+          borderRadius: 8,
+          fontFamily: T.fontSerif, fontSize: 12, fontStyle: 'italic',
+          color: T.textMid, lineHeight: 1.5,
+        }}>
+          No crops painted yet.{' '}
+          <a href="garden-painting.html" style={{ color: T.leaf, fontWeight: 500 }}>
+            Add crops in Painting →
+          </a>
+        </div>
+      )}
+
+      {showSections ? (
+        <>
+          <Label size={9} color={T.textSoft} style={{
+            marginLeft: 2, marginTop: 10, display: 'block', fontWeight: 600,
+          }}>YOUR BED</Label>
+          <Section ids={yourIds} cropMap={cropMap} cropId={cropId} onPick={onPick}/>
+          <div style={{ borderTop: `1px solid ${T.borderSoft}`, marginTop: 10, paddingTop: 8 }}>
+            <Label size={9} color={T.textMuted} style={{ marginLeft: 2, display: 'block' }}>
+              OTHER CROPS
+            </Label>
+            <Section ids={otherIds} cropMap={cropMap} cropId={cropId} onPick={onPick}/>
+          </div>
+        </>
+      ) : (
+        <Section ids={CROP_LIST} cropMap={cropMap} cropId={cropId} onPick={onPick}/>
+      )}
     </div>
   );
 }
@@ -509,6 +622,43 @@ function Doctor() {
   const [season, setSeason] = React.useState(() => last?.season || 'late-spring');
   const [diagnosed, setDiagnosed] = React.useState(false);
   const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
+  const [bed, setBed] = React.useState(readActiveBed);
+
+  const paintedCrops = React.useMemo(
+    () => bed ? dedupePainted(bed.painted) : [],
+    [bed]
+  );
+  const hasBed = bed !== null;
+  const bedHasNoCrops = hasBed && paintedCrops.length === 0;
+
+  // Live refresh: pick up changes from same-tab GosBed writes (gosBedChanged)
+  // and cross-tab writes (storage event filtered to gos.bed.* / gos.activeBed).
+  React.useEffect(() => {
+    function refresh() { setBed(readActiveBed()); }
+    function onStorage(e) {
+      if (!e || !e.key) { refresh(); return; }
+      if (e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
+    }
+    window.addEventListener('gosBedChanged', refresh);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('gosBedChanged', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  // Validate selected cropId on bed change. If the bed is gone or the
+  // currently-selected crop is no longer in the visible list, fall back to
+  // the first painted crop, then the first static crop, then 'tom'.
+  React.useEffect(() => {
+    if (!hasBed || bedHasNoCrops) return; // generic flat list, all CROP_LIST valid
+    const yourIds = paintedCrops.map(p => p.cropId);
+    const otherIds = buildOtherCropIds(paintedCrops);
+    const valid = new Set([...yourIds, ...otherIds]);
+    if (!valid.has(cropId)) {
+      setCropId(yourIds[0] || otherIds[0] || 'tom');
+    }
+  }, [bed, hasBed, bedHasNoCrops]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (id) => setSymptoms(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   const ranked = diagnosed ? rankDiagnoses(symptoms).filter(d => d.prob >= tweak.confidenceThreshold) : [];
@@ -550,7 +700,9 @@ function Doctor() {
 
       <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Label size={9} color={T.soilMid}>DOCTOR</Label>
+          <Label size={9} color={T.soilMid}>
+            DOCTOR{hasBed && bed.name ? ' · ' + bed.name.toUpperCase() : ''}
+          </Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <Label size={9} color={T.soilMid}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
@@ -569,7 +721,8 @@ function Doctor() {
       </header>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
-        <CropPicker cropId={cropId} onPick={setCropId} variant={variant}/>
+        <CropPicker cropId={cropId} onPick={setCropId} variant={variant}
+          paintedCrops={paintedCrops} hasBed={hasBed} bedHasNoCrops={bedHasNoCrops}/>
 
         <div style={{ marginTop: 14 }}>
           <Label size={9} color={T.textSoft} style={{ marginLeft: 2 }}>WHAT'S WRONG?</Label>
@@ -627,7 +780,9 @@ function Doctor() {
             minHeight: 48,
             boxShadow: symptoms.length === 0 ? 'none' : '0 2px 8px rgba(78,140,60,0.25)',
           }}>
-          {symptoms.length === 0 ? 'Pick at least one symptom' : `Diagnose ${CROPS[cropId]?.name || 'plant'}`}
+          {symptoms.length === 0
+            ? 'Pick at least one symptom'
+            : `Diagnose ${(CROPS[cropId]?.name) || (paintedCrops.find(p => p.cropId === cropId)?.cropName) || 'plant'}`}
         </button>
 
         {diagnosed && ranked.length > 0 && (
