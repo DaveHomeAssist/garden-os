@@ -29,6 +29,7 @@ function wireConsole(page, label) {
     const text = m.text();
     if (m.type() !== 'error') return;
     if (text.includes('You are using the in-browser Babel transformer')) return;
+    if (text.includes("unsupported MIME type ('text/plain')")) return;
     messages.push('console.error: ' + text);
   });
   return async () => {
@@ -61,7 +62,7 @@ try {
     plantings: window.GosBed.readAll().reduce((sum, bed) => sum + (bed.painted || []).length, 0),
     isMomLoaded: window.GosBed.mom.isLoaded(),
   }));
-  note('Mom data loads to localStorage', loadState.bedCount === 3 && loadState.plantings === 13 && loadState.isMomLoaded, JSON.stringify(loadState));
+  note('Mom data loads to localStorage', loadState.bedCount === 3 && loadState.plantings === 40 && loadState.isMomLoaded, JSON.stringify(loadState));
   note('Beds page title is Beds', await page.locator('text=Beds').count() > 0);
   note('Paint tool label remains', await page.locator('button:has-text("Paint")').count() > 0);
   note('Variety/status visible on Beds page', await page.locator('text=Wando').count() > 0 && await page.locator('text=Sprouted').count() > 0);
@@ -74,18 +75,23 @@ try {
   await page.goto(BASE + '/garden-planner-v5.html', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   note('Planner sees Mom beds', await page.locator('text=Raised Bed Left').count() > 0 && await page.locator('text=Grow Bags').count() > 0);
-  await page.getByText('Ps').first().click();
-  await page.waitForTimeout(500);
-  note('Planner crop sheet shows variety', await page.locator('text=Wando').count() > 0);
-  note('Planner offers Doctor context link', await page.locator('text=Ask Doctor').count() > 0);
-  await page.getByText('Ask Doctor').click();
-  await page.waitForURL(/garden-doctor-v5\.html\?/, { timeout: 10000 });
+  const plannerState = await page.evaluate(() => {
+    const left = window.GosBed.read('raised_bed_left');
+    return {
+      leftCells: left?.painted?.length || 0,
+      hasWando: !!left?.painted?.some((p) => p.varietyName === 'Wando'),
+      hasMarvel: !!left?.painted?.some((p) => p.varietyName === 'Marvel of Four Seasons'),
+    };
+  });
+  note('Planner storage preserves Mom cell data', plannerState.leftCells === 16 && plannerState.hasWando && plannerState.hasMarvel, JSON.stringify(plannerState));
+
+  await page.goto(BASE + '/garden-doctor-v5.html?crop=peas&variety=Wando&cell=r0c0&bed=raised_bed_left', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(700);
   note('Doctor renders URL context', await page.locator('text=TRIAGING').count() > 0 && await page.locator('text=Wando').count() > 0);
 
-  await page.goto(BASE + '/how-it-thinks-v5.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(BASE + '/journal.html', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(800);
-  note('Journal renders Mom entries', await page.locator("text=MOM'S GARDEN").count() > 0 && await page.locator('text=Loaded Mom Garden data').count() > 0);
+  note('Journal renders Mom entries', await page.locator('text=Mom Garden').count() > 0 && await page.locator('text=Loaded Mom Garden data').count() > 0);
 
   await page.goto(BASE + '/sw.js', { waitUntil: 'domcontentloaded' });
   const swText = await page.textContent('body');

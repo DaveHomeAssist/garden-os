@@ -13,29 +13,34 @@ assert.equal(existsSync(momDataJsUrl), true, "data/mom-garden-data.js should exi
 const momData = JSON.parse(readFileSync(momDataUrl, "utf8"));
 const momDataJs = readFileSync(momDataJsUrl, "utf8");
 const plantings = momData.beds.flatMap((bed) => bed.plantings.map((planting) => ({ bed, planting })));
+const placementCount = plantings.reduce(
+  (sum, { planting }) => sum + (Array.isArray(planting.cells) ? planting.cells.length : 1),
+  0,
+);
 
-assert.equal(momData.version, 1, "Mom data version should be 1");
+assert.equal(momData.version, 2, "Mom data version should be 2");
 assert.match(momDataJs, /window\.GOS_MOM_GARDEN_DATA\s*=/, "Mom data JS should expose a global fallback");
 assert.match(momDataJs, /Marvel of Four Seasons/, "Mom data JS should mirror the JSON payload");
 assert.equal(momData.beds.length, 3, "Mom data should define 3 beds");
-assert.equal(plantings.length, 13, "Mom data should define 13 plantings");
+assert.equal(plantings.length, 12, "Mom data should define 12 planting groups");
+assert.equal(placementCount, 40, "Mom data should preserve 40 planted cell placements from the JSON exports");
 assert.deepEqual(
   momData.beds.map((bed) => [bed.id, bed.dimensions.rows, bed.dimensions.cols]),
   [
     ["raised_bed_left", 4, 4],
     ["raised_bed_right", 4, 4],
-    ["grow_bags", 1, 6],
+    ["grow_bags", 6, 2],
   ],
   "Mom bed dimensions should preserve the source layout",
 );
 assert.equal(
   new Set(plantings.map(({ planting }) => planting.cropId)).size,
-  7,
-  "Mom data should contain 7 distinct crop IDs",
+  9,
+  "Mom data should contain 9 distinct crop IDs",
 );
 assert.equal(
   plantings.filter(({ planting }) => planting.varietyName).length,
-  8,
+  4,
   "Mom data should preserve all variety names",
 );
 
@@ -87,49 +92,54 @@ const builtBeds = context.GosBed.mom.buildBedsFromData(momData, { loadedAt: "202
 assert.equal(builtBeds.length, 3, "Mom loader should build 3 GosBed records");
 assert.equal(
   builtBeds.reduce((sum, bed) => sum + bed.painted.length, 0),
-  13,
-  "Mom loader should place all 13 plantings",
+  40,
+  "Mom loader should expand planting groups into all 40 cell placements",
 );
 
 const growBags = builtBeds.find((bed) => bed.id === "grow_bags");
-assert.equal(growBags.shape, "6x1", "Grow bags should be a 1x6 virtual bed");
+assert.equal(growBags.shape, "2x6", "Grow bags should preserve the 2-column by 6-bag JSON export");
 assert.equal(
   JSON.stringify(growBags.painted.map((p) => p.cell)),
-  JSON.stringify(["r0c0", "r0c1", "r0c2", "r0c3", "r0c4", "r0c5"]),
-  "Grow bag plantings should map Bag 1 through Bag 6 left-to-right",
+  JSON.stringify([
+    "r0c0", "r1c0", "r2c0", "r4c1",
+    "r0c1",
+    "r1c1", "r2c1", "r3c1",
+    "r3c0", "r4c0",
+    "r5c0", "r5c1",
+  ]),
+  "Grow bag plantings should preserve each JSON export cell",
 );
 
-const snapPea = builtBeds
+const rightOnions = builtBeds
   .find((bed) => bed.id === "raised_bed_right")
-  .painted.find((p) => p.id === "mom_pea_snap_cascadia_right");
-assert.equal(snapPea.cropId, "peas");
-assert.equal(snapPea.displayName, "Pea, Snap");
-assert.equal(snapPea.varietyName, "Cascadia");
-assert.equal(snapPea.status, "Sprouted");
-assert.equal(snapPea.placementConfidence, "row");
+  .painted.filter((p) => p.sourcePlantingId === "mom_right_onion_rows_2_3");
+assert.equal(rightOnions.length, 8, "Right bed should preserve both onion rows from the JSON sample");
+assert.equal(rightOnions[0].cropId, "oni");
+assert.equal(rightOnions[0].displayName, "Onion");
+assert.equal(rightOnions[0].placementConfidence, "explicit-cell");
 
 const loadResult = context.GosBed.mom.loadFromData(momData, {
   loadedAt: "2026-04-27T12:00:00.000Z",
   overwrite: true,
 });
 assert.equal(loadResult.beds.length, 3, "Loading Mom data should write 3 beds");
-assert.equal(loadResult.plantingCount, 13, "Loading Mom data should report 13 plantings");
+assert.equal(loadResult.plantingCount, 40, "Loading Mom data should report 40 planted cells");
 assert.equal(context.GosBed.readAll().length, 3, "GosBed.readAll should return Mom beds after load");
 assert.equal(context.GosBed.mom.isLoaded(), true, "GosBed.mom.isLoaded should detect loaded Mom beds");
 
 const loadedLeft = context.GosBed.read("raised_bed_left");
-assert.equal(loadedLeft.source, "mom-garden-data.json v1");
+assert.equal(loadedLeft.source, "mom-garden-data.json v2");
 assert.equal(loadedLeft.loadedAt, "2026-04-27T12:00:00.000Z");
 assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Wando").cropId, "peas");
 assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Marvel of Four Seasons").cropId, "red_lettuce");
 assert.equal(
   loadedLeft.events.filter((event) => event.type === "journal").length,
-  5,
-  "Raised Bed Left should include one load journal event plus one event per planting",
+  17,
+  "Raised Bed Left should include one load journal event plus one event per placed cell",
 );
 
 const planner = readFileSync(new URL("garden-planner-v5.html", repo), "utf8");
-for (const cropId of ["peas", "scallion", "garlic", "head_lettuce", "red_lettuce", "kale", "carrot"]) {
+for (const cropId of ["peas", "garlic", "head_lettuce", "red_lettuce", "kale", "carrot"]) {
   assert.match(planner, new RegExp(`${cropId}:\\s*\\{`), `Planner fallback CROPS should include ${cropId}`);
 }
 assert.match(planner, /mono:'Ps'/, "Peas should use Ps mono label to avoid Pepper's Pe collision");
@@ -145,16 +155,16 @@ assert.match(painting, /Loading Mom's Garden/, "Beds page should show a loading 
 assert.doesNotMatch(painting, /Garden OS needs one bed to begin/, "Beds page should not default to the old empty setup shell");
 assert.match(painting, /Load Mom Garden/, "Beds page should surface Load Mom Garden");
 assert.match(painting, /Reset to Mom Garden/, "Beds page should surface Reset to Mom Garden");
-assert.match(painting, /Bag '\s*\+\s*\(cell\.c \+ 1\)/, "Beds page should render grow bag labels");
+assert.match(painting, /rows > 1 \? cell\.r : cell\.c/, "Beds page should render grow bag labels from bag rows");
 
 const hub = readFileSync(new URL("index-v5.html", repo), "utf8");
 assert.match(hub, /Mom's Garden/, "Hub should include a Mom's Garden tile");
-assert.match(hub, /13 plantings/, "Hub Mom tile should summarize planting count");
+assert.match(hub, /40 planted cells/, "Hub Mom tile should summarize planted cell count");
 
 const journal = readFileSync(new URL("journal.html", repo), "utf8");
 assert.match(journal, /gos-bed\.js/, "Journal should load GosBed data");
 assert.match(journal, /readMomJournalEntries/, "Journal should surface Mom data events");
-assert.match(journal, /mom-garden-data\.json v1/, "Journal should dedupe and display Mom load events");
+assert.match(journal, /mom-garden-data\.json v2/, "Journal should dedupe and display Mom load events");
 
 const doctor = readFileSync(new URL("garden-doctor-v5.html", repo), "utf8");
 assert.match(doctor, /URLSearchParams/, "Doctor should read Planner URL context");

@@ -438,7 +438,7 @@
     var entries = [];
     GosBed.readAll().forEach(function (bed) {
       (bed.events || []).forEach(function (event) {
-        if (!event || event.source !== 'mom-garden-data.json v1' || event.type !== 'journal') return;
+        if (!event || event.source !== 'mom-garden-data.json v2' || event.type !== 'journal') return;
         var key = event.message && event.message.indexOf('Loaded Mom Garden data') === 0
           ? event.message
           : [bed.id, event.message].join(':');

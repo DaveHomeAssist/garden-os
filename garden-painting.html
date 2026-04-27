@@ -954,7 +954,7 @@ function gosBedToInternal(gosBed) {
     comment: gosBed.comment,
     events: Array.isArray(gosBed.events) ? gosBed.events : [],
     rowLabels: gosBed.type === 'grow_bags'
-      ? ['Bags']
+      ? Array.from({ length: rows }, (_, i) => 'Bag ' + (i + 1))
       : Array.from({ length: rows }, (_, i) => 'Row ' + (i + 1)),
     shape: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1)),
     painted: (gosBed.painted || []).map(p => {
@@ -972,7 +972,7 @@ function gosBedToInternal(gosBed) {
         bedLocation: p.bedLocation,
         placementConfidence: p.placementConfidence,
         placementNote: p.placementNote,
-        label: p.label || (gosBed.type === 'grow_bags' ? 'Bag ' + (cell.c + 1) : null),
+        label: p.label || (gosBed.type === 'grow_bags' ? 'Bag ' + ((rows > 1 ? cell.r : cell.c) + 1) : null),
         notes: p.notes,
       };
     }).filter(Boolean),

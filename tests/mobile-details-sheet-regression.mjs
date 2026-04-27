@@ -30,7 +30,7 @@ assert.match(painting, /red_lettuce:\s*\{[^}]*label:'Red Lettuce'[^}]*color:RED_
 assert.match(painting, /let:\s*\{[^}]*label:'Leaf Lettuce'[\s\S]*red_lettuce:\s*\{[^}]*label:'Red Lettuce'[\s\S]*head_lettuce:\s*\{[^}]*label:'Head Lettuce'/, "Red lettuce should appear before the second green lettuce option");
 assert.match(painting, /cellVarietyLabel/, "Selected occupied cells should surface variety labels");
 assert.match(momGarden, /Parris Island Cos|Marvel of Four Seasons/, "Mom lettuce varieties should remain available to visible copy paths");
-assert.match(momGarden, /"id": "mom_lettuce_butterhead_red_marvel_left"[\s\S]*"cropId": "red_lettuce"/, "Mom's red butterhead lettuce should use the red lettuce crop id");
+assert.match(momGarden, /"id": "mom_left_red_lettuce_marvel"[\s\S]*"cropId": "red_lettuce"/, "Mom's red butterhead lettuce should use the red lettuce crop id");
 assert.match(painting, /function cropVisualForPlanting/, "Bed cells should derive visual color from planting-level variety data");
 assert.match(painting, /RED_LETTUCE_COLOR/, "Red lettuce should have a dedicated visual color");
 assert.match(painting, /data-crop-color/, "Rendered bed cells should expose resolved crop color for browser verification");

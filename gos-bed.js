@@ -138,6 +138,8 @@
       placementConfidence: p.placementConfidence,
       placementNote: p.placementNote,
       label: p.label,
+      sourcePlantingId: p.sourcePlantingId,
+      sourcePlantingCellIndex: p.sourcePlantingCellIndex,
       notes: p.notes
     };
     // Round-trip optional planting timestamp + ISO week when present.
@@ -392,12 +394,14 @@
   }
 
   // ── Mom-first static data loader ────────────────────────────────────────
-  var MOM_SOURCE = 'mom-garden-data.json v1';
+  var MOM_SOURCE = 'mom-garden-data.json v2';
 
   function countMomPlantings(data) {
     if (!data || !Array.isArray(data.beds)) return 0;
     return data.beds.reduce(function (sum, bed) {
-      return sum + (Array.isArray(bed.plantings) ? bed.plantings.length : 0);
+      return sum + (Array.isArray(bed.plantings) ? bed.plantings.reduce(function (bedSum, planting) {
+        return bedSum + (Array.isArray(planting.cells) && planting.cells.length ? planting.cells.length : 1);
+      }, 0) : 0);
     }, 0);
   }
 
@@ -416,6 +420,47 @@
       if (!used[row + ':' + c]) return c;
     }
     return null;
+  }
+
+  function growBagLabel(row, col, rows, cols) {
+    if (rows > 1) return 'Bag ' + (row + 1);
+    return 'Bag ' + (col + 1);
+  }
+
+  function explicitCellTargets(cells, rows, cols) {
+    if (!Array.isArray(cells)) return [];
+    return cells.map(parseCell).filter(function (cell) {
+      return cell && cell.r >= 0 && cell.c >= 0 && cell.r < rows && cell.c < cols;
+    }).map(function (cell) {
+      return { row: cell.r, col: cell.c, confidence: 'explicit-cell', note: null };
+    });
+  }
+
+  function fallbackCellTarget(srcBed, planting, index, used, rows, cols) {
+    var row = null;
+    var col = null;
+    var confidence = 'unknown';
+    var note = '';
+    if (srcBed.type === 'grow_bags') {
+      row = rows > 1 ? bagFromLocation(planting.bedLocation) : 0;
+      col = rows > 1 ? nextOpenColumn(used, row, cols) : bagFromLocation(planting.bedLocation);
+      confidence = (row == null && col == null) ? 'auto' : 'explicit';
+    } else {
+      row = rowFromLocation(planting.bedLocation);
+      if (row != null) {
+        col = nextOpenColumn(used, row, cols);
+        confidence = 'row';
+        note = 'Garden OS placed left-to-right within the source row.';
+      }
+    }
+    if (row == null || row >= rows) row = Math.min(rows - 1, Math.floor(index / cols));
+    if (col == null || col >= cols) {
+      col = nextOpenColumn(used, row, cols);
+      if (col == null) col = Math.min(cols - 1, index % cols);
+      if (confidence === 'unknown') confidence = 'auto';
+      if (!note) note = 'Garden OS placed this planting because the source did not include an exact cell.';
+    }
+    return { row: row, col: col, confidence: confidence, note: note || null };
   }
 
   function createJournalEvent(message, bedId, loadedAt, payload) {
@@ -449,32 +494,20 @@
       var used = {};
       var painted = [];
       (srcBed.plantings || []).forEach(function (planting, index) {
-        var row = null;
-        var col = null;
-        var confidence = 'unknown';
-        var note = '';
-        if (srcBed.type === 'grow_bags') {
-          row = 0;
-          col = bagFromLocation(planting.bedLocation);
-          confidence = col == null ? 'auto' : 'explicit';
-        } else {
-          row = rowFromLocation(planting.bedLocation);
-          if (row != null) {
-            col = nextOpenColumn(used, row, cols);
-            confidence = 'row';
-            note = 'Garden OS placed left-to-right within the source row.';
-          }
-        }
-        if (row == null || row >= rows) row = Math.min(rows - 1, Math.floor(index / cols));
-        if (col == null || col >= cols) {
-          col = nextOpenColumn(used, row, cols);
-          if (col == null) col = Math.min(cols - 1, index % cols);
-          if (confidence === 'unknown') confidence = 'auto';
-          if (!note) note = 'Garden OS placed this planting because the source did not include an exact cell.';
+        var targets = explicitCellTargets(planting.cells, rows, cols);
+        if (!targets.length) targets = [fallbackCellTarget(srcBed, planting, index, used, rows, cols)];
+        targets.forEach(function (target, targetIndex) {
+        var row = target.row;
+        var col = target.col;
+        var confidence = target.confidence;
+        var note = target.note;
+        if (used[row + ':' + col]) {
+          note = note || 'Garden OS skipped an already-filled source cell.';
+          return;
         }
         used[row + ':' + col] = true;
         painted.push(copyPaintedEntry({
-          id: planting.id,
+          id: targets.length > 1 ? planting.id + '__' + formatCell(row, col) : planting.id,
           cell: formatCell(row, col),
           cropId: planting.cropId,
           cropName: planting.displayName || planting.cropId,
@@ -487,7 +520,9 @@
           sourceBedName: srcBed.name,
           placementConfidence: confidence,
           placementNote: note || null,
-          label: srcBed.type === 'grow_bags' ? 'Bag ' + (col + 1) : null,
+          label: srcBed.type === 'grow_bags' ? growBagLabel(row, col, rows, cols) : null,
+          sourcePlantingId: planting.id,
+          sourcePlantingCellIndex: targetIndex,
           plantedAt: planting.plantedOnStart,
           plantedOnStart: planting.plantedOnStart,
           plantedOnEnd: planting.plantedOnEnd,
@@ -495,6 +530,7 @@
           season: planting.season,
           notes: planting.notes
         }));
+        });
       });
       return {
         schemaVersion: SCHEMA_VERSION,
