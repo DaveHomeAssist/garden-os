@@ -104,11 +104,14 @@ const T = {
   fontMono: "'DM Mono', ui-monospace, monospace",
 };
 
+const RED_LETTUCE_COLOR = '#a83a3a';
+
 // ── Crop catalog (12 fixtures, mirrors v5 Planner) ──────────────────────────
 const CROPS = {
   tom: { name:'Tomato',   mono:'To', color:'#c8412a', family:'Nightshade', sun:'full', daysToMaturity:75 },
   bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c', family:'Herb',       sun:'full', daysToMaturity:60 },
   let: { name:'Lettuce', label:'Leaf Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sun:'part', daysToMaturity:45 },
+  red_lettuce: { name:'Lettuce', label:'Red Lettuce', mono:'RL', color:RED_LETTUCE_COLOR, family:'Leafy', sun:'part', daysToMaturity:55 },
   head_lettuce: { name:'Lettuce', label:'Head Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sun:'part', daysToMaturity:55 },
   rad: { name:'Radish',   mono:'Ra', color:'#b84a1a', family:'Root',       sun:'full', daysToMaturity:28 },
   car: { name:'Carrot',   mono:'Ca', color:'#d4651a', family:'Root',       sun:'full', daysToMaturity:70 },
@@ -136,8 +139,6 @@ const STATUS_COLORS = {
   Done: T.leafBright,
   Failed: T.bad,
 };
-
-const RED_LETTUCE_COLOR = '#a83a3a';
 
 // ── Multi-bed fixture (mirrors src/paint-data.jsx) ──────────────────────────
 const BEDS = [

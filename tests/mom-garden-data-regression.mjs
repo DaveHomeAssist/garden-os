@@ -25,8 +25,8 @@ assert.deepEqual(
 );
 assert.equal(
   new Set(plantings.map(({ planting }) => planting.cropId)).size,
-  6,
-  "Mom data should contain 6 distinct crop IDs",
+  7,
+  "Mom data should contain 7 distinct crop IDs",
 );
 assert.equal(
   plantings.filter(({ planting }) => planting.varietyName).length,
@@ -116,6 +116,7 @@ const loadedLeft = context.GosBed.read("raised_bed_left");
 assert.equal(loadedLeft.source, "mom-garden-data.json v1");
 assert.equal(loadedLeft.loadedAt, "2026-04-27T12:00:00.000Z");
 assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Wando").cropId, "peas");
+assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Marvel of Four Seasons").cropId, "red_lettuce");
 assert.equal(
   loadedLeft.events.filter((event) => event.type === "journal").length,
   5,
@@ -123,7 +124,7 @@ assert.equal(
 );
 
 const planner = readFileSync(new URL("garden-planner-v5.html", repo), "utf8");
-for (const cropId of ["peas", "scallion", "garlic", "head_lettuce", "kale", "carrot"]) {
+for (const cropId of ["peas", "scallion", "garlic", "head_lettuce", "red_lettuce", "kale", "carrot"]) {
   assert.match(planner, new RegExp(`${cropId}:\\s*\\{`), `Planner fallback CROPS should include ${cropId}`);
 }
 assert.match(planner, /mono:'Ps'/, "Peas should use Ps mono label to avoid Pepper's Pe collision");

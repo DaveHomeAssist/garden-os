@@ -37,7 +37,7 @@
         },
         {
           "id": "mom_lettuce_butterhead_red_marvel_left",
-          "cropId": "head_lettuce",
+          "cropId": "red_lettuce",
           "displayName": "Lettuce, Butterhead Red",
           "varietyName": "Marvel of Four Seasons",
           "status": "Planted",
@@ -164,7 +164,7 @@
         },
         {
           "id": "mom_lettuce_butterhead_red_marvel_bag5",
-          "cropId": "head_lettuce",
+          "cropId": "red_lettuce",
           "displayName": "Lettuce, Butterhead Red",
           "varietyName": "Marvel of Four Seasons",
           "status": "Planted",
