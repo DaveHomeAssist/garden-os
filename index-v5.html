@@ -124,27 +124,34 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
-    { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
-    { id:'journal', label:'Journal', href:'journal.html' },
+    { id:'home',    label:'Home',          href:'index-v5.html' },
+    { id:'game',    label:'Play Game',     href:'garden-league-simulator-v4.html' },
+    { id:'planner', label:'Planner',       href:'garden-planner-v5.html' },
+    { id:'beds',    label:'Beds',          href:'garden-painting.html' },
+    { id:'journal', label:'Journal',       href:'journal.html' },
+    { id:'build',   label:'Build Guide',   href:'garden-cage-build-guide.html' },
+    { id:'ops',     label:'Ops Guide',     href:'garden-cage-ops-guide.html' },
+    { id:'think',   label:'How It Thinks', href:'how-it-thinks-v5.html' },
+    { id:'dev',     label:'Dev Tools',     href:'index-v5.html?dev=1', muted:true },
   ];
   return (
     <nav style={{
-      flexShrink: 0, height: 66, background: T.panel,
+      flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: 1, textAlign: 'center', padding: '4px 0',
+          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
-          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+          color: t.id === active ? T.leaf : T.textMuted,
+          minHeight: 44, opacity: t.muted ? 0.58 : 1,
         }}>
           <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
-            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+            style={{ fontWeight: t.id === active ? 600 : 400, whiteSpace: 'nowrap' }}>{t.label}</Label>
         </a>
       ))}
     </nav>
@@ -636,14 +643,14 @@ function MoreToolsSheet({ onClose, onOpenDevTools }) {
           }}>{Icons.close(14, T.textSoft)}</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 18 }}>
+          <MoreToolsRow icon={Icons.story} title="Play Game"
+            subtitle="Play through a season" href="garden-league-simulator-v4.html"/>
           <MoreToolsRow icon={Icons.build} title="Build Guide"
             subtitle="Pick a bed, list materials" href="garden-cage-build-guide.html"/>
           <MoreToolsRow icon={Icons.ops}   title="Ops Guide"
             subtitle="Weekly garden ops" href="garden-cage-ops-guide.html"/>
           <MoreToolsRow icon={Icons.story} title="How It Thinks"
             subtitle="Scoring logic, plainly" href="how-it-thinks-v5.html"/>
-          <MoreToolsRow icon={Icons.story} title="Story Mode"
-            subtitle="Play through a season" href="story-mode/"/>
           <MoreToolsRow icon={Icons.code}  title="Dev Tools"
             subtitle="Beds · storage · raw log" onClick={onOpenDevTools} last/>
         </div>
@@ -1119,7 +1126,7 @@ function DevToolsOverlay({ onClose }) {
                 padding: '14px 12px', background: T.panel,
                 border: `1px dashed ${T.borderSoft}`, borderRadius: 8,
                 fontFamily: T.fontSerif, fontSize: 12, color: T.textSoft, fontStyle: 'italic',
-              }}>No beds yet. Create one in Paint.</div>
+              }}>No beds yet. Create one in Beds.</div>
             ) : (
               <div style={{
                 background: T.panel, borderRadius: 8,
@@ -1299,6 +1306,11 @@ function Hub() {
   const compact = tweak.density === 'compact';
 
   React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('dev') === '1') setDevOpen(true);
+  }, []);
+
+  React.useEffect(() => {
     function refresh() { setBedSummary(loadActiveBedSummary()); }
     function onStorage(e) {
       if (!e.key) { refresh(); return; }
@@ -1362,10 +1374,10 @@ function Hub() {
             marginTop: 6, display: 'grid', gridTemplateColumns: '1fr 1fr',
             gap: compact ? 8 : 10,
           }}>
-            <Tile title="Plan"    subtitle="The season at a glance"      icon={Icons.plan}    href="garden-planner-v5.html" compact={compact}/>
-            <Tile title="Paint"   subtitle="Place crops in the bed"      icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
-            <Tile title="Doctor"  subtitle="What's wrong with this leaf" icon={Icons.doctor}  href="garden-doctor-v5.html"   compact={compact}/>
-            <Tile title="Journal" subtitle="Garden memory and system inbox" icon={Icons.journal} href="journal.html" compact={compact}/>
+            <Tile title="Play Game" subtitle="Play through a season"        icon={Icons.story}   href="garden-league-simulator-v4.html" compact={compact}/>
+            <Tile title="Planner"   subtitle="The season at a glance"       icon={Icons.plan}    href="garden-planner-v5.html" compact={compact}/>
+            <Tile title="Beds"      subtitle="Place crops in the bed"       icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
+            <Tile title="Journal"   subtitle="Garden memory and system inbox" icon={Icons.journal} href="journal.html" compact={compact}/>
           </div>
         </section>
 
@@ -1387,7 +1399,7 @@ function Hub() {
               fontWeight: 600, color: T.text, letterSpacing: -0.1,
             }}>More tools</span>
             <span style={{ display: 'block', fontSize: 11, color: T.textSoft, lineHeight: 1.3, marginTop: 1 }}>
-              Build, Ops, Story Mode, Dev
+              Play Game, Build, Ops, How It Thinks, Dev
             </span>
           </span>
           <span style={{ display: 'inline-flex' }}>{Icons.arrow(13, T.textMuted)}</span>
@@ -1410,7 +1422,7 @@ function Hub() {
         ))}
       </div>
 
-      <TabBar active="hub"/>
+      <TabBar active="home"/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
       {moreOpen && <MoreToolsSheet onClose={() => setMoreOpen(false)} onOpenDevTools={openDevTools}/>}
       {devOpen && <DevToolsOverlay onClose={() => setDevOpen(false)}/>}
@@ -1419,7 +1431,7 @@ function Hub() {
 }
 
 // Cold-start route (PR #21): if no active bed lives in localStorage, send
-// the user to Painting before any Hub UI renders. The flag suppresses the
+// the user to Beds before any Hub UI renders. The flag suppresses the
 // ReactDOM render so there's no flash of Hub during the navigation. Fails
 // open with a console warning if gos-bed.js failed to load — better to show
 // a Hub with empty data than to lock the user in a redirect loop.

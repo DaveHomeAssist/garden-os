@@ -183,27 +183,34 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
-    { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
-    { id:'journal', label:'Journal', href:'journal.html' },
+    { id:'home',    label:'Home',          href:'index-v5.html' },
+    { id:'game',    label:'Play Game',     href:'garden-league-simulator-v4.html' },
+    { id:'planner', label:'Planner',       href:'garden-planner-v5.html' },
+    { id:'beds',    label:'Beds',          href:'garden-painting.html' },
+    { id:'journal', label:'Journal',       href:'journal.html' },
+    { id:'build',   label:'Build Guide',   href:'garden-cage-build-guide.html' },
+    { id:'ops',     label:'Ops Guide',     href:'garden-cage-ops-guide.html' },
+    { id:'think',   label:'How It Thinks', href:'how-it-thinks-v5.html' },
+    { id:'dev',     label:'Dev Tools',     href:'index-v5.html?dev=1', muted:true },
   ];
   return (
     <nav style={{
-      flexShrink: 0, height: 66, background: T.panel,
+      flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: 1, textAlign: 'center', padding: '4px 0',
+          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
-          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+          color: t.id === active ? T.leaf : T.textMuted,
+          minHeight: 44, opacity: t.muted ? 0.58 : 1,
         }}>
           <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
-            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+            style={{ fontWeight: t.id === active ? 600 : 400, whiteSpace: 'nowrap' }}>{t.label}</Label>
         </a>
       ))}
     </nav>
@@ -891,7 +898,7 @@ function RetroEmptyNoBed() {
         fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
         color: T.textSoft, lineHeight: 1.5, marginTop: 6,
       }}>
-        Paint a bed first, then come back here to see your season summary.
+        Set up a bed first, then come back here to see your season summary.
       </div>
       <a href="garden-painting.html" style={{
         display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -899,7 +906,7 @@ function RetroEmptyNoBed() {
         background: T.leafBright, color: '#fff',
         fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
         textDecoration: 'none', minHeight: 36,
-      }}>Go to Painting →</a>
+      }}>Go to Beds →</a>
     </div>
   );
 }

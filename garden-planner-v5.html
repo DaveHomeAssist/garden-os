@@ -87,7 +87,7 @@
 <script src="gos-journal.js"></script>
 </head>
 <body>
-<a class="v5-eyebrow" href="index.html">← Garden OS</a>
+<a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
 <div id="shell"><div id="root"></div></div>
 
 <script type="text/babel" data-presets="react">
@@ -574,7 +574,7 @@ function isProtectedCropEvent(e) {
 }
 function pickWeeklyHeadline(bed, events, today, calendar, frostWeeks) {
   const planted = Array.isArray(bed) ? bed.filter(x => x && x.crop) : [];
-  if (!planted.length) return 'Your bed is empty. Open Painting to plant your first crop.';
+  if (!planted.length) return 'Your bed is empty. Open Beds to plant your first crop.';
   const season = today.seasonYear;
   const week = today.week;
   const seen = new Set();
@@ -769,35 +769,43 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id: 'hub',     label: 'Hub',     href: 'index-v5.html' },
-    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
-    { id: 'planner', label: 'Plan',    href: null },
-    { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
-    { id: 'journal', label: 'Journal', href: 'journal.html' },
+    { id: 'home',    label: 'Home',          href: 'index-v5.html' },
+    { id: 'game',    label: 'Play Game',     href: 'garden-league-simulator-v4.html' },
+    { id: 'planner', label: 'Planner',       href: 'garden-planner-v5.html' },
+    { id: 'beds',    label: 'Beds',          href: 'garden-painting.html' },
+    { id: 'journal', label: 'Journal',       href: 'journal.html' },
+    { id: 'build',   label: 'Build Guide',   href: 'garden-cage-build-guide.html' },
+    { id: 'ops',     label: 'Ops Guide',     href: 'garden-cage-ops-guide.html' },
+    { id: 'think',   label: 'How It Thinks', href: 'how-it-thinks-v5.html' },
+    { id: 'dev',     label: 'Dev Tools',     href: 'index-v5.html?dev=1', muted: true },
   ];
   return (
     <nav style={{
-      flexShrink: 0, height: 66, background: T.panel,
+      flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
       {tabs.map(t => {
         const activeTab = t.id === active;
         const style = {
-          flex: 1, textAlign: 'center', padding: '4px 0',
+          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          textAlign: 'center', padding: '4px 8px',
           borderTop: activeTab ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
           color: activeTab ? T.leaf : T.textMuted,
           background: 'transparent',
           borderLeft: 0, borderRight: 0, borderBottom: 0,
+          minHeight: 44,
+          opacity: t.muted ? 0.58 : 1,
         };
         return activeTab ? (
           <span key={t.id} aria-current="page" style={style}>
-            <Label size={10} color={T.leaf} style={{ fontWeight: 600 }}>{t.label}</Label>
+            <Label size={10} color={T.leaf} style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{t.label}</Label>
           </span>
         ) : (
           <a key={t.id} href={t.href} style={style}>
-            <Label size={10} color={T.textMuted} style={{ fontWeight: 400 }}>{t.label}</Label>
+            <Label size={10} color={T.textMuted} style={{ fontWeight: 400, whiteSpace: 'nowrap' }}>{t.label}</Label>
           </a>
         );
       })}
@@ -1406,7 +1414,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
               Harvested — log yield
             </ActionBtn>
             {inBed && !isFixture && (
-              <ActionBtn onClick={onRemove}>Remove (in Painting)</ActionBtn>
+              <ActionBtn onClick={onRemove}>Remove (in Beds)</ActionBtn>
             )}
           </div>
         )}
@@ -1650,7 +1658,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
           <span style={{
             fontFamily: T.fontSans, fontSize: 12, color: T.text, lineHeight: 1.4, flex: 1,
           }}>
-            Showing example data. <a href="garden-painting.html" style={{ color: T.leaf, fontWeight: 600 }}>Set up your bed in Painting</a> to see your real plan.
+            Showing example data. <a href="garden-painting.html" style={{ color: T.leaf, fontWeight: 600 }}>Set up your bed in Beds</a> to see your real plan.
           </span>
           <button type="button" aria-label="Dismiss banner" onClick={() => setFixtureBannerDismissed(true)} style={{
             width: 28, height: 28, minWidth: 28, minHeight: 28, padding: 0,
@@ -1690,9 +1698,9 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
             cursor: 'pointer', padding: 0,
           }}>{Icons.gear(14, T.soil)}</button>
           <button type="button"
-            aria-label={isPreview ? 'Reset season position to add crops' : 'Open Painting to add crops'}
+            aria-label={isPreview ? 'Reset season position to add crops' : 'Open Beds to add crops'}
             disabled={isPreview}
-            title={isPreview ? 'Reset season position to add crops' : 'Open Painting to add crops'}
+            title={isPreview ? 'Reset season position to add crops' : 'Open Beds to add crops'}
             onClick={onAdd} style={{
             width: 32, height: 32, borderRadius: 8,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
@@ -1735,7 +1743,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
             display: 'inline-flex', alignItems: 'center',
             background: T.leafBright, color: '#fff', textDecoration: 'none',
             fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
-          }}>Open Painting →</a>
+          }}>Open Beds →</a>
         </div>
       )}
 
@@ -2036,14 +2044,14 @@ function App() {
   const frostWeeks = getFrostWeeks(gosBed);
   const calendar = React.useMemo(() => buildCalendar(Number(now.seasonYear), CROPS, frostWeeks), [now.seasonYear, catalogVersion, frostWeeks && frostWeeks.last, frostWeeks && frostWeeks.first]);
 
-  // Bed-content edits live in the Painting screen now. Both the fixture and
+  // Bed-content edits live in the Beds screen now. Both the fixture and
   // the real-bed paths route the user there to keep one canonical writer.
-  const goToPainting = () => {
+  const goToBeds = () => {
     try { window.location.href = 'garden-painting.html'; } catch (_) {}
   };
 
   const handleMarkDone = (cropKey) => {
-    if (!gosBed) { goToPainting(); return; }
+    if (!gosBed) { goToBeds(); return; }
     const ev = makeDoneEvent('mark_done', gosBed, cropKey, null, null, now, 'crop');
     const res = appendEventToActiveBed(ev, revision);
     if (!res.ok) { refresh(); showToast({ type: 'error', message: classifyWriteError(res) }); return; }
@@ -2052,7 +2060,7 @@ function App() {
   };
 
   const handleHarvest = (cropKey, opts) => {
-    if (!gosBed) { goToPainting(); return; }
+    if (!gosBed) { goToBeds(); return; }
     const ev = makeDoneEvent('harvest', gosBed, cropKey, null, opts || {}, now, 'crop');
     const res = appendEventToActiveBed(ev, revision);
     if (!res.ok) { refresh(); showToast({ type: 'error', message: classifyWriteError(res) }); return; }
@@ -2087,7 +2095,7 @@ function App() {
   // the gardener can log "this row of lettuce is done" without claiming the
   // whole crop is finished.
   const handleMarkCellDone = (cropKey, cellStr) => {
-    if (!gosBed || !cellStr) { goToPainting(); return; }
+    if (!gosBed || !cellStr) { goToBeds(); return; }
     const ev = makeDoneEvent('mark_done', gosBed, cropKey, cellStr, null, now, 'cell');
     const res = appendEventToActiveBed(ev, revision);
     if (!res.ok) { refresh(); showToast({ type: 'error', message: classifyWriteError(res) }); return; }
@@ -2095,7 +2103,7 @@ function App() {
     showToast({ type: 'success', message: 'Cell saved.' });
   };
   const handleHarvestCell = (cropKey, cellStr, opts) => {
-    if (!gosBed || !cellStr) { goToPainting(); return; }
+    if (!gosBed || !cellStr) { goToBeds(); return; }
     const ev = makeDoneEvent('harvest', gosBed, cropKey, cellStr, opts || {}, now, 'cell');
     const res = appendEventToActiveBed(ev, revision);
     if (!res.ok) { refresh(); showToast({ type: 'error', message: classifyWriteError(res) }); return; }
@@ -2137,8 +2145,8 @@ function App() {
         dimensions={dimensions}
         catalogWarning={catalogWarning}
         onOpenTweaks={() => setTweaksOpen(true)}
-        onAdd={goToPainting}
-        onRemove={goToPainting}
+        onAdd={goToBeds}
+        onRemove={goToBeds}
         onRecord={(cropKey, type) => {
           // Legacy bridge: callers still passing 'harvested' get routed to
           // mark_done so the new schema is the only writer.
