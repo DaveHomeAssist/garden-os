@@ -28,6 +28,21 @@
     padding: 0;
   }
   #root { display: contents; }
+  /* Bed-wide score badge highlight: weakest cells get a sun-colored outline. */
+  .gos-cell-weak {
+    outline: 2px solid #f5a623;
+    background-color: rgba(245, 166, 35, 0.15);
+    position: relative;
+  }
+  .gos-cell-weak::after {
+    content: "↓";
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 10px;
+    color: #f5a623;
+    pointer-events: none;
+  }
   @media (min-width: 480px) {
     #shell { padding: 32px 16px 64px; align-items: center; }
   }
@@ -147,33 +162,69 @@ const BEDS = [
   },
 ];
 
-// ── Cell-level recommendation scoring (mirrors src/paint-data.jsx) ──────────
-function recsForCell(bed, r, c) {
+// ── Cell-level scoring (mirrors src/paint-data.jsx) ─────────────────────────
+// Pure scoring kernel: given a bed, a cell coord, and a candidate crop id,
+// returns a 1-10 score. Used both by recsForCell (try every crop in an empty
+// cell) and by computeBedScore (score the actual placed crop in each cell).
+function scoreCropCell(bed, r, c, cropId) {
+  if (!bed || !cropId) return 5;
+  const cd = CROPS[cropId];
+  if (!cd) return 5;
   const neighbors = [];
-  [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => {
-    const cell = bed.painted.find(p => p.r === r+dr && p.c === c+dc);
+  [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
+    const nr = r + dr, nc = c + dc;
+    const cell = (bed.painted || []).find(p => p.r === nr && p.c === nc);
     if (cell) neighbors.push(cell.crop);
   });
   const isBack = r === 0;
-  const isFront = r === bed.rows - 1;
-  const allCrops = Object.keys(CROPS);
-  const scored = allCrops.map(k => {
-    const c = CROPS[k];
-    let score = 5;
-    if (isBack && (k === 'tom' || k === 'cuc' || k === 'pep')) score += 2;
-    if (isFront && (k === 'let' || k === 'rad' || k === 'spi')) score += 1.8;
-    if (c.sun === 'full' && bed.sun === 'full') score += 0.7;
-    if (c.sun === 'part' && bed.sun === 'part') score += 1.2;
-    if (c.sun === 'full' && bed.sun === 'part') score -= 1.5;
-    if (neighbors.includes('tom') && (k === 'bas' || k === 'mar')) score += 1.5;
-    if (neighbors.includes('car') && k === 'oni') score += 0.8;
-    if (neighbors.includes(k)) score += 0.5;
-    if (neighbors.includes('oni') && k === 'bas') score -= 1;
-    if (k === 'tom' || k === 'cuc' || k === 'pep') score += 0.5;
-    score = Math.max(1, Math.min(10, score));
-    return { crop: k, score };
-  });
-  return scored.sort((a, b) => b.score - a.score);
+  const isFront = r === (bed.rows - 1);
+  const k = cropId;
+  let score = 5;
+  if (isBack && (k === 'tom' || k === 'cuc' || k === 'pep')) score += 2;
+  if (isFront && (k === 'let' || k === 'rad' || k === 'spi')) score += 1.8;
+  if (cd.sun === 'full' && bed.sun === 'full') score += 0.7;
+  if (cd.sun === 'part' && bed.sun === 'part') score += 1.2;
+  if (cd.sun === 'full' && bed.sun === 'part') score -= 1.5;
+  if (neighbors.includes('tom') && (k === 'bas' || k === 'mar')) score += 1.5;
+  if (neighbors.includes('car') && k === 'oni') score += 0.8;
+  if (neighbors.includes(k)) score += 0.5;
+  if (neighbors.includes('oni') && k === 'bas') score -= 1;
+  if (k === 'tom' || k === 'cuc' || k === 'pep') score += 0.5;
+  return Math.max(1, Math.min(10, score));
+}
+
+function recsForCell(bed, r, c) {
+  return Object.keys(CROPS)
+    .map(k => ({ crop: k, score: scoreCropCell(bed, r, c, k) }))
+    .sort((a, b) => b.score - a.score);
+}
+
+// Aggregate the bed's score from all occupied cells. Returns:
+//   { score: 0-100 number | null, weakestCells: ["r0c2", ...] }
+// score = round(avg cell score * 10) on the 1-10 -> 0-100 mapping.
+// weakestCells = cells more than 15 pts (in 0-100 space) below avg, OR
+// the bottom 20 percent (min 1) when none qualify.
+function computeBedScore(bed) {
+  if (!bed) return { score: null, weakestCells: [] };
+  const occupied = (bed.painted || []).filter(p => p && p.crop);
+  if (!occupied.length) return { score: null, weakestCells: [] };
+  const scored = occupied.map(cell => ({
+    r: cell.r, c: cell.c,
+    score10: scoreCropCell(bed, cell.r, cell.c, cell.crop),
+  }));
+  const avg10 = scored.reduce((acc, x) => acc + x.score10, 0) / scored.length;
+  const bedScore = Math.round(avg10 * 10);
+  const threshold10 = avg10 - 1.5;
+  let weak = scored.filter(x => x.score10 < threshold10);
+  if (weak.length === 0) {
+    const sorted = [...scored].sort((a, b) => a.score10 - b.score10);
+    const n = Math.max(1, Math.floor(scored.length * 0.2));
+    weak = sorted.slice(0, n);
+  }
+  return {
+    score: bedScore,
+    weakestCells: weak.map(x => 'r' + x.r + 'c' + x.c),
+  };
 }
 
 // ── Tiny SVG icon set ───────────────────────────────────────────────────────
@@ -274,8 +325,8 @@ function FakeStatusBar() {
 function TabBar({ active }) {
   const tabs = [
     { id: 'hub',     label: 'Hub',     href: 'index-v5.html' },
-    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
     { id: 'planner', label: 'Plan',    href: 'garden-planner-v5.html' },
+    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
     { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
     { id: 'journal', label: 'Journal', href: 'how-it-thinks-v5.html' },
   ];
@@ -610,70 +661,604 @@ function loadActiveBedAsInternal() {
 
 // First-run stub. Creates a default 4×8 bed via the pending-then-commit flow
 // so the data primitive is exercised end to end. Full creator UI is next task.
-function SetupStub({ onCreated }) {
-  const handleCreate = () => {
-    if (typeof GosBed === 'undefined') {
-      alert('Bed storage unavailable.');
-      return;
+// ── Bed creator (build-order item #2) ──────────────────────────────────────
+const SIZE_PRESETS = ['2x4', '2x6', '4x4', '4x6', '4x8', '4x12'];
+
+function slugifyName(input) {
+  return String(input || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function isMidSeasonNow() {
+  const m = new Date().getMonth(); // 0 = Jan; May=4..Sep=8
+  return m >= 4 && m <= 8;
+}
+
+function readPendingRaw() {
+  try {
+    const raw = window.localStorage.getItem('gos.bed.pending');
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+
+const SunIcons = {
+  full: (s = 30, c = T.sun) => (
+    <svg width={s} height={s} viewBox="0 0 32 32" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <circle cx="16" cy="16" r="5" fill={c} stroke="none"/>
+      <path d="M16 3v3M16 26v3M3 16h3M26 16h3M6 6l2.1 2.1M23.9 23.9L26 26M6 26l2.1-2.1M23.9 8.1L26 6"/>
+    </svg>
+  ),
+  partial: (s = 30, c = T.cedar) => (
+    <svg width={s} height={s} viewBox="0 0 32 32" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.4" fill={c} fillOpacity="0.5" stroke="none"/>
+      <path d="M12 4.5v2M4.5 12h2M7 7l1.4 1.4M16.5 7l-1.4 1.4"/>
+      <path d="M11 24h12a4.5 4.5 0 0 0 0-9 5.5 5.5 0 0 0-10.5 1A4.5 4.5 0 0 0 11 24z" fill={c} fillOpacity="0.18"/>
+    </svg>
+  ),
+  shade: (s = 30, c = T.textSoft) => (
+    <svg width={s} height={s} viewBox="0 0 32 32" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 23h14a5 5 0 0 0 0-10 6 6 0 0 0-11.5 1A5 5 0 0 0 9 23z" fill={c} fillOpacity="0.22"/>
+    </svg>
+  ),
+};
+
+function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
+  const initialPending = React.useMemo(readPendingRaw, []);
+  const [showResumeBanner, setShowResumeBanner] = React.useState(initialPending !== null);
+  const [step, setStep] = React.useState(1);
+  const [name, setName] = React.useState('');
+  const [shape, setShape] = React.useState('4x8');
+  const [customW, setCustomW] = React.useState(3);
+  const [customL, setCustomL] = React.useState(7);
+  const [sun, setSun] = React.useState('full');
+  const [error, setError] = React.useState('');
+  const nameInputRef = React.useRef(null);
+  const isMidSeason = React.useMemo(isMidSeasonNow, []);
+  const existingBedIds = React.useMemo(() =>
+    (typeof GosBed !== 'undefined' ? GosBed.readAll().map(b => b.id) : []), []);
+
+  React.useEffect(() => {
+    if (step === 1 && nameInputRef.current && !showResumeBanner) {
+      nameInputRef.current.focus();
     }
-    GosBed.writePending({
-      id: 'my-first-bed',
-      name: 'My First Bed',
-      shape: '4x8',
-      sun: 'full',
-      painted: [],
-    });
-    console.log('pending bed created');
-    try {
-      GosBed.commitPending();
-    } catch (e) {
-      alert(e.message);
-      return;
+  }, [step, showResumeBanner]);
+
+  const applyShapeToState = (shapeStr) => {
+    if (!shapeStr) return;
+    if (SIZE_PRESETS.indexOf(shapeStr) >= 0) {
+      setShape(shapeStr);
+    } else {
+      const dims = (typeof GosBed !== 'undefined') ? GosBed.parseShape(shapeStr) : null;
+      if (dims) {
+        setShape('custom');
+        setCustomW(dims.cols);
+        setCustomL(dims.rows);
+      }
     }
-    GosBed.setActive('my-first-bed');
-    onCreated();
   };
+
+  const handleResume = () => {
+    if (!initialPending) return;
+    if (initialPending.name) setName(initialPending.name);
+    if (initialPending.shape) applyShapeToState(initialPending.shape);
+    if (initialPending.sun) setSun(initialPending.sun);
+    setShowResumeBanner(false);
+    setError('');
+    setStep(2);
+  };
+
+  const handleStartOver = () => {
+    if (typeof GosBed !== 'undefined') GosBed.discardPending();
+    setShowResumeBanner(false);
+    setName('');
+    setShape('4x8');
+    setSun('full');
+    setError('');
+  };
+
+  const handleStep1Next = () => {
+    const trimmed = name.trim();
+    if (!trimmed) { setError('Please enter a name.'); return; }
+    const id = slugifyName(trimmed);
+    if (!id) { setError('Please use letters or numbers in the name.'); return; }
+    if (existingBedIds.indexOf(id) >= 0) {
+      setError('You already have a bed with that name.');
+      return;
+    }
+    setError('');
+    try {
+      GosBed.writePending({ id, name: trimmed });
+    } catch (e) { setError(e.message); return; }
+    setStep(2);
+  };
+
+  const handleStep2Next = () => {
+    let finalShape;
+    if (shape === 'custom') {
+      const w = parseInt(customW, 10), l = parseInt(customL, 10);
+      if (!w || !l || w < 1 || w > 20 || l < 1 || l > 20) {
+        setError('Custom size must be 1 to 20 feet on each side.');
+        return;
+      }
+      finalShape = w + 'x' + l;
+    } else {
+      finalShape = shape;
+    }
+    setError('');
+    try {
+      const pending = readPendingRaw() || {};
+      GosBed.writePending(Object.assign({}, pending, { shape: finalShape }));
+    } catch (e) { setError(e.message); return; }
+    setStep(3);
+  };
+
+  const handleSave = () => {
+    setError('');
+    try {
+      const pending = readPendingRaw() || {};
+      GosBed.writePending(Object.assign({}, pending, { sun, painted: [] }));
+      const committed = GosBed.commitPending();
+      if (!committed) { setError('Could not save bed. Try again.'); return; }
+      GosBed.setActive(committed.id);
+      onComplete(committed);
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleCancelStep1 = () => {
+    if (typeof GosBed !== 'undefined') GosBed.discardPending();
+    onCancel && onCancel();
+  };
+
   return (
-    <div style={{
-      width: '100%', height: '100%', background: T.cream,
-      fontFamily: T.fontSans, color: T.text,
-      display: 'flex', flexDirection: 'column', position: 'relative',
+    <div role="dialog" aria-modal="true" aria-label="Set up a bed" style={{
+      position: 'absolute', inset: 0, zIndex: 200,
+      background: 'rgba(44,27,11,0.55)',
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      padding: '54px 14px 14px', overflowY: 'auto',
     }}>
-      <FakeStatusBar/>
+      <style>{`
+        @media (max-width: 480px) {
+          .gos-creator-grid { grid-template-columns: 1fr 1fr !important; }
+          .gos-creator-sun { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+        width: '100%', maxWidth: 360, background: T.cream,
+        borderRadius: 16, padding: '14px 18px 18px',
+        boxShadow: '0 24px 60px rgba(20,12,4,0.4)', border: `1px solid ${T.border}`,
+        fontFamily: T.fontSans, color: T.text,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <Label size={9} color={T.leaf}>NEW BED</Label>
+          <Label size={9} color={T.textSoft}>Step {step} of 3</Label>
+        </div>
+
+        {step === 1 && (
+          <div>
+            {showResumeBanner && (
+              <div style={{
+                marginBottom: 12, padding: '10px 12px', borderRadius: 10,
+                background: T.sunPale, border: `1px solid ${T.sunBright}`,
+              }}>
+                <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.text, lineHeight: 1.4, marginBottom: 8, fontStyle: 'italic' }}>
+                  You started setting up a bed earlier. Resume, or start over?
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={handleResume} style={{
+                    flex: 1, minHeight: 36, padding: '6px 10px', borderRadius: 8,
+                    background: T.leafBright, color: '#fff', border: 'none',
+                    fontFamily: T.fontSans, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  }}>Resume</button>
+                  <button onClick={handleStartOver} style={{
+                    flex: 1, minHeight: 36, padding: '6px 10px', borderRadius: 8,
+                    background: T.panel, color: T.text,
+                    border: `1px solid ${T.borderSoft}`,
+                    fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  }}>Start over</button>
+                </div>
+              </div>
+            )}
+
+            {isMidSeason && !showResumeBanner && (
+              <div style={{
+                marginBottom: 12, padding: '10px 12px', borderRadius: 10,
+                background: T.leafWash || '#edf5e8', border: `1px solid ${T.leafPale}`,
+                fontFamily: T.fontSerif, fontSize: 13, color: T.leaf, lineHeight: 1.45, fontStyle: 'italic',
+              }}>
+                Already growing? No problem. Tell us about your bed and we'll catch up to where you are.
+              </div>
+            )}
+
+            <div style={{
+              fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
+              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 10,
+            }}>What do you call this bed?</div>
+
+            <input ref={nameInputRef} type="text" value={name} maxLength={40}
+              onChange={e => { setName(e.target.value); if (error) setError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') handleStep1Next(); }}
+              placeholder="e.g. Front Bed, Raised Bed 1, South Corner"
+              aria-label="Bed name"
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 10,
+                border: `1px solid ${error ? T.rust : T.borderSoft}`,
+                background: T.panel, fontFamily: T.fontSans, fontSize: 14,
+                color: T.text, outline: 'none', boxSizing: 'border-box',
+              }}/>
+            {error && (
+              <div style={{ marginTop: 6, color: T.rust, fontFamily: T.fontSans, fontSize: 12 }}>
+                {error}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              {hasInitialBeds && (
+                <button onClick={handleCancelStep1} style={{
+                  flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
+                  background: 'transparent', color: T.textSoft,
+                  border: `1px solid ${T.borderSoft}`,
+                  fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                }}>Cancel</button>
+              )}
+              <button onClick={handleStep1Next} style={{
+                flex: hasInitialBeds ? 2 : 1, minHeight: 44, padding: '10px 14px', borderRadius: 10,
+                background: T.leafBright, color: '#fff', border: 'none',
+                fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(78,140,60,0.25)',
+              }}>Next →</button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <div style={{
+              fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
+              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 12,
+            }}>How big is this bed?</div>
+
+            <div className="gos-creator-grid" style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+            }}>
+              {SIZE_PRESETS.map(sz => {
+                const dims = sz.split('x').map(Number);
+                const aspect = dims[0] / dims[1];
+                const visW = aspect >= 1 ? 44 : Math.max(20, Math.round(44 * aspect));
+                const visH = aspect >= 1 ? Math.max(20, Math.round(44 / aspect)) : 44;
+                const sel = shape === sz;
+                return (
+                  <button key={sz} onClick={() => setShape(sz)} aria-pressed={sel} style={{
+                    padding: '12px 6px', borderRadius: 10,
+                    background: sel ? T.panel : T.cream,
+                    border: `1.5px solid ${sel ? T.leafBright : T.borderSoft}`,
+                    cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 8, minHeight: 88,
+                    boxShadow: sel ? '0 2px 6px rgba(78,140,60,0.18)' : 'none',
+                  }}>
+                    <div style={{
+                      width: visW, height: visH,
+                      background: T.cedarWash, border: `1.5px solid ${T.cedar}`, borderRadius: 3,
+                    }}/>
+                    <span style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 600, color: T.text, letterSpacing: 0.05 }}>
+                      {sz.replace('x', '×')}
+                    </span>
+                  </button>
+                );
+              })}
+              <button onClick={() => setShape('custom')} aria-pressed={shape === 'custom'} style={{
+                padding: '12px 6px', borderRadius: 10,
+                background: shape === 'custom' ? T.panel : T.cream,
+                border: `1.5px dashed ${shape === 'custom' ? T.leafBright : T.cedar}`,
+                cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 88,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 4, border: `1.5px dashed ${T.cedar}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: T.fontMono, fontSize: 18, color: T.cedar,
+                }}>+</div>
+                <span style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 600, color: T.text }}>
+                  Custom
+                </span>
+              </button>
+            </div>
+
+            {shape === 'custom' && (
+              <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
+                <label style={{ flex: 1 }}>
+                  <Label size={9} style={{ display: 'block', marginBottom: 4 }}>Width (ft)</Label>
+                  <input type="number" min="1" max="20" value={customW}
+                    onChange={e => setCustomW(e.target.value)} aria-label="Width in feet" style={{
+                    width: '100%', padding: '8px 10px', borderRadius: 8,
+                    border: `1px solid ${T.borderSoft}`, background: T.panel,
+                    fontFamily: T.fontSans, fontSize: 14, boxSizing: 'border-box',
+                  }}/>
+                </label>
+                <label style={{ flex: 1 }}>
+                  <Label size={9} style={{ display: 'block', marginBottom: 4 }}>Length (ft)</Label>
+                  <input type="number" min="1" max="20" value={customL}
+                    onChange={e => setCustomL(e.target.value)} aria-label="Length in feet" style={{
+                    width: '100%', padding: '8px 10px', borderRadius: 8,
+                    border: `1px solid ${T.borderSoft}`, background: T.panel,
+                    fontFamily: T.fontSans, fontSize: 14, boxSizing: 'border-box',
+                  }}/>
+                </label>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ marginTop: 8, color: T.rust, fontFamily: T.fontSans, fontSize: 12 }}>{error}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={() => { setError(''); setStep(1); }} style={{
+                flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
+                background: 'transparent', color: T.textSoft,
+                border: `1px solid ${T.borderSoft}`,
+                fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}>← Back</button>
+              <button onClick={handleStep2Next} style={{
+                flex: 2, minHeight: 44, padding: '10px 14px', borderRadius: 10,
+                background: T.leafBright, color: '#fff', border: 'none',
+                fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(78,140,60,0.25)',
+              }}>Next →</button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div style={{
+              fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
+              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 12,
+            }}>How much sun does this bed get?</div>
+
+            <div className="gos-creator-sun" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              {[
+                { id: 'full',    label: 'Full sun',      desc: '6+ hours of direct sun per day',          icon: SunIcons.full },
+                { id: 'partial', label: 'Partial shade', desc: '3 to 6 hours, or filtered light',         icon: SunIcons.partial },
+                { id: 'shade',   label: 'Mostly shade',  desc: 'Fewer than 3 hours of direct sun',        icon: SunIcons.shade },
+              ].map(opt => {
+                const sel = sun === opt.id;
+                return (
+                  <button key={opt.id} onClick={() => setSun(opt.id)} aria-pressed={sel} style={{
+                    padding: '12px 14px', borderRadius: 10,
+                    background: sel ? T.panel : T.cream,
+                    border: `1.5px solid ${sel ? T.leafBright : T.borderSoft}`,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+                    textAlign: 'left', minHeight: 60,
+                    boxShadow: sel ? '0 2px 6px rgba(78,140,60,0.18)' : 'none',
+                  }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 10,
+                      background: sel ? (opt.id === 'full' ? T.sunPale : (opt.id === 'partial' ? T.cedarWash : T.cream)) : T.panel,
+                      border: `1px solid ${T.borderSoft}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>{opt.icon(28)}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600, color: T.text }}>
+                        {opt.label}
+                      </div>
+                      <div style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.textSoft, marginTop: 2 }}>
+                        {opt.desc}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {error && (
+              <div style={{ marginTop: 8, color: T.rust, fontFamily: T.fontSans, fontSize: 12 }}>{error}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={() => { setError(''); setStep(2); }} style={{
+                flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
+                background: 'transparent', color: T.textSoft,
+                border: `1px solid ${T.borderSoft}`,
+                fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}>← Back</button>
+              <button onClick={handleSave} style={{
+                flex: 2, minHeight: 44, padding: '10px 14px', borderRadius: 10,
+                background: T.leafBright, color: '#fff', border: 'none',
+                fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(78,140,60,0.25)',
+              }}>Save my bed</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GhostHint({ onDismiss }) {
+  return (
+    <div onClick={onDismiss} role="button" aria-label="Dismiss tip" style={{
+      position: 'absolute', inset: 0, zIndex: 80,
+      background: 'rgba(44,27,11,0.18)', backdropFilter: 'blur(1px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: 'pointer', padding: 24,
+    }}>
+      <div style={{
+        background: T.panel, borderRadius: 12, padding: '14px 18px',
+        border: `1px solid ${T.cedarPale}`,
+        boxShadow: '0 8px 24px rgba(44,27,11,0.18)',
+        textAlign: 'center', maxWidth: 280,
       }}>
         <div style={{
-          background: T.panel, border: `1px solid ${T.borderSoft}`,
-          borderRadius: 14, padding: '22px 22px 18px', maxWidth: 320,
-          textAlign: 'center', boxShadow: '0 1px 3px rgba(44,27,11,0.05)',
-        }}>
-          <Label size={9} color={T.leaf} style={{ display: 'block', marginBottom: 6 }}>
-            FIRST RUN
-          </Label>
-          <div style={{
-            fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
-            letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 8,
-          }}>
-            Set up your first bed.
-          </div>
-          <div style={{
-            fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft,
-            lineHeight: 1.55, marginBottom: 16, fontStyle: 'italic',
-          }}>
-            We'll start you with a 4×8 full-sun bed. Full editor lands next.
-          </div>
-          <button onClick={handleCreate} style={{
-            width: '100%', padding: '12px 14px', borderRadius: 12,
-            background: T.leafBright, border: 'none', color: '#fff',
-            fontFamily: T.fontSans, fontSize: 14, fontWeight: 600,
-            cursor: 'pointer', minHeight: 44,
-            boxShadow: '0 2px 8px rgba(78,140,60,0.25)',
-          }}>Create default 4×8 bed</button>
-        </div>
+          fontFamily: T.fontSerif, fontSize: 14, color: T.text,
+          lineHeight: 1.45, fontStyle: 'italic', marginBottom: 8,
+        }}>Tap any cell to place a crop.</div>
+        <Label size={9} color={T.textMuted}>TAP A CELL OR TAP TO DISMISS</Label>
       </div>
-      <TabBar active="planner"/>
     </div>
+  );
+}
+
+// ── Bed-wide score badge (build-order item #3) ─────────────────────────────
+// Persistent floating badge that shows an aggregate score for the active bed.
+// Tap toggles a weakest-cell highlight pass on the canvas.
+//
+// Reads bed state via the getCurrentBed prop (which knows the live painted
+// state). Falls back to GosBed.getActive() when an event arrives without a
+// payload. Two custom window events feed it:
+//   - gosBedChanged       (fired by Painting.handleCreatorComplete)
+//   - gosPaintedChanged   (fired by Painting whenever painted[] mutates)
+// Two custom window events come out of it:
+//   - gosHighlightCells   { detail: { cells: ["r0c2", ...] } }
+const SCORE_TIER_COLORS = { green: '#4caf50', amber: '#f5a623', red: '#e53935', gray: '#9e9e9e' };
+function tierFor(score) {
+  if (score === null || score === undefined) return 'gray';
+  if (score >= 90) return 'green';
+  if (score >= 70) return 'amber';
+  return 'red';
+}
+
+function ScoreBadge({ getCurrentBed }) {
+  const [score, setScore] = React.useState(null);
+  const [weakestCells, setWeakestCells] = React.useState([]);
+  const [highlightMode, setHighlightMode] = React.useState(false);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  const tooltipTimerRef = React.useRef(null);
+  const highlightModeRef = React.useRef(highlightMode);
+  React.useEffect(() => { highlightModeRef.current = highlightMode; }, [highlightMode]);
+
+  const recompute = React.useCallback((bedSource) => {
+    const bed = bedSource || (getCurrentBed && getCurrentBed()) ||
+                ((typeof GosBed !== 'undefined') ? GosBed.getActive() : null);
+    const result = computeBedScore(bed);
+    setScore(result.score);
+    setWeakestCells(result.weakestCells);
+    return result;
+  }, [getCurrentBed]);
+
+  // Initial compute on mount.
+  React.useEffect(() => { recompute(); }, [recompute]);
+
+  // Listen for bed-changed and painted-changed events.
+  React.useEffect(() => {
+    const onBedChanged = (e) => {
+      const result = recompute(e && e.detail && e.detail.bed);
+      if (highlightModeRef.current) {
+        try {
+          window.dispatchEvent(new CustomEvent('gosHighlightCells',
+            { detail: { cells: result.weakestCells } }));
+        } catch (_) {}
+      }
+    };
+    const onPaintedChanged = (e) => {
+      const bedFromDetail = e && e.detail && e.detail.bed;
+      const result = recompute(bedFromDetail);
+      if (highlightModeRef.current) {
+        try {
+          window.dispatchEvent(new CustomEvent('gosHighlightCells',
+            { detail: { cells: result.weakestCells } }));
+        } catch (_) {}
+      }
+    };
+    window.addEventListener('gosBedChanged', onBedChanged);
+    window.addEventListener('gosPaintedChanged', onPaintedChanged);
+    return () => {
+      window.removeEventListener('gosBedChanged', onBedChanged);
+      window.removeEventListener('gosPaintedChanged', onPaintedChanged);
+    };
+  }, [recompute]);
+
+  React.useEffect(() => {
+    return () => { if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current); };
+  }, []);
+
+  const handleClick = () => {
+    if (score === null) {
+      setShowTooltip(true);
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 2400);
+      return;
+    }
+    const next = !highlightMode;
+    setHighlightMode(next);
+    try {
+      window.dispatchEvent(new CustomEvent('gosHighlightCells',
+        { detail: { cells: next ? weakestCells : [] } }));
+    } catch (_) {}
+  };
+
+  const handleDismiss = () => {
+    setHighlightMode(false);
+    try {
+      window.dispatchEvent(new CustomEvent('gosHighlightCells', { detail: { cells: [] } }));
+    } catch (_) {}
+  };
+
+  const tier = tierFor(score);
+  const bg = SCORE_TIER_COLORS[tier];
+
+  return (
+    <>
+      <button onClick={handleClick} aria-pressed={highlightMode}
+        aria-label={score === null ? 'Bed score: no crops yet' : 'Bed score ' + score + ' of 100'}
+        style={{
+          position: 'absolute', top: 96, right: 14, zIndex: 50,
+          width: 56, height: 56, minWidth: 48, minHeight: 48,
+          borderRadius: '50%', background: bg, color: '#fff',
+          border: highlightMode ? `2px solid ${T.soil}` : '2px solid transparent',
+          cursor: 'pointer', padding: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          fontFamily: T.fontDisp,
+          boxShadow: '0 4px 14px rgba(44,27,11,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
+          transition: 'transform 0.18s, border-color 0.18s',
+        }}>
+        <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1, letterSpacing: -0.5 }}>
+          {score === null ? '—' : score}
+        </span>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 9, fontWeight: 500,
+          letterSpacing: 0.1, opacity: 0.88, marginTop: 2, textTransform: 'uppercase',
+        }}>bed score</span>
+      </button>
+
+      {showTooltip && (
+        <div role="status" style={{
+          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 220,
+          background: T.panel, border: `1px solid ${T.borderSoft}`,
+          borderRadius: 10, padding: '8px 12px',
+          fontFamily: T.fontSans, fontSize: 12, color: T.text,
+          boxShadow: '0 6px 14px rgba(44,27,11,0.18)',
+        }}>
+          Place some crops first.
+        </div>
+      )}
+
+      {highlightMode && weakestCells.length > 0 && (
+        <div role="status" style={{
+          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 260,
+          background: T.panel, border: `1px solid ${SCORE_TIER_COLORS.amber}`,
+          borderRadius: 10, padding: '8px 8px 8px 12px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 6px 14px rgba(44,27,11,0.18)',
+        }}>
+          <span style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.text, lineHeight: 1.35, flex: 1 }}>
+            <b>{weakestCells.length}</b> cell{weakestCells.length === 1 ? '' : 's'} dragging your score down. Tap a highlighted cell to see why.
+          </span>
+          <button onClick={handleDismiss} aria-label="Dismiss highlight" style={{
+            width: 28, height: 28, minWidth: 28, minHeight: 28,
+            borderRadius: 6, padding: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: T.textSoft, flexShrink: 0,
+          }}>{Icons.close(12, T.textSoft)}</button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -689,6 +1274,8 @@ function Painting({ tweak, onOpenTweaks }) {
   });
   const [history, setHistory] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
+  const [creatorOpen, setCreatorOpen] = React.useState(activeBed === null);
+  const [ghostVisible, setGhostVisible] = React.useState(false);
 
   // Claim the session lock once per tab on mount.
   React.useEffect(() => {
@@ -711,15 +1298,95 @@ function Painting({ tweak, onOpenTweaks }) {
     return () => clearTimeout(t);
   }, [painted, activeBed]);
 
+  // Synchronously dispatch gosPaintedChanged on every painted-state mutation
+  // so ScoreBadge can recompute against the live bed without waiting for the
+  // 500ms autosave to flush. Detail carries a synthetic bed snapshot so any
+  // listener can score from the live state.
+  React.useEffect(() => {
+    if (!activeBed) return;
+    const list = painted[activeBed.id];
+    if (!list) return;
+    try {
+      const liveBed = Object.assign({}, activeBed, { painted: list });
+      window.dispatchEvent(new CustomEvent('gosPaintedChanged',
+        { detail: { id: activeBed.id, bed: liveBed } }));
+    } catch (_) {}
+  }, [painted, activeBed]);
+
+  // Cell highlight handler: toggle .gos-cell-weak on cells matching the
+  // payload from gosHighlightCells. Empty array clears all. Existing
+  // BedCell elements expose data-cell="r-c"; weakest cells arrive in
+  // "rRcC" form (matching the GosBed schema), so we translate at the
+  // boundary and leave BedCell untouched.
+  React.useEffect(() => {
+    const handler = (e) => {
+      const cells = (e && e.detail && Array.isArray(e.detail.cells))
+        ? e.detail.cells : [];
+      const targets = new Set();
+      cells.forEach(s => {
+        const m = String(s).match(/^r(\d+)c(\d+)$/);
+        if (m) targets.add(m[1] + '-' + m[2]);
+      });
+      const all = document.querySelectorAll('[data-cell]');
+      all.forEach(el => {
+        const dc = el.getAttribute('data-cell');
+        if (targets.has(dc)) el.classList.add('gos-cell-weak');
+        else el.classList.remove('gos-cell-weak');
+      });
+    };
+    window.addEventListener('gosHighlightCells', handler);
+    return () => window.removeEventListener('gosHighlightCells', handler);
+  }, []);
+
+  const handleCreatorComplete = () => {
+    const fresh = loadActiveBedAsInternal();
+    if (!fresh) return;
+    setActiveBed(fresh);
+    setActiveBedId(fresh.id);
+    setPainted(prev => Object.assign({}, prev, { [fresh.id]: fresh.painted }));
+    setCreatorOpen(false);
+    setTimeout(() => setGhostVisible(true), 300);
+    // Notify ScoreBadge (and any other listeners) that the active bed changed.
+    try {
+      window.dispatchEvent(new CustomEvent('gosBedChanged',
+        { detail: { id: fresh.id, bed: fresh } }));
+    } catch (_) {}
+  };
+
+  const handleCreatorCancel = () => {
+    setCreatorOpen(false);
+  };
+
+  const handleAddBedClick = () => {
+    if (typeof GosBed !== 'undefined') GosBed.discardPending();
+    setCreatorOpen(true);
+  };
+
+  // First-run shell: no active bed yet. Render minimal chrome with the
+  // BedCreator overlay covering the empty canvas area.
   if (!activeBed) {
-    return <SetupStub onCreated={() => {
-      const fresh = loadActiveBedAsInternal();
-      if (fresh) {
-        setActiveBed(fresh);
-        setActiveBedId(fresh.id);
-        setPainted({ [fresh.id]: fresh.painted });
-      }
-    }}/>;
+    return (
+      <div style={{
+        width: '100%', height: '100%', background: T.cream,
+        fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', position: 'relative',
+      }}>
+        <FakeStatusBar/>
+        <div style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div style={{
+            fontFamily: T.fontSerif, fontSize: 14, color: T.textSoft,
+            fontStyle: 'italic', textAlign: 'center', maxWidth: 240, lineHeight: 1.5,
+          }}>
+            Garden OS needs one bed to begin. Set yours up and we'll take it from there.
+          </div>
+        </div>
+        <TabBar active="planner"/>
+        <BedCreator hasInitialBeds={false} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>
+      </div>
+    );
   }
 
   const beds = [activeBed];
@@ -745,6 +1412,7 @@ function Painting({ tweak, onOpenTweaks }) {
   const paintCell = (r, c) => {
     const inShape = bed.shape[r] && bed.shape[r][c];
     if (!inShape) return;
+    if (ghostVisible) setGhostVisible(false);
     setSelected({ r, c });
     if (tool === 'inspect') return;
     pushHistory();
@@ -785,7 +1453,7 @@ function Painting({ tweak, onOpenTweaks }) {
       </header>
 
       <BedSwitcher beds={beds} painted={painted} activeId={activeBedId} onPick={setActiveBedId}
-        onAdd={() => alert('Multi-bed editor lands in the next pass.')}/>
+        onAdd={handleAddBedClick}/>
 
       <div style={{ display: 'flex', gap: 6, padding: '8px 14px 4px', flexShrink: 0 }}>
         <ToolBtn label="Paint"   active={tool === 'paint'}   onClick={() => setTool('paint')}   icon={Icons.paint(13, 'currentColor')}/>
@@ -865,6 +1533,10 @@ function Painting({ tweak, onOpenTweaks }) {
       )}
 
       <TabBar active="paint"/>
+
+      <ScoreBadge getCurrentBed={() => Object.assign({}, activeBed, { painted: painted[activeBedId] || [] })}/>
+      {ghostVisible && <GhostHint onDismiss={() => setGhostVisible(false)}/>}
+      {creatorOpen && <BedCreator hasInitialBeds={true} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>}
     </div>
   );
 }
