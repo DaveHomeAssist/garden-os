@@ -828,7 +828,7 @@ function HarvestTotalsTable({ groups }) {
                     flex: 1, fontFamily: T.fontSerif, fontSize: 12, fontStyle: 'italic',
                     color: T.textSoft, textAlign: 'right',
                   }}>
-                    harvested {g.unrecorded} time{g.unrecorded === 1 ? '' : '(s)'} — quantity not recorded
+                    harvested {g.unrecorded} time{g.unrecorded === 1 ? '' : '(s)'}, quantity not recorded
                   </span>
                 </div>
               ) : (
@@ -1017,7 +1017,7 @@ function BedSuitabilityCard({ bed }) {
         fontFamily: T.fontMono, fontSize: 10.5,
         color: T.textSoft, letterSpacing: 0.04,
       }}>
-        Suitability: <span style={{ color: T.textMuted }}>—</span>
+        Suitability: <span style={{ color: T.textMuted }}>-</span>
         {' '}<span style={{ color: T.textMuted }}>(no crops placed yet)</span>
       </div>
     );

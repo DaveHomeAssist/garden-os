@@ -759,7 +759,7 @@ function BedPicker({ beds, activeId, onPick }) {
 
 function Chip({ n, label, color, fg }) {
   if (!n) return (
-    <span style={{ fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15, color: T.cedarPale, opacity: 0.4 }}>— {label}</span>
+    <span style={{ fontFamily: T.fontMono, fontSize: 9, letterSpacing: 0.15, color: T.cedarPale, opacity: 0.4 }}>- {label}</span>
   );
   return (
     <span style={{
@@ -1207,7 +1207,7 @@ function CropLife({ c, today }) {
       }}>
         <span>W{c.sowWeek} SOW</span>
         <span>W{growAt} GROW</span>
-        <span>W{c.harvestStart}–{c.harvestEnd} HARVEST</span>
+        <span>W{c.harvestStart}-{c.harvestEnd} HARVEST</span>
       </div>
     </div>
   );
@@ -1464,7 +1464,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
               </span>
             </ActionBtn>
             <ActionBtn onClick={() => setShowHarvestForm(true)}>
-              Harvested — log yield
+              Harvested: log yield
             </ActionBtn>
             {inBed && !isFixture && (
               <ActionBtn onClick={onRemove}>Remove (in Beds)</ActionBtn>
