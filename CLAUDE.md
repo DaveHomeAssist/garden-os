@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Browser-based garden planning game and tool suite. Deterministic crop scoring engine, season simulator, character dialogue system, and a set of standalone planning tools. All surfaces run entirely in the browser with no server dependency.
+Browser-based garden planning game and tool suite. Deterministic crop scoring engine, season simulator, character dialogue system, and a set of standalone planning tools.
 
 ## Stack
 
@@ -14,7 +14,6 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 
 ## Key Decisions
 
-- Zero backend constraint is permanent. No servers, APIs, or databases.
 - Build tooling lives in `story-mode/`. Root tools may be single-file HTML or React via CDN — either is fine.
 - Scoring is strictly deterministic with six fixed weighted factors. No randomness.
 - Schema-first: all tools validate against `gos-schema.json`. Specs in `specs/` are canonical over code.
@@ -23,10 +22,8 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 
 ## Architecture — Hard Constraints
 
-- **Zero backend.** No servers, no APIs, no databases. Everything runs in the browser.
 - **`story-mode/` is the build-tooling runtime.** It is an active Vite + Three.js app with Vitest coverage and its own `package.json`.
 - **Build tooling is allowed only inside `story-mode/`.** Use `npm ci` or `npm install`, `npm test`, `npm run build`, and `npm run dev` from `story-mode/` when working on that app surface.
-- **localStorage persistence.** All state saved to localStorage. Cross-tool data exchange via `.gos.json` file export/import.
 - **Offline-capable.** Every tool must work without network access (except Google Fonts, which degrade gracefully).
 - **Schema-first.** All tools validate against `gos-schema.json`. Increment the version field on breaking changes. See `docs/MIGRATION-CONTRACT.md` for migration rules.
 
@@ -124,7 +121,6 @@ Issues tracked in `docs/UI_ISSUES_TABLE.html`. The table below is a historical a
 
 ## What Not To Do
 
-- Do not add a backend, database, or server requirement.
 - Do not merge the user and dev nav tracks.
 - Do not add randomness to scoring.
 - Do not modify specs/ JSON files without updating the corresponding HTML tool.
