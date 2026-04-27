@@ -1148,12 +1148,30 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
               : <span>Season<span style={{ color: T.leaf, fontStyle: 'italic', fontWeight: 500 }}> / </span></span>}
             <span style={{ fontWeight: 400, color: T.textMid, fontSize: 22 }}>W{today}</span>
           </div>
-          <div style={{ marginTop: 3, display: 'flex', gap: 8 }}>
+          <div style={{ marginTop: 3, display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
             <Label size={10} color={T.textSoft}>{SEASON.today.toUpperCase()}</Label>
             <Label size={10} color={T.textMuted}>·</Label>
             <Label size={10} color={T.textSoft}>ZONE {SEASON.zone}</Label>
             <Label size={10} color={T.textMuted}>·</Label>
             <Label size={10} color={T.textSoft}>DAY {SEASON.dayOfSeason}</Label>
+            {/* PR #24: cross-surface edit link to Painting. Hidden in
+                fixture mode (gosBed === null) so example-data users don't
+                get a misleading affordance. Empty bed shows "Paint crops"
+                (more directional); populated bed shows "Edit bed". */}
+            {gosBed && (
+              <>
+                <Label size={10} color={T.textMuted}>·</Label>
+                <a href="garden-painting.html" style={{
+                  fontFamily: T.fontMono, fontSize: 10, fontWeight: 500,
+                  letterSpacing: 0.12, textTransform: 'uppercase',
+                  color: T.leaf, textDecoration: 'none',
+                }}>
+                  {Array.isArray(gosBed.painted) && gosBed.painted.length > 0
+                    ? 'Edit bed →'
+                    : 'Paint crops →'}
+                </a>
+              </>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
