@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Garden OS Journal: local-first field log, harvest memory, maintenance trail, and system inbox.">
+<title>Garden OS · Journal</title>
+<link rel="stylesheet" href="garden-os-theme.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/favicon/apple-touch-icon.png">
+<meta name="theme-color" content="#3a2510">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil:#3a2510; --soil-mid:#52331a; --cedar:#8b5e3c; --cedar-wash:#f2e8d8;
+    --leaf:#3a6b2a; --leaf-bright:#4e8c3c; --leaf-wash:#edf5e8;
+    --sun:#d4a820; --sun-pale:#faf0c0; --rust:#b84a1a;
+    --cream:#f7f3ec; --panel:#fffdf9; --text:#1e1208; --text-mid:#4a3018;
+    --text-soft:#6f5840; --text-muted:#9a8068; --border:#c8b090; --border-soft:#dfd0b8;
+    --bad:#a82018; --info:#3a6abf;
+    --font-disp:'Fraunces', Georgia, serif; --font-serif:'Lora', Georgia, serif;
+    --font-sans:'DM Sans', system-ui, sans-serif; --font-mono:'DM Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; background: var(--cream); color: var(--text);
+    font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
+  }
+  a, button, input, textarea, select { font: inherit; }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2.5px solid var(--leaf-bright); outline-offset: 2px;
+  }
+  .shell { min-height: 100vh; display: flex; justify-content: center; padding: 0; }
+  .frame {
+    width: min(100vw, 860px); min-height: 100vh; background: var(--cream);
+    display: flex; flex-direction: column; position: relative;
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+  }
+  @media (min-width: 900px) {
+    .shell { padding: 28px 18px 56px; }
+    .frame { min-height: calc(100vh - 84px); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(20,12,4,0.16); }
+  }
+  .top {
+    background: var(--panel); border-bottom: 1px solid var(--border-soft);
+    padding: 18px 18px 14px; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;
+  }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text-soft); margin-bottom: 4px;
+  }
+  h1 {
+    margin: 0; font-family: var(--font-disp); font-size: 30px; line-height: 1;
+    font-weight: 600; letter-spacing: -0.02em;
+  }
+  .subtitle { margin-top: 5px; color: var(--text-soft); font-size: 13px; line-height: 1.35; }
+  .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn {
+    border: 1px solid var(--border-soft); border-radius: 8px; min-height: 38px;
+    padding: 8px 11px; background: var(--panel); color: var(--text-mid);
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-weight: 600; font-size: 13px;
+  }
+  .btn.primary { background: var(--leaf); color: #fff; border-color: var(--leaf); }
+  .btn.danger { color: var(--bad); }
+  .main { flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 0; min-height: 0; }
+  .composer {
+    border-right: 1px solid var(--border-soft); background: var(--cedar-wash);
+    padding: 14px; overflow-y: auto;
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 12px; box-shadow: 0 1px 3px rgba(44,27,11,.05);
+  }
+  h2 {
+    margin: 0 0 10px; font-family: var(--font-disp); font-size: 18px; line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  label, .label {
+    display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--text-soft); font-weight: 600; margin-bottom: 5px;
+  }
+  input, textarea, select {
+    width: 100%; min-height: 40px; border: 1px solid var(--border-soft); border-radius: 8px;
+    background: #fff; color: var(--text); padding: 9px 10px; font-size: 14px;
+  }
+  textarea { min-height: 96px; resize: vertical; line-height: 1.45; }
+  .field { margin-bottom: 10px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filters {
+    padding: 12px 14px; background: var(--panel); border-bottom: 1px solid var(--border-soft);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .chip {
+    border: 1px solid var(--border-soft); border-radius: 999px; background: #fff;
+    color: var(--text-soft); min-height: 32px; padding: 6px 10px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .chip[aria-pressed="true"] { background: var(--leaf); color: #fff; border-color: var(--leaf); }
+  .timeline-wrap { min-height: 0; overflow-y: auto; }
+  .timeline { padding: 14px; max-width: 720px; margin: 0 auto; }
+  .entry {
+    background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 12px 13px; margin-bottom: 10px; display: grid; grid-template-columns: 34px 1fr; gap: 10px;
+  }
+  .entry.system { border-left: 4px solid var(--info); }
+  .entry.warning { border-left: 4px solid var(--sun); }
+  .entry.urgent { border-left: 4px solid var(--bad); }
+  .entry.success { border-left: 4px solid var(--leaf-bright); }
+  .icon {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--leaf-wash); color: var(--leaf); font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  }
+  .entry-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .entry-title { font-weight: 700; line-height: 1.25; color: var(--text); }
+  .meta {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+    letter-spacing: .06em; text-transform: uppercase; margin-top: 3px;
+  }
+  .body { margin-top: 8px; color: var(--text-mid); font-family: var(--font-serif); font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+  .tag { font-family: var(--font-mono); font-size: 9px; color: var(--text-soft); background: var(--cedar-wash); padding: 2px 6px; border-radius: 999px; }
+  .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .small-btn {
+    min-height: 30px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-soft);
+    background: transparent; color: var(--text-soft); cursor: pointer;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .empty {
+    border: 1px dashed var(--border); border-radius: 12px; padding: 24px; text-align: center;
+    color: var(--text-soft); background: rgba(255,253,249,.6);
+  }
+  .empty strong { display: block; font-family: var(--font-disp); font-size: 20px; color: var(--text); margin-bottom: 5px; }
+  .toast {
+    position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 10; max-width: 520px; margin: 0 auto; padding: 10px 12px; border-radius: 10px;
+    background: var(--soil); color: #fff; box-shadow: 0 10px 30px rgba(44,27,11,.25);
+  }
+  .sr-only {
+    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+  }
+  .tabbar {
+    height: 70px; background: var(--panel); border-top: 1px solid var(--border-soft);
+    display: flex; align-items: flex-start; padding-top: 8px; flex-shrink: 0;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .tabbar a, .tabbar span {
+    flex: 0 0 auto; min-width: 72px; min-height: 44px; text-align: center; padding: 11px 8px 0; margin-top: -9px;
+    border-top: 2px solid transparent; color: var(--text-muted); text-decoration: none;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .tabbar a:nth-child(2), .tabbar a:nth-child(6), .tabbar a:nth-child(7), .tabbar a:nth-child(8) { min-width: 96px; }
+  .tabbar .muted { opacity: .58; }
+  .tabbar [aria-current="page"] { color: var(--leaf); border-top-color: var(--leaf); font-weight: 600; }
+  @media (max-width: 760px) {
+    .main { display: block; overflow-y: auto; }
+    .composer { border-right: 0; border-bottom: 1px solid var(--border-soft); overflow: visible; }
+    .timeline-wrap { overflow: visible; }
+    .top { align-items: flex-start; flex-direction: column; }
+    .top-actions { justify-content: flex-start; }
+  }
+</style>
+<script src="gos-bed.js"></script>
+<script src="gos-journal.js"></script>
+</head>
+<body>
+<div class="shell">
+  <div class="frame">
+    <header class="top">
+      <div>
+        <div class="eyebrow">Garden OS memory layer</div>
+        <h1>Journal</h1>
+        <div class="subtitle">Field log, harvest memory, maintenance trail, and system inbox.</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" type="button" id="generateSystemBtn">Check active bed</button>
+        <button class="btn" type="button" id="exportBtn">Export</button>
+        <label class="btn" for="importFile" style="margin:0">Import</label>
+        <input id="importFile" type="file" accept=".gos.json,.json,application/json" class="sr-only">
+      </div>
+    </header>
+
+    <main class="main" id="main">
+      <aside class="composer" aria-label="New journal entry">
+        <form class="panel" id="entryForm">
+          <h2>Log Entry</h2>
+          <div class="field">
+            <label for="entryType">Type</label>
+            <select id="entryType" name="type">
+              <option value="note">Note</option>
+              <option value="observation">Observation</option>
+              <option value="harvest">Harvest</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="entryTitle">Title</label>
+            <input id="entryTitle" name="title" maxlength="120" required>
+          </div>
+          <div class="field">
+            <label for="entryBody">Note</label>
+            <textarea id="entryBody" name="body" maxlength="2000" required></textarea>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="entryDate">Date</label>
+              <input id="entryDate" name="eventDate" type="date">
+            </div>
+            <div class="field">
+              <label for="entrySeverity">Severity</label>
+              <select id="entrySeverity" name="severity">
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="row harvest-fields" hidden>
+            <div class="field">
+              <label for="entryAmount">Amount</label>
+              <input id="entryAmount" name="amount" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label for="entryUnit">Unit</label>
+              <input id="entryUnit" name="unit" maxlength="16" placeholder="lb, oz, bunches">
+            </div>
+          </div>
+          <div class="field">
+            <label for="entryCrop">Crop</label>
+            <input id="entryCrop" name="cropId" maxlength="80" placeholder="optional">
+          </div>
+          <div class="field">
+            <label for="entryCells">Cells</label>
+            <input id="entryCells" name="cells" maxlength="240" placeholder="r0c1, r0c2">
+          </div>
+          <div class="field">
+            <label for="entryTags">Tags</label>
+            <input id="entryTags" name="tags" maxlength="240" placeholder="basil, watering">
+          </div>
+          <button class="btn primary" type="submit" style="width:100%">Save entry</button>
+        </form>
+      </aside>
+
+      <section aria-label="Journal timeline" style="min-width:0; display:flex; flex-direction:column; min-height:0">
+        <div class="filters" id="filters" aria-label="Timeline filters"></div>
+        <div class="timeline-wrap">
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="Garden OS">
+      <a href="index-v5.html">Home</a>
+      <a href="garden-painting.html">Beds</a>
+      <a href="garden-planner-v5.html">Planner</a>
+      <a href="garden-doctor-v5.html">Doctor</a>
+      <span aria-current="page">Journal</span>
+    </nav>
+    <div role="status" aria-live="polite" class="sr-only" id="live"></div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var state = { type: 'all', source: 'all', showDismissed: false };
+  var typeLabels = ['all', 'note', 'observation', 'harvest', 'maintenance', 'system'];
+  var sourceLabels = ['all', 'manual', 'planner', 'system'];
+  var timeline = document.getElementById('timeline');
+  var filters = document.getElementById('filters');
+  var form = document.getElementById('entryForm');
+  var typeInput = document.getElementById('entryType');
+  var harvestFields = document.querySelector('.harvest-fields');
+  var live = document.getElementById('live');
+  var lastDeleted = null;
+
+  function say(message, action) {
+    live.textContent = message;
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role', 'status');
+    var text = document.createElement('span');
+    text.textContent = message;
+    toast.appendChild(text);
+    if (action && action.label && typeof action.onClick === 'function') {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'small-btn';
+      btn.style.marginLeft = '10px';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'rgba(255,255,255,.45)';
+      btn.textContent = action.label;
+      btn.addEventListener('click', function () {
+        action.onClick();
+        toast.remove();
+      });
+      toast.appendChild(btn);
+    }
+    document.body.appendChild(toast);
+    window.setTimeout(function () { toast.remove(); }, 2800);
+  }
+  function activeBedContext() {
+    var bed = typeof GosBed !== 'undefined' ? GosBed.getActive() : null;
+    return {
+      bedId: bed && bed.id ? bed.id : '',
+      bedName: bed && bed.name ? bed.name : '',
+      hasLocation: !!(bed && ((bed.location && bed.location.trim()) || (bed.zone && bed.zone.trim()))),
+      gosBed: bed
+    };
+  }
+  function isoWeek(date) {
+    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    var dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+  function clampNumber(value, min, max, fallback) {
+    var n = Number(value);
+    if (!isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  }
+  function scheduleForSpecCrop(id, spec) {
+    var faction = String(spec && spec.faction || '');
+    var cool = !!(spec && spec.coolSeason) || (spec && spec.seasonalMultipliers && spec.seasonalMultipliers.spring >= spec.seasonalMultipliers.summer);
+    if (cool || faction === 'fast_cycles') return { sowWeek: 9, harvestStart: 15, harvestEnd: 22 };
+    if (faction === 'roots') return { sowWeek: 12, harvestStart: 22, harvestEnd: 32 };
+    if (faction === 'climbers' || faction === 'fruiting') return { sowWeek: 12, harvestStart: 26, harvestEnd: 38 };
+    return { sowWeek: 10, harvestStart: 20, harvestEnd: 36 };
+  }
+  function normalizeCatalogPayload(payload) {
+    if (!payload || typeof payload !== 'object' || !payload.crops || typeof payload.crops !== 'object') return {};
+    var out = {};
+    Object.keys(payload.crops).forEach(function (id) {
+      if (!/^[a-z0-9_-]{1,64}$/i.test(id)) return;
+      var raw = payload.crops[id] || {};
+      var schedule = scheduleForSpecCrop(id, raw);
+      var name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim().slice(0, 80) : id;
+      var vulnerabilities = Array.isArray(raw.eventVulnerabilities) ? raw.eventVulnerabilities : [];
+      var sowWeek = clampNumber(raw.sowWeek, 1, 53, schedule.sowWeek);
+      var harvestStart = clampNumber(raw.harvestStart, 1, 53, Math.max(sowWeek, schedule.harvestStart));
+      out[id] = {
+        cropId: id,
+        name: name,
+        sowWeek: sowWeek,
+        harvestStart: harvestStart,
+        harvestEnd: clampNumber(raw.harvestEnd, harvestStart, 53, Math.max(harvestStart, schedule.harvestEnd)),
+        tender: vulnerabilities.indexOf('frost-sensitive') >= 0 || raw.coolSeason === false,
+        boltRisk: vulnerabilities.indexOf('heat-sensitive') >= 0 || /lettuce|spinach/i.test(name)
+      };
+    });
+    return out;
+  }
+  function readCachedCatalog() {
+    try {
+      var raw = window.localStorage.getItem('gos.cropCatalog.v1');
+      var parsed = raw ? JSON.parse(raw) : null;
+      return parsed && parsed.crops ? parsed.crops : null;
+    } catch (_) { return null; }
+  }
+  function loadCatalog() {
+    var cached = readCachedCatalog();
+    if (cached) return Promise.resolve(cached);
+    return fetch('specs/CROP_SCORING_DATA.json')
+      .then(function (res) { if (!res.ok) throw new Error('catalog'); return res.json(); })
+      .then(function (payload) { return normalizeCatalogPayload(payload); })
+      .catch(function () { return {}; });
+  }
+  function cellListFromBed(bed) {
+    if (!bed || !Array.isArray(bed.painted)) return [];
+    return bed.painted.map(function (p) { return p && p.cell; }).filter(Boolean);
+  }
+  function cropIdsFromBed(bed) {
+    var seen = [];
+    if (!bed || !Array.isArray(bed.painted)) return seen;
+    bed.painted.forEach(function (p) {
+      if (p && typeof p.cropId === 'string' && seen.indexOf(p.cropId) < 0) seen.push(p.cropId);
+    });
+    return seen;
+  }
+  function frostDaysForBed(bed, week) {
+    if (!bed) return null;
+    var first = bed.firstFrostWeek || (bed.frostWeeks && bed.frostWeeks.first);
+    var n = parseInt(first, 10);
+    if (!isFinite(n)) return null;
+    var days = (n - week) * 7;
+    return days >= 0 ? days : null;
+  }
+  function makeButton(label, pressed, onClick) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip';
+    btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    btn.textContent = label;
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+  function renderFilters() {
+    filters.textContent = '';
+    typeLabels.forEach(function (type) {
+      filters.appendChild(makeButton(type, state.type === type, function () {
+        state.type = type;
+        render();
+      }));
+    });
+    sourceLabels.forEach(function (source) {
+      filters.appendChild(makeButton(source, state.source === source, function () {
+        state.source = source;
+        render();
+      }));
+    });
+    filters.appendChild(makeButton('history', state.showDismissed, function () {
+      state.showDismissed = !state.showDismissed;
+      render();
+    }));
+  }
+  function iconFor(type) {
+    return { note: 'NO', observation: 'OB', harvest: 'HA', maintenance: 'MT', system: 'SY' }[type] || 'JR';
+  }
+  function formatDate(entry) {
+    var d = new Date(entry.eventDate + 'T12:00:00');
+    if (isNaN(d.getTime())) return entry.eventDate || '';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function entryMatches(entry) {
+    if (state.type !== 'all' && entry.type !== state.type) return false;
+    if (state.source !== 'all' && entry.source !== state.source) return false;
+    if (entry.deletedAt) return false;
+    if (!state.showDismissed && entry.type === 'system' && entry.dismissedAt) return false;
+    return true;
+  }
+  function readMomJournalEntries() {
+    if (typeof GosBed === 'undefined' || !GosBed.readAll) return [];
+    var seen = {};
+    var entries = [];
+    GosBed.readAll().forEach(function (bed) {
+      (bed.events || []).forEach(function (event) {
+        if (!event || event.source !== 'mom-garden-data.json v1' || event.type !== 'journal') return;
+        var key = event.message && event.message.indexOf('Loaded Mom Garden data') === 0
+          ? event.message
+          : [bed.id, event.message].join(':');
+        if (seen[key]) return;
+        seen[key] = true;
+        entries.push({
+          id: 'mom:' + key,
+          type: 'system',
+          severity: 'info',
+          source: 'system',
+          title: event.message || 'Mom Garden update',
+          body: bed.name || bed.id,
+          bedId: bed.id,
+          bedName: bed.name || bed.id,
+          eventDate: String(event.timestamp || new Date().toISOString()).slice(0, 10),
+          tags: ['Mom Garden'],
+        });
+      });
+    });
+    return entries;
+  }
+  function renderEntry(entry) {
+    var article = document.createElement('article');
+    article.className = 'entry ' + entry.type + ' ' + entry.severity;
+
+    var icon = document.createElement('div');
+    icon.className = 'icon';
+    icon.textContent = iconFor(entry.type);
+    article.appendChild(icon);
+
+    var content = document.createElement('div');
+    var head = document.createElement('div');
+    head.className = 'entry-head';
+    var titleWrap = document.createElement('div');
+    var title = document.createElement('div');
+    title.className = 'entry-title';
+    title.textContent = entry.title;
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = [formatDate(entry), entry.type, entry.source, entry.bedName || entry.bedId].filter(Boolean).join(' · ');
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(meta);
+    head.appendChild(titleWrap);
+    content.appendChild(head);
+
+    if (entry.body) {
+      var body = document.createElement('div');
+      body.className = 'body';
+      body.textContent = entry.body;
+      content.appendChild(body);
+    }
+    if (entry.tags.length) {
+      var tags = document.createElement('div');
+      tags.className = 'tags';
+      entry.tags.forEach(function (tagText) {
+        var tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = tagText;
+        tags.appendChild(tag);
+      });
+      content.appendChild(tags);
+    }
+    var actions = document.createElement('div');
+    actions.className = 'entry-actions';
+    if (entry.type === 'system' && !entry.dismissedAt) {
+      var dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'small-btn';
+      dismiss.textContent = 'Dismiss';
+      dismiss.addEventListener('click', function () {
+        GardenJournal.dismiss(entry.id);
+        say('System entry dismissed.');
+        render();
+      });
+      actions.appendChild(dismiss);
+    }
+    if (entry.source === 'manual') {
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'small-btn';
+      del.textContent = 'Delete';
+      del.addEventListener('click', function () {
+        try {
+          lastDeleted = GardenJournal.update(entry.id, { deletedAt: new Date().toISOString() });
+          say('Manual entry deleted.', {
+            label: 'Undo',
+            onClick: function () {
+              if (!lastDeleted) return;
+              GardenJournal.update(lastDeleted.id, { deletedAt: null });
+              lastDeleted = null;
+              say('Deleted entry restored.');
+              render();
+            }
+          });
+          render();
+        } catch (e) {
+          say(e && e.code === 'JOURNAL_CONFLICT' ? 'Journal changed in another tab. Reloaded timeline.' : 'Manual entry could not be deleted.');
+          render();
+        }
+      });
+      actions.appendChild(del);
+    }
+    if (actions.childNodes.length) content.appendChild(actions);
+    article.appendChild(content);
+    return article;
+  }
+  function render() {
+    renderFilters();
+    timeline.textContent = '';
+    var entries = GardenJournal.readAll().concat(readMomJournalEntries()).filter(entryMatches);
+    if (!entries.length) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      var strong = document.createElement('strong');
+      strong.textContent = 'Journal is ready.';
+      var copy = document.createElement('div');
+      copy.textContent = 'Use it as Garden OS memory: what happened, what changed, and what the system noticed.';
+      empty.appendChild(strong);
+      empty.appendChild(copy);
+      timeline.appendChild(empty);
+      return;
+    }
+    entries.forEach(function (entry) { timeline.appendChild(renderEntry(entry)); });
+  }
+  function parseList(value) {
+    return String(value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  function currentSeasonYear(date) {
+    return new Date(date + 'T12:00:00').getFullYear();
+  }
+  typeInput.addEventListener('change', function () {
+    harvestFields.hidden = typeInput.value !== 'harvest';
+    if (typeInput.value === 'harvest') document.getElementById('entrySeverity').value = 'success';
+  });
+  document.getElementById('entryDate').value = new Date().toISOString().slice(0, 10);
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var data = new FormData(form);
+    var context = activeBedContext();
+    var eventDate = data.get('eventDate') || new Date().toISOString().slice(0, 10);
+    var payload = {};
+    if (data.get('type') === 'harvest') {
+      payload.amount = data.get('amount') ? Number(data.get('amount')) : null;
+      payload.unit = String(data.get('unit') || '').slice(0, 16);
+    }
+    var entry = null;
+    try {
+      entry = GardenJournal.append({
+        type: data.get('type'),
+        source: 'manual',
+        title: data.get('title'),
+        body: data.get('body'),
+        createdAt: new Date().toISOString(),
+        eventDate: eventDate,
+        seasonYear: currentSeasonYear(eventDate),
+        bedId: context.bedId,
+        bedName: context.bedName,
+        cropId: data.get('cropId'),
+        cells: parseList(data.get('cells')),
+        severity: data.get('severity'),
+        tags: parseList(data.get('tags')).concat([data.get('type')]),
+        payload: payload
+      });
+    } catch (e) {
+      say(e && e.code === 'JOURNAL_CONFLICT' ? 'Journal changed in another tab. Reloaded timeline.' : 'Entry could not be saved.');
+      render();
+      return;
+    }
+    if (!entry) {
+      say('Entry could not be saved.');
+      return;
+    }
+    form.reset();
+    document.getElementById('entryDate').value = new Date().toISOString().slice(0, 10);
+    harvestFields.hidden = true;
+    say('Journal entry saved.');
+    render();
+  });
+  document.addEventListener('keydown', function (event) {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && lastDeleted) {
+      event.preventDefault();
+      GardenJournal.update(lastDeleted.id, { deletedAt: null });
+      lastDeleted = null;
+      say('Deleted entry restored.');
+      render();
+    }
+  });
+  document.getElementById('generateSystemBtn').addEventListener('click', function () {
+    var context = activeBedContext();
+    var today = new Date();
+    var week = typeof GosBed !== 'undefined' && GosBed.currentIsoWeek ? GosBed.currentIsoWeek() : isoWeek(today);
+    loadCatalog().then(function (catalog) {
+      var cropIds = cropIdsFromBed(context.gosBed);
+      var unknownCropIds = cropIds.filter(function (id) { return !catalog[id]; });
+      var crops = cropIds.map(function (id) { return catalog[id] || null; }).filter(Boolean);
+      var result = GardenJournal.generateSystemAnnouncements({
+        bedId: context.bedId,
+        bedName: context.bedName,
+        hasLocation: context.hasLocation,
+        now: { week: week, seasonYear: today.getFullYear() },
+        frostDays: frostDaysForBed(context.gosBed, week),
+        crops: crops,
+        unknownCropIds: unknownCropIds,
+        cells: cellListFromBed(context.gosBed)
+      });
+      say('Active bed checked: ' + result.added + ' added, ' + result.skipped + ' already present, ' + result.invalid + ' skipped.');
+      render();
+    }).catch(function () {
+      say('Active bed check could not run.');
+    });
+  });
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var payload = { schemaVersion: 1, journalSchemaVersion: GardenJournal.SCHEMA_VERSION, exportedAt: new Date().toISOString(), journalEntries: GardenJournal.export() };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'garden-os-journal-' + new Date().toISOString().slice(0, 10) + '.gos.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 100);
+    say('Journal exported.');
+  });
+  document.getElementById('importFile').addEventListener('change', function (event) {
+    var file = event.target.files && event.target.files[0];
+    if (!file) return;
+    file.text().then(function (text) {
+      var parsed = JSON.parse(text);
+      var result = GardenJournal.import(Array.isArray(parsed) ? parsed : (parsed.journalEntries || parsed.entries || []));
+      say('Journal import: ' + result.added + ' added, ' + result.merged + ' merged, ' + result.skipped + ' skipped, ' + result.invalid + ' invalid.');
+      render();
+    }).catch(function () {
+      say('Import failed.');
+    }).finally(function () {
+      event.target.value = '';
+    });
+  });
+  window.addEventListener('storage', function (event) {
+    if (event.key === GardenJournal.JOURNAL_STORAGE_KEY) render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

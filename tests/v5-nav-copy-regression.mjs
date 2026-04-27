@@ -6,6 +6,7 @@ const v5Files = [
   "garden-painting.html",
   "garden-doctor-v5.html",
   "how-it-thinks-v5.html",
+  "journal.html",
 ];
 
 const expectedCompactNav = ["Home", "Beds", "Planner", "Doctor", "Journal"];
@@ -14,7 +15,7 @@ const expectedHrefs = [
   "garden-painting.html",
   "garden-planner-v5.html",
   "garden-doctor-v5.html",
-  "how-it-thinks-v5.html",
+  "journal.html",
 ];
 
 const failures = [];
@@ -24,8 +25,16 @@ function read(path) {
 }
 
 function extractTabLabels(source) {
-  return [...source.matchAll(/\{\s*id:\s*['"][^'"]+['"],\s*label:\s*['"]([^'"]+)['"],\s*href:\s*['"]([^'"]+)['"]/g)]
+  const jsTabs = [...source.matchAll(/\{\s*id:\s*['"][^'"]+['"],\s*label:\s*['"]([^'"]+)['"],\s*href:\s*['"]([^'"]+)['"]/g)]
     .map((match) => ({ label: match[1], href: match[2] }));
+  if (jsTabs.length) return jsTabs;
+  const nav = source.match(/<nav class="tabbar"[\s\S]*?<\/nav>/);
+  if (!nav) return [];
+  return [...nav[0].matchAll(/<(a|span)(?:[^>]*href="([^"]+)")?[^>]*>([^<]+)<\/(?:a|span)>/g)]
+    .map((match) => ({
+      label: match[3].trim(),
+      href: match[2] || "journal.html",
+    }));
 }
 
 for (const file of v5Files) {

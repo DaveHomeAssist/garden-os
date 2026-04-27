@@ -139,10 +139,10 @@ const hub = readFileSync(new URL("index-v5.html", repo), "utf8");
 assert.match(hub, /Mom's Garden/, "Hub should include a Mom's Garden tile");
 assert.match(hub, /13 plantings/, "Hub Mom tile should summarize planting count");
 
-const journal = readFileSync(new URL("how-it-thinks-v5.html", repo), "utf8");
+const journal = readFileSync(new URL("journal.html", repo), "utf8");
 assert.match(journal, /gos-bed\.js/, "Journal should load GosBed data");
-assert.match(journal, /MomJournalEntries/, "Journal should surface Mom data events");
-assert.match(journal, /Loaded Mom Garden data/, "Journal should dedupe and display Mom load events");
+assert.match(journal, /readMomJournalEntries/, "Journal should surface Mom data events");
+assert.match(journal, /mom-garden-data\.json v1/, "Journal should dedupe and display Mom load events");
 
 const doctor = readFileSync(new URL("garden-doctor-v5.html", repo), "utf8");
 assert.match(doctor, /URLSearchParams/, "Doctor should read Planner URL context");

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Garden OS Journal: how the score decides, plain English. Try-it mini-bed, six factor cards, link to specs.">
-<title>Garden OS · Journal (mobile beta)</title>
+<meta name="description" content="Garden OS How It Thinks: how the score decides, plain English. Try-it mini-bed, six factor cards, link to specs.">
+<title>Garden OS · How It Thinks</title>
 
 <link rel="stylesheet" href="garden-os-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -44,10 +44,9 @@
   @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
 </style>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
-<script src="gos-bed.js"></script>
+<script src="vendor/react-18.3.1.production.min.js"></script>
+<script src="vendor/react-dom-18.3.1.production.min.js"></script>
+<script src="vendor/babel-standalone-7.29.0.min.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -152,27 +151,30 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Home',    href:'index-v5.html' },
-    { id:'paint',   label:'Beds',    href:'garden-painting.html' },
+    { id:'home',    label:'Home',    href:'index-v5.html' },
+    { id:'beds',    label:'Beds',    href:'garden-painting.html' },
     { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
-    { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
+    { id:'journal', label:'Journal', href:'journal.html' },
   ];
   return (
     <nav style={{
-      flexShrink: 0, height: 66, background: T.panel,
+      flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: 1, textAlign: 'center', padding: '4px 0',
+          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
-          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+          color: t.id === active ? T.leaf : T.textMuted,
+          minHeight: 44, opacity: t.muted ? 0.58 : 1,
         }}>
           <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
-            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+            style={{ fontWeight: t.id === active ? 600 : 400, whiteSpace: 'nowrap' }}>{t.label}</Label>
         </a>
       ))}
     </nav>
@@ -192,8 +194,8 @@ function PhoneFrame({ children }) {
 
 // ── Tweaks ──────────────────────────────────────────────────────────────────
 const TWEAK_DEFAULTS = { detailLevel: 'standard' };
-const TWEAK_KEY = 'gos.journal.tweaks';
-const TRY_IT_KEY = 'gos.journal.tryIt';
+const TWEAK_KEY = 'gos.howItThinks.tweaks';
+const TRY_IT_KEY = 'gos.howItThinks.tryIt';
 
 function loadTweaks() {
   try { const raw = window.localStorage.getItem(TWEAK_KEY); if (!raw) return TWEAK_DEFAULTS; return { ...TWEAK_DEFAULTS, ...JSON.parse(raw) }; }
@@ -464,77 +466,8 @@ function FactorCard({ factor, open, detailLevel, onToggle }) {
   );
 }
 
-// ── Journal screen ──────────────────────────────────────────────────────────
-function readMomJournalEntries() {
-  if (typeof GosBed === 'undefined') return [];
-  const beds = GosBed.readAll ? GosBed.readAll() : [];
-  const seen = {};
-  const entries = [];
-  beds.forEach(bed => {
-    (bed.events || []).forEach(event => {
-      if (!event || event.source !== 'mom-garden-data.json v1' || event.type !== 'journal') return;
-      const isLoadEvent = event.message && event.message.indexOf('Loaded Mom Garden data') === 0;
-      const key = isLoadEvent ? event.message : `${event.bedId || bed.id}:${event.message}`;
-      if (seen[key]) return;
-      seen[key] = true;
-      entries.push({
-        id: key,
-        message: event.message,
-        timestamp: event.timestamp,
-        bedName: bed.name || bed.id,
-        isLoadEvent,
-      });
-    });
-  });
-  return entries.sort((a, b) => (a.isLoadEvent === b.isLoadEvent ? a.id.localeCompare(b.id) : (a.isLoadEvent ? -1 : 1)));
-}
-
-function MomJournalEntries() {
-  const [entries, setEntries] = React.useState(readMomJournalEntries);
-  React.useEffect(() => {
-    function refresh() { setEntries(readMomJournalEntries()); }
-    function onStorage(e) {
-      if (!e || !e.key || e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
-    }
-    window.addEventListener('gosBedChanged', refresh);
-    window.addEventListener('storage', onStorage);
-    return function () {
-      window.removeEventListener('gosBedChanged', refresh);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, []);
-  if (!entries.length) return null;
-  return (
-    <section style={{
-      marginBottom: 18, padding: '12px 14px', borderRadius: 12,
-      background: T.leafWash, border: `1px solid ${T.leafPale}`,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <Label size={9} color={T.leaf}>MOM'S GARDEN</Label>
-        <Label size={9} color={T.textSoft}>{entries.length} ENTRIES</Label>
-      </div>
-      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 7 }}>
-        {entries.map(entry => (
-          <div key={entry.id} style={{
-            padding: '8px 10px', borderRadius: 9, background: T.panel,
-            border: `1px solid ${T.borderSoft}`,
-          }}>
-            <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.text, lineHeight: 1.35 }}>
-              {entry.message}
-            </div>
-            {!entry.isLoadEvent && (
-              <Label size={8} color={T.textMuted} style={{ display: 'block', marginTop: 3 }}>
-                {entry.bedName}
-              </Label>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function Journal() {
+// ── How It Thinks screen ────────────────────────────────────────────────────
+function HowItThinks() {
   const [tweak, setTweak] = React.useState(loadTweaks);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
   const [openId, setOpenId] = React.useState('sun');
@@ -549,7 +482,7 @@ function Journal() {
 
       <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Label size={9} color={T.soilMid}>JOURNAL</Label>
+          <Label size={9} color={T.soilMid}>HOW IT THINKS</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <Label size={9} color={T.soilMid}>{tweak.detailLevel.toUpperCase()}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
@@ -571,7 +504,6 @@ function Journal() {
       </header>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
-        <MomJournalEntries/>
         <TryItBed/>
 
         <Label size={9} color={T.textSoft} style={{ marginLeft: 2, marginTop: 18, display: 'block' }}>SIX FACTORS</Label>
@@ -607,13 +539,13 @@ function Journal() {
         }}>See specs/SCORING_RULES.md →</a>
       </div>
 
-      <TabBar active="journal"/>
+      <TabBar active="think"/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><Journal/></PhoneFrame>);
+ReactDOM.createRoot(document.getElementById('root')).render(<PhoneFrame><HowItThinks/></PhoneFrame>);
 </script>
 </body>
 </html>

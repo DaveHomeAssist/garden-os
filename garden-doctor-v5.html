@@ -44,9 +44,9 @@
   @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
 </style>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="vendor/react-18.3.1.production.min.js"></script>
+<script src="vendor/react-dom-18.3.1.production.min.js"></script>
+<script src="vendor/babel-standalone-7.29.0.min.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-suitability.js"></script>
 </head>
@@ -189,27 +189,30 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Home',    href:'index-v5.html' },
-    { id:'paint',   label:'Beds',    href:'garden-painting.html' },
+    { id:'home',    label:'Home',    href:'index-v5.html' },
+    { id:'beds',    label:'Beds',    href:'garden-painting.html' },
     { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
-    { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
+    { id:'journal', label:'Journal', href:'journal.html' },
   ];
   return (
     <nav style={{
-      flexShrink: 0, height: 66, background: T.panel,
+      flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
+      overflowX: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: 1, textAlign: 'center', padding: '4px 0',
+          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
-          color: t.id === active ? T.leaf : T.textMuted, minHeight: 44,
+          color: t.id === active ? T.leaf : T.textMuted,
+          minHeight: 44, opacity: t.muted ? 0.58 : 1,
         }}>
           <Label size={10} color={t.id === active ? T.leaf : T.textMuted}
-            style={{ fontWeight: t.id === active ? 600 : 400 }}>{t.label}</Label>
+            style={{ fontWeight: t.id === active ? 600 : 400, whiteSpace: 'nowrap' }}>{t.label}</Label>
         </a>
       ))}
     </nav>
