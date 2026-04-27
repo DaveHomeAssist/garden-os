@@ -2051,7 +2051,14 @@ function App() {
   const [catalogWarning, setCatalogWarning] = React.useState('');
   const [catalogVersion, setCatalogVersion] = React.useState(0);
   const { toast, showToast, dismissToast, lastAction, setLastAction } = useToast();
-  const refresh = React.useCallback(() => setActive(loadActiveContext(now)), [now]);
+  // refresh must keep stable identity. The previous useCallback(..., [now])
+  // re-bound every minute (useNow ticks setNow), invalidating the deps of
+  // every effect below and triggering an unnecessary loadActiveContext +
+  // localStorage scan on each minute change. Read `now` through a ref so
+  // the callback can stay []-stable while still seeing the latest value.
+  const nowRef = React.useRef(now);
+  nowRef.current = now;
+  const refresh = React.useCallback(() => setActive(loadActiveContext(nowRef.current)), []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -2084,14 +2091,14 @@ function App() {
 
   React.useEffect(() => {
     refresh();
-  }, [now.week, now.seasonYear, catalogVersion, refresh]);
+  }, [now.week, now.seasonYear, catalogVersion]);
 
   // Refresh when a bed is created or switched (item #1/#2 dispatch path).
   React.useEffect(() => {
     const handler = () => refresh();
     window.addEventListener('gosBedChanged', handler);
     return () => window.removeEventListener('gosBedChanged', handler);
-  }, [refresh]);
+  }, []);
 
   React.useEffect(() => {
     const handler = (e) => {
@@ -2102,7 +2109,7 @@ function App() {
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
-  }, [refresh, setLastAction]);
+  }, [setLastAction]);
 
   const { bed, events, gosBed, allBeds, isFixture, revision, dimensions } = active;
   const frostWeeks = getFrostWeeks(gosBed);
