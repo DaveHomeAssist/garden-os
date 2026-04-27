@@ -146,10 +146,14 @@
   }
 
   // positionFit: tall crops belong on the wall row, low crops near the front.
-  // Uses bed.wallSide when present; otherwise treats r=0 as back.
+  // Returns neutral 3 when wall context is missing or explicitly 'none' —
+  // we cannot judge position without knowing which side is the wall, and
+  // pretending we do gave a "perfect" score to any FRONT_PREFERRED crop in
+  // the unknown branch (distFromAccess=0 → accessFrac=1 → score=5).
   function positionFit(cropId, r, c, dims, bed) {
     var rows = dims.rows, cols = dims.cols;
-    var wallSide = bed.wallSide || 'back';
+    var wallSide = bed.wallSide;
+    if (!wallSide || wallSide === 'none') return 3;
     var rowFromWall, distFromAccess;
     if (wallSide === 'back') {
       rowFromWall = r;
@@ -164,7 +168,8 @@
       rowFromWall = (cols - 1) - c;
       distFromAccess = c;
     } else {
-      rowFromWall = 0; distFromAccess = 0;
+      // Unknown value (e.g. data drift) — also neutral, not pretend-back.
+      return 3;
     }
     var maxR = Math.max(1, rows - 1);
     var maxC = Math.max(1, cols - 1);
