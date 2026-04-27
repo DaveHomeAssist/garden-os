@@ -188,12 +188,6 @@
       ruleVersion: bedData.ruleVersion != null ? bedData.ruleVersion : null,
       seasonStart: bedData.seasonStart || 'standard'
     };
-    if (bedData.dimensions && typeof bedData.dimensions === 'object') {
-      record.dimensions = {
-        rows: Number(bedData.dimensions.rows),
-        cols: Number(bedData.dimensions.cols)
-      };
-    }
     if (typeof bedData.type === 'string' && bedData.type) record.type = bedData.type;
     if (typeof bedData.source === 'string' && bedData.source) record.source = bedData.source;
     if (typeof bedData.loadedAt === 'string' && bedData.loadedAt) record.loadedAt = bedData.loadedAt;
