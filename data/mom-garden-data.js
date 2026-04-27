@@ -1,0 +1,197 @@
+﻿// Generated from data/mom-garden-data.json for file:// fallback.
+(function () {
+  window.GOS_MOM_GARDEN_DATA = {
+  "version": 1,
+  "source": "Mom Outdoor Plant Beds Tracker (Notion)",
+  "comment": "Mom-first demo data. Do not treat as generic crop catalog. Imported 2026-04-27 from Notion DB c0c707d0f4f54b2aae07bbff1721219a.",
+  "loadedAt": null,
+  "beds": [
+    {
+      "id": "raised_bed_left",
+      "name": "Raised Bed Left",
+      "type": "raised_bed",
+      "dimensions": { "rows": 4, "cols": 4 },
+      "wallSide": "back",
+      "plantings": [
+        {
+          "id": "mom_pea_shelling_wando_left",
+          "cropId": "peas",
+          "displayName": "Pea, Shelling",
+          "varietyName": "Wando",
+          "status": "Sprouted",
+          "bedLocation": "Row 4 (trellis)",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Pisum sativum, 68 days, frost-tolerant, $2.99/25g (Botanical Interests)"
+        },
+        {
+          "id": "mom_lettuce_romaine_parris_island_left",
+          "cropId": "head_lettuce",
+          "displayName": "Lettuce, Romaine",
+          "varietyName": "Parris Island Cos",
+          "status": "Planted",
+          "bedLocation": "Row 3",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Lactuca sativa, 21-68 days, USDA Organic, $3.49/750mg (Botanical Interests)"
+        },
+        {
+          "id": "mom_lettuce_butterhead_red_marvel_left",
+          "cropId": "red_lettuce",
+          "displayName": "Lettuce, Butterhead Red",
+          "varietyName": "Marvel of Four Seasons",
+          "status": "Planted",
+          "bedLocation": "Row 2",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Lactuca sativa, 21-55 days, USDA Organic, heat and cold tolerant"
+        },
+        {
+          "id": "mom_carrot_left",
+          "cropId": "carrot",
+          "displayName": "Carrot",
+          "varietyName": null,
+          "status": "Sprouted",
+          "bedLocation": "Row 1",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": null
+        }
+      ]
+    },
+    {
+      "id": "raised_bed_right",
+      "name": "Raised Bed Right",
+      "type": "raised_bed",
+      "dimensions": { "rows": 4, "cols": 4 },
+      "wallSide": "back",
+      "plantings": [
+        {
+          "id": "mom_pea_snap_cascadia_right",
+          "cropId": "peas",
+          "displayName": "Pea, Snap",
+          "varietyName": "Cascadia",
+          "status": "Sprouted",
+          "bedLocation": "Row 4 against trellis",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Pisum sativum, 60 days, USDA Organic, $3.49/15g (Botanical Interests)"
+        },
+        {
+          "id": "mom_kale_dwarf_blue_curled_right",
+          "cropId": "kale",
+          "displayName": "Kale",
+          "varietyName": "Dwarf Blue Curled",
+          "status": "Planted",
+          "bedLocation": "Row 3",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Brassica oleracea, 21-55 days, USDA Organic"
+        },
+        {
+          "id": "mom_scallion_right",
+          "cropId": "scallion",
+          "displayName": "Scallions",
+          "varietyName": null,
+          "status": "Producing",
+          "bedLocation": "Row 1, far right",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": null
+        }
+      ]
+    },
+    {
+      "id": "grow_bags",
+      "name": "Grow Bags",
+      "type": "grow_bags",
+      "dimensions": { "rows": 1, "cols": 6 },
+      "wallSide": "none",
+      "comment": "Six grow bags modeled as one virtual 1x6 bed. Cells labeled Bag 1 through Bag 6. Sun gradient does not apply.",
+      "plantings": [
+        {
+          "id": "mom_garlic_bag1",
+          "cropId": "garlic",
+          "displayName": "Garlic",
+          "varietyName": null,
+          "status": "Growing",
+          "bedLocation": "Bag 1",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Fall 2025",
+          "notes": "Fall 2025 planting, overwintered"
+        },
+        {
+          "id": "mom_garlic_bag2",
+          "cropId": "garlic",
+          "displayName": "Garlic",
+          "varietyName": null,
+          "status": "Growing",
+          "bedLocation": "Bag 2",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Fall 2025",
+          "notes": "Fall 2025 planting, overwintered"
+        },
+        {
+          "id": "mom_kale_dwarf_blue_curled_bag3",
+          "cropId": "kale",
+          "displayName": "Kale",
+          "varietyName": "Dwarf Blue Curled",
+          "status": "Planted",
+          "bedLocation": "Bag 3",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Brassica oleracea, 21-55 days, USDA Organic"
+        },
+        {
+          "id": "mom_kale_dwarf_blue_curled_bag4",
+          "cropId": "kale",
+          "displayName": "Kale",
+          "varietyName": "Dwarf Blue Curled",
+          "status": "Planted",
+          "bedLocation": "Bag 4",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Brassica oleracea, 21-55 days, USDA Organic"
+        },
+        {
+          "id": "mom_lettuce_butterhead_red_marvel_bag5",
+          "cropId": "red_lettuce",
+          "displayName": "Lettuce, Butterhead Red",
+          "varietyName": "Marvel of Four Seasons",
+          "status": "Planted",
+          "bedLocation": "Bag 5",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": "Lactuca sativa, 21-55 days, USDA Organic"
+        },
+        {
+          "id": "mom_carrot_bag6",
+          "cropId": "carrot",
+          "displayName": "Carrot",
+          "varietyName": null,
+          "status": "Planted",
+          "bedLocation": "Bag 6",
+          "plantedOnStart": "2026-04-11",
+          "plantedOnEnd": "2026-04-19",
+          "season": "Spring 2026",
+          "notes": null
+        }
+      ]
+    }
+  ]
+}
+;
+}());
+

@@ -5,13 +5,18 @@ import assert from "node:assert/strict";
 
 const repo = new URL("../", import.meta.url);
 const momDataUrl = new URL("data/mom-garden-data.json", repo);
+const momDataJsUrl = new URL("data/mom-garden-data.js", repo);
 
 assert.equal(existsSync(momDataUrl), true, "data/mom-garden-data.json should exist");
+assert.equal(existsSync(momDataJsUrl), true, "data/mom-garden-data.js should exist for file:// fallback");
 
 const momData = JSON.parse(readFileSync(momDataUrl, "utf8"));
+const momDataJs = readFileSync(momDataJsUrl, "utf8");
 const plantings = momData.beds.flatMap((bed) => bed.plantings.map((planting) => ({ bed, planting })));
 
 assert.equal(momData.version, 1, "Mom data version should be 1");
+assert.match(momDataJs, /window\.GOS_MOM_GARDEN_DATA\s*=/, "Mom data JS should expose a global fallback");
+assert.match(momDataJs, /Marvel of Four Seasons/, "Mom data JS should mirror the JSON payload");
 assert.equal(momData.beds.length, 3, "Mom data should define 3 beds");
 assert.equal(plantings.length, 13, "Mom data should define 13 plantings");
 assert.deepEqual(
@@ -132,6 +137,9 @@ assert.match(planner, /fall planting/, "Planner should mention garlic's fall pla
 assert.match(planner, /Ask Doctor/, "Planner should link crop context to Doctor");
 
 const painting = readFileSync(new URL("garden-painting.html", repo), "utf8");
+assert.match(painting, /data\/mom-garden-data\.js/, "Beds page should load Mom data JS for file:// fallback");
+assert.match(painting, /loadBundledMomGardenData/, "Beds page should fall back to bundled Mom data when fetch fails");
+assert.match(painting, /window\.location\.protocol === 'file:'/, "Beds page should skip fetch entirely under file://");
 assert.match(painting, /autoLoadMomGardenIfEmpty/, "Beds page should auto-load Mom Garden when no bed exists");
 assert.match(painting, /Loading Mom's Garden/, "Beds page should show a loading state during default Mom Garden load");
 assert.doesNotMatch(painting, /Garden OS needs one bed to begin/, "Beds page should not default to the old empty setup shell");
@@ -155,5 +163,6 @@ assert.match(doctor, /peas:\s*\{[^}]*mono:'Ps'/s, "Doctor should know the Mom pe
 
 const sw = readFileSync(new URL("sw.js", repo), "utf8");
 assert.match(sw, /data\/mom-garden-data\.json/, "Service worker should precache Mom data");
+assert.match(sw, /data\/mom-garden-data\.js/, "Service worker should precache Mom data JS fallback");
 
 console.log(JSON.stringify({ ok: true, plantings: plantings.length, beds: momData.beds.length }, null, 2));

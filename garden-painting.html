@@ -78,6 +78,7 @@
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-suitability.js"></script>
+<script src="data/mom-garden-data.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -1081,10 +1082,29 @@ async function loadMomGardenData(overwrite) {
   if (typeof GosBed === 'undefined' || !GosBed.mom) {
     throw new Error('Mom Garden loader is unavailable.');
   }
-  const res = await fetch('data/mom-garden-data.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Could not load Mom Garden data.');
-  const data = await res.json();
+  const data = await loadMomGardenPayload();
   return GosBed.mom.loadFromData(data, { overwrite: !!overwrite });
+}
+
+function loadBundledMomGardenData() {
+  if (typeof window === 'undefined' || !window.GOS_MOM_GARDEN_DATA) return null;
+  return JSON.parse(JSON.stringify(window.GOS_MOM_GARDEN_DATA));
+}
+
+async function loadMomGardenPayload() {
+  if (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') {
+    const bundled = loadBundledMomGardenData();
+    if (bundled) return bundled;
+  }
+  try {
+    const res = await fetch('data/mom-garden-data.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Could not load Mom Garden data.');
+    return await res.json();
+  } catch (e) {
+    const bundled = loadBundledMomGardenData();
+    if (bundled) return bundled;
+    throw e;
+  }
 }
 
 async function resetMomGardenAndReload() {

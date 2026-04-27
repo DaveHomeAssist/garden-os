@@ -2,7 +2,7 @@
 // Strategy: network-first for HTML, cache-first for fonts, stale-while-revalidate for assets
 // Update CACHE_VERSION on every deploy to bust stale caches.
 
-const CACHE_VERSION = '2026-04-27-default-mom-garden-v5-1';
+const CACHE_VERSION = '2026-04-27-file-mom-garden-v5-1';
 const CACHE_NAME = 'garden-os-' + CACHE_VERSION;
 
 const CORE_ASSETS = [
@@ -16,6 +16,7 @@ const CORE_ASSETS = [
   'gos-bed.js',
   'gos-suitability.js',
   'data/mom-garden-data.json',
+  'data/mom-garden-data.js',
   'journal.html',
   'garden-planner-v4.html',
   'garden-painting.html',
