@@ -774,7 +774,7 @@ function SyncBedRow({ bed, meta, defaultWorkerUrl, onChanged, onToast }) {
   }
   async function handlePush() {
     setBusy('push');
-    try { await GosBed.sync.push(bed.id); onToast('Pushed ✔'); }
+    try { await GosBed.sync.push(bed.id); onToast('Pushed'); }
     catch (e) { onToast('Push failed: ' + (e.message || e)); }
     finally { setBusy(null); onChanged(); }
   }
@@ -790,7 +790,7 @@ function SyncBedRow({ bed, meta, defaultWorkerUrl, onChanged, onToast }) {
           window.dispatchEvent(new CustomEvent('gosBedChanged',
             { detail: { reason: 'sync-pull', id: updated.id } }));
         } catch (_) {}
-        onToast('Pulled ✔');
+        onToast('Pulled');
       }
     } catch (e) { onToast('Pull failed: ' + (e.message || e)); }
     finally { setBusy(null); onChanged(); }
@@ -839,7 +839,7 @@ function SyncBedRow({ bed, meta, defaultWorkerUrl, onChanged, onToast }) {
           <button onClick={handleEnable} disabled={busy === 'enable'}
             style={{ ...baseBtn, color: T.leaf, borderColor: T.leaf,
               opacity: busy ? 0.6 : 1 }}>
-            {busy === 'enable' ? 'Enabling…' : '☁ Enable sync'}
+            {busy === 'enable' ? 'Enabling…' : 'Enable sync'}
           </button>
         </div>
       ) : (
@@ -847,11 +847,11 @@ function SyncBedRow({ bed, meta, defaultWorkerUrl, onChanged, onToast }) {
           <button onClick={copyShareUrl} style={baseBtn}>Copy URL</button>
           <button onClick={handlePush} disabled={busy === 'push'}
             style={{ ...baseBtn, opacity: busy ? 0.6 : 1 }}>
-            {busy === 'push' ? '…pushing' : '↑ Push'}
+            {busy === 'push' ? '…pushing' : 'Push'}
           </button>
           <button onClick={handlePull} disabled={busy === 'pull'}
             style={{ ...baseBtn, opacity: busy ? 0.6 : 1 }}>
-            {busy === 'pull' ? '…pulling' : '↓ Pull'}
+            {busy === 'pull' ? '…pulling' : 'Pull'}
           </button>
           <button onClick={handleRevoke} disabled={busy === 'revoke'}
             style={{ ...baseBtn, color: T.rust, borderColor: T.borderSoft,
