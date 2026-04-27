@@ -102,15 +102,21 @@ const CROPS = {
   tom: { name:'Tomato',   mono:'To', color:'#c8412a', family:'Nightshade', sowWeek: 8, transplantWeek:16, harvestStart:26, harvestEnd:38, daysToMaturity:75, sun:'full' },
   bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c', family:'Herb',       sowWeek:12, transplantWeek:18, harvestStart:22, harvestEnd:38, daysToMaturity:60, sun:'full' },
   let: { name:'Lettuce',  mono:'Le', color:'#6aab4a', family:'Leafy',      sowWeek:10, transplantWeek:null, harvestStart:16, harvestEnd:22, daysToMaturity:45, sun:'part' },
+  head_lettuce: { name:'Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sowWeek:10, transplantWeek:null, harvestStart:16, harvestEnd:24, daysToMaturity:55, sun:'part' },
   rad: { name:'Radish',   mono:'Ra', color:'#b84a1a', family:'Root',       sowWeek:10, transplantWeek:null, harvestStart:14, harvestEnd:18, daysToMaturity:28, sun:'full' },
   car: { name:'Carrot',   mono:'Ca', color:'#d4651a', family:'Root',       sowWeek:12, transplantWeek:null, harvestStart:22, harvestEnd:30, daysToMaturity:70, sun:'full' },
+  carrot: { name:'Carrot', mono:'Ca', color:'#d4651a', family:'Root',       sowWeek:12, transplantWeek:null, harvestStart:22, harvestEnd:30, daysToMaturity:70, sun:'full' },
   pep: { name:'Pepper',   mono:'Pe', color:'#c45a18', family:'Nightshade', sowWeek: 8, transplantWeek:18, harvestStart:30, harvestEnd:40, daysToMaturity:80, sun:'full' },
   cuc: { name:'Cucumber', mono:'Cu', color:'#3a6b2a', family:'Cucurbit',   sowWeek:16, transplantWeek:null, harvestStart:26, harvestEnd:36, daysToMaturity:55, sun:'full' },
   kal: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',   sowWeek:10, transplantWeek:null, harvestStart:22, harvestEnd:48, daysToMaturity:55, sun:'part' },
+  kale: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',   sowWeek:10, transplantWeek:null, harvestStart:22, harvestEnd:48, daysToMaturity:55, sun:'part' },
   oni: { name:'Onion',    mono:'On', color:'#b07d55', family:'Allium',     sowWeek: 6, transplantWeek:12, harvestStart:32, harvestEnd:36, daysToMaturity:110, sun:'full' },
   spi: { name:'Spinach',  mono:'Sp', color:'#3a6b2a', family:'Leafy',      sowWeek: 8, transplantWeek:null, harvestStart:14, harvestEnd:20, daysToMaturity:40, sun:'part' },
   chv: { name:'Chives',   mono:'Ch', color:'#6aab4a', family:'Allium',     sowWeek: 8, transplantWeek:null, harvestStart:18, harvestEnd:48, daysToMaturity:80, sun:'full' },
   mar: { name:'Marigold', mono:'Ma', color:'#e8c84a', family:'Flower',     sowWeek:14, transplantWeek:18, harvestStart:22, harvestEnd:44, daysToMaturity:50, sun:'full' },
+  peas: { name:'Peas', mono:'Ps', color:'#5aab6b', family:'Legume', sowWeek:8, transplantWeek:null, harvestStart:18, harvestEnd:24, daysToMaturity:65, sun:'full' },
+  scallion: { name:'Scallion', mono:'Sc', color:'#7da838', family:'Allium', sowWeek:10, transplantWeek:null, harvestStart:18, harvestEnd:32, daysToMaturity:60, sun:'full' },
+  garlic: { name:'Garlic', mono:'Ga', color:'#b07d55', family:'Allium', sowWeek:42, transplantWeek:null, harvestStart:24, harvestEnd:30, daysToMaturity:240, sun:'full', cycleNote:'fall planting -> summer harvest' },
 };
 function isoWeek(d) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -176,6 +182,14 @@ function bedFromGos(gosBed) {
       r: cell.r,
       c: cell.c,
       crop: p.cropId,
+      id: p.id,
+      displayName: p.displayName || p.cropName || (CROPS[p.cropId] && CROPS[p.cropId].name) || p.cropId,
+      varietyName: p.varietyName,
+      status: p.status,
+      bedLocation: p.bedLocation,
+      placementNote: p.placementNote,
+      label: p.label,
+      notes: p.notes,
       plantedWeek: realWeek != null ? realWeek : fallbackWeek,
       plantedAt: typeof p.plantedAt === 'string' ? p.plantedAt : null,
       isScheduled: realWeek == null,
@@ -188,17 +202,19 @@ function bedFromGos(gosBed) {
 // isFixture for banners + write-disabled paths.
 function loadActiveContext() {
   if (typeof GosBed === 'undefined') {
-    return { bed: BED, events: [], gosBed: null, isFixture: true };
+    return { bed: BED, events: [], gosBed: null, allBeds: [], isFixture: true };
   }
+  const allBeds = GosBed.readAll();
   const gosBed = GosBed.getActive();
   if (!gosBed) {
-    return { bed: BED, events: [], gosBed: null, isFixture: true };
+    return { bed: BED, events: [], gosBed: null, allBeds, isFixture: true };
   }
   const internalBed = bedFromGos(gosBed);
   return {
     bed: internalBed,
     events: Array.isArray(gosBed.events) ? gosBed.events : [],
     gosBed,
+    allBeds,
     isFixture: false,
   };
 }
@@ -426,6 +442,26 @@ function CropChip({ crop, size = 24 }) {
     }}>{c.mono}</span>
   );
 }
+function BedPicker({ beds, activeId, onPick }) {
+  if (!beds || beds.length <= 1) return null;
+  return (
+    <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 14px 8px', flexShrink: 0 }}>
+      {beds.map(bed => {
+        const active = bed.id === activeId;
+        return (
+          <button key={bed.id} onClick={() => onPick(bed.id)} style={{
+            flex: '0 0 auto', padding: '7px 10px', borderRadius: 999,
+            border: `1px solid ${active ? T.soil : T.borderSoft}`,
+            background: active ? T.soil : T.panel,
+            color: active ? T.sunPale : T.textMid,
+            fontFamily: T.fontSans, fontSize: 12, fontWeight: 700,
+            cursor: 'pointer',
+          }}>{bed.name || bed.id}</button>
+        );
+      })}
+    </div>
+  );
+}
 function KeyDot({ label, color, border, solid }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -488,9 +524,9 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id: 'hub',     label: 'Hub',     href: 'index-v5.html' },
-    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
-    { id: 'planner', label: 'Plan',    href: '#' },
+    { id: 'hub',     label: 'Home',    href: 'index-v5.html' },
+    { id: 'paint',   label: 'Beds',    href: 'garden-painting.html' },
+    { id: 'planner', label: 'Planner', href: 'garden-planner-v5.html' },
     { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
     { id: 'journal', label: 'Journal', href: 'how-it-thinks-v5.html' },
   ];
@@ -756,8 +792,12 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done, actual
 }
 
 // ── In-ground strip — the bed reduced to a 4×8 ribbon ───────────────────────
-function InGroundStrip({ bed, onPickCrop }) {
+function InGroundStrip({ bed, gosBed, onPickCrop }) {
   const total = bed.length;
+  const dims = gosBed && gosBed.dimensions
+    ? { rows: Number(gosBed.dimensions.rows) || 4, cols: Number(gosBed.dimensions.cols) || 8 }
+    : { rows: 4, cols: 8 };
+  const totalCells = dims.rows * dims.cols;
   return (
     <div style={{
       margin: '8px 14px', padding: '8px 12px 10px',
@@ -769,25 +809,27 @@ function InGroundStrip({ bed, onPickCrop }) {
         display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         marginBottom: 6,
       }}>
-        <Label size={10} color={T.soilMid}>IN GROUND · 4×8 BED</Label>
+        <Label size={10} color={T.soilMid}>
+          {gosBed && gosBed.type === 'grow_bags' ? 'GROW BAGS' : 'IN GROUND'} · {dims.rows}x{dims.cols} BED
+        </Label>
         <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textSoft }}>
-          <b style={{ color: T.text, fontWeight: 600 }}>{total}</b>/32 cells
+          <b style={{ color: T.text, fontWeight: 600 }}>{total}</b>/{totalCells} cells
         </div>
       </div>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '12px repeat(8, 1fr)',
-        gridTemplateRows: 'repeat(4, 18px)',
+        gridTemplateColumns: `12px repeat(${dims.cols}, 1fr)`,
+        gridTemplateRows: `repeat(${dims.rows}, 18px)`,
         gap: 2,
       }}>
-        {Array.from({ length: 4 }).map((_, r) => (
+        {Array.from({ length: dims.rows }).map((_, r) => (
           <React.Fragment key={'row' + r}>
             <div style={{
               gridRow: r + 1, gridColumn: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: T.fontMono, fontSize: 8, color: T.textMuted, fontWeight: 500,
-            }}>{r + 1}</div>
-            {Array.from({ length: 8 }).map((_, c) => {
+            }}>{gosBed && gosBed.type === 'grow_bags' ? 'B' : r + 1}</div>
+            {Array.from({ length: dims.cols }).map((_, c) => {
               const cell = bed.find(x => x.r === r && x.c === c);
               const crop = cell && CROPS[cell.crop];
               return (
@@ -866,12 +908,36 @@ function formatEventDate(iso) {
   } catch (_) { return ''; }
 }
 
+const STATUS_COLORS = {
+  Planned: T.textMuted,
+  Planted: T.info,
+  Sprouted: T.sun,
+  Growing: T.good,
+  Producing: '#7a4cc2',
+  Harvesting: T.rust,
+  Done: T.leafBright,
+  Failed: T.bad,
+};
+
+function StatusBadge({ status }) {
+  if (!status) return null;
+  return (
+    <span style={{
+      display: 'inline-flex', padding: '3px 7px', borderRadius: 999,
+      background: STATUS_COLORS[status] || T.textMuted, color: '#fff',
+      fontFamily: T.fontMono, fontSize: 9, fontWeight: 600,
+      letterSpacing: 0.12, textTransform: 'uppercase',
+    }}>{status}</span>
+  );
+}
+
 function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
                     isPreview = false, weekOffset = 0,
                     onClose, onMarkDone, onHarvest, onUndoDone, onRemove,
                     onMarkCellDone, onHarvestCell, onUndoCellDone }) {
   const c = CROPS[cropKey];
   const cells = bed.filter(x => x.crop === cropKey);
+  const primaryCell = cells.find(x => x.varietyName) || cells[0] || null;
   const inBed = cells.length > 0;
   const doneEvent = findDoneEventThisSeason(events, cropKey, season);
 
@@ -909,6 +975,16 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
   const stageColor = { upcoming: T.textMuted, sowing: T.leaf, growing: T.sun, harvesting: T.rust, done: T.leafBright }[stage];
   const weeksIn = Math.max(0, today - c.sowWeek);
   const weeksToHarv = Math.max(0, c.harvestStart - today);
+  const doctorHref = (() => {
+    const params = new URLSearchParams();
+    if (gosBed && gosBed.id) params.set('bed', gosBed.id);
+    if (primaryCell) {
+      params.set('cell', `r${primaryCell.r}c${primaryCell.c}`);
+      if (primaryCell.varietyName) params.set('variety', primaryCell.varietyName);
+    }
+    params.set('crop', cropKey);
+    return `garden-doctor-v5.html?${params.toString()}`;
+  })();
 
   const submitHarvest = () => {
     onHarvest(cropKey, {
@@ -939,10 +1015,20 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
           <CropChip crop={cropKey} size={44}/>
           <div style={{ flex: 1 }}>
-            <Disp size={22}>{c.name}</Disp>
+            <Disp size={22}>{primaryCell && primaryCell.displayName ? primaryCell.displayName : c.name}</Disp>
+            {primaryCell && primaryCell.varietyName && (
+              <div style={{ marginTop: 2, fontFamily: T.fontSerif, fontSize: 14, color: T.textSoft, fontStyle: 'italic' }}>
+                {primaryCell.varietyName}
+              </div>
+            )}
             <div style={{ marginTop: 2 }}>
               <Label size={10} color={T.textMuted}>{c.family.toUpperCase()} · {c.daysToMaturity} DAYS · {c.sun.toUpperCase()} SUN</Label>
             </div>
+            {c.cycleNote && (
+              <Label size={10} color={T.rust} style={{ display: 'block', marginTop: 3, fontWeight: 600 }}>
+                {c.cycleNote.toUpperCase()}
+              </Label>
+            )}
             {earliestPlantedAt && (
               <Label size={10} color={T.leaf} style={{ display: 'block', marginTop: 3, fontWeight: 600 }}>
                 PLANTED {formatEventDate(earliestPlantedAt)}{earliestPlantedWeek != null ? ` · W${earliestPlantedWeek}` : ''}
@@ -958,7 +1044,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             background: stageColor, color: '#fff',
             padding: '4px 10px', borderRadius: 999,
             fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: 0.15,
-          }}>{stageLabel}</div>
+          }}>{primaryCell && primaryCell.status ? primaryCell.status.toUpperCase() : stageLabel}</div>
         </div>
 
         <div style={{
@@ -979,6 +1065,33 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             unit={cells.length ? 'of 4' : ''}/>
         </div>
 
+        {cells.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+            {cells.map(cell => (
+              <div key={`${cell.r}-${cell.c}-${cell.id || ''}`} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                padding: '8px 10px', borderRadius: 10,
+                background: T.panel, border: `1px solid ${T.borderSoft}`,
+              }}>
+                <div style={{ minWidth: 0 }}>
+                  {cell.varietyName && (
+                    <span style={{
+                      display: 'inline-flex', padding: '3px 7px', borderRadius: 999,
+                      background: T.cedarWash, color: T.soil,
+                      fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
+                    }}>{cell.displayName || c.name} · {cell.varietyName}</span>
+                  )}
+                  <div style={{ marginTop: 3, fontFamily: T.fontMono, fontSize: 9, color: T.textMuted }}>
+                    {cell.bedLocation || cell.label || `Row ${cell.r + 1}`}
+                    {cell.placementNote ? ' · Garden OS placed' : ''}
+                  </div>
+                </div>
+                <StatusBadge status={cell.status}/>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div style={{
           background: T.sunPale, borderLeft: `3px solid ${T.sun}`,
           padding: '10px 14px', borderRadius: '0 8px 8px 0',
@@ -989,6 +1102,14 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             color: T.text, lineHeight: 1.35, fontStyle: 'italic',
           }}>{nextMoveFor(c, stage, today)}</div>
         </div>
+
+        <a href={doctorHref} style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          marginTop: 10, minHeight: 38, padding: '8px 12px', borderRadius: 10,
+          background: T.panel, border: `1px solid ${T.borderSoft}`,
+          color: T.leaf, textDecoration: 'none',
+          fontFamily: T.fontSans, fontSize: 12, fontWeight: 700,
+        }}>Ask Doctor</a>
 
         {/* Mark-done flow (build-order item #4) */}
         {showHarvestForm ? (
@@ -1093,7 +1214,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
               Harvested — log yield
             </ActionBtn>
             {inBed && !isFixture && (
-              <ActionBtn onClick={onRemove}>Remove (in Painting)</ActionBtn>
+              <ActionBtn onClick={onRemove}>Remove (in Beds)</ActionBtn>
             )}
           </div>
         )}
@@ -1274,8 +1395,9 @@ function AddCropSheet({ bed, today, onAdd, onClose }) {
 }
 
 // ── Main planner composition ────────────────────────────────────────────────
-function Planner({ tweak, bed, events, gosBed, isFixture, season,
+function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
                   onOpenTweaks, onAdd, onRecord, onRemove,
+                  onPickBed,
                   onMarkDone, onHarvest, onUndoDone,
                   onMarkCellDone, onHarvestCell, onUndoCellDone }) {
   const density = tweak.density || 'comfortable';
@@ -1357,7 +1479,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
           <span style={{
             fontFamily: T.fontSans, fontSize: 12, color: T.text, lineHeight: 1.4, flex: 1,
           }}>
-            Showing example data. <a href="garden-painting.html" style={{ color: T.leaf, fontWeight: 600 }}>Set up your bed in Painting</a> to see your real plan.
+            Showing example data. <a href="garden-painting.html" style={{ color: T.leaf, fontWeight: 600 }}>Set up your bed in Beds</a> to see your real plan.
           </span>
           <button aria-label="Dismiss banner" onClick={() => setFixtureBannerDismissed(true)} style={{
             width: 28, height: 28, minWidth: 28, minHeight: 28, padding: 0,
@@ -1405,6 +1527,8 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
         </div>
       </header>
 
+      <BedPicker beds={allBeds} activeId={gosBed && gosBed.id} onPick={onPickBed}/>
+
       <ThisWeekStrip thisWeek={thisWeek}/>
 
       {isBedEmpty && (
@@ -1421,7 +1545,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
             display: 'inline-flex', alignItems: 'center',
             background: T.leafBright, color: '#fff', textDecoration: 'none',
             fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
-          }}>Open Painting →</a>
+          }}>Open Beds →</a>
         </div>
       )}
 
@@ -1481,7 +1605,7 @@ function Planner({ tweak, bed, events, gosBed, isFixture, season,
         </div>
       </section>
 
-      <InGroundStrip bed={bed} onPickCrop={setPicked}/>
+      <InGroundStrip bed={bed} gosBed={gosBed} onPickCrop={setPicked}/>
       <TabBar active="planner"/>
 
       {picked && (
@@ -1633,7 +1757,7 @@ function App() {
     return () => window.removeEventListener('gosBedChanged', handler);
   }, [refresh]);
 
-  const { bed, events, gosBed, isFixture } = active;
+  const { bed, events, gosBed, allBeds, isFixture } = active;
 
   // Bed-content edits live in the Painting screen now. Both the fixture and
   // the real-bed paths route the user there to keep one canonical writer.
@@ -1689,14 +1813,20 @@ function App() {
     if (!res.ok) { alert(CONCURRENT_WRITE_MSG); return; }
     refresh();
   };
+  const handlePickBed = (id) => {
+    if (typeof GosBed === 'undefined') return;
+    GosBed.setActive(id);
+    refresh();
+  };
 
   return (
     <PhoneFrame>
       <Planner
         tweak={tweak}
-        bed={bed} events={events} gosBed={gosBed} isFixture={isFixture}
+        bed={bed} events={events} gosBed={gosBed} allBeds={allBeds} isFixture={isFixture}
         season={SEASON_YEAR}
         onOpenTweaks={() => setTweaksOpen(true)}
+        onPickBed={handlePickBed}
         onAdd={goToPainting}
         onRemove={goToPainting}
         onRecord={(cropKey, type) => {

@@ -115,18 +115,34 @@
   function copyPaintedEntry(p) {
     if (!p || typeof p !== 'object') return p;
     var out = {
+      id: p.id,
       cell: p.cell,
       cropId: p.cropId,
       cropName: p.cropName,
       cropIcon: p.cropIcon,
-      cropColor: p.cropColor
+      cropColor: p.cropColor,
+      displayName: p.displayName,
+      varietyName: p.varietyName == null ? null : p.varietyName,
+      status: p.status,
+      bedLocation: p.bedLocation,
+      sourceBedName: p.sourceBedName,
+      placementConfidence: p.placementConfidence,
+      placementNote: p.placementNote,
+      label: p.label,
+      notes: p.notes
     };
     // Round-trip optional planting timestamp + ISO week when present.
     // Surfaces that don't set these (older code, fixtures) stay back-compat.
     if (typeof p.plantedAt === 'string' && p.plantedAt) out.plantedAt = p.plantedAt;
+    if (typeof p.plantedOnStart === 'string' && p.plantedOnStart) out.plantedOnStart = p.plantedOnStart;
+    if (typeof p.plantedOnEnd === 'string' && p.plantedOnEnd) out.plantedOnEnd = p.plantedOnEnd;
+    if (typeof p.season === 'string' && p.season) out.season = p.season;
     if (typeof p.plantedWeek === 'number' && isFinite(p.plantedWeek)) {
       out.plantedWeek = p.plantedWeek;
     }
+    Object.keys(out).forEach(function (k) {
+      if (out[k] === undefined) delete out[k];
+    });
     return out;
   }
 
@@ -147,6 +163,17 @@
       ruleVersion: bedData.ruleVersion != null ? bedData.ruleVersion : null,
       seasonStart: bedData.seasonStart || 'standard'
     };
+    if (bedData.dimensions && typeof bedData.dimensions === 'object') {
+      record.dimensions = {
+        rows: Number(bedData.dimensions.rows),
+        cols: Number(bedData.dimensions.cols)
+      };
+    }
+    if (typeof bedData.type === 'string' && bedData.type) record.type = bedData.type;
+    if (typeof bedData.source === 'string' && bedData.source) record.source = bedData.source;
+    if (typeof bedData.loadedAt === 'string' && bedData.loadedAt) record.loadedAt = bedData.loadedAt;
+    if (typeof bedData.comment === 'string' && bedData.comment) record.comment = bedData.comment;
+    if (typeof bedData.momGarden === 'boolean') record.momGarden = bedData.momGarden;
     // Optional bedContext — only persist if the caller supplied it. Keeps
     // pre-context beds visually identical when re-saved.
     if (typeof bedData.zone === 'string' && bedData.zone) record.zone = bedData.zone;
@@ -323,6 +350,164 @@
       return isoWeek(painted.plantedAt);
     }
     return null;
+  }
+
+  // ── Mom-first static data loader ────────────────────────────────────────
+  var MOM_SOURCE = 'mom-garden-data.json v1';
+
+  function countMomPlantings(data) {
+    if (!data || !Array.isArray(data.beds)) return 0;
+    return data.beds.reduce(function (sum, bed) {
+      return sum + (Array.isArray(bed.plantings) ? bed.plantings.length : 0);
+    }, 0);
+  }
+
+  function rowFromLocation(location) {
+    var m = String(location || '').match(/Row\s+(\d+)/i);
+    return m ? Math.max(0, parseInt(m[1], 10) - 1) : null;
+  }
+
+  function bagFromLocation(location) {
+    var m = String(location || '').match(/Bag\s+(\d+)/i);
+    return m ? Math.max(0, parseInt(m[1], 10) - 1) : null;
+  }
+
+  function nextOpenColumn(used, row, cols) {
+    for (var c = 0; c < cols; c++) {
+      if (!used[row + ':' + c]) return c;
+    }
+    return null;
+  }
+
+  function createJournalEvent(message, bedId, loadedAt, payload) {
+    return {
+      type: 'journal',
+      source: MOM_SOURCE,
+      bedId: bedId,
+      timestamp: loadedAt,
+      message: message,
+      payload: payload || null
+    };
+  }
+
+  function plantingJournalMessage(planting, bedName) {
+    var variety = planting.varietyName ? ' ' + planting.varietyName : '';
+    var loc = planting.bedLocation ? ' (' + planting.bedLocation + ')' : '';
+    return planting.displayName + variety + ' ' + String(planting.status || 'planted').toLowerCase() +
+      ' in ' + bedName + loc + '.';
+  }
+
+  function buildMomBedsFromData(data, options) {
+    options = options || {};
+    if (!data || !Array.isArray(data.beds)) {
+      throw new Error('GosBed.mom.buildBedsFromData: invalid Mom data');
+    }
+    var loadedAt = options.loadedAt || new Date().toISOString();
+    var plantingCount = countMomPlantings(data);
+    return data.beds.map(function (srcBed) {
+      var rows = Number(srcBed.dimensions && srcBed.dimensions.rows) || 4;
+      var cols = Number(srcBed.dimensions && srcBed.dimensions.cols) || 4;
+      var used = {};
+      var painted = [];
+      (srcBed.plantings || []).forEach(function (planting, index) {
+        var row = null;
+        var col = null;
+        var confidence = 'unknown';
+        var note = '';
+        if (srcBed.type === 'grow_bags') {
+          row = 0;
+          col = bagFromLocation(planting.bedLocation);
+          confidence = col == null ? 'auto' : 'explicit';
+        } else {
+          row = rowFromLocation(planting.bedLocation);
+          if (row != null) {
+            col = nextOpenColumn(used, row, cols);
+            confidence = 'row';
+            note = 'Garden OS placed left-to-right within the source row.';
+          }
+        }
+        if (row == null || row >= rows) row = Math.min(rows - 1, Math.floor(index / cols));
+        if (col == null || col >= cols) {
+          col = nextOpenColumn(used, row, cols);
+          if (col == null) col = Math.min(cols - 1, index % cols);
+          if (confidence === 'unknown') confidence = 'auto';
+          if (!note) note = 'Garden OS placed this planting because the source did not include an exact cell.';
+        }
+        used[row + ':' + col] = true;
+        painted.push(copyPaintedEntry({
+          id: planting.id,
+          cell: formatCell(row, col),
+          cropId: planting.cropId,
+          cropName: planting.displayName || planting.cropId,
+          cropIcon: '',
+          cropColor: '',
+          displayName: planting.displayName || planting.cropId,
+          varietyName: planting.varietyName == null ? null : planting.varietyName,
+          status: planting.status || 'Planted',
+          bedLocation: planting.bedLocation || null,
+          sourceBedName: srcBed.name,
+          placementConfidence: confidence,
+          placementNote: note || null,
+          label: srcBed.type === 'grow_bags' ? 'Bag ' + (col + 1) : null,
+          plantedAt: planting.plantedOnStart,
+          plantedOnStart: planting.plantedOnStart,
+          plantedOnEnd: planting.plantedOnEnd,
+          plantedWeek: isoWeek(planting.plantedOnStart),
+          season: planting.season,
+          notes: planting.notes
+        }));
+      });
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        id: srcBed.id,
+        name: srcBed.name,
+        type: srcBed.type,
+        dimensions: { rows: rows, cols: cols },
+        shape: cols + 'x' + rows,
+        sun: 'full',
+        wallSide: srcBed.wallSide || 'none',
+        source: MOM_SOURCE,
+        loadedAt: loadedAt,
+        comment: srcBed.comment || null,
+        momGarden: true,
+        painted: painted,
+        events: [createJournalEvent(
+          'Loaded Mom Garden data (' + plantingCount + ' plantings, ' + data.beds.length + ' beds)',
+          srcBed.id,
+          loadedAt,
+          { plantingCount: plantingCount, bedCount: data.beds.length }
+        )].concat(painted.map(function (p) {
+          return createJournalEvent(
+            plantingJournalMessage(p, srcBed.name),
+            srcBed.id,
+            loadedAt,
+            { planting: p, sourceBedName: srcBed.name }
+          );
+        })),
+        ruleVersion: null,
+        seasonStart: 'retroactive'
+      };
+    });
+  }
+
+  function isMomLoaded() {
+    return readAllBeds().some(function (bed) {
+      return bed && (bed.source === MOM_SOURCE || bed.momGarden === true);
+    });
+  }
+
+  function loadMomFromData(data, options) {
+    options = options || {};
+    if (!options.overwrite && readAllBeds().length > 0) {
+      return { ok: false, skipped: true, reason: 'existing-beds' };
+    }
+    var beds = buildMomBedsFromData(data, options);
+    if (options.overwrite) {
+      beds.forEach(function (bed) { deleteBed(bed.id); });
+    }
+    beds.forEach(function (bed) { writeBed(bed); });
+    if (beds[0]) setActive(beds[0].id);
+    return { ok: true, beds: beds, plantingCount: countMomPlantings(data) };
   }
 
   // ── Cross-device sync (optional) ────────────────────────────────────────
@@ -528,6 +713,12 @@
     currentIsoDate: currentIsoDate,
     currentIsoWeek: currentIsoWeek,
     plantedWeekOf: plantedWeekOf,
+    mom: {
+      source: MOM_SOURCE,
+      buildBedsFromData: buildMomBedsFromData,
+      loadFromData: loadMomFromData,
+      isLoaded: isMomLoaded,
+    },
     WALL_SIDES: WALL_SIDES,
     WATER_KINDS: WATER_KINDS,
     ORIENTATIONS: ORIENTATIONS,

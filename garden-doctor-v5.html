@@ -76,8 +76,14 @@ const CROPS = {
   tom: { name:'Tomato',   mono:'To', color:'#c8412a' },
   bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c' },
   let: { name:'Lettuce',  mono:'Le', color:'#6aab4a' },
+  head_lettuce: { name:'Lettuce', mono:'Le', color:'#6aab4a' },
   car: { name:'Carrot',   mono:'Ca', color:'#d4651a' },
+  carrot: { name:'Carrot', mono:'Ca', color:'#d4651a' },
   pep: { name:'Pepper',   mono:'Pe', color:'#c45a18' },
+  kale: { name:'Kale',     mono:'Ka', color:'#2f7a3d' },
+  peas: { name:'Peas',     mono:'Ps', color:'#5aab6b' },
+  scallion: { name:'Scallion', mono:'Sc', color:'#7da838' },
+  garlic: { name:'Garlic', mono:'Ga', color:'#b07d55' },
 };
 
 const SYMPTOMS = [
@@ -183,9 +189,9 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
+    { id:'hub',     label:'Home',    href:'index-v5.html' },
+    { id:'paint',   label:'Beds',    href:'garden-painting.html' },
+    { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -270,6 +276,40 @@ function readActiveBed() {
   try { return GosBed.getActive(); } catch (_) { return null; }
 }
 
+function readDoctorQuery() {
+  try { return new URLSearchParams(window.location.search || ''); }
+  catch (_) { return new URLSearchParams(''); }
+}
+function readDoctorInitialCrop() {
+  const crop = readDoctorQuery().get('crop');
+  return crop || null;
+}
+function readDoctorContextFromUrl() {
+  const params = readDoctorQuery();
+  const bedId = params.get('bed');
+  const cell = params.get('cell');
+  const crop = params.get('crop');
+  const variety = params.get('variety');
+  if (!bedId && !cell && !crop && !variety) return null;
+  let bed = null;
+  if (typeof GosBed !== 'undefined') {
+    try { bed = bedId && GosBed.read ? GosBed.read(bedId) : GosBed.getActive(); } catch (_) { bed = null; }
+  }
+  const planting = bed && Array.isArray(bed.painted)
+    ? bed.painted.find(p => p && ((cell && p.cell === cell) || (crop && p.cropId === crop && (!variety || p.varietyName === variety))))
+    : null;
+  const cropDef = CROPS[crop] || {};
+  return {
+    bedName: (bed && bed.name) || bedId || 'Selected bed',
+    cell,
+    cropId: crop || (planting && planting.cropId) || null,
+    cropName: (planting && (planting.displayName || planting.cropName)) || cropDef.name || crop || 'Selected crop',
+    varietyName: (planting && planting.varietyName) || variety || null,
+    status: planting && planting.status,
+    location: (planting && (planting.bedLocation || planting.label)) || null,
+  };
+}
+
 // Minimal scoring crop catalog. Doctor's local CROPS dict only has the chip
 // fields; this adapter supplies the timing/sun fields GosSuitability needs
 // for the 12 crops the v5 surfaces share. A crop missing here just returns a
@@ -278,15 +318,21 @@ const DOCTOR_CROP_SCORING = {
   tom: { sun: 'full', sowWeek:  8, harvestStart: 26, harvestEnd: 38 },
   bas: { sun: 'full', sowWeek: 12, harvestStart: 22, harvestEnd: 38 },
   let: { sun: 'part', sowWeek: 10, harvestStart: 16, harvestEnd: 22 },
+  head_lettuce: { sun: 'part', sowWeek: 10, harvestStart: 16, harvestEnd: 24 },
   rad: { sun: 'full', sowWeek: 10, harvestStart: 14, harvestEnd: 18 },
   car: { sun: 'full', sowWeek: 12, harvestStart: 22, harvestEnd: 30 },
+  carrot: { sun: 'full', sowWeek: 12, harvestStart: 22, harvestEnd: 30 },
   pep: { sun: 'full', sowWeek:  8, harvestStart: 30, harvestEnd: 40 },
   cuc: { sun: 'full', sowWeek: 16, harvestStart: 26, harvestEnd: 36 },
   kal: { sun: 'part', sowWeek: 10, harvestStart: 22, harvestEnd: 48 },
+  kale: { sun: 'part', sowWeek: 10, harvestStart: 22, harvestEnd: 48 },
   oni: { sun: 'full', sowWeek:  6, harvestStart: 32, harvestEnd: 36 },
   spi: { sun: 'part', sowWeek:  8, harvestStart: 14, harvestEnd: 20 },
   chv: { sun: 'full', sowWeek:  8, harvestStart: 18, harvestEnd: 48 },
   mar: { sun: 'full', sowWeek: 14, harvestStart: 22, harvestEnd: 44 },
+  peas: { sun: 'full', sowWeek: 8, harvestStart: 18, harvestEnd: 24 },
+  scallion: { sun: 'full', sowWeek: 10, harvestStart: 18, harvestEnd: 32 },
+  garlic: { sun: 'full', sowWeek: 42, harvestStart: 24, harvestEnd: 30 },
 };
 function doctorGetCrop(cropId) {
   return DOCTOR_CROP_SCORING[cropId] || { sun: 'full' };
@@ -526,6 +572,32 @@ function CropPicker({ cropId, onPick, bed }) {
         })}
       </div>
     </div>
+  );
+}
+
+function DoctorContextBar({ context }) {
+  if (!context) return null;
+  return (
+    <section style={{
+      marginBottom: 12, padding: '10px 12px', borderRadius: 12,
+      background: T.leafWash, border: `1px solid ${T.leafPale}`,
+    }}>
+      <Label size={9} color={T.leaf}>TRIAGING</Label>
+      <div style={{
+        marginTop: 3, fontFamily: T.fontDisp, fontSize: 17,
+        fontWeight: 600, color: T.soil, lineHeight: 1.15,
+      }}>
+        {context.cropName}{context.varietyName ? ` · ${context.varietyName}` : ''}
+      </div>
+      <div style={{
+        marginTop: 4, fontFamily: T.fontMono, fontSize: 9,
+        color: T.textSoft, letterSpacing: 0.08, textTransform: 'uppercase',
+      }}>
+        {context.bedName}
+        {context.location ? ` · ${context.location}` : ''}
+        {context.status ? ` · ${context.status}` : ''}
+      </div>
+    </section>
   );
 }
 
@@ -891,7 +963,7 @@ function RetroEmptyNoBed() {
         fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
         color: T.textSoft, lineHeight: 1.5, marginTop: 6,
       }}>
-        Paint a bed first, then come back here to see your season summary.
+        Set up a bed first, then come back here to see your season summary.
       </div>
       <a href="garden-painting.html" style={{
         display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -899,7 +971,7 @@ function RetroEmptyNoBed() {
         background: T.leafBright, color: '#fff',
         fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
         textDecoration: 'none', minHeight: 36,
-      }}>Go to Painting →</a>
+      }}>Go to Beds →</a>
     </div>
   );
 }
@@ -919,7 +991,7 @@ function RetroEmptyNoEvents({ year }) {
         fontFamily: T.fontSerif, fontSize: 13, fontStyle: 'italic',
         color: T.textSoft, lineHeight: 1.5, marginTop: 6,
       }}>
-        Mark crops as done or log a harvest in your Plan to see your season summary here.
+        Mark crops as done or log a harvest in your Planner to see your season summary here.
       </div>
       <a href="garden-planner-v5.html" style={{
         display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -927,7 +999,7 @@ function RetroEmptyNoEvents({ year }) {
         background: T.leafBright, color: '#fff',
         fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
         textDecoration: 'none', minHeight: 36,
-      }}>Go to Plan →</a>
+      }}>Go to Planner →</a>
     </div>
   );
 }
@@ -1048,7 +1120,7 @@ function Doctor() {
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
   const last = loadLastQuery();
   const [symptoms, setSymptoms] = React.useState(() => last?.symptoms || []);
-  const [cropId, setCropId] = React.useState(() => last?.cropId || 'tom');
+  const [cropId, setCropId] = React.useState(() => readDoctorInitialCrop() || last?.cropId || 'tom');
   const [season, setSeason] = React.useState(() => last?.season || 'late-spring');
   const [diagnosed, setDiagnosed] = React.useState(false);
   const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
@@ -1072,6 +1144,7 @@ function Doctor() {
 
   const toggle = (id) => setSymptoms(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   const ranked = diagnosed ? rankDiagnoses(symptoms).filter(d => d.prob >= tweak.confidenceThreshold) : [];
+  const doctorContext = React.useMemo(readDoctorContextFromUrl, [bed]);
 
   React.useEffect(() => {
     saveLastQuery({ symptoms, cropId, season });
@@ -1138,6 +1211,7 @@ function Doctor() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
         {view === 'retro' ? <Retrospective/> : (<>
+        <DoctorContextBar context={doctorContext}/>
         <CropPicker cropId={cropId} onPick={setCropId} bed={bed}/>
 
         <div style={{ marginTop: 14 }}>

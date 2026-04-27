@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Garden OS Painting screen: tap-to-paint crops into real-shaped beds. Multi-bed, brush + erase + inspect.">
-<title>Garden OS · Painting (mobile beta)</title>
+<meta name="description" content="Garden OS Beds screen: tap-to-paint crops into real-shaped beds. Multi-bed, brush + erase + inspect.">
+<title>Garden OS · Beds (mobile beta)</title>
 
 <link rel="stylesheet" href="garden-os-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -92,7 +92,7 @@ const T = {
   cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
   leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0',
   sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0',
-  rust:'#b84a1a', rustLight:'#d4651a',
+  rust:'#b84a1a', rustLight:'#d4651a', rustWash:'#fdf0e8',
   cream:'#f7f3ec', creamMid:'#ede5d8', creamDeep:'#e4d8c8',
   panel:'#fffdf9',
   text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
@@ -108,17 +108,36 @@ const T = {
 const CROPS = {
   tom: { name:'Tomato',   mono:'To', color:'#c8412a', family:'Nightshade', sun:'full', daysToMaturity:75 },
   bas: { name:'Basil',    mono:'Ba', color:'#4e8c3c', family:'Herb',       sun:'full', daysToMaturity:60 },
-  let: { name:'Lettuce',  mono:'Le', color:'#6aab4a', family:'Leafy',      sun:'part', daysToMaturity:45 },
+  let: { name:'Lettuce', label:'Leaf Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sun:'part', daysToMaturity:45 },
+  head_lettuce: { name:'Lettuce', label:'Head Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sun:'part', daysToMaturity:55 },
   rad: { name:'Radish',   mono:'Ra', color:'#b84a1a', family:'Root',       sun:'full', daysToMaturity:28 },
   car: { name:'Carrot',   mono:'Ca', color:'#d4651a', family:'Root',       sun:'full', daysToMaturity:70 },
+  carrot: { name:'Carrot', mono:'Ca', color:'#d4651a', family:'Root',      sun:'full', daysToMaturity:70 },
   pep: { name:'Pepper',   mono:'Pe', color:'#c45a18', family:'Nightshade', sun:'full', daysToMaturity:80 },
   cuc: { name:'Cucumber', mono:'Cu', color:'#3a6b2a', family:'Cucurbit',   sun:'full', daysToMaturity:55 },
   kal: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',   sun:'part', daysToMaturity:55 },
+  kale: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',  sun:'part', daysToMaturity:55 },
   oni: { name:'Onion',    mono:'On', color:'#b07d55', family:'Allium',     sun:'full', daysToMaturity:110 },
   spi: { name:'Spinach',  mono:'Sp', color:'#3a6b2a', family:'Leafy',      sun:'part', daysToMaturity:40 },
   chv: { name:'Chives',   mono:'Ch', color:'#6aab4a', family:'Allium',     sun:'full', daysToMaturity:80 },
   mar: { name:'Marigold', mono:'Ma', color:'#e8c84a', family:'Flower',     sun:'full', daysToMaturity:50 },
+  peas: { name:'Peas', mono:'Ps', color:'#5aab6b', family:'Legume', sun:'full', daysToMaturity:65 },
+  scallion: { name:'Scallion', mono:'Sc', color:'#7da838', family:'Allium', sun:'full', daysToMaturity:60 },
+  garlic: { name:'Garlic', mono:'Ga', color:'#b07d55', family:'Allium', sun:'full', daysToMaturity:240 },
 };
+
+const STATUS_COLORS = {
+  Planned: T.textMuted,
+  Planted: T.info,
+  Sprouted: T.sun,
+  Growing: T.good,
+  Producing: '#7a4cc2',
+  Harvesting: T.rust,
+  Done: T.leafBright,
+  Failed: T.bad,
+};
+
+const RED_LETTUCE_COLOR = '#a83a3a';
 
 // ── Multi-bed fixture (mirrors src/paint-data.jsx) ──────────────────────────
 const BEDS = [
@@ -237,6 +256,100 @@ function recsForCell(bed, r, c) {
     .sort((a, b) => b.score - a.score);
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(max-width: 700px)').matches;
+}
+
+function getCellScoreDetail(bed, painted, cell) {
+  if (!bed || !cell || !cell.crop || typeof GosSuitability === 'undefined') return null;
+  const scoreBed = Object.assign({}, bed, { painted: painted || [] });
+  const gosBed = paintingBedToGos(scoreBed);
+  if (!gosBed) return null;
+  const cellStr = 'r' + cell.r + 'c' + cell.c;
+  return GosSuitability.scoreCell({
+    bed: gosBed,
+    cellEntry: { cell: cellStr, cropId: cell.crop },
+    getCrop: paintingGetCrop,
+    currentWeek: currentIsoWeekSafe(),
+  });
+}
+
+function cellLocationLabel(cell) {
+  if (!cell) return '';
+  return cell.bedLocation || cell.label || ('Row ' + (cell.r + 1));
+}
+
+function cellDisplayName(cell) {
+  const crop = cell && CROPS[cell.crop];
+  return (cell && (cell.displayName || cell.cropName)) || (crop && crop.name) || 'Empty cell';
+}
+
+function cropPaletteLabel(cropId) {
+  const crop = CROPS[cropId];
+  return (crop && (crop.label || crop.name)) || cropId || 'Crop';
+}
+
+function cellVarietyLabel(cell) {
+  return (cell && cell.varietyName) || '';
+}
+
+function cellDisplayWithVariety(cell) {
+  const name = cellDisplayName(cell);
+  const variety = cellVarietyLabel(cell);
+  return variety ? name + ' - ' + variety : name;
+}
+
+function cropVisualForPlanting(crop, planting) {
+  if (!crop) return null;
+  const text = [
+    planting && planting.displayName,
+    planting && planting.cropName,
+    planting && planting.varietyName,
+  ].filter(Boolean).join(' ');
+  const isRedLettuce = crop.name === 'Lettuce' && /red|marvel/i.test(text);
+  return isRedLettuce ? Object.assign({}, crop, { color: RED_LETTUCE_COLOR }) : crop;
+}
+
+function cellDoctorHref(bed, cell) {
+  const params = new URLSearchParams();
+  if (bed && bed.id) params.set('bed', bed.id);
+  if (cell) {
+    params.set('cell', 'r' + cell.r + 'c' + cell.c);
+    if (cell.crop) params.set('crop', cell.crop);
+    if (cell.varietyName) params.set('variety', cell.varietyName);
+  }
+  return 'garden-doctor-v5.html?' + params.toString();
+}
+
+function eventMatchesCell(event, cell) {
+  if (!event || !cell) return false;
+  const cellStr = 'r' + cell.r + 'c' + cell.c;
+  if (event.cell === cellStr || event.cellId === cellStr) return true;
+  const snap = event.cropSnapshot || (event.payload && event.payload.planting);
+  return !!(snap && (snap.cell === cellStr || snap.cropId === cell.crop));
+}
+
+function journalEntriesForCell(bed, cell) {
+  const events = bed && Array.isArray(bed.events) ? bed.events : [];
+  return events.filter(event => eventMatchesCell(event, cell)).slice(-3).reverse();
+}
+
+function neighborRelationsForCell(bedPainted, cell) {
+  const crop = cell && CROPS[cell.crop];
+  if (!crop) return [];
+  const companions = crop.companions || [];
+  const conflicts = crop.conflicts || [];
+  return (bedPainted || []).filter(other => other && other !== cell &&
+    Math.abs(other.r - cell.r) + Math.abs(other.c - cell.c) === 1
+  ).map(other => {
+    const relation = companions.includes(other.crop) ? 'Companion' :
+      (conflicts.includes(other.crop) ? 'Conflict' : null);
+    return relation ? { relation, cell: other } : null;
+  }).filter(Boolean);
+}
+
 // Aggregate the bed's score from all occupied cells. Returns:
 //   { score: 0-100 number | null, weakestCells: ["r0c2", ...] }
 function computeBedScore(bed) {
@@ -325,13 +438,13 @@ function Body({ children, size = 13, color = T.textMid, style = {} }) {
     <span style={{ fontFamily: T.fontSans, fontSize: size, color, lineHeight: 1.4, ...style }}>{children}</span>
   );
 }
-function CropChip({ crop, size = 24 }) {
+function CropChip({ crop, size = 24, visualColor }) {
   const c = CROPS[crop];
   if (!c) return null;
   return (
     <span style={{
       width: size, height: size, borderRadius: '50%',
-      background: c.color, color: '#fff',
+      background: visualColor || c.color, color: '#fff',
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: T.fontMono, fontSize: size * 0.42, fontWeight: 500,
       letterSpacing: -0.3,
@@ -360,9 +473,9 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id: 'hub',     label: 'Hub',     href: 'index-v5.html' },
-    { id: 'planner', label: 'Plan',    href: 'garden-planner-v5.html' },
-    { id: 'paint',   label: 'Paint',   href: 'garden-painting.html' },
+    { id: 'hub',     label: 'Home',    href: 'index-v5.html' },
+    { id: 'paint',   label: 'Beds',    href: 'garden-painting.html' },
+    { id: 'planner', label: 'Planner', href: 'garden-planner-v5.html' },
     { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
     { id: 'journal', label: 'Journal', href: 'how-it-thinks-v5.html' },
   ];
@@ -429,7 +542,7 @@ function BedSwitcher({ beds, painted, activeId, onPick, onAdd }) {
         const totalCells = b.shape.flat().reduce((s, x) => s + x, 0);
         const filled = (painted[b.id] || []).length;
         return (
-          <button key={b.id} data-bedid={b.id} onClick={() => onPick(b.id)} style={{
+          <button type="button" key={b.id} data-bedid={b.id} onClick={() => onPick(b.id)} style={{
             flex: '0 0 auto', padding: '6px 10px 6px 8px', borderRadius: 10,
             background: active ? T.soil : T.cream,
             color: active ? T.sunPale : T.textMid,
@@ -448,7 +561,7 @@ function BedSwitcher({ beds, painted, activeId, onPick, onAdd }) {
           </button>
         );
       })}
-      <button onClick={onAdd} style={{
+      <button type="button" onClick={onAdd} style={{
         flex: '0 0 auto', padding: '6px 12px', borderRadius: 10,
         background: T.cream, border: `1px dashed ${T.border}`,
         color: T.textSoft, fontFamily: T.fontMono, fontSize: 11,
@@ -459,30 +572,55 @@ function BedSwitcher({ beds, painted, activeId, onPick, onAdd }) {
     </div>
   );
 }
-function BedCell({ r, c, crop, ghost, selected, showMono, size, onTap, onEnter, mode }) {
-  const bg = crop ? crop.color + 'DD' : T.panel;
+function BedCell({ r, c, crop, planting, ghost, selected, showMono, size, onTap, onEnter, mode }) {
+  const visualCrop = cropVisualForPlanting(crop, planting);
+  const cropColor = visualCrop ? visualCrop.color : '';
+  const bg = visualCrop ? cropColor + 'DD' : T.panel;
+  const variety = planting && planting.varietyName;
+  const status = planting && planting.status;
+  const label = planting && planting.label;
+  const displayName = planting && planting.displayName ? planting.displayName : (visualCrop && visualCrop.name);
   return (
-    <button
+    <button type="button"
       onClick={onTap}
       onMouseEnter={onEnter}
       onTouchMove={onEnter}
       data-cell={`${r}-${c}`}
-      data-crop={crop ? crop.name : ''}
+      data-crop={visualCrop ? visualCrop.name : ''}
+      data-crop-color={cropColor}
       style={{
         width: size, height: size, padding: 0,
-        border: selected ? `2px solid ${T.sun}` : `1px solid ${crop ? crop.color : T.borderSoft}`,
+        border: selected ? `2px solid ${T.sun}` : `1px solid ${cropColor || T.borderSoft}`,
         background: bg, borderRadius: 4,
         position: 'relative', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: T.fontMono, fontSize: size * 0.28, fontWeight: 600,
-        color: crop ? '#fff' : T.textSoft,
+        color: visualCrop ? '#fff' : T.textSoft,
         letterSpacing: -0.2,
-        boxShadow: crop ? 'inset 0 -2px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+        boxShadow: visualCrop ? 'inset 0 -2px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
         transition: 'transform 0.08s, border-color 0.1s',
         transform: selected ? 'scale(1.08)' : 'scale(1)',
         zIndex: selected ? 2 : 1,
       }}>
-      {crop && showMono && crop.mono}
+      {visualCrop && showMono && (
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, lineHeight: 1 }}>
+          <span>{visualCrop.mono}</span>
+          {variety && (
+            <span style={{ fontSize: Math.max(7, size * 0.16), fontFamily: T.fontSans, fontWeight: 600 }}>
+              {displayName} · {variety}
+            </span>
+          )}
+          {status && (
+            <span style={{
+              marginTop: 1, padding: '1px 4px', borderRadius: 999,
+              background: STATUS_COLORS[status] || T.textMuted,
+              color: '#fff', fontSize: Math.max(6, size * 0.13), fontFamily: T.fontMono,
+            }}>{status}</span>
+          )}
+          {label && <span style={{ fontSize: Math.max(6, size * 0.13), opacity: 0.88 }}>{label}</span>}
+        </span>
+      )}
+      {!crop && label && <span style={{ fontSize: size * 0.2 }}>{label}</span>}
       {!crop && ghost && (
         <span style={{
           color: ghost.color, opacity: 0.35,
@@ -531,9 +669,9 @@ function BedGrid({ bed, painted, onCellTap, onCellEnter, selected, ghostCrop, ce
             const ghost = !cell && ghostCrop && CROPS[ghostCrop];
             return (
               <BedCell key={r + '-' + c}
-                r={r} c={c} crop={crop} ghost={ghost} selected={isSel}
+                r={r} c={c} crop={crop} planting={cell} ghost={ghost} selected={isSel}
                 showMono size={cellSize}
-                onTap={() => onCellTap && onCellTap(r, c)}
+                onTap={(event) => onCellTap && onCellTap(r, c, event.currentTarget)}
                 onEnter={() => onCellEnter && onCellEnter(r, c)}
                 mode={mode}/>
             );
@@ -547,7 +685,7 @@ function BedGrid({ bed, painted, onCellTap, onCellEnter, selected, ghostCrop, ce
 // ── Tool buttons strip ──────────────────────────────────────────────────────
 function ToolBtn({ label, icon, active, muted, onClick, ariaLabel }) {
   return (
-    <button onClick={onClick} aria-label={ariaLabel || label} aria-pressed={!!active} style={{
+    <button type="button" onClick={onClick} aria-label={ariaLabel || label} aria-pressed={!!active} style={{
       height: 32, padding: '0 12px', borderRadius: 8,
       background: active ? T.soil : T.panel,
       color: active ? T.sunPale : (muted ? T.textSoft : T.textMid),
@@ -579,7 +717,7 @@ function Seg({ value, opts, onChange }) {
   return (
     <div style={{ display: 'flex', background: T.cedarWash, borderRadius: 6, padding: 2, gap: 2 }}>
       {opts.map(([val, lab]) => (
-        <button key={val} onClick={() => onChange(val)} style={{
+        <button type="button" key={val} onClick={() => onChange(val)} style={{
           flex: 1, padding: '5px 8px', borderRadius: 4, border: 'none',
           background: value === val ? T.panel : 'transparent',
           fontFamily: T.fontSans, fontSize: 12, fontWeight: 500,
@@ -633,7 +771,7 @@ function SitePanel({ bed, onChange, onClose }) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8,
         }}>
           <Disp size={17}>Site</Disp>
-          <button onClick={onClose} aria-label="Close site panel" style={{
+          <button type="button" onClick={onClose} aria-label="Close site panel" style={{
             width: 24, height: 24, borderRadius: 6, padding: 0,
             background: 'transparent', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -674,7 +812,7 @@ function SitePanel({ bed, onChange, onClose }) {
             style={{ width: '100%', accentColor: T.leaf }}
             aria-label="Daily sun hours"/>
           {bed.sunHoursNumeric != null && (
-            <button onClick={() => set('sunHoursNumeric', null)} style={{
+            <button type="button" onClick={() => set('sunHoursNumeric', null)} style={{
               marginTop: 4, padding: '2px 6px', borderRadius: 4,
               background: 'transparent', border: 'none', cursor: 'pointer',
               fontFamily: T.fontMono, fontSize: 9, color: T.textMuted,
@@ -709,7 +847,7 @@ function SitePanel({ bed, onChange, onClose }) {
   );
 }
 
-function TweaksPanel({ tweak, setTweak, onClose }) {
+function TweaksPanel({ tweak, setTweak, onClose, onResetMomGarden }) {
   const setKey = (k, v) => {
     const next = { ...tweak, [k]: v };
     setTweak(next);
@@ -732,7 +870,7 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12,
         }}>
           <Disp size={17}>Tweaks</Disp>
-          <button onClick={onClose} aria-label="Close tweaks" style={{
+          <button type="button" onClick={onClose} aria-label="Close tweaks" style={{
             width: 24, height: 24, borderRadius: 6, padding: 0,
             background: 'transparent', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -747,7 +885,7 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
             opts={[['true', 'On'], ['false', 'Off']]}
             onChange={v => setKey('ghostRecs', v === 'true')}/>
         </div>
-        <button onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
+        <button type="button" onClick={() => { setTweak(TWEAK_DEFAULTS); saveTweaks(TWEAK_DEFAULTS); }} style={{
           width: '100%', padding: '6px 10px',
           background: 'transparent', border: `1px solid ${T.borderSoft}`,
           borderRadius: 6, cursor: 'pointer',
@@ -755,6 +893,22 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
           letterSpacing: 0.15, textTransform: 'uppercase',
           color: T.textSoft, fontWeight: 500,
         }}>Reset to defaults</button>
+        <button type="button" onClick={onResetMomGarden} style={{
+          width: '100%', padding: '8px 10px', marginTop: 8,
+          background: T.sunPale, border: `1px solid ${T.sun}`,
+          borderRadius: 6, cursor: 'pointer',
+          fontFamily: T.fontMono, fontSize: 9,
+          letterSpacing: 0.15, textTransform: 'uppercase',
+          color: T.soil, fontWeight: 600,
+        }}>Reset to Mom Garden</button>
+        <button type="button" onClick={onResetMomGarden} style={{
+          width: '100%', padding: '6px 10px', marginTop: 6,
+          background: 'transparent', border: `1px solid ${T.borderSoft}`,
+          borderRadius: 6, cursor: 'pointer',
+          fontFamily: T.fontMono, fontSize: 9,
+          letterSpacing: 0.15, textTransform: 'uppercase',
+          color: T.textSoft, fontWeight: 500,
+        }}>Import Mom Garden Data</button>
       </div>
     </>
   );
@@ -766,7 +920,9 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
 // {r,c,crop} entries).
 function gosBedToInternal(gosBed) {
   if (!gosBed) return null;
-  const dims = (typeof GosBed !== 'undefined' && GosBed.parseShape(gosBed.shape))
+  const dims = (gosBed.dimensions && gosBed.dimensions.cols && gosBed.dimensions.rows)
+    ? { cols: Number(gosBed.dimensions.cols), rows: Number(gosBed.dimensions.rows) }
+    : (typeof GosBed !== 'undefined' && GosBed.parseShape(gosBed.shape))
     || { cols: 4, rows: 8 };
   const cols = dims.cols, rows = dims.rows;
   const sunInternal = gosBed.sun === 'partial' ? 'part' : gosBed.sun;
@@ -782,13 +938,34 @@ function gosBedToInternal(gosBed) {
     sunHoursNumeric: gosBed.sunHoursNumeric,
     water: gosBed.water,
     orientation: gosBed.orientation,
-    rowLabels: Array.from({ length: rows }, (_, i) => 'Row ' + (i + 1)),
+    type: gosBed.type,
+    source: gosBed.source,
+    loadedAt: gosBed.loadedAt,
+    momGarden: gosBed.momGarden === true,
+    comment: gosBed.comment,
+    events: Array.isArray(gosBed.events) ? gosBed.events : [],
+    rowLabels: gosBed.type === 'grow_bags'
+      ? ['Bags']
+      : Array.from({ length: rows }, (_, i) => 'Row ' + (i + 1)),
     shape: Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1)),
     painted: (gosBed.painted || []).map(p => {
       const cell = GosBed.parseCell(p.cell);
       if (!cell) return null;
       if (cell.r >= rows || cell.c >= cols) return null;
-      return { r: cell.r, c: cell.c, crop: p.cropId };
+      return {
+        r: cell.r,
+        c: cell.c,
+        crop: p.cropId,
+        id: p.id,
+        displayName: p.displayName || p.cropName,
+        varietyName: p.varietyName,
+        status: p.status,
+        bedLocation: p.bedLocation,
+        placementConfidence: p.placementConfidence,
+        placementNote: p.placementNote,
+        label: p.label || (gosBed.type === 'grow_bags' ? 'Bag ' + (cell.c + 1) : null),
+        notes: p.notes,
+      };
     }).filter(Boolean),
   };
 }
@@ -816,14 +993,21 @@ function internalToGosBed(activeBed, internalPaintedArr) {
     painted: (internalPaintedArr || []).map(p => {
       const c = CROPS[p.crop];
       const cellStr = GosBed.formatCell(p.r, p.c);
+      const prior = prevByCellCrop.get(cellStr + '::' + p.crop);
       const entry = {
         cell: cellStr,
         cropId: p.crop,
-        cropName: (c && c.name) || p.crop,
+        cropName: (p.displayName || (c && c.name)) || p.crop,
         cropIcon: (c && c.mono) || '',
         cropColor: (c && c.color) || '#888',
       };
-      const prior = prevByCellCrop.get(cellStr + '::' + p.crop);
+      if (prior) {
+        ['id','displayName','varietyName','status','bedLocation','sourceBedName',
+         'placementConfidence','placementNote','label','plantedOnStart','plantedOnEnd',
+         'season','notes'].forEach(k => {
+          if (prior[k] !== undefined) entry[k] = prior[k];
+        });
+      }
       if (prior && prior.plantedAt) {
         entry.plantedAt = prior.plantedAt;
         if (typeof prior.plantedWeek === 'number') entry.plantedWeek = prior.plantedWeek;
@@ -834,9 +1018,18 @@ function internalToGosBed(activeBed, internalPaintedArr) {
       return entry;
     })
   };
+  out.dimensions = { rows: activeBed.rows, cols: activeBed.cols };
+  if (activeBed.type) out.type = activeBed.type;
+  if (activeBed.source) out.source = activeBed.source;
+  if (activeBed.loadedAt) out.loadedAt = activeBed.loadedAt;
+  if (activeBed.momGarden === true) out.momGarden = true;
+  if (activeBed.comment) out.comment = activeBed.comment;
+  out.events = Array.isArray(activeBed.events)
+    ? activeBed.events
+    : (prev && Array.isArray(prev.events) ? prev.events : []);
 
   // bedContext fields: prefer the live activeBed value (user just edited it
-  // in Painting). Fall back to prev so autosave doesn't drop fields the user
+  // on the Beds screen. Fall back to prev so autosave doesn't drop fields the user
   // hasn't touched this session.
   function ctx(field, validator) {
     if (validator(activeBed[field])) return activeBed[field];
@@ -861,6 +1054,36 @@ function internalToGosBed(activeBed, internalPaintedArr) {
 function loadActiveBedAsInternal() {
   if (typeof GosBed === 'undefined') return null;
   return gosBedToInternal(GosBed.getActive());
+}
+
+function loadAllBedsAsInternal() {
+  if (typeof GosBed === 'undefined' || !GosBed.readAll) return [];
+  return GosBed.readAll().map(gosBedToInternal).filter(Boolean);
+}
+
+function paintedMapFromBeds(beds) {
+  const out = {};
+  (beds || []).forEach(bed => {
+    if (bed && bed.id) out[bed.id] = Array.isArray(bed.painted) ? bed.painted : [];
+  });
+  return out;
+}
+
+async function loadMomGardenData(overwrite) {
+  if (typeof GosBed === 'undefined' || !GosBed.mom) {
+    throw new Error('Mom Garden loader is unavailable.');
+  }
+  const res = await fetch('data/mom-garden-data.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Could not load Mom Garden data.');
+  const data = await res.json();
+  return GosBed.mom.loadFromData(data, { overwrite: !!overwrite });
+}
+
+async function resetMomGardenAndReload() {
+  const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 13 plantings.');
+  if (!ok) return;
+  await loadMomGardenData(true);
+  window.location.href = 'garden-painting.html';
 }
 
 // First-run stub. Creates a default 4×8 bed via the pending-then-commit flow
@@ -1053,12 +1276,12 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
                   You started setting up a bed earlier. Resume, or start over?
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={handleResume} style={{
+                  <button type="button" onClick={handleResume} style={{
                     flex: 1, minHeight: 36, padding: '6px 10px', borderRadius: 8,
                     background: T.leafBright, color: '#fff', border: 'none',
                     fontFamily: T.fontSans, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   }}>Resume</button>
-                  <button onClick={handleStartOver} style={{
+                  <button type="button" onClick={handleStartOver} style={{
                     flex: 1, minHeight: 36, padding: '6px 10px', borderRadius: 8,
                     background: T.panel, color: T.text,
                     border: `1px solid ${T.borderSoft}`,
@@ -1102,14 +1325,14 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               {hasInitialBeds && (
-                <button onClick={handleCancelStep1} style={{
+                <button type="button" onClick={handleCancelStep1} style={{
                   flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
                   background: 'transparent', color: T.textSoft,
                   border: `1px solid ${T.borderSoft}`,
                   fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
                 }}>Cancel</button>
               )}
-              <button onClick={handleStep1Next} style={{
+              <button type="button" onClick={handleStep1Next} style={{
                 flex: hasInitialBeds ? 2 : 1, minHeight: 44, padding: '10px 14px', borderRadius: 10,
                 background: T.leafBright, color: '#fff', border: 'none',
                 fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -1136,7 +1359,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
                 const visH = aspect >= 1 ? Math.max(20, Math.round(44 / aspect)) : 44;
                 const sel = shape === sz;
                 return (
-                  <button key={sz} onClick={() => setShape(sz)} aria-pressed={sel} style={{
+                  <button type="button" key={sz} onClick={() => setShape(sz)} aria-pressed={sel} style={{
                     padding: '12px 6px', borderRadius: 10,
                     background: sel ? T.panel : T.cream,
                     border: `1.5px solid ${sel ? T.leafBright : T.borderSoft}`,
@@ -1154,7 +1377,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
                   </button>
                 );
               })}
-              <button onClick={() => setShape('custom')} aria-pressed={shape === 'custom'} style={{
+              <button type="button" onClick={() => setShape('custom')} aria-pressed={shape === 'custom'} style={{
                 padding: '12px 6px', borderRadius: 10,
                 background: shape === 'custom' ? T.panel : T.cream,
                 border: `1.5px dashed ${shape === 'custom' ? T.leafBright : T.cedar}`,
@@ -1200,13 +1423,13 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setError(''); setStep(1); }} style={{
+              <button type="button" onClick={() => { setError(''); setStep(1); }} style={{
                 flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
                 background: 'transparent', color: T.textSoft,
                 border: `1px solid ${T.borderSoft}`,
                 fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
               }}>← Back</button>
-              <button onClick={handleStep2Next} style={{
+              <button type="button" onClick={handleStep2Next} style={{
                 flex: 2, minHeight: 44, padding: '10px 14px', borderRadius: 10,
                 background: T.leafBright, color: '#fff', border: 'none',
                 fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -1231,7 +1454,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
               ].map(opt => {
                 const sel = sun === opt.id;
                 return (
-                  <button key={opt.id} onClick={() => setSun(opt.id)} aria-pressed={sel} style={{
+                  <button type="button" key={opt.id} onClick={() => setSun(opt.id)} aria-pressed={sel} style={{
                     padding: '12px 14px', borderRadius: 10,
                     background: sel ? T.panel : T.cream,
                     border: `1.5px solid ${sel ? T.leafBright : T.borderSoft}`,
@@ -1264,13 +1487,13 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setError(''); setStep(2); }} style={{
+              <button type="button" onClick={() => { setError(''); setStep(2); }} style={{
                 flex: 1, minHeight: 44, padding: '10px 12px', borderRadius: 10,
                 background: 'transparent', color: T.textSoft,
                 border: `1px solid ${T.borderSoft}`,
                 fontFamily: T.fontSans, fontSize: 14, fontWeight: 500, cursor: 'pointer',
               }}>← Back</button>
-              <button onClick={handleSave} style={{
+              <button type="button" onClick={handleSave} style={{
                 flex: 2, minHeight: 44, padding: '10px 14px', borderRadius: 10,
                 background: T.leafBright, color: '#fff', border: 'none',
                 fontFamily: T.fontSans, fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -1408,31 +1631,30 @@ function ScoreBadge({ getCurrentBed }) {
 
   return (
     <>
-      <button onClick={handleClick} aria-pressed={highlightMode}
+      <button type="button" onClick={handleClick} aria-pressed={highlightMode}
         aria-label={score === null ? 'Bed score: no crops yet' : 'Bed score ' + score + ' of 100'}
         style={{
-          position: 'absolute', top: 96, right: 14, zIndex: 50,
-          width: 56, height: 56, minWidth: 48, minHeight: 48,
-          borderRadius: '50%', background: bg, color: '#fff',
+          height: 30, minHeight: 30, padding: '0 9px',
+          borderRadius: 999, background: bg, color: '#fff',
           border: highlightMode ? `2px solid ${T.soil}` : '2px solid transparent',
-          cursor: 'pointer', padding: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           fontFamily: T.fontDisp,
-          boxShadow: '0 4px 14px rgba(44,27,11,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
+          boxShadow: '0 2px 8px rgba(44,27,11,0.16), 0 0 0 1px rgba(0,0,0,0.05)',
           transition: 'transform 0.18s, border-color 0.18s',
         }}>
-        <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1, letterSpacing: -0.5 }}>
+        <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1, letterSpacing: 0 }}>
           {score === null ? '—' : score}
         </span>
         <span style={{
-          fontFamily: T.fontMono, fontSize: 9, fontWeight: 500,
-          letterSpacing: 0.1, opacity: 0.88, marginTop: 2, textTransform: 'uppercase',
+          fontFamily: T.fontMono, fontSize: 10, fontWeight: 500,
+          letterSpacing: 0.08, opacity: 0.88, textTransform: 'uppercase',
         }}>bed score</span>
       </button>
 
       {showTooltip && (
         <div role="status" style={{
-          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 220,
+          position: 'absolute', top: 38, right: 0, zIndex: 50, width: 180,
           background: T.panel, border: `1px solid ${T.borderSoft}`,
           borderRadius: 10, padding: '8px 12px',
           fontFamily: T.fontSans, fontSize: 12, color: T.text,
@@ -1444,7 +1666,7 @@ function ScoreBadge({ getCurrentBed }) {
 
       {highlightMode && weakestCells.length > 0 && (
         <div role="status" style={{
-          position: 'absolute', top: 158, right: 14, zIndex: 50, maxWidth: 260,
+          position: 'absolute', top: 38, right: 0, zIndex: 50, width: 240,
           background: T.panel, border: `1px solid ${SCORE_TIER_COLORS.amber}`,
           borderRadius: 10, padding: '8px 8px 8px 12px',
           display: 'flex', alignItems: 'center', gap: 8,
@@ -1453,7 +1675,7 @@ function ScoreBadge({ getCurrentBed }) {
           <span style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.text, lineHeight: 1.35, flex: 1 }}>
             <b>{weakestCells.length}</b> cell{weakestCells.length === 1 ? '' : 's'} dragging your score down. Tap a highlighted cell to see why.
           </span>
-          <button onClick={handleDismiss} aria-label="Dismiss highlight" style={{
+          <button type="button" onClick={handleDismiss} aria-label="Dismiss highlight" style={{
             width: 28, height: 28, minWidth: 28, minHeight: 28,
             borderRadius: 6, padding: 0,
             background: 'transparent', border: 'none', cursor: 'pointer',
@@ -1466,21 +1688,324 @@ function ScoreBadge({ getCurrentBed }) {
   );
 }
 
+function CellToast({ toast, onUndo, onDismiss }) {
+  if (!toast) return null;
+  const { cropName, r, c } = toast;
+  return (
+    <div role="status" aria-live="polite" onClick={onDismiss} style={{
+      position: 'fixed',
+      bottom: 'max(16px, env(safe-area-inset-bottom))',
+      left: '50%', transform: 'translateX(-50%)', zIndex: 70,
+      background: T.soil, color: T.cream, padding: '10px 14px',
+      borderRadius: 999, boxShadow: '0 8px 24px rgba(44,27,11,0.24)',
+      fontFamily: T.fontSans, fontSize: 12, display: 'flex',
+      alignItems: 'center', gap: 10, maxWidth: 'calc(100% - 28px)',
+    }}>
+      <span>Cleared {cropName} from R{r + 1}·C{c + 1}.</span>
+      <button type="button" onClick={(e) => { e.stopPropagation(); onUndo(); }} style={{
+        border: 'none', background: 'transparent', color: T.sunPale,
+        fontFamily: T.fontSans, fontSize: 12, fontWeight: 700,
+        textDecoration: 'underline', cursor: 'pointer', minHeight: 28,
+      }}>Undo</button>
+    </div>
+  );
+}
+
+function FactorLine({ label, value, note }) {
+  if (value == null) return null;
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', gap: 10,
+      padding: '7px 0', borderBottom: `1px solid ${T.borderSoft}`,
+      fontFamily: T.fontSans, fontSize: 11.5, color: T.text,
+    }}>
+      <span>{label}</span>
+      <span style={{ color: T.textSoft, textAlign: 'right' }}>{Number(value).toFixed(1)}/5{note ? ' · ' + note : ''}</span>
+    </div>
+  );
+}
+
+function CellBottomSheet({
+  sheet, bed, bedPainted, brush, onClose, onDetails, onReplace,
+  onErase, onHarvest, onSetBrush,
+}) {
+  const [replaceOpen, setReplaceOpen] = React.useState(false);
+  const [harvestOpen, setHarvestOpen] = React.useState(false);
+  const [qty, setQty] = React.useState('');
+  const [unit, setUnit] = React.useState('');
+  const [notes, setNotes] = React.useState('');
+  const sheetRef = React.useRef(null);
+  const cell = sheet && bedPainted.find(p => p.r === sheet.r && p.c === sheet.c);
+  const emptyCell = !cell;
+  const mode = sheet && sheet.mode === 'details' ? 'details' : 'actions';
+  const displayCell = cell || { r: sheet.r, c: sheet.c, crop: brush };
+  const crop = cell && CROPS[cell.crop];
+  const cropName = cell ? cellDisplayName(cell) : 'Empty cell';
+  const scoreDetail = cell ? getCellScoreDetail(bed, bedPainted, cell) : null;
+  const recs = emptyCell ? recsForCell(Object.assign({}, bed, { painted: bedPainted }), sheet.r, sheet.c).slice(0, 3) : [];
+  const relations = cell ? neighborRelationsForCell(bedPainted, cell) : [];
+  const journal = cell ? journalEntriesForCell(bed, cell) : [];
+
+  React.useEffect(() => {
+    const node = sheetRef.current;
+    if (!node) return;
+    const focusable = node.querySelectorAll('button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable[0]) focusable[0].focus();
+  }, [sheet && sheet.r, sheet && sheet.c, mode]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const node = sheetRef.current;
+    if (!node) return;
+    const focusable = Array.from(node.querySelectorAll('button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  const submitHarvest = () => {
+    if (!cell) return;
+    onHarvest(cell, {
+      quantity: qty.trim() ? Number(qty) : null,
+      unit: unit || null,
+      notes: notes.trim() || null,
+    });
+    onClose();
+  };
+
+  const summary = cell
+    ? `${cellDisplayWithVariety(cell)}, R${cell.r + 1} C${cell.c + 1}`
+    : `Empty cell, R${sheet.r + 1} C${sheet.c + 1}`;
+
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(44,27,11,0.55)',
+        zIndex: 40,
+      }}/>
+      <div ref={sheetRef} role="dialog" aria-modal="true"
+        aria-label={cell ? cellDisplayWithVariety(cell) + ' cell details' : 'Empty cell details'}
+        onKeyDown={handleKeyDown}
+        style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 41,
+          background: T.cream, borderRadius: '20px 20px 0 0',
+          padding: '12px 20px max(24px, env(safe-area-inset-bottom))',
+          maxHeight: '82%', overflowY: 'auto',
+          boxShadow: '0 -8px 40px rgba(44,27,11,0.3)',
+        }}>
+        <div aria-hidden="true" style={{
+          width: 40, height: 4, background: T.border, borderRadius: 2,
+          margin: '0 auto 12px',
+        }}/>
+        <div role="status" aria-live="polite" className="sr-only">{summary}</div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          {cell
+            ? <CropChip crop={cell.crop} size={36} visualColor={(cropVisualForPlanting(crop, cell) || {}).color}/>
+            : <CropChip crop={brush} size={36}/>}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Disp size={18}>{cropName}</Disp>
+            {cell && cell.varietyName && (
+              <div style={{
+                display: 'inline-flex', marginTop: 5, padding: '3px 7px',
+                borderRadius: 999, background: T.cedarWash, color: T.soil,
+                fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
+              }}>{cropName} · {cell.varietyName}</div>
+            )}
+            <div style={{ marginTop: 5, fontFamily: T.fontMono, fontSize: 11, color: T.textSoft }}>
+              {bed.name} · {cell ? cellLocationLabel(cell) : 'Empty'} · R{displayCell.r + 1} · C{displayCell.c + 1}
+            </div>
+          </div>
+          {cell && cell.status && (
+            <span style={{
+              padding: '4px 8px', borderRadius: 999,
+              background: STATUS_COLORS[cell.status] || T.textMuted, color: '#fff',
+              fontFamily: T.fontMono, fontSize: 11, fontWeight: 700,
+              textTransform: 'uppercase',
+            }}>{cell.status}</span>
+          )}
+        </div>
+
+        {cell && (
+          <div style={{ marginTop: 12, padding: '9px 10px', borderRadius: 10, background: T.panel, border: `1px solid ${T.borderSoft}` }}>
+            <Label size={11} color={T.leaf}>SCORE · {scoreDetail ? scoreDetail.total.toFixed(1) + '/10' : 'NEUTRAL'}</Label>
+            {cell.placementNote && (
+              <Body size={12} color={T.textSoft} style={{ display: 'block', marginTop: 4 }}>{cell.placementNote}</Body>
+            )}
+          </div>
+        )}
+
+        {mode === 'actions' && cell && (
+          <>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+              <button type="button" onClick={onDetails} style={sheetButtonStyle(true)}>Details</button>
+              <button type="button" onClick={() => setReplaceOpen(v => !v)} disabled={!brush} style={sheetButtonStyle(false)}>Replace</button>
+              <button type="button" disabled title="Coming soon" style={sheetButtonStyle(false, true)}>Move · Coming soon</button>
+              <button type="button" onClick={() => setHarvestOpen(v => !v)} style={sheetButtonStyle(false)}>Log harvest</button>
+              <a href={cellDoctorHref(bed, cell)} style={sheetLinkStyle()}>Ask Doctor</a>
+              <button type="button" onClick={() => onErase(cell)} style={sheetButtonStyle(false, false, true)}>Erase</button>
+            </div>
+            {replaceOpen && (
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {Object.keys(CROPS).map(k => (
+                  <button type="button" key={k} onClick={() => { onSetBrush(k); onReplace(cell, k); }} style={{
+                    minHeight: 48, borderRadius: 10, border: `1px solid ${T.borderSoft}`,
+                    background: T.panel, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', cursor: 'pointer',
+                  }} aria-label={'Replace with ' + cropPaletteLabel(k)}>
+                    <CropChip crop={k} size={28}/>
+                  </button>
+                ))}
+              </div>
+            )}
+            {harvestOpen && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: T.panel, border: `1px solid ${T.borderSoft}` }}>
+                <Label size={11} color={T.leaf}>HARVEST</Label>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input value={qty} onChange={e => setQty(e.target.value)} type="number" placeholder="0" aria-label="Harvest quantity"
+                    style={{ flex: 1, minHeight: 44, borderRadius: 8, border: `1px solid ${T.borderSoft}`, padding: '8px 10px', fontSize: 14 }}/>
+                  <select value={unit} onChange={e => setUnit(e.target.value)} aria-label="Harvest unit"
+                    style={{ minHeight: 44, borderRadius: 8, border: `1px solid ${T.borderSoft}`, padding: '8px 10px', fontSize: 14 }}>
+                    <option value="">unit</option>
+                    <option value="lbs">lbs</option>
+                    <option value="oz">oz</option>
+                    <option value="pieces">pieces</option>
+                    <option value="bunches">bunches</option>
+                  </select>
+                </div>
+                <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" aria-label="Harvest notes"
+                  style={{ width: '100%', marginTop: 8, minHeight: 44, borderRadius: 8, border: `1px solid ${T.borderSoft}`, padding: '8px 10px', fontSize: 14 }}/>
+                <div style={{ position: 'sticky', bottom: 0, display: 'flex', gap: 8, marginTop: 10, background: T.panel, paddingTop: 8 }}>
+                  <button type="button" onClick={submitHarvest} style={sheetButtonStyle(true)}>Save harvest</button>
+                  <button type="button" onClick={() => setHarvestOpen(false)} style={sheetButtonStyle(false)}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {(mode === 'details' || emptyCell) && (
+          <div style={{ marginTop: 14 }}>
+            <Label size={11} color={T.soilMid}>WHY THIS PLACEMENT</Label>
+            {cell ? (
+              <div style={{ marginTop: 7, background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 10, padding: '2px 10px' }}>
+                <FactorLine label="Sun fit" value={scoreDetail && scoreDetail.factors.sunFit} note={crop && crop.sun ? crop.sun + ' sun' : ''}/>
+                <FactorLine label="Support fit" value={scoreDetail && scoreDetail.factors.positionFit} note="position fit"/>
+                <FactorLine label="Access fit" value={scoreDetail && scoreDetail.factors.positionFit} note="reach and row"/>
+                <FactorLine label="Protection fit" value={3} note="neutral"/>
+                <FactorLine label="Season fit" value={scoreDetail && scoreDetail.factors.seasonFit}/>
+              </div>
+            ) : (
+              <div style={{ marginTop: 7, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {recs.map(r => (
+                  <button type="button" key={r.crop} onClick={() => onReplace({ r: sheet.r, c: sheet.c }, r.crop)} style={{
+                    minHeight: 44, padding: '8px 10px', borderRadius: 10, background: T.panel,
+                    border: `1px solid ${T.borderSoft}`, display: 'flex', alignItems: 'center',
+                    gap: 8, cursor: 'pointer',
+                  }}>
+                    <CropChip crop={r.crop} size={24}/>
+                    <Body size={12}>{cropPaletteLabel(r.crop)}</Body>
+                    <Label size={11} color={T.leaf} style={{ marginLeft: 'auto' }}>{r.score.toFixed(1)}/10</Label>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {relations.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <Label size={11} color={T.soilMid}>COMPANIONS / CONFLICTS</Label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 7 }}>
+                  {relations.map(item => (
+                    <span key={item.cell.r + '-' + item.cell.c} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '5px 8px', borderRadius: 999,
+                      background: item.relation === 'Conflict' ? T.rustWash : T.leafWash,
+                      fontFamily: T.fontSans, fontSize: 11, color: T.text,
+                    }}>
+                      <CropChip crop={item.cell.crop} size={16}/>
+                      {CROPS[item.cell.crop].name} · {item.relation}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 14 }}>
+              <Label size={11} color={T.soilMid}>RELATED JOURNAL ENTRIES</Label>
+              <div style={{ marginTop: 7, background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 10, padding: '9px 10px' }}>
+                {journal.length ? journal.map((event, idx) => (
+                  <div key={idx} style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.text, lineHeight: 1.35, marginTop: idx ? 6 : 0 }}>
+                    <b>{event.timestamp ? new Date(event.timestamp).toLocaleDateString() : 'Log'}</b> · {event.message || event.type}
+                  </div>
+                )) : (
+                  <Body size={12} color={T.textSoft}>No journal entries yet.</Body>
+                )}
+              </div>
+            </div>
+
+            <button type="button" onClick={onClose} style={Object.assign({}, sheetButtonStyle(true), {
+              width: '100%', marginTop: 14,
+            })}>Close</button>
+          </div>
+        )}
+      </div>
+    </span>
+  );
+}
+
+function sheetButtonStyle(primary, disabled, danger) {
+  return {
+    minHeight: 44, padding: '9px 12px', borderRadius: 10,
+    border: `1px solid ${primary ? T.leafBright : danger ? T.rustLight : T.borderSoft}`,
+    background: disabled ? T.creamMid : (primary ? T.leafBright : T.panel),
+    color: disabled ? T.textMuted : (primary ? '#fff' : danger ? T.rust : T.text),
+    fontFamily: T.fontSans, fontSize: 12, fontWeight: 700,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.68 : 1,
+  };
+}
+
+function sheetLinkStyle() {
+  return Object.assign({}, sheetButtonStyle(false), {
+    display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
+    color: T.leaf,
+  });
+}
+
 // ── Main painting flow (Direction 1: Brush) ─────────────────────────────────
 function Painting({ tweak, onOpenTweaks }) {
   const [activeBed, setActiveBed] = React.useState(loadActiveBedAsInternal);
   const [activeBedId, setActiveBedId] = React.useState(activeBed ? activeBed.id : '');
+  const [allBeds, setAllBeds] = React.useState(() => {
+    const beds = loadAllBedsAsInternal();
+    return beds.length ? beds : (activeBed ? [activeBed] : []);
+  });
   const [tool, setTool] = React.useState('paint');
   const [brush, setBrush] = React.useState('bas');
   const [painted, setPainted] = React.useState(() => {
-    if (!activeBed) return {};
-    return { [activeBed.id]: activeBed.painted };
+    const beds = allBeds.length ? allBeds : (activeBed ? [activeBed] : []);
+    return paintedMapFromBeds(beds);
   });
   const [history, setHistory] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
   const [creatorOpen, setCreatorOpen] = React.useState(activeBed === null);
   const [ghostVisible, setGhostVisible] = React.useState(false);
   const [siteOpen, setSiteOpen] = React.useState(false);
+  const [cellSheet, setCellSheet] = React.useState(null);
+  const [toast, setToast] = React.useState(null);
+  const restoreFocusRef = React.useRef(null);
 
   // Apply user edits from the Site panel: merge into activeBed and let the
   // existing autosave effect write through to GosBed. The internalToGosBed
@@ -1560,9 +2085,11 @@ function Painting({ tweak, onOpenTweaks }) {
   const handleCreatorComplete = () => {
     const fresh = loadActiveBedAsInternal();
     if (!fresh) return;
+    const beds = loadAllBedsAsInternal();
+    setAllBeds(beds.length ? beds : [fresh]);
     setActiveBed(fresh);
     setActiveBedId(fresh.id);
-    setPainted(prev => Object.assign({}, prev, { [fresh.id]: fresh.painted }));
+    setPainted(prev => Object.assign({}, paintedMapFromBeds(beds.length ? beds : [fresh]), prev, { [fresh.id]: fresh.painted }));
     setCreatorOpen(false);
     setTimeout(() => setGhostVisible(true), 300);
     // Notify ScoreBadge (and any other listeners) that the active bed changed.
@@ -1579,6 +2106,50 @@ function Painting({ tweak, onOpenTweaks }) {
   const handleAddBedClick = () => {
     if (typeof GosBed !== 'undefined') GosBed.discardPending();
     setCreatorOpen(true);
+  };
+
+  const refreshFromActiveBed = React.useCallback(() => {
+    const fresh = loadActiveBedAsInternal();
+    const beds = loadAllBedsAsInternal();
+    setAllBeds(beds.length ? beds : (fresh ? [fresh] : []));
+    setActiveBed(fresh);
+    setActiveBedId(fresh ? fresh.id : '');
+    setPainted(paintedMapFromBeds(beds.length ? beds : (fresh ? [fresh] : [])));
+    setSelected(null);
+    return fresh;
+  }, []);
+
+  const handlePickBed = React.useCallback((id) => {
+    if (!id) return;
+    let next = allBeds.find(bed => bed && bed.id === id);
+    if (!next && typeof GosBed !== 'undefined' && GosBed.read) {
+      next = gosBedToInternal(GosBed.read(id));
+    }
+    if (!next) return;
+    if (typeof GosBed !== 'undefined' && GosBed.setActive) GosBed.setActive(id);
+    setActiveBed(next);
+    setActiveBedId(next.id);
+    setPainted(prev => Object.assign({}, prev, { [next.id]: next.painted || [] }));
+    setSelected(null);
+  }, [allBeds]);
+
+  const handleLoadMomGarden = async (overwrite) => {
+    const shouldOverwrite = !!overwrite;
+    if (shouldOverwrite) {
+      const ok = window.confirm('Reset to Mom Garden? This replaces current Mom beds with 3 beds and 13 plantings.');
+      if (!ok) return;
+    }
+    try {
+      await loadMomGardenData(shouldOverwrite);
+      const fresh = refreshFromActiveBed();
+      setCreatorOpen(false);
+      if (fresh) {
+        try { window.dispatchEvent(new CustomEvent('gosBedChanged', { detail: { id: fresh.id, bed: fresh } })); } catch (_) {}
+      }
+    } catch (e) {
+      console.warn('Mom Garden load failed:', e.message);
+      try { alert(e.message || 'Mom Garden load failed'); } catch (_) {}
+    }
   };
 
   // First-run shell: no active bed yet. Render minimal chrome with the
@@ -1601,6 +2172,13 @@ function Painting({ tweak, onOpenTweaks }) {
           }}>
             Garden OS needs one bed to begin. Set yours up and we'll take it from there.
           </div>
+          <button type="button" onClick={() => handleLoadMomGarden(false)} style={{
+            position: 'absolute', bottom: 94,
+            padding: '10px 14px', borderRadius: 999,
+            background: T.leafBright, color: '#fff',
+            border: 'none', fontFamily: T.fontSans, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer',
+          }}>Load Mom Garden</button>
         </div>
         <TabBar active="planner"/>
         <BedCreator hasInitialBeds={false} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>
@@ -1608,9 +2186,9 @@ function Painting({ tweak, onOpenTweaks }) {
     );
   }
 
-  const beds = [activeBed];
+  const beds = allBeds.length ? allBeds : [activeBed];
   const bed = activeBed;
-  const bedPainted = painted[activeBedId];
+  const bedPainted = painted[activeBedId] || [];
   const totalCells = bed.shape.flat().reduce((s, x) => s + x, 0);
   const filled = bedPainted.length;
   const cellSize = bed.cols > 6 ? 34 : (bed.cols > 4 ? 44 : 56);
@@ -1628,15 +2206,106 @@ function Painting({ tweak, onOpenTweaks }) {
     });
   };
 
-  const paintCell = (r, c) => {
+  const closeCellSheet = () => {
+    setCellSheet(null);
+    setTimeout(() => {
+      if (restoreFocusRef.current && typeof restoreFocusRef.current.focus === 'function') {
+        restoreFocusRef.current.focus();
+      }
+      restoreFocusRef.current = null;
+    }, 0);
+  };
+
+  const showEraseToast = (cell) => {
+    const crop = CROPS[cell.crop];
+    setToast({ cropName: cellDisplayName(cell) || (crop && crop.name) || 'crop', r: cell.r, c: cell.c });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const eraseCell = (cell, showToast) => {
+    if (!cell) return;
+    pushHistory();
+    setPainted(prev => {
+      const list = [...(prev[activeBedId] || [])];
+      const idx = list.findIndex(p => p.r === cell.r && p.c === cell.c);
+      if (idx >= 0) list.splice(idx, 1);
+      return { ...prev, [activeBedId]: list };
+    });
+    if (showToast) showEraseToast(cell);
+    closeCellSheet();
+  };
+
+  const replaceCellCrop = (cell, cropId) => {
+    if (!cell || !cropId) return;
+    pushHistory();
+    setPainted(prev => {
+      const list = [...(prev[activeBedId] || [])];
+      const idx = list.findIndex(p => p.r === cell.r && p.c === cell.c);
+      const next = { r: cell.r, c: cell.c, crop: cropId };
+      if (idx >= 0) list[idx] = next;
+      else list.push(next);
+      return { ...prev, [activeBedId]: list };
+    });
+    setCellSheet(null);
+  };
+
+  const logHarvestForCell = (cell, harvest) => {
+    if (!cell || !activeBed) return;
+    const event = {
+      id: 'h' + Date.now(),
+      type: 'harvest',
+      timestamp: new Date().toISOString(),
+      cell: 'r' + cell.r + 'c' + cell.c,
+      quantity: harvest.quantity,
+      unit: harvest.unit,
+      notes: harvest.notes,
+      cropSnapshot: {
+        cropId: cell.crop,
+        cropName: cellDisplayName(cell),
+        varietyName: cell.varietyName || null,
+        cell: 'r' + cell.r + 'c' + cell.c,
+      },
+    };
+    const nextBed = Object.assign({}, activeBed, {
+      events: (activeBed.events || []).concat(event),
+    });
+    setActiveBed(nextBed);
+    setAllBeds(prev => prev.map(b => b.id === nextBed.id ? nextBed : b));
+    if (typeof GosBed !== 'undefined') {
+      try {
+        GosBed.write(internalToGosBed(nextBed, painted[activeBedId] || []));
+      } catch (e) {
+        console.warn('GosBed.write harvest failed:', e.message);
+      }
+    }
+  };
+
+  const paintCell = (r, c, triggerEl) => {
     const inShape = bed.shape[r] && bed.shape[r][c];
     if (!inShape) return;
     if (ghostVisible) setGhostVisible(false);
     setSelected({ r, c });
+    const list = painted[activeBedId] || [];
+    const existing = list.find(p => p.r === r && p.c === c);
+    if (isMobileViewport()) {
+      restoreFocusRef.current = triggerEl || null;
+      if (tool === 'inspect') {
+        setCellSheet({ r, c, mode: 'details' });
+        return;
+      }
+      if (tool === 'paint' && existing) {
+        setCellSheet({ r, c, mode: 'actions' });
+        return;
+      }
+      if (tool === 'erase') {
+        if (existing) eraseCell(existing, true);
+        return;
+      }
+    }
     if (tool === 'inspect') return;
     pushHistory();
     setPainted(prev => {
-      const list = [...prev[activeBedId]];
+      const list = [...(prev[activeBedId] || [])];
       const idx = list.findIndex(p => p.r === r && p.c === c);
       if (tool === 'erase') {
         if (idx >= 0) list.splice(idx, 1);
@@ -1658,10 +2327,10 @@ function Painting({ tweak, onOpenTweaks }) {
 
       <header style={{ padding: '4px 18px 8px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Disp size={24}>Paint</Disp>
+          <Disp size={24}>Beds</Disp>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <Label size={9} color={T.textMuted}>BRUSH MODE · {filled}/{totalCells}</Label>
-            <button aria-label={hasSiteContext ? 'Site context (set)' : 'Site context (not set)'}
+            <button type="button" aria-label={hasSiteContext ? 'Site context (set)' : 'Site context (not set)'}
               onClick={() => setSiteOpen(true)} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
@@ -1677,7 +2346,7 @@ function Painting({ tweak, onOpenTweaks }) {
                 }}/>
               )}
             </button>
-            <button aria-label="Tweaks" onClick={onOpenTweaks} style={{
+            <button type="button" aria-label="Tweaks" onClick={onOpenTweaks} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1687,13 +2356,13 @@ function Painting({ tweak, onOpenTweaks }) {
         </div>
       </header>
 
-      <BedSwitcher beds={beds} painted={painted} activeId={activeBedId} onPick={setActiveBedId}
+      <BedSwitcher beds={beds} painted={painted} activeId={activeBedId} onPick={handlePickBed}
         onAdd={handleAddBedClick}/>
 
       <div style={{ display: 'flex', gap: 6, padding: '8px 14px 4px', flexShrink: 0 }}>
         <ToolBtn label="Paint"   active={tool === 'paint'}   onClick={() => setTool('paint')}   icon={Icons.paint(13, 'currentColor')}/>
         <ToolBtn label="Erase"   active={tool === 'erase'}   onClick={() => setTool('erase')}   icon={Icons.erase(13, 'currentColor')}/>
-        <ToolBtn label="Inspect" active={tool === 'inspect'} onClick={() => setTool('inspect')} icon={Icons.inspect(13, 'currentColor')}/>
+        <ToolBtn label="Details" active={tool === 'inspect'} onClick={() => setTool('inspect')} icon={Icons.inspect(13, 'currentColor')}/>
         <div style={{ flex: 1 }}/>
         <ToolBtn label="Undo" muted onClick={undo} ariaLabel="Undo last action" icon={Icons.undo(13, 'currentColor')}/>
       </div>
@@ -1705,11 +2374,14 @@ function Painting({ tweak, onOpenTweaks }) {
           boxShadow: '0 1px 3px rgba(44,27,11,0.05)',
         }}>
           <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-            marginBottom: 8, padding: '0 6px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: 8, padding: '0 6px', gap: 10,
           }}>
             <Disp size={16}>{bed.name}</Disp>
-            <Label size={9} color={T.textMuted}>{bed.location.toUpperCase()}</Label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <ScoreBadge getCurrentBed={() => Object.assign({}, activeBed, { painted: painted[activeBedId] || [] })}/>
+              <Label size={9} color={T.textMuted}>{bed.location.toUpperCase()}</Label>
+            </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <BedGrid bed={bed} painted={bedPainted}
@@ -1744,7 +2416,7 @@ function Painting({ tweak, onOpenTweaks }) {
             {Object.keys(CROPS).map(k => {
               const active = brush === k;
               return (
-                <button key={k} onClick={() => setBrush(k)} aria-pressed={active} style={{
+                <button type="button" key={k} onClick={() => setBrush(k)} aria-pressed={active} style={{
                   flex: '0 0 auto', padding: 4,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                   border: 'none', background: 'transparent', cursor: 'pointer',
@@ -1759,7 +2431,7 @@ function Painting({ tweak, onOpenTweaks }) {
                     fontFamily: T.fontSans, fontSize: 9.5,
                     color: active ? T.text : T.textSoft,
                     fontWeight: active ? 500 : 400,
-                  }}>{CROPS[k].name}</span>
+                  }}>{cropPaletteLabel(k)}</span>
                 </button>
               );
             })}
@@ -1769,8 +2441,21 @@ function Painting({ tweak, onOpenTweaks }) {
 
       <TabBar active="paint"/>
 
-      <ScoreBadge getCurrentBed={() => Object.assign({}, activeBed, { painted: painted[activeBedId] || [] })}/>
       {ghostVisible && <GhostHint onDismiss={() => setGhostVisible(false)}/>}
+      {toast && <CellToast toast={toast} onUndo={undo} onDismiss={() => setToast(null)}/>}
+      {cellSheet && (
+        <CellBottomSheet
+          sheet={cellSheet}
+          bed={Object.assign({}, bed, { events: activeBed.events || [] })}
+          bedPainted={bedPainted}
+          brush={brush}
+          onClose={closeCellSheet}
+          onDetails={() => setCellSheet(s => s && Object.assign({}, s, { mode: 'details' }))}
+          onReplace={replaceCellCrop}
+          onErase={(cell) => eraseCell(cell, true)}
+          onHarvest={logHarvestForCell}
+          onSetBrush={setBrush}/>
+      )}
       {creatorOpen && <BedCreator hasInitialBeds={true} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>}
       {siteOpen && <SitePanel bed={activeBed} onChange={handleSiteChange} onClose={() => setSiteOpen(false)}/>}
     </div>
@@ -1783,17 +2468,23 @@ function InspectBox({ bed, bedPainted, selected, tool, brush, setBrush, setTool,
     const cell = bedPainted.find(p => p.r === selected.r && p.c === selected.c);
     if (cell) {
       const cr = CROPS[cell.crop];
+      const variety = cellVarietyLabel(cell);
       return (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CropChip crop={cell.crop} size={20}/>
-            <Disp size={14}>{cr.name}</Disp>
+            <CropChip crop={cell.crop} size={20} visualColor={(cropVisualForPlanting(cr, cell) || {}).color}/>
+            <Disp size={14}>{cellDisplayName(cell)}</Disp>
+            {variety && (
+              <Label size={9} color={T.leaf} style={{
+                minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{variety}</Label>
+            )}
             <Label size={9} color={T.textMuted} style={{ marginLeft: 'auto' }}>
               R{selected.r + 1} · C{selected.c + 1}
             </Label>
           </div>
           <Body size={11} color={T.textSoft} style={{ marginTop: 4, display: 'block' }}>
-            {cr.family} · {cr.sun} sun · {cr.daysToMaturity}d to maturity
+            {cropPaletteLabel(cell.crop)} - {cr.family} - {cr.sun} sun - {cr.daysToMaturity}d to maturity
           </Body>
         </div>
       );
@@ -1804,7 +2495,7 @@ function InspectBox({ bed, bedPainted, selected, tool, brush, setBrush, setTool,
         <Label size={9} color={T.textMuted}>EMPTY · R{selected.r + 1}·C{selected.c + 1} · TOP FITS</Label>
         <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
           {recs.map(r => (
-            <button key={r.crop} onClick={() => {
+            <button type="button" key={r.crop} onClick={() => {
               setBrush(r.crop);
               setTool('paint');
               paintCell(selected.r, selected.c);
@@ -1818,7 +2509,7 @@ function InspectBox({ bed, bedPainted, selected, tool, brush, setBrush, setTool,
                 <div style={{
                   fontSize: 11, fontWeight: 500, color: T.text,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>{CROPS[r.crop].name}</div>
+                }}>{cropPaletteLabel(r.crop)}</div>
                 <div style={{ fontFamily: T.fontMono, fontSize: 9, color: T.leaf }}>{r.score.toFixed(1)}</div>
               </div>
             </button>
@@ -1832,14 +2523,14 @@ function InspectBox({ bed, bedPainted, selected, tool, brush, setBrush, setTool,
       <CropChip crop={brush} size={22}/>
       <div>
         <div style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text }}>
-          {tool === 'paint' && `Painting ${CROPS[brush].name.toLowerCase()}`}
+          {tool === 'paint' && `Painting ${cropPaletteLabel(brush).toLowerCase()}`}
           {tool === 'erase' && 'Erasing cells'}
-          {tool === 'inspect' && 'Tap any cell to inspect'}
+          {tool === 'inspect' && 'Tap any cell for details'}
         </div>
         <Label size={9} color={T.textMuted} style={{ display: 'block', marginTop: 1 }}>
           {tool === 'paint' && 'TAP A CELL TO PLACE'}
           {tool === 'erase' && 'TAP A CELL TO CLEAR'}
-          {tool === 'inspect' && 'READ ONLY · NO CHANGES'}
+          {tool === 'inspect' && 'DETAILS · READ ONLY'}
         </Label>
       </div>
     </div>
@@ -1853,7 +2544,9 @@ function App() {
   return (
     <PhoneFrame>
       <Painting tweak={tweak} onOpenTweaks={() => setTweaksOpen(true)}/>
-      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
+      {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak}
+        onResetMomGarden={() => resetMomGardenAndReload().catch(e => alert(e.message || 'Mom Garden reset failed'))}
+        onClose={() => setTweaksOpen(false)}/>}
     </PhoneFrame>
   );
 }

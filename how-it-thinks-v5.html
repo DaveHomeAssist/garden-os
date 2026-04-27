@@ -47,6 +47,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="gos-bed.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -151,9 +152,9 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'hub',     label:'Home',    href:'index-v5.html' },
+    { id:'paint',   label:'Beds',    href:'garden-painting.html' },
+    { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -464,6 +465,75 @@ function FactorCard({ factor, open, detailLevel, onToggle }) {
 }
 
 // ── Journal screen ──────────────────────────────────────────────────────────
+function readMomJournalEntries() {
+  if (typeof GosBed === 'undefined') return [];
+  const beds = GosBed.readAll ? GosBed.readAll() : [];
+  const seen = {};
+  const entries = [];
+  beds.forEach(bed => {
+    (bed.events || []).forEach(event => {
+      if (!event || event.source !== 'mom-garden-data.json v1' || event.type !== 'journal') return;
+      const isLoadEvent = event.message && event.message.indexOf('Loaded Mom Garden data') === 0;
+      const key = isLoadEvent ? event.message : `${event.bedId || bed.id}:${event.message}`;
+      if (seen[key]) return;
+      seen[key] = true;
+      entries.push({
+        id: key,
+        message: event.message,
+        timestamp: event.timestamp,
+        bedName: bed.name || bed.id,
+        isLoadEvent,
+      });
+    });
+  });
+  return entries.sort((a, b) => (a.isLoadEvent === b.isLoadEvent ? a.id.localeCompare(b.id) : (a.isLoadEvent ? -1 : 1)));
+}
+
+function MomJournalEntries() {
+  const [entries, setEntries] = React.useState(readMomJournalEntries);
+  React.useEffect(() => {
+    function refresh() { setEntries(readMomJournalEntries()); }
+    function onStorage(e) {
+      if (!e || !e.key || e.key.indexOf('gos.bed.') === 0 || e.key === 'gos.activeBed') refresh();
+    }
+    window.addEventListener('gosBedChanged', refresh);
+    window.addEventListener('storage', onStorage);
+    return function () {
+      window.removeEventListener('gosBedChanged', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  if (!entries.length) return null;
+  return (
+    <section style={{
+      marginBottom: 18, padding: '12px 14px', borderRadius: 12,
+      background: T.leafWash, border: `1px solid ${T.leafPale}`,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <Label size={9} color={T.leaf}>MOM'S GARDEN</Label>
+        <Label size={9} color={T.textSoft}>{entries.length} ENTRIES</Label>
+      </div>
+      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {entries.map(entry => (
+          <div key={entry.id} style={{
+            padding: '8px 10px', borderRadius: 9, background: T.panel,
+            border: `1px solid ${T.borderSoft}`,
+          }}>
+            <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.text, lineHeight: 1.35 }}>
+              {entry.message}
+            </div>
+            {!entry.isLoadEvent && (
+              <Label size={8} color={T.textMuted} style={{ display: 'block', marginTop: 3 }}>
+                {entry.bedName}
+              </Label>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Journal() {
   const [tweak, setTweak] = React.useState(loadTweaks);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
@@ -501,6 +571,7 @@ function Journal() {
       </header>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
+        <MomJournalEntries/>
         <TryItBed/>
 
         <Label size={9} color={T.textSoft} style={{ marginLeft: 2, marginTop: 18, display: 'block' }}>SIX FACTORS</Label>

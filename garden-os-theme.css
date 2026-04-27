@@ -117,6 +117,7 @@
   --header-h:       80px;
   --content-max:    1100px;
   --content-narrow: 720px;
+  --bp-mobile:      700px;
 
   /* Transitions */
   --ease:           0.18s ease;
@@ -198,6 +199,18 @@ a {
   text-decoration-color: var(--leaf-pale);
   text-underline-offset: 2px;
   transition: color var(--ease), text-decoration-color var(--ease);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 a:hover { color: var(--leaf-bright); text-decoration-color: var(--leaf-pale); }
 

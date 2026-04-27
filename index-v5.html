@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Garden OS Hub: this week, where to next, what's recently touched.">
-<title>Garden OS · Hub (mobile beta)</title>
+<meta name="description" content="Garden OS Home: this week, where to next, what's recently touched.">
+<title>Garden OS · Home (mobile beta)</title>
 
 <link rel="stylesheet" href="garden-os-theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -123,9 +123,9 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'hub',     label:'Hub',     href:'index-v5.html' },
-    { id:'paint',   label:'Paint',   href:'garden-painting.html' },
-    { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
+    { id:'hub',     label:'Home',    href:'index-v5.html' },
+    { id:'paint',   label:'Beds',    href:'garden-painting.html' },
+    { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
   ];
@@ -473,7 +473,7 @@ function WelcomeCard() {
         Tap a tile to pick a tool.
       </div>
       <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5 }}>
-        Recently-touched fills in as you use the app. The Plan tab is the most common place to start.
+        Recently-touched fills in as you use the app. The Planner tab is the most common place to start.
       </div>
     </section>
   );
@@ -488,7 +488,7 @@ function SeasonLogTile({ summary, compact }) {
   const lastVerb = last && last.type === 'harvest' ? 'harvested' : 'marked done';
   const lastCrop = last && last.cropSnapshot ? last.cropSnapshot.cropName : '';
   return (
-    <a href="garden-planner-v5.html" aria-label="Open season log in Plan" style={{
+    <a href="garden-planner-v5.html" aria-label="Open season log in Planner" style={{
       display: 'block', textDecoration: 'none', color: T.text,
       marginTop: compact ? 10 : 12,
       background: T.panel, borderRadius: 12,
@@ -510,13 +510,70 @@ function SeasonLogTile({ summary, compact }) {
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {empty
-            ? <>No events yet on <span style={{ color: T.text, fontStyle: 'normal', fontWeight: 500 }}>{summary.bedName}</span> &mdash; mark a crop done in Plan.</>
+            ? <>No events yet on <span style={{ color: T.text, fontStyle: 'normal', fontWeight: 500 }}>{summary.bedName}</span> &mdash; mark a crop done in Planner.</>
             : <><span style={{ color: T.text, fontStyle: 'normal', fontWeight: 500 }}>{summary.bedName}</span> &middot; last: {lastCrop} {lastVerb} {lastWhen}.</>
           }
         </span>
         <span style={{ display: 'inline-flex' }}>{Icons.arrow(12, T.textMuted)}</span>
       </div>
     </a>
+  );
+}
+
+async function loadMomGardenDataFromHub() {
+  if (typeof GosBed === 'undefined' || !GosBed.mom) {
+    throw new Error('Mom Garden loader is unavailable.');
+  }
+  const res = await fetch('data/mom-garden-data.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Could not load Mom Garden data.');
+  const data = await res.json();
+  return GosBed.mom.loadFromData(data, { overwrite: false });
+}
+
+function MomGardenTile({ compact, onLoaded }) {
+  const loaded = typeof GosBed !== 'undefined' && GosBed.mom && GosBed.mom.isLoaded();
+  const handleClick = async () => {
+    if (loaded) {
+      window.location.href = 'garden-painting.html';
+      return;
+    }
+    const ok = window.confirm("Load Mom Garden? This adds 3 beds and 13 plantings.");
+    if (!ok) return;
+    try {
+      const result = await loadMomGardenDataFromHub();
+      if (result && result.ok === false && result.reason === 'existing-beds') {
+        alert('You already have garden data. Open Beds or use Reset to Mom Garden from the Beds tweaks menu.');
+        return;
+      }
+      onLoaded && onLoaded();
+      window.location.href = 'garden-painting.html';
+    } catch (e) {
+      alert(e.message || 'Mom Garden load failed');
+    }
+  };
+  return (
+    <button onClick={handleClick} style={{
+      marginTop: compact ? 10 : 12, width: '100%',
+      padding: '12px 14px', borderRadius: 12,
+      background: T.leafWash, border: `1px solid ${T.leafPale}`,
+      display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+      fontFamily: T.fontSans, color: T.text, textAlign: 'left', minHeight: 58,
+    }}>
+      <span style={{
+        width: 34, height: 34, borderRadius: 10, background: T.leafBright,
+        color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: T.fontMono, fontSize: 11, fontWeight: 700,
+      }}>MOM</span>
+      <span style={{ flex: 1 }}>
+        <span style={{ display: 'block', fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600 }}>
+          Mom's Garden
+        </span>
+        <span style={{ display: 'block', fontSize: 12, color: T.textSoft, lineHeight: 1.35, marginTop: 1 }}>
+          13 plantings · 3 beds · Real active garden
+        </span>
+      </span>
+      <span style={{ display: 'inline-flex' }}>{Icons.arrow(13, T.leaf)}</span>
+    </button>
   );
 }
 
@@ -636,9 +693,9 @@ function MoreToolsSheet({ onClose, onOpenDevTools }) {
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 18 }}>
           <MoreToolsRow icon={Icons.build} title="Build Guide"
-            subtitle="Pick a bed, list materials" href="build-guide.html"/>
+            subtitle="Pick a bed, list materials" href="garden-cage-build-guide.html"/>
           <MoreToolsRow icon={Icons.ops}   title="Ops Guide"
-            subtitle="Weekly garden ops" href="ops-guide.html"/>
+            subtitle="Weekly garden ops" href="garden-cage-ops-guide.html"/>
           <MoreToolsRow icon={Icons.story} title="Story Mode"
             subtitle="Play through a season" href="story-mode/"/>
           <MoreToolsRow icon={Icons.code}  title="Dev Tools"
@@ -1113,7 +1170,7 @@ function DevToolsOverlay({ onClose }) {
                 padding: '14px 12px', background: T.panel,
                 border: `1px dashed ${T.borderSoft}`, borderRadius: 8,
                 fontFamily: T.fontSerif, fontSize: 12, color: T.textSoft, fontStyle: 'italic',
-              }}>No beds yet. Create one in Paint.</div>
+              }}>No beds yet. Add one in Beds.</div>
             ) : (
               <div style={{
                 background: T.panel, borderRadius: 8,
@@ -1350,14 +1407,16 @@ function Hub() {
 
         <SeasonLogTile summary={bedSummary} compact={compact}/>
 
+        <MomGardenTile compact={compact} onLoaded={() => setBedSummary(loadActiveBedSummary())}/>
+
         <section style={{ marginTop: compact ? 10 : 14 }}>
           <Label size={9} color={T.textSoft} style={{ marginLeft: 4 }}>WHERE TO</Label>
           <div style={{
             marginTop: 6, display: 'grid', gridTemplateColumns: '1fr 1fr',
             gap: compact ? 8 : 10,
           }}>
-            <Tile title="Plan"    subtitle="The season at a glance"      icon={Icons.plan}    href="garden-planner-v5.html" compact={compact}/>
-            <Tile title="Paint"   subtitle="Place crops in the bed"      icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
+            <Tile title="Planner" subtitle="The season at a glance"      icon={Icons.plan}    href="garden-planner-v5.html" compact={compact}/>
+            <Tile title="Beds"    subtitle="Edit beds and crop placement" icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
             <Tile title="Doctor"  subtitle="What's wrong with this leaf" icon={Icons.doctor}  href="garden-doctor-v5.html"   compact={compact}/>
             <Tile title="Journal" subtitle="How scoring decides"         icon={Icons.journal} href="how-it-thinks-v5.html"   compact={compact}/>
           </div>
@@ -1421,8 +1480,7 @@ let __coldStartRedirecting = false;
 if (typeof GosBed === 'undefined' || typeof GosBed.getActive !== 'function') {
   console.warn('Garden OS: GosBed not available — skipping cold-start guard');
 } else if (GosBed.getActive() === null) {
-  __coldStartRedirecting = true;
-  location.replace('garden-painting.html');
+  __coldStartRedirecting = false;
 }
 
 // gos-bed.js wiring: report saved beds for verification
