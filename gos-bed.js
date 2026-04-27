@@ -95,6 +95,15 @@
     }
   }
 
+  function ConcurrentWriteError(message) {
+    this.name = 'ConcurrentWriteError';
+    this.message = message || 'Concurrent write conflict';
+    this.code = 'CONCURRENT_WRITE';
+    if (Error.captureStackTrace) Error.captureStackTrace(this, ConcurrentWriteError);
+  }
+  ConcurrentWriteError.prototype = Object.create(Error.prototype);
+  ConcurrentWriteError.prototype.constructor = ConcurrentWriteError;
+
   function checkLock() {
     var raw = safeGet(LOCK_KEY);
     if (!raw) return; // no lock, fine
@@ -130,13 +139,27 @@
     return out;
   }
 
-  function writeBed(bedData) {
+  function normalizeRevision(bed) {
+    if (!bed || typeof bed !== 'object') return 0;
+    return (typeof bed.revision === 'number' && isFinite(bed.revision) && bed.revision >= 0)
+      ? Math.floor(bed.revision)
+      : 0;
+  }
+
+  function writeBed(bedData, options) {
+    options = options || {};
     validateBedShape(bedData);
     checkLock();
     var now = new Date().toISOString();
+    var current = readBed(bedData.id);
+    var currentRevision = normalizeRevision(current);
+    if (options.expectedRevision != null && options.expectedRevision !== currentRevision) {
+      throw new ConcurrentWriteError('GosBed.write: expected revision ' + options.expectedRevision + ' but found ' + currentRevision);
+    }
     var paintedSrc = Array.isArray(bedData.painted) ? bedData.painted : [];
     var record = {
       schemaVersion: SCHEMA_VERSION,
+      revision: currentRevision + 1,
       id: bedData.id,
       name: bedData.name || bedData.id,
       shape: bedData.shape,
@@ -158,6 +181,17 @@
     if (typeof bedData.orientation === 'string' && bedData.orientation) {
       record.orientation = bedData.orientation;
     }
+    if (bedData.dimensions && typeof bedData.dimensions === 'object') {
+      var rows = parseInt(bedData.dimensions.rows, 10);
+      var cols = parseInt(bedData.dimensions.cols, 10);
+      if (isFinite(rows) && rows > 0 && isFinite(cols) && cols > 0) {
+        record.dimensions = { rows: rows, cols: cols };
+      }
+    }
+    if (typeof bedData.location === 'string' && bedData.location) record.location = bedData.location;
+    if (typeof bedData.lastFrostWeek === 'number' && isFinite(bedData.lastFrostWeek)) record.lastFrostWeek = bedData.lastFrostWeek;
+    if (typeof bedData.firstFrostWeek === 'number' && isFinite(bedData.firstFrostWeek)) record.firstFrostWeek = bedData.firstFrostWeek;
+    if (bedData.frostWeeks && typeof bedData.frostWeeks === 'object') record.frostWeeks = bedData.frostWeeks;
     var ok = safeSet(BED_PREFIX + bedData.id, JSON.stringify(record));
     if (!ok) {
       throw new Error('GosBed.write: localStorage write failed (quota or disabled)');
@@ -168,7 +202,9 @@
   function readBed(id) {
     if (!id) return null;
     var raw = safeGet(BED_PREFIX + id);
-    return parseJson(raw);
+    var bed = parseJson(raw);
+    if (bed && typeof bed === 'object' && bed.revision == null) bed.revision = 0;
+    return bed;
   }
 
   function readAllBeds() {
@@ -180,7 +216,10 @@
       if (k.indexOf(BED_PREFIX) !== 0) continue;
       if (k === PENDING_KEY) continue;
       var v = parseJson(global.localStorage.getItem(k));
-      if (v) out.push(v);
+      if (v) {
+        if (v.revision == null) v.revision = 0;
+        out.push(v);
+      }
     }
     out.sort(function (a, b) {
       var aT = a.lastEdited || '';
@@ -528,6 +567,7 @@
     currentIsoDate: currentIsoDate,
     currentIsoWeek: currentIsoWeek,
     plantedWeekOf: plantedWeekOf,
+    ConcurrentWriteError: ConcurrentWriteError,
     WALL_SIDES: WALL_SIDES,
     WATER_KINDS: WATER_KINDS,
     ORIENTATIONS: ORIENTATIONS,

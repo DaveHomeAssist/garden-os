@@ -46,10 +46,11 @@
   .gos-fade-in { animation: gos-fade-in 180ms ease; }
 </style>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="vendor/react-18.3.1.production.min.js"></script>
+<script src="vendor/react-dom-18.3.1.production.min.js"></script>
+<script src="vendor/babel-standalone-7.29.0.min.js"></script>
 <script src="gos-bed.js"></script>
+<script src="gos-journal.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index.html">← Legacy launcher</a>
@@ -127,7 +128,7 @@ function TabBar({ active }) {
     { id:'paint',   label:'Paint',   href:'garden-painting.html' },
     { id:'planner', label:'Plan',    href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
-    { id:'journal', label:'Journal', href:'how-it-thinks-v5.html' },
+    { id:'journal', label:'Journal', href:'journal.html' },
   ];
   return (
     <nav style={{
@@ -636,9 +637,11 @@ function MoreToolsSheet({ onClose, onOpenDevTools }) {
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 18 }}>
           <MoreToolsRow icon={Icons.build} title="Build Guide"
-            subtitle="Pick a bed, list materials" href="build-guide.html"/>
+            subtitle="Pick a bed, list materials" href="garden-cage-build-guide.html"/>
           <MoreToolsRow icon={Icons.ops}   title="Ops Guide"
-            subtitle="Weekly garden ops" href="ops-guide.html"/>
+            subtitle="Weekly garden ops" href="garden-cage-ops-guide.html"/>
+          <MoreToolsRow icon={Icons.story} title="How It Thinks"
+            subtitle="Scoring logic, plainly" href="how-it-thinks-v5.html"/>
           <MoreToolsRow icon={Icons.story} title="Story Mode"
             subtitle="Play through a season" href="story-mode/"/>
           <MoreToolsRow icon={Icons.code}  title="Dev Tools"
@@ -653,10 +656,13 @@ function MoreToolsSheet({ onClose, onOpenDevTools }) {
 function exportAllBedsToFile() {
   if (typeof GosBed === 'undefined') return false;
   const beds = GosBed.readAll();
+  const journalEntries = typeof GardenJournal !== 'undefined' ? GardenJournal.export() : [];
   const payload = {
     schemaVersion: GosBed.SCHEMA_VERSION || 1,
+    journalSchemaVersion: typeof GardenJournal !== 'undefined' ? GardenJournal.SCHEMA_VERSION : 1,
     exportedAt: new Date().toISOString(),
     beds,
+    journalEntries,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1359,7 +1365,7 @@ function Hub() {
             <Tile title="Plan"    subtitle="The season at a glance"      icon={Icons.plan}    href="garden-planner-v5.html" compact={compact}/>
             <Tile title="Paint"   subtitle="Place crops in the bed"      icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
             <Tile title="Doctor"  subtitle="What's wrong with this leaf" icon={Icons.doctor}  href="garden-doctor-v5.html"   compact={compact}/>
-            <Tile title="Journal" subtitle="How scoring decides"         icon={Icons.journal} href="how-it-thinks-v5.html"   compact={compact}/>
+            <Tile title="Journal" subtitle="Garden memory and system inbox" icon={Icons.journal} href="journal.html" compact={compact}/>
           </div>
         </section>
 

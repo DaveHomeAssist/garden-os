@@ -1,8 +1,8 @@
 {
-  "name": "Garden OS — Story Mode and Planner",
+  "name": "Garden OS Planner",
   "short_name": "Garden OS",
-  "description": "Local-first raised bed garden app with a Story Mode that opens on Calvin, month-aware seasons, winter review, richer 3D scenes and dialogue, plus planner and build guides. Zero backend. Works offline.",
-  "start_url": "/garden-os/index.html",
+  "description": "Local-first raised bed garden planner. Zero backend. Works offline after first visit.",
+  "start_url": "garden-planner-v5.html",
   "scope": "/garden-os/",
   "display": "standalone",
   "orientation": "any",
@@ -25,8 +25,13 @@
     },
     {
       "name": "Open Planner",
-      "url": "/garden-os/garden-planner-v4.html",
+      "url": "/garden-os/garden-planner-v5.html",
       "icons": [{ "src": "assets/icons/favicon/garden-planner.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Open Journal",
+      "url": "/garden-os/journal.html",
+      "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
     }
   ]
 }
