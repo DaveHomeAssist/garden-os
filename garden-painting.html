@@ -114,11 +114,11 @@ const CROPS = {
   red_lettuce: { name:'Lettuce', label:'Red Lettuce', mono:'RL', color:RED_LETTUCE_COLOR, family:'Leafy', sun:'part', daysToMaturity:55 },
   head_lettuce: { name:'Lettuce', label:'Head Lettuce', mono:'Le', color:'#6aab4a', family:'Leafy', sun:'part', daysToMaturity:55 },
   rad: { name:'Radish',   mono:'Ra', color:'#b84a1a', family:'Root',       sun:'full', daysToMaturity:28 },
-  car: { name:'Carrot',   mono:'Ca', color:'#d4651a', family:'Root',       sun:'full', daysToMaturity:70 },
+  car: { name:'Carrot',   mono:'Ca', color:'#d4651a', family:'Root',       sun:'full', daysToMaturity:70, palette:false },
   carrot: { name:'Carrot', mono:'Ca', color:'#d4651a', family:'Root',      sun:'full', daysToMaturity:70 },
   pep: { name:'Pepper',   mono:'Pe', color:'#c45a18', family:'Nightshade', sun:'full', daysToMaturity:80 },
   cuc: { name:'Cucumber', mono:'Cu', color:'#3a6b2a', family:'Cucurbit',   sun:'full', daysToMaturity:55 },
-  kal: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',   sun:'part', daysToMaturity:55 },
+  kal: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',   sun:'part', daysToMaturity:55, palette:false },
   kale: { name:'Kale',     mono:'Ka', color:'#2f7a3d', family:'Brassica',  sun:'part', daysToMaturity:55 },
   oni: { name:'Onion',    mono:'On', color:'#b07d55', family:'Allium',     sun:'full', daysToMaturity:110 },
   spi: { name:'Spinach',  mono:'Sp', color:'#3a6b2a', family:'Leafy',      sun:'part', daysToMaturity:40 },
@@ -252,7 +252,7 @@ function scoreCropCell(bed, r, c, cropId) {
 }
 
 function recsForCell(bed, r, c) {
-  return Object.keys(CROPS)
+  return paletteCropIds()
     .map(k => ({ crop: k, score: scoreCropCell(bed, r, c, k) }))
     .sort((a, b) => b.score - a.score);
 }
@@ -290,6 +290,10 @@ function cellDisplayName(cell) {
 function cropPaletteLabel(cropId) {
   const crop = CROPS[cropId];
   return (crop && (crop.label || crop.name)) || cropId || 'Crop';
+}
+
+function paletteCropIds() {
+  return Object.keys(CROPS).filter(k => CROPS[k] && CROPS[k].palette !== false);
 }
 
 function cellVarietyLabel(cell) {
@@ -1863,7 +1867,7 @@ function CellBottomSheet({
             </div>
             {replaceOpen && (
               <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                {Object.keys(CROPS).map(k => (
+                {paletteCropIds().map(k => (
                   <button type="button" key={k} onClick={() => { onSetBrush(k); onReplace(cell, k); }} style={{
                     minHeight: 48, borderRadius: 10, border: `1px solid ${T.borderSoft}`,
                     background: T.panel, display: 'flex', alignItems: 'center',
@@ -2417,7 +2421,7 @@ function Painting({ tweak, onOpenTweaks }) {
             <Label size={10} color={T.soilMid}>CROP · tap to select</Label>
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
-            {Object.keys(CROPS).map(k => {
+            {paletteCropIds().map(k => {
               const active = brush === k;
               return (
                 <button type="button" key={k} onClick={() => setBrush(k)} aria-pressed={active} style={{

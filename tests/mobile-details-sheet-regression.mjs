@@ -20,6 +20,10 @@ assert.match(painting, /focusable\[0\]\.focus\(\)/, "Sheet should focus the firs
 assert.match(painting, /e\.key === 'Escape'/, "Escape should close the sheet");
 assert.match(painting, /restoreFocusRef\.current\.focus\(\)/, "Closing should restore focus to the tapped cell");
 assert.match(painting, /function cropPaletteLabel/, "Crop palette should disambiguate duplicate crop names");
+assert.match(painting, /function paletteCropIds/, "Visible crop pickers should use a curated palette id list");
+assert.match(painting, /car:\s*\{[^}]*palette:false/, "Legacy carrot alias should stay readable but hidden from visible pickers");
+assert.match(painting, /kal:\s*\{[^}]*palette:false/, "Legacy kale alias should stay readable but hidden from visible pickers");
+assert.doesNotMatch(painting, /\{Object\.keys\(CROPS\)\.map\(k =>/, "Visible crop pickers should not render every catalog key");
 assert.match(painting, /Leaf Lettuce/, "Generic lettuce should be visibly distinct in the palette");
 assert.match(painting, /Head Lettuce/, "Head lettuce should be visibly distinct in the palette");
 assert.match(painting, /red_lettuce:\s*\{[^}]*label:'Red Lettuce'[^}]*color:RED_LETTUCE_COLOR/s, "Red lettuce should be its own red palette option");
