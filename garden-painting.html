@@ -2008,12 +2008,14 @@ function Painting({ tweak, onOpenTweaks }) {
   });
   const [history, setHistory] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
-  const [creatorOpen, setCreatorOpen] = React.useState(activeBed === null);
+  const [creatorOpen, setCreatorOpen] = React.useState(false);
+  const [momAutoLoadStatus, setMomAutoLoadStatus] = React.useState(activeBed ? 'idle' : 'loading');
   const [ghostVisible, setGhostVisible] = React.useState(false);
   const [siteOpen, setSiteOpen] = React.useState(false);
   const [cellSheet, setCellSheet] = React.useState(null);
   const [toast, setToast] = React.useState(null);
   const restoreFocusRef = React.useRef(null);
+  const momAutoLoadStartedRef = React.useRef(false);
 
   // Apply user edits from the Site panel: merge into activeBed and let the
   // existing autosave effect write through to GosBed. The internalToGosBed
@@ -2160,8 +2162,31 @@ function Painting({ tweak, onOpenTweaks }) {
     }
   };
 
-  // First-run shell: no active bed yet. Render minimal chrome with the
-  // BedCreator overlay covering the empty canvas area.
+  const autoLoadMomGardenIfEmpty = React.useCallback(() => {
+    if (activeBed || momAutoLoadStartedRef.current) return;
+    momAutoLoadStartedRef.current = true;
+    setMomAutoLoadStatus('loading');
+    loadMomGardenData(false)
+      .then(() => {
+        const fresh = refreshFromActiveBed();
+        setCreatorOpen(false);
+        setMomAutoLoadStatus('loaded');
+        if (fresh) {
+          try { window.dispatchEvent(new CustomEvent('gosBedChanged', { detail: { id: fresh.id, bed: fresh } })); } catch (_) {}
+        }
+      })
+      .catch((e) => {
+        console.warn('Mom Garden auto-load failed:', e.message);
+        setMomAutoLoadStatus('error');
+        setCreatorOpen(true);
+      });
+  }, [activeBed, refreshFromActiveBed]);
+
+  React.useEffect(() => {
+    autoLoadMomGardenIfEmpty();
+  }, [autoLoadMomGardenIfEmpty]);
+
+  // First-run shell: default to Mom's Garden until the user creates their own.
   if (!activeBed) {
     return (
       <div style={{
@@ -2178,18 +2203,20 @@ function Painting({ tweak, onOpenTweaks }) {
             fontFamily: T.fontSerif, fontSize: 14, color: T.textSoft,
             fontStyle: 'italic', textAlign: 'center', maxWidth: 240, lineHeight: 1.5,
           }}>
-            Garden OS needs one bed to begin. Set yours up and we'll take it from there.
+            {momAutoLoadStatus === 'error'
+              ? "Mom's Garden did not load. You can retry or set up a bed."
+              : "Loading Mom's Garden..."}
           </div>
-          <button type="button" onClick={() => handleLoadMomGarden(false)} style={{
+          {momAutoLoadStatus === 'error' && <button type="button" onClick={() => handleLoadMomGarden(false)} style={{
             position: 'absolute', bottom: 94,
             padding: '10px 14px', borderRadius: 999,
             background: T.leafBright, color: '#fff',
             border: 'none', fontFamily: T.fontSans, fontSize: 13, fontWeight: 700,
             cursor: 'pointer',
-          }}>Load Mom Garden</button>
+          }}>Load Mom Garden</button>}
         </div>
         <TabBar active="beds"/>
-        <BedCreator hasInitialBeds={false} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>
+        {creatorOpen && <BedCreator hasInitialBeds={false} onComplete={handleCreatorComplete} onCancel={handleCreatorCancel}/>}
       </div>
     );
   }

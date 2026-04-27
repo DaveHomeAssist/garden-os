@@ -132,6 +132,9 @@ assert.match(planner, /fall planting/, "Planner should mention garlic's fall pla
 assert.match(planner, /Ask Doctor/, "Planner should link crop context to Doctor");
 
 const painting = readFileSync(new URL("garden-painting.html", repo), "utf8");
+assert.match(painting, /autoLoadMomGardenIfEmpty/, "Beds page should auto-load Mom Garden when no bed exists");
+assert.match(painting, /Loading Mom's Garden/, "Beds page should show a loading state during default Mom Garden load");
+assert.doesNotMatch(painting, /Garden OS needs one bed to begin/, "Beds page should not default to the old empty setup shell");
 assert.match(painting, /Load Mom Garden/, "Beds page should surface Load Mom Garden");
 assert.match(painting, /Reset to Mom Garden/, "Beds page should surface Reset to Mom Garden");
 assert.match(painting, /Bag '\s*\+\s*\(cell\.c \+ 1\)/, "Beds page should render grow bag labels");

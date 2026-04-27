@@ -79,15 +79,12 @@ try {
     await firstRunPage.goto(BASE + '/garden-painting.html', { waitUntil: 'domcontentloaded' });
     await firstRunPage.evaluate(() => localStorage.clear());
     await firstRunPage.reload({ waitUntil: 'domcontentloaded' });
-    await firstRunPage.waitForTimeout(500);
-    await firstRunPage.evaluate(() => {
-      Array.from(document.querySelectorAll('button'))
-        .find(b => b.textContent && b.textContent.includes('Load Mom Garden'))
-        .click();
-    });
-    await firstRunPage.waitForTimeout(1000);
+    await firstRunPage.waitForFunction(() => window.GosBed && window.GosBed.mom.isLoaded(), null, { timeout: 5000 });
     const loaded = await firstRunPage.evaluate(() => window.GosBed && window.GosBed.mom.isLoaded());
-    note('First-run Load Mom Garden does not trip React hook order', loaded && firstRunErrors().length === 0, firstRunErrors().join(' | '));
+    const firstRunText = await firstRunPage.evaluate(() => document.body.innerText);
+    note('First-run auto-loads Mom Garden without React hook order errors',
+      loaded && /My First Bed|Raised Bed Left/.test(firstRunText) && firstRunErrors().length === 0,
+      firstRunErrors().join(' | '));
     await firstRun.close();
   }
 
