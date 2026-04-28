@@ -1391,7 +1391,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             value={stage === 'growing' ? weeksToHarv : weeksIn}
             unit="weeks"/>
           <Stat label="ROW"
-            value={cells.length ? [...new Set(cells.map(x => x.r + 1))].join('+') : '—'}
+            value={cells.length ? [...new Set(cells.map(x => x.r + 1))].join('+') : '--'}
             unit={cells.length ? 'of 4' : ''}/>
         </div>
 
