@@ -843,6 +843,54 @@ body {
 }
 .btn-sticky:hover { background: var(--sun-700); }
 
+
+/* ─── FRESH COAT 2026-04-28: a11y, depth, hover consistency ─── */
+
+html { color-scheme: light; }
+
+/* Global focus-visible. Keyboard users get a clear ring; mouse users see nothing extra. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-story:focus-visible,
+.btn-sticky:focus-visible,
+.nav-link:focus-visible,
+.nav-cta:focus-visible {
+  outline: 2px solid var(--sun-500);
+  outline-offset: 3px;
+  border-radius: var(--r-md);
+}
+
+/* Subtle resting depth on top-level cards (was: no shadow until hover) */
+.benefit-card { box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.result-item { box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.proof-card { box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: all 0.25s; }
+
+/* Card hover consistency: same lift across benefit-card / result-item / proof-card */
+.proof-card:hover {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-mid);
+}
+.result-item:hover { transform: translateY(-2px); }
+
+/* btn-primary: subtle vertical gradient gives the CTA depth without changing the palette */
+.btn-primary {
+  background: linear-gradient(180deg, #e08a25 0%, var(--sun-600) 100%);
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #cf7a1a 0%, var(--sun-700) 100%);
+}
+
+/* Mobile: don't strip the entire nav. Keep the product entry visible at <=900px. */
+@media (max-width: 900px) {
+  .nav-link[href="index-v5.html"] { display: inline-flex; }
+}
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
   .hero-inner { grid-template-columns: 1fr; gap: 40px; }
