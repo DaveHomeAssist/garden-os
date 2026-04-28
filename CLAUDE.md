@@ -36,8 +36,9 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 
 ## Navigation — Two-Track Model
 
-- **User track:** Home → Play Game → Planner → Build Guide → Ops Guide → How It Thinks → [Dev Tools →]
+- **User track:** Home → Beds → Planner → Doctor → Journal → [Dev Tools →]
 - **Dev track:** [← Garden] → Visualizer → Scoring Map → Fairness Tester → System Map → Topology
+- Build Guide, Ops Guide, and How It Thinks are auxiliary pages reachable from Hub or by direct URL, not in the v5 tab bar.
 - Bridge links connect the tracks. Do not merge them into a single nav.
 - Nav bar: dark soil background (`#5c3d1e`), DM Mono font, sun accent (`#e8c84a`).
 
@@ -86,6 +87,7 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 | Full project context | `docs/HANDOFF.md` |
 | Live URLs | `docs/active-hosted-urls.md` |
 | Roadmap | `IMPLEMENTATION_PLAN.md` |
+| Assistant operating spec | `GARDEN_OS_ASSISTANT_INSTRUCTIONS.md` |
 
 ## Documentation Maintenance
 
