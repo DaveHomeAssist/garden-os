@@ -645,9 +645,144 @@
     if (typeof workerUrl !== 'string') return '';
     return workerUrl.replace(/\/+$/, '');
   }
+  function isLocalWorkerHost(hostname) {
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1';
+  }
+  function normalizeWorkerUrl(workerUrl) {
+    var trimmed = trimWorkerUrl(workerUrl);
+    if (!trimmed) return { ok: false, value: '', reason: 'required' };
+    var parsed;
+    try {
+      parsed = new URL(trimmed);
+    } catch (_) {
+      return { ok: false, value: '', reason: 'invalid' };
+    }
+    if (parsed.protocol === 'https:' || (parsed.protocol === 'http:' && isLocalWorkerHost(parsed.hostname))) {
+      return { ok: true, value: trimmed };
+    }
+    return { ok: false, value: '', reason: 'https' };
+  }
+  function requireWorkerUrl(workerUrl, action) {
+    var normalized = normalizeWorkerUrl(workerUrl);
+    if (normalized.ok) return normalized.value;
+    if (normalized.reason === 'https') {
+      throw new Error('GosBed.sync.' + action + ': Worker URL must use HTTPS outside localhost');
+    }
+    if (normalized.reason === 'invalid') {
+      throw new Error('GosBed.sync.' + action + ': workerUrl must be a valid URL');
+    }
+    throw new Error('GosBed.sync.' + action + ': workerUrl is required');
+  }
+  var IMPORT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+  var IMPORT_CROP_ID_RE = /^[a-z][a-z0-9_]{0,63}$/;
+  var IMPORT_LABEL_RE = /^[^<>\x00-\x1F\x7F]{0,200}$/;
+  var IMPORT_DATE_RE = /^\d{4}-\d{2}-\d{2}(?:T[0-9:.+-]+Z?)?$/;
+  var IMPORT_EVENT_TYPE_RE = /^[a-z][a-z0-9_]{0,31}$/;
+
+  function validImportText(value, max, required) {
+    if (value == null || value === '') return !required;
+    if (typeof value !== 'string') return false;
+    return value.length <= max && IMPORT_LABEL_RE.test(value);
+  }
+  function validImportId(value) {
+    return typeof value === 'string' && IMPORT_ID_RE.test(value);
+  }
+  function validImportDate(value) {
+    return value == null || value === '' || (typeof value === 'string' && value.length <= 40 && IMPORT_DATE_RE.test(value));
+  }
+  function validImportWeek(value) {
+    return value == null || (typeof value === 'number' && isFinite(value) && value >= 1 && value <= 53);
+  }
+  function validImportCell(cell, dims) {
+    var parsed = parseCell(cell);
+    return !!parsed && parsed.r >= 0 && parsed.c >= 0 && parsed.r < dims.rows && parsed.c < dims.cols;
+  }
+  function validImportPlainValue(value, depth) {
+    if (value == null) return true;
+    if (typeof value === 'string') return value.length <= 1000 && IMPORT_LABEL_RE.test(value);
+    if (typeof value === 'number') return isFinite(value);
+    if (typeof value === 'boolean') return true;
+    if (depth > 4) return false;
+    if (Array.isArray(value)) {
+      if (value.length > 200) return false;
+      return value.every(function (item) { return validImportPlainValue(item, depth + 1); });
+    }
+    if (typeof value === 'object') {
+      var keys = Object.keys(value);
+      if (keys.length > 50) return false;
+      return keys.every(function (key) {
+        return validImportText(key, 80, true) && validImportPlainValue(value[key], depth + 1);
+      });
+    }
+    return false;
+  }
+  function validateImportedPaintedEntry(entry, dims) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    if (!validImportCell(entry.cell, dims)) return false;
+    if (typeof entry.cropId !== 'string' || !IMPORT_CROP_ID_RE.test(entry.cropId)) return false;
+    if (entry.id != null && !validImportId(entry.id)) return false;
+    if (!validImportText(entry.cropName, 120, false)) return false;
+    if (!validImportText(entry.cropIcon, 20, false)) return false;
+    if (!validImportText(entry.cropColor, 40, false)) return false;
+    if (!validImportText(entry.displayName, 120, false)) return false;
+    if (!validImportText(entry.varietyName, 120, false)) return false;
+    if (!validImportText(entry.status, 40, false)) return false;
+    if (!validImportText(entry.bedLocation, 120, false)) return false;
+    if (!validImportText(entry.sourceBedName, 120, false)) return false;
+    if (!validImportText(entry.placementConfidence, 40, false)) return false;
+    if (!validImportText(entry.placementNote, 500, false)) return false;
+    if (!validImportText(entry.label, 120, false)) return false;
+    if (!validImportText(entry.sourcePlantingId, 120, false)) return false;
+    if (!validImportText(entry.notes, 1000, false)) return false;
+    if (entry.sourcePlantingCellIndex != null && (typeof entry.sourcePlantingCellIndex !== 'number' || !isFinite(entry.sourcePlantingCellIndex))) return false;
+    if (!validImportDate(entry.plantedAt) || !validImportDate(entry.plantedOnStart) || !validImportDate(entry.plantedOnEnd)) return false;
+    return validImportWeek(entry.plantedWeek);
+  }
+  function validateImportedEvent(event, dims) {
+    if (!event || typeof event !== 'object' || Array.isArray(event)) return false;
+    if (event.type != null && (typeof event.type !== 'string' || !IMPORT_EVENT_TYPE_RE.test(event.type))) return false;
+    if (event.bedId != null && !validImportId(event.bedId)) return false;
+    if (event.cell != null && !validImportCell(event.cell, dims)) return false;
+    if (event.timestamp != null && !validImportDate(event.timestamp)) return false;
+    return validImportPlainValue(event, 0);
+  }
+  function validateImportedBedPayload(bed) {
+    if (!bed || typeof bed !== 'object' || Array.isArray(bed)) return false;
+    if (!validImportId(bed.id)) return false;
+    if (!validImportText(bed.name || bed.id, 120, true)) return false;
+    if (typeof bed.shape !== 'string' || !/^[1-9][0-9]?x[1-9][0-9]?$/i.test(bed.shape)) return false;
+    var dims = parseShape(bed.shape);
+    if (!dims || dims.cols > 30 || dims.rows > 30) return false;
+    if (['full', 'partial', 'shade'].indexOf(bed.sun) < 0) return false;
+    if (bed.type != null && !validImportText(bed.type, 40, false)) return false;
+    if (bed.source != null && !validImportText(bed.source, 80, false)) return false;
+    if (bed.loadedAt != null && !validImportDate(bed.loadedAt)) return false;
+    if (bed.comment != null && !validImportText(bed.comment, 1000, false)) return false;
+    if (bed.zone != null && !validImportText(bed.zone, 20, false)) return false;
+    if (bed.location != null && !validImportText(bed.location, 120, false)) return false;
+    if (bed.wallSide != null && WALL_SIDES.indexOf(bed.wallSide) < 0) return false;
+    if (bed.water != null && WATER_KINDS.indexOf(bed.water) < 0) return false;
+    if (bed.orientation != null && ORIENTATIONS.indexOf(bed.orientation) < 0) return false;
+    if (bed.dimensions != null) {
+      if (!bed.dimensions || typeof bed.dimensions !== 'object') return false;
+      var rows = parseInt(bed.dimensions.rows, 10);
+      var cols = parseInt(bed.dimensions.cols, 10);
+      if (!isFinite(rows) || !isFinite(cols) || rows < 1 || cols < 1 || rows > 30 || cols > 30) return false;
+    }
+    if (bed.painted != null) {
+      if (!Array.isArray(bed.painted) || bed.painted.length > 1000) return false;
+      if (!bed.painted.every(function (entry) { return validateImportedPaintedEntry(entry, dims); })) return false;
+    }
+    if (bed.events != null) {
+      if (!Array.isArray(bed.events) || bed.events.length > 1000) return false;
+      if (!bed.events.every(function (event) { return validateImportedEvent(event, dims); })) return false;
+    }
+    return true;
+  }
 
   async function postBeds(workerUrl, payload) {
-    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds', {
+    var baseUrl = requireWorkerUrl(workerUrl, 'create');
+    var res = await fetch(baseUrl + '/beds', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -659,7 +794,8 @@
     return json;
   }
   async function putBed(workerUrl, code, payload) {
-    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+    var baseUrl = requireWorkerUrl(workerUrl, 'push');
+    var res = await fetch(baseUrl + '/beds/' + code, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -671,7 +807,8 @@
     return json;
   }
   async function getBed(workerUrl, code) {
-    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, { method: 'GET' });
+    var baseUrl = requireWorkerUrl(workerUrl, 'pull');
+    var res = await fetch(baseUrl + '/beds/' + code, { method: 'GET' });
     var json = await res.json().catch(function () { return null; });
     if (!res.ok || !json || !json.ok) {
       throw new Error('GosBed.sync.pull failed: ' + (json && json.error ? json.error : res.status));
@@ -679,7 +816,8 @@
     return json;
   }
   async function deleteBedRemote(workerUrl, code, secret) {
-    var res = await fetch(trimWorkerUrl(workerUrl) + '/beds/' + code, {
+    var baseUrl = requireWorkerUrl(workerUrl, 'revoke');
+    var res = await fetch(baseUrl + '/beds/' + code, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret: secret }),
@@ -703,7 +841,7 @@
     var meta = {
       code: resp.code,
       secret: resp.secret,
-      workerUrl: trimWorkerUrl(workerUrl),
+      workerUrl: requireWorkerUrl(workerUrl, 'create'),
       lastPushedAt: resp.updatedAt || new Date().toISOString(),
     };
     writeSyncMeta(bedId, meta);
@@ -722,7 +860,7 @@
   }
 
   async function syncPull(code, workerUrl) {
-    if (!code || !workerUrl) {
+    if (!code) {
       throw new Error('GosBed.sync.pull: code and workerUrl are required');
     }
     var resp = await getBed(workerUrl, code);
@@ -743,7 +881,7 @@
   async function syncImportFromCode(code, workerUrl, options) {
     options = options || {};
     var bed = await syncPull(code, workerUrl);
-    if (!bed || typeof bed !== 'object' || !bed.id) {
+    if (!validateImportedBedPayload(bed)) {
       throw new Error('GosBed.sync.importFromCode: invalid bed payload');
     }
     var existing = readBed(bed.id);
@@ -794,9 +932,9 @@
     return v || '';
   }
   function syncSetDefaultWorkerUrl(workerUrl) {
-    var trimmed = trimWorkerUrl(workerUrl);
-    if (!trimmed) return false;
-    return safeSet(SYNC_DEFAULT, trimmed);
+    var normalized = normalizeWorkerUrl(workerUrl);
+    if (!normalized.ok) return false;
+    return safeSet(SYNC_DEFAULT, normalized.value);
   }
 
   global.GosBed = {

@@ -252,10 +252,10 @@ try {
       window.localStorage.setItem('gos.sync.shared-bed', JSON.stringify({
         code: 'TEST-AAAA',
         secret: 'super-secret-32-hex-chars-fake0000',
-        workerUrl: 'http://example.invalid',
+        workerUrl: 'https://example.invalid',
         lastPushedAt: new Date().toISOString(),
       }));
-      window.localStorage.setItem('gos.sync.workerUrl', 'http://example.invalid');
+      window.localStorage.setItem('gos.sync.workerUrl', 'https://example.invalid');
     });
 
     // Mock DELETE to simulate a failure that is NOT not_found — e.g. 500.
@@ -307,10 +307,10 @@ try {
       window.localStorage.setItem('gos.sync.shared-bed', JSON.stringify({
         code: 'TEST-BBBB',
         secret: 'super-secret-32-hex-chars-fake0000',
-        workerUrl: 'http://example.invalid',
+        workerUrl: 'https://example.invalid',
         lastPushedAt: new Date().toISOString(),
       }));
-      window.localStorage.setItem('gos.sync.workerUrl', 'http://example.invalid');
+      window.localStorage.setItem('gos.sync.workerUrl', 'https://example.invalid');
     });
 
     await page.route('**/beds/TEST-BBBB', async (route) => {
