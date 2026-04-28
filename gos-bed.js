@@ -48,6 +48,7 @@
   var PENDING_KEY    = 'gos.bed.pending';
   var LOCK_KEY       = 'gos.session.lock';
   var ACTIVE_BED_KEY = 'gos.activeBed';
+  var ORDER_KEY      = 'gos.bed.order.v1';
   var SCHEMA_VERSION = 1;
   var WARNING_BYTES  = 4000000;
 
@@ -219,6 +220,7 @@
     if (!ok) {
       throw new Error('GosBed.write: localStorage write failed (quota or disabled)');
     }
+    ensureBedInOrder(bedData.id);
     return record;
   }
 
@@ -230,6 +232,32 @@
     return bed;
   }
 
+  function readBedOrder() {
+    var raw = safeGet(ORDER_KEY);
+    var parsed = parseJson(raw);
+    return Array.isArray(parsed) ? parsed.filter(function (id) {
+      return typeof id === 'string' && id;
+    }) : [];
+  }
+
+  function setBedOrder(ids) {
+    var seen = {};
+    var clean = (Array.isArray(ids) ? ids : []).filter(function (id) {
+      if (typeof id !== 'string' || !id || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    });
+    return safeSet(ORDER_KEY, JSON.stringify(clean));
+  }
+
+  function ensureBedInOrder(id) {
+    if (!id) return;
+    var order = readBedOrder();
+    if (order.indexOf(id) >= 0) return;
+    order.push(id);
+    setBedOrder(order);
+  }
+
   function readAllBeds() {
     var out = [];
     if (!global.localStorage) return out;
@@ -238,18 +266,26 @@
       if (!k) continue;
       if (k.indexOf(BED_PREFIX) !== 0) continue;
       if (k === PENDING_KEY) continue;
+      if (k === ORDER_KEY) continue;
       var v = parseJson(global.localStorage.getItem(k));
-      if (v) {
+      if (v && v.id) {
         if (v.revision == null) v.revision = 0;
         out.push(v);
       }
     }
+    var order = readBedOrder();
+    var rank = {};
+    order.forEach(function (id, index) { rank[id] = index; });
     out.sort(function (a, b) {
+      var aRank = Object.prototype.hasOwnProperty.call(rank, a.id) ? rank[a.id] : Infinity;
+      var bRank = Object.prototype.hasOwnProperty.call(rank, b.id) ? rank[b.id] : Infinity;
+      if (aRank !== bRank) return aRank - bRank;
       var aT = a.lastEdited || '';
       var bT = b.lastEdited || '';
       if (aT === bT) return 0;
       return aT < bT ? 1 : -1; // descending
     });
+    setBedOrder(out.map(function (bed) { return bed.id; }));
     return out;
   }
 
@@ -276,6 +312,7 @@
     if (!id) return false;
     var existed = !!safeGet(BED_PREFIX + id);
     safeRemove(BED_PREFIX + id);
+    setBedOrder(readBedOrder().filter(function (bedId) { return bedId !== id; }));
     if (safeGet(ACTIVE_BED_KEY) === id) safeRemove(ACTIVE_BED_KEY);
     return existed;
   }
@@ -767,6 +804,8 @@
     write: writeBed,
     read: readBed,
     readAll: readAllBeds,
+    readOrder: readBedOrder,
+    setOrder: setBedOrder,
     getActive: getActive,
     setActive: setActive,
     delete: deleteBed,

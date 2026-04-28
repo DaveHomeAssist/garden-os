@@ -85,6 +85,7 @@
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-journal.js"></script>
+<script src="data/mom-garden-data.js"></script>
 </head>
 <body>
 <a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
@@ -332,10 +333,15 @@ function bedFromGos(gosBed, now) {
       status: p.status,
       bedLocation: p.bedLocation,
       placementNote: p.placementNote,
+      sourcePlantingId: p.sourcePlantingId,
+      sourcePlantingCellIndex: p.sourcePlantingCellIndex,
       label: p.label,
       notes: p.notes,
       plantedWeek: realWeek != null ? realWeek : null,
       plantedAt: typeof p.plantedAt === 'string' ? p.plantedAt : null,
+      plantedOnStart: typeof p.plantedOnStart === 'string' ? p.plantedOnStart : null,
+      plantedOnEnd: typeof p.plantedOnEnd === 'string' ? p.plantedOnEnd : null,
+      season: p.season,
       isScheduled: realWeek == null && !!crop,
     };
   }).filter(Boolean);
@@ -375,6 +381,16 @@ function loadActiveContext(now) {
     dimensions: getBedDimensions(gosBed),
     isFixture: false,
   };
+}
+
+function loadBundledMomGardenIfEmpty() {
+  if (typeof GosBed === 'undefined' || !GosBed.mom || !window.GOS_MOM_GARDEN_DATA) return;
+  if (GosBed.readAll().length > 0) return;
+  try {
+    GosBed.mom.loadFromData(window.GOS_MOM_GARDEN_DATA, { overwrite: false });
+  } catch (e) {
+    console.warn('Mom Garden planner auto-load failed:', e.message);
+  }
 }
 
 // Find the most recent crop-level mark_done or harvest event for a crop in
@@ -1210,6 +1226,49 @@ function formatEventDate(iso) {
   } catch (_) { return ''; }
 }
 
+function plantingDateLabel(cell) {
+  if (!cell) return 'Not set';
+  const value = cell.plantedAt || cell.plantedOnStart;
+  if (!value) return 'Not set';
+  return formatEventDate(value) || value;
+}
+
+function buildPlantProfiles(cells) {
+  const map = new Map();
+  (cells || []).forEach(cell => {
+    if (!cell) return;
+    const key = cell.sourcePlantingId || [
+      cell.crop,
+      cell.displayName || '',
+      cell.varietyName || '',
+      cell.plantedAt || cell.plantedOnStart || '',
+      cell.status || '',
+    ].join('|');
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        crop: cell.crop,
+        displayName: cell.displayName,
+        varietyName: cell.varietyName,
+        status: cell.status,
+        plantedAt: cell.plantedAt,
+        plantedOnStart: cell.plantedOnStart,
+        plantedOnEnd: cell.plantedOnEnd,
+        plantedWeek: cell.plantedWeek,
+        season: cell.season,
+        notes: cell.notes,
+        cells: [],
+      });
+    }
+    map.get(key).cells.push(cell);
+  });
+  return Array.from(map.values()).sort((a, b) => {
+    const aCell = a.cells[0] || {};
+    const bCell = b.cells[0] || {};
+    return aCell.r === bCell.r ? aCell.c - bCell.c : aCell.r - bCell.r;
+  });
+}
+
 function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
                     isPreview = false, weekOffset = 0,
                     onClose, onMarkDone, onHarvest, onUndoDone, onRemove,
@@ -1217,6 +1276,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
   const c = getCrop(cropKey) || unknownCrop(cropKey);
   const cells = bed.filter(x => x.crop === cropKey);
   const primaryCell = cells[0] || null;
+  const plantProfiles = buildPlantProfiles(cells);
   const inBed = cells.length > 0;
   const doneEvent = findDoneEventThisSeason(events, cropKey, season);
 
@@ -1334,6 +1394,61 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             value={cells.length ? [...new Set(cells.map(x => x.r + 1))].join('+') : '—'}
             unit={cells.length ? 'of 4' : ''}/>
         </div>
+
+        {plantProfiles.length > 0 && (
+          <div style={{
+            marginBottom: 14, padding: '10px 12px',
+            background: T.panel, border: `1px solid ${T.borderSoft}`,
+            borderRadius: 10,
+          }}>
+            <Label size={9} color={T.soilMid}>PLANT PROFILES</Label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {plantProfiles.map(profile => {
+                const first = profile.cells[0] || {};
+                const cellLabel = profile.cells.length === 1
+                  ? `R${first.r + 1} C${first.c + 1}`
+                  : `${profile.cells.length} cells`;
+                const title = [profile.displayName || c.name, profile.varietyName].filter(Boolean).join(' - ');
+                return (
+                  <div key={profile.key} style={{
+                    display: 'grid', gridTemplateColumns: '1fr auto', gap: 8,
+                    padding: '8px 10px', borderRadius: 8,
+                    background: T.cream, border: `1px solid ${T.borderSoft}`,
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{
+                        fontFamily: T.fontSans, fontSize: 12.5, fontWeight: 700,
+                        color: T.text, whiteSpace: 'nowrap', overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>{title}</div>
+                      <Label size={9} color={T.textSoft} style={{ display: 'block', marginTop: 3 }}>
+                        Planted {plantingDateLabel(profile)}
+                        {profile.plantedWeek != null ? ` - W${profile.plantedWeek}` : ''}
+                        {profile.plantedOnEnd ? ` - window ends ${formatEventDate(profile.plantedOnEnd)}` : ''}
+                      </Label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', flexDirection: 'column', gap: 4 }}>
+                      {profile.status && (
+                        <span style={{
+                          padding: '3px 7px', borderRadius: 999,
+                          background: T.leafPale, color: T.leaf,
+                          fontFamily: T.fontMono, fontSize: 9, fontWeight: 700,
+                          textTransform: 'uppercase',
+                        }}>{profile.status}</span>
+                      )}
+                      <Label size={9} color={T.textSoft}>{cellLabel}</Label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {!isFixture && (
+              <Label size={9} color={T.textSoft} style={{ display: 'block', marginTop: 8 }}>
+                Edit profile dates from Beds details.
+              </Label>
+            )}
+          </div>
+        )}
 
         <div style={{
           background: T.sunPale, borderLeft: `3px solid ${T.sun}`,
@@ -2242,6 +2357,8 @@ function App() {
     </PhoneFrame>
   );
 }
+
+loadBundledMomGardenIfEmpty();
 
 // gos-bed.js wiring: report active bed for verification (no rendering change)
 if (typeof GosBed !== 'undefined') {
