@@ -1274,7 +1274,7 @@ function DevToolsOverlay({ onClose }) {
                     const dt = ev.timestamp ? new Date(ev.timestamp) : null;
                     const dateStr = dt
                       ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
-                      : '—';
+                      : '-';
                     const cropName = ev.cropSnapshot ? ev.cropSnapshot.cropName : '?';
                     const qty = ev.quantity != null && ev.unit
                       ? ` · ${ev.quantity} ${ev.unit}`
