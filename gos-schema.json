@@ -72,6 +72,10 @@
     "appVersion": {
       "type": "string",
       "description": "Present only in exported .gos.json files. APP_VERSION at time of export."
+    },
+    "reasonedExport": {
+      "$ref": "#/$defs/ReasonedExport",
+      "description": "Present only in exported .gos.json files. Derived planner reasoning for temporal context, multi-plot comparison, companion findings, and active-cell explanation. Ignored on import."
     }
   },
 
@@ -659,6 +663,66 @@
             "$ref": "#/$defs/ExperimentObservation"
           },
           "default": []
+        }
+      }
+    },
+
+    "ReasonedExport": {
+      "type": "object",
+      "required": ["schema", "appVersion", "activeBedId", "phaseCoverage", "summary", "temporal", "multiPlot", "companion", "activeCell"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "reasoned-export-1.0.0"
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "activeBedId": {
+          "type": "string"
+        },
+        "phaseCoverage": {
+          "type": "object",
+          "required": ["temporalReasoning", "multiPlotCompanion", "reasonedExport"],
+          "additionalProperties": false,
+          "properties": {
+            "temporalReasoning": { "type": "string" },
+            "multiPlotCompanion": { "type": "string" },
+            "reasonedExport": { "type": "string" }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Compact planner-level proof that the export was generated from current derived state."
+        },
+        "temporal": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Phase 6 export summary for season, planting date, forecast, succession plan, baseline, and score history."
+        },
+        "multiPlot": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Phase 7 export summary for bed scores, leader bed, score spread, and experiment links."
+        },
+        "companion": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Phase 7 export summary for active-bed adjacency and companion findings."
+        },
+        "activeCell": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 8 active-cell reasoner snapshot, or null when no planted cell is available."
         }
       }
     },

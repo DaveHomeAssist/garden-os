@@ -23,6 +23,7 @@ The system also highlights the limiting factor so users can make high-leverage c
 - Limiting-factor detection for each selected crop/cell
 - Adjacency analysis (companion/conflict/water mismatch)
 - Workspace export/import with `.gos.json`
+- Export-only reasoned summaries for temporal context, multi-bed comparison, companion findings, and active-cell explanation
 - Canonical data contract in `gos-schema.json`
 - Zero-backend, offline-capable architecture
 
@@ -84,6 +85,7 @@ garden-os/
 - Season Engine v4 neutral clicks inspect/select without mutating the grid.
 - Season Engine v4 `E` toggles eraser and `Escape` returns to neutral inspect behavior.
 - Menus and dialogs open with focus on an action, trap Tab where expected, and close on `Escape`.
+- Phase reasoning smoke verifies score payload parity, temporal context, multi-bed experiment summaries, companion findings, and deterministic reasoned export output.
 
 ## Roadmap
 

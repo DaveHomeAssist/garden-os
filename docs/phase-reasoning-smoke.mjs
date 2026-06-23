@@ -543,6 +543,19 @@ async function capturePlannerBroaderSmoke(browser) {
 
   const prep = await page.evaluate(() => {
     const inputs = inp();
+    const originalActive = activeBed();
+    if (_workspace && originalActive && _workspace.beds.length < 2) {
+      const clone = duplicateBed(originalActive.id);
+      if (clone) {
+        clone.name = 'Smoke Comparison Bed';
+        if (clone.plannerState && Array.isArray(clone.plannerState.cells) && clone.plannerState.cells.length) {
+          clone.plannerState.cells[0] = 'lettuce';
+        }
+        _workspace.beds.push(clone);
+        _workspace.activeBedId = originalActive.id;
+        upsertExperiment(originalActive.id, clone.id, 'spacing');
+      }
+    }
     const weakest = weakestCells(inputs, 1)[0];
     if (!weakest || !weakest.cell) return null;
     ui.selCell = weakest.cell.id;
@@ -578,13 +591,43 @@ async function capturePlannerBroaderSmoke(browser) {
   assert(reasoning.dom.formulaFinalValue === reasoning.parity.shared.scoreBreakdownTotal, 'broader smoke: formula final drifted from shared payload');
   assert(reasoning.dom.reasoningTargetScoreValue === reasoning.parity.shared.score, 'broader smoke: reasoning target score drifted from shared payload');
 
+  const reasonedExport = await page.evaluate(() => {
+    const first = buildReasonedExportContract();
+    const second = buildReasonedExportContract();
+    return {
+      deterministic: JSON.stringify(first) === JSON.stringify(second),
+      schema: first.schema,
+      phaseCoverage: first.phaseCoverage,
+      activeCellId: first.activeCell?.cellId || null,
+      temporalSeason: first.temporal?.season || '',
+      temporalForecastCount: Array.isArray(first.temporal?.forecast) ? first.temporal.forecast.length : 0,
+      multiPlotBedCount: first.multiPlot?.bedCount || 0,
+      multiPlotExperimentCount: Array.isArray(first.multiPlot?.experiments) ? first.multiPlot.experiments.length : 0,
+      companionFindingCount: Array.isArray(first.companion?.findings) ? first.companion.findings.length : 0,
+      exportNote: first.summary?.exportNote || ''
+    };
+  });
+  assert(reasonedExport.deterministic, 'broader smoke: reasoned export contract is not deterministic');
+  assert(reasonedExport.schema === 'reasoned-export-1.0.0', `broader smoke: reasoned export schema mismatch ${reasonedExport.schema}`);
+  assert(reasonedExport.phaseCoverage?.temporalReasoning === 'Phase 6C', 'broader smoke: Phase 6 export coverage missing');
+  assert(reasonedExport.phaseCoverage?.multiPlotCompanion === 'Phase 7C', 'broader smoke: Phase 7 export coverage missing');
+  assert(reasonedExport.phaseCoverage?.reasonedExport === 'Phase 8B', 'broader smoke: Phase 8 export coverage missing');
+  assert(reasonedExport.activeCellId === prep.weakestCellId, 'broader smoke: reasoned export active cell did not follow selected weakest cell');
+  assert(reasonedExport.temporalSeason.length > 0, 'broader smoke: reasoned export temporal season missing');
+  assert(reasonedExport.temporalForecastCount > 0, 'broader smoke: reasoned export forecast missing');
+  assert(reasonedExport.multiPlotBedCount >= 2, 'broader smoke: reasoned export multi-plot bed summary missing');
+  assert(reasonedExport.multiPlotExperimentCount >= 1, 'broader smoke: reasoned export experiment summary missing');
+  assert(reasonedExport.companionFindingCount >= 1, 'broader smoke: reasoned export companion findings missing');
+  assert(/export only/i.test(reasonedExport.exportNote), 'broader smoke: reasoned export import boundary note missing');
+
   const screenshot = await capturePage(page, 'broader_autofill_weakest.png');
   await page.close();
   return {
     ...prep,
     reasoning,
+    reasonedExport,
     screenshot,
-    notes: 'Auto-fill click succeeded under the repo smoke harness and the weakest-cell inspect hero, score breakdown, and reasoning card stayed aligned with the shared payload.'
+    notes: 'Auto-fill click succeeded under the repo smoke harness. Weakest-cell reasoning, Phase 6 temporal summary, Phase 7 multi-plot and companion summaries, and Phase 8 reasoned export stayed deterministic.'
   };
 }
 
@@ -614,6 +657,7 @@ async function checkLegacyReviewMigration(browser, chapter, expectedPhase) {
 
 async function diagnoseGenericClientAutoFill() {
   const harnessBrowser = await chromium.launch({
+    executablePath: fs.existsSync(BROWSER_PATH) ? BROWSER_PATH : undefined,
     headless: true,
     args: ['--use-gl=angle', '--use-angle=swiftshader']
   });

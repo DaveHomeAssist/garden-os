@@ -3320,7 +3320,7 @@ const EXPERIMENT_VARIABLES=['spacing','mulch','fertilizer','variety','sun exposu
 const MAX_SHARE_PAYLOAD=50000;
 const MAX_IMPORT_FILE_BYTES=500*1024;
 const WORKSPACE_VERSION = 1;
-const APP_VERSION = '4.5';
+const APP_VERSION = '4.6';
 
 const CROPS = {
   // ── CUCURBITS ──────────────────────────────────────────────────────────────
@@ -7041,6 +7041,190 @@ function workspaceExportFileName(){
   return `garden-os-${slug}-${day}.gos.json`;
 }
 
+function reasonedNumber(value, digits=1){
+  return Number.isFinite(value) ? Number(value.toFixed(digits)) : null;
+}
+
+function summarizeReasonedExportSnapshot(snapshot){
+  if(!snapshot || !snapshot.crop) return null;
+  return {
+    cellId: snapshot.cell.id,
+    cropKey: snapshot.cell.crop,
+    score: reasonedNumber(snapshot.score, 1),
+    status: snapshot.inspectLead ? snapshot.inspectLead.status : '',
+    topRisk: snapshot.primaryIssue ? snapshot.primaryIssue.msg : 'No hard violation is active.',
+    weakestFactor: snapshot.weakestFactor ? snapshot.weakestFactor.label : '',
+    strongestFactor: snapshot.strongestFactor ? snapshot.strongestFactor.label : '',
+    season: snapshot.seasonContext ? {
+      season: snapshot.seasonContext.season,
+      mappedSeason: snapshot.seasonContext.mappedSeason,
+      multiplier: reasonedNumber(snapshot.seasonContext.seasonMultiplier, 2),
+      kicker: snapshot.seasonContext.kicker,
+      summary: snapshot.seasonContext.summary,
+      action: snapshot.seasonContext.action,
+      successionHint: snapshot.seasonContext.successionHint || ''
+    } : null,
+    strictFits: (snapshot.strictFits || []).map(candidate=>({
+      cropKey: candidate.cropKey,
+      score: reasonedNumber(candidate.score, 1),
+      gain: reasonedNumber(candidate.gain, 1),
+      fit: candidate.fit,
+      reason: candidate.reason,
+      notes: candidate.notes || []
+    })),
+    nextMove: snapshot.nextMove,
+    tradeoff: snapshot.tradeoff
+  };
+}
+
+function buildTemporalReasoningExport(inputs, activeAnalysis){
+  const b = activeBed();
+  const baseline = b ? normalizeSeasonBaseline(b.seasonBaseline) : null;
+  const history = b ? normalizeScoreHistoryEntries(b.scoreHistory).slice(-8) : [];
+  const succession = b ? normalizeSuccessionPlanEntries(b.successionPlan) : [];
+  const forecast = typeof buildYieldForecast==='function'
+    ? buildYieldForecast({ ...inputs, zone:String(inputs.zone || getCalendarZone() || '') }).slice(0, 6)
+    : [];
+  return {
+    season: inputs.season,
+    zone: String(inputs.zone || getCalendarZone() || ''),
+    plantingDate: normalizeISODate(inputs.plantingDate) || getEffectivePlantingDate(inputs),
+    activeScore: activeAnalysis ? activeAnalysis.scoreTotal : 0,
+    baseline: baseline ? {
+      season: baseline.season,
+      plantingDate: baseline.plantingDate,
+      score: baseline.score,
+      plantedCount: baseline.plantedCount
+    } : null,
+    scoreHistory: history.map(item=>({
+      date: item.date,
+      score: item.score,
+      plantedCount: item.plantedCount,
+      fillRatio: reasonedNumber(item.fillRatio, 2)
+    })),
+    successionPlan: succession.map(item=>({
+      cropKey: item.cropKey,
+      plannedDate: item.plannedDate,
+      harvestStart: item.harvestStart,
+      harvestEnd: item.harvestEnd,
+      status: item.status
+    })),
+    forecast: forecast.map(item=>({
+      cropKey: item.cropKey,
+      count: item.count,
+      harvestStart: item.startDate,
+      harvestEnd: item.endDate,
+      confidence: item.confidence ? item.confidence.label : ''
+    }))
+  };
+}
+
+function buildCompanionFindingsForAnalysis(analysis, limit=8){
+  if(!analysis || !Array.isArray(analysis.cells)) return [];
+  return analysis.cells
+    .filter(cell=>cell.crop && CROPS[cell.crop])
+    .map(cell=>{
+      const adjacency = computeAdjacencyBreakdownForCells(analysis.cells, cell, analysis.rows, analysis.cols);
+      const interactions = (adjacency.interactions || [])
+        .filter(item=>item.delta !== 0)
+        .map(item=>({
+          cellId: item.neighbor.id,
+          cropKey: item.neighbor.crop,
+          delta: reasonedNumber(item.delta, 2),
+          reasons: (item.contributions || []).map(entry=>entry.label)
+        }));
+      const companionCount = interactions.filter(item=>item.delta > 0).length;
+      const conflictCount = interactions.filter(item=>item.delta < 0).length;
+      return {
+        cellId: cell.id,
+        cropKey: cell.crop,
+        netAdjacency: reasonedNumber(adjacency.clamped, 2),
+        companionCount,
+        conflictCount,
+        neighbors: interactions.slice(0, 4)
+      };
+    })
+    .filter(item=>item.neighbors.length)
+    .sort((a,b)=>b.conflictCount-a.conflictCount || Math.abs(b.netAdjacency)-Math.abs(a.netAdjacency) || a.cellId.localeCompare(b.cellId))
+    .slice(0, limit);
+}
+
+function buildMultiPlotReasoningExport(){
+  const records = _workspace && Array.isArray(_workspace.beds) ? _workspace.beds : [];
+  const bedSummaries = records.map(record=>{
+    const analysis = analyzeBedRecord(record);
+    const weak = analysis && analysis.weakest ? analysis.weakest[0] : null;
+    return {
+      bedId: record.id,
+      name: record.name,
+      score: analysis ? analysis.scoreTotal : 0,
+      plantedCount: analysis ? analysis.plantedCount : 0,
+      totalCells: analysis ? analysis.audit.totalCells : ((record.size && record.size.cols * record.size.rows) || 0),
+      weakestCellId: weak ? weak.cell.id : '',
+      weakestCropKey: weak ? weak.cell.crop : '',
+      weakestScore: weak ? reasonedNumber(weak.score, 1) : null
+    };
+  });
+  const sorted = [...bedSummaries].sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name));
+  const high = sorted[0] ? sorted[0].score : 0;
+  const low = sorted.length ? sorted[sorted.length - 1].score : 0;
+  const experiments = (_workspace && Array.isArray(_workspace.experiments) ? _workspace.experiments : []).map(exp=>{
+    const a = bedSummaries.find(item=>item.bedId===exp.aBedId);
+    const b = bedSummaries.find(item=>item.bBedId===exp.bBedId);
+    return {
+      id: exp.id,
+      variable: exp.variable,
+      aBedId: exp.aBedId,
+      bBedId: exp.bBedId,
+      scoreDelta: a && b ? a.score - b.score : null,
+      observationCount: Array.isArray(exp.observations) ? exp.observations.length : 0
+    };
+  });
+  return {
+    bedCount: bedSummaries.length,
+    leaderBedId: sorted[0] ? sorted[0].bedId : '',
+    scoreSpread: sorted.length > 1 ? high - low : 0,
+    beds: bedSummaries,
+    experiments
+  };
+}
+
+function buildReasonedExportContract(){
+  const inputs = inp();
+  const active = activeBed();
+  const activeAnalysis = active ? analyzeBedRecord(active) : null;
+  const issues = cellIssues(inputs);
+  const selected = ui.selCell ? bed.find(cell=>cell.id===ui.selCell) : null;
+  const weakest = weakestCells(inputs, 1)[0];
+  const target = selected && selected.crop ? selected : (weakest ? weakest.cell : bed.find(cell=>cell.crop));
+  const activeSnapshot = target ? buildPlannerReasoningSnapshot(target, inputs, issues) : null;
+  const multiPlot = buildMultiPlotReasoningExport();
+  return {
+    schema: 'reasoned-export-1.0.0',
+    appVersion: APP_VERSION,
+    activeBedId: active ? active.id : '',
+    phaseCoverage: {
+      temporalReasoning: 'Phase 6C',
+      multiPlotCompanion: 'Phase 7C',
+      reasonedExport: 'Phase 8B'
+    },
+    summary: {
+      workspaceId: _workspace ? _workspace.id : '',
+      activeScore: activeAnalysis ? activeAnalysis.scoreTotal : 0,
+      activePlantedCount: activeAnalysis ? activeAnalysis.plantedCount : 0,
+      topRisk: issues[0] ? issues[0].msg : 'No active planner issue.',
+      exportNote: 'Derived reasoning is export only. Import keeps the workspace data as the authority.'
+    },
+    temporal: buildTemporalReasoningExport(inputs, activeAnalysis),
+    multiPlot,
+    companion: {
+      activeBedId: active ? active.id : '',
+      findings: buildCompanionFindingsForAnalysis(activeAnalysis)
+    },
+    activeCell: summarizeReasonedExportSnapshot(activeSnapshot)
+  };
+}
+
 function exportWorkspaceFile(){
   if(blockWhileSimulating('Exporting the workspace')) return;
   saveState();
@@ -7058,6 +7242,7 @@ function exportWorkspaceFile(){
     : [];
   payload.exportedAt = new Date().toISOString();
   payload.appVersion = APP_VERSION;
+  payload.reasonedExport = buildReasonedExportContract();
   const fileName = workspaceExportFileName();
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   const objectUrl = URL.createObjectURL(blob);

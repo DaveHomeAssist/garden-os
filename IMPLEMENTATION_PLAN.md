@@ -532,6 +532,71 @@ Architecture: zero-backend, browser-only tools, localStorage persistence, URL ha
 - `garden-planner-v4.html` keeps the selected-cell score breakdown on the shared `buildPlannerReasoningSnapshot(...)` path and no longer has a second selected-cell breakdown render path.
 - `docs/phase-reasoning-smoke.mjs` now captures and asserts score alignment across the inspect hero chip, the breakdown formula final, and the reasoning target card.
 
+### Phase 6A-6C Temporal Reasoning Closeout
+
+**Owner:** Codex
+**Window:** 2026-06-22
+**Goal:** Carry the planner reasoning contract through season, zone, planting-date, baseline, score-history, succession, and forecast context without changing stored workspace authority.
+**Status:** COMPLETE — 2026-06-22
+
+**Tasks:**
+- Add a derived temporal reasoning export summary from the existing planner season, calendar, succession, score-history, and forecast helpers.
+- Keep the stored workspace schema unchanged; temporal reasoning is generated at export time only.
+- Extend the browser smoke harness so the temporal export includes season and forecast proof after auto-fill.
+
+**Validation:**
+- `docs/phase-reasoning-smoke.mjs` now asserts Phase 6 coverage as `Phase 6C`.
+- The smoke harness requires a non-empty temporal season and forecast array from `buildReasonedExportContract()`.
+- `gos-schema.json` accepts the optional export-only `reasonedExport.temporal` branch.
+
+**Evidence:**
+- `garden-planner-v4.html` now builds `buildTemporalReasoningExport(...)` from current derived planner state.
+- `docs/phase-reasoning-smoke.mjs` records the temporal fields in the broader planner smoke result.
+
+### Phase 7A-7C Multi Plot and Companion Logic Closeout
+
+**Owner:** Codex
+**Window:** 2026-06-22
+**Goal:** Include cross-bed summaries, experiment links, and companion findings in the planner reasoning contract without adding a backend or changing planner storage.
+**Status:** COMPLETE — 2026-06-22
+
+**Tasks:**
+- Add export-time bed summaries with score, planted count, weakest cell, leader bed, score spread, and experiment deltas.
+- Add export-time companion findings from active-bed adjacency analysis.
+- Expand smoke setup to create a comparison bed and experiment link when the browser fixture starts with one bed.
+
+**Validation:**
+- `docs/phase-reasoning-smoke.mjs` now asserts Phase 7 coverage as `Phase 7C`.
+- The broader smoke requires at least two bed summaries, one experiment summary, and one companion finding.
+- Multi-plot and companion logic remains derived from existing planner state.
+
+**Evidence:**
+- `garden-planner-v4.html` now builds `buildMultiPlotReasoningExport()` and `buildCompanionFindingsForAnalysis(...)`.
+- `docs/phase-reasoning-smoke.mjs` exercises the multi-bed and companion branches in the browser.
+
+### Phase 8A-8C Reasoned Export Closeout
+
+**Owner:** Codex
+**Window:** 2026-06-22
+**Goal:** Ship a deterministic export-only reasoned contract that packages Phase 6 and Phase 7 reasoning beside the `.gos.json` workspace payload while keeping import data authoritative.
+**Status:** COMPLETE — 2026-06-22
+
+**Tasks:**
+- Add `buildReasonedExportContract()` with schema marker `reasoned-export-1.0.0`.
+- Add `reasonedExport` to `.gos.json` downloads without reading it back during import.
+- Add a JSON Schema branch for the optional export-only contract.
+- Add smoke assertions for determinism, phase coverage, active-cell alignment, and the export-only import boundary note.
+
+**Validation:**
+- `docs/phase-reasoning-smoke.mjs` now asserts Phase 8 coverage as `Phase 8B`.
+- The smoke harness builds the reasoned export twice and requires byte-equivalent JSON output.
+- Import remains bounded to existing workspace data validation.
+
+**Evidence:**
+- `garden-planner-v4.html` exports `payload.reasonedExport = buildReasonedExportContract()`.
+- `gos-schema.json` defines `$defs.ReasonedExport`.
+- `README.md` and this plan document the reasoned export contract and smoke coverage.
+
 ### Next Concrete Step — Re-open planner feature work
 
 **Owner:** Claude Code
