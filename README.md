@@ -78,6 +78,17 @@ garden-os/
 
 ## Smoke Checklist
 
+- Run the full predeploy verifier:
+  ```bash
+  cd story-mode && npm ci
+  npx playwright install chromium
+  cd ..
+  node scripts/verify-all.mjs
+  ```
+- Run the live postdeploy smoke:
+  ```bash
+  node scripts/verify-all.mjs --live-only --live-url https://davehomeassist.github.io/garden-os/story-mode/
+  ```
 - Planner reloads cleanly with existing saved workspaces.
 - Planner recovers to a safe empty workspace if localStorage JSON is malformed.
 - Planner tool state stays in sync across click, keyboard, reload, and bed switching.

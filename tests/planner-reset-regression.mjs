@@ -1,4 +1,9 @@
-import { chromium } from "playwright";
+import { pathToFileURL } from "node:url";
+
+const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
+  ? pathToFileURL(process.env.PLAYWRIGHT_IMPORT_PATH).href
+  : "playwright";
+const { chromium } = await import(playwrightSpecifier);
 
 const defaultUrl = "http://127.0.0.1:4173/garden-planner-v4.html";
 const url = process.env.PLANNER_URL || process.argv[2] || defaultUrl;
@@ -22,9 +27,8 @@ async function run() {
     bedH: document.getElementById("bedH")?.value,
   }));
 
-  await page.click("#menuGearBtn");
+  await page.click("#openManagePanel");
   await page.click("#menuResetBed");
-  await page.click("#confirmOkBtn");
   await page.waitForTimeout(250);
 
   const after = await page.evaluate(() => ({

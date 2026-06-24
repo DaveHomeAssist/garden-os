@@ -27,7 +27,7 @@ h1{font-family:'Fraunces',serif;font-size:1.6rem;margin-bottom:.5rem;color:#5c3d
 </head>
 <body>
 <h1>Crop Reconciliation Test Suite</h1>
-<div class="meta">Garden OS v4.3 · Crop Data v2 · 38 crops · <span id="ts"></span></div>
+<div class="meta">Garden OS v4.3 · Crop Data v3 · 50 crops · <span id="ts"></span></div>
 <div class="summary" id="summary"></div>
 <div id="results"></div>
 
@@ -157,12 +157,12 @@ function runUnitTests() {
       'chapterUnlock','recipes','eventVulnerabilities','seasonalMultipliers'];
     const plannerFields = ['category','sunMin','sunIdeal','height','shadeScore','coolSeason'];
 
-    it('All 38 crops exist in planner', () => {
-      assertEqual(Object.keys(CROPS).length, 38);
+    it('Planner crop count matches spec', () => {
+      assertEqual(Object.keys(CROPS).length, Object.keys(spec.crops).length);
     });
 
-    it('All 38 crops exist in spec', () => {
-      assertEqual(Object.keys(spec.crops).length, 38);
+    it('Canonical spec defines 50 crops', () => {
+      assertEqual(Object.keys(spec.crops).length, 50);
     });
 
     it('Planner and spec have identical key sets', () => {
@@ -200,8 +200,8 @@ function runUnitTests() {
         assertEqual(typeof c.tall, 'boolean');
       });
 
-      it(`${key}.water is 2 or 3`, () => {
-        assert(c.water === 2 || c.water === 3, `water=${c.water}`);
+      it(`${key}.water is 1 through 4`, () => {
+        assert(Number.isInteger(c.water) && c.water >= 1 && c.water <= 4, `water=${c.water}`);
       });
 
       it(`${key}.companions is array of strings`, () => {
@@ -284,9 +284,10 @@ function runUnitTests() {
       assertEqual(Object.keys(factionCounts).length, 8);
     });
 
-    it('No faction exceeds 8 crops', () => {
-      Object.entries(factionCounts).forEach(([f, n]) => {
-        assert(n <= 8, `${f} has ${n} crops`);
+    it('Every canonical faction is represented', () => {
+      const valid = ['climbers','fast_cycles','brassicas','roots','greens','herbs','fruiting','companions'];
+      valid.forEach(faction => {
+        assert(factionCounts[faction] > 0, `${faction} has no crops`);
       });
     });
 
@@ -585,7 +586,7 @@ function runPerformanceTests() {
     }
     const cropKeys = Object.keys(CROPS);
 
-    it('Score all 38 crops × 32 cells in under 50ms', (t) => {
+    it('Score all canonical crops × 32 cells in under 50ms', (t) => {
       const start = performance.now();
       for (let i = 0; i < 10; i++) {
         cropKeys.forEach(key => {
