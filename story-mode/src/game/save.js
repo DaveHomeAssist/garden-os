@@ -13,6 +13,8 @@ import {
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
+const corruptCampaignSlots = new Set();
+const corruptSeasonSlots = new Set();
 
 function isValidSlot(slot) {
   return Number.isInteger(slot) && slot >= 0 && slot < SAVE_SLOTS;
@@ -80,6 +82,7 @@ export function saveCampaign(campaign, slot) {
   };
   try {
     localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
+    corruptCampaignSlots.delete(slot);
     return toSave;
   } catch (e) {
     console.warn('[GOS] Save failed:', e.message);
@@ -88,9 +91,13 @@ export function saveCampaign(campaign, slot) {
 }
 
 export function loadCampaign(slot) {
+  if (!isValidSlot(slot)) return null;
   try {
     const raw = localStorage.getItem(campaignKey(slot));
-    if (!raw) return null;
+    if (!raw) {
+      corruptCampaignSlots.delete(slot);
+      return null;
+    }
     const parsed = JSON.parse(raw);
     const version = parsed.version ?? 1;
     return {
@@ -131,7 +138,9 @@ export function loadCampaign(slot) {
         : [],
       gameMode: parsed.gameMode ?? 'story',
     };
-  } catch {
+  } catch (error) {
+    corruptCampaignSlots.add(slot);
+    console.warn('[GOS] Campaign save unreadable:', error?.message ?? error);
     return null;
   }
 }
@@ -139,6 +148,8 @@ export function loadCampaign(slot) {
 export function deleteCampaign(slot) {
   localStorage.removeItem(campaignKey(slot));
   localStorage.removeItem(seasonKey(slot));
+  corruptCampaignSlots.delete(slot);
+  corruptSeasonSlots.delete(slot);
 }
 
 export function saveSeasonState(season, slot) {
@@ -155,6 +166,7 @@ export function saveSeasonState(season, slot) {
       },
     };
     localStorage.setItem(seasonKey(slot), JSON.stringify(toSave));
+    corruptSeasonSlots.delete(slot);
     return toSave;
   } catch (e) {
     console.warn('[GOS] Season save failed:', e.message);
@@ -163,9 +175,13 @@ export function saveSeasonState(season, slot) {
 }
 
 export function loadSeasonState(slot) {
+  if (!isValidSlot(slot)) return null;
   try {
     const raw = localStorage.getItem(seasonKey(slot));
-    if (!raw) return null;
+    if (!raw) {
+      corruptSeasonSlots.delete(slot);
+      return null;
+    }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed?.grid)) {
       return {
@@ -178,7 +194,9 @@ export function loadSeasonState(slot) {
       };
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    corruptSeasonSlots.add(slot);
+    console.warn('[GOS] Season save unreadable:', error?.message ?? error);
     return null;
   }
 }
@@ -188,10 +206,14 @@ const SEASON_EMOJIS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: 
 export function listSaves() {
   const saves = [];
   for (let slot = 0; slot < SAVE_SLOTS; slot++) {
+    const rawCampaign = localStorage.getItem(campaignKey(slot));
     const campaign = loadCampaign(slot);
     if (!campaign) {
-      saves.push({ slot, campaign: null, isEmpty: true });
+      const isCorrupt = rawCampaign !== null || corruptCampaignSlots.has(slot);
+      saves.push({ slot, campaign: null, isEmpty: !isCorrupt, isCorrupt });
     } else {
+      const rawSeason = localStorage.getItem(seasonKey(slot));
+      const seasonCorrupt = rawSeason !== null && loadSeasonState(slot) === null;
       const seasonOrder = ['spring', 'summer', 'fall', 'winter'];
       const seasonIdx = ((campaign.currentChapter - 1) % 4);
       const season = campaign.currentSeason ?? seasonOrder[seasonIdx] ?? 'spring';
@@ -205,6 +227,7 @@ export function listSaves() {
         slot,
         campaign,
         isEmpty: false,
+        isCorrupt: seasonCorrupt,
         chapter: campaign.currentChapter,
         season,
         seasonEmoji: SEASON_EMOJIS[season] ?? '🌱',

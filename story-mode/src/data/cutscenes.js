@@ -507,7 +507,17 @@ export function getHighestPriorityCutscene(triggerPayload, campaign, seenSet) {
     ?? buildDynamicInterventionCutscene(triggerPayload)
     ?? buildDynamicHarvestCutscene(triggerPayload);
   if (dynamicScene) return dynamicScene;
-  const eligible = getEligibleCutscenes(triggerPayload, campaign, seenSet);
+  let eligible = getEligibleCutscenes(triggerPayload, campaign, seenSet);
+  if (triggerPayload?.type === 'chapter_start') {
+    const hasSpecificChapterIntro = CUTSCENES.some((scene) => (
+      scene.trigger === 'chapter_start'
+      && scene.id !== 'chapter-generic-intro'
+      && scene.conditions?.chapter === triggerPayload.chapter
+    ));
+    if (hasSpecificChapterIntro) {
+      eligible = eligible.filter((scene) => scene.id !== 'chapter-generic-intro');
+    }
+  }
   if (eligible.length === 0) return null;
   return eligible.reduce((best, scene) => (scene.priority > best.priority ? scene : best));
 }

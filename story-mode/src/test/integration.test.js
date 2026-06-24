@@ -4324,22 +4324,22 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
     });
 
     it('skill-gated zones check the player skill level', () => {
-      // meadow requires foraging level 3 per DEFAULT_ZONE_GATES
+      // meadow requires starter foraging experience per DEFAULT_ZONE_GATES
       const state = createGameState();
-      state.campaign.skills.foraging = { xp: 0, level: 2 };
+      state.campaign.skills.foraging = { xp: 0, level: 1 };
       const store = new Store(state);
       const skillSystem = new SkillSystem(store);
       const systems = { skillSystem };
 
-      // At foraging level 2 -> blocked
+      // At foraging level 1 -> blocked
       const blocked = evaluateZoneAccess('meadow', store.getState(), systems);
       expect(blocked.allowed).toBe(false);
       expect(blocked.blockers.length).toBeGreaterThanOrEqual(1);
       expect(blocked.blockers[0].type).toBe('skill');
 
-      // Level up foraging to 3 -> accessible
+      // Level up foraging to 2 -> accessible
       const state2 = createGameState();
-      state2.campaign.skills.foraging = { xp: 0, level: 3 };
+      state2.campaign.skills.foraging = { xp: 0, level: 2 };
       const store2 = new Store(state2);
       const skillSystem2 = new SkillSystem(store2);
       const systems2 = { skillSystem: skillSystem2 };
@@ -4450,7 +4450,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(plotForaging.getForagingSpots('player_plot')).toHaveLength(0);
 
       const { foraging: nbForaging } = makeForagingIntegration('neighborhood');
-      expect(nbForaging.getForagingSpots('neighborhood')).toHaveLength(0);
+      expect(nbForaging.getForagingSpots('neighborhood').length).toBeGreaterThan(0);
     });
 
     it('foraging produces items matching the zone biome', () => {

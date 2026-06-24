@@ -166,6 +166,18 @@ describe('open world phases 5 to 8', () => {
     });
   });
 
+  it('keeps market map copy out of profit-loop framing', () => {
+    const market = WORLD_MAP.zones.market_square;
+    const marketCopy = [
+      market.description,
+      ...market.interactables.map((entry) => entry.label),
+    ].join(' ').toLowerCase();
+
+    ['sell harvests', 'buy tools', 'buy and upgrade', 'best-paying', 'high-reward'].forEach((phrase) => {
+      expect(marketCopy).not.toContain(phrase);
+    });
+  });
+
   it('validates quest branches and persists divergent choices', () => {
     expect(assertValidQuestDeck().branchingQuestCount).toBeGreaterThanOrEqual(10);
     const quest = readJson('specs/QUEST_DECK.json').quests.find((entry) => entry.id === 'lila_basil');

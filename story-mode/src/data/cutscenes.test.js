@@ -121,6 +121,13 @@ async function runTests() {
     }
   }
 
+  const seenChapterOne = getHighestPriorityCutscene(
+    { type: 'chapter_start', chapter: 1 },
+    { seenCutsceneIds: ['ch1-intro'] },
+    new Set(['ch1-intro']),
+  );
+  assert(seenChapterOne === null, 'Chapter 1 intro: seen specific intro does not fall through to generic replay');
+
   // Test 4: Event reactions for every category × valence × season
   section('Dynamic event reactions');
   let eventScenarios = 0;

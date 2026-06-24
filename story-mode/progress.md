@@ -145,6 +145,14 @@ TODO / next-agent suggestions:
 - Once tests are confirmed, update the already-dirty root docs to reflect the now-green build baseline and the `story-mode/` toolchain reality.
 - After Phase 0 is explicitly closed, take only one new feature slice next: planner What-If / Simulate mode.
 
+Update 2026-06-24 open-world QA patch pass:
+- Patched verified P1/P2 open-world findings from the live story-mode audit: starter neighborhood forage progression, skipped opening cutscene resume persistence, hidden controls focus state, market doctrine copy, missing sprite references, route drift to `/story-mode/`, and corrupt save handling.
+- Added store-backed `MARK_CUTSCENE_SEEN` persistence and changed chapter-start fallback selection so a seen specific chapter intro does not replay through `chapter-generic-intro`.
+- Updated `docs/UI_ISSUES_TABLE.html` with resolved open-world rows 046-052 and `data-last-verified="2026-06-24"`.
+- Validation: `node src/data/cutscenes.test.js` passed 1828/1828; full `npm test` passed 29 files / 353 tests; `npm run build` passed; `node scripts/verify-all.mjs` passed all requested Garden OS gates; local Playwright smoke verified title focus, cutscene skip persistence, reload/continue no replay, missing asset cleanliness, and corrupt save warning UI.
+- Local browser screenshot artifacts: `story-mode/output/web-game/open-world-qa/title.png`, `opening-cutscene.png`, `after-skip-play.png`, and `corrupt-save.png`.
+- Closeout dependency at patch time: commit and push to `main`, wait for GitHub Pages workflow, then run live Story Mode smoke before closing Status Runs `RUN-20260624-1830` green.
+
 Update 2026-03-22 scene/UI polish pass from live screenshot baseline:
 - Removed the clothesline wire + hanging towel from `src/scene/scenery.js` while keeping the poles. In the current camera framing they were reading as stray debug geometry across the yard.
 - Reworked row labels in `src/scene/bed-model.js` into darker pill-backed sprites with brighter text and stronger opacity so `Back (Wall)` / `Front (Access)` remain readable against the soil and gravel.

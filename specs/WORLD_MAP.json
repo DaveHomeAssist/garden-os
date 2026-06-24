@@ -23,7 +23,13 @@
       "exitPoints": [
         { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": 7 } }
       ],
-      "foraging": false,
+      "foraging": {
+        "enabled": true,
+        "spots": 3,
+        "lootTable": ["basil_seed", "marigold_seed", "plant_matter", "stone", "scrap_metal"],
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging"
+      },
       "npcSlots": [],
       "interactables": [
         { "id": "cedar_bed", "type": "object", "position": { "x": 0, "z": 0.5 }, "label": "8×4 raised cedar bed — your main growing area" },
@@ -70,7 +76,8 @@
       "interactables": [
         { "id": "notice_board", "type": "sign", "position": { "x": 0, "z": -2 }, "label": "Community notice board — check for quests and requests" },
         { "id": "community_plot", "type": "object", "position": { "x": 3, "z": 5 }, "label": "Shared community garden plot" },
-        { "id": "mailbox_row", "type": "object", "position": { "x": -5, "z": 0 }, "label": "Neighborhood mailboxes — sometimes hold gifts" }
+        { "id": "mailbox_row", "type": "object", "position": { "x": -5, "z": 0 }, "label": "Neighborhood mailboxes — sometimes hold gifts" },
+        { "id": "corner_verge", "type": "object", "position": { "x": 5, "z": -2 }, "label": "Corner verge — forage starter herbs and curbside materials" }
       ],
       "ambientAudio": "neighborhood_ambient",
       "seasonalVariation": {
@@ -95,8 +102,8 @@
       "connections": ["neighborhood", "riverside"],
       "gate": {
         "type": "skill",
-        "requirement": { "skill": "foraging", "level": 3 },
-        "blockerMessage": "The meadow trails are overgrown. You need more foraging experience to navigate them."
+        "requirement": { "skill": "foraging", "level": 2 },
+        "blockerMessage": "The meadow trails are overgrown. Practice neighborhood foraging before navigating them."
       },
       "features": ["wildflower_field", "herb_patch", "rock_pile"],
       "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
@@ -307,7 +314,7 @@
     "market_square": {
       "id": "market_square",
       "name": "Market Square",
-      "description": "A bustling trading hub where gardeners come to swap seeds, sell harvests, and buy tools. Lila runs a food stall in the warm months. The notice board here has the best-paying requests.",
+      "description": "A bustling trading hub where gardeners come to swap seeds, trade harvest notes, and repair shared tools. Lila runs a food stall in the warm months. The notice board here has neighbor requests that build trust.",
       "biome": "urban",
       "visualTheme": {
         "primaryColor": "#c4763a",
@@ -333,8 +340,8 @@
       ],
       "interactables": [
         { "id": "seed_exchange", "type": "vendor", "position": { "x": -5, "z": 0 }, "label": "Seed exchange — trade your seeds for new varieties" },
-        { "id": "tool_vendor_stall", "type": "vendor", "position": { "x": 5, "z": 0 }, "label": "Tool vendor — buy and upgrade gardening tools" },
-        { "id": "market_notice_board", "type": "sign", "position": { "x": 0, "z": -4 }, "label": "Market notice board — high-reward delivery requests" }
+        { "id": "tool_vendor_stall", "type": "vendor", "position": { "x": 5, "z": 0 }, "label": "Tool repair stall — maintain shared gardening tools" },
+        { "id": "market_notice_board", "type": "sign", "position": { "x": 0, "z": -4 }, "label": "Market notice board — neighbor delivery requests" }
       ],
       "ambientAudio": "market_ambient",
       "seasonalVariation": {

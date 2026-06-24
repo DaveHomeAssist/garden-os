@@ -81,7 +81,7 @@ describe('ZoneManager', () => {
     expect(DEFAULT_ZONE_GATES.neighborhood).toEqual({});
     expect(DEFAULT_ZONE_GATES.meadow).toEqual({
       message: WORLD_MAP.zones.meadow.gate.blockerMessage,
-      skills: { foraging: 3 },
+      skills: { foraging: 2 },
     });
     expect(DEFAULT_ZONE_GATES.riverside).toEqual({
       message: WORLD_MAP.zones.riverside.gate.blockerMessage,

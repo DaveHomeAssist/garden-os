@@ -11,6 +11,11 @@ const BIOME_CROP_SEEDS = {
 };
 
 const ZONE_SPOTS = {
+  neighborhood: [
+    { id: 'neighborhood_mailbox_mint', position: { x: -4.8, z: 0.2 }, type: 'herb_patch', xpGained: 50 },
+    { id: 'neighborhood_corner_bed', position: { x: 2.8, z: 4.8 }, type: 'wildflower_field', xpGained: 50 },
+    { id: 'neighborhood_curb_stones', position: { x: 5.3, z: -2.4 }, type: 'rock_pile', xpGained: 50 },
+  ],
   meadow: [
     { id: 'meadow_herbs', position: { x: -2.2, z: 1.1 }, type: 'herb_patch' },
     { id: 'meadow_rocks', position: { x: 1.8, z: -1.2 }, type: 'rock_pile' },
@@ -169,7 +174,7 @@ export class ForagingSystem {
       }
     }
 
-    const xpGained = 20 + (items.some((entry) => entry.itemId === 'rare_earth') ? 10 : 0);
+    const xpGained = (spot.xpGained ?? 20) + (items.some((entry) => entry.itemId === 'rare_earth') ? 10 : 0);
     const cooldownUntil = timestamp + BASE_COOLDOWN_MS;
     this.cooldowns.set(spotId, cooldownUntil);
     this.store.dispatch({

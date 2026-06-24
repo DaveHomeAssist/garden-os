@@ -271,7 +271,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="os-nav" id="navBar" aria-label="Garden OS"></nav>
-<main id="main" data-last-verified="2026-04-20">
+<main id="main" data-last-verified="2026-06-24">
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow"></div>
@@ -825,6 +825,93 @@
       "tool": "planner",
       "title": "Playwright browser click on #autoFillBtn times out in automation",
       "notes": "Automation-only issue. The button remains visible, enabled, and top-most; DOM-triggered autofill still fills the bed to 32/32 and planner behavior is intact. Track as harness hardening, not a live user-facing planner regression."
+    },
+    {
+      "id": "046",
+      "severity": "P1",
+      "status": "done",
+      "area": "Progression",
+      "tool": "engine",
+      "title": "Open-world starter forage path unlocks meadow progression",
+      "fix": "Added neighborhood forage spots with starter XP and lowered the meadow gate to foraging level 2.",
+      "verification": "Covered by ForagingSystem starter progression test.",
+      "location": "story-mode/src/game/foraging.js; specs/WORLD_MAP.json",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "047",
+      "severity": "P1",
+      "status": "done",
+      "area": "State",
+      "tool": "engine",
+      "title": "Skipped opening cutscenes persist before resume",
+      "fix": "Cutscene completion now emits a seen-scene persistence hook, and startup restores input when no opening scene is queued.",
+      "location": "story-mode/src/game/cutscene-machine.js; story-mode/src/game/phase-router.js; story-mode/src/ui/ui-binder.js",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "048",
+      "severity": "P1",
+      "status": "done",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Hidden story-mode controls removed from keyboard navigation",
+      "fix": "Added inert and aria-hidden synchronization for title, pause, cutscene, bug panel, and floating action controls.",
+      "location": "story-mode/index.html; story-mode/src/ui/focus-state.js; story-mode/src/game/game-init.js; story-mode/src/ui/ui-binder.js; story-mode/src/ui/pause-controller.js",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "049",
+      "severity": "P1",
+      "status": "done",
+      "area": "Copy",
+      "tool": "engine",
+      "title": "Market map copy no longer frames the loop as profit chasing",
+      "fix": "Replaced buy, sell, best-paying, and high-reward market language with trade, repair, and neighbor request copy.",
+      "verification": "Covered by open-world market copy guard test.",
+      "location": "specs/WORLD_MAP.json; story-mode/src/game/open-world-phases.test.js",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "050",
+      "severity": "P2",
+      "status": "done",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Missing sprite manifest entries stopped requesting nonexistent textures",
+      "fix": "Removed missing bed-rain and bed-seasons manifest entries, added a filename guard, and made seasonal bed texture fall back to real bed textures.",
+      "location": "story-mode/src/scene/sprite-loader.js",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "051",
+      "severity": "P2",
+      "status": "done",
+      "area": "Navigation",
+      "tool": "engine",
+      "title": "Root and Story Mode metadata use the same route",
+      "fix": "Changed root Story Mode links and Open Graph URL from story-mode-live to story-mode.",
+      "location": "index.html; story-mode/index.html",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
+    },
+    {
+      "id": "052",
+      "severity": "P2",
+      "status": "done",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Corrupt save slots show as unreadable instead of empty",
+      "fix": "Malformed campaign saves are tracked as corrupt and the title screen offers New Game or Delete instead of Continue.",
+      "verification": "Covered by corrupt save listSaves test.",
+      "location": "story-mode/src/game/save.js; story-mode/src/game/game-init.js",
+      "added": "2026-06-24",
+      "resolved": "2026-06-24"
     }
   ]
 }

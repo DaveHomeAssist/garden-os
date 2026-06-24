@@ -9,7 +9,7 @@
   <meta property="og:title" content="Garden OS Story Mode" />
   <meta property="og:description" content="Plan one raised bed across three years, meet Calvin and the cast, survive month-aware seasons, and use winter review to carry the garden forward." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://davehomeassist.github.io/garden-os/story-mode-live/" />
+  <meta property="og:url" content="https://davehomeassist.github.io/garden-os/story-mode/" />
   <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Garden OS Story Mode" />
@@ -65,7 +65,7 @@
     </div>
     <div id="viewport"></div>
     <div class="vignette-overlay"></div>
-    <div id="hud">
+    <div id="hud" aria-hidden="true" inert>
       <div class="hud-left">
         <button id="hud-pause" class="hud-pause-btn" aria-label="Pause menu">☰</button>
         <span class="hud-pill season-icon" id="hud-season-icon">🌱</span>
@@ -86,14 +86,14 @@
         </div>
       </div>
     </div>
-    <div id="phase-dots"></div>
+    <div id="phase-dots" aria-hidden="true" inert></div>
     <div id="phase-helper" aria-live="polite"></div>
-    <div id="panel-container"></div>
-    <div id="overlay-container"></div>
-    <div id="cutscene-layer" aria-hidden="true">
+    <div id="panel-container" aria-hidden="true" inert></div>
+    <div id="overlay-container" aria-hidden="true" inert></div>
+    <div id="cutscene-layer" aria-hidden="true" inert>
       <div id="dialogue-root"></div>
     </div>
-    <div class="pause-overlay" id="pause-menu" aria-hidden="true">
+    <div class="pause-overlay" id="pause-menu" aria-hidden="true" inert>
       <div class="pause-shell" role="dialog" aria-modal="true" aria-labelledby="pause-title">
         <div class="pause-shell__top">
           <div>
@@ -173,8 +173,8 @@
         <div class="pause-footer-note">ESC or Close returns you to play.</div>
       </div>
     </div>
-    <button id="fab-bug" aria-label="Report a bug">🦗</button>
-    <div class="bug-report-panel" id="bug-panel">
+    <button id="fab-bug" aria-label="Report a bug" aria-hidden="true" disabled inert>🦗</button>
+    <div class="bug-report-panel" id="bug-panel" aria-hidden="true" inert>
       <h3>🦗 Report a Bug</h3>
       <div class="bug-subtitle">Saved locally on this device for later review</div>
       <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>
@@ -184,9 +184,9 @@
       </div>
       <div class="bug-meta" id="bug-meta"></div>
     </div>
-    <button id="fab-plant" aria-label="Open planting menu"><span aria-hidden="true">🌱</span><span>Plant</span></button>
-    <button id="fab-backpack" aria-label="Open crop backpack">🎒</button>
-    <button id="fab-advance" aria-label="Advance to next phase">Next</button>
+    <button id="fab-plant" aria-label="Open planting menu" aria-hidden="true" disabled inert><span aria-hidden="true">🌱</span><span>Plant</span></button>
+    <button id="fab-backpack" aria-label="Open crop backpack" aria-hidden="true" disabled inert>🎒</button>
+    <button id="fab-advance" aria-label="Advance to next phase" aria-hidden="true" disabled inert>Next</button>
     <div id="toast-container"></div>
   </div>
   <script type="module" src="/src/main.js"></script>

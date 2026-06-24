@@ -5,6 +5,7 @@ export function createCutsceneMachine({
   onStateChange,
   onFinish,
   onEffect,
+  onSceneSeen,
   gardenScene,
 }) {
   const state = {
@@ -49,14 +50,17 @@ export function createCutsceneMachine({
   }
 
   function persistSeen(sceneId) {
+    const wasNew = !state.seenSceneIds.has(sceneId);
     state.seenSceneIds.add(sceneId);
-    if (!state.currentCampaign) return;
+    if (!state.currentCampaign) return wasNew;
     if (!Array.isArray(state.currentCampaign.seenCutsceneIds)) {
       state.currentCampaign.seenCutsceneIds = [];
     }
     if (!state.currentCampaign.seenCutsceneIds.includes(sceneId)) {
       state.currentCampaign.seenCutsceneIds.push(sceneId);
+      return true;
     }
+    return wasNew;
   }
 
   function insertQueued(scene) {
@@ -147,7 +151,9 @@ export function createCutsceneMachine({
 
   function completeScene() {
     if (state.currentScene) {
-      persistSeen(state.currentScene.id);
+      const sceneId = state.currentScene.id;
+      const seenChanged = persistSeen(sceneId);
+      onSceneSeen?.({ sceneId, campaign: state.currentCampaign, seenChanged });
     }
     state.currentScene = null;
     state.activeBeats = [];

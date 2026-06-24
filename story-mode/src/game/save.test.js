@@ -75,6 +75,17 @@ describe('save', () => {
     expect(slot.zonesVisited).toBe(3);
   });
 
+  it('reports corrupt campaign data as unreadable instead of empty', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    localStorage.setItem('gos-story-slot-0-campaign', '{bad-json');
+
+    expect(loadCampaign(0)).toBeNull();
+
+    const slot = listSaves()[0];
+    expect(slot.isEmpty).toBe(false);
+    expect(slot.isCorrupt).toBe(true);
+  });
+
   it('migrates old season grid arrays into versioned grid objects', () => {
     localStorage.setItem('gos-story-slot-0-season', JSON.stringify({
       season: 'spring',

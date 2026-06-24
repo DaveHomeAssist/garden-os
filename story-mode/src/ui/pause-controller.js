@@ -4,6 +4,7 @@ import { createSeasonState } from '../game/state.js';
 import { deleteCampaign } from '../game/save.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
+import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 
 export function createPauseController({
   getState,
@@ -34,11 +35,16 @@ export function createPauseController({
 
   let pauseMenuOpen = false;
 
+  setElementInteractive(pauseOverlay, false);
+  setElementInteractive(bugPanel, false);
+  setButtonInteractive(fabBug, true);
+
   function togglePauseMenu() {
     if (isInterventionTargeting()) return;
     pauseMenuOpen = !pauseMenuOpen;
     if (pauseMenuOpen) {
       bugPanel?.classList.remove('is-open');
+      setElementInteractive(bugPanel, false);
       if (isCropPaletteOpen()) closePalette();
       closePanelSheets();
       const state = getState();
@@ -48,8 +54,10 @@ export function createPauseController({
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
       pauseOverlay?.classList.add('is-open');
+      setElementInteractive(pauseOverlay, true);
     } else {
       pauseOverlay?.classList.remove('is-open');
+      setElementInteractive(pauseOverlay, false);
     }
     syncToolHUDVisibility();
   }
@@ -57,6 +65,7 @@ export function createPauseController({
   function closePauseMenu() {
     pauseMenuOpen = false;
     pauseOverlay?.classList.remove('is-open');
+    setElementInteractive(pauseOverlay, false);
   }
 
   function isOpen() {
@@ -144,8 +153,10 @@ export function createPauseController({
     if (pauseMenuOpen) {
       pauseMenuOpen = false;
       pauseOverlay?.classList.remove('is-open');
+      setElementInteractive(pauseOverlay, false);
     }
     const isOpen = bugPanel?.classList.toggle('is-open');
+    setElementInteractive(bugPanel, Boolean(isOpen));
     if (isOpen) {
       if (bugText) {
         bugText.value = '';
@@ -173,6 +184,7 @@ export function createPauseController({
 
   bugCancel?.addEventListener('click', () => {
     bugPanel?.classList.remove('is-open');
+    setElementInteractive(bugPanel, false);
   });
 
   bugSend?.addEventListener('click', () => {
@@ -217,6 +229,7 @@ export function createPauseController({
     }
 
     bugPanel?.classList.remove('is-open');
+    setElementInteractive(bugPanel, false);
     showToast('Bug report saved on this device.', 2500);
   });
 

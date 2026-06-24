@@ -57,6 +57,7 @@ import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported,
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
+import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 
 function bindUI({
   store,
@@ -209,13 +210,13 @@ function bindUI({
   const cutsceneMachine = createCutsceneMachine({
     onStateChange: (uiState) => {
       dialoguePanel.render(uiState);
-      cutsceneLayer?.setAttribute('aria-hidden', uiState.visible ? 'false' : 'true');
+      setElementInteractive(cutsceneLayer, uiState.visible);
       phaseDots?.classList.toggle('is-cutscene', uiState.visible);
       scene.setScenePhase?.(uiState.visible ? 'CUTSCENE' : state.season.phase);
     },
     onFinish: () => {
       dialoguePanel.hide();
-      cutsceneLayer?.setAttribute('aria-hidden', 'true');
+      setElementInteractive(cutsceneLayer, false);
       phaseDots?.classList.remove('is-cutscene');
       scene.setScenePhase?.(state.season.phase, { force: true });
       phaseRouter?.onCutsceneFinish();
@@ -225,6 +226,12 @@ function bindUI({
       dispatch({
         type: effect.action,
         payload: effect.payload ?? {},
+      });
+    },
+    onSceneSeen: ({ sceneId }) => {
+      dispatch({
+        type: Actions.MARK_CUTSCENE_SEEN,
+        payload: { sceneId },
       });
     },
     gardenScene: scene,
@@ -412,9 +419,11 @@ function bindUI({
   function setGameInputEnabled(enabled) {
     gameInputEnabled = enabled;
     if (fab) {
-      fab.disabled = !enabled;
       fab.classList.toggle('is-disabled', !enabled);
+      setButtonInteractive(fab, enabled && fab.classList.contains('is-visible'));
     }
+    setButtonInteractive(fabPlant, enabled && fabPlant?.classList.contains('is-visible'));
+    setButtonInteractive(fabBackpack, enabled && !fabBackpack?.classList.contains('is-hidden'));
     syncToolHUDVisibility();
   }
 
@@ -775,12 +784,15 @@ function bindUI({
     if (!fab) return;
     if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargeting.isActive()) {
       fab.classList.remove('is-visible');
+      setButtonInteractive(fab, false);
       fabWasVisible = false;
       if (fabPlant) {
         fabPlant.classList.remove('is-visible');
+        setButtonInteractive(fabPlant, false);
         fabPlantWasVisible = false;
       }
       fabBackpack?.classList.add('is-hidden');
+      setButtonInteractive(fabBackpack, false);
       return;
     }
 
@@ -788,10 +800,12 @@ function bindUI({
       const wasVisible = fabWasVisible;
       fab.classList.add('is-visible');
       fab.textContent = getAdvanceLabel();
+      setButtonInteractive(fab, true);
       pulseOnEnter(fab, wasVisible);
       fabWasVisible = true;
     } else {
       fab.classList.remove('is-visible');
+      setButtonInteractive(fab, false);
       fabWasVisible = false;
     }
 
@@ -799,16 +813,19 @@ function bindUI({
       if (state.season.phase === PHASES.PLANNING) {
         const wasVisible = fabPlantWasVisible;
         fabPlant.classList.add('is-visible');
+        setButtonInteractive(fabPlant, true);
         pulseOnEnter(fabPlant, wasVisible);
         fabPlantWasVisible = true;
       } else {
         fabPlant.classList.remove('is-visible');
+        setButtonInteractive(fabPlant, false);
         fabPlantWasVisible = false;
         if (cropPaletteOpen) closePalette();
       }
     }
 
     fabBackpack?.classList.remove('is-hidden');
+    setButtonInteractive(fabBackpack, true);
   }
 
   function buildBackpackData() {
@@ -1626,11 +1643,14 @@ function bindUI({
     setGameInputEnabled(true);
   } else {
     setGameInputEnabled(false);
-    phaseRouter.handleNarrativeTrigger({
+    const cutsceneStarted = phaseRouter.handleNarrativeTrigger({
       type: 'chapter_start',
       chapter: state.campaign.currentChapter,
       season: state.season.season,
     });
+    if (!cutsceneStarted) {
+      setGameInputEnabled(true);
+    }
   }
 
   return {

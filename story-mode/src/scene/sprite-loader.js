@@ -17,7 +17,6 @@ import * as THREE from 'three';
 const SINGLE_ASSETS = {
   'bed-empty':     { file: 'bed-empty.png',     w: 1024, h: 512 },
   'bed-grid':      { file: 'bed-grid.png',      w: 1024, h: 512 },
-  'bed-rain':      { file: 'bed-rain.png',      w: 1024, h: 512 },
   'bed-cell':      { file: 'bed-cell.png',      w: 256,  h: 256 },
   'crop-lettuce':  { file: 'crop-lettuce.png',  w: 256,  h: 256 },
   'crop-spinach':  { file: 'crop-spinach.png',  w: 256,  h: 256 },
@@ -36,7 +35,6 @@ const SINGLE_ASSETS = {
 
 const SHEET_ASSETS = {
   'crop-sheet':    { file: 'crop-sheet.png',    w: 1536, h: 256, cols: 6, rows: 1 },
-  'bed-seasons':   { file: 'bed-seasons.png',   w: 2048, h: 512, cols: 4, rows: 1 },
   'grow-lettuce':  { file: 'grow-lettuce.png',  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-spinach':  { file: 'grow-spinach.png',  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-arugula':  { file: 'grow-arugula.png',  w: 1024, h: 256, cols: 4, rows: 1 },
@@ -48,7 +46,7 @@ const SHEET_ASSETS = {
 /** Named growth stage indices */
 export const GROWTH_STAGE = { SEED: 0, SPROUT: 1, GROWING: 2, HARVEST: 3 };
 
-/** Named season indices for bed-seasons sheet */
+/** Reserved season indices for future bed-season sheets */
 export const SEASON_INDEX = { SPRING: 0, SUMMER: 1, AUTUMN: 2, WINTER: 3 };
 
 /** Named crop indices for crop-sheet */
@@ -75,6 +73,12 @@ function assetPath(filename) {
 /* ── Loading ────────────────────────────────────────────────────────── */
 
 function loadOne(key, filename) {
+  if (!filename) {
+    console.warn(`[sprite-loader] missing texture filename for: ${key}`);
+    missingAssets.push(key);
+    return Promise.resolve(null);
+  }
+
   return new Promise((resolve, reject) => {
     texLoader.load(
       assetPath(filename),
@@ -197,7 +201,7 @@ export function getGrowthTexture(cropId, stage) {
  * @returns {THREE.Texture|null}
  */
 export function getSeasonBed(seasonIndex) {
-  return getFrame('bed-seasons', seasonIndex);
+  return getFrame('bed-seasons', seasonIndex) ?? getTexture('bed-grid') ?? getTexture('bed-empty');
 }
 
 /**

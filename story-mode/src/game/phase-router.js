@@ -55,19 +55,19 @@ function createPhaseRouter({
 
     if (!trigger) {
       setGameInputEnabled(true);
-      return;
+      return false;
     }
 
     if (state.campaign?.sandbox && trigger.type === 'chapter_start') {
       setGameInputEnabled(true);
-      return;
+      return false;
     }
 
     const queued = cutsceneMachine.queueFromTrigger(trigger, state.campaign);
     if (!queued) {
       if (trigger.type === 'chapter_start' && state.season.season === 'winter' && !state.season.winterReviewSeen) {
         openWinterReviewOverlay();
-        return;
+        return false;
       }
       if (trigger.type === 'event_drawn') {
         openEventCard();
@@ -78,7 +78,7 @@ function createPhaseRouter({
       } else {
         setGameInputEnabled(true);
       }
-      return;
+      return false;
     }
 
     if (trigger.type === 'event_drawn') {
@@ -92,6 +92,7 @@ function createPhaseRouter({
     } else {
       postCutsceneAction = null;
     }
+    return true;
   }
 
   function doAdvance() {

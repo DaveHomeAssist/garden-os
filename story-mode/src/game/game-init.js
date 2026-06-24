@@ -11,6 +11,7 @@ import {
 import { getCropById, getCropsForChapter, getRecipeById, getRecipes } from '../data/crops.js';
 import { getKeepsakeById, getKeepsakeSlots } from '../data/keepsakes.js';
 import { showGameplayGuide } from '../ui/gameplay-guide.js';
+import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.js';
 
 const GRADE_DOT_CLASS = {
   'A+': 'sparkline-dot--a', A: 'sparkline-dot--a',
@@ -69,11 +70,30 @@ function formatSeasonLabel(season) {
 
 function dismissTitleScreen(titleScreen, callback) {
   document.body.dataset.storyScreen = 'play';
+  syncTitleInteractivity(false);
   titleScreen.classList.add('is-exiting');
   setTimeout(() => {
     titleScreen.style.display = 'none';
     callback();
   }, 400);
+}
+
+function syncTitleInteractivity(isTitle) {
+  setElementInteractive(document.getElementById('title-screen'), isTitle);
+  setElementInteractive(document.getElementById('hud'), !isTitle);
+  setElementInteractive(document.getElementById('phase-dots'), !isTitle);
+  setElementInteractive(document.getElementById('panel-container'), !isTitle);
+  setElementInteractive(document.getElementById('overlay-container'), !isTitle);
+  setElementInteractive(document.getElementById('cutscene-layer'), false);
+  setElementInteractive(document.getElementById('pause-menu'), false);
+  setElementInteractive(document.getElementById('bug-panel'), false);
+
+  if (isTitle) {
+    setButtonInteractive(document.getElementById('fab-bug'), false);
+    setButtonInteractive(document.getElementById('fab-plant'), false);
+    setButtonInteractive(document.getElementById('fab-backpack'), false);
+    setButtonInteractive(document.getElementById('fab-advance'), false);
+  }
 }
 
 function renderTitleScreen(onStart) {
@@ -87,9 +107,23 @@ function renderTitleScreen(onStart) {
   delete document.body.dataset.season;
   titleScreen.classList.remove('is-exiting');
   titleScreen.style.display = '';
+  syncTitleInteractivity(true);
 
   const saves = listSaves();
   slotsContainer.innerHTML = saves.map((entry) => {
+    if (entry.isCorrupt) {
+      return `
+        <div class="save-slot-card save-slot-card--corrupt progress-low" data-slot="${entry.slot}">
+          <div class="save-slot-label">Slot ${entry.slot + 1}</div>
+          <div class="save-slot-empty-copy">This save data is unreadable. Start over or delete the damaged slot.</div>
+          <div class="save-slot-empty-label">Save Unreadable</div>
+          <div class="save-slot-actions">
+            <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="new" data-slot="${entry.slot}">New Game</button>
+            <button type="button" class="save-slot-btn save-slot-btn--danger" data-action="delete" data-slot="${entry.slot}">Delete</button>
+          </div>
+        </div>`;
+    }
+
     if (entry.isEmpty) {
       return `
         <div class="save-slot-card save-slot-card--empty" data-slot="${entry.slot}">

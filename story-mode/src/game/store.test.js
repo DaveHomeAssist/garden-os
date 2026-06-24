@@ -279,6 +279,23 @@ describe('gameReducer', () => {
     expect(reset.selectedCropId).toBeNull();
   });
 
+  it('marks cutscenes seen without duplicating scene ids', () => {
+    const state = makeState();
+    state.campaign.seenCutsceneIds = ['older-scene'];
+
+    const marked = gameReducer(state, {
+      type: Actions.MARK_CUTSCENE_SEEN,
+      payload: { sceneId: 'ch1-intro' },
+    });
+    const duplicate = gameReducer(marked, {
+      type: Actions.MARK_CUTSCENE_SEEN,
+      payload: { sceneId: 'ch1-intro' },
+    });
+
+    expect(marked.campaign.seenCutsceneIds).toEqual(['older-scene', 'ch1-intro']);
+    expect(duplicate.campaign.seenCutsceneIds).toEqual(['older-scene', 'ch1-intro']);
+  });
+
   it('returns the previous state for unknown actions', () => {
     const base = makeState();
     const next = gameReducer(base, { type: 'UNKNOWN_ACTION' });

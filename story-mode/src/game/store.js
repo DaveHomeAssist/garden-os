@@ -106,6 +106,7 @@ const Actions = {
   RECORD_MARKET_TRANSACTION: 'RECORD_MARKET_TRANSACTION',
   REGISTER_CONTENT_PACK: 'REGISTER_CONTENT_PACK',
   REJECT_CONTENT_PACK: 'REJECT_CONTENT_PACK',
+  MARK_CUTSCENE_SEEN: 'MARK_CUTSCENE_SEEN',
 };
 
 const REPUTATION_ZONE_EFFECTS = {
@@ -450,6 +451,18 @@ function gameReducer(state, action = {}) {
     case Actions.SET_SELECTED_CROP: {
       const nextState = cloneGameState(state);
       nextState.selectedCropId = payload.cropId ?? null;
+      return nextState;
+    }
+
+    case Actions.MARK_CUTSCENE_SEEN: {
+      if (!payload.sceneId) return state;
+      const nextState = cloneGameState(state);
+      nextState.campaign.seenCutsceneIds = [
+        ...new Set([
+          ...(nextState.campaign.seenCutsceneIds ?? []),
+          payload.sceneId,
+        ]),
+      ];
       return nextState;
     }
 
