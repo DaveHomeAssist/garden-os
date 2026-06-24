@@ -5,13 +5,13 @@ import { applyZoneTravelState, resolveZoneSpawnPoint } from './zone-travel.js';
 
 describe('zone-travel', () => {
   it('resolves destination spawn points from the reverse route when available', () => {
-    expect(resolveZoneSpawnPoint('player_plot', 'neighborhood')).toEqual({ x: 0.2, y: 0, z: 4.4 });
-    expect(resolveZoneSpawnPoint('meadow', 'forest_edge')).toEqual({ x: -4.2, y: 0, z: 0.8 });
+    expect(resolveZoneSpawnPoint('player_plot', 'neighborhood')).toEqual({ x: 0, y: 0, z: 7.5 });
+    expect(resolveZoneSpawnPoint('forest_edge', 'greenhouse')).toEqual({ x: 0, y: 0, z: 7.5 });
   });
 
   it('falls back to a zone default spawn when no reverse route exists', () => {
-    expect(resolveZoneSpawnPoint('unknown_zone', 'player_plot')).toEqual({ x: 0, y: 0, z: 2.55 });
-    expect(resolveZoneSpawnPoint('unknown_zone', 'market_square')).toEqual({ x: 0.2, y: 0, z: 4.4 });
+    expect(resolveZoneSpawnPoint('unknown_zone', 'player_plot')).toEqual({ x: 0, y: 0, z: 0 });
+    expect(resolveZoneSpawnPoint('unknown_zone', 'market_square')).toEqual({ x: 0, y: 0, z: 5 });
   });
 
   it('resets the player and refreshes scene interaction state after a zone change', () => {

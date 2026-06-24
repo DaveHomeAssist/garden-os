@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://davehomeassist.github.io/garden-os/specs/CONTENT_PACK_SCHEMA.json",
+  "title": "Garden OS Content Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "version", "title", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string"
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "crops": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/crop" }
+        },
+        "zones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/zone" }
+        },
+        "quests": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/quest" }
+        },
+        "npcs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/npc" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "crop": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "name", "faction", "chapterUnlock", "seasonalMultipliers"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "emoji": { "type": "string" },
+        "short": { "type": "string" },
+        "faction": { "type": "string", "minLength": 1 },
+        "chapterUnlock": { "type": "number", "minimum": 1 },
+        "seasonalMultipliers": { "type": "object" }
+      }
+    },
+    "zone": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "name", "biome"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "biome": { "type": "string", "minLength": 1 }
+      }
+    },
+    "quest": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "npc", "title", "requirements", "rewards", "outcomes"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "npc": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "requirements": { "type": "array" },
+        "rewards": { "type": "array" },
+        "outcomes": { "type": "array", "minItems": 2 }
+      }
+    },
+    "npc": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "name", "role"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

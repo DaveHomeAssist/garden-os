@@ -1,8 +1,8 @@
 {
   "$schema": "garden-os-quest-deck-v1",
-  "version": 1,
+  "version": 2,
   "description": "Quest deck for Let It Grow. 25 quests across 7 NPCs, including zone-specific exploration, biome, advanced, and community quests.",
-  "lastUpdated": "2026-03-22",
+  "lastUpdated": "2026-06-24",
   "quests": [
     {
       "id": "gus_tomatoes",
@@ -14,11 +14,23 @@
       "progressDialogue": "Back when I was small, those tomatoes came in by the bushel. You'll get there. Just takes patience. Soil doesn't hurry for nobody.",
       "completeDialogue": "Well I'll be. That's the one. Smell that? That's summer, 1962. Here — take these pepper seeds. My granddad grew those too. Figured they ought to stay together.",
       "requirements": [
-        { "type": "crop_harvested", "id": "cherry_tom", "count": 3 }
+        {
+          "type": "crop_harvested",
+          "id": "cherry_tom",
+          "count": 3
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "heritage_pepper", "amount": 1 },
-        { "type": "reputation", "id": "old_gus", "amount": 15 }
+        {
+          "type": "seed",
+          "id": "heritage_pepper",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 3,
@@ -27,7 +39,77 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Grandpa's Tomatoes becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "heritage_pepper",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_tomatoes:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Grandpa's Tomatoes becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Grandpa's Tomatoes becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "heritage_pepper",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_tomatoes:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Grandpa's Tomatoes becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "gus_compost",
@@ -39,13 +121,33 @@
       "progressDialogue": "Back when the bin was working, worms came from three yards over. They knew. Animals always know where the good soil is. Keep at it.",
       "completeDialogue": "That's the stuff. Layers just right. Give it six weeks and this'll be black gold. You earned this — compost supplies, on me. And you learned something about soil today. That's worth more than seeds.",
       "requirements": [
-        { "type": "item_crafted", "id": "compost", "count": 2 },
-        { "type": "crop_harvested", "id": "kale", "count": 2 }
+        {
+          "type": "item_crafted",
+          "id": "compost",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "kale",
+          "count": 2
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "compost_supplies", "amount": 1 },
-        { "type": "reputation", "id": "old_gus", "amount": 20 },
-        { "type": "xp", "id": "soil_science", "amount": 15 }
+        {
+          "type": "item",
+          "id": "compost_supplies",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 20
+        },
+        {
+          "type": "xp",
+          "id": "soil_science",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 5,
@@ -54,7 +156,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Old Compost Method becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "compost_supplies",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_compost:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Old Compost Method becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Old Compost Method becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "compost_supplies",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_compost:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Old Compost Method becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "gus_frost",
@@ -66,16 +248,48 @@
       "progressDialogue": "Sky's getting grayer. Hurry it up. Used to be we had another week this time of year. Weather's not what it was. Get those crops in.",
       "completeDialogue": "Every last one. That's how it's done. My dad would've said you've got farmer's hands. Here — rare seeds I've been saving. Didn't think I'd find someone worth giving them to.",
       "requirements": [
-        { "type": "crop_harvested", "id": "carrot", "count": 1 },
-        { "type": "crop_harvested", "id": "beet", "count": 1 },
-        { "type": "crop_harvested", "id": "kale", "count": 1 },
-        { "type": "crop_harvested", "id": "broccoli", "count": 1 },
-        { "type": "crop_harvested", "id": "turnip", "count": 1 }
+        {
+          "type": "crop_harvested",
+          "id": "carrot",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "beet",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "kale",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "broccoli",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "turnip",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "rare_seed_bundle", "amount": 1 },
-        { "type": "reputation", "id": "old_gus", "amount": 25 },
-        { "type": "xp", "id": "gardening", "amount": 20 }
+        {
+          "type": "seed",
+          "id": "rare_seed_bundle",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 25
+        },
+        {
+          "type": "xp",
+          "id": "gardening",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 7,
@@ -84,7 +298,87 @@
         "quests_completed": []
       },
       "timed": true,
-      "deadline": "end_of_fall"
+      "deadline": "end_of_fall",
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Before the First Frost becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_seed_bundle",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_frost:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Before the First Frost becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Before the First Frost becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_seed_bundle",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_frost:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Before the First Frost becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "maya_sprinkler",
@@ -96,12 +390,28 @@
       "progressDialogue": "How's it going? Did you figure out the valve part? Because I was thinking — wait, no, finish the first version first. But ALSO I had this idea for a drip attachment that — no. Focus. Basic sprinkler. Then we iterate!",
       "completeDialogue": "YOU BUILT IT! Let me see — oh wow, the spray pattern is actually better than I predicted! Here, take this — I call it the Smart Watering Can, it's got a — well, it's basically a regular can but I added a moisture sensor to the — you know what, just try it. You'll love it.",
       "requirements": [
-        { "type": "item_crafted", "id": "basic_sprinkler", "count": 1 }
+        {
+          "type": "item_crafted",
+          "id": "basic_sprinkler",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "smart_watering_can", "amount": 1 },
-        { "type": "reputation", "id": "maya", "amount": 15 },
-        { "type": "xp", "id": "crafting", "amount": 15 }
+        {
+          "type": "item",
+          "id": "smart_watering_can",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "maya",
+          "amount": 15
+        },
+        {
+          "type": "xp",
+          "id": "crafting",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 2,
@@ -110,7 +420,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Prototype Sprinkler becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "smart_watering_can",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "maya_sprinkler:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Prototype Sprinkler becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Prototype Sprinkler becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "smart_watering_can",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "maya_sprinkler:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Prototype Sprinkler becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "maya_scanner",
@@ -122,14 +512,38 @@
       "progressDialogue": "Did you get to all three spots yet? Because the calibration won't work unless — actually wait, even partial data could — no, I need all three. The riverside clay is completely different from the meadow loam and I need that contrast to set the baseline. Science!",
       "completeDialogue": "Three zones! Three datasets! This is — hold on, let me punch these numbers — YES. The scanner works! PH, nitrogen, phosphorus, all reading clean. You earned this. Take the scanner. I already started building version two with a — actually, you don't want to know. Just take it.",
       "requirements": [
-        { "type": "zone_visited", "id": "meadow", "count": 1 },
-        { "type": "zone_visited", "id": "riverside", "count": 1 },
-        { "type": "zone_visited", "id": "forest_edge", "count": 1 }
+        {
+          "type": "zone_visited",
+          "id": "meadow",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "riverside",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "forest_edge",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "soil_scanner", "amount": 1 },
-        { "type": "reputation", "id": "maya", "amount": 20 },
-        { "type": "xp", "id": "soil_science", "amount": 20 }
+        {
+          "type": "item",
+          "id": "soil_scanner",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "maya",
+          "amount": 20
+        },
+        {
+          "type": "xp",
+          "id": "soil_science",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 4,
@@ -138,7 +552,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Soil Scanner Calibration becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "soil_scanner",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "maya_scanner:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Soil Scanner Calibration becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Soil Scanner Calibration becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "soil_scanner",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "maya_scanner:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Soil Scanner Calibration becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "maya_hybrid",
@@ -150,14 +644,38 @@
       "progressDialogue": "How are the plants looking? Are they flowering yet? Because the cross-pollination window is really narrow — like three days — and we need to time the — wait, did you plant them close enough? They need to be ADJACENT. The bees won't fly far in summer heat and — just check on them, OK?",
       "completeDialogue": "A hybrid seed. An actual hybrid seed. Do you realize what we just — this is a brand new cultivar! Nobody's ever — well, probably someone has, but WE did it! Here, take these hybrid seeds. Grow them out. Document everything. I need to write this up. Where's my notebook? WHERE'S MY — oh, it's in my hand.",
       "requirements": [
-        { "type": "crop_planted", "id": "cherry_tom", "count": 1 },
-        { "type": "crop_planted", "id": "pepper", "count": 1 },
-        { "type": "item_crafted", "id": "hybrid_seed", "count": 1 }
+        {
+          "type": "crop_planted",
+          "id": "cherry_tom",
+          "count": 1
+        },
+        {
+          "type": "crop_planted",
+          "id": "pepper",
+          "count": 1
+        },
+        {
+          "type": "item_crafted",
+          "id": "hybrid_seed",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "hybrid_seeds", "amount": 1 },
-        { "type": "reputation", "id": "maya", "amount": 25 },
-        { "type": "xp", "id": "gardening", "amount": 20 }
+        {
+          "type": "seed",
+          "id": "hybrid_seeds",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "maya",
+          "amount": 25
+        },
+        {
+          "type": "xp",
+          "id": "gardening",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 6,
@@ -166,7 +684,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Experimental Hybrid becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "hybrid_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "maya_hybrid:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Experimental Hybrid becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Experimental Hybrid becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "hybrid_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "maya_hybrid:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Experimental Hybrid becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "lila_basil",
@@ -178,12 +776,28 @@
       "progressDialogue": "Still waiting on that basil. Every hour it's not here, the leaves on MY plants get a little sadder. Sympathetic wilting. That's a real thing. I may have made it up. But the point stands — hurry.",
       "completeDialogue": "Let me see. Let me smell. ...Yes. THAT is basil. You can taste the sun in these leaves. Here — take these herb seeds. Grow more. Grow different ones. A garden without herbs is just a vegetable warehouse.",
       "requirements": [
-        { "type": "crop_harvested", "id": "basil", "count": 3 }
+        {
+          "type": "crop_harvested",
+          "id": "basil",
+          "count": 3
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "herb_seeds", "amount": 1 },
-        { "type": "reputation", "id": "lila", "amount": 10 },
-        { "type": "xp", "id": "social", "amount": 10 }
+        {
+          "type": "seed",
+          "id": "herb_seeds",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "lila",
+          "amount": 10
+        },
+        {
+          "type": "xp",
+          "id": "social",
+          "amount": 10
+        }
       ],
       "prerequisites": {
         "chapter_min": 1,
@@ -192,7 +806,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Fresh Basil, Please becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "herb_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 10
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "lila_basil:community",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Fresh Basil, Please becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Fresh Basil, Please becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "herb_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "lila_basil:stewardship",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Fresh Basil, Please becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "lila_salsa",
@@ -204,15 +898,43 @@
       "progressDialogue": "The mortar and pestle are ready. The lime is cut. I'm literally just standing here waiting for you. No pressure. But also — pressure. Flavor waits for no one.",
       "completeDialogue": "Tomatoes — firm, good. Peppers — I can smell the capsaicin. Cilantro — bright, not bolted. Onion — oh, that'll make someone cry, and I mean that as the highest compliment. Take this recipe card. You've earned it. Share it with someone who deserves it.",
       "requirements": [
-        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
-        { "type": "crop_harvested", "id": "pepper", "count": 2 },
-        { "type": "crop_harvested", "id": "cilantro", "count": 1 },
-        { "type": "crop_harvested", "id": "onion", "count": 1 }
+        {
+          "type": "crop_harvested",
+          "id": "cherry_tom",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "pepper",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "cilantro",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "onion",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "recipe_card_salsa", "amount": 1 },
-        { "type": "reputation", "id": "lila", "amount": 20 },
-        { "type": "xp", "id": "gardening", "amount": 15 }
+        {
+          "type": "item",
+          "id": "recipe_card_salsa",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "lila",
+          "amount": 20
+        },
+        {
+          "type": "xp",
+          "id": "gardening",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 4,
@@ -221,7 +943,87 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Perfect Salsa becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "recipe_card_salsa",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "lila_salsa:community",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Perfect Salsa becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Perfect Salsa becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "recipe_card_salsa",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "lila_salsa:stewardship",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Perfect Salsa becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "lila_recipe",
@@ -233,27 +1035,160 @@
       "progressDialogue": "I keep reading her handwriting on the card. She underlined 'fresh' three times. She spelled 'garlic' wrong. I'm not changing it. Just — bring me what I asked for. Take your time. But not too much time. Fall doesn't last forever.",
       "completeDialogue": "Everything's here. All of it, perfect. I can smell her kitchen already. ...Thank you. I mean it. Here — these seeds are rare. I've been saving them for someone who understands that food isn't just food. It's memory. It's people. You get that.",
       "requirements": [
-        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
-        { "type": "crop_harvested", "id": "basil", "count": 2 },
-        { "type": "crop_harvested", "id": "pepper", "count": 1 },
-        { "type": "crop_harvested", "id": "onion", "count": 1 },
-        { "type": "crop_harvested", "id": "carrot", "count": 1 },
-        { "type": "crop_harvested", "id": "garlic", "count": 1 }
+        {
+          "type": "crop_harvested",
+          "id": "cherry_tom",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "basil",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "pepper",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "onion",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "carrot",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "garlic",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "exclusive_seed", "amount": 1 },
-        { "type": "reputation", "id": "lila", "amount": 30 },
-        { "type": "xp", "id": "social", "amount": 20 },
-        { "type": "xp", "id": "crafting", "amount": 15 }
+        {
+          "type": "seed",
+          "id": "exclusive_seed",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "lila",
+          "amount": 30
+        },
+        {
+          "type": "xp",
+          "id": "social",
+          "amount": 20
+        },
+        {
+          "type": "xp",
+          "id": "crafting",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 8,
         "season": "fall",
         "reputation": {},
-        "quests_completed": ["lila_basil", "lila_salsa"]
+        "quests_completed": [
+          "lila_basil",
+          "lila_salsa"
+        ]
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Mom's Secret Recipe becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "exclusive_seed",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "lila_recipe:community",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Mom's Secret Recipe becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Mom's Secret Recipe becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "exclusive_seed",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "lila_recipe:stewardship",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Mom's Secret Recipe becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "pat_watering",
@@ -265,11 +1200,23 @@
       "progressDialogue": "How's it going over there? I keep checking my weather app. It says hot and dry. Please tell me my sunflowers are OK. I'm trusting you with my babies!",
       "completeDialogue": "Everything's alive! And are those — did my sunflowers BLOOM? You're the best neighbor ever. Here, take some of this plant matter I've been saving. Least I can do!",
       "requirements": [
-        { "type": "zone_visited", "id": "neighborhood", "count": 1 }
+        {
+          "type": "zone_visited",
+          "id": "neighborhood",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "plant_matter", "amount": 5 },
-        { "type": "reputation", "id": "neighbor_pat", "amount": 10 }
+        {
+          "type": "item",
+          "id": "plant_matter",
+          "amount": 5
+        },
+        {
+          "type": "reputation",
+          "id": "neighbor_pat",
+          "amount": 10
+        }
       ],
       "prerequisites": {
         "chapter_min": 2,
@@ -278,7 +1225,77 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Weekend Watering becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "plant_matter",
+              "amount": 5
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 10
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "pat_watering:community",
+            "npc": "neighbor_pat"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Weekend Watering becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Weekend Watering becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "plant_matter",
+              "amount": 5
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "pat_watering:stewardship",
+            "npc": "neighbor_pat"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Weekend Watering becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "sam_bees",
@@ -290,12 +1307,28 @@
       "progressDialogue": "The bees are out there looking for flowers every morning. Poor things come back with barely anything. How are those plantings coming along?",
       "completeDialogue": "Flowers in the ground! The bees will find them by tomorrow, I guarantee it. Here — fresh honey from last season's harvest. Consider it an advance payment from the bees themselves.",
       "requirements": [
-        { "type": "crop_planted", "id": "marigold", "count": 2 },
-        { "type": "crop_planted", "id": "nasturtium", "count": 1 }
+        {
+          "type": "crop_planted",
+          "id": "marigold",
+          "count": 2
+        },
+        {
+          "type": "crop_planted",
+          "id": "nasturtium",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "honey_jar", "amount": 1 },
-        { "type": "reputation", "id": "neighbor_sam", "amount": 10 }
+        {
+          "type": "item",
+          "id": "honey_jar",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "neighbor_sam",
+          "amount": 10
+        }
       ],
       "prerequisites": {
         "chapter_min": 3,
@@ -304,7 +1337,77 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Bee-Friendly Garden becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "honey_jar",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 10
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "sam_bees:community",
+            "npc": "neighbor_sam"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Bee-Friendly Garden becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Bee-Friendly Garden becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "honey_jar",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "sam_bees:stewardship",
+            "npc": "neighbor_sam"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Bee-Friendly Garden becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "jo_compost",
@@ -316,11 +1419,23 @@
       "progressDialogue": "The compost pile's looking a little sad right now. Just a pile of leaves and cardboard. It needs the good stuff — garden scraps, crop waste. Bring me what you've got!",
       "completeDialogue": "That's what I'm talking about! This pile is going to cook. Give it a few weeks and we'll have the richest compost on the block. Take this fertilizer — consider it the first dividend from our little compost investment.",
       "requirements": [
-        { "type": "crop_harvested", "id": "any", "count": 5 }
+        {
+          "type": "crop_harvested",
+          "id": "any",
+          "count": 5
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "fertilizer", "amount": 2 },
-        { "type": "reputation", "id": "neighbor_jo", "amount": 10 }
+        {
+          "type": "item",
+          "id": "fertilizer",
+          "amount": 2
+        },
+        {
+          "type": "reputation",
+          "id": "neighbor_jo",
+          "amount": 10
+        }
       ],
       "prerequisites": {
         "chapter_min": 2,
@@ -329,7 +1444,77 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Compost Contribution becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "fertilizer",
+              "amount": 2
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
+              "amount": 10
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "jo_compost:community",
+            "npc": "neighbor_jo"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Compost Contribution becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Compost Contribution becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "fertilizer",
+              "amount": 2
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
+              "amount": 10
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "jo_compost:stewardship",
+            "npc": "neighbor_jo"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Compost Contribution becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "robin_birds",
@@ -341,13 +1526,33 @@
       "progressDialogue": "How many zones have you visited? Each habitat has different species. The meadow has sparrows and larks, the riverside has kingfishers, and the forest edge — that's where the warblers hide. Don't rush it. Birds can tell when you're impatient.",
       "completeDialogue": "Three habitats surveyed! Let me see your notes — oh, wonderful. A kingfisher at the riverside? That's the first sighting this season. You've got a good eye. Here, take these wildflower seeds. Plant them and you'll bring even more birds to the garden.",
       "requirements": [
-        { "type": "zone_visited", "id": "meadow", "count": 1 },
-        { "type": "zone_visited", "id": "riverside", "count": 1 },
-        { "type": "zone_visited", "id": "forest_edge", "count": 1 }
+        {
+          "type": "zone_visited",
+          "id": "meadow",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "riverside",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "forest_edge",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "rare_wildflower_seeds", "amount": 1 },
-        { "type": "reputation", "id": "neighbor_robin", "amount": 15 }
+        {
+          "type": "seed",
+          "id": "rare_wildflower_seeds",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "neighbor_robin",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 4,
@@ -356,9 +1561,78 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Bird Census becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_wildflower_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_robin",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_robin",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "robin_birds:community",
+            "npc": "neighbor_robin"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Bird Census becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Bird Census becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_wildflower_seeds",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_robin",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "robin_birds:stewardship",
+            "npc": "neighbor_robin"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Bird Census becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "explore_meadow",
       "npc": "neighbor_robin",
@@ -369,13 +1643,33 @@
       "progressDialogue": "Still mapping? Take your time. The meadow reveals itself slowly. Look near the old fence line and along the creek bank.",
       "completeDialogue": "All three spots documented! This is exactly what the nature group needed. You've got a real eye for the wild places. Here — some rare seeds I've been saving.",
       "requirements": [
-        { "type": "zone_visited", "id": "meadow_spot_1", "count": 1 },
-        { "type": "zone_visited", "id": "meadow_spot_2", "count": 1 },
-        { "type": "zone_visited", "id": "meadow_spot_3", "count": 1 }
+        {
+          "type": "zone_visited",
+          "id": "meadow_spot_1",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "meadow_spot_2",
+          "count": 1
+        },
+        {
+          "type": "zone_visited",
+          "id": "meadow_spot_3",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "rare_wildflower_seeds", "amount": 2 },
-        { "type": "xp", "id": "foraging", "amount": 20 }
+        {
+          "type": "seed",
+          "id": "rare_wildflower_seeds",
+          "amount": 2
+        },
+        {
+          "type": "xp",
+          "id": "foraging",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 4,
@@ -384,9 +1678,78 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Map the Meadow becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_wildflower_seeds",
+              "amount": 2
+            },
+            {
+              "type": "xp",
+              "id": "foraging",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_robin",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "explore_meadow:community",
+            "npc": "neighbor_robin"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Map the Meadow becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Map the Meadow becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_wildflower_seeds",
+              "amount": 2
+            },
+            {
+              "type": "xp",
+              "id": "foraging",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "explore_meadow:stewardship",
+            "npc": "neighbor_robin"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Map the Meadow becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "gus_river_path",
       "npc": "old_gus",
@@ -397,23 +1760,110 @@
       "progressDialogue": "Still looking? The oak's on the east side. Path used to go through the tall grass. Might need to push through some brambles.",
       "completeDialogue": "You found it. The old crossing. Haven't seen that in years. River's still running the same way. Here — the path is yours now. Go whenever you want.",
       "requirements": [
-        { "type": "zone_visited", "id": "neighborhood", "count": 1 },
-        { "type": "item_found", "id": "old_map", "count": 1 }
+        {
+          "type": "zone_visited",
+          "id": "neighborhood",
+          "count": 1
+        },
+        {
+          "type": "item_found",
+          "id": "old_map",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "riverside_access", "amount": 1 },
-        { "type": "reputation", "id": "old_gus", "amount": 20 }
+        {
+          "type": "item",
+          "id": "riverside_access",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 5,
         "season": null,
-        "reputation": { "old_gus": 25 },
+        "reputation": {
+          "old_gus": 25
+        },
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "River Crossing becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "riverside_access",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_river_path:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "River Crossing becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "River Crossing becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "riverside_access",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_river_path:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "River Crossing becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "greenhouse_access",
       "npc": "maya",
@@ -424,11 +1874,23 @@
       "progressDialogue": "Panel's not done yet? You need crystal shards and scrap metal. Check the forest for shards — oh! And Maya's tip: hit the rocks at an angle. More efficient. Probably.",
       "completeDialogue": "YOU BUILT IT! Look at that panel! It's beautiful. It's functional. It's — okay it's a little crooked but that adds character. Greenhouse is all yours now!",
       "requirements": [
-        { "type": "item_crafted", "id": "greenhouse_panel", "count": 1 }
+        {
+          "type": "item_crafted",
+          "id": "greenhouse_panel",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "greenhouse_access", "amount": 1 },
-        { "type": "xp", "id": "crafting", "amount": 30 }
+        {
+          "type": "item",
+          "id": "greenhouse_access",
+          "amount": 1
+        },
+        {
+          "type": "xp",
+          "id": "crafting",
+          "amount": 30
+        }
       ],
       "prerequisites": {
         "chapter_min": 6,
@@ -437,9 +1899,78 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Greenhouse Key becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "greenhouse_access",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 30
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "greenhouse_access:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Greenhouse Key becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Greenhouse Key becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "greenhouse_access",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "greenhouse_access:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Greenhouse Key becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "lila_watercress",
       "npc": "lila",
@@ -450,23 +1981,120 @@
       "progressDialogue": "The watercress? Still waiting. Remember — riverside only. I can taste the difference. Don't test me.",
       "completeDialogue": "Now THAT is watercress. Feel the crunch? See the color? This is going straight into the stew. Here — you've earned the recipe. Make it yourself sometime.",
       "requirements": [
-        { "type": "crop_harvested", "id": "watercress", "count": 3 }
+        {
+          "type": "crop_harvested",
+          "id": "watercress",
+          "count": 3
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "recipe_card_foragers_stew", "amount": 1 },
-        { "type": "reputation", "id": "lila", "amount": 20 },
-        { "type": "xp", "id": "social", "amount": 15 }
+        {
+          "type": "item",
+          "id": "recipe_card_foragers_stew",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "lila",
+          "amount": 20
+        },
+        {
+          "type": "xp",
+          "id": "social",
+          "amount": 15
+        }
       ],
       "prerequisites": {
         "chapter_min": 5,
         "season": null,
         "reputation": {},
-        "quests_completed": ["gus_river_path"]
+        "quests_completed": [
+          "gus_river_path"
+        ]
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Watercress for Lila becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "recipe_card_foragers_stew",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 15
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "lila_watercress:community",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Watercress for Lila becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Watercress for Lila becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "recipe_card_foragers_stew",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "lila_watercress:stewardship",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Watercress for Lila becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "gus_mushroom_logs",
       "npc": "old_gus",
@@ -477,24 +2105,125 @@
       "progressDialogue": "Got the wood and compost yet? Oak's best for the logs. And the compost needs to be mature — none of that half-rotted stuff.",
       "completeDialogue": "That's it. Logs are set. Give it a few weeks and you'll see the first pins coming through. Here — take some spores. Start your own logs if you want. My grandfather would've liked you.",
       "requirements": [
-        { "type": "item_delivered", "id": "wood", "count": 4 },
-        { "type": "item_delivered", "id": "compost", "count": 2 }
+        {
+          "type": "item_delivered",
+          "id": "wood",
+          "count": 4
+        },
+        {
+          "type": "item_delivered",
+          "id": "compost",
+          "count": 2
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "shiitake_spores", "amount": 3 },
-        { "type": "reputation", "id": "old_gus", "amount": 25 },
-        { "type": "xp", "id": "soil_science", "amount": 20 }
+        {
+          "type": "seed",
+          "id": "shiitake_spores",
+          "amount": 3
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 25
+        },
+        {
+          "type": "xp",
+          "id": "soil_science",
+          "amount": 20
+        }
       ],
       "prerequisites": {
         "chapter_min": 7,
         "season": null,
-        "reputation": { "old_gus": 50 },
+        "reputation": {
+          "old_gus": 50
+        },
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Mushroom Log Inoculation becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "shiitake_spores",
+              "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 20
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_mushroom_logs:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Mushroom Log Inoculation becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Mushroom Log Inoculation becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "shiitake_spores",
+              "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_mushroom_logs:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Mushroom Log Inoculation becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "vanilla_challenge",
       "npc": "maya",
@@ -505,22 +2234,105 @@
       "progressDialogue": "How's the vanilla? Still growing? It's so slow! I keep checking mine and — wait, I shouldn't tell you about mine. This is YOUR challenge. Keep going!",
       "completeDialogue": "YOU DID IT! A full vanilla orchid! Do you know how rare that is?! The smell alone — okay I'm crying a little. This is the best day. Here, take this. You've earned something legendary.",
       "requirements": [
-        { "type": "crop_harvested", "id": "vanilla_orchid", "count": 1 }
+        {
+          "type": "crop_harvested",
+          "id": "vanilla_orchid",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "seed", "id": "legendary_seed", "amount": 1 },
-        { "type": "xp", "id": "gardening", "amount": 30 }
+        {
+          "type": "seed",
+          "id": "legendary_seed",
+          "amount": 1
+        },
+        {
+          "type": "xp",
+          "id": "gardening",
+          "amount": 30
+        }
       ],
       "prerequisites": {
         "chapter_min": 8,
         "season": null,
         "reputation": {},
-        "quests_completed": ["greenhouse_access"]
+        "quests_completed": [
+          "greenhouse_access"
+        ]
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "The Vanilla Challenge becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "legendary_seed",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 30
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "vanilla_challenge:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "The Vanilla Challenge becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "The Vanilla Challenge becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "legendary_seed",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "vanilla_challenge:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "The Vanilla Challenge becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "prairie_restore",
       "npc": "neighbor_sam",
@@ -531,11 +2343,23 @@
       "progressDialogue": "How many clover plants are in? Each one is helping the soil recover. The bees love them too — win-win.",
       "completeDialogue": "Five clover patches! The meadow's already looking healthier. You can actually see the difference in the soil color. Here — I found this rare earth mineral while digging. You should have it.",
       "requirements": [
-        { "type": "crop_planted", "id": "wild_clover", "count": 5 }
+        {
+          "type": "crop_planted",
+          "id": "wild_clover",
+          "count": 5
+        }
       ],
       "rewards": [
-        { "type": "xp", "id": "composting", "amount": 40 },
-        { "type": "item", "id": "rare_earth", "amount": 1 }
+        {
+          "type": "xp",
+          "id": "composting",
+          "amount": 40
+        },
+        {
+          "type": "item",
+          "id": "rare_earth",
+          "amount": 1
+        }
       ],
       "prerequisites": {
         "chapter_min": 5,
@@ -544,9 +2368,78 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Prairie Restoration becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "xp",
+              "id": "composting",
+              "amount": 40
+            },
+            {
+              "type": "item",
+              "id": "rare_earth",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "prairie_restore:community",
+            "npc": "neighbor_sam"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Prairie Restoration becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Prairie Restoration becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "xp",
+              "id": "composting",
+              "amount": 40
+            },
+            {
+              "type": "item",
+              "id": "rare_earth",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "prairie_restore:stewardship",
+            "npc": "neighbor_sam"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Prairie Restoration becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "maya_masterpiece",
       "npc": "maya",
@@ -557,22 +2450,105 @@
       "progressDialogue": "The hybridizer needs crystal shards, mechanisms, AND rare earth. I know that's a lot. But think about what we're building! NEW CROPS. From EXISTING CROPS. Science!",
       "completeDialogue": "It's... it's perfect. Better than my blueprints. You actually improved the calibration mechanism — I see what you did there. This changes everything. You can crossbreed crops now. Go make something the world's never seen.",
       "requirements": [
-        { "type": "item_crafted", "id": "seed_hybridizer", "count": 1 }
+        {
+          "type": "item_crafted",
+          "id": "seed_hybridizer",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "ability_crop_crossbreeding", "amount": 1 },
-        { "type": "reputation", "id": "maya", "amount": 30 }
+        {
+          "type": "item",
+          "id": "ability_crop_crossbreeding",
+          "amount": 1
+        },
+        {
+          "type": "reputation",
+          "id": "maya",
+          "amount": 30
+        }
       ],
       "prerequisites": {
         "chapter_min": 9,
         "season": null,
-        "reputation": { "maya": 75 },
+        "reputation": {
+          "maya": 75
+        },
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Maya's Masterpiece becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "ability_crop_crossbreeding",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 30
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "maya_masterpiece:community",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Maya's Masterpiece becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Maya's Masterpiece becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "ability_crop_crossbreeding",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "maya_masterpiece:stewardship",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Maya's Masterpiece becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "gus_legacy",
       "npc": "old_gus",
@@ -583,27 +2559,140 @@
       "progressDialogue": "The tomatoes go in the center. Basil right next to them. Marigolds on the border — he always said they kept the bad bugs out. Peppers on the sunny side. Carrots in the shade of the tomatoes.",
       "completeDialogue": "... That's it. That's his garden. Looks just like I remember. Thank you. I don't say that often. Here — his trowel recipe. And some seeds he saved. They've been in my family for generations. Take care of them.",
       "requirements": [
-        { "type": "crop_planted", "id": "cherry_tom", "count": 2 },
-        { "type": "crop_planted", "id": "basil", "count": 2 },
-        { "type": "crop_planted", "id": "pepper", "count": 1 },
-        { "type": "crop_planted", "id": "marigold", "count": 2 },
-        { "type": "crop_planted", "id": "carrot", "count": 1 }
+        {
+          "type": "crop_planted",
+          "id": "cherry_tom",
+          "count": 2
+        },
+        {
+          "type": "crop_planted",
+          "id": "basil",
+          "count": 2
+        },
+        {
+          "type": "crop_planted",
+          "id": "pepper",
+          "count": 1
+        },
+        {
+          "type": "crop_planted",
+          "id": "marigold",
+          "count": 2
+        },
+        {
+          "type": "crop_planted",
+          "id": "carrot",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "legendary_trowel_recipe", "amount": 1 },
-        { "type": "seed", "id": "heirloom_seeds", "amount": 3 },
-        { "type": "reputation", "id": "old_gus", "amount": 30 }
+        {
+          "type": "item",
+          "id": "legendary_trowel_recipe",
+          "amount": 1
+        },
+        {
+          "type": "seed",
+          "id": "heirloom_seeds",
+          "amount": 3
+        },
+        {
+          "type": "reputation",
+          "id": "old_gus",
+          "amount": 30
+        }
       ],
       "prerequisites": {
         "chapter_min": 10,
         "season": null,
-        "reputation": { "old_gus": 90 },
+        "reputation": {
+          "old_gus": 90
+        },
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Gus's Legacy Garden becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "legendary_trowel_recipe",
+              "amount": 1
+            },
+            {
+              "type": "seed",
+              "id": "heirloom_seeds",
+              "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 30
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "gus_legacy:community",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Gus's Legacy Garden becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Gus's Legacy Garden becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "legendary_trowel_recipe",
+              "amount": 1
+            },
+            {
+              "type": "seed",
+              "id": "heirloom_seeds",
+              "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "gus_legacy:stewardship",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Gus's Legacy Garden becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "lila_cookbook",
       "npc": "lila",
@@ -614,30 +2703,160 @@
       "progressDialogue": "How many recipes have you sourced? I need ingredients for all eight. Fresh. Seasonal. Perfect. This cookbook doesn't accept 'good enough.'",
       "completeDialogue": "Every recipe. Every ingredient. This cookbook is complete. I'm putting your name in the acknowledgments. Right after my grandmother's. That's the highest honor I give. Thank you.",
       "requirements": [
-        { "type": "crop_harvested", "id": "basil", "count": 2 },
-        { "type": "crop_harvested", "id": "cherry_tom", "count": 2 },
-        { "type": "crop_harvested", "id": "lettuce", "count": 1 },
-        { "type": "crop_harvested", "id": "pepper", "count": 1 },
-        { "type": "crop_harvested", "id": "onion", "count": 1 },
-        { "type": "crop_harvested", "id": "carrot", "count": 1 },
-        { "type": "crop_harvested", "id": "wild_garlic", "count": 1 },
-        { "type": "crop_harvested", "id": "ghost_pepper", "count": 1 }
+        {
+          "type": "crop_harvested",
+          "id": "basil",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "cherry_tom",
+          "count": 2
+        },
+        {
+          "type": "crop_harvested",
+          "id": "lettuce",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "pepper",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "onion",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "carrot",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "wild_garlic",
+          "count": 1
+        },
+        {
+          "type": "crop_harvested",
+          "id": "ghost_pepper",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "exclusive_cosmetics", "amount": 1 },
-        { "type": "xp", "id": "social", "amount": 40 },
-        { "type": "reputation", "id": "lila", "amount": 30 }
+        {
+          "type": "item",
+          "id": "exclusive_cosmetics",
+          "amount": 1
+        },
+        {
+          "type": "xp",
+          "id": "social",
+          "amount": 40
+        },
+        {
+          "type": "reputation",
+          "id": "lila",
+          "amount": 30
+        }
       ],
       "prerequisites": {
         "chapter_min": 10,
         "season": null,
-        "reputation": { "lila": 75 },
-        "quests_completed": ["lila_basil", "lila_salsa", "lila_recipe", "lila_watercress"]
+        "reputation": {
+          "lila": 75
+        },
+        "quests_completed": [
+          "lila_basil",
+          "lila_salsa",
+          "lila_recipe",
+          "lila_watercress"
+        ]
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Lila's Cookbook becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "exclusive_cosmetics",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 40
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 30
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "lila_cookbook:community",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Lila's Cookbook becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Lila's Cookbook becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "exclusive_cosmetics",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 40
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 30
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "lila_cookbook:stewardship",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Lila's Cookbook becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "market_day",
       "npc": "neighbor_pat",
@@ -648,11 +2867,23 @@
       "progressDialogue": "How many trades so far? We need the stalls full. The more variety, the better the market. People come from all over for a good market day.",
       "completeDialogue": "Ten trades! The market was a huge success. People are already asking when the next one is. You made this happen. Here — the other traders pooled some rare materials as a thank-you.",
       "requirements": [
-        { "type": "item_traded", "id": "any", "count": 10 }
+        {
+          "type": "item_traded",
+          "id": "any",
+          "count": 10
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "rare_materials_bundle", "amount": 1 },
-        { "type": "xp", "id": "social", "amount": 25 }
+        {
+          "type": "item",
+          "id": "rare_materials_bundle",
+          "amount": 1
+        },
+        {
+          "type": "xp",
+          "id": "social",
+          "amount": 25
+        }
       ],
       "prerequisites": {
         "chapter_min": 6,
@@ -661,9 +2892,78 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Market Day becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "rare_materials_bundle",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 25
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "market_day:community",
+            "npc": "neighbor_pat"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Market Day becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Market Day becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "rare_materials_bundle",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "market_day:stewardship",
+            "npc": "neighbor_pat"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Market Day becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     },
-
     {
       "id": "festival_champion",
       "npc": "neighbor_jo",
@@ -674,14 +2974,38 @@
       "progressDialogue": "How many festivals have you completed this year? Remember — all four, same year. Spring, Summer, Fall, Winter. No skipping!",
       "completeDialogue": "ALL FOUR! You did it! Festival Champion! I've never even gotten past three! This trophy is yours — and honestly? The whole neighborhood's going to score a little better with you inspiring everyone. Five percent better, I'd say.",
       "requirements": [
-        { "type": "festival_completed", "id": "spring", "count": 1 },
-        { "type": "festival_completed", "id": "summer", "count": 1 },
-        { "type": "festival_completed", "id": "fall", "count": 1 },
-        { "type": "festival_completed", "id": "winter", "count": 1 }
+        {
+          "type": "festival_completed",
+          "id": "spring",
+          "count": 1
+        },
+        {
+          "type": "festival_completed",
+          "id": "summer",
+          "count": 1
+        },
+        {
+          "type": "festival_completed",
+          "id": "fall",
+          "count": 1
+        },
+        {
+          "type": "festival_completed",
+          "id": "winter",
+          "count": 1
+        }
       ],
       "rewards": [
-        { "type": "item", "id": "trophy_festival_champion", "amount": 1 },
-        { "type": "item", "id": "scoring_buff_global_5pct", "amount": 1 }
+        {
+          "type": "item",
+          "id": "trophy_festival_champion",
+          "amount": 1
+        },
+        {
+          "type": "item",
+          "id": "scoring_buff_global_5pct",
+          "amount": 1
+        }
       ],
       "prerequisites": {
         "chapter_min": 8,
@@ -690,7 +3014,77 @@
         "quests_completed": []
       },
       "timed": false,
-      "deadline": null
+      "deadline": null,
+      "outcomes": [
+        {
+          "id": "community",
+          "label": "Share the result",
+          "summary": "Festival Champion becomes a neighborhood trust beat.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "trophy_festival_champion",
+              "amount": 1
+            },
+            {
+              "type": "item",
+              "id": "scoring_buff_global_5pct",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
+              "amount": 3
+            }
+          ],
+          "worldState": {
+            "branch": "community",
+            "flag": "festival_champion:community",
+            "npc": "neighbor_jo"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Share the result",
+              "summary": "Festival Champion becomes a neighborhood trust beat."
+            }
+          ]
+        },
+        {
+          "id": "stewardship",
+          "label": "Document the lesson",
+          "summary": "Festival Champion becomes a documented garden lesson.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "trophy_festival_champion",
+              "amount": 1
+            },
+            {
+              "type": "item",
+              "id": "scoring_buff_global_5pct",
+              "amount": 1
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 5
+            }
+          ],
+          "worldState": {
+            "branch": "stewardship",
+            "flag": "festival_champion:stewardship",
+            "npc": "neighbor_jo"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Document the lesson",
+              "summary": "Festival Champion becomes a documented garden lesson."
+            }
+          ]
+        }
+      ]
     }
   ]
 }

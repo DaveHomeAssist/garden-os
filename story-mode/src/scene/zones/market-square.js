@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsInZone } from '../../data/npcs.js';
 import { makeNpcMesh } from './zone-interactables.js';
-import { createShopPanel } from '../../ui/shop-panel.js';
+import { createTradePanel } from '../../ui/trade-panel.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
@@ -76,9 +76,8 @@ export function createMarketSquare(store, tracker) {
     interactables.push(mesh.userData.interactable);
   });
 
-  // Shop panel for stall interactions
-  const shopContainer = typeof document !== 'undefined' ? document.body : null;
-  const shopPanel = shopContainer ? createShopPanel(shopContainer) : null;
+  const tradeContainer = typeof document !== 'undefined' ? document.body : null;
+  const tradePanel = tradeContainer ? createTradePanel(tradeContainer) : null;
 
   // Register each market stall as an interactable that opens the shop
   STALLS.forEach((stall) => {
@@ -89,10 +88,10 @@ export function createMarketSquare(store, tracker) {
       position: { x: stall.x, y: 0.5, z: stall.z },
       radius: 1.8,
       onInteract: ({ store: interactStore }) => {
-        if (shopPanel && !shopPanel.isOpen()) {
+        if (tradePanel && !tradePanel.isOpen()) {
           const currentState = (interactStore ?? store).getState();
           const chapter = currentState?.campaign?.currentChapter ?? 1;
-          shopPanel.open(
+          tradePanel.open(
             { name: stall.name, chapter },
             interactStore ?? store,
           );
@@ -116,6 +115,6 @@ export function createMarketSquare(store, tracker) {
     },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
-    dispose() { shopPanel?.dispose(); tracker.disposeObject(root); },
+    dispose() { tradePanel?.dispose(); tracker.disposeObject(root); },
   };
 }

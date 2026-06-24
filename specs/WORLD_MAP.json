@@ -36,7 +36,7 @@
         "fall": "Amber leaves drifting across the yard, pumpkins on the porch, crisp air.",
         "winter": "Bare branches, frost on the cedar planks, a dusting of snow on the shed roof."
       },
-      "biomeCrops": []
+      "biomeCrops": ["lettuce"]
     },
     "neighborhood": {
       "id": "neighborhood",
@@ -79,7 +79,7 @@
         "fall": "Leaf piles on every curb, jack-o-lanterns on porches, wood smoke in the air.",
         "winter": "String lights on eaves, snowmen in yards, the crunch of salt underfoot."
       },
-      "biomeCrops": []
+      "biomeCrops": ["basil"]
     },
     "meadow": {
       "id": "meadow",
@@ -302,7 +302,7 @@
         "fall": "Hay bales and corn mazes, pumpkin carving stations, caramel apple booth, harvest wreaths.",
         "winter": "Twinkling string lights, hot cocoa stand, ice sculpture display, carolers on the stage."
       },
-      "biomeCrops": []
+      "biomeCrops": ["nasturtium"]
     },
     "market_square": {
       "id": "market_square",
@@ -343,7 +343,7 @@
         "fall": "Root vegetables and squash towers, apple cider press in the corner, wool scarves on a rack.",
         "winter": "Reduced stalls under heavy canvas, preserved goods and dried herbs, warm bread from a brick oven."
       },
-      "biomeCrops": []
+      "biomeCrops": ["compact_tomato", "pepper"]
     }
   },
   "connections": [

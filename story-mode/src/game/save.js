@@ -2,7 +2,14 @@
  * Save System — Multi-slot localStorage persistence.
  * 3 independent save slots, each storing campaign + season state.
  */
-import { DEFAULT_REPUTATION, DEFAULT_WORLD_STATE } from './state.js';
+import {
+  CAMPAIGN_SCHEMA_VERSION,
+  DEFAULT_CONTENT_PACK_STATE,
+  DEFAULT_CURRENCY_STATE,
+  DEFAULT_MARKET_STATE,
+  DEFAULT_REPUTATION,
+  DEFAULT_WORLD_STATE,
+} from './state.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -38,10 +45,31 @@ export function saveCampaign(campaign, slot) {
   };
   const toSave = {
     ...campaign,
-    version: 4,
+    version: CAMPAIGN_SCHEMA_VERSION,
     questLog: { ...(campaign.questLog ?? {}) },
+    choiceLog: { ...(campaign.choiceLog ?? {}) },
+    storyLog: Array.isArray(campaign.storyLog) ? [...campaign.storyLog] : [],
     reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },
+    zoneReputation: { ...(campaign.zoneReputation ?? {}) },
     worldState,
+    currency: {
+      ...DEFAULT_CURRENCY_STATE,
+      ...(campaign.currency ?? {}),
+      ledger: Array.isArray(campaign.currency?.ledger) ? [...campaign.currency.ledger] : [],
+    },
+    market: {
+      ...DEFAULT_MARKET_STATE,
+      ...(campaign.market ?? {}),
+      priceHistory: Array.isArray(campaign.market?.priceHistory) ? [...campaign.market.priceHistory].slice(-3) : [],
+      transactions: Array.isArray(campaign.market?.transactions) ? [...campaign.market.transactions] : [],
+    },
+    contentPacks: {
+      ...DEFAULT_CONTENT_PACK_STATE,
+      ...(campaign.contentPacks ?? {}),
+      loaded: Array.isArray(campaign.contentPacks?.loaded) ? [...campaign.contentPacks.loaded] : [],
+      rejected: Array.isArray(campaign.contentPacks?.rejected) ? [...campaign.contentPacks.rejected] : [],
+    },
+    contentProvenance: Array.isArray(campaign.contentProvenance) ? [...campaign.contentProvenance] : [],
     beds: campaign.beds ?? {},
     activeBedId: campaign.activeBedId ?? 'player_plot',
     biomeCropsUnlocked: Array.isArray(campaign.biomeCropsUnlocked)
@@ -67,14 +95,35 @@ export function loadCampaign(slot) {
     const version = parsed.version ?? 1;
     return {
       ...parsed,
-      version: 4,
+      version: CAMPAIGN_SCHEMA_VERSION,
       questLog: parsed.questLog ?? {},
+      choiceLog: parsed.choiceLog ?? {},
+      storyLog: Array.isArray(parsed.storyLog) ? [...parsed.storyLog] : [],
       reputation: { ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
+      zoneReputation: { ...(parsed.zoneReputation ?? {}) },
       worldState: {
         ...DEFAULT_WORLD_STATE,
         ...(parsed.worldState ?? {}),
         visitedZones: [...new Set(parsed.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
       },
+      currency: {
+        ...DEFAULT_CURRENCY_STATE,
+        ...(parsed.currency ?? {}),
+        ledger: Array.isArray(parsed.currency?.ledger) ? [...parsed.currency.ledger] : [],
+      },
+      market: {
+        ...DEFAULT_MARKET_STATE,
+        ...(parsed.market ?? {}),
+        priceHistory: Array.isArray(parsed.market?.priceHistory) ? [...parsed.market.priceHistory].slice(-3) : [],
+        transactions: Array.isArray(parsed.market?.transactions) ? [...parsed.market.transactions] : [],
+      },
+      contentPacks: {
+        ...DEFAULT_CONTENT_PACK_STATE,
+        ...(parsed.contentPacks ?? {}),
+        loaded: Array.isArray(parsed.contentPacks?.loaded) ? [...parsed.contentPacks.loaded] : [],
+        rejected: Array.isArray(parsed.contentPacks?.rejected) ? [...parsed.contentPacks.rejected] : [],
+      },
+      contentProvenance: Array.isArray(parsed.contentProvenance) ? [...parsed.contentProvenance] : [],
       beds: parsed.beds ?? {},
       activeBedId: parsed.activeBedId ?? 'player_plot',
       biomeCropsUnlocked: Array.isArray(parsed.biomeCropsUnlocked)

@@ -1,0 +1,17 @@
+{
+  "id": "Malformed Pack",
+  "version": "one",
+  "title": "",
+  "content": {
+    "crops": [
+      {
+        "id": "bad crop",
+        "name": "",
+        "chapterUnlock": 0
+      }
+    ],
+    "scripts": [
+      "not allowed"
+    ]
+  }
+}

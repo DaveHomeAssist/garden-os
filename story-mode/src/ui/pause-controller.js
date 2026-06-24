@@ -3,6 +3,7 @@ import { getPhaseLabel } from '../game/phase-machine.js';
 import { createSeasonState } from '../game/state.js';
 import { deleteCampaign } from '../game/save.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
+import { showStoryLogSheet } from './story-log.js';
 
 export function createPauseController({
   getState,
@@ -76,6 +77,12 @@ export function createPauseController({
     closePauseMenu();
     const state = getState();
     showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
+  });
+
+  document.getElementById('pause-story-log')?.addEventListener('click', () => {
+    closePauseMenu();
+    const state = getState();
+    showStoryLogSheet(pauseContainer, state.campaign);
   });
 
   document.getElementById('pause-bugs')?.addEventListener('click', () => {

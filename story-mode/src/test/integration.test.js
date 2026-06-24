@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE, GRID_UNLOCKS } from '../game/state.js';
+import { createGameState, createSeasonState, PHASES, PHASE_ORDER, CELL_COUNT, DEFAULT_REPUTATION, DEFAULT_WORLD_STATE, GRID_UNLOCKS, CAMPAIGN_SCHEMA_VERSION } from '../game/state.js';
 import { Actions, Store, cloneGameState, gameReducer, normalizeGameState } from '../game/store.js';
 import { advance, canAdvance } from '../game/phase-machine.js';
 import { applyEventEffect } from '../game/event-engine.js';
@@ -54,7 +54,6 @@ import { DayNightCycle } from '../scene/weather-fx.js';
 import { ToolManager } from '../game/tool-manager.js';
 import { MultiBedManager } from '../game/multi-bed.js';
 import * as THREE from 'three';
-import { createPlayerController } from '../game/player-controller.js';
 import { AudioManager, DEFAULT_SFX_LIBRARY } from '../audio/audio-manager.js';
 import { ToolHUD } from '../ui/tool-hud.js';
 import { BiomeCropBridge } from '../game/biome-crops.js';
@@ -2886,7 +2885,7 @@ describe('Phase 2 — Quests, NPCs, Reputation, Zones', () => {
       expect(loaded.reputation).toMatchObject(DEFAULT_REPUTATION);
       expect(loaded.worldState.currentZone).toBe(DEFAULT_WORLD_STATE.currentZone);
       expect(loaded.worldState.visitedZones).toEqual(DEFAULT_WORLD_STATE.visitedZones);
-      expect(loaded.version).toBe(4);
+      expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     });
   });
 });

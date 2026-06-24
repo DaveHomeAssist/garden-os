@@ -40,6 +40,7 @@ import {
   applyZoneTravelState,
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
+import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
 import {
   FACTION_BADGE_COLORS,
   FACTION_NAMES,
@@ -83,6 +84,7 @@ function bindUI({
   inputManager.registerAction('advance', { keys: ['Enter'] });
   inputManager.registerAction('toggle_palette', { keys: ['p'] });
   inputManager.registerAction('toggle_backpack', { keys: ['b'] });
+  inputManager.registerAction('toggle_world_map', { keys: ['m'] });
   inputManager.registerAction('select_cell', { keys: ['Enter', 'Space'], pointer: true, touch: true });
   inputManager.registerAction('next_tool', { keys: ['Tab', ']'] });
   inputManager.registerAction('prev_tool', { keys: ['Shift+Tab', '['] });
@@ -122,6 +124,7 @@ function bindUI({
 
   let backpackOpen = false;
   let cropPaletteOpen = false;
+  let worldMapOpen = false;
   let gameInputEnabled = true;
   let holdTimer = null;
   const interventionCtx = {};
@@ -287,8 +290,12 @@ function bindUI({
     return ZONE_NAMES[getCurrentZoneId()] ?? 'Unknown Zone';
   }
 
+  function getWorldSystems() {
+    return { reputationSystem, skillSystem, questEngine, festivalEngine };
+  }
+
   function getZoneTravelSummary(currentState = state) {
-    const systems = { reputationSystem, skillSystem, questEngine, festivalEngine };
+    const systems = getWorldSystems();
     const exits = WORLD_ZONE_INTERACTABLES[getCurrentZoneId()] ?? [];
     const available = exits.filter((entry) => (
       evaluateZoneAccess(entry.zoneId, currentState, systems).allowed
@@ -324,12 +331,39 @@ function bindUI({
     return blocker.message ?? 'Locked';
   }
 
+  async function travelToZone(zoneId) {
+    const currentZone = getCurrentZoneId();
+    const check = evaluateZoneAccess(zoneId, state, getWorldSystems());
+    if (!check.allowed) {
+      showToast(check.blockers[0]?.message ?? 'That area is still locked.', 2200, 'info');
+      return false;
+    }
+    const spawnPoint = resolveZoneSpawnPoint(currentZone, zoneId);
+    if (zoneManager?.transitionTo) {
+      const result = await zoneManager.transitionTo(zoneId, spawnPoint);
+      if (result?.blocked) {
+        showToast(result.blockers?.[0]?.message ?? 'That area is still locked.', 2200, 'info');
+        return false;
+      }
+    } else {
+      dispatch({
+        type: Actions.ZONE_CHANGED,
+        payload: { fromZone: currentZone, toZone: zoneId, spawnPoint },
+      });
+    }
+    showToast(`Entered ${ZONE_NAMES[zoneId] ?? zoneId}.`, 1800, 'success');
+    syncWorldInteractables();
+    updateHUD();
+    persistState();
+    return true;
+  }
+
   function syncWorldInteractables() {
     registeredWorldInteractableIds.forEach((id) => interactionSystem.unregisterInteractable(id));
     registeredWorldInteractableIds = [];
 
     const currentZone = getCurrentZoneId();
-    const systems = { reputationSystem, skillSystem, questEngine, festivalEngine };
+    const systems = getWorldSystems();
     const exits = WORLD_ZONE_INTERACTABLES[currentZone] ?? [];
     exits.forEach((entry) => {
       const interactableId = `zone:${entry.id}`;
@@ -343,19 +377,7 @@ function bindUI({
             : getZoneBlockerText(check.blockers[0]);
         },
         onInteract: () => {
-          const check = evaluateZoneAccess(entry.zoneId, state, systems);
-          if (!check.allowed) {
-            showToast(check.blockers[0]?.message ?? 'That area is still locked.', 2200, 'info');
-            return;
-          }
-          const spawnPoint = resolveZoneSpawnPoint(currentZone, entry.zoneId);
-          dispatch({
-            type: Actions.ZONE_CHANGED,
-            payload: { fromZone: currentZone, toZone: entry.zoneId, spawnPoint },
-          });
-          showToast(`Entered ${ZONE_NAMES[entry.zoneId] ?? entry.zoneId}.`, 1800, 'success');
-          updateHUD();
-          persistState();
+          void travelToZone(entry.zoneId);
         },
       });
       registeredWorldInteractableIds.push(interactableId);
@@ -416,6 +438,7 @@ function bindUI({
       && !interventionTargeting.isActive()
       && !backpackOpen
       && !cropPaletteOpen
+      && !worldMapOpen
       && state.season.phase === PHASES.PLANNING
     );
   }
@@ -719,12 +742,23 @@ function bindUI({
     syncToolHUDVisibility();
   }
 
+  function closeWorldMap() {
+    const sheet = panelContainer?.querySelector('#world-map-panel');
+    if (sheet) {
+      sheet.classList.remove('is-open');
+      setTimeout(() => sheet.remove(), 260);
+    }
+    worldMapOpen = false;
+    syncToolHUDVisibility();
+  }
+
   function closePanelSheets() {
     if (panelContainer) {
       panelContainer.innerHTML = '';
     }
     cropPaletteOpen = false;
     backpackOpen = false;
+    worldMapOpen = false;
     fabBackpack?.classList.remove('is-open');
     if (!interventionTargeting.isActive()) {
       scene.clearTargeting?.();
@@ -795,6 +829,7 @@ function bindUI({
   function showBackpack() {
     scene.clearTargeting?.();
     closePalette();
+    closeWorldMap();
     showBackpackPanel(panelContainer, buildBackpackData(), () => {
       backpackOpen = false;
       fabBackpack?.classList.remove('is-open');
@@ -803,6 +838,28 @@ function bindUI({
     backpackOpen = true;
     fabBackpack?.classList.add('is-open');
     syncToolHUDVisibility();
+  }
+
+  function showWorldMap() {
+    scene.clearTargeting?.();
+    closePalette();
+    closeBackpackPanel();
+    const model = buildWorldMapModel(state, getWorldSystems());
+    showWorldMapPanel(panelContainer, model, (zoneId) => {
+      closeWorldMap();
+      void travelToZone(zoneId);
+    });
+    worldMapOpen = true;
+    syncToolHUDVisibility();
+  }
+
+  function toggleWorldMap() {
+    if (interventionTargeting.isActive()) return;
+    if (worldMapOpen) {
+      closeWorldMap();
+    } else {
+      showWorldMap();
+    }
   }
 
   function openWinterReviewOverlay() {
@@ -1086,6 +1143,7 @@ function bindUI({
   function showCropPalette() {
     scene.clearTargeting?.();
     closeBackpackPanel();
+    closeWorldMap();
     if (toolHUD && letItGrowInteractionMode) {
       toolHUD.selectTool('plant');
       syncPlayerTool();
@@ -1311,7 +1369,7 @@ function bindUI({
       return;
     }
 
-    const activeReadOnlySheet = pauseContainer?.querySelector('#season-journal-sheet, #bug-reports-sheet');
+    const activeReadOnlySheet = pauseContainer?.querySelector('#season-journal-sheet, #story-log-sheet, #bug-reports-sheet');
     if (event?.key === 'Escape' && activeReadOnlySheet) {
       payload.preventDefault();
       activeReadOnlySheet.querySelector('[data-close="true"]')?.click();
@@ -1351,6 +1409,12 @@ function bindUI({
     if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
     payload.preventDefault();
     toggleBackpack();
+  });
+
+  inputManager.on('toggle_world_map', (payload) => {
+    if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    payload.preventDefault();
+    toggleWorldMap();
   });
 
   dialoguePanel.getSkipButton().addEventListener('click', () => cutsceneMachine.skip());
@@ -1508,6 +1572,7 @@ function bindUI({
       proximityMode: letItGrowInteractionMode,
       highlightedInteraction: interactionSystem.getHighlighted(),
       routes: getZoneTravelSummary(),
+      worldMap: buildWorldMapModel(state, getWorldSystems()),
       foraging: getForagingSummary(),
       selectedTool: getSelectedToolId(),
       toolHudVisible: shouldShowToolHUD(),

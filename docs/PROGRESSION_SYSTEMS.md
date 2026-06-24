@@ -163,5 +163,21 @@ Non-goals:
 - no skill-tree inflation,
 - no live-service compulsion mechanics.
 
+## 12) Bounded Stewardship Exchange Doctrine
+
+Decision logged 2026-06-24 for Phase 7:
+
+Garden OS may use a bounded exchange balance for readable trade previews, but it must not become a repeatable loot economy or grind loop.
+
+Rules:
+1. Credits are a settlement record for buy, sell, and barter at the market.
+2. Prices are deterministic from seed and season, not demand simulation.
+3. Sell values stay below buy values, so cycling transactions cannot generate profit.
+4. Market history is informational and limited to the last three seasons.
+5. Exchange supports stewardship pacing only: seeds, tools, and garden materials.
+6. No rarity drops, loot boxes, speculation, idle income, or live-service pressure.
+
+This resolves Phase 7 by scoping the market as a transparent household ledger, not a loot economy.
+
 Core thesis:
 > Garden OS progression is the slow accumulation of practical judgment, trust, and continuity in one specific backyard system.

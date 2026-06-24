@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createGameState } from './state.js';
+import { CAMPAIGN_SCHEMA_VERSION, createGameState } from './state.js';
 import { listSaves, loadCampaign, loadSeasonState, saveCampaign, saveSeasonState } from './save.js';
 
 const localStorageMock = (() => {
@@ -46,7 +46,7 @@ describe('save', () => {
     expect(loaded.questLog.gus_tomatoes.state).toBe('ACCEPTED');
     expect(loaded.reputation.old_gus).toBe(20);
     expect(loaded.worldState.currentZone).toBe('neighborhood');
-    expect(loaded.version).toBe(4);
+    expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
   });
 
   it('applies defaults when loading an old-format save', () => {
@@ -112,7 +112,7 @@ describe('save', () => {
 
     const loaded = loadCampaign(0);
 
-    expect(loaded.version).toBe(4);
+    expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     expect(loaded.beds).toEqual({});
     expect(loaded.activeBedId).toBe('player_plot');
     expect(loaded.biomeCropsUnlocked).toEqual([]);
@@ -134,7 +134,7 @@ describe('save', () => {
     saveCampaign(state.campaign, 1);
     const loaded = loadCampaign(1);
 
-    expect(loaded.version).toBe(4);
+    expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     expect(loaded.beds).toEqual({
       forest_bed: { gridCols: 6, gridRows: 3, grid: [], biome: 'forest_edge' },
     });

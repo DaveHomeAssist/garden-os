@@ -18,12 +18,14 @@ describe('BiomeCropBridge', () => {
     const crops = bridge.getBiomeCropsForZone('forest_edge');
     expect(crops).toContain('wild_garlic');
     expect(crops).toContain('shiitake_mushroom');
-    expect(crops).toHaveLength(2);
+    expect(crops).toContain('woodland_strawberry');
+    expect(crops).toHaveLength(3);
   });
 
-  it('getBiomeCropsForZone returns empty for zones with no biome crops', () => {
+  it('getBiomeCropsForZone returns world map crops for starter zones', () => {
     const { bridge } = makeBridge();
-    expect(bridge.getBiomeCropsForZone('player_plot')).toEqual([]);
+    expect(bridge.getBiomeCropsForZone('player_plot')).toEqual(['lettuce']);
+    expect(bridge.getBiomeCropsForZone('neighborhood')).toEqual(['basil']);
     expect(bridge.getBiomeCropsForZone('unknown_zone')).toEqual([]);
   });
 
@@ -35,10 +37,10 @@ describe('BiomeCropBridge', () => {
     expect(bridge.getZoneForCrop('prairie_onion')).toBe('meadow');
   });
 
-  it('getZoneForCrop returns null for non-biome crops', () => {
+  it('getZoneForCrop maps starter crops without making them exclusive', () => {
     const { bridge } = makeBridge();
     expect(bridge.getZoneForCrop('cherry_tom')).toBeNull();
-    expect(bridge.getZoneForCrop('basil')).toBeNull();
+    expect(bridge.getZoneForCrop('basil')).toBe('neighborhood');
     expect(bridge.getZoneForCrop('nonexistent_crop')).toBeNull();
   });
 

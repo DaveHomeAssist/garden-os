@@ -1,0 +1,24 @@
+{
+  "id": "riverside_neighbor",
+  "version": "1.0.0",
+  "title": "Riverside Neighbor",
+  "author": "Garden OS",
+  "content": {
+    "npcs": [
+      {
+        "id": "rhea",
+        "name": "Rhea",
+        "role": "Riverside Seed Saver",
+        "personality": "Careful and observant"
+      }
+    ],
+    "zones": [
+      {
+        "id": "riverside_lean_to",
+        "name": "Riverside Lean To",
+        "biome": "riverside",
+        "description": "A small seed drying lean to beside the path."
+      }
+    ]
+  }
+}

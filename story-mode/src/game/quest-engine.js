@@ -33,6 +33,20 @@ class QuestEngine {
     return this.getState().campaign.questLog?.[questId] ?? null;
   }
 
+  getQuestOutcomes(questOrId) {
+    const quest = typeof questOrId === 'string' ? this.getQuestById(questOrId) : questOrId;
+    return Array.isArray(quest?.outcomes) ? quest.outcomes : [];
+  }
+
+  resolveQuestOutcome(questId, choiceId) {
+    const outcomes = this.getQuestOutcomes(questId);
+    if (!outcomes.length) return null;
+    if (choiceId) {
+      return outcomes.find((outcome) => outcome.id === choiceId) ?? null;
+    }
+    return outcomes[0] ?? null;
+  }
+
   meetsPrerequisites(quest, state) {
     const prereq = quest.prerequisites ?? {};
     if ((state.campaign.currentChapter ?? 1) < (prereq.chapter_min ?? 1)) return false;
@@ -158,19 +172,26 @@ class QuestEngine {
     return changes;
   }
 
-  turnInQuest(questId) {
+  turnInQuest(questId, choiceId = null) {
     const quest = this.getQuestById(questId);
     const entry = this.getQuestEntry(questId);
     if (!quest || entry?.state !== QuestStates.READY_TO_TURN_IN) return null;
+    const outcome = this.resolveQuestOutcome(questId, choiceId);
+    if (this.getQuestOutcomes(quest).length && !outcome) return null;
+    const rewards = outcome?.rewards ?? quest.rewards ?? [];
     this.store.dispatch({
       type: Actions.COMPLETE_QUEST,
       payload: {
         questId,
-        rewards: quest.rewards ?? [],
+        title: quest.title,
+        choiceId: choiceId ?? outcome?.id ?? null,
+        outcome,
+        rewards,
+        storyEntries: outcome?.storyLog ?? [],
         completedAt: Date.now(),
       },
     });
-    return quest.rewards ?? [];
+    return rewards;
   }
 
   checkTimedQuests() {

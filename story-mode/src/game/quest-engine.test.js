@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QuestEngine, QuestStates } from './quest-engine.js';
 import { PHASES, createGameState } from './state.js';
 import { Actions, Store } from './store.js';
+import { assertValidQuestDeck } from './quest-deck-validator.js';
 
 const TEST_DECK = [
   {
@@ -160,5 +161,65 @@ describe('QuestEngine', () => {
     expect(engine.acceptQuest('quest_b')).toBe(true);
     expect(engine.acceptQuest('quest_c')).toBe(true);
     expect(engine.acceptQuest('quest_d')).toBe(false);
+  });
+
+  it('validates the canonical quest deck branch contract', () => {
+    const result = assertValidQuestDeck();
+    expect(result.branchingQuestCount).toBeGreaterThanOrEqual(10);
+  });
+
+  it('resolves quest outcomes deterministically from player choice', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(123_456);
+    const branchDeck = [
+      {
+        id: 'branch_quest',
+        npc: 'lila',
+        title: 'Branch Quest',
+        requirements: [],
+        rewards: [{ type: 'reputation', id: 'lila', amount: 1 }],
+        prerequisites: { chapter_min: 1, season: null, reputation: {}, quests_completed: [] },
+        outcomes: [
+          {
+            id: 'community',
+            label: 'Share the result',
+            rewards: [{ type: 'reputation', id: 'lila', amount: 5 }],
+            worldState: { branch: 'community' },
+            storyLog: [{ type: 'choice', label: 'Share the result', summary: 'Shared with neighbors.' }],
+          },
+          {
+            id: 'stewardship',
+            label: 'Document the lesson',
+            rewards: [{ type: 'xp', id: 'social', amount: 5 }],
+            worldState: { branch: 'stewardship' },
+            storyLog: [{ type: 'choice', label: 'Document the lesson', summary: 'Documented for later.' }],
+          },
+        ],
+        timed: false,
+      },
+    ];
+
+    const makeBranchEngine = () => new QuestEngine(new Store(createGameState()), branchDeck);
+    const communityEngine = makeBranchEngine();
+    const stewardshipEngine = makeBranchEngine();
+
+    communityEngine.acceptQuest('branch_quest');
+    stewardshipEngine.acceptQuest('branch_quest');
+    communityEngine.evaluateProgress();
+    stewardshipEngine.evaluateProgress();
+
+    communityEngine.turnInQuest('branch_quest', 'community');
+    stewardshipEngine.turnInQuest('branch_quest', 'stewardship');
+
+    const communityState = communityEngine.store.getState().campaign;
+    const stewardshipState = stewardshipEngine.store.getState().campaign;
+
+    expect(communityState.choiceLog.branch_quest.outcomeId).toBe('community');
+    expect(stewardshipState.choiceLog.branch_quest.outcomeId).toBe('stewardship');
+    expect(communityState.worldState.questOutcomes.branch_quest.branch).toBe('community');
+    expect(stewardshipState.worldState.questOutcomes.branch_quest.branch).toBe('stewardship');
+    expect(communityState.reputation.lila).toBe(5);
+    expect(stewardshipState.reputation.lila).toBe(0);
+    expect(communityState.storyLog.some((entry) => entry.outcomeId === 'community')).toBe(true);
+    expect(stewardshipState.storyLog.some((entry) => entry.outcomeId === 'stewardship')).toBe(true);
   });
 });

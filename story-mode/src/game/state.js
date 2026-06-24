@@ -21,6 +21,7 @@ const SEASONS = ['spring', 'summer', 'fall', 'winter'];
 const COLS = 8;
 const ROWS = 4;
 const CELL_COUNT = COLS * ROWS;
+const CAMPAIGN_SCHEMA_VERSION = 8;
 const GRID_UNLOCKS = [
   { cols: 8, rows: 4, chapter: 1, gardeningLevel: 1 },
   { cols: 8, rows: 6, chapter: 6, gardeningLevel: 5 },
@@ -37,6 +38,9 @@ const DEFAULT_WORLD_STATE = {
     history: {},
   },
 };
+const DEFAULT_CURRENCY_STATE = { balance: 100, ledger: [] };
+const DEFAULT_MARKET_STATE = { seed: 'garden-os-market', priceHistory: [], transactions: [] };
+const DEFAULT_CONTENT_PACK_STATE = { loaded: [], rejected: [] };
 
 // All phases in order for progress indicator
 const PHASE_ORDER = [
@@ -121,7 +125,7 @@ function createCampaignState() {
   inventory = addItemToInventoryState(inventory, 'pest_spray', 3).inventory;
   inventory = addItemToInventoryState(inventory, 'mulch_bag', 3).inventory;
   return {
-    version: 4,
+    version: CAMPAIGN_SCHEMA_VERSION,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     currentChapter: 1,
@@ -141,7 +145,10 @@ function createCampaignState() {
     soilHealth: Array(CELL_COUNT).fill(1.0),
     previousGrid: null,
     questLog: {},
+    choiceLog: {},
+    storyLog: [],
     reputation: { ...DEFAULT_REPUTATION },
+    zoneReputation: {},
     worldState: { ...DEFAULT_WORLD_STATE, visitedZones: [...DEFAULT_WORLD_STATE.visitedZones] },
     activeNeighbors: ['neighbor_gardener', 'neighbor_beekeeper'],
     inventory,
@@ -152,6 +159,10 @@ function createCampaignState() {
     lastLevelUp: null,
     gameMode: 'story',
     tokens: 0,
+    currency: { ...DEFAULT_CURRENCY_STATE, ledger: [] },
+    market: { ...DEFAULT_MARKET_STATE, priceHistory: [], transactions: [] },
+    contentPacks: { ...DEFAULT_CONTENT_PACK_STATE, loaded: [], rejected: [] },
+    contentProvenance: [],
     beds: {},
     activeBedId: 'player_plot',
   };
@@ -258,6 +269,7 @@ export {
   ROWS,
   CELL_COUNT,
   GRID_UNLOCKS,
+  CAMPAIGN_SCHEMA_VERSION,
   PHASE_ORDER,
   DEFAULT_SITE_CONFIG,
   attachGridMeta,
@@ -270,6 +282,9 @@ export {
   createPlannerState,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
+  DEFAULT_CURRENCY_STATE,
+  DEFAULT_MARKET_STATE,
+  DEFAULT_CONTENT_PACK_STATE,
   getGridCols,
   getGridRows,
   getAvailableGridSizes,

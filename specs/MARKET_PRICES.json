@@ -1,0 +1,60 @@
+{
+  "$schema": "garden-os-market-prices-v1",
+  "version": 1,
+  "seedDefault": "garden-os-market",
+  "currency": {
+    "id": "garden_credit",
+    "label": "Garden Credits",
+    "startingBalance": 100
+  },
+  "items": {
+    "lettuce_seed": {
+      "label": "Lettuce Seeds",
+      "type": "seed",
+      "basePrice": 5,
+      "seasonMultipliers": { "spring": 0.9, "summer": 1.0, "fall": 1.1, "winter": 1.2 }
+    },
+    "basil_seed": {
+      "label": "Basil Seeds",
+      "type": "seed",
+      "basePrice": 6,
+      "seasonMultipliers": { "spring": 1.0, "summer": 0.9, "fall": 1.1, "winter": 1.25 }
+    },
+    "compact_tomato_seed": {
+      "label": "Compact Tomato Seeds",
+      "type": "seed",
+      "basePrice": 9,
+      "seasonMultipliers": { "spring": 1.0, "summer": 0.85, "fall": 1.15, "winter": 1.35 }
+    },
+    "pepper_seed": {
+      "label": "Pepper Seeds",
+      "type": "seed",
+      "basePrice": 8,
+      "seasonMultipliers": { "spring": 1.05, "summer": 0.9, "fall": 1.1, "winter": 1.3 }
+    },
+    "compost": {
+      "label": "Compost",
+      "type": "material",
+      "basePrice": 12,
+      "seasonMultipliers": { "spring": 1.15, "summer": 1.0, "fall": 0.9, "winter": 1.05 }
+    },
+    "fertilizer_bag": {
+      "label": "Fertilizer",
+      "type": "material",
+      "basePrice": 14,
+      "seasonMultipliers": { "spring": 1.1, "summer": 1.0, "fall": 0.95, "winter": 1.1 }
+    },
+    "watering_can": {
+      "label": "Watering Can",
+      "type": "tool",
+      "basePrice": 22,
+      "seasonMultipliers": { "spring": 1.0, "summer": 1.1, "fall": 0.95, "winter": 0.9 }
+    },
+    "garden_twine": {
+      "label": "Garden Twine",
+      "type": "material",
+      "basePrice": 7,
+      "seasonMultipliers": { "spring": 1.0, "summer": 1.05, "fall": 0.95, "winter": 0.9 }
+    }
+  }
+}

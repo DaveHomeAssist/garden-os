@@ -1,0 +1,29 @@
+{
+  "id": "spring_herbs",
+  "version": "1.0.0",
+  "title": "Spring Herbs",
+  "author": "Garden OS",
+  "content": {
+    "crops": [
+      {
+        "id": "lemon_balm",
+        "name": "Lemon Balm",
+        "emoji": "🌿",
+        "short": "LEMB",
+        "faction": "herbs",
+        "sunMin": 3,
+        "sunIdeal": 5,
+        "support": false,
+        "shadeScore": 4,
+        "coolSeason": true,
+        "tall": false,
+        "water": 2,
+        "companions": ["basil"],
+        "conflicts": [],
+        "chapterUnlock": 2,
+        "recipes": [],
+        "seasonalMultipliers": { "spring": 1.0, "summer": 0.8, "fall": 0.8, "winter": 0.2 }
+      }
+    ]
+  }
+}

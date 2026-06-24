@@ -1,0 +1,55 @@
+{
+  "id": "porch_quest",
+  "version": "1.0.0",
+  "title": "Porch Quest",
+  "author": "Garden OS",
+  "content": {
+    "quests": [
+      {
+        "id": "porch_cuttings",
+        "npc": "neighbor_pat",
+        "type": "fetch",
+        "title": "Porch Cuttings",
+        "description": "Pat wants a small tray of starter herbs for the porch rail.",
+        "requirements": [
+          { "type": "crop_harvested", "id": "basil", "count": 1 }
+        ],
+        "rewards": [
+          { "type": "reputation", "id": "neighbor_pat", "amount": 5 }
+        ],
+        "outcomes": [
+          {
+            "id": "share_tray",
+            "label": "Share a full tray",
+            "rewards": [
+              { "type": "reputation", "id": "neighbor_pat", "amount": 8 }
+            ],
+            "worldState": { "branch": "share_tray" },
+            "storyLog": [
+              { "type": "choice", "label": "Share a full tray", "summary": "Pat gets enough herbs to share." }
+            ]
+          },
+          {
+            "id": "keep_notes",
+            "label": "Keep propagation notes",
+            "rewards": [
+              { "type": "xp", "id": "gardening", "amount": 5 }
+            ],
+            "worldState": { "branch": "keep_notes" },
+            "storyLog": [
+              { "type": "choice", "label": "Keep propagation notes", "summary": "The journal keeps the cutting method." }
+            ]
+          }
+        ],
+        "prerequisites": {
+          "chapter_min": 1,
+          "season": null,
+          "reputation": {},
+          "quests_completed": []
+        },
+        "timed": false,
+        "deadline": null
+      }
+    ]
+  }
+}

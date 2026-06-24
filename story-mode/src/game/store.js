@@ -4,6 +4,10 @@ import {
   createGameState,
   createGrid,
   createSeasonState,
+  CAMPAIGN_SCHEMA_VERSION,
+  DEFAULT_CONTENT_PACK_STATE,
+  DEFAULT_CURRENCY_STATE,
+  DEFAULT_MARKET_STATE,
   DEFAULT_REPUTATION,
   DEFAULT_WORLD_STATE,
   getAvailableGridSizes,
@@ -95,6 +99,23 @@ const Actions = {
   SWITCH_BED: 'SWITCH_BED',
   EXPAND_BED_GRID: 'EXPAND_BED_GRID',
   SET_TOKENS: 'SET_TOKENS',
+  ADD_STORY_LOG: 'ADD_STORY_LOG',
+  RECORD_QUEST_CHOICE: 'RECORD_QUEST_CHOICE',
+  ADJUST_CURRENCY: 'ADJUST_CURRENCY',
+  RECORD_MARKET_PRICES: 'RECORD_MARKET_PRICES',
+  RECORD_MARKET_TRANSACTION: 'RECORD_MARKET_TRANSACTION',
+  REGISTER_CONTENT_PACK: 'REGISTER_CONTENT_PACK',
+  REJECT_CONTENT_PACK: 'REJECT_CONTENT_PACK',
+};
+
+const REPUTATION_ZONE_EFFECTS = {
+  old_gus: ['neighborhood', 'forest_edge'],
+  maya: ['meadow', 'greenhouse', 'market_square'],
+  lila: ['neighborhood', 'market_square', 'festival_grounds'],
+  neighbor_pat: ['neighborhood'],
+  neighbor_beekeeper: ['meadow'],
+  neighbor_composter: ['market_square'],
+  neighbor_birdwatcher: ['riverside', 'forest_edge'],
 };
 
 function cloneValue(value) {
@@ -103,6 +124,22 @@ function cloneValue(value) {
 
 function cloneArray(value) {
   return Array.isArray(value) ? value.map((entry) => cloneValue(entry)) : [];
+}
+
+function createStoryLogEntry(type, payload = {}) {
+  return {
+    id: payload.id ?? `${type}:${payload.questId ?? payload.npcId ?? payload.zoneId ?? 'event'}:${payload.timestamp ?? Date.now()}`,
+    type,
+    timestamp: payload.timestamp ?? Date.now(),
+    ...cloneValue(payload),
+  };
+}
+
+function normalizeStoryLogEntry(entry, fallback = {}) {
+  return createStoryLogEntry(entry?.type ?? fallback.type ?? 'story', {
+    ...fallback,
+    ...(entry ?? {}),
+  });
 }
 
 function normalizeCell(cell = {}) {
@@ -164,6 +201,7 @@ function normalizeCampaign(rawCampaign) {
   return {
     ...fallbackCampaign,
     ...campaign,
+    version: CAMPAIGN_SCHEMA_VERSION,
     pantry: { ...(fallbackCampaign.pantry ?? {}), ...(campaign.pantry ?? {}) },
     completedChapters: cloneArray(campaign.completedChapters),
     seasonHistory: cloneArray(campaign.seasonHistory),
@@ -186,7 +224,10 @@ function normalizeCampaign(rawCampaign) {
       : null,
     lastSeasonReview: campaign.lastSeasonReview ?? null,
     questLog: { ...(fallbackCampaign.questLog ?? {}), ...(campaign.questLog ?? {}) },
+    choiceLog: { ...(fallbackCampaign.choiceLog ?? {}), ...(campaign.choiceLog ?? {}) },
+    storyLog: cloneArray(campaign.storyLog ?? fallbackCampaign.storyLog),
     reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },
+    zoneReputation: { ...(fallbackCampaign.zoneReputation ?? {}), ...(campaign.zoneReputation ?? {}) },
     worldState: {
       ...worldState,
       currentZone,
@@ -201,6 +242,26 @@ function normalizeCampaign(rawCampaign) {
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
     tokens: Number(campaign.tokens ?? fallbackCampaign.tokens ?? 0),
+    currency: {
+      ...DEFAULT_CURRENCY_STATE,
+      ...(campaign.currency ?? {}),
+      balance: Number(campaign.currency?.balance ?? campaign.currencyBalance ?? fallbackCampaign.currency.balance),
+      ledger: cloneArray(campaign.currency?.ledger ?? fallbackCampaign.currency.ledger),
+    },
+    market: {
+      ...DEFAULT_MARKET_STATE,
+      ...(campaign.market ?? {}),
+      seed: campaign.market?.seed ?? fallbackCampaign.market.seed,
+      priceHistory: cloneArray(campaign.market?.priceHistory ?? fallbackCampaign.market.priceHistory).slice(-3),
+      transactions: cloneArray(campaign.market?.transactions ?? fallbackCampaign.market.transactions),
+    },
+    contentPacks: {
+      ...DEFAULT_CONTENT_PACK_STATE,
+      ...(campaign.contentPacks ?? {}),
+      loaded: cloneArray(campaign.contentPacks?.loaded ?? fallbackCampaign.contentPacks.loaded),
+      rejected: cloneArray(campaign.contentPacks?.rejected ?? fallbackCampaign.contentPacks.rejected),
+    },
+    contentProvenance: cloneArray(campaign.contentProvenance ?? fallbackCampaign.contentProvenance),
     beds: cloneValue(campaign.beds ?? fallbackCampaign.beds ?? {}),
     activeBedId: campaign.activeBedId ?? fallbackCampaign.activeBedId ?? 'player_plot',
   };
@@ -321,6 +382,22 @@ function clampReputation(value) {
   return Math.max(0, Math.min(100, value));
 }
 
+function clampCurrency(value) {
+  return Math.max(0, Math.round(Number(value ?? 0)));
+}
+
+function applyZoneReputation(nextState, npcId, amount) {
+  const zones = REPUTATION_ZONE_EFFECTS[npcId] ?? [];
+  if (!zones.length) return;
+  const delta = Number(amount ?? 0);
+  nextState.campaign.zoneReputation = { ...(nextState.campaign.zoneReputation ?? {}) };
+  zones.forEach((zoneId) => {
+    nextState.campaign.zoneReputation[zoneId] = clampReputation(
+      (nextState.campaign.zoneReputation[zoneId] ?? 0) + delta,
+    );
+  });
+}
+
 function applyQuestRewards(nextState, rewards = []) {
   for (const reward of rewards) {
     if (!reward?.type || !reward.id) continue;
@@ -331,6 +408,7 @@ function applyQuestRewards(nextState, rewards = []) {
           ...(nextState.campaign.reputation ?? {}),
           [reward.id]: clampReputation((nextState.campaign.reputation?.[reward.id] ?? 0) + amount),
         };
+        applyZoneReputation(nextState, reward.id, amount);
         break;
       case 'seed': {
         const unlocked = new Set(nextState.campaign.cropsUnlocked ?? []);
@@ -625,15 +703,61 @@ function gameReducer(state, action = {}) {
       if (!questId) return state;
       const nextState = cloneGameState(state);
       const current = nextState.campaign.questLog?.[questId] ?? {};
+      const outcome = cloneValue(payload.outcome) ?? null;
       nextState.campaign.questLog = {
         ...(nextState.campaign.questLog ?? {}),
         [questId]: {
           ...current,
           state: 'COMPLETED',
           completedAt: payload.completedAt ?? Date.now(),
+          outcomeId: outcome?.id ?? current.outcomeId ?? null,
+          choiceId: payload.choiceId ?? outcome?.id ?? current.choiceId ?? null,
         },
       };
+      if (outcome?.id) {
+        nextState.campaign.choiceLog = {
+          ...(nextState.campaign.choiceLog ?? {}),
+          [questId]: {
+            questId,
+            outcomeId: outcome.id,
+            choiceId: payload.choiceId ?? outcome.id,
+            label: outcome.label ?? outcome.id,
+            resolvedAt: payload.completedAt ?? Date.now(),
+          },
+        };
+        nextState.campaign.worldState = {
+          ...DEFAULT_WORLD_STATE,
+          ...(nextState.campaign.worldState ?? {}),
+          questOutcomes: {
+            ...(nextState.campaign.worldState?.questOutcomes ?? {}),
+            [questId]: {
+              outcomeId: outcome.id,
+              choiceId: payload.choiceId ?? outcome.id,
+              ...(outcome.worldState ?? {}),
+            },
+          },
+          forageState: normalizeForageState(nextState.campaign.worldState?.forageState),
+        };
+      }
       applyQuestRewards(nextState, payload.rewards ?? []);
+      nextState.campaign.storyLog = [
+        ...(nextState.campaign.storyLog ?? []),
+        createStoryLogEntry('quest_complete', {
+          questId,
+          title: payload.title ?? questId,
+          outcomeId: outcome?.id ?? null,
+          label: outcome?.label ?? null,
+          reputation: cloneValue(nextState.campaign.reputation ?? {}),
+          zoneReputation: cloneValue(nextState.campaign.zoneReputation ?? {}),
+          timestamp: payload.completedAt ?? Date.now(),
+        }),
+        ...(payload.storyEntries ? cloneArray(payload.storyEntries).map((entry) => normalizeStoryLogEntry(entry, {
+          type: 'choice',
+          questId,
+          outcomeId: outcome?.id ?? null,
+          timestamp: payload.completedAt ?? Date.now(),
+        })) : []),
+      ];
       return nextState;
     }
 
@@ -671,10 +795,22 @@ function gameReducer(state, action = {}) {
       const npcId = payload.npcId;
       if (!npcId) return state;
       const nextState = cloneGameState(state);
+      const amount = payload.amount ?? 0;
       nextState.campaign.reputation = {
         ...(nextState.campaign.reputation ?? {}),
-        [npcId]: clampReputation((nextState.campaign.reputation?.[npcId] ?? 0) + (payload.amount ?? 0)),
+        [npcId]: clampReputation((nextState.campaign.reputation?.[npcId] ?? 0) + amount),
       };
+      applyZoneReputation(nextState, npcId, amount);
+      nextState.campaign.storyLog = [
+        ...(nextState.campaign.storyLog ?? []),
+        createStoryLogEntry('reputation', {
+          npcId,
+          amount,
+          value: nextState.campaign.reputation[npcId],
+          zoneReputation: cloneValue(nextState.campaign.zoneReputation ?? {}),
+          timestamp: payload.timestamp ?? Date.now(),
+        }),
+      ];
       return nextState;
     }
 
@@ -960,6 +1096,115 @@ function gameReducer(state, action = {}) {
     case Actions.SET_TOKENS: {
       const nextState = cloneGameState(state);
       nextState.campaign.tokens = Math.max(0, Number(payload.tokens ?? 0));
+      return nextState;
+    }
+
+    case Actions.ADD_STORY_LOG: {
+      if (!payload.entry && !payload.type) return state;
+      const nextState = cloneGameState(state);
+      const entry = payload.entry ? cloneValue(payload.entry) : createStoryLogEntry(payload.type, payload);
+      nextState.campaign.storyLog = [...(nextState.campaign.storyLog ?? []), entry];
+      return nextState;
+    }
+
+    case Actions.RECORD_QUEST_CHOICE: {
+      if (!payload.questId || !payload.outcomeId) return state;
+      const nextState = cloneGameState(state);
+      nextState.campaign.choiceLog = {
+        ...(nextState.campaign.choiceLog ?? {}),
+        [payload.questId]: {
+          questId: payload.questId,
+          outcomeId: payload.outcomeId,
+          choiceId: payload.choiceId ?? payload.outcomeId,
+          label: payload.label ?? payload.outcomeId,
+          resolvedAt: payload.resolvedAt ?? Date.now(),
+        },
+      };
+      return nextState;
+    }
+
+    case Actions.ADJUST_CURRENCY: {
+      const nextState = cloneGameState(state);
+      const delta = Number(payload.delta ?? 0);
+      const before = nextState.campaign.currency?.balance ?? 0;
+      const after = clampCurrency(before + delta);
+      nextState.campaign.currency = {
+        ...(nextState.campaign.currency ?? DEFAULT_CURRENCY_STATE),
+        balance: after,
+        ledger: [
+          ...(nextState.campaign.currency?.ledger ?? []),
+          { type: payload.reason ?? 'adjustment', delta, before, after, timestamp: payload.timestamp ?? Date.now() },
+        ],
+      };
+      return nextState;
+    }
+
+    case Actions.RECORD_MARKET_PRICES: {
+      if (!payload.season || !payload.prices) return state;
+      const nextState = cloneGameState(state);
+      const entry = {
+        seed: payload.seed ?? nextState.campaign.market?.seed ?? DEFAULT_MARKET_STATE.seed,
+        season: payload.season,
+        prices: cloneValue(payload.prices),
+        timestamp: payload.timestamp ?? Date.now(),
+      };
+      nextState.campaign.market = {
+        ...(nextState.campaign.market ?? DEFAULT_MARKET_STATE),
+        priceHistory: [...(nextState.campaign.market?.priceHistory ?? []), entry].slice(-3),
+      };
+      return nextState;
+    }
+
+    case Actions.RECORD_MARKET_TRANSACTION: {
+      if (!payload.transaction?.type) return state;
+      const nextState = cloneGameState(state);
+      const transaction = { timestamp: payload.transaction.timestamp ?? Date.now(), ...cloneValue(payload.transaction) };
+      nextState.campaign.market = {
+        ...(nextState.campaign.market ?? DEFAULT_MARKET_STATE),
+        transactions: [...(nextState.campaign.market?.transactions ?? []), transaction],
+      };
+      nextState.campaign.currency = {
+        ...(nextState.campaign.currency ?? DEFAULT_CURRENCY_STATE),
+        balance: clampCurrency(payload.balance ?? nextState.campaign.currency?.balance ?? 0),
+      };
+      return nextState;
+    }
+
+    case Actions.REGISTER_CONTENT_PACK: {
+      if (!payload.pack?.id) return state;
+      const nextState = cloneGameState(state);
+      const pack = cloneValue(payload.pack);
+      const loaded = new Map((nextState.campaign.contentPacks?.loaded ?? []).map((entry) => [entry.id, entry]));
+      loaded.set(pack.id, {
+        id: pack.id,
+        version: pack.version,
+        title: pack.title ?? pack.id,
+        registeredAt: payload.registeredAt ?? Date.now(),
+      });
+      nextState.campaign.contentPacks = {
+        ...(nextState.campaign.contentPacks ?? DEFAULT_CONTENT_PACK_STATE),
+        loaded: [...loaded.values()],
+      };
+      nextState.campaign.contentProvenance = [
+        ...(nextState.campaign.contentProvenance ?? []),
+        ...(payload.provenance ? cloneArray(payload.provenance) : []),
+      ];
+      return nextState;
+    }
+
+    case Actions.REJECT_CONTENT_PACK: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.contentPacks = {
+        ...(nextState.campaign.contentPacks ?? DEFAULT_CONTENT_PACK_STATE),
+        rejected: [
+          ...(nextState.campaign.contentPacks?.rejected ?? []),
+          {
+            id: payload.id ?? 'unknown-pack',
+            errors: cloneArray(payload.errors ?? []),
+            rejectedAt: payload.rejectedAt ?? Date.now(),
+          },
+        ],
+      };
       return nextState;
     }
 

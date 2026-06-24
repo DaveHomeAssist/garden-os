@@ -1,12 +1,13 @@
 import { Actions } from './store.js';
 import { getCropById, getRecipes } from '../data/crops.js';
+import WORLD_MAP from 'specs/WORLD_MAP.json';
 
-const BIOME_CROP_MAP = {
-  wild_garlic: 'forest_edge',
-  shiitake_mushroom: 'forest_edge',
-  watercress: 'riverside',
-  prairie_onion: 'meadow',
-};
+const STARTER_BIOME_CROPS = new Set(['lettuce', 'basil', 'compact_tomato', 'pepper', 'nasturtium']);
+const BIOME_CROP_MAP = Object.fromEntries(
+  Object.entries(WORLD_MAP.zones ?? {}).flatMap(([zoneId, zone]) => (
+    (zone.biomeCrops ?? []).map((cropId) => [cropId, zoneId])
+  )),
+);
 
 const BIOME_CROP_SEASONS = {
   wild_garlic: { spring: 1.0, summer: 0.5, fall: 0.8 },
@@ -47,7 +48,7 @@ export class BiomeCropBridge {
   }
 
   isCropBiomeExclusive(cropId) {
-    return cropId in BIOME_CROP_MAP;
+    return cropId in BIOME_CROP_MAP && !STARTER_BIOME_CROPS.has(cropId);
   }
 
   isCropUnlocked(cropId) {

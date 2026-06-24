@@ -1,4 +1,5 @@
 import { initGame, showTitleScreen } from './game/game-init.js';
+import { loadContentPacks } from './game/pack-loader.js';
 
 let runtimeModulesPromise = null;
 
@@ -72,9 +73,12 @@ async function startSession({ initialState, slot, viewport, planner }) {
       viewport.innerHTML = '';
     }
 
+    const packResult = loadContentPacks(initialState, globalThis.GARDEN_OS_CONTENT_PACKS ?? []);
+    globalThis.GARDEN_OS_LOADED_CONTENT = packResult;
+
     const scene = createGardenScene(viewport);
     const inputManager = new InputManager(scene.canvas, { keyboardTarget: document });
-    const { store, data, cleanup } = initGame(initialState, { slot });
+    const { store, data, cleanup } = initGame(packResult.state, { slot });
 
     if (planner) {
       const { bindPlannerUI } = await import('./ui/planner-binder.js');
@@ -92,8 +96,8 @@ async function startSession({ initialState, slot, viewport, planner }) {
     registerAllZones(zoneManager, store, zoneResourceTracker);
 
     // Transition to the player's current zone (or default to player_plot)
-    const startZone = initialState.campaign?.worldState?.currentZone ?? 'player_plot';
-    const startSpawn = initialState.campaign?.worldState?.lastSpawnPoint ?? null;
+    const startZone = packResult.state.campaign?.worldState?.currentZone ?? 'player_plot';
+    const startSpawn = packResult.state.campaign?.worldState?.lastSpawnPoint ?? null;
     zoneManager.transitionTo(startZone, startSpawn);
 
     bindUI({

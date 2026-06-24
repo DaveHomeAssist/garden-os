@@ -36,6 +36,10 @@ class ReputationSystem {
     return active;
   }
 
+  getZoneReputation(zoneId) {
+    return clamp(this.getState().campaign.zoneReputation?.[zoneId] ?? 0);
+  }
+
   addReputation(npcId, amount) {
     if (!npcId) return this.getReputation(npcId);
     this.store.dispatch({
@@ -60,6 +64,11 @@ class ReputationSystem {
   getAllReputations() {
     const state = this.getState();
     return { ...(state.campaign.reputation ?? {}) };
+  }
+
+  getAllZoneReputations() {
+    const state = this.getState();
+    return { ...(state.campaign.zoneReputation ?? {}) };
   }
 }
 

@@ -1,62 +1,7 @@
+import WORLD_MAP from 'specs/WORLD_MAP.json';
+
 import { Actions } from '../game/store.js';
-
-const ZONE_NAMES = {
-  player_plot: 'Player Plot',
-  neighborhood: 'Neighborhood',
-  meadow: 'Meadow',
-  riverside: 'Riverside',
-  forest_edge: 'Forest Edge',
-  greenhouse: 'Greenhouse',
-  festival_grounds: 'Festival Grounds',
-  market_square: 'Market Square',
-};
-
-const WORLD_ZONE_INTERACTABLES = {
-  player_plot: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Neighborhood Gate', position: { x: 0, y: 0, z: -3.2 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.5, y: 0, z: 1.4 }, radius: 1.1 },
-    { id: 'travel_forest_edge', zoneId: 'forest_edge', label: 'Forest Trail', position: { x: 4.8, y: 0, z: 1.6 }, radius: 1.1 },
-    { id: 'travel_riverside', zoneId: 'riverside', label: 'Riverside Path', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  neighborhood: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Backyard Gate', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_market_square', zoneId: 'market_square', label: 'Market Lane', position: { x: 4.7, y: 0, z: 0.8 }, radius: 1.1 },
-    { id: 'travel_greenhouse', zoneId: 'greenhouse', label: 'Greenhouse Walk', position: { x: -3.8, y: 0, z: -2.4 }, radius: 1.1 },
-    { id: 'travel_festival_grounds', zoneId: 'festival_grounds', label: 'Festival Route', position: { x: -4.5, y: 0, z: 2.4 }, radius: 1.1 },
-  ],
-  meadow: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_forest_edge', zoneId: 'forest_edge', label: 'Forest Trail', position: { x: 4.8, y: 0, z: 0.9 }, radius: 1.1 },
-  ],
-  riverside: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.2, y: 0, z: 0.8 }, radius: 1.1 },
-  ],
-  forest_edge: [
-    { id: 'travel_plot', zoneId: 'player_plot', label: 'Back to Plot', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-    { id: 'travel_meadow', zoneId: 'meadow', label: 'Meadow Path', position: { x: -4.2, y: 0, z: 0.8 }, radius: 1.1 },
-  ],
-  greenhouse: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  festival_grounds: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-  market_square: [
-    { id: 'travel_neighborhood', zoneId: 'neighborhood', label: 'Back to Neighborhood', position: { x: 0.2, y: 0, z: 4.4 }, radius: 1.1 },
-  ],
-};
-
-const DEFAULT_ZONE_SPAWN_POINTS = {
-  player_plot: { x: 0, y: 0, z: 2.55 },
-  neighborhood: { x: 0.2, y: 0, z: 4.4 },
-  meadow: { x: 0.2, y: 0, z: 4.4 },
-  riverside: { x: 0.2, y: 0, z: 4.4 },
-  forest_edge: { x: 0.2, y: 0, z: 4.4 },
-  greenhouse: { x: 0.2, y: 0, z: 4.4 },
-  festival_grounds: { x: 0.2, y: 0, z: 4.4 },
-  market_square: { x: 0.2, y: 0, z: 4.4 },
-};
+import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
 
 function clonePosition(position) {
   if (!position) return null;
@@ -67,12 +12,58 @@ function clonePosition(position) {
   };
 }
 
+function toWorldPosition(position) {
+  return {
+    x: position?.x ?? 0,
+    y: position?.y ?? 0,
+    z: position?.z ?? 0,
+  };
+}
+
+function buildZoneNames(worldMap = WORLD_MAP) {
+  return Object.fromEntries(
+    Object.entries(worldMap.zones ?? {}).map(([zoneId, zone]) => [zoneId, zone.name ?? zoneId]),
+  );
+}
+
+function buildDefaultZoneSpawnPoints(worldMap = WORLD_MAP) {
+  return Object.fromEntries(
+    Object.entries(worldMap.zones ?? {}).map(([zoneId, zone]) => [zoneId, toWorldPosition(zone.spawnPoint)]),
+  );
+}
+
+function getZoneExitInteractables(zoneId, worldMap = WORLD_MAP) {
+  return getZoneExitPoints(zoneId, worldMap).map((exit) => ({
+    id: exit.id,
+    zoneId: exit.destination,
+    label: `${ZONE_NAMES[exit.destination] ?? exit.destination} Path`,
+    position: toWorldPosition(exit.position),
+    radius: 1.1,
+    spawnPoint: clonePosition(exit.spawnPoint),
+  }));
+}
+
+function buildWorldZoneInteractables(worldMap = WORLD_MAP) {
+  return Object.fromEntries(
+    Object.keys(worldMap.zones ?? {}).map((zoneId) => [zoneId, getZoneExitInteractables(zoneId, worldMap)]),
+  );
+}
+
+const ZONE_NAMES = buildZoneNames(WORLD_MAP);
+const DEFAULT_ZONE_SPAWN_POINTS = buildDefaultZoneSpawnPoints(WORLD_MAP);
+const WORLD_ZONE_INTERACTABLES = buildWorldZoneInteractables(WORLD_MAP);
+
 function resolveZoneSpawnPoint(fromZone, toZone) {
   if (!toZone) return null;
 
   const reverseExit = (WORLD_ZONE_INTERACTABLES[toZone] ?? []).find((entry) => entry.zoneId === fromZone);
   if (reverseExit?.position) {
     return clonePosition(reverseExit.position);
+  }
+
+  const forwardExit = (WORLD_ZONE_INTERACTABLES[fromZone] ?? []).find((entry) => entry.zoneId === toZone);
+  if (forwardExit?.spawnPoint) {
+    return clonePosition(forwardExit.spawnPoint);
   }
 
   return clonePosition(DEFAULT_ZONE_SPAWN_POINTS[toZone] ?? null);
@@ -100,5 +91,9 @@ export {
   WORLD_ZONE_INTERACTABLES,
   ZONE_NAMES,
   applyZoneTravelState,
+  buildDefaultZoneSpawnPoints,
+  buildWorldZoneInteractables,
+  buildZoneNames,
+  getZoneExitInteractables,
   resolveZoneSpawnPoint,
 };
