@@ -15,6 +15,24 @@ import { SEASON_LABELS } from './ui-constants.js';
 import { getRotatedSeasonLabel } from './ui-data-builders.js';
 
 export function createOverlayScreens(ctx) {
+  function buildRecipeRewards(state) {
+    return (state.season.harvestResult?.recipeMatches ?? []).map((recipeId) => {
+      const recipe = ctx.getRecipeById?.(recipeId);
+      return {
+        id: recipeId,
+        name: recipe?.name ?? recipeId,
+        crops: (recipe?.crops ?? []).map((cropId) => {
+          const crop = ctx.getCropById?.(cropId);
+          return {
+            id: cropId,
+            name: crop?.name ?? cropId,
+            short: crop?.short ?? cropId.slice(0, 4).toUpperCase(),
+          };
+        }),
+      };
+    });
+  }
+
   function openEventCard() {
     if (!ctx.interventionTargeting.isActive()) {
       ctx.scene.clearTargeting?.();
@@ -65,6 +83,7 @@ export function createOverlayScreens(ctx) {
         totalKeepsakes: ctx.getKeepsakeSlots().length,
         recipeNames: (ctx.getState().season.harvestResult.recipeMatches ?? [])
           .map((recipeId) => ctx.getRecipeById(recipeId)?.name ?? recipeId),
+        recipeRewards: buildRecipeRewards(ctx.getState()),
         onViewBackpack: () => {
           ctx.showBackpack();
         },

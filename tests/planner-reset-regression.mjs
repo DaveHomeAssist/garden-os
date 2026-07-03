@@ -1,4 +1,5 @@
 import { pathToFileURL } from "node:url";
+import { chromiumLaunchOptions } from "./playwright-launch-options.mjs";
 
 const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
   ? pathToFileURL(process.env.PLAYWRIGHT_IMPORT_PATH).href
@@ -9,7 +10,7 @@ const defaultUrl = "http://127.0.0.1:4173/garden-planner-v4.html";
 const url = process.env.PLANNER_URL || process.argv[2] || defaultUrl;
 
 async function run() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch(chromiumLaunchOptions({ headless: true }));
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
   const errors = [];
 

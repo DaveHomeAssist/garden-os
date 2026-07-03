@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createServer } from 'node:http';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { chromiumLaunchOptions } from './playwright-launch-options.mjs';
 
 const repoRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const storyModeDir = join(repoRoot, 'story-mode');
@@ -286,6 +287,93 @@ function makeSeasonalPlaceSave(season) {
   };
 }
 
+function makeCritterEventSave() {
+  const timestamp = '2026-07-03T12:00:00.000Z';
+  const cells = Array.from({ length: 32 }, () => makeCell(null));
+  const eventActive = {
+    id: 'critter-alley-cat-patrol',
+    title: 'Alley Cat Patrol',
+    category: 'critter',
+    valence: 'neutral',
+    description: 'The alley cat threads the fence line and tests the edge of the bed.',
+    mechanicalEffect: {
+      modifier: -0.2,
+      target: { type: 'random_cells', maxCells: 2, filter: 'planted' },
+      duration: 'current_beat',
+    },
+  };
+  return {
+    campaign: {
+      version: 8,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      currentChapter: 2,
+      currentSeason: 'summer',
+      cropsUnlocked: ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'],
+      seenCutsceneIds: ['ch2-intro'],
+      worldState: {
+        currentZone: 'player_plot',
+        visitedZones: ['player_plot'],
+        lastSpawnPoint: null,
+        forageState: { cooldowns: {}, history: {} },
+      },
+      gameMode: 'story',
+    },
+    season: {
+      chapter: 2,
+      season: 'summer',
+      month: 7,
+      phase: 'MID_SEASON',
+      beatIndex: 1,
+      gridCols: 8,
+      gridRows: 4,
+      grid: { cells, cols: 8, rows: 4 },
+      interventionTokens: 3,
+      eventsDrawn: [eventActive.id],
+      eventTitles: [eventActive.title],
+      eventActive,
+      interventionChosen: 'observe',
+      harvestResult: null,
+      winterReviewSeen: true,
+    },
+  };
+}
+
+function makeHarvestRewardResult() {
+  const factors = {
+    sunFit: 4.7,
+    supportFit: 4.1,
+    shadeFit: 4.4,
+    accessFit: 4.8,
+    seasonFit: 5,
+    adjacency: 1.2,
+  };
+  const cropIds = ['cherry_tom', 'basil', 'pepper', 'onion', 'carrot', 'lettuce', 'radish', 'chives'];
+  return {
+    score: 92,
+    grade: 'A+',
+    occupiedCount: cropIds.length,
+    yieldList: cropIds,
+    recipeMatches: ['moms_sauce', 'garden_salad'],
+    details: {
+      cellAvg: 8.9,
+      fillRatio: cropIds.length / 32,
+      fillPenalty: 0.75,
+      diversityBonus: 0.7,
+      recipeBonus: 0.4,
+      tallPenalty: 0,
+      trellisPenalty: 0,
+      uniqueCrops: cropIds.length,
+    },
+    cellScores: cropIds.map((cropId, cellIndex) => ({
+      cellIndex,
+      cropId,
+      total: 8.9,
+      factors,
+    })),
+  };
+}
+
 async function readVisualDebug(page) {
   return page.evaluate(() => window.gardenOS?.getVisualDebug?.() ?? null);
 }
@@ -329,6 +417,28 @@ async function seedAndStartSeasonalPlaceRun(page, baseUrl, season) {
   await captureDialogueThenDismiss(page);
 }
 
+async function seedAndStartCritterRun(page, baseUrl) {
+  const seed = makeCritterEventSave();
+  await page.addInitScript((save) => {
+    localStorage.clear();
+    localStorage.setItem('gos-story-active-slot', '0');
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
+    localStorage.setItem('gos-story-slot-0-season', JSON.stringify(save.season));
+  }, seed);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
+  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await captureDialogueThenDismiss(page);
+  await page.waitForFunction(() => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.creatureCompanions?.companions?.alleyCat?.visible === true;
+  }, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await page.waitForTimeout(250);
+}
+
 async function assertCropAccentLayer(page) {
   const debug = await readVisualDebug(page);
   assert(debug, 'Expected visual debug state.');
@@ -342,6 +452,18 @@ async function assertCropAccentLayer(page) {
     debug.cropAccents.accents.every((accent) => accent.accentType === 'growth-billboard' && accent.opacity > 0.3 && accent.scale >= 0.3),
     `Unexpected crop accent tuning: ${JSON.stringify(debug.cropAccents.accents.slice(0, 3))}`,
   );
+}
+
+async function assertCritterCompanionLayer(page) {
+  const debug = await readVisualDebug(page);
+  assert(debug, 'Expected visual debug state.');
+  const critters = debug.creatureCompanions;
+  assert(critters?.activeEvent?.category === 'critter', `Expected critter active event, got ${critters?.activeEvent?.category}.`);
+  assert(critters.activeEvent.title === 'Alley Cat Patrol', `Expected alley cat event title, got ${critters.activeEvent.title}.`);
+  assert(critters.companions.alleyCat.visible, 'Expected alley cat companion to be visible.');
+  assert(critters.companions.alleyCat.count >= 6, `Expected detailed alley cat mesh, got ${critters.companions.alleyCat.count} parts.`);
+  assert(critters.visibleCompanionNames.includes('alleyCat'), `Expected alleyCat in visible companions, got ${critters.visibleCompanionNames.join(', ')}.`);
+  assert(!critters.companions.neighborGift.visible, 'Neighbor gift should not show for a critter event.');
 }
 
 function assertLayerVisible(debug, layerName) {
@@ -377,6 +499,102 @@ async function assertSeasonalPlaceLayer(page, season) {
   if (season !== 'summer') {
     assert(!debug.seasonalAtmosphere.layers.summerButterflies.visible, `${season} should not show summer butterflies.`);
   }
+}
+
+async function openHarvestRewardOverlay(page) {
+  const harvestResult = makeHarvestRewardResult();
+  await page.evaluate((result) => {
+    window.gardenOS.showHarvestRevealDebug(
+      result,
+      {
+        recipeRewards: [
+          {
+            id: 'moms_sauce',
+            name: "Mom's Sauce",
+            crops: [
+              { id: 'cherry_tom', name: 'Cherry Tomato', short: 'CTOM' },
+              { id: 'basil', name: 'Basil', short: 'BAS' },
+              { id: 'pepper', name: 'Pepper', short: 'PEP' },
+              { id: 'onion', name: 'Onion', short: 'ONI' },
+              { id: 'carrot', name: 'Carrot', short: 'CAR' },
+            ],
+          },
+          {
+            id: 'garden_salad',
+            name: 'Garden Salad',
+            crops: [
+              { id: 'lettuce', name: 'Leaf Lettuce', short: 'LET' },
+              { id: 'radish', name: 'Radish', short: 'RAD' },
+              { id: 'carrot', name: 'Carrot', short: 'CAR' },
+              { id: 'chives', name: 'Chives', short: 'CHIV' },
+            ],
+          },
+        ],
+        keepsakes: [
+          { id: 'block_party_plate', name: 'Block Party Plate', shortLabel: 'Plate' },
+          { id: 'handwritten_sauce_card', name: 'Handwritten Sauce Card', shortLabel: 'Sauce' },
+        ],
+        unlockedCount: 5,
+        totalKeepsakes: 7,
+        onViewBackpack: () => {},
+      },
+    );
+  }, harvestResult);
+  await page.waitForSelector('.harvest-reveal__recipe-card[data-recipe-id="moms_sauce"]', { timeout: 60000 });
+  await page.waitForSelector('.harvest-reveal__keepsake[data-keepsake-id="block_party_plate"]', { timeout: 60000 });
+  await page.waitForFunction(() => document.querySelector('#score-counter')?.textContent === '92', null, { timeout: 60000 });
+  await page.waitForSelector('#grade-badge.is-visible', { timeout: 60000 });
+}
+
+async function assertHarvestRewardOverlay(page) {
+  const state = await page.evaluate(() => {
+    const sheet = document.querySelector('.harvest-reveal__sheet');
+    const rect = sheet?.getBoundingClientRect();
+    return {
+      grade: sheet?.getAttribute('data-grade'),
+      recipeCount: Number(sheet?.getAttribute('data-recipe-count') ?? 0),
+      keepsakeCount: Number(sheet?.getAttribute('data-keepsake-count') ?? 0),
+      recipeIds: [...document.querySelectorAll('.harvest-reveal__recipe-card')].map((card) => card.getAttribute('data-recipe-id')),
+      ingredientIds: [...document.querySelectorAll('.harvest-reveal__ingredient[data-crop-id]')].map((chip) => chip.getAttribute('data-crop-id')),
+      keepsakeIds: [...document.querySelectorAll('.harvest-reveal__keepsake')].map((card) => card.getAttribute('data-keepsake-id')),
+      scoreText: document.querySelector('#score-counter')?.textContent,
+      gradeVisible: document.querySelector('#grade-badge')?.classList.contains('is-visible') ?? false,
+      backpackButtonVisible: Boolean(document.querySelector('#harvest-backpack')),
+      sheetWidth: rect?.width ?? 0,
+      sheetRight: rect?.right ?? 0,
+      viewportWidth: window.innerWidth,
+      overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
+    };
+  });
+  assert(state.grade === 'A+', `Expected A+ reward overlay, got ${state.grade}.`);
+  assert(state.scoreText === '92', `Expected score 92, got ${state.scoreText}.`);
+  assert(state.gradeVisible, 'Expected grade badge to settle visible.');
+  assert(state.recipeCount === 2, `Expected 2 recipe rewards, got ${state.recipeCount}.`);
+  assert(state.keepsakeCount === 2, `Expected 2 keepsake rewards, got ${state.keepsakeCount}.`);
+  ['moms_sauce', 'garden_salad'].forEach((recipeId) => {
+    assert(state.recipeIds.includes(recipeId), `Missing recipe reward ${recipeId}.`);
+  });
+  ['cherry_tom', 'basil', 'pepper', 'onion', 'carrot', 'lettuce', 'radish', 'chives'].forEach((cropId) => {
+    assert(state.ingredientIds.includes(cropId), `Missing ingredient chip ${cropId}.`);
+  });
+  ['block_party_plate', 'handwritten_sauce_card'].forEach((keepsakeId) => {
+    assert(state.keepsakeIds.includes(keepsakeId), `Missing keepsake card ${keepsakeId}.`);
+  });
+  assert(state.backpackButtonVisible, 'Reward overlay should offer backpack when rewards exist.');
+  assert(state.sheetWidth > 0 && state.sheetRight <= state.viewportWidth + 2, 'Reward overlay extends beyond viewport width.');
+  assert(!state.overflowX, 'Reward overlay creates horizontal overflow.');
+}
+
+async function scrollHarvestRewardOverlayToRewards(page) {
+  await page.evaluate(() => {
+    const body = document.querySelector('.harvest-reveal__body');
+    const recipePanel = document.querySelector('.harvest-reveal__panel--recipes');
+    if (!body || !recipePanel) return;
+    const bodyRect = body.getBoundingClientRect();
+    const panelRect = recipePanel.getBoundingClientRect();
+    body.scrollTop += panelRect.top - bodyRect.top - 12;
+  });
+  await page.waitForTimeout(150);
 }
 
 async function startPlannerAndPlant(page, baseUrl) {
@@ -544,7 +762,7 @@ async function assertLayout(page) {
 const port = await getOpenPort();
 const baseUrl = `http://127.0.0.1:${port}/`;
 const server = await startDevServer(port);
-const browser = await chromium.launch({ headless: process.env.HEADLESS !== '0' });
+const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
 
 try {
   await mkdir(outputDir, { recursive: true });
@@ -577,6 +795,32 @@ try {
     await seasonalPage.close();
   }
 
+  const critterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+  await seedAndStartCritterRun(critterPage, baseUrl);
+  await assertCritterCompanionLayer(critterPage);
+  await critterPage.screenshot({ path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
+  await critterPage.close();
+
+  const rewardDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  await seedAndStart(rewardDesktop, baseUrl);
+  await openHarvestRewardOverlay(rewardDesktop);
+  await assertHarvestRewardOverlay(rewardDesktop);
+  await scrollHarvestRewardOverlayToRewards(rewardDesktop);
+  await rewardDesktop.screenshot({ path: join(outputDir, 'harvest-reward-desktop.png'), fullPage: true });
+  await rewardDesktop.close();
+
+  const rewardMobile = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  await seedAndStart(rewardMobile, baseUrl);
+  await openHarvestRewardOverlay(rewardMobile);
+  await assertHarvestRewardOverlay(rewardMobile);
+  await scrollHarvestRewardOverlayToRewards(rewardMobile);
+  await rewardMobile.screenshot({ path: join(outputDir, 'harvest-reward-mobile.png'), fullPage: true });
+  await rewardMobile.close();
+
   const mobile = await browser.newPage({
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -606,6 +850,9 @@ try {
       'desktop-play-event.png',
       'desktop-crop-accents.png',
       ...seasonalScreenshots,
+      'critter-alley-cat.png',
+      'harvest-reward-desktop.png',
+      'harvest-reward-mobile.png',
       'mobile-dialogue.png',
       'mobile-play-event.png',
       'planner-procedural-no-accents.png',

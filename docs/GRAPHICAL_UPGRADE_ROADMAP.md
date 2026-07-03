@@ -78,6 +78,15 @@ Trailer polish and marketing screenshot templates.
 | July has a distinct summer read | Summer enables butterflies plus porch string lights in the Story scene |
 | March, July, October, and winter states are screenshot-proven | `tests/story-mode-screenshot-regression.mjs` captures `season-place-spring.png`, `season-place-summer.png`, `season-place-fall.png`, and `season-place-winter.png` |
 
+## P3 Critter And Reward Gates
+
+| Requirement | Evidence |
+| --- | --- |
+| Critter event cues use live event state | `story-mode/src/scene/garden-scene.js` reads `season.eventActive` and exposes `creatureCompanions` debug state |
+| Alley cat visual reads as an intentional critter cue | The cat silhouette includes bright eye marks and `tests/story-mode-screenshot-regression.mjs` captures `critter-alley-cat.png` |
+| Recipe rewards are visible artifacts, not loose tags | `story-mode/src/ui/harvest-reveal.js` renders recipe reward cards with ingredient chips from crop data |
+| Reward visuals are desktop and mobile proven | `tests/story-mode-screenshot-regression.mjs` captures `harvest-reward-desktop.png` and `harvest-reward-mobile.png` |
+
 ## Asset Rule
 
 Future portrait art should live under `story-mode/assets/textures/portraits/` and use:

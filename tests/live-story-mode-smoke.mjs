@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chromiumLaunchOptions } from './playwright-launch-options.mjs';
 
 const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
   ? pathToFileURL(process.env.PLAYWRIGHT_IMPORT_PATH).href
@@ -138,7 +139,7 @@ async function moveToward(page, target) {
   );
 }
 
-const browser = await chromium.launch({ headless: process.env.HEADLESS !== '0' });
+const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
 try {

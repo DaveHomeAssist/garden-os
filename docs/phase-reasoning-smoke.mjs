@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chromiumLaunchOptions } from '../tests/playwright-launch-options.mjs';
 
 const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
   ? pathToFileURL(process.env.PLAYWRIGHT_IMPORT_PATH).href
@@ -656,11 +657,11 @@ async function checkLegacyReviewMigration(browser, chapter, expectedPhase) {
 }
 
 async function diagnoseGenericClientAutoFill() {
-  const harnessBrowser = await chromium.launch({
+  const harnessBrowser = await chromium.launch(chromiumLaunchOptions({
     executablePath: fs.existsSync(BROWSER_PATH) ? BROWSER_PATH : undefined,
     headless: true,
     args: ['--use-gl=angle', '--use-angle=swiftshader']
-  });
+  }));
   try {
     const page = await harnessBrowser.newPage({ viewport: { width: 1280, height: 720 } });
     await page.addInitScript({ content: makeGenericClientShim() });
@@ -758,11 +759,11 @@ async function diagnoseGenericClientAutoFill() {
 async function main() {
   ensureDir(OUTPUT_DIR);
 
-  const browser = await chromium.launch({
+  const browser = await chromium.launch(chromiumLaunchOptions({
     executablePath: fs.existsSync(BROWSER_PATH) ? BROWSER_PATH : undefined,
     headless: true,
     args: ['--use-gl=angle', '--use-angle=swiftshader']
-  });
+  }));
 
   try {
     const plannerFixtures = [];

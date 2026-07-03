@@ -536,7 +536,24 @@ export function createGardenScene(container) {
   // ── Creature meshes ──────────────────────────────────────────────────────
   // Cat silhouette on fence
   const catGroup = new THREE.Group();
-  const catDarkMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
+  const catDarkMat = new THREE.MeshStandardMaterial({
+    color: 0x3a312b,
+    emissive: 0x120c08,
+    emissiveIntensity: 0.1,
+    roughness: 0.85,
+  });
+  const catEyeMat = new THREE.MeshStandardMaterial({
+    color: 0xc8db74,
+    emissive: 0xc8db74,
+    emissiveIntensity: 0.78,
+    roughness: 0.5,
+  });
+  const catCollarMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a832,
+    emissive: 0x6f4a12,
+    emissiveIntensity: 0.28,
+    roughness: 0.62,
+  });
 
   const catBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.034, 0.08, 5, 10), catDarkMat);
   catBody.rotation.z = Math.PI / 2;
@@ -547,6 +564,16 @@ export function createGardenScene(container) {
   const catHead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), catDarkMat);
   catHead.position.set(0.07, 0.028, 0);
   catGroup.add(catHead);
+
+  for (const ez of [-0.011, 0.011]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), catEyeMat);
+    eye.position.set(0.105, 0.038, ez);
+    catGroup.add(eye);
+  }
+
+  const catCollar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.034, 0.048), catCollarMat);
+  catCollar.position.set(0.046, 0.024, 0);
+  catGroup.add(catCollar);
 
   // Ears — two small cones
   for (const ex of [-0.012, 0.012]) {
@@ -561,7 +588,8 @@ export function createGardenScene(container) {
   catTail.position.set(-0.09, 0.04, 0);
   catGroup.add(catTail);
 
-  catGroup.position.set(5.0, 0.5, 0.5);
+  catGroup.position.set(4.95, 0.58, 0.5);
+  catGroup.scale.setScalar(1.45);
   catGroup.visible = false;
   root.add(catGroup);
 
@@ -1420,6 +1448,10 @@ export function createGardenScene(container) {
     };
   }
 
+  function getActiveSeasonEvent(sourceState = lastSyncedState) {
+    return sourceState?.season?.eventActive ?? sourceState?.season?.currentEvent ?? null;
+  }
+
   function getSeasonalAtmosphereDebug() {
     const sceneryDebug = scenery.getDebugState?.() ?? {
       placeCueCount: 0,
@@ -1456,11 +1488,34 @@ export function createGardenScene(container) {
     };
   }
 
+  function getCreatureCompanionDebug() {
+    const event = getActiveSeasonEvent();
+    const companions = {
+      alleyCat: getGroupDebugState(catGroup),
+      neighborGift: getGroupDebugState(neighborGroup),
+      trellisBird: getGroupDebugState(birdGroup),
+      summerButterflies: getGroupDebugState(butterflies),
+    };
+    return {
+      activeEvent: event ? {
+        id: event.id ?? null,
+        title: event.title ?? '',
+        category: event.category ?? '',
+        valence: event.valence ?? '',
+      } : null,
+      companions,
+      visibleCompanionNames: Object.entries(companions)
+        .filter(([, companion]) => companion.visible)
+        .map(([name]) => name),
+    };
+  }
+
   function getVisualDebug() {
     return {
       scenePhase: currentScenePhase,
       sceneStyle: currentSceneStyle,
       seasonalAtmosphere: getSeasonalAtmosphereDebug(),
+      creatureCompanions: getCreatureCompanionDebug(),
       cropMeshCount: cropMeshes.size,
       supportMeshCount: supportMeshes.size,
       gridCells: getGridLayout().map((cell) => {
@@ -2818,7 +2873,7 @@ function getGrowthScale(phase, season) {
       updateTransitions(performance.now());
 
       // ── Creature visibility ────────────────────────────────────────────
-      const ev = state.season?.currentEvent ?? null;
+      const ev = getActiveSeasonEvent(state);
       const evTitle = ev?.title ?? '';
       const evCategory = ev?.category ?? '';
       const evValence = ev?.valence ?? '';
@@ -2838,7 +2893,7 @@ function getGrowthScale(phase, season) {
       const time = performance.now() * 0.001; // seconds
 
       // ── Trellis wire wind oscillation ──────────────────────────────────
-      const ev = lastSyncedState?.season?.currentEvent ?? null;
+      const ev = getActiveSeasonEvent(lastSyncedState);
       const isWindEvent = (ev?.category === 'weather') &&
         (ev?.title?.toLowerCase().includes('wind') || ev?.title?.toLowerCase().includes('storm'));
       if (isWindEvent && trellisWires.length > 0) {

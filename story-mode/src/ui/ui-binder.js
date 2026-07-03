@@ -888,6 +888,24 @@ function bindUI({
     return buildWinterReviewData_imported({ state, getCropById, getRecipes, getKeepsakeSlots });
   }
 
+  function buildHarvestRecipeRewards(currentState = state) {
+    return (currentState.season.harvestResult?.recipeMatches ?? []).map((recipeId) => {
+      const recipe = getRecipeById(recipeId);
+      return {
+        id: recipeId,
+        name: recipe?.name ?? recipeId,
+        crops: (recipe?.crops ?? []).map((cropId) => {
+          const crop = getCropById(cropId);
+          return {
+            id: cropId,
+            name: crop?.name ?? cropId,
+            short: crop?.short ?? cropId.slice(0, 4).toUpperCase(),
+          };
+        }),
+      };
+    });
+  }
+
 
   function showBackpack() {
     scene.clearTargeting?.();
@@ -1028,6 +1046,7 @@ function bindUI({
         totalKeepsakes: getKeepsakeSlots().length,
         recipeNames: (state.season.harvestResult.recipeMatches ?? [])
           .map((recipeId) => getRecipeById(recipeId)?.name ?? recipeId),
+        recipeRewards: buildHarvestRecipeRewards(state),
         onViewBackpack: () => {
           showBackpack();
           fabBackpack?.classList.add('is-open');
@@ -1668,6 +1687,14 @@ function bindUI({
     render_game_to_text: renderGameToText,
     advanceTime,
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
+    showHarvestRevealDebug: (result, extras = {}) => {
+      showHarvestReveal(
+        document.getElementById('overlay-container'),
+        result,
+        extras,
+        () => {},
+      );
+    },
   };
 
   function cleanupGame() {
