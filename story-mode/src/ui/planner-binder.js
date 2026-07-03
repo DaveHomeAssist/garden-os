@@ -181,6 +181,19 @@ function createCropPalette(viewport, store) {
 export function bindPlannerUI(store, scene, viewport) {
   // 1. Apply planner scene style
   scene.setSceneStyle?.('planner');
+  let disposed = false;
+  let rafId = 0;
+
+  function syncAndRender() {
+    scene.sync?.(store.getState());
+    scene.render?.();
+  }
+
+  function frame() {
+    if (disposed) return;
+    syncAndRender();
+    rafId = requestAnimationFrame(frame);
+  }
 
   // 2. Build score panel
   const scorePanel = createScorePanel(viewport);
@@ -205,6 +218,7 @@ export function bindPlannerUI(store, scene, viewport) {
     const result = runScore(state);
     scorePanel.update(result);
     cropPalette.highlightSelected(state.selectedCropId);
+    syncAndRender();
   });
 
   // Initial render
@@ -212,6 +226,8 @@ export function bindPlannerUI(store, scene, viewport) {
     const state = store.getState();
     scorePanel.update(runScore(state));
     cropPalette.highlightSelected(state.selectedCropId);
+    syncAndRender();
+    rafId = requestAnimationFrame(frame);
   }
 
   // 5. Wire canvas click → plant / remove
@@ -240,6 +256,8 @@ export function bindPlannerUI(store, scene, viewport) {
 
   // 6. Return dispose
   function dispose() {
+    disposed = true;
+    cancelAnimationFrame(rafId);
     canvas?.removeEventListener('click', handleCanvasClick);
     unsubscribe?.();
     scorePanel.dispose();

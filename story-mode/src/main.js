@@ -87,6 +87,9 @@ async function startSession({ initialState, slot, viewport, planner }) {
       // When a back-to-title flow is added, capture both and invoke them before
       // re-mounting the title screen.
       bindPlannerUI(store, scene, viewport);
+      window.gardenOS = {
+        getVisualDebug: () => scene.getVisualDebug?.() ?? null,
+      };
       return;
     }
 

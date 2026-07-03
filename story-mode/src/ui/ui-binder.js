@@ -1667,6 +1667,7 @@ function bindUI({
   window.gardenOS = {
     render_game_to_text: renderGameToText,
     advanceTime,
+    getVisualDebug: () => scene.getVisualDebug?.() ?? null,
   };
 
   function cleanupGame() {

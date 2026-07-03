@@ -59,6 +59,16 @@ Trailer polish and marketing screenshot templates.
 | Garden GURL, Onion Man, Vegeman, and Critters have distinct silhouettes | `story-mode/assets/css/theme.css` Zine Press Sprint 2 character identity layer |
 | Screenshot regression proves the strip | `tests/story-mode-screenshot-regression.mjs` checks active portrait, emotion, fallback state, and strip bounds |
 
+## Phase 4 Hybrid Crop Gates
+
+| Requirement | Evidence |
+| --- | --- |
+| Crop sprite art remains cosmetic | `story-mode/src/scene/garden-scene.js` keeps procedural crop meshes as gameplay truth and mounts sprite accents separately in `accentMeshes` |
+| Growth sheets appear after async texture load | `loadSprites()` resyncs crop accents after sprite assets become ready |
+| Story phases show crop identity accents | `tests/story-mode-screenshot-regression.mjs` seeds `MID_SEASON` crops and verifies growth billboard accents |
+| Planner mode stays sprite-free | Planner keeps procedural crop meshes visible while `syncCropAccents()` suppresses sprite accents for planner style |
+| Screenshot regression proves both sides | The screenshot harness captures `desktop-crop-accents.png` and `planner-procedural-no-accents.png` |
+
 ## Asset Rule
 
 Future portrait art should live under `story-mode/assets/textures/portraits/` and use:
@@ -70,6 +80,17 @@ Future portrait art should live under `story-mode/assets/textures/portraits/` an
 Examples: `garden_gurl-neutral.png`, `onion_man-sad.png`, `vegeman-smirk.png`, `critters-surprised.png`.
 
 Until an asset exists, `portraits.js` should keep the speaker on the CSS fallback path. Do not add loose portrait files at the root of `story-mode/assets/textures/`.
+
+Crop identity art should stay in the existing `story-mode/assets/textures/` crop family:
+
+```text
+crop-{crop-id}.png
+grow-{crop-id}.png
+```
+
+Examples: `crop-lettuce.png`, `grow-lettuce.png`, `crop-radish.png`, `grow-radish.png`.
+
+Use `grow-{crop-id}.png` for the four-stage cosmetic billboard layer. Procedural crop meshes remain the gameplay source of truth, and Planner mode should not display the sprite accents.
 
 ## Guardrails
 

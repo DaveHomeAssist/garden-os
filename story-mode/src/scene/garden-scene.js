@@ -507,8 +507,11 @@ export function createGardenScene(container) {
   const scenery = buildScenery(resourceTracker);
   root.add(scenery.group);
 
+  let spriteAssetsReady = false;
+
   // Load sprite textures (async, non-blocking — accents appear once loaded)
   loadSprites().then(() => {
+    spriteAssetsReady = true;
     const missing = getMissingAssets();
     if (missing.length > 0) {
       const toast = document.getElementById('toast-container');
@@ -520,6 +523,13 @@ export function createGardenScene(container) {
         requestAnimationFrame(() => el.classList.add('is-visible'));
         setTimeout(() => { el.classList.remove('is-visible'); setTimeout(() => el.remove(), 300); }, 4000);
       }
+    }
+    if (lastSyncedState?.season?.grid) {
+      syncCropAccents(
+        lastSyncedState.season.grid,
+        lastSyncedState.season.phase,
+        lastSyncedState.season.season,
+      );
     }
   }).catch(() => {});
 
@@ -1252,6 +1262,15 @@ export function createGardenScene(container) {
   const cropMeshes = new Map();
   const supportMeshes = new Map();
   const accentMeshes = new Map();   // sprite accent billboards per cell
+  let lastAccentSync = {
+    phase: 'PLANNING',
+    season: 'spring',
+    style: 'planner',
+    stage: -1,
+    suppressedByPlanner: true,
+    plantedCount: 0,
+    activeCount: 0,
+  };
 
   // ── Sprite accent layer ─────────────────────────────────────────────────────
   // Maps game phase to sprite growth stage index.
@@ -1267,11 +1286,10 @@ export function createGardenScene(container) {
     }
   }
 
-  // Accent tuning — now alpha-ready growth sheets are available.
-  // Full opacity and meaningful scale per stage so sprites read as world objects.
-  const ACCENT_OPACITY = [0.22, 0.34, 0.22, 0.12];
-  const ACCENT_SCALE = [0.14, 0.18, 0.2, 0.18];
-  const ACCENT_LIFT = [0.055, 0.08, 0.105, 0.12];
+  // Accent tuning: sprites are readable crop identity plates, not gameplay truth.
+  const ACCENT_OPACITY = [0.3, 0.44, 0.5, 0.54];
+  const ACCENT_SCALE = [0.18, 0.24, 0.31, 0.36];
+  const ACCENT_LIFT = [0.062, 0.095, 0.14, 0.18];
   const ACCENT_BASE_TINT = new THREE.Color(0xf2ede2);
   const ACCENT_DORMANT_TINT = new THREE.Color(0xb7c3d0);
   const ACCENT_DAMAGED_TINT = new THREE.Color(0xc8b198);
@@ -1303,6 +1321,7 @@ export function createGardenScene(container) {
     const isPlanner = style === 'planner';
     const stage = phaseToGrowthStage(phase, season);
     const activeIds = new Set();
+    const plantedCount = grid.filter((cell) => cell.cropId).length;
 
     for (let i = 0; i < grid.length; i++) {
       const cell = grid[i];
@@ -1363,6 +1382,11 @@ export function createGardenScene(container) {
       sprite.position.set(x, bed.soilY, z);
       sprite.userData.sig = sig;
       sprite.userData.cellIndex = i;
+      sprite.userData.cropId = cell.cropId;
+      sprite.userData.stage = stage;
+      sprite.userData.season = season;
+      sprite.userData.damageState = cell.damageState ?? null;
+      sprite.userData.accentType = 'growth-billboard';
       applyCropAccentState(sprite, stage, cell.damageState, season);
 
       resourceTracker.trackObject(sprite);
@@ -1377,6 +1401,54 @@ export function createGardenScene(container) {
         accentMeshes.delete(key);
       }
     }
+
+    lastAccentSync = {
+      phase,
+      season,
+      style,
+      stage,
+      suppressedByPlanner: isPlanner,
+      plantedCount,
+      activeCount: accentMeshes.size,
+    };
+  }
+
+  function getVisualDebug() {
+    return {
+      scenePhase: currentScenePhase,
+      sceneStyle: currentSceneStyle,
+      cropMeshCount: cropMeshes.size,
+      supportMeshCount: supportMeshes.size,
+      gridCells: getGridLayout().map((cell) => {
+        const projected = projectWorldPosition(cell);
+        return {
+          index: cell.index,
+          x: cell.x,
+          y: cell.y,
+          z: cell.z,
+          screenX: projected?.x ?? 0,
+          screenY: projected?.y ?? 0,
+          visible: Boolean(projected?.visible),
+        };
+      }),
+      cropAccents: {
+        spriteAssetsReady,
+        count: accentMeshes.size,
+        lastSync: { ...lastAccentSync },
+        accents: [...accentMeshes.entries()].map(([key, sprite]) => ({
+          key,
+          cellIndex: sprite.userData.cellIndex,
+          cropId: sprite.userData.cropId,
+          stage: sprite.userData.stage,
+          season: sprite.userData.season,
+          damageState: sprite.userData.damageState,
+          accentType: sprite.userData.accentType,
+          opacity: sprite.material?.opacity ?? 0,
+          scale: sprite.scale.x,
+          y: sprite.position.y,
+        })),
+      },
+    };
   }
 
   // ── Harvest FX particle pool ────────────────────────────────────────────────
@@ -3055,6 +3127,7 @@ function getGrowthScale(phase, season) {
     dayNight,
     getRenderer() { return renderer; },
     getResourceTracker() { return resourceTracker; },
+    getVisualDebug,
     dispose() {
       disposeGardenScene({
         container,

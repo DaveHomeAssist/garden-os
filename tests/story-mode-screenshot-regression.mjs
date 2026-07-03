@@ -98,34 +98,56 @@ async function waitForCanvasPaint(page) {
 }
 
 async function readDialogueIdentity(page) {
-  return page.evaluate(() => {
-    const panel = document.querySelector('.dp-panel.dp-panel--visible');
-    const portrait = document.querySelector('.dp-portrait');
-    const strip = document.querySelector('.dp-cast-strip');
-    const tokens = [...document.querySelectorAll('.dp-cast-token')].map((token) => ({
-      speaker: token.getAttribute('data-speaker'),
-      portrait: token.getAttribute('data-portrait'),
-      emotion: token.getAttribute('data-emotion'),
-      active: token.getAttribute('data-active') === 'true',
-    }));
-    const active = tokens.filter((token) => token.active);
-    const stripRect = strip?.getBoundingClientRect();
+  try {
+    return await page.evaluate(() => {
+      const panel = document.querySelector('.dp-panel.dp-panel--visible');
+      const portrait = document.querySelector('.dp-portrait');
+      const strip = document.querySelector('.dp-cast-strip');
+      const tokens = [...document.querySelectorAll('.dp-cast-token')].map((token) => ({
+        speaker: token.getAttribute('data-speaker'),
+        portrait: token.getAttribute('data-portrait'),
+        emotion: token.getAttribute('data-emotion'),
+        active: token.getAttribute('data-active') === 'true',
+      }));
+      const active = tokens.filter((token) => token.active);
+      const stripRect = strip?.getBoundingClientRect();
+      return {
+        visible: Boolean(panel),
+        speaker: panel?.getAttribute('data-speaker') ?? '',
+        portrait: portrait?.getAttribute('data-portrait') ?? '',
+        portraitEmotion: portrait?.getAttribute('data-emotion') ?? '',
+        portraitAssetState: portrait?.getAttribute('data-asset-state') ?? '',
+        castCount: tokens.length,
+        castSpeakers: tokens.map((token) => token.speaker),
+        activeCount: active.length,
+        activeSpeaker: active[0]?.speaker ?? '',
+        activeEmotion: active[0]?.emotion ?? '',
+        stripWidth: stripRect?.width ?? 0,
+        stripBottom: stripRect?.bottom ?? 0,
+        viewportHeight: window.innerHeight,
+      };
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/Execution context was destroyed|Cannot find context/.test(message)) {
+      throw error;
+    }
     return {
-      visible: Boolean(panel),
-      speaker: panel?.getAttribute('data-speaker') ?? '',
-      portrait: portrait?.getAttribute('data-portrait') ?? '',
-      portraitEmotion: portrait?.getAttribute('data-emotion') ?? '',
-      portraitAssetState: portrait?.getAttribute('data-asset-state') ?? '',
-      castCount: tokens.length,
-      castSpeakers: tokens.map((token) => token.speaker),
-      activeCount: active.length,
-      activeSpeaker: active[0]?.speaker ?? '',
-      activeEmotion: active[0]?.emotion ?? '',
-      stripWidth: stripRect?.width ?? 0,
-      stripBottom: stripRect?.bottom ?? 0,
-      viewportHeight: window.innerHeight,
+      visible: false,
+      speaker: '',
+      portrait: '',
+      portraitEmotion: '',
+      portraitAssetState: '',
+      castCount: 0,
+      castSpeakers: [],
+      activeCount: 0,
+      activeSpeaker: '',
+      activeEmotion: '',
+      stripWidth: 0,
+      stripBottom: 0,
+      viewportHeight: 0,
     };
-  });
+  }
 }
 
 async function waitForCharacterDialogue(page) {
@@ -154,6 +176,149 @@ async function assertDialogueIdentity(page) {
   assert(['css-fallback', 'asset'].includes(identity.portraitAssetState), `Unexpected portrait asset state ${identity.portraitAssetState}.`);
   assert(identity.stripWidth > 40, `Cast strip width too small: ${identity.stripWidth}.`);
   assert(identity.stripBottom <= identity.viewportHeight + 2, 'Cast strip extends beyond the viewport.');
+}
+
+function makeCell(cropId = null) {
+  return {
+    cropId,
+    protected: false,
+    mulched: false,
+    damageState: null,
+    carryForwardType: null,
+    eventModifier: 0,
+    interventionBonus: 0,
+    soilFatigue: 0,
+    lastWateredAt: null,
+  };
+}
+
+function makeSeededAccentSave() {
+  const cropIds = [
+    'lettuce',
+    'spinach',
+    'arugula',
+    'radish',
+    'basil',
+    'marigold',
+    'lettuce',
+    'spinach',
+  ];
+  const cells = Array.from({ length: 32 }, (_, index) => makeCell(cropIds[index] ?? null));
+  const timestamp = '2026-07-03T12:00:00.000Z';
+  return {
+    campaign: {
+      version: 8,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      currentChapter: 1,
+      currentSeason: 'spring',
+      cropsUnlocked: ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'],
+      worldState: {
+        currentZone: 'player_plot',
+        visitedZones: ['player_plot'],
+        lastSpawnPoint: null,
+        forageState: { cooldowns: {}, history: {} },
+      },
+      gameMode: 'story',
+    },
+    season: {
+      chapter: 1,
+      season: 'spring',
+      month: 1,
+      phase: 'MID_SEASON',
+      beatIndex: 1,
+      gridCols: 8,
+      gridRows: 4,
+      grid: { cells, cols: 8, rows: 4 },
+      interventionTokens: 3,
+      eventsDrawn: [],
+      eventTitles: [],
+      eventActive: null,
+      interventionChosen: null,
+      harvestResult: null,
+      winterReviewSeen: true,
+    },
+  };
+}
+
+async function readVisualDebug(page) {
+  return page.evaluate(() => window.gardenOS?.getVisualDebug?.() ?? null);
+}
+
+async function seedAndStartAccentRun(page, baseUrl) {
+  const seed = makeSeededAccentSave();
+  await page.addInitScript((save) => {
+    localStorage.clear();
+    localStorage.setItem('gos-story-active-slot', '0');
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
+    localStorage.setItem('gos-story-slot-0-season', JSON.stringify(save.season));
+  }, seed);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
+  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await page.waitForFunction(() => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.cropAccents?.spriteAssetsReady && debug.cropAccents.count >= 8;
+  }, null, { timeout: 60000 });
+}
+
+async function assertCropAccentLayer(page) {
+  const debug = await readVisualDebug(page);
+  assert(debug, 'Expected visual debug state.');
+  assert(debug.cropMeshCount >= 8, `Expected procedural crop meshes, got ${debug.cropMeshCount}.`);
+  assert(debug.cropAccents.spriteAssetsReady, 'Expected crop sprite assets to be ready.');
+  assert(debug.cropAccents.lastSync.phase === 'MID_SEASON', `Expected MID_SEASON accent sync, got ${debug.cropAccents.lastSync.phase}.`);
+  assert(debug.cropAccents.lastSync.stage === 2, `Expected growing stage index 2, got ${debug.cropAccents.lastSync.stage}.`);
+  assert(!debug.cropAccents.lastSync.suppressedByPlanner, 'Story crop accents should not be planner-suppressed.');
+  assert(debug.cropAccents.count >= 8, `Expected at least 8 crop accents, got ${debug.cropAccents.count}.`);
+  assert(
+    debug.cropAccents.accents.every((accent) => accent.accentType === 'growth-billboard' && accent.opacity > 0.3 && accent.scale >= 0.3),
+    `Unexpected crop accent tuning: ${JSON.stringify(debug.cropAccents.accents.slice(0, 3))}`,
+  );
+}
+
+async function startPlannerAndPlant(page, baseUrl) {
+  await page.addInitScript(() => {
+    localStorage.clear();
+  });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
+  await page.locator('[data-mode="planner"]').click();
+  await page.locator('.planner-start-btn').click();
+  await page.waitForSelector('[data-planner-crop-palette] [data-crop-id="lettuce"]', { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await page.locator('[data-planner-crop-palette] [data-crop-id="lettuce"]').click();
+  const canvas = page.locator('#viewport canvas');
+  const box = await canvas.boundingBox();
+  assert(box, 'Expected planner canvas bounds.');
+  const targetCell = await page.waitForFunction(() => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.gridCells?.find((cell) => (
+      cell.visible
+      && cell.screenX > 80
+      && cell.screenY > 80
+      && cell.screenX < window.innerWidth - 80
+      && cell.screenY < window.innerHeight - 120
+    )) ?? null;
+  }, null, { timeout: 60000 });
+  const cell = await targetCell.jsonValue();
+  assert(cell, 'Expected projected planner cell target.');
+  await page.mouse.click(box.x + cell.screenX, box.y + cell.screenY);
+  await page.waitForFunction(() => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.cropMeshCount >= 1;
+  }, null, { timeout: 60000 });
+}
+
+async function assertPlannerSuppressesAccents(page) {
+  const debug = await readVisualDebug(page);
+  assert(debug, 'Expected planner visual debug state.');
+  assert(debug.sceneStyle === 'planner', `Expected planner scene style, got ${debug.sceneStyle}.`);
+  assert(debug.cropMeshCount >= 1, `Expected Planner procedural crop mesh, got ${debug.cropMeshCount}.`);
+  assert(debug.cropAccents.count === 0, `Planner should not show sprite accents, got ${debug.cropAccents.count}.`);
+  assert(debug.cropAccents.lastSync.suppressedByPlanner, 'Planner crop accents should be explicitly suppressed.');
 }
 
 async function captureDialogueThenDismiss(page, screenshotName) {
@@ -293,6 +458,12 @@ try {
   await desktop.screenshot({ path: join(outputDir, 'desktop-play-event.png'), fullPage: true });
   await desktop.close();
 
+  const accentDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  await seedAndStartAccentRun(accentDesktop, baseUrl);
+  await assertCropAccentLayer(accentDesktop);
+  await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
+  await accentDesktop.close();
+
   const mobile = await browser.newPage({
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -306,6 +477,12 @@ try {
   await mobile.screenshot({ path: join(outputDir, 'mobile-play-event.png'), fullPage: true });
   await mobile.close();
 
+  const planner = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+  await startPlannerAndPlant(planner, baseUrl);
+  await assertPlannerSuppressesAccents(planner);
+  await planner.screenshot({ path: join(outputDir, 'planner-procedural-no-accents.png'), fullPage: true });
+  await planner.close();
+
   console.log(JSON.stringify({
     ok: true,
     baseUrl,
@@ -314,8 +491,10 @@ try {
       'desktop-title.png',
       'desktop-dialogue.png',
       'desktop-play-event.png',
+      'desktop-crop-accents.png',
       'mobile-dialogue.png',
       'mobile-play-event.png',
+      'planner-procedural-no-accents.png',
     ],
   }, null, 2));
 } finally {
