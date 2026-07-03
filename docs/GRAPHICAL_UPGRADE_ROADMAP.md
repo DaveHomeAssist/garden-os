@@ -49,6 +49,28 @@ Trailer polish and marketing screenshot templates.
 | Zone semantics are visible | `body[data-zone]`, `#phase-helper[data-zone]`, and zone accent tokens update from runtime state |
 | Mobile and desktop visuals are checked | `tests/story-mode-screenshot-regression.mjs` captures both widths and checks canvas pixels |
 
+## Phase 3 Character Identity Gates
+
+| Requirement | Evidence |
+| --- | --- |
+| Core cast has one source of truth | `CORE_CAST_IDS` in `story-mode/src/data/speakers.js` |
+| Dialogue shows active cast identity | `story-mode/src/ui/dialogue-panel.js` renders `.dp-cast-strip` and syncs active speaker/emotion |
+| Missing portrait assets fail gracefully | CSS-only portraits use `data-asset-state="css-fallback"` instead of broken image layers |
+| Garden GURL, Onion Man, Vegeman, and Critters have distinct silhouettes | `story-mode/assets/css/theme.css` Zine Press Sprint 2 character identity layer |
+| Screenshot regression proves the strip | `tests/story-mode-screenshot-regression.mjs` checks active portrait, emotion, fallback state, and strip bounds |
+
+## Asset Rule
+
+Future portrait art should live under `story-mode/assets/textures/portraits/` and use:
+
+```text
+{speaker-id}-{emotion}.png
+```
+
+Examples: `garden_gurl-neutral.png`, `onion_man-sad.png`, `vegeman-smirk.png`, `critters-surprised.png`.
+
+Until an asset exists, `portraits.js` should keep the speaker on the CSS fallback path. Do not add loose portrait files at the root of `story-mode/assets/textures/`.
+
 ## Guardrails
 
 Do not replace procedural board logic with sprites. Sprites remain cosmetic.

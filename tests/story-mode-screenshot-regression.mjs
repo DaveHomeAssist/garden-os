@@ -97,11 +97,71 @@ async function waitForCanvasPaint(page) {
   }, null, { timeout: 60000 });
 }
 
+async function readDialogueIdentity(page) {
+  return page.evaluate(() => {
+    const panel = document.querySelector('.dp-panel.dp-panel--visible');
+    const portrait = document.querySelector('.dp-portrait');
+    const strip = document.querySelector('.dp-cast-strip');
+    const tokens = [...document.querySelectorAll('.dp-cast-token')].map((token) => ({
+      speaker: token.getAttribute('data-speaker'),
+      portrait: token.getAttribute('data-portrait'),
+      emotion: token.getAttribute('data-emotion'),
+      active: token.getAttribute('data-active') === 'true',
+    }));
+    const active = tokens.filter((token) => token.active);
+    const stripRect = strip?.getBoundingClientRect();
+    return {
+      visible: Boolean(panel),
+      speaker: panel?.getAttribute('data-speaker') ?? '',
+      portrait: portrait?.getAttribute('data-portrait') ?? '',
+      portraitEmotion: portrait?.getAttribute('data-emotion') ?? '',
+      portraitAssetState: portrait?.getAttribute('data-asset-state') ?? '',
+      castCount: tokens.length,
+      castSpeakers: tokens.map((token) => token.speaker),
+      activeCount: active.length,
+      activeSpeaker: active[0]?.speaker ?? '',
+      activeEmotion: active[0]?.emotion ?? '',
+      stripWidth: stripRect?.width ?? 0,
+      stripBottom: stripRect?.bottom ?? 0,
+      viewportHeight: window.innerHeight,
+    };
+  });
+}
+
+async function waitForCharacterDialogue(page) {
+  const coreCast = new Set(['garden_gurl', 'onion_man', 'vegeman', 'critters']);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const identity = await readDialogueIdentity(page);
+    if (identity.visible && coreCast.has(identity.activeSpeaker)) return identity;
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(250);
+  }
+  const identity = await readDialogueIdentity(page);
+  throw new Error(`Timed out waiting for active cast portrait. Last identity: ${JSON.stringify(identity)}`);
+}
+
+async function assertDialogueIdentity(page) {
+  const identity = await waitForCharacterDialogue(page);
+  assert(identity.castCount === 4, `Expected 4 core cast tokens, got ${identity.castCount}.`);
+  assert(
+    ['garden_gurl', 'onion_man', 'vegeman', 'critters'].every((speaker) => identity.castSpeakers.includes(speaker)),
+    `Core cast strip missing expected speakers: ${identity.castSpeakers.join(', ')}.`,
+  );
+  assert(identity.activeCount === 1, `Expected one active cast token, got ${identity.activeCount}.`);
+  assert(identity.activeSpeaker === identity.speaker, `Active strip speaker ${identity.activeSpeaker} does not match panel speaker ${identity.speaker}.`);
+  assert(identity.portrait === identity.activeSpeaker, `Portrait ${identity.portrait} does not match active speaker ${identity.activeSpeaker}.`);
+  assert(identity.portraitEmotion === identity.activeEmotion, `Portrait emotion ${identity.portraitEmotion} does not match strip emotion ${identity.activeEmotion}.`);
+  assert(['css-fallback', 'asset'].includes(identity.portraitAssetState), `Unexpected portrait asset state ${identity.portraitAssetState}.`);
+  assert(identity.stripWidth > 40, `Cast strip width too small: ${identity.stripWidth}.`);
+  assert(identity.stripBottom <= identity.viewportHeight + 2, 'Cast strip extends beyond the viewport.');
+}
+
 async function captureDialogueThenDismiss(page, screenshotName) {
   const panel = page.locator('.dp-panel.dp-panel--visible').first();
   const visible = await panel.isVisible().catch(() => false);
   if (!visible) return;
 
+  await assertDialogueIdentity(page);
   await page.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
   const skip = page.locator('#dp-skip-btn');
   if (await skip.isVisible().catch(() => false)) {

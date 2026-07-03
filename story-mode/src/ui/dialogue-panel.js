@@ -1,4 +1,5 @@
 import { resolvePortraitLayers } from '../data/portraits.js';
+import { CORE_CAST_IDS, getSpeaker } from '../data/speakers.js';
 
 function ensureChoiceStyles() {
   if (document.getElementById('dp-choice-styles')) return;
@@ -61,6 +62,14 @@ function ensureChoiceStyles() {
   document.head.appendChild(style);
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export function createDialoguePanel(rootEl) {
   ensureChoiceStyles();
   rootEl.innerHTML = `
@@ -74,6 +83,7 @@ export function createDialoguePanel(rootEl) {
           <div class="dp-portrait-layer" id="dp-layer-overlay"></div>
           <div class="dp-portrait-fallback" id="dp-portrait-fallback"></div>
         </div>
+        <div class="dp-cast-strip" id="dp-cast-strip" aria-label="Core cast portrait strip"></div>
       </div>
       <div class="dp-content-area">
         <div class="dp-speaker-badge" id="dp-speaker-badge"></div>
@@ -90,6 +100,7 @@ export function createDialoguePanel(rootEl) {
     panel: rootEl.querySelector('#dp-panel'),
     portrait: rootEl.querySelector('#dp-portrait'),
     portraitFallback: rootEl.querySelector('#dp-portrait-fallback'),
+    castStrip: rootEl.querySelector('#dp-cast-strip'),
     layerBase: rootEl.querySelector('#dp-layer-base'),
     layerBody: rootEl.querySelector('#dp-layer-body'),
     layerEyes: rootEl.querySelector('#dp-layer-eyes'),
@@ -104,6 +115,7 @@ export function createDialoguePanel(rootEl) {
   };
   let choiceHandler = null;
   let lastChoiceSignature = '';
+  let lastCastSignature = '';
 
   function setLayerSrc(el, src) {
     el.style.backgroundImage = src ? `url("${src}")` : 'none';
@@ -113,6 +125,8 @@ export function createDialoguePanel(rootEl) {
     const { portraitId, emotion, portraitAnim, portraitEmoji } = uiState;
     if (!portraitId) {
       els.portrait.style.display = 'none';
+      els.portrait.removeAttribute('data-portrait');
+      els.portrait.removeAttribute('data-emotion');
       return;
     }
 
@@ -123,13 +137,17 @@ export function createDialoguePanel(rootEl) {
 
     els.portrait.className = 'dp-portrait';
     els.portrait.classList.add(emotionClass);
+    els.portrait.dataset.portrait = portraitId;
+    els.portrait.dataset.emotion = emotion ?? 'neutral';
     if (animClass) {
       els.portrait.classList.add(animClass);
     }
 
-    if (!resolved || resolved.cssOnly) {
-      els.portrait.dataset.portrait = portraitId;
-      els.portraitFallback.textContent = portraitEmoji ?? '';
+    const hasAssetLayer = Boolean(resolved?.base || resolved?.body || resolved?.eyes || resolved?.mouth || resolved?.overlay);
+
+    if (!resolved || resolved.cssOnly || !hasAssetLayer) {
+      els.portrait.dataset.assetState = resolved?.cssOnly ? 'css-fallback' : 'missing-fallback';
+      els.portraitFallback.textContent = portraitEmoji ?? resolved?.emoji ?? '';
       setLayerSrc(els.layerBase, null);
       setLayerSrc(els.layerBody, null);
       setLayerSrc(els.layerEyes, null);
@@ -139,11 +157,40 @@ export function createDialoguePanel(rootEl) {
     }
 
     els.portraitFallback.textContent = '';
+    els.portrait.dataset.assetState = 'asset';
     setLayerSrc(els.layerBase, resolved.base);
     setLayerSrc(els.layerBody, resolved.body);
     setLayerSrc(els.layerEyes, resolved.eyes);
     setLayerSrc(els.layerMouth, resolved.mouth);
     setLayerSrc(els.layerOverlay, resolved.overlay);
+  }
+
+  function renderCastStrip(uiState) {
+    const activeSpeaker = uiState.speaker ?? '';
+    const activeEmotion = uiState.emotion ?? 'neutral';
+    const signature = `${activeSpeaker}|${activeEmotion}`;
+    if (signature === lastCastSignature) return;
+
+    els.castStrip.innerHTML = CORE_CAST_IDS.map((speakerId) => {
+      const speaker = getSpeaker(speakerId);
+      const isActive = speaker.id === activeSpeaker;
+      const emotion = isActive ? activeEmotion : speaker.defaultEmotion ?? 'neutral';
+      const activeSuffix = isActive ? `, active, ${emotion}` : '';
+      return `
+        <span
+          class="dp-cast-token"
+          data-speaker="${escapeHtml(speaker.id)}"
+          data-portrait="${escapeHtml(speaker.portraitId)}"
+          data-emotion="${escapeHtml(emotion)}"
+          data-active="${isActive ? 'true' : 'false'}"
+          aria-label="${escapeHtml(`${speaker.displayName}${activeSuffix}`)}"
+          title="${escapeHtml(speaker.displayName)}"
+        >
+          <span class="dp-cast-token__mark" aria-hidden="true">${escapeHtml(speaker.emoji)}</span>
+        </span>
+      `;
+    }).join('');
+    lastCastSignature = signature;
   }
 
   function renderDots(beatIndex, beatCount) {
@@ -234,6 +281,7 @@ export function createDialoguePanel(rootEl) {
 
       els.text.textContent = uiState.textVisible ?? '';
       renderPortrait(uiState);
+      renderCastStrip(uiState);
       renderChoices(uiState);
       renderDots(uiState.beatIndex, uiState.beatCount);
       els.advanceHint.style.opacity = uiState.canAdvance && !(uiState.choices?.length) ? '1' : '0';

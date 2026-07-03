@@ -83,6 +83,8 @@ export const SPEAKERS = {
   },
 };
 
+export const CORE_CAST_IDS = ['garden_gurl', 'onion_man', 'vegeman', 'critters'];
+
 export function getSpeaker(speakerId) {
   return SPEAKERS[speakerId] ?? {
     id: speakerId,

@@ -1100,3 +1100,229 @@ select:focus-visible {
 .dp-choice-btn {
   border-radius: 8px;
 }
+
+/* Zine Press Sprint 2 character identity layer */
+.dp-portrait-area {
+  width: 98px;
+  height: auto;
+  min-height: 122px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.dp-portrait {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
+  isolation: isolate;
+}
+
+.dp-portrait::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.9;
+  filter: drop-shadow(0 7px 8px rgba(18, 10, 4, 0.22));
+}
+
+.dp-portrait-layer {
+  z-index: 2;
+}
+
+.dp-portrait::after {
+  z-index: 4;
+}
+
+.dp-portrait-fallback {
+  z-index: 3;
+  opacity: 0.34;
+  mix-blend-mode: multiply;
+}
+
+.dp-portrait[data-portrait="garden_gurl"]::before {
+  inset: 12px 13px 10px;
+  background:
+    linear-gradient(rgba(28, 25, 16, 0.92), rgba(28, 25, 16, 0.92)) 50% 19% / 86% 8px no-repeat,
+    linear-gradient(180deg, rgba(42, 47, 24, 0.94), rgba(25, 31, 17, 0.98)) 50% 29% / 48% 20px no-repeat,
+    radial-gradient(ellipse at 50% 47%, rgba(202, 171, 123, 0.92) 0 31%, transparent 32%),
+    linear-gradient(165deg, rgba(77, 96, 50, 0.95), rgba(40, 49, 29, 0.98)) 50% 91% / 58% 39% no-repeat;
+  border-radius: 11px 11px 18px 18px;
+}
+
+.dp-portrait[data-portrait="onion_man"]::before {
+  inset: 13px 18px 10px;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(246, 214, 156, 0.96) 0 38%, transparent 39%),
+    radial-gradient(ellipse at 50% 58%, rgba(209, 139, 74, 0.92) 0 43%, transparent 44%),
+    linear-gradient(180deg, rgba(72, 45, 28, 0.92), rgba(48, 31, 22, 0.98)) 50% 91% / 50% 31% no-repeat;
+  clip-path: polygon(50% 0, 74% 18%, 92% 50%, 72% 82%, 50% 100%, 27% 82%, 8% 50%, 27% 18%);
+}
+
+.dp-portrait[data-portrait="vegeman"]::before {
+  inset: 15px 10px 8px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(126, 175, 71, 0.95) 0 22%, transparent 23%),
+    linear-gradient(160deg, transparent 0 24%, rgba(46, 80, 36, 0.96) 25% 78%, transparent 79%) 18% 74% / 42% 47% no-repeat,
+    linear-gradient(200deg, transparent 0 24%, rgba(46, 80, 36, 0.96) 25% 78%, transparent 79%) 82% 74% / 42% 47% no-repeat,
+    linear-gradient(180deg, rgba(100, 155, 57, 0.96), rgba(42, 74, 33, 0.98)) 50% 84% / 62% 48% no-repeat;
+  border-radius: 40% 40% 22% 22%;
+  transform: rotate(-2deg) scaleX(1.1);
+}
+
+.dp-portrait[data-portrait="critters"]::before {
+  inset: 16px 12px 12px;
+  background:
+    radial-gradient(circle at 26% 50%, rgba(92, 67, 42, 0.96) 0 15%, transparent 16%),
+    radial-gradient(circle at 48% 36%, rgba(79, 99, 50, 0.96) 0 17%, transparent 18%),
+    radial-gradient(circle at 70% 54%, rgba(111, 73, 50, 0.96) 0 16%, transparent 17%),
+    radial-gradient(circle at 55% 72%, rgba(55, 62, 38, 0.96) 0 12%, transparent 13%);
+}
+
+.dp-portrait[data-emotion="sad"]::before {
+  transform: translateY(2px) scale(0.97);
+}
+
+.dp-portrait[data-emotion="surprised"]::before,
+.dp-portrait[data-emotion="emphasis"]::before {
+  filter:
+    drop-shadow(0 7px 8px rgba(18, 10, 4, 0.2))
+    drop-shadow(0 0 10px rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.26));
+}
+
+.dp-portrait[data-emotion="smirk"]::before {
+  transform: rotate(-3deg);
+}
+
+.dp-cast-strip {
+  width: 92px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  pointer-events: none;
+}
+
+.dp-cast-token {
+  position: relative;
+  height: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(65, 39, 21, 0.24);
+  border-radius: 4px;
+  background:
+    var(--story-print-fiber, repeating-linear-gradient(0deg, rgba(42, 24, 10, 0.025) 0, rgba(42, 24, 10, 0.025) 1px, transparent 1px, transparent 7px)),
+    rgba(255, 247, 235, 0.72);
+  opacity: 0.56;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  transform: translateY(0);
+  transition: opacity 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+
+.dp-cast-token[data-active="true"] {
+  opacity: 1;
+  border-color: rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.56);
+  background:
+    linear-gradient(180deg, rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.24), rgba(255, 247, 235, 0.72)),
+    var(--story-print-paper-light, #fff7eb);
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 10px rgba(21, 11, 4, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.dp-cast-token::before {
+  content: "";
+  position: absolute;
+  inset: 4px 5px 3px;
+  background: rgba(48, 29, 15, 0.66);
+  border-radius: 50% 50% 34% 34%;
+}
+
+.dp-cast-token[data-speaker="garden_gurl"]::before {
+  border-radius: 3px 3px 42% 42%;
+  clip-path: polygon(8% 28%, 92% 28%, 92% 45%, 62% 45%, 62% 100%, 38% 100%, 38% 45%, 8% 45%);
+}
+
+.dp-cast-token[data-speaker="onion_man"]::before {
+  clip-path: polygon(50% 0, 80% 22%, 94% 58%, 66% 100%, 34% 100%, 6% 58%, 20% 22%);
+}
+
+.dp-cast-token[data-speaker="vegeman"]::before {
+  border-radius: 28% 28% 18% 18%;
+  transform: scaleX(1.16);
+}
+
+.dp-cast-token[data-speaker="critters"]::before {
+  inset: 4px 4px 3px;
+  background:
+    radial-gradient(circle at 25% 52%, rgba(48, 29, 15, 0.68) 0 21%, transparent 22%),
+    radial-gradient(circle at 50% 38%, rgba(48, 29, 15, 0.68) 0 24%, transparent 25%),
+    radial-gradient(circle at 74% 55%, rgba(48, 29, 15, 0.68) 0 21%, transparent 22%);
+  border-radius: 0;
+}
+
+.dp-cast-token__mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  opacity: 0.48;
+  transform: translateY(0.5px);
+}
+
+.dp-cast-token[data-active="true"] .dp-cast-token__mark {
+  opacity: 0.72;
+}
+
+.dp-panel::before {
+  right: 88px;
+}
+
+.dp-panel[data-side="right"]::before {
+  right: auto;
+  left: 18px;
+}
+
+@media (max-width: 480px) {
+  .dp-panel::before {
+    top: 10px;
+    right: 74px;
+  }
+
+  .dp-panel[data-side="right"]::before {
+    right: auto;
+    left: 14px;
+  }
+
+  .dp-portrait-area {
+    width: 64px;
+    min-height: 84px;
+    gap: 5px;
+  }
+
+  .dp-portrait {
+    width: 60px;
+    height: 60px;
+    flex-basis: 60px;
+  }
+
+  .dp-cast-strip {
+    width: 60px;
+    gap: 3px;
+  }
+
+  .dp-cast-token {
+    height: 13px;
+    border-radius: 3px;
+  }
+
+  .dp-cast-token::before {
+    inset: 3px 4px 2px;
+  }
+
+  .dp-cast-token__mark {
+    font-size: 7px;
+  }
+}
