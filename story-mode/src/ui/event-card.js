@@ -17,6 +17,7 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     const options = event.interventionOptions ?? [];
     return options.length === 0 || options.includes(intervention.id);
   });
+  const category = getEventCategory(event);
 
   const sheet = document.createElement('div');
   sheet.className = 'panel-sheet is-open event-card-sheet';
@@ -37,12 +38,16 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
 
   sheet.style.setProperty('--event-accent', valenceColor);
   sheet.dataset.valence = event.valence ?? 'neutral';
+  sheet.dataset.category = category.id;
 
   sheet.innerHTML = `
     <div class="panel-handle"></div>
     <div class="event-card__header">
       <div>
-        <div class="event-card__eyebrow">Season Event</div>
+        <div class="event-card__eyebrow">
+          <span class="event-card__category">${escapeHtml(category.label)}</span>
+          <span>Season Event</span>
+        </div>
         <div class="event-card__title">${escapeHtml(event.title)}</div>
       </div>
       <span class="event-card__valence">${valenceLabel}</span>
@@ -114,4 +119,20 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function getEventCategory(event) {
+  const raw = String(event.category ?? event.type ?? 'field').toLowerCase();
+  const labels = {
+    critter: 'Critter',
+    neighbor: 'Neighbor',
+    weather: 'Weather',
+    household: 'Household',
+    field: 'Field',
+  };
+  const id = raw.replace(/[^a-z0-9_-]/g, '') || 'field';
+  return {
+    id,
+    label: labels[id] ?? id.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+  };
 }

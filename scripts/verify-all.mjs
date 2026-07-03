@@ -137,6 +137,9 @@ async function runLocalVerification() {
   await runStep('Story Mode Vitest suite', 'npm', ['test'], { cwd: storyModeDir });
   await runStep('Open world phases smoke', nodeBin, ['docs/open-world-phases-smoke.mjs']);
   await runStep('Story Mode production build', 'npm', ['run', 'build'], { cwd: storyModeDir });
+  await runStep('Story Mode screenshot regression', nodeBin, ['tests/story-mode-screenshot-regression.mjs'], {
+    env: browserEnv(),
+  });
 
   const nodeRegressionScripts = [
     ['V5 nav copy regression', ['tests/v5-nav-copy-regression.mjs']],

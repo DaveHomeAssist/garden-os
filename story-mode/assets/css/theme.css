@@ -1013,3 +1013,90 @@ select:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Zine Press Sprint 1 dialogue layer */
+.dp-panel {
+  border-radius: 8px;
+  background:
+    var(--story-print-fiber, repeating-linear-gradient(0deg, rgba(42, 24, 10, 0.025) 0, rgba(42, 24, 10, 0.025) 1px, transparent 1px, transparent 7px)),
+    linear-gradient(135deg, var(--story-zone-wash, rgba(138, 125, 61, 0.14)), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)),
+    var(--story-print-paper-light, #fff7eb);
+  border: 1px solid var(--story-print-rule, rgba(79, 48, 27, 0.28));
+  box-shadow: var(--story-registration-shadow, 0 12px 30px rgba(14, 8, 4, 0.22));
+}
+
+.dp-panel::before {
+  content: "field note";
+  border-radius: 4px;
+  border-color: rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.32);
+  background: rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.12);
+  color: rgba(48, 29, 15, 0.82);
+}
+
+.dp-panel:not(.dp-panel--thought)::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  pointer-events: none;
+  border: 1px dashed rgba(65, 39, 21, 0.14);
+}
+
+.dp-panel--thought {
+  border-radius: 8px;
+}
+
+.dp-portrait {
+  border-radius: 8px;
+  border-color: rgba(65, 39, 21, 0.28);
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.3), transparent 38%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.88), rgba(44, 26, 13, 0.96));
+}
+
+.dp-portrait::after {
+  border-radius: 5px;
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.dp-portrait[data-portrait="garden_gurl"] {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.28), transparent 38%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, rgba(93, 129, 75, 0.92), rgba(36, 31, 18, 0.96));
+}
+
+.dp-portrait[data-portrait="onion_man"] {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.3), transparent 38%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, rgba(213, 168, 91, 0.94), rgba(76, 44, 24, 0.98));
+}
+
+.dp-portrait[data-portrait="vegeman"] {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.24), transparent 38%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, rgba(188, 74, 43, 0.94), rgba(48, 23, 15, 0.98));
+}
+
+.dp-portrait[data-portrait="critters"] {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.24), transparent 38%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 9px),
+    linear-gradient(180deg, rgba(90, 110, 86, 0.92), rgba(29, 31, 24, 0.98));
+}
+
+.dp-speaker-badge {
+  color: rgba(65, 39, 21, 0.72);
+}
+
+.dp-text {
+  color: var(--story-print-ink, #271408);
+  text-wrap: pretty;
+}
+
+.dp-choice-btn {
+  border-radius: 8px;
+}

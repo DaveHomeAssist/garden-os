@@ -1125,6 +1125,7 @@ function bindUI({
     document.body.dataset.storyScreen = 'play';
     document.body.dataset.season = state.season.season ?? 'spring';
     document.body.dataset.phase = state.season.phase ?? '';
+    document.body.dataset.zone = getCurrentZoneId();
     scene.setScenePhase?.(cutsceneMachine.isActive() ? 'CUTSCENE' : state.season.phase);
     syncWorldInteractables();
 
@@ -1172,6 +1173,8 @@ function bindUI({
     if (phaseHelper) {
       const isWinter = state.season.season === 'winter';
       let helperText = '';
+      phaseHelper.dataset.zone = getCurrentZoneId();
+      phaseHelper.dataset.zoneLabel = getCurrentZoneName();
 
       if (state.season.phase === PHASES.PLANNING) {
         if (isWinter) {
