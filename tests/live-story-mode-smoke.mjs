@@ -64,26 +64,50 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function waitForRenderedZone(page, zoneId) {
-  await page.waitForFunction(
-    (nextZoneId) => {
+async function waitForRenderedZone(page, zoneId, label = 'zone render') {
+  try {
+    await page.waitForFunction(
+      (nextZoneId) => {
+        const renderer = window.gardenOS?.render_game_to_text;
+        if (!renderer) return false;
+        return JSON.parse(renderer()).currentZone === nextZoneId;
+      },
+      zoneId,
+      { timeout: 60000 },
+    );
+  } catch (error) {
+    const current = await page.evaluate(() => {
       const renderer = window.gardenOS?.render_game_to_text;
-      if (!renderer) return false;
-      return JSON.parse(renderer()).currentZone === nextZoneId;
-    },
-    zoneId,
-    { timeout: 60000 },
-  );
+      if (!renderer) return { currentZone: 'unavailable' };
+      return JSON.parse(renderer());
+    }).catch(() => ({ currentZone: 'unavailable' }));
+    throw new Error(`${label}: expected ${zoneId}, got ${current.currentZone}. ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 async function snapshot(page) {
   return JSON.parse(await page.evaluate(() => window.gardenOS.render_game_to_text()));
 }
 
+async function waitForWorldMapClosed(page) {
+  await page.locator('#world-map-panel').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+}
+
 async function travel(page, zoneId) {
+  await waitForWorldMapClosed(page);
   await page.keyboard.press('m');
-  await page.locator(`#world-map-panel [data-zone-id="${zoneId}"]`).click();
-  await waitForRenderedZone(page, zoneId);
+  await page.locator('#world-map-panel').waitFor({ state: 'visible', timeout: 15000 });
+  const zoneButton = page.locator(`#world-map-panel [data-zone-id="${zoneId}"]`);
+  await zoneButton.waitFor({ state: 'visible', timeout: 15000 });
+  await page.waitForFunction((targetZoneId) => {
+    const button = document.querySelector(`#world-map-panel [data-zone-id="${targetZoneId}"]`);
+    return button && !button.disabled;
+  }, zoneId, { timeout: 15000 });
+  await zoneButton.click({ force: true });
+  await page.waitForTimeout(350);
+  await waitForWorldMapClosed(page);
+  await waitForRenderedZone(page, zoneId, `travel to ${zoneId}`);
+  await page.waitForTimeout(700);
 }
 
 async function moveAxis(page, key, durationMs) {
