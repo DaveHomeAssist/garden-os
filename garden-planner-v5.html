@@ -96,6 +96,7 @@
 <script src="vendor/react-dom-18.3.1.production.min.js"></script>
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
 <script src="gos-bed.js"></script>
+<script src="gos-suitability.js"></script>
 <script src="gos-journal.js"></script>
 <script src="data/mom-garden-data.js"></script>
 </head>
@@ -362,6 +363,37 @@ function bedFromGos(gosBed, now) {
 // Single read of the active context. Returns the same shape regardless of
 // whether a real bed or the fixture is being shown. Callers branch on
 // isFixture for banners + write-disabled paths.
+// ── Suitability scoring (shared realism model, gos-suitability.js) ──────────
+// The normalized catalog crop already carries the fields GosSuitability needs
+// (sun, sowWeek, harvestStart, harvestEnd), so getCrop doubles as the adapter —
+// same model Doctor and Painting use, now surfaced in the flagship planner.
+function plannerGetCrop(cropId) { return getCrop(cropId) || { sun: 'full' }; }
+function plannerIsoWeek() {
+  return (typeof GosBed !== 'undefined' && typeof GosBed.currentIsoWeek === 'function')
+    ? GosBed.currentIsoWeek() : null;
+}
+function computeBedSuitability(gosBed) {
+  if (!gosBed || typeof GosSuitability === 'undefined') return null;
+  const r = GosSuitability.scoreBed({ bed: gosBed, getCrop: plannerGetCrop, currentWeek: plannerIsoWeek() });
+  return (r && r.score != null) ? r : null;
+}
+// Map GosSuitability cells ("r0c2") → InGroundStrip keys ("0:2").
+function suitabilityCellMap(suitability) {
+  const m = new Map();
+  if (!suitability || !Array.isArray(suitability.cells)) return m;
+  suitability.cells.forEach(cell => {
+    const mm = /^r(\d+)c(\d+)$/.exec(cell.cell || '');
+    if (mm) m.set(mm[1] + ':' + mm[2], cell);
+  });
+  return m;
+}
+// Score band → color, shared by the cell bar, the header chip, and the panel.
+function scoreBand(total) {
+  if (total == null) return { label: '—', color: '#9a8f7d' };
+  if (total >= 7.5) return { label: 'Great', color: '#4b8b3b' };
+  if (total >= 5)   return { label: 'OK', color: '#b7860b' };
+  return { label: 'Weak', color: '#b4532e' };
+}
 function getBedDimensions(gosBed) {
   if (gosBed && gosBed.dimensions && typeof gosBed.dimensions === 'object') {
     const rows = clampNumber(gosBed.dimensions.rows, 1, 20, 4);
@@ -1114,7 +1146,7 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done, actual
 }
 
 // ── In-ground strip — the bed reduced to a 4×8 ribbon ───────────────────────
-function InGroundStrip({ bed, dimensions, onPickCrop }) {
+function InGroundStrip({ bed, dimensions, onPickCrop, cellScores }) {
   const total = bed.length;
   const rows = dimensions.rows;
   const cols = dimensions.cols;
@@ -1159,10 +1191,13 @@ function InGroundStrip({ bed, dimensions, onPickCrop }) {
             {Array.from({ length: cols }).map((_, c) => {
               const cell = bedByCell.get(r + ':' + c);
               const crop = cell && (getCrop(cell.crop) || unknownCrop(cell.crop));
+              const sc = cell && cellScores && cellScores.get(r + ':' + c);
+              const band = sc ? scoreBand(sc.total) : null;
               return (
                 <button type="button" key={r + '-' + c}
                   onClick={() => cell && onPickCrop(cell.crop)}
-                  aria-label={cell ? `${crop.name} at row ${r + 1}, column ${c + 1}` : `Empty row ${r + 1}, column ${c + 1}`}
+                  aria-label={cell ? `${crop.name} at row ${r + 1}, column ${c + 1}${band ? `, suitability ${sc.total.toFixed(1)} of 10 (${band.label})` : ''}` : `Empty row ${r + 1}, column ${c + 1}`}
+                  title={band ? `${crop.name}: ${sc.total.toFixed(1)}/10 — ${band.label}` : undefined}
                   style={{
                     background: crop ? crop.color + '55' : T.cedarWash,
                     border: `1px solid ${crop ? crop.color + 'aa' : T.borderSoft}`,
@@ -1170,6 +1205,7 @@ function InGroundStrip({ bed, dimensions, onPickCrop }) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: T.fontMono, fontSize: 7, color: T.soil, fontWeight: 600,
                     padding: 0,
+                    boxShadow: band ? `inset 0 -3px 0 ${band.color}` : 'none',
                   }}>{crop && crop.mono}</button>
               );
             })}
@@ -1281,8 +1317,46 @@ function buildPlantProfiles(cells) {
   });
 }
 
+function WhyThisScore({ cropKey, suitability }) {
+  if (!suitability || typeof GosSuitability === 'undefined') return null;
+  const cells = (suitability.cells || []).filter(c => c.cropId === cropKey);
+  if (!cells.length) return null;
+  // Show the weakest placement of this crop — the most instructive to fix.
+  const worst = cells.reduce((a, b) => (a.total <= b.total ? a : b));
+  const rows = GosSuitability.explain(worst.factors);
+  if (!rows.length) return null;
+  const band = scoreBand(worst.total);
+  const dotFor = v => (v === 'good' ? '#4b8b3b' : v === 'bad' ? '#b4532e' : '#b7860b');
+  return (
+    <div style={{
+      marginBottom: 14, background: T.cedarWash, borderRadius: 10,
+      border: `1px solid ${T.borderSoft}`, padding: '10px 12px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+        <Label size={10} color={T.soilMid}>WHY THIS SCORE?</Label>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, fontWeight: 600, color: band.color,
+        }}>{worst.total.toFixed(1)}/10 · {band.label}{cells.length > 1 ? ` · weakest of ${cells.length}` : ''}</span>
+      </div>
+      {rows.map(row => (
+        <div key={row.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+          <span style={{
+            marginTop: 3, width: 8, height: 8, borderRadius: '50%',
+            background: dotFor(row.verdict), flexShrink: 0,
+          }}/>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: T.fontMono, fontSize: 11, color: T.text, fontWeight: 600 }}>
+              {row.emoji} {row.label} <span style={{ color: T.textMuted, fontWeight: 400 }}>{row.weight}</span>
+            </div>
+            <div style={{ fontSize: 12, color: T.textSoft, lineHeight: 1.4 }}>{row.note}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
-                    isPreview = false, weekOffset = 0,
+                    isPreview = false, weekOffset = 0, suitability = null,
                     onClose, onMarkDone, onHarvest, onUndoDone, onRemove,
                     onMarkCellDone, onHarvestCell, onUndoCellDone }) {
   const c = getCrop(cropKey) || unknownCrop(cropKey);
@@ -1396,6 +1470,8 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
         }}>
           <CropLife c={c} today={today}/>
         </div>
+
+        <WhyThisScore cropKey={cropKey} suitability={suitability}/>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           <Stat label="IN BED" value={cells.length} unit={cells.length === 1 ? 'cell' : 'cells'}/>
@@ -1736,6 +1812,8 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
   const showEnded = tweak.showEnded !== false;
   const weekOffset = tweak.weekOffset || 0;
   const today = Math.max(1, Math.min(isoWeeksInYear(Number(now.seasonYear)), now.week + weekOffset));
+  const suitability = React.useMemo(() => computeBedSuitability(gosBed), [gosBed]);
+  const cellScores = React.useMemo(() => suitabilityCellMap(suitability), [suitability]);
   const [picked, setPicked] = React.useState(null);
   const [fixtureBannerDismissed, setFixtureBannerDismissed] = React.useState(false);
 
@@ -1870,6 +1948,14 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
               ? <span>{gosBed.name}<span style={{ color: T.leaf, fontStyle: 'italic', fontWeight: 500 }}> / </span></span>
               : <span>Season<span style={{ color: T.leaf, fontStyle: 'italic', fontWeight: 500 }}> / </span></span>}
             <span style={{ fontWeight: 400, color: T.textMid, fontSize: 22 }}>{offSeason ? 'OFF SEASON' : `W${today}`}</span>
+            {suitability && (
+              <span title="Average crop suitability for this bed" style={{
+                marginLeft: 10, fontFamily: T.fontMono, fontSize: 12, fontWeight: 600,
+                color: scoreBand(suitability.score / 10).color,
+                background: T.cedarWash, borderRadius: 8, padding: '2px 8px',
+                border: `1px solid ${T.borderSoft}`, verticalAlign: 'middle',
+              }}>{suitability.score}/100</span>
+            )}
           </div>
           <div style={{ marginTop: 3, display: 'flex', gap: 8 }}>
             <Label size={10} color={T.textSoft}>{now.label.toUpperCase()}</Label>
@@ -2004,12 +2090,12 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
         </div>
       </section>
 
-      <InGroundStrip bed={bed} dimensions={dimensions} onPickCrop={setPicked}/>
+      <InGroundStrip bed={bed} dimensions={dimensions} onPickCrop={setPicked} cellScores={cellScores}/>
       <TabBar active="planner"/>
 
       {picked && (
         <CropSheet cropKey={picked} today={today} bed={bed} events={events}
-          season={season} gosBed={gosBed} isFixture={isFixture}
+          season={season} gosBed={gosBed} isFixture={isFixture} suitability={suitability}
           isPreview={isPreview} weekOffset={weekOffset}
           onMarkDone={onMarkDone}
           onHarvest={onHarvest}

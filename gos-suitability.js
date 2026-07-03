@@ -297,6 +297,83 @@
     };
   }
 
+  // ── explain layer ─────────────────────────────────────────────────────────
+  // Turns a factors object (from scoreCell) into plain-English rows so a
+  // surface can answer "Why this score?". Copy adapted from the story-mode
+  // score-explain reference, scoped to the four factors this engine emits.
+  var FACTOR_EXPLAIN = {
+    sunFit: {
+      label: 'Sun', emoji: '☀️', weight: '2×',
+      what: 'How well this crop’s light needs match the bed.',
+      good: 'Getting the sun it wants.',
+      mid: 'Workable light, but it could use more.',
+      bad: 'Not enough sun here — move it or pick a shade-tolerant crop.',
+    },
+    positionFit: {
+      label: 'Position', emoji: '📐', weight: '1×',
+      what: 'Tall crops belong on the wall row; low, frequently-picked crops near the front.',
+      good: 'Well placed for its height and access.',
+      mid: 'Placement is fine, not optimal.',
+      bad: 'Out of place — a tall crop up front or a picker stuck in back.',
+    },
+    seasonFit: {
+      label: 'Season', emoji: '📅', weight: '1×',
+      what: 'Whether the current week sits in this crop’s grow/harvest window.',
+      good: 'Right in its season.',
+      mid: 'Can grow now, but off its peak.',
+      bad: 'Wrong season — outside its window.',
+    },
+    adjacency: {
+      label: 'Neighbors', emoji: '🤝', weight: '±',
+      what: 'Companion bonus vs. conflict penalty from the four touching cells.',
+      good: 'Good company — companion planting bonus.',
+      mid: 'Neutral neighbors.',
+      bad: 'Bad neighbors — conflicts or too much of the same crop.',
+    },
+  };
+
+  // Verdict for one factor value → 'good' | 'mid' | 'bad'.
+  function factorVerdict(key, value) {
+    if (key === 'adjacency') {
+      if (value > 0.3) return 'good';
+      if (value < -0.3) return 'bad';
+      return 'mid';
+    }
+    if (value >= 4) return 'good';
+    if (value >= 2.5) return 'mid';
+    return 'bad';
+  }
+
+  function explainFactor(key, value) {
+    var meta = FACTOR_EXPLAIN[key];
+    if (!meta) return null;
+    var verdict = factorVerdict(key, value);
+    return {
+      key: key,
+      label: meta.label,
+      emoji: meta.emoji,
+      weight: meta.weight,
+      value: value,
+      verdict: verdict,          // 'good' | 'mid' | 'bad'
+      what: meta.what,
+      note: meta[verdict],
+    };
+  }
+
+  // explain(factors) → ordered rows for a "Why this score?" panel.
+  function explain(factors) {
+    if (!factors) return [];
+    var order = ['sunFit', 'positionFit', 'seasonFit', 'adjacency'];
+    var rows = [];
+    for (var i = 0; i < order.length; i++) {
+      if (typeof factors[order[i]] === 'number') {
+        var row = explainFactor(order[i], factors[order[i]]);
+        if (row) rows.push(row);
+      }
+    }
+    return rows;
+  }
+
   global.GosSuitability = {
     scoreCell: scoreCell,
     scoreBed: scoreBed,
@@ -306,6 +383,8 @@
     adjacencyDelta: adjacencyDelta,
     isCompanion: isCompanion,
     isConflict: isConflict,
+    explain: explain,
+    explainFactor: explainFactor,
     COMPANIONS: COMPANIONS,
     CONFLICTS: CONFLICTS,
   };
