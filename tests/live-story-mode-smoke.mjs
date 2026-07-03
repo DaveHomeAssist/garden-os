@@ -10,6 +10,8 @@ const { chromium } = await import(playwrightSpecifier);
 
 const LIVE_URL = process.env.LIVE_URL || 'https://davehomeassist.github.io/garden-os/story-mode/';
 const outputDir = process.env.SMOKE_OUTPUT_DIR || join(tmpdir(), 'garden-os-live-smoke');
+const PLAYER_SPEED_UNITS_PER_SECOND = 1.85;
+const MEADOW_FLOWERS_POSITION = { x: 2.7, z: 2.4 };
 
 function seededCampaign() {
   return {
@@ -84,6 +86,34 @@ async function travel(page, zoneId) {
   await waitForRenderedZone(page, zoneId);
 }
 
+async function moveAxis(page, key, durationMs) {
+  if (durationMs <= 0) return;
+  await page.keyboard.down(key);
+  await page.evaluate((duration) => window.advanceTime(duration), durationMs);
+  await page.keyboard.up(key);
+}
+
+async function moveToward(page, target) {
+  const state = await snapshot(page);
+  const position = state.player?.position;
+  assert(position, 'Player position should be available for live smoke movement.');
+
+  const dx = target.x - position.x;
+  await moveAxis(
+    page,
+    dx > 0 ? 'd' : 'a',
+    Math.round((Math.abs(dx) / PLAYER_SPEED_UNITS_PER_SECOND) * 1000),
+  );
+
+  const afterX = await snapshot(page);
+  const dz = target.z - afterX.player.position.z;
+  await moveAxis(
+    page,
+    dz > 0 ? 's' : 'w',
+    Math.round((Math.abs(dz) / PLAYER_SPEED_UNITS_PER_SECOND) * 1000),
+  );
+}
+
 const browser = await chromium.launch({ headless: process.env.HEADLESS !== '0' });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
@@ -109,15 +139,10 @@ try {
   await travel(page, 'riverside');
   await travel(page, 'meadow');
 
-  await page.keyboard.down('a');
-  await page.evaluate(() => window.advanceTime(1600));
-  await page.keyboard.up('a');
-  await page.keyboard.down('s');
-  await page.evaluate(() => window.advanceTime(1300));
-  await page.keyboard.up('s');
+  await moveToward(page, MEADOW_FLOWERS_POSITION);
 
   await page.locator('.interaction-prompt', { hasText: 'Forage' }).waitFor({ state: 'visible', timeout: 30000 });
-  await page.keyboard.press('Space');
+  await page.keyboard.press('e');
 
   await page.waitForFunction(() => {
     const campaign = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');

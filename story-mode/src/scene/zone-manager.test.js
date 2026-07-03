@@ -158,6 +158,7 @@ describe('ZoneManager', () => {
     await vi.runAllTimersAsync();
     await transition;
 
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: 2 } });
     manager.update(1 / 60, { position: { x: 0, y: 0, z: -8.5 } });
     await vi.runAllTimersAsync();
 
@@ -166,6 +167,52 @@ describe('ZoneManager', () => {
       type: Actions.ZONE_CHANGED,
       payload: { fromZone: 'player_plot', toZone: 'neighborhood', spawnPoint: nextSpawn },
     });
+  });
+
+  it('does not bounce through a return exit while standing on the destination spawn', async () => {
+    const renderer = { render: vi.fn() };
+    const store = {
+      dispatch: vi.fn(),
+      getState: () => ({ campaign: {}, season: { season: 'spring' } }),
+    };
+    const tracker = { disposeAll: vi.fn() };
+    const manager = new ZoneManager(renderer, store, tracker);
+
+    manager.registerZone('player_plot', () => ({ scene: {}, camera: {} }));
+    manager.registerZone('neighborhood', () => ({ scene: {}, camera: {} }));
+    manager.addZoneExit(
+      'player_plot',
+      { minX: -1, maxX: 1, minZ: -9, maxZ: -8 },
+      'neighborhood',
+      { x: 0, y: 0, z: 7.5 },
+    );
+    manager.addZoneExit(
+      'neighborhood',
+      { minX: -1, maxX: 1, minZ: 7, maxZ: 8 },
+      'player_plot',
+      { x: 0, y: 0, z: 2 },
+    );
+
+    const transition = manager.transitionTo('player_plot');
+    await vi.runAllTimersAsync();
+    await transition;
+
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: 2 } });
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: -8.5 } });
+    await vi.runAllTimersAsync();
+
+    expect(manager.getActiveZone()).toBe('neighborhood');
+
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: 7.5 } });
+    await vi.runAllTimersAsync();
+
+    expect(manager.getActiveZone()).toBe('neighborhood');
+
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: 0 } });
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: 7.5 } });
+    await vi.runAllTimersAsync();
+
+    expect(manager.getActiveZone()).toBe('player_plot');
   });
 
   it('blocks gated zones until requirements are met', () => {

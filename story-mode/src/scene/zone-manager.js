@@ -141,6 +141,7 @@ export class ZoneManager {
     this.activeZoneInstance = null;
     this.activeZoneInteractableIds = [];
     this.interactableRegistry = null;
+    this.triggerArmed = true;
     this.transitioning = false;
     this.overlay = this.createOverlay();
     this.registerDefaultGates();
@@ -258,6 +259,7 @@ export class ZoneManager {
     const instance = this.factories.get(zoneId)?.();
     this.activeZoneId = zoneId;
     this.activeZoneInstance = instance ?? null;
+    this.triggerArmed = false;
     this.activeZoneInstance?.setSpawnPoint?.(spawnPoint);
     this.activeZoneInstance?.setSeason?.(
       this.store?.getState?.()?.season?.season
@@ -291,6 +293,11 @@ export class ZoneManager {
     return false;
   }
 
+  isInsideAnyExit(playerPosition) {
+    const exits = this.zoneExits.get(this.activeZoneId) ?? [];
+    return exits.some((exit) => isInsideBounds(playerPosition, exit.triggerBounds));
+  }
+
   update(dt, playerStateOrPosition = null) {
     const playerPosition = toWorldPosition(playerStateOrPosition?.position ?? playerStateOrPosition);
     if (playerPosition) {
@@ -299,6 +306,10 @@ export class ZoneManager {
     this.activeZoneInstance?.update?.(dt);
     const triggerPosition = playerPosition ?? this.activeZoneInstance?.getPlayerPosition?.() ?? null;
     if (triggerPosition && !this.transitioning) {
+      if (!this.triggerArmed) {
+        this.triggerArmed = !this.isInsideAnyExit(triggerPosition);
+        return;
+      }
       this.checkTriggers(triggerPosition);
     }
   }
@@ -352,6 +363,7 @@ export class ZoneManager {
     this.resourceTracker?.disposeAll?.();
     this.activeZoneInstance = null;
     this.activeZoneId = null;
+    this.triggerArmed = true;
     this.overlay?.remove?.();
     this.overlay = null;
   }

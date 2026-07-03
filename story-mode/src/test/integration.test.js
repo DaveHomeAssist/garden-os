@@ -4169,6 +4169,8 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(manager.factories.has(exitDef.destination), `factory for ${exitDef.destination} must be registered`).toBe(true);
       expect(manager.transitioning, 'manager should not be mid-transition').toBe(false);
 
+      manager.activeZoneInstance.setPlayerPosition({ x: 0, z: 3 });
+      manager.update(0.016);
       manager.activeZoneInstance.setPlayerPosition(insideExit);
       manager.update(0.016);
       await vi.runAllTimersAsync();
@@ -4268,12 +4270,16 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(manager.getActiveZone()).toBe('player_plot');
 
       const toNeighborhoodExit = getZoneExitPoints('player_plot')[0];
+      manager.activeZoneInstance.setPlayerPosition({ x: 0, z: 3 });
+      manager.update(0.016);
       manager.activeZoneInstance.setPlayerPosition({ ...toNeighborhoodExit.position });
       manager.update(0.016);
       await vi.runAllTimersAsync();
       expect(manager.getActiveZone()).toBe('neighborhood');
 
       const backHomeExit = getZoneExitPoints('neighborhood').find((exit) => exit.destination === 'player_plot');
+      manager.activeZoneInstance.setPlayerPosition({ x: 0, z: 0 });
+      manager.update(0.016);
       manager.activeZoneInstance.setPlayerPosition({ ...backHomeExit.position });
       manager.update(0.016);
       await vi.runAllTimersAsync();

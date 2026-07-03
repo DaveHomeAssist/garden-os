@@ -88,6 +88,7 @@ function bindUI({
   inputManager.registerAction('toggle_backpack', { keys: ['b'] });
   inputManager.registerAction('toggle_world_map', { keys: ['m'] });
   inputManager.registerAction('select_cell', { keys: ['Enter', 'Space'], pointer: true, touch: true });
+  inputManager.registerAction('interact', { keys: ['e'] });
   inputManager.registerAction('next_tool', { keys: ['Tab', ']'] });
   inputManager.registerAction('prev_tool', { keys: ['Shift+Tab', '['] });
   inputManager.registerAction('move_up', { keys: ['w', 'ArrowUp'] });
@@ -184,9 +185,7 @@ function bindUI({
   const interactionPrompt = createInteractionPrompt({
     container: viewport,
     onActivate: () => {
-      if (interactionSystem.interactHighlighted({ source: 'prompt' })) {
-        syncInteractionPresentation();
-      }
+      activateHighlightedInteraction('prompt');
     },
   });
 
@@ -600,6 +599,14 @@ function bindUI({
       label: highlighted.label,
       visible: true,
     });
+  }
+
+  function activateHighlightedInteraction(source) {
+    if (!interactionSystem.interactHighlighted({ source })) {
+      return false;
+    }
+    syncInteractionPresentation();
+    return true;
   }
 
   function showToast(message, durationMs = 2200, variant = 'info') {
@@ -1401,12 +1408,17 @@ function bindUI({
   }
 
   inputManager.on('select_cell', ({ source, position }) => {
-    if ((source === 'keyboard' || source === 'touch') && interactionSystem.interactHighlighted({ source })) {
-      syncInteractionPresentation();
+    if ((source === 'keyboard' || source === 'touch') && activateHighlightedInteraction(source)) {
       return;
     }
     if (source === 'keyboard') return;
     handleViewportSelection(position.clientX, position.clientY);
+  });
+
+  inputManager.on('interact', ({ source }) => {
+    if (source === 'keyboard') {
+      activateHighlightedInteraction(source);
+    }
   });
 
   ['move_up', 'move_down', 'move_left', 'move_right'].forEach((actionName) => {
