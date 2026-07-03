@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -8,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const repoRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const storyModeDir = join(repoRoot, 'story-mode');
 const localPlaywrightPath = join(storyModeDir, 'node_modules', 'playwright', 'index.mjs');
+const localVitePath = join(storyModeDir, 'node_modules', 'vite', 'dist', 'node', 'index.js');
 const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
   ? pathToFileURL(process.env.PLAYWRIGHT_IMPORT_PATH).href
   : pathToFileURL(localPlaywrightPath).href;
@@ -15,6 +15,12 @@ const { chromium } = await import(playwrightSpecifier);
 
 const outputDir = process.env.GOS_SCREENSHOT_OUTPUT_DIR
   || join(tmpdir(), `garden-os-story-screens-${Date.now()}`);
+const timeoutMs = Number(process.env.GOS_SCREENSHOT_TIMEOUT_MS ?? 180000);
+const hardTimeout = setTimeout(() => {
+  console.error(`Story Mode screenshot regression timed out after ${timeoutMs}ms.`);
+  process.exit(124);
+}, timeoutMs);
+hardTimeout.unref?.();
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -32,41 +38,28 @@ async function getOpenPort() {
   return address.port;
 }
 
-function startDevServer(port) {
-  const child = spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
-    cwd: storyModeDir,
-    env: { ...process.env, BROWSER: 'none' },
-    stdio: ['ignore', 'pipe', 'pipe'],
+async function startDevServer(port) {
+  const { createServer: createViteServer } = await import(pathToFileURL(localVitePath).href);
+  const vite = await createViteServer({
+    root: storyModeDir,
+    configFile: join(storyModeDir, 'vite.config.js'),
+    logLevel: 'error',
+    server: {
+      host: '127.0.0.1',
+      port,
+      strictPort: true,
+    },
   });
-
-  let output = '';
-  child.stdout.on('data', (chunk) => { output += chunk.toString(); });
-  child.stderr.on('data', (chunk) => { output += chunk.toString(); });
-
+  await vite.listen();
   return {
-    child,
-    getOutput: () => output,
-    stop: () => new Promise((resolveStop) => {
-      if (child.exitCode !== null) {
-        resolveStop();
-        return;
-      }
-      child.once('exit', resolveStop);
-      child.kill('SIGTERM');
-      setTimeout(() => {
-        if (child.exitCode === null) child.kill('SIGKILL');
-      }, 2000).unref();
-    }),
+    stop: () => vite.close(),
   };
 }
 
-async function waitForServer(url, server) {
+async function waitForServer(url) {
   const startedAt = Date.now();
   let lastError = '';
   while (Date.now() - startedAt < 45000) {
-    if (server.child.exitCode !== null) {
-      throw new Error(`Vite exited early with code ${server.child.exitCode}.\n${server.getOutput()}`);
-    }
     try {
       const response = await fetch(url);
       if (response.ok) return;
@@ -76,7 +69,7 @@ async function waitForServer(url, server) {
     }
     await new Promise((resolveWait) => setTimeout(resolveWait, 350));
   }
-  throw new Error(`Timed out waiting for ${url}: ${lastError}\n${server.getOutput()}`);
+  throw new Error(`Timed out waiting for ${url}: ${lastError}`);
 }
 
 async function waitForCanvasPaint(page) {
@@ -223,12 +216,12 @@ async function assertLayout(page) {
 
 const port = await getOpenPort();
 const baseUrl = `http://127.0.0.1:${port}/`;
-const server = startDevServer(port);
+const server = await startDevServer(port);
 const browser = await chromium.launch({ headless: process.env.HEADLESS !== '0' });
 
 try {
   await mkdir(outputDir, { recursive: true });
-  await waitForServer(baseUrl, server);
+  await waitForServer(baseUrl);
 
   const desktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
   await seedAndStart(desktop, baseUrl, {
@@ -266,6 +259,7 @@ try {
     ],
   }, null, 2));
 } finally {
+  clearTimeout(hardTimeout);
   await browser.close();
   await server.stop();
 }
