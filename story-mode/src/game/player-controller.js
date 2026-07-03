@@ -15,6 +15,19 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function cloneBounds(bounds) {
+  return {
+    minX: bounds.minX,
+    maxX: bounds.maxX,
+    minZ: bounds.minZ,
+    maxZ: bounds.maxZ,
+  };
+}
+
+function cloneBlockers(blockers) {
+  return blockers.map((blocker) => ({ ...blocker }));
+}
+
 function circleIntersectsRect(x, z, radius, rect) {
   const closestX = clamp(x, rect.minX, rect.maxX);
   const closestZ = clamp(z, rect.minZ, rect.maxZ);
@@ -39,8 +52,8 @@ function normalizeInput(input) {
 }
 
 export function createPlayerController(options = {}) {
-  const bounds = options.bounds ?? DEFAULT_BOUNDS;
-  const blockers = options.blockers ?? DEFAULT_BLOCKERS;
+  let bounds = cloneBounds(options.bounds ?? DEFAULT_BOUNDS);
+  let blockers = cloneBlockers(options.blockers ?? DEFAULT_BLOCKERS);
   const position = { ...DEFAULT_POSITION, ...(options.initialPosition ?? {}) };
 
   let enabled = true;
@@ -118,6 +131,18 @@ export function createPlayerController(options = {}) {
   }
 
   return {
+    setBounds(nextBounds = null) {
+      bounds = cloneBounds(nextBounds ?? DEFAULT_BOUNDS);
+      position.x = clamp(position.x, bounds.minX, bounds.maxX);
+      position.z = clamp(position.z, bounds.minZ, bounds.maxZ);
+      return getState();
+    },
+    setBlockers(nextBlockers = null) {
+      blockers = Array.isArray(nextBlockers)
+        ? cloneBlockers(nextBlockers)
+        : cloneBlockers(DEFAULT_BLOCKERS);
+      return getState();
+    },
     setEnabled(nextEnabled) {
       enabled = Boolean(nextEnabled);
       if (!enabled) {
@@ -128,9 +153,9 @@ export function createPlayerController(options = {}) {
       }
     },
     reset(nextPosition = DEFAULT_POSITION) {
-      position.x = nextPosition.x;
+      position.x = clamp(nextPosition.x, bounds.minX, bounds.maxX);
       position.y = nextPosition.y ?? 0;
-      position.z = nextPosition.z;
+      position.z = clamp(nextPosition.z, bounds.minZ, bounds.maxZ);
       velocityX = 0;
       velocityZ = 0;
       moving = false;

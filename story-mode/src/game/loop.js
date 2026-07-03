@@ -10,7 +10,11 @@ export function createLoop(services) {
 function runStep(dt) {
   services.update?.(dt);
   services.scene.sync(services.getState());
-  services.scene.render();
+  if (typeof services.render === 'function') {
+    services.render();
+  } else {
+    services.scene.render();
+  }
   services.onFrame?.({ dt });
 }
 

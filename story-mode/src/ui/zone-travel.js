@@ -12,6 +12,16 @@ function clonePosition(position) {
   };
 }
 
+function cloneBounds(bounds) {
+  if (!bounds) return null;
+  return {
+    minX: bounds.minX,
+    maxX: bounds.maxX,
+    minZ: bounds.minZ,
+    maxZ: bounds.maxZ,
+  };
+}
+
 function toWorldPosition(position) {
   return {
     x: position?.x ?? 0,
@@ -52,6 +62,10 @@ function buildWorldZoneInteractables(worldMap = WORLD_MAP) {
 const ZONE_NAMES = buildZoneNames(WORLD_MAP);
 const DEFAULT_ZONE_SPAWN_POINTS = buildDefaultZoneSpawnPoints(WORLD_MAP);
 const WORLD_ZONE_INTERACTABLES = buildWorldZoneInteractables(WORLD_MAP);
+
+function getZoneMovementBounds(zoneId, worldMap = WORLD_MAP) {
+  return cloneBounds(worldMap.zones?.[zoneId]?.bounds ?? null);
+}
 
 function resolveZoneSpawnPoint(fromZone, toZone) {
   if (!toZone) return null;
@@ -95,5 +109,6 @@ export {
   buildWorldZoneInteractables,
   buildZoneNames,
   getZoneExitInteractables,
+  getZoneMovementBounds,
   resolveZoneSpawnPoint,
 };

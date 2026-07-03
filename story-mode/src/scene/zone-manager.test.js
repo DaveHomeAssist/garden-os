@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WORLD_MAP from 'specs/WORLD_MAP.json';
 
+import { Actions } from '../game/store.js';
 import { ZoneManager, DEFAULT_ZONE_GATES, buildZoneGateRequirements } from './zone-manager.js';
 
 beforeEach(() => {
@@ -50,6 +51,121 @@ describe('ZoneManager', () => {
     expect(disposeA).toHaveBeenCalled();
     expect(tracker.disposeAll).toHaveBeenCalled();
     expect(manager.getActiveZone()).toBe('neighborhood');
+  });
+
+  it('registers active zone interactables and unregisters them on the next transition', async () => {
+    const renderer = { render: vi.fn() };
+    const store = {
+      dispatch: vi.fn(),
+      getState: () => ({ campaign: {}, season: { season: 'spring' } }),
+    };
+    const tracker = { disposeAll: vi.fn() };
+    const manager = new ZoneManager(renderer, store, tracker);
+    const register = vi.fn((id) => id);
+    const unregister = vi.fn();
+
+    manager.setInteractableRegistry({ register, unregister });
+    manager.registerZone('player_plot', () => ({
+      scene: {},
+      camera: {},
+      registerInteractables(callback) {
+        callback({
+          id: 'npc_old_gus',
+          type: 'npc',
+          label: 'Old Gus',
+          position: { x: 1, y: 0, z: 2 },
+          radius: 1,
+        });
+      },
+      dispose: vi.fn(),
+    }));
+    manager.registerZone('neighborhood', () => ({
+      scene: {},
+      camera: {},
+      registerInteractables(callback) {
+        callback({
+          id: 'stall_seeds',
+          type: 'custom',
+          label: 'Seed Stall',
+          position: { x: -2, y: 0, z: 0 },
+          radius: 1,
+        });
+      },
+      dispose: vi.fn(),
+    }));
+
+    const first = manager.transitionTo('player_plot');
+    await vi.runAllTimersAsync();
+    await first;
+
+    expect(register).toHaveBeenCalledWith(
+      'active-zone:player_plot:npc_old_gus',
+      expect.objectContaining({ label: 'Old Gus' }),
+    );
+
+    const second = manager.transitionTo('neighborhood');
+    await vi.runAllTimersAsync();
+    await second;
+
+    expect(unregister).toHaveBeenCalledWith('active-zone:player_plot:npc_old_gus');
+    expect(register).toHaveBeenCalledWith(
+      'active-zone:neighborhood:stall_seeds',
+      expect.objectContaining({ label: 'Seed Stall' }),
+    );
+  });
+
+  it('renders the active zone through the configured renderer', async () => {
+    const renderer = { render: vi.fn(), domElement: { clientWidth: 100, clientHeight: 80 } };
+    const store = {
+      dispatch: vi.fn(),
+      getState: () => ({ campaign: {}, season: { season: 'spring' } }),
+    };
+    const tracker = { disposeAll: vi.fn() };
+    const manager = new ZoneManager(renderer, store, tracker);
+    const scene = {};
+    const camera = {};
+
+    manager.registerZone('player_plot', () => ({ scene, camera }));
+
+    const transition = manager.transitionTo('player_plot');
+    await vi.runAllTimersAsync();
+    await transition;
+
+    expect(manager.render()).toBe(true);
+    expect(renderer.render).toHaveBeenCalledWith(scene, camera);
+  });
+
+  it('transitions when the live player position enters an exit during update', async () => {
+    const renderer = { render: vi.fn() };
+    const store = {
+      dispatch: vi.fn(),
+      getState: () => ({ campaign: {}, season: { season: 'spring' } }),
+    };
+    const tracker = { disposeAll: vi.fn() };
+    const manager = new ZoneManager(renderer, store, tracker);
+    const nextSpawn = { x: 0, y: 0, z: 7.5 };
+
+    manager.registerZone('player_plot', () => ({ scene: {}, camera: {} }));
+    manager.registerZone('neighborhood', () => ({ scene: {}, camera: {} }));
+    manager.addZoneExit(
+      'player_plot',
+      { minX: -1, maxX: 1, minZ: -9, maxZ: -8 },
+      'neighborhood',
+      nextSpawn,
+    );
+
+    const transition = manager.transitionTo('player_plot');
+    await vi.runAllTimersAsync();
+    await transition;
+
+    manager.update(1 / 60, { position: { x: 0, y: 0, z: -8.5 } });
+    await vi.runAllTimersAsync();
+
+    expect(manager.getActiveZone()).toBe('neighborhood');
+    expect(store.dispatch).toHaveBeenCalledWith({
+      type: Actions.ZONE_CHANGED,
+      payload: { fromZone: 'player_plot', toZone: 'neighborhood', spawnPoint: nextSpawn },
+    });
   });
 
   it('blocks gated zones until requirements are met', () => {

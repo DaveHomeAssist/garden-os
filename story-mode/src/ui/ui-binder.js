@@ -38,6 +38,7 @@ import {
   WORLD_ZONE_INTERACTABLES,
   ZONE_NAMES,
   applyZoneTravelState,
+  getZoneMovementBounds,
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
@@ -137,15 +138,30 @@ function bindUI({
   let state = store.getState();
   let interactionSystem = null;
   const playerController = createPlayerController();
+
+  function syncPlayerMovementForZone(zoneId = state.campaign.worldState?.currentZone ?? 'player_plot') {
+    playerController.setBounds(getZoneMovementBounds(zoneId));
+    playerController.setBlockers(zoneId === 'player_plot' ? null : []);
+  }
+
+  syncPlayerMovementForZone();
+
   if (state.campaign.worldState?.lastSpawnPoint) {
     playerController.reset(state.campaign.worldState.lastSpawnPoint);
+    syncPlayerMovementForZone();
   }
   const unsubscribeState = store.subscribe((nextState, action) => {
     state = nextState;
+    if (action?.type === Actions.ZONE_CHANGED) {
+      syncPlayerMovementForZone(nextState.campaign.worldState?.currentZone);
+    }
     if (applyZoneTravelState(action, nextState, { playerController, scene, interactionSystem })) {
+      if (interactionSystem) syncWorldInteractables();
       updateHUD();
       interactionSystem?.update?.(0);
       syncInteractionPresentation();
+      saveCampaign(nextState.campaign, slot);
+      saveSeasonState(nextState.season, slot);
     }
   });
   const touchStick = createTouchStick();
@@ -295,6 +311,14 @@ function bindUI({
 
   function getCurrentZoneName() {
     return ZONE_NAMES[getCurrentZoneId()] ?? 'Unknown Zone';
+  }
+
+  function shouldRenderActiveZone() {
+    return Boolean(
+      zoneManager?.isRenderableActiveZone?.()
+      && zoneManager.getActiveZone?.()
+      && zoneManager.getActiveZone() !== 'player_plot'
+    );
   }
 
   function getWorldSystems() {
@@ -528,6 +552,19 @@ function bindUI({
       onInteractCell: ({ cellIndex, source }) => handleCellInteraction(cellIndex, source),
     },
   );
+  zoneManager?.setSystems?.(getWorldSystems());
+  zoneManager?.setInteractableRegistry?.({
+    register(id, definition) {
+      if (!definition?.position || definition.type === 'exit' || definition.type === 'forage') {
+        return null;
+      }
+      interactionSystem.registerInteractable(id, definition);
+      return id;
+    },
+    unregister(id) {
+      interactionSystem.unregisterInteractable(id);
+    },
+  });
   syncWorldInteractables();
 
   function syncInteractionPresentation() {
@@ -549,7 +586,9 @@ function bindUI({
       scene.clearInteractionHighlight?.();
     }
 
-    const projected = scene.projectWorldPosition?.(highlighted.anchor ?? highlighted.position);
+    const projected = shouldRenderActiveZone()
+      ? zoneManager.projectWorldPosition?.(highlighted.anchor ?? highlighted.position)
+      : scene.projectWorldPosition?.(highlighted.anchor ?? highlighted.position);
     if (!projected?.visible) {
       interactionPrompt.hide();
       return;
@@ -1512,7 +1551,10 @@ function bindUI({
 
   function resize() {
     const rect = viewport.getBoundingClientRect();
-    scene.resize(Math.round(rect.width), Math.round(rect.height));
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+    scene.resize(width, height);
+    zoneManager?.resize?.(width, height);
   }
 
   // Populate lazy intervention context now that all functions are defined
@@ -1553,11 +1595,13 @@ function bindUI({
       interactionSystem.update(dt);
       syncInteractionPresentation();
       dayNightController.sync();
-      // Check zone exit triggers each frame using the player's current position
-      if (zoneManager && !zoneManager.transitioning) {
-        const pos = playerController.getState().position;
-        zoneManager.checkTriggers(pos);
+      zoneManager?.update?.(dt, playerState);
+    },
+    render: () => {
+      if (shouldRenderActiveZone() && zoneManager.render()) {
+        return;
       }
+      scene.render();
     },
     onFrame: ({ dt }) => {
       perfHud?.sample({ dt });

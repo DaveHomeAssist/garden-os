@@ -52,6 +52,23 @@ describe('player-controller', () => {
     expect(blockerController.getState().position.z).toBeGreaterThan(0.5);
   });
 
+  it('can swap movement bounds and blockers when the active world zone changes', () => {
+    const controller = createPlayerController({
+      bounds: { minX: -1, maxX: 1, minZ: -1, maxZ: 1 },
+      blockers: [{ minX: -0.2, maxX: 0.2, minZ: -0.2, maxZ: 0.2 }],
+      initialPosition: { x: 0, y: 0, z: 0.5 },
+    });
+
+    controller.setBounds({ minX: -9, maxX: 9, minZ: -9, maxZ: 9 });
+    controller.setBlockers([]);
+
+    for (let index = 0; index < 8; index += 1) {
+      controller.update(0.1, { x: 0, z: -1 });
+    }
+
+    expect(controller.getState().position.z).toBeLessThan(-0.2);
+  });
+
   it('stops cleanly when disabled and can be reset to a new spawn point', () => {
     const controller = createPlayerController({
       blockers: [],

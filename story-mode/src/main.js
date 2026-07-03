@@ -92,7 +92,7 @@ async function startSession({ initialState, slot, viewport, planner }) {
 
     // Create zone manager and register all zone factories + exit triggers
     const zoneResourceTracker = new ResourceTracker();
-    const zoneManager = new ZoneManager(null, store, zoneResourceTracker);
+    const zoneManager = new ZoneManager(scene.getRenderer?.(), store, zoneResourceTracker);
     registerAllZones(zoneManager, store, zoneResourceTracker);
 
     // Transition to the player's current zone (or default to player_plot)

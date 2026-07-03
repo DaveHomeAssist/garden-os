@@ -1,9 +1,12 @@
+import { Vector3 } from 'three';
+
 import { Actions } from '../game/store.js';
 import { ReputationTiers } from '../game/reputation.js';
 import WORLD_MAP from 'specs/WORLD_MAP.json';
 
 const FADE_DURATION_MS = 300;
 const TIER_THRESHOLDS = Object.fromEntries(Object.values(ReputationTiers).map((tier) => [tier.id, tier.threshold]));
+const projectedPositionScratch = new Vector3();
 
 function buildZoneGateRequirements(worldMap = WORLD_MAP) {
   return Object.fromEntries(
@@ -46,6 +49,15 @@ function isInsideBounds(position, bounds) {
     && position.z >= bounds.minZ
     && position.z <= bounds.maxZ
   );
+}
+
+function toWorldPosition(position) {
+  if (!position) return null;
+  return {
+    x: position.x ?? 0,
+    y: position.y ?? 0,
+    z: position.z ?? 0,
+  };
 }
 
 function evaluateZoneAccess(zoneId, state, systems = {}, zoneGates = DEFAULT_ZONE_GATES) {
@@ -127,6 +139,8 @@ export class ZoneManager {
     this.zoneGates = new Map();
     this.activeZoneId = null;
     this.activeZoneInstance = null;
+    this.activeZoneInteractableIds = [];
+    this.interactableRegistry = null;
     this.transitioning = false;
     this.overlay = this.createOverlay();
     this.registerDefaultGates();
@@ -159,6 +173,48 @@ export class ZoneManager {
 
   registerZoneGate(zoneId, requirements) {
     this.zoneGates.set(zoneId, structuredClone(requirements ?? {}));
+  }
+
+  setRenderer(renderer) {
+    this.renderer = renderer;
+  }
+
+  setSystems(systems = {}) {
+    this.systems = systems;
+  }
+
+  setInteractableRegistry(registry = null) {
+    this.clearActiveZoneInteractables();
+    this.interactableRegistry = registry;
+    this.registerActiveZoneInteractables();
+  }
+
+  clearActiveZoneInteractables() {
+    if (!this.interactableRegistry?.unregister) {
+      this.activeZoneInteractableIds = [];
+      return;
+    }
+    this.activeZoneInteractableIds.forEach((id) => {
+      this.interactableRegistry.unregister(id);
+    });
+    this.activeZoneInteractableIds = [];
+  }
+
+  registerActiveZoneInteractables() {
+    if (!this.interactableRegistry?.register || !this.activeZoneInstance?.registerInteractables) {
+      return;
+    }
+
+    this.activeZoneInstance.registerInteractables((definition) => {
+      if (!definition?.id || !definition?.position) return;
+      const registeredId = this.interactableRegistry.register(
+        `active-zone:${this.activeZoneId}:${definition.id}`,
+        definition,
+      );
+      if (registeredId) {
+        this.activeZoneInteractableIds.push(registeredId);
+      }
+    });
   }
 
   registerDefaultGates() {
@@ -195,6 +251,7 @@ export class ZoneManager {
     this.setOverlayOpacity(1);
     await wait(FADE_DURATION_MS);
 
+    this.clearActiveZoneInteractables();
     this.activeZoneInstance?.dispose?.();
     this.resourceTracker?.disposeAll?.();
 
@@ -202,6 +259,12 @@ export class ZoneManager {
     this.activeZoneId = zoneId;
     this.activeZoneInstance = instance ?? null;
     this.activeZoneInstance?.setSpawnPoint?.(spawnPoint);
+    this.activeZoneInstance?.setSeason?.(
+      this.store?.getState?.()?.season?.season
+        ?? this.store?.getState?.()?.campaign?.currentSeason
+        ?? 'spring',
+    );
+    this.registerActiveZoneInteractables();
 
     this.store?.dispatch?.({
       type: Actions.ZONE_CHANGED,
@@ -228,20 +291,63 @@ export class ZoneManager {
     return false;
   }
 
-  update(dt) {
+  update(dt, playerStateOrPosition = null) {
+    const playerPosition = toWorldPosition(playerStateOrPosition?.position ?? playerStateOrPosition);
+    if (playerPosition) {
+      this.activeZoneInstance?.setPlayerPosition?.(playerPosition);
+    }
     this.activeZoneInstance?.update?.(dt);
-    const playerPosition = this.activeZoneInstance?.getPlayerPosition?.() ?? null;
-    if (playerPosition && !this.transitioning) {
-      this.checkTriggers(playerPosition);
+    const triggerPosition = playerPosition ?? this.activeZoneInstance?.getPlayerPosition?.() ?? null;
+    if (triggerPosition && !this.transitioning) {
+      this.checkTriggers(triggerPosition);
     }
   }
 
   render() {
-    if (!this.activeZoneInstance?.scene || !this.activeZoneInstance?.camera) return;
+    if (!this.renderer || !this.activeZoneInstance?.scene || !this.activeZoneInstance?.camera) {
+      return false;
+    }
     this.renderer.render(this.activeZoneInstance.scene, this.activeZoneInstance.camera);
+    return true;
+  }
+
+  isRenderableActiveZone() {
+    return Boolean(this.renderer && this.activeZoneInstance?.scene && this.activeZoneInstance?.camera);
+  }
+
+  resize(width, height) {
+    const camera = this.activeZoneInstance?.camera;
+    if (!camera || !width || !height) return;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix?.();
+  }
+
+  projectWorldPosition(worldPosition) {
+    const camera = this.activeZoneInstance?.camera;
+    const element = this.renderer?.domElement;
+    if (!worldPosition || !camera || !element) return null;
+
+    projectedPositionScratch.set(
+      worldPosition.x ?? 0,
+      worldPosition.y ?? 0,
+      worldPosition.z ?? 0,
+    );
+    projectedPositionScratch.project(camera);
+
+    return {
+      x: (projectedPositionScratch.x * 0.5 + 0.5) * element.clientWidth,
+      y: (-projectedPositionScratch.y * 0.5 + 0.5) * element.clientHeight,
+      visible: projectedPositionScratch.z >= -1
+        && projectedPositionScratch.z <= 1
+        && projectedPositionScratch.x >= -1.05
+        && projectedPositionScratch.x <= 1.05
+        && projectedPositionScratch.y >= -1.05
+        && projectedPositionScratch.y <= 1.05,
+    };
   }
 
   dispose() {
+    this.clearActiveZoneInteractables();
     this.activeZoneInstance?.dispose?.();
     this.resourceTracker?.disposeAll?.();
     this.activeZoneInstance = null;
