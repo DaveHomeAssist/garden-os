@@ -94,6 +94,24 @@ export function buildScenery(tracker = null) {
   const hedgePlants = [];
   const accentFlowers = [];
   const breezeNodes = [];
+  const placeCueIds = new Set();
+  let currentSeason = 'spring';
+
+  function markPlaceCue(target, cueId) {
+    if (target?.userData && cueId) {
+      target.userData.placeCueId = cueId;
+      placeCueIds.add(cueId);
+    }
+    return target;
+  }
+
+  function getLayerState(target) {
+    return {
+      visible: Boolean(target?.visible),
+      count: target?.children?.length ?? 0,
+    };
+  }
+
   const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
   const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
   const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
@@ -139,6 +157,7 @@ export function buildScenery(tracker = null) {
   const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 3.5), sidingMat);
   houseWall.position.set(0, 1.75, -6.15);
   houseWall.receiveShadow = true;
+  markPlaceCue(houseWall, 'rowhouse-siding');
   group.add(houseWall);
 
   const foundationStrip = new THREE.Mesh(
@@ -460,6 +479,7 @@ export function buildScenery(tracker = null) {
   const rainBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 18), barrelMat);
   rainBarrel.position.set(3.03, 0.35, -4.78);
   rainBarrel.castShadow = true;
+  markPlaceCue(rainBarrel, 'rain-barrel');
   group.add(rainBarrel);
 
   const barrelLid = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 18), trimMat);
@@ -575,6 +595,7 @@ export function buildScenery(tracker = null) {
   screenDoorGroup.add(screenMesh);
   screenDoorGroup.position.set(-2.55, 0.85, -4.1);
   screenDoorGroup.rotation.y = -0.12;
+  markPlaceCue(screenDoorGroup, 'porch-screen-door');
   group.add(screenDoorGroup);
 
   // 2. Radio on porch railing
@@ -746,6 +767,7 @@ export function buildScenery(tracker = null) {
     const pennant = new THREE.Mesh(pennantGeo, pennantMat);
     pennant.position.set(4.98, 0.56, 1.18);
     pennant.rotation.y = -Math.PI / 2;
+    markPlaceCue(pennant, 'phillies-pennant');
     group.add(pennant);
   }
 
@@ -770,6 +792,7 @@ export function buildScenery(tracker = null) {
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.92 });
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.0, 8), poleMat);
     pole.position.set(7.8, 1.5, -5.4);
+    markPlaceCue(pole, 'overhead-utility-pole');
     group.add(pole);
 
     const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.6, 8), poleMat);
@@ -1236,6 +1259,7 @@ export function buildScenery(tracker = null) {
   const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.5), alleyMat);
   alleyGround.rotation.x = -Math.PI / 2;
   alleyGround.position.set(0, 0.002, -7.0);
+  markPlaceCue(alleyGround, 'back-alley-strip');
   group.add(alleyGround);
 
   // === ADDITIONAL DISTANT ROOFTOPS (more depth) ===
@@ -1263,6 +1287,7 @@ export function buildScenery(tracker = null) {
   walkway.rotation.x = -Math.PI / 2;
   walkway.position.set(-2.95, 0.004, -2.5);
   walkway.receiveShadow = true;
+  markPlaceCue(walkway, 'concrete-walkway');
   group.add(walkway);
 
   // Sidewalk along front of house
@@ -1278,6 +1303,7 @@ export function buildScenery(tracker = null) {
   const acMat = new THREE.MeshStandardMaterial({ color: 0x909090, roughness: 0.7, metalness: 0.15 });
   const acUnit = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.35), acMat);
   acUnit.position.set(3.6, 0.225, -4.5);
+  markPlaceCue(acUnit, 'window-ac-unit');
   group.add(acUnit);
   // AC fan grille (circle on top)
   const acFan = new THREE.Mesh(
@@ -1342,18 +1368,19 @@ export function buildScenery(tracker = null) {
     group,
 
     updateSeason(season) {
-      const colors = SEASON_TREE_COLORS[season] || SEASON_TREE_COLORS.spring;
+      currentSeason = season || 'spring';
+      const colors = SEASON_TREE_COLORS[currentSeason] || SEASON_TREE_COLORS.spring;
       for (const canopyGroup of treeCanopies) {
         canopyGroup.children.forEach((mesh, i) => {
           mesh.material.color.set(colors[i] || colors[0]);
         });
       }
       // Seasonal prop visibility
-      fallLeaves.visible = season === 'fall';
-      winterSnow.visible = season === 'winter';
-      winterSmoke.visible = season === 'winter';
-      springFlowers.visible = season === 'spring';
-      seasonalProps.visible = season !== 'winter';
+      fallLeaves.visible = currentSeason === 'fall';
+      winterSnow.visible = currentSeason === 'winter';
+      winterSmoke.visible = currentSeason === 'winter';
+      springFlowers.visible = currentSeason === 'spring';
+      seasonalProps.visible = currentSeason !== 'winter';
 
       const shrubPalettes = {
         spring: [0x5f8d4d, 0x729d63, 0x6ea78a],
@@ -1367,11 +1394,11 @@ export function buildScenery(tracker = null) {
         fall: [0xc98a34, 0x9d5c34, 0xb88e52],
         winter: [0xcdd6df, 0xdce5ef, 0xb6c2cf],
       };
-      const shrubColors = shrubPalettes[season] || shrubPalettes.spring;
+      const shrubColors = shrubPalettes[currentSeason] || shrubPalettes.spring;
       hedgePlants.forEach((shrub, index) => {
         shrub.material.color.setHex(shrubColors[index % shrubColors.length]);
       });
-      const flowerColors = flowerPalettes[season] || flowerPalettes.spring;
+      const flowerColors = flowerPalettes[currentSeason] || flowerPalettes.spring;
       accentFlowers.forEach((flower, index) => {
         flower.material.color.setHex(flowerColors[index % flowerColors.length]);
       });
@@ -1379,7 +1406,7 @@ export function buildScenery(tracker = null) {
       // Wind flag rotation varies by season
       if (windIndicator._flag) {
         const seasonRotations = { spring: 0.3, summer: 0.1, fall: 0.6, winter: 0.8 };
-        windIndicator._flag.rotation.y = seasonRotations[season] || 0.2;
+        windIndicator._flag.rotation.y = seasonRotations[currentSeason] || 0.2;
         if (windIndicator._flag.userData.breeze) {
           windIndicator._flag.userData.breeze.baseRotationY = windIndicator._flag.rotation.y;
         }
@@ -1453,6 +1480,25 @@ export function buildScenery(tracker = null) {
     showNarrativeProps(chapter, campaign) {
       // Show notebook/sauce jar from chapter 2 onward or when campaign has started
       narrativeProps.visible = (chapter >= 2 || (campaign && campaign.length > 0));
+    },
+
+    getDebugState() {
+      return {
+        season: currentSeason,
+        placeCueCount: placeCueIds.size,
+        placeCues: [...placeCueIds].sort(),
+        layers: {
+          springFlowers: getLayerState(springFlowers),
+          fallLeaves: getLayerState(fallLeaves),
+          winterSnow: getLayerState(winterSnow),
+          winterSmoke: getLayerState(winterSmoke),
+          seasonalProps: getLayerState(seasonalProps),
+          planningProps: getLayerState(planningProps),
+          narrativeProps: getLayerState(narrativeProps),
+          fireflies: getLayerState(fireflies),
+          puddles: getLayerState(puddles),
+        },
+      };
     },
 
     showFireflies(visible) {

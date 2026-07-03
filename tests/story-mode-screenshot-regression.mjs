@@ -15,7 +15,7 @@ const { chromium } = await import(playwrightSpecifier);
 
 const outputDir = process.env.GOS_SCREENSHOT_OUTPUT_DIR
   || join(tmpdir(), `garden-os-story-screens-${Date.now()}`);
-const timeoutMs = Number(process.env.GOS_SCREENSHOT_TIMEOUT_MS ?? 180000);
+const timeoutMs = Number(process.env.GOS_SCREENSHOT_TIMEOUT_MS ?? 240000);
 const hardTimeout = setTimeout(() => {
   console.error(`Story Mode screenshot regression timed out after ${timeoutMs}ms.`);
   process.exit(124);
@@ -241,6 +241,51 @@ function makeSeededAccentSave() {
   };
 }
 
+function makeSeasonalPlaceSave(season) {
+  const timestamp = '2026-07-03T12:00:00.000Z';
+  const cells = Array.from({ length: 32 }, () => makeCell(null));
+  const phase = {
+    spring: 'EARLY_SEASON',
+    summer: 'MID_SEASON',
+    fall: 'MID_SEASON',
+    winter: 'MID_SEASON',
+  }[season] ?? 'EARLY_SEASON';
+  return {
+    campaign: {
+      version: 8,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      currentChapter: 2,
+      currentSeason: season,
+      cropsUnlocked: ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'],
+      worldState: {
+        currentZone: 'player_plot',
+        visitedZones: ['player_plot'],
+        lastSpawnPoint: null,
+        forageState: { cooldowns: {}, history: {} },
+      },
+      gameMode: 'story',
+    },
+    season: {
+      chapter: 2,
+      season,
+      month: { spring: 3, summer: 7, fall: 10, winter: 1 }[season] ?? 3,
+      phase,
+      beatIndex: phase === 'EARLY_SEASON' ? 0 : 1,
+      gridCols: 8,
+      gridRows: 4,
+      grid: { cells, cols: 8, rows: 4 },
+      interventionTokens: 3,
+      eventsDrawn: [],
+      eventTitles: [],
+      eventActive: null,
+      interventionChosen: null,
+      harvestResult: null,
+      winterReviewSeen: true,
+    },
+  };
+}
+
 async function readVisualDebug(page) {
   return page.evaluate(() => window.gardenOS?.getVisualDebug?.() ?? null);
 }
@@ -264,6 +309,26 @@ async function seedAndStartAccentRun(page, baseUrl) {
   }, null, { timeout: 60000 });
 }
 
+async function seedAndStartSeasonalPlaceRun(page, baseUrl, season) {
+  const seed = makeSeasonalPlaceSave(season);
+  await page.addInitScript((save) => {
+    localStorage.clear();
+    localStorage.setItem('gos-story-active-slot', '0');
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
+    localStorage.setItem('gos-story-slot-0-season', JSON.stringify(save.season));
+  }, seed);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
+  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await page.waitForFunction((expectedSeason) => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.seasonalAtmosphere?.season === expectedSeason;
+  }, season, { timeout: 60000 });
+  await captureDialogueThenDismiss(page);
+}
+
 async function assertCropAccentLayer(page) {
   const debug = await readVisualDebug(page);
   assert(debug, 'Expected visual debug state.');
@@ -277,6 +342,41 @@ async function assertCropAccentLayer(page) {
     debug.cropAccents.accents.every((accent) => accent.accentType === 'growth-billboard' && accent.opacity > 0.3 && accent.scale >= 0.3),
     `Unexpected crop accent tuning: ${JSON.stringify(debug.cropAccents.accents.slice(0, 3))}`,
   );
+}
+
+function assertLayerVisible(debug, layerName) {
+  const layer = debug.seasonalAtmosphere.layers[layerName];
+  assert(layer, `Missing seasonal layer ${layerName}.`);
+  assert(layer.visible, `Expected ${layerName} to be visible.`);
+  assert(layer.count > 0, `Expected ${layerName} to have visible objects.`);
+}
+
+async function assertSeasonalPlaceLayer(page, season) {
+  const debug = await readVisualDebug(page);
+  assert(debug, 'Expected visual debug state.');
+  assert(debug.seasonalAtmosphere?.season === season, `Expected ${season} atmosphere, got ${debug.seasonalAtmosphere?.season}.`);
+  assert(debug.seasonalAtmosphere.placeCueCount >= 7, `Expected at least 7 Philly place cues, got ${debug.seasonalAtmosphere.placeCueCount}.`);
+  ['back-alley-strip', 'concrete-walkway', 'overhead-utility-pole', 'phillies-pennant', 'porch-screen-door', 'rain-barrel', 'rowhouse-siding'].forEach((cue) => {
+    assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing Philly place cue ${cue}.`);
+  });
+
+  const expectations = {
+    spring: ['springPuddles', 'scenerySpringFlowers', 'sceneryPuddles'],
+    summer: ['summerButterflies', 'summerStringLights'],
+    fall: ['fallLeaves', 'sceneryFallLeaves'],
+    winter: ['winterSnow', 'sceneryWinterSnow', 'sceneryWinterSmoke'],
+  }[season] ?? [];
+  expectations.forEach((layerName) => assertLayerVisible(debug, layerName));
+
+  if (season !== 'fall') {
+    assert(!debug.seasonalAtmosphere.layers.fallLeaves.visible, `${season} should not show main fall leaves.`);
+  }
+  if (season !== 'winter') {
+    assert(!debug.seasonalAtmosphere.layers.winterSnow.visible, `${season} should not show winter snow.`);
+  }
+  if (season !== 'summer') {
+    assert(!debug.seasonalAtmosphere.layers.summerButterflies.visible, `${season} should not show summer butterflies.`);
+  }
 }
 
 async function startPlannerAndPlant(page, baseUrl) {
@@ -326,8 +426,10 @@ async function captureDialogueThenDismiss(page, screenshotName) {
   const visible = await panel.isVisible().catch(() => false);
   if (!visible) return;
 
-  await assertDialogueIdentity(page);
-  await page.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
+  if (screenshotName) {
+    await assertDialogueIdentity(page);
+    await page.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
+  }
   const skip = page.locator('#dp-skip-btn');
   if (await skip.isVisible().catch(() => false)) {
     await skip.click({ force: true });
@@ -464,6 +566,17 @@ try {
   await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
   await accentDesktop.close();
 
+  const seasonalScreenshots = [];
+  for (const season of ['spring', 'summer', 'fall', 'winter']) {
+    const seasonalPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+    await seedAndStartSeasonalPlaceRun(seasonalPage, baseUrl, season);
+    await assertSeasonalPlaceLayer(seasonalPage, season);
+    const screenshotName = `season-place-${season}.png`;
+    await seasonalPage.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
+    seasonalScreenshots.push(screenshotName);
+    await seasonalPage.close();
+  }
+
   const mobile = await browser.newPage({
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -492,6 +605,7 @@ try {
       'desktop-dialogue.png',
       'desktop-play-event.png',
       'desktop-crop-accents.png',
+      ...seasonalScreenshots,
       'mobile-dialogue.png',
       'mobile-play-event.png',
       'planner-procedural-no-accents.png',

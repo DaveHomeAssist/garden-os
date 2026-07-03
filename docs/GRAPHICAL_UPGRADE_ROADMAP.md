@@ -69,6 +69,15 @@ Trailer polish and marketing screenshot templates.
 | Planner mode stays sprite-free | Planner keeps procedural crop meshes visible while `syncCropAccents()` suppresses sprite accents for planner style |
 | Screenshot regression proves both sides | The screenshot harness captures `desktop-crop-accents.png` and `planner-procedural-no-accents.png` |
 
+## Phase 5 Place And Season Gates
+
+| Requirement | Evidence |
+| --- | --- |
+| Philly backyard cues are runtime-visible | `story-mode/src/scene/scenery.js` tags rowhouse siding, porch screen door, rain barrel, utility pole, alley strip, concrete walkway, and Phillies pennant as place cues |
+| Seasonal layers are deterministic | `story-mode/src/scene/garden-scene.js` exposes `seasonalAtmosphere` debug state and uses deterministic grass tint variation |
+| July has a distinct summer read | Summer enables butterflies plus porch string lights in the Story scene |
+| March, July, October, and winter states are screenshot-proven | `tests/story-mode-screenshot-regression.mjs` captures `season-place-spring.png`, `season-place-summer.png`, `season-place-fall.png`, and `season-place-winter.png` |
+
 ## Asset Rule
 
 Future portrait art should live under `story-mode/assets/textures/portraits/` and use:

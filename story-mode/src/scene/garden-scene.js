@@ -1413,10 +1413,54 @@ export function createGardenScene(container) {
     };
   }
 
+  function getGroupDebugState(target) {
+    return {
+      visible: Boolean(target?.visible),
+      count: target?.children?.length ?? 0,
+    };
+  }
+
+  function getSeasonalAtmosphereDebug() {
+    const sceneryDebug = scenery.getDebugState?.() ?? {
+      placeCueCount: 0,
+      placeCues: [],
+      layers: {},
+    };
+    const layers = {
+      springPuddles: getGroupDebugState(springPuddles),
+      summerButterflies: getGroupDebugState(butterflies),
+      summerStringLights: getGroupDebugState(stringLights),
+      fallLeaves: getGroupDebugState(fallLeaves),
+      winterSnow: getGroupDebugState(snowDusting),
+      scenerySpringFlowers: sceneryDebug.layers?.springFlowers ?? { visible: false, count: 0 },
+      sceneryPuddles: sceneryDebug.layers?.puddles ?? { visible: false, count: 0 },
+      sceneryFallLeaves: sceneryDebug.layers?.fallLeaves ?? { visible: false, count: 0 },
+      sceneryWinterSnow: sceneryDebug.layers?.winterSnow ?? { visible: false, count: 0 },
+      sceneryWinterSmoke: sceneryDebug.layers?.winterSmoke ?? { visible: false, count: 0 },
+    };
+
+    return {
+      season: currentSeasonId,
+      lighting: {
+        sky: lightingState?.background ? `#${lightingState.background.getHexString()}` : null,
+        fogDensity: lightingState?.fogDensity ?? null,
+        sunIntensity: lightingState?.sunIntensity ?? null,
+      },
+      layers,
+      visibleLayerNames: Object.entries(layers)
+        .filter(([, layer]) => layer.visible)
+        .map(([name]) => name),
+      placeCueCount: sceneryDebug.placeCueCount ?? 0,
+      placeCues: sceneryDebug.placeCues ?? [],
+      scenery: sceneryDebug,
+    };
+  }
+
   function getVisualDebug() {
     return {
       scenePhase: currentScenePhase,
       sceneStyle: currentSceneStyle,
+      seasonalAtmosphere: getSeasonalAtmosphereDebug(),
       cropMeshCount: cropMeshes.size,
       supportMeshCount: supportMeshes.size,
       gridCells: getGridLayout().map((cell) => {
@@ -2426,9 +2470,11 @@ function getGrowthScale(phase, season) {
       winter: { r: 0.32, g: 0.32, b: 0.28 },
     };
     const gTint = grassTints[season] || grassTints.spring;
+    let grassTintIndex = 0;
     grassGroup.traverse((child) => {
       if (child.isMesh && child.material?.color) {
-        const v = 0.85 + Math.random() * 0.3;
+        const v = 0.85 + seededRandom(grassTintIndex * 19.7 + String(season).length * 11.3) * 0.3;
+        grassTintIndex += 1;
         child.material.color.setRGB(gTint.r * v, gTint.g * v, gTint.b * v);
       }
     });
@@ -2439,6 +2485,7 @@ function getGrowthScale(phase, season) {
     snowDusting.visible  = season === 'winter';
     springPuddles.visible = season === 'spring';
     butterflies.visible  = season === 'summer';
+    stringLights.visible = season === 'summer';
     // Bird: always potentially visible (toggled in render loop) except winter
     if (season === 'winter') {
       birdGroup.visible = false;
