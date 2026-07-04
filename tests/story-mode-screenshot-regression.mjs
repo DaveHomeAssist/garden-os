@@ -98,6 +98,35 @@ async function waitForCanvasPaint(page) {
   }, null, { timeout: 60000 });
 }
 
+async function waitForReadableCanvas(page, { minAverage = 28, minLit = 220 } = {}) {
+  await page.waitForFunction(({ minAverage: minAvg, minLit: litFloor }) => {
+    const canvas = document.querySelector('#viewport canvas');
+    if (!canvas || canvas.width < 10 || canvas.height < 10) return false;
+    const probe = document.createElement('canvas');
+    probe.width = 64;
+    probe.height = 64;
+    const context = probe.getContext('2d', { willReadFrequently: true });
+    if (!context) return false;
+    context.drawImage(canvas, 0, 0, probe.width, probe.height);
+    const pixels = context.getImageData(0, 0, probe.width, probe.height).data;
+    let lit = 0;
+    let varied = 0;
+    let total = 0;
+    let samples = 0;
+    for (let index = 0; index < pixels.length; index += 16) {
+      const r = pixels[index];
+      const g = pixels[index + 1];
+      const b = pixels[index + 2];
+      const brightness = (r + g + b) / 3;
+      total += brightness;
+      samples += 1;
+      if (brightness > 22) lit += 1;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 8) varied += 1;
+    }
+    return (total / Math.max(samples, 1)) >= minAvg && lit >= litFloor && varied > 60;
+  }, { minAverage, minLit }, { timeout: 60000 });
+}
+
 async function readDialogueIdentity(page) {
   try {
     return await page.evaluate(() => {
@@ -339,6 +368,58 @@ function makeCritterEventSave() {
   };
 }
 
+function makeBirdCritterEventSave() {
+  const timestamp = '2026-07-03T12:00:00.000Z';
+  const cells = Array.from({ length: 32 }, () => makeCell(null));
+  const eventActive = {
+    id: 'critter-fence-sparrow-watch',
+    title: 'Fence Sparrow Watch',
+    category: 'critter',
+    valence: 'neutral',
+    description: 'A sparrow posts up on the trellis and keeps watch over the July bed.',
+    mechanicalEffect: {
+      modifier: 0.1,
+      target: { type: 'all_cells', filter: 'planted' },
+      duration: 'current_beat',
+    },
+  };
+  return {
+    campaign: {
+      version: 8,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      currentChapter: 2,
+      currentSeason: 'summer',
+      cropsUnlocked: ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'],
+      seenCutsceneIds: ['ch2-intro'],
+      worldState: {
+        currentZone: 'player_plot',
+        visitedZones: ['player_plot'],
+        lastSpawnPoint: null,
+        forageState: { cooldowns: {}, history: {} },
+      },
+      gameMode: 'story',
+    },
+    season: {
+      chapter: 2,
+      season: 'summer',
+      month: 7,
+      phase: 'MID_SEASON',
+      beatIndex: 1,
+      gridCols: 8,
+      gridRows: 4,
+      grid: { cells, cols: 8, rows: 4 },
+      interventionTokens: 3,
+      eventsDrawn: [eventActive.id],
+      eventTitles: [eventActive.title],
+      eventActive,
+      interventionChosen: 'observe',
+      harvestResult: null,
+      winterReviewSeen: true,
+    },
+  };
+}
+
 function makeHarvestRewardResult() {
   const factors = {
     sunFit: 4.7,
@@ -415,6 +496,11 @@ async function seedAndStartSeasonalPlaceRun(page, baseUrl, season) {
     return debug?.seasonalAtmosphere?.season === expectedSeason;
   }, season, { timeout: 60000 });
   await captureDialogueThenDismiss(page);
+  await waitForCanvasPaint(page);
+  if (season === 'summer') {
+    await waitForReadableCanvas(page);
+  }
+  await page.waitForTimeout(500);
 }
 
 async function seedAndStartCritterRun(page, baseUrl) {
@@ -434,6 +520,29 @@ async function seedAndStartCritterRun(page, baseUrl) {
   await page.waitForFunction(() => {
     const debug = window.gardenOS?.getVisualDebug?.();
     return debug?.creatureCompanions?.companions?.alleyCat?.visible === true;
+  }, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await page.waitForTimeout(250);
+}
+
+async function seedAndStartBirdCritterRun(page, baseUrl) {
+  const seed = makeBirdCritterEventSave();
+  await page.addInitScript((save) => {
+    localStorage.clear();
+    localStorage.setItem('gos-story-active-slot', '0');
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
+    localStorage.setItem('gos-story-slot-0-season', JSON.stringify(save.season));
+  }, seed);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
+  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
+  await waitForCanvasPaint(page);
+  await captureDialogueThenDismiss(page);
+  await page.waitForFunction(() => {
+    const debug = window.gardenOS?.getVisualDebug?.();
+    return debug?.creatureCompanions?.companions?.trellisBird?.eventPinned === true
+      && debug.creatureCompanions.companions.trellisBird.visible === true;
   }, null, { timeout: 60000 });
   await waitForCanvasPaint(page);
   await page.waitForTimeout(250);
@@ -466,6 +575,19 @@ async function assertCritterCompanionLayer(page) {
   assert(!critters.companions.neighborGift.visible, 'Neighbor gift should not show for a critter event.');
 }
 
+async function assertBirdCritterCompanionLayer(page) {
+  const debug = await readVisualDebug(page);
+  assert(debug, 'Expected visual debug state.');
+  const critters = debug.creatureCompanions;
+  assert(critters?.activeEvent?.category === 'critter', `Expected critter active event, got ${critters?.activeEvent?.category}.`);
+  assert(critters.activeEvent.title === 'Fence Sparrow Watch', `Expected sparrow event title, got ${critters.activeEvent.title}.`);
+  assert(critters.companions.trellisBird.visible, 'Expected trellis bird companion to be visible.');
+  assert(critters.companions.trellisBird.eventPinned, 'Expected trellis bird to be pinned by active critter event.');
+  assert(critters.companions.trellisBird.count >= 6, `Expected detailed trellis bird mesh, got ${critters.companions.trellisBird.count} parts.`);
+  assert(critters.visibleCompanionNames.includes('trellisBird'), `Expected trellisBird in visible companions, got ${critters.visibleCompanionNames.join(', ')}.`);
+  assert(!critters.companions.alleyCat.visible, 'Alley cat should not show for a sparrow event.');
+}
+
 function assertLayerVisible(debug, layerName) {
   const layer = debug.seasonalAtmosphere.layers[layerName];
   assert(layer, `Missing seasonal layer ${layerName}.`);
@@ -484,11 +606,21 @@ async function assertSeasonalPlaceLayer(page, season) {
 
   const expectations = {
     spring: ['springPuddles', 'scenerySpringFlowers', 'sceneryPuddles'],
-    summer: ['summerButterflies', 'summerStringLights'],
+    summer: ['summerButterflies', 'summerStringLights', 'sceneryFireflies', 'scenerySummerGrit', 'sceneryHeatHaze'],
     fall: ['fallLeaves', 'sceneryFallLeaves'],
     winter: ['winterSnow', 'sceneryWinterSnow', 'sceneryWinterSmoke'],
   }[season] ?? [];
   expectations.forEach((layerName) => assertLayerVisible(debug, layerName));
+
+  if (season === 'summer') {
+    const lighting = debug.seasonalAtmosphere.lighting;
+    assert(lighting.sunColor === '#e8c84a', `Expected July sun token #e8c84a, got ${lighting.sunColor}.`);
+    assert(lighting.sunIntensity >= 1.9, `Expected stronger July sun intensity, got ${lighting.sunIntensity}.`);
+    assert(lighting.ambientIntensity >= 0.16, `Expected soft July ambient light, got ${lighting.ambientIntensity}.`);
+    ['philly-party-wall-brick', 'july-weed-cracks', 'philly-alley-utility-tag', 'alley-oil-stain', 'blue-milk-crate-alley'].forEach((cue) => {
+      assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing July Philly place cue ${cue}.`);
+    });
+  }
 
   if (season !== 'fall') {
     assert(!debug.seasonalAtmosphere.layers.fallLeaves.visible, `${season} should not show main fall leaves.`);
@@ -557,6 +689,9 @@ async function assertHarvestRewardOverlay(page) {
       recipeIds: [...document.querySelectorAll('.harvest-reveal__recipe-card')].map((card) => card.getAttribute('data-recipe-id')),
       ingredientIds: [...document.querySelectorAll('.harvest-reveal__ingredient[data-crop-id]')].map((chip) => chip.getAttribute('data-crop-id')),
       keepsakeIds: [...document.querySelectorAll('.harvest-reveal__keepsake')].map((card) => card.getAttribute('data-keepsake-id')),
+      rewardBurstVisible: Boolean(document.querySelector('[data-reward-burst="true"]')),
+      rewardFleckCount: document.querySelectorAll('[data-reward-fleck]').length,
+      rewardCardTypes: [...document.querySelectorAll('[data-reward-card]')].map((card) => card.getAttribute('data-reward-card')),
       scoreText: document.querySelector('#score-counter')?.textContent,
       gradeVisible: document.querySelector('#grade-badge')?.classList.contains('is-visible') ?? false,
       backpackButtonVisible: Boolean(document.querySelector('#harvest-backpack')),
@@ -580,6 +715,10 @@ async function assertHarvestRewardOverlay(page) {
   ['block_party_plate', 'handwritten_sauce_card'].forEach((keepsakeId) => {
     assert(state.keepsakeIds.includes(keepsakeId), `Missing keepsake card ${keepsakeId}.`);
   });
+  assert(state.rewardBurstVisible, 'Expected reward burst layer when recipes or keepsakes unlock.');
+  assert(state.rewardFleckCount >= 18, `Expected reward flecks, got ${state.rewardFleckCount}.`);
+  assert(state.rewardCardTypes.filter((type) => type === 'recipe').length === 2, `Expected 2 recipe reward cards, got ${state.rewardCardTypes.join(', ')}.`);
+  assert(state.rewardCardTypes.filter((type) => type === 'keepsake').length === 2, `Expected 2 keepsake reward cards, got ${state.rewardCardTypes.join(', ')}.`);
   assert(state.backpackButtonVisible, 'Reward overlay should offer backpack when rewards exist.');
   assert(state.sheetWidth > 0 && state.sheetRight <= state.viewportWidth + 2, 'Reward overlay extends beyond viewport width.');
   assert(!state.overflowX, 'Reward overlay creates horizontal overflow.');
@@ -759,9 +898,10 @@ async function assertLayout(page) {
   assert(!result.overflowX, 'Page has horizontal overflow.');
 }
 
-const port = await getOpenPort();
-const baseUrl = `http://127.0.0.1:${port}/`;
-const server = await startDevServer(port);
+const suppliedBaseUrl = process.env.GOS_SCREENSHOT_BASE_URL;
+const port = suppliedBaseUrl ? null : await getOpenPort();
+const baseUrl = suppliedBaseUrl ? new URL(suppliedBaseUrl).href : `http://127.0.0.1:${port}/`;
+const server = suppliedBaseUrl ? { stop: async () => {} } : await startDevServer(port);
 const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
 
 try {
@@ -792,6 +932,10 @@ try {
     const screenshotName = `season-place-${season}.png`;
     await seasonalPage.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
     seasonalScreenshots.push(screenshotName);
+    if (season === 'summer') {
+      await seasonalPage.screenshot({ path: join(outputDir, 'season-place-july.png'), fullPage: true });
+      seasonalScreenshots.push('season-place-july.png');
+    }
     await seasonalPage.close();
   }
 
@@ -800,6 +944,12 @@ try {
   await assertCritterCompanionLayer(critterPage);
   await critterPage.screenshot({ path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
   await critterPage.close();
+
+  const birdCritterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+  await seedAndStartBirdCritterRun(birdCritterPage, baseUrl);
+  await assertBirdCritterCompanionLayer(birdCritterPage);
+  await birdCritterPage.screenshot({ path: join(outputDir, 'critter-bird.png'), fullPage: true });
+  await birdCritterPage.close();
 
   const rewardDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
   await seedAndStart(rewardDesktop, baseUrl);
@@ -851,6 +1001,7 @@ try {
       'desktop-crop-accents.png',
       ...seasonalScreenshots,
       'critter-alley-cat.png',
+      'critter-bird.png',
       'harvest-reward-desktop.png',
       'harvest-reward-mobile.png',
       'mobile-dialogue.png',

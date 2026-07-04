@@ -155,7 +155,11 @@ async function runLocalVerification() {
   }
 
   await requirePlaywright();
-  const { baseUrl, server } = await startStaticServer();
+  const suppliedBaseUrl = process.env.GOS_VERIFY_BASE_URL;
+  const staticServer = suppliedBaseUrl
+    ? { baseUrl: new URL(suppliedBaseUrl).href.replace(/\/$/, ''), server: null }
+    : await startStaticServer();
+  const { baseUrl, server } = staticServer;
   const outputDir = process.env.GOS_VERIFY_OUTPUT_DIR || join(tmpdir(), `garden-os-verify-${Date.now()}`);
 
   try {
@@ -172,7 +176,9 @@ async function runLocalVerification() {
       }),
     });
   } finally {
-    await new Promise((resolveClose) => server.close(resolveClose));
+    if (server) {
+      await new Promise((resolveClose) => server.close(resolveClose));
+    }
   }
 }
 

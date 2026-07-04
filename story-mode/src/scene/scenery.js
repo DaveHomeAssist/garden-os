@@ -10,6 +10,8 @@ const PATH_COLOR = 0x8a7a5a;
 const GRASS_DARK = 0x3a5a2a;
 const FOUNDATION_COLOR = 0x6d706d;
 const MULCH_COLOR = 0x5b452f;
+const JULY_WEED_COLOR = 0x3d7a4f;
+const JULY_DRY_WEED_COLOR = 0xb99a48;
 
 const SEASON_TREE_COLORS = {
   spring: [0x5aaa55, 0x6dbb68, 0x4a9a45],
@@ -119,6 +121,26 @@ export function buildScenery(tracker = null) {
   const gravelTexture = createPebbleTexture(PATH_COLOR, 0xc1b39d, 3.6, 3.6);
   const mulchTexture = createPebbleTexture(MULCH_COLOR, 0x7a5d3a, 3.8, 1.4);
   const concreteTexture = createPebbleTexture(0xb5b0a2, 0xe2ddd2, 2.2, 2.2);
+  const brickTexture = makeCanvasTexture(192, (ctx, size) => {
+    ctx.fillStyle = '#8d4d34';
+    ctx.fillRect(0, 0, size, size);
+    for (let y = 0; y < size; y += 24) {
+      ctx.fillStyle = 'rgba(70, 38, 28, 0.34)';
+      ctx.fillRect(0, y, size, 3);
+    }
+    for (let y = 0; y < size; y += 24) {
+      for (let x = (y / 24) % 2 ? -24 : 0; x < size; x += 48) {
+        ctx.fillStyle = 'rgba(70, 38, 28, 0.26)';
+        ctx.fillRect(x, y, 3, 24);
+      }
+    }
+    for (let i = 0; i < 260; i++) {
+      const x = (i * 41) % size;
+      const y = (i * 67) % size;
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(255, 220, 180, 0.12)' : 'rgba(38, 20, 12, 0.12)';
+      ctx.fillRect(x, y, 1 + (i % 3), 1);
+    }
+  }, 2.4, 1.5);
 
   const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide, map: sidingTexture, bumpMap: sidingTexture, bumpScale: 0.01 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78, map: trimTexture, bumpMap: trimTexture, bumpScale: 0.008 });
@@ -128,6 +150,7 @@ export function buildScenery(tracker = null) {
   const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.01 });
   const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.008 });
   const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0, map: gravelTexture, bumpMap: gravelTexture, bumpScale: 0.012 });
+  const brickMat = new THREE.MeshStandardMaterial({ color: 0x8d4d34, roughness: 0.95, side: THREE.DoubleSide, map: brickTexture, bumpMap: brickTexture, bumpScale: 0.008 });
 
   function registerBreezeNode(mesh, {
     rotX = 0,
@@ -893,7 +916,160 @@ export function buildScenery(tracker = null) {
   puddles.visible = false;
   group.add(puddles);
 
-  // 17. Cat silhouette on fence
+  // 17. July alley grit: cracked concrete, heat haze, weeds, and rowhome repairs
+  const summerGrit = new THREE.Group();
+  const summerHeatHaze = new THREE.Group();
+  const heatHazePlanes = [];
+  {
+    const crackMat = new THREE.MeshStandardMaterial({
+      color: 0x2d251d,
+      roughness: 1,
+      transparent: true,
+      opacity: 0.48,
+    });
+    const stainMat = new THREE.MeshStandardMaterial({
+      color: 0x271d14,
+      roughness: 1,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.DoubleSide,
+    });
+    const weedMat = new THREE.MeshStandardMaterial({
+      color: JULY_WEED_COLOR,
+      roughness: 0.78,
+      side: THREE.DoubleSide,
+    });
+    const dryWeedMat = new THREE.MeshStandardMaterial({
+      color: JULY_DRY_WEED_COLOR,
+      roughness: 0.82,
+      side: THREE.DoubleSide,
+    });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x8a887f, roughness: 0.72, metalness: 0.18 });
+
+    const brickPatch = new THREE.Mesh(new THREE.PlaneGeometry(1.02, 1.1), brickMat);
+    brickPatch.position.set(3.38, 1.35, -6.04);
+    brickPatch.rotation.y = Math.PI;
+    brickPatch.receiveShadow = true;
+    markPlaceCue(brickPatch, 'philly-party-wall-brick');
+    summerGrit.add(brickPatch);
+
+    const mortarScars = [
+      { x: 2.88, y: 1.18, w: 0.28 },
+      { x: 3.42, y: 1.55, w: 0.2 },
+      { x: 3.73, y: 0.92, w: 0.32 },
+    ];
+    mortarScars.forEach(({ x, y, w }, index) => {
+      const scar = new THREE.Mesh(
+        new THREE.BoxGeometry(w, 0.018, 0.008),
+        new THREE.MeshStandardMaterial({ color: 0xd6c6aa, roughness: 0.96 }),
+      );
+      scar.position.set(x, y, -6.0);
+      markPlaceCue(scar, index === 0 ? 'rowhome-mortar-repair' : null);
+      summerGrit.add(scar);
+    });
+
+    const utilityPlate = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.02), metalMat);
+    utilityPlate.position.set(4.08, 0.84, -5.96);
+    markPlaceCue(utilityPlate, 'philly-alley-utility-tag');
+    summerGrit.add(utilityPlate);
+    for (const y of [-0.044, 0.044]) {
+      const screw = new THREE.Mesh(new THREE.CircleGeometry(0.012, 8), metalMat);
+      screw.position.set(4.08, 0.84 + y, -5.948);
+      summerGrit.add(screw);
+    }
+
+    const crackData = [
+      { x: -2.35, z: 2.36, w: 0.72, rot: 0.16 },
+      { x: -0.95, z: 2.96, w: 0.88, rot: -0.34 },
+      { x: 0.92, z: 2.22, w: 0.64, rot: 0.28 },
+      { x: 2.2, z: 1.48, w: 0.58, rot: -0.18 },
+      { x: 3.3, z: -3.35, w: 0.7, rot: 0.08 },
+    ];
+    crackData.forEach(({ x, z, w, rot }, index) => {
+      const crack = new THREE.Mesh(new THREE.BoxGeometry(w, 0.004, 0.026), crackMat.clone());
+      crack.rotation.y = rot;
+      crack.position.set(x, 0.014, z);
+      crack.receiveShadow = true;
+      markPlaceCue(crack, index === 0 ? 'july-weed-cracks' : null);
+      summerGrit.add(crack);
+      for (let i = 0; i < 3; i++) {
+        const blade = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.022 + i * 0.004, 0.13 + (i % 2) * 0.04),
+          i === 2 ? dryWeedMat.clone() : weedMat.clone(),
+        );
+        blade.position.set(x - w * 0.32 + i * w * 0.22, 0.026, z + (i - 1) * 0.018);
+        blade.rotation.x = -0.18;
+        blade.rotation.y = rot + (i - 1) * 0.28;
+        blade.rotation.z = (i - 1) * 0.16;
+        registerBreezeNode(blade, {
+          rotZ: 0.16,
+          rotY: 0.06,
+          lift: 0.004,
+          speed: 1.4 + i * 0.18,
+          phase: x + z + i,
+        });
+        summerGrit.add(blade);
+      }
+    });
+
+    const stainData = [
+      { x: 3.56, z: -3.86, sx: 1.8, sz: 0.62, opacity: 0.18 },
+      { x: -2.54, z: 2.75, sx: 1.05, sz: 0.5, opacity: 0.12 },
+      { x: 2.0, z: 2.64, sx: 0.92, sz: 0.42, opacity: 0.1 },
+    ];
+    stainData.forEach(({ x, z, sx, sz, opacity }, index) => {
+      const stain = new THREE.Mesh(new THREE.CircleGeometry(0.22, 24), stainMat.clone());
+      stain.material.opacity = opacity;
+      stain.rotation.x = -Math.PI / 2;
+      stain.rotation.z = index * 0.52;
+      stain.position.set(x, 0.012, z);
+      stain.scale.set(sx, sz, 1);
+      markPlaceCue(stain, index === 0 ? 'alley-oil-stain' : null);
+      summerGrit.add(stain);
+    });
+
+    const crateGroup = new THREE.Group();
+    const crateMat = new THREE.MeshStandardMaterial({ color: 0x225aa6, roughness: 0.82 });
+    for (const [w, h, d, x, y, z] of [
+      [0.42, 0.035, 0.22, 0, 0, 0],
+      [0.42, 0.035, 0.22, 0, 0.22, 0],
+      [0.035, 0.24, 0.22, -0.2, 0.11, 0],
+      [0.035, 0.24, 0.22, 0.2, 0.11, 0],
+      [0.42, 0.035, 0.035, 0, 0.11, -0.1],
+      [0.42, 0.035, 0.035, 0, 0.11, 0.1],
+    ]) {
+      const part = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), crateMat);
+      part.position.set(x, y, z);
+      crateGroup.add(part);
+    }
+    crateGroup.position.set(3.84, 0.04, -4.15);
+    crateGroup.rotation.y = -0.12;
+    markPlaceCue(crateGroup, 'blue-milk-crate-alley');
+    summerGrit.add(crateGroup);
+
+    const heatMat = new THREE.MeshBasicMaterial({
+      color: 0xe8c84a,
+      transparent: true,
+      opacity: 0.032,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    for (let i = 0; i < 4; i++) {
+      const pane = new THREE.Mesh(new THREE.PlaneGeometry(1.0 + i * 0.22, 0.5 + i * 0.08), heatMat.clone());
+      pane.position.set(-1.85 + i * 1.16, 0.55 + i * 0.06, -3.2 - (i % 2) * 0.4);
+      pane.rotation.y = 0.08 - i * 0.04;
+      pane.renderOrder = 4;
+      pane.userData.baseOpacity = 0.028 + i * 0.006;
+      heatHazePlanes.push(pane);
+      summerHeatHaze.add(pane);
+    }
+  }
+  summerGrit.visible = false;
+  summerHeatHaze.visible = false;
+  group.add(summerGrit);
+  group.add(summerHeatHaze);
+
+  // 18. Cat silhouette on fence
   {
     const catMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
     const catSilhouette = new THREE.Group();
@@ -917,7 +1093,7 @@ export function buildScenery(tracker = null) {
     seasonalProps.add(catSilhouette);
   }
 
-  // 18. Chimney smoke (winter)
+  // 19. Chimney smoke (winter)
   const winterSmoke = new THREE.Group();
   let smokePositions;
   {
@@ -944,7 +1120,7 @@ export function buildScenery(tracker = null) {
   winterSmoke.visible = false;
   group.add(winterSmoke);
 
-  // 19. Wind indicator on fence
+  // 20. Wind indicator on fence
   const windIndicator = new THREE.Group();
   {
     const windPoleMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.3 });
@@ -1380,6 +1556,8 @@ export function buildScenery(tracker = null) {
       winterSnow.visible = currentSeason === 'winter';
       winterSmoke.visible = currentSeason === 'winter';
       springFlowers.visible = currentSeason === 'spring';
+      summerGrit.visible = currentSeason === 'summer';
+      summerHeatHaze.visible = currentSeason === 'summer';
       seasonalProps.visible = currentSeason !== 'winter';
 
       const shrubPalettes = {
@@ -1424,6 +1602,16 @@ export function buildScenery(tracker = null) {
         node.rotation.y = breeze.baseRotationY + flutter * breeze.rotY * strength;
         node.rotation.z = breeze.baseRotationZ + wave * breeze.rotZ * strength;
       }
+    },
+
+    updateSummerGrit(time, strength = 1) {
+      if (!summerHeatHaze.visible) return;
+      heatHazePlanes.forEach((pane, index) => {
+        const wave = Math.sin(time * (0.55 + index * 0.12) + index * 1.7);
+        pane.material.opacity = Math.max(0.014, pane.userData.baseOpacity + wave * 0.012);
+        pane.scale.x = 1 + wave * 0.035 * strength;
+        pane.position.y = 0.55 + index * 0.06 + Math.sin(time * 0.42 + index) * 0.018;
+      });
     },
 
     updateClouds(dt) {
@@ -1493,6 +1681,8 @@ export function buildScenery(tracker = null) {
           winterSnow: getLayerState(winterSnow),
           winterSmoke: getLayerState(winterSmoke),
           seasonalProps: getLayerState(seasonalProps),
+          summerGrit: getLayerState(summerGrit),
+          summerHeatHaze: getLayerState(summerHeatHaze),
           planningProps: getLayerState(planningProps),
           narrativeProps: getLayerState(narrativeProps),
           fireflies: getLayerState(fireflies),

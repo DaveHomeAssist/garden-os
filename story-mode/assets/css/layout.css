@@ -395,6 +395,16 @@
       from { opacity: 1; transform: translateY(0); }
       to   { opacity: 0; transform: translateY(-12px); }
     }
+    @keyframes harvestRewardFleck {
+      0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg) scale(0.72); }
+      18% { opacity: 0.95; }
+      100% { opacity: 0; transform: translate3d(calc(var(--drift, 18px) * 0.45), calc(var(--drift, 18px) * -1), 0) rotate(34deg) scale(1); }
+    }
+    @keyframes harvestCardSheen {
+      from { transform: translateX(-65%); opacity: 0; }
+      35% { opacity: 0.36; }
+      to { transform: translateX(65%); opacity: 0; }
+    }
 
     /* Floating Action Button */
     #fab-backpack {
@@ -1114,6 +1124,8 @@
       #app.is-shaking { animation: none; }
       .fab-enter { animation: none; }
       .chapter-intro { animation: none; opacity: 1; }
+      .harvest-reveal__reward-fleck { animation: none; opacity: 0.32; }
+      .harvest-reveal__recipe-card::after { animation: none; opacity: 0; }
     }
 
     /* ── Title Screen ── */
@@ -2846,6 +2858,44 @@
       gap: 14px;
     }
 
+    .harvest-reveal__reward-burst {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .harvest-reveal__reward-fleck {
+      position: absolute;
+      left: var(--x, 50%);
+      top: var(--y, 50%);
+      width: 9px;
+      height: 4px;
+      border-radius: 1px;
+      opacity: 0;
+      background: var(--sun);
+      box-shadow: 0 0 10px rgba(232, 200, 74, 0.16);
+      transform-origin: 50% 50%;
+      animation: harvestRewardFleck 1180ms ease-out var(--delay, 0ms) both;
+    }
+
+    .harvest-reveal__reward-fleck[data-reward-fleck="leaf"] {
+      background: var(--leaf);
+      box-shadow: 0 0 10px rgba(61, 122, 79, 0.14);
+    }
+
+    .harvest-reveal__reward-fleck[data-reward-fleck="soil"] {
+      background: var(--soil);
+      box-shadow: none;
+    }
+
+    .harvest-reveal__reward-fleck[data-reward-fleck="cream"] {
+      background: rgba(247, 242, 234, 0.92);
+      border: 1px solid rgba(104, 68, 40, 0.1);
+      box-shadow: none;
+    }
+
     .harvest-reveal__hero,
     .winter-review__header {
       position: relative;
@@ -3267,24 +3317,41 @@
     }
 
     .harvest-reveal__recipe-card {
+      position: relative;
       display: grid;
       grid-template-columns: 42px minmax(0, 1fr);
       gap: 12px;
       align-items: stretch;
       padding: 12px;
-      border-radius: 16px;
+      border-radius: 8px;
       background:
+        radial-gradient(circle at 14% 20%, rgba(92, 61, 30, 0.04) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 72% 68%, rgba(92, 61, 30, 0.035) 0 1px, transparent 1.5px),
         linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 250, 244, 0.34)),
         rgba(245, 231, 202, 0.62);
+      background-size: 28px 24px, 34px 30px, auto, auto;
       border: 1px solid rgba(104, 68, 40, 0.14);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.34),
         0 10px 20px rgba(60, 36, 16, 0.08);
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+
+    .harvest-reveal__recipe-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 20%, rgba(232, 200, 74, 0.16) 48%, transparent 70%);
+      opacity: 0.36;
+      transform: translateX(-35%);
+      animation: harvestCardSheen 920ms ease-out 180ms both;
     }
 
     .harvest-reveal__recipe-ticket {
       min-height: 100%;
-      border-radius: 12px;
+      border-radius: 8px;
       border: 1px dashed rgba(104, 68, 40, 0.24);
       background:
         linear-gradient(180deg, rgba(var(--story-season-accent-rgb), 0.22), rgba(255, 255, 255, 0.34)),
@@ -3361,7 +3428,7 @@
       color: rgba(38, 22, 10, 0.72);
       font-family: 'DM Mono', monospace;
       font-size: 8px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0;
       text-transform: uppercase;
       flex-shrink: 0;
     }
@@ -3578,7 +3645,7 @@
       color: #428453;
       font-family: 'DM Mono', monospace;
       font-size: 9px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0;
       text-transform: uppercase;
       flex-shrink: 0;
     }
@@ -3592,7 +3659,7 @@
     .harvest-reveal__keepsake-badge {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0;
       text-transform: uppercase;
       color: #428453;
     }

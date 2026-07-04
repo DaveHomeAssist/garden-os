@@ -33,6 +33,7 @@ export const SCENE_STYLES = {
     hemiSkyTint: new THREE.Color(0xe9e3d8),
     hemiGroundTint: new THREE.Color(0x6a645a),
     hemiIntensityMultiplier: 1.06,
+    ambientIntensityMultiplier: 0.58,
     sunIntensityMultiplier: 0.58,
     fillIntensityMultiplier: 0.44,
     rimIntensityMultiplier: 0.22,
@@ -55,6 +56,7 @@ export const SCENE_STYLES = {
     hemiSkyTint: null,
     hemiGroundTint: null,
     hemiIntensityMultiplier: 1.08,
+    ambientIntensityMultiplier: 1,
     sunIntensityMultiplier: 1.03,
     fillIntensityMultiplier: 1.14,
     rimIntensityMultiplier: 1.08,
@@ -77,6 +79,7 @@ export const SCENE_STYLES = {
     hemiSkyTint: new THREE.Color(0xfff3d6),
     hemiGroundTint: null,
     hemiIntensityMultiplier: 1.08,
+    ambientIntensityMultiplier: 1.08,
     sunIntensityMultiplier: 1.18,
     fillIntensityMultiplier: 1.14,
     rimIntensityMultiplier: 1.08,
@@ -191,6 +194,7 @@ export function applySceneStyle(styleName, refs) {
     scene,
     skyMat,
     hemi,
+    ambient,
     sun,
     fill,
     rim,
@@ -226,6 +230,11 @@ export function applySceneStyle(styleName, refs) {
     hemi.color.copy(style.hemiSkyTint ?? lightingState.hemiSky);
     hemi.groundColor.copy(style.hemiGroundTint ?? lightingState.hemiGround);
     hemi.intensity = lightingState.hemiIntensity * style.hemiIntensityMultiplier;
+  }
+
+  if (ambient && lightingState) {
+    ambient.color.copy(lightingState.ambientColor);
+    ambient.intensity = lightingState.ambientIntensity * style.ambientIntensityMultiplier;
   }
 
   if (sun && lightingState) {

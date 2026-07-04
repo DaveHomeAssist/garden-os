@@ -75,16 +75,19 @@ Trailer polish and marketing screenshot templates.
 | --- | --- |
 | Philly backyard cues are runtime-visible | `story-mode/src/scene/scenery.js` tags rowhouse siding, porch screen door, rain barrel, utility pole, alley strip, concrete walkway, and Phillies pennant as place cues |
 | Seasonal layers are deterministic | `story-mode/src/scene/garden-scene.js` exposes `seasonalAtmosphere` debug state and uses deterministic grass tint variation |
-| July has a distinct summer read | Summer enables butterflies plus porch string lights in the Story scene |
-| March, July, October, and winter states are screenshot-proven | `tests/story-mode-screenshot-regression.mjs` captures `season-place-spring.png`, `season-place-summer.png`, `season-place-fall.png`, and `season-place-winter.png` |
+| July has a distinct summer read | Summer enables butterflies, porch string lights, fireflies, heat haze, cracked concrete weeds, brick repair, alley oil stain, utility tag, and milk crate cues |
+| July lighting uses project tokens | `story-mode/src/scene/garden-scene.js` uses `--sun`/`--soil` token colors for summer sun and ground lighting, with soft ambient fill debug assertions |
+| March, July, October, and winter states are screenshot-proven | `tests/story-mode-screenshot-regression.mjs` captures `season-place-spring.png`, `season-place-summer.png`, `season-place-july.png`, `season-place-fall.png`, and `season-place-winter.png` |
 
 ## P3 Critter And Reward Gates
 
 | Requirement | Evidence |
 | --- | --- |
 | Critter event cues use live event state | `story-mode/src/scene/garden-scene.js` reads `season.eventActive` and exposes `creatureCompanions` debug state |
-| Alley cat visual reads as an intentional critter cue | The cat silhouette includes bright eye marks and `tests/story-mode-screenshot-regression.mjs` captures `critter-alley-cat.png` |
+| Alley cat visual reads as an intentional critter cue | The cat silhouette includes bright eye marks, collar flash, tail motion, and `tests/story-mode-screenshot-regression.mjs` captures `critter-alley-cat.png` |
+| A second critter has a deterministic event trigger | Bird/sparrow/finch/nest critter events pin the trellis bird and the harness captures `critter-bird.png` |
 | Recipe rewards are visible artifacts, not loose tags | `story-mode/src/ui/harvest-reveal.js` renders recipe reward cards with ingredient chips from crop data |
+| Reward moments have tactile feedback | Recipe/keepsake cards expose `data-reward-card` hooks and a deterministic paper-fleck burst via `data-reward-burst` |
 | Reward visuals are desktop and mobile proven | `tests/story-mode-screenshot-regression.mjs` captures `harvest-reward-desktop.png` and `harvest-reward-mobile.png` |
 
 ## Asset Rule

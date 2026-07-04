@@ -93,6 +93,18 @@ function buildKeepsakeMark(keepsake) {
   return escapeHtml(keepsake.shortLabel ?? keepsake.name?.slice(0, 3) ?? keepsake.id?.slice(0, 3) ?? 'New');
 }
 
+function buildRewardFlecksMarkup(count = 18) {
+  const tones = ['gold', 'leaf', 'soil', 'cream'];
+  return Array.from({ length: count }, (_, index) => {
+    const x = 7 + ((index * 23) % 86);
+    const y = 8 + ((index * 37) % 70);
+    const delay = (index % 9) * 45;
+    const drift = 10 + (index % 5) * 4;
+    const tone = tones[index % tones.length];
+    return `<span class="harvest-reveal__reward-fleck" data-reward-fleck="${tone}" style="--x:${x}%;--y:${y}%;--delay:${delay}ms;--drift:${drift}px;"></span>`;
+  }).join('');
+}
+
 export function showHarvestReveal(container, result, extras = {}, onDismiss) {
   const overlay = document.createElement('div');
   overlay.className = 'harvest-reveal harvest-reveal-overlay';
@@ -105,6 +117,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
   const totalKeepsakes = extras.totalKeepsakes ?? unlockedCount;
   const onViewBackpack = extras.onViewBackpack ?? null;
   const adjustments = buildAdjustments(result);
+  const hasRewardBurst = recipeRewards.length > 0 || keepsakes.length > 0;
 
   const factorAvgs = {};
   let scoredCount = 0;
@@ -121,6 +134,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
 
   overlay.innerHTML = `
     <div class="harvest-reveal__sheet" data-grade="${escapeHtml(result.grade)}" data-recipe-count="${escapeHtml(recipeRewards.length)}" data-keepsake-count="${escapeHtml(keepsakes.length)}">
+      ${hasRewardBurst ? `<div class="harvest-reveal__reward-burst" data-reward-burst="true" aria-hidden="true">${buildRewardFlecksMarkup()}</div>` : ''}
       <header class="harvest-reveal__hero">
         <div class="harvest-reveal__intro">
           <div class="harvest-reveal__eyebrow">Harvest Complete</div>
@@ -221,7 +235,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
                 </div>
                 <div class="harvest-reveal__recipe-list">
                   ${recipeRewards.map((recipe) => `
-                    <article class="harvest-reveal__recipe-card" data-recipe-id="${escapeHtml(recipe.id)}">
+                    <article class="harvest-reveal__recipe-card" data-reward-card="recipe" data-recipe-id="${escapeHtml(recipe.id)}">
                       <div class="harvest-reveal__recipe-ticket" aria-hidden="true">
                         <span></span><span></span><span></span>
                       </div>
@@ -245,7 +259,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
               ${keepsakes.length ? `
                 <div class="harvest-reveal__keepsake-list">
                   ${keepsakes.map((keepsake) => `
-                    <div class="harvest-reveal__keepsake" data-keepsake-id="${escapeHtml(keepsake.id ?? '')}">
+                    <div class="harvest-reveal__keepsake" data-reward-card="keepsake" data-keepsake-id="${escapeHtml(keepsake.id ?? '')}">
                       <span class="harvest-reveal__keepsake-mark" aria-hidden="true">${buildKeepsakeMark(keepsake)}</span>
                       <span class="harvest-reveal__keepsake-name">${escapeHtml(keepsake.name)}</span>
                       <span class="harvest-reveal__keepsake-badge">New</span>

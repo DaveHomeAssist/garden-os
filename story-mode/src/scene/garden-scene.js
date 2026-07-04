@@ -14,11 +14,19 @@ import { loadSprites, getMissingAssets, getGrowthTexture, GROWTH_STAGE } from '.
 import { COLS, ROWS } from '../game/state.js';
 import { getCropById } from '../data/crops.js';
 
+const DESIGN_TOKENS = {
+  soil: 0x5c3d1e,
+  leaf: 0x3d7a4f,
+  leafBright: 0x5aab6b,
+  sun: 0xe8c84a,
+  cream: 0xf7f2ea,
+};
+
 const SEASON_LIGHTING = {
-  spring: { sky: 0xc8d9e4, ground: 0x56462d, sunAngle: 52, sunInt: 1.45, ambInt: 0.7, fillInt: 0.48, fogDensity: 0.021, sunX: -2.7, sunZ: 4.8, fillX: 3.8, fillZ: -2.1 },
-  summer: { sky: 0xf0e6cf, ground: 0x6a5233, sunAngle: 68, sunInt: 1.72, ambInt: 0.82, fillInt: 0.52, fogDensity: 0.018, sunX: -1.8, sunZ: 4.4, fillX: 4.2, fillZ: -2.4 },
-  fall:   { sky: 0xd8b17a, ground: 0x4a3116, sunAngle: 38, sunInt: 1.16, ambInt: 0.56, fillInt: 0.4, fogDensity: 0.024, sunX: -3.4, sunZ: 4.6, fillX: 3.6, fillZ: -1.8 },
-  winter: { sky: 0x7e8ea0, ground: 0x231f26, sunAngle: 28, sunInt: 0.78, ambInt: 0.42, fillInt: 0.3, fogDensity: 0.028, sunX: -4.0, sunZ: 3.3, fillX: 2.8, fillZ: -1.6 },
+  spring: { sky: 0xc8d9e4, ground: 0x56462d, sunColor: 0xfff4de, ambientColor: 0xf3ead8, sunAngle: 52, sunInt: 1.45, ambInt: 0.7, ambientInt: 0.1, fillInt: 0.48, fogDensity: 0.021, sunX: -2.7, sunZ: 4.8, fillX: 3.8, fillZ: -2.1 },
+  summer: { sky: 0xf0e0b8, ground: DESIGN_TOKENS.soil, sunColor: DESIGN_TOKENS.sun, ambientColor: 0xffefd0, sunAngle: 70, sunInt: 1.92, ambInt: 0.88, ambientInt: 0.18, fillInt: 0.58, fogDensity: 0.017, sunX: -1.6, sunZ: 4.2, fillX: 4.4, fillZ: -2.6 },
+  fall:   { sky: 0xd8b17a, ground: 0x4a3116, sunColor: 0xffd49a, ambientColor: 0xf0d0a8, sunAngle: 38, sunInt: 1.16, ambInt: 0.56, ambientInt: 0.08, fillInt: 0.4, fogDensity: 0.024, sunX: -3.4, sunZ: 4.6, fillX: 3.6, fillZ: -1.8 },
+  winter: { sky: 0x7e8ea0, ground: 0x231f26, sunColor: 0xd9e7ff, ambientColor: 0xb8c7da, sunAngle: 28, sunInt: 0.78, ambInt: 0.42, ambientInt: 0.05, fillInt: 0.3, fogDensity: 0.028, sunX: -4.0, sunZ: 3.3, fillX: 2.8, fillZ: -1.6 },
 };
 
 const CROP_COLORS = {
@@ -565,10 +573,12 @@ export function createGardenScene(container) {
   catHead.position.set(0.07, 0.028, 0);
   catGroup.add(catHead);
 
+  const catEyes = [];
   for (const ez of [-0.011, 0.011]) {
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), catEyeMat);
     eye.position.set(0.105, 0.038, ez);
     catGroup.add(eye);
+    catEyes.push(eye);
   }
 
   const catCollar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.034, 0.048), catCollarMat);
@@ -587,11 +597,20 @@ export function createGardenScene(container) {
   catTail.rotation.z = -0.7;
   catTail.position.set(-0.09, 0.04, 0);
   catGroup.add(catTail);
+  const catShadow = addGroundShadow(catGroup, {
+    radiusX: 0.13,
+    radiusZ: 0.055,
+    opacity: 0.18,
+    y: -0.03,
+  });
 
   catGroup.position.set(4.95, 0.58, 0.5);
   catGroup.scale.setScalar(1.45);
   catGroup.visible = false;
   root.add(catGroup);
+  const catBaseY = catGroup.position.y;
+  const catHeadBaseZ = catHead.rotation.z;
+  const catTailBaseZ = catTail.rotation.z;
 
   // Neighbor arm reaching over fence
   const neighborGroup = new THREE.Group();
@@ -891,16 +910,22 @@ export function createGardenScene(container) {
   const hemi = new THREE.HemisphereLight(0xc7d8df, 0x56462d, 0.7);
   scene.add(hemi);
 
+  const ambient = new THREE.AmbientLight(0xf3ead8, 0.1);
+  scene.add(ambient);
+
   const sun = new THREE.DirectionalLight(0xfff4de, 1.45);
   sun.position.set(-2.7, 8, 4.8);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.radius = 6;
+  sun.shadow.bias = -0.00025;
+  sun.shadow.normalBias = 0.022;
   sun.shadow.camera.near = 0.5;
   sun.shadow.camera.far = 30;
-  sun.shadow.camera.left = -6;
-  sun.shadow.camera.right = 6;
-  sun.shadow.camera.top = 6;
-  sun.shadow.camera.bottom = -6;
+  sun.shadow.camera.left = -7;
+  sun.shadow.camera.right = 7;
+  sun.shadow.camera.top = 7;
+  sun.shadow.camera.bottom = -7;
   scene.add(sun);
 
   const fill = new THREE.DirectionalLight(0x8ea8bc, 0.48);
@@ -910,7 +935,7 @@ export function createGardenScene(container) {
   const rim = new THREE.DirectionalLight(0xd7e6f5, 0.18);
   rim.position.set(-4.4, 3.1, -4.7);
   scene.add(rim);
-  scene.userData.lightingRig = { hemi, sun, fill, rim, skyMat };
+  scene.userData.lightingRig = { hemi, ambient, sun, fill, rim, skyMat };
   scene.userData.weatherFx = weather;
   scene.userData.scenery = scenery;
   const dayNight = new DayNightCycle(scene, { enabled: false });
@@ -922,6 +947,7 @@ export function createGardenScene(container) {
       scene,
       skyMat,
       hemi,
+      ambient,
       sun,
       fill,
       rim,
@@ -1052,24 +1078,33 @@ export function createGardenScene(container) {
   // 4. Bird on trellis — body + head + beak + tail
   const birdGroup = new THREE.Group();
   {
-    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x3a3028, roughness: 0.85 });
+    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x4f3423, roughness: 0.85 });
+    const birdWingMat = new THREE.MeshStandardMaterial({ color: 0x7d5030, roughness: 0.82 });
     const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xddaa44, roughness: 0.7 });
 
-    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), birdBodyMat);
-    birdBody.scale.set(1.4, 0.8, 1.1);
+    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 9), birdBodyMat);
+    birdBody.scale.set(1.45, 0.82, 1.08);
     birdGroup.add(birdBody);
 
-    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 7), birdBodyMat);
-    birdHead.position.set(0.028, 0.018, 0);
+    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.021, 9, 7), birdBodyMat);
+    birdHead.position.set(0.043, 0.024, 0);
     birdGroup.add(birdHead);
 
-    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.022, 6), birdBeakMat);
+    for (const z of [-0.02, 0.02]) {
+      const wing = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), birdWingMat);
+      wing.position.set(-0.006, -0.002, z);
+      wing.scale.set(1.35, 0.34, 0.64);
+      wing.rotation.y = z < 0 ? -0.36 : 0.36;
+      birdGroup.add(wing);
+    }
+
+    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.028, 6), birdBeakMat);
     birdBeak.rotation.z = -Math.PI / 2;
-    birdBeak.position.set(0.048, 0.016, 0);
+    birdBeak.position.set(0.072, 0.021, 0);
     birdGroup.add(birdBeak);
 
-    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.01, 0.028, 6), birdBodyMat);
-    birdTail.position.set(-0.034, 0.004, 0);
+    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.014, 0.04, 6), birdWingMat);
+    birdTail.position.set(-0.05, 0.004, 0);
     birdTail.rotation.z = 1.22;
     birdGroup.add(birdTail);
   }
@@ -1079,6 +1114,7 @@ export function createGardenScene(container) {
   root.add(birdGroup);
   let birdVisible = true;
   let birdFlipTimer = 0;
+  let birdEventPinned = false;
 
   // 5. String lights — 8 emissive bulbs between porch posts
   const stringLights = new THREE.Group();
@@ -1101,12 +1137,25 @@ export function createGardenScene(container) {
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), lightBulbMat.clone());
       bulb.position.set(x, yLine + sag, zLine);
       stringLights.add(bulb);
+      const halo = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.075, 0.075),
+        new THREE.MeshBasicMaterial({
+          color: 0xffd978,
+          transparent: true,
+          opacity: 0.16,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+      );
+      halo.position.copy(bulb.position);
+      halo.position.z += 0.012;
+      stringLights.add(halo);
     }
   }
   stringLights.visible = false;
   root.add(stringLights);
 
-  // 6. Butterfly particles (summer) — 3 small billboard planes, animated in render loop
+  // 6. Butterfly particles (summer) — billboard planes, animated in render loop
   const butterflies = new THREE.Group();
   const butterflyData = [];
   {
@@ -1118,12 +1167,17 @@ export function createGardenScene(container) {
       emissiveIntensity: 0.15,
     });
     const bfConfigs = [
-      { x: -0.4, y: 0.55, z:  0.8, phase: 0.0, speed: 1.1 },
-      { x:  0.8, y: 0.65, z: -0.3, phase: 1.8, speed: 0.9 },
-      { x: -1.0, y: 0.72, z: -0.9, phase: 3.5, speed: 1.3 },
+      { x: -0.4, y: 0.55, z:  0.8, phase: 0.0, speed: 1.1, color: 0xf4a460 },
+      { x:  0.8, y: 0.65, z: -0.3, phase: 1.8, speed: 0.9, color: 0xe8c84a },
+      { x: -1.0, y: 0.72, z: -0.9, phase: 3.5, speed: 1.3, color: 0xf2f0d9 },
+      { x:  1.28, y: 0.58, z:  0.72, phase: 4.6, speed: 1.05, color: 0xffd95e },
+      { x: -1.42, y: 0.64, z:  0.18, phase: 5.4, speed: 1.2, color: 0xf4b56e },
     ];
     bfConfigs.forEach((cfg) => {
-      const bf = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.03), bfBaseMat.clone());
+      const mat = bfBaseMat.clone();
+      mat.color.setHex(cfg.color);
+      mat.emissive.setHex(cfg.color);
+      const bf = new THREE.Mesh(new THREE.PlaneGeometry(0.058, 0.042), mat);
       bf.position.set(cfg.x, cfg.y, cfg.z);
       butterflies.add(bf);
       butterflyData.push({ mesh: bf, baseX: cfg.x, baseY: cfg.y, baseZ: cfg.z, phase: cfg.phase, speed: cfg.speed });
@@ -1466,6 +1520,9 @@ export function createGardenScene(container) {
       winterSnow: getGroupDebugState(snowDusting),
       scenerySpringFlowers: sceneryDebug.layers?.springFlowers ?? { visible: false, count: 0 },
       sceneryPuddles: sceneryDebug.layers?.puddles ?? { visible: false, count: 0 },
+      sceneryFireflies: sceneryDebug.layers?.fireflies ?? { visible: false, count: 0 },
+      scenerySummerGrit: sceneryDebug.layers?.summerGrit ?? { visible: false, count: 0 },
+      sceneryHeatHaze: sceneryDebug.layers?.summerHeatHaze ?? { visible: false, count: 0 },
       sceneryFallLeaves: sceneryDebug.layers?.fallLeaves ?? { visible: false, count: 0 },
       sceneryWinterSnow: sceneryDebug.layers?.winterSnow ?? { visible: false, count: 0 },
       sceneryWinterSmoke: sceneryDebug.layers?.winterSmoke ?? { visible: false, count: 0 },
@@ -1477,6 +1534,8 @@ export function createGardenScene(container) {
         sky: lightingState?.background ? `#${lightingState.background.getHexString()}` : null,
         fogDensity: lightingState?.fogDensity ?? null,
         sunIntensity: lightingState?.sunIntensity ?? null,
+        ambientIntensity: lightingState?.ambientIntensity ?? null,
+        sunColor: lightingState?.sunColor ? `#${lightingState.sunColor.getHexString()}` : null,
       },
       layers,
       visibleLayerNames: Object.entries(layers)
@@ -1490,10 +1549,12 @@ export function createGardenScene(container) {
 
   function getCreatureCompanionDebug() {
     const event = getActiveSeasonEvent();
+    const trellisBird = getGroupDebugState(birdGroup);
+    trellisBird.eventPinned = birdEventPinned;
     const companions = {
       alleyCat: getGroupDebugState(catGroup),
       neighborGift: getGroupDebugState(neighborGroup),
-      trellisBird: getGroupDebugState(birdGroup),
+      trellisBird,
       summerButterflies: getGroupDebugState(butterflies),
     };
     return {
@@ -2502,7 +2563,9 @@ function getGrowthScale(phase, season) {
       hemiSky: new THREE.Color(config.sky),
       hemiGround: new THREE.Color(config.ground),
       hemiIntensity: config.ambInt,
-      sunColor: new THREE.Color(0xfff4de),
+      ambientColor: new THREE.Color(config.ambientColor ?? 0xf3ead8),
+      ambientIntensity: config.ambientInt ?? 0.1,
+      sunColor: new THREE.Color(config.sunColor ?? 0xfff4de),
       sunIntensity: config.sunInt,
       sunPosition: new THREE.Vector3(config.sunX, 8 * Math.sin(angle), config.sunZ),
       fillColor: new THREE.Color(0x8ea8bc),
@@ -2545,8 +2608,8 @@ function getGrowthScale(phase, season) {
     if (season === 'winter') {
       birdGroup.visible = false;
     }
-    // Scenery fireflies: show during night mood in winter
-    scenery.showFireflies(season === 'winter');
+    // Scenery fireflies: show in July/summer and during night mood
+    scenery.showFireflies(season === 'summer');
     // Scenery puddles: show in spring
     scenery.showPuddles(season === 'spring');
     // ── End season visibility ──────────────────────────────────────────────
@@ -2661,10 +2724,9 @@ function getGrowthScale(phase, season) {
       toSkyTint: new THREE.Color(preset.skyTint),
     };
 
-    // String lights: show during night mood
-    stringLights.visible = (name === 'night');
-    // Fireflies: show during night mood
-    scenery.showFireflies(name === 'night');
+    // String lights and fireflies stay present for July, and wake up in night mood.
+    stringLights.visible = (name === 'night') || currentSeasonId === 'summer';
+    scenery.showFireflies((name === 'night') || currentSeasonId === 'summer');
   }
 
   function resetMood() {
@@ -2877,12 +2939,22 @@ function getGrowthScale(phase, season) {
       const evTitle = ev?.title ?? '';
       const evCategory = ev?.category ?? '';
       const evValence = ev?.valence ?? '';
+      const evTitleLower = evTitle.toLowerCase();
 
       // Cat: show for critter events with 'cat' or 'alley' in the title
       catGroup.visible = (
         evCategory === 'critter' &&
-        (evTitle.toLowerCase().includes('cat') || evTitle.toLowerCase().includes('alley'))
+        (evTitleLower.includes('cat') || evTitleLower.includes('alley'))
       );
+
+      birdEventPinned = evCategory === 'critter' && /\b(bird|sparrow|finch|wing|nest)\b/i.test(evTitle);
+      if (birdEventPinned) {
+        birdVisible = true;
+        birdFlipTimer = 0;
+        birdGroup.visible = state.season.season !== 'winter';
+      } else if (state.season.season === 'winter') {
+        birdGroup.visible = false;
+      }
 
       // Neighbor arm: show for positive neighbor events
       neighborGroup.visible = (evCategory === 'neighbor' && evValence === 'positive');
@@ -2924,20 +2996,37 @@ function getGrowthScale(phase, season) {
         });
       }
 
-      // Bird random perch: flip every ~4-8 seconds, 50% chance visible
-      birdFlipTimer += dt;
-      if (birdFlipTimer > 4 + Math.sin(atmosphereTime * 0.17) * 2) {
-        birdFlipTimer = 0;
-        birdVisible = Math.sin(atmosphereTime * 137.5) > 0;
-        const season = lastSyncedState?.season?.season ?? 'spring';
-        birdGroup.visible = birdVisible && season !== 'winter';
+      if (catGroup.visible) {
+        const catPulse = Math.sin(atmosphereTime * 1.35);
+        catGroup.position.y = catBaseY + catPulse * 0.006;
+        catHead.rotation.z = catHeadBaseZ + Math.sin(atmosphereTime * 1.8 + 0.7) * 0.035;
+        catTail.rotation.z = catTailBaseZ + Math.sin(atmosphereTime * 2.2) * 0.16;
+        catCollar.rotation.z = Math.sin(atmosphereTime * 1.4) * 0.08;
+        catShadow.material.opacity = 0.14 + Math.max(0, catPulse) * 0.05;
+        catEyes.forEach((eye, index) => {
+          eye.scale.y = 0.72 + Math.abs(Math.sin(atmosphereTime * 0.55 + index)) * 0.28;
+          eye.material.emissiveIntensity = 0.64 + Math.max(0, Math.sin(atmosphereTime * 2.4 + index)) * 0.22;
+        });
+      }
+
+      const season = lastSyncedState?.season?.season ?? 'spring';
+      if (birdEventPinned) {
+        birdVisible = true;
+        birdGroup.visible = season !== 'winter';
+      } else {
+        // Bird random perch: flip every ~4-8 seconds, 50% chance visible
+        birdFlipTimer += dt;
+        if (birdFlipTimer > 4 + Math.sin(atmosphereTime * 0.17) * 2) {
+          birdFlipTimer = 0;
+          birdVisible = Math.sin(atmosphereTime * 137.5) > 0;
+          birdGroup.visible = birdVisible && season !== 'winter';
+        }
       }
       if (birdGroup.visible) {
         birdGroup.position.y = 1.105 + Math.sin(atmosphereTime * 1.7) * 0.008;
         birdGroup.rotation.z = Math.sin(atmosphereTime * 1.5) * 0.08;
       }
 
-      const season = lastSyncedState?.season?.season ?? 'spring';
       const seasonalBreeze = { spring: 0.95, summer: 0.72, fall: 1.08, winter: 0.45 }[season] ?? 0.85;
       const breezeStrength = seasonalBreeze * (isWindEvent ? 1.9 : 1);
       updateCropBreeze(atmosphereTime, breezeStrength);
@@ -3186,6 +3275,7 @@ function getGrowthScale(phase, season) {
       // ── Scenery per-frame animations ─────────────────────────────────
       scenery.updateClouds(dt);
       scenery.updateBreeze(atmosphereTime, breezeStrength);
+      scenery.updateSummerGrit?.(atmosphereTime, breezeStrength);
       if (lastSyncedState?.season?.season === 'winter') {
         scenery.updateSmoke(dt);
       }
