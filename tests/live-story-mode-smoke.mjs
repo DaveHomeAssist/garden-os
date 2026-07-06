@@ -92,6 +92,53 @@ async function waitForWorldMapClosed(page) {
   await page.locator('#world-map-panel').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
 }
 
+async function readSavedCampaign(page) {
+  return page.evaluate(async () => {
+    async function readAuthorityCampaign() {
+      const sessionId = localStorage.getItem('gos-story-authority-session-0');
+      if (!sessionId || !indexedDB?.open) return null;
+      if (typeof indexedDB.databases === 'function') {
+        const databases = await indexedDB.databases();
+        if (!databases.some((database) => database.name === 'gos-story-authority-v1')) {
+          return null;
+        }
+      }
+
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('gos-story-authority-v1', 1);
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      try {
+        if (!db.objectStoreNames.contains('snapshots')) return null;
+        return await new Promise((resolve, reject) => {
+          const request = db.transaction('snapshots').objectStore('snapshots').get(sessionId);
+          request.onerror = () => reject(request.error ?? new Error('IndexedDB read failed'));
+          request.onsuccess = () => resolve(request.result?.state?.campaign ?? null);
+        });
+      } finally {
+        db.close?.();
+      }
+    }
+
+    const authorityCampaign = await readAuthorityCampaign().catch(() => null);
+    if (authorityCampaign) return authorityCampaign;
+
+    return JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
+  });
+}
+
+async function waitForSavedCampaign(page, predicate, timeout = 8000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const campaign = await readSavedCampaign(page).catch(() => null);
+    if (campaign && predicate(campaign)) return campaign;
+    await page.waitForTimeout(250);
+  }
+  return null;
+}
+
 async function travel(page, zoneId) {
   await waitForWorldMapClosed(page);
   await page.keyboard.press('m');
@@ -110,10 +157,12 @@ async function travel(page, zoneId) {
 }
 
 async function forageHistorySaved(page, timeout = 8000) {
-  return page.waitForFunction(() => {
-    const campaign = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
-    return Object.keys(campaign.worldState?.forageState?.history ?? {}).length > 0;
-  }, null, { timeout }).then(() => true).catch(() => false);
+  const campaign = await waitForSavedCampaign(
+    page,
+    (saved) => Object.keys(saved.worldState?.forageState?.history ?? {}).length > 0,
+    timeout,
+  );
+  return Boolean(campaign);
 }
 
 async function activateForage(page) {
@@ -160,7 +209,7 @@ try {
 
   await activateForage(page);
 
-  const savedBeforeReload = await page.evaluate(() => JSON.parse(localStorage.getItem('gos-story-slot-0-campaign')));
+  const savedBeforeReload = await readSavedCampaign(page);
   assert(savedBeforeReload.worldState.currentZone === 'meadow', 'Save should persist current zone before reload.');
   assert(Object.keys(savedBeforeReload.worldState.forageState.history).length > 0, 'Forage history should save before reload.');
 
@@ -171,7 +220,7 @@ try {
   await waitForRenderedZone(page, 'meadow');
 
   const afterReload = await snapshot(page);
-  const savedAfterReload = await page.evaluate(() => JSON.parse(localStorage.getItem('gos-story-slot-0-campaign')));
+  const savedAfterReload = await readSavedCampaign(page);
   assert(afterReload.currentZone === 'meadow', `Expected meadow after reload, got ${afterReload.currentZone}.`);
   assert(
     ['player_plot', 'neighborhood', 'meadow', 'riverside'].every((zoneId) => savedAfterReload.worldState.visitedZones.includes(zoneId)),
