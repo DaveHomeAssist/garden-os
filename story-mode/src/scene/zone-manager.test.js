@@ -53,6 +53,34 @@ describe('ZoneManager', () => {
     expect(manager.getActiveZone()).toBe('neighborhood');
   });
 
+  it('waits for an active transition before starting the next requested zone', async () => {
+    const renderer = { render: vi.fn() };
+    const store = {
+      dispatch: vi.fn(),
+      getState: () => ({ campaign: {}, season: { season: 'spring' } }),
+    };
+    const tracker = { disposeAll: vi.fn() };
+    const manager = new ZoneManager(renderer, store, tracker);
+
+    manager.registerZone('player_plot', () => ({ scene: {}, camera: {} }));
+    manager.registerZone('neighborhood', () => ({ scene: {}, camera: {} }));
+
+    const start = manager.transitionTo('player_plot');
+    const queued = manager.transitionTo('neighborhood', { x: 1, y: 0, z: 2 });
+    await vi.runAllTimersAsync();
+    await Promise.all([start, queued]);
+
+    expect(manager.getActiveZone()).toBe('neighborhood');
+    expect(store.dispatch).toHaveBeenCalledWith({
+      type: Actions.ZONE_CHANGED,
+      payload: {
+        fromZone: 'player_plot',
+        toZone: 'neighborhood',
+        spawnPoint: { x: 1, y: 0, z: 2 },
+      },
+    });
+  });
+
   it('registers active zone interactables and unregisters them on the next transition', async () => {
     const renderer = { render: vi.fn() };
     const store = {

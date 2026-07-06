@@ -143,6 +143,7 @@ export class ZoneManager {
     this.interactableRegistry = null;
     this.triggerArmed = true;
     this.transitioning = false;
+    this.activeTransition = null;
     this.overlay = this.createOverlay();
     this.registerDefaultGates();
   }
@@ -241,12 +242,27 @@ export class ZoneManager {
   }
 
   async transitionTo(zoneId, spawnPoint = null) {
+    if (this.transitioning && this.activeTransition) {
+      await this.activeTransition.catch(() => {});
+    }
     if (this.transitioning || !this.factories.has(zoneId)) return false;
     const gateCheck = this.canEnterZone(zoneId);
     if (!gateCheck.allowed) {
       return { blocked: true, blockers: gateCheck.blockers };
     }
     this.transitioning = true;
+    const activeTransition = this.runTransition(zoneId, spawnPoint);
+    this.activeTransition = activeTransition;
+    try {
+      return await activeTransition;
+    } finally {
+      if (this.activeTransition === activeTransition) {
+        this.activeTransition = null;
+      }
+    }
+  }
+
+  async runTransition(zoneId, spawnPoint = null) {
     const fromZone = this.activeZoneId;
 
     this.setOverlayOpacity(1);

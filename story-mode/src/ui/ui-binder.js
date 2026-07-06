@@ -385,6 +385,10 @@ function bindUI({
         showToast(result.blockers?.[0]?.message ?? 'That area is still locked.', 2200, 'info');
         return false;
       }
+      if (result === false) {
+        showToast('Travel is still settling. Try again.', 1600, 'info');
+        return false;
+      }
     } else {
       dispatch({
         type: Actions.ZONE_CHANGED,
