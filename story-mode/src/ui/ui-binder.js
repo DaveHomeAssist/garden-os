@@ -58,6 +58,7 @@ import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported,
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
+import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 
 function bindUI({
@@ -139,16 +140,23 @@ function bindUI({
   let state = store.getState();
   let interactionSystem = null;
   const playerController = createPlayerController();
+  const simulationWorker = createSimulationWorkerClient({
+    initialState: playerController.getState(),
+  });
 
   function syncPlayerMovementForZone(zoneId = state.campaign.worldState?.currentZone ?? 'player_plot') {
-    playerController.setBounds(getZoneMovementBounds(zoneId));
-    playerController.setBlockers(zoneId === 'player_plot' ? null : []);
+    const bounds = getZoneMovementBounds(zoneId);
+    const blockers = zoneId === 'player_plot' ? null : [];
+    playerController.setBounds(bounds);
+    playerController.setBlockers(blockers);
+    simulationWorker.configure({ bounds, blockers });
   }
 
   syncPlayerMovementForZone();
 
   if (state.campaign.worldState?.lastSpawnPoint) {
-    playerController.reset(state.campaign.worldState.lastSpawnPoint);
+    const resetState = playerController.reset(state.campaign.worldState.lastSpawnPoint);
+    simulationWorker.reset(resetState);
     syncPlayerMovementForZone();
   }
   const unsubscribeState = store.subscribe((nextState, action) => {
@@ -156,7 +164,9 @@ function bindUI({
     if (action?.type === Actions.ZONE_CHANGED) {
       syncPlayerMovementForZone(nextState.campaign.worldState?.currentZone);
     }
-    if (applyZoneTravelState(action, nextState, { playerController, scene, interactionSystem })) {
+    const zoneTravelPlayerState = applyZoneTravelState(action, nextState, { playerController, scene, interactionSystem });
+    if (zoneTravelPlayerState) {
+      simulationWorker.reset(zoneTravelPlayerState);
       if (interactionSystem) syncWorldInteractables();
       updateHUD();
       interactionSystem?.update?.(0);
@@ -1618,7 +1628,15 @@ function bindUI({
       const movementEnabled = canMovePlayer();
       touchStick.setEnabled(movementEnabled);
       playerController.setEnabled(movementEnabled);
-      const playerState = playerController.update(dt, movementEnabled ? getMovementVector() : null);
+      simulationWorker.setEnabled(movementEnabled);
+      const movementVector = movementEnabled ? getMovementVector() : null;
+      simulationWorker.setInput(movementVector);
+      const playerState = simulationWorker.available
+        ? (simulationWorker.getSnapshot() ?? playerController.getState())
+        : playerController.update(dt, movementVector);
+      if (simulationWorker.available) {
+        playerController.setState(playerState);
+      }
       scene.setPlayerState?.(playerState);
       syncPlayerTool();
       const proximityEnabled = isProximityInteractionEnabled();
@@ -1677,6 +1695,12 @@ function bindUI({
   function advanceTime(ms) {
     const steps = Math.max(1, Math.round(ms / (1000 / 60)));
     for (let index = 0; index < steps; index += 1) {
+      const movementEnabled = canMovePlayer();
+      const movementVector = movementEnabled ? getMovementVector() : null;
+      if (simulationWorker.available) {
+        const playerState = simulationWorker.stepLocal(1 / 60, movementVector, movementEnabled);
+        playerController.setState(playerState);
+      }
       loop.tick(1 / 60);
     }
   }
@@ -1706,6 +1730,7 @@ function bindUI({
     toolHUD?.dispose();
     touchStick.dispose();
     touchControls.dispose();
+    simulationWorker.dispose();
     calendarEl.remove();
     dialoguePanel?.destroy();
     dayNightController?.dispose();

@@ -7,15 +7,15 @@ export function createLoop(services) {
   let lastTime = performance.now();
   let running = false;
 
-function runStep(dt) {
-  services.update?.(dt);
+function runStep(dt, { manual = false } = {}) {
+  services.update?.(dt, { manual });
   services.scene.sync(services.getState());
   if (typeof services.render === 'function') {
     services.render();
   } else {
     services.scene.render();
   }
-  services.onFrame?.({ dt });
+  services.onFrame?.({ dt, manual });
 }
 
   function frame(now) {
@@ -39,7 +39,7 @@ function runStep(dt) {
       cancelAnimationFrame(rafId);
     },
     tick(dt = 1 / 60) {
-      runStep(dt);
+      runStep(dt, { manual: true });
     },
   };
 }

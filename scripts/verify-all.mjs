@@ -152,6 +152,7 @@ async function runLocalVerification() {
     ['Mom garden data regression', ['tests/mom-garden-data-regression.mjs']],
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
     ['Authority cache IndexedDB tests', ['test', '--', 'src/engine/authority-cache.test.js'], { cwd: storyModeDir }],
+    ['Fixed-step simulation worker tests', ['test', '--', 'src/engine/simulation-core.test.js', 'src/engine/simulation-worker.test.js'], { cwd: storyModeDir }],
     ['Sync client worker URL tests', ['--test', 'tests/sync-client-worker-url.test.mjs']],
     ['Sync worker security tests', ['--test', 'tests/sync-worker-security.test.mjs']],
     ['Authority worker security tests', ['--test', 'tests/authority-worker.test.mjs']],
