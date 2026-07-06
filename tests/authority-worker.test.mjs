@@ -149,6 +149,32 @@ test('authority ack signature fails after tampering', async () => {
   assert.equal(await verifyServerAckSignature({ ...ack, signature: 'hmac-sha256:bad' }, SECRET), false);
 });
 
+test('authority verifies signed acks without exposing the hmac secret', async () => {
+  const { env } = await createSession();
+  const ack = await signServerAck({
+    accepted: true,
+    actionId: 'action-verify-1',
+    checksum: 'abc123',
+    serverTime: '2026-07-06T15:00:00.000Z',
+    sessionId: 'test-session-0001',
+    stateVersion: 1,
+    tick: 1,
+  }, SECRET);
+
+  const goodResponse = await worker.fetch(jsonRequest('/ack/verify', { ack }), env);
+  const good = await goodResponse.json();
+  const badResponse = await worker.fetch(jsonRequest('/ack/verify', {
+    ack: { ...ack, checksum: 'tampered' },
+  }), env);
+  const bad = await badResponse.json();
+
+  assert.equal(goodResponse.status, 200);
+  assert.equal(good.verified, true);
+  assert.equal(badResponse.status, 422);
+  assert.equal(bad.verified, false);
+  assert.equal(Object.hasOwn(good, 'secret'), false);
+});
+
 test('authority fails closed without hmac secret', async () => {
   const kv = new MemoryKv();
   await worker.fetch(jsonRequest('/session', { sessionId: 'test-session-0001' }), {

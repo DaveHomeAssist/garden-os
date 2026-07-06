@@ -8,6 +8,7 @@ import {
   buildAuthorityEnvelope,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
+  verifyAuthorityAck,
 } from './authority-cache.js';
 
 const NOW = Date.parse('2026-07-06T15:00:00.000Z');
@@ -238,9 +239,17 @@ describe('authority IndexedDB cache', () => {
     expect(offline).toMatchObject({ acked: 0, online: false, sent: 0 });
     expect(await journal.listPendingActions('session-2')).toHaveLength(1);
 
-    let calls = 0;
-    const fetchFn = async () => {
-      calls += 1;
+    let actionCalls = 0;
+    let verifyCalls = 0;
+    const fetchFn = async (url) => {
+      if (url.endsWith('/ack/verify')) {
+        verifyCalls += 1;
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
       return new Response(JSON.stringify({ ack: ackFor(envelope), ok: true }), {
         headers: { 'Content-Type': 'application/json' },
         status: 200,
@@ -257,6 +266,8 @@ describe('authority IndexedDB cache', () => {
     expect(drained).toMatchObject({ acked: 1, online: true, sent: 1 });
     expect(await journal.listPendingActions('session-2')).toHaveLength(0);
     expect(await journal.listAcks('session-2')).toHaveLength(1);
+    expect(actionCalls).toBe(1);
+    expect(verifyCalls).toBe(1);
 
     await drainAuthorityQueue({
       authorityUrl: 'https://authority.example.test',
@@ -265,7 +276,54 @@ describe('authority IndexedDB cache', () => {
       now: () => NOW,
       sessionId: 'session-2',
     });
-    expect(calls).toBe(1);
+    expect(actionCalls).toBe(1);
+    expect(verifyCalls).toBe(1);
+  });
+
+  it('leaves actions pending when server ack verification fails', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const journal = new IndexedDbAuthorityJournal({ databaseName: 'verify-fail-test', indexedDB });
+    const envelope = buildAuthorityEnvelope(
+      { payload: { toolId: 'water' }, type: Actions.SET_ACTIVE_TOOL },
+      {},
+      { clientSeq: 1, now: () => NOW, sessionId: 'session-verify-fail' },
+    );
+
+    await journal.enqueueAction(envelope);
+
+    const drained = await drainAuthorityQueue({
+      authorityUrl: 'https://authority.example.test',
+      fetchFn: async (url) => {
+        if (url.endsWith('/ack/verify')) {
+          return new Response(JSON.stringify({ ok: false, verified: false }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 422,
+          });
+        }
+        return new Response(JSON.stringify({ ack: ackFor(envelope), ok: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      },
+      journal,
+      now: () => NOW,
+      sessionId: 'session-verify-fail',
+    });
+
+    expect(drained).toMatchObject({ acked: 0, sent: 1, verificationFailed: true });
+    expect(await journal.listPendingActions('session-verify-fail')).toHaveLength(1);
+    expect(await journal.listAcks('session-verify-fail')).toHaveLength(0);
+  });
+
+  it('supports injected ack verification for local authority tests', async () => {
+    const ack = ackFor({ id: 'action-injected', sessionId: 'session-injected' });
+
+    await expect(verifyAuthorityAck(ack, {
+      verifyAck: async (candidate) => candidate.actionId === 'action-injected',
+    })).resolves.toBe(true);
+    await expect(verifyAuthorityAck({ ...ack, signature: 'local-test' }, {
+      verifyAck: async () => true,
+    })).resolves.toBe(false);
   });
 
   it('mirrors live store snapshots and queues routed actions without blocking render', async () => {
@@ -303,7 +361,13 @@ describe('authority IndexedDB cache', () => {
     const storage = createLocalStorage();
     const store = new Store(createGameState());
     let fetchCalls = 0;
-    const fetchFn = async (_url, init) => {
+    const fetchFn = async (url, init) => {
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
       fetchCalls += 1;
       const envelope = JSON.parse(init.body);
       return new Response(JSON.stringify({

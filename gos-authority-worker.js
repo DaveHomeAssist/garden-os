@@ -247,6 +247,12 @@ async function handleAction(request, env) {
   }, signedAck.accepted ? 200 : 422);
 }
 
+async function handleVerifyAck(request, env) {
+  const body = await readJson(request);
+  const verified = await verifyServerAckSignature(body.ack, getSecret(env));
+  return jsonResponse({ ok: verified, verified }, verified ? 200 : 422);
+}
+
 async function handle(request, env) {
   const url = new URL(request.url);
   const method = request.method.toUpperCase();
@@ -259,6 +265,7 @@ async function handle(request, env) {
   const sessionMatch = url.pathname.match(/^\/session\/([^/]+)$/);
   if (method === 'GET' && sessionMatch) return handleGetSession(env, sessionMatch[1]);
   if (method === 'POST' && url.pathname === '/action') return handleAction(request, env);
+  if (method === 'POST' && url.pathname === '/ack/verify') return handleVerifyAck(request, env);
   return problem('not_found', 'Endpoint not found', 404);
 }
 

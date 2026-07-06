@@ -281,6 +281,7 @@ async function drainAuthorityQueue({
   now = Date.now,
   onAck,
   sessionId,
+  verifyAck,
 } = {}) {
   const url = resolveAuthorityUrl({ authorityUrl });
   if (!url || typeof fetchFn !== 'function' || !journal || !sessionId) {
@@ -310,12 +311,46 @@ async function drainAuthorityQueue({
       return { sent, acked, pending: pending.length - acked, online: response.ok };
     }
 
+    const verified = await verifyAuthorityAck(body.ack, { authorityUrl: url, fetchFn, verifyAck });
+    if (!verified) {
+      await journal.recordAttempt(record, { attemptedAt: isoNow(now) });
+      return {
+        acked,
+        online: response.ok,
+        pending: pending.length - acked,
+        sent,
+        verificationFailed: true,
+      };
+    }
+
     await journal.markActionAcked(record, body.ack, { ackedAt: isoNow(now) });
     if (onAck) await onAck(body.ack, record);
     acked += 1;
   }
 
   return { sent, acked, pending: Math.max(0, pending.length - acked), online: true };
+}
+
+async function verifyAuthorityAck(ack, {
+  authorityUrl,
+  fetchFn = globalThis.fetch,
+  verifyAck,
+} = {}) {
+  if (!ack?.signature?.startsWith('hmac-sha256:')) return false;
+  if (verifyAck) return Boolean(await verifyAck(ack));
+
+  const url = resolveAuthorityUrl({ authorityUrl });
+  if (!url || typeof fetchFn !== 'function') return false;
+
+  const response = await fetchFn(`${url}/ack/verify`, {
+    body: JSON.stringify({ ack }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+  if (!response.ok) return false;
+
+  const body = await response.json().catch(() => null);
+  return body?.verified === true;
 }
 
 function createStoryAuthorityPersistence(store, {
@@ -325,6 +360,7 @@ function createStoryAuthorityPersistence(store, {
   now = Date.now,
   slot = 0,
   storage = globalThis.localStorage,
+  verifyAck,
 } = {}) {
   const journal = new IndexedDbAuthorityJournal({ indexedDB });
   if (!store?.subscribe || slot < 0 || !journal.available) {
@@ -373,6 +409,7 @@ function createStoryAuthorityPersistence(store, {
             now,
             onAck: reconcileAck,
             sessionId,
+            verifyAck,
           });
         }
       }
@@ -399,6 +436,7 @@ function createStoryAuthorityPersistence(store, {
         now,
         onAck: reconcileAck,
         sessionId,
+        verifyAck,
       }));
     },
     flush() {
@@ -420,4 +458,5 @@ export {
   ensureSessionPointer,
   isAuthorityRoutedAction,
   sessionPointerKey,
+  verifyAuthorityAck,
 };
