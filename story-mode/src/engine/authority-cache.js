@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -140,6 +140,7 @@ function clonePosition(value) {
 function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
+  if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
@@ -157,6 +158,20 @@ function authorityAckToStoreAction(ack, currentState = null) {
   const data = ack.authoritativePatch?.data;
   if (!data || typeof data !== 'object') return null;
   const actionType = inferAckActionType(ack);
+
+  if (actionType === 'PLANT_CROP') {
+    const planting = data.lastPlanting;
+    const cellIndex = Number(planting?.cellIndex);
+    const cropId = typeof planting?.cropId === 'string' ? planting.cropId : null;
+    if (!Number.isInteger(cellIndex) || !cropId) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if (currentCell?.cropId === cropId && (currentCell.damageState ?? null) === null) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { cellIndex, cropId },
+      type: 'PLANT_CROP',
+    };
+  }
 
   if (actionType === 'SET_SELECTED_CROP' && hasOwn(data, 'selectedCropId')) {
     return {

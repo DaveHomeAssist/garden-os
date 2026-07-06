@@ -90,6 +90,66 @@ test('authority action signs ack and mutates canonical state once', async () => 
   assert.equal(second.state.data.selectedCropId, 'basil');
 });
 
+test('authority action routes plant crop through canonical grid state once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: { cellIndex: 2, cropId: 'radish' },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'PLANT_CROP');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].cropId, 'basil');
+  assert.deepEqual(first.state.data.lastPlanting, { cellIndex: 2, cropId: 'basil' });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 1);
+  assert.equal(second.state.data.grid[2].cropId, 'basil');
+});
+
+test('authority rejects malformed plant crop payload before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-plant',
+    idempotencyKey: 'idem-bad-plant',
+    payload: { cellIndex: 99, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.actionType, 'PLANT_CROP');
+  assert.equal(body.ack.rejection.code, 'BAD_CELL_INDEX');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.grid.every((cell) => cell.cropId === null), true);
+});
+
 test('authority action routes zone changes through canonical state once', async () => {
   const { env, sessionId } = await createSession();
   const action = {

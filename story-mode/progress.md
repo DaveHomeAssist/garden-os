@@ -1,3 +1,14 @@
+Update 2026-07-06 Story Mode plant authority pass:
+- Routed `PLANT_CROP` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the first real gameplay grid mutation.
+- Added server-owned starter-grid authority state plus payload validation so clients can submit only `{ cellIndex, cropId }`; out-of-range cells or missing crop ids are rejected before mutation.
+- Client reconciliation now maps authoritative `lastPlanting` acks back into `PLANT_CROP` and skips duplicate local replay when the optimistic cell already matches the signed ack.
+- Validation: focused authority Vitest passed 4 files / 35 tests; worker authority passed 10 tests; full Story Mode Vitest passed 35 files / 406 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
+- Browser smoke: local Vite Story Mode launched into the live loop, rendered one canvas, exposed `render_game_to_text()`, and reported 0 / 32 planted in chapter 1 planning. Expected console error remains `503` from the unprovisioned live authority API.
+- Deferred:
+  - Expanded-grid and multi-bed planting authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Harvest, water, interventions, inventory, currency, quest, and phase transitions are still not routed through authority.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-06 Story Mode zone authority pass:
 - Added `actionType` to server acks so client reconciliation no longer guesses from full authority patches.
 - Routed `ZONE_CHANGED` through the Vercel/Node authority service and the fetch-compatible authority worker, with canonical `currentZone`, `visitedZones`, and `lastSpawnPoint` in authority state.

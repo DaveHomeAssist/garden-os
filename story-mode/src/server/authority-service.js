@@ -11,13 +11,20 @@ import {
 const ACK_SIGNATURE_PREFIX = 'hmac-sha256:';
 const DEFAULT_GAME_ID = 'garden';
 const DEFAULT_SECRET = 'dev-only-garden-os-authority-secret';
+const AUTHORITY_GRID_SIZE = 32;
+const DEFAULT_AUTHORITY_CELL = {
+  cropId: null,
+  damageState: null,
+};
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const ACTIONS = {
+  PLANT_CROP: 'PLANT_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.PLANT_CROP,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
   ACTIONS.ZONE_CHANGED,
@@ -25,6 +32,39 @@ const ROUTED_ACTION_TYPES = new Set([
 
 function cloneValue(value) {
   return value == null ? value : structuredClone(value);
+}
+
+function createAuthorityCell(cell = {}) {
+  return {
+    ...DEFAULT_AUTHORITY_CELL,
+    cropId: typeof cell.cropId === 'string' ? cell.cropId : null,
+    damageState: cell.damageState ?? null,
+  };
+}
+
+function createAuthorityGrid(grid = []) {
+  const cells = Array.isArray(grid) ? grid : [];
+  return Array.from({ length: AUTHORITY_GRID_SIZE }, (_, index) => createAuthorityCell(cells[index]));
+}
+
+function createInitialAuthorityData({
+  activeTool = 'hand',
+  currentZone = 'player_plot',
+  grid = [],
+  lastPlanting = null,
+  lastSpawnPoint = null,
+  selectedCropId = null,
+  visitedZones = ['player_plot'],
+} = {}) {
+  return {
+    activeTool,
+    currentZone,
+    grid: createAuthorityGrid(grid),
+    lastPlanting,
+    lastSpawnPoint,
+    selectedCropId,
+    visitedZones: Array.isArray(visitedZones) && visitedZones.length ? [...new Set(visitedZones)] : ['player_plot'],
+  };
 }
 
 function isoNow(now = Date.now) {
@@ -172,6 +212,21 @@ function createUpstashLedgerStore({
 }
 
 function reduceStoryAction(data, payload, envelope) {
+  if (envelope.type === ACTIONS.PLANT_CROP) {
+    const cellIndex = payload.cellIndex;
+    const cropId = payload.cropId;
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      cropId,
+      damageState: null,
+    };
+    return {
+      ...data,
+      grid,
+      lastPlanting: { cellIndex, cropId },
+    };
+  }
   if (envelope.type === ACTIONS.SET_SELECTED_CROP) {
     return {
       ...data,
@@ -198,6 +253,18 @@ function reduceStoryAction(data, payload, envelope) {
     };
   }
   return data;
+}
+
+function validateStoryActionPayload(envelope, state) {
+  if (envelope?.type !== ACTIONS.PLANT_CROP) return null;
+  const grid = createAuthorityGrid(state?.data?.grid);
+  if (!Number.isInteger(envelope.payload?.cellIndex) || envelope.payload.cellIndex < 0 || envelope.payload.cellIndex >= grid.length) {
+    return { code: 'BAD_CELL_INDEX', message: 'Plant action requires a valid starter-grid cell index.' };
+  }
+  if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
+    return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+  }
+  return null;
 }
 
 function sessionSummary(state) {
@@ -275,13 +342,7 @@ function createAuthorityService({
     }
     const sessionId = body.sessionId || sessionIdFactory();
     const state = createEngineState({
-      data: {
-        activeTool: 'hand',
-        currentZone: 'player_plot',
-        lastSpawnPoint: null,
-        selectedCropId: null,
-        visitedZones: ['player_plot'],
-      },
+      data: createInitialAuthorityData(),
       gameId: body.gameId ?? DEFAULT_GAME_ID,
       seed: body.seed ?? `garden-os:${sessionId}`,
       sessionId,
@@ -308,13 +369,7 @@ function createAuthorityService({
     let state = await sessionStore.get(envelope.sessionId);
     if (!state) {
       state = createEngineState({
-        data: {
-          activeTool: 'hand',
-          currentZone: 'player_plot',
-          lastSpawnPoint: null,
-          selectedCropId: null,
-          visitedZones: ['player_plot'],
-        },
+        data: createInitialAuthorityData(),
         gameId: envelope.gameId ?? DEFAULT_GAME_ID,
         seed: `garden-os:${envelope.sessionId}`,
         sessionId: envelope.sessionId,
@@ -347,6 +402,30 @@ function createAuthorityService({
         checksum: previousState.checksum,
         code: 'UNSUPPORTED_ACTION_TYPE',
         message: 'Action type is not routed through Story Mode authority yet.',
+        serverTime,
+        sessionId: previousState.sessionId,
+        stateVersion: previousState.version,
+        tick: previousState.tick,
+      }, hmacSecret);
+      await ledgerStore.append(ledgerActionEntry({
+        ack,
+        duplicate: false,
+        envelope,
+        previousState,
+        serverTime,
+        state: previousState,
+      }));
+      return { ack, duplicate: false, ok: false, session: sessionSummary(previousState) };
+    }
+
+    const payloadError = validateStoryActionPayload(envelope, previousState);
+    if (payloadError) {
+      const ack = createRejectedAck({
+        actionId: envelope?.id,
+        actionType: envelope?.type,
+        checksum: previousState.checksum,
+        code: payloadError.code,
+        message: payloadError.message,
         serverTime,
         sessionId: previousState.sessionId,
         stateVersion: previousState.version,

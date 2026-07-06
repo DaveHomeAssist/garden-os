@@ -21,9 +21,60 @@ import {
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 64 * 1024;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,80}$/;
+const AUTHORITY_GRID_SIZE = 32;
+const DEFAULT_AUTHORITY_CELL = {
+  cropId: null,
+  damageState: null,
+};
+
+function createAuthorityCell(cell = {}) {
+  return {
+    ...DEFAULT_AUTHORITY_CELL,
+    cropId: typeof cell.cropId === 'string' ? cell.cropId : null,
+    damageState: cell.damageState ?? null,
+  };
+}
+
+function createAuthorityGrid(grid = []) {
+  const cells = Array.isArray(grid) ? grid : [];
+  return Array.from({ length: AUTHORITY_GRID_SIZE }, (_, index) => createAuthorityCell(cells[index]));
+}
+
+function createInitialAuthorityData({
+  activeTool = null,
+  currentZone = 'player_plot',
+  grid = [],
+  lastPlanting = null,
+  lastSpawnPoint = null,
+  selectedCropId = null,
+  visitedZones = ['player_plot'],
+} = {}) {
+  return {
+    activeTool,
+    currentZone,
+    grid: createAuthorityGrid(grid),
+    lastPlanting,
+    lastSpawnPoint,
+    selectedCropId,
+    visitedZones: Array.isArray(visitedZones) && visitedZones.length ? [...new Set(visitedZones)] : ['player_plot'],
+  };
+}
 
 const AUTHORITY_REDUCERS = {
   NOOP: (data) => data,
+  PLANT_CROP: (data, payload) => {
+    const grid = createAuthorityGrid(data.grid);
+    grid[payload.cellIndex] = {
+      ...grid[payload.cellIndex],
+      cropId: payload.cropId,
+      damageState: null,
+    };
+    return {
+      ...data,
+      grid,
+      lastPlanting: { cellIndex: payload.cellIndex, cropId: payload.cropId },
+    };
+  },
   SET_ACTIVE_TOOL: (data, payload) => ({
     ...data,
     activeTool: typeof payload.toolId === 'string' ? payload.toolId : null,
@@ -209,6 +260,18 @@ function publicState(state) {
   };
 }
 
+function validateAuthorityPayload(envelope, state) {
+  if (envelope?.type !== 'PLANT_CROP') return null;
+  const grid = createAuthorityGrid(state?.data?.grid);
+  if (!Number.isInteger(envelope.payload?.cellIndex) || envelope.payload.cellIndex < 0 || envelope.payload.cellIndex >= grid.length) {
+    return { code: 'BAD_CELL_INDEX', message: 'Plant action requires a valid starter-grid cell index.' };
+  }
+  if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
+    return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+  }
+  return null;
+}
+
 async function signedRejection(env, state, envelope, code, message, status = 422) {
   const ack = await signServerAck({
     accepted: false,
@@ -230,13 +293,7 @@ async function handleCreateSession(request, env) {
   let state = await loadSession(env, sessionId);
   if (!state) {
     state = createEngineState({
-      data: {
-        activeTool: null,
-        currentZone: 'player_plot',
-        lastSpawnPoint: null,
-        selectedCropId: null,
-        visitedZones: ['player_plot'],
-      },
+      data: createInitialAuthorityData(),
       sessionId,
     });
     await saveSession(env, state);
@@ -259,6 +316,10 @@ async function handleAction(request, env) {
   if (!state) return problem('not_found', 'Session not found', 404);
   if (!AUTHORITY_REDUCERS[envelope.type]) {
     return signedRejection(env, state, envelope, 'ACTION_NOT_ALLOWED', 'Action type is not allowed');
+  }
+  const payloadError = validateAuthorityPayload(envelope, state);
+  if (payloadError) {
+    return signedRejection(env, state, envelope, payloadError.code, payloadError.message);
   }
 
   const result = applyAuthoritativeAction(state, envelope, AUTHORITY_REDUCERS);

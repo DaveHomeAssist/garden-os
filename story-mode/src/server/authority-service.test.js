@@ -113,6 +113,51 @@ describe('authority service', () => {
     expect(second.body.ack.signature).toBe(first.body.ack.signature);
   });
 
+  it('routes plant crop gameplay actions through canonical grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.PLANT_CROP);
+    expect(applied.body.ack.authoritativePatch.data.lastPlanting).toEqual({ cellIndex: 2, cropId: 'basil' });
+    expect(applied.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      cropId: 'basil',
+      damageState: null,
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(state.data.grid[2].cropId).toBe('basil');
+    expect(state.ledger.entries).toHaveLength(1);
+  });
+
+  it('rejects malformed plant crop payloads without changing grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const blocked = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-plant',
+      idempotencyKey: 'idem-bad-plant',
+      payload: { cellIndex: 99, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(blocked.body.ok).toBe(false);
+    expect(blocked.body.ack.accepted).toBe(false);
+    expect(blocked.body.ack.actionType).toBe(Actions.PLANT_CROP);
+    expect(blocked.body.ack.rejection.code).toBe('BAD_CELL_INDEX');
+    expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.grid.every((cell) => cell.cropId === null)).toBe(true);
+  });
+
   it('persists session state through an injected session store across service instances', async () => {
     const ledgerStore = createMemoryLedgerStore();
     const sessionStore = createMemorySessionStore();

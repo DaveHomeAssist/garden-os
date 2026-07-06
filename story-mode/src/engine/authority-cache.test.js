@@ -193,6 +193,33 @@ describe('authority IndexedDB cache', () => {
   it('maps accepted authority patches back into safe store actions', () => {
     expect(authorityAckToStoreAction({
       accepted: true,
+      actionType: Actions.PLANT_CROP,
+      authoritativePatch: {
+        data: {
+          lastPlanting: { cellIndex: 2, cropId: 'basil' },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    });
+
+    const alreadyPlanted = createGameState();
+    alreadyPlanted.season.grid[2].cropId = 'basil';
+    alreadyPlanted.season.grid[2].damageState = null;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.PLANT_CROP,
+      authoritativePatch: {
+        data: {
+          lastPlanting: { cellIndex: 2, cropId: 'basil' },
+        },
+      },
+    }, alreadyPlanted)).toBeNull();
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
       actionType: Actions.SET_SELECTED_CROP,
       authoritativePatch: { data: { selectedCropId: 'basil' } },
     })).toEqual({
@@ -694,6 +721,71 @@ describe('authority IndexedDB cache', () => {
     expect(actionCalls).toBe(1);
     expect(store.getState().campaign.worldState.currentZone).toBe('meadow');
     expect(store.getState().campaign.worldState.visitedZones).toEqual(['player_plot', 'meadow']);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues plant crop gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastPlanting: {
+                cellIndex: body.payload.cellIndex,
+                cropId: body.payload.cropId,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.PLANT_CROP,
+      payload: { cellIndex: 2, cropId: 'basil' },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].cropId).toBe('basil');
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
