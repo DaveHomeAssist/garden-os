@@ -1,0 +1,172 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import worker from '../gos-authority-worker.js';
+
+const {
+  SESSION_TTL_SECONDS,
+  signServerAck,
+  verifyServerAckSignature,
+} = worker.__test;
+
+const SECRET = 'test-authority-secret-minimum-24-chars';
+
+class MemoryKv {
+  constructor(seed = {}) {
+    this.store = new Map(Object.entries(seed));
+    this.puts = [];
+  }
+
+  async get(key) {
+    return this.store.has(key) ? this.store.get(key) : null;
+  }
+
+  async put(key, value, options) {
+    this.store.set(key, value);
+    this.puts.push({ key, value, options });
+  }
+}
+
+function envWithKv(kv = new MemoryKv()) {
+  return {
+    GOS_AUTHORITY: kv,
+    GOS_AUTHORITY_SECRET: SECRET,
+  };
+}
+
+function jsonRequest(path, body) {
+  return new Request('https://authority.example.test' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+async function createSession(kv = new MemoryKv(), sessionId = 'test-session-0001') {
+  const env = envWithKv(kv);
+  const response = await worker.fetch(jsonRequest('/session', { sessionId }), env);
+  assert.equal(response.status, 200);
+  return { body: await response.json(), env, kv, sessionId };
+}
+
+test('authority session persists canonical state with ttl', async () => {
+  const kv = new MemoryKv();
+  const { body } = await createSession(kv);
+
+  assert.equal(body.ok, true);
+  assert.equal(body.state.sessionId, 'test-session-0001');
+  const sessionPut = kv.puts.find((entry) => entry.key === 'session:test-session-0001');
+  assert.ok(sessionPut, 'expected session write');
+  assert.deepEqual(sessionPut.options, { expirationTtl: SESSION_TTL_SECONDS });
+});
+
+test('authority action signs ack and mutates canonical state once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-1',
+    idempotencyKey: 'idem-1',
+    payload: { cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_SELECTED_CROP',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.selectedCropId, 'basil');
+  assert.equal(first.state.tick, 1);
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 1);
+  assert.equal(second.state.data.selectedCropId, 'basil');
+});
+
+test('authority rejects tampered full-state payload before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-2',
+    payload: { state: { selectedCropId: 'trusted-client-state' } },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_SELECTED_CROP',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.rejection.code, 'TRUSTED_STATE_PAYLOAD');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.data.selectedCropId, null);
+  assert.equal(session.state.tick, 0);
+});
+
+test('authority rejects unknown action types', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-3',
+    payload: {},
+    playerId: 'local',
+    sessionId,
+    type: 'REPLACE_WHOLE_GAME',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.rejection.code, 'ACTION_NOT_ALLOWED');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+});
+
+test('authority ack signature fails after tampering', async () => {
+  const ack = await signServerAck({
+    accepted: true,
+    actionId: 'action-4',
+    checksum: 'abc123',
+    serverTime: '2026-07-06T15:00:00.000Z',
+    sessionId: 'test-session-0001',
+    stateVersion: 1,
+    tick: 1,
+  }, SECRET);
+
+  assert.equal(await verifyServerAckSignature(ack, SECRET), true);
+  assert.equal(await verifyServerAckSignature({ ...ack, checksum: 'tampered' }, SECRET), false);
+  assert.equal(await verifyServerAckSignature({ ...ack, signature: 'hmac-sha256:bad' }, SECRET), false);
+});
+
+test('authority fails closed without hmac secret', async () => {
+  const kv = new MemoryKv();
+  await worker.fetch(jsonRequest('/session', { sessionId: 'test-session-0001' }), {
+    GOS_AUTHORITY: kv,
+    GOS_AUTHORITY_SECRET: SECRET,
+  });
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-5',
+    payload: { cropId: 'basil' },
+    playerId: 'local',
+    sessionId: 'test-session-0001',
+    type: 'SET_SELECTED_CROP',
+  }), { GOS_AUTHORITY: kv });
+  const body = await response.json();
+
+  assert.equal(response.status, 503);
+  assert.equal(body.error, 'secret_unavailable');
+});

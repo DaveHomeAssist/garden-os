@@ -103,6 +103,11 @@ async function startStaticServer() {
   const server = createServer(async (request, response) => {
     try {
       const requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
+      if (requestUrl.pathname === '/favicon.ico') {
+        response.writeHead(204);
+        response.end();
+        return;
+      }
       const filePath = await resolveStaticPath(requestUrl.pathname);
       if (!filePath) {
         response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
@@ -148,6 +153,7 @@ async function runLocalVerification() {
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
     ['Sync client worker URL tests', ['--test', 'tests/sync-client-worker-url.test.mjs']],
     ['Sync worker security tests', ['--test', 'tests/sync-worker-security.test.mjs']],
+    ['Authority worker security tests', ['--test', 'tests/authority-worker.test.mjs']],
   ];
 
   for (const [name, scriptArgs] of nodeRegressionScripts) {
