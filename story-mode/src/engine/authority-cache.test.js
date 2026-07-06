@@ -4,6 +4,7 @@ import { createGameState } from '../game/state.js';
 import { Actions, Store } from '../game/store.js';
 import {
   IndexedDbAuthorityJournal,
+  authorityAckToStoreAction,
   buildAuthorityEnvelope,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
@@ -158,6 +159,31 @@ afterEach(() => {
 });
 
 describe('authority IndexedDB cache', () => {
+  it('maps accepted authority patches back into safe store actions', () => {
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      authoritativePatch: { data: { selectedCropId: 'basil' } },
+    })).toEqual({
+      meta: { authorityAck: true },
+      payload: { cropId: 'basil' },
+      type: Actions.SET_SELECTED_CROP,
+    });
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      authoritativePatch: { data: { activeTool: 'water' } },
+    })).toEqual({
+      meta: { authorityAck: true },
+      payload: { toolId: 'water' },
+      type: Actions.SET_ACTIVE_TOOL,
+    });
+
+    expect(authorityAckToStoreAction({
+      accepted: false,
+      authoritativePatch: { data: { selectedCropId: 'basil' } },
+    })).toBeNull();
+  });
+
   it('persists snapshots and deletes corrupt cached snapshots', async () => {
     const indexedDB = createFakeIndexedDB();
     const journal = new IndexedDbAuthorityJournal({ databaseName: 'snapshot-test', indexedDB });
@@ -268,6 +294,50 @@ describe('authority IndexedDB cache', () => {
     expect(snapshot.state.selectedCropId).toBe('basil');
     expect(pending).toHaveLength(1);
     expect(pending[0].envelope.payload).toEqual({ cropId: 'basil' });
+
+    persistence.cleanup();
+  });
+
+  it('reconciles configured authority acks back into the live store once', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let fetchCalls = 0;
+    const fetchFn = async (_url, init) => {
+      fetchCalls += 1;
+      const envelope = JSON.parse(init.body);
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(envelope),
+          authoritativePatch: { data: { selectedCropId: 'server-basil' } },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_SELECTED_CROP,
+      payload: { cropId: 'optimistic-basil' },
+    });
+    await persistence.flush();
+    await persistence.flush();
+
+    expect(fetchCalls).toBe(1);
+    expect(store.getState().selectedCropId).toBe('server-basil');
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+    expect(await persistence.journal.listAcks(persistence.sessionId)).toHaveLength(1);
 
     persistence.cleanup();
   });

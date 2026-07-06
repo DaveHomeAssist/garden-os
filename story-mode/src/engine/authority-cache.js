@@ -85,6 +85,10 @@ function isAuthorityRoutedAction(action) {
   return ROUTED_ACTION_TYPES.has(action?.type);
 }
 
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
 function buildAuthorityEnvelope(action, state, {
   clientSeq,
   now = Date.now,
@@ -100,6 +104,30 @@ function buildAuthorityEnvelope(action, state, {
     sessionId,
     type: action.type,
   });
+}
+
+function authorityAckToStoreAction(ack) {
+  if (!ack?.accepted) return null;
+  const data = ack.authoritativePatch?.data;
+  if (!data || typeof data !== 'object') return null;
+
+  if (hasOwn(data, 'selectedCropId')) {
+    return {
+      meta: { authorityAck: true },
+      payload: { cropId: typeof data.selectedCropId === 'string' ? data.selectedCropId : null },
+      type: 'SET_SELECTED_CROP',
+    };
+  }
+
+  if (hasOwn(data, 'activeTool')) {
+    return {
+      meta: { authorityAck: true },
+      payload: { toolId: typeof data.activeTool === 'string' ? data.activeTool : null },
+      type: 'SET_ACTIVE_TOOL',
+    };
+  }
+
+  return null;
 }
 
 class IndexedDbAuthorityJournal {
@@ -251,6 +279,7 @@ async function drainAuthorityQueue({
   journal,
   maxActions = MAX_DRAIN_ACTIONS,
   now = Date.now,
+  onAck,
   sessionId,
 } = {}) {
   const url = resolveAuthorityUrl({ authorityUrl });
@@ -282,6 +311,7 @@ async function drainAuthorityQueue({
     }
 
     await journal.markActionAcked(record, body.ack, { ackedAt: isoNow(now) });
+    if (onAck) await onAck(body.ack, record);
     acked += 1;
   }
 
@@ -307,6 +337,11 @@ function createStoryAuthorityPersistence(store, {
   const sessionId = ensureSessionPointer(slot, storage);
   const resolvedAuthorityUrl = resolveAuthorityUrl({ authorityUrl, storage });
 
+  async function reconcileAck(ack) {
+    const action = authorityAckToStoreAction(ack);
+    if (action) store.dispatch(action);
+  }
+
   function enqueue(work) {
     chain = chain
       .then(() => (active ? work() : null))
@@ -326,7 +361,7 @@ function createStoryAuthorityPersistence(store, {
         state,
       });
 
-      if (isAuthorityRoutedAction(action)) {
+      if (isAuthorityRoutedAction(action) && action?.meta?.authorityAck !== true) {
         clientSeq += 1;
         const envelope = buildAuthorityEnvelope(action, state, { clientSeq, now, sessionId });
         await journal.enqueueAction(envelope, { queuedAt: isoNow(now) });
@@ -336,6 +371,7 @@ function createStoryAuthorityPersistence(store, {
             fetchFn,
             journal,
             now,
+            onAck: reconcileAck,
             sessionId,
           });
         }
@@ -361,6 +397,7 @@ function createStoryAuthorityPersistence(store, {
         fetchFn,
         journal,
         now,
+        onAck: reconcileAck,
         sessionId,
       }));
     },
@@ -376,6 +413,7 @@ export {
   AUTHORITY_URL_KEY,
   DB_NAME,
   IndexedDbAuthorityJournal,
+  authorityAckToStoreAction,
   buildAuthorityEnvelope,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
