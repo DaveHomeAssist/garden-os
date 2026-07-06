@@ -1,9 +1,14 @@
+import { Readable } from 'node:stream';
+
 import { describe, expect, it } from 'vitest';
 
 import { createActionEnvelope } from '../engine/authoritative-engine.js';
 import { Actions } from '../game/store.js';
 import { verifyAuthorityAckSignature } from './authority-service.js';
-import { createVercelAuthorityFetchHandler } from './vercel-authority.js';
+import {
+  createVercelAuthorityFetchHandler,
+  createVercelAuthorityNodeHandler,
+} from './vercel-authority.js';
 
 const NOW = Date.parse('2026-07-06T20:30:00.000Z');
 const SECRET = 'vercel-hmac-secret';
@@ -41,6 +46,31 @@ function createRedisFetchHarness() {
     return Response.json({ error: `Unsupported command ${operation}` }, { status: 400 });
   };
   return { calls, fetchFn, records };
+}
+
+function createNodeRequest({ body = {}, headers = {}, method = 'POST', url = '/api/session' } = {}) {
+  const req = Readable.from([JSON.stringify(body)]);
+  req.headers = { 'content-type': 'application/json', host: 'authority.example.test', ...headers };
+  req.method = method;
+  req.url = url;
+  return req;
+}
+
+function createNodeResponse() {
+  return {
+    body: '',
+    headers: null,
+    statusCode: null,
+    writableEnded: false,
+    end(body) {
+      this.body = Buffer.isBuffer(body) ? body.toString('utf8') : String(body ?? '');
+      this.writableEnded = true;
+    },
+    writeHead(statusCode, headers) {
+      this.statusCode = statusCode;
+      this.headers = headers;
+    },
+  };
 }
 
 function envelope(overrides = {}) {
@@ -115,6 +145,22 @@ describe('vercel authority handler', () => {
       },
       method: 'POST',
       url: 'https://redis.example.test',
+    });
+  });
+
+  it('writes and ends Node ServerResponse for Vercel API routes', async () => {
+    const handler = createVercelAuthorityNodeHandler({ env: {}, fetchFn: async () => Response.json({}) });
+    const req = createNodeRequest({ body: { sessionId: 'session-vercel' } });
+    const res = createNodeResponse();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(503);
+    expect(res.headers).toMatchObject({ 'content-type': 'application/json' });
+    expect(res.writableEnded).toBe(true);
+    expect(JSON.parse(res.body)).toMatchObject({
+      error: 'AUTHORITY_STORE_UNCONFIGURED',
+      ok: false,
     });
   });
 });
