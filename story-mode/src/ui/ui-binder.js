@@ -437,17 +437,7 @@ function bindUI({
             ? `Forage ${spot.type.replace(/_/g, ' ')}`
             : `Recovering ${Math.ceil(spot.cooldownRemaining / 1000)}s`
         ),
-        onInteract: () => {
-          const result = foragingSystem.forage(spot.id);
-          if (!result.success) {
-            showToast(result.message, 1800, 'info');
-            return;
-          }
-          const summary = result.items.map((entry) => `${entry.count}x ${getItemDef(entry.itemId).name}`).join(', ');
-          showToast(summary ? `Foraged ${summary}` : result.message, 2200, 'success');
-          updateHUD();
-          persistState();
-        },
+        onInteract: () => forageSpot(spot),
       });
       registeredWorldInteractableIds.push(interactableId);
     });
@@ -621,6 +611,42 @@ function bindUI({
     }
     syncInteractionPresentation();
     return true;
+  }
+
+  function forageSpot(spot) {
+    const result = foragingSystem.forage(spot.id);
+    const payload = {
+      ...result,
+      spotId: spot.id,
+      zoneId: getCurrentZoneId(),
+    };
+    if (!result.success) {
+      showToast(result.message, 1800, 'info');
+      return payload;
+    }
+    const summary = result.items.map((entry) => `${entry.count}x ${getItemDef(entry.itemId).name}`).join(', ');
+    showToast(summary ? `Foraged ${summary}` : result.message, 2200, 'success');
+    updateHUD();
+    persistState();
+    return payload;
+  }
+
+  function activateForageForSmoke(spotId = null) {
+    const currentZone = getCurrentZoneId();
+    const spots = foragingSystem.getForagingSpots(currentZone);
+    const spot = spots.find((entry) => entry.id === spotId)
+      ?? spots.find((entry) => entry.available)
+      ?? spots[0];
+    if (!spot) {
+      return {
+        success: false,
+        items: [],
+        xpGained: 0,
+        message: `No foraging spots in ${currentZone}.`,
+        zoneId: currentZone,
+      };
+    }
+    return forageSpot(spot);
   }
 
   function showToast(message, durationMs = 2200, variant = 'info') {
@@ -1714,6 +1740,7 @@ function bindUI({
   window.gardenOS = {
     render_game_to_text: renderGameToText,
     advanceTime,
+    activateForageForSmoke,
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
     showHarvestRevealDebug: (result, extras = {}) => {
       showHarvestReveal(

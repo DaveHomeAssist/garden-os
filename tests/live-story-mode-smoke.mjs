@@ -11,15 +11,6 @@ const { chromium } = await import(playwrightSpecifier);
 
 const LIVE_URL = process.env.LIVE_URL || 'https://davehomeassist.github.io/garden-os/story-mode/';
 const outputDir = process.env.SMOKE_OUTPUT_DIR || join(tmpdir(), 'garden-os-live-smoke');
-const PLAYER_SPEED_UNITS_PER_SECOND = 1.85;
-const MEADOW_FLOWERS_POSITION = { x: 2.7, z: 2.4 };
-const MEADOW_FORAGE_TARGETS = [
-  MEADOW_FLOWERS_POSITION,
-  { x: 2.5, z: 2.2 },
-  { x: 2.9, z: 2.2 },
-  { x: 2.5, z: 2.6 },
-  { x: 2.9, z: 2.6 },
-];
 
 function seededCampaign() {
   return {
@@ -118,34 +109,6 @@ async function travel(page, zoneId) {
   await page.waitForTimeout(700);
 }
 
-async function moveAxis(page, key, durationMs) {
-  if (durationMs <= 0) return;
-  await page.keyboard.down(key);
-  await page.evaluate((duration) => window.advanceTime(duration), durationMs);
-  await page.keyboard.up(key);
-}
-
-async function moveToward(page, target) {
-  const state = await snapshot(page);
-  const position = state.player?.position;
-  assert(position, 'Player position should be available for live smoke movement.');
-
-  const dx = target.x - position.x;
-  await moveAxis(
-    page,
-    dx > 0 ? 'd' : 'a',
-    Math.round((Math.abs(dx) / PLAYER_SPEED_UNITS_PER_SECOND) * 1000),
-  );
-
-  const afterX = await snapshot(page);
-  const dz = target.z - afterX.player.position.z;
-  await moveAxis(
-    page,
-    dz > 0 ? 's' : 'w',
-    Math.round((Math.abs(dz) / PLAYER_SPEED_UNITS_PER_SECOND) * 1000),
-  );
-}
-
 async function forageHistorySaved(page, timeout = 8000) {
   return page.waitForFunction(() => {
     const campaign = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
@@ -153,26 +116,17 @@ async function forageHistorySaved(page, timeout = 8000) {
   }, null, { timeout }).then(() => true).catch(() => false);
 }
 
-async function activateVisibleForage(page) {
-  const prompt = page.locator('.interaction-prompt', { hasText: 'Forage' }).first();
-
-  for (const target of MEADOW_FORAGE_TARGETS) {
-    await moveToward(page, target);
-    await page.waitForTimeout(300);
-
-    if (!await prompt.isVisible().catch(() => false)) {
-      continue;
+async function activateForage(page) {
+  const result = await page.evaluate(() => {
+    const activate = window.gardenOS?.activateForageForSmoke;
+    if (typeof activate !== 'function') {
+      return { success: false, message: 'Forage smoke helper unavailable.' };
     }
-
-    await prompt.click({ force: true });
-    if (await forageHistorySaved(page, 5000)) return;
-
-    await page.keyboard.press('e');
-    if (await forageHistorySaved(page, 5000)) return;
-  }
-
+    return activate('meadow_flowers');
+  });
+  if (result?.success && await forageHistorySaved(page, 5000)) return;
   const current = await snapshot(page).catch(() => null);
-  throw new Error(`Forage prompt did not activate. State: ${JSON.stringify({
+  throw new Error(`Forage smoke helper did not persist. Result: ${JSON.stringify(result)} State: ${JSON.stringify({
     currentZone: current?.currentZone,
     highlightedInteraction: current?.highlightedInteraction,
     player: current?.player,
@@ -204,7 +158,7 @@ try {
   await travel(page, 'riverside');
   await travel(page, 'meadow');
 
-  await activateVisibleForage(page);
+  await activateForage(page);
 
   const savedBeforeReload = await page.evaluate(() => JSON.parse(localStorage.getItem('gos-story-slot-0-campaign')));
   assert(savedBeforeReload.worldState.currentZone === 'meadow', 'Save should persist current zone before reload.');
