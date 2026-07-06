@@ -15,8 +15,13 @@ const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullS
 const ACTIONS = {
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
+  ZONE_CHANGED: 'ZONE_CHANGED',
 };
-const ROUTED_ACTION_TYPES = new Set([ACTIONS.SET_SELECTED_CROP, ACTIONS.SET_ACTIVE_TOOL]);
+const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.SET_SELECTED_CROP,
+  ACTIONS.SET_ACTIVE_TOOL,
+  ACTIONS.ZONE_CHANGED,
+]);
 
 function cloneValue(value) {
   return value == null ? value : structuredClone(value);
@@ -179,6 +184,19 @@ function reduceStoryAction(data, payload, envelope) {
       activeTool: payload.toolId ?? null,
     };
   }
+  if (envelope.type === ACTIONS.ZONE_CHANGED) {
+    const currentZone = typeof payload.toZone === 'string' && payload.toZone
+      ? payload.toZone
+      : data.currentZone;
+    const visitedZones = new Set(Array.isArray(data.visitedZones) ? data.visitedZones : ['player_plot']);
+    if (currentZone) visitedZones.add(currentZone);
+    return {
+      ...data,
+      currentZone,
+      lastSpawnPoint: cloneValue(payload.spawnPoint ?? null),
+      visitedZones: [...visitedZones],
+    };
+  }
   return data;
 }
 
@@ -212,6 +230,7 @@ function ledgerActionEntry({ ack, duplicate, envelope, previousState, serverTime
 
 function createRejectedAck({
   actionId = 'unknown',
+  actionType,
   checksum = 'unavailable',
   code,
   message,
@@ -223,6 +242,7 @@ function createRejectedAck({
   return signAck({
     accepted: false,
     actionId,
+    actionType,
     checksum,
     rejection: { code, message },
     serverTime,
@@ -255,7 +275,13 @@ function createAuthorityService({
     }
     const sessionId = body.sessionId || sessionIdFactory();
     const state = createEngineState({
-      data: { activeTool: 'hand', selectedCropId: null },
+      data: {
+        activeTool: 'hand',
+        currentZone: 'player_plot',
+        lastSpawnPoint: null,
+        selectedCropId: null,
+        visitedZones: ['player_plot'],
+      },
       gameId: body.gameId ?? DEFAULT_GAME_ID,
       seed: body.seed ?? `garden-os:${sessionId}`,
       sessionId,
@@ -282,7 +308,13 @@ function createAuthorityService({
     let state = await sessionStore.get(envelope.sessionId);
     if (!state) {
       state = createEngineState({
-        data: { activeTool: 'hand', selectedCropId: null },
+        data: {
+          activeTool: 'hand',
+          currentZone: 'player_plot',
+          lastSpawnPoint: null,
+          selectedCropId: null,
+          visitedZones: ['player_plot'],
+        },
         gameId: envelope.gameId ?? DEFAULT_GAME_ID,
         seed: `garden-os:${envelope.sessionId}`,
         sessionId: envelope.sessionId,
@@ -298,6 +330,7 @@ function createAuthorityService({
     if (!previousState) {
       const ack = createRejectedAck({
         actionId: envelope?.id,
+        actionType: envelope?.type,
         code: 'BAD_SESSION',
         message: 'Session id is required.',
         serverTime: isoNow(now),
@@ -310,6 +343,7 @@ function createAuthorityService({
     if (!ROUTED_ACTION_TYPES.has(envelope?.type)) {
       const ack = createRejectedAck({
         actionId: envelope?.id,
+        actionType: envelope?.type,
         checksum: previousState.checksum,
         code: 'UNSUPPORTED_ACTION_TYPE',
         message: 'Action type is not routed through Story Mode authority yet.',

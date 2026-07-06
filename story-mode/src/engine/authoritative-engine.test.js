@@ -45,6 +45,7 @@ describe('authoritative engine core', () => {
     const second = applyAuthoritativeAction(first.state, envelope, { INCREMENT: counterReducer }, { now: NOW });
 
     expect(first.ack.accepted).toBe(true);
+    expect(first.ack.actionType).toBe('INCREMENT');
     expect(second.duplicate).toBe(true);
     expect(second.state.data.count).toBe(2);
     expect(second.ack).toEqual(first.ack);

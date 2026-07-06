@@ -88,6 +88,22 @@ function envelope(overrides = {}) {
 }
 
 describe('vercel authority handler', () => {
+  it('answers CORS preflight before requiring authority storage env', async () => {
+    const handle = createVercelAuthorityFetchHandler({ env: {}, fetchFn: async () => Response.json({}) });
+    const response = await handle(new Request('https://authority.example.test/api/session', {
+      headers: {
+        'Access-Control-Request-Headers': 'content-type',
+        'Access-Control-Request-Method': 'POST',
+        Origin: 'https://davehomeassist.github.io',
+      },
+      method: 'OPTIONS',
+    }));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('OPTIONS');
+  });
+
   it('fails closed when production authority storage is not configured', async () => {
     const handle = createVercelAuthorityFetchHandler({ env: {}, fetchFn: async () => Response.json({}) });
 

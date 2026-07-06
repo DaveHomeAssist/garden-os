@@ -81,12 +81,39 @@ test('authority action signs ack and mutates canonical state once', async () => 
 
   assert.equal(firstResponse.status, 200);
   assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'SET_SELECTED_CROP');
   assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
   assert.equal(first.state.data.selectedCropId, 'basil');
   assert.equal(first.state.tick, 1);
   assert.equal(second.duplicate, true);
   assert.equal(second.state.tick, 1);
   assert.equal(second.state.data.selectedCropId, 'basil');
+});
+
+test('authority action routes zone changes through canonical state once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-zone',
+    idempotencyKey: 'idem-zone',
+    payload: { spawnPoint: { x: -6, z: 0 }, toZone: 'meadow' },
+    playerId: 'local',
+    sessionId,
+    type: 'ZONE_CHANGED',
+  };
+
+  const response = await worker.fetch(jsonRequest('/action', action), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ack.accepted, true);
+  assert.equal(body.ack.actionType, 'ZONE_CHANGED');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+  assert.equal(body.state.data.currentZone, 'meadow');
+  assert.deepEqual(body.state.data.visitedZones, ['player_plot', 'meadow']);
+  assert.deepEqual(body.state.data.lastSpawnPoint, { x: -6, z: 0 });
 });
 
 test('authority rejects tampered full-state payload before mutation', async () => {

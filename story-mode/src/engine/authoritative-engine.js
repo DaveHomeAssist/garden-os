@@ -163,6 +163,7 @@ function buildAck(state, envelope, accepted, {
   const ack = {
     accepted,
     actionId: envelope.id,
+    actionType: envelope.type,
     authoritativePatch: patch ?? undefined,
     checksum: state.checksum,
     rejection: rejection ?? undefined,

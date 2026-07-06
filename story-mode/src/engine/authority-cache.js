@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['SET_ACTIVE_TOOL', 'SET_SELECTED_CROP']);
+const ROUTED_ACTION_TYPES = new Set(['SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -129,12 +129,36 @@ function buildAuthorityEnvelope(action, state, {
   });
 }
 
-function authorityAckToStoreAction(ack) {
+function clonePosition(value) {
+  if (!value || typeof value !== 'object') return null;
+  const x = Number(value.x);
+  const z = Number(value.z);
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+  return { x, z };
+}
+
+function inferAckActionType(ack) {
+  if (typeof ack?.actionType === 'string') return ack.actionType;
+  const actionId = String(ack?.actionId ?? '');
+  if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
+  if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
+  if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
+  return null;
+}
+
+function samePosition(left, right) {
+  if (!left && !right) return true;
+  if (!left || !right) return false;
+  return left.x === right.x && left.z === right.z;
+}
+
+function authorityAckToStoreAction(ack, currentState = null) {
   if (!ack?.accepted) return null;
   const data = ack.authoritativePatch?.data;
   if (!data || typeof data !== 'object') return null;
+  const actionType = inferAckActionType(ack);
 
-  if (hasOwn(data, 'selectedCropId')) {
+  if (actionType === 'SET_SELECTED_CROP' && hasOwn(data, 'selectedCropId')) {
     return {
       meta: { authorityAck: true },
       payload: { cropId: typeof data.selectedCropId === 'string' ? data.selectedCropId : null },
@@ -142,7 +166,41 @@ function authorityAckToStoreAction(ack) {
     };
   }
 
-  if (hasOwn(data, 'activeTool')) {
+  if (actionType === 'SET_ACTIVE_TOOL' && hasOwn(data, 'activeTool')) {
+    return {
+      meta: { authorityAck: true },
+      payload: { toolId: typeof data.activeTool === 'string' ? data.activeTool : null },
+      type: 'SET_ACTIVE_TOOL',
+    };
+  }
+
+  if (actionType === 'ZONE_CHANGED' && typeof data.currentZone === 'string' && data.currentZone) {
+    const spawnPoint = clonePosition(data.lastSpawnPoint);
+    const worldState = currentState?.campaign?.worldState ?? {};
+    const alreadyApplied = (
+      worldState.currentZone === data.currentZone
+      && samePosition(clonePosition(worldState.lastSpawnPoint), spawnPoint)
+      && (Array.isArray(data.visitedZones)
+        ? data.visitedZones.every((zoneId) => worldState.visitedZones?.includes(zoneId))
+        : true)
+    );
+    if (alreadyApplied) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { spawnPoint, toZone: data.currentZone },
+      type: 'ZONE_CHANGED',
+    };
+  }
+
+  if (!actionType && hasOwn(data, 'selectedCropId') && !hasOwn(data, 'activeTool')) {
+    return {
+      meta: { authorityAck: true },
+      payload: { cropId: typeof data.selectedCropId === 'string' ? data.selectedCropId : null },
+      type: 'SET_SELECTED_CROP',
+    };
+  }
+
+  if (!actionType && hasOwn(data, 'activeTool') && !hasOwn(data, 'selectedCropId')) {
     return {
       meta: { authorityAck: true },
       payload: { toolId: typeof data.activeTool === 'string' ? data.activeTool : null },
@@ -426,7 +484,7 @@ function createStoryAuthorityPersistence(store, {
   let sessionPromise = null;
 
   async function reconcileAck(ack) {
-    const action = authorityAckToStoreAction(ack);
+    const action = authorityAckToStoreAction(ack, store.getState?.());
     if (action) store.dispatch(action);
   }
 

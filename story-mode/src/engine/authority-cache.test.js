@@ -193,6 +193,7 @@ describe('authority IndexedDB cache', () => {
   it('maps accepted authority patches back into safe store actions', () => {
     expect(authorityAckToStoreAction({
       accepted: true,
+      actionType: Actions.SET_SELECTED_CROP,
       authoritativePatch: { data: { selectedCropId: 'basil' } },
     })).toEqual({
       meta: { authorityAck: true },
@@ -202,12 +203,62 @@ describe('authority IndexedDB cache', () => {
 
     expect(authorityAckToStoreAction({
       accepted: true,
+      actionType: Actions.SET_ACTIVE_TOOL,
       authoritativePatch: { data: { activeTool: 'water' } },
     })).toEqual({
       meta: { authorityAck: true },
       payload: { toolId: 'water' },
       type: Actions.SET_ACTIVE_TOOL,
     });
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_ACTIVE_TOOL,
+      authoritativePatch: {
+        data: {
+          activeTool: 'water',
+          currentZone: 'player_plot',
+          selectedCropId: null,
+          visitedZones: ['player_plot'],
+        },
+      },
+    })).toEqual({
+      meta: { authorityAck: true },
+      payload: { toolId: 'water' },
+      type: Actions.SET_ACTIVE_TOOL,
+    });
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.ZONE_CHANGED,
+      authoritativePatch: {
+        data: {
+          currentZone: 'meadow',
+          lastSpawnPoint: { x: -6, z: 0 },
+          visitedZones: ['player_plot', 'meadow'],
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { spawnPoint: { x: -6, z: 0 }, toZone: 'meadow' },
+      type: Actions.ZONE_CHANGED,
+    });
+
+    const alreadyInMeadow = createGameState();
+    alreadyInMeadow.campaign.worldState.currentZone = 'meadow';
+    alreadyInMeadow.campaign.worldState.visitedZones = ['player_plot', 'meadow'];
+    alreadyInMeadow.campaign.worldState.lastSpawnPoint = { x: -6, z: 0 };
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.ZONE_CHANGED,
+      authoritativePatch: {
+        data: {
+          currentZone: 'meadow',
+          lastSpawnPoint: { x: -6, z: 0 },
+          visitedZones: ['player_plot', 'meadow'],
+        },
+      },
+    }, alreadyInMeadow)).toBeNull();
 
     expect(authorityAckToStoreAction({
       accepted: false,
@@ -549,6 +600,7 @@ describe('authority IndexedDB cache', () => {
       return new Response(JSON.stringify({
         ack: {
           ...ackFor(envelope),
+          actionType: envelope.type,
           authoritativePatch: { data: { selectedCropId: 'server-basil' } },
         },
         ok: true,
@@ -578,6 +630,71 @@ describe('authority IndexedDB cache', () => {
     expect(store.getState().selectedCropId).toBe('server-basil');
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
     expect(await persistence.journal.listAcks(persistence.sessionId)).toHaveLength(1);
+
+    persistence.cleanup();
+  });
+
+  it('queues zone changes and skips duplicate server zone reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              currentZone: body.payload.toZone,
+              lastSpawnPoint: body.payload.spawnPoint,
+              visitedZones: ['player_plot', body.payload.toZone],
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.ZONE_CHANGED,
+      payload: { spawnPoint: { x: -6, z: 0 }, toZone: 'meadow' },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.worldState.currentZone).toBe('meadow');
+    expect(store.getState().campaign.worldState.visitedZones).toEqual(['player_plot', 'meadow']);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
   });

@@ -1,3 +1,17 @@
+Update 2026-07-06 Story Mode zone authority pass:
+- Added `actionType` to server acks so client reconciliation no longer guesses from full authority patches.
+- Routed `ZONE_CHANGED` through the Vercel/Node authority service and the fetch-compatible authority worker, with canonical `currentZone`, `visitedZones`, and `lastSpawnPoint` in authority state.
+- Updated the IndexedDB authority cache so live `ZONE_CHANGED` actions queue like selected crop/tool actions and duplicate server zone acks do not replay zone-transition side effects.
+- Fixed Vercel authority CORS preflight so the API returns `204` for `OPTIONS` before requiring storage env, while still failing closed for real requests when env is missing.
+- Validation:
+  - `npm test -- src/engine/authoritative-engine.test.js src/engine/authority-cache.test.js src/server/authority-service.test.js src/server/vercel-authority.test.js` passed with 32 tests.
+  - `node --test tests/authority-worker.test.mjs` passed with 8 tests.
+  - `npm test` passed with 35 files / 403 tests.
+- Deferred:
+  - Vercel production authority remains blocked until `GOS_AUTHORITY_HMAC_SECRET` and Redis REST URL/token are provisioned.
+  - Gameplay mutation families beyond selected crop, active tool, and zone travel are still intentionally not routed through authority.
+  - Live `/session` -> `/action` -> signed ack proof still requires the Vercel env fix and redeploy.
+
 Update 2026-07-06 Story Mode authority live wiring pass:
 - Wired the live crop palette and Let It Grow tool HUD through the existing authority-routed store actions instead of keeping them as UI-only state.
 - Added client `/session` bootstrap before draining queued `/action` envelopes when an authority URL is configured.

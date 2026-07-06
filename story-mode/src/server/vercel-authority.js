@@ -74,6 +74,10 @@ function createConfiguredAuthorityService({
 
 function createVercelAuthorityFetchHandler(options = {}) {
   return async function handleVercelAuthorityRequest(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: JSON_HEADERS, status: 204 });
+    }
+
     const { missing, service } = createConfiguredAuthorityService(options);
     if (!service) {
       return jsonResponse({

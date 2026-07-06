@@ -32,6 +32,24 @@ const AUTHORITY_REDUCERS = {
     ...data,
     selectedCropId: typeof payload.cropId === 'string' ? payload.cropId : null,
   }),
+  ZONE_CHANGED: (data, payload) => {
+    const currentZone = typeof payload.toZone === 'string' && payload.toZone
+      ? payload.toZone
+      : data.currentZone;
+    const visitedZones = new Set(Array.isArray(data.visitedZones) ? data.visitedZones : ['player_plot']);
+    if (currentZone) visitedZones.add(currentZone);
+    const spawnX = Number(payload.spawnPoint?.x);
+    const spawnZ = Number(payload.spawnPoint?.z);
+    const lastSpawnPoint = Number.isFinite(spawnX) && Number.isFinite(spawnZ)
+      ? { x: spawnX, z: spawnZ }
+      : null;
+    return {
+      ...data,
+      currentZone,
+      lastSpawnPoint,
+      visitedZones: [...visitedZones],
+    };
+  },
 };
 
 const CORS_HEADERS = {
@@ -195,6 +213,7 @@ async function signedRejection(env, state, envelope, code, message, status = 422
   const ack = await signServerAck({
     accepted: false,
     actionId: envelope?.id ?? 'unknown',
+    actionType: envelope?.type,
     checksum: state.checksum,
     rejection: { code, message },
     serverTime: new Date().toISOString(),
@@ -211,7 +230,13 @@ async function handleCreateSession(request, env) {
   let state = await loadSession(env, sessionId);
   if (!state) {
     state = createEngineState({
-      data: { activeTool: null, selectedCropId: null },
+      data: {
+        activeTool: null,
+        currentZone: 'player_plot',
+        lastSpawnPoint: null,
+        selectedCropId: null,
+        visitedZones: ['player_plot'],
+      },
       sessionId,
     });
     await saveSession(env, state);

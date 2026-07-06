@@ -84,6 +84,7 @@ describe('authority service', () => {
     expect(applied.body.ack).toMatchObject({
       accepted: true,
       actionId: 'action-1',
+      actionType: Actions.SET_SELECTED_CROP,
       sessionId: 'session-http',
       tick: 1,
     });
@@ -196,6 +197,27 @@ describe('authority service', () => {
     });
     expect(tampered.status).toBe(422);
     expect(tampered.body.verified).toBe(false);
+  });
+
+  it('routes zone changes through the authoritative session ledger', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-zone',
+      idempotencyKey: 'idem-zone',
+      payload: { spawnPoint: { x: -6, z: 0 }, toZone: 'meadow' },
+      type: Actions.ZONE_CHANGED,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.ZONE_CHANGED);
+    expect(applied.body.ack.authoritativePatch.data.currentZone).toBe('meadow');
+    expect(applied.body.ack.authoritativePatch.data.visitedZones).toEqual(['player_plot', 'meadow']);
+    expect(state.data.currentZone).toBe('meadow');
+    expect(state.data.lastSpawnPoint).toEqual({ x: -6, z: 0 });
+    expect(state.ledger.entries).toHaveLength(1);
   });
 
   it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {
