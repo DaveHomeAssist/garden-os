@@ -376,7 +376,7 @@ function makeBirdCritterEventSave() {
     title: 'Fence Sparrow Watch',
     category: 'critter',
     valence: 'neutral',
-    description: 'A sparrow posts up on the trellis and keeps watch over the July bed.',
+    description: 'A sparrow keeps watch from the yard edge over the July bed.',
     mechanicalEffect: {
       modifier: 0.1,
       target: { type: 'all_cells', filter: 'planted' },
@@ -541,8 +541,7 @@ async function seedAndStartBirdCritterRun(page, baseUrl) {
   await captureDialogueThenDismiss(page);
   await page.waitForFunction(() => {
     const debug = window.gardenOS?.getVisualDebug?.();
-    return debug?.creatureCompanions?.companions?.trellisBird?.eventPinned === true
-      && debug.creatureCompanions.companions.trellisBird.visible === true;
+    return debug?.creatureCompanions?.activeEvent?.title === 'Fence Sparrow Watch';
   }, null, { timeout: 60000 });
   await waitForCanvasPaint(page);
   await page.waitForTimeout(250);
@@ -581,10 +580,9 @@ async function assertBirdCritterCompanionLayer(page) {
   const critters = debug.creatureCompanions;
   assert(critters?.activeEvent?.category === 'critter', `Expected critter active event, got ${critters?.activeEvent?.category}.`);
   assert(critters.activeEvent.title === 'Fence Sparrow Watch', `Expected sparrow event title, got ${critters.activeEvent.title}.`);
-  assert(critters.companions.trellisBird.visible, 'Expected trellis bird companion to be visible.');
-  assert(critters.companions.trellisBird.eventPinned, 'Expected trellis bird to be pinned by active critter event.');
-  assert(critters.companions.trellisBird.count >= 6, `Expected detailed trellis bird mesh, got ${critters.companions.trellisBird.count} parts.`);
-  assert(critters.visibleCompanionNames.includes('trellisBird'), `Expected trellisBird in visible companions, got ${critters.visibleCompanionNames.join(', ')}.`);
+  assert(!critters.companions.trellisBird.visible, 'Removed bed trellis bird companion should stay hidden.');
+  assert(critters.companions.trellisBird.count === 0, `Expected no trellis bird mesh, got ${critters.companions.trellisBird.count} parts.`);
+  assert(!critters.visibleCompanionNames.includes('trellisBird'), `Unexpected trellisBird in visible companions: ${critters.visibleCompanionNames.join(', ')}.`);
   assert(!critters.companions.alleyCat.visible, 'Alley cat should not show for a sparrow event.');
 }
 

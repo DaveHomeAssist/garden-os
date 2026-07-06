@@ -1008,9 +1008,6 @@ export function createGardenScene(container) {
     const frameHSnow = 0.15;
     const frZSnow  =  bedDepthSnow / 2 + 0.03;
     const bkZSnow  = -(bedDepthSnow / 2 + 0.03);
-    const trellisZSnow = -(bedDepthSnow / 2 + 0.5 * 0.8);
-    const trellisTopY  = 1.08;
-
     const snowPatches = [
       { w: bedWidthSnow + 0.12, d: 0.06, x: 0,                         y: frameHSnow + 0.003, z: frZSnow },
       { w: bedWidthSnow + 0.12, d: 0.06, x: 0,                         y: frameHSnow + 0.003, z: bkZSnow },
@@ -1027,24 +1024,6 @@ export function createGardenScene(container) {
         snowDusting.add(patch);
       }
     });
-    for (let k = 0; k < 10; k++) {
-      const patch = new THREE.Mesh(
-        new THREE.BoxGeometry(0.35 + (k % 3) * 0.1, 0.005, 0.03),
-        snowMat
-      );
-      patch.position.set(-1.7 + k * 0.38, trellisTopY + 0.028, trellisZSnow);
-      snowDusting.add(patch);
-    }
-    for (const px of [-1.94, 1.94]) {
-      for (let k = 0; k < 6; k++) {
-        const patch = new THREE.Mesh(
-          new THREE.BoxGeometry(0.06, 0.005, 0.03 + (k % 2) * 0.01),
-          snowMat
-        );
-        patch.position.set(px, 0.15 + k * 0.18, trellisZSnow);
-        snowDusting.add(patch);
-      }
-    }
   }
   snowDusting.visible = false;
   root.add(snowDusting);
@@ -1075,44 +1054,11 @@ export function createGardenScene(container) {
   springPuddles.visible = false;
   root.add(springPuddles);
 
-  // 4. Bird on trellis — body + head + beak + tail
+  // 4. Bird cue placeholder. The old bed trellis perch was removed from the scene.
   const birdGroup = new THREE.Group();
-  {
-    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x4f3423, roughness: 0.85 });
-    const birdWingMat = new THREE.MeshStandardMaterial({ color: 0x7d5030, roughness: 0.82 });
-    const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xddaa44, roughness: 0.7 });
-
-    const birdBody = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 9), birdBodyMat);
-    birdBody.scale.set(1.45, 0.82, 1.08);
-    birdGroup.add(birdBody);
-
-    const birdHead = new THREE.Mesh(new THREE.SphereGeometry(0.021, 9, 7), birdBodyMat);
-    birdHead.position.set(0.043, 0.024, 0);
-    birdGroup.add(birdHead);
-
-    for (const z of [-0.02, 0.02]) {
-      const wing = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), birdWingMat);
-      wing.position.set(-0.006, -0.002, z);
-      wing.scale.set(1.35, 0.34, 0.64);
-      wing.rotation.y = z < 0 ? -0.36 : 0.36;
-      birdGroup.add(wing);
-    }
-
-    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.028, 6), birdBeakMat);
-    birdBeak.rotation.z = -Math.PI / 2;
-    birdBeak.position.set(0.072, 0.021, 0);
-    birdGroup.add(birdBeak);
-
-    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.014, 0.04, 6), birdWingMat);
-    birdTail.position.set(-0.05, 0.004, 0);
-    birdTail.rotation.z = 1.22;
-    birdGroup.add(birdTail);
-  }
-  // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.5*0.8) ~= -1.4
-  birdGroup.position.set(1.24, 1.105, -(4 * 0.5 / 2 + 0.5 * 0.8));
-  birdGroup.visible = true;
+  birdGroup.visible = false;
   root.add(birdGroup);
-  let birdVisible = true;
+  let birdVisible = false;
   let birdFlipTimer = 0;
   let birdEventPinned = false;
 
@@ -2947,14 +2893,10 @@ function getGrowthScale(phase, season) {
         (evTitleLower.includes('cat') || evTitleLower.includes('alley'))
       );
 
-      birdEventPinned = evCategory === 'critter' && /\b(bird|sparrow|finch|wing|nest)\b/i.test(evTitle);
-      if (birdEventPinned) {
-        birdVisible = true;
-        birdFlipTimer = 0;
-        birdGroup.visible = state.season.season !== 'winter';
-      } else if (state.season.season === 'winter') {
-        birdGroup.visible = false;
-      }
+      birdEventPinned = false;
+      birdVisible = false;
+      birdFlipTimer = 0;
+      birdGroup.visible = false;
 
       // Neighbor arm: show for positive neighbor events
       neighborGroup.visible = (evCategory === 'neighbor' && evValence === 'positive');
@@ -3010,22 +2952,8 @@ function getGrowthScale(phase, season) {
       }
 
       const season = lastSyncedState?.season?.season ?? 'spring';
-      if (birdEventPinned) {
-        birdVisible = true;
-        birdGroup.visible = season !== 'winter';
-      } else {
-        // Bird random perch: flip every ~4-8 seconds, 50% chance visible
-        birdFlipTimer += dt;
-        if (birdFlipTimer > 4 + Math.sin(atmosphereTime * 0.17) * 2) {
-          birdFlipTimer = 0;
-          birdVisible = Math.sin(atmosphereTime * 137.5) > 0;
-          birdGroup.visible = birdVisible && season !== 'winter';
-        }
-      }
-      if (birdGroup.visible) {
-        birdGroup.position.y = 1.105 + Math.sin(atmosphereTime * 1.7) * 0.008;
-        birdGroup.rotation.z = Math.sin(atmosphereTime * 1.5) * 0.08;
-      }
+      birdVisible = false;
+      birdGroup.visible = false;
 
       const seasonalBreeze = { spring: 0.95, summer: 0.72, fall: 1.08, winter: 0.45 }[season] ?? 0.85;
       const breezeStrength = seasonalBreeze * (isWindEvent ? 1.9 : 1);

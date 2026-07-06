@@ -3,7 +3,7 @@ Update 2026-07-06 Story Mode water authority pass:
 - Extended server-owned starter-grid authority cells with `interventionBonus` and `lastWateredAt`, plus canonical `lastWatering` ack metadata.
 - Added payload validation so water actions require a valid starter-grid cell, an already-planted crop in server authority state, a finite 0..1 bonus, and a finite/null `wateredAt`.
 - Client reconciliation now maps authoritative `lastWatering` acks back into `WATER_CELL` and skips duplicate local replay when the optimistic water state already matches the signed ack.
-- Visual follow-up: moved the bed trellis, front guard, snow caps, and bird anchor outside the planting footprint, then raised the trellis lattice above the bed face so the fence no longer reads as crossing the garden grid.
+- Visual follow-up: removed the bed trellis/front guard, trellis snow caps, old trellis bird perch, and the stray cross-yard back fence at the garden bed line.
 - Validation: focused authority Vitest passed 4 files / 38 tests; worker authority passed 12 tests; full Story Mode Vitest passed 35 files / 409 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
 - Browser smoke: local Vite Story Mode launched into the live loop, rendered one canvas, exposed `render_game_to_text()`, and captured a planning/cutscene frame at `/tmp/garden-os-web-game-water-authority-20260706/direct-smoke.png`. Expected console error remains `503` from the unprovisioned live authority API.
 - Deferred:

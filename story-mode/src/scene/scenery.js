@@ -1306,16 +1306,6 @@ export function buildScenery(tracker = null) {
     group.add(rail);
   }
 
-  // Back fence connecting left and right fences
-  const backFenceZ = -0.2;
-  for (let i = 0; i < 20; i++) {
-    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
-    const slatHeight = 0.42 + (i % 2) * 0.04;
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, slatHeight, 0.12), slatMat);
-    slat.position.set(-4.5 + i * 0.48, slatHeight / 2, backFenceZ);
-    group.add(slat);
-  }
-
   // Front fence with gate opening (skip center slats for gate)
   const frontFenceZ = 4.8;
   for (let i = 0; i < 20; i++) {
