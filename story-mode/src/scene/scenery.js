@@ -4,7 +4,6 @@
  */
 import * as THREE from 'three';
 
-const PATH_COLOR = 0x8a7a5a;
 const GRASS_DARK = 0x3a5a2a;
 const FOUNDATION_COLOR = 0x6d706d;
 const MULCH_COLOR = 0x5b452f;
@@ -115,9 +114,7 @@ export function buildScenery(tracker = null) {
   const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
   const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
   const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
-  const gravelTexture = createPebbleTexture(PATH_COLOR, 0xc1b39d, 3.6, 3.6);
   const mulchTexture = createPebbleTexture(MULCH_COLOR, 0x7a5d3a, 3.8, 1.4);
-  const concreteTexture = createPebbleTexture(0xb5b0a2, 0xe2ddd2, 2.2, 2.2);
   const brickTexture = makeCanvasTexture(192, (ctx, size) => {
     ctx.fillStyle = '#8d4d34';
     ctx.fillRect(0, 0, size, size);
@@ -144,7 +141,6 @@ export function buildScenery(tracker = null) {
   const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88, map: porchTexture, bumpMap: porchTexture, bumpScale: 0.008 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
   const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
-  const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0, map: gravelTexture, bumpMap: gravelTexture, bumpScale: 0.012 });
   const brickMat = new THREE.MeshStandardMaterial({ color: 0x8d4d34, roughness: 0.95, side: THREE.DoubleSide, map: brickTexture, bumpMap: brickTexture, bumpScale: 0.008 });
 
   function registerBreezeNode(mesh, {
@@ -228,12 +224,6 @@ export function buildScenery(tracker = null) {
     accentFlowers.push(bloom);
   }
 
-  for (let i = 0; i < 11; i++) {
-    const board = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.045, 0.02), trimMat);
-    board.position.set(0, 0.22 + i * 0.29, -6.12);
-    group.add(board);
-  }
-
   // Porch left
   const porchFloor = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.12, 1.6), porchMat);
   porchFloor.position.set(-2.95, 0.06, -5.45);
@@ -248,17 +238,6 @@ export function buildScenery(tracker = null) {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 2.58, 10), trimMat);
     post.position.set(x - 0.4, 1.29, -5.38);
     group.add(post);
-  }
-
-  const porchRail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.82, 10), trimMat);
-  porchRail.rotation.z = Math.PI / 2;
-  porchRail.position.set(-2.95, 0.72, -4.7);
-  group.add(porchRail);
-
-  for (const x of [-3.35, -2.55, -1.75]) {
-    const baluster = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.54, 8), trimMat);
-    baluster.position.set(x, 0.39, -4.7);
-    group.add(baluster);
   }
 
   for (const [x, y, z, w, h, d] of [
@@ -282,21 +261,6 @@ export function buildScenery(tracker = null) {
   const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
   backGlass.position.set(0.25, 1.95, -6.22);
   group.add(backGlass);
-
-  // Gravel border around the bed instead of a single front pad
-  const gravelPatches = [
-    { w: 5.8, h: 1.9, x: 0, z: 2.05 },
-    { w: 0.95, h: 2.9, x: -3.05, z: 0.85 },
-    { w: 0.95, h: 2.9, x: 3.05, z: 0.85 },
-    { w: 5.8, h: 1.15, x: 0, z: -1.95 },
-  ];
-  gravelPatches.forEach(({ w, h, x, z }) => {
-    const patch = new THREE.Mesh(createSoftPatchGeometry(w, h, 16, 16, 0.008, x * 0.13 + z * 0.07), gravelMat);
-    patch.rotation.x = -Math.PI / 2;
-    patch.position.set(x, 0.006, z);
-    patch.receiveShadow = true;
-    group.add(patch);
-  });
 
   const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb29c7c, roughness: 0.92 });
   for (let i = 0; i < 48; i++) {
@@ -492,14 +456,6 @@ export function buildScenery(tracker = null) {
   barrelLid.position.set(3.03, 0.72, -4.78);
   group.add(barrelLid);
 
-  // 3. Concrete pad under bed area — just above ground
-  const concretePadMat = new THREE.MeshStandardMaterial({ color: 0xb5b0a2, roughness: 0.95, map: concreteTexture, bumpMap: concreteTexture, bumpScale: 0.007 });
-  const concretePad = new THREE.Mesh(createSoftPatchGeometry(4.2, 3.0, 18, 14, 0.004, 0.34), concretePadMat);
-  concretePad.rotation.x = -Math.PI / 2;
-  concretePad.position.set(0, 0.003, 0);
-  concretePad.receiveShadow = true;
-  group.add(concretePad);
-
   // 4. Wall-mounted light fixture above the back door
   const fixtureMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.7 });
   const fixture = new THREE.Group();
@@ -562,49 +518,7 @@ export function buildScenery(tracker = null) {
 
   // ── NEW SCENERY ITEMS ──────────────────────────────────────────────────
 
-  // 1. Screen door on the back porch
-  const screenDoorGroup = new THREE.Group();
-  const screenDoorMat = new THREE.MeshStandardMaterial({ color: 0x8a7a5a, roughness: 0.85 });
-  for (const [w, h, x, y] of [
-    [0.06, 1.5, -0.32, 0],
-    [0.06, 1.5, 0.32, 0],
-    [0.7, 0.06, 0, 0.72],
-    [0.7, 0.06, 0, -0.72],
-  ]) {
-    const isVertical = h > w;
-    const part = new THREE.Mesh(
-      isVertical
-        ? new THREE.CylinderGeometry(0.026, 0.03, h, 8)
-        : new THREE.CylinderGeometry(0.026, 0.026, w, 8),
-      screenDoorMat
-    );
-    if (!isVertical) {
-      part.rotation.z = Math.PI / 2;
-    }
-    part.position.set(x, y, 0);
-    screenDoorGroup.add(part);
-  }
-  const kickPlate = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.3, 0.028), screenDoorMat);
-  kickPlate.position.set(0, -0.58, 0.003);
-  screenDoorGroup.add(kickPlate);
-
-  const screenMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.56, 1.12),
-    new THREE.MeshStandardMaterial({
-      color: 0x5a6158,
-      transparent: true,
-      opacity: 0.24,
-      side: THREE.DoubleSide,
-    })
-  );
-  screenMesh.position.set(0, 0.04, 0.018);
-  screenDoorGroup.add(screenMesh);
-  screenDoorGroup.position.set(-2.55, 0.85, -4.1);
-  screenDoorGroup.rotation.y = -0.12;
-  markPlaceCue(screenDoorGroup, 'porch-screen-door');
-  group.add(screenDoorGroup);
-
-  // 2. Radio on porch railing
+  // 2. Radio on the porch step
   const radioBody = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.022, 0.04, 4, 8),
     new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.88 })
@@ -624,7 +538,7 @@ export function buildScenery(tracker = null) {
   // 3. Clothesline removed entirely.
   // Even the remaining poles were still reading as a phantom guide lane in the current framing.
 
-  // 4. Seasonal prop group. Fence-mounted critters are intentionally omitted.
+  // 4. Seasonal prop group. Edge-mounted critters are intentionally omitted.
   const seasonalProps = new THREE.Group();
   group.add(seasonalProps);
 
@@ -1067,13 +981,6 @@ export function buildScenery(tracker = null) {
   secondFloorWall.receiveShadow = true;
   group.add(secondFloorWall);
 
-  // Horizontal siding lines for second floor
-  for (let i = 0; i < 9; i++) {
-    const board2 = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.045, 0.02), trimMat);
-    board2.position.set(0, 3.65 + i * 0.29, -6.12);
-    group.add(board2);
-  }
-
   // Floor separator trim between stories
   const storyTrim = new THREE.Mesh(new THREE.BoxGeometry(7.9, 0.08, 0.06), trimMat);
   storyTrim.position.set(0, 3.46, -6.1);
@@ -1257,23 +1164,6 @@ export function buildScenery(tracker = null) {
       group.add(block);
     });
   }
-
-  // === SIDEWALK / CONCRETE PATH ===
-  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xb0a898, roughness: 0.94 });
-  // Path from gate to porch steps
-  const walkway = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2), sidewalkMat);
-  walkway.rotation.x = -Math.PI / 2;
-  walkway.position.set(-2.95, 0.004, -2.5);
-  walkway.receiveShadow = true;
-  markPlaceCue(walkway, 'concrete-walkway');
-  group.add(walkway);
-
-  // Sidewalk along front of house
-  const frontWalk = new THREE.Mesh(new THREE.PlaneGeometry(8.0, 0.6), sidewalkMat);
-  frontWalk.rotation.x = -Math.PI / 2;
-  frontWalk.position.set(0, 0.004, 5.1);
-  frontWalk.receiveShadow = true;
-  group.add(frontWalk);
 
   // === MISC YARD DETAILS ===
 

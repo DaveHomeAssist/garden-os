@@ -22,6 +22,7 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 64 * 1024;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,80}$/;
 const AUTHORITY_GRID_SIZE = 32;
+const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const DEFAULT_AUTHORITY_CELL = {
   cropId: null,
   damageState: null,
@@ -48,6 +49,7 @@ function createInitialAuthorityData({
   activeTool = null,
   currentZone = 'player_plot',
   grid = [],
+  lastHarvesting = null,
   lastPlanting = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -58,6 +60,7 @@ function createInitialAuthorityData({
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    lastHarvesting,
     lastPlanting,
     lastWatering,
     lastSpawnPoint,
@@ -98,6 +101,22 @@ const AUTHORITY_REDUCERS = {
         cellIndex: payload.cellIndex,
         interventionBonus: grid[payload.cellIndex].interventionBonus,
         wateredAt,
+      },
+    };
+  },
+  HARVEST_CELL: (data, payload) => {
+    const grid = createAuthorityGrid(data.grid);
+    const cropId = grid[payload.cellIndex]?.cropId;
+    const harvestedAt = Number.isFinite(payload.harvestedAt) ? payload.harvestedAt : null;
+    grid[payload.cellIndex] = createAuthorityCell();
+    return {
+      ...data,
+      grid,
+      lastHarvesting: {
+        cellIndex: payload.cellIndex,
+        cropId,
+        harvestedAt,
+        yieldCount: 1,
       },
     };
   },
@@ -316,6 +335,30 @@ function validateAuthorityPayload(envelope, state) {
     return null;
   }
 
+  if (envelope?.type === 'HARVEST_CELL') {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Harvest action requires a valid starter-grid cell index.' };
+    }
+    if (!grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Harvest action requires a planted crop.' };
+    }
+    const blockedKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_HARVEST_PAYLOAD_KEYS.has(key));
+    if (blockedKey) {
+      return { code: 'CLIENT_HARVEST_TOTAL', message: `Harvest action cannot submit trusted harvest field "${blockedKey}".` };
+    }
+    if (
+      typeof envelope.payload?.cropId === 'string'
+      && envelope.payload.cropId
+      && envelope.payload.cropId !== grid[cellIndex].cropId
+    ) {
+      return { code: 'CROP_MISMATCH', message: 'Harvest action crop id must match the server-owned cell crop.' };
+    }
+    if ('harvestedAt' in (envelope.payload ?? {}) && envelope.payload.harvestedAt !== null && !Number.isFinite(envelope.payload.harvestedAt)) {
+      return { code: 'BAD_HARVESTED_AT', message: 'Harvest action requires harvestedAt to be a finite timestamp or null.' };
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -361,6 +404,17 @@ async function handleAction(request, env) {
   const envelope = createActionEnvelope(body);
   const state = await loadSession(env, envelope.sessionId);
   if (!state) return problem('not_found', 'Session not found', 404);
+  const ackKey = envelope.idempotencyKey ?? envelope.id;
+  const duplicateAck = ackKey ? state.ledger?.acks?.[ackKey] : null;
+  if (duplicateAck) {
+    const signedAck = await signServerAck(duplicateAck, getSecret(env));
+    return jsonResponse({
+      ok: signedAck.accepted,
+      ack: signedAck,
+      duplicate: true,
+      state: publicState(state),
+    }, signedAck.accepted ? 200 : 422);
+  }
   if (!AUTHORITY_REDUCERS[envelope.type]) {
     return signedRejection(env, state, envelope, 'ACTION_NOT_ALLOWED', 'Action type is not allowed');
   }
@@ -371,7 +425,23 @@ async function handleAction(request, env) {
 
   const result = applyAuthoritativeAction(state, envelope, AUTHORITY_REDUCERS);
   const signedAck = await signServerAck(result.ack, getSecret(env));
-  if (result.ack.accepted && !result.duplicate) await saveSession(env, result.state);
+  if (result.ack.accepted && !result.duplicate) {
+    const nextState = {
+      ...result.state,
+      ledger: {
+        ...(result.state.ledger ?? { acks: {}, cursor: '0', entries: [] }),
+        acks: { ...(result.state.ledger?.acks ?? {}) },
+      },
+    };
+    if (ackKey) nextState.ledger.acks[ackKey] = signedAck;
+    await saveSession(env, nextState);
+    return jsonResponse({
+      ok: signedAck.accepted,
+      ack: signedAck,
+      duplicate: result.duplicate,
+      state: publicState(nextState),
+    }, 200);
+  }
   return jsonResponse({
     ok: signedAck.accepted,
     ack: signedAck,

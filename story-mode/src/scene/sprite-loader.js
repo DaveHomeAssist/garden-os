@@ -25,7 +25,6 @@ const SINGLE_ASSETS = {
   'crop-basil':    { file: 'crop-basil.png',    w: 256,  h: 256 },
   'crop-marigold': { file: 'crop-marigold.png', w: 256,  h: 256 },
   'env-spigot':    { file: 'env-spigot.png',    w: 128,  h: 256 },
-  'env-fence':     { file: 'env-fence.png',     w: 256,  h: 512 },
   'env-path':      { file: 'env-path.png',      w: 512,  h: 512 },
   'env-grass':     { file: 'env-grass.png',     w: 512,  h: 512 },
   'ui-badges':     { file: 'ui-badges.png',     w: 512,  h: 64  },

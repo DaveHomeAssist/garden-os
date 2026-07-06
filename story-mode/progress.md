@@ -1,3 +1,18 @@
+Update 2026-07-06 Story Mode harvest authority pass:
+- Routed `HARVEST_CELL` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the third real gameplay grid mutation.
+- Server authority now clears the starter-grid cell from canonical state and emits `lastHarvesting` ack metadata with server-owned `cropId`, `harvestedAt`, and `yieldCount: 1`.
+- Added harvest payload validation so clients can harvest only a valid planted starter-grid cell, crop ids must match server-owned state, and client-submitted `yield`, `yieldCount`, inventory, pantry, currency, recipes, or harvest-result totals are rejected before mutation.
+- Duplicate idempotency-key lookups now happen before action-specific validation in both authority runtimes, so a valid first harvest retry does not get rejected against the already-empty canonical cell.
+- Client reconciliation now maps authoritative `lastHarvesting` acks back into `HARVEST_CELL` only when the matching crop is still present locally, preventing duplicate optimistic inventory/pantry credit.
+- Visual fix: removed the remaining fence-reading scenery from Story Mode's garden view, including house-wall board strips, porch rail/balusters, the freestanding porch screen-frame, broad gravel/concrete path strips, the alternate player-plot fence perimeter, lingering fence/gate comments, the unused `env-fence` sprite registration, and the unreferenced fence texture.
+- Browser smoke: local Vite Story Mode rendered clean default, side, opposite-side, and zoomed house-edge views with no fence-like geometry across the garden at `/tmp/garden-os-fence-recheck-20260706-v5` and `/tmp/garden-os-fence-recheck-20260706-v5-default`.
+- Validation: full Story Mode Vitest passed 35 files / 413 tests; worker authority passed 15 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Full inventory, pantry, recipe, currency, tool durability, cooldown, intervention, quest, and phase-transition authority are still deferred; this pass owns harvest grid occupancy and canonical single-yield metadata only.
+  - Existing local saves with pre-authority planted cells can still need fresh authority replay before harvest acks succeed server-side.
+  - Expanded-grid and multi-bed harvest authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-06 Story Mode water authority pass:
 - Routed `WATER_CELL` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the second real gameplay grid mutation.
 - Extended server-owned starter-grid authority cells with `interventionBonus` and `lastWateredAt`, plus canonical `lastWatering` ack metadata.

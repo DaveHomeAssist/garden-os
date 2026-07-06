@@ -39,16 +39,6 @@ export function createPlayerPlot(store, tracker) {
     p.rotation.x = -Math.PI / 2; p.position.set(x, 0.005, z); root.add(p);
   });
 
-  // Wooden fence perimeter
-  root.add(box(18, 0.6, 0.12, 0x6b4226, 0, 0.3, -9));
-  root.add(box(18, 0.6, 0.12, 0x6b4226, 0, 0.3, 9));
-  root.add(box(0.12, 0.6, 18, 0x6b4226, -9, 0.3, 0));
-  root.add(box(0.12, 0.6, 18, 0x6b4226, 9, 0.3, 0));
-  // Fence posts
-  [[-9, -9], [-9, 9], [9, -9], [9, 9], [-9, 0], [9, 0], [0, -9]].forEach(([x, z]) => {
-    root.add(box(0.18, 0.9, 0.18, 0x5d3b22, x, 0.45, z));
-  });
-
   // Shed + roof
   root.add(box(2.4, 1.8, 2, 0x7d5a39, -6, 0.9, -5));
   root.add(box(2.6, 0.15, 2.4, 0x5d3b22, -6, 1.85, -5));

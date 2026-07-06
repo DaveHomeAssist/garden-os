@@ -511,7 +511,7 @@ export function createGardenScene(container) {
   }
   root.add(grassGroup);
 
-  // Background scenery (fence, trees, path, props)
+  // Background scenery (house, trees, path, props)
   const scenery = buildScenery(resourceTracker);
   root.add(scenery.group);
 
@@ -542,7 +542,7 @@ export function createGardenScene(container) {
   }).catch(() => {});
 
   // ── Creature meshes ──────────────────────────────────────────────────────
-  // Cat silhouette on fence
+  // Cat silhouette at the side-yard edge
   const catGroup = new THREE.Group();
   const catDarkMat = new THREE.MeshStandardMaterial({
     color: 0x3a312b,
@@ -612,13 +612,13 @@ export function createGardenScene(container) {
   const catHeadBaseZ = catHead.rotation.z;
   const catTailBaseZ = catTail.rotation.z;
 
-  // Neighbor arm reaching over fence
+  // Neighbor arm reaching in from the side yard
   const neighborGroup = new THREE.Group();
   const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
   const bagMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 }); // compost-brown bag
 
   const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 10), skinMat);
-  arm.rotation.z = Math.PI / 4; // angled, reaching over the fence
+  arm.rotation.z = Math.PI / 4; // angled reach into the yard
   arm.position.set(0, 0, 0);
   neighborGroup.add(arm);
 
@@ -871,10 +871,10 @@ export function createGardenScene(container) {
     { x: 1.8,  z: 2.5,  rot: -0.4  },   // near front-right of bed
     { x: -1.5, z: 3.2,  rot: 0.7   },   // left side of yard, facing bed
     { x: 0.0,  z: 1.2,  rot: 0.0   },   // right in front of bed, facing it
-    { x: -3.8, z: 1.5,  rot: -1.2  },   // near left fence
-    { x: 3.5,  z: 2.8,  rot: 1.8   },   // near right fence
+    { x: -3.8, z: 1.5,  rot: -1.2  },   // left yard edge
+    { x: 3.5,  z: 2.8,  rot: 1.8   },   // right yard edge
     { x: -2.0, z: -3.0, rot: 0.3   },   // near porch steps
-    { x: 0.8,  z: 3.8,  rot: -0.2  },   // further front, near gate
+    { x: 0.8,  z: 3.8,  rot: -0.2  },   // further front
   ];
 
   function resetSheepdogVisuals() {
@@ -999,7 +999,7 @@ export function createGardenScene(container) {
   fallLeaves.visible = false;
   root.add(fallLeaves);
 
-  // 2. Snow dusting (winter) — thin white patches on frame edges and trellis rails
+  // 2. Snow dusting (winter) — thin white patches on frame and trellis edges
   const snowDusting = new THREE.Group();
   {
     const snowMat = new THREE.MeshStandardMaterial({ color: 0xf0f4ff, roughness: 0.85 });

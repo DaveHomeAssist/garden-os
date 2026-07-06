@@ -173,6 +173,51 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(2);
   });
 
+  it('routes harvest cell gameplay actions through canonical grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-harvest',
+      idempotencyKey: 'idem-harvest',
+      payload: { cellIndex: 2, cropId: 'basil', harvestedAt: NOW },
+      type: Actions.HARVEST_CELL,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-harvest-retry',
+      idempotencyKey: 'idem-harvest',
+      payload: { cellIndex: 2, cropId: 'radish', harvestedAt: NOW + 1 },
+      type: Actions.HARVEST_CELL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.HARVEST_CELL);
+    expect(applied.body.ack.authoritativePatch.data.lastHarvesting).toEqual({
+      cellIndex: 2,
+      cropId: 'basil',
+      harvestedAt: NOW,
+      yieldCount: 1,
+    });
+    expect(applied.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      cropId: null,
+      damageState: null,
+      interventionBonus: 0,
+      lastWateredAt: null,
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(2);
+    expect(state.data.grid[2].cropId).toBeNull();
+    expect(state.ledger.entries).toHaveLength(2);
+  });
+
   it('rejects malformed plant crop payloads without changing grid state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -213,6 +258,54 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.grid[2].interventionBonus).toBe(0);
+  });
+
+  it('rejects harvest cell actions for empty cells before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const blocked = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-harvest',
+      idempotencyKey: 'idem-bad-harvest',
+      payload: { cellIndex: 2, cropId: 'basil', harvestedAt: NOW },
+      type: Actions.HARVEST_CELL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(blocked.body.ok).toBe(false);
+    expect(blocked.body.ack.accepted).toBe(false);
+    expect(blocked.body.ack.actionType).toBe(Actions.HARVEST_CELL);
+    expect(blocked.body.ack.rejection.code).toBe('CELL_EMPTY');
+    expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.grid[2].cropId).toBeNull();
+  });
+
+  it('rejects client-submitted harvest totals before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const blocked = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-harvest-total',
+      idempotencyKey: 'idem-bad-harvest-total',
+      payload: { cellIndex: 2, cropId: 'basil', harvestedAt: NOW, yieldCount: 999 },
+      type: Actions.HARVEST_CELL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(blocked.body.ok).toBe(false);
+    expect(blocked.body.ack.accepted).toBe(false);
+    expect(blocked.body.ack.actionType).toBe(Actions.HARVEST_CELL);
+    expect(blocked.body.ack.rejection.code).toBe('CLIENT_HARVEST_TOTAL');
+    expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(1);
+    expect(state.data.grid[2].cropId).toBe('basil');
   });
 
   it('persists session state through an injected session store across service instances', async () => {

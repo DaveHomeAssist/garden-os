@@ -176,6 +176,57 @@ test('authority action routes water cell through canonical grid state once', asy
   assert.equal(second.state.data.grid[2].interventionBonus, 0.25);
 });
 
+test('authority action routes harvest cell through canonical grid state once', async () => {
+  const { env, sessionId } = await createSession();
+  const plantAction = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  };
+  await worker.fetch(jsonRequest('/action', plantAction), env);
+
+  const action = {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-harvest',
+    idempotencyKey: 'idem-harvest',
+    payload: { cellIndex: 2, cropId: 'basil', harvestedAt: 1783370000000 },
+    playerId: 'local',
+    sessionId,
+    type: 'HARVEST_CELL',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: { cellIndex: 2, cropId: 'radish', harvestedAt: 1783379999999 },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'HARVEST_CELL');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].cropId, null);
+  assert.deepEqual(first.state.data.lastHarvesting, {
+    cellIndex: 2,
+    cropId: 'basil',
+    harvestedAt: 1783370000000,
+    yieldCount: 1,
+  });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 2);
+  assert.equal(second.state.data.grid[2].cropId, null);
+});
+
 test('authority rejects malformed plant crop payload before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -228,6 +279,72 @@ test('authority rejects water cell for empty cells before mutation', async () =>
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.equal(session.state.data.grid[2].interventionBonus, 0);
+});
+
+test('authority rejects harvest cell for empty cells before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-harvest',
+    idempotencyKey: 'idem-bad-harvest',
+    payload: { cellIndex: 2, cropId: 'basil', harvestedAt: 1783370000000 },
+    playerId: 'local',
+    sessionId,
+    type: 'HARVEST_CELL',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.actionType, 'HARVEST_CELL');
+  assert.equal(body.ack.rejection.code, 'CELL_EMPTY');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.grid[2].cropId, null);
+});
+
+test('authority rejects client-submitted harvest totals before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  }), env);
+
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-bad-harvest-total',
+    idempotencyKey: 'idem-bad-harvest-total',
+    payload: { cellIndex: 2, cropId: 'basil', harvestedAt: 1783370000000, yieldCount: 999 },
+    playerId: 'local',
+    sessionId,
+    type: 'HARVEST_CELL',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.actionType, 'HARVEST_CELL');
+  assert.equal(body.ack.rejection.code, 'CLIENT_HARVEST_TOTAL');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 1);
+  assert.equal(session.state.data.grid[2].cropId, 'basil');
 });
 
 test('authority action routes zone changes through canonical state once', async () => {

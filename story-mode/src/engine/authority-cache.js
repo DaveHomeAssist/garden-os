@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -141,6 +141,7 @@ function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
+  if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
   if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
@@ -191,6 +192,28 @@ function authorityAckToStoreAction(ack, currentState = null) {
         wateredAt,
       },
       type: 'WATER_CELL',
+    };
+  }
+
+  if (actionType === 'HARVEST_CELL') {
+    const harvesting = data.lastHarvesting;
+    const cellIndex = Number(harvesting?.cellIndex);
+    const cropId = typeof harvesting?.cropId === 'string' ? harvesting.cropId : null;
+    const harvestedAt = Number.isFinite(harvesting?.harvestedAt) ? harvesting.harvestedAt : null;
+    const yieldCount = Number.isFinite(harvesting?.yieldCount) ? harvesting.yieldCount : 1;
+    if (!Number.isInteger(cellIndex) || !cropId || yieldCount !== 1) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if (!currentCell?.cropId) return null;
+    if (currentCell.cropId !== cropId) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        cellIndex,
+        cropId,
+        harvestedAt,
+        yieldCount,
+      },
+      type: 'HARVEST_CELL',
     };
   }
 

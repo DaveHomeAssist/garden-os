@@ -253,6 +253,66 @@ describe('authority IndexedDB cache', () => {
       },
     }, alreadyWatered)).toBeNull();
 
+    const harvestReady = createGameState();
+    harvestReady.season.grid[2].cropId = 'basil';
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.HARVEST_CELL,
+      authoritativePatch: {
+        data: {
+          lastHarvesting: {
+            cellIndex: 2,
+            cropId: 'basil',
+            harvestedAt: NOW,
+            yieldCount: 1,
+          },
+        },
+      },
+    }, harvestReady)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        cellIndex: 2,
+        cropId: 'basil',
+        harvestedAt: NOW,
+        yieldCount: 1,
+      },
+      type: Actions.HARVEST_CELL,
+    });
+
+    const alreadyHarvested = createGameState();
+    alreadyHarvested.season.grid[2].cropId = null;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.HARVEST_CELL,
+      authoritativePatch: {
+        data: {
+          lastHarvesting: {
+            cellIndex: 2,
+            cropId: 'basil',
+            harvestedAt: NOW,
+            yieldCount: 1,
+          },
+        },
+      },
+    }, alreadyHarvested)).toBeNull();
+
+    const mismatchedHarvest = createGameState();
+    mismatchedHarvest.season.grid[2].cropId = 'radish';
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.HARVEST_CELL,
+      authoritativePatch: {
+        data: {
+          lastHarvesting: {
+            cellIndex: 2,
+            cropId: 'basil',
+            harvestedAt: NOW,
+            yieldCount: 1,
+          },
+        },
+      },
+    }, mismatchedHarvest)).toBeNull();
+
     expect(authorityAckToStoreAction({
       accepted: true,
       actionType: Actions.SET_SELECTED_CROP,
@@ -890,6 +950,76 @@ describe('authority IndexedDB cache', () => {
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].interventionBonus).toBe(0.3);
     expect(store.getState().season.grid[2].lastWateredAt).toBe(NOW);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues harvest cell gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const initialState = createGameState();
+    initialState.season.grid[2].cropId = 'basil';
+    const store = new Store(initialState);
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastHarvesting: {
+                cellIndex: body.payload.cellIndex,
+                cropId: 'basil',
+                harvestedAt: body.payload.harvestedAt,
+                yieldCount: 1,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.HARVEST_CELL,
+      payload: { cellIndex: 2, cropId: 'basil', harvestedAt: NOW },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].cropId).toBeNull();
+    expect(store.getState().campaign.inventory.slots.some((slot) => slot?.itemId === 'basil')).toBe(true);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

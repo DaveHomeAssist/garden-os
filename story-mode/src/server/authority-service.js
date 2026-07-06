@@ -19,7 +19,9 @@ const DEFAULT_AUTHORITY_CELL = {
   lastWateredAt: null,
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
+const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const ACTIONS = {
+  HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
@@ -27,6 +29,7 @@ const ACTIONS = {
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
@@ -57,6 +60,7 @@ function createInitialAuthorityData({
   activeTool = 'hand',
   currentZone = 'player_plot',
   grid = [],
+  lastHarvesting = null,
   lastPlanting = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -67,6 +71,7 @@ function createInitialAuthorityData({
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    lastHarvesting,
     lastPlanting,
     lastWatering,
     lastSpawnPoint,
@@ -256,6 +261,23 @@ function reduceStoryAction(data, payload, envelope) {
       },
     };
   }
+  if (envelope.type === ACTIONS.HARVEST_CELL) {
+    const cellIndex = payload.cellIndex;
+    const grid = createAuthorityGrid(data.grid);
+    const cropId = grid[cellIndex]?.cropId;
+    const harvestedAt = Number.isFinite(payload.harvestedAt) ? payload.harvestedAt : null;
+    grid[cellIndex] = createAuthorityCell();
+    return {
+      ...data,
+      grid,
+      lastHarvesting: {
+        cellIndex,
+        cropId,
+        harvestedAt,
+        yieldCount: 1,
+      },
+    };
+  }
   if (envelope.type === ACTIONS.SET_SELECTED_CROP) {
     return {
       ...data,
@@ -310,6 +332,30 @@ function validateStoryActionPayload(envelope, state) {
     }
     if ('wateredAt' in (envelope.payload ?? {}) && envelope.payload.wateredAt !== null && !Number.isFinite(envelope.payload.wateredAt)) {
       return { code: 'BAD_WATERED_AT', message: 'Water action requires wateredAt to be a finite timestamp or null.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.HARVEST_CELL) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Harvest action requires a valid starter-grid cell index.' };
+    }
+    if (!grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Harvest action requires a planted crop.' };
+    }
+    const blockedKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_HARVEST_PAYLOAD_KEYS.has(key));
+    if (blockedKey) {
+      return { code: 'CLIENT_HARVEST_TOTAL', message: `Harvest action cannot submit trusted harvest field "${blockedKey}".` };
+    }
+    if (
+      typeof envelope.payload?.cropId === 'string'
+      && envelope.payload.cropId
+      && envelope.payload.cropId !== grid[cellIndex].cropId
+    ) {
+      return { code: 'CROP_MISMATCH', message: 'Harvest action crop id must match the server-owned cell crop.' };
+    }
+    if ('harvestedAt' in (envelope.payload ?? {}) && envelope.payload.harvestedAt !== null && !Number.isFinite(envelope.payload.harvestedAt)) {
+      return { code: 'BAD_HARVESTED_AT', message: 'Harvest action requires harvestedAt to be a finite timestamp or null.' };
     }
     return null;
   }
@@ -445,6 +491,21 @@ function createAuthorityService({
     }
 
     const serverTime = isoNow(now);
+    const ackKey = envelope?.idempotencyKey ?? envelope?.id;
+    const duplicateAck = ackKey ? previousState.ledger?.acks?.[ackKey] : null;
+    if (duplicateAck) {
+      const signedAck = signAck(duplicateAck, hmacSecret);
+      await ledgerStore.append(ledgerActionEntry({
+        ack: signedAck,
+        duplicate: true,
+        envelope,
+        previousState,
+        serverTime,
+        state: previousState,
+      }));
+      return { ack: signedAck, duplicate: true, ok: signedAck.accepted, session: sessionSummary(previousState) };
+    }
+
     if (!ROUTED_ACTION_TYPES.has(envelope?.type)) {
       const ack = createRejectedAck({
         actionId: envelope?.id,
@@ -501,7 +562,6 @@ function createAuthorityService({
         acks: { ...(result.state.ledger?.acks ?? {}) },
       },
     };
-    const ackKey = envelope?.idempotencyKey ?? envelope?.id;
     if (ackKey && signedAck.accepted) {
       nextState.ledger.acks[ackKey] = signedAck;
     }

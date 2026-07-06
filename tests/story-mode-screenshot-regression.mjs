@@ -598,7 +598,7 @@ async function assertSeasonalPlaceLayer(page, season) {
   assert(debug, 'Expected visual debug state.');
   assert(debug.seasonalAtmosphere?.season === season, `Expected ${season} atmosphere, got ${debug.seasonalAtmosphere?.season}.`);
   assert(debug.seasonalAtmosphere.placeCueCount >= 7, `Expected at least 7 Philly place cues, got ${debug.seasonalAtmosphere.placeCueCount}.`);
-  ['back-alley-strip', 'concrete-walkway', 'overhead-utility-pole', 'phillies-pennant', 'porch-screen-door', 'rain-barrel', 'rowhouse-siding'].forEach((cue) => {
+  ['back-alley-strip', 'overhead-utility-pole', 'phillies-pennant', 'rain-barrel', 'rowhouse-siding', 'window-ac-unit'].forEach((cue) => {
     assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing Philly place cue ${cue}.`);
   });
 
