@@ -13,6 +13,13 @@ const LIVE_URL = process.env.LIVE_URL || 'https://davehomeassist.github.io/garde
 const outputDir = process.env.SMOKE_OUTPUT_DIR || join(tmpdir(), 'garden-os-live-smoke');
 const PLAYER_SPEED_UNITS_PER_SECOND = 1.85;
 const MEADOW_FLOWERS_POSITION = { x: 2.7, z: 2.4 };
+const MEADOW_FORAGE_TARGETS = [
+  MEADOW_FLOWERS_POSITION,
+  { x: 2.5, z: 2.2 },
+  { x: 2.9, z: 2.2 },
+  { x: 2.5, z: 2.6 },
+  { x: 2.9, z: 2.6 },
+];
 
 function seededCampaign() {
   return {
@@ -139,6 +146,39 @@ async function moveToward(page, target) {
   );
 }
 
+async function forageHistorySaved(page, timeout = 8000) {
+  return page.waitForFunction(() => {
+    const campaign = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
+    return Object.keys(campaign.worldState?.forageState?.history ?? {}).length > 0;
+  }, null, { timeout }).then(() => true).catch(() => false);
+}
+
+async function activateVisibleForage(page) {
+  const prompt = page.locator('.interaction-prompt', { hasText: 'Forage' }).first();
+
+  for (const target of MEADOW_FORAGE_TARGETS) {
+    await moveToward(page, target);
+    await page.waitForTimeout(300);
+
+    if (!await prompt.isVisible().catch(() => false)) {
+      continue;
+    }
+
+    await prompt.click({ force: true });
+    if (await forageHistorySaved(page, 5000)) return;
+
+    await page.keyboard.press('e');
+    if (await forageHistorySaved(page, 5000)) return;
+  }
+
+  const current = await snapshot(page).catch(() => null);
+  throw new Error(`Forage prompt did not activate. State: ${JSON.stringify({
+    currentZone: current?.currentZone,
+    highlightedInteraction: current?.highlightedInteraction,
+    player: current?.player,
+  })}`);
+}
+
 const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
@@ -164,15 +204,7 @@ try {
   await travel(page, 'riverside');
   await travel(page, 'meadow');
 
-  await moveToward(page, MEADOW_FLOWERS_POSITION);
-
-  await page.locator('.interaction-prompt', { hasText: 'Forage' }).waitFor({ state: 'visible', timeout: 30000 });
-  await page.keyboard.press('e');
-
-  await page.waitForFunction(() => {
-    const campaign = JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
-    return Object.keys(campaign.worldState?.forageState?.history ?? {}).length > 0;
-  }, null, { timeout: 30000 });
+  await activateVisibleForage(page);
 
   const savedBeforeReload = await page.evaluate(() => JSON.parse(localStorage.getItem('gos-story-slot-0-campaign')));
   assert(savedBeforeReload.worldState.currentZone === 'meadow', 'Save should persist current zone before reload.');
