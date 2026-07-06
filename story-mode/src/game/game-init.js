@@ -3,6 +3,8 @@ import { Store } from './store.js';
 import {
   deleteCampaign,
   listSaves,
+  listSavesWithAuthoritySnapshots,
+  loadAuthoritySnapshotSave,
   loadCampaign,
   loadSeasonState,
   setActiveSaveSlot,
@@ -40,7 +42,7 @@ function getProgressClass(campaign) {
   return 'progress-low';
 }
 
-function createInitialState(slot, savedCampaign) {
+function createInitialState(slot, savedCampaign, savedSeason = undefined) {
   const initialState = createGameState();
 
   if (!savedCampaign) {
@@ -48,10 +50,10 @@ function createInitialState(slot, savedCampaign) {
   }
 
   Object.assign(initialState.campaign, savedCampaign);
-  const savedSeason = loadSeasonState(slot);
+  const savedSeasonState = savedSeason === undefined ? loadSeasonState(slot) : savedSeason;
 
-  if (savedSeason) {
-    Object.assign(initialState.season, savedSeason);
+  if (savedSeasonState) {
+    Object.assign(initialState.season, savedSeasonState);
     initialState.season.campaign = initialState.campaign;
   } else {
     initialState.season = createSeasonState(
@@ -64,9 +66,31 @@ function createInitialState(slot, savedCampaign) {
   return initialState;
 }
 
+async function createInitialStateFromSave(slot) {
+  const authority = await loadAuthoritySnapshotSave(slot);
+  const savedCampaign = authority?.campaign ?? loadCampaign(slot);
+  const savedSeason = authority?.season ?? undefined;
+  return createInitialState(slot, savedCampaign, savedSeason);
+}
+
 function formatSeasonLabel(season) {
   if (!season) return 'Spring';
   return season.charAt(0).toUpperCase() + season.slice(1);
+}
+
+function titleSaveSignature(entries) {
+  return JSON.stringify(entries.map((entry) => ({
+    chapter: entry.chapter ?? null,
+    isCorrupt: Boolean(entry.isCorrupt),
+    isEmpty: Boolean(entry.isEmpty),
+    season: entry.season ?? null,
+    slot: entry.slot,
+    updatedAt: entry.updatedAt ?? null,
+  })));
+}
+
+function shouldRefreshTitleSaves(currentEntries, hydratedEntries) {
+  return titleSaveSignature(currentEntries) !== titleSaveSignature(hydratedEntries);
 }
 
 function dismissTitleScreen(titleScreen, callback) {
@@ -97,7 +121,7 @@ function syncTitleInteractivity(isTitle) {
   }
 }
 
-function renderTitleScreen(onStart) {
+function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthority = true } = {}) {
   const titleScreen = document.getElementById('title-screen');
   const slotsContainer = document.getElementById('save-slots');
   const modesContainer = document.getElementById('title-modes');
@@ -110,8 +134,7 @@ function renderTitleScreen(onStart) {
   titleScreen.style.display = '';
   syncTitleInteractivity(true);
 
-  const saves = listSaves();
-  slotsContainer.innerHTML = saves.map((entry) => {
+  slotsContainer.innerHTML = saveEntries.map((entry) => {
     if (entry.isCorrupt) {
       return `
         <div class="save-slot-card save-slot-card--corrupt progress-low" data-slot="${entry.slot}">
@@ -277,7 +300,23 @@ function renderTitleScreen(onStart) {
     }
   }
 
-  freshSlots.addEventListener('click', (event) => {
+  if (hydrateAuthority) {
+    void listSavesWithAuthoritySnapshots()
+      .then((hydratedEntries) => {
+        if (
+          document.body.dataset.storyScreen === 'title'
+          && !titleScreen.classList.contains('is-exiting')
+          && shouldRefreshTitleSaves(saveEntries, hydratedEntries)
+        ) {
+          renderTitleScreen(onStart, { saveEntries: hydratedEntries, hydrateAuthority: false });
+        }
+      })
+      .catch((error) => {
+        console.warn('[GOS] Authority save list unavailable:', error?.message ?? error);
+      });
+  }
+
+  freshSlots.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-action]');
     if (!button) return;
 
@@ -304,13 +343,14 @@ function renderTitleScreen(onStart) {
     }
 
     if (action === 'continue') {
-      const savedCampaign = loadCampaign(slot);
+      button.disabled = true;
+      const initialState = await createInitialStateFromSave(slot);
       setActiveSaveSlot(slot);
       dismissTitleScreen(titleScreen, () => {
         onStart({
           slot,
           viewport: document.getElementById('viewport'),
-          initialState: createInitialState(slot, savedCampaign),
+          initialState,
         });
       });
     }

@@ -2,7 +2,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CAMPAIGN_SCHEMA_VERSION, createGameState } from './state.js';
-import { listSaves, loadCampaign, loadSeasonState, saveCampaign, saveSeasonState } from './save.js';
+import {
+  deleteCampaign,
+  listSaves,
+  listSavesWithAuthoritySnapshots,
+  loadAuthoritySnapshotSave,
+  loadCampaign,
+  loadSeasonState,
+  saveCampaign,
+  saveSeasonState,
+} from './save.js';
+import { IndexedDbAuthorityJournal, sessionPointerKey } from '../engine/authority-cache.js';
 
 const localStorageMock = (() => {
   let store = {};
@@ -21,6 +31,117 @@ const localStorageMock = (() => {
     },
   };
 })();
+
+function clone(value) {
+  return value == null ? value : structuredClone(value);
+}
+
+function createSuccessRequest(value) {
+  const request = { error: null, result: undefined };
+  queueMicrotask(() => {
+    request.result = clone(value);
+    request.onsuccess?.({ target: request });
+  });
+  return request;
+}
+
+function createFakeIndexedDB() {
+  const databases = new Map();
+
+  class FakeObjectStore {
+    constructor(store) {
+      this.store = store;
+    }
+
+    createIndex() {
+      return {};
+    }
+
+    delete(key) {
+      this.store.records.delete(key);
+      return createSuccessRequest(undefined);
+    }
+
+    get(key) {
+      return createSuccessRequest(this.store.records.get(key));
+    }
+
+    getAll() {
+      return createSuccessRequest([...this.store.records.values()]);
+    }
+
+    put(record) {
+      const key = record[this.store.keyPath];
+      this.store.records.set(key, clone(record));
+      return createSuccessRequest(key);
+    }
+  }
+
+  class FakeTransaction {
+    constructor(entry) {
+      this.entry = entry;
+    }
+
+    objectStore(storeName) {
+      const store = this.entry.stores.get(storeName);
+      if (!store) throw new Error(`Missing object store: ${storeName}`);
+      return new FakeObjectStore(store);
+    }
+  }
+
+  class FakeDatabase {
+    constructor(entry) {
+      this.entry = entry;
+      this.objectStoreNames = {
+        contains: (storeName) => this.entry.stores.has(storeName),
+      };
+    }
+
+    close() {}
+
+    createObjectStore(storeName, { keyPath }) {
+      const store = { keyPath, records: new Map() };
+      this.entry.stores.set(storeName, store);
+      return new FakeObjectStore(store);
+    }
+
+    transaction(storeName) {
+      return new FakeTransaction(this.entry, storeName);
+    }
+  }
+
+  return {
+    open(databaseName, version) {
+      const request = { error: null, result: undefined };
+      queueMicrotask(() => {
+        let entry = databases.get(databaseName);
+        const oldVersion = entry?.version ?? 0;
+        const needsUpgrade = !entry || oldVersion < version;
+        if (!entry) {
+          entry = { stores: new Map(), version };
+          databases.set(databaseName, entry);
+        }
+        entry.version = version;
+        request.result = new FakeDatabase(entry);
+        if (needsUpgrade) request.onupgradeneeded?.({ oldVersion, target: request });
+        request.onsuccess?.({ target: request });
+      });
+      return request;
+    },
+  };
+}
+
+async function writeAuthoritySnapshot({ indexedDB, sessionId, slot, state }) {
+  const journal = new IndexedDbAuthorityJournal({ indexedDB });
+  await journal.putSnapshot({
+    ledgerCursor: '9',
+    savedAt: '2026-07-06T15:00:00.000Z',
+    sessionId,
+    slot,
+    state,
+  });
+  await journal.close();
+}
 
 beforeEach(() => {
   localStorageMock.clear();
@@ -84,6 +205,65 @@ describe('save', () => {
     const slot = listSaves()[0];
     expect(slot.isEmpty).toBe(false);
     expect(slot.isCorrupt).toBe(true);
+  });
+
+  it('restores campaign and season data from an authority snapshot', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const state = createGameState();
+    state.campaign.currentChapter = 4;
+    state.campaign.currentSeason = 'winter';
+    state.campaign.questLog.gus_tomatoes = { state: 'IN_PROGRESS' };
+    state.season.chapter = 4;
+    state.season.season = 'winter';
+    localStorage.setItem(sessionPointerKey(0), 'session-restore');
+
+    await writeAuthoritySnapshot({
+      indexedDB,
+      sessionId: 'session-restore',
+      slot: 0,
+      state,
+    });
+
+    const restored = await loadAuthoritySnapshotSave(0, { indexedDB, storage: localStorage });
+
+    expect(restored.sessionId).toBe('session-restore');
+    expect(restored.campaign.currentChapter).toBe(4);
+    expect(restored.campaign.questLog.gus_tomatoes.state).toBe('IN_PROGRESS');
+    expect(restored.season.season).toBe('winter');
+  });
+
+  it('lists an authority snapshot save when local campaign storage is empty', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const state = createGameState();
+    state.campaign.currentChapter = 2;
+    state.campaign.currentSeason = 'summer';
+    state.campaign.updatedAt = '2026-07-06T15:00:00.000Z';
+    localStorage.setItem(sessionPointerKey(1), 'session-list');
+
+    await writeAuthoritySnapshot({
+      indexedDB,
+      sessionId: 'session-list',
+      slot: 1,
+      state,
+    });
+
+    const saves = await listSavesWithAuthoritySnapshots({ indexedDB, storage: localStorage });
+
+    expect(saves[1]).toMatchObject({
+      chapter: 2,
+      isCorrupt: false,
+      isEmpty: false,
+      season: 'summer',
+      slot: 1,
+    });
+  });
+
+  it('deleting a slot removes its authority snapshot pointer', () => {
+    localStorage.setItem(sessionPointerKey(2), 'session-delete');
+
+    deleteCampaign(2);
+
+    expect(localStorage.getItem(sessionPointerKey(2))).toBeNull();
   });
 
   it('migrates old season grid arrays into versioned grid objects', () => {
