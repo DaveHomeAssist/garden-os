@@ -1008,7 +1008,7 @@ export function createGardenScene(container) {
     const frameHSnow = 0.15;
     const frZSnow  =  bedDepthSnow / 2 + 0.03;
     const bkZSnow  = -(bedDepthSnow / 2 + 0.03);
-    const trellisZSnow = -(bedDepthSnow / 2 + 0.06 * 0.15);
+    const trellisZSnow = -(bedDepthSnow / 2 + 0.5 * 0.8);
     const trellisTopY  = 1.08;
 
     const snowPatches = [
@@ -1108,8 +1108,8 @@ export function createGardenScene(container) {
     birdTail.rotation.z = 1.22;
     birdGroup.add(birdTail);
   }
-  // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.06*0.15) ≈ -1.009
-  birdGroup.position.set(1.24, 1.105, -(4 * 0.5 / 2 + 0.06 * 0.15));
+  // Trellis top rail: y=1.08, trellisZ = -(ROWS*0.5/2 + 0.5*0.8) ~= -1.4
+  birdGroup.position.set(1.24, 1.105, -(4 * 0.5 / 2 + 0.5 * 0.8));
   birdGroup.visible = true;
   root.add(birdGroup);
   let birdVisible = true;

@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -143,6 +143,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
+  if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
   return null;
 }
@@ -170,6 +171,26 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { cellIndex, cropId },
       type: 'PLANT_CROP',
+    };
+  }
+
+  if (actionType === 'WATER_CELL') {
+    const watering = data.lastWatering;
+    const cellIndex = Number(watering?.cellIndex);
+    const interventionBonus = Number(watering?.interventionBonus);
+    const wateredAt = Number.isFinite(watering?.wateredAt) ? watering.wateredAt : null;
+    if (!Number.isInteger(cellIndex) || !Number.isFinite(interventionBonus)) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    const currentBonus = currentCell?.interventionBonus ?? 0;
+    if (currentBonus === interventionBonus && (currentCell?.lastWateredAt ?? null) === wateredAt) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        bonus: Math.max(0, interventionBonus - currentBonus),
+        cellIndex,
+        wateredAt,
+      },
+      type: 'WATER_CELL',
     };
   }
 

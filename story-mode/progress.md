@@ -1,3 +1,17 @@
+Update 2026-07-06 Story Mode water authority pass:
+- Routed `WATER_CELL` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the second real gameplay grid mutation.
+- Extended server-owned starter-grid authority cells with `interventionBonus` and `lastWateredAt`, plus canonical `lastWatering` ack metadata.
+- Added payload validation so water actions require a valid starter-grid cell, an already-planted crop in server authority state, a finite 0..1 bonus, and a finite/null `wateredAt`.
+- Client reconciliation now maps authoritative `lastWatering` acks back into `WATER_CELL` and skips duplicate local replay when the optimistic water state already matches the signed ack.
+- Visual follow-up: moved the bed trellis, front guard, snow caps, and bird anchor outside the planting footprint, then raised the trellis lattice above the bed face so the fence no longer reads as crossing the garden grid.
+- Validation: focused authority Vitest passed 4 files / 38 tests; worker authority passed 12 tests; full Story Mode Vitest passed 35 files / 409 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
+- Browser smoke: local Vite Story Mode launched into the live loop, rendered one canvas, exposed `render_game_to_text()`, and captured a planning/cutscene frame at `/tmp/garden-os-web-game-water-authority-20260706/direct-smoke.png`. Expected console error remains `503` from the unprovisioned live authority API.
+- Deferred:
+  - Tool durability, cooldown, inventory cost, harvest, interventions, currency, quest, and phase transitions are still not routed through authority.
+  - Existing local saves with pre-authority planted cells can still need fresh authority replay before water acks succeed server-side.
+  - Expanded-grid and multi-bed watering authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-06 Story Mode plant authority pass:
 - Routed `PLANT_CROP` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the first real gameplay grid mutation.
 - Added server-owned starter-grid authority state plus payload validation so clients can submit only `{ cellIndex, cropId }`; out-of-range cells or missing crop ids are rejected before mutation.

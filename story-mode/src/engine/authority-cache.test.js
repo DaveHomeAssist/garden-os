@@ -220,6 +220,41 @@ describe('authority IndexedDB cache', () => {
 
     expect(authorityAckToStoreAction({
       accepted: true,
+      actionType: Actions.WATER_CELL,
+      authoritativePatch: {
+        data: {
+          lastWatering: {
+            cellIndex: 2,
+            interventionBonus: 0.3,
+            wateredAt: NOW,
+          },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { bonus: 0.3, cellIndex: 2, wateredAt: NOW },
+      type: Actions.WATER_CELL,
+    });
+
+    const alreadyWatered = createGameState();
+    alreadyWatered.season.grid[2].interventionBonus = 0.3;
+    alreadyWatered.season.grid[2].lastWateredAt = NOW;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.WATER_CELL,
+      authoritativePatch: {
+        data: {
+          lastWatering: {
+            cellIndex: 2,
+            interventionBonus: 0.3,
+            wateredAt: NOW,
+          },
+        },
+      },
+    }, alreadyWatered)).toBeNull();
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
       actionType: Actions.SET_SELECTED_CROP,
       authoritativePatch: { data: { selectedCropId: 'basil' } },
     })).toEqual({
@@ -786,6 +821,75 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].cropId).toBe('basil');
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues water cell gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const initialState = createGameState();
+    initialState.season.grid[2].cropId = 'basil';
+    const store = new Store(initialState);
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastWatering: {
+                cellIndex: body.payload.cellIndex,
+                interventionBonus: body.payload.bonus,
+                wateredAt: body.payload.wateredAt,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.WATER_CELL,
+      payload: { bonus: 0.3, cellIndex: 2, wateredAt: NOW },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].interventionBonus).toBe(0.3);
+    expect(store.getState().season.grid[2].lastWateredAt).toBe(NOW);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

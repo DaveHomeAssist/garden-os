@@ -15,18 +15,22 @@ const AUTHORITY_GRID_SIZE = 32;
 const DEFAULT_AUTHORITY_CELL = {
   cropId: null,
   damageState: null,
+  interventionBonus: 0,
+  lastWateredAt: null,
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const ACTIONS = {
   PLANT_CROP: 'PLANT_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
+  WATER_CELL: 'WATER_CELL',
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.PLANT_CROP,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
+  ACTIONS.WATER_CELL,
   ACTIONS.ZONE_CHANGED,
 ]);
 
@@ -39,6 +43,8 @@ function createAuthorityCell(cell = {}) {
     ...DEFAULT_AUTHORITY_CELL,
     cropId: typeof cell.cropId === 'string' ? cell.cropId : null,
     damageState: cell.damageState ?? null,
+    interventionBonus: Number.isFinite(cell.interventionBonus) ? Math.min(1, Math.max(0, cell.interventionBonus)) : 0,
+    lastWateredAt: Number.isFinite(cell.lastWateredAt) ? cell.lastWateredAt : null,
   };
 }
 
@@ -52,6 +58,7 @@ function createInitialAuthorityData({
   currentZone = 'player_plot',
   grid = [],
   lastPlanting = null,
+  lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
   visitedZones = ['player_plot'],
@@ -61,6 +68,7 @@ function createInitialAuthorityData({
     currentZone,
     grid: createAuthorityGrid(grid),
     lastPlanting,
+    lastWatering,
     lastSpawnPoint,
     selectedCropId,
     visitedZones: Array.isArray(visitedZones) && visitedZones.length ? [...new Set(visitedZones)] : ['player_plot'],
@@ -227,6 +235,27 @@ function reduceStoryAction(data, payload, envelope) {
       lastPlanting: { cellIndex, cropId },
     };
   }
+  if (envelope.type === ACTIONS.WATER_CELL) {
+    const cellIndex = payload.cellIndex;
+    const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0;
+    const wateredAt = Number.isFinite(payload.wateredAt) ? payload.wateredAt : null;
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      interventionBonus: Math.min(1, Math.max(0, (grid[cellIndex].interventionBonus ?? 0) + bonus)),
+      lastWateredAt: wateredAt,
+    };
+    return {
+      ...data,
+      grid,
+      lastWatering: {
+        bonus,
+        cellIndex,
+        interventionBonus: grid[cellIndex].interventionBonus,
+        wateredAt,
+      },
+    };
+  }
   if (envelope.type === ACTIONS.SET_SELECTED_CROP) {
     return {
       ...data,
@@ -256,14 +285,35 @@ function reduceStoryAction(data, payload, envelope) {
 }
 
 function validateStoryActionPayload(envelope, state) {
-  if (envelope?.type !== ACTIONS.PLANT_CROP) return null;
   const grid = createAuthorityGrid(state?.data?.grid);
-  if (!Number.isInteger(envelope.payload?.cellIndex) || envelope.payload.cellIndex < 0 || envelope.payload.cellIndex >= grid.length) {
-    return { code: 'BAD_CELL_INDEX', message: 'Plant action requires a valid starter-grid cell index.' };
+  const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === ACTIONS.PLANT_CROP) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Plant action requires a valid starter-grid cell index.' };
+    }
+    if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
+      return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+    }
+    return null;
   }
-  if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
-    return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+
+  if (envelope?.type === ACTIONS.WATER_CELL) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Water action requires a valid starter-grid cell index.' };
+    }
+    if (!grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Water action requires a planted crop.' };
+    }
+    const bonus = envelope.payload?.bonus ?? 0;
+    if (!Number.isFinite(bonus) || bonus < 0 || bonus > 1) {
+      return { code: 'BAD_WATER_BONUS', message: 'Water action requires a finite bonus from 0 to 1.' };
+    }
+    if ('wateredAt' in (envelope.payload ?? {}) && envelope.payload.wateredAt !== null && !Number.isFinite(envelope.payload.wateredAt)) {
+      return { code: 'BAD_WATERED_AT', message: 'Water action requires wateredAt to be a finite timestamp or null.' };
+    }
+    return null;
   }
+
   return null;
 }
 

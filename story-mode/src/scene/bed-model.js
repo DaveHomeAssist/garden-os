@@ -204,7 +204,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   rightBevel.position.set(bedWidth / 2 + FRAME_THICKNESS / 2, FRAME_HEIGHT + BEVEL_INSET / 2, 0);
   group.add(rightBevel);
 
-  // Back lattice trellis — closer to the real bed silhouette
+  // Back lattice trellis — mounted outside the planting footprint
   const trellisMat = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.82, metalness: 0.05 });
   const meshWireMat = new THREE.MeshStandardMaterial({
     color: 0x8a8478,
@@ -214,8 +214,12 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
     metalness: 0.55,
     wireframe: true,
   });
-  const trellisZ = -bedDepth / 2 - FRAME_THICKNESS * 0.15;
+  const trellisSetback = CELL_SIZE * 0.8;
+  const guardSetback = CELL_SIZE * 0.85;
+  const trellisZ = -bedDepth / 2 - trellisSetback;
   const trellisHeight = 1.2;
+  const trellisBaseY = 0.48;
+  const trellisTopY = trellisHeight - 0.12;
   const trellisWidth = bedWidth - 0.12;
 
   for (const x of [-trellisWidth / 2, trellisWidth / 2]) {
@@ -225,7 +229,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
     group.add(post);
   }
 
-  for (const y of [0.12, trellisHeight - 0.12]) {
+  for (const y of [trellisBaseY, trellisTopY]) {
     const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, trellisWidth + 0.08, 8), trellisMat);
     rail.rotation.z = Math.PI / 2;
     rail.position.set(0, y, trellisZ);
@@ -237,14 +241,14 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   const latticeRows = Math.max(5, rows + 1);
   for (let col = 0; col < latticeCols; col++) {
     const x = -trellisWidth / 2 + (col / (latticeCols - 1)) * trellisWidth;
-    const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, trellisHeight - 0.18, 7), trellisMat);
-    slat.position.set(x, trellisHeight / 2, trellisZ);
+    const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, trellisTopY - trellisBaseY, 7), trellisMat);
+    slat.position.set(x, (trellisBaseY + trellisTopY) / 2, trellisZ);
     slat.castShadow = true;
     group.add(slat);
   }
 
   for (let row = 0; row < latticeRows; row++) {
-    const y = 0.18 + (row / (latticeRows - 1)) * (trellisHeight - 0.36);
+    const y = trellisBaseY + (row / (latticeRows - 1)) * (trellisTopY - trellisBaseY);
     const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, trellisWidth - 0.08, 7), trellisMat);
     slat.rotation.z = Math.PI / 2;
     slat.position.set(0, y, trellisZ);
@@ -253,7 +257,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   }
 
   // Trellis wires — horizontal tension wires across the trellis frame
-  const trellisWireHeights = [0.3, 0.6, 0.9];
+  const trellisWireHeights = [0.6, 0.82, 1.04];
   for (const wy of trellisWireHeights) {
     const wire = new THREE.Mesh(
       new THREE.CylinderGeometry(0.004, 0.004, trellisWidth + 0.04, 6),
@@ -268,7 +272,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
 
   // Front critter guard — low frame plus chicken wire
   const guardHeight = 0.42;
-  const guardZ = bedDepth / 2 + FRAME_THICKNESS * 0.55;
+  const guardZ = bedDepth / 2 + guardSetback;
   const frontMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(bedWidth - 0.12, guardHeight - 0.08, 10, 6),
     meshWireMat

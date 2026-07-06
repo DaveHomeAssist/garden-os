@@ -123,6 +123,59 @@ test('authority action routes plant crop through canonical grid state once', asy
   assert.equal(second.state.data.grid[2].cropId, 'basil');
 });
 
+test('authority action routes water cell through canonical grid state once', async () => {
+  const { env, sessionId } = await createSession();
+  const plantAction = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  };
+  await worker.fetch(jsonRequest('/action', plantAction), env);
+
+  const action = {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-water',
+    idempotencyKey: 'idem-water',
+    payload: { bonus: 0.25, cellIndex: 2, wateredAt: 1783370000000 },
+    playerId: 'local',
+    sessionId,
+    type: 'WATER_CELL',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: { bonus: 1, cellIndex: 2, wateredAt: 1783379999999 },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'WATER_CELL');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].cropId, 'basil');
+  assert.equal(first.state.data.grid[2].interventionBonus, 0.25);
+  assert.equal(first.state.data.grid[2].lastWateredAt, 1783370000000);
+  assert.deepEqual(first.state.data.lastWatering, {
+    bonus: 0.25,
+    cellIndex: 2,
+    interventionBonus: 0.25,
+    wateredAt: 1783370000000,
+  });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 2);
+  assert.equal(second.state.data.grid[2].interventionBonus, 0.25);
+});
+
 test('authority rejects malformed plant crop payload before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -148,6 +201,33 @@ test('authority rejects malformed plant crop payload before mutation', async () 
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.equal(session.state.data.grid.every((cell) => cell.cropId === null), true);
+});
+
+test('authority rejects water cell for empty cells before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-water',
+    idempotencyKey: 'idem-bad-water',
+    payload: { bonus: 0.25, cellIndex: 2, wateredAt: 1783370000000 },
+    playerId: 'local',
+    sessionId,
+    type: 'WATER_CELL',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.actionType, 'WATER_CELL');
+  assert.equal(body.ack.rejection.code, 'CELL_EMPTY');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.grid[2].interventionBonus, 0);
 });
 
 test('authority action routes zone changes through canonical state once', async () => {
