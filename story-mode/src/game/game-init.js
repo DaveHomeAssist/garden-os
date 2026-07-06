@@ -4,8 +4,7 @@ import {
   deleteCampaign,
   listSaves,
   listSavesWithAuthoritySnapshots,
-  loadAuthoritySnapshotSave,
-  loadCampaign,
+  loadBestAvailableSave,
   loadSeasonState,
   setActiveSaveSlot,
   subscribeToStoreSaves,
@@ -67,10 +66,8 @@ function createInitialState(slot, savedCampaign, savedSeason = undefined) {
 }
 
 async function createInitialStateFromSave(slot) {
-  const authority = await loadAuthoritySnapshotSave(slot);
-  const savedCampaign = authority?.campaign ?? loadCampaign(slot);
-  const savedSeason = authority?.season ?? undefined;
-  return createInitialState(slot, savedCampaign, savedSeason);
+  const restored = await loadBestAvailableSave(slot);
+  return createInitialState(slot, restored.campaign, restored.season);
 }
 
 function formatSeasonLabel(season) {

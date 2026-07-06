@@ -7,6 +7,7 @@ import {
   listSaves,
   listSavesWithAuthoritySnapshots,
   loadAuthoritySnapshotSave,
+  loadBestAvailableSave,
   loadCampaign,
   loadSeasonState,
   saveCampaign,
@@ -264,6 +265,43 @@ describe('save', () => {
     deleteCampaign(2);
 
     expect(localStorage.getItem(sessionPointerKey(2))).toBeNull();
+  });
+
+  it('prefers newer local storage over a stale authority snapshot on restore', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const authorityState = createGameState();
+    authorityState.campaign.updatedAt = '2026-07-06T15:00:00.000Z';
+    authorityState.campaign.worldState.currentZone = 'meadow';
+    authorityState.campaign.worldState.forageState = { cooldowns: {}, history: {} };
+    localStorage.setItem(sessionPointerKey(0), 'session-stale');
+
+    await writeAuthoritySnapshot({
+      indexedDB,
+      sessionId: 'session-stale',
+      slot: 0,
+      state: authorityState,
+    });
+
+    const localState = createGameState();
+    localState.campaign.updatedAt = '2026-07-06T15:05:00.000Z';
+    localState.campaign.worldState.currentZone = 'meadow';
+    localState.campaign.worldState.forageState = {
+      cooldowns: { meadow_flowers: 1_783_363_000_000 },
+      history: {
+        meadow_flowers: {
+          items: [{ count: 1, itemId: 'wildflower' }],
+          timestamp: 1_783_363_000_000,
+          xpGained: 20,
+          zoneId: 'meadow',
+        },
+      },
+    };
+    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(localState.campaign));
+
+    const restored = await loadBestAvailableSave(0, { indexedDB, storage: localStorage });
+
+    expect(restored.source).toBe('localStorage');
+    expect(restored.campaign.worldState.forageState.history.meadow_flowers.zoneId).toBe('meadow');
   });
 
   it('migrates old season grid arrays into versioned grid objects', () => {

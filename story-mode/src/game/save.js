@@ -99,6 +99,23 @@ function deleteAuthoritySessionPointer(slot, storage = globalThis.localStorage) 
   storage.removeItem(sessionPointerKey(slot));
 }
 
+function savedAtMs(value) {
+  const ms = Date.parse(value ?? '');
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function campaignSavedAtMs(campaign) {
+  return savedAtMs(campaign?.updatedAt ?? campaign?.createdAt);
+}
+
+function snapshotSavedAtMs(snapshot) {
+  return savedAtMs(
+    snapshot?.savedAt
+      ?? snapshot?.state?.campaign?.updatedAt
+      ?? snapshot?.state?.campaign?.createdAt,
+  );
+}
+
 function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
   if (!campaign) {
     return { slot, campaign: null, isEmpty: !isCorrupt, isCorrupt };
@@ -291,6 +308,33 @@ export async function listSavesWithAuthoritySnapshots(options = {}) {
     if (authority?.campaign) authoritySaves[slot] = authority.campaign;
   }));
   return listSaves({ authoritySaves });
+}
+
+export async function loadBestAvailableSave(slot, options = {}) {
+  const localCampaign = loadCampaign(slot);
+  const authority = await loadAuthoritySnapshotSave(slot, options);
+
+  if (!authority?.campaign) {
+    return {
+      campaign: localCampaign,
+      season: localCampaign ? loadSeasonState(slot) : null,
+      source: localCampaign ? 'localStorage' : 'empty',
+    };
+  }
+
+  if (!localCampaign || campaignSavedAtMs(localCampaign) <= snapshotSavedAtMs(authority.snapshot)) {
+    return {
+      campaign: authority.campaign,
+      season: authority.season,
+      source: 'authority',
+    };
+  }
+
+  return {
+    campaign: localCampaign,
+    season: loadSeasonState(slot),
+    source: 'localStorage',
+  };
 }
 
 export function listSaves({ authoritySaves = {} } = {}) {
