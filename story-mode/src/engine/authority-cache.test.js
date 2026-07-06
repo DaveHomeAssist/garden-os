@@ -4,10 +4,12 @@ import { createGameState } from '../game/state.js';
 import { Actions, Store } from '../game/store.js';
 import {
   IndexedDbAuthorityJournal,
+  AUTHORITY_URL_KEY,
   authorityAckToStoreAction,
   buildAuthorityEnvelope,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
+  resolveAuthorityUrl,
   verifyAuthorityAck,
 } from './authority-cache.js';
 
@@ -160,6 +162,33 @@ afterEach(() => {
 });
 
 describe('authority IndexedDB cache', () => {
+  it('resolves authority URL from operator settings, runtime globals, and meta tags', () => {
+    const storage = createLocalStorage();
+    const document = {
+      querySelector: (selector) => (
+        selector === 'meta[name="garden-os-authority-url"]'
+          ? { getAttribute: () => 'https://meta-authority.example.test/' }
+          : null
+      ),
+    };
+    const globalScope = { GARDEN_OS_AUTHORITY_URL: 'https://runtime-authority.example.test/' };
+
+    expect(resolveAuthorityUrl({
+      authorityUrl: 'https://explicit-authority.example.test/',
+      document,
+      globalScope,
+      storage,
+    })).toBe('https://explicit-authority.example.test');
+
+    storage.setItem(AUTHORITY_URL_KEY, 'https://stored-authority.example.test/');
+    expect(resolveAuthorityUrl({ document, globalScope, storage })).toBe('https://stored-authority.example.test');
+
+    storage.clear();
+    expect(resolveAuthorityUrl({ document, globalScope, storage })).toBe('https://runtime-authority.example.test');
+
+    expect(resolveAuthorityUrl({ document, globalScope: {}, storage })).toBe('https://meta-authority.example.test');
+  });
+
   it('maps accepted authority patches back into safe store actions', () => {
     expect(authorityAckToStoreAction({
       accepted: true,

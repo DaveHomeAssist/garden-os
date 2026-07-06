@@ -10,6 +10,8 @@ const STORES = {
 };
 const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
+const AUTHORITY_META_NAME = 'garden-os-authority-url';
+const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const ROUTED_ACTION_TYPES = new Set(['SET_ACTIVE_TOOL', 'SET_SELECTED_CROP']);
 const MAX_DRAIN_ACTIONS = 20;
 
@@ -54,6 +56,10 @@ function getGlobalIndexedDB(indexedDB = globalThis.indexedDB) {
   return indexedDB && typeof indexedDB.open === 'function' ? indexedDB : null;
 }
 
+function normalizeAuthorityUrl(url) {
+  return typeof url === 'string' && url.trim() ? url.trim().replace(/\/$/, '') : null;
+}
+
 function sessionPointerKey(slot) {
   return `${SESSION_POINTER_PREFIX}-${slot}`;
 }
@@ -75,10 +81,27 @@ function ensureSessionPointer(slot, storage = globalThis.localStorage) {
   return sessionId;
 }
 
-function resolveAuthorityUrl({ authorityUrl, storage = globalThis.localStorage } = {}) {
-  if (typeof authorityUrl === 'string' && authorityUrl.trim()) return authorityUrl.replace(/\/$/, '');
-  const configured = getStorage(storage)?.getItem(AUTHORITY_URL_KEY);
-  return configured ? configured.replace(/\/$/, '') : null;
+function resolveAuthorityUrl({
+  authorityUrl,
+  document = globalThis.document,
+  globalScope = globalThis,
+  storage = globalThis.localStorage,
+} = {}) {
+  const explicit = normalizeAuthorityUrl(authorityUrl);
+  if (explicit) return explicit;
+
+  const configured = normalizeAuthorityUrl(getStorage(storage)?.getItem(AUTHORITY_URL_KEY));
+  if (configured) return configured;
+
+  const runtimeGlobal = normalizeAuthorityUrl(globalScope?.GARDEN_OS_AUTHORITY_URL);
+  if (runtimeGlobal) return runtimeGlobal;
+
+  const metaUrl = normalizeAuthorityUrl(
+    document?.querySelector?.(`meta[name="${AUTHORITY_META_NAME}"]`)?.getAttribute?.('content'),
+  );
+  if (metaUrl) return metaUrl;
+
+  return normalizeAuthorityUrl(BUILD_AUTHORITY_URL);
 }
 
 function isAuthorityRoutedAction(action) {
@@ -457,6 +480,7 @@ export {
   drainAuthorityQueue,
   ensureSessionPointer,
   isAuthorityRoutedAction,
+  resolveAuthorityUrl,
   sessionPointerKey,
   verifyAuthorityAck,
 };
