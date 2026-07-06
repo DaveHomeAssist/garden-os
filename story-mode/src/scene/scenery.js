@@ -1,11 +1,9 @@
 /**
- * Background Scenery — fence, trees, path, props around the garden bed.
+ * Background Scenery — trees, path, house, and props around the garden bed.
  * All procedural geometry, no external models.
  */
 import * as THREE from 'three';
 
-const WOOD_COLOR = 0x6B4226;
-const WOOD_DARK = 0x4A2E18;
 const PATH_COLOR = 0x8a7a5a;
 const GRASS_DARK = 0x3a5a2a;
 const FOUNDATION_COLOR = 0x6d706d;
@@ -117,7 +115,6 @@ export function buildScenery(tracker = null) {
   const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
   const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
   const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
-  const fenceTexture = createBoardTexture(WOOD_COLOR, WOOD_DARK, 2.6, 2.6);
   const gravelTexture = createPebbleTexture(PATH_COLOR, 0xc1b39d, 3.6, 3.6);
   const mulchTexture = createPebbleTexture(MULCH_COLOR, 0x7a5d3a, 3.8, 1.4);
   const concreteTexture = createPebbleTexture(0xb5b0a2, 0xe2ddd2, 2.2, 2.2);
@@ -147,8 +144,6 @@ export function buildScenery(tracker = null) {
   const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88, map: porchTexture, bumpMap: porchTexture, bumpScale: 0.008 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
   const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
-  const fenceMat = new THREE.MeshStandardMaterial({ color: WOOD_COLOR, roughness: 0.88, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.01 });
-  const fenceDarkMat = new THREE.MeshStandardMaterial({ color: WOOD_DARK, roughness: 0.9, map: fenceTexture, bumpMap: fenceTexture, bumpScale: 0.008 });
   const gravelMat = new THREE.MeshStandardMaterial({ color: PATH_COLOR, roughness: 1.0, map: gravelTexture, bumpMap: gravelTexture, bumpScale: 0.012 });
   const brickMat = new THREE.MeshStandardMaterial({ color: 0x8d4d34, roughness: 0.95, side: THREE.DoubleSide, map: brickTexture, bumpMap: brickTexture, bumpScale: 0.008 });
 
@@ -287,18 +282,6 @@ export function buildScenery(tracker = null) {
   const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
   backGlass.position.set(0.25, 1.95, -6.22);
   group.add(backGlass);
-
-  // Side fence line on the right edge of the yard
-  for (let i = 0; i < 10; i++) {
-    const slatHeight = 0.42 + (i % 2) * 0.04;
-    const slat = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.028, 0.032, slatHeight, 8),
-      i % 3 === 0 ? fenceDarkMat : fenceMat
-    );
-    slat.position.set(4.95, slat.geometry.parameters.height / 2, -0.2 + i * 0.36);
-    slat.rotation.y = -0.08;
-    group.add(slat);
-  }
 
   // Gravel border around the bed instead of a single front pad
   const gravelPatches = [
@@ -641,30 +624,8 @@ export function buildScenery(tracker = null) {
   // 3. Clothesline removed entirely.
   // Even the remaining poles were still reading as a phantom guide lane in the current framing.
 
-  // 4. Bird on the fence
+  // 4. Seasonal prop group. Fence-mounted critters are intentionally omitted.
   const seasonalProps = new THREE.Group();
-  {
-    const birdOnFence = new THREE.Group();
-    const birdBodyMat = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8 });
-    const birdBeakMat = new THREE.MeshStandardMaterial({ color: 0xd9ad54, roughness: 0.65 });
-    const birdBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.034, 5, 10), birdBodyMat);
-    birdBody.rotation.z = Math.PI / 2;
-    birdBody.scale.set(1.15, 0.95, 0.9);
-    birdOnFence.add(birdBody);
-    const birdHeadSphere = new THREE.Mesh(new THREE.SphereGeometry(0.019, 8, 7), birdBodyMat);
-    birdHeadSphere.position.set(0.03, 0.018, 0);
-    birdOnFence.add(birdHeadSphere);
-    const birdBeak = new THREE.Mesh(new THREE.ConeGeometry(0.007, 0.02, 6), birdBeakMat);
-    birdBeak.rotation.z = -Math.PI / 2;
-    birdBeak.position.set(0.052, 0.016, 0);
-    birdOnFence.add(birdBeak);
-    const birdTail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.01, 0.026, 6), birdBodyMat);
-    birdTail.rotation.z = 1.18;
-    birdTail.position.set(-0.03, 0.004, 0);
-    birdOnFence.add(birdTail);
-    birdOnFence.position.set(4.98, 0.5, 0.18);
-    seasonalProps.add(birdOnFence);
-  }
   group.add(seasonalProps);
 
   // 5. Fallen leaves (fall only)
@@ -776,7 +737,7 @@ export function buildScenery(tracker = null) {
   narrativeProps.visible = true;
   group.add(narrativeProps);
 
-  // 10. Phillies pennant on fence
+  // 10. Phillies pennant on the porch trim
   {
     const pennantShape = new THREE.Shape();
     pennantShape.moveTo(0, 0);
@@ -788,8 +749,8 @@ export function buildScenery(tracker = null) {
       color: 0xE81828, roughness: 0.7, side: THREE.DoubleSide,
     });
     const pennant = new THREE.Mesh(pennantGeo, pennantMat);
-    pennant.position.set(4.98, 0.56, 1.18);
-    pennant.rotation.y = -Math.PI / 2;
+    pennant.position.set(-1.95, 0.86, -4.66);
+    pennant.rotation.y = -0.05;
     markPlaceCue(pennant, 'phillies-pennant');
     group.add(pennant);
   }
@@ -1069,30 +1030,6 @@ export function buildScenery(tracker = null) {
   group.add(summerGrit);
   group.add(summerHeatHaze);
 
-  // 18. Cat silhouette on fence
-  {
-    const catMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85 });
-    const catSilhouette = new THREE.Group();
-    const catBody2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.026, 0.05, 5, 10), catMat);
-    catBody2.rotation.z = Math.PI / 2;
-    catBody2.scale.set(1, 0.9, 0.78);
-    catSilhouette.add(catBody2);
-    const catHead2 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 7), catMat);
-    catHead2.position.set(0.05, 0.022, 0);
-    catSilhouette.add(catHead2);
-    for (const ex of [-0.01, 0.01]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.02, 6), catMat);
-      ear.position.set(0.05 + ex, 0.055, 0);
-      catSilhouette.add(ear);
-    }
-    const catTail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.005, 0.1, 8), catMat);
-    catTail2.rotation.z = -0.8;
-    catTail2.position.set(-0.07, 0.03, 0);
-    catSilhouette.add(catTail2);
-    catSilhouette.position.set(5.02, 0.55, 2.0);
-    seasonalProps.add(catSilhouette);
-  }
-
   // 19. Chimney smoke (winter)
   const winterSmoke = new THREE.Group();
   let smokePositions;
@@ -1120,33 +1057,7 @@ export function buildScenery(tracker = null) {
   winterSmoke.visible = false;
   group.add(winterSmoke);
 
-  // 20. Wind indicator on fence
-  const windIndicator = new THREE.Group();
-  {
-    const windPoleMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.3 });
-    const windPole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.3, 6), windPoleMat);
-    windPole.position.y = 0.15;
-    windIndicator.add(windPole);
-
-    const flagShape = new THREE.Shape();
-    flagShape.moveTo(0, 0);
-    flagShape.lineTo(0.06, 0.02);
-    flagShape.lineTo(0, 0.04);
-    flagShape.closePath();
-    const flagGeo = new THREE.ShapeGeometry(flagShape);
-    const flagMat = new THREE.MeshStandardMaterial({
-      color: 0xee6633, roughness: 0.7, side: THREE.DoubleSide,
-    });
-    const windFlag = new THREE.Mesh(flagGeo, flagMat);
-    windFlag.position.set(0.01, 0.25, 0);
-    registerBreezeNode(windFlag, { rotZ: 0.22, speed: 2.5, phase: 1.1 });
-    windIndicator.add(windFlag);
-    windIndicator._flag = windFlag;
-  }
-  windIndicator.position.set(4.95, 0.5, 1.0);
-  group.add(windIndicator);
-
-  // ── EXPANDED SCENERY — full house, fences, neighbors ─────────────────
+  // ── EXPANDED SCENERY — full house and neighbors ─────────────────
 
   // === FULL HOUSE — second floor, roof, chimney, more windows ===
 
@@ -1251,97 +1162,6 @@ export function buildScenery(tracker = null) {
   gutterRight.position.set(1.8, roofBaseY - 0.02, -5.2);
   group.add(gutterRight);
 
-  // House side walls (partially visible)
-  const houseSideLeft = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 6.3), sidingMat);
-  houseSideLeft.position.set(-3.9, 3.15, -4.65);
-  houseSideLeft.rotation.y = Math.PI / 2;
-  group.add(houseSideLeft);
-
-  const houseSideRight = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 6.3), sidingMat);
-  houseSideRight.position.set(3.9, 3.15, -4.65);
-  houseSideRight.rotation.y = -Math.PI / 2;
-  group.add(houseSideRight);
-
-  // === LEFT-SIDE FENCE (mirrors right fence, encloses yard) ===
-  for (let i = 0; i < 14; i++) {
-    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
-    const slatHeight = 0.42 + (i % 2) * 0.04;
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, slatHeight, 0.03), slatMat);
-    slat.position.set(-4.95, slatHeight / 2, -0.2 + i * 0.36);
-    slat.rotation.y = 0.08;
-    group.add(slat);
-  }
-  // Left fence posts (thicker support posts every 4 slats)
-  for (let i = 0; i < 14; i += 4) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.08), fenceDarkMat);
-    post.position.set(-4.95, 0.29, -0.2 + i * 0.36);
-    group.add(post);
-  }
-  // Left fence horizontal rails
-  for (const ry of [0.1, 0.38]) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 14 * 0.36), fenceMat);
-    rail.position.set(-4.95, ry, -0.2 + 6.5 * 0.36);
-    rail.rotation.y = 0.08;
-    group.add(rail);
-  }
-
-  // Right fence — extend and add posts/rails to match
-  for (let i = 10; i < 14; i++) {
-    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
-    const slatHeight = 0.42 + (i % 2) * 0.04;
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, slatHeight, 0.03), slatMat);
-    slat.position.set(4.95, slatHeight / 2, -0.2 + i * 0.36);
-    slat.rotation.y = -0.08;
-    group.add(slat);
-  }
-  for (let i = 0; i < 14; i += 4) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.08), fenceDarkMat);
-    post.position.set(4.95, 0.29, -0.2 + i * 0.36);
-    group.add(post);
-  }
-  for (const ry of [0.1, 0.38]) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 14 * 0.36), fenceMat);
-    rail.position.set(4.95, ry, -0.2 + 6.5 * 0.36);
-    rail.rotation.y = -0.08;
-    group.add(rail);
-  }
-
-  // Front fence with gate opening (skip center slats for gate)
-  const frontFenceZ = 4.8;
-  for (let i = 0; i < 20; i++) {
-    // Leave gap for gate (slats 8-11)
-    if (i >= 8 && i <= 11) continue;
-    const slatMat = i % 3 === 0 ? fenceDarkMat : fenceMat;
-    const slatHeight = 0.42 + (i % 2) * 0.04;
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, slatHeight, 0.12), slatMat);
-    slat.position.set(-4.5 + i * 0.48, slatHeight / 2, frontFenceZ);
-    group.add(slat);
-  }
-  // Gate posts (taller)
-  for (const gx of [-4.5 + 8 * 0.48 - 0.12, -4.5 + 11 * 0.48 + 0.12]) {
-    const gatePost = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.65, 0.1), fenceDarkMat);
-    gatePost.position.set(gx, 0.325, frontFenceZ);
-    group.add(gatePost);
-  }
-  // Gate (slightly ajar)
-  const gateGroup = new THREE.Group();
-  const gateWidth = 4 * 0.48;
-  for (let i = 0; i < 4; i++) {
-    const gSlat = new THREE.Mesh(
-      new THREE.BoxGeometry(0.03, 0.4, 0.1),
-      i % 2 === 0 ? fenceMat : fenceDarkMat
-    );
-    gSlat.position.set(i * 0.48 - gateWidth / 2 + 0.24, 0.2, 0);
-    gateGroup.add(gSlat);
-  }
-  // Gate cross brace
-  const gateBrace = new THREE.Mesh(new THREE.BoxGeometry(gateWidth - 0.1, 0.03, 0.03), fenceMat);
-  gateBrace.position.set(0, 0.35, 0);
-  gateGroup.add(gateBrace);
-  gateGroup.position.set(-4.5 + 9.5 * 0.48, 0, frontFenceZ);
-  gateGroup.rotation.y = 0.25; // slightly ajar
-  group.add(gateGroup);
-
   // === NEIGHBOR HOUSE — LEFT SIDE ===
   const neighborSidingLeft = new THREE.MeshStandardMaterial({ color: 0xc4a882, roughness: 0.88, side: THREE.DoubleSide });
   const neighborRoofLeft = new THREE.MeshStandardMaterial({ color: 0x3a3832, roughness: 0.94 });
@@ -1411,15 +1231,7 @@ export function buildScenery(tracker = null) {
   nRightFound.rotation.y = Math.PI / 2.7;
   group.add(nRightFound);
 
-  // === ALLEY / BACK FENCE ===
-  // Back alley fence behind house (visible through gaps)
-  const alleyFenceMat = new THREE.MeshStandardMaterial({ color: 0x5a4a38, roughness: 0.92 });
-  for (let i = 0; i < 16; i++) {
-    const afSlat = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.025), alleyFenceMat);
-    afSlat.position.set(-3.5 + i * 0.48, 0.28, -7.5);
-    group.add(afSlat);
-  }
-
+  // === ALLEY ===
   // Alley ground strip
   const alleyMat = new THREE.MeshStandardMaterial({ color: 0x5a5850, roughness: 0.96 });
   const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.5), alleyMat);
@@ -1571,14 +1383,6 @@ export function buildScenery(tracker = null) {
         flower.material.color.setHex(flowerColors[index % flowerColors.length]);
       });
 
-      // Wind flag rotation varies by season
-      if (windIndicator._flag) {
-        const seasonRotations = { spring: 0.3, summer: 0.1, fall: 0.6, winter: 0.8 };
-        windIndicator._flag.rotation.y = seasonRotations[currentSeason] || 0.2;
-        if (windIndicator._flag.userData.breeze) {
-          windIndicator._flag.userData.breeze.baseRotationY = windIndicator._flag.rotation.y;
-        }
-      }
     },
 
     updateBreeze(time, strength = 1) {
