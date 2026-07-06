@@ -6,6 +6,9 @@ import { createAuthorityFetchHandler } from './authority-http.js';
 import {
   createAuthorityService,
   createMemoryLedgerStore,
+  createMemorySessionStore,
+  createUpstashLedgerStore,
+  createUpstashSessionStore,
   verifyAuthorityAckSignature,
 } from './authority-service.js';
 
@@ -109,6 +112,39 @@ describe('authority service', () => {
     expect(second.body.ack.signature).toBe(first.body.ack.signature);
   });
 
+  it('persists session state through an injected session store across service instances', async () => {
+    const ledgerStore = createMemoryLedgerStore();
+    const sessionStore = createMemorySessionStore();
+    const firstService = createAuthorityService({
+      ledgerStore,
+      now: () => NOW,
+      secret: SECRET,
+      sessionIdFactory: () => 'session-http',
+      sessionStore,
+    });
+    const secondService = createAuthorityService({
+      ledgerStore,
+      now: () => NOW,
+      secret: SECRET,
+      sessionStore,
+    });
+    const firstHandle = createAuthorityFetchHandler(firstService);
+    const secondHandle = createAuthorityFetchHandler(secondService);
+
+    await postJson(firstHandle, '/api/session', { sessionId: 'session-http' });
+    const first = await postJson(firstHandle, '/api/action', envelope());
+    const second = await postJson(secondHandle, '/api/action', envelope({
+      payload: { cropId: 'client-duplicate' },
+    }));
+    const state = await sessionStore.get('session-http');
+
+    expect(second.body.duplicate).toBe(true);
+    expect(second.body.session.tick).toBe(1);
+    expect(state.data.selectedCropId).toBe('basil');
+    expect(state.ledger.entries).toHaveLength(1);
+    expect(second.body.ack.signature).toBe(first.body.ack.signature);
+  });
+
   it('rejects trusted full-state and resource totals in action payloads', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -160,5 +196,61 @@ describe('authority service', () => {
     });
     expect(tampered.status).toBe(422);
     expect(tampered.body.verified).toBe(false);
+  });
+
+  it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {
+    const calls = [];
+    const records = new Map();
+    const fetchFn = async (url, init) => {
+      const command = JSON.parse(init.body);
+      calls.push({ command, headers: init.headers, method: init.method, url });
+      const [operation, key, value] = command;
+      if (operation === 'GET') {
+        return Response.json({ result: records.get(key) ?? null });
+      }
+      if (operation === 'SET') {
+        records.set(key, value);
+        return Response.json({ result: 'OK' });
+      }
+      if (operation === 'RPUSH') {
+        records.set(key, [...(records.get(key) ?? []), value]);
+        return Response.json({ result: records.get(key).length });
+      }
+      return Response.json({ error: `Unsupported command ${operation}` }, { status: 400 });
+    };
+    const config = {
+      fetchFn,
+      keyPrefix: 'test:authority',
+      token: 'redis-token',
+      url: 'https://redis.example.test/',
+    };
+    const sessionStore = createUpstashSessionStore(config);
+    const ledgerStore = createUpstashLedgerStore(config);
+
+    await sessionStore.set({
+      checksum: 'checksum-1',
+      data: { activeTool: 'hand', selectedCropId: 'basil' },
+      gameId: 'garden',
+      ledger: { acks: {}, cursor: '0', entries: [] },
+      sessionId: 'session-http',
+      tick: 1,
+      version: 1,
+    });
+    const stored = await sessionStore.get('session-http');
+    await ledgerStore.append({ recordType: 'action', sessionId: 'session-http' });
+
+    expect(stored.data.selectedCropId).toBe('basil');
+    expect(calls.map((call) => call.command[0])).toEqual(['SET', 'GET', 'RPUSH', 'RPUSH']);
+    expect(calls[0]).toMatchObject({
+      headers: {
+        Authorization: 'Bearer redis-token',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      url: 'https://redis.example.test',
+    });
+    expect(calls[0].command[1]).toBe('test:authority:session:session-http');
+    expect(calls[2].command[1]).toBe('test:authority:ledger');
+    expect(calls[3].command[1]).toBe('test:authority:ledger:session-http');
   });
 });

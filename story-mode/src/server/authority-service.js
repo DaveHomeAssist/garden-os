@@ -67,6 +67,20 @@ function createMemoryLedgerStore() {
   };
 }
 
+function createMemorySessionStore() {
+  const sessions = new Map();
+  return {
+    async get(sessionId) {
+      return cloneValue(sessions.get(sessionId));
+    },
+    async set(state) {
+      sessions.set(state.sessionId, cloneValue(state));
+      return cloneValue(state);
+    },
+    sessions,
+  };
+}
+
 function createFileLedgerStore({
   directory = process.env.GOS_AUTHORITY_LEDGER_DIR ?? join(process.cwd(), '.garden-os-authority'),
   filename = 'ledger.jsonl',
@@ -78,6 +92,77 @@ function createFileLedgerStore({
       await appendFile(filePath, `${stableStringify(entry)}\n`, 'utf8');
     },
     filePath,
+  };
+}
+
+function resolveUpstashConfig({
+  fetchFn = globalThis.fetch,
+  token = process.env.GOS_AUTHORITY_REDIS_REST_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN,
+  url = process.env.GOS_AUTHORITY_REDIS_REST_URL ?? process.env.UPSTASH_REDIS_REST_URL,
+} = {}) {
+  return {
+    fetchFn,
+    token,
+    url: typeof url === 'string' ? url.replace(/\/$/, '') : '',
+  };
+}
+
+async function upstashCommand(config, command) {
+  if (!config.url || !config.token) {
+    throw new Error('Upstash REST URL and token are required.');
+  }
+  if (typeof config.fetchFn !== 'function') {
+    throw new Error('fetch is required for Upstash REST storage.');
+  }
+  const response = await config.fetchFn(config.url, {
+    body: JSON.stringify(command),
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.error) {
+    throw new Error(body?.error ?? `Upstash command failed with HTTP ${response.status}.`);
+  }
+  return body?.result;
+}
+
+function createUpstashSessionStore({
+  keyPrefix = process.env.GOS_AUTHORITY_REDIS_PREFIX ?? 'gos:story-authority',
+  ...configOptions
+} = {}) {
+  const config = resolveUpstashConfig(configOptions);
+  const keyFor = (sessionId) => `${keyPrefix}:session:${sessionId}`;
+  return {
+    async get(sessionId) {
+      if (!sessionId) return null;
+      const result = await upstashCommand(config, ['GET', keyFor(sessionId)]);
+      if (!result) return null;
+      return JSON.parse(result);
+    },
+    async set(state) {
+      if (!state?.sessionId) return null;
+      await upstashCommand(config, ['SET', keyFor(state.sessionId), stableStringify(state)]);
+      return cloneValue(state);
+    },
+  };
+}
+
+function createUpstashLedgerStore({
+  keyPrefix = process.env.GOS_AUTHORITY_REDIS_PREFIX ?? 'gos:story-authority',
+  ...configOptions
+} = {}) {
+  const config = resolveUpstashConfig(configOptions);
+  return {
+    async append(entry) {
+      const serialized = stableStringify(entry);
+      await upstashCommand(config, ['RPUSH', `${keyPrefix}:ledger`, serialized]);
+      if (entry?.sessionId) {
+        await upstashCommand(config, ['RPUSH', `${keyPrefix}:ledger:${entry.sessionId}`, serialized]);
+      }
+    },
   };
 }
 
@@ -152,8 +237,8 @@ function createAuthorityService({
   now = Date.now,
   secret = process.env.GOS_AUTHORITY_HMAC_SECRET,
   sessionIdFactory = randomUUID,
+  sessionStore = createMemorySessionStore(),
 } = {}) {
-  const sessions = new Map();
   const hmacSecret = normalizeSecret(secret);
 
   async function createSession(body = {}) {
@@ -176,7 +261,7 @@ function createAuthorityService({
       sessionId,
       now: serverTime,
     });
-    sessions.set(sessionId, state);
+    await sessionStore.set(state);
     await ledgerStore.append({
       checksum: state.checksum,
       gameId: state.gameId,
@@ -192,9 +277,9 @@ function createAuthorityService({
     };
   }
 
-  function getSessionState(envelope) {
+  async function getSessionState(envelope) {
     if (!envelope?.sessionId) return null;
-    let state = sessions.get(envelope.sessionId);
+    let state = await sessionStore.get(envelope.sessionId);
     if (!state) {
       state = createEngineState({
         data: { activeTool: 'hand', selectedCropId: null },
@@ -203,13 +288,13 @@ function createAuthorityService({
         sessionId: envelope.sessionId,
         now: isoNow(now),
       });
-      sessions.set(envelope.sessionId, state);
+      await sessionStore.set(state);
     }
     return state;
   }
 
   async function applyAction(envelope = {}) {
-    const previousState = getSessionState(envelope);
+    const previousState = await getSessionState(envelope);
     if (!previousState) {
       const ack = createRejectedAck({
         actionId: envelope?.id,
@@ -257,7 +342,7 @@ function createAuthorityService({
     if (ackKey && signedAck.accepted) {
       nextState.ledger.acks[ackKey] = signedAck;
     }
-    sessions.set(nextState.sessionId, nextState);
+    await sessionStore.set(nextState);
     await ledgerStore.append(ledgerActionEntry({
       ack: signedAck,
       duplicate: result.duplicate,
@@ -285,7 +370,8 @@ function createAuthorityService({
     applyAction,
     createSession,
     ledgerStore,
-    sessions,
+    sessions: sessionStore.sessions ?? null,
+    sessionStore,
     verifyAck,
   };
 }
@@ -295,6 +381,10 @@ export {
   createAuthorityService,
   createFileLedgerStore,
   createMemoryLedgerStore,
+  createMemorySessionStore,
+  createUpstashLedgerStore,
+  createUpstashSessionStore,
   signAuthorityAck,
+  upstashCommand,
   verifyAuthorityAckSignature,
 };
