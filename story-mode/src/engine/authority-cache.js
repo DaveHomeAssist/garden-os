@@ -387,7 +387,15 @@ function createStoryAuthorityPersistence(store, {
 } = {}) {
   const journal = new IndexedDbAuthorityJournal({ indexedDB });
   if (!store?.subscribe || slot < 0 || !journal.available) {
-    return { cleanup() {}, drain: async () => ({ sent: 0, acked: 0, pending: 0, online: false }), journal: null };
+    return {
+      available: false,
+      cleanup() {},
+      drain: async () => ({ sent: 0, acked: 0, pending: 0, online: false }),
+      flush: async () => null,
+      journal: null,
+      saveSnapshot: async () => null,
+      sessionId: null,
+    };
   }
 
   let active = true;
@@ -401,16 +409,16 @@ function createStoryAuthorityPersistence(store, {
     if (action) store.dispatch(action);
   }
 
-  function enqueue(work) {
+  function enqueue(work, { force = false } = {}) {
     chain = chain
-      .then(() => (active ? work() : null))
+      .then(() => (active || force ? work() : null))
       .catch((error) => {
         console.warn('[GOS] Authority cache unavailable:', error?.message ?? error);
       });
     return chain;
   }
 
-  function persistState(state, action = null) {
+  function persistState(state, action = null, { force = false } = {}) {
     return enqueue(async () => {
       await journal.putSnapshot({
         ledgerCursor: String(state?.authorityTick ?? 0),
@@ -436,7 +444,7 @@ function createStoryAuthorityPersistence(store, {
           });
         }
       }
-    });
+    }, { force });
   }
 
   void persistState(store.getState());
@@ -446,10 +454,11 @@ function createStoryAuthorityPersistence(store, {
   });
 
   return {
+    available: true,
     cleanup() {
       active = false;
       unsubscribe();
-      void journal.close();
+      void chain.finally(() => journal.close());
     },
     drain() {
       return enqueue(() => drainAuthorityQueue({
@@ -466,6 +475,9 @@ function createStoryAuthorityPersistence(store, {
       return chain;
     },
     journal,
+    saveSnapshot(state = store.getState()) {
+      return persistState(state, null, { force: true });
+    },
     sessionId,
   };
 }

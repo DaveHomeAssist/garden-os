@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { showTitleScreen } from './game-init.js';
+import { Actions } from './store.js';
+import { createGameState } from './state.js';
+import { initGame, showTitleScreen } from './game-init.js';
+import { loadAuthoritySnapshotSave } from './save.js';
 
 const localStorageMock = (() => {
   let store = {};
@@ -32,6 +35,101 @@ function mountTitleScreenDom() {
     </div>
     <div id="viewport"></div>
   `;
+}
+
+function clone(value) {
+  return value == null ? value : structuredClone(value);
+}
+
+function createSuccessRequest(value) {
+  const request = { error: null, result: undefined };
+  queueMicrotask(() => {
+    request.result = clone(value);
+    request.onsuccess?.({ target: request });
+  });
+  return request;
+}
+
+function createFakeIndexedDB() {
+  const databases = new Map();
+
+  class FakeObjectStore {
+    constructor(store) {
+      this.store = store;
+    }
+
+    delete(key) {
+      this.store.records.delete(key);
+      return createSuccessRequest(undefined);
+    }
+
+    get(key) {
+      return createSuccessRequest(this.store.records.get(key));
+    }
+
+    getAll() {
+      return createSuccessRequest([...this.store.records.values()]);
+    }
+
+    put(record) {
+      const key = record[this.store.keyPath];
+      this.store.records.set(key, clone(record));
+      return createSuccessRequest(key);
+    }
+  }
+
+  class FakeTransaction {
+    constructor(entry) {
+      this.entry = entry;
+    }
+
+    objectStore(storeName) {
+      const store = this.entry.stores.get(storeName);
+      if (!store) throw new Error(`Missing object store: ${storeName}`);
+      return new FakeObjectStore(store);
+    }
+  }
+
+  class FakeDatabase {
+    constructor(entry) {
+      this.entry = entry;
+      this.objectStoreNames = {
+        contains: (storeName) => this.entry.stores.has(storeName),
+      };
+    }
+
+    close() {}
+
+    createObjectStore(storeName, { keyPath }) {
+      const store = { keyPath, records: new Map() };
+      this.entry.stores.set(storeName, store);
+      return new FakeObjectStore(store);
+    }
+
+    transaction() {
+      return new FakeTransaction(this.entry);
+    }
+  }
+
+  return {
+    open(databaseName, version) {
+      const request = { error: null, result: undefined };
+      queueMicrotask(() => {
+        let entry = databases.get(databaseName);
+        const oldVersion = entry?.version ?? 0;
+        const needsUpgrade = !entry || oldVersion < version;
+        if (!entry) {
+          entry = { stores: new Map(), version };
+          databases.set(databaseName, entry);
+        }
+        entry.version = version;
+        request.result = new FakeDatabase(entry);
+        if (needsUpgrade) request.onupgradeneeded?.({ oldVersion, target: request });
+        request.onsuccess?.({ target: request });
+      });
+      return request;
+    },
+  };
 }
 
 beforeEach(() => {
@@ -83,5 +181,48 @@ describe('game-init title screen', () => {
         }),
       }),
     );
+  });
+});
+
+describe('game-init persistence', () => {
+  it('stores runtime saves in IndexedDB and leaves localStorage as a session pointer', async () => {
+    const indexedDB = createFakeIndexedDB();
+    vi.stubGlobal('indexedDB', indexedDB);
+
+    const initialState = createGameState();
+    const { cleanup, persistGameState, store } = initGame(initialState, { slot: 0 });
+
+    store.dispatch({
+      type: Actions.SET_ACTIVE_TOOL,
+      payload: { toolId: 'inspect' },
+    });
+    await persistGameState(store.getState());
+
+    expect(localStorage.getItem('gos-story-slot-0-campaign')).toBeNull();
+    expect(localStorage.getItem('gos-story-slot-0-season')).toBeNull();
+    expect(localStorage.getItem('gos-story-authority-session-0')).toMatch(/[a-z0-9-]+/i);
+
+    const restored = await loadAuthoritySnapshotSave(0, { indexedDB, storage: localStorage });
+    expect(restored.campaign.currentChapter).toBe(initialState.campaign.currentChapter);
+    expect(restored.season.activeTool).toBe('inspect');
+
+    cleanup();
+  });
+
+  it('falls back to localStorage runtime saves when IndexedDB is unavailable', async () => {
+    vi.stubGlobal('indexedDB', null);
+
+    const { cleanup, persistGameState, store } = initGame(createGameState(), { slot: 1 });
+    store.dispatch({
+      type: Actions.SET_ACTIVE_TOOL,
+      payload: { toolId: 'plant' },
+    });
+    await persistGameState(store.getState());
+
+    expect(localStorage.getItem('gos-story-slot-1-campaign')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('gos-story-slot-1-season')).activeTool).toBe('plant');
+    expect(localStorage.getItem('gos-story-authority-session-1')).toBeNull();
+
+    cleanup();
   });
 });

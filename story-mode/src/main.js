@@ -78,7 +78,7 @@ async function startSession({ initialState, slot, viewport, planner }) {
 
     const scene = createGardenScene(viewport);
     const inputManager = new InputManager(scene.canvas, { keyboardTarget: document });
-    const { store, data, cleanup } = initGame(packResult.state, { slot });
+    const { store, data, cleanup, persistGameState } = initGame(packResult.state, { slot });
 
     if (planner) {
       const { bindPlannerUI } = await import('./ui/planner-binder.js');
@@ -111,6 +111,7 @@ async function startSession({ initialState, slot, viewport, planner }) {
       viewport,
       slot,
       destroyInit: cleanup,
+      persistGameState,
       remount: mount,
       zoneManager,
     });

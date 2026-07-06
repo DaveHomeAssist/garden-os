@@ -385,6 +385,31 @@ describe('authority IndexedDB cache', () => {
     persistence.cleanup();
   });
 
+  it('flushes an explicit snapshot even when cleanup follows immediately', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const persistence = createStoryAuthorityPersistence(store, {
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    const nextState = {
+      ...store.getState(),
+      selectedCropId: 'shutdown-basil',
+    };
+
+    const savePromise = persistence.saveSnapshot(nextState);
+    persistence.cleanup();
+    await savePromise;
+
+    const snapshot = await persistence.journal.readSnapshot(persistence.sessionId);
+    expect(snapshot.state.selectedCropId).toBe('shutdown-basil');
+  });
+
   it('reconciles configured authority acks back into the live store once', async () => {
     const indexedDB = createFakeIndexedDB();
     const storage = createLocalStorage();

@@ -6,6 +6,8 @@ import {
   listSavesWithAuthoritySnapshots,
   loadBestAvailableSave,
   loadSeasonState,
+  saveCampaign,
+  saveSeasonState,
   setActiveSaveSlot,
   subscribeToStoreSaves,
 } from './save.js';
@@ -365,14 +367,26 @@ function showTitleScreen(onStart) {
 
 function initGame(initialState, { slot }) {
   const store = new Store(initialState);
-  const unsubscribePersistence = subscribeToStoreSaves(store, () => slot, {
-    shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
-  });
   const authorityPersistence = createStoryAuthorityPersistence(store, { slot });
+  const unsubscribePersistence = authorityPersistence.available
+    ? () => {}
+    : subscribeToStoreSaves(store, () => slot, {
+      shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
+    });
+
+  function persistGameState(state = store.getState()) {
+    if (authorityPersistence.available) {
+      return authorityPersistence.saveSnapshot(state);
+    }
+    saveCampaign(state.campaign, slot);
+    saveSeasonState(state.season, slot);
+    return Promise.resolve(null);
+  }
 
   return {
     store,
     data: GAME_DATA,
+    persistGameState,
     cleanup() {
       unsubscribePersistence();
       authorityPersistence.cleanup();

@@ -69,6 +69,7 @@ function bindUI({
   viewport,
   slot,
   destroyInit,
+  persistGameState,
   remount,
   zoneManager,
 }) {
@@ -154,6 +155,15 @@ function bindUI({
 
   syncPlayerMovementForZone();
 
+  function saveGameSnapshot(nextState = state) {
+    if (typeof persistGameState === 'function') {
+      void persistGameState(nextState);
+      return;
+    }
+    saveCampaign(nextState.campaign, slot);
+    saveSeasonState(nextState.season, slot);
+  }
+
   if (state.campaign.worldState?.lastSpawnPoint) {
     const resetState = playerController.reset(state.campaign.worldState.lastSpawnPoint);
     simulationWorker.reset(resetState);
@@ -171,8 +181,7 @@ function bindUI({
       updateHUD();
       interactionSystem?.update?.(0);
       syncInteractionPresentation();
-      saveCampaign(nextState.campaign, slot);
-      saveSeasonState(nextState.season, slot);
+      saveGameSnapshot(nextState);
     }
   });
   const touchStick = createTouchStick();
@@ -695,8 +704,7 @@ function bindUI({
     if (!hasKeepsake(state.campaign, 'first_seed_packet')) {
       awardCampaignKeepsake('first_seed_packet');
     }
-    saveCampaign(state.campaign, slot);
-    saveSeasonState(state.season, slot);
+    saveGameSnapshot(state);
   }
 
   function finalizeHarvestProgression() {
