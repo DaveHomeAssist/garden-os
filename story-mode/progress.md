@@ -1,3 +1,15 @@
+Update 2026-07-06 Story Mode authority live wiring pass:
+- Wired the live crop palette and Let It Grow tool HUD through the existing authority-routed store actions instead of keeping them as UI-only state.
+- Added client `/session` bootstrap before draining queued `/action` envelopes when an authority URL is configured.
+- Added the deployed Vercel authority API URL to `index.html` as the static `garden-os-authority-url` meta config so GitHub Pages can exercise the authority path without operator localStorage setup.
+- Validation:
+  - `npm test -- src/engine/authority-cache.test.js src/ui/tool-hud.test.js` passed with 16 tests.
+  - `npm test` passed with 35 files / 400 tests.
+- Deferred:
+  - Vercel production authority remains blocked until `GOS_AUTHORITY_HMAC_SECRET` and Redis REST URL/token are provisioned.
+  - Gameplay mutation families beyond `SET_SELECTED_CROP` and `SET_ACTIVE_TOOL` are still intentionally not routed through authority.
+  - End-to-end live `/session` -> `/action` -> signed ack proof still requires the Vercel env fix and redeploy.
+
 Original prompt: Build the Garden OS Story Mode cutscene and character animation layer with chapter intros, event reveals, harvest result scenes, animated 2D portraits, camera choreography, and mobile-friendly dialogue flow. Keep the game engine responsible for facts and the narrative layer responsible for presentation.
 
 - Added Phase 2 engine work earlier: chapter rollover, real event draws, harvest journaling, crop growth stages.

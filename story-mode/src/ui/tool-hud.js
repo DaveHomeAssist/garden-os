@@ -57,10 +57,11 @@ function applyButtonStyles(button, selected) {
 }
 
 export class ToolHUD {
-  constructor(container, inputManager, store) {
+  constructor(container, inputManager, store, { onSelect } = {}) {
     this.container = container;
     this.inputManager = inputManager;
     this.store = store;
+    this.onSelect = typeof onSelect === 'function' ? onSelect : null;
     this.tools = [];
     this.buttons = new Map();
     this.selectedToolId = null;
@@ -113,13 +114,18 @@ export class ToolHUD {
     return this.tools.find((tool) => tool.id === this.selectedToolId) ?? null;
   }
 
-  selectTool(toolId) {
+  selectTool(toolId, { silent = false } = {}) {
     if (!this.tools.some((tool) => tool.id === toolId)) {
       return null;
     }
+    const previousToolId = this.selectedToolId;
     this.selectedToolId = toolId;
     this.syncSelection();
-    return this.getSelectedTool();
+    const selectedTool = this.getSelectedTool();
+    if (!silent && selectedTool && previousToolId !== toolId) {
+      this.onSelect?.(selectedTool);
+    }
+    return selectedTool;
   }
 
   setVisible(visible) {

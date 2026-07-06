@@ -376,6 +376,26 @@ async function verifyAuthorityAck(ack, {
   return body?.verified === true;
 }
 
+async function createAuthoritySession({
+  authorityUrl,
+  fetchFn = globalThis.fetch,
+  sessionId,
+} = {}) {
+  const url = resolveAuthorityUrl({ authorityUrl });
+  if (!url || typeof fetchFn !== 'function' || !sessionId) return null;
+
+  const response = await fetchFn(`${url}/session`, {
+    body: JSON.stringify({ sessionId }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.ok !== true || body?.session?.sessionId !== sessionId) {
+    throw new Error(body?.error ?? body?.rejection?.message ?? 'Authority session creation failed.');
+  }
+  return body.session;
+}
+
 function createStoryAuthorityPersistence(store, {
   authorityUrl,
   fetchFn = globalThis.fetch,
@@ -403,10 +423,26 @@ function createStoryAuthorityPersistence(store, {
   let chain = Promise.resolve();
   const sessionId = ensureSessionPointer(slot, storage);
   const resolvedAuthorityUrl = resolveAuthorityUrl({ authorityUrl, storage });
+  let sessionPromise = null;
 
   async function reconcileAck(ack) {
     const action = authorityAckToStoreAction(ack);
     if (action) store.dispatch(action);
+  }
+
+  async function ensureServerSession() {
+    if (!resolvedAuthorityUrl) return null;
+    if (!sessionPromise) {
+      sessionPromise = createAuthoritySession({
+        authorityUrl: resolvedAuthorityUrl,
+        fetchFn,
+        sessionId,
+      }).catch((error) => {
+        sessionPromise = null;
+        throw error;
+      });
+    }
+    return sessionPromise;
   }
 
   function enqueue(work, { force = false } = {}) {
@@ -433,6 +469,7 @@ function createStoryAuthorityPersistence(store, {
         const envelope = buildAuthorityEnvelope(action, state, { clientSeq, now, sessionId });
         await journal.enqueueAction(envelope, { queuedAt: isoNow(now) });
         if (resolvedAuthorityUrl) {
+          await ensureServerSession();
           await drainAuthorityQueue({
             authorityUrl: resolvedAuthorityUrl,
             fetchFn,
@@ -461,15 +498,18 @@ function createStoryAuthorityPersistence(store, {
       void chain.finally(() => journal.close());
     },
     drain() {
-      return enqueue(() => drainAuthorityQueue({
-        authorityUrl: resolvedAuthorityUrl,
-        fetchFn,
-        journal,
-        now,
-        onAck: reconcileAck,
-        sessionId,
-        verifyAck,
-      }));
+      return enqueue(async () => {
+        await ensureServerSession();
+        return drainAuthorityQueue({
+          authorityUrl: resolvedAuthorityUrl,
+          fetchFn,
+          journal,
+          now,
+          onAck: reconcileAck,
+          sessionId,
+          verifyAck,
+        });
+      });
     },
     flush() {
       return chain;
@@ -488,6 +528,7 @@ export {
   IndexedDbAuthorityJournal,
   authorityAckToStoreAction,
   buildAuthorityEnvelope,
+  createAuthoritySession,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
   ensureSessionPointer,

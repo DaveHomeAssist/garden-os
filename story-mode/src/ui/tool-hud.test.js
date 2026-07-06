@@ -117,4 +117,23 @@ describe('ToolHUD', () => {
 
     hud.dispose();
   });
+
+  it('notifies routed selection changes without firing for silent initialization', () => {
+    const inputManager = createInputManager();
+    const onSelect = vi.fn();
+    const hud = new ToolHUD(document.getElementById('app'), inputManager, null, { onSelect });
+    hud.setTools(createTools());
+
+    hud.selectTool('plant', { silent: true });
+    expect(onSelect).not.toHaveBeenCalled();
+
+    hud.selectTool('water');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'water' }));
+
+    hud.selectTool('water');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    hud.dispose();
+  });
 });

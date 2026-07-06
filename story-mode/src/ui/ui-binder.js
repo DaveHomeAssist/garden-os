@@ -193,11 +193,18 @@ function bindUI({
   });
   const letItGrowInteractionMode = isLetItGrowInteractionMode(state);
   const toolHUD = letItGrowInteractionMode
-    ? new ToolHUD(document.getElementById('app'), inputManager, store)
+    ? new ToolHUD(document.getElementById('app'), inputManager, store, {
+      onSelect: (tool) => {
+        dispatch({
+          type: Actions.SET_ACTIVE_TOOL,
+          payload: { toolId: tool.id },
+        });
+      },
+    })
     : null;
   if (toolHUD) {
     toolHUD.setTools(DEFAULT_TOOLS);
-    toolHUD.selectTool('hand');
+    toolHUD.selectTool(state.season.activeTool ?? 'hand', { silent: true });
     toolHUD.setVisible(false);
   }
 
@@ -1322,7 +1329,6 @@ function bindUI({
       dispatch({
         type: Actions.SET_SELECTED_CROP,
         payload: { cropId: cropButton.dataset.crop },
-        meta: { persist: false },
       });
       closePalette();
     });

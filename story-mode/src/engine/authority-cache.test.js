@@ -7,6 +7,7 @@ import {
   AUTHORITY_URL_KEY,
   authorityAckToStoreAction,
   buildAuthorityEnvelope,
+  createAuthoritySession,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
   resolveAuthorityUrl,
@@ -355,6 +356,117 @@ describe('authority IndexedDB cache', () => {
     })).resolves.toBe(false);
   });
 
+  it('creates a configured authority session before draining queued actions', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const calls = [];
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      calls.push({ body, url });
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          authoritativePatch: { data: { activeTool: 'water' } },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_ACTIVE_TOOL,
+      payload: { toolId: 'water' },
+    });
+    await persistence.flush();
+
+    expect(calls.map((call) => new URL(call.url).pathname)).toEqual(['/session', '/action', '/ack/verify']);
+    expect(calls[0].body).toEqual({ sessionId: persistence.sessionId });
+    expect(store.getState().season.activeTool).toBe('water');
+
+    persistence.cleanup();
+  });
+
+  it('surfaces configured authority session failures and leaves queued actions pending', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const fetchFn = vi.fn(async () => new Response(JSON.stringify({
+      error: 'AUTHORITY_STORE_UNCONFIGURED',
+      ok: false,
+    }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 503,
+    }));
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_SELECTED_CROP,
+      payload: { cropId: 'basil' },
+    });
+    await persistence.flush();
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn.mock.calls[0][0]).toBe('https://authority.example.test/session');
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(1);
+
+    persistence.cleanup();
+  });
+
+  it('posts authority session requests and validates the returned session id', async () => {
+    const fetchFn = vi.fn(async (url, init) => {
+      expect(url).toBe('https://authority.example.test/session');
+      expect(JSON.parse(init.body)).toEqual({ sessionId: 'session-post' });
+      return new Response(JSON.stringify({
+        ok: true,
+        session: { sessionId: 'session-post', tick: 0 },
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    });
+
+    await expect(createAuthoritySession({
+      authorityUrl: 'https://authority.example.test/',
+      fetchFn,
+      sessionId: 'session-post',
+    })).resolves.toMatchObject({ sessionId: 'session-post' });
+  });
+
   it('mirrors live store snapshots and queues routed actions without blocking render', async () => {
     const indexedDB = createFakeIndexedDB();
     const storage = createLocalStorage();
@@ -416,6 +528,16 @@ describe('authority IndexedDB cache', () => {
     const store = new Store(createGameState());
     let fetchCalls = 0;
     const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
       if (url.endsWith('/ack/verify')) {
         return new Response(JSON.stringify({ ok: true, verified: true }), {
           headers: { 'Content-Type': 'application/json' },
@@ -423,7 +545,7 @@ describe('authority IndexedDB cache', () => {
         });
       }
       fetchCalls += 1;
-      const envelope = JSON.parse(init.body);
+      const envelope = body;
       return new Response(JSON.stringify({
         ack: {
           ...ackFor(envelope),
