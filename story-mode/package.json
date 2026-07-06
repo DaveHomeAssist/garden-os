@@ -9,6 +9,7 @@
     "build:single": "npm run build && node scripts/export-single-file.mjs",
     "preview": "vite preview",
     "preview:dist": "node scripts/local-dist-transform-server.mjs",
+    "authority": "node scripts/authority-server.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

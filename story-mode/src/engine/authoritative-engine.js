@@ -1,7 +1,16 @@
 const ENGINE_VERSION = 1;
 const DEFAULT_MAX_PAYLOAD_BYTES = 64_000;
 const DEFAULT_PREDICTION_WINDOW = 2;
-const BLOCKED_PAYLOAD_KEYS = new Set(['state', 'gameState', 'fullState', 'entities', 'players']);
+const BLOCKED_PAYLOAD_KEYS = new Set([
+  'entityTotals',
+  'entities',
+  'fullState',
+  'gameState',
+  'players',
+  'resourceTotals',
+  'resources',
+  'state',
+]);
 
 function cloneValue(value) {
   if (value == null) return value;

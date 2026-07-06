@@ -17,6 +17,7 @@ assets/garden-os-man.mp4
 archives/
 story-mode/node_modules/
 story-mode/dist/
+story-mode/.garden-os-authority/
 
 # Large binary assets (sprites, textures, audio) — keep out of pack files
 garden-os-sprites/

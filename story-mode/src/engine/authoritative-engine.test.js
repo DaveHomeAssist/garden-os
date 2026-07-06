@@ -57,7 +57,7 @@ describe('authoritative engine core', () => {
       clientSentAt: NOW,
       expectedTick: 0,
       id: 'action-2',
-      payload: { state: { count: 999 } },
+      payload: { resourceTotals: { coins: 999 }, state: { count: 999 } },
       type: 'INCREMENT',
     });
     const result = applyAuthoritativeAction(state, envelope, { INCREMENT: counterReducer }, { now: NOW });
