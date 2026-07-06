@@ -10,6 +10,7 @@ import {
 } from './save.js';
 import { getCropById, getCropsForChapter, getRecipeById, getRecipes } from '../data/crops.js';
 import { getKeepsakeById, getKeepsakeSlots } from '../data/keepsakes.js';
+import { createStoryAuthorityPersistence } from '../engine/authority-cache.js';
 import { showGameplayGuide } from '../ui/gameplay-guide.js';
 import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.js';
 
@@ -330,12 +331,14 @@ function initGame(initialState, { slot }) {
   const unsubscribePersistence = subscribeToStoreSaves(store, () => slot, {
     shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
   });
+  const authorityPersistence = createStoryAuthorityPersistence(store, { slot });
 
   return {
     store,
     data: GAME_DATA,
     cleanup() {
       unsubscribePersistence();
+      authorityPersistence.cleanup();
     },
   };
 }
