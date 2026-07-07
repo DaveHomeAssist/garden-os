@@ -14,6 +14,16 @@ Update 2026-07-07 Story Mode fence removal and tool durability authority pass:
   - Atomic intervention transactions remain deferred: mulch/protect/water still span separate local actions.
   - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
 
+Update 2026-07-07 Story Mode fence angle follow-up:
+- Rechecked default, right house-edge, low right edge, opposite, zoom, and mobile Story Mode views after user feedback that the fence still appeared where the house ends.
+- Confirmed support geometry and July vertical heat panels remained absent (`supportMeshCount=0`, `summerHeatHaze.verticalPanelCount=0`) in each fresh angle capture.
+- Found the remaining post-like read was from non-gameplay guide/particle visuals: Story row label markers were still partially visible, and summer butterfly billboard planes rendered as small square chips through/around the bed.
+- Hid bed row markers outside Planner presentation and changed summer butterfly particles from square planes to rounded circle geometry while keeping the summer butterfly layer active.
+- Visual proof: local after-captures saved under `/tmp/garden-os-fence-user-angles-after-butterfly-round-20260707`.
+- Deferred:
+  - Live GitHub Pages deploy/smoke after commit and push.
+  - Any richer house re-model remains deferred; this pass only removes remaining fence/post reads from current Story visuals.
+
 Update 2026-07-07 Story Mode cell condition authority pass:
 - Routed `SET_DAMAGE`, `UPDATE_SOIL`, and `CARRY_FORWARD` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache.
 - Server authority now owns canonical starter-grid `damageState`, `soilFatigue`, `carryForwardType`, and `mulched` fields, with signed `lastDamage`, `lastSoil`, and `lastCarryForward` ack metadata.

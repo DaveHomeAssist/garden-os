@@ -1094,7 +1094,7 @@ export function createGardenScene(container) {
   stringLights.visible = false;
   root.add(stringLights);
 
-  // 6. Butterfly particles (summer) — billboard planes, animated in render loop
+  // 6. Butterfly particles (summer) — rounded sprites, animated in render loop
   const butterflies = new THREE.Group();
   const butterflyData = [];
   {
@@ -1116,7 +1116,7 @@ export function createGardenScene(container) {
       const mat = bfBaseMat.clone();
       mat.color.setHex(cfg.color);
       mat.emissive.setHex(cfg.color);
-      const bf = new THREE.Mesh(new THREE.PlaneGeometry(0.058, 0.042), mat);
+      const bf = new THREE.Mesh(new THREE.CircleGeometry(0.026, 12), mat);
       bf.position.set(cfg.x, cfg.y, cfg.z);
       butterflies.add(bf);
       butterflyData.push({ mesh: bf, baseX: cfg.x, baseY: cfg.y, baseZ: cfg.z, phase: cfg.phase, speed: cfg.speed });
@@ -2542,7 +2542,7 @@ function getGrowthScale(phase, season) {
         trellisOpacity: 0.34,
         labelsVisible: false,
         labelOpacity: 0,
-        markerOpacity: 0.34,
+        markerOpacity: 0,
       },
       celebration: {
         gridOpacity: 0.035,
@@ -2550,7 +2550,7 @@ function getGrowthScale(phase, season) {
         trellisOpacity: 0.28,
         labelsVisible: false,
         labelOpacity: 0,
-        markerOpacity: 0.24,
+        markerOpacity: 0,
       },
     }[styleName] || {
       gridOpacity: 0.08,
@@ -2588,6 +2588,7 @@ function getGrowthScale(phase, season) {
       }
     });
     bed.labelMarkers?.forEach((marker) => {
+      marker.visible = presentation.markerOpacity > 0.01;
       if (marker.material) {
         marker.material.transparent = true;
         marker.material.opacity = presentation.markerOpacity;
