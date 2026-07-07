@@ -24,7 +24,7 @@ const DESIGN_TOKENS = {
 
 const SEASON_LIGHTING = {
   spring: { sky: 0xc8d9e4, ground: 0x56462d, sunColor: 0xfff4de, ambientColor: 0xf3ead8, sunAngle: 52, sunInt: 1.45, ambInt: 0.7, ambientInt: 0.1, fillInt: 0.48, fogDensity: 0.021, sunX: -2.7, sunZ: 4.8, fillX: 3.8, fillZ: -2.1 },
-  summer: { sky: 0xf0e0b8, ground: DESIGN_TOKENS.soil, sunColor: DESIGN_TOKENS.sun, ambientColor: 0xffefd0, sunAngle: 70, sunInt: 2.25, ambInt: 1.18, ambientInt: 0.32, fillInt: 0.9, fogDensity: 0.012, sunX: -1.6, sunZ: 4.2, fillX: 4.4, fillZ: -2.6 },
+  summer: { sky: 0xf0e0b8, ground: DESIGN_TOKENS.soil, sunColor: DESIGN_TOKENS.sun, ambientColor: 0xffefd0, sunAngle: 70, sunInt: 2.25, ambInt: 1.36, ambientInt: 0.54, fillInt: 1.02, fogDensity: 0.012, sunX: -1.6, sunZ: 4.2, fillX: 4.4, fillZ: -2.6 },
   fall:   { sky: 0xd8b17a, ground: 0x4a3116, sunColor: 0xffd49a, ambientColor: 0xf0d0a8, sunAngle: 38, sunInt: 1.16, ambInt: 0.56, ambientInt: 0.08, fillInt: 0.4, fogDensity: 0.024, sunX: -3.4, sunZ: 4.6, fillX: 3.6, fillZ: -1.8 },
   winter: { sky: 0x7e8ea0, ground: 0x231f26, sunColor: 0xd9e7ff, ambientColor: 0xb8c7da, sunAngle: 28, sunInt: 0.78, ambInt: 0.42, ambientInt: 0.05, fillInt: 0.3, fogDensity: 0.028, sunX: -4.0, sunZ: 3.3, fillX: 2.8, fillZ: -1.6 },
 };
@@ -94,22 +94,16 @@ function createGrassTexture(repeatX = 1, repeatY = 1) {
   return makeCanvasTexture(192, (ctx, size) => {
     ctx.fillStyle = '#496b34';
     ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 1500; i++) {
-      const x = (i * 37) % size;
-      const y = (i * 73) % size;
-      const h = 4 + (i % 5);
-      ctx.strokeStyle = i % 7 === 0 ? 'rgba(190, 170, 96, 0.16)' : 'rgba(92, 140, 72, 0.22)';
+    for (let i = 0; i < 950; i++) {
+      const x = seededRandom(i * 7 + 41) * size;
+      const y = seededRandom(i * 7 + 47) * size;
+      const radius = 1.2 + seededRandom(i * 7 + 53) * 3.2;
+      const alpha = 0.05 + seededRandom(i * 7 + 59) * 0.1;
+      ctx.fillStyle = i % 5 === 0
+        ? `rgba(190, 170, 96, ${alpha * 0.65})`
+        : `rgba(42, 76, 34, ${alpha})`;
       ctx.beginPath();
-      ctx.moveTo(x, y + h);
-      ctx.lineTo(x + ((i % 3) - 1) * 2, y);
-      ctx.stroke();
-    }
-    for (let i = 0; i < 320; i++) {
-      const x = (i * 53) % size;
-      const y = (i * 97) % size;
-      ctx.fillStyle = 'rgba(58, 92, 43, 0.16)';
-      ctx.beginPath();
-      ctx.arc(x, y, 2 + (i % 2), 0, Math.PI * 2);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     }
   }, repeatX, repeatY);
@@ -422,7 +416,7 @@ export function createGardenScene(container) {
 
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95, vertexColors: true, map: grassTexture, bumpMap: grassTexture, bumpScale: 0.012 })
+    new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95, vertexColors: true, map: grassTexture })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.01;
@@ -469,11 +463,9 @@ export function createGardenScene(container) {
 
     // Deterministic scatter — avoid bed area and path
     const GRASS_COUNT = 220;
-    const SEED = 7919;
     for (let i = 0; i < GRASS_COUNT; i++) {
-      const hash = ((i + 1) * SEED) % 10007;
-      const nx = ((hash % 997) / 997) * 2 - 1;
-      const nz = ((hash % 991) / 991) * 2 - 1;
+      const nx = seededRandom(i * 11 + 503) * 2 - 1;
+      const nz = seededRandom(i * 11 + 509) * 2 - 1;
       const gx = nx * 8;
       const gz = nz * 6 + 1.5;
 
@@ -487,9 +479,9 @@ export function createGardenScene(container) {
       const dist = Math.sqrt(gx * gx + (gz - 1) * (gz - 1));
       if (dist > 9) continue;
 
-      const scale = 0.7 + ((hash % 13) / 13) * 0.6;
-      const rotY = ((hash % 31) / 31) * Math.PI;
-      const tint = 0.85 + ((hash % 17) / 17) * 0.3;
+      const scale = 0.7 + seededRandom(i * 11 + 521) * 0.6;
+      const rotY = seededRandom(i * 11 + 523) * Math.PI;
+      const tint = 0.85 + seededRandom(i * 11 + 541) * 0.3;
 
       const tuft = new THREE.Mesh(tuftGeo, tuftMat.clone());
       tuft.material.color = new THREE.Color(tint * 0.3, tint * 0.45, tint * 0.22);

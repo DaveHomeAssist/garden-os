@@ -1,3 +1,16 @@
+Update 2026-07-07 Story Mode fence edge correction:
+- Removed the remaining fence-read house-edge scenery from Story Mode: right-side rain barrel, AC unit, trash cans, blue crate, brick patch, utility tag, mortar scars, left neighbor wall/roof/foundation cluster, alley strip, distant side blocks, repeated July crack/weed rails, and the straight mulch strip under the shrubs.
+- Removed the bottom-right `#app::after` repeating-linear-gradient overlay that survived as a fence-like striped rectangle over the gameplay canvas.
+- Changed the procedural grass texture from line strokes to soft seeded mottling, removed lawn bump mapping, and changed grass tuft placement from modular rows to seeded scatter so ground detail does not form repeated rail bands at oblique camera angles.
+- Kept the backdrop to the house wall, stoop, shrubs, non-linear July stains, heat shimmer, bed, and core gameplay props.
+- Added screenshot regression assertions that the removed house-edge/fence-read cues and the bottom-right striped CSS overlay stay absent while `rowhouse-siding`, `phillies-pennant`, and `july-ground-stain` remain available as place cues.
+- Raised summer ambient/fill lighting just enough to keep the post-cut scene above the existing screenshot readability gate.
+- Visual proof: local seeded summer captures checked default, both house-edge orbits, low/zoom angles, and mobile under `/tmp/garden-os-fence-angles-20260707-css-fix`; screenshot regression proof saved under `/tmp/garden-os-story-screens-fence-css-fix-pass`.
+- Final validation: Story Mode screenshot regression passed, `npm test` passed 35 files / 416 tests, and `npm run build` passed after the CSS stripe removal. Earlier in this correction pass, `npm audit --audit-level=high` found 0 vulnerabilities, `node scripts/verify-all.mjs` passed all requested Garden OS gates, and the develop-web-game client reached gameplay with only the known static 404 and unprovisioned authority 503 console errors.
+- Deferred:
+  - Live GitHub Pages deployment verification after commit/push.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode cooldown authority pass:
 - Routed `SET_COOLDOWN` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the first tool-state authority mutation.
 - Server authority now stores canonical `toolCooldowns` and emits `lastCooldown` ack metadata with normalized `key`, `toolId`, `cellIndex`, and `until`.

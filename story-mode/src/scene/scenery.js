@@ -6,9 +6,6 @@ import * as THREE from 'three';
 
 const GRASS_DARK = 0x3a5a2a;
 const FOUNDATION_COLOR = 0x6d706d;
-const MULCH_COLOR = 0x5b452f;
-const JULY_WEED_COLOR = 0x3d7a4f;
-const JULY_DRY_WEED_COLOR = 0xb99a48;
 
 const SEASON_TREE_COLORS = {
   spring: [0x5aaa55, 0x6dbb68, 0x4a9a45],
@@ -49,25 +46,6 @@ function createBoardTexture(baseColor, grainColor, repeatX = 1, repeatY = 1) {
       ctx.moveTo(0, y + Math.sin(y * 0.09) * 4);
       ctx.lineTo(size, y - Math.cos(y * 0.07) * 3);
       ctx.stroke();
-    }
-  }, repeatX, repeatY);
-}
-
-function createPebbleTexture(baseHex, speckHex, repeatX = 1, repeatY = 1) {
-  const base = new THREE.Color(baseHex);
-  const speck = new THREE.Color(speckHex);
-  return makeCanvasTexture(192, (ctx, size) => {
-    ctx.fillStyle = `#${base.getHexString()}`;
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 1200; i++) {
-      const x = (i * 47) % size;
-      const y = (i * 83) % size;
-      const r = 1 + (i % 2);
-      const alpha = 0.12 + (i % 4) * 0.03;
-      ctx.fillStyle = `rgba(${Math.round(speck.r * 255)}, ${Math.round(speck.g * 255)}, ${Math.round(speck.b * 255)}, ${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
     }
   }, repeatX, repeatY);
 }
@@ -114,34 +92,11 @@ export function buildScenery(tracker = null) {
   const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
   const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
   const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
-  const mulchTexture = createPebbleTexture(MULCH_COLOR, 0x7a5d3a, 3.8, 1.4);
-  const brickTexture = makeCanvasTexture(192, (ctx, size) => {
-    ctx.fillStyle = '#8d4d34';
-    ctx.fillRect(0, 0, size, size);
-    for (let y = 0; y < size; y += 24) {
-      ctx.fillStyle = 'rgba(70, 38, 28, 0.34)';
-      ctx.fillRect(0, y, size, 3);
-    }
-    for (let y = 0; y < size; y += 24) {
-      for (let x = (y / 24) % 2 ? -24 : 0; x < size; x += 48) {
-        ctx.fillStyle = 'rgba(70, 38, 28, 0.26)';
-        ctx.fillRect(x, y, 3, 24);
-      }
-    }
-    for (let i = 0; i < 260; i++) {
-      const x = (i * 41) % size;
-      const y = (i * 67) % size;
-      ctx.fillStyle = i % 3 === 0 ? 'rgba(255, 220, 180, 0.12)' : 'rgba(38, 20, 12, 0.12)';
-      ctx.fillRect(x, y, 1 + (i % 3), 1);
-    }
-  }, 2.4, 1.5);
-
   const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide, map: sidingTexture, bumpMap: sidingTexture, bumpScale: 0.01 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78, map: trimTexture, bumpMap: trimTexture, bumpScale: 0.008 });
   const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88, map: porchTexture, bumpMap: porchTexture, bumpScale: 0.008 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
   const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
-  const brickMat = new THREE.MeshStandardMaterial({ color: 0x8d4d34, roughness: 0.95, side: THREE.DoubleSide, map: brickTexture, bumpMap: brickTexture, bumpScale: 0.008 });
 
   function registerBreezeNode(mesh, {
     rotX = 0,
@@ -180,15 +135,6 @@ export function buildScenery(tracker = null) {
   );
   foundationStrip.position.set(0, 0.19, -6.06);
   group.add(foundationStrip);
-
-  const mulchBed = new THREE.Mesh(
-    createSoftPatchGeometry(7.3, 0.95, 32, 8, 0.022, 0.18),
-    new THREE.MeshStandardMaterial({ color: MULCH_COLOR, roughness: 0.98, map: mulchTexture, bumpMap: mulchTexture, bumpScale: 0.01 })
-  );
-  mulchBed.rotation.x = -Math.PI / 2;
-  mulchBed.position.set(0.25, 0.005, -4.95);
-  mulchBed.receiveShadow = true;
-  group.add(mulchBed);
 
   for (const { x, z, scale, color } of [
     { x: -1.9, z: -4.86, scale: 1.1, color: 0x527d46 },
@@ -401,17 +347,6 @@ export function buildScenery(tracker = null) {
   dryerVent.rotation.x = Math.PI / 2;
   dryerVent.position.set(1.1, 0.8, -4.68);
   group.add(dryerVent);
-
-  const barrelMat = new THREE.MeshStandardMaterial({ color: 0x3c5f46, roughness: 0.76 });
-  const rainBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 18), barrelMat);
-  rainBarrel.position.set(3.03, 0.35, -4.78);
-  rainBarrel.castShadow = true;
-  markPlaceCue(rainBarrel, 'rain-barrel');
-  group.add(rainBarrel);
-
-  const barrelLid = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 18), trimMat);
-  barrelLid.position.set(3.03, 0.72, -4.78);
-  group.add(barrelLid);
 
   // 4. Wall-mounted light fixture above the back door
   const fixtureMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.7 });
@@ -728,17 +663,11 @@ export function buildScenery(tracker = null) {
   puddles.visible = false;
   group.add(puddles);
 
-  // 17. July alley grit: cracked concrete, heat haze, weeds, and rowhome repairs
+  // 17. July ground grit: non-linear stains and heat shimmer kept off the house edge.
   const summerGrit = new THREE.Group();
   const summerHeatHaze = new THREE.Group();
   const heatHazePlanes = [];
   {
-    const crackMat = new THREE.MeshStandardMaterial({
-      color: 0x2d251d,
-      roughness: 1,
-      transparent: true,
-      opacity: 0.48,
-    });
     const stainMat = new THREE.MeshStandardMaterial({
       color: 0x271d14,
       roughness: 1,
@@ -746,86 +675,7 @@ export function buildScenery(tracker = null) {
       opacity: 0.2,
       side: THREE.DoubleSide,
     });
-    const weedMat = new THREE.MeshStandardMaterial({
-      color: JULY_WEED_COLOR,
-      roughness: 0.78,
-      side: THREE.DoubleSide,
-    });
-    const dryWeedMat = new THREE.MeshStandardMaterial({
-      color: JULY_DRY_WEED_COLOR,
-      roughness: 0.82,
-      side: THREE.DoubleSide,
-    });
-    const metalMat = new THREE.MeshStandardMaterial({ color: 0x8a887f, roughness: 0.72, metalness: 0.18 });
-
-    const brickPatch = new THREE.Mesh(new THREE.PlaneGeometry(1.02, 1.1), brickMat);
-    brickPatch.position.set(3.38, 1.35, -6.04);
-    brickPatch.rotation.y = Math.PI;
-    brickPatch.receiveShadow = true;
-    markPlaceCue(brickPatch, 'philly-party-wall-brick');
-    summerGrit.add(brickPatch);
-
-    const mortarScars = [
-      { x: 2.88, y: 1.18, w: 0.28 },
-      { x: 3.42, y: 1.55, w: 0.2 },
-      { x: 3.73, y: 0.92, w: 0.32 },
-    ];
-    mortarScars.forEach(({ x, y, w }, index) => {
-      const scar = new THREE.Mesh(
-        new THREE.BoxGeometry(w, 0.018, 0.008),
-        new THREE.MeshStandardMaterial({ color: 0xd6c6aa, roughness: 0.96 }),
-      );
-      scar.position.set(x, y, -6.0);
-      markPlaceCue(scar, index === 0 ? 'rowhome-mortar-repair' : null);
-      summerGrit.add(scar);
-    });
-
-    const utilityPlate = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.02), metalMat);
-    utilityPlate.position.set(4.08, 0.84, -5.96);
-    markPlaceCue(utilityPlate, 'philly-alley-utility-tag');
-    summerGrit.add(utilityPlate);
-    for (const y of [-0.044, 0.044]) {
-      const screw = new THREE.Mesh(new THREE.CircleGeometry(0.012, 8), metalMat);
-      screw.position.set(4.08, 0.84 + y, -5.948);
-      summerGrit.add(screw);
-    }
-
-    const crackData = [
-      { x: -2.35, z: 2.36, w: 0.72, rot: 0.16 },
-      { x: -0.95, z: 2.96, w: 0.88, rot: -0.34 },
-      { x: 0.92, z: 2.22, w: 0.64, rot: 0.28 },
-      { x: 2.2, z: 1.48, w: 0.58, rot: -0.18 },
-      { x: 3.3, z: -3.35, w: 0.7, rot: 0.08 },
-    ];
-    crackData.forEach(({ x, z, w, rot }, index) => {
-      const crack = new THREE.Mesh(new THREE.BoxGeometry(w, 0.004, 0.026), crackMat.clone());
-      crack.rotation.y = rot;
-      crack.position.set(x, 0.014, z);
-      crack.receiveShadow = true;
-      markPlaceCue(crack, index === 0 ? 'july-weed-cracks' : null);
-      summerGrit.add(crack);
-      for (let i = 0; i < 3; i++) {
-        const blade = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.022 + i * 0.004, 0.13 + (i % 2) * 0.04),
-          i === 2 ? dryWeedMat.clone() : weedMat.clone(),
-        );
-        blade.position.set(x - w * 0.32 + i * w * 0.22, 0.026, z + (i - 1) * 0.018);
-        blade.rotation.x = -0.18;
-        blade.rotation.y = rot + (i - 1) * 0.28;
-        blade.rotation.z = (i - 1) * 0.16;
-        registerBreezeNode(blade, {
-          rotZ: 0.16,
-          rotY: 0.06,
-          lift: 0.004,
-          speed: 1.4 + i * 0.18,
-          phase: x + z + i,
-        });
-        summerGrit.add(blade);
-      }
-    });
-
     const stainData = [
-      { x: 3.56, z: -3.86, sx: 1.8, sz: 0.62, opacity: 0.18 },
       { x: -2.54, z: 2.75, sx: 1.05, sz: 0.5, opacity: 0.12 },
       { x: 2.0, z: 2.64, sx: 0.92, sz: 0.42, opacity: 0.1 },
     ];
@@ -836,28 +686,9 @@ export function buildScenery(tracker = null) {
       stain.rotation.z = index * 0.52;
       stain.position.set(x, 0.012, z);
       stain.scale.set(sx, sz, 1);
-      markPlaceCue(stain, index === 0 ? 'alley-oil-stain' : null);
+      markPlaceCue(stain, index === 0 ? 'july-ground-stain' : null);
       summerGrit.add(stain);
     });
-
-    const crateGroup = new THREE.Group();
-    const crateMat = new THREE.MeshStandardMaterial({ color: 0x225aa6, roughness: 0.82 });
-    for (const [w, h, d, x, y, z] of [
-      [0.42, 0.035, 0.22, 0, 0, 0],
-      [0.42, 0.035, 0.22, 0, 0.22, 0],
-      [0.035, 0.24, 0.22, -0.2, 0.11, 0],
-      [0.035, 0.24, 0.22, 0.2, 0.11, 0],
-      [0.42, 0.035, 0.035, 0, 0.11, -0.1],
-      [0.42, 0.035, 0.035, 0, 0.11, 0.1],
-    ]) {
-      const part = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), crateMat);
-      part.position.set(x, y, z);
-      crateGroup.add(part);
-    }
-    crateGroup.position.set(3.84, 0.04, -4.15);
-    crateGroup.rotation.y = -0.12;
-    markPlaceCue(crateGroup, 'blue-milk-crate-alley');
-    summerGrit.add(crateGroup);
 
     const heatMat = new THREE.MeshBasicMaterial({
       color: 0xe8c84a,
@@ -916,7 +747,7 @@ export function buildScenery(tracker = null) {
   winterSmoke.visible = false;
   group.add(winterSmoke);
 
-  // ── EXPANDED SCENERY — full house and neighbors ─────────────────
+  // ── EXPANDED SCENERY — full house backdrop ─────────────────
 
   // === FULL HOUSE — second floor, roof, chimney, more windows ===
 
@@ -1014,96 +845,7 @@ export function buildScenery(tracker = null) {
   gutterRight.position.set(1.8, roofBaseY - 0.02, -5.2);
   group.add(gutterRight);
 
-  // === NEIGHBOR HOUSE — LEFT SIDE ===
-  const neighborSidingLeft = new THREE.MeshStandardMaterial({ color: 0xc4a882, roughness: 0.88, side: THREE.DoubleSide });
-  const neighborRoofLeft = new THREE.MeshStandardMaterial({ color: 0x3a3832, roughness: 0.94 });
-
-  const nLeftWall = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), neighborSidingLeft);
-  nLeftWall.position.set(-6.5, 2.25, -4.8);
-  nLeftWall.rotation.y = -Math.PI / 2.7;
-  group.add(nLeftWall);
-
-  // Left neighbor second wall (front-facing)
-  const nLeftWall2 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 4.5), neighborSidingLeft);
-  nLeftWall2.position.set(-7.2, 2.25, -3.4);
-  nLeftWall2.rotation.y = 0.15;
-  group.add(nLeftWall2);
-
-  const nLeftRoof = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 2.0), neighborRoofLeft);
-  nLeftRoof.position.set(-6.8, 4.4, -4.1);
-  nLeftRoof.rotation.y = -Math.PI / 2.7;
-  group.add(nLeftRoof);
-
-  // Left neighbor window
-  const nLeftWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.55), trimMat);
-  nLeftWin.position.set(-6.45, 2.0, -4.75);
-  nLeftWin.rotation.y = -Math.PI / 2.7;
-  group.add(nLeftWin);
-
-  // Left neighbor foundation
-  const nLeftFound = new THREE.Mesh(
-    new THREE.BoxGeometry(3.2, 0.35, 0.18),
-    new THREE.MeshStandardMaterial({ color: FOUNDATION_COLOR, roughness: 0.94 })
-  );
-  nLeftFound.position.set(-6.6, 0.18, -4.4);
-  nLeftFound.rotation.y = -Math.PI / 2.7;
-  group.add(nLeftFound);
-
-  // === ALLEY ===
-  // Alley ground kept behind the wall so it does not read as a fence or path through the garden.
-  const alleyMat = new THREE.MeshStandardMaterial({ color: 0x343630, roughness: 0.98 });
-  const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(8.2, 0.7), alleyMat);
-  alleyGround.rotation.x = -Math.PI / 2;
-  alleyGround.position.set(0, 0.002, -7.35);
-  markPlaceCue(alleyGround, 'back-alley-strip');
-  group.add(alleyGround);
-
-  // === ADDITIONAL DISTANT ROOFTOPS (more depth) ===
-  {
-    const distMat = new THREE.MeshStandardMaterial({ color: 0x4a4a58, roughness: 0.95 });
-    const distMat2 = new THREE.MeshStandardMaterial({ color: 0x5a5250, roughness: 0.95 });
-    const moreRooftops = [
-      { w: 2.5, h: 2.0, d: 1.8, x: -8.5, y: 1.0, z: -9.0, mat: distMat },
-      { w: 1.8, h: 2.5, d: 1.5, x: -10.2, y: 1.25, z: -8.5, mat: distMat2 },
-      { w: 3.0, h: 1.5, d: 2.0, x: -6.5, y: 0.75, z: -10.0, mat: distMat },
-      { w: 2.2, h: 1.8, d: 1.6, x: 14.0, y: 0.9, z: -8.8, mat: distMat2 },
-      { w: 1.5, h: 2.2, d: 1.3, x: 9.5, y: 1.1, z: -10.2, mat: distMat },
-    ];
-    moreRooftops.forEach(({ w, h, d, x, y, z, mat }) => {
-      const block = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-      block.position.set(x, y, z);
-      group.add(block);
-    });
-  }
-
   // === MISC YARD DETAILS ===
-
-  // AC unit on right side of house
-  const acMat = new THREE.MeshStandardMaterial({ color: 0x909090, roughness: 0.7, metalness: 0.15 });
-  const acUnit = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.35), acMat);
-  acUnit.position.set(3.6, 0.225, -4.5);
-  markPlaceCue(acUnit, 'window-ac-unit');
-  group.add(acUnit);
-  // AC fan grille (circle on top)
-  const acFan = new THREE.Mesh(
-    new THREE.CircleGeometry(0.15, 12),
-    new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.6, metalness: 0.3 })
-  );
-  acFan.rotation.x = -Math.PI / 2;
-  acFan.position.set(3.6, 0.451, -4.5);
-  group.add(acFan);
-
-  // Trash cans near alley
-  const trashMat = new THREE.MeshStandardMaterial({ color: 0x2a5a2a, roughness: 0.8 });
-  for (const [tx, tz] of [[3.2, -4.0], [3.5, -3.85]]) {
-    const trashCan = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.5, 10), trashMat);
-    trashCan.position.set(tx, 0.25, tz);
-    trashCan.castShadow = true;
-    group.add(trashCan);
-    const trashLid = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 10), trashMat);
-    trashLid.position.set(tx, 0.52, tz);
-    group.add(trashLid);
-  }
 
   // Flower box under back window
   const flowerBoxMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.88 });

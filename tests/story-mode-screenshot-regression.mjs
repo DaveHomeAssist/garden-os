@@ -601,10 +601,37 @@ async function assertSeasonalPlaceLayer(page, season) {
   const debug = await readVisualDebug(page);
   assert(debug, 'Expected visual debug state.');
   assert(debug.seasonalAtmosphere?.season === season, `Expected ${season} atmosphere, got ${debug.seasonalAtmosphere?.season}.`);
-  assert(debug.seasonalAtmosphere.placeCueCount >= 7, `Expected at least 7 Philly place cues, got ${debug.seasonalAtmosphere.placeCueCount}.`);
-  ['back-alley-strip', 'phillies-pennant', 'rain-barrel', 'rowhouse-siding', 'window-ac-unit'].forEach((cue) => {
+  assert(debug.seasonalAtmosphere.placeCueCount >= 2, `Expected at least 2 Philly place cues, got ${debug.seasonalAtmosphere.placeCueCount}.`);
+  ['phillies-pennant', 'rowhouse-siding'].forEach((cue) => {
     assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing Philly place cue ${cue}.`);
   });
+  [
+    'back-alley-strip',
+    'blue-milk-crate-alley',
+    'july-weed-cracks',
+    'philly-alley-utility-tag',
+    'philly-party-wall-brick',
+    'rain-barrel',
+    'rowhome-mortar-repair',
+    'window-ac-unit',
+  ].forEach((cue) => {
+    assert(!debug.seasonalAtmosphere.placeCues.includes(cue), `Fence-read house-edge cue should stay removed: ${cue}.`);
+  });
+  const appOverlay = await page.evaluate(() => {
+    const app = document.querySelector('#app');
+    if (!app) return { display: '', backgroundImage: '' };
+    const after = getComputedStyle(app, '::after');
+    return {
+      display: after.display,
+      backgroundImage: after.backgroundImage,
+    };
+  });
+  assert(
+    appOverlay.display === 'none'
+      || appOverlay.backgroundImage === 'none'
+      || !appOverlay.backgroundImage.includes('repeating-linear-gradient'),
+    `Bottom-right app overlay should not render fence-like stripes: ${JSON.stringify(appOverlay)}`,
+  );
 
   const expectations = {
     spring: ['springPuddles', 'scenerySpringFlowers', 'sceneryPuddles'],
@@ -619,7 +646,7 @@ async function assertSeasonalPlaceLayer(page, season) {
     assert(lighting.sunColor === '#e8c84a', `Expected July sun token #e8c84a, got ${lighting.sunColor}.`);
     assert(lighting.sunIntensity >= 1.9, `Expected stronger July sun intensity, got ${lighting.sunIntensity}.`);
     assert(lighting.ambientIntensity >= 0.16, `Expected soft July ambient light, got ${lighting.ambientIntensity}.`);
-    ['philly-party-wall-brick', 'july-weed-cracks', 'philly-alley-utility-tag', 'alley-oil-stain', 'blue-milk-crate-alley'].forEach((cue) => {
+    ['july-ground-stain'].forEach((cue) => {
       assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing July Philly place cue ${cue}.`);
     });
     assert(

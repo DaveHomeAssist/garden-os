@@ -3862,13 +3862,7 @@
     }
 
     #app::after {
-      border-radius: 0;
-      background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent 18%),
-        repeating-linear-gradient(0deg, rgba(var(--story-zone-accent-rgb), 0.14) 0 6px, transparent 6px 12px);
-      filter: none;
-      opacity: 0.45;
-      transform: rotate(-6deg);
+      display: none;
     }
 
     #hud {
