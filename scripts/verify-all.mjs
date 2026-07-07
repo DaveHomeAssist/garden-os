@@ -156,6 +156,7 @@ async function runLocalVerification() {
     ['Sync client worker URL tests', ['--test', 'tests/sync-client-worker-url.test.mjs']],
     ['Sync worker security tests', ['--test', 'tests/sync-worker-security.test.mjs']],
     ['Authority worker security tests', ['--test', 'tests/authority-worker.test.mjs']],
+    ['Vercel authority API import tests', ['--test', 'tests/vercel-authority-api-import.test.mjs']],
   ];
 
   for (const [name, scriptArgs, options] of nodeRegressionScripts) {

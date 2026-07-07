@@ -1,3 +1,12 @@
+Update 2026-07-07 Vercel authority runtime crash fix:
+- Fixed the production Vercel authority crash that happened before CORS/preflight could respond: `api/session` imported `authority-service`, which imported `game/inventory`, which pulled browser/build-time `specs/*` aliases unavailable in the Vercel function runtime.
+- Made the server authority inventory path self-contained for starter tools/materials, normalization, and tool durability mutation so API entrypoints no longer depend on the browser Story Mode inventory module.
+- Added a Node-level `tests/vercel-authority-api-import.test.mjs` regression and wired it into `node scripts/verify-all.mjs`, so API entrypoints must import under plain Node without Vite/browser aliases.
+- Validation: Vercel API imports passed under plain Node; focused Vercel authority/server/inventory/tool tests passed 46 tests; `vercel build` passed; full Story Mode Vitest passed 35 files / 430 tests; `npm run build`, `npm audit --audit-level=high`, `git diff --check`, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Production authority storage remains unconfigured until `GOS_AUTHORITY_HMAC_SECRET` and Upstash Redis REST URL/token envs are set in Vercel.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked by those missing envs; this pass fixes the runtime crash/CORS failure path.
+
 Update 2026-07-07 Story Mode authority proof hardening pass:
 - Added explicit engine replay proof that the same seed plus the same action ledger replays to the same checksum across fresh authority states, while a different seed produces a different checksum.
 - Added IndexedDB persistence proof that an offline outbound queue survives a simulated app restart, drains once after reconnect, stores the ack, and does not resend after a second restart.

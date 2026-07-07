@@ -7,17 +7,23 @@ import {
   createEngineState,
   stableStringify,
 } from '../engine/authoritative-engine.js';
-import {
-  addItemToInventoryState,
-  applyToolDurabilityToInventoryState,
-  createInventoryState,
-  normalizeInventoryState,
-} from '../game/inventory.js';
 
 const ACK_SIGNATURE_PREFIX = 'hmac-sha256:';
 const DEFAULT_GAME_ID = 'garden';
 const DEFAULT_SECRET = 'dev-only-garden-os-authority-secret';
 const AUTHORITY_GRID_SIZE = 32;
+const AUTHORITY_INVENTORY_CAPACITY = 20;
+const AUTHORITY_ITEM_CATEGORIES = {
+  MATERIALS: 'materials',
+  TOOLS: 'tools',
+};
+const AUTHORITY_ITEM_DEFS = {
+  fertilizer_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
+  mulch_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  pest_spray: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  pruning_shears: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 50, stackable: false },
+  watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 100, stackable: false },
+};
 const DEFAULT_AUTHORITY_CELL = {
   carryForwardType: null,
   cropId: null,
@@ -74,18 +80,127 @@ function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value ?? {}, key);
 }
 
+function getAuthorityItemDef(itemId) {
+  return AUTHORITY_ITEM_DEFS[itemId] ?? {
+    category: AUTHORITY_ITEM_CATEGORIES.MATERIALS,
+    maxStack: 99,
+    stackable: true,
+  };
+}
+
+function createAuthorityInventoryState(capacity = AUTHORITY_INVENTORY_CAPACITY, tier = 1) {
+  return {
+    capacity,
+    equippedToolId: null,
+    slots: Array.from({ length: capacity }, () => null),
+    tier,
+  };
+}
+
+function normalizeAuthorityInventorySlot(slot) {
+  if (!slot?.itemId) return null;
+  const itemDef = getAuthorityItemDef(slot.itemId);
+  return {
+    category: slot.category ?? itemDef.category,
+    count: Math.max(1, Number(slot.count ?? 1)),
+    durability: slot.durability ?? itemDef.durability ?? null,
+    itemId: slot.itemId,
+    maxDurability: slot.maxDurability ?? itemDef.durability ?? null,
+    metadata: cloneValue(slot.metadata ?? {}),
+  };
+}
+
+function normalizeAuthorityInventoryState(raw) {
+  if (raw?.slots && Array.isArray(raw.slots)) {
+    const capacity = Math.max(Number(raw.capacity ?? raw.slots.length ?? AUTHORITY_INVENTORY_CAPACITY), AUTHORITY_INVENTORY_CAPACITY);
+    const inventory = createAuthorityInventoryState(capacity, Number(raw.tier ?? 1));
+    raw.slots.slice(0, capacity).forEach((slot, index) => {
+      inventory.slots[index] = normalizeAuthorityInventorySlot(slot);
+    });
+    inventory.equippedToolId = raw.equippedToolId ?? null;
+    return inventory;
+  }
+
+  let inventory = createAuthorityInventoryState();
+  for (const [itemId, count] of Object.entries(raw ?? {})) {
+    if (['capacity', 'equippedToolId', 'slots', 'tier'].includes(itemId) || Number(count) <= 0) continue;
+    inventory = addAuthorityInventoryItem(inventory, itemId, Number(count)).inventory;
+  }
+  return inventory;
+}
+
+function cloneAuthorityInventory(inventoryState) {
+  const inventory = normalizeAuthorityInventoryState(inventoryState);
+  return {
+    ...inventory,
+    slots: inventory.slots.map((slot) => cloneValue(slot)),
+  };
+}
+
+function addAuthorityInventoryItem(inventoryState, itemId, count = 1) {
+  const inventory = cloneAuthorityInventory(inventoryState);
+  const itemDef = getAuthorityItemDef(itemId);
+  let remaining = Math.max(1, Number(count ?? 1));
+
+  if (itemDef.stackable) {
+    for (const slot of inventory.slots) {
+      if (!slot || slot.itemId !== itemId || remaining <= 0) continue;
+      const room = Math.max(0, (itemDef.maxStack ?? 99) - (slot.count ?? 0));
+      const added = Math.min(room, remaining);
+      slot.count += added;
+      remaining -= added;
+    }
+  }
+
+  while (remaining > 0) {
+    const emptyIndex = inventory.slots.findIndex((slot) => !slot);
+    if (emptyIndex < 0) break;
+    const added = itemDef.stackable ? Math.min(itemDef.maxStack ?? 99, remaining) : 1;
+    inventory.slots[emptyIndex] = normalizeAuthorityInventorySlot({
+      itemId,
+      category: itemDef.category,
+      count: added,
+      durability: itemDef.durability ?? null,
+      maxDurability: itemDef.durability ?? null,
+    });
+    remaining -= added;
+  }
+
+  return {
+    added: Math.max(0, Number(count ?? 1) - remaining),
+    inventory,
+    success: remaining === 0,
+  };
+}
+
+function applyAuthorityToolDurability(inventoryState, slotIndex, durabilityCost = 1) {
+  const inventory = cloneAuthorityInventory(inventoryState);
+  const slot = inventory.slots[slotIndex];
+  if (!slot) return { inventory, reason: 'Missing tool slot', success: false };
+  const itemDef = getAuthorityItemDef(slot.itemId);
+  if ((slot.category ?? itemDef.category) !== AUTHORITY_ITEM_CATEGORIES.TOOLS) {
+    return { inventory, reason: 'Not a tool', success: false };
+  }
+  inventory.slots[slotIndex] = {
+    ...slot,
+    durability: Math.max(0, (slot.durability ?? slot.maxDurability ?? itemDef.durability ?? 0) - durabilityCost),
+    maxDurability: slot.maxDurability ?? itemDef.durability ?? null,
+  };
+  return { inventory, success: true };
+}
+
 function createStarterAuthorityInventory() {
-  let inventory = createInventoryState();
-  inventory = addItemToInventoryState(inventory, 'watering_can', 1).inventory;
-  inventory = addItemToInventoryState(inventory, 'pruning_shears', 1).inventory;
-  inventory = addItemToInventoryState(inventory, 'fertilizer_bag', 3).inventory;
-  inventory = addItemToInventoryState(inventory, 'pest_spray', 3).inventory;
-  inventory = addItemToInventoryState(inventory, 'mulch_bag', 3).inventory;
+  let inventory = createAuthorityInventoryState();
+  inventory = addAuthorityInventoryItem(inventory, 'watering_can', 1).inventory;
+  inventory = addAuthorityInventoryItem(inventory, 'pruning_shears', 1).inventory;
+  inventory = addAuthorityInventoryItem(inventory, 'fertilizer_bag', 3).inventory;
+  inventory = addAuthorityInventoryItem(inventory, 'pest_spray', 3).inventory;
+  inventory = addAuthorityInventoryItem(inventory, 'mulch_bag', 3).inventory;
   return inventory;
 }
 
 function createAuthorityInventory(inventory) {
-  return normalizeInventoryState(inventory ?? createStarterAuthorityInventory());
+  return normalizeAuthorityInventoryState(inventory ?? createStarterAuthorityInventory());
 }
 
 function createAuthorityCell(cell = {}) {
@@ -476,7 +591,7 @@ function reduceStoryAction(data, payload, envelope) {
     const slotIndex = payload.slotIndex;
     const durabilityCost = Number.isFinite(payload.durabilityCost) ? Math.max(0, payload.durabilityCost) : 1;
     const beforeSlot = inventory.slots[slotIndex];
-    const result = applyToolDurabilityToInventoryState(inventory, slotIndex, durabilityCost);
+    const result = applyAuthorityToolDurability(inventory, slotIndex, durabilityCost);
     const afterSlot = result.inventory.slots[slotIndex];
     return {
       ...data,
