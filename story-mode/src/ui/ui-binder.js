@@ -60,6 +60,7 @@ import { createOverlayScreens } from './overlay-screens.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
+import { scoreCell } from '../scoring/cell-score.js';
 
 function bindUI({
   store,
@@ -676,6 +677,34 @@ function bindUI({
       toast.classList.remove('is-visible');
       setTimeout(() => toast.remove(), 300);
     }, durationMs);
+  }
+
+  function spawnFloatingScore(cellIndex, total) {
+    const layout = scene.getGridLayout?.();
+    const cell = layout?.[cellIndex];
+    if (!cell) return;
+    const projected = scene.projectWorldPosition?.({ x: cell.x, y: cell.y + 0.25, z: cell.z });
+    if (!projected?.visible) return;
+    const host = viewport ?? document.getElementById('viewport');
+    if (!host) return;
+    const el = document.createElement('div');
+    const rounded = Math.round(total * 10) / 10;
+    el.textContent = `+${rounded}`;
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = [
+      'position:absolute', `left:${projected.x}px`, `top:${projected.y}px`,
+      'transform:translate(-50%,-50%)', 'pointer-events:none', 'z-index:60',
+      "font-family:'DM Mono',monospace", 'font-weight:600', 'font-size:20px',
+      `color:${total >= 7 ? '#78b25b' : total >= 4 ? '#e8c84a' : '#d08a5a'}`,
+      'text-shadow:0 1px 3px rgba(20,14,8,0.55)',
+      'transition:transform 0.9s ease-out, opacity 0.9s ease-out', 'opacity:1',
+    ].join(';');
+    host.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.transform = 'translate(-50%,-140%)';
+      el.style.opacity = '0';
+    });
+    setTimeout(() => el.remove(), 950);
   }
 
   function triggerScreenShake() {
@@ -1406,6 +1435,11 @@ function bindUI({
       if (cropInfo) {
         showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
       }
+      try {
+        const freshState = store.getState();
+        const placed = scoreCell(cellIndex, freshState.season.grid, freshState.season.siteConfig ?? {}, freshState.season.season);
+        if (placed && Number.isFinite(placed.total)) spawnFloatingScore(cellIndex, placed.total);
+      } catch { /* score feedback is cosmetic — never block planting */ }
       if (
         cellIndex === 0
         && state.campaign.currentChapter === 1
