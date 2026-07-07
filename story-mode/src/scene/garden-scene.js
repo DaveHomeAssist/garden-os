@@ -425,7 +425,7 @@ export function createGardenScene(container) {
 
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95, vertexColors: true, map: grassTexture })
+    new THREE.MeshStandardMaterial({ color: 0x9cc27e, roughness: 0.95, vertexColors: true, map: grassTexture })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.01;

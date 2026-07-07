@@ -25,7 +25,7 @@ const PHASE_STYLE_MAP = {
 export const SCENE_STYLES = {
   planner: {
     toneMapping: THREE.ACESFilmicToneMapping,
-    toneMappingExposure: 1.08,
+    toneMappingExposure: 2.7,
     shadowsEnabled: true,
     fogDensityMultiplier: 0.32,
     backgroundColor: new THREE.Color(0xd8d3c6),
@@ -48,7 +48,7 @@ export const SCENE_STYLES = {
   },
   story: {
     toneMapping: THREE.ACESFilmicToneMapping,
-    toneMappingExposure: 1.24,
+    toneMappingExposure: 3.1,
     shadowsEnabled: true,
     fogDensityMultiplier: 0.92,
     backgroundColor: null,
@@ -71,7 +71,7 @@ export const SCENE_STYLES = {
   },
   celebration: {
     toneMapping: THREE.ACESFilmicToneMapping,
-    toneMappingExposure: 1.25,
+    toneMappingExposure: 3.1,
     shadowsEnabled: true,
     fogDensityMultiplier: 0.78,
     backgroundColor: null,

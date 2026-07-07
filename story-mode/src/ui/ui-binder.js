@@ -1752,6 +1752,7 @@ function bindUI({
   window.render_game_to_text = renderGameToText;
   window.advanceTime = advanceTime;
   window.gardenOS = {
+    _sceneDebug: scene,
     render_game_to_text: renderGameToText,
     advanceTime,
     activateForageForSmoke,

@@ -10,9 +10,9 @@ const FRAME_THICKNESS = 0.06;
 const BEVEL_INSET = 0.008;
 const SOIL_Y = FRAME_HEIGHT * 0.6;
 
-const CEDAR_MATERIAL = { color: 0x8B5A2B, roughness: 0.85, metalness: 0.05 };
-const CEDAR_BEVEL_MATERIAL = { color: 0x7A4E24, roughness: 0.8, metalness: 0.08 };
-const SOIL_MATERIAL = { color: 0x4b3826, roughness: 0.96 };
+const CEDAR_MATERIAL = { color: 0xffffff, roughness: 0.85, metalness: 0.05 };
+const CEDAR_BEVEL_MATERIAL = { color: 0xffffff, roughness: 0.8, metalness: 0.08 };
+const SOIL_MATERIAL = { color: 0xffffff, roughness: 0.96 };
 const GRID_LINE_MATERIAL = { color: 0x4c402f, transparent: true, opacity: 0.16, roughness: 0.98, metalness: 0 };
 
 // Seeded random for consistent soil terrain per cell
@@ -70,7 +70,7 @@ function createWoodTexture(baseHex, grainHex, repeatX = 1, repeatY = 1) {
 
 function createSoilTexture() {
   return makeCanvasTexture(192, (ctx, size) => {
-    ctx.fillStyle = '#4b3826';
+    ctx.fillStyle = '#6b4e33';
     ctx.fillRect(0, 0, size, size);
     for (let i = 0; i < 900; i++) {
       const x = (i * 73) % size;
@@ -142,8 +142,8 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   const cedarMat = new THREE.MeshStandardMaterial(CEDAR_MATERIAL);
   const cedarBevelMat = new THREE.MeshStandardMaterial(CEDAR_BEVEL_MATERIAL);
   const gridLineMat = new THREE.MeshStandardMaterial(GRID_LINE_MATERIAL);
-  const cedarTexture = createWoodTexture(0x8b5a2b, 0x6e431d, 1.3, 1.3);
-  const cedarBevelTexture = createWoodTexture(0x7a4e24, 0x5a3717, 1.4, 1.4);
+  const cedarTexture = createWoodTexture(0xa06a34, 0x7a4e22, 1.3, 1.3);
+  const cedarBevelTexture = createWoodTexture(0x8f5c2c, 0x6a4520, 1.4, 1.4);
   const soilTexture = createSoilTexture();
 
   cedarMat.map = cedarTexture;
