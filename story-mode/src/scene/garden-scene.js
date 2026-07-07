@@ -24,7 +24,7 @@ const DESIGN_TOKENS = {
 
 const SEASON_LIGHTING = {
   spring: { sky: 0xc8d9e4, ground: 0x56462d, sunColor: 0xfff4de, ambientColor: 0xf3ead8, sunAngle: 52, sunInt: 1.45, ambInt: 0.7, ambientInt: 0.1, fillInt: 0.48, fogDensity: 0.021, sunX: -2.7, sunZ: 4.8, fillX: 3.8, fillZ: -2.1 },
-  summer: { sky: 0xf0e0b8, ground: DESIGN_TOKENS.soil, sunColor: DESIGN_TOKENS.sun, ambientColor: 0xffefd0, sunAngle: 70, sunInt: 2.25, ambInt: 1.36, ambientInt: 0.54, fillInt: 1.02, fogDensity: 0.012, sunX: -1.6, sunZ: 4.2, fillX: 4.4, fillZ: -2.6 },
+  summer: { sky: 0xf0e0b8, ground: DESIGN_TOKENS.soil, sunColor: DESIGN_TOKENS.sun, ambientColor: 0xffefd0, sunAngle: 70, sunInt: 2.25, ambInt: 1.44, ambientInt: 0.68, fillInt: 1.12, fogDensity: 0.012, sunX: -1.6, sunZ: 4.2, fillX: 4.4, fillZ: -2.6 },
   fall:   { sky: 0xd8b17a, ground: 0x4a3116, sunColor: 0xffd49a, ambientColor: 0xf0d0a8, sunAngle: 38, sunInt: 1.16, ambInt: 0.56, ambientInt: 0.08, fillInt: 0.4, fogDensity: 0.024, sunX: -3.4, sunZ: 4.6, fillX: 3.6, fillZ: -1.8 },
   winter: { sky: 0x7e8ea0, ground: 0x231f26, sunColor: 0xd9e7ff, ambientColor: 0xb8c7da, sunAngle: 28, sunInt: 0.78, ambInt: 0.42, ambientInt: 0.05, fillInt: 0.3, fogDensity: 0.028, sunX: -4.0, sunZ: 3.3, fillX: 2.8, fillZ: -1.6 },
 };
@@ -338,7 +338,7 @@ export function createGardenScene(container) {
   // Ground-level fog — neutral until mood lighting overrides on first sync
   scene.fog = new THREE.FogExp2(0xb0c8d0, 0.022);
 
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 320);
   // Start from the front/access side looking back toward the house wall.
   camera.position.set(0, 2.95, 4.9);
   camera.lookAt(0, 0.46, -0.12);
@@ -363,7 +363,7 @@ export function createGardenScene(container) {
   scene.add(root);
 
   // Sky gradient — large background sphere with gradient texture
-  const skyGeo = new THREE.SphereGeometry(50, 64, 32);
+  const skyGeo = new THREE.SphereGeometry(260, 64, 32);
   const skyCanvas = document.createElement('canvas');
   skyCanvas.width = 8;
   skyCanvas.height = 256;
@@ -390,7 +390,7 @@ export function createGardenScene(container) {
   }
 
   // Ground plane — grass-like, slightly darker near the bed via vertex colors
-  const groundGeo = new THREE.PlaneGeometry(40, 40, 64, 64);
+  const groundGeo = new THREE.PlaneGeometry(360, 360, 128, 128);
   const groundColors = [];
   const posAttr = groundGeo.getAttribute('position');
   const grassTexture = createGrassTexture(5.5, 5.5);

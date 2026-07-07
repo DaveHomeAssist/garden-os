@@ -1,3 +1,10 @@
+Update 2026-07-07 Story Mode fence recheck from side-angle feedback:
+- Found a remaining fence-read artifact that was not a fence mesh: the finite grass plane exposed a hard straight back edge when orbiting past the house wall, so it appeared to start where the house ended.
+- Enlarged the Story Mode ground plane from 40x40 to 360x360 and expanded the camera far plane plus sky dome so reachable side/low camera angles no longer expose a straight terrain/sky boundary.
+- Removed the remaining straight house-base foundation rail and distant right-side block silhouettes because they still looked like fence/side-yard geometry in house-edge captures and are not gameplay-critical.
+- Raised summer ambient/fill slightly after screenshot regression caught the larger terrain as below the readability gate.
+- Verification: local default, house-edge, low, zoom, and mobile captures checked under `/var/folders/kc/_0fsy0wx01j8jqysccxyc9100000gn/T/garden-os-fence-final-1783394534064`; develop-web-game smoke captured `/tmp/garden-os-web-game-fence-fix/shot-0.png`; `npm test`, `npm run build`, `node tests/story-mode-screenshot-regression.mjs`, and `node scripts/verify-all.mjs` passed.
+
 Update 2026-07-07 Story Mode fence edge correction:
 - Removed the remaining fence-read house-edge scenery from Story Mode: right-side rain barrel, AC unit, trash cans, blue crate, brick patch, utility tag, mortar scars, left neighbor wall/roof/foundation cluster, alley strip, distant side blocks, repeated July crack/weed rails, and the straight mulch strip under the shrubs.
 - Removed the bottom-right `#app::after` repeating-linear-gradient overlay that survived as a fence-like striped rectangle over the gameplay canvas.

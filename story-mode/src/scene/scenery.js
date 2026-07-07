@@ -5,8 +5,6 @@
 import * as THREE from 'three';
 
 const GRASS_DARK = 0x3a5a2a;
-const FOUNDATION_COLOR = 0x6d706d;
-
 const SEASON_TREE_COLORS = {
   spring: [0x5aaa55, 0x6dbb68, 0x4a9a45],
   summer: [0x3a8a35, 0x4a9a40, 0x2d7a28],
@@ -128,13 +126,6 @@ export function buildScenery(tracker = null) {
   houseWall.receiveShadow = true;
   markPlaceCue(houseWall, 'rowhouse-siding');
   group.add(houseWall);
-
-  const foundationStrip = new THREE.Mesh(
-    new THREE.BoxGeometry(7.95, 0.38, 0.18),
-    new THREE.MeshStandardMaterial({ color: FOUNDATION_COLOR, roughness: 0.94 })
-  );
-  foundationStrip.position.set(0, 0.19, -6.06);
-  group.add(foundationStrip);
 
   for (const { x, z, scale, color } of [
     { x: -1.9, z: -4.86, scale: 1.1, color: 0x527d46 },
@@ -576,21 +567,6 @@ export function buildScenery(tracker = null) {
   }
   planningProps.visible = false;
   group.add(planningProps);
-
-  // 13. Distant rooftops
-  {
-    const silMat = new THREE.MeshStandardMaterial({ color: 0x3a3a4a, roughness: 0.95 });
-    const rooftops = [
-      { w: 2.0, h: 1.2, d: 1.5, x: 8.8, y: 0.6, z: -8.3 },
-      { w: 1.5, h: 1.8, d: 1.2, x: 10.9, y: 0.9, z: -7.9 },
-      { w: 1.8, h: 1.0, d: 1.4, x: 12.4, y: 0.5, z: -9.1 },
-    ];
-    rooftops.forEach(({ w, h, d, x, y, z }) => {
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silMat);
-      roof.position.set(x, y, z);
-      group.add(roof);
-    });
-  }
 
   // 14. Drifting clouds
   const clouds = [];
