@@ -72,7 +72,7 @@ async function loadData() {
   spec = await specResp.json();
 
   // Load planner HTML and extract CROPS object
-  const plannerResp = await fetch('../garden-planner-v4.html');
+  const plannerResp = await fetch('../archive/garden-planner-v4.html');
   const html = await plannerResp.text();
 
   // Extract CROPS — replace "const CROPS" with assignment to outer variable
