@@ -87,13 +87,11 @@ export function buildScenery(tracker = null) {
     };
   }
 
-  const sidingTexture = createBoardTexture(0xb9c3c9, 0x87939a, 5.5, 2.2);
   const trimTexture = createBoardTexture(0xe8e0d1, 0xbba98f, 2.8, 2.8);
   const porchTexture = createBoardTexture(0xd7d0c0, 0xa58e73, 3.4, 2.2);
-  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide, map: sidingTexture, bumpMap: sidingTexture, bumpScale: 0.01 });
+  const sidingMat = new THREE.MeshStandardMaterial({ color: 0xb9c3c9, roughness: 0.9, side: THREE.DoubleSide });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d1, roughness: 0.78, map: trimTexture, bumpMap: trimTexture, bumpScale: 0.008 });
   const porchMat = new THREE.MeshStandardMaterial({ color: 0xd7d0c0, roughness: 0.88, map: porchTexture, bumpMap: porchTexture, bumpScale: 0.008 });
-  const roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4844, roughness: 0.92 });
   const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0xc7d8df, roughness: 0.2, metalness: 0.05 });
 
   function registerBreezeNode(mesh, {
@@ -121,18 +119,16 @@ export function buildScenery(tracker = null) {
   }
 
   // --- Back house wall directly behind the bed ---
-  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 3.5), sidingMat);
-  houseWall.position.set(0, 1.75, -6.15);
+  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.2), sidingMat);
+  houseWall.position.set(-2.1, 1.6, -6.15);
   houseWall.receiveShadow = true;
   markPlaceCue(houseWall, 'rowhouse-siding');
   group.add(houseWall);
 
   for (const { x, z, scale, color } of [
-    { x: -1.9, z: -4.86, scale: 1.1, color: 0x527d46 },
-    { x: -1.15, z: -4.72, scale: 0.92, color: 0x628a4f },
-    { x: 0.05, z: -4.8, scale: 1.08, color: 0x4d7442 },
-    { x: 0.96, z: -4.69, scale: 0.88, color: 0x5e854d },
-    { x: 1.8, z: -4.88, scale: 0.98, color: 0x587949 },
+    { x: -2.0, z: -4.86, scale: 1.08, color: 0x527d46 },
+    { x: -1.32, z: -4.72, scale: 0.88, color: 0x628a4f },
+    { x: -0.72, z: -4.92, scale: 0.96, color: 0x4d7442 },
   ]) {
     const shrub = new THREE.Mesh(
       new THREE.SphereGeometry(0.22 * scale, 12, 10),
@@ -147,8 +143,7 @@ export function buildScenery(tracker = null) {
 
   for (const { x, z, color } of [
     { x: -2.35, z: -4.62, color: 0xbfcfdf },
-    { x: -0.72, z: -4.55, color: 0xd6d2b2 },
-    { x: 1.35, z: -4.56, color: 0xc7b6d8 },
+    { x: -0.82, z: -4.55, color: 0xd6d2b2 },
   ]) {
     const bloom = new THREE.Mesh(
       new THREE.SphereGeometry(0.09, 10, 8),
@@ -181,12 +176,12 @@ export function buildScenery(tracker = null) {
   backDoor.position.set(-2.95, 0.95, -6.18);
   group.add(backDoor);
 
-  // Back window centered above bed
+  // Back window on the compact house face.
   const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.12, 0.08), trimMat);
-  backWindow.position.set(0.25, 1.95, -6.18);
+  backWindow.position.set(-1.35, 1.95, -6.18);
   group.add(backWindow);
   const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
-  backGlass.position.set(0.25, 1.95, -6.22);
+  backGlass.position.set(-1.35, 1.95, -6.22);
   group.add(backGlass);
 
   // Yard framing foliage kept minimal so the bed stays the subject
@@ -336,7 +331,7 @@ export function buildScenery(tracker = null) {
   const dryerVentMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, roughness: 0.5, metalness: 0.6 });
   const dryerVent = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.08, 8), dryerVentMat);
   dryerVent.rotation.x = Math.PI / 2;
-  dryerVent.position.set(1.1, 0.8, -4.68);
+  dryerVent.position.set(-0.72, 0.8, -4.68);
   group.add(dryerVent);
 
   // 4. Wall-mounted light fixture above the back door
@@ -723,110 +718,10 @@ export function buildScenery(tracker = null) {
   winterSmoke.visible = false;
   group.add(winterSmoke);
 
-  // ── EXPANDED SCENERY — full house backdrop ─────────────────
-
-  // === FULL HOUSE — second floor, roof, chimney, more windows ===
-
-  // Second floor wall (extends above existing first-floor wall)
-  const secondFloorWall = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 2.8), sidingMat);
-  secondFloorWall.position.set(0, 3.5 + 1.4, -6.15);
-  secondFloorWall.receiveShadow = true;
-  group.add(secondFloorWall);
-
-  // Floor separator trim between stories
-  const storyTrim = new THREE.Mesh(new THREE.BoxGeometry(7.9, 0.08, 0.06), trimMat);
-  storyTrim.position.set(0, 3.46, -6.1);
-  group.add(storyTrim);
-
-  // Second floor windows (2 windows)
-  for (const wx of [-1.2, 1.6]) {
-    const win2Frame = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.0, 0.08), trimMat);
-    win2Frame.position.set(wx, 4.5, -6.18);
-    group.add(win2Frame);
-    const win2Glass = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.78, 0.04), windowGlassMat);
-    win2Glass.position.set(wx, 4.5, -6.22);
-    group.add(win2Glass);
-    // Window sill
-    const sill = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.04, 0.1), trimMat);
-    sill.position.set(wx, 3.98, -6.12);
-    group.add(sill);
-  }
-
-  // First floor — additional window right of center
-  const firstWin2Frame = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.0, 0.08), trimMat);
-  firstWin2Frame.position.set(1.85, 1.85, -6.18);
-  group.add(firstWin2Frame);
-  const firstWin2Glass = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.78, 0.04), windowGlassMat);
-  firstWin2Glass.position.set(1.85, 1.85, -6.22);
-  group.add(firstWin2Glass);
-  const firstWin2Sill = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.04, 0.1), trimMat);
-  firstWin2Sill.position.set(1.85, 1.33, -6.12);
-  group.add(firstWin2Sill);
-
-  // Main roof — pitched (two angled planes)
-  const roofOverhang = 0.35;
-  const roofWidth = 7.8 + roofOverhang * 2;
-  const roofDepth = 2.2;
-  const roofPeakY = 7.4;
-  const roofBaseY = 6.3;
-  const roofZ = -6.15;
-
-  const roofLeftGeo = new THREE.PlaneGeometry(roofWidth / 2 + 0.1, roofDepth);
-  const roofLeftMesh = new THREE.Mesh(roofLeftGeo, roofMat);
-  roofLeftMesh.position.set(-roofWidth / 4, (roofPeakY + roofBaseY) / 2, roofZ);
-  roofLeftMesh.rotation.z = -0.48;
-  roofLeftMesh.rotation.x = -0.15;
-  group.add(roofLeftMesh);
-
-  const roofRightGeo = new THREE.PlaneGeometry(roofWidth / 2 + 0.1, roofDepth);
-  const roofRightMesh = new THREE.Mesh(roofRightGeo, roofMat);
-  roofRightMesh.position.set(roofWidth / 4, (roofPeakY + roofBaseY) / 2, roofZ);
-  roofRightMesh.rotation.z = 0.48;
-  roofRightMesh.rotation.x = -0.15;
-  group.add(roofRightMesh);
-
-  // Roof ridge cap
-  const ridgeCap = new THREE.Mesh(new THREE.BoxGeometry(roofWidth, 0.06, 0.12), roofMat);
-  ridgeCap.position.set(0, roofPeakY, roofZ);
-  group.add(ridgeCap);
-
-  // Gable fill (triangular)
-  const gableShape = new THREE.Shape();
-  gableShape.moveTo(-roofWidth / 2 + roofOverhang, 0);
-  gableShape.lineTo(0, roofPeakY - roofBaseY);
-  gableShape.lineTo(roofWidth / 2 - roofOverhang, 0);
-  gableShape.closePath();
-  const gableGeo = new THREE.ShapeGeometry(gableShape);
-  const gable = new THREE.Mesh(gableGeo, sidingMat);
-  gable.position.set(0, roofBaseY, -6.14);
-  group.add(gable);
-
-  // Chimney
-  const chimneyMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.92 });
-  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.4, 0.4), chimneyMat);
-  chimney.position.set(2.6, roofPeakY + 0.1, -6.3);
-  chimney.castShadow = true;
-  group.add(chimney);
-  // Chimney cap
-  const chimneyCap = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.5), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 }));
-  chimneyCap.position.set(2.6, roofPeakY + 0.83, -6.3);
-  group.add(chimneyCap);
-
-  // Gutters along roofline
-  const gutterMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, roughness: 0.7, metalness: 0.2 });
-  const gutterLeft = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.05, 0.06), gutterMat);
-  gutterLeft.position.set(-1.8, roofBaseY - 0.02, -5.2);
-  group.add(gutterLeft);
-  const gutterRight = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.05, 0.06), gutterMat);
-  gutterRight.position.set(1.8, roofBaseY - 0.02, -5.2);
-  group.add(gutterRight);
-
-  // === MISC YARD DETAILS ===
-
   // Flower box under back window
   const flowerBoxMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.88 });
   const flowerBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.14), flowerBoxMat);
-  flowerBox.position.set(0.25, 1.3, -6.06);
+  flowerBox.position.set(-1.35, 1.3, -6.06);
   group.add(flowerBox);
   // Small flowers in window box
   for (let fb = 0; fb < 5; fb++) {
@@ -835,7 +730,7 @@ export function buildScenery(tracker = null) {
       new THREE.SphereGeometry(0.025, 5, 4),
       new THREE.MeshStandardMaterial({ color: fbColor, roughness: 0.55 })
     );
-    fbFlower.position.set(0.25 - 0.32 + fb * 0.16, 1.42, -6.02);
+    fbFlower.position.set(-1.35 - 0.32 + fb * 0.16, 1.42, -6.02);
     group.add(fbFlower);
     accentFlowers.push(fbFlower);
   }
@@ -845,8 +740,6 @@ export function buildScenery(tracker = null) {
   const houseNumber = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.02), numberMat);
   houseNumber.position.set(-2.1, 2.15, -6.12);
   group.add(houseNumber);
-
-  // ── END EXPANDED SCENERY ──────────────────────────────────────────────
 
   tracker?.trackObject(group);
 

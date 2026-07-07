@@ -1,3 +1,16 @@
+Update 2026-07-07 Story Mode house-edge fence cut:
+- Rechecked the live Story Mode scene from fresh default, right house-edge, opposite house-edge, low, and zoomed canvas captures after user feedback that the fence still started where the house ended.
+- Found the remaining fence read was the blank grey house backdrop continuing past the door/porch like a long panel, plus the expanded second-floor/roof/gutter block and repeated siding texture.
+- Cut the backdrop down to a compact flat house face, removed the repeated siding texture, removed the expanded second-floor/roof/gutter/chimney geometry, and trimmed the shrub/flower line so no straight wall continues past the house into the garden.
+- Raised summer ambient/fill lighting after the existing screenshot readability gate correctly caught the removed wall reducing scene brightness.
+- Visual proof: fresh local canvas captures checked default, house-edge, opposite, low, and zoom under `/tmp/garden-os-fence-user-report-after-compact-house`; screenshot regression proof saved under `/var/folders/kc/_0fsy0wx01j8jqysccxyc9100000gn/T/garden-os-story-screens-1783397878865`.
+- Validation: focused scene tests passed 7 tests; full Story Mode Vitest passed 35 files / 422 tests; `npm run build`, `npm audit --audit-level=high`, `git diff --check`, and `node tests/story-mode-screenshot-regression.mjs` passed. The stock develop-web-game client reached the animated title screen but its fixed 5s selector click timed out on the New Game button; custom Playwright canvas captures were used for the actual multi-angle visual proof.
+- Deferred:
+  - Re-run live GitHub Pages smoke after commit/push/deploy.
+  - The compact house remains a flat backdrop; richer house modeling is deferred until it can be added without any fence-read geometry.
+  - `/Users/daverobertson/Desktop/Code/95-docs-personal/today.csv` is still absent, so no personal session CSV append was made.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode protection authority pass:
 - Routed `SET_PROTECTION` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the next starter-grid protection mutation.
 - Server authority now stores canonical cell `protected` state, rejects malformed non-boolean protection payloads, and rejects protect-true requests for empty starter-grid cells.
