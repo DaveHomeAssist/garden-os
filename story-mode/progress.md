@@ -1,3 +1,11 @@
+Update 2026-07-07 Story Mode fence recheck from user screenshot feedback:
+- Re-ran local Story Mode with new default, side-orbit, zoomed house-edge, low house-edge, and mobile screenshots under `/tmp/garden-os-fence-user-recheck-20260707-local`.
+- Found the remaining fence read was coming from unnamed scenery: repeated pale pebble rows around the bed, porch support posts/awning pieces, a right-edge neighbor wall/roof cluster, the utility pole/wire, and a bright alley strip.
+- Removed those linear/repeated scenery forms plus the remaining house-edge downspout, and kept the backdrop to the house wall, compact stoop, shrubs, and non-linear yard props.
+- Added a screenshot-regression-only WebGL readback flag so the harness can preserve the drawing buffer for pixel checks without changing normal gameplay renderer behavior.
+- Raised summer ambient/fill lighting slightly so the bed remains readable after removing the bright fence-like pebble rows.
+- Deferred until deploy smoke: live GitHub Pages verification after commit/push.
+
 Update 2026-07-06 Story Mode harvest authority pass:
 - Routed `HARVEST_CELL` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the third real gameplay grid mutation.
 - Server authority now clears the starter-grid cell from canonical state and emits `lastHarvesting` ack metadata with server-owned `cropId`, `harvestedAt`, and `yieldCount: 1`.

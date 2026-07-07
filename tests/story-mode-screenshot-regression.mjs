@@ -462,6 +462,7 @@ async function readVisualDebug(page) {
 async function seedAndStartAccentRun(page, baseUrl) {
   const seed = makeSeededAccentSave();
   await page.addInitScript((save) => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
     localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
@@ -481,6 +482,7 @@ async function seedAndStartAccentRun(page, baseUrl) {
 async function seedAndStartSeasonalPlaceRun(page, baseUrl, season) {
   const seed = makeSeasonalPlaceSave(season);
   await page.addInitScript((save) => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
     localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
@@ -506,6 +508,7 @@ async function seedAndStartSeasonalPlaceRun(page, baseUrl, season) {
 async function seedAndStartCritterRun(page, baseUrl) {
   const seed = makeCritterEventSave();
   await page.addInitScript((save) => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
     localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
@@ -528,6 +531,7 @@ async function seedAndStartCritterRun(page, baseUrl) {
 async function seedAndStartBirdCritterRun(page, baseUrl) {
   const seed = makeBirdCritterEventSave();
   await page.addInitScript((save) => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
     localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
@@ -598,7 +602,7 @@ async function assertSeasonalPlaceLayer(page, season) {
   assert(debug, 'Expected visual debug state.');
   assert(debug.seasonalAtmosphere?.season === season, `Expected ${season} atmosphere, got ${debug.seasonalAtmosphere?.season}.`);
   assert(debug.seasonalAtmosphere.placeCueCount >= 7, `Expected at least 7 Philly place cues, got ${debug.seasonalAtmosphere.placeCueCount}.`);
-  ['back-alley-strip', 'overhead-utility-pole', 'phillies-pennant', 'rain-barrel', 'rowhouse-siding', 'window-ac-unit'].forEach((cue) => {
+  ['back-alley-strip', 'phillies-pennant', 'rain-barrel', 'rowhouse-siding', 'window-ac-unit'].forEach((cue) => {
     assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing Philly place cue ${cue}.`);
   });
 
@@ -736,6 +740,7 @@ async function scrollHarvestRewardOverlayToRewards(page) {
 
 async function startPlannerAndPlant(page, baseUrl) {
   await page.addInitScript(() => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
   });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -798,6 +803,7 @@ async function captureDialogueThenDismiss(page, screenshotName) {
 
 async function seedAndStart(page, baseUrl, options = {}) {
   await page.addInitScript(() => {
+    globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
   });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });

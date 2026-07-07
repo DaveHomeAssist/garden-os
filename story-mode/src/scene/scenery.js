@@ -1,5 +1,5 @@
 /**
- * Background Scenery — trees, path, house, and props around the garden bed.
+ * Background Scenery — trees, house, and props around the garden bed.
  * All procedural geometry, no external models.
  */
 import * as THREE from 'three';
@@ -225,24 +225,14 @@ export function buildScenery(tracker = null) {
   }
 
   // Porch left
-  const porchFloor = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.12, 1.6), porchMat);
-  porchFloor.position.set(-2.95, 0.06, -5.45);
+  const porchFloor = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.1, 0.72), porchMat);
+  porchFloor.position.set(-2.95, 0.05, -5.72);
   porchFloor.receiveShadow = true;
   group.add(porchFloor);
 
-  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.08, 1.72), porchMat);
-  porchRoof.position.set(-2.95, 2.72, -5.42);
-  group.add(porchRoof);
-
-  for (const x of [-3.38, -2.52, -1.72]) {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 2.58, 10), trimMat);
-    post.position.set(x - 0.4, 1.29, -5.38);
-    group.add(post);
-  }
-
   for (const [x, y, z, w, h, d] of [
-    [-2.95, 0.12, -4.52, 0.88, 0.08, 0.5],
-    [-2.95, 0.08, -4.25, 0.72, 0.06, 0.36],
+    [-2.95, 0.09, -5.2, 0.82, 0.07, 0.34],
+    [-2.95, 0.055, -4.98, 0.64, 0.05, 0.26],
   ]) {
     const step = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), porchMat);
     step.position.set(x, y, z);
@@ -261,32 +251,6 @@ export function buildScenery(tracker = null) {
   const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.88, 0.04), windowGlassMat);
   backGlass.position.set(0.25, 1.95, -6.22);
   group.add(backGlass);
-
-  const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb29c7c, roughness: 0.92 });
-  for (let i = 0; i < 48; i++) {
-    const pebble = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.025 + (i % 3) * 0.012, 0.025 + (i % 3) * 0.012, 0.014, 6),
-      stoneMat
-    );
-    const band = i % 4;
-    const x = band === 0
-      ? -2.7 + (i % 12) * 0.48
-      : band === 1
-        ? -3.18 + (i % 12) * 0.04
-        : band === 2
-          ? 3.18 - (i % 12) * 0.04
-          : -2.7 + (i % 12) * 0.48;
-    const z = band === 0
-      ? 1.35 + Math.floor(i / 12) * 0.24
-      : band === 1
-        ? -0.45 + Math.floor(i / 12) * 0.42
-        : band === 2
-          ? -0.45 + Math.floor(i / 12) * 0.42
-          : -2.2 + Math.floor(i / 12) * 0.12;
-    pebble.position.set(x, 0.014, z);
-    pebble.rotation.y = i * 0.37;
-    group.add(pebble);
-  }
 
   // Yard framing foliage kept minimal so the bed stays the subject
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.9 });
@@ -437,13 +401,6 @@ export function buildScenery(tracker = null) {
   dryerVent.rotation.x = Math.PI / 2;
   dryerVent.position.set(1.1, 0.8, -4.68);
   group.add(dryerVent);
-
-  // 2. Downspout — vertical box on the right edge of the house wall
-  const downspoutMat = new THREE.MeshStandardMaterial({ color: 0xa8a8a8, roughness: 0.7 });
-  const downspout = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 2.4, 10), downspoutMat);
-  downspout.scale.set(1, 1, 0.62);
-  downspout.position.set(3.4, 1.2, -4.68);
-  group.add(downspout);
 
   const barrelMat = new THREE.MeshStandardMaterial({ color: 0x3c5f46, roughness: 0.76 });
   const rainBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.7, 18), barrelMat);
@@ -684,26 +641,6 @@ export function buildScenery(tracker = null) {
   }
   planningProps.visible = false;
   group.add(planningProps);
-
-  // 12. Telephone pole
-  {
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.92 });
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.0, 8), poleMat);
-    pole.position.set(7.8, 1.5, -5.4);
-    markPlaceCue(pole, 'overhead-utility-pole');
-    group.add(pole);
-
-    const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.6, 8), poleMat);
-    crossbar.rotation.z = Math.PI / 2;
-    crossbar.position.set(7.8, 3.0, -5.4);
-    group.add(crossbar);
-
-    const wireMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
-    const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 2.4, 6), wireMat);
-    wire.rotation.z = Math.PI / 2;
-    wire.position.set(9.0, 2.98, -5.4);
-    group.add(wire);
-  }
 
   // 13. Distant rooftops
   {
@@ -1104,46 +1041,12 @@ export function buildScenery(tracker = null) {
   nLeftFound.rotation.y = -Math.PI / 2.7;
   group.add(nLeftFound);
 
-  // === NEIGHBOR HOUSE — RIGHT SIDE (enhance existing) ===
-  // Additional right neighbor wall area (front facing portion)
-  const nRightWall2 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.5), sidingMat);
-  nRightWall2.position.set(7.1, 1.75, -3.8);
-  nRightWall2.rotation.y = Math.PI - 0.15;
-  group.add(nRightWall2);
-
-  // Right neighbor second floor extension
-  const nRightUpper = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), sidingMat);
-  nRightUpper.position.set(6.35, 3.08, -5.55);
-  nRightUpper.rotation.y = Math.PI / 2.7;
-  group.add(nRightUpper);
-
-  // Right neighbor enhanced roof
-  const nRightRoof2 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 1.8), roofMat);
-  nRightRoof2.position.set(6.55, 3.9, -5.05);
-  nRightRoof2.rotation.y = Math.PI / 2.7;
-  group.add(nRightRoof2);
-
-  // Right neighbor window
-  const nRightWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.55), trimMat);
-  nRightWin.position.set(6.4, 1.6, -5.5);
-  nRightWin.rotation.y = Math.PI / 2.7;
-  group.add(nRightWin);
-
-  // Right neighbor foundation
-  const nRightFound = new THREE.Mesh(
-    new THREE.BoxGeometry(2.5, 0.35, 0.18),
-    new THREE.MeshStandardMaterial({ color: FOUNDATION_COLOR, roughness: 0.94 })
-  );
-  nRightFound.position.set(6.5, 0.18, -5.2);
-  nRightFound.rotation.y = Math.PI / 2.7;
-  group.add(nRightFound);
-
   // === ALLEY ===
-  // Alley ground strip
-  const alleyMat = new THREE.MeshStandardMaterial({ color: 0x5a5850, roughness: 0.96 });
-  const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.5), alleyMat);
+  // Alley ground kept behind the wall so it does not read as a fence or path through the garden.
+  const alleyMat = new THREE.MeshStandardMaterial({ color: 0x343630, roughness: 0.98 });
+  const alleyGround = new THREE.Mesh(new THREE.PlaneGeometry(8.2, 0.7), alleyMat);
   alleyGround.rotation.x = -Math.PI / 2;
-  alleyGround.position.set(0, 0.002, -7.0);
+  alleyGround.position.set(0, 0.002, -7.35);
   markPlaceCue(alleyGround, 'back-alley-strip');
   group.add(alleyGround);
 
@@ -1216,17 +1119,6 @@ export function buildScenery(tracker = null) {
   const houseNumber = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.02), numberMat);
   houseNumber.position.set(-2.1, 2.15, -6.12);
   group.add(houseNumber);
-
-  // Porch awning bracket details
-  for (const bx of [-3.6, -2.3]) {
-    const bracket = new THREE.Mesh(
-      new THREE.BoxGeometry(0.04, 0.3, 0.04),
-      new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.8 })
-    );
-    bracket.position.set(bx, 2.55, -5.32);
-    bracket.rotation.z = 0.4;
-    group.add(bracket);
-  }
 
   // ── END EXPANDED SCENERY ──────────────────────────────────────────────
 
