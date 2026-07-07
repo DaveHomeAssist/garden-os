@@ -2343,8 +2343,9 @@
     .title-screen {
       padding: 30px 24px;
       background:
-        radial-gradient(circle at 16% 14%, rgba(var(--story-season-accent-rgb), 0.16), transparent 30%),
-        linear-gradient(180deg, rgba(29, 18, 9, 0.98), rgba(11, 7, 4, 1));
+        radial-gradient(circle at 16% 14%, rgba(var(--story-season-accent-rgb), 0.2), transparent 34%),
+        radial-gradient(120% 55% at 76% -6%, rgba(242, 201, 106, 0.5), transparent 62%),
+        linear-gradient(180deg, #35506b 0%, #7f97a8 26%, #d9b077 46%, #c0623a 58%, #4a3823 60%, #2b3d24 78%, #1d2b19 100%);
       overflow: hidden;
     }
 
@@ -2366,8 +2367,8 @@
       width: clamp(140px, 22vw, 240px);
       height: clamp(140px, 22vw, 240px);
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(245, 214, 128, 0.24), rgba(245, 214, 128, 0) 70%);
-      filter: blur(4px);
+      background: radial-gradient(circle, rgba(255, 226, 150, 0.55), rgba(245, 214, 128, 0) 70%);
+      filter: blur(6px);
     }
 
     .title-screen__grid {
