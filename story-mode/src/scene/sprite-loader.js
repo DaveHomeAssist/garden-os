@@ -11,6 +11,7 @@
  *   const frame = getFrame('grow-lettuce', 2);   // frame 2 of sprite sheet
  */
 import * as THREE from 'three';
+import { getCropById } from '../data/crops.js';
 
 /* ── Asset Manifest ─────────────────────────────────────────────────── */
 
@@ -190,7 +191,109 @@ export function getCropIcon(cropId) {
  */
 export function getGrowthTexture(cropId, stage) {
   const sheetKey = `grow-${cropId}`;
-  return getFrame(sheetKey, stage) ?? getCropIcon(cropId);
+  return getFrame(sheetKey, stage) ?? getCropIcon(cropId) ?? getProceduralGrowthTexture(cropId, stage);
+}
+
+/* ── Procedural crop sprites ─────────────────────────────────────────
+ * 43 of 50 crops have no hand-drawn sheets. Rather than rendering blobs,
+ * synthesize a stylized billboard per crop: faction-tinted foliage plus the
+ * crop's emoji glyph, staged by growth. Deterministic (seeded by crop id),
+ * cached, zero binary assets. Hand-drawn sheets still win when present. */
+
+const FACTION_STYLE = {
+  greens:      { leaf: '#5d9c4a', deep: '#40763a', shape: 'rosette' },
+  brassicas:   { leaf: '#4f8f5a', deep: '#35673f', shape: 'rosette' },
+  roots:       { leaf: '#5b8f46', deep: '#3d6a32', shape: 'tuft' },
+  herbs:       { leaf: '#6aa457', deep: '#4a7a3e', shape: 'sprigs' },
+  fruiting:    { leaf: '#4f7f42', deep: '#365e2f', shape: 'bush' },
+  climbers:    { leaf: '#55904c', deep: '#3a6a36', shape: 'vine' },
+  fast_cycles: { leaf: '#66a355', deep: '#47793c', shape: 'tuft' },
+  companions:  { leaf: '#5d9c4a', deep: '#40763a', shape: 'sprigs' },
+};
+
+function cropSeed(id) {
+  let h = 2166136261;
+  const s = String(id);
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return Math.abs(h >>> 0);
+}
+
+function drawLeaf(ctx, x, y, len, angle, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(0, -len / 2, len / 4.2, len / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+const proceduralCache = new Map();
+
+export function getProceduralGrowthTexture(cropId, stage) {
+  const key = `${cropId}:${stage}`;
+  if (proceduralCache.has(key)) return proceduralCache.get(key);
+  const crop = getCropById(cropId);
+  if (!crop || typeof document === 'undefined') return null;
+
+  const style = FACTION_STYLE[crop.faction] ?? FACTION_STYLE.greens;
+  const seed = cropSeed(cropId);
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const cx = size / 2;
+  const groundY = size * 0.86;
+
+  // Soft contact shadow
+  ctx.fillStyle = 'rgba(30, 22, 12, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY, size * (0.14 + stage * 0.05), size * 0.035, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (stage === 0) {
+    // Seed mound + fleck
+    ctx.fillStyle = '#6b4e33';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY - 4, 26, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e8dcc0';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY - 10, 5, 7, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Foliage: leaf fan scaled by stage, layout varied per crop + faction shape
+    const growth = stage / 3;
+    const leafCount = style.shape === 'sprigs' ? 5 + (seed % 3) : 6 + (seed % 4);
+    const spread = style.shape === 'vine' ? 1.35 : style.shape === 'rosette' ? 1.0 : 0.8;
+    const maxLen = size * (0.16 + growth * (style.shape === 'bush' ? 0.30 : 0.36));
+    for (let i = 0; i < leafCount; i++) {
+      const t = leafCount === 1 ? 0.5 : i / (leafCount - 1);
+      const angle = (t - 0.5) * Math.PI * spread + ((seed >> (i % 8)) % 7 - 3) * 0.03;
+      const len = maxLen * (0.7 + (((seed >> i) % 5) / 5) * 0.45);
+      drawLeaf(ctx, cx, groundY - 2, len, angle, i % 2 ? style.leaf : style.deep);
+    }
+    // Emoji glyph — the recognizable identity, appears as the plant matures
+    if (crop.emoji && stage >= 2) {
+      const em = size * (0.22 + growth * 0.16);
+      ctx.font = `${em}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(25, 18, 10, 0.35)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText(crop.emoji, cx, groundY - maxLen * 0.72);
+      ctx.shadowColor = 'transparent';
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  proceduralCache.set(key, texture);
+  return texture;
 }
 
 /**
