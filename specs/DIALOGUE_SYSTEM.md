@@ -384,6 +384,5 @@ The DIALOGUE_ENGINE.json structure supports:
 - **Challenge-specific lines**: Future challenge modifiers can add sub-trigger keys (e.g., `event_negative_drought_year`) that override the base pool when a specific challenge is active.
 
 The current dialogue system is compact enough to live in one browser-loaded
-module. That shape is an implementation detail, not a rule against build
-tooling, packages, or a stronger architecture if future dialogue complexity
-requires it.
+module. Build tooling, packages, or stronger architecture remain available if
+future dialogue complexity requires them.
