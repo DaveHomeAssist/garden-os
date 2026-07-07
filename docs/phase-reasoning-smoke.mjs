@@ -429,7 +429,7 @@ async function capturePlannerFixture(browser, fixture) {
       console.warn(error);
     }
   }, TUTORIAL_KEY);
-  await page.goto(`${BASE_URL}/garden-planner-v4.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE_URL}/archive/garden-planner-v4.html`, { waitUntil: 'networkidle' });
 
   await page.evaluate((fixture) => {
     const setSelect = (id, value) => {
@@ -529,7 +529,7 @@ async function capturePlannerBroaderSmoke(browser) {
       console.warn(error);
     }
   }, TUTORIAL_KEY);
-  await page.goto(`${BASE_URL}/garden-planner-v4.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE_URL}/archive/garden-planner-v4.html`, { waitUntil: 'networkidle' });
   await page.click('#autoFillBtn', { timeout: 5000 });
   await page.waitForFunction(() => {
     try {
@@ -665,7 +665,7 @@ async function diagnoseGenericClientAutoFill() {
   try {
     const page = await harnessBrowser.newPage({ viewport: { width: 1280, height: 720 } });
     await page.addInitScript({ content: makeGenericClientShim() });
-    await page.goto(`${BASE_URL}/garden-planner-v4.html`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/archive/garden-planner-v4.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
     await page.evaluate(() => {
       window.dispatchEvent(new Event('resize'));
