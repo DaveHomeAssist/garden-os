@@ -326,6 +326,136 @@ test('authority action routes protection through canonical grid state once', asy
   assert.equal(second.state.data.grid[2].protected, true);
 });
 
+test('authority action routes tool interventions as one canonical transaction', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  }), env);
+
+  const action = {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-protect-intervention',
+    idempotencyKey: 'idem-protect-intervention',
+    payload: {
+      appliedAt: 1783370000000,
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      itemCount: 1,
+      itemId: 'pest_spray',
+      protected: true,
+      toolId: 'protect',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: {
+      ...action.payload,
+      cooldownUntil: 1783370099999,
+      itemCount: 3,
+    },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'APPLY_TOOL_INTERVENTION');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].protected, true);
+  assert.equal(first.state.data.inventory.slots[3].count, 2);
+  assert.equal(first.state.data.toolCooldowns.protect_2, 1783370030000);
+  assert.deepEqual(first.state.data.lastToolIntervention, {
+    appliedAt: 1783370000000,
+    bonus: 0,
+    carryForwardType: null,
+    cellIndex: 2,
+    cooldown: {
+      cellIndex: 2,
+      key: 'protect_2',
+      toolId: 'protect',
+      until: 1783370030000,
+    },
+    interventionBonus: 0,
+    itemCount: 1,
+    itemId: 'pest_spray',
+    protected: true,
+    remainingCount: 2,
+    toolId: 'protect',
+  });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 2);
+  assert.equal(second.state.data.inventory.slots[3].count, 2);
+});
+
+test('authority action routes mulch interventions as one canonical transaction', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-mulch-intervention',
+    idempotencyKey: 'idem-mulch-intervention',
+    payload: {
+      appliedAt: 1783370000000,
+      bonus: 0.2,
+      carryForwardType: 'enriched',
+      cellIndex: 3,
+      cooldownUntil: 1783370045000,
+      itemCount: 1,
+      itemId: 'mulch_bag',
+      mulched: true,
+      toolId: 'mulch',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ack.accepted, true);
+  assert.equal(body.ack.actionType, 'APPLY_TOOL_INTERVENTION');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+  assert.equal(body.state.data.grid[3].mulched, true);
+  assert.equal(body.state.data.grid[3].carryForwardType, 'enriched');
+  assert.equal(body.state.data.grid[3].interventionBonus, 0.2);
+  assert.equal(body.state.data.inventory.slots[4].count, 2);
+  assert.equal(body.state.data.toolCooldowns.mulch_3, 1783370045000);
+  assert.deepEqual(body.state.data.lastToolIntervention, {
+    appliedAt: 1783370000000,
+    bonus: 0.2,
+    carryForwardType: 'enriched',
+    cellIndex: 3,
+    cooldown: {
+      cellIndex: 3,
+      key: 'mulch_3',
+      toolId: 'mulch',
+      until: 1783370045000,
+    },
+    interventionBonus: 0.2,
+    itemCount: 1,
+    itemId: 'mulch_bag',
+    mulched: true,
+    remainingCount: 2,
+    toolId: 'mulch',
+  });
+});
+
 test('authority action routes cell conditions through canonical grid state', async () => {
   const { env, sessionId } = await createSession();
 
@@ -632,6 +762,96 @@ test('authority rejects protection for empty cells and malformed values before m
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.equal(session.state.data.grid[2].protected, false);
+});
+
+test('authority rejects malformed tool intervention payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const emptyResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-empty-protect-intervention',
+    idempotencyKey: 'idem-empty-protect-intervention',
+    payload: {
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      itemId: 'pest_spray',
+      protected: true,
+      toolId: 'protect',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const empty = await emptyResponse.json();
+
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  }), env);
+
+  const trustedTotalResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-trusted-intervention-total',
+    idempotencyKey: 'idem-trusted-intervention-total',
+    payload: {
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      interventionBonus: 99,
+      itemId: 'pest_spray',
+      protected: true,
+      toolId: 'protect',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const trustedTotal = await trustedTotalResponse.json();
+
+  const wrongItemResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 4,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-wrong-intervention-item',
+    idempotencyKey: 'idem-wrong-intervention-item',
+    payload: {
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      itemId: 'mulch_bag',
+      protected: true,
+      toolId: 'protect',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const wrongItem = await wrongItemResponse.json();
+
+  assert.equal(emptyResponse.status, 422);
+  assert.equal(empty.ack.accepted, false);
+  assert.equal(empty.ack.rejection.code, 'CELL_EMPTY');
+  assert.equal(trustedTotalResponse.status, 422);
+  assert.equal(trustedTotal.ack.accepted, false);
+  assert.equal(trustedTotal.ack.rejection.code, 'CLIENT_INTERVENTION_TOTAL');
+  assert.equal(wrongItemResponse.status, 422);
+  assert.equal(wrongItem.ack.accepted, false);
+  assert.equal(wrongItem.ack.rejection.code, 'ITEM_MISMATCH');
+  assert.equal(await verifyServerAckSignature(wrongItem.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 1);
+  assert.equal(session.state.data.grid[2].protected, false);
+  assert.equal(session.state.data.inventory.slots[3].count, 3);
 });
 
 test('authority rejects client-submitted harvest totals before mutation', async () => {

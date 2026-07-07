@@ -1,3 +1,15 @@
+Update 2026-07-07 Story Mode atomic intervention authority pass:
+- Routed protect/mulch tool interventions through one `APPLY_TOOL_INTERVENTION` authority action instead of separate local cell, consumable, and cooldown actions.
+- Server authority and the fetch-compatible authority worker now validate starter-grid cell/tool/item/cooldown payloads, reject client-owned grid/inventory/intervention totals, spend the server-owned `pest_spray`/`mulch_bag` consumable once, update canonical cell/cooldown state, and emit signed `lastToolIntervention` ack metadata.
+- Client reconciliation maps signed `lastToolIntervention` acks back into local `APPLY_TOOL_INTERVENTION` only when the optimistic state differs, so duplicate idempotency-key retries do not double-spend consumables.
+- Validation: focused authority/cache Vitest passed 54 tests; direct authority worker security test passed 30 tests; full Story Mode Vitest passed 35 files / 436 tests; `npm run build`, `npm audit --audit-level=high` with 0 vulnerabilities, `git diff --check`, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Water tool use is still split between `WATER_CELL` and `SET_COOLDOWN`; this pass only makes protect/mulch atomic.
+  - Tool repair authority remains deferred; repair material spend and repaired existing saves may need a fresh authority session before durable server-side repair is complete.
+  - Crafting/reward inventory mutations remain local until item awards, recipes, and crafting outputs are authority-owned.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode consumable spend authority pass:
 - Routed starter consumable inventory spend (`REMOVE_ITEM` for `fertilizer_bag`, `pest_spray`, and `mulch_bag`) through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache.
 - Server authority now owns canonical starter consumable counts, rejects client-submitted inventory/slots, rejects malformed item ids/counts, rejects insufficient server-owned inventory, and emits signed `lastItemRemoval` ack metadata with the server-owned remaining count.
