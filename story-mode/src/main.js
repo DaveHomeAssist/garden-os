@@ -25,16 +25,15 @@ function loadRuntimeModules() {
 }
 
 function scheduleRuntimePreload() {
-  const preload = () => {
-    void loadRuntimeModules().catch(() => {});
-  };
-
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    window.requestIdleCallback(preload, { timeout: 1500 });
-    return;
-  }
-
-  window.setTimeout(preload, 80);
+  // Warm the runtime chunk eagerly the moment the title mounts. This work
+  // (module eval + texture decode + first GPU upload) is ~1.8s of main-thread
+  // time; if it is deferred to the New Game click it coalesces into one frozen
+  // task and the intro looks broken. Kicking it off immediately lets it run —
+  // and mostly settle — while the player is still reading the static title.
+  const preload = () => { void loadRuntimeModules().catch(() => {}); };
+  // A near-immediate timeout (not requestIdleCallback, which a fast click beats,
+  // and not synchronous, so the title paints first).
+  window.setTimeout(preload, 0);
 }
 
 function showViewportLoading(viewport) {
@@ -77,6 +76,10 @@ async function startSession({ initialState, slot, viewport, planner }) {
     globalThis.GARDEN_OS_LOADED_CONTENT = packResult;
 
     const scene = createGardenScene(viewport);
+    // Pre-compile shaders + upload textures off the blocking path before the
+    // render loop starts. Otherwise the first frame stalls the main thread for
+    // ~1.8s (the intro's frozen black screen) doing all of it synchronously.
+    await scene.warmup?.();
     const inputManager = new InputManager(scene.canvas, { keyboardTarget: document });
     const { store, data, cleanup, persistGameState } = initGame(packResult.state, { slot });
 

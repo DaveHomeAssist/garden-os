@@ -2948,6 +2948,21 @@ function getGrowthScale(phase, season) {
       neighborGroup.visible = (evCategory === 'neighbor' && evValence === 'positive');
       // ── End creature visibility ────────────────────────────────────────
     },
+    // Pre-compile every shader program and upload textures for the current
+    // scene BEFORE the first render. Without this, the first render() blocks
+    // the main thread for ~1.8s compiling/linking shaders and uploading
+    // textures synchronously (the intro's "frozen black screen" hitch).
+    // compileAsync uses KHR_parallel_shader_compile to do the work off the
+    // blocking path; awaiting it keeps the page responsive meanwhile.
+    async warmup() {
+      try {
+        if (typeof renderer.compileAsync === 'function') {
+          await renderer.compileAsync(scene, camera);
+        } else {
+          renderer.compile(scene, camera);
+        }
+      } catch { /* warmup is best-effort — never block startup on it */ }
+    },
     render() {
       dayNight.update(1 / 60);
       const time = performance.now() * 0.001; // seconds
