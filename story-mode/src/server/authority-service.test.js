@@ -898,6 +898,9 @@ describe('authority service', () => {
         cellIndex: 2,
         cooldownUntil: NOW + 30_000,
         toolId: 'water',
+        toolDurabilityCost: 1,
+        toolItemId: 'watering_can',
+        toolSlotIndex: 0,
         wateredAt: NOW,
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
@@ -912,6 +915,9 @@ describe('authority service', () => {
         cellIndex: 2,
         cooldownUntil: NOW + 60_000,
         toolId: 'water',
+        toolDurabilityCost: 50,
+        toolItemId: 'watering_can',
+        toolSlotIndex: 0,
         wateredAt: NOW + 1,
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
@@ -929,7 +935,11 @@ describe('authority service', () => {
       itemCount: 0,
       itemId: null,
       remainingCount: null,
+      toolDurability: 99,
+      toolDurabilityCost: 1,
       toolId: 'water',
+      toolItemId: 'watering_can',
+      toolSlotIndex: 0,
       wateredAt: NOW,
     });
     expect(wateredCell.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
@@ -944,6 +954,7 @@ describe('authority service', () => {
     expect(state.data.grid[2].lastWateredAt).toBe(NOW);
     expect(state.data.toolCooldowns.water_2).toBe(NOW + 30_000);
     expect(state.data.inventory.slots[0].itemId).toBe('watering_can');
+    expect(state.data.inventory.slots[0].durability).toBe(99);
     expect(state.ledger.entries).toHaveLength(2);
   });
 
@@ -1006,6 +1017,20 @@ describe('authority service', () => {
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
     }));
+    const toolMismatch = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-water-tool-mismatch',
+      idempotencyKey: 'idem-water-tool-mismatch',
+      payload: {
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        toolId: 'water',
+        toolItemId: 'pruning_shears',
+        toolSlotIndex: 0,
+        wateredAt: NOW,
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
     const wrongItem = await postJson(handle, '/api/action', envelope({
       expectedTick: 1,
       id: 'action-wrong-intervention-item',
@@ -1029,6 +1054,8 @@ describe('authority service', () => {
     expect(trustedTotal.body.ack.rejection.code).toBe('CLIENT_INTERVENTION_TOTAL');
     expect(badWateredAt.body.ok).toBe(false);
     expect(badWateredAt.body.ack.rejection.code).toBe('BAD_WATERED_AT');
+    expect(toolMismatch.body.ok).toBe(false);
+    expect(toolMismatch.body.ack.rejection.code).toBe('TOOL_MISMATCH');
     expect(wrongItem.body.ok).toBe(false);
     expect(wrongItem.body.ack.rejection.code).toBe('ITEM_MISMATCH');
     expect(verifyAuthorityAckSignature(wrongItem.body.ack, SECRET)).toBe(true);

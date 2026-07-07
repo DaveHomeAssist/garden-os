@@ -246,6 +246,16 @@ function normalizeToolInterventionPayload(payload = {}) {
     : (typeof cooldown.key === 'string' && cooldown.key.trim() ? cooldown.key.trim() : null);
   const key = explicitKey ?? (toolId && cellIndex != null ? `${toolId}_${cellIndex}` : null);
   const until = Number(payload.cooldownUntil ?? cooldown.until);
+  const toolSlotIndex = Number.isInteger(payload.toolSlotIndex)
+    ? payload.toolSlotIndex
+    : (Number.isInteger(payload.slotIndex) ? payload.slotIndex : null);
+  const toolItemId = typeof payload.toolItemId === 'string' && payload.toolItemId.trim()
+    ? payload.toolItemId.trim()
+    : null;
+  const toolDurabilityCostValue = payload.toolDurabilityCost ?? payload.durabilityCost;
+  const toolDurabilityCost = Number.isFinite(toolDurabilityCostValue)
+    ? Math.max(0, Number(toolDurabilityCostValue))
+    : (toolSlotIndex != null ? 1 : null);
   return {
     appliedAt: Number.isFinite(payload.appliedAt) ? payload.appliedAt : null,
     bonus: Number.isFinite(payload.bonus) ? payload.bonus : (toolId === 'mulch' ? 0.2 : 0),
@@ -261,7 +271,10 @@ function normalizeToolInterventionPayload(payload = {}) {
     },
     itemCount,
     itemId,
+    toolDurabilityCost,
     toolId,
+    toolItemId,
+    toolSlotIndex,
     wateredAt: Number.isFinite(payload.wateredAt)
       ? payload.wateredAt
       : (Number.isFinite(payload.appliedAt) ? payload.appliedAt : null),
@@ -289,11 +302,29 @@ const AUTHORITY_REDUCERS = {
     }
     grid[intervention.cellIndex] = nextCell;
 
-    const inventory = createAuthorityInventory(data.inventory);
+    const baseInventory = createAuthorityInventory(data.inventory);
     const itemCount = intervention.itemId ? Math.max(1, Math.floor(Number(intervention.itemCount ?? 1))) : 0;
     const itemRemoval = intervention.itemId
-      ? removeAuthorityInventoryItem(inventory, intervention.itemId, itemCount)
-      : { inventory, success: true };
+      ? removeAuthorityInventoryItem(baseInventory, intervention.itemId, itemCount)
+      : { inventory: baseInventory, success: true };
+    let inventory = itemRemoval.inventory;
+    let toolUse = null;
+    if (intervention.toolSlotIndex != null) {
+      const beforeSlot = inventory.slots[intervention.toolSlotIndex];
+      const toolResult = applyAuthorityToolDurability(
+        inventory,
+        intervention.toolSlotIndex,
+        intervention.toolDurabilityCost ?? 1,
+      );
+      inventory = toolResult.inventory;
+      const afterSlot = inventory.slots[intervention.toolSlotIndex];
+      toolUse = {
+        durability: Number.isFinite(afterSlot?.durability) ? afterSlot.durability : null,
+        durabilityCost: intervention.toolDurabilityCost ?? 1,
+        itemId: beforeSlot?.itemId ?? intervention.toolItemId ?? null,
+        slotIndex: intervention.toolSlotIndex,
+      };
+    }
     const toolCooldowns = {
       ...createAuthorityCooldowns(data.toolCooldowns),
       [intervention.cooldown.key]: intervention.cooldown.until,
@@ -302,7 +333,7 @@ const AUTHORITY_REDUCERS = {
     return {
       ...data,
       grid,
-      inventory: itemRemoval.inventory,
+      inventory,
       lastToolIntervention: {
         appliedAt: intervention.appliedAt,
         bonus: ['mulch', 'water'].includes(intervention.toolId) ? intervention.bonus : 0,
@@ -315,9 +346,13 @@ const AUTHORITY_REDUCERS = {
         mulched: intervention.toolId === 'mulch' ? true : undefined,
         protected: intervention.toolId === 'protect' ? true : undefined,
         remainingCount: intervention.itemId
-          ? getAuthorityInventoryItemCount(itemRemoval.inventory, intervention.itemId)
+          ? getAuthorityInventoryItemCount(inventory, intervention.itemId)
           : null,
+        toolDurability: toolUse?.durability ?? undefined,
+        toolDurabilityCost: toolUse?.durabilityCost ?? undefined,
         toolId: intervention.toolId,
+        toolItemId: toolUse?.itemId ?? undefined,
+        toolSlotIndex: toolUse?.slotIndex ?? undefined,
         wateredAt: intervention.toolId === 'water' ? intervention.wateredAt : undefined,
       },
       toolCooldowns,
@@ -756,6 +791,41 @@ function validateAuthorityPayload(envelope, state) {
     }
     if ('wateredAt' in (envelope.payload ?? {}) && envelope.payload.wateredAt !== null && !Number.isFinite(envelope.payload.wateredAt)) {
       return { code: 'BAD_WATERED_AT', message: 'Tool intervention requires wateredAt to be a finite timestamp or null.' };
+    }
+    const hasToolDurabilityPayload = (
+      hasOwn(envelope.payload, 'durabilityCost')
+      || hasOwn(envelope.payload, 'slotIndex')
+      || hasOwn(envelope.payload, 'toolDurabilityCost')
+      || hasOwn(envelope.payload, 'toolItemId')
+      || hasOwn(envelope.payload, 'toolSlotIndex')
+    );
+    if (hasToolDurabilityPayload && intervention.toolId !== 'water') {
+      return { code: 'BAD_TOOL_DURABILITY_PAYLOAD', message: 'Only water interventions can submit tool durability.' };
+    }
+    if (hasToolDurabilityPayload) {
+      if (!Number.isInteger(intervention.toolSlotIndex) || intervention.toolSlotIndex < 0) {
+        return { code: 'BAD_TOOL_SLOT', message: 'Water intervention requires a valid tool slot index.' };
+      }
+      if (!Number.isFinite(intervention.toolDurabilityCost) || intervention.toolDurabilityCost < 0 || intervention.toolDurabilityCost > 100) {
+        return { code: 'BAD_DURABILITY_COST', message: 'Water intervention requires a finite tool durability cost from 0 to 100.' };
+      }
+      const inventory = createAuthorityInventory(state?.data?.inventory);
+      if (intervention.toolSlotIndex >= inventory.slots.length) {
+        return { code: 'BAD_TOOL_SLOT', message: 'Water intervention tool slot is outside the server-owned inventory.' };
+      }
+      const toolSlot = inventory.slots[intervention.toolSlotIndex];
+      if (!toolSlot) {
+        return { code: 'MISSING_TOOL_SLOT', message: 'Water intervention requires a populated server-owned tool slot.' };
+      }
+      if (toolSlot.category !== 'tools') {
+        return { code: 'NOT_TOOL', message: 'Water intervention requires a tool slot.' };
+      }
+      if (intervention.toolItemId && intervention.toolItemId !== toolSlot.itemId) {
+        return { code: 'TOOL_MISMATCH', message: 'Water intervention tool id must match the server-owned tool slot.' };
+      }
+      if ((toolSlot.durability ?? 0) <= 0) {
+        return { code: 'TOOL_BROKEN', message: 'Water intervention requires a usable tool.' };
+      }
     }
     if (expectedItemId) {
       const inventory = createAuthorityInventory(state?.data?.inventory);

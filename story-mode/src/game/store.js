@@ -403,6 +403,30 @@ function applyToolInterventionToState(state, payload = {}) {
     ).inventory;
   }
 
+  const toolSlotIndex = Number.isInteger(payload.toolSlotIndex)
+    ? payload.toolSlotIndex
+    : (Number.isInteger(payload.slotIndex) ? payload.slotIndex : null);
+  const toolDurability = Number.isFinite(payload.toolDurability) ? payload.toolDurability : null;
+  const toolDurabilityCost = Number.isFinite(payload.toolDurabilityCost)
+    ? payload.toolDurabilityCost
+    : (Number.isFinite(payload.durabilityCost) ? payload.durabilityCost : null);
+  if (toolSlotIndex != null && toolDurability != null) {
+    const slot = nextState.campaign.inventory.slots?.[toolSlotIndex];
+    if (slot) {
+      nextState.campaign.inventory.slots[toolSlotIndex] = {
+        ...slot,
+        durability: Math.max(0, toolDurability),
+        maxDurability: slot.maxDurability ?? toolDurability,
+      };
+    }
+  } else if (toolSlotIndex != null && toolDurabilityCost != null) {
+    nextState.campaign.inventory = applyToolDurabilityToInventoryState(
+      nextState.campaign.inventory,
+      toolSlotIndex,
+      toolDurabilityCost,
+    ).inventory;
+  }
+
   const cooldown = payload.cooldown ?? {};
   const key = payload.cooldownKey ?? cooldown.key ?? `${toolId}_${cellIndex}`;
   const until = payload.cooldownUntil ?? cooldown.until;

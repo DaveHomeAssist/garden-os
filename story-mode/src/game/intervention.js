@@ -294,15 +294,12 @@ export function executeToolAction(store, toolId, cellIndex, now = Date.now()) {
           bonus,
           cooldownUntil: until,
           toolId,
+          toolDurabilityCost: toolSlot ? 1 : undefined,
+          toolItemId: toolSlot?.slot?.itemId,
+          toolSlotIndex: toolSlot?.slotIndex,
           wateredAt: now,
         },
       });
-      if (toolSlot) {
-        store.dispatch({
-          type: Actions.USE_TOOL,
-          payload: { slotIndex: toolSlot.slotIndex, durabilityCost: 1 },
-        });
-      }
       return {
         success: true,
         message: `${getCropName(cell)} watered.`,

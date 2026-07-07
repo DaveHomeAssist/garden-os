@@ -198,6 +198,17 @@ function sameToolIntervention(intervention, currentState) {
     if ((currentState?.season?.toolCooldowns?.[cooldown.key] ?? 0) !== cooldown.until) return false;
   }
 
+  const toolSlotIndex = Number(intervention.toolSlotIndex);
+  const toolDurability = Number(intervention.toolDurability);
+  if (Number.isInteger(toolSlotIndex) && Number.isFinite(toolDurability)) {
+    const slot = currentState?.campaign?.inventory?.slots?.[toolSlotIndex];
+    if (!slot) return false;
+    if (typeof intervention.toolItemId === 'string' && intervention.toolItemId && slot.itemId !== intervention.toolItemId) {
+      return false;
+    }
+    if (Number(slot.durability ?? 0) !== toolDurability) return false;
+  }
+
   const itemId = typeof intervention.itemId === 'string' ? intervention.itemId : null;
   const remainingCount = Number(intervention.remainingCount);
   if (itemId && Number.isFinite(remainingCount)) {
@@ -252,7 +263,11 @@ function authorityAckToStoreAction(ack, currentState = null) {
         itemId,
         mulched: typeof intervention?.mulched === 'boolean' ? intervention.mulched : undefined,
         protected: typeof intervention?.protected === 'boolean' ? intervention.protected : undefined,
+        toolDurability: Number.isFinite(intervention?.toolDurability) ? intervention.toolDurability : undefined,
+        toolDurabilityCost: Number.isFinite(intervention?.toolDurabilityCost) ? intervention.toolDurabilityCost : undefined,
         toolId,
+        toolItemId: typeof intervention?.toolItemId === 'string' ? intervention.toolItemId : undefined,
+        toolSlotIndex: Number.isInteger(intervention?.toolSlotIndex) ? intervention.toolSlotIndex : undefined,
         wateredAt: Number.isFinite(intervention?.wateredAt) ? intervention.wateredAt : undefined,
       },
       type: 'APPLY_TOOL_INTERVENTION',

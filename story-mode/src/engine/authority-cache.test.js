@@ -479,7 +479,11 @@ describe('authority IndexedDB cache', () => {
             itemCount: 0,
             itemId: null,
             remainingCount: null,
+            toolDurability: 99,
+            toolDurabilityCost: 1,
             toolId: 'water',
+            toolItemId: 'watering_can',
+            toolSlotIndex: 0,
             wateredAt: NOW,
           },
         },
@@ -500,7 +504,11 @@ describe('authority IndexedDB cache', () => {
         interventionBonus: 0.3,
         itemCount: 0,
         itemId: null,
+        toolDurability: 99,
+        toolDurabilityCost: 1,
         toolId: 'water',
+        toolItemId: 'watering_can',
+        toolSlotIndex: 0,
         wateredAt: NOW,
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
@@ -510,6 +518,7 @@ describe('authority IndexedDB cache', () => {
     alreadyWaterIntervened.season.grid[2].interventionBonus = 0.3;
     alreadyWaterIntervened.season.grid[2].lastWateredAt = NOW;
     alreadyWaterIntervened.season.toolCooldowns.water_2 = NOW + 30_000;
+    alreadyWaterIntervened.campaign.inventory.slots[0].durability = 99;
     expect(authorityAckToStoreAction({
       accepted: true,
       actionType: Actions.APPLY_TOOL_INTERVENTION,
@@ -529,7 +538,11 @@ describe('authority IndexedDB cache', () => {
             itemCount: 0,
             itemId: null,
             remainingCount: null,
+            toolDurability: 99,
+            toolDurabilityCost: 1,
             toolId: 'water',
+            toolItemId: 'watering_can',
+            toolSlotIndex: 0,
             wateredAt: NOW,
           },
         },
@@ -1652,7 +1665,11 @@ describe('authority IndexedDB cache', () => {
                 itemCount: 0,
                 itemId: null,
                 remainingCount: null,
+                toolDurability: 99,
+                toolDurabilityCost: body.payload.toolDurabilityCost,
                 toolId: body.payload.toolId,
+                toolItemId: body.payload.toolItemId,
+                toolSlotIndex: body.payload.toolSlotIndex,
                 wateredAt: body.payload.wateredAt,
               },
             },
@@ -1682,6 +1699,9 @@ describe('authority IndexedDB cache', () => {
         cellIndex: 2,
         cooldownUntil: NOW + 30_000,
         toolId: 'water',
+        toolDurabilityCost: 1,
+        toolItemId: 'watering_can',
+        toolSlotIndex: 0,
         wateredAt: NOW,
       },
     });
@@ -1691,6 +1711,7 @@ describe('authority IndexedDB cache', () => {
     expect(store.getState().season.grid[2].interventionBonus).toBe(0.3);
     expect(store.getState().season.grid[2].lastWateredAt).toBe(NOW);
     expect(store.getState().season.toolCooldowns.water_2).toBe(NOW + 30_000);
+    expect(store.getState().campaign.inventory.slots[0].durability).toBe(99);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

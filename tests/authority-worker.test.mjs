@@ -482,6 +482,9 @@ test('authority action routes water interventions with cooldown as one canonical
       cellIndex: 2,
       cooldownUntil: 1783370030000,
       toolId: 'water',
+      toolDurabilityCost: 1,
+      toolItemId: 'watering_can',
+      toolSlotIndex: 0,
       wateredAt: 1783370000000,
     },
     playerId: 'local',
@@ -497,6 +500,7 @@ test('authority action routes water interventions with cooldown as one canonical
       ...action.payload,
       bonus: 1,
       cooldownUntil: 1783370099999,
+      toolDurabilityCost: 50,
       wateredAt: 1783379999999,
     },
   }), env);
@@ -511,6 +515,7 @@ test('authority action routes water interventions with cooldown as one canonical
   assert.equal(first.state.data.grid[2].lastWateredAt, 1783370000000);
   assert.equal(first.state.data.toolCooldowns.water_2, 1783370030000);
   assert.equal(first.state.data.inventory.slots[0].itemId, 'watering_can');
+  assert.equal(first.state.data.inventory.slots[0].durability, 99);
   assert.deepEqual(first.state.data.lastToolIntervention, {
     appliedAt: 1783370000000,
     bonus: 0.25,
@@ -526,13 +531,18 @@ test('authority action routes water interventions with cooldown as one canonical
     itemCount: 0,
     itemId: null,
     remainingCount: null,
+    toolDurability: 99,
+    toolDurabilityCost: 1,
     toolId: 'water',
+    toolItemId: 'watering_can',
+    toolSlotIndex: 0,
     wateredAt: 1783370000000,
   });
   assert.equal(second.duplicate, true);
   assert.equal(second.state.tick, 2);
   assert.equal(second.state.data.grid[2].interventionBonus, 0.25);
   assert.equal(second.state.data.toolCooldowns.water_2, 1783370030000);
+  assert.equal(second.state.data.inventory.slots[0].durability, 99);
 });
 
 test('authority action routes cell conditions through canonical grid state', async () => {
@@ -932,8 +942,28 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   }), env);
   const badWateredAt = await badWateredAtResponse.json();
 
-  const wrongItemResponse = await worker.fetch(jsonRequest('/action', {
+  const toolMismatchResponse = await worker.fetch(jsonRequest('/action', {
     clientSeq: 6,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-water-tool-mismatch',
+    idempotencyKey: 'idem-water-tool-mismatch',
+    payload: {
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      toolId: 'water',
+      toolItemId: 'pruning_shears',
+      toolSlotIndex: 0,
+      wateredAt: 1783370000000,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const toolMismatch = await toolMismatchResponse.json();
+
+  const wrongItemResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 7,
     expectedTick: 1,
     gameId: 'garden',
     id: 'action-wrong-intervention-item',
@@ -963,6 +993,9 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   assert.equal(badWateredAtResponse.status, 422);
   assert.equal(badWateredAt.ack.accepted, false);
   assert.equal(badWateredAt.ack.rejection.code, 'BAD_WATERED_AT');
+  assert.equal(toolMismatchResponse.status, 422);
+  assert.equal(toolMismatch.ack.accepted, false);
+  assert.equal(toolMismatch.ack.rejection.code, 'TOOL_MISMATCH');
   assert.equal(wrongItemResponse.status, 422);
   assert.equal(wrongItem.ack.accepted, false);
   assert.equal(wrongItem.ack.rejection.code, 'ITEM_MISMATCH');

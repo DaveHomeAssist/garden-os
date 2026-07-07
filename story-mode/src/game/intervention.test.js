@@ -75,15 +75,20 @@ describe('executeToolAction', () => {
   it('waters a crop, adds bonus, and applies cooldown', () => {
     const store = makeStore();
     plant(store, 0, 'lettuce');
+    const dispatch = vi.spyOn(store, 'dispatch');
 
     const result = executeToolAction(store, 'water', 0, 100_000);
     const next = store.getState();
 
     expect(result.success).toBe(true);
+    expect(dispatch.mock.calls.map(([action]) => action.type)).toEqual([
+      Actions.APPLY_TOOL_INTERVENTION,
+    ]);
     expect(result.effects.bonus).toBeCloseTo(0.3, 5);
     expect(next.season.grid[0].interventionBonus).toBeCloseTo(0.3, 5);
     expect(next.season.grid[0].lastWateredAt).toBe(100_000);
     expect(next.season.toolCooldowns.water_0).toBe(130_000);
+    expect(next.campaign.inventory.slots[0].durability).toBe(99);
     expect(canUseTool(next, 'water', 0, 110_000)).toMatchObject({ valid: false });
   });
 
