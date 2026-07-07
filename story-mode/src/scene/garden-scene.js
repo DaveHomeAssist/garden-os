@@ -1290,6 +1290,66 @@ export function createGardenScene(container) {
 
   // Crop mesh cache
   const cropMeshes = new Map();
+
+  // ── Plant juice: pop-in tween + soil poof particles (deterministic, no Math.random) ──
+  const plantPops = [];
+  const soilPoofs = [];
+  let cropSyncCount = 0; // first sync restores saves — no juice on load
+  const POOF_GEO = new THREE.SphereGeometry(0.016, 6, 5);
+
+  function easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
+  function spawnPlantJuice(mesh, cellIndex, baseScale) {
+    plantPops.push({ mesh, t: 0, base: baseScale });
+    mesh.scale.setScalar(baseScale * 0.01);
+    const group = new THREE.Group();
+    group.position.set(mesh.position.x, bed.soilY + 0.02, mesh.position.z);
+    const parts = [];
+    for (let p = 0; p < 8; p++) {
+      const seed = cellIndex * 13 + p * 7;
+      const angle = (p / 8) * Math.PI * 2 + (seed % 5) * 0.13;
+      const speed = 0.55 + ((seed % 7) / 7) * 0.5;
+      const mat = new THREE.MeshBasicMaterial({ color: p % 2 ? 0x6b4e33 : 0x8a6a45, transparent: true, opacity: 0.9 });
+      const dot = new THREE.Mesh(POOF_GEO, mat);
+      dot.scale.setScalar(0.8 + (seed % 4) * 0.15);
+      group.add(dot);
+      parts.push({ dot, vx: Math.cos(angle) * speed, vz: Math.sin(angle) * speed, vy: 1.1 + ((seed % 3) / 3) * 0.6 });
+    }
+    resourceTracker.trackObject(group);
+    root.add(group);
+    soilPoofs.push({ group, parts, t: 0 });
+  }
+
+  function updatePlantFX(dt) {
+    for (let i = plantPops.length - 1; i >= 0; i--) {
+      const pop = plantPops[i];
+      pop.t += dt;
+      const k = Math.min(pop.t / 0.38, 1);
+      pop.mesh.scale.setScalar(pop.base * Math.max(easeOutBack(k), 0.01));
+      if (k >= 1) plantPops.splice(i, 1);
+    }
+    for (let i = soilPoofs.length - 1; i >= 0; i--) {
+      const poof = soilPoofs[i];
+      poof.t += dt;
+      const life = poof.t / 0.55;
+      for (const part of poof.parts) {
+        part.dot.position.x += part.vx * dt;
+        part.dot.position.z += part.vz * dt;
+        part.vy -= 4.6 * dt;
+        part.dot.position.y = Math.max(part.dot.position.y + part.vy * dt, 0);
+        part.dot.material.opacity = 0.9 * Math.max(1 - life, 0);
+      }
+      if (life >= 1) {
+        resourceTracker.disposeObject(poof.group);
+        soilPoofs.splice(i, 1);
+      }
+    }
+  }
+
   const supportMeshes = new Map();
   const accentMeshes = new Map();   // sprite accent billboards per cell
   let lastAccentSync = {
@@ -2362,7 +2422,9 @@ function getGrowthScale(phase, season) {
       applyCropDamageState(mesh, cell.damageState, season);
       root.add(mesh);
       cropMeshes.set(key, mesh);
+      if (cropSyncCount > 0) spawnPlantJuice(mesh, i, growthScale * anchor.scale);
     }
+    cropSyncCount++;
 
     // Remove stale meshes
     for (const [key, mesh] of cropMeshes) {
@@ -3048,6 +3110,8 @@ function getGrowthScale(phase, season) {
           sheepdogHoldState.active = false;
         }
       }
+
+      updatePlantFX(dt);
 
       if (sheepdogRunState.active) {
         sheepdogRunState.elapsedMs += dt * 1000;

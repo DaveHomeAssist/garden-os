@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -144,6 +144,7 @@ function clonePosition(value) {
 function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
+  if (actionId.endsWith(':APPLY_TOOL_INTERVENTION')) return 'APPLY_TOOL_INTERVENTION';
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
@@ -173,6 +174,33 @@ function getInventoryItemCount(inventoryState, itemId) {
   ), 0);
 }
 
+function sameToolIntervention(intervention, currentState) {
+  const toolId = intervention?.toolId;
+  const cellIndex = Number(intervention?.cellIndex);
+  if (!['protect', 'mulch'].includes(toolId) || !Number.isInteger(cellIndex)) return false;
+  const cell = currentState?.season?.grid?.[cellIndex];
+  if (!cell) return false;
+
+  if (toolId === 'protect' && Boolean(cell.protected) !== Boolean(intervention.protected)) return false;
+  if (toolId === 'mulch') {
+    if (Boolean(cell.mulched) !== Boolean(intervention.mulched)) return false;
+    if ((cell.carryForwardType ?? null) !== (intervention.carryForwardType ?? null)) return false;
+    if (Number(cell.interventionBonus ?? 0) !== Number(intervention.interventionBonus ?? 0)) return false;
+  }
+
+  const cooldown = intervention.cooldown ?? {};
+  if (typeof cooldown.key === 'string' && Number.isFinite(cooldown.until)) {
+    if ((currentState?.season?.toolCooldowns?.[cooldown.key] ?? 0) !== cooldown.until) return false;
+  }
+
+  const itemId = typeof intervention.itemId === 'string' ? intervention.itemId : null;
+  const remainingCount = Number(intervention.remainingCount);
+  if (itemId && Number.isFinite(remainingCount)) {
+    return getInventoryItemCount(currentState?.campaign?.inventory, itemId) <= remainingCount;
+  }
+  return true;
+}
+
 function authorityAckToStoreAction(ack, currentState = null) {
   if (!ack?.accepted) return null;
   const data = ack.authoritativePatch?.data;
@@ -190,6 +218,38 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { cellIndex, cropId },
       type: 'PLANT_CROP',
+    };
+  }
+
+  if (actionType === 'APPLY_TOOL_INTERVENTION') {
+    const intervention = data.lastToolIntervention;
+    const toolId = typeof intervention?.toolId === 'string' ? intervention.toolId : null;
+    const cellIndex = Number(intervention?.cellIndex);
+    const itemId = typeof intervention?.itemId === 'string' ? intervention.itemId : null;
+    const remainingCount = Number(intervention?.remainingCount);
+    if (!['protect', 'mulch'].includes(toolId) || !Number.isInteger(cellIndex)) return null;
+    if (sameToolIntervention(intervention, currentState)) return null;
+    const currentCount = itemId ? getInventoryItemCount(currentState?.campaign?.inventory, itemId) : 0;
+    const itemCount = itemId && Number.isFinite(remainingCount)
+      ? Math.max(0, currentCount - remainingCount)
+      : Number(intervention?.itemCount ?? 0);
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        appliedAt: Number.isFinite(intervention?.appliedAt) ? intervention.appliedAt : undefined,
+        bonus: Number.isFinite(intervention?.bonus) ? intervention.bonus : undefined,
+        carryForwardType: intervention?.carryForwardType ?? undefined,
+        cellIndex,
+        cooldown: intervention?.cooldown ?? undefined,
+        cooldownUntil: intervention?.cooldown?.until,
+        interventionBonus: Number.isFinite(intervention?.interventionBonus) ? intervention.interventionBonus : undefined,
+        itemCount,
+        itemId,
+        mulched: typeof intervention?.mulched === 'boolean' ? intervention.mulched : undefined,
+        protected: typeof intervention?.protected === 'boolean' ? intervention.protected : undefined,
+        toolId,
+      },
+      type: 'APPLY_TOOL_INTERVENTION',
     };
   }
 

@@ -326,15 +326,20 @@ export function executeToolAction(store, toolId, cellIndex, now = Date.now()) {
     }
 
     case 'protect': {
+      const until = now + TOOL_COOLDOWNS.protect;
+      cooldowns.set(getCooldownKey(toolId, cellIndex), until);
       store.dispatch({
-        type: Actions.SET_PROTECTION,
-        payload: { cellIndex, protected: true },
+        type: Actions.APPLY_TOOL_INTERVENTION,
+        payload: {
+          appliedAt: now,
+          cellIndex,
+          cooldownUntil: until,
+          itemCount: 1,
+          itemId: 'pest_spray',
+          protected: true,
+          toolId,
+        },
       });
-      store.dispatch({
-        type: Actions.REMOVE_ITEM,
-        payload: { itemId: 'pest_spray', count: 1 },
-      });
-      const until = setCooldown(store, toolId, cellIndex, TOOL_COOLDOWNS.protect, now);
       return {
         success: true,
         message: `${getCropName(cell)} protected.`,
@@ -343,22 +348,22 @@ export function executeToolAction(store, toolId, cellIndex, now = Date.now()) {
     }
 
     case 'mulch': {
+      const until = now + TOOL_COOLDOWNS.mulch;
+      cooldowns.set(getCooldownKey(toolId, cellIndex), until);
       store.dispatch({
-        type: Actions.CARRY_FORWARD,
-        payload: { cellIndex, carryForwardType: 'enriched', mulched: true },
-      });
-      store.dispatch({
-        type: Actions.WATER_CELL,
+        type: Actions.APPLY_TOOL_INTERVENTION,
         payload: {
-          cellIndex,
+          appliedAt: now,
           bonus: 0.2,
+          cellIndex,
+          carryForwardType: 'enriched',
+          cooldownUntil: until,
+          itemCount: 1,
+          itemId: 'mulch_bag',
+          mulched: true,
+          toolId,
         },
       });
-      store.dispatch({
-        type: Actions.REMOVE_ITEM,
-        payload: { itemId: 'mulch_bag', count: 1 },
-      });
-      const until = setCooldown(store, toolId, cellIndex, TOOL_COOLDOWNS.mulch, now);
       return {
         success: true,
         message: `${cell?.cropId ? getCropName(cell) : 'Soil'} mulched.`,

@@ -53,6 +53,7 @@ const Actions = {
   PLANT_CROP: 'PLANT_CROP',
   REMOVE_CROP: 'REMOVE_CROP',
   APPLY_EVENT: 'APPLY_EVENT',
+  APPLY_TOOL_INTERVENTION: 'APPLY_TOOL_INTERVENTION',
   USE_INTERVENTION: 'USE_INTERVENTION',
   SET_DAMAGE: 'SET_DAMAGE',
   SET_PROTECTION: 'SET_PROTECTION',
@@ -361,6 +362,52 @@ function updateCell(state, cellIndex, updater) {
   return nextState;
 }
 
+function applyToolInterventionToState(state, payload = {}) {
+  const cellIndex = payload.cellIndex;
+  const toolId = payload.toolId;
+  if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= state.season.grid.length) {
+    return state;
+  }
+  if (!['protect', 'mulch'].includes(toolId)) return state;
+
+  const nextState = cloneGameState(state);
+  const cell = nextState.season.grid[cellIndex];
+  const itemId = payload.itemId ?? (toolId === 'protect' ? 'pest_spray' : 'mulch_bag');
+  const itemCount = Math.max(0, Number(payload.itemCount ?? payload.count ?? 1));
+
+  if (toolId === 'protect') {
+    cell.protected = payload.protected ?? true;
+  }
+
+  if (toolId === 'mulch') {
+    cell.carryForwardType = payload.carryForwardType ?? 'enriched';
+    cell.mulched = payload.mulched ?? true;
+    const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0.2;
+    const targetBonus = Number.isFinite(payload.interventionBonus) ? payload.interventionBonus : null;
+    cell.interventionBonus = targetBonus ?? Math.min(1, (cell.interventionBonus ?? 0) + bonus);
+  }
+
+  if (itemId && itemCount > 0) {
+    nextState.campaign.inventory = removeItemFromInventoryState(
+      nextState.campaign.inventory,
+      itemId,
+      itemCount,
+    ).inventory;
+  }
+
+  const cooldown = payload.cooldown ?? {};
+  const key = payload.cooldownKey ?? cooldown.key ?? `${toolId}_${cellIndex}`;
+  const until = payload.cooldownUntil ?? cooldown.until;
+  if (key && Number.isFinite(until)) {
+    nextState.season.toolCooldowns = {
+      ...(nextState.season.toolCooldowns ?? {}),
+      [key]: until,
+    };
+  }
+
+  return nextState;
+}
+
 function awardKeepsakeToState(state, awarded, includeSeasonQueue = true) {
   if (!awarded?.id) return state;
   if ((state.campaign.keepsakes ?? []).some((entry) => entry.id === awarded.id)) {
@@ -497,6 +544,9 @@ function gameReducer(state, action = {}) {
       ).inventory;
       return nextState;
     }
+
+    case Actions.APPLY_TOOL_INTERVENTION:
+      return applyToolInterventionToState(state, payload);
 
     case Actions.MOVE_SLOT: {
       const nextState = cloneGameState(state);

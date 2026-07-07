@@ -779,6 +779,168 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes protect and mulch interventions through one canonical transaction', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const protectedCell = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-protect-intervention',
+      idempotencyKey: 'idem-protect-intervention',
+      payload: {
+        appliedAt: NOW,
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        itemCount: 1,
+        itemId: 'pest_spray',
+        protected: true,
+        toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-protect-intervention-retry',
+      idempotencyKey: 'idem-protect-intervention',
+      payload: {
+        appliedAt: NOW,
+        cellIndex: 2,
+        cooldownUntil: NOW + 60_000,
+        itemCount: 3,
+        itemId: 'pest_spray',
+        protected: true,
+        toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const mulchedCell = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-mulch-intervention',
+      idempotencyKey: 'idem-mulch-intervention',
+      payload: {
+        appliedAt: NOW + 1,
+        bonus: 0.2,
+        carryForwardType: 'enriched',
+        cellIndex: 3,
+        cooldownUntil: NOW + 45_000,
+        itemCount: 1,
+        itemId: 'mulch_bag',
+        mulched: true,
+        toolId: 'mulch',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(protectedCell.body.ok).toBe(true);
+    expect(protectedCell.body.ack.actionType).toBe(Actions.APPLY_TOOL_INTERVENTION);
+    expect(protectedCell.body.ack.authoritativePatch.data.lastToolIntervention).toMatchObject({
+      appliedAt: NOW,
+      cellIndex: 2,
+      cooldown: { cellIndex: 2, key: 'protect_2', toolId: 'protect', until: NOW + 30_000 },
+      itemCount: 1,
+      itemId: 'pest_spray',
+      protected: true,
+      remainingCount: 2,
+      toolId: 'protect',
+    });
+    expect(verifyAuthorityAckSignature(protectedCell.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(2);
+    expect(mulchedCell.body.ok).toBe(true);
+    expect(mulchedCell.body.ack.authoritativePatch.data.lastToolIntervention).toMatchObject({
+      appliedAt: NOW + 1,
+      bonus: 0.2,
+      carryForwardType: 'enriched',
+      cellIndex: 3,
+      cooldown: { cellIndex: 3, key: 'mulch_3', toolId: 'mulch', until: NOW + 45_000 },
+      interventionBonus: 0.2,
+      itemCount: 1,
+      itemId: 'mulch_bag',
+      mulched: true,
+      remainingCount: 2,
+      toolId: 'mulch',
+    });
+    expect(state.data.grid[2].protected).toBe(true);
+    expect(state.data.grid[3].mulched).toBe(true);
+    expect(state.data.grid[3].carryForwardType).toBe('enriched');
+    expect(state.data.grid[3].interventionBonus).toBe(0.2);
+    expect(state.data.inventory.slots[3].count).toBe(2);
+    expect(state.data.inventory.slots[4].count).toBe(2);
+    expect(state.data.toolCooldowns.protect_2).toBe(NOW + 30_000);
+    expect(state.data.toolCooldowns.mulch_3).toBe(NOW + 45_000);
+    expect(state.ledger.entries).toHaveLength(3);
+  });
+
+  it('rejects malformed or client-owned tool intervention payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const emptyProtect = await postJson(handle, '/api/action', envelope({
+      id: 'action-empty-protect-intervention',
+      idempotencyKey: 'idem-empty-protect-intervention',
+      payload: {
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        itemId: 'pest_spray',
+        protected: true,
+        toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+    const trustedTotal = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-trusted-intervention-total',
+      idempotencyKey: 'idem-trusted-intervention-total',
+      payload: {
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        interventionBonus: 99,
+        itemId: 'pest_spray',
+        protected: true,
+        toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const wrongItem = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-wrong-intervention-item',
+      idempotencyKey: 'idem-wrong-intervention-item',
+      payload: {
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        itemId: 'mulch_bag',
+        protected: true,
+        toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(emptyProtect.body.ok).toBe(false);
+    expect(emptyProtect.body.ack.rejection.code).toBe('CELL_EMPTY');
+    expect(trustedTotal.body.ok).toBe(false);
+    expect(trustedTotal.body.ack.rejection.code).toBe('CLIENT_INTERVENTION_TOTAL');
+    expect(wrongItem.body.ok).toBe(false);
+    expect(wrongItem.body.ack.rejection.code).toBe('ITEM_MISMATCH');
+    expect(verifyAuthorityAckSignature(wrongItem.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(1);
+    expect(state.data.grid[2].protected).toBe(false);
+    expect(state.data.inventory.slots[3].count).toBe(3);
+  });
+
   it('rejects malformed cooldown payloads without changing session state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });

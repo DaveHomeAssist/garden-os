@@ -37,6 +37,7 @@ const DEFAULT_AUTHORITY_CELL = {
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const ACTIONS = {
+  APPLY_TOOL_INTERVENTION: 'APPLY_TOOL_INTERVENTION',
   CARRY_FORWARD: 'CARRY_FORWARD',
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
@@ -53,6 +54,7 @@ const ACTIONS = {
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.APPLY_TOOL_INTERVENTION,
   ACTIONS.CARRY_FORWARD,
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
@@ -274,6 +276,7 @@ function createInitialAuthorityData({
   lastProtection = null,
   lastRemoval = null,
   lastSoil = null,
+  lastToolIntervention = null,
   lastToolUse = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -295,6 +298,7 @@ function createInitialAuthorityData({
     lastProtection,
     lastRemoval,
     lastSoil,
+    lastToolIntervention,
     lastToolUse,
     lastWatering,
     lastSpawnPoint,
@@ -350,6 +354,39 @@ function normalizeCooldownPayload(payload = {}) {
     key,
     toolId,
     until,
+  };
+}
+
+function normalizeToolInterventionPayload(payload = {}) {
+  const toolId = typeof payload.toolId === 'string' ? payload.toolId.trim() : '';
+  const cellIndex = Number.isInteger(payload.cellIndex) ? payload.cellIndex : null;
+  const itemId = typeof payload.itemId === 'string' && payload.itemId.trim()
+    ? payload.itemId.trim()
+    : (toolId === 'protect' ? 'pest_spray' : 'mulch_bag');
+  const countValue = payload.itemCount ?? payload.count ?? 1;
+  const itemCount = Number.isInteger(countValue) ? countValue : Number(countValue);
+  const cooldown = payload.cooldown ?? {};
+  const explicitKey = typeof payload.cooldownKey === 'string' && payload.cooldownKey.trim()
+    ? payload.cooldownKey.trim()
+    : (typeof cooldown.key === 'string' && cooldown.key.trim() ? cooldown.key.trim() : null);
+  const key = explicitKey ?? (toolId && cellIndex != null ? `${toolId}_${cellIndex}` : null);
+  const until = Number(payload.cooldownUntil ?? cooldown.until);
+  return {
+    appliedAt: Number.isFinite(payload.appliedAt) ? payload.appliedAt : null,
+    bonus: Number.isFinite(payload.bonus) ? payload.bonus : (toolId === 'mulch' ? 0.2 : 0),
+    carryForwardType: typeof payload.carryForwardType === 'string' && payload.carryForwardType.trim()
+      ? payload.carryForwardType.trim()
+      : 'enriched',
+    cellIndex,
+    cooldown: {
+      cellIndex,
+      key,
+      toolId,
+      until,
+    },
+    itemCount,
+    itemId,
+    toolId,
   };
 }
 
@@ -463,6 +500,50 @@ function createUpstashLedgerStore({
 }
 
 function reduceStoryAction(data, payload, envelope) {
+  if (envelope.type === ACTIONS.APPLY_TOOL_INTERVENTION) {
+    const intervention = normalizeToolInterventionPayload(payload);
+    const grid = createAuthorityGrid(data.grid);
+    const cell = grid[intervention.cellIndex];
+    const nextCell = { ...cell };
+    if (intervention.toolId === 'protect') {
+      nextCell.protected = true;
+    }
+    if (intervention.toolId === 'mulch') {
+      nextCell.carryForwardType = intervention.carryForwardType;
+      nextCell.mulched = true;
+      nextCell.interventionBonus = Math.min(1, Math.max(0, (nextCell.interventionBonus ?? 0) + intervention.bonus));
+    }
+    grid[intervention.cellIndex] = nextCell;
+
+    const inventory = createAuthorityInventory(data.inventory);
+    const itemCount = Math.max(1, Math.floor(Number(intervention.itemCount ?? 1)));
+    const itemRemoval = removeAuthorityInventoryItem(inventory, intervention.itemId, itemCount);
+    const toolCooldowns = {
+      ...createAuthorityCooldowns(data.toolCooldowns),
+      [intervention.cooldown.key]: intervention.cooldown.until,
+    };
+
+    return {
+      ...data,
+      grid,
+      inventory: itemRemoval.inventory,
+      lastToolIntervention: {
+        appliedAt: intervention.appliedAt,
+        bonus: intervention.toolId === 'mulch' ? intervention.bonus : 0,
+        carryForwardType: intervention.toolId === 'mulch' ? intervention.carryForwardType : null,
+        cellIndex: intervention.cellIndex,
+        cooldown: intervention.cooldown,
+        interventionBonus: nextCell.interventionBonus,
+        itemCount,
+        itemId: intervention.itemId,
+        mulched: intervention.toolId === 'mulch' ? true : undefined,
+        protected: intervention.toolId === 'protect' ? true : undefined,
+        remainingCount: getAuthorityInventoryItemCount(itemRemoval.inventory, intervention.itemId),
+        toolId: intervention.toolId,
+      },
+      toolCooldowns,
+    };
+  }
   if (envelope.type === ACTIONS.SET_DAMAGE) {
     const cellIndex = payload.cellIndex;
     const damageState = typeof payload.damageState === 'string' ? payload.damageState : null;
@@ -670,6 +751,71 @@ function reduceStoryAction(data, payload, envelope) {
 function validateStoryActionPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === ACTIONS.APPLY_TOOL_INTERVENTION) {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Tool intervention cannot submit trusted inventory state.' };
+    }
+    if (hasOwn(envelope.payload, 'grid') || hasOwn(envelope.payload, 'cell') || hasOwn(envelope.payload, 'state')) {
+      return { code: 'TRUSTED_CELL_PAYLOAD', message: 'Tool intervention cannot submit trusted cell state.' };
+    }
+    if (hasOwn(envelope.payload, 'interventionBonus')) {
+      return { code: 'CLIENT_INTERVENTION_TOTAL', message: 'Tool intervention cannot submit trusted intervention totals.' };
+    }
+    const intervention = normalizeToolInterventionPayload(envelope.payload);
+    if (!['protect', 'mulch'].includes(intervention.toolId)) {
+      return { code: 'BAD_TOOL_INTERVENTION', message: 'Tool intervention requires protect or mulch.' };
+    }
+    if (!Number.isInteger(intervention.cellIndex) || intervention.cellIndex < 0 || intervention.cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Tool intervention requires a valid starter-grid cell index.' };
+    }
+    if (intervention.toolId === 'protect' && !grid[intervention.cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Protect intervention requires a planted crop.' };
+    }
+    if (
+      hasOwn(envelope.payload, 'protected')
+      && (envelope.payload.protected !== true || intervention.toolId !== 'protect')
+    ) {
+      return { code: 'BAD_PROTECTION_VALUE', message: 'Protect intervention requires protected true.' };
+    }
+    if (
+      hasOwn(envelope.payload, 'mulched')
+      && (envelope.payload.mulched !== true || intervention.toolId !== 'mulch')
+    ) {
+      return { code: 'BAD_MULCHED_VALUE', message: 'Mulch intervention requires mulched true.' };
+    }
+    if (
+      hasOwn(envelope.payload, 'carryForwardType')
+      && (typeof envelope.payload.carryForwardType !== 'string' || !envelope.payload.carryForwardType.trim())
+    ) {
+      return { code: 'BAD_CARRY_FORWARD_TYPE', message: 'Mulch intervention requires a non-empty carryForwardType.' };
+    }
+    if (!Number.isFinite(intervention.bonus) || intervention.bonus < 0 || intervention.bonus > 1) {
+      return { code: 'BAD_INTERVENTION_BONUS', message: 'Tool intervention requires a finite bonus from 0 to 1.' };
+    }
+    const expectedItemId = intervention.toolId === 'protect' ? 'pest_spray' : 'mulch_bag';
+    if (intervention.itemId !== expectedItemId) {
+      return { code: 'ITEM_MISMATCH', message: 'Tool intervention item must match the selected tool.' };
+    }
+    if (!Number.isInteger(intervention.itemCount) || intervention.itemCount <= 0 || intervention.itemCount > 99) {
+      return { code: 'BAD_ITEM_COUNT', message: 'Tool intervention requires an integer item count from 1 to 99.' };
+    }
+    const cooldown = intervention.cooldown;
+    const expectedKey = `${intervention.toolId}_${intervention.cellIndex}`;
+    if (!cooldown.key || !COOLDOWN_KEY_RE.test(cooldown.key) || cooldown.key !== expectedKey) {
+      return { code: 'BAD_COOLDOWN_KEY', message: 'Tool intervention cooldown key must match toolId and cellIndex.' };
+    }
+    if (!Number.isFinite(cooldown.until) || cooldown.until < 0) {
+      return { code: 'BAD_COOLDOWN_UNTIL', message: 'Tool intervention requires a finite non-negative cooldown expiry.' };
+    }
+    if ('appliedAt' in (envelope.payload ?? {}) && envelope.payload.appliedAt !== null && !Number.isFinite(envelope.payload.appliedAt)) {
+      return { code: 'BAD_APPLIED_AT', message: 'Tool intervention requires appliedAt to be a finite timestamp or null.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (getAuthorityInventoryItemCount(inventory, intervention.itemId) < intervention.itemCount) {
+      return { code: 'NOT_ENOUGH_ITEM', message: 'Tool intervention requires enough server-owned inventory.' };
+    }
+    return null;
+  }
   if (envelope?.type === ACTIONS.SET_DAMAGE) {
     if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
       return { code: 'BAD_CELL_INDEX', message: 'Damage action requires a valid starter-grid cell index.' };

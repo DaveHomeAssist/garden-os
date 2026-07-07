@@ -1812,4 +1812,90 @@ describe('authority IndexedDB cache', () => {
 
     persistence.cleanup();
   });
+
+  it('queues tool intervention transactions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastToolIntervention: {
+                appliedAt: body.payload.appliedAt,
+                cellIndex: body.payload.cellIndex,
+                cooldown: {
+                  cellIndex: body.payload.cellIndex,
+                  key: 'protect_2',
+                  toolId: body.payload.toolId,
+                  until: body.payload.cooldownUntil,
+                },
+                itemCount: body.payload.itemCount,
+                itemId: body.payload.itemId,
+                protected: true,
+                remainingCount: 2,
+                toolId: body.payload.toolId,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.APPLY_TOOL_INTERVENTION,
+      payload: {
+        appliedAt: NOW,
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        itemCount: 1,
+        itemId: 'pest_spray',
+        protected: true,
+        toolId: 'protect',
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].protected).toBe(true);
+    expect(store.getState().season.toolCooldowns.protect_2).toBe(NOW + 30_000);
+    expect(store.getState().campaign.inventory.slots[3].count).toBe(2);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
 });
