@@ -456,6 +456,85 @@ test('authority action routes mulch interventions as one canonical transaction',
   });
 });
 
+test('authority action routes water interventions with cooldown as one canonical transaction', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  }), env);
+
+  const action = {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-water-intervention',
+    idempotencyKey: 'idem-water-intervention',
+    payload: {
+      appliedAt: 1783370000000,
+      bonus: 0.25,
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      toolId: 'water',
+      wateredAt: 1783370000000,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: {
+      ...action.payload,
+      bonus: 1,
+      cooldownUntil: 1783370099999,
+      wateredAt: 1783379999999,
+    },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'APPLY_TOOL_INTERVENTION');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].cropId, 'basil');
+  assert.equal(first.state.data.grid[2].interventionBonus, 0.25);
+  assert.equal(first.state.data.grid[2].lastWateredAt, 1783370000000);
+  assert.equal(first.state.data.toolCooldowns.water_2, 1783370030000);
+  assert.equal(first.state.data.inventory.slots[0].itemId, 'watering_can');
+  assert.deepEqual(first.state.data.lastToolIntervention, {
+    appliedAt: 1783370000000,
+    bonus: 0.25,
+    carryForwardType: null,
+    cellIndex: 2,
+    cooldown: {
+      cellIndex: 2,
+      key: 'water_2',
+      toolId: 'water',
+      until: 1783370030000,
+    },
+    interventionBonus: 0.25,
+    itemCount: 0,
+    itemId: null,
+    remainingCount: null,
+    toolId: 'water',
+    wateredAt: 1783370000000,
+  });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 2);
+  assert.equal(second.state.data.grid[2].interventionBonus, 0.25);
+  assert.equal(second.state.data.toolCooldowns.water_2, 1783370030000);
+});
+
 test('authority action routes cell conditions through canonical grid state', async () => {
   const { env, sessionId } = await createSession();
 
@@ -785,8 +864,26 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   }), env);
   const empty = await emptyResponse.json();
 
-  await worker.fetch(jsonRequest('/action', {
+  const emptyWaterResponse = await worker.fetch(jsonRequest('/action', {
     clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-empty-water-intervention',
+    idempotencyKey: 'idem-empty-water-intervention',
+    payload: {
+      cellIndex: 3,
+      cooldownUntil: 1783370030000,
+      toolId: 'water',
+      wateredAt: 1783370000000,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const emptyWater = await emptyWaterResponse.json();
+
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
     expectedTick: 0,
     gameId: 'garden',
     id: 'action-plant',
@@ -798,7 +895,7 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   }), env);
 
   const trustedTotalResponse = await worker.fetch(jsonRequest('/action', {
-    clientSeq: 3,
+    clientSeq: 4,
     expectedTick: 1,
     gameId: 'garden',
     id: 'action-trusted-intervention-total',
@@ -817,8 +914,26 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   }), env);
   const trustedTotal = await trustedTotalResponse.json();
 
+  const badWateredAtResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 5,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-bad-watered-at',
+    idempotencyKey: 'idem-bad-watered-at',
+    payload: {
+      cellIndex: 2,
+      cooldownUntil: 1783370030000,
+      toolId: 'water',
+      wateredAt: 'bad-timestamp',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'APPLY_TOOL_INTERVENTION',
+  }), env);
+  const badWateredAt = await badWateredAtResponse.json();
+
   const wrongItemResponse = await worker.fetch(jsonRequest('/action', {
-    clientSeq: 4,
+    clientSeq: 6,
     expectedTick: 1,
     gameId: 'garden',
     id: 'action-wrong-intervention-item',
@@ -839,9 +954,15 @@ test('authority rejects malformed tool intervention payloads before mutation', a
   assert.equal(emptyResponse.status, 422);
   assert.equal(empty.ack.accepted, false);
   assert.equal(empty.ack.rejection.code, 'CELL_EMPTY');
+  assert.equal(emptyWaterResponse.status, 422);
+  assert.equal(emptyWater.ack.accepted, false);
+  assert.equal(emptyWater.ack.rejection.code, 'CELL_EMPTY');
   assert.equal(trustedTotalResponse.status, 422);
   assert.equal(trustedTotal.ack.accepted, false);
   assert.equal(trustedTotal.ack.rejection.code, 'CLIENT_INTERVENTION_TOTAL');
+  assert.equal(badWateredAtResponse.status, 422);
+  assert.equal(badWateredAt.ack.accepted, false);
+  assert.equal(badWateredAt.ack.rejection.code, 'BAD_WATERED_AT');
   assert.equal(wrongItemResponse.status, 422);
   assert.equal(wrongItem.ack.accepted, false);
   assert.equal(wrongItem.ack.rejection.code, 'ITEM_MISMATCH');

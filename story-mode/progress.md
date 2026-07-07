@@ -1,3 +1,16 @@
+Update 2026-07-07 Story Mode water intervention authority pass:
+- Routed live watering through `APPLY_TOOL_INTERVENTION` so water bonus, `lastWateredAt`, and the water cooldown now land in one signed server/worker authority transaction.
+- Kept watering can durability on the existing `USE_TOOL` authority path for this sprint slice; water no longer uses separate `WATER_CELL` plus `SET_COOLDOWN` dispatches from the live tool action.
+- Server authority and the fetch-compatible authority worker now validate water intervention cell/cooldown/timestamp payloads, reject client-owned cell/intervention totals, reject item payloads for water, update canonical grid/cooldown state, and emit signed `lastToolIntervention` ack metadata.
+- Client reconciliation maps signed water `lastToolIntervention` acks back into local `APPLY_TOOL_INTERVENTION` only when optimistic state differs, preserving duplicate idempotency-key replay safety.
+- Validation: focused authority/cache/intervention Vitest passed 68 tests; direct authority worker security test passed 31 tests; full Story Mode Vitest passed 35 files / 438 tests; `npm run build`, `npm audit --audit-level=high` with 0 vulnerabilities, `git diff --check`, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Tool durability for water still commits through the separate `USE_TOOL` authority transaction; merging durability into the intervention transaction remains deferred.
+  - Tool repair authority remains deferred; repair material spend and repaired existing saves may need a fresh authority session before durable server-side repair is complete.
+  - Crafting/reward inventory mutations remain local until item awards, recipes, and crafting outputs are authority-owned.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode atomic intervention authority pass:
 - Routed protect/mulch tool interventions through one `APPLY_TOOL_INTERVENTION` authority action instead of separate local cell, consumable, and cooldown actions.
 - Server authority and the fetch-compatible authority worker now validate starter-grid cell/tool/item/cooldown payloads, reject client-owned grid/inventory/intervention totals, spend the server-owned `pest_spray`/`mulch_bag` consumable once, update canonical cell/cooldown state, and emit signed `lastToolIntervention` ack metadata.
