@@ -309,6 +309,7 @@ describe('authority IndexedDB cache', () => {
     expect(isAuthorityRoutedAction({ type: Actions.SET_DAMAGE })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.UPDATE_SOIL })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.CARRY_FORWARD })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.USE_TOOL })).toBe(true);
 
     expect(authorityAckToStoreAction({
       accepted: true,
@@ -552,6 +553,48 @@ describe('authority IndexedDB cache', () => {
         },
       },
     }, alreadyCooledDown)).toBeNull();
+
+    const toolReady = createGameState();
+    toolReady.campaign.inventory.slots[0].durability = 100;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.USE_TOOL,
+      authoritativePatch: {
+        data: {
+          lastToolUse: {
+            durability: 95,
+            durabilityCost: 5,
+            itemId: 'watering_can',
+            slotIndex: 0,
+          },
+        },
+      },
+    }, toolReady)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        durabilityCost: 5,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+      type: Actions.USE_TOOL,
+    });
+
+    const alreadyUsedTool = createGameState();
+    alreadyUsedTool.campaign.inventory.slots[0].durability = 95;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.USE_TOOL,
+      authoritativePatch: {
+        data: {
+          lastToolUse: {
+            durability: 95,
+            durabilityCost: 5,
+            itemId: 'watering_can',
+            slotIndex: 0,
+          },
+        },
+      },
+    }, alreadyUsedTool)).toBeNull();
 
     expect(authorityAckToStoreAction({
       accepted: true,
@@ -1538,6 +1581,77 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().season.toolCooldowns.water_2).toBe(NOW + 5_000);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues tool durability actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastToolUse: {
+                durability: 95,
+                durabilityCost: body.payload.durabilityCost,
+                itemId: body.payload.itemId,
+                slotIndex: body.payload.slotIndex,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.USE_TOOL,
+      payload: {
+        durabilityCost: 5,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.inventory.slots[0].durability).toBe(95);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

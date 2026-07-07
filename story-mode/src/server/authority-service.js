@@ -7,6 +7,12 @@ import {
   createEngineState,
   stableStringify,
 } from '../engine/authoritative-engine.js';
+import {
+  addItemToInventoryState,
+  applyToolDurabilityToInventoryState,
+  createInventoryState,
+  normalizeInventoryState,
+} from '../game/inventory.js';
 
 const ACK_SIGNATURE_PREFIX = 'hmac-sha256:';
 const DEFAULT_GAME_ID = 'garden';
@@ -35,6 +41,7 @@ const ACTIONS = {
   SET_PROTECTION: 'SET_PROTECTION',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
   UPDATE_SOIL: 'UPDATE_SOIL',
+  USE_TOOL: 'USE_TOOL',
   WATER_CELL: 'WATER_CELL',
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
@@ -49,6 +56,7 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.SET_COOLDOWN,
   ACTIONS.SET_PROTECTION,
   ACTIONS.UPDATE_SOIL,
+  ACTIONS.USE_TOOL,
   ACTIONS.WATER_CELL,
   ACTIONS.ZONE_CHANGED,
 ]);
@@ -64,6 +72,20 @@ function clampUnitNumber(value, fallback = 0) {
 
 function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value ?? {}, key);
+}
+
+function createStarterAuthorityInventory() {
+  let inventory = createInventoryState();
+  inventory = addItemToInventoryState(inventory, 'watering_can', 1).inventory;
+  inventory = addItemToInventoryState(inventory, 'pruning_shears', 1).inventory;
+  inventory = addItemToInventoryState(inventory, 'fertilizer_bag', 3).inventory;
+  inventory = addItemToInventoryState(inventory, 'pest_spray', 3).inventory;
+  inventory = addItemToInventoryState(inventory, 'mulch_bag', 3).inventory;
+  return inventory;
+}
+
+function createAuthorityInventory(inventory) {
+  return normalizeInventoryState(inventory ?? createStarterAuthorityInventory());
 }
 
 function createAuthorityCell(cell = {}) {
@@ -97,6 +119,7 @@ function createInitialAuthorityData({
   activeTool = 'hand',
   currentZone = 'player_plot',
   grid = [],
+  inventory = null,
   lastCarryForward = null,
   lastCooldown = null,
   lastDamage = null,
@@ -105,6 +128,7 @@ function createInitialAuthorityData({
   lastProtection = null,
   lastRemoval = null,
   lastSoil = null,
+  lastToolUse = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
@@ -115,6 +139,7 @@ function createInitialAuthorityData({
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    inventory: createAuthorityInventory(inventory),
     lastCarryForward,
     lastCooldown,
     lastDamage,
@@ -123,6 +148,7 @@ function createInitialAuthorityData({
     lastProtection,
     lastRemoval,
     lastSoil,
+    lastToolUse,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
@@ -445,6 +471,24 @@ function reduceStoryAction(data, payload, envelope) {
       },
     };
   }
+  if (envelope.type === ACTIONS.USE_TOOL) {
+    const inventory = createAuthorityInventory(data.inventory);
+    const slotIndex = payload.slotIndex;
+    const durabilityCost = Number.isFinite(payload.durabilityCost) ? Math.max(0, payload.durabilityCost) : 1;
+    const beforeSlot = inventory.slots[slotIndex];
+    const result = applyToolDurabilityToInventoryState(inventory, slotIndex, durabilityCost);
+    const afterSlot = result.inventory.slots[slotIndex];
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastToolUse: {
+        durability: Number.isFinite(afterSlot?.durability) ? afterSlot.durability : null,
+        durabilityCost,
+        itemId: beforeSlot?.itemId ?? null,
+        slotIndex,
+      },
+    };
+  }
   if (envelope.type === ACTIONS.ZONE_CHANGED) {
     const currentZone = typeof payload.toZone === 'string' && payload.toZone
       ? payload.toZone
@@ -603,6 +647,38 @@ function validateStoryActionPayload(envelope, state) {
     }
     if (!Number.isFinite(cooldown.until) || cooldown.until < 0) {
       return { code: 'BAD_COOLDOWN_UNTIL', message: 'Cooldown action requires a finite non-negative expiry timestamp.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.USE_TOOL) {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Tool use action cannot submit trusted inventory state.' };
+    }
+    const slotIndex = envelope.payload?.slotIndex;
+    if (!Number.isInteger(slotIndex) || slotIndex < 0) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool use action requires a valid inventory slot index.' };
+    }
+    const durabilityCost = envelope.payload?.durabilityCost ?? 1;
+    if (!Number.isFinite(durabilityCost) || durabilityCost < 0 || durabilityCost > 100) {
+      return { code: 'BAD_DURABILITY_COST', message: 'Tool use action requires a finite durability cost from 0 to 100.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (slotIndex >= inventory.slots.length) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool use slot index is outside the server-owned inventory.' };
+    }
+    const slot = inventory.slots[slotIndex];
+    if (!slot) {
+      return { code: 'MISSING_TOOL_SLOT', message: 'Tool use action requires a populated server-owned tool slot.' };
+    }
+    if (slot.category !== 'tools') {
+      return { code: 'NOT_TOOL', message: 'Tool use action requires a tool slot.' };
+    }
+    if (typeof envelope.payload?.itemId === 'string' && envelope.payload.itemId && envelope.payload.itemId !== slot.itemId) {
+      return { code: 'TOOL_MISMATCH', message: 'Tool use item id must match the server-owned tool slot.' };
+    }
+    if ((slot.durability ?? 0) <= 0) {
+      return { code: 'TOOL_BROKEN', message: 'Tool use action requires a usable tool.' };
     }
     return null;
   }

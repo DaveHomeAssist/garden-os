@@ -669,10 +669,8 @@ export function buildScenery(tracker = null) {
       side: THREE.DoubleSide,
     });
     [
-      { x: -2.15, z: -5.48, sx: 1.35, sz: 0.34 },
-      { x: -0.65, z: -5.6, sx: 1.1, sz: 0.28 },
-      { x: 0.9, z: -5.52, sx: 1.22, sz: 0.32 },
-      { x: 2.3, z: -5.62, sx: 0.92, sz: 0.24 },
+      { x: -2.35, z: -5.48, sx: 1.08, sz: 0.28 },
+      { x: -1.48, z: -5.58, sx: 0.86, sz: 0.22 },
     ].forEach(({ x, z, sx, sz }, index) => {
       const shimmer = new THREE.Mesh(new THREE.CircleGeometry(0.34, 24), heatMat.clone());
       shimmer.rotation.x = -Math.PI / 2;

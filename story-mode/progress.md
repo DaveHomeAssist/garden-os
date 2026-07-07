@@ -1,3 +1,19 @@
+Update 2026-07-07 Story Mode fence removal and tool durability authority pass:
+- Removed the remaining fence-read geometry from the live Story Mode bed by deleting per-crop support stake/cross-tie rendering; support crops and scoring logic remain intact, but the garden no longer draws fence-like posts through planted cells.
+- Trimmed July heat-haze scenery so pale shimmer stays under the compact house face instead of continuing to the right where the house ends.
+- Routed `USE_TOOL` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the first inventory side-effect authority mutation.
+- Server authority now owns starter inventory tool durability for default tools and emits signed `lastToolUse` ack metadata.
+- Added payload validation rejecting client-submitted inventory/slots, invalid slot indexes, non-tool slots, item mismatches, bad durability costs, and broken tools before mutation.
+- Client reconciliation maps signed `lastToolUse` acks back into `USE_TOOL` only when local durability is higher, so optimistic tool use does not double-decrement.
+- Visual proof: before/after default, house-edge, opposite, low, zoom, and mobile captures checked under `/var/folders/kc/_0fsy0wx01j8jqysccxyc9100000gn/T/garden-os-fence-angle-recheck-1783400038284` and `/var/folders/kc/_0fsy0wx01j8jqysccxyc9100000gn/T/garden-os-fence-angle-after-1783400223883`; standard screenshot regression proof saved under `/tmp/garden-os-story-screens-fence-tool-authority`.
+- Validation: worker authority passed 25 tests; focused authority/cache Vitest passed 47 tests; full Story Mode Vitest passed 35 files / 428 tests; `npm audit --audit-level=high` found 0 vulnerabilities; `npm run build`, `git diff --check`, `node tests/story-mode-screenshot-regression.mjs`, `node scripts/verify-all.mjs`, and the develop-web-game client smoke passed. The web-game client reached the live Story Mode loop and captured `/tmp/garden-os-web-game-fence-tool-authority/shot-0.png`; it still reported the known static 404 and unprovisioned authority 503 console errors.
+- Deferred:
+  - Consumable inventory spend (`REMOVE_ITEM`) remains local until item awards/repairs/crafting are authority-owned.
+  - Tool repair authority remains deferred; repaired existing saves may need a fresh authority session before durable server-side tool use is complete.
+  - Richer non-fence support visuals for climbers are deferred; current fix intentionally removes the visible support structure.
+  - Atomic intervention transactions remain deferred: mulch/protect/water still span separate local actions.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode cell condition authority pass:
 - Routed `SET_DAMAGE`, `UPDATE_SOIL`, and `CARRY_FORWARD` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache.
 - Server authority now owns canonical starter-grid `damageState`, `soilFatigue`, `carryForwardType`, and `mulched` fields, with signed `lastDamage`, `lastSoil`, and `lastCarryForward` ack metadata.

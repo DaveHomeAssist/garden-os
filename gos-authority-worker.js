@@ -22,8 +22,16 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 64 * 1024;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,80}$/;
 const AUTHORITY_GRID_SIZE = 32;
+const AUTHORITY_INVENTORY_CAPACITY = 20;
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const COOLDOWN_KEY_RE = /^[A-Za-z0-9_-]+_[0-9]+$/;
+const STARTER_AUTHORITY_ITEMS = [
+  { itemId: 'watering_can', category: 'tools', count: 1, durability: 100, maxDurability: 100 },
+  { itemId: 'pruning_shears', category: 'tools', count: 1, durability: 50, maxDurability: 50 },
+  { itemId: 'fertilizer_bag', category: 'materials', count: 3, durability: null, maxDurability: null },
+  { itemId: 'pest_spray', category: 'materials', count: 3, durability: null, maxDurability: null },
+  { itemId: 'mulch_bag', category: 'materials', count: 3, durability: null, maxDurability: null },
+];
 const DEFAULT_AUTHORITY_CELL = {
   carryForwardType: null,
   cropId: null,
@@ -41,6 +49,72 @@ function clampUnitNumber(value, fallback = 0) {
 
 function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value ?? {}, key);
+}
+
+function cloneSlot(slot) {
+  return slot ? structuredClone(slot) : null;
+}
+
+function normalizeAuthoritySlot(slot) {
+  if (!slot?.itemId) return null;
+  const durability = Number(slot.durability);
+  const maxDurability = Number(slot.maxDurability);
+  return {
+    itemId: String(slot.itemId),
+    category: typeof slot.category === 'string' ? slot.category : 'materials',
+    count: Math.max(1, Number(slot.count ?? 1)),
+    durability: Number.isFinite(durability) ? durability : null,
+    maxDurability: Number.isFinite(maxDurability) ? maxDurability : null,
+    metadata: slot.metadata && typeof slot.metadata === 'object' ? structuredClone(slot.metadata) : {},
+  };
+}
+
+function createStarterAuthorityInventory() {
+  const slots = Array.from({ length: AUTHORITY_INVENTORY_CAPACITY }, () => null);
+  STARTER_AUTHORITY_ITEMS.forEach((item, index) => {
+    slots[index] = normalizeAuthoritySlot(item);
+  });
+  return {
+    slots,
+    capacity: AUTHORITY_INVENTORY_CAPACITY,
+    tier: 1,
+    equippedToolId: null,
+  };
+}
+
+function createAuthorityInventory(inventory) {
+  if (!inventory?.slots || !Array.isArray(inventory.slots)) return createStarterAuthorityInventory();
+  const capacity = Math.max(Number(inventory.capacity ?? inventory.slots.length ?? AUTHORITY_INVENTORY_CAPACITY), AUTHORITY_INVENTORY_CAPACITY);
+  return {
+    slots: Array.from({ length: capacity }, (_, index) => normalizeAuthoritySlot(inventory.slots[index])),
+    capacity,
+    tier: Number.isFinite(Number(inventory.tier)) ? Number(inventory.tier) : 1,
+    equippedToolId: typeof inventory.equippedToolId === 'string' ? inventory.equippedToolId : null,
+  };
+}
+
+function cloneAuthorityInventory(inventory) {
+  const normalized = createAuthorityInventory(inventory);
+  return {
+    ...normalized,
+    slots: normalized.slots.map(cloneSlot),
+  };
+}
+
+function applyAuthorityToolDurability(inventory, slotIndex, durabilityCost = 1) {
+  const next = cloneAuthorityInventory(inventory);
+  const slot = next.slots[slotIndex];
+  if (!slot || slot.category !== 'tools') {
+    return { inventory: next, success: false };
+  }
+  const maxDurability = Number.isFinite(slot.maxDurability) ? slot.maxDurability : slot.durability ?? 0;
+  const current = Number.isFinite(slot.durability) ? slot.durability : maxDurability;
+  next.slots[slotIndex] = {
+    ...slot,
+    durability: Math.max(0, current - durabilityCost),
+    maxDurability,
+  };
+  return { inventory: next, success: true };
 }
 
 function createAuthorityCell(cell = {}) {
@@ -74,6 +148,7 @@ function createInitialAuthorityData({
   activeTool = null,
   currentZone = 'player_plot',
   grid = [],
+  inventory = null,
   lastCarryForward = null,
   lastCooldown = null,
   lastDamage = null,
@@ -82,6 +157,7 @@ function createInitialAuthorityData({
   lastProtection = null,
   lastRemoval = null,
   lastSoil = null,
+  lastToolUse = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
@@ -92,6 +168,7 @@ function createInitialAuthorityData({
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    inventory: createAuthorityInventory(inventory),
     lastCarryForward,
     lastCooldown,
     lastDamage,
@@ -100,6 +177,7 @@ function createInitialAuthorityData({
     lastProtection,
     lastRemoval,
     lastSoil,
+    lastToolUse,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
@@ -264,6 +342,24 @@ const AUTHORITY_REDUCERS = {
       ...data,
       grid,
       lastSoil: { cellIndex: payload.cellIndex, soilFatigue },
+    };
+  },
+  USE_TOOL: (data, payload) => {
+    const inventory = createAuthorityInventory(data.inventory);
+    const slotIndex = payload.slotIndex;
+    const durabilityCost = Number.isFinite(payload.durabilityCost) ? Math.max(0, payload.durabilityCost) : 1;
+    const beforeSlot = inventory.slots[slotIndex];
+    const result = applyAuthorityToolDurability(inventory, slotIndex, durabilityCost);
+    const afterSlot = result.inventory.slots[slotIndex];
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastToolUse: {
+        durability: Number.isFinite(afterSlot?.durability) ? afterSlot.durability : null,
+        durabilityCost,
+        itemId: beforeSlot?.itemId ?? null,
+        slotIndex,
+      },
     };
   },
   ZONE_CHANGED: (data, payload) => {
@@ -585,6 +681,38 @@ function validateAuthorityPayload(envelope, state) {
     }
     if (!Number.isFinite(cooldown.until) || cooldown.until < 0) {
       return { code: 'BAD_COOLDOWN_UNTIL', message: 'Cooldown action requires a finite non-negative expiry timestamp.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'USE_TOOL') {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Tool use action cannot submit trusted inventory state.' };
+    }
+    const slotIndex = envelope.payload?.slotIndex;
+    if (!Number.isInteger(slotIndex) || slotIndex < 0) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool use action requires a valid inventory slot index.' };
+    }
+    const durabilityCost = envelope.payload?.durabilityCost ?? 1;
+    if (!Number.isFinite(durabilityCost) || durabilityCost < 0 || durabilityCost > 100) {
+      return { code: 'BAD_DURABILITY_COST', message: 'Tool use action requires a finite durability cost from 0 to 100.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (slotIndex >= inventory.slots.length) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool use slot index is outside the server-owned inventory.' };
+    }
+    const slot = inventory.slots[slotIndex];
+    if (!slot) {
+      return { code: 'MISSING_TOOL_SLOT', message: 'Tool use action requires a populated server-owned tool slot.' };
+    }
+    if (slot.category !== 'tools') {
+      return { code: 'NOT_TOOL', message: 'Tool use action requires a tool slot.' };
+    }
+    if (typeof envelope.payload?.itemId === 'string' && envelope.payload.itemId && envelope.payload.itemId !== slot.itemId) {
+      return { code: 'TOOL_MISMATCH', message: 'Tool use item id must match the server-owned tool slot.' };
+    }
+    if ((slot.durability ?? 0) <= 0) {
+      return { code: 'TOOL_BROKEN', message: 'Tool use action requires a usable tool.' };
     }
     return null;
   }

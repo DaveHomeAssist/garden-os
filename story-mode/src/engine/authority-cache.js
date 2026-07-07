@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -150,6 +150,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':SET_PROTECTION')) return 'SET_PROTECTION';
   if (actionId.endsWith(':UPDATE_SOIL')) return 'UPDATE_SOIL';
   if (actionId.endsWith(':CARRY_FORWARD')) return 'CARRY_FORWARD';
+  if (actionId.endsWith(':USE_TOOL')) return 'USE_TOOL';
   if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
   return null;
@@ -332,6 +333,27 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload,
       type: 'SET_COOLDOWN',
+    };
+  }
+
+  if (actionType === 'USE_TOOL') {
+    const toolUse = data.lastToolUse;
+    const slotIndex = Number(toolUse?.slotIndex);
+    const durability = Number(toolUse?.durability);
+    const itemId = typeof toolUse?.itemId === 'string' ? toolUse.itemId : null;
+    if (!Number.isInteger(slotIndex) || !Number.isFinite(durability)) return null;
+    const currentSlot = currentState?.campaign?.inventory?.slots?.[slotIndex];
+    if (!currentSlot || (itemId && currentSlot.itemId !== itemId)) return null;
+    const currentDurability = Number(currentSlot.durability ?? 0);
+    if (!Number.isFinite(currentDurability) || currentDurability <= durability) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        durabilityCost: currentDurability - durability,
+        itemId,
+        slotIndex,
+      },
+      type: 'USE_TOOL',
     };
   }
 

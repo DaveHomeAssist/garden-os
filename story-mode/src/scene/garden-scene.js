@@ -2095,27 +2095,6 @@ export function createGardenScene(container) {
     return group;
   }
 
-  function buildStakeProp() {
-    const group = new THREE.Group();
-    const stakeMat = new THREE.MeshStandardMaterial({ color: 0x6e5130, roughness: 0.86 });
-    const tieMat = new THREE.MeshStandardMaterial({ color: 0xb8a87a, roughness: 0.8 });
-
-    for (const [x, z, rot] of [[-0.08, -0.02, 0.1], [0.08, 0.02, -0.1]]) {
-      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.62, 8), stakeMat);
-      stake.position.set(x, 0.31, z);
-      stake.rotation.z = rot;
-      stake.castShadow = true;
-      group.add(stake);
-    }
-
-    const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.18, 6), tieMat);
-    tie.rotation.z = Math.PI / 2;
-    tie.position.set(0, 0.38, 0);
-    group.add(tie);
-
-    return group;
-  }
-
   function buildProtectionProp() {
     const domeMat = new THREE.MeshStandardMaterial({
       color: 0xbfd4d9,
@@ -2219,16 +2198,10 @@ export function createGardenScene(container) {
 
   function buildCellSupportProps(cell) {
     const group = new THREE.Group();
-    const crop = cell.cropId ? getCropById(cell.cropId) : null;
     let hasProp = false;
 
     if (cell.mulched || cell.carryForwardType === 'mulched') {
       group.add(buildMulchProp());
-      hasProp = true;
-    }
-
-    if (crop?.support) {
-      group.add(buildStakeProp());
       hasProp = true;
     }
 
@@ -2439,7 +2412,6 @@ function getGrowthScale(phase, season) {
       const key = `support-${i}`;
       const signature = JSON.stringify({
         cropId: cell.cropId,
-        support: Boolean(cell.cropId && getCropById(cell.cropId)?.support),
         mulched: Boolean(cell.mulched || cell.carryForwardType === 'mulched'),
         protected: Boolean(cell.protected),
         companionPatched: Boolean(cell.companionPatched),

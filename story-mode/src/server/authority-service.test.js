@@ -692,6 +692,51 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes tool durability through canonical inventory state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-tool-use',
+      idempotencyKey: 'idem-tool-use',
+      payload: {
+        durabilityCost: 5,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+      type: Actions.USE_TOOL,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-tool-use-retry',
+      idempotencyKey: 'idem-tool-use',
+      payload: {
+        durabilityCost: 50,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+      type: Actions.USE_TOOL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.USE_TOOL);
+    expect(applied.body.ack.authoritativePatch.data.lastToolUse).toEqual({
+      durability: 95,
+      durabilityCost: 5,
+      itemId: 'watering_can',
+      slotIndex: 0,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[0]).toMatchObject({
+      durability: 95,
+      itemId: 'watering_can',
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(1);
+    expect(state.data.inventory.slots[0].durability).toBe(95);
+    expect(state.ledger.entries).toHaveLength(1);
+  });
+
   it('rejects malformed cooldown payloads without changing session state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -711,6 +756,41 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.toolCooldowns).toEqual({});
+  });
+
+  it('rejects malformed or client-owned tool durability payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedInventory = await postJson(handle, '/api/action', envelope({
+      id: 'action-trusted-tool-use',
+      idempotencyKey: 'idem-trusted-tool-use',
+      payload: { inventory: { slots: [] }, slotIndex: 0 },
+      type: Actions.USE_TOOL,
+    }));
+    const notTool = await postJson(handle, '/api/action', envelope({
+      id: 'action-not-tool',
+      idempotencyKey: 'idem-not-tool',
+      payload: { durabilityCost: 1, slotIndex: 2 },
+      type: Actions.USE_TOOL,
+    }));
+    const mismatch = await postJson(handle, '/api/action', envelope({
+      id: 'action-tool-mismatch',
+      idempotencyKey: 'idem-tool-mismatch',
+      payload: { durabilityCost: 1, itemId: 'pruning_shears', slotIndex: 0 },
+      type: Actions.USE_TOOL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedInventory.body.ok).toBe(false);
+    expect(trustedInventory.body.ack.rejection.code).toBe('TRUSTED_INVENTORY_PAYLOAD');
+    expect(notTool.body.ok).toBe(false);
+    expect(notTool.body.ack.rejection.code).toBe('NOT_TOOL');
+    expect(mismatch.body.ok).toBe(false);
+    expect(mismatch.body.ack.rejection.code).toBe('TOOL_MISMATCH');
+    expect(verifyAuthorityAckSignature(mismatch.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.inventory.slots[0].durability).toBe(100);
   });
 
   it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {

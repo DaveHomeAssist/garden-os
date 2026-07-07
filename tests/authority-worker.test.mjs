@@ -734,6 +734,53 @@ test('authority action routes cooldowns through canonical state once', async () 
   assert.equal(body.state.data.toolCooldowns.water_2, 1783370005000);
 });
 
+test('authority action routes tool durability through canonical inventory once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-tool-use',
+    idempotencyKey: 'idem-tool-use',
+    payload: {
+      durabilityCost: 5,
+      itemId: 'watering_can',
+      slotIndex: 0,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'USE_TOOL',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: {
+      durabilityCost: 50,
+      itemId: 'watering_can',
+      slotIndex: 0,
+    },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'USE_TOOL');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.deepEqual(first.state.data.lastToolUse, {
+    durability: 95,
+    durabilityCost: 5,
+    itemId: 'watering_can',
+    slotIndex: 0,
+  });
+  assert.equal(first.state.data.inventory.slots[0].itemId, 'watering_can');
+  assert.equal(first.state.data.inventory.slots[0].durability, 95);
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 1);
+  assert.equal(second.state.data.inventory.slots[0].durability, 95);
+});
+
 test('authority rejects malformed cooldown payloads before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -759,6 +806,64 @@ test('authority rejects malformed cooldown payloads before mutation', async () =
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.deepEqual(session.state.data.toolCooldowns, {});
+});
+
+test('authority rejects malformed or client-owned tool durability payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const trustedResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-trusted-tool-use',
+    idempotencyKey: 'idem-trusted-tool-use',
+    payload: { inventory: { slots: [] }, slotIndex: 0 },
+    playerId: 'local',
+    sessionId,
+    type: 'USE_TOOL',
+  }), env);
+  const trusted = await trustedResponse.json();
+
+  const notToolResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-not-tool',
+    idempotencyKey: 'idem-not-tool',
+    payload: { durabilityCost: 1, slotIndex: 2 },
+    playerId: 'local',
+    sessionId,
+    type: 'USE_TOOL',
+  }), env);
+  const notTool = await notToolResponse.json();
+
+  const mismatchResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-tool-mismatch',
+    idempotencyKey: 'idem-tool-mismatch',
+    payload: { durabilityCost: 1, itemId: 'pruning_shears', slotIndex: 0 },
+    playerId: 'local',
+    sessionId,
+    type: 'USE_TOOL',
+  }), env);
+  const mismatch = await mismatchResponse.json();
+
+  assert.equal(trustedResponse.status, 422);
+  assert.equal(trusted.ack.accepted, false);
+  assert.equal(trusted.ack.rejection.code, 'TRUSTED_INVENTORY_PAYLOAD');
+  assert.equal(notToolResponse.status, 422);
+  assert.equal(notTool.ack.accepted, false);
+  assert.equal(notTool.ack.rejection.code, 'NOT_TOOL');
+  assert.equal(mismatchResponse.status, 422);
+  assert.equal(mismatch.ack.accepted, false);
+  assert.equal(mismatch.ack.rejection.code, 'TOOL_MISMATCH');
+  assert.equal(await verifyServerAckSignature(mismatch.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.inventory.slots[0].durability, 100);
 });
 
 test('authority rejects tampered full-state payload before mutation', async () => {
