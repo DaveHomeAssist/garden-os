@@ -12,7 +12,8 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
+const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -105,6 +106,9 @@ function resolveAuthorityUrl({
 }
 
 function isAuthorityRoutedAction(action) {
+  if (action?.type === 'REMOVE_ITEM') {
+    return AUTHORITY_ROUTED_REMOVE_ITEM_IDS.has(action.payload?.itemId);
+  }
   return ROUTED_ACTION_TYPES.has(action?.type);
 }
 
@@ -142,6 +146,7 @@ function inferAckActionType(ack) {
   const actionId = String(ack?.actionId ?? '');
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
+  if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
   if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
   if (actionId.endsWith(':SET_DAMAGE')) return 'SET_DAMAGE';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
@@ -160,6 +165,12 @@ function samePosition(left, right) {
   if (!left && !right) return true;
   if (!left || !right) return false;
   return left.x === right.x && left.z === right.z;
+}
+
+function getInventoryItemCount(inventoryState, itemId) {
+  return (inventoryState?.slots ?? []).reduce((total, slot) => (
+    slot?.itemId === itemId ? total + Number(slot.count ?? 0) : total
+  ), 0);
 }
 
 function authorityAckToStoreAction(ack, currentState = null) {
@@ -333,6 +344,20 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload,
       type: 'SET_COOLDOWN',
+    };
+  }
+
+  if (actionType === 'REMOVE_ITEM') {
+    const itemRemoval = data.lastItemRemoval;
+    const itemId = typeof itemRemoval?.itemId === 'string' ? itemRemoval.itemId : null;
+    const remainingCount = Number(itemRemoval?.remainingCount);
+    if (!itemId || !Number.isFinite(remainingCount)) return null;
+    const currentCount = getInventoryItemCount(currentState?.campaign?.inventory, itemId);
+    if (currentCount <= remainingCount) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { count: currentCount - remainingCount, itemId },
+      type: 'REMOVE_ITEM',
     };
   }
 

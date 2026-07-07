@@ -737,6 +737,48 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes consumable item removal through canonical inventory state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-remove-item',
+      idempotencyKey: 'idem-remove-item',
+      payload: {
+        count: 1,
+        itemId: 'pest_spray',
+      },
+      type: Actions.REMOVE_ITEM,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-remove-item-retry',
+      idempotencyKey: 'idem-remove-item',
+      payload: {
+        count: 2,
+        itemId: 'pest_spray',
+      },
+      type: Actions.REMOVE_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.REMOVE_ITEM);
+    expect(applied.body.ack.authoritativePatch.data.lastItemRemoval).toEqual({
+      count: 1,
+      itemId: 'pest_spray',
+      remainingCount: 2,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[3]).toMatchObject({
+      count: 2,
+      itemId: 'pest_spray',
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(1);
+    expect(state.data.inventory.slots[3].count).toBe(2);
+    expect(state.ledger.entries).toHaveLength(1);
+  });
+
   it('rejects malformed cooldown payloads without changing session state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -791,6 +833,41 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(mismatch.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.inventory.slots[0].durability).toBe(100);
+  });
+
+  it('rejects malformed or client-owned item removal payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedInventory = await postJson(handle, '/api/action', envelope({
+      id: 'action-trusted-remove-item',
+      idempotencyKey: 'idem-trusted-remove-item',
+      payload: { inventory: { slots: [] }, itemId: 'pest_spray', count: 1 },
+      type: Actions.REMOVE_ITEM,
+    }));
+    const badCount = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-remove-count',
+      idempotencyKey: 'idem-bad-remove-count',
+      payload: { count: 0, itemId: 'pest_spray' },
+      type: Actions.REMOVE_ITEM,
+    }));
+    const notEnough = await postJson(handle, '/api/action', envelope({
+      id: 'action-not-enough-item',
+      idempotencyKey: 'idem-not-enough-item',
+      payload: { count: 99, itemId: 'pest_spray' },
+      type: Actions.REMOVE_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedInventory.body.ok).toBe(false);
+    expect(trustedInventory.body.ack.rejection.code).toBe('TRUSTED_INVENTORY_PAYLOAD');
+    expect(badCount.body.ok).toBe(false);
+    expect(badCount.body.ack.rejection.code).toBe('BAD_ITEM_COUNT');
+    expect(notEnough.body.ok).toBe(false);
+    expect(notEnough.body.ack.rejection.code).toBe('NOT_ENOUGH_ITEM');
+    expect(verifyAuthorityAckSignature(notEnough.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.inventory.slots[3].count).toBe(3);
   });
 
   it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {

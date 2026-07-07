@@ -41,6 +41,7 @@ const ACTIONS = {
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
   REMOVE_CROP: 'REMOVE_CROP',
+  REMOVE_ITEM: 'REMOVE_ITEM',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_COOLDOWN: 'SET_COOLDOWN',
   SET_DAMAGE: 'SET_DAMAGE',
@@ -56,6 +57,7 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
   ACTIONS.REMOVE_CROP,
+  ACTIONS.REMOVE_ITEM,
   ACTIONS.SET_DAMAGE,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
@@ -173,6 +175,34 @@ function addAuthorityInventoryItem(inventoryState, itemId, count = 1) {
   };
 }
 
+function getAuthorityInventoryItemCount(inventoryState, itemId) {
+  const inventory = normalizeAuthorityInventoryState(inventoryState);
+  return inventory.slots.reduce((total, slot) => (
+    slot?.itemId === itemId ? total + Number(slot.count ?? 0) : total
+  ), 0);
+}
+
+function removeAuthorityInventoryItem(inventoryState, itemId, count = 1) {
+  const inventory = cloneAuthorityInventory(inventoryState);
+  let remaining = Math.max(1, Math.floor(Number(count ?? 1)));
+  const before = getAuthorityInventoryItemCount(inventory, itemId);
+
+  for (let index = inventory.slots.length - 1; index >= 0 && remaining > 0; index -= 1) {
+    const slot = inventory.slots[index];
+    if (!slot || slot.itemId !== itemId) continue;
+    const removed = Math.min(Number(slot.count ?? 0), remaining);
+    const nextCount = Number(slot.count ?? 0) - removed;
+    remaining -= removed;
+    inventory.slots[index] = nextCount > 0 ? { ...slot, count: nextCount } : null;
+  }
+
+  return {
+    inventory,
+    removed: before - getAuthorityInventoryItemCount(inventory, itemId),
+    success: remaining === 0,
+  };
+}
+
 function applyAuthorityToolDurability(inventoryState, slotIndex, durabilityCost = 1) {
   const inventory = cloneAuthorityInventory(inventoryState);
   const slot = inventory.slots[slotIndex];
@@ -239,6 +269,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastDamage = null,
   lastHarvesting = null,
+  lastItemRemoval = null,
   lastPlanting = null,
   lastProtection = null,
   lastRemoval = null,
@@ -259,6 +290,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastDamage,
     lastHarvesting,
+    lastItemRemoval,
     lastPlanting,
     lastProtection,
     lastRemoval,
@@ -586,6 +618,21 @@ function reduceStoryAction(data, payload, envelope) {
       },
     };
   }
+  if (envelope.type === ACTIONS.REMOVE_ITEM) {
+    const inventory = createAuthorityInventory(data.inventory);
+    const itemId = payload.itemId;
+    const count = Math.max(1, Math.floor(Number(payload.count ?? 1)));
+    const result = removeAuthorityInventoryItem(inventory, itemId, count);
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastItemRemoval: {
+        count,
+        itemId,
+        remainingCount: getAuthorityInventoryItemCount(result.inventory, itemId),
+      },
+    };
+  }
   if (envelope.type === ACTIONS.USE_TOOL) {
     const inventory = createAuthorityInventory(data.inventory);
     const slotIndex = payload.slotIndex;
@@ -794,6 +841,25 @@ function validateStoryActionPayload(envelope, state) {
     }
     if ((slot.durability ?? 0) <= 0) {
       return { code: 'TOOL_BROKEN', message: 'Tool use action requires a usable tool.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.REMOVE_ITEM) {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Remove item action cannot submit trusted inventory state.' };
+    }
+    const itemId = envelope.payload?.itemId;
+    if (typeof itemId !== 'string' || !itemId.trim()) {
+      return { code: 'BAD_ITEM_ID', message: 'Remove item action requires an item id.' };
+    }
+    const count = envelope.payload?.count ?? 1;
+    if (!Number.isInteger(count) || count <= 0 || count > 99) {
+      return { code: 'BAD_ITEM_COUNT', message: 'Remove item action requires an integer count from 1 to 99.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (getAuthorityInventoryItemCount(inventory, itemId) < count) {
+      return { code: 'NOT_ENOUGH_ITEM', message: 'Remove item action requires enough server-owned inventory.' };
     }
     return null;
   }

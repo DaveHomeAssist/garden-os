@@ -1,3 +1,16 @@
+Update 2026-07-07 Story Mode consumable spend authority pass:
+- Routed starter consumable inventory spend (`REMOVE_ITEM` for `fertilizer_bag`, `pest_spray`, and `mulch_bag`) through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache.
+- Server authority now owns canonical starter consumable counts, rejects client-submitted inventory/slots, rejects malformed item ids/counts, rejects insufficient server-owned inventory, and emits signed `lastItemRemoval` ack metadata with the server-owned remaining count.
+- Client reconciliation maps signed `lastItemRemoval` acks back into local `REMOVE_ITEM` only when optimistic local inventory is above the server remaining count, so offline replay and duplicate idempotency-key retries do not double-spend.
+- Kept repair/crafting materials local by routing only starter consumables; this avoids pretending the still-deferred repair/crafting systems are server-authoritative.
+- Validation: focused authority/cache Vitest passed 51 tests; direct authority worker security test passed 27 tests; full Story Mode Vitest passed 35 files / 433 tests; `npm run build`, `npm audit --audit-level=high` with 0 vulnerabilities, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Tool repair authority remains deferred; repair material spend and repaired existing saves may need a fresh authority session before durable server-side repair is complete.
+  - Crafting/reward inventory mutations remain local until item awards, recipes, and crafting outputs are authority-owned.
+  - Atomic intervention transactions remain deferred: mulch/protect/water still span separate routed actions instead of one server transaction.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Vercel authority runtime crash fix:
 - Fixed the production Vercel authority crash that happened before CORS/preflight could respond: `api/session` imported `authority-service`, which imported `game/inventory`, which pulled browser/build-time `specs/*` aliases unavailable in the Vercel function runtime.
 - Made the server authority inventory path self-contained for starter tools/materials, normalization, and tool durability mutation so API entrypoints no longer depend on the browser Story Mode inventory module.

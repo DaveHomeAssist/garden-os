@@ -117,6 +117,33 @@ function applyAuthorityToolDurability(inventory, slotIndex, durabilityCost = 1) 
   return { inventory: next, success: true };
 }
 
+function getAuthorityInventoryItemCount(inventory, itemId) {
+  return createAuthorityInventory(inventory).slots.reduce((total, slot) => (
+    slot?.itemId === itemId ? total + Number(slot.count ?? 0) : total
+  ), 0);
+}
+
+function removeAuthorityInventoryItem(inventory, itemId, count = 1) {
+  const next = cloneAuthorityInventory(inventory);
+  let remaining = Math.max(1, Math.floor(Number(count ?? 1)));
+  const before = getAuthorityInventoryItemCount(next, itemId);
+
+  for (let index = next.slots.length - 1; index >= 0 && remaining > 0; index -= 1) {
+    const slot = next.slots[index];
+    if (!slot || slot.itemId !== itemId) continue;
+    const removed = Math.min(Number(slot.count ?? 0), remaining);
+    const nextCount = Number(slot.count ?? 0) - removed;
+    remaining -= removed;
+    next.slots[index] = nextCount > 0 ? { ...slot, count: nextCount } : null;
+  }
+
+  return {
+    inventory: next,
+    removed: before - getAuthorityInventoryItemCount(next, itemId),
+    success: remaining === 0,
+  };
+}
+
 function createAuthorityCell(cell = {}) {
   return {
     ...DEFAULT_AUTHORITY_CELL,
@@ -153,6 +180,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastDamage = null,
   lastHarvesting = null,
+  lastItemRemoval = null,
   lastPlanting = null,
   lastProtection = null,
   lastRemoval = null,
@@ -173,6 +201,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastDamage,
     lastHarvesting,
+    lastItemRemoval,
     lastPlanting,
     lastProtection,
     lastRemoval,
@@ -331,6 +360,21 @@ const AUTHORITY_REDUCERS = {
     ...data,
     selectedCropId: typeof payload.cropId === 'string' ? payload.cropId : null,
   }),
+  REMOVE_ITEM: (data, payload) => {
+    const inventory = createAuthorityInventory(data.inventory);
+    const itemId = payload.itemId;
+    const count = Math.max(1, Math.floor(Number(payload.count ?? 1)));
+    const result = removeAuthorityInventoryItem(inventory, itemId, count);
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastItemRemoval: {
+        count,
+        itemId,
+        remainingCount: getAuthorityInventoryItemCount(result.inventory, itemId),
+      },
+    };
+  },
   UPDATE_SOIL: (data, payload) => {
     const soilFatigue = clampUnitNumber(payload.soilFatigue);
     const grid = createAuthorityGrid(data.grid);
@@ -713,6 +757,25 @@ function validateAuthorityPayload(envelope, state) {
     }
     if ((slot.durability ?? 0) <= 0) {
       return { code: 'TOOL_BROKEN', message: 'Tool use action requires a usable tool.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'REMOVE_ITEM') {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Remove item action cannot submit trusted inventory state.' };
+    }
+    const itemId = envelope.payload?.itemId;
+    if (typeof itemId !== 'string' || !itemId.trim()) {
+      return { code: 'BAD_ITEM_ID', message: 'Remove item action requires an item id.' };
+    }
+    const count = envelope.payload?.count ?? 1;
+    if (!Number.isInteger(count) || count <= 0 || count > 99) {
+      return { code: 'BAD_ITEM_COUNT', message: 'Remove item action requires an integer count from 1 to 99.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (getAuthorityInventoryItemCount(inventory, itemId) < count) {
+      return { code: 'NOT_ENOUGH_ITEM', message: 'Remove item action requires enough server-owned inventory.' };
     }
     return null;
   }
