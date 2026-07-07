@@ -1,7 +1,7 @@
 /* gos-bed.js — canonical bed data primitive for Garden OS v5 surfaces.
  *
- * Single shared localStorage namespace, no framework, no build step.
- * Attaches a vanilla `GosBed` namespace to `window`. Safe to load before
+ * Single shared localStorage namespace for the current browser-loaded surfaces.
+ * Attaches a `GosBed` namespace to `window`. Safe to load before
  * any React + Babel CDN bundles on the page; React surfaces can read and
  * write through GosBed.* without taking a dependency on it.
  *

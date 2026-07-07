@@ -10,7 +10,11 @@
 
 ## System Architecture
 
-Garden OS is a collection of single-file HTML tools for raised bed garden planning. Each tool is self-contained with inline CSS and JS. No build step, no external JS dependencies, no module system. State persists in `localStorage`.
+Garden OS currently includes a collection of self-contained root HTML tools for
+raised bed garden planning plus the package-managed Story Mode runtime. The
+root-tool shape is a shipping mode, not a ceiling; future app surfaces can use
+build tooling, packages, or stronger local storage when the product needs them.
+State persists in `localStorage` today.
 
 ### Application Map
 

@@ -3,7 +3,8 @@
 > **Superseded:** This roadmap is superseded by IMPLEMENTATION_PLAN.md (System A).
 > **Status detail:** Feature 1 (Scoring Explainer) shipped as Phase 1B. Feature 4 (Print Layout) partially covered by Phase 3C retrospective export. Features 2, 3, 5 remain open.
 > **Updated:** 2026-03-16 original; superseded notice added 2026-04-20
-> **Architecture:** Static web app, vanilla JS, GitHub Pages, zero backend
+> **Architecture:** Current browser app on GitHub Pages, zero backend; stronger
+> architecture remains allowed when product needs it
 > **Namespace:** `window.GOS`
 
 ---

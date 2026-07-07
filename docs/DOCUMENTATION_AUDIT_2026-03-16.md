@@ -219,7 +219,7 @@ The one genuine gap. There is no behavioral instruction file for AI agents worki
 
 | Category | Content |
 |----------|---------|
-| Architecture constraints | Zero-backend, single-file HTML, no build step, no npm, localStorage only, offline-capable |
+| Architecture context | Current root tools are zero-backend, self-contained browser surfaces with localStorage and offline-capable behavior; this is not a ban on package-managed app surfaces |
 | File conventions | Kebab-case filenames, single HTML files, specs/ for data + algorithms, docs/ for design |
 | Scoring rules | Deterministic — same inputs always produce same outputs. Never add randomness to scoring. |
 | Schema contract | All tools validate against `gos-schema.json`. Increment version on breaking changes. |
@@ -227,9 +227,9 @@ The one genuine gap. There is no behavioral instruction file for AI agents worki
 | Font stack | User track: Fraunces/DM Sans/DM Mono. Dev track: own aesthetic allowed. |
 | Color palette | Soil/leaf/sun/cream system. Reference `docs/ART_DIRECTION.md` for full spec. |
 | Voice constraints | 4 characters with fixed speaking order. Never add random dialogue. Reference `docs/VOICE_BIBLE.md`. |
-| Code style | Vanilla JS, no frameworks, no transpilation. Functions over classes. Explicit over clever. |
+| Code style | Prefer clear, explicit code. Use framework code, transpilation, or packages when they materially improve the product or maintainability. |
 | Testing | Local: `python3 -m http.server`. Deploy: push to main → auto-Pages. |
-| What not to do | No backend, no npm, no build step, no frameworks, no random scoring, no merging nav tracks |
+| What not to do | Do not add random scoring or merge nav tracks. Do not block needed architecture improvements just to preserve old static constraints. |
 
 ### Belongs in Supporting Docs (NOT in CLAUDE.md)
 

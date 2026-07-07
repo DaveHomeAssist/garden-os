@@ -2,7 +2,9 @@
 
 **Date:** 2026-03-25
 **Files analyzed:** `index.html`, `garden-planner-v4.html`, `how-it-thinks.html`, `brand-guide.html`, `scoring-map.html`, `fairness-tester.html`, `gos-system-map-v2.html`, `system-topology.html`, `garden-cage-build-guide.html`, `garden-os-build-state.html`, `prompt-explorer.html`, `garden-league-simulator-v4.html`, `garden-os-sprite-viewer.html`, `garden-os-theme.css`, `scoring-api.json`, `gos-schema.json`
-**Stack:** Zero-backend single-file HTML tools, vanilla JS/CSS, localStorage persistence, GitHub Pages
+**Stack:** Current root tools are zero-backend browser surfaces with
+localStorage persistence on GitHub Pages; that shape is not a cap on future app
+architecture.
 **Scope:** Root-level tools only (NOT story-mode/)
 
 ---

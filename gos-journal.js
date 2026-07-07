@@ -1,7 +1,7 @@
 /* gos-journal.js — local-first Garden OS memory layer.
  *
  * Stores durable narrative/audit entries separately from GosBed operational
- * events. No backend, no framework, no build step.
+ * events for the current browser-loaded surfaces.
  */
 (function (global) {
   'use strict';

@@ -96,7 +96,7 @@ Local First                     All data stays in your browser. No server, no sy
 Explainable Scoring             Every score shows exactly why — factor by factor, cell by cell.
 Works Offline                   Load once. Works forever. No network dependency after first visit.
 Deterministic Engine            Same inputs always produce the same scores. No hidden randomness.
-Single-File Architecture        Each tool is one self-contained HTML file. No build step. No framework.
+Portable Root Tools             Current tools can run as self-contained browser files; future app surfaces can use stronger architecture.
 Reversible Actions              Clear, reset, and delete all offer undo. Deleted beds go to trash.
 Keyboard Native                 Every primary action has a keyboard shortcut. Grid is fully navigable.
 Screen Reader Ready             ARIA grid roles, descriptive cell labels, live region announcements.

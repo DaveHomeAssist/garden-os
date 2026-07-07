@@ -1,6 +1,6 @@
 # Garden OS — UI Specification
 
-Version: 1.0 · Target: Single HTML file · Tech: Vanilla JS, embedded CSS, localStorage
+Version: 1.0 · Target: current root tool surface · Tech: browser UI, embedded CSS, localStorage today; stronger architecture allowed when product depth requires it
 Art Direction: Editorial Realism + Graphic Overlays. Philadelphia backyard. Dry humor. Earned sentiment.
 
 ---
@@ -1636,4 +1636,8 @@ Complete list of all custom properties, organized for a developer implementing t
 
 ---
 
-*End of specification. A developer implements this file as a single `<style>` block and vanilla JS within one HTML document. No external dependencies beyond Google Fonts. All persistence via localStorage. All animations respect `prefers-reduced-motion`. All colors support `prefers-color-scheme: dark`.*
+*End of specification. A developer should implement this with the architecture
+that best serves the product. The current root-tool approach can fit in one HTML
+document, but framework code, build tooling, packages, or stronger persistence
+are allowed when they materially improve the surface. All animations respect
+`prefers-reduced-motion`. All colors support `prefers-color-scheme: dark`.*

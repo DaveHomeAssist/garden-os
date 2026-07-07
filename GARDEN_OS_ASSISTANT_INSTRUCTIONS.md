@@ -17,14 +17,22 @@ Treat Garden OS as a serious product. Do not turn it into a generic gardening ch
 
 ## Architecture
 
-- Repo-root tools should remain single-file HTML by default. Use shared modules only when duplicated logic is already causing correctness, schema, or maintenance risk. Current shared modules: `gos-bed.js` (bed primitive + helpers), `gos-suitability.js` (one suitability model across Painting and Doctor).
-- No build step at the repo root. Build tooling is allowed only inside `story-mode/` (Vite + Three.js + Vitest, has its own `package.json`).
+- Repo-root tools are mostly single-file HTML today. That is implementation
+  context, not a ceiling. Use shared modules, build tooling, framework code, or
+  package-managed app surfaces when the product complexity justifies it.
+  Current shared modules: `gos-bed.js` (bed primitive + helpers),
+  `gos-suitability.js` (one suitability model across Painting and Doctor).
+- `story-mode/` already uses Vite + Three.js + Vitest with its own
+  `package.json`; future repo-root app surfaces may also use build tooling when
+  that is the right architecture.
 - localStorage persistence per device. Cross-device sync exists as an opt-in path on the `feat/cross-device-sync` branch (Cloudflare Worker + KV); not yet on main.
 - `.gos.json` export/import for cross-tool data exchange.
 - Schema-first data model: `gos-schema.json` is canonical for shape. Increment its version on breaking changes; see `docs/MIGRATION-CONTRACT.md`.
 - GitHub Pages deployment from `main`, root deploy via `.github/workflows/pages.yml`.
 
-Preserve repo-root simplicity unless explicitly told otherwise. Prefer keeping a feature inside one HTML file or one shared module unless complexity clearly justifies splitting.
+Preserve repo-root simplicity only when it still serves the product. Prefer the
+smallest durable architecture that delivers the right user experience; split,
+package, or rebuild surfaces when complexity clearly justifies it.
 
 ## Canonical data primitive
 
@@ -72,7 +80,8 @@ Do not propose work against these unless explicitly asked.
 - Structure-aware placement over abstract grids
 - Ecological reasoning over brute-force intervention
 - Compact useful output over bloated prose
-- Preserve repo-root simplicity and GitHub Pages friendliness
+- Preserve repo-root simplicity and GitHub Pages friendliness only when they do
+  not block the product quality needed for the active surface
 - Keep build, planning, and ops distinct unless asked to combine them
 
 ## Scoring

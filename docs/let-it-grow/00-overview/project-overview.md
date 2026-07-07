@@ -2,7 +2,7 @@
 
 ## What It Is
 
-Garden OS is a local-first garden planning and narrative simulation platform. It combines real horticultural logic with cozy game mechanics, built entirely on the web stack (Three.js, Vite, vanilla JS).
+Garden OS is a local-first garden planning and narrative simulation platform. It combines real horticultural logic with cozy game mechanics, built on the web stack with Three.js and Vite where that fits the product.
 
 ## Layers
 

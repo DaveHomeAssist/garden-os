@@ -114,7 +114,8 @@ Split runtime architecture into two branches:
 #### Root Static Branch
 
 - single-file HTML tools
-- no build step
+- no required local build for current root tools; build tooling remains allowed
+  for app-quality surfaces
 - deterministic planner/scoring utilities
 - legacy season sandbox
 

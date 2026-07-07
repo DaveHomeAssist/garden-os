@@ -448,7 +448,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 **GitHub Pages:** Push to `main` → auto-deploys via `.github/workflows/pages.yml`.
 
-- Root tools: no build step, served directly from repo root at `davehomeassist.github.io/garden-os/`
+- Root tools: currently served directly from repo root at `davehomeassist.github.io/garden-os/`
 - Story Mode: Vite build → `story-mode/dist/` → copied to `story-mode-live/` → served at `davehomeassist.github.io/garden-os/story-mode-live/`
 
 **Testing locally:**

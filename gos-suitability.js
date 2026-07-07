@@ -5,8 +5,8 @@
  * current season, and its neighbors. Same vocabulary across Painting, Doctor,
  * and Planner so the gardener sees one number, not three.
  *
- * Vanilla JS, no framework, no build step. Attaches a `GosSuitability`
- * namespace to `window`. Safe to load before any React + Babel CDN bundle.
+ * Attaches a `GosSuitability` namespace to `window` for the current
+ * browser-loaded surfaces. Safe to load before any React + Babel CDN bundle.
  *
  * Inputs come from the canonical GosBed record:
  *   bed.shape           — "<cols>x<rows>"

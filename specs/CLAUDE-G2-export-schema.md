@@ -154,7 +154,9 @@ triggerPrintView() → void
 
 **Changed files:** `garden-planner-v4.html` (single file)
 
-**Hard constraint:** No framework or build-tool migration. Remain single-file Vanilla JS/HTML/CSS.
+**Architecture note:** Keep this patch focused on `garden-planner-v4.html`, but
+do not treat the current file shape as a permanent ban on framework code,
+build tooling, or stronger architecture when future product work needs it.
 
 **Verification steps:**
 1. Export JSON — file downloads, valid JSON, all beds present

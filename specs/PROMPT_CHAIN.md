@@ -26,7 +26,10 @@ ROUND 5 (sequential): P10
 PROJECT: Garden OS
 THESIS: Make a tiny space feel emotionally meaningful and strategically dense.
 TONE: No fantasy. No whimsy. Philadelphia backyard. Dry humor. Earned sentiment.
-TECH: Single HTML file. Vanilla JS. localStorage. Offline-capable. No frameworks. No build tools.
+TECH: Local-first browser app. Use the smallest architecture that delivers the
+product well; framework code, build tooling, or packages are allowed when the
+surface needs them. Offline-capable. localStorage or a stronger local store as
+needed.
 SCOPE: 12-chapter campaign (6-8 hour playthrough). 8x4 raised bed. 20 crops. 40 events.
 SETTING: South Philadelphia rowhome backyard. Mom built the bed. She does not garden anymore. The player inherited it.
 CHARACTERS: Garden GURL (scoring judge, dry), Onion Man (emotional reactor, Phillies fan), Vegeman (chaos tutorial agent), Garden Critters (collective nuisance voice).

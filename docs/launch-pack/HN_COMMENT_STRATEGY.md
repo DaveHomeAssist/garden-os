@@ -13,12 +13,10 @@ Drive technical discussion, pre-answer common criticism, and emphasize engineeri
 Use early to establish technical identity.
 
 ```text
-One unusual constraint in Garden OS:
-Every tool runs as a standalone HTML file.
+One current deployment advantage in Garden OS:
+Root tools run as portable browser files.
 
-No framework.
-No backend.
-No build pipeline.
+The architecture can get stronger where the product needs it.
 
 That forced design decisions:
 - schema-validated workspace model

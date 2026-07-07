@@ -383,4 +383,7 @@ The DIALOGUE_ENGINE.json structure supports:
 - **Free-play dialogue**: Post-Chapter 12, the same pools continue to fire. The system does not distinguish between campaign and free-play except for chapter-locked triggers (sauce, epilogue) which cannot re-fire.
 - **Challenge-specific lines**: Future challenge modifiers can add sub-trigger keys (e.g., `event_negative_drought_year`) that override the base pool when a specific challenge is active.
 
-The system is designed for a single HTML file with no build step. All dialogue data lives in one JSON object. All selection logic lives in one JS module. No external dependencies.
+The current dialogue system is compact enough to live in one browser-loaded
+module. That shape is an implementation detail, not a rule against build
+tooling, packages, or a stronger architecture if future dialogue complexity
+requires it.

@@ -33,7 +33,8 @@ The system also highlights the limiting factor so users can make high-leverage c
 2. Open `index.html` in a modern browser.
 3. Launch `garden-planner-v4.html` from the hub.
 
-No install step, no build step, no runtime services.
+The current root surfaces can run without install, build, or runtime services.
+That is a shipping mode, not a permanent architecture rule.
 
 ## Usage Example
 
@@ -67,7 +68,8 @@ garden-os/
 
 - **Host:** GitHub Pages
 - **Live URL:** https://davehomeassist.github.io/garden-os/
-- **Build step:** None (static)
+- **Build step:** None for current root surfaces; build tooling is allowed for
+  app-quality surfaces when the product needs it.
 
 ## Tech
 

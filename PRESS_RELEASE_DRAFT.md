@@ -103,7 +103,8 @@ The schema ensures every tool speaks the same language.
 | Codebase | 9,169 lines of handwritten HTML, CSS, and JavaScript |
 | Dependencies | Zero |
 
-Garden OS uses no frameworks, build tools, or backend services.
+Garden OS current root tools run as portable browser files, while app surfaces
+can use stronger architecture when the product needs it.
 
 Every tool is a single HTML file that runs in any modern browser.
 

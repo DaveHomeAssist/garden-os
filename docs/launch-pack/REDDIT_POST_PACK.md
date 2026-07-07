@@ -5,11 +5,11 @@
 Zero-backend garden planner built as standalone HTML tools
 
 ### Body
-I built Garden OS with a strict constraint: every tool must run as a standalone HTML file.
+I built Garden OS so the current root tools can run as portable browser files.
 
 - no backend
-- no frameworks
-- no build step
+- no account required
+- stronger app architecture allowed where the product needs it
 - local-first data
 
 Latest release adds explainable crop scoring and portable `.gos.json` workspace files.
@@ -34,8 +34,8 @@ The scoring model now shows factor-level breakdowns (sun/support/shade/access/se
 
 Architecture constraints:
 - no backend
-- no framework
-- no build pipeline
+- portable root tools today
+- stronger app architecture allowed where the product needs it
 - local-first workspaces with `.gos.json` export/import
 
 Demo: https://davehomeassist.github.io/garden-os/

@@ -8,7 +8,9 @@ Create a professional interactive system map page for **Garden OS**.
 Explain the architecture and ecosystem to developers, contributors, and technically curious users.
 
 ## Output
-Return a **single HTML file** with inline CSS/JS. No build tools. No frameworks.
+Return a system map implementation that fits the product. A single HTML file is
+acceptable when sufficient, but build tooling, framework code, or packages are
+allowed when they make the result meaningfully better.
 
 ## Visual direction
 - Dark mode default

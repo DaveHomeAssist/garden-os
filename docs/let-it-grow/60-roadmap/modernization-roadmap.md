@@ -14,7 +14,7 @@
 
 | Area | Issue | Priority |
 |------|-------|----------|
-| No TypeScript | All vanilla JS — no type safety | Medium |
+| No TypeScript | Current JS has limited type safety | Medium |
 | No component framework | UI is raw DOM manipulation | Low |
 | No audio | Complete silence | High for v0.3 |
 | No input abstraction | Input handling baked into main.js | High for v0.1 |
@@ -62,7 +62,9 @@
 
 ## Non-Goals
 
-- **No framework migration** — React/Vue/Svelte add complexity without value for this project
+- **Architecture is product-led** — React/Vue/Svelte or other tooling should be
+  used when it creates enough product or maintenance value to justify the
+  complexity
 - **No SSR** — this is a client-side game
 - **No monorepo tooling** — single project, single build
 - **No GraphQL** — localStorage + simple REST (if multiplayer) is sufficient
