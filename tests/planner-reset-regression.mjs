@@ -6,7 +6,7 @@ const playwrightSpecifier = process.env.PLAYWRIGHT_IMPORT_PATH
   : "playwright";
 const { chromium } = await import(playwrightSpecifier);
 
-const defaultUrl = "http://127.0.0.1:4173/garden-planner-v4.html";
+const defaultUrl = "http://127.0.0.1:4173/archive/garden-planner-v4.html";
 const url = process.env.PLANNER_URL || process.argv[2] || defaultUrl;
 
 async function run() {

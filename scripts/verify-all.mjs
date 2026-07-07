@@ -173,7 +173,7 @@ async function runLocalVerification() {
 
   try {
     await runStep('Planner reset browser regression', nodeBin, ['tests/planner-reset-regression.mjs'], {
-      env: browserEnv({ PLANNER_URL: `${baseUrl}/garden-planner-v4.html` }),
+      env: browserEnv({ PLANNER_URL: `${baseUrl}/archive/garden-planner-v4.html` }),
     });
     await runStep('Browser HTML fixture tests', nodeBin, ['tests/browser-fixture-pages.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl }),
