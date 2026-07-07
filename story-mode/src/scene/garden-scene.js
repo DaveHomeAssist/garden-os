@@ -640,6 +640,7 @@ export function createGardenScene(container) {
 
   // Sheepdog opening-scene runner
   const sheepdogGroup = new THREE.Group();
+  sheepdogGroup.name = 'calvin-sheepdog';
   sheepdogGroup.visible = false;
 
   const dogFurDark = new THREE.MeshStandardMaterial({ color: 0x3c3129, roughness: 0.95 });
@@ -3101,7 +3102,6 @@ function getGrowthScale(phase, season) {
       // ── End Calvin idle loiter ──────────────────────────────────────────
 
       if (sheepdogHoldState.active) {
-        sheepdogHoldState.remainingMs -= dt * 1000;
         sheepdogGroup.visible = true;
         sheepdogGroup.position.copy(sheepdogHoldState.position);
         dogTorso.position.y = 0.34 + Math.sin(time * 3.4) * 0.012;
@@ -3109,9 +3109,12 @@ function getGrowthScale(phase, season) {
         dogTailPivot.rotation.y = Math.sin(time * 4.1) * 0.22;
         dogTailPivot.rotation.z = 0.34 + Math.cos(time * 4.1) * 0.06;
         dogThoughtBubble.position.y = 0.62 + Math.sin(time * 2.8) * 0.015;
-        if (sheepdogHoldState.remainingMs <= 0) {
-          sheepdogHoldState.active = false;
-        }
+        // Hold Calvin in the bed until the next scene cue supersedes it, rather
+        // than expiring on a timer. The intro's narration beat has no fixed
+        // duration (it waits for a click) and scene init can hitch for ~2s past
+        // the old 1800ms timer — so the timer left Calvin already gone from the
+        // bed before the "CALVIN, out of the bed" line. The sheepdog-run cue
+        // clears this hold when the player advances.
       }
 
       updatePlantFX(dt);
@@ -3242,8 +3245,17 @@ function getGrowthScale(phase, season) {
             kneePivot.rotation.z = -0.28;
           });
         }
-      } else {
-        if (!sheepdogHoldState.active && !calvinIdleState.active && calvinIdleState.fadeOutMs <= 0) sheepdogGroup.visible = false;
+      } else if (
+        !sheepdogHoldState.active
+        && !sheepdogRunState.active
+        && !calvinIdleState.active
+        && calvinIdleState.fadeOutMs <= 0
+      ) {
+        // Nothing is driving Calvin this frame — hide him. Must check the run
+        // flag too: without it, this fired every frame of an active run (run
+        // sets visible=true above, this immediately set it false), so Calvin
+        // ran out of the bed completely invisible.
+        sheepdogGroup.visible = false;
       }
       // ── End atmosphere animations ──────────────────────────────────────
 
