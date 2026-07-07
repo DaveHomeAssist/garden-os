@@ -862,19 +862,27 @@ export function buildScenery(tracker = null) {
     const heatMat = new THREE.MeshBasicMaterial({
       color: 0xe8c84a,
       transparent: true,
-      opacity: 0.032,
+      opacity: 0.018,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    for (let i = 0; i < 4; i++) {
-      const pane = new THREE.Mesh(new THREE.PlaneGeometry(1.0 + i * 0.22, 0.5 + i * 0.08), heatMat.clone());
-      pane.position.set(-1.85 + i * 1.16, 0.55 + i * 0.06, -3.2 - (i % 2) * 0.4);
-      pane.rotation.y = 0.08 - i * 0.04;
-      pane.renderOrder = 4;
-      pane.userData.baseOpacity = 0.028 + i * 0.006;
-      heatHazePlanes.push(pane);
-      summerHeatHaze.add(pane);
-    }
+    [
+      { x: -2.15, z: -5.48, sx: 1.35, sz: 0.34 },
+      { x: -0.65, z: -5.6, sx: 1.1, sz: 0.28 },
+      { x: 0.9, z: -5.52, sx: 1.22, sz: 0.32 },
+      { x: 2.3, z: -5.62, sx: 0.92, sz: 0.24 },
+    ].forEach(({ x, z, sx, sz }, index) => {
+      const shimmer = new THREE.Mesh(new THREE.CircleGeometry(0.34, 24), heatMat.clone());
+      shimmer.rotation.x = -Math.PI / 2;
+      shimmer.rotation.z = index * 0.38;
+      shimmer.position.set(x, 0.018, z);
+      shimmer.scale.set(sx, sz, 1);
+      shimmer.renderOrder = 1;
+      shimmer.userData.baseOpacity = 0.012 + index * 0.003;
+      shimmer.userData.heatHazeStyle = 'ground-shimmer';
+      heatHazePlanes.push(shimmer);
+      summerHeatHaze.add(shimmer);
+    });
   }
   summerGrit.visible = false;
   summerHeatHaze.visible = false;
@@ -1184,9 +1192,9 @@ export function buildScenery(tracker = null) {
       if (!summerHeatHaze.visible) return;
       heatHazePlanes.forEach((pane, index) => {
         const wave = Math.sin(time * (0.55 + index * 0.12) + index * 1.7);
-        pane.material.opacity = Math.max(0.014, pane.userData.baseOpacity + wave * 0.012);
-        pane.scale.x = 1 + wave * 0.035 * strength;
-        pane.position.y = 0.55 + index * 0.06 + Math.sin(time * 0.42 + index) * 0.018;
+        pane.material.opacity = Math.max(0.006, pane.userData.baseOpacity + wave * 0.006);
+        pane.scale.x = (pane.userData.baseScaleX ??= pane.scale.x) * (1 + wave * 0.035 * strength);
+        pane.position.y = 0.018 + Math.sin(time * 0.42 + index) * 0.003;
       });
     },
 
@@ -1258,7 +1266,13 @@ export function buildScenery(tracker = null) {
           winterSmoke: getLayerState(winterSmoke),
           seasonalProps: getLayerState(seasonalProps),
           summerGrit: getLayerState(summerGrit),
-          summerHeatHaze: getLayerState(summerHeatHaze),
+          summerHeatHaze: {
+            ...getLayerState(summerHeatHaze),
+            verticalPanelCount: heatHazePlanes.filter((pane) => (
+              pane.userData?.heatHazeStyle !== 'ground-shimmer'
+              || Math.abs(Math.abs(pane.rotation.x) - Math.PI / 2) > 0.1
+            )).length,
+          },
           planningProps: getLayerState(planningProps),
           narrativeProps: getLayerState(narrativeProps),
           fireflies: getLayerState(fireflies),

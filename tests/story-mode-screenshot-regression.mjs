@@ -622,6 +622,10 @@ async function assertSeasonalPlaceLayer(page, season) {
     ['philly-party-wall-brick', 'july-weed-cracks', 'philly-alley-utility-tag', 'alley-oil-stain', 'blue-milk-crate-alley'].forEach((cue) => {
       assert(debug.seasonalAtmosphere.placeCues.includes(cue), `Missing July Philly place cue ${cue}.`);
     });
+    assert(
+      debug.seasonalAtmosphere.scenery.layers.summerHeatHaze.verticalPanelCount === 0,
+      'July heat haze should not render vertical fence-like panels through the garden.',
+    );
   }
 
   if (season !== 'fall') {
