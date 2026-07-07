@@ -632,6 +632,9 @@ async function assertSeasonalPlaceLayer(page, season) {
       || !appOverlay.backgroundImage.includes('repeating-linear-gradient'),
     `Bottom-right app overlay should not render fence-like stripes: ${JSON.stringify(appOverlay)}`,
   );
+  assert(debug.seasonalAtmosphere.skyDome?.seamless === true, 'Sky dome should be marked as seam-free.');
+  assert(debug.seasonalAtmosphere.skyDome?.usesTextureMap === false, 'Sky dome should not use a texture map that can create a vertical seam.');
+  assert(debug.seasonalAtmosphere.skyDome?.vertexColors === true, 'Sky dome should use vertex colors for the gradient.');
 
   const expectations = {
     spring: ['springPuddles', 'scenerySpringFlowers', 'sceneryPuddles'],

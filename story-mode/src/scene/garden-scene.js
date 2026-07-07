@@ -362,24 +362,33 @@ export function createGardenScene(container) {
   const root = new THREE.Group();
   scene.add(root);
 
-  // Sky gradient — large background sphere with gradient texture
+  // Sky gradient — large background sphere with vertex colors.
+  // A texture-mapped sphere leaves a visible longitude seam that reads as a fence/wall.
   const skyGeo = new THREE.SphereGeometry(260, 64, 32);
-  const skyCanvas = document.createElement('canvas');
-  skyCanvas.width = 8;
-  skyCanvas.height = 256;
-  const skyCtx = skyCanvas.getContext('2d');
-  const grad = skyCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#6a9fd4');   // zenith — soft blue
-  grad.addColorStop(0.35, '#a8d8f0'); // upper sky
-  grad.addColorStop(0.6, '#d4e8f2');  // mid sky — light
-  grad.addColorStop(0.8, '#e8eeef');  // near horizon — bright haze
-  grad.addColorStop(1.0, '#f2e8d4');  // horizon — warm glow
-  skyCtx.fillStyle = grad;
-  skyCtx.fillRect(0, 0, 8, 256);
-  const skyTex = new THREE.CanvasTexture(skyCanvas);
-  skyTex.minFilter = THREE.LinearFilter;
-  const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false });
+  const skyStops = [
+    { at: 0, color: new THREE.Color(0xf2e8d4) },
+    { at: 0.2, color: new THREE.Color(0xe8eeef) },
+    { at: 0.4, color: new THREE.Color(0xd4e8f2) },
+    { at: 0.68, color: new THREE.Color(0xa8d8f0) },
+    { at: 1, color: new THREE.Color(0x6a9fd4) },
+  ];
+  const skyColors = [];
+  const skyPos = skyGeo.getAttribute('position');
+  const skyColor = new THREE.Color();
+  for (let i = 0; i < skyPos.count; i++) {
+    const t = THREE.MathUtils.clamp((skyPos.getY(i) / 260 + 1) / 2, 0, 1);
+    const stopIndex = skyStops.findIndex((stop) => t <= stop.at);
+    const upperIndex = stopIndex === -1 ? skyStops.length - 1 : Math.max(stopIndex, 1);
+    const lower = skyStops[upperIndex - 1];
+    const upper = skyStops[upperIndex];
+    const localT = upper.at === lower.at ? 0 : (t - lower.at) / (upper.at - lower.at);
+    skyColor.copy(lower.color).lerp(upper.color, THREE.MathUtils.clamp(localT, 0, 1));
+    skyColors.push(skyColor.r, skyColor.g, skyColor.b);
+  }
+  skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, side: THREE.BackSide, fog: false });
   const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+  skyMesh.userData.skyDome = { seamless: true };
   scene.add(skyMesh);
 
   // Build the garden bed
@@ -1475,6 +1484,11 @@ export function createGardenScene(container) {
         sunIntensity: lightingState?.sunIntensity ?? null,
         ambientIntensity: lightingState?.ambientIntensity ?? null,
         sunColor: lightingState?.sunColor ? `#${lightingState.sunColor.getHexString()}` : null,
+      },
+      skyDome: {
+        seamless: skyMesh.userData.skyDome?.seamless === true,
+        usesTextureMap: Boolean(skyMat.map),
+        vertexColors: skyMat.vertexColors === true,
       },
       layers,
       visibleLayerNames: Object.entries(layers)
