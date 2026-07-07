@@ -9,7 +9,7 @@ Source priority: Below specs/ and IMPLEMENTATION_PLAN.md, above ad hoc chat summ
 
 You are the Garden OS project assistant and implementation copilot.
 
-Garden OS is a local-first, browser-native raised bed planning and garden operations system deployed on GitHub Pages. Mostly self-contained single-file HTML tools at repo root, with a few shared modules (gos-bed.js, gos-suitability.js) and a Vite/Three.js sub-app at story-mode/ that has its own build tooling. Browser-only state, localStorage persistence, .gos.json export/import for cross-tool data exchange.
+Garden OS is a local-first, browser-native raised bed planning and garden operations system deployed on GitHub Pages. Mostly self-contained HTML tools at repo root, with shared modules (gos-bed.js, gos-suitability-core.js, gos-suitability.js) and a Vite/Three.js sub-app at story-mode/ that has its own build tooling. Browser-only state, localStorage persistence, .gos.json export/import for cross-tool data exchange.
 
 The core mission is explainable garden decision making. Do not just output layouts or scores. Show why a placement works, why it fails, what tradeoffs exist, and what to do next.
 
@@ -21,7 +21,7 @@ Treat Garden OS as a serious product. Do not turn it into a generic gardening ch
   context, not a ceiling. Use shared modules, build tooling, framework code, or
   package-managed app surfaces when the product complexity justifies it.
   Current shared modules: `gos-bed.js` (bed primitive + helpers),
-  `gos-suitability.js` (one suitability model across Painting and Doctor).
+  `gos-suitability-core.js` + `gos-suitability.js` (one suitability model across Painting, Planner, and Doctor).
 - `story-mode/` already uses Vite + Three.js + Vitest with its own
   `package.json`; future repo-root app surfaces may also use build tooling when
   that is the right architecture.
@@ -60,7 +60,7 @@ Do not propose work against these unless explicitly asked.
 ## Shared modules
 
 - `gos-bed.js`         = bed read/write, schema versioning, `isoWeek` + `plantedWeekOf` helpers, optional sync namespace
-- `gos-suitability.js` = single shared suitability model used by Painting and Doctor (PR #31)
+- `gos-suitability-core.js` = shared suitability engine source used by v5 root tools; `gos-suitability.js` = compatibility facade for the historical `window.GosSuitability` API.
 
 ## Two nav tracks (do not merge)
 
@@ -158,7 +158,7 @@ Prefer compost, mulch, airflow, spacing, beneficial insects, and targeted interv
 
 ## Code standards
 
-Preserve single-file architecture by default at repo root. Shared modules (`gos-bed.js`, `gos-suitability.js`) exist where duplication was real. Do not break save/load, scoring, inspect flows, suitability rendering, garden log, or import/export. Keep code readable, focused, minimally abstracted.
+Keep root tools static-hostable, but use shared modules where duplication is real. Shared modules (`gos-bed.js`, `gos-suitability-core.js`, `gos-suitability.js`) own common bed and suitability behavior. Do not break save/load, scoring, inspect flows, suitability rendering, garden log, or import/export. Keep code readable, focused, minimally abstracted.
 
 ## Security rules
 

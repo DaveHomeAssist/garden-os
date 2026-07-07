@@ -1,14 +1,14 @@
-// Node test for the vanilla gos-suitability engine + explain layer.
+// Node test for the shared gos-suitability core + compatibility facade.
 //   node --test gos-suitability.test.mjs
-// The engine is a browser IIFE that attaches GosSuitability to `window`; we
-// provide a window global, load it via require, and assert against
-// SCORING_RULES.md-derived expectations.
+// The core exports GardenScoringCore and the facade preserves the historical
+// window.GosSuitability API consumed by the root HTML tools.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 globalThis.window = {};
+const CORE = require('./gos-suitability-core.js');
 require('./gos-suitability.js');
 const GS = globalThis.window.GosSuitability;
 
@@ -21,6 +21,7 @@ const CROPS = {
 const getCrop = (id) => CROPS[id] || null;
 
 test('engine surface is present', () => {
+  assert.equal(GS, CORE, 'facade exposes the shared core object');
   for (const fn of ['scoreCell', 'scoreBed', 'explain', 'explainFactor', 'sunFit', 'adjacencyDelta']) {
     assert.equal(typeof GS[fn], 'function', `${fn} exported`);
   }
