@@ -360,10 +360,11 @@ function normalizeCooldownPayload(payload = {}) {
 function normalizeToolInterventionPayload(payload = {}) {
   const toolId = typeof payload.toolId === 'string' ? payload.toolId.trim() : '';
   const cellIndex = Number.isInteger(payload.cellIndex) ? payload.cellIndex : null;
+  const defaultItemId = toolId === 'protect' ? 'pest_spray' : (toolId === 'mulch' ? 'mulch_bag' : null);
   const itemId = typeof payload.itemId === 'string' && payload.itemId.trim()
     ? payload.itemId.trim()
-    : (toolId === 'protect' ? 'pest_spray' : 'mulch_bag');
-  const countValue = payload.itemCount ?? payload.count ?? 1;
+    : defaultItemId;
+  const countValue = payload.itemCount ?? payload.count ?? (itemId ? 1 : 0);
   const itemCount = Number.isInteger(countValue) ? countValue : Number(countValue);
   const cooldown = payload.cooldown ?? {};
   const explicitKey = typeof payload.cooldownKey === 'string' && payload.cooldownKey.trim()
@@ -387,6 +388,9 @@ function normalizeToolInterventionPayload(payload = {}) {
     itemCount,
     itemId,
     toolId,
+    wateredAt: Number.isFinite(payload.wateredAt)
+      ? payload.wateredAt
+      : (Number.isFinite(payload.appliedAt) ? payload.appliedAt : null),
   };
 }
 
@@ -513,11 +517,17 @@ function reduceStoryAction(data, payload, envelope) {
       nextCell.mulched = true;
       nextCell.interventionBonus = Math.min(1, Math.max(0, (nextCell.interventionBonus ?? 0) + intervention.bonus));
     }
+    if (intervention.toolId === 'water') {
+      nextCell.interventionBonus = Math.min(1, Math.max(0, (nextCell.interventionBonus ?? 0) + intervention.bonus));
+      nextCell.lastWateredAt = intervention.wateredAt;
+    }
     grid[intervention.cellIndex] = nextCell;
 
     const inventory = createAuthorityInventory(data.inventory);
-    const itemCount = Math.max(1, Math.floor(Number(intervention.itemCount ?? 1)));
-    const itemRemoval = removeAuthorityInventoryItem(inventory, intervention.itemId, itemCount);
+    const itemCount = intervention.itemId ? Math.max(1, Math.floor(Number(intervention.itemCount ?? 1))) : 0;
+    const itemRemoval = intervention.itemId
+      ? removeAuthorityInventoryItem(inventory, intervention.itemId, itemCount)
+      : { inventory, success: true };
     const toolCooldowns = {
       ...createAuthorityCooldowns(data.toolCooldowns),
       [intervention.cooldown.key]: intervention.cooldown.until,
@@ -529,7 +539,7 @@ function reduceStoryAction(data, payload, envelope) {
       inventory: itemRemoval.inventory,
       lastToolIntervention: {
         appliedAt: intervention.appliedAt,
-        bonus: intervention.toolId === 'mulch' ? intervention.bonus : 0,
+        bonus: ['mulch', 'water'].includes(intervention.toolId) ? intervention.bonus : 0,
         carryForwardType: intervention.toolId === 'mulch' ? intervention.carryForwardType : null,
         cellIndex: intervention.cellIndex,
         cooldown: intervention.cooldown,
@@ -538,8 +548,11 @@ function reduceStoryAction(data, payload, envelope) {
         itemId: intervention.itemId,
         mulched: intervention.toolId === 'mulch' ? true : undefined,
         protected: intervention.toolId === 'protect' ? true : undefined,
-        remainingCount: getAuthorityInventoryItemCount(itemRemoval.inventory, intervention.itemId),
+        remainingCount: intervention.itemId
+          ? getAuthorityInventoryItemCount(itemRemoval.inventory, intervention.itemId)
+          : null,
         toolId: intervention.toolId,
+        wateredAt: intervention.toolId === 'water' ? intervention.wateredAt : undefined,
       },
       toolCooldowns,
     };
@@ -762,14 +775,19 @@ function validateStoryActionPayload(envelope, state) {
       return { code: 'CLIENT_INTERVENTION_TOTAL', message: 'Tool intervention cannot submit trusted intervention totals.' };
     }
     const intervention = normalizeToolInterventionPayload(envelope.payload);
-    if (!['protect', 'mulch'].includes(intervention.toolId)) {
-      return { code: 'BAD_TOOL_INTERVENTION', message: 'Tool intervention requires protect or mulch.' };
+    if (!['protect', 'mulch', 'water'].includes(intervention.toolId)) {
+      return { code: 'BAD_TOOL_INTERVENTION', message: 'Tool intervention requires protect, mulch, or water.' };
     }
     if (!Number.isInteger(intervention.cellIndex) || intervention.cellIndex < 0 || intervention.cellIndex >= grid.length) {
       return { code: 'BAD_CELL_INDEX', message: 'Tool intervention requires a valid starter-grid cell index.' };
     }
-    if (intervention.toolId === 'protect' && !grid[intervention.cellIndex]?.cropId) {
-      return { code: 'CELL_EMPTY', message: 'Protect intervention requires a planted crop.' };
+    if (['protect', 'water'].includes(intervention.toolId) && !grid[intervention.cellIndex]?.cropId) {
+      return {
+        code: 'CELL_EMPTY',
+        message: intervention.toolId === 'water'
+          ? 'Water intervention requires a planted crop.'
+          : 'Protect intervention requires a planted crop.',
+      };
     }
     if (
       hasOwn(envelope.payload, 'protected')
@@ -785,18 +803,30 @@ function validateStoryActionPayload(envelope, state) {
     }
     if (
       hasOwn(envelope.payload, 'carryForwardType')
-      && (typeof envelope.payload.carryForwardType !== 'string' || !envelope.payload.carryForwardType.trim())
+      && (
+        intervention.toolId !== 'mulch'
+        || typeof envelope.payload.carryForwardType !== 'string'
+        || !envelope.payload.carryForwardType.trim()
+      )
     ) {
       return { code: 'BAD_CARRY_FORWARD_TYPE', message: 'Mulch intervention requires a non-empty carryForwardType.' };
     }
     if (!Number.isFinite(intervention.bonus) || intervention.bonus < 0 || intervention.bonus > 1) {
       return { code: 'BAD_INTERVENTION_BONUS', message: 'Tool intervention requires a finite bonus from 0 to 1.' };
     }
-    const expectedItemId = intervention.toolId === 'protect' ? 'pest_spray' : 'mulch_bag';
-    if (intervention.itemId !== expectedItemId) {
+    const expectedItemId = intervention.toolId === 'protect'
+      ? 'pest_spray'
+      : (intervention.toolId === 'mulch' ? 'mulch_bag' : null);
+    if (expectedItemId && intervention.itemId !== expectedItemId) {
       return { code: 'ITEM_MISMATCH', message: 'Tool intervention item must match the selected tool.' };
     }
-    if (!Number.isInteger(intervention.itemCount) || intervention.itemCount <= 0 || intervention.itemCount > 99) {
+    if (!expectedItemId && (intervention.itemId !== null || intervention.itemCount !== 0)) {
+      return { code: 'ITEM_MISMATCH', message: 'Water intervention cannot submit an item payload.' };
+    }
+    if (
+      expectedItemId
+      && (!Number.isInteger(intervention.itemCount) || intervention.itemCount <= 0 || intervention.itemCount > 99)
+    ) {
       return { code: 'BAD_ITEM_COUNT', message: 'Tool intervention requires an integer item count from 1 to 99.' };
     }
     const cooldown = intervention.cooldown;
@@ -810,9 +840,14 @@ function validateStoryActionPayload(envelope, state) {
     if ('appliedAt' in (envelope.payload ?? {}) && envelope.payload.appliedAt !== null && !Number.isFinite(envelope.payload.appliedAt)) {
       return { code: 'BAD_APPLIED_AT', message: 'Tool intervention requires appliedAt to be a finite timestamp or null.' };
     }
-    const inventory = createAuthorityInventory(state?.data?.inventory);
-    if (getAuthorityInventoryItemCount(inventory, intervention.itemId) < intervention.itemCount) {
-      return { code: 'NOT_ENOUGH_ITEM', message: 'Tool intervention requires enough server-owned inventory.' };
+    if ('wateredAt' in (envelope.payload ?? {}) && envelope.payload.wateredAt !== null && !Number.isFinite(envelope.payload.wateredAt)) {
+      return { code: 'BAD_WATERED_AT', message: 'Tool intervention requires wateredAt to be a finite timestamp or null.' };
+    }
+    if (expectedItemId) {
+      const inventory = createAuthorityInventory(state?.data?.inventory);
+      if (getAuthorityInventoryItemCount(inventory, intervention.itemId) < intervention.itemCount) {
+        return { code: 'NOT_ENOUGH_ITEM', message: 'Tool intervention requires enough server-owned inventory.' };
+      }
     }
     return null;
   }

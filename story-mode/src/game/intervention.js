@@ -284,11 +284,16 @@ export function executeToolAction(store, toolId, cellIndex, now = Date.now()) {
 
     case 'water': {
       const bonus = Math.min(0.3, Math.max(0, 1 - (cell.interventionBonus ?? 0)));
+      const until = now + TOOL_COOLDOWNS.water;
+      cooldowns.set(getCooldownKey(toolId, cellIndex), until);
       store.dispatch({
-        type: Actions.WATER_CELL,
+        type: Actions.APPLY_TOOL_INTERVENTION,
         payload: {
+          appliedAt: now,
           cellIndex,
           bonus,
+          cooldownUntil: until,
+          toolId,
           wateredAt: now,
         },
       });
@@ -298,7 +303,6 @@ export function executeToolAction(store, toolId, cellIndex, now = Date.now()) {
           payload: { slotIndex: toolSlot.slotIndex, durabilityCost: 1 },
         });
       }
-      const until = setCooldown(store, toolId, cellIndex, TOOL_COOLDOWNS.water, now);
       return {
         success: true,
         message: `${getCropName(cell)} watered.`,

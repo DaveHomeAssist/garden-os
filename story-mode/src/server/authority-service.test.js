@@ -878,6 +878,75 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(3);
   });
 
+  it('routes water interventions with cooldown through one canonical transaction', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const wateredCell = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-water-intervention',
+      idempotencyKey: 'idem-water-intervention',
+      payload: {
+        appliedAt: NOW,
+        bonus: 0.25,
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        toolId: 'water',
+        wateredAt: NOW,
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-water-intervention-retry',
+      idempotencyKey: 'idem-water-intervention',
+      payload: {
+        appliedAt: NOW + 1,
+        bonus: 1,
+        cellIndex: 2,
+        cooldownUntil: NOW + 60_000,
+        toolId: 'water',
+        wateredAt: NOW + 1,
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(wateredCell.body.ok).toBe(true);
+    expect(wateredCell.body.ack.actionType).toBe(Actions.APPLY_TOOL_INTERVENTION);
+    expect(wateredCell.body.ack.authoritativePatch.data.lastToolIntervention).toMatchObject({
+      appliedAt: NOW,
+      bonus: 0.25,
+      cellIndex: 2,
+      cooldown: { cellIndex: 2, key: 'water_2', toolId: 'water', until: NOW + 30_000 },
+      interventionBonus: 0.25,
+      itemCount: 0,
+      itemId: null,
+      remainingCount: null,
+      toolId: 'water',
+      wateredAt: NOW,
+    });
+    expect(wateredCell.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      cropId: 'basil',
+      interventionBonus: 0.25,
+      lastWateredAt: NOW,
+    });
+    expect(verifyAuthorityAckSignature(wateredCell.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(2);
+    expect(state.data.grid[2].interventionBonus).toBe(0.25);
+    expect(state.data.grid[2].lastWateredAt).toBe(NOW);
+    expect(state.data.toolCooldowns.water_2).toBe(NOW + 30_000);
+    expect(state.data.inventory.slots[0].itemId).toBe('watering_can');
+    expect(state.ledger.entries).toHaveLength(2);
+  });
+
   it('rejects malformed or client-owned tool intervention payloads before mutation', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -891,6 +960,17 @@ describe('authority service', () => {
         itemId: 'pest_spray',
         protected: true,
         toolId: 'protect',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
+    const emptyWater = await postJson(handle, '/api/action', envelope({
+      id: 'action-empty-water-intervention',
+      idempotencyKey: 'idem-empty-water-intervention',
+      payload: {
+        cellIndex: 3,
+        cooldownUntil: NOW + 30_000,
+        toolId: 'water',
+        wateredAt: NOW,
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
     }));
@@ -914,6 +994,18 @@ describe('authority service', () => {
       },
       type: Actions.APPLY_TOOL_INTERVENTION,
     }));
+    const badWateredAt = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-bad-watered-at',
+      idempotencyKey: 'idem-bad-watered-at',
+      payload: {
+        cellIndex: 2,
+        cooldownUntil: NOW + 30_000,
+        toolId: 'water',
+        wateredAt: 'bad-timestamp',
+      },
+      type: Actions.APPLY_TOOL_INTERVENTION,
+    }));
     const wrongItem = await postJson(handle, '/api/action', envelope({
       expectedTick: 1,
       id: 'action-wrong-intervention-item',
@@ -931,8 +1023,12 @@ describe('authority service', () => {
 
     expect(emptyProtect.body.ok).toBe(false);
     expect(emptyProtect.body.ack.rejection.code).toBe('CELL_EMPTY');
+    expect(emptyWater.body.ok).toBe(false);
+    expect(emptyWater.body.ack.rejection.code).toBe('CELL_EMPTY');
     expect(trustedTotal.body.ok).toBe(false);
     expect(trustedTotal.body.ack.rejection.code).toBe('CLIENT_INTERVENTION_TOTAL');
+    expect(badWateredAt.body.ok).toBe(false);
+    expect(badWateredAt.body.ack.rejection.code).toBe('BAD_WATERED_AT');
     expect(wrongItem.body.ok).toBe(false);
     expect(wrongItem.body.ack.rejection.code).toBe('ITEM_MISMATCH');
     expect(verifyAuthorityAckSignature(wrongItem.body.ack, SECRET)).toBe(true);

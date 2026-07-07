@@ -177,7 +177,7 @@ function getInventoryItemCount(inventoryState, itemId) {
 function sameToolIntervention(intervention, currentState) {
   const toolId = intervention?.toolId;
   const cellIndex = Number(intervention?.cellIndex);
-  if (!['protect', 'mulch'].includes(toolId) || !Number.isInteger(cellIndex)) return false;
+  if (!['protect', 'mulch', 'water'].includes(toolId) || !Number.isInteger(cellIndex)) return false;
   const cell = currentState?.season?.grid?.[cellIndex];
   if (!cell) return false;
 
@@ -186,6 +186,11 @@ function sameToolIntervention(intervention, currentState) {
     if (Boolean(cell.mulched) !== Boolean(intervention.mulched)) return false;
     if ((cell.carryForwardType ?? null) !== (intervention.carryForwardType ?? null)) return false;
     if (Number(cell.interventionBonus ?? 0) !== Number(intervention.interventionBonus ?? 0)) return false;
+  }
+  if (toolId === 'water') {
+    const wateredAt = Number.isFinite(intervention.wateredAt) ? intervention.wateredAt : null;
+    if (Number(cell.interventionBonus ?? 0) !== Number(intervention.interventionBonus ?? 0)) return false;
+    if ((cell.lastWateredAt ?? null) !== wateredAt) return false;
   }
 
   const cooldown = intervention.cooldown ?? {};
@@ -227,7 +232,7 @@ function authorityAckToStoreAction(ack, currentState = null) {
     const cellIndex = Number(intervention?.cellIndex);
     const itemId = typeof intervention?.itemId === 'string' ? intervention.itemId : null;
     const remainingCount = Number(intervention?.remainingCount);
-    if (!['protect', 'mulch'].includes(toolId) || !Number.isInteger(cellIndex)) return null;
+    if (!['protect', 'mulch', 'water'].includes(toolId) || !Number.isInteger(cellIndex)) return null;
     if (sameToolIntervention(intervention, currentState)) return null;
     const currentCount = itemId ? getInventoryItemCount(currentState?.campaign?.inventory, itemId) : 0;
     const itemCount = itemId && Number.isFinite(remainingCount)
@@ -248,6 +253,7 @@ function authorityAckToStoreAction(ack, currentState = null) {
         mulched: typeof intervention?.mulched === 'boolean' ? intervention.mulched : undefined,
         protected: typeof intervention?.protected === 'boolean' ? intervention.protected : undefined,
         toolId,
+        wateredAt: Number.isFinite(intervention?.wateredAt) ? intervention.wateredAt : undefined,
       },
       type: 'APPLY_TOOL_INTERVENTION',
     };

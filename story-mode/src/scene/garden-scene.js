@@ -1201,6 +1201,9 @@ export function createGardenScene(container) {
     const damageVisual = damageState ? DAMAGE_VISUALS[damageState] : null;
 
     mesh.material.color.copy(getCellDisplayColor(index));
+    if (cellState?.lastWateredAt != null) {
+      mesh.material.color.multiplyScalar(0.78); // moist soil reads darker than dry
+    }
     if (interactionHighlightedCellIndex === index) {
       mesh.material.emissive?.setHex(0xe8c84a);
       mesh.material.emissiveIntensity = interactionHighlightIntensity;

@@ -368,12 +368,13 @@ function applyToolInterventionToState(state, payload = {}) {
   if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= state.season.grid.length) {
     return state;
   }
-  if (!['protect', 'mulch'].includes(toolId)) return state;
+  if (!['protect', 'mulch', 'water'].includes(toolId)) return state;
 
   const nextState = cloneGameState(state);
   const cell = nextState.season.grid[cellIndex];
-  const itemId = payload.itemId ?? (toolId === 'protect' ? 'pest_spray' : 'mulch_bag');
-  const itemCount = Math.max(0, Number(payload.itemCount ?? payload.count ?? 1));
+  const defaultItemId = toolId === 'protect' ? 'pest_spray' : (toolId === 'mulch' ? 'mulch_bag' : null);
+  const itemId = payload.itemId ?? defaultItemId;
+  const itemCount = itemId ? Math.max(0, Number(payload.itemCount ?? payload.count ?? 1)) : 0;
 
   if (toolId === 'protect') {
     cell.protected = payload.protected ?? true;
@@ -385,6 +386,13 @@ function applyToolInterventionToState(state, payload = {}) {
     const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0.2;
     const targetBonus = Number.isFinite(payload.interventionBonus) ? payload.interventionBonus : null;
     cell.interventionBonus = targetBonus ?? Math.min(1, (cell.interventionBonus ?? 0) + bonus);
+  }
+
+  if (toolId === 'water') {
+    const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0;
+    const targetBonus = Number.isFinite(payload.interventionBonus) ? payload.interventionBonus : null;
+    cell.interventionBonus = targetBonus ?? Math.min(1, (cell.interventionBonus ?? 0) + bonus);
+    cell.lastWateredAt = Number.isFinite(payload.wateredAt) ? payload.wateredAt : (payload.appliedAt ?? null);
   }
 
   if (itemId && itemCount > 0) {
