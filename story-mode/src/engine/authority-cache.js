@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -144,6 +144,7 @@ function clonePosition(value) {
 function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
+  if (actionId.endsWith(':ADD_ITEM')) return 'ADD_ITEM';
   if (actionId.endsWith(':APPLY_TOOL_INTERVENTION')) return 'APPLY_TOOL_INTERVENTION';
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
@@ -439,6 +440,28 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { count: currentCount - remainingCount, itemId },
       type: 'REMOVE_ITEM',
+    };
+  }
+
+  if (actionType === 'ADD_ITEM') {
+    const itemAddition = data.lastItemAddition;
+    const itemId = typeof itemAddition?.itemId === 'string' ? itemAddition.itemId : null;
+    const totalCount = Number(itemAddition?.totalCount);
+    if (!itemId || !Number.isFinite(totalCount)) return null;
+    const currentCount = getInventoryItemCount(currentState?.campaign?.inventory, itemId);
+    if (currentCount >= totalCount) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        count: totalCount - currentCount,
+        durability: Number.isFinite(itemAddition?.durability) ? itemAddition.durability : undefined,
+        itemId,
+        maxDurability: Number.isFinite(itemAddition?.maxDurability) ? itemAddition.maxDurability : undefined,
+        metadata: itemAddition?.metadata && typeof itemAddition.metadata === 'object'
+          ? cloneValue(itemAddition.metadata)
+          : undefined,
+      },
+      type: 'ADD_ITEM',
     };
   }
 

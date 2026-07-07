@@ -1199,6 +1199,52 @@ test('authority action routes consumable item removal through canonical inventor
   assert.equal(second.state.data.inventory.slots[3].count, 2);
 });
 
+test('authority action routes item additions through canonical inventory once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-add-item',
+    idempotencyKey: 'idem-add-item',
+    payload: {
+      count: 2,
+      itemId: 'plant_matter',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: {
+      count: 20,
+      itemId: 'plant_matter',
+    },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'ADD_ITEM');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.deepEqual(first.state.data.lastItemAddition, {
+    addedCount: 2,
+    count: 2,
+    itemId: 'plant_matter',
+    slotIndex: 5,
+    totalCount: 2,
+  });
+  assert.equal(first.state.data.inventory.slots[5].itemId, 'plant_matter');
+  assert.equal(first.state.data.inventory.slots[5].count, 2);
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 1);
+  assert.equal(second.state.data.inventory.slots[5].count, 2);
+});
+
 test('authority rejects malformed cooldown payloads before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -1340,6 +1386,64 @@ test('authority rejects malformed or client-owned item removal payloads before m
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.equal(session.state.data.inventory.slots[3].count, 3);
+});
+
+test('authority rejects malformed or client-owned item addition payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const trustedResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-trusted-add-item',
+    idempotencyKey: 'idem-trusted-add-item',
+    payload: { inventory: { slots: [] }, itemId: 'plant_matter', count: 1 },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+  const trusted = await trustedResponse.json();
+
+  const badCountResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-add-count',
+    idempotencyKey: 'idem-bad-add-count',
+    payload: { count: 0, itemId: 'plant_matter' },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+  const badCount = await badCountResponse.json();
+
+  const badItemResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-add-item',
+    idempotencyKey: 'idem-bad-add-item',
+    payload: { count: 1, itemId: '__proto__' },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+  const badItem = await badItemResponse.json();
+
+  assert.equal(trustedResponse.status, 422);
+  assert.equal(trusted.ack.accepted, false);
+  assert.equal(trusted.ack.rejection.code, 'TRUSTED_INVENTORY_PAYLOAD');
+  assert.equal(badCountResponse.status, 422);
+  assert.equal(badCount.ack.accepted, false);
+  assert.equal(badCount.ack.rejection.code, 'BAD_ITEM_COUNT');
+  assert.equal(badItemResponse.status, 422);
+  assert.equal(badItem.ack.accepted, false);
+  assert.equal(badItem.ack.rejection.code, 'BAD_ITEM_ID');
+  assert.equal(await verifyServerAckSignature(badItem.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.inventory.slots[5], null);
 });
 
 test('authority rejects tampered full-state payload before mutation', async () => {

@@ -23,6 +23,19 @@ const MAX_BODY_BYTES = 64 * 1024;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,80}$/;
 const AUTHORITY_GRID_SIZE = 32;
 const AUTHORITY_INVENTORY_CAPACITY = 20;
+const AUTHORITY_ITEM_CATEGORIES = {
+  MATERIALS: 'materials',
+  TOOLS: 'tools',
+};
+const AUTHORITY_ITEM_DEFS = {
+  fertilizer_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
+  mulch_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  pest_spray: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  pruning_shears: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 50, stackable: false },
+  smart_watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 80, stackable: false },
+  soil_scanner: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 30, stackable: false },
+  watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 100, stackable: false },
+};
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const COOLDOWN_KEY_RE = /^[A-Za-z0-9_-]+_[0-9]+$/;
 const STARTER_AUTHORITY_ITEMS = [
@@ -55,16 +68,25 @@ function cloneSlot(slot) {
   return slot ? structuredClone(slot) : null;
 }
 
+function getAuthorityItemDef(itemId) {
+  return AUTHORITY_ITEM_DEFS[itemId] ?? {
+    category: AUTHORITY_ITEM_CATEGORIES.MATERIALS,
+    maxStack: 99,
+    stackable: true,
+  };
+}
+
 function normalizeAuthoritySlot(slot) {
   if (!slot?.itemId) return null;
+  const itemDef = getAuthorityItemDef(slot.itemId);
   const durability = Number(slot.durability);
   const maxDurability = Number(slot.maxDurability);
   return {
     itemId: String(slot.itemId),
-    category: typeof slot.category === 'string' ? slot.category : 'materials',
+    category: typeof slot.category === 'string' ? slot.category : itemDef.category,
     count: Math.max(1, Number(slot.count ?? 1)),
-    durability: Number.isFinite(durability) ? durability : null,
-    maxDurability: Number.isFinite(maxDurability) ? maxDurability : null,
+    durability: Number.isFinite(durability) ? durability : itemDef.durability ?? null,
+    maxDurability: Number.isFinite(maxDurability) ? maxDurability : itemDef.durability ?? null,
     metadata: slot.metadata && typeof slot.metadata === 'object' ? structuredClone(slot.metadata) : {},
   };
 }
@@ -115,6 +137,48 @@ function applyAuthorityToolDurability(inventory, slotIndex, durabilityCost = 1) 
     maxDurability,
   };
   return { inventory: next, success: true };
+}
+
+function addAuthorityInventoryItem(inventory, itemId, count = 1, options = {}) {
+  const next = cloneAuthorityInventory(inventory);
+  const itemDef = getAuthorityItemDef(itemId);
+  let remaining = Math.max(1, Math.floor(Number(count ?? 1)));
+  let firstSlotIndex = -1;
+
+  if (itemDef.stackable) {
+    for (let index = 0; index < next.slots.length; index += 1) {
+      const slot = next.slots[index];
+      if (!slot || slot.itemId !== itemId || remaining <= 0) continue;
+      const room = Math.max(0, (itemDef.maxStack ?? 99) - (slot.count ?? 0));
+      const added = Math.min(room, remaining);
+      slot.count += added;
+      remaining -= added;
+      if (added > 0 && firstSlotIndex < 0) firstSlotIndex = index;
+    }
+  }
+
+  while (remaining > 0) {
+    const emptyIndex = next.slots.findIndex((slot) => !slot);
+    if (emptyIndex < 0) break;
+    const added = itemDef.stackable ? Math.min(itemDef.maxStack ?? 99, remaining) : 1;
+    next.slots[emptyIndex] = normalizeAuthoritySlot({
+      itemId,
+      category: itemDef.category,
+      count: added,
+      durability: options.durability ?? itemDef.durability ?? null,
+      maxDurability: options.maxDurability ?? itemDef.durability ?? null,
+      metadata: options.metadata ?? {},
+    });
+    remaining -= added;
+    if (firstSlotIndex < 0) firstSlotIndex = emptyIndex;
+  }
+
+  return {
+    added: Math.max(0, Number(count ?? 1) - remaining),
+    inventory: next,
+    slotIndex: firstSlotIndex,
+    success: remaining === 0,
+  };
 }
 
 function getAuthorityInventoryItemCount(inventory, itemId) {
@@ -180,6 +244,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastDamage = null,
   lastHarvesting = null,
+  lastItemAddition = null,
   lastItemRemoval = null,
   lastPlanting = null,
   lastProtection = null,
@@ -202,6 +267,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastDamage,
     lastHarvesting,
+    lastItemAddition,
     lastItemRemoval,
     lastPlanting,
     lastProtection,
@@ -281,8 +347,48 @@ function normalizeToolInterventionPayload(payload = {}) {
   };
 }
 
+function normalizeAddItemPayload(payload = {}) {
+  const itemId = typeof payload.itemId === 'string' && payload.itemId.trim()
+    ? payload.itemId.trim()
+    : null;
+  const count = Number(payload.count ?? 1);
+  const durability = Number(payload.durability);
+  const maxDurability = Number(payload.maxDurability);
+  return {
+    count,
+    durability: Number.isFinite(durability) ? durability : null,
+    itemId,
+    maxDurability: Number.isFinite(maxDurability) ? maxDurability : null,
+    metadata: payload.metadata && typeof payload.metadata === 'object' && !Array.isArray(payload.metadata)
+      ? structuredClone(payload.metadata)
+      : {},
+  };
+}
+
 const AUTHORITY_REDUCERS = {
   NOOP: (data) => data,
+  ADD_ITEM: (data, payload) => {
+    const addition = normalizeAddItemPayload(payload);
+    const result = addAuthorityInventoryItem(data.inventory, addition.itemId, addition.count, {
+      durability: addition.durability ?? undefined,
+      maxDurability: addition.maxDurability ?? undefined,
+      metadata: addition.metadata,
+    });
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastItemAddition: {
+        addedCount: result.added,
+        count: addition.count,
+        durability: addition.durability ?? undefined,
+        itemId: addition.itemId,
+        maxDurability: addition.maxDurability ?? undefined,
+        metadata: Object.keys(addition.metadata ?? {}).length ? addition.metadata : undefined,
+        slotIndex: result.slotIndex,
+        totalCount: getAuthorityInventoryItemCount(result.inventory, addition.itemId),
+      },
+    };
+  },
   APPLY_TOOL_INTERVENTION: (data, payload) => {
     const intervention = normalizeToolInterventionPayload(payload);
     const grid = createAuthorityGrid(data.grid);
@@ -713,6 +819,33 @@ function publicState(state) {
 function validateAuthorityPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === 'ADD_ITEM') {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Add item action cannot submit trusted inventory state.' };
+    }
+    const addition = normalizeAddItemPayload(envelope.payload);
+    if (typeof addition.itemId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{1,79}$/.test(addition.itemId)) {
+      return { code: 'BAD_ITEM_ID', message: 'Add item action requires a valid item id.' };
+    }
+    if (!Number.isInteger(addition.count) || addition.count <= 0 || addition.count > 99) {
+      return { code: 'BAD_ITEM_COUNT', message: 'Add item action requires an integer count from 1 to 99.' };
+    }
+    if (
+      (hasOwn(envelope.payload, 'durability') && (addition.durability == null || addition.durability < 0 || addition.durability > 500))
+      || (hasOwn(envelope.payload, 'maxDurability') && (addition.maxDurability == null || addition.maxDurability < 0 || addition.maxDurability > 500))
+    ) {
+      return { code: 'BAD_DURABILITY', message: 'Add item action requires bounded durability values from 0 to 500.' };
+    }
+    const preview = addAuthorityInventoryItem(state?.data?.inventory, addition.itemId, addition.count, {
+      durability: addition.durability ?? undefined,
+      maxDurability: addition.maxDurability ?? undefined,
+      metadata: addition.metadata,
+    });
+    if (!preview.success) {
+      return { code: 'INVENTORY_FULL', message: 'Add item action requires enough server-owned inventory space.' };
+    }
+    return null;
+  }
   if (envelope?.type === 'APPLY_TOOL_INTERVENTION') {
     if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
       return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Tool intervention cannot submit trusted inventory state.' };

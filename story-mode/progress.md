@@ -1,3 +1,15 @@
+Update 2026-07-07 Story Mode item addition authority pass:
+- Routed `ADD_ITEM` through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache so inventory awards now enter the signed action ledger instead of staying purely local.
+- Server authority now owns canonical item addition totals, rejects client-submitted inventory/slot state, rejects malformed item ids/counts, rejects inventory-full additions, and emits signed `lastItemAddition` ack metadata with the server-owned total count.
+- Client reconciliation maps signed `lastItemAddition` acks back into local `ADD_ITEM` only when optimistic local inventory is behind the server total, so duplicate idempotency-key retries do not double-add items.
+- Validation: focused authority/cache Vitest passed 59 tests; direct authority worker security test passed 33 tests; full Story Mode Vitest passed 35 files / 441 tests; `npm run build`, `npm audit --audit-level=high` with 0 vulnerabilities, `git diff --check`, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Tool repair authority remains deferred; repair material spend plus tool restoration still need one atomic server transaction.
+  - Crafting remains partially local; material spends and crafted-item recipe validation are not yet server-owned even though item additions now route through authority.
+  - Quest/festival/harvest reward rules remain local until reward derivation itself is server-owned.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode water durability atomic authority pass:
 - Routed live watering through one `APPLY_TOOL_INTERVENTION` authority transaction so water bonus, `lastWateredAt`, cooldown, and watering-can durability land together.
 - Server authority and the fetch-compatible authority worker now validate water tool slot, item id, and durability cost against server-owned inventory before mutating canonical grid, cooldown, and tool durability.

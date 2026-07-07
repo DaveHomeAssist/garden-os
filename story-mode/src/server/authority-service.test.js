@@ -779,6 +779,53 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes item additions through canonical inventory state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-add-item',
+      idempotencyKey: 'idem-add-item',
+      payload: {
+        count: 2,
+        itemId: 'plant_matter',
+      },
+      type: Actions.ADD_ITEM,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-add-item-retry',
+      idempotencyKey: 'idem-add-item',
+      payload: {
+        count: 20,
+        itemId: 'plant_matter',
+      },
+      type: Actions.ADD_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.ADD_ITEM);
+    expect(applied.body.ack.authoritativePatch.data.lastItemAddition).toEqual({
+      addedCount: 2,
+      count: 2,
+      itemId: 'plant_matter',
+      slotIndex: 5,
+      totalCount: 2,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[5]).toMatchObject({
+      count: 2,
+      itemId: 'plant_matter',
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(1);
+    expect(state.data.inventory.slots[5]).toMatchObject({
+      count: 2,
+      itemId: 'plant_matter',
+    });
+    expect(state.ledger.entries).toHaveLength(1);
+  });
+
   it('routes protect and mulch interventions through one canonical transaction', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -1153,6 +1200,41 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(notEnough.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.inventory.slots[3].count).toBe(3);
+  });
+
+  it('rejects malformed or client-owned item addition payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedInventory = await postJson(handle, '/api/action', envelope({
+      id: 'action-trusted-add-item',
+      idempotencyKey: 'idem-trusted-add-item',
+      payload: { inventory: { slots: [] }, itemId: 'plant_matter', count: 1 },
+      type: Actions.ADD_ITEM,
+    }));
+    const badCount = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-add-count',
+      idempotencyKey: 'idem-bad-add-count',
+      payload: { count: 0, itemId: 'plant_matter' },
+      type: Actions.ADD_ITEM,
+    }));
+    const badItem = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-add-item',
+      idempotencyKey: 'idem-bad-add-item',
+      payload: { count: 1, itemId: '__proto__' },
+      type: Actions.ADD_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedInventory.body.ok).toBe(false);
+    expect(trustedInventory.body.ack.rejection.code).toBe('TRUSTED_INVENTORY_PAYLOAD');
+    expect(badCount.body.ok).toBe(false);
+    expect(badCount.body.ack.rejection.code).toBe('BAD_ITEM_COUNT');
+    expect(badItem.body.ok).toBe(false);
+    expect(badItem.body.ack.rejection.code).toBe('BAD_ITEM_ID');
+    expect(verifyAuthorityAckSignature(badItem.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.inventory.slots[5]).toBeNull();
   });
 
   it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {

@@ -310,6 +310,7 @@ describe('authority IndexedDB cache', () => {
     expect(isAuthorityRoutedAction({ type: Actions.UPDATE_SOIL })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.CARRY_FORWARD })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.USE_TOOL })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.ADD_ITEM, payload: { itemId: 'plant_matter' } })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.REMOVE_ITEM, payload: { itemId: 'pest_spray' } })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.REMOVE_ITEM, payload: { itemId: 'scrap_metal' } })).toBe(false);
 
@@ -337,6 +338,44 @@ describe('authority IndexedDB cache', () => {
         },
       },
     }, itemRemovalState)).toBeNull();
+
+    const itemAdditionState = createGameState();
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.ADD_ITEM,
+      authoritativePatch: {
+        data: {
+          lastItemAddition: { addedCount: 2, count: 2, itemId: 'plant_matter', slotIndex: 5, totalCount: 2 },
+        },
+      },
+    }, itemAdditionState)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        count: 2,
+        durability: undefined,
+        itemId: 'plant_matter',
+        maxDurability: undefined,
+        metadata: undefined,
+      },
+      type: Actions.ADD_ITEM,
+    });
+    itemAdditionState.campaign.inventory.slots[5] = {
+      category: 'materials',
+      count: 2,
+      durability: null,
+      itemId: 'plant_matter',
+      maxDurability: null,
+      metadata: {},
+    };
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.ADD_ITEM,
+      authoritativePatch: {
+        data: {
+          lastItemAddition: { addedCount: 2, count: 2, itemId: 'plant_matter', slotIndex: 5, totalCount: 2 },
+        },
+      },
+    }, itemAdditionState)).toBeNull();
 
     expect(authorityAckToStoreAction({
       accepted: true,
@@ -1994,6 +2033,80 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().campaign.inventory.slots[3].count).toBe(2);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues item addition actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastItemAddition: {
+                addedCount: body.payload.count,
+                count: body.payload.count,
+                itemId: body.payload.itemId,
+                slotIndex: 5,
+                totalCount: body.payload.count,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.ADD_ITEM,
+      payload: {
+        count: 2,
+        itemId: 'plant_matter',
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.inventory.slots[5]).toMatchObject({
+      count: 2,
+      itemId: 'plant_matter',
+    });
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
