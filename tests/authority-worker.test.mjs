@@ -373,6 +373,68 @@ test('authority action routes zone changes through canonical state once', async 
   assert.deepEqual(body.state.data.lastSpawnPoint, { x: -6, z: 0 });
 });
 
+test('authority action routes cooldowns through canonical state once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-cooldown',
+    idempotencyKey: 'idem-cooldown',
+    payload: {
+      cellIndex: 2,
+      key: 'water_2',
+      toolId: 'water',
+      until: 1783370005000,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_COOLDOWN',
+  };
+
+  const response = await worker.fetch(jsonRequest('/action', action), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.ack.accepted, true);
+  assert.equal(body.ack.actionType, 'SET_COOLDOWN');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+  assert.deepEqual(body.state.data.lastCooldown, {
+    cellIndex: 2,
+    key: 'water_2',
+    toolId: 'water',
+    until: 1783370005000,
+  });
+  assert.equal(body.state.data.toolCooldowns.water_2, 1783370005000);
+});
+
+test('authority rejects malformed cooldown payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-cooldown',
+    idempotencyKey: 'idem-bad-cooldown',
+    payload: { key: '__proto__', until: -1 },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_COOLDOWN',
+  }), env);
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.actionType, 'SET_COOLDOWN');
+  assert.equal(body.ack.rejection.code, 'BAD_COOLDOWN_KEY');
+  assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.deepEqual(session.state.data.toolCooldowns, {});
+});
+
 test('authority rejects tampered full-state payload before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {

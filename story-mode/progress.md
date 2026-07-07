@@ -1,3 +1,13 @@
+Update 2026-07-07 Story Mode cooldown authority pass:
+- Routed `SET_COOLDOWN` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the first tool-state authority mutation.
+- Server authority now stores canonical `toolCooldowns` and emits `lastCooldown` ack metadata with normalized `key`, `toolId`, `cellIndex`, and `until`.
+- Added cooldown payload validation so clients must submit a `tool_cell` key and a finite non-negative expiry timestamp before mutation.
+- Validation: focused authority/cache Vitest passed 35 tests; worker authority passed 17 tests; full Story Mode Vitest passed 35 files / 416 tests; `npm run build`, `npm audit --audit-level=high`, screenshot regression, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Server-derived cooldown duration rules are still deferred; this pass authorizes persistence/replay of the existing cooldown payload contract.
+  - Tool durability, inventory spend, interventions, quests, currency, market transactions, phase transitions, expanded-grid, and multi-bed authority are still deferred.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode fence recheck from user screenshot feedback:
 - Re-ran local Story Mode with new default, side-orbit, zoomed house-edge, low house-edge, and mobile screenshots under `/tmp/garden-os-fence-user-recheck-20260707-local`.
 - Found the remaining fence read was coming from unnamed scenery: repeated pale pebble rows around the bed, porch support posts/awning pieces, a right-edge neighbor wall/roof cluster, the utility pole/wire, and a bright alley strip.

@@ -23,6 +23,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,80}$/;
 const AUTHORITY_GRID_SIZE = 32;
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
+const COOLDOWN_KEY_RE = /^[A-Za-z0-9_-]+_[0-9]+$/;
 const DEFAULT_AUTHORITY_CELL = {
   cropId: null,
   damageState: null,
@@ -45,27 +46,53 @@ function createAuthorityGrid(grid = []) {
   return Array.from({ length: AUTHORITY_GRID_SIZE }, (_, index) => createAuthorityCell(cells[index]));
 }
 
+function createAuthorityCooldowns(cooldowns = {}) {
+  return Object.fromEntries(
+    Object.entries(cooldowns ?? {}).filter(([key, until]) => (
+      COOLDOWN_KEY_RE.test(key) && Number.isFinite(until) && until >= 0
+    )),
+  );
+}
+
 function createInitialAuthorityData({
   activeTool = null,
   currentZone = 'player_plot',
   grid = [],
+  lastCooldown = null,
   lastHarvesting = null,
   lastPlanting = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
+  toolCooldowns = {},
   visitedZones = ['player_plot'],
 } = {}) {
   return {
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    lastCooldown,
     lastHarvesting,
     lastPlanting,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
+    toolCooldowns: createAuthorityCooldowns(toolCooldowns),
     visitedZones: Array.isArray(visitedZones) && visitedZones.length ? [...new Set(visitedZones)] : ['player_plot'],
+  };
+}
+
+function normalizeCooldownPayload(payload = {}) {
+  const explicitKey = typeof payload.key === 'string' && payload.key.trim() ? payload.key.trim() : null;
+  const toolId = typeof payload.toolId === 'string' && payload.toolId.trim() ? payload.toolId.trim() : null;
+  const cellIndex = Number.isInteger(payload.cellIndex) && payload.cellIndex >= 0 ? payload.cellIndex : null;
+  const key = explicitKey ?? (toolId && cellIndex != null ? `${toolId}_${cellIndex}` : null);
+  const until = Number(payload.until ?? 0);
+  return {
+    cellIndex,
+    key,
+    toolId,
+    until,
   };
 }
 
@@ -124,6 +151,17 @@ const AUTHORITY_REDUCERS = {
     ...data,
     activeTool: typeof payload.toolId === 'string' ? payload.toolId : null,
   }),
+  SET_COOLDOWN: (data, payload) => {
+    const cooldown = normalizeCooldownPayload(payload);
+    return {
+      ...data,
+      lastCooldown: cooldown,
+      toolCooldowns: {
+        ...createAuthorityCooldowns(data.toolCooldowns),
+        [cooldown.key]: cooldown.until,
+      },
+    };
+  },
   SET_SELECTED_CROP: (data, payload) => ({
     ...data,
     selectedCropId: typeof payload.cropId === 'string' ? payload.cropId : null,
@@ -355,6 +393,21 @@ function validateAuthorityPayload(envelope, state) {
     }
     if ('harvestedAt' in (envelope.payload ?? {}) && envelope.payload.harvestedAt !== null && !Number.isFinite(envelope.payload.harvestedAt)) {
       return { code: 'BAD_HARVESTED_AT', message: 'Harvest action requires harvestedAt to be a finite timestamp or null.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'SET_COOLDOWN') {
+    const cooldown = normalizeCooldownPayload(envelope.payload);
+    const derivedKey = cooldown.toolId && cooldown.cellIndex != null ? `${cooldown.toolId}_${cooldown.cellIndex}` : null;
+    if (!cooldown.key || !COOLDOWN_KEY_RE.test(cooldown.key)) {
+      return { code: 'BAD_COOLDOWN_KEY', message: 'Cooldown action requires a tool_cell key.' };
+    }
+    if (derivedKey && cooldown.key !== derivedKey) {
+      return { code: 'BAD_COOLDOWN_KEY', message: 'Cooldown key must match toolId and cellIndex.' };
+    }
+    if (!Number.isFinite(cooldown.until) || cooldown.until < 0) {
+      return { code: 'BAD_COOLDOWN_UNTIL', message: 'Cooldown action requires a finite non-negative expiry timestamp.' };
     }
     return null;
   }

@@ -415,6 +415,58 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes tool cooldowns through the authoritative session ledger', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-cooldown',
+      idempotencyKey: 'idem-cooldown',
+      payload: {
+        cellIndex: 2,
+        key: 'water_2',
+        toolId: 'water',
+        until: NOW + 5_000,
+      },
+      type: Actions.SET_COOLDOWN,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.SET_COOLDOWN);
+    expect(applied.body.ack.authoritativePatch.data.lastCooldown).toEqual({
+      cellIndex: 2,
+      key: 'water_2',
+      toolId: 'water',
+      until: NOW + 5_000,
+    });
+    expect(applied.body.ack.authoritativePatch.data.toolCooldowns.water_2).toBe(NOW + 5_000);
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(state.data.toolCooldowns.water_2).toBe(NOW + 5_000);
+    expect(state.ledger.entries).toHaveLength(1);
+  });
+
+  it('rejects malformed cooldown payloads without changing session state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const blocked = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-cooldown',
+      idempotencyKey: 'idem-bad-cooldown',
+      payload: { key: '__proto__', until: -1 },
+      type: Actions.SET_COOLDOWN,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(blocked.body.ok).toBe(false);
+    expect(blocked.body.ack.accepted).toBe(false);
+    expect(blocked.body.ack.actionType).toBe(Actions.SET_COOLDOWN);
+    expect(blocked.body.ack.rejection.code).toBe('BAD_COOLDOWN_KEY');
+    expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.toolCooldowns).toEqual({});
+  });
+
   it('stores sessions and ledger entries through Upstash Redis REST commands', async () => {
     const calls = [];
     const records = new Map();

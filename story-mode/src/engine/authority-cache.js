@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -144,6 +144,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
+  if (actionId.endsWith(':SET_COOLDOWN')) return 'SET_COOLDOWN';
   if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
   return null;
@@ -230,6 +231,22 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { toolId: typeof data.activeTool === 'string' ? data.activeTool : null },
       type: 'SET_ACTIVE_TOOL',
+    };
+  }
+
+  if (actionType === 'SET_COOLDOWN') {
+    const cooldown = data.lastCooldown;
+    const key = typeof cooldown?.key === 'string' && cooldown.key ? cooldown.key : null;
+    const until = Number(cooldown?.until);
+    if (!key || !Number.isFinite(until)) return null;
+    if ((currentState?.season?.toolCooldowns?.[key] ?? 0) === until) return null;
+    const payload = { key, until };
+    if (Number.isInteger(cooldown.cellIndex)) payload.cellIndex = cooldown.cellIndex;
+    if (typeof cooldown.toolId === 'string') payload.toolId = cooldown.toolId;
+    return {
+      meta: { authorityAck: true },
+      payload,
+      type: 'SET_COOLDOWN',
     };
   }
 

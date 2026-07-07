@@ -335,6 +335,47 @@ describe('authority IndexedDB cache', () => {
 
     expect(authorityAckToStoreAction({
       accepted: true,
+      actionType: Actions.SET_COOLDOWN,
+      authoritativePatch: {
+        data: {
+          lastCooldown: {
+            cellIndex: 2,
+            key: 'water_2',
+            toolId: 'water',
+            until: NOW + 5_000,
+          },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        cellIndex: 2,
+        key: 'water_2',
+        toolId: 'water',
+        until: NOW + 5_000,
+      },
+      type: Actions.SET_COOLDOWN,
+    });
+
+    const alreadyCooledDown = createGameState();
+    alreadyCooledDown.season.toolCooldowns.water_2 = NOW + 5_000;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_COOLDOWN,
+      authoritativePatch: {
+        data: {
+          lastCooldown: {
+            cellIndex: 2,
+            key: 'water_2',
+            toolId: 'water',
+            until: NOW + 5_000,
+          },
+        },
+      },
+    }, alreadyCooledDown)).toBeNull();
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
       actionType: Actions.SET_ACTIVE_TOOL,
       authoritativePatch: {
         data: {
@@ -1020,6 +1061,78 @@ describe('authority IndexedDB cache', () => {
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].cropId).toBeNull();
     expect(store.getState().campaign.inventory.slots.some((slot) => slot?.itemId === 'basil')).toBe(true);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues cooldown gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastCooldown: {
+                cellIndex: body.payload.cellIndex,
+                key: body.payload.key,
+                toolId: body.payload.toolId,
+                until: body.payload.until,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_COOLDOWN,
+      payload: {
+        cellIndex: 2,
+        key: 'water_2',
+        toolId: 'water',
+        until: NOW + 5_000,
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.toolCooldowns.water_2).toBe(NOW + 5_000);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
