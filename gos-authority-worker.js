@@ -61,6 +61,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastHarvesting = null,
   lastPlanting = null,
+  lastRemoval = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
@@ -74,6 +75,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastHarvesting,
     lastPlanting,
+    lastRemoval,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
@@ -109,6 +111,21 @@ const AUTHORITY_REDUCERS = {
       ...data,
       grid,
       lastPlanting: { cellIndex: payload.cellIndex, cropId: payload.cropId },
+    };
+  },
+  REMOVE_CROP: (data, payload) => {
+    const grid = createAuthorityGrid(data.grid);
+    const cropId = grid[payload.cellIndex]?.cropId;
+    const removedAt = Number.isFinite(payload.removedAt) ? payload.removedAt : null;
+    grid[payload.cellIndex] = {
+      ...grid[payload.cellIndex],
+      cropId: null,
+      damageState: null,
+    };
+    return {
+      ...data,
+      grid,
+      lastRemoval: { cellIndex: payload.cellIndex, cropId, removedAt },
     };
   },
   WATER_CELL: (data, payload) => {
@@ -352,6 +369,26 @@ function validateAuthorityPayload(envelope, state) {
     }
     if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
       return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'REMOVE_CROP') {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Remove crop action requires a valid starter-grid cell index.' };
+    }
+    if (!grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Remove crop action requires a planted crop.' };
+    }
+    if (
+      typeof envelope.payload?.cropId === 'string'
+      && envelope.payload.cropId
+      && envelope.payload.cropId !== grid[cellIndex].cropId
+    ) {
+      return { code: 'CROP_MISMATCH', message: 'Remove crop action crop id must match the server-owned cell crop.' };
+    }
+    if ('removedAt' in (envelope.payload ?? {}) && envelope.payload.removedAt !== null && !Number.isFinite(envelope.payload.removedAt)) {
+      return { code: 'BAD_REMOVED_AT', message: 'Remove crop action requires removedAt to be a finite timestamp or null.' };
     }
     return null;
   }

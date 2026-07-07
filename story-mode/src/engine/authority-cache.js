@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -141,6 +141,7 @@ function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
+  if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
@@ -173,6 +174,22 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { cellIndex, cropId },
       type: 'PLANT_CROP',
+    };
+  }
+
+  if (actionType === 'REMOVE_CROP') {
+    const removal = data.lastRemoval;
+    const cellIndex = Number(removal?.cellIndex);
+    const cropId = typeof removal?.cropId === 'string' ? removal.cropId : null;
+    const removedAt = Number.isFinite(removal?.removedAt) ? removal.removedAt : null;
+    if (!Number.isInteger(cellIndex) || !cropId) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if (!currentCell?.cropId) return null;
+    if (currentCell.cropId !== cropId) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { cellIndex, cropId, removedAt },
+      type: 'REMOVE_CROP',
     };
   }
 

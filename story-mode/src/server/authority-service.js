@@ -23,6 +23,7 @@ const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inve
 const ACTIONS = {
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
+  REMOVE_CROP: 'REMOVE_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_COOLDOWN: 'SET_COOLDOWN',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
@@ -32,6 +33,7 @@ const ACTIONS = {
 const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
+  ACTIONS.REMOVE_CROP,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
   ACTIONS.SET_COOLDOWN,
@@ -74,6 +76,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastHarvesting = null,
   lastPlanting = null,
+  lastRemoval = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
@@ -87,6 +90,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastHarvesting,
     lastPlanting,
+    lastRemoval,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
@@ -269,6 +273,22 @@ function reduceStoryAction(data, payload, envelope) {
       lastPlanting: { cellIndex, cropId },
     };
   }
+  if (envelope.type === ACTIONS.REMOVE_CROP) {
+    const cellIndex = payload.cellIndex;
+    const grid = createAuthorityGrid(data.grid);
+    const cropId = grid[cellIndex]?.cropId;
+    const removedAt = Number.isFinite(payload.removedAt) ? payload.removedAt : null;
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      cropId: null,
+      damageState: null,
+    };
+    return {
+      ...data,
+      grid,
+      lastRemoval: { cellIndex, cropId, removedAt },
+    };
+  }
   if (envelope.type === ACTIONS.WATER_CELL) {
     const cellIndex = payload.cellIndex;
     const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0;
@@ -355,6 +375,26 @@ function validateStoryActionPayload(envelope, state) {
     }
     if (typeof envelope.payload?.cropId !== 'string' || !envelope.payload.cropId.trim()) {
       return { code: 'BAD_CROP_ID', message: 'Plant action requires a crop id.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.REMOVE_CROP) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Remove crop action requires a valid starter-grid cell index.' };
+    }
+    if (!grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Remove crop action requires a planted crop.' };
+    }
+    if (
+      typeof envelope.payload?.cropId === 'string'
+      && envelope.payload.cropId
+      && envelope.payload.cropId !== grid[cellIndex].cropId
+    ) {
+      return { code: 'CROP_MISMATCH', message: 'Remove crop action crop id must match the server-owned cell crop.' };
+    }
+    if ('removedAt' in (envelope.payload ?? {}) && envelope.payload.removedAt !== null && !Number.isFinite(envelope.payload.removedAt)) {
+      return { code: 'BAD_REMOVED_AT', message: 'Remove crop action requires removedAt to be a finite timestamp or null.' };
     }
     return null;
   }

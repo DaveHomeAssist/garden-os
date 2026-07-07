@@ -1,3 +1,13 @@
+Update 2026-07-07 Story Mode remove crop authority pass:
+- Routed `REMOVE_CROP` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the next starter-grid mutation.
+- Server authority now validates valid planted cells, rejects optional crop-id mismatches, clears canonical `cropId`/`damageState`, and emits signed `lastRemoval` metadata with server-owned `cropId`.
+- Client reconciliation maps signed `lastRemoval` acks back into `REMOVE_CROP` only when the matching crop is still present locally, so optimistic removal does not replay duplicate mutation.
+- Validation: focused authority/cache Vitest passed 38 tests; worker authority passed 19 tests; full Story Mode Vitest passed 35 files / 419 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Inventory spend, interventions, quests, currency, market transactions, phase transitions, expanded-grid, and multi-bed authority are still deferred.
+  - Server-derived remove timing and richer removal reasons are deferred; this pass authorizes the existing grid removal contract.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode fence recheck from side-angle feedback:
 - Found a remaining fence-read artifact that was not a fence mesh: the finite grass plane exposed a hard straight back edge when orbiting past the house wall, so it appeared to start where the house ended.
 - Enlarged the Story Mode ground plane from 40x40 to 360x360 and expanded the camera far plane plus sky dome so reachable side/low camera angles no longer expose a straight terrain/sky boundary.

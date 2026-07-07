@@ -218,6 +218,48 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(2);
   });
 
+  it('routes remove crop gameplay actions through canonical grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-remove',
+      idempotencyKey: 'idem-remove',
+      payload: { cellIndex: 2, cropId: 'basil', removedAt: NOW },
+      type: Actions.REMOVE_CROP,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-remove-retry',
+      idempotencyKey: 'idem-remove',
+      payload: { cellIndex: 2, cropId: 'radish', removedAt: NOW + 1 },
+      type: Actions.REMOVE_CROP,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.REMOVE_CROP);
+    expect(applied.body.ack.authoritativePatch.data.lastRemoval).toEqual({
+      cellIndex: 2,
+      cropId: 'basil',
+      removedAt: NOW,
+    });
+    expect(applied.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      cropId: null,
+      damageState: null,
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(2);
+    expect(state.data.grid[2].cropId).toBeNull();
+    expect(state.ledger.entries).toHaveLength(2);
+  });
+
   it('rejects malformed plant crop payloads without changing grid state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -279,6 +321,41 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(blocked.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.grid[2].cropId).toBeNull();
+  });
+
+  it('rejects remove crop actions for empty or mismatched cells before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const empty = await postJson(handle, '/api/action', envelope({
+      id: 'action-empty-remove',
+      idempotencyKey: 'idem-empty-remove',
+      payload: { cellIndex: 2, cropId: 'basil', removedAt: NOW },
+      type: Actions.REMOVE_CROP,
+    }));
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+    const mismatch = await postJson(handle, '/api/action', envelope({
+      id: 'action-mismatch-remove',
+      idempotencyKey: 'idem-mismatch-remove',
+      payload: { cellIndex: 2, cropId: 'radish', removedAt: NOW },
+      type: Actions.REMOVE_CROP,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(empty.body.ok).toBe(false);
+    expect(empty.body.ack.actionType).toBe(Actions.REMOVE_CROP);
+    expect(empty.body.ack.rejection.code).toBe('CELL_EMPTY');
+    expect(mismatch.body.ok).toBe(false);
+    expect(mismatch.body.ack.actionType).toBe(Actions.REMOVE_CROP);
+    expect(mismatch.body.ack.rejection.code).toBe('CROP_MISMATCH');
+    expect(verifyAuthorityAckSignature(mismatch.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(1);
+    expect(state.data.grid[2].cropId).toBe('basil');
   });
 
   it('rejects client-submitted harvest totals before mutation', async () => {

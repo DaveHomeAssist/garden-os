@@ -218,6 +218,58 @@ describe('authority IndexedDB cache', () => {
       },
     }, alreadyPlanted)).toBeNull();
 
+    const removeReady = createGameState();
+    removeReady.season.grid[2].cropId = 'basil';
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.REMOVE_CROP,
+      authoritativePatch: {
+        data: {
+          lastRemoval: {
+            cellIndex: 2,
+            cropId: 'basil',
+            removedAt: NOW,
+          },
+        },
+      },
+    }, removeReady)).toEqual({
+      meta: { authorityAck: true },
+      payload: { cellIndex: 2, cropId: 'basil', removedAt: NOW },
+      type: Actions.REMOVE_CROP,
+    });
+
+    const alreadyRemoved = createGameState();
+    alreadyRemoved.season.grid[2].cropId = null;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.REMOVE_CROP,
+      authoritativePatch: {
+        data: {
+          lastRemoval: {
+            cellIndex: 2,
+            cropId: 'basil',
+            removedAt: NOW,
+          },
+        },
+      },
+    }, alreadyRemoved)).toBeNull();
+
+    const mismatchedRemoval = createGameState();
+    mismatchedRemoval.season.grid[2].cropId = 'radish';
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.REMOVE_CROP,
+      authoritativePatch: {
+        data: {
+          lastRemoval: {
+            cellIndex: 2,
+            cropId: 'basil',
+            removedAt: NOW,
+          },
+        },
+      },
+    }, mismatchedRemoval)).toBeNull();
+
     expect(authorityAckToStoreAction({
       accepted: true,
       actionType: Actions.WATER_CELL,
@@ -922,6 +974,74 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].cropId).toBe('basil');
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues remove crop gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const initialState = createGameState();
+    initialState.season.grid[2].cropId = 'basil';
+    const store = new Store(initialState);
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastRemoval: {
+                cellIndex: body.payload.cellIndex,
+                cropId: body.payload.cropId,
+                removedAt: body.payload.removedAt,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.REMOVE_CROP,
+      payload: { cellIndex: 2, cropId: 'basil', removedAt: NOW },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].cropId).toBeNull();
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
