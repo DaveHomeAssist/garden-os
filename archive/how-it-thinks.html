@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon/favicon.svg">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon/favicon-16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../assets/icons/favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="var(--soil)">
   <title>Garden OS · How the Planner Thinks</title>
 <meta name="description" content="Garden OS is a browser-based raised bed planning ecosystem with explainable scoring, build guides, seasonal operations, and story mode.">
@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="Garden OS · How the Planner Thinks">
 <meta name="twitter:description" content="Garden OS is a browser-based raised bed planning ecosystem with explainable scoring, build guides, seasonal operations, and story mode.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
-  <link rel="stylesheet" href="garden-os-theme.css">
+  <link rel="stylesheet" href="../garden-os-theme.css">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
   <style>
     :root{
@@ -259,14 +259,14 @@
 <body>
 
   <nav class="os-nav" aria-label="Garden OS">
-    <a href="index.html">Home</a>
+    <a href="../index.html">Home</a>
     <a href="garden-planner-v4.html" class="os-nav-cta">Open Planner</a>
-    <a href="story-mode-live/">Story Mode</a>
-    <a href="garden-cage-build-guide.html">Build Guide</a>
-    <a href="garden-cage-ops-guide.html">Ops Guide</a>
+    <a href="../story-mode-live/">Story Mode</a>
+    <a href="../garden-cage-build-guide.html">Build Guide</a>
+    <a href="../garden-cage-ops-guide.html">Ops Guide</a>
     <a href="how-it-thinks.html" aria-current="page">How It Thinks</a>
-    <a href="scoring-map.html">Scoring Map</a>
-    <a href="scoring-visualizer.html" class="os-nav-utility">Dev Tools →</a>
+    <a href="../scoring-map.html">Scoring Map</a>
+    <a href="../scoring-visualizer.html" class="os-nav-utility">Dev Tools →</a>
   </nav>
 
   <div class="topbar">
@@ -294,19 +294,19 @@
       <p>This page explains the logic. The Planner lets you see it live: place a crop, tap a cell, compare the recommendation, and then move into build or ops once the bed is stable.</p>
       <div class="guide-launch-actions">
         <a class="os-btn os-btn--primary" href="garden-planner-v4.html">Open Planner</a>
-        <a class="os-btn os-btn--outline" href="scoring-map.html">See the scoring map</a>
-        <a class="os-btn os-btn--ghost" href="garden-cage-build-guide.html">Build from the layout</a>
+        <a class="os-btn os-btn--outline" href="../scoring-map.html">See the scoring map</a>
+        <a class="os-btn os-btn--ghost" href="../garden-cage-build-guide.html">Build from the layout</a>
       </div>
       <div class="guide-launch-grid">
         <a class="guide-launch-card" href="garden-planner-v4.html">
           <strong>Place one crop</strong>
           <span>Start a bed and watch how trellis, protection, and access change the score.</span>
         </a>
-        <a class="guide-launch-card" href="scoring-map.html">
+        <a class="guide-launch-card" href="../scoring-map.html">
           <strong>Trace the logic</strong>
           <span>Move from plain English into the planner's actual scoring pipeline when you need detail.</span>
         </a>
-        <a class="guide-launch-card" href="garden-cage-ops-guide.html">
+        <a class="guide-launch-card" href="../garden-cage-ops-guide.html">
           <strong>Carry it forward</strong>
           <span>Once the layout works, use the ops guide to keep the season and harvest rhythm on track.</span>
         </a>
@@ -526,6 +526,6 @@
     </div>
 
   </div>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("../sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>
