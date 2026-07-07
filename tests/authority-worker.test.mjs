@@ -277,6 +277,55 @@ test('authority action routes remove crop through canonical grid state once', as
   assert.equal(second.state.data.grid[2].cropId, null);
 });
 
+test('authority action routes protection through canonical grid state once', async () => {
+  const { env, sessionId } = await createSession();
+  const plantAction = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-plant',
+    idempotencyKey: 'idem-plant',
+    payload: { cellIndex: 2, cropId: 'basil' },
+    playerId: 'local',
+    sessionId,
+    type: 'PLANT_CROP',
+  };
+  await worker.fetch(jsonRequest('/action', plantAction), env);
+
+  const action = {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-protect',
+    idempotencyKey: 'idem-protect',
+    payload: { cellIndex: 2, protected: true },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_PROTECTION',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    payload: { cellIndex: 2, protected: false },
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'SET_PROTECTION');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.equal(first.state.data.grid[2].protected, true);
+  assert.deepEqual(first.state.data.lastProtection, {
+    cellIndex: 2,
+    protected: true,
+  });
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 2);
+  assert.equal(second.state.data.grid[2].protected, true);
+});
+
 test('authority rejects malformed plant crop payload before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -412,6 +461,50 @@ test('authority rejects remove crop for empty or mismatched cells before mutatio
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 1);
   assert.equal(session.state.data.grid[2].cropId, 'basil');
+});
+
+test('authority rejects protection for empty cells and malformed values before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const emptyResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-empty-protect',
+    idempotencyKey: 'idem-empty-protect',
+    payload: { cellIndex: 2, protected: true },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_PROTECTION',
+  }), env);
+  const empty = await emptyResponse.json();
+
+  const malformedResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-protect',
+    idempotencyKey: 'idem-bad-protect',
+    payload: { cellIndex: 2, protected: 'true' },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_PROTECTION',
+  }), env);
+  const malformed = await malformedResponse.json();
+
+  assert.equal(emptyResponse.status, 422);
+  assert.equal(empty.ack.accepted, false);
+  assert.equal(empty.ack.actionType, 'SET_PROTECTION');
+  assert.equal(empty.ack.rejection.code, 'CELL_EMPTY');
+  assert.equal(malformedResponse.status, 422);
+  assert.equal(malformed.ack.accepted, false);
+  assert.equal(malformed.ack.actionType, 'SET_PROTECTION');
+  assert.equal(malformed.ack.rejection.code, 'BAD_PROTECTION_VALUE');
+  assert.equal(await verifyServerAckSignature(malformed.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.grid[2].protected, false);
 });
 
 test('authority rejects client-submitted harvest totals before mutation', async () => {

@@ -1,3 +1,14 @@
+Update 2026-07-07 Story Mode protection authority pass:
+- Routed `SET_PROTECTION` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the next starter-grid protection mutation.
+- Server authority now stores canonical cell `protected` state, rejects malformed non-boolean protection payloads, and rejects protect-true requests for empty starter-grid cells.
+- Client reconciliation maps signed `lastProtection` acks back into `SET_PROTECTION` only when local protected state differs, so optimistic protect actions do not replay duplicate mutation.
+- Validation: focused authority/cache Vitest passed 41 tests; worker authority passed 21 tests; full Story Mode Vitest passed 35 files / 422 tests; `npm run build`, `npm audit --audit-level=high`, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Inventory spend for pest spray remains client-side; this pass owns only canonical cell protection state.
+  - Server-derived protection duration/cooldown/economy rules are still deferred; existing `SET_COOLDOWN` handles cooldown persistence separately.
+  - Inventory spend, interventions as atomic transactions, quests, currency, market transactions, phase transitions, expanded-grid, and multi-bed authority are still deferred.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode remove crop authority pass:
 - Routed `REMOVE_CROP` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache as the next starter-grid mutation.
 - Server authority now validates valid planted cells, rejects optional crop-id mismatches, clears canonical `cropId`/`damageState`, and emits signed `lastRemoval` metadata with server-owned `cropId`.

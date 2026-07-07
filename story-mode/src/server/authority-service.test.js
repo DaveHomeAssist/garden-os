@@ -260,6 +260,47 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(2);
   });
 
+  it('routes protection gameplay actions through canonical grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-plant',
+      idempotencyKey: 'idem-plant',
+      payload: { cellIndex: 2, cropId: 'basil' },
+      type: Actions.PLANT_CROP,
+    }));
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-protect',
+      idempotencyKey: 'idem-protect',
+      payload: { cellIndex: 2, protected: true },
+      type: Actions.SET_PROTECTION,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      id: 'action-protect-retry',
+      idempotencyKey: 'idem-protect',
+      payload: { cellIndex: 2, protected: false },
+      type: Actions.SET_PROTECTION,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.SET_PROTECTION);
+    expect(applied.body.ack.authoritativePatch.data.lastProtection).toEqual({
+      cellIndex: 2,
+      protected: true,
+    });
+    expect(applied.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      cropId: 'basil',
+      protected: true,
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(2);
+    expect(state.data.grid[2].protected).toBe(true);
+    expect(state.ledger.entries).toHaveLength(2);
+  });
+
   it('rejects malformed plant crop payloads without changing grid state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -356,6 +397,35 @@ describe('authority service', () => {
     expect(verifyAuthorityAckSignature(mismatch.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(1);
     expect(state.data.grid[2].cropId).toBe('basil');
+  });
+
+  it('rejects protection actions for empty cells and malformed values before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const empty = await postJson(handle, '/api/action', envelope({
+      id: 'action-empty-protect',
+      idempotencyKey: 'idem-empty-protect',
+      payload: { cellIndex: 2, protected: true },
+      type: Actions.SET_PROTECTION,
+    }));
+    const malformed = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-protect',
+      idempotencyKey: 'idem-bad-protect',
+      payload: { cellIndex: 2, protected: 'true' },
+      type: Actions.SET_PROTECTION,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(empty.body.ok).toBe(false);
+    expect(empty.body.ack.actionType).toBe(Actions.SET_PROTECTION);
+    expect(empty.body.ack.rejection.code).toBe('CELL_EMPTY');
+    expect(malformed.body.ok).toBe(false);
+    expect(malformed.body.ack.actionType).toBe(Actions.SET_PROTECTION);
+    expect(malformed.body.ack.rejection.code).toBe('BAD_PROTECTION_VALUE');
+    expect(verifyAuthorityAckSignature(malformed.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.grid[2].protected).toBe(false);
   });
 
   it('rejects client-submitted harvest totals before mutation', async () => {

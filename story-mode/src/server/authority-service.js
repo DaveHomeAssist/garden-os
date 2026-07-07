@@ -17,6 +17,7 @@ const DEFAULT_AUTHORITY_CELL = {
   damageState: null,
   interventionBonus: 0,
   lastWateredAt: null,
+  protected: false,
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
@@ -26,6 +27,7 @@ const ACTIONS = {
   REMOVE_CROP: 'REMOVE_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_COOLDOWN: 'SET_COOLDOWN',
+  SET_PROTECTION: 'SET_PROTECTION',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
   WATER_CELL: 'WATER_CELL',
   ZONE_CHANGED: 'ZONE_CHANGED',
@@ -37,6 +39,7 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
   ACTIONS.SET_COOLDOWN,
+  ACTIONS.SET_PROTECTION,
   ACTIONS.WATER_CELL,
   ACTIONS.ZONE_CHANGED,
 ]);
@@ -53,6 +56,7 @@ function createAuthorityCell(cell = {}) {
     damageState: cell.damageState ?? null,
     interventionBonus: Number.isFinite(cell.interventionBonus) ? Math.min(1, Math.max(0, cell.interventionBonus)) : 0,
     lastWateredAt: Number.isFinite(cell.lastWateredAt) ? cell.lastWateredAt : null,
+    protected: Boolean(cell.protected),
   };
 }
 
@@ -76,6 +80,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastHarvesting = null,
   lastPlanting = null,
+  lastProtection = null,
   lastRemoval = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -90,6 +95,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastHarvesting,
     lastPlanting,
+    lastProtection,
     lastRemoval,
     lastWatering,
     lastSpawnPoint,
@@ -289,6 +295,20 @@ function reduceStoryAction(data, payload, envelope) {
       lastRemoval: { cellIndex, cropId, removedAt },
     };
   }
+  if (envelope.type === ACTIONS.SET_PROTECTION) {
+    const cellIndex = payload.cellIndex;
+    const protectedValue = Boolean(payload.protected);
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      protected: protectedValue,
+    };
+    return {
+      ...data,
+      grid,
+      lastProtection: { cellIndex, protected: protectedValue },
+    };
+  }
   if (envelope.type === ACTIONS.WATER_CELL) {
     const cellIndex = payload.cellIndex;
     const bonus = Number.isFinite(payload.bonus) ? payload.bonus : 0;
@@ -395,6 +415,19 @@ function validateStoryActionPayload(envelope, state) {
     }
     if ('removedAt' in (envelope.payload ?? {}) && envelope.payload.removedAt !== null && !Number.isFinite(envelope.payload.removedAt)) {
       return { code: 'BAD_REMOVED_AT', message: 'Remove crop action requires removedAt to be a finite timestamp or null.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.SET_PROTECTION) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Protection action requires a valid starter-grid cell index.' };
+    }
+    if (typeof envelope.payload?.protected !== 'boolean') {
+      return { code: 'BAD_PROTECTION_VALUE', message: 'Protection action requires a boolean protected value.' };
+    }
+    if (envelope.payload.protected && !grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Protection action requires a planted crop.' };
     }
     return null;
   }

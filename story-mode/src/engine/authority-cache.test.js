@@ -270,6 +270,41 @@ describe('authority IndexedDB cache', () => {
       },
     }, mismatchedRemoval)).toBeNull();
 
+    const unprotected = createGameState();
+    unprotected.season.grid[2].cropId = 'basil';
+    unprotected.season.grid[2].protected = false;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_PROTECTION,
+      authoritativePatch: {
+        data: {
+          lastProtection: {
+            cellIndex: 2,
+            protected: true,
+          },
+        },
+      },
+    }, unprotected)).toEqual({
+      meta: { authorityAck: true },
+      payload: { cellIndex: 2, protected: true },
+      type: Actions.SET_PROTECTION,
+    });
+
+    const alreadyProtected = createGameState();
+    alreadyProtected.season.grid[2].protected = true;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_PROTECTION,
+      authoritativePatch: {
+        data: {
+          lastProtection: {
+            cellIndex: 2,
+            protected: true,
+          },
+        },
+      },
+    }, alreadyProtected)).toBeNull();
+
     expect(authorityAckToStoreAction({
       accepted: true,
       actionType: Actions.WATER_CELL,
@@ -1042,6 +1077,73 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].cropId).toBeNull();
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues protection gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const initialState = createGameState();
+    initialState.season.grid[2].cropId = 'basil';
+    const store = new Store(initialState);
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastProtection: {
+                cellIndex: body.payload.cellIndex,
+                protected: body.payload.protected,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_PROTECTION,
+      payload: { cellIndex: 2, protected: true },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().season.grid[2].protected).toBe(true);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

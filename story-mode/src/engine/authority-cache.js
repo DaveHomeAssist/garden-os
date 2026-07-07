@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -146,6 +146,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
   if (actionId.endsWith(':SET_COOLDOWN')) return 'SET_COOLDOWN';
+  if (actionId.endsWith(':SET_PROTECTION')) return 'SET_PROTECTION';
   if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
   return null;
@@ -190,6 +191,20 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { cellIndex, cropId, removedAt },
       type: 'REMOVE_CROP',
+    };
+  }
+
+  if (actionType === 'SET_PROTECTION') {
+    const protection = data.lastProtection;
+    const cellIndex = Number(protection?.cellIndex);
+    if (!Number.isInteger(cellIndex) || typeof protection?.protected !== 'boolean') return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if (!currentCell) return null;
+    if (Boolean(currentCell.protected) === protection.protected) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { cellIndex, protected: protection.protected },
+      type: 'SET_PROTECTION',
     };
   }
 

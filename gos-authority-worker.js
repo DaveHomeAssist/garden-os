@@ -29,6 +29,7 @@ const DEFAULT_AUTHORITY_CELL = {
   damageState: null,
   interventionBonus: 0,
   lastWateredAt: null,
+  protected: false,
 };
 
 function createAuthorityCell(cell = {}) {
@@ -38,6 +39,7 @@ function createAuthorityCell(cell = {}) {
     damageState: cell.damageState ?? null,
     interventionBonus: Number.isFinite(cell.interventionBonus) ? Math.min(1, Math.max(0, cell.interventionBonus)) : 0,
     lastWateredAt: Number.isFinite(cell.lastWateredAt) ? cell.lastWateredAt : null,
+    protected: Boolean(cell.protected),
   };
 }
 
@@ -61,6 +63,7 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastHarvesting = null,
   lastPlanting = null,
+  lastProtection = null,
   lastRemoval = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -75,6 +78,7 @@ function createInitialAuthorityData({
     lastCooldown,
     lastHarvesting,
     lastPlanting,
+    lastProtection,
     lastRemoval,
     lastWatering,
     lastSpawnPoint,
@@ -126,6 +130,19 @@ const AUTHORITY_REDUCERS = {
       ...data,
       grid,
       lastRemoval: { cellIndex: payload.cellIndex, cropId, removedAt },
+    };
+  },
+  SET_PROTECTION: (data, payload) => {
+    const protectedValue = Boolean(payload.protected);
+    const grid = createAuthorityGrid(data.grid);
+    grid[payload.cellIndex] = {
+      ...grid[payload.cellIndex],
+      protected: protectedValue,
+    };
+    return {
+      ...data,
+      grid,
+      lastProtection: { cellIndex: payload.cellIndex, protected: protectedValue },
     };
   },
   WATER_CELL: (data, payload) => {
@@ -389,6 +406,19 @@ function validateAuthorityPayload(envelope, state) {
     }
     if ('removedAt' in (envelope.payload ?? {}) && envelope.payload.removedAt !== null && !Number.isFinite(envelope.payload.removedAt)) {
       return { code: 'BAD_REMOVED_AT', message: 'Remove crop action requires removedAt to be a finite timestamp or null.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'SET_PROTECTION') {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Protection action requires a valid starter-grid cell index.' };
+    }
+    if (typeof envelope.payload?.protected !== 'boolean') {
+      return { code: 'BAD_PROTECTION_VALUE', message: 'Protection action requires a boolean protected value.' };
+    }
+    if (envelope.payload.protected && !grid[cellIndex]?.cropId) {
+      return { code: 'CELL_EMPTY', message: 'Protection action requires a planted crop.' };
     }
     return null;
   }
