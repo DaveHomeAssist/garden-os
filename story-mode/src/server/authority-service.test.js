@@ -301,6 +301,105 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(2);
   });
 
+  it('routes cell condition gameplay actions through canonical grid state', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const damaged = await postJson(handle, '/api/action', envelope({
+      id: 'action-damage',
+      idempotencyKey: 'idem-damage',
+      payload: { cellIndex: 2, damageState: 'frost' },
+      type: Actions.SET_DAMAGE,
+    }));
+    const soil = await postJson(handle, '/api/action', envelope({
+      id: 'action-soil',
+      idempotencyKey: 'idem-soil',
+      payload: { cellIndex: 2, soilFatigue: 0.3 },
+      type: Actions.UPDATE_SOIL,
+    }));
+    const carried = await postJson(handle, '/api/action', envelope({
+      id: 'action-carry',
+      idempotencyKey: 'idem-carry',
+      payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: true },
+      type: Actions.CARRY_FORWARD,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(damaged.body.ok).toBe(true);
+    expect(damaged.body.ack.actionType).toBe(Actions.SET_DAMAGE);
+    expect(damaged.body.ack.authoritativePatch.data.lastDamage).toEqual({
+      cellIndex: 2,
+      damageState: 'frost',
+    });
+    expect(soil.body.ok).toBe(true);
+    expect(soil.body.ack.actionType).toBe(Actions.UPDATE_SOIL);
+    expect(soil.body.ack.authoritativePatch.data.lastSoil).toEqual({
+      cellIndex: 2,
+      soilFatigue: 0.3,
+    });
+    expect(carried.body.ok).toBe(true);
+    expect(carried.body.ack.actionType).toBe(Actions.CARRY_FORWARD);
+    expect(carried.body.ack.authoritativePatch.data.lastCarryForward).toEqual({
+      carryForwardType: 'enriched',
+      cellIndex: 2,
+      mulched: true,
+    });
+    expect(carried.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
+      carryForwardType: 'enriched',
+      damageState: 'frost',
+      mulched: true,
+      soilFatigue: 0.3,
+    });
+    expect(verifyAuthorityAckSignature(carried.body.ack, SECRET)).toBe(true);
+    expect(state.data.grid[2]).toMatchObject({
+      carryForwardType: 'enriched',
+      damageState: 'frost',
+      mulched: true,
+      soilFatigue: 0.3,
+    });
+    expect(state.ledger.entries).toHaveLength(3);
+  });
+
+  it('rejects malformed cell condition payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const badDamage = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-damage',
+      idempotencyKey: 'idem-bad-damage',
+      payload: { cellIndex: 2, damageState: '' },
+      type: Actions.SET_DAMAGE,
+    }));
+    const badSoil = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-soil',
+      idempotencyKey: 'idem-bad-soil',
+      payload: { cellIndex: 2, soilFatigue: 1.5 },
+      type: Actions.UPDATE_SOIL,
+    }));
+    const badCarry = await postJson(handle, '/api/action', envelope({
+      id: 'action-bad-carry',
+      idempotencyKey: 'idem-bad-carry',
+      payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: 'true' },
+      type: Actions.CARRY_FORWARD,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(badDamage.body.ok).toBe(false);
+    expect(badDamage.body.ack.rejection.code).toBe('BAD_DAMAGE_STATE');
+    expect(badSoil.body.ok).toBe(false);
+    expect(badSoil.body.ack.rejection.code).toBe('BAD_SOIL_FATIGUE');
+    expect(badCarry.body.ok).toBe(false);
+    expect(badCarry.body.ack.rejection.code).toBe('BAD_MULCHED_VALUE');
+    expect(verifyAuthorityAckSignature(badCarry.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.grid[2]).toMatchObject({
+      carryForwardType: null,
+      damageState: null,
+      mulched: false,
+      soilFatigue: 0,
+    });
+  });
+
   it('rejects malformed plant crop payloads without changing grid state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });

@@ -1,3 +1,15 @@
+Update 2026-07-07 Story Mode cell condition authority pass:
+- Routed `SET_DAMAGE`, `UPDATE_SOIL`, and `CARRY_FORWARD` through the Node/Vercel authority service, fetch-compatible authority worker, and IndexedDB authority cache.
+- Server authority now owns canonical starter-grid `damageState`, `soilFatigue`, `carryForwardType`, and `mulched` fields, with signed `lastDamage`, `lastSoil`, and `lastCarryForward` ack metadata.
+- Added fail-closed payload validation for malformed damage strings, out-of-range soil fatigue, non-boolean mulch flags, missing carry-forward payloads, and invalid starter-grid cell indexes before mutation.
+- Client reconciliation maps signed condition acks back into local store actions only when optimistic local state differs, so offline replay does not mutate the same condition twice.
+- Validation: focused authority/cache Vitest passed 44 tests; worker authority passed 23 tests; full Story Mode Vitest passed 35 files / 425 tests; `npm audit --audit-level=high` found 0 vulnerabilities; `npm run build`, `git diff --check`, and `node scripts/verify-all.mjs` passed.
+- Deferred:
+  - Atomic intervention transactions remain deferred: mulch still spends inventory, sets cooldown, and applies water bonus through separate client-side actions.
+  - Event engine generation of damage, soil fatigue, and carry-forward effects is still local until event resolution authority is pulled server-side.
+  - Expanded-grid and multi-bed condition authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode house-edge fence cut:
 - Rechecked the live Story Mode scene from fresh default, right house-edge, opposite house-edge, low, and zoomed canvas captures after user feedback that the fence still started where the house ended.
 - Found the remaining fence read was the blank grey house backdrop continuing past the door/porch like a long panel, plus the expanded second-floor/roof/gutter block and repeated siding texture.

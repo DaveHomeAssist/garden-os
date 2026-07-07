@@ -10,6 +10,7 @@ import {
   createAuthoritySession,
   createStoryAuthorityPersistence,
   drainAuthorityQueue,
+  isAuthorityRoutedAction,
   resolveAuthorityUrl,
   verifyAuthorityAck,
 } from './authority-cache.js';
@@ -304,6 +305,97 @@ describe('authority IndexedDB cache', () => {
         },
       },
     }, alreadyProtected)).toBeNull();
+
+    expect(isAuthorityRoutedAction({ type: Actions.SET_DAMAGE })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.UPDATE_SOIL })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.CARRY_FORWARD })).toBe(true);
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_DAMAGE,
+      authoritativePatch: {
+        data: {
+          lastDamage: { cellIndex: 2, damageState: 'frost' },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { cellIndex: 2, damageState: 'frost' },
+      type: Actions.SET_DAMAGE,
+    });
+
+    const alreadyDamaged = createGameState();
+    alreadyDamaged.season.grid[2].damageState = 'frost';
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.SET_DAMAGE,
+      authoritativePatch: {
+        data: {
+          lastDamage: { cellIndex: 2, damageState: 'frost' },
+        },
+      },
+    }, alreadyDamaged)).toBeNull();
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.UPDATE_SOIL,
+      authoritativePatch: {
+        data: {
+          lastSoil: { cellIndex: 2, soilFatigue: 0.3 },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { cellIndex: 2, soilFatigue: 0.3 },
+      type: Actions.UPDATE_SOIL,
+    });
+
+    const alreadySoiled = createGameState();
+    alreadySoiled.season.grid[2].soilFatigue = 0.3;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.UPDATE_SOIL,
+      authoritativePatch: {
+        data: {
+          lastSoil: { cellIndex: 2, soilFatigue: 0.3 },
+        },
+      },
+    }, alreadySoiled)).toBeNull();
+
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.CARRY_FORWARD,
+      authoritativePatch: {
+        data: {
+          lastCarryForward: {
+            carryForwardType: 'enriched',
+            cellIndex: 2,
+            mulched: true,
+          },
+        },
+      },
+    }, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: true },
+      type: Actions.CARRY_FORWARD,
+    });
+
+    const alreadyCarried = createGameState();
+    alreadyCarried.season.grid[2].carryForwardType = 'enriched';
+    alreadyCarried.season.grid[2].mulched = true;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.CARRY_FORWARD,
+      authoritativePatch: {
+        data: {
+          lastCarryForward: {
+            carryForwardType: 'enriched',
+            cellIndex: 2,
+            mulched: true,
+          },
+        },
+      },
+    }, alreadyCarried)).toBeNull();
 
     expect(authorityAckToStoreAction({
       accepted: true,
@@ -1144,6 +1236,97 @@ describe('authority IndexedDB cache', () => {
 
     expect(actionCalls).toBe(1);
     expect(store.getState().season.grid[2].protected).toBe(true);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues cell condition gameplay actions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      const data = {};
+      if (body.type === Actions.SET_DAMAGE) {
+        data.lastDamage = {
+          cellIndex: body.payload.cellIndex,
+          damageState: body.payload.damageState,
+        };
+      }
+      if (body.type === Actions.UPDATE_SOIL) {
+        data.lastSoil = {
+          cellIndex: body.payload.cellIndex,
+          soilFatigue: body.payload.soilFatigue,
+        };
+      }
+      if (body.type === Actions.CARRY_FORWARD) {
+        data.lastCarryForward = {
+          carryForwardType: body.payload.carryForwardType,
+          cellIndex: body.payload.cellIndex,
+          mulched: body.payload.mulched,
+        };
+      }
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: { data },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_DAMAGE,
+      payload: { cellIndex: 2, damageState: 'frost' },
+    });
+    store.dispatch({
+      type: Actions.UPDATE_SOIL,
+      payload: { cellIndex: 2, soilFatigue: 0.3 },
+    });
+    store.dispatch({
+      type: Actions.CARRY_FORWARD,
+      payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: true },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(3);
+    expect(store.getState().season.grid[2]).toMatchObject({
+      carryForwardType: 'enriched',
+      damageState: 'frost',
+      mulched: true,
+      soilFatigue: 0.3,
+    });
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

@@ -12,7 +12,7 @@ const SESSION_POINTER_PREFIX = 'gos-story-authority-session';
 const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
-const ROUTED_ACTION_TYPES = new Set(['HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -143,10 +143,13 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
+  if (actionId.endsWith(':SET_DAMAGE')) return 'SET_DAMAGE';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
   if (actionId.endsWith(':SET_ACTIVE_TOOL')) return 'SET_ACTIVE_TOOL';
   if (actionId.endsWith(':SET_COOLDOWN')) return 'SET_COOLDOWN';
   if (actionId.endsWith(':SET_PROTECTION')) return 'SET_PROTECTION';
+  if (actionId.endsWith(':UPDATE_SOIL')) return 'UPDATE_SOIL';
+  if (actionId.endsWith(':CARRY_FORWARD')) return 'CARRY_FORWARD';
   if (actionId.endsWith(':WATER_CELL')) return 'WATER_CELL';
   if (actionId.endsWith(':ZONE_CHANGED')) return 'ZONE_CHANGED';
   return null;
@@ -205,6 +208,56 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { cellIndex, protected: protection.protected },
       type: 'SET_PROTECTION',
+    };
+  }
+
+  if (actionType === 'SET_DAMAGE') {
+    const damage = data.lastDamage;
+    const cellIndex = Number(damage?.cellIndex);
+    const damageState = typeof damage?.damageState === 'string' ? damage.damageState : null;
+    if (!Number.isInteger(cellIndex)) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if ((currentCell?.damageState ?? null) === damageState) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { cellIndex, damageState },
+      type: 'SET_DAMAGE',
+    };
+  }
+
+  if (actionType === 'UPDATE_SOIL') {
+    const soil = data.lastSoil;
+    const cellIndex = Number(soil?.cellIndex);
+    const soilFatigue = Number(soil?.soilFatigue);
+    if (!Number.isInteger(cellIndex) || !Number.isFinite(soilFatigue)) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    if ((currentCell?.soilFatigue ?? 0) === soilFatigue) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { cellIndex, soilFatigue },
+      type: 'UPDATE_SOIL',
+    };
+  }
+
+  if (actionType === 'CARRY_FORWARD') {
+    const carryForward = data.lastCarryForward;
+    const cellIndex = Number(carryForward?.cellIndex);
+    const carryForwardType = typeof carryForward?.carryForwardType === 'string' ? carryForward.carryForwardType : null;
+    const hasMulched = hasOwn(carryForward ?? {}, 'mulched');
+    const mulched = Boolean(carryForward?.mulched);
+    if (!Number.isInteger(cellIndex)) return null;
+    const currentCell = currentState?.season?.grid?.[cellIndex];
+    const sameCarryForward = (currentCell?.carryForwardType ?? null) === carryForwardType;
+    const sameMulched = !hasMulched || Boolean(currentCell?.mulched) === mulched;
+    if (sameCarryForward && sameMulched) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        carryForwardType,
+        cellIndex,
+        ...(hasMulched ? { mulched } : {}),
+      },
+      type: 'CARRY_FORWARD',
     };
   }
 

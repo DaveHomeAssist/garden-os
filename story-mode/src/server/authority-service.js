@@ -13,33 +13,42 @@ const DEFAULT_GAME_ID = 'garden';
 const DEFAULT_SECRET = 'dev-only-garden-os-authority-secret';
 const AUTHORITY_GRID_SIZE = 32;
 const DEFAULT_AUTHORITY_CELL = {
+  carryForwardType: null,
   cropId: null,
   damageState: null,
   interventionBonus: 0,
   lastWateredAt: null,
+  mulched: false,
   protected: false,
+  soilFatigue: 0,
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const ACTIONS = {
+  CARRY_FORWARD: 'CARRY_FORWARD',
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
   REMOVE_CROP: 'REMOVE_CROP',
   SET_ACTIVE_TOOL: 'SET_ACTIVE_TOOL',
   SET_COOLDOWN: 'SET_COOLDOWN',
+  SET_DAMAGE: 'SET_DAMAGE',
   SET_PROTECTION: 'SET_PROTECTION',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
+  UPDATE_SOIL: 'UPDATE_SOIL',
   WATER_CELL: 'WATER_CELL',
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.CARRY_FORWARD,
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
   ACTIONS.REMOVE_CROP,
+  ACTIONS.SET_DAMAGE,
   ACTIONS.SET_SELECTED_CROP,
   ACTIONS.SET_ACTIVE_TOOL,
   ACTIONS.SET_COOLDOWN,
   ACTIONS.SET_PROTECTION,
+  ACTIONS.UPDATE_SOIL,
   ACTIONS.WATER_CELL,
   ACTIONS.ZONE_CHANGED,
 ]);
@@ -49,14 +58,25 @@ function cloneValue(value) {
   return value == null ? value : structuredClone(value);
 }
 
+function clampUnitNumber(value, fallback = 0) {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value ?? {}, key);
+}
+
 function createAuthorityCell(cell = {}) {
   return {
     ...DEFAULT_AUTHORITY_CELL,
+    carryForwardType: typeof cell.carryForwardType === 'string' && cell.carryForwardType.trim() ? cell.carryForwardType : null,
     cropId: typeof cell.cropId === 'string' ? cell.cropId : null,
-    damageState: cell.damageState ?? null,
-    interventionBonus: Number.isFinite(cell.interventionBonus) ? Math.min(1, Math.max(0, cell.interventionBonus)) : 0,
+    damageState: typeof cell.damageState === 'string' && cell.damageState.trim() ? cell.damageState : null,
+    interventionBonus: clampUnitNumber(cell.interventionBonus),
     lastWateredAt: Number.isFinite(cell.lastWateredAt) ? cell.lastWateredAt : null,
+    mulched: Boolean(cell.mulched),
     protected: Boolean(cell.protected),
+    soilFatigue: clampUnitNumber(cell.soilFatigue),
   };
 }
 
@@ -77,11 +97,14 @@ function createInitialAuthorityData({
   activeTool = 'hand',
   currentZone = 'player_plot',
   grid = [],
+  lastCarryForward = null,
   lastCooldown = null,
+  lastDamage = null,
   lastHarvesting = null,
   lastPlanting = null,
   lastProtection = null,
   lastRemoval = null,
+  lastSoil = null,
   lastWatering = null,
   lastSpawnPoint = null,
   selectedCropId = null,
@@ -92,11 +115,14 @@ function createInitialAuthorityData({
     activeTool,
     currentZone,
     grid: createAuthorityGrid(grid),
+    lastCarryForward,
     lastCooldown,
+    lastDamage,
     lastHarvesting,
     lastPlanting,
     lastProtection,
     lastRemoval,
+    lastSoil,
     lastWatering,
     lastSpawnPoint,
     selectedCropId,
@@ -264,6 +290,55 @@ function createUpstashLedgerStore({
 }
 
 function reduceStoryAction(data, payload, envelope) {
+  if (envelope.type === ACTIONS.SET_DAMAGE) {
+    const cellIndex = payload.cellIndex;
+    const damageState = typeof payload.damageState === 'string' ? payload.damageState : null;
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      damageState,
+    };
+    return {
+      ...data,
+      grid,
+      lastDamage: { cellIndex, damageState },
+    };
+  }
+  if (envelope.type === ACTIONS.UPDATE_SOIL) {
+    const cellIndex = payload.cellIndex;
+    const soilFatigue = clampUnitNumber(payload.soilFatigue);
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      soilFatigue,
+    };
+    return {
+      ...data,
+      grid,
+      lastSoil: { cellIndex, soilFatigue },
+    };
+  }
+  if (envelope.type === ACTIONS.CARRY_FORWARD) {
+    const cellIndex = payload.cellIndex;
+    const carryForwardType = typeof payload.carryForwardType === 'string' ? payload.carryForwardType : null;
+    const grid = createAuthorityGrid(data.grid);
+    grid[cellIndex] = {
+      ...grid[cellIndex],
+      carryForwardType,
+    };
+    if (hasOwn(payload, 'mulched')) {
+      grid[cellIndex].mulched = Boolean(payload.mulched);
+    }
+    return {
+      ...data,
+      grid,
+      lastCarryForward: {
+        carryForwardType,
+        cellIndex,
+        mulched: grid[cellIndex].mulched,
+      },
+    };
+  }
   if (envelope.type === ACTIONS.PLANT_CROP) {
     const cellIndex = payload.cellIndex;
     const cropId = payload.cropId;
@@ -389,6 +464,50 @@ function reduceStoryAction(data, payload, envelope) {
 function validateStoryActionPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === ACTIONS.SET_DAMAGE) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Damage action requires a valid starter-grid cell index.' };
+    }
+    if (
+      envelope.payload?.damageState !== null
+      && (typeof envelope.payload?.damageState !== 'string' || !envelope.payload.damageState.trim())
+    ) {
+      return { code: 'BAD_DAMAGE_STATE', message: 'Damage action requires damageState to be a non-empty string or null.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.UPDATE_SOIL) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Soil action requires a valid starter-grid cell index.' };
+    }
+    const soilFatigue = envelope.payload?.soilFatigue;
+    if (!Number.isFinite(soilFatigue) || soilFatigue < 0 || soilFatigue > 1) {
+      return { code: 'BAD_SOIL_FATIGUE', message: 'Soil action requires a finite soilFatigue from 0 to 1.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.CARRY_FORWARD) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
+      return { code: 'BAD_CELL_INDEX', message: 'Carry-forward action requires a valid starter-grid cell index.' };
+    }
+    if (!hasOwn(envelope.payload, 'carryForwardType') && !hasOwn(envelope.payload, 'mulched')) {
+      return { code: 'BAD_CARRY_FORWARD_PAYLOAD', message: 'Carry-forward action requires carryForwardType or mulched.' };
+    }
+    if (
+      hasOwn(envelope.payload, 'carryForwardType')
+      && envelope.payload.carryForwardType !== null
+      && (typeof envelope.payload.carryForwardType !== 'string' || !envelope.payload.carryForwardType.trim())
+    ) {
+      return { code: 'BAD_CARRY_FORWARD_TYPE', message: 'Carry-forward action requires carryForwardType to be a non-empty string or null.' };
+    }
+    if (hasOwn(envelope.payload, 'mulched') && typeof envelope.payload.mulched !== 'boolean') {
+      return { code: 'BAD_MULCHED_VALUE', message: 'Carry-forward action requires mulched to be boolean.' };
+    }
+    return null;
+  }
+
   if (envelope?.type === ACTIONS.PLANT_CROP) {
     if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= grid.length) {
       return { code: 'BAD_CELL_INDEX', message: 'Plant action requires a valid starter-grid cell index.' };

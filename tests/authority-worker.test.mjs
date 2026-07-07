@@ -326,6 +326,133 @@ test('authority action routes protection through canonical grid state once', asy
   assert.equal(second.state.data.grid[2].protected, true);
 });
 
+test('authority action routes cell conditions through canonical grid state', async () => {
+  const { env, sessionId } = await createSession();
+
+  const damageResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-damage',
+    idempotencyKey: 'idem-damage',
+    payload: { cellIndex: 2, damageState: 'frost' },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_DAMAGE',
+  }), env);
+  const damage = await damageResponse.json();
+
+  const soilResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-soil',
+    idempotencyKey: 'idem-soil',
+    payload: { cellIndex: 2, soilFatigue: 0.3 },
+    playerId: 'local',
+    sessionId,
+    type: 'UPDATE_SOIL',
+  }), env);
+  const soil = await soilResponse.json();
+
+  const carryResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 2,
+    gameId: 'garden',
+    id: 'action-carry',
+    idempotencyKey: 'idem-carry',
+    payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: true },
+    playerId: 'local',
+    sessionId,
+    type: 'CARRY_FORWARD',
+  }), env);
+  const carry = await carryResponse.json();
+
+  assert.equal(damageResponse.status, 200);
+  assert.equal(damage.ack.accepted, true);
+  assert.equal(damage.ack.actionType, 'SET_DAMAGE');
+  assert.deepEqual(damage.state.data.lastDamage, { cellIndex: 2, damageState: 'frost' });
+  assert.equal(soilResponse.status, 200);
+  assert.equal(soil.ack.accepted, true);
+  assert.equal(soil.ack.actionType, 'UPDATE_SOIL');
+  assert.deepEqual(soil.state.data.lastSoil, { cellIndex: 2, soilFatigue: 0.3 });
+  assert.equal(carryResponse.status, 200);
+  assert.equal(carry.ack.accepted, true);
+  assert.equal(carry.ack.actionType, 'CARRY_FORWARD');
+  assert.equal(await verifyServerAckSignature(carry.ack, SECRET), true);
+  assert.deepEqual(carry.state.data.lastCarryForward, {
+    carryForwardType: 'enriched',
+    cellIndex: 2,
+    mulched: true,
+  });
+  assert.equal(carry.state.data.grid[2].damageState, 'frost');
+  assert.equal(carry.state.data.grid[2].soilFatigue, 0.3);
+  assert.equal(carry.state.data.grid[2].carryForwardType, 'enriched');
+  assert.equal(carry.state.data.grid[2].mulched, true);
+});
+
+test('authority rejects malformed cell condition payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+
+  const damageResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-damage',
+    idempotencyKey: 'idem-bad-damage',
+    payload: { cellIndex: 2, damageState: '' },
+    playerId: 'local',
+    sessionId,
+    type: 'SET_DAMAGE',
+  }), env);
+  const damage = await damageResponse.json();
+
+  const soilResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-soil',
+    idempotencyKey: 'idem-bad-soil',
+    payload: { cellIndex: 2, soilFatigue: 1.5 },
+    playerId: 'local',
+    sessionId,
+    type: 'UPDATE_SOIL',
+  }), env);
+  const soil = await soilResponse.json();
+
+  const carryResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-bad-carry',
+    idempotencyKey: 'idem-bad-carry',
+    payload: { carryForwardType: 'enriched', cellIndex: 2, mulched: 'true' },
+    playerId: 'local',
+    sessionId,
+    type: 'CARRY_FORWARD',
+  }), env);
+  const carry = await carryResponse.json();
+
+  assert.equal(damageResponse.status, 422);
+  assert.equal(damage.ack.accepted, false);
+  assert.equal(damage.ack.rejection.code, 'BAD_DAMAGE_STATE');
+  assert.equal(soilResponse.status, 422);
+  assert.equal(soil.ack.accepted, false);
+  assert.equal(soil.ack.rejection.code, 'BAD_SOIL_FATIGUE');
+  assert.equal(carryResponse.status, 422);
+  assert.equal(carry.ack.accepted, false);
+  assert.equal(carry.ack.rejection.code, 'BAD_MULCHED_VALUE');
+  assert.equal(await verifyServerAckSignature(carry.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.grid[2].damageState, null);
+  assert.equal(session.state.data.grid[2].soilFatigue, 0);
+  assert.equal(session.state.data.grid[2].carryForwardType, null);
+  assert.equal(session.state.data.grid[2].mulched, false);
+});
+
 test('authority rejects malformed plant crop payload before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
