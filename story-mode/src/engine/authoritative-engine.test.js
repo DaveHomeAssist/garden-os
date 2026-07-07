@@ -120,6 +120,51 @@ describe('authoritative engine core', () => {
     expect(left.state.checksum).toBe(right.state.checksum);
   });
 
+  it('replays the same seed and ledger to the same checksum across fresh states', () => {
+    const sessionId = 'story-ledger-session';
+    const seed = 'story-seed-42';
+    const envelopes = [
+      createActionEnvelope({
+        clientSeq: 1,
+        clientSentAt: NOW,
+        expectedTick: 0,
+        id: 'seed-action-1',
+        payload: { amount: 2 },
+        sessionId,
+        type: 'INCREMENT',
+      }),
+      createActionEnvelope({
+        clientSeq: 2,
+        clientSentAt: NOW,
+        expectedTick: 1,
+        id: 'seed-action-2',
+        payload: { amount: 5 },
+        sessionId,
+        type: 'INCREMENT',
+      }),
+    ];
+    const initial = () => createEngineState({
+      data: { count: 0 },
+      now: NOW,
+      seed,
+      sessionId,
+    });
+
+    const left = replayActionLedger(initial(), envelopes, { INCREMENT: counterReducer }, { now: NOW });
+    const right = replayActionLedger(initial(), envelopes, { INCREMENT: counterReducer }, { now: NOW });
+    const otherSeed = replayActionLedger(createEngineState({
+      data: { count: 0 },
+      now: NOW,
+      seed: 'story-seed-other',
+      sessionId,
+    }), envelopes, { INCREMENT: counterReducer }, { now: NOW });
+
+    expect(left.state.data.count).toBe(7);
+    expect(left.state.ledger.entries.map((entry) => entry.actionId)).toEqual(['seed-action-1', 'seed-action-2']);
+    expect(left.state.checksum).toBe(right.state.checksum);
+    expect(left.state.checksum).not.toBe(otherSeed.state.checksum);
+  });
+
   it('can wrap the existing Story Mode reducer without changing reducer code', () => {
     const state = createEngineState({
       data: createGameState(),

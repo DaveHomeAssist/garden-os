@@ -1,3 +1,14 @@
+Update 2026-07-07 Story Mode authority proof hardening pass:
+- Added explicit engine replay proof that the same seed plus the same action ledger replays to the same checksum across fresh authority states, while a different seed produces a different checksum.
+- Added IndexedDB persistence proof that an offline outbound queue survives a simulated app restart, drains once after reconnect, stores the ack, and does not resend after a second restart.
+- Validation: focused authority proof Vitest passed 29 tests; full Story Mode Vitest passed 35 files / 430 tests; `npm audit --audit-level=high` found 0 vulnerabilities; `npm run build`, `git diff --check`, Story Mode screenshot regression, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Consumable inventory spend (`REMOVE_ITEM`) remains local until item awards/repairs/crafting are authority-owned.
+  - Tool repair authority remains deferred; repaired existing saves may need a fresh authority session before durable server-side tool use is complete.
+  - Atomic intervention transactions remain deferred: mulch/protect/water still span separate local actions.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode fence removal and tool durability authority pass:
 - Removed the remaining fence-read geometry from the live Story Mode bed by deleting per-crop support stake/cross-tie rendering; support crops and scoring logic remain intact, but the garden no longer draws fence-like posts through planted cells.
 - Trimmed July heat-haze scenery so pale shimmer stays under the compact house face instead of continuing to the right where the house ends.

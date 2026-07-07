@@ -746,6 +746,66 @@ describe('authority IndexedDB cache', () => {
     expect(verifyCalls).toBe(1);
   });
 
+  it('replays a persisted offline queue after restart exactly once', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const databaseName = 'restart-drain-test';
+    const sessionId = 'session-restart';
+    const envelope = buildAuthorityEnvelope(
+      { payload: { toolId: 'water' }, type: Actions.SET_ACTIVE_TOOL },
+      {},
+      { clientSeq: 1, now: () => NOW, sessionId },
+    );
+    const firstJournal = new IndexedDbAuthorityJournal({ databaseName, indexedDB });
+    await firstJournal.enqueueAction(envelope);
+    await firstJournal.close();
+
+    let actionCalls = 0;
+    let verifyCalls = 0;
+    const fetchFn = async (url) => {
+      if (url.endsWith('/ack/verify')) {
+        verifyCalls += 1;
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({ ack: ackFor(envelope), ok: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+
+    const restartedJournal = new IndexedDbAuthorityJournal({ databaseName, indexedDB });
+    const drained = await drainAuthorityQueue({
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      journal: restartedJournal,
+      now: () => NOW,
+      sessionId,
+    });
+    expect(drained).toMatchObject({ acked: 1, online: true, sent: 1 });
+    expect(await restartedJournal.listPendingActions(sessionId)).toHaveLength(0);
+    expect(await restartedJournal.listAcks(sessionId)).toHaveLength(1);
+    await restartedJournal.close();
+
+    const secondRestartJournal = new IndexedDbAuthorityJournal({ databaseName, indexedDB });
+    const secondDrain = await drainAuthorityQueue({
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      journal: secondRestartJournal,
+      now: () => NOW,
+      sessionId,
+    });
+
+    expect(secondDrain).toMatchObject({ acked: 0, online: true, sent: 0 });
+    expect(actionCalls).toBe(1);
+    expect(verifyCalls).toBe(1);
+    expect(await secondRestartJournal.listPendingActions(sessionId)).toHaveLength(0);
+    expect(await secondRestartJournal.listAcks(sessionId)).toHaveLength(1);
+    await secondRestartJournal.close();
+  });
+
   it('leaves actions pending when server ack verification fails', async () => {
     const indexedDB = createFakeIndexedDB();
     const journal = new IndexedDbAuthorityJournal({ databaseName: 'verify-fail-test', indexedDB });
