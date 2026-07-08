@@ -41,6 +41,13 @@ const DEFAULT_WORLD_STATE = {
 const DEFAULT_CURRENCY_STATE = { balance: 100, ledger: [] };
 const DEFAULT_MARKET_STATE = { seed: 'garden-os-market', priceHistory: [], transactions: [] };
 const DEFAULT_CONTENT_PACK_STATE = { loaded: [], rejected: [] };
+const DEFAULT_AUTHORITY_STATE = {
+  authorityChecksum: null,
+  authorityLastAckAt: null,
+  authorityLastActionId: null,
+  authoritySessionId: null,
+  authorityTick: 0,
+};
 
 // All phases in order for progress indicator
 const PHASE_ORDER = [
@@ -190,6 +197,7 @@ function createGameState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: true,
+    ...DEFAULT_AUTHORITY_STATE,
   };
 }
 
@@ -228,6 +236,7 @@ function createPlannerState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: false,
+    ...DEFAULT_AUTHORITY_STATE,
   };
 }
 
@@ -258,6 +267,7 @@ function createSandboxState() {
     selectedWeight: 'overview',
     panelOpen: null,
     showChapterIntro: false,
+    ...DEFAULT_AUTHORITY_STATE,
   };
 }
 
@@ -285,6 +295,7 @@ export {
   DEFAULT_CURRENCY_STATE,
   DEFAULT_MARKET_STATE,
   DEFAULT_CONTENT_PACK_STATE,
+  DEFAULT_AUTHORITY_STATE,
   getGridCols,
   getGridRows,
   getAvailableGridSizes,

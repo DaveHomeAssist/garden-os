@@ -113,6 +113,33 @@ describe('authority service', () => {
     expect(second.body.ack.signature).toBe(first.body.ack.signature);
   });
 
+  it('resumes an existing session without resetting authoritative state', async () => {
+    const { handle, ledgerStore, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const first = await postJson(handle, '/api/action', envelope());
+    const resumed = await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      payload: { cropId: 'client-reset-attempt' },
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(first.body.ack.accepted).toBe(true);
+    expect(resumed.status).toBe(200);
+    expect(resumed.body.session).toMatchObject({
+      checksum: first.body.ack.checksum,
+      ledgerCursor: '1',
+      sessionId: 'session-http',
+      tick: 1,
+    });
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(1);
+    expect(state.data.selectedCropId).toBe('basil');
+    expect(state.ledger.entries).toHaveLength(1);
+    expect(ledgerStore.entries.map((entry) => entry.recordType)).toEqual(['session', 'action', 'action']);
+    expect(ledgerStore.entries[2].duplicate).toBe(true);
+  });
+
   it('routes plant crop gameplay actions through canonical grid state', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });

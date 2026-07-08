@@ -845,6 +845,19 @@ function createStoryAuthorityPersistence(store, {
   async function reconcileAck(ack) {
     const action = authorityAckToStoreAction(ack, store.getState?.());
     if (action) store.dispatch(action);
+    if (Number.isInteger(ack?.tick)) {
+      store.dispatch({
+        meta: { authorityAck: true },
+        payload: {
+          actionId: ack.actionId,
+          checksum: ack.checksum,
+          serverTime: ack.serverTime,
+          sessionId: ack.sessionId,
+          tick: ack.tick,
+        },
+        type: 'RECORD_AUTHORITY_ACK',
+      });
+    }
   }
 
   async function ensureServerSession() {
@@ -869,6 +882,15 @@ function createStoryAuthorityPersistence(store, {
         console.warn('[GOS] Authority cache unavailable:', error?.message ?? error);
       });
     return chain;
+  }
+
+  async function flushSettled() {
+    let pending = chain;
+    while (true) {
+      await pending;
+      if (pending === chain) return null;
+      pending = chain;
+    }
   }
 
   function persistState(state, action = null, { force = false } = {}) {
@@ -912,7 +934,7 @@ function createStoryAuthorityPersistence(store, {
     cleanup() {
       active = false;
       unsubscribe();
-      void chain.finally(() => journal.close());
+      void flushSettled().finally(() => journal.close());
     },
     drain() {
       return enqueue(async () => {
@@ -929,7 +951,7 @@ function createStoryAuthorityPersistence(store, {
       });
     },
     flush() {
-      return chain;
+      return flushSettled();
     },
     journal,
     saveSnapshot(state = store.getState()) {

@@ -48,11 +48,19 @@ function createRedisFetchHarness() {
   return { calls, fetchFn, records };
 }
 
-function createNodeRequest({ body = {}, headers = {}, method = 'POST', url = '/api/session' } = {}) {
-  const req = Readable.from([JSON.stringify(body)]);
+function createNodeRequest({
+  body = {},
+  headers = {},
+  method = 'POST',
+  parsedBody,
+  streamBody = JSON.stringify(body),
+  url = '/api/session',
+} = {}) {
+  const req = Readable.from([streamBody]);
   req.headers = { 'content-type': 'application/json', host: 'authority.example.test', ...headers };
   req.method = method;
   req.url = url;
+  if (parsedBody !== undefined) req.body = parsedBody;
   return req;
 }
 
@@ -116,8 +124,8 @@ describe('vercel authority handler', () => {
     });
     expect(response.body.missing).toEqual([
       'GOS_AUTHORITY_HMAC_SECRET',
-      'GOS_AUTHORITY_REDIS_REST_URL or UPSTASH_REDIS_REST_URL',
-      'GOS_AUTHORITY_REDIS_REST_TOKEN or UPSTASH_REDIS_REST_TOKEN',
+      'GOS_AUTHORITY_REDIS_REST_URL, UPSTASH_REDIS_REST_URL, or KV_REST_API_URL',
+      'GOS_AUTHORITY_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_TOKEN, or KV_REST_API_TOKEN',
     ]);
   });
 
@@ -136,6 +144,7 @@ describe('vercel authority handler', () => {
 
     const created = await postJson(handle, '/api/session', { sessionId: 'session-vercel' });
     const applied = await postJson(handle, '/api/action', envelope());
+    const resumed = await postJson(handle, '/api/session', { sessionId: 'session-vercel' });
     const verified = await postJson(handle, '/api/ack/verify', { ack: applied.body.ack });
 
     expect(created.status).toBe(200);
@@ -143,9 +152,17 @@ describe('vercel authority handler', () => {
     expect(applied.status).toBe(200);
     expect(applied.body.ack.accepted).toBe(true);
     expect(applied.body.ack.authoritativePatch.data.activeTool).toBe('water');
+    expect(resumed.status).toBe(200);
+    expect(resumed.body.session).toMatchObject({
+      checksum: applied.body.ack.checksum,
+      ledgerCursor: '1',
+      sessionId: 'session-vercel',
+      tick: 1,
+    });
     expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
     expect(verified).toMatchObject({ body: { verified: true }, status: 200 });
     expect(calls.map((call) => call.command[0])).toEqual([
+      'GET',
       'SET',
       'RPUSH',
       'RPUSH',
@@ -153,6 +170,7 @@ describe('vercel authority handler', () => {
       'SET',
       'RPUSH',
       'RPUSH',
+      'GET',
     ]);
     expect(calls[0]).toMatchObject({
       headers: {
@@ -161,6 +179,32 @@ describe('vercel authority handler', () => {
       },
       method: 'POST',
       url: 'https://redis.example.test',
+    });
+  });
+
+  it('accepts Vercel Marketplace KV_REST_API env aliases for Upstash Redis', async () => {
+    const { calls, fetchFn } = createRedisFetchHarness();
+    const handle = createVercelAuthorityFetchHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        GOS_AUTHORITY_REDIS_PREFIX: 'test:vercel-kv-alias',
+        KV_REST_API_TOKEN: 'kv-token',
+        KV_REST_API_URL: 'https://kv.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+
+    const created = await postJson(handle, '/api/session', { sessionId: 'session-kv-alias' });
+
+    expect(created.status).toBe(200);
+    expect(created.body.session.sessionId).toBe('session-kv-alias');
+    expect(calls[0]).toMatchObject({
+      headers: {
+        Authorization: 'Bearer kv-token',
+        'Content-Type': 'application/json',
+      },
+      url: 'https://kv.example.test',
     });
   });
 
@@ -177,6 +221,35 @@ describe('vercel authority handler', () => {
     expect(JSON.parse(res.body)).toMatchObject({
       error: 'AUTHORITY_STORE_UNCONFIGURED',
       ok: false,
+    });
+  });
+
+  it('uses Vercel parsed Node request bodies before stream fallback', async () => {
+    const { fetchFn } = createRedisFetchHarness();
+    const handler = createVercelAuthorityNodeHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        KV_REST_API_TOKEN: 'kv-token',
+        KV_REST_API_URL: 'https://kv.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+    const req = createNodeRequest({
+      parsedBody: { sessionId: 'session-parsed-body' },
+      streamBody: '{',
+    });
+    const res = createNodeResponse();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body)).toMatchObject({
+      ok: true,
+      session: {
+        sessionId: 'session-parsed-body',
+        tick: 0,
+      },
     });
   });
 });

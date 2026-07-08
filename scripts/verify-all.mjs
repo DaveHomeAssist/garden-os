@@ -16,11 +16,14 @@ const args = process.argv.slice(2);
 const liveOnly = args.includes('--live-only');
 const includeLive = liveOnly || args.includes('--include-live');
 const liveUrl = readOption('--live-url') || process.env.LIVE_URL || 'https://davehomeassist.github.io/garden-os/story-mode/';
+const includeAuthorityBackend = args.includes('--include-authority-backend');
+const authorityUrl = readOption('--authority-url') || process.env.GOS_AUTHORITY_URL || 'https://garden-os-theta.vercel.app/api';
 
 if (args.includes('--help')) {
   console.log(`Usage:
   node scripts/verify-all.mjs
   node scripts/verify-all.mjs --include-live
+  node scripts/verify-all.mjs --include-authority-backend
   node scripts/verify-all.mjs --live-only --live-url https://davehomeassist.github.io/garden-os/story-mode/`);
   process.exit(0);
 }
@@ -198,12 +201,23 @@ async function runLiveVerification() {
   });
 }
 
+async function runAuthorityBackendVerification() {
+  await runStep('Live authority backend smoke', nodeBin, [
+    'scripts/verify-authority-backend.mjs',
+    '--authority-url',
+    authorityUrl,
+  ]);
+}
+
 try {
   if (!liveOnly) {
     await runLocalVerification();
   }
   if (includeLive) {
     await runLiveVerification();
+  }
+  if (includeAuthorityBackend) {
+    await runAuthorityBackendVerification();
   }
   console.log('\nAll requested Garden OS verification gates passed.');
 } catch (error) {

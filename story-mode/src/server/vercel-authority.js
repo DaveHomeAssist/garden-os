@@ -29,12 +29,12 @@ function jsonResponse(body, { status = 200 } = {}) {
 
 function resolveAuthorityEnv(env = process.env) {
   const secret = firstPresent(env, ['GOS_AUTHORITY_HMAC_SECRET']);
-  const token = firstPresent(env, ['GOS_AUTHORITY_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_TOKEN']);
-  const url = firstPresent(env, ['GOS_AUTHORITY_REDIS_REST_URL', 'UPSTASH_REDIS_REST_URL']);
+  const token = firstPresent(env, ['GOS_AUTHORITY_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_TOKEN', 'KV_REST_API_TOKEN']);
+  const url = firstPresent(env, ['GOS_AUTHORITY_REDIS_REST_URL', 'UPSTASH_REDIS_REST_URL', 'KV_REST_API_URL']);
   const missing = [];
   if (!secret) missing.push('GOS_AUTHORITY_HMAC_SECRET');
-  if (!url) missing.push('GOS_AUTHORITY_REDIS_REST_URL or UPSTASH_REDIS_REST_URL');
-  if (!token) missing.push('GOS_AUTHORITY_REDIS_REST_TOKEN or UPSTASH_REDIS_REST_TOKEN');
+  if (!url) missing.push('GOS_AUTHORITY_REDIS_REST_URL, UPSTASH_REDIS_REST_URL, or KV_REST_API_URL');
+  if (!token) missing.push('GOS_AUTHORITY_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_TOKEN, or KV_REST_API_TOKEN');
   return {
     keyPrefix: env.GOS_AUTHORITY_REDIS_PREFIX ?? 'gos:story-authority',
     missing,

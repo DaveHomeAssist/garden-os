@@ -557,8 +557,12 @@ function createFileLedgerStore({
 
 function resolveUpstashConfig({
   fetchFn = globalThis.fetch,
-  token = process.env.GOS_AUTHORITY_REDIS_REST_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN,
-  url = process.env.GOS_AUTHORITY_REDIS_REST_URL ?? process.env.UPSTASH_REDIS_REST_URL,
+  token = process.env.GOS_AUTHORITY_REDIS_REST_TOKEN
+    ?? process.env.UPSTASH_REDIS_REST_TOKEN
+    ?? process.env.KV_REST_API_TOKEN,
+  url = process.env.GOS_AUTHORITY_REDIS_REST_URL
+    ?? process.env.UPSTASH_REDIS_REST_URL
+    ?? process.env.KV_REST_API_URL,
 } = {}) {
   return {
     fetchFn,
@@ -1420,6 +1424,13 @@ function createAuthorityService({
       };
     }
     const sessionId = body.sessionId || sessionIdFactory();
+    const existingState = body.sessionId ? await sessionStore.get(sessionId) : null;
+    if (existingState) {
+      return {
+        ok: true,
+        session: sessionSummary(existingState),
+      };
+    }
     const state = createEngineState({
       data: createInitialAuthorityData(),
       gameId: body.gameId ?? DEFAULT_GAME_ID,
