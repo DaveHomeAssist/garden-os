@@ -5,6 +5,7 @@ import {
   createGrid,
   createSeasonState,
   CAMPAIGN_SCHEMA_VERSION,
+  DEFAULT_AUTHORITY_STATE,
   DEFAULT_CONTENT_PACK_STATE,
   DEFAULT_CURRENCY_STATE,
   DEFAULT_MARKET_STATE,
@@ -108,6 +109,7 @@ const Actions = {
   REGISTER_CONTENT_PACK: 'REGISTER_CONTENT_PACK',
   REJECT_CONTENT_PACK: 'REJECT_CONTENT_PACK',
   MARK_CUTSCENE_SEEN: 'MARK_CUTSCENE_SEEN',
+  RECORD_AUTHORITY_ACK: 'RECORD_AUTHORITY_ACK',
 };
 
 const REPUTATION_ZONE_EFFECTS = {
@@ -321,6 +323,9 @@ function normalizeGameState(rawState) {
   const inputState = rawState ? structuredClone(rawState) : fallbackState;
   const campaign = normalizeCampaign(inputState.campaign);
   const season = normalizeSeason(inputState.season, campaign);
+  const authorityTick = Number.isInteger(inputState.authorityTick)
+    ? Math.max(0, inputState.authorityTick)
+    : DEFAULT_AUTHORITY_STATE.authorityTick;
 
   return {
     ...fallbackState,
@@ -341,6 +346,11 @@ function normalizeGameState(rawState) {
     selectedWeight: inputState.selectedWeight ?? fallbackState.selectedWeight,
     panelOpen: inputState.panelOpen ?? fallbackState.panelOpen,
     showChapterIntro: inputState.showChapterIntro ?? fallbackState.showChapterIntro,
+    authorityChecksum: typeof inputState.authorityChecksum === 'string' ? inputState.authorityChecksum : null,
+    authorityLastAckAt: typeof inputState.authorityLastAckAt === 'string' ? inputState.authorityLastAckAt : null,
+    authorityLastActionId: typeof inputState.authorityLastActionId === 'string' ? inputState.authorityLastActionId : null,
+    authoritySessionId: typeof inputState.authoritySessionId === 'string' ? inputState.authoritySessionId : null,
+    authorityTick,
   };
 }
 
@@ -542,6 +552,18 @@ function gameReducer(state, action = {}) {
           payload.sceneId,
         ]),
       ];
+      return nextState;
+    }
+
+    case Actions.RECORD_AUTHORITY_ACK: {
+      if (!Number.isInteger(payload.tick) || payload.tick < 0) return state;
+      const nextState = cloneGameState(state);
+      if (payload.tick < (nextState.authorityTick ?? 0)) return nextState;
+      nextState.authorityTick = payload.tick;
+      nextState.authorityChecksum = typeof payload.checksum === 'string' ? payload.checksum : nextState.authorityChecksum;
+      nextState.authorityLastAckAt = typeof payload.serverTime === 'string' ? payload.serverTime : nextState.authorityLastAckAt;
+      nextState.authorityLastActionId = typeof payload.actionId === 'string' ? payload.actionId : nextState.authorityLastActionId;
+      nextState.authoritySessionId = typeof payload.sessionId === 'string' ? payload.sessionId : nextState.authoritySessionId;
       return nextState;
     }
 

@@ -1283,8 +1283,98 @@ describe('authority IndexedDB cache', () => {
 
     expect(fetchCalls).toBe(1);
     expect(store.getState().selectedCropId).toBe('server-basil');
+    expect(store.getState().authorityTick).toBe(1);
+    expect(store.getState().authorityChecksum).toBe('checksum-after-action');
+    expect(store.getState().authorityLastActionId).toContain(Actions.SET_SELECTED_CROP);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
     expect(await persistence.journal.listAcks(persistence.sessionId)).toHaveLength(1);
+
+    persistence.cleanup();
+  });
+
+  it('records ack cursors in snapshots and sends the next expected tick', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const actionBodies = [];
+    let serverTick = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+
+      actionBodies.push(body);
+      serverTick += 1;
+      const patchData = body.type === Actions.SET_SELECTED_CROP
+        ? { selectedCropId: body.payload.cropId }
+        : { activeTool: body.payload.toolId };
+      return new Response(JSON.stringify({
+        ack: {
+          accepted: true,
+          actionId: body.id,
+          actionType: body.type,
+          authoritativePatch: { data: patchData },
+          checksum: `checksum-${serverTick}`,
+          serverTime: `2026-07-06T15:00:0${serverTick}.000Z`,
+          sessionId: body.sessionId,
+          signature: `hmac-sha256:test-${serverTick}`,
+          stateVersion: 1,
+          tick: serverTick,
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_SELECTED_CROP,
+      payload: { cropId: 'basil' },
+    });
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.SET_ACTIVE_TOOL,
+      payload: { toolId: 'water' },
+    });
+    await persistence.flush();
+
+    expect(actionBodies).toHaveLength(2);
+    expect(actionBodies[0].expectedTick).toBe(0);
+    expect(actionBodies[1].expectedTick).toBe(1);
+    expect(store.getState()).toMatchObject({
+      authorityChecksum: 'checksum-2',
+      authorityLastActionId: actionBodies[1].id,
+      authoritySessionId: persistence.sessionId,
+      authorityTick: 2,
+    });
+
+    const snapshot = await persistence.journal.readSnapshot(persistence.sessionId);
+    expect(snapshot.ledgerCursor).toBe('2');
+    expect(snapshot.state.authorityTick).toBe(2);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();
   });
