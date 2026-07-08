@@ -284,7 +284,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="os-nav" id="navBar" aria-label="Garden OS"></nav>
-<main id="main" data-last-verified="2026-06-24">
+<main id="main" data-last-verified="2026-07-08">
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow"></div>
@@ -929,16 +929,17 @@
     {
       "id": "053",
       "severity": "P1",
-      "status": "deferred",
+      "status": "done",
       "area": "Resilience",
       "tool": "engine",
       "title": "Live Story Mode authority API storage env is not configured",
-      "impact": "The static Story Mode app remains playable with local IndexedDB persistence, but the advertised Vercel authority endpoint cannot create sessions or sign server acks until production HMAC and Redis REST env vars exist.",
-      "fix": "Provision production env vars for GOS_AUTHORITY_HMAC_SECRET plus either GOS_AUTHORITY_REDIS_REST_URL/TOKEN, UPSTASH_REDIS_REST_URL/TOKEN, or the Vercel Marketplace Upstash KV_REST_API_URL/TOKEN pair, then redeploy Vercel and run the live authority backend smoke.",
-      "verification": "2026-07-08 live POST to https://garden-os-theta.vercel.app/api/session returned HTTP 503 AUTHORITY_STORE_UNCONFIGURED and Vercel env inspection for project garden-os returned no env vars or Marketplace resources. Added scripts/verify-authority-backend.mjs and node scripts/verify-all.mjs --include-authority-backend to make the live backend gate explicit; Vercel authority tests now cover KV_REST_API_URL/TOKEN aliases.",
+      "impact": "The static Story Mode app remains playable with local IndexedDB persistence, and the advertised Vercel authority endpoint now creates sessions, signs server acks, verifies acks, and preserves duplicate action idempotency.",
+      "fix": "Provisioned Vercel production authority env with GOS_AUTHORITY_HMAC_SECRET plus Vercel Marketplace Upstash KV_REST_API_URL/TOKEN storage, taught the authority server to accept KV_REST_API aliases, and fixed the Vercel Node body adapter so parsed API route bodies reach the authority handler.",
+      "verification": "2026-07-08 node scripts/verify-authority-backend.mjs --authority-url https://garden-os-theta.vercel.app/api passed against deployment dpl_GwYoHh6HDArUHnzRq4MSEM5KGvVp with ackVerified true, tick 1, and duplicatePreservedTick 1. node scripts/verify-all.mjs passed locally with 448 Story Mode Vitest tests and all requested Garden OS verification gates.",
       "location": "story-mode/index.html authority meta; api/session.mjs; api/action.mjs; api/ack/verify.mjs; Vercel project garden-os",
-      "notes": "Deferred because secrets and hosted storage credentials cannot be invented or committed from the repo. Keep the full authority objective open until this issue is configured and the live backend smoke passes.",
-      "added": "2026-07-08"
+      "notes": "Vercel production now uses Upstash KV env aliases from the Marketplace resource upstash-kv-fuchsia-forest. Secrets are configured in Vercel and are not stored in the repo.",
+      "added": "2026-07-08",
+      "resolved": "2026-07-08"
     }
   ]
 }
