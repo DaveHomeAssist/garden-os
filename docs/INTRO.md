@@ -17,7 +17,7 @@ Garden OS is a collection of free, browser-based tools for planning and maintain
 ### The Tools
 
 - **Garden Planner v4.3** — Drag crops into an 8x4 grid. Real-time scoring with factor breakdowns. Export your plan as a file you own.
-- **Story Mode** — A 12-chapter narrative garden game with a Three.js scene, chapter intros, interventions, winter review, and carry-forward state.
+- **Story Mode** — A 12-chapter narrative garden game with a customizable gardener, Three.js scene, chapter intros, interventions, winter review, and carry-forward state.
 - **Legacy Season Engine v4** — Earlier deterministic season sandbox that remains live as a reference and fallback simulator.
 - **Build Guide** — Step-by-step interactive construction specs for building a cattle panel garden cage with trellis.
 - **Ops Guide** — Seasonal maintenance checklist organized by month and task type.
@@ -133,7 +133,7 @@ Deterministic. Same inputs always produce the same output.
 
 ### Narrative Structure
 
-12 chapters across 3 years. Year 1 teaches mechanics (placement → trellis → companions). Year 2 deepens systems (factions → events → rotation). Year 3 challenges mastery (modifiers → succession → Mom's Sauce climax).
+12 chapters across 3 years. Year 1 teaches mechanics (placement → trellis → companions). Year 2 deepens systems (factions → events → rotation). Year 3 challenges mastery (modifiers → succession → sauce recipe climax). Mom is the default playable gardener, with custom name and look support for different household reads.
 
 **4 character voices** with fixed speaking order:
 1. **Garden GURL** — Judge. Cold, sharp, legally annoyed. Scoring voice.

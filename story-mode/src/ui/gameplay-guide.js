@@ -134,7 +134,7 @@ function renderOverviewSection() {
         tone: 'green',
         label: 'Story Mode is live',
         body:
-          'Inherit Mom’s backyard, plan one season at a time, ride out three season beats, harvest and review. Planner Mode and Let It Grow are being built on top of these systems.',
+          'Choose your gardener, tend the backyard one season at a time, ride out three season beats, harvest and review. Planner Mode and Let It Grow are being built on top of these systems.',
       })}
       ${renderTable(
         ['Mode', 'Status', 'Entry'],

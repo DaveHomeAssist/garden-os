@@ -19,6 +19,7 @@ import {
 } from './state.js';
 import { scoreBed } from '../scoring/bed-score.js';
 import { checkRecipeComplete, getRecipeById, getRecipes } from '../data/crops.js';
+import { normalizePlayerProfile } from '../data/player-profile.js';
 import {
   addItemToInventoryState,
   applyToolDurabilityToInventoryState,
@@ -110,6 +111,7 @@ const Actions = {
   REJECT_CONTENT_PACK: 'REJECT_CONTENT_PACK',
   MARK_CUTSCENE_SEEN: 'MARK_CUTSCENE_SEEN',
   RECORD_AUTHORITY_ACK: 'RECORD_AUTHORITY_ACK',
+  UPDATE_PLAYER_PROFILE: 'UPDATE_PLAYER_PROFILE',
 };
 
 const REPUTATION_ZONE_EFFECTS = {
@@ -206,6 +208,7 @@ function normalizeCampaign(rawCampaign) {
     ...fallbackCampaign,
     ...campaign,
     version: CAMPAIGN_SCHEMA_VERSION,
+    playerProfile: normalizePlayerProfile(campaign.playerProfile ?? fallbackCampaign.playerProfile),
     pantry: { ...(fallbackCampaign.pantry ?? {}), ...(campaign.pantry ?? {}) },
     completedChapters: cloneArray(campaign.completedChapters),
     seasonHistory: cloneArray(campaign.seasonHistory),
@@ -552,6 +555,15 @@ function gameReducer(state, action = {}) {
           payload.sceneId,
         ]),
       ];
+      return nextState;
+    }
+
+    case Actions.UPDATE_PLAYER_PROFILE: {
+      const nextState = cloneGameState(state);
+      nextState.campaign.playerProfile = normalizePlayerProfile({
+        ...(nextState.campaign.playerProfile ?? {}),
+        ...(payload.profile ?? payload),
+      });
       return nextState;
     }
 

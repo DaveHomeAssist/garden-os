@@ -1310,6 +1310,10 @@ export function createGardenScene(container) {
     playerCharacter.setEquippedTool?.(toolId);
   }
 
+  function setPlayerProfile(profile) {
+    playerCharacter.setProfile?.(profile);
+  }
+
   // Crop mesh cache
   const cropMeshes = new Map();
 
@@ -3340,6 +3344,7 @@ function getGrowthScale(phase, season) {
     clearTargeting,
     setPlayerState,
     setPlayerTool,
+    setPlayerProfile,
     setScenePhase,
     setSceneStyle,
     setDayNightEnabled(enabled) {

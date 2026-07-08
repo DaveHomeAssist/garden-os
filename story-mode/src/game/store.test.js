@@ -15,6 +15,7 @@ describe('gameReducer', () => {
     expect(next).not.toBe(base);
     expect(next.season.phase).toBe(PHASES.PLANNING);
     expect(next.selectedCropId).toBeNull();
+    expect(next.campaign.playerProfile.displayName).toBe('Mom');
   });
 
   it('loads an explicit state snapshot', () => {
@@ -296,6 +297,27 @@ describe('gameReducer', () => {
     expect(duplicate.campaign.seenCutsceneIds).toEqual(['older-scene', 'ch1-intro']);
   });
 
+  it('updates and normalizes the saved player profile', () => {
+    const next = gameReducer(makeState(), {
+      type: Actions.UPDATE_PLAYER_PROFILE,
+      payload: {
+        profile: {
+          displayName: '  Jess  ',
+          skinTone: 'deep',
+          hair: 'silver',
+          outfit: 'sunShirt',
+        },
+      },
+    });
+
+    expect(next.campaign.playerProfile).toEqual({
+      displayName: 'Jess',
+      skinTone: 'deep',
+      hair: 'silver',
+      outfit: 'sunShirt',
+    });
+  });
+
   it('returns the previous state for unknown actions', () => {
     const base = makeState();
     const next = gameReducer(base, { type: 'UNKNOWN_ACTION' });
@@ -317,6 +339,7 @@ describe('gameReducer', () => {
     expect(next.campaign.questLog).toEqual({});
     expect(next.campaign.reputation).toMatchObject({ old_gus: 0, maya: 0, lila: 0 });
     expect(next.campaign.worldState.currentZone).toBe('player_plot');
+    expect(next.campaign.playerProfile.displayName).toBe('Mom');
   });
 });
 

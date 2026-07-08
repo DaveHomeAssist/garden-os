@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import { getPlayerProfilePalette, normalizePlayerProfile } from '../data/player-profile.js';
 
-export function createPlayerCharacter(tracker = null) {
+export function createPlayerCharacter(tracker = null, initialProfile = null) {
   const group = new THREE.Group();
   group.name = 'player-character';
 
@@ -176,6 +177,18 @@ export function createPlayerCharacter(tracker = null) {
     time: 0,
   };
   let equippedToolId = 'hand';
+  let profile = normalizePlayerProfile(initialProfile);
+
+  function setProfile(nextProfile) {
+    profile = normalizePlayerProfile(nextProfile ?? profile);
+    const palette = getPlayerProfilePalette(profile);
+    skinMat.color.setHex(palette.skin);
+    hairMat.color.setHex(palette.hair);
+    shirtMat.color.setHex(palette.shirt);
+    apronMat.color.setHex(palette.apron);
+    pantsMat.color.setHex(palette.pants);
+    hatMat.color.setHex(palette.hat);
+  }
 
   function update(snapshot) {
     if (!snapshot) return;
@@ -214,6 +227,7 @@ export function createPlayerCharacter(tracker = null) {
   tracker?.trackObject(group);
 
   update(lastSnapshot);
+  setProfile(profile);
   setEquippedTool(equippedToolId);
 
   return {
@@ -221,5 +235,6 @@ export function createPlayerCharacter(tracker = null) {
     update,
     getFocusTarget,
     setEquippedTool,
+    setProfile,
   };
 }

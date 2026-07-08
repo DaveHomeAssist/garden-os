@@ -73,6 +73,10 @@ async function runTests() {
     const moduleCode = `
       const MOCK_RECIPES = ${JSON.stringify(MOCK_RECIPES)};
       const getRecipeById = (id) => MOCK_RECIPES[id] || { name: id };
+      const resolvePlayerText = (text) => String(text ?? '')
+        .replaceAll('{returningGardener}', 'Mom')
+        .replaceAll('{recipeLabel}', "Mom's recipe")
+        .replaceAll('{sauceLabel}', "Mom's Sauce");
       ${stripped}
       return { CUTSCENES, getHighestPriorityCutscene, getEligibleCutscenes };
     `;

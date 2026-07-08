@@ -13,6 +13,7 @@ import { showHarvestReveal } from './harvest-reveal.js';
 import { showBackpackPanel } from './backpack-panel.js';
 import { SEASON_LABELS } from './ui-constants.js';
 import { getRotatedSeasonLabel } from './ui-data-builders.js';
+import { getProfileRecipeName } from '../data/player-profile.js';
 
 export function createOverlayScreens(ctx) {
   function buildRecipeRewards(state) {
@@ -20,7 +21,7 @@ export function createOverlayScreens(ctx) {
       const recipe = ctx.getRecipeById?.(recipeId);
       return {
         id: recipeId,
-        name: recipe?.name ?? recipeId,
+        name: getProfileRecipeName(recipeId, recipe?.name, state.campaign),
         crops: (recipe?.crops ?? []).map((cropId) => {
           const crop = ctx.getCropById?.(cropId);
           return {
@@ -82,7 +83,7 @@ export function createOverlayScreens(ctx) {
         unlockedCount: ctx.getState().campaign.keepsakes.length,
         totalKeepsakes: ctx.getKeepsakeSlots().length,
         recipeNames: (ctx.getState().season.harvestResult.recipeMatches ?? [])
-          .map((recipeId) => ctx.getRecipeById(recipeId)?.name ?? recipeId),
+          .map((recipeId) => getProfileRecipeName(recipeId, ctx.getRecipeById(recipeId)?.name, ctx.getState().campaign)),
         recipeRewards: buildRecipeRewards(ctx.getState()),
         onViewBackpack: () => {
           ctx.showBackpack();

@@ -1,4 +1,5 @@
 import { getYearForChapter, SEASON_LABELS } from './ui-constants.js';
+import { getProfileRecipeName } from '../data/player-profile.js';
 
 export function getRotatedSeasonLabel(seasonId) {
   const order = ['spring', 'summer', 'fall', 'winter'];
@@ -42,7 +43,14 @@ export function buildBackpackData({
     ...(getKeepsakeById(entry.id) ?? {}),
   }));
   const recipesCompleted = (state.campaign.recipesCompleted ?? [])
-    .map((recipeId) => ({ id: recipeId, ...(getRecipeById(recipeId) ?? { name: recipeId }) }));
+    .map((recipeId) => {
+      const recipe = getRecipeById(recipeId) ?? { name: recipeId };
+      return {
+        id: recipeId,
+        ...recipe,
+        name: getProfileRecipeName(recipeId, recipe.name, state.campaign),
+      };
+    });
   const pantryEntries = Object.entries(state.campaign.pantry ?? {})
     .filter(([, count]) => count > 0)
     .map(([cropId, count]) => ({

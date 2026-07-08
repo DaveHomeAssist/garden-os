@@ -2,6 +2,7 @@
  * Game State — campaign + season state objects.
  */
 import { getAllCrops, getCropsForChapter } from '../data/crops.js';
+import { normalizePlayerProfile } from '../data/player-profile.js';
 import { addItemToInventoryState, createInventoryState } from './inventory.js';
 import { getDefaultSkillsState, getSkillXpMap } from './skills.js';
 
@@ -21,7 +22,7 @@ const SEASONS = ['spring', 'summer', 'fall', 'winter'];
 const COLS = 8;
 const ROWS = 4;
 const CELL_COUNT = COLS * ROWS;
-const CAMPAIGN_SCHEMA_VERSION = 8;
+const CAMPAIGN_SCHEMA_VERSION = 9;
 const GRID_UNLOCKS = [
   { cols: 8, rows: 4, chapter: 1, gardeningLevel: 1 },
   { cols: 8, rows: 6, chapter: 6, gardeningLevel: 5 },
@@ -137,6 +138,7 @@ function createCampaignState() {
     updatedAt: new Date().toISOString(),
     currentChapter: 1,
     currentSeason: 'spring',
+    playerProfile: normalizePlayerProfile(),
     complete: false,
     completedChapters: [],
     seasonHistory: [],

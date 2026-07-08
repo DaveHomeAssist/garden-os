@@ -5,6 +5,7 @@ import { deleteCampaign } from '../game/save.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
+import { createPlayerProfileEditor } from './player-profile-editor.js';
 
 export function createPauseController({
   getState,
@@ -68,6 +69,57 @@ export function createPauseController({
     setElementInteractive(pauseOverlay, false);
   }
 
+  function showProfileSheet() {
+    closePauseMenu();
+    const state = getState();
+    const sheet = document.createElement('div');
+    sheet.className = 'panel-sheet is-open profile-sheet';
+    sheet.id = 'gardener-profile-sheet';
+    sheet.innerHTML = `
+      <div class="panel-handle"></div>
+      <div class="palette-header read-only-sheet__header">
+        <div>
+          <div class="palette-title">Gardener Profile</div>
+          <div class="read-only-sheet__subtitle">Saved with this campaign slot</div>
+        </div>
+        <button type="button" class="palette-dismiss read-only-sheet__close" data-close="true" aria-label="Close gardener profile">&times;</button>
+      </div>
+      <div class="profile-sheet__body"></div>
+    `;
+
+    const closeSheet = () => {
+      sheet.classList.remove('is-open');
+      setTimeout(() => sheet.remove(), 260);
+    };
+
+    const editor = createPlayerProfileEditor({
+      initialProfile: state.campaign.playerProfile,
+      title: 'Edit Gardener',
+      subtitle: 'These choices update the in-scene character and future save slot label.',
+      submitLabel: 'Save Profile',
+      cancelLabel: 'Close',
+      onSubmit(profile) {
+        dispatch({
+          type: Actions.UPDATE_PLAYER_PROFILE,
+          payload: { profile },
+        });
+        persistState();
+        updateHUD();
+        showToast('Gardener profile updated.', 1800, 'success');
+        closeSheet();
+      },
+      onCancel: closeSheet,
+    });
+
+    sheet.querySelector('.profile-sheet__body')?.appendChild(editor.element);
+    sheet.addEventListener('click', (event) => {
+      if (event.target.closest('[data-close="true"]')) closeSheet();
+    });
+    pauseContainer.innerHTML = '';
+    pauseContainer.appendChild(sheet);
+    editor.focus();
+  }
+
   function isOpen() {
     return pauseMenuOpen;
   }
@@ -126,6 +178,10 @@ export function createPauseController({
     stopLoop();
     cleanupGame();
     remount();
+  });
+
+  document.getElementById('pause-profile')?.addEventListener('click', () => {
+    showProfileSheet();
   });
 
   document.getElementById('pause-new')?.addEventListener('click', () => {

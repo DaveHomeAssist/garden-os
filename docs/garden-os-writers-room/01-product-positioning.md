@@ -2,7 +2,7 @@
 You are a world class game creative director, product strategist, and indie publishing advisor.
 
 Project: Garden OS
-Current concept: A grounded narrative strategy game in an inherited 8x4 raised bed in a South Philly backyard. The player learns seasonal gardening through layout, spacing, trellis logic, companion planting, and event management. Emotional core: inheriting Mom's bed after she no longer really gardens. Cast: Garden GURL, Onion Man, Vegeman, Garden Critters.
+Current concept: A grounded narrative strategy game in an 8x4 raised bed in a South Philly backyard. The player is the gardener, with Mom as the default canonical identity, and can customize name, look, and clothes for a different household read. The player learns seasonal gardening through layout, spacing, trellis logic, companion planting, and event management. Emotional core: returning to the bed, rebuilding a practice, and making the sauce from what you grew. Cast: Garden GURL, Onion Man, Vegeman, Garden Critters.
 
 Task: Define the strongest commercial and creative positioning.
 

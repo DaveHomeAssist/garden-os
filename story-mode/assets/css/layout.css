@@ -2410,6 +2410,7 @@
       display: grid;
       gap: 20px;
       z-index: 1;
+      position: relative;
     }
 
     .title-screen__poster::before,
@@ -2659,6 +2660,256 @@
     .title-guide-overlay .panel-sheet {
       border-color: var(--story-shell-border);
       border-bottom: none;
+    }
+
+    .title-profile-setup {
+      position: absolute;
+      inset: 14px;
+      z-index: 6;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(41, 26, 15, 0.42);
+      backdrop-filter: blur(16px);
+    }
+
+    .profile-editor {
+      width: min(680px, 100%);
+      max-height: min(78vh, 760px);
+      overflow: auto;
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid rgba(104, 68, 40, 0.18);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0)),
+        rgba(255, 250, 244, 0.94);
+      box-shadow: 0 24px 70px rgba(24, 12, 6, 0.32);
+      color: rgba(38, 22, 10, 0.94);
+    }
+
+    .profile-sheet .profile-editor {
+      max-height: calc(86vh - 112px);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+      padding: 0;
+    }
+
+    .profile-editor__top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .profile-editor__eyebrow,
+    .profile-name-field span,
+    .profile-fieldset legend {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(84, 53, 29, 0.58);
+    }
+
+    .profile-editor__title {
+      margin: 4px 0 6px;
+      font-family: 'Fraunces', serif;
+      font-size: clamp(26px, 5vw, 42px);
+      line-height: 1;
+      color: rgba(38, 22, 10, 0.96);
+    }
+
+    .profile-editor__subtitle {
+      max-width: 48ch;
+      margin: 0;
+      color: rgba(74, 50, 30, 0.72);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .profile-name-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .profile-name-field input {
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(104, 68, 40, 0.18);
+      background: rgba(255, 255, 255, 0.62);
+      color: rgba(38, 22, 10, 0.94);
+      font: 600 17px 'DM Sans', sans-serif;
+      outline: none;
+    }
+
+    .profile-name-field input:focus-visible,
+    .profile-choice:focus-visible {
+      border-color: rgba(var(--story-season-accent-rgb), 0.76);
+      box-shadow: 0 0 0 3px rgba(var(--story-season-accent-rgb), 0.18);
+    }
+
+    .profile-fieldset {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .profile-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .profile-choice {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid rgba(104, 68, 40, 0.16);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.48);
+      color: rgba(56, 35, 19, 0.86);
+      font: 600 12px 'DM Sans', sans-serif;
+      cursor: pointer;
+    }
+
+    .profile-choice.is-selected {
+      border-color: rgba(var(--story-season-accent-rgb), 0.48);
+      background: rgba(var(--story-season-accent-rgb), 0.16);
+    }
+
+    .profile-choice__swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--choice-color);
+      border: 1px solid rgba(38, 22, 10, 0.16);
+      box-shadow: 0 1px 2px rgba(24, 12, 6, 0.16);
+    }
+
+    .profile-editor__actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .profile-avatar {
+      position: relative;
+      width: 92px;
+      height: 124px;
+      flex: 0 0 auto;
+    }
+
+    .profile-avatar span {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: block;
+    }
+
+    .profile-avatar__shadow {
+      bottom: 2px;
+      width: 62px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(38, 22, 10, 0.16);
+    }
+
+    .profile-avatar__legs {
+      bottom: 12px;
+      width: 34px;
+      height: 44px;
+      border-radius: 12px 12px 8px 8px;
+      background: var(--avatar-pants);
+      box-shadow: -18px 0 0 -4px var(--avatar-pants), 18px 0 0 -4px var(--avatar-pants);
+    }
+
+    .profile-avatar__body {
+      bottom: 48px;
+      width: 50px;
+      height: 42px;
+      border-radius: 20px 20px 14px 14px;
+      background: var(--avatar-shirt);
+    }
+
+    .profile-avatar__apron {
+      bottom: 42px;
+      width: 34px;
+      height: 46px;
+      border-radius: 12px;
+      background: var(--avatar-apron);
+      opacity: 0.94;
+    }
+
+    .profile-avatar__head {
+      bottom: 86px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--avatar-skin);
+    }
+
+    .profile-avatar__hair {
+      bottom: 107px;
+      width: 42px;
+      height: 21px;
+      border-radius: 28px 28px 10px 10px;
+      background: var(--avatar-hair);
+    }
+
+    .profile-avatar__hat {
+      bottom: 119px;
+      width: 60px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--avatar-hat);
+      box-shadow: 0 -8px 0 -2px var(--avatar-hat);
+    }
+
+    .profile-sheet__body {
+      padding: 0 18px 18px;
+    }
+
+    @media (max-width: 640px) {
+      .title-profile-setup {
+        inset: 8px;
+        padding: 10px;
+      }
+
+      .profile-editor {
+        max-height: 82vh;
+        padding: 16px;
+      }
+
+      .profile-editor__top {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-avatar {
+        justify-self: center;
+      }
+
+      .profile-choice-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .profile-editor__actions {
+        flex-direction: column;
+      }
+
+      .profile-editor__actions .save-slot-btn {
+        width: 100%;
+      }
     }
 
     .gameplay-guide-shell {

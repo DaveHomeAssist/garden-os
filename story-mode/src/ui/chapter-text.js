@@ -1,15 +1,16 @@
 /**
  * Chapter Text — narrative titles and intro text for all 12 chapters.
  */
+import { resolvePlayerText } from '../data/player-profile.js';
 
 const CHAPTERS = {
   1: {
-    title: "The Backyard Inheritance",
-    narrative: "Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil. The screen door still creaks the same way. The radio's on inside. Start with what you know — lettuce, basil, radishes. Keep it simple. Keep it alive.",
+    title: "Back to the Bed",
+    narrative: "{returningGardener} is back in the raised bed out back. Eight feet by four, cedar frame, good soil. The screen door still creaks the same way. The radio's on inside. Start with what you know: lettuce, basil, radishes. Keep it simple. Keep it alive.",
   },
   2: {
     title: "First Shoots",
-    narrative: "Spring came fast this year. The trellises are up — Mom always said climbers need something to reach for. Pole beans and peas are in the packet drawer. The neighborhood cat is already interested.",
+    narrative: "Spring came fast this year. The trellises are up because climbers need something to reach for. Pole beans and peas are in the packet drawer. The neighborhood cat is already interested.",
   },
   3: {
     title: "Root Work",
@@ -17,7 +18,7 @@ const CHAPTERS = {
   },
   4: {
     title: "Winter Rest",
-    narrative: "First frost painted the kale silver. The bed goes quiet. No planting this round — just memory. Review what grew, what didn't, what the soil remembers. Mom's notebook is still on the shelf.",
+    narrative: "First frost painted the kale silver. The bed goes quiet. No planting this round, just review. Read what grew, what did not, and what the soil is telling you to change.",
   },
   5: {
     title: "The Second Spring",
@@ -33,7 +34,7 @@ const CHAPTERS = {
   },
   8: {
     title: "Preservation",
-    narrative: "Cabbage, kohlrabi — the brassicas arrive for the cool-down. You're thinking ahead now. What to save, what to can, what to freeze. The pantry is filling. Mom's recipe is three ingredients away.",
+    narrative: "Cabbage, kohlrabi — the brassicas arrive for the cool-down. You're thinking ahead now. What to save, what to can, what to freeze. The pantry is filling. {recipeLabel} is three ingredients away.",
   },
   9: {
     title: "The Final Harvest",
@@ -41,15 +42,15 @@ const CHAPTERS = {
   },
   10: {
     title: "Legacy Rows",
-    narrative: "The bed looks different now. Soil darker, richer. You rotate without thinking. The neighbors ask questions. You sound like your mother when you answer.",
+    narrative: "The bed looks different now. Soil darker, richer. You rotate without thinking. The neighbors ask questions. You answer like somebody who knows this yard by feel.",
   },
   11: {
-    title: "Mom's Recipe",
+    title: "Sauce Season",
     narrative: "Cherry tomato, basil, pepper, onion, carrot. Five ingredients, grown in this bed, in this soil, in this yard. The sauce simmers on the stove. The house smells the way it's supposed to.",
   },
   12: {
     title: "The Garden Stays",
-    narrative: "Three years. Twelve seasons. You inherited a raised bed and built something that keeps going. The cedar will need replacing soon. That's okay. The soil remembers. The garden stays.",
+    narrative: "Three years. Twelve seasons. You returned to a raised bed and built something that keeps going. The cedar will need replacing soon. That's okay. The soil remembers. The garden stays.",
   },
 };
 
@@ -58,7 +59,7 @@ export function getChapterTitle(chapter) {
   return CHAPTERS[chapter]?.title || `Chapter ${chapter}`;
 }
 
-export function getChapterNarrative(chapter) {
+export function getChapterNarrative(chapter, campaign) {
   if (chapter === 99) return 'All crops unlocked. No gates, no pressure. Just the bed and the soil.';
-  return CHAPTERS[chapter]?.narrative || "A new season begins.";
+  return resolvePlayerText(CHAPTERS[chapter]?.narrative || "A new season begins.", campaign);
 }

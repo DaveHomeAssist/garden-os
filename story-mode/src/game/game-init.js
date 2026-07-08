@@ -16,6 +16,8 @@ import { getKeepsakeById, getKeepsakeSlots } from '../data/keepsakes.js';
 import { createStoryAuthorityPersistence } from '../engine/authority-cache.js';
 import { showGameplayGuide } from '../ui/gameplay-guide.js';
 import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.js';
+import { normalizePlayerProfile } from '../data/player-profile.js';
+import { createPlayerProfileEditor } from '../ui/player-profile-editor.js';
 
 const GRADE_DOT_CLASS = {
   'A+': 'sparkline-dot--a', A: 'sparkline-dot--a',
@@ -43,10 +45,19 @@ function getProgressClass(campaign) {
   return 'progress-low';
 }
 
-function createInitialState(slot, savedCampaign, savedSeason = undefined) {
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function createInitialState(slot, savedCampaign, savedSeason = undefined, options = {}) {
   const initialState = createGameState();
 
   if (!savedCampaign) {
+    initialState.campaign.playerProfile = normalizePlayerProfile(options.playerProfile);
     return initialState;
   }
 
@@ -165,12 +176,14 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     const progressCls = getProgressClass(entry.campaign);
     const seasonLabel = formatSeasonLabel(entry.season);
     const gradeLabel = entry.grade ? `Last grade ${entry.grade}` : 'No harvest grade yet';
+    const gardenerName = normalizePlayerProfile(entry.playerProfile ?? entry.campaign?.playerProfile).displayName;
 
     return `
       <div class="save-slot-card save-slot-card--occupied ${progressCls}" data-slot="${entry.slot}">
         <div>
           <div class="save-slot-label">Slot ${entry.slot + 1}</div>
           <div class="save-slot-stamps">
+            <span class="save-slot-stamp">${escapeHtml(gardenerName)}</span>
             <span class="save-slot-stamp">${seasonLabel}</span>
             <span class="save-slot-stamp">${gradeLabel}</span>
           </div>
@@ -315,6 +328,44 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
       });
   }
 
+  function beginNewGame(slot, playerProfile) {
+    setActiveSaveSlot(slot);
+    dismissTitleScreen(titleScreen, () => {
+      onStart({
+        slot,
+        viewport: document.getElementById('viewport'),
+        initialState: createInitialState(slot, null, undefined, { playerProfile }),
+      });
+    });
+  }
+
+  function openCharacterCreator(slot) {
+    titleScreen.querySelector('.title-profile-setup')?.remove();
+    const shell = document.createElement('div');
+    shell.className = 'title-profile-setup';
+    shell.setAttribute('role', 'dialog');
+    shell.setAttribute('aria-modal', 'true');
+    shell.setAttribute('aria-label', 'Choose your gardener');
+    const editor = createPlayerProfileEditor({
+      initialProfile: normalizePlayerProfile(),
+      title: 'Choose Your Gardener',
+      subtitle: 'Mom is the default gardener. Change the name, look, or clothes if this is your household.',
+      submitLabel: 'Start Story',
+      cancelLabel: 'Back',
+      onSubmit(profile) {
+        shell.remove();
+        beginNewGame(slot, profile);
+      },
+      onCancel() {
+        shell.remove();
+        titleScreen.querySelector(`[data-action="new"][data-slot="${slot}"]`)?.focus();
+      },
+    });
+    shell.appendChild(editor.element);
+    titleScreen.querySelector('.title-screen__poster')?.appendChild(shell);
+    editor.focus();
+  }
+
   freshSlots.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-action]');
     if (!button) return;
@@ -330,14 +381,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     }
 
     if (action === 'new') {
-      setActiveSaveSlot(slot);
-      dismissTitleScreen(titleScreen, () => {
-        onStart({
-          slot,
-          viewport: document.getElementById('viewport'),
-          initialState: createInitialState(slot, null),
-        });
-      });
+      openCharacterCreator(slot);
       return;
     }
 

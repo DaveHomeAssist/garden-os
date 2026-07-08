@@ -846,6 +846,8 @@ async function seedAndStart(page, baseUrl, options = {}) {
     await page.screenshot({ path: join(outputDir, 'desktop-title.png'), fullPage: true });
   }
   await page.locator('[data-action="new"][data-slot="0"]').click();
+  await page.waitForSelector('.title-profile-setup', { state: 'visible', timeout: 60000 });
+  await page.locator('.title-profile-setup button[type="submit"]').click();
   await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
   await waitForCanvasPaint(page);
   await captureDialogueThenDismiss(page, options.dialogueScreenshot);

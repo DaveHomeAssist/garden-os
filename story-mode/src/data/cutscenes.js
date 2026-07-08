@@ -1,20 +1,21 @@
 import { getRecipeById } from './crops.js';
+import { resolvePlayerText } from './player-profile.js';
 
 export const CUTSCENES = [
 
   // ═══ CHAPTER INTROS ═══════════════════════════════════════
 
   { id: 'ch1-intro', trigger: 'chapter_start', conditions: { chapter: 1 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Mom left you the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-bed', cueDuration: 1800, cueFromX: 0.15, cueFromZ: 0.34 },
+    { speaker: 'narrator', text: '{returningGardener} is back in the raised bed out back. Eight feet by four, cedar frame, good soil.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'dawn', sceneCue: 'sheepdog-bed', cueDuration: 1800, cueFromX: 0.15, cueFromZ: 0.34 },
     { speaker: 'garden_gurl', text: 'CALVIN. Out of the bed. Now.', emotion: 'surprised', portraitAnim: 'emphasis', camera: 'chapter-intro', duration: 1800, sceneCue: 'sheepdog-run', cueDuration: 2200, cueFromX: 0.15, cueToX: 2.9, cueFromZ: 0.34, cueToZ: 0.96, cueArcHeight: 0.06, cueSway: 0.05 },
     { speaker: 'calvin', text: '...dirt is warm.', emotion: 'neutral', portraitAnim: 'talk', camera: 'row-close', duration: 1200 },
-    { speaker: 'onion_man', text: 'He does that every spring. Mom never stopped him either.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
-    { speaker: 'garden_gurl', text: 'This bed fed your family once. Now it is your turn.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'He does that every spring. You never really stopped him either.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
+    { speaker: 'garden_gurl', text: 'This bed fed your family once. It has its gardener back.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Start simple. Lettuce, basil, radishes. Learn the light before you push the bed.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
   ]},
 
   { id: 'ch2-intro', trigger: 'chapter_start', conditions: { chapter: 2 }, priority: 120, once: true, skippable: true, beats: [
-    { speaker: 'narrator', text: 'Summer. The trellises are up. Mom always said climbers need something to reach for.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
+    { speaker: 'narrator', text: 'Summer. The trellises are up. You always said climbers need something to reach for.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
     { speaker: 'vegeman', text: 'POLE BEANS. Let me at them. I will fill every cell.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Support crops need the back row. Check the trellis before you commit.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
@@ -27,7 +28,7 @@ export const CUTSCENES = [
 
   { id: 'ch4-intro', trigger: 'chapter_start', conditions: { chapter: 4 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'First winter. The bed goes quiet. No planting this round.', emotion: 'neutral', camera: 'overview', backdropTone: 'night' },
-    { speaker: 'onion_man', text: 'Mom used to stand out here in January. Just looking at the soil. I never understood it.', emotion: 'sad', portraitAnim: 'sad', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'You stand out here in January. Just looking at the soil. I get it now. Mostly.', emotion: 'sad', portraitAnim: 'sad', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'Rest is part of the cycle. Review what grew. Plan what comes next.', emotion: 'warm', portraitAnim: 'talk', camera: 'overview' },
   ]},
 
@@ -49,7 +50,7 @@ export const CUTSCENES = [
 
   { id: 'ch8-intro', trigger: 'chapter_start', conditions: { chapter: 8 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Preservation. You are thinking ahead now. What to save, what to can.', emotion: 'neutral', camera: 'overview', backdropTone: 'night' },
-    { speaker: 'onion_man', text: 'Mom kept a photo of the bed from this time of year. I found it in the kitchen drawer.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'There is a photo of the bed from this time of year in the kitchen drawer. Proof that this place has always known what to do.', emotion: 'sad', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'ch9-intro', trigger: 'chapter_start', conditions: { chapter: 9 }, priority: 120, once: true, skippable: true, beats: [
@@ -59,19 +60,19 @@ export const CUTSCENES = [
 
   { id: 'ch10-intro', trigger: 'chapter_start', conditions: { chapter: 10 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Legacy rows. The soil is darker, richer. You rotate without thinking.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'heat', sceneCue: 'sheepdog-run' },
-    { speaker: 'onion_man', text: 'The neighbors ask questions now. You sound like your mother when you answer.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
+    { speaker: 'onion_man', text: 'The neighbors ask questions now. You answer like somebody who has earned the dirt under their nails.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
   ]},
 
   { id: 'ch11-intro', trigger: 'chapter_start', conditions: { chapter: 11 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Cherry tomato, basil, pepper, onion, carrot. Five ingredients, this bed, this soil, this yard.', emotion: 'neutral', camera: 'chapter-intro', backdropTone: 'calm', sceneCue: 'sheepdog-run' },
     { speaker: 'onion_man', text: 'The sauce simmers on the stove. The house smells the way it is supposed to.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'harvest-gold' },
-    { speaker: 'garden_gurl', text: 'This is what the bed was always for. Finish what she started.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
+    { speaker: 'garden_gurl', text: 'This is what the bed was always for. Finish the sauce.', emotion: 'emphasis', portraitAnim: 'emphasis', camera: 'overview' },
   ]},
 
   { id: 'ch12-intro', trigger: 'chapter_start', conditions: { chapter: 12 }, priority: 120, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Three years. Twelve seasons. The cedar will need replacing soon. That is okay.', emotion: 'neutral', camera: 'overview', backdropTone: 'night' },
     { speaker: 'garden_gurl', text: 'The soil remembers every crop you placed. Every choice you made. The garden stays.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
-    { speaker: 'onion_man', text: 'She would have liked what you did with the place.', emotion: 'sad', portraitAnim: 'sad', camera: 'overview', backdropTone: 'dawn' },
+    { speaker: 'onion_man', text: 'This place looks like you again. I am handling that normally, obviously.', emotion: 'sad', portraitAnim: 'sad', camera: 'overview', backdropTone: 'dawn' },
   ]},
 
   // Fallback for chapters without specific intros
@@ -140,7 +141,7 @@ export const CUTSCENES = [
   // ═══ FIRST-TIME MILESTONES ════════════════════════════════
 
   { id: 'first-companion-bonus', trigger: 'placement_companion_found', conditions: {}, priority: 85, once: true, skippable: true, beats: [
-    { speaker: 'onion_man', text: 'Mom always planted basil next to tomatoes. Said they were friends.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'You always plant basil next to tomatoes. Said they were friends. Honestly, I respect the consistency.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
   { id: 'first-conflict', trigger: 'placement_conflict_found', conditions: {}, priority: 85, once: true, skippable: true, beats: [
@@ -163,14 +164,14 @@ export const CUTSCENES = [
 
   { id: 'recipe-moms-sauce', trigger: 'recipe_unlocked', conditions: { recipeId: 'moms_sauce' }, priority: 95, once: true, skippable: true, beats: [
     { speaker: 'narrator', text: 'Cherry tomato, basil, pepper, onion, carrot. All from this bed. All from this soil.', emotion: 'neutral', camera: 'overview', backdropTone: 'harvest-gold' },
-    { speaker: 'onion_man', text: 'That is Mom is recipe. You grew every ingredient yourself. She would be proud.', emotion: 'sad', portraitAnim: 'sad', camera: 'bed-low-angle' },
+    { speaker: 'onion_man', text: 'That is {recipeLabel}. You grew every ingredient yourself. That is the whole point.', emotion: 'sad', portraitAnim: 'sad', camera: 'bed-low-angle' },
     { speaker: 'garden_gurl', text: 'The garden gave you what you needed. That is how it works.', emotion: 'warm', portraitAnim: 'talk', camera: 'overview', backdropTone: 'celebration' },
   ]},
 
   // ═══ CAMPAIGN COMPLETE ════════════════════════════════════
 
   { id: 'campaign-complete', trigger: 'campaign_complete', conditions: {}, priority: 250, once: true, skippable: false, beats: [
-    { speaker: 'narrator', text: 'Three years. Twelve seasons. You inherited a raised bed and built something that keeps going.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', duration: 3000 },
+    { speaker: 'narrator', text: 'Three years. Twelve seasons. You returned to a raised bed and built something that keeps going.', emotion: 'neutral', camera: 'overview', backdropTone: 'dawn', duration: 3000 },
     { speaker: 'garden_gurl', text: 'You did it. The bed is full, and the story holds.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle', backdropTone: 'celebration' },
     { speaker: 'onion_man', text: 'The cedar will need replacing soon. That is okay. The soil remembers.', emotion: 'warm', portraitAnim: 'talk', camera: 'row-close' },
     { speaker: 'vegeman', text: 'I still say you should have planted more tomatoes. But fine. FINE. It was beautiful.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'overview' },
@@ -425,7 +426,7 @@ function buildHarvestText(speaker, triggerPayload) {
   const yieldCount = triggerPayload.yieldCount ?? 0;
 
   if (triggerPayload.recipeMatches?.includes('moms_sauce')) {
-    if (speaker === 'onion_man') return `That is Mom's sauce on the table. ${yieldCount} good pulls out of the bed, and the right five among them.`;
+    if (speaker === 'onion_man') return `That is {sauceLabel} on the table. ${yieldCount} good pulls out of the bed, and the right five among them.`;
     return 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
   }
 
@@ -502,11 +503,29 @@ export function getEligibleCutscenes(triggerPayload, campaign, seenSet) {
   });
 }
 
+function resolveCutsceneText(scene, campaign) {
+  if (!scene) return null;
+  return {
+    ...scene,
+    beats: (scene.beats ?? []).map((beat) => ({
+      ...beat,
+      text: resolvePlayerText(beat.text, campaign),
+      choices: Array.isArray(beat.choices)
+        ? beat.choices.map((choice) => ({
+          ...choice,
+          label: resolvePlayerText(choice.label, campaign),
+          text: resolvePlayerText(choice.text, campaign),
+        }))
+        : beat.choices,
+    })),
+  };
+}
+
 export function getHighestPriorityCutscene(triggerPayload, campaign, seenSet) {
   const dynamicScene = buildDynamicEventCutscene(triggerPayload)
     ?? buildDynamicInterventionCutscene(triggerPayload)
     ?? buildDynamicHarvestCutscene(triggerPayload);
-  if (dynamicScene) return dynamicScene;
+  if (dynamicScene) return resolveCutsceneText(dynamicScene, campaign);
   let eligible = getEligibleCutscenes(triggerPayload, campaign, seenSet);
   if (triggerPayload?.type === 'chapter_start') {
     const hasSpecificChapterIntro = CUTSCENES.some((scene) => (
@@ -519,5 +538,8 @@ export function getHighestPriorityCutscene(triggerPayload, campaign, seenSet) {
     }
   }
   if (eligible.length === 0) return null;
-  return eligible.reduce((best, scene) => (scene.priority > best.priority ? scene : best));
+  return resolveCutsceneText(
+    eligible.reduce((best, scene) => (scene.priority > best.priority ? scene : best)),
+    campaign,
+  );
 }

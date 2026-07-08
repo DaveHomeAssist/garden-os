@@ -1,6 +1,6 @@
 # Garden OS: 12-Chapter Campaign Design
 
-> Each chapter teaches one major mechanic, raises the score target, advances the story, and deepens the relationship to Mom's raised bed.
+> Each chapter teaches one major mechanic, raises the score target, advances the story, and deepens the player's relationship to the raised bed. Mom is the default playable gardener, not an absent figure.
 > The campaign escalates in both system mastery and emotional meaning.
 
 ---
@@ -22,7 +22,7 @@
 8. **Failure flavor:** Garden GURL: "You placed eleven crops and created twelve problems. That is almost impressive." Onion Man: "It is a start. Starts are allowed to be rough. The Phillies have proven this many times."
 9. **Success flavor:** Garden GURL: "Functional first draft. No hard violations. You are not hopeless." Onion Man: "Okay. Okay. That looks like something. That looks like the beginning of something."
 10. **Unlock reward:** Crop Notes panel unlocks. Each crop the player uses gets a one-line annotation visible in future seasons.
-11. **Why this chapter is memorable:** It is the first time the player sees the bed. The empty grid, the tarp coming off, the first crop placed. Every garden game has a first planting moment, but this one is weighted by the fact that someone else built this bed and stopped using it. The player is not starting fresh. They are continuing.
+11. **Why this chapter is memorable:** It is the first time the player sees the bed. The empty grid, the tarp coming off, the first crop placed. Every garden game has a first planting moment, but this one is weighted by return rather than discovery. The player is not starting fresh. They are continuing a practice.
 
 ---
 
@@ -34,10 +34,10 @@
 3. **New mechanic introduced:** Trellis and support. Climbing crops must be placed in trellis rows (rows 0-1). Placing them in access rows triggers a hard violation. Non-climbers in trellis rows trigger an advisory for wasted infrastructure.
 4. **Returning mechanics tested:** Basic placement, cell count.
 5. **Score target:** 5.5 average. All support crops must be in trellis rows.
-6. **Narrative beat:** The trellis has been here since Mom installed it. It is wire and cedar, simple and solid. Garden GURL explains it like building code. Vegeman appears for the first time in a tutorial cameo. He puts a tomato in the front row. It collapses. He does not understand why.
+6. **Narrative beat:** The trellis has been here for years. It is wire and cedar, simple and solid. Garden GURL explains it like building code. Vegeman appears for the first time in a tutorial cameo. He puts a tomato in the front row. It collapses. He does not understand why.
 7. **Character spotlight:** Vegeman's introduction. He is confident, wrong, and likable. The player learns what not to do by watching him do it.
 8. **Failure flavor:** Garden GURL: "You put climbers on the ground. The trellis is right there. It has been right there for years." Vegeman: "In my defense, I thought the tomato would figure it out."
-9. **Success flavor:** Garden GURL: "Trellis compliance confirmed across both rows. The wire is doing what it was built to do." Onion Man: "Mom put that trellis up herself. Seeing it used right does something to me."
+9. **Success flavor:** Garden GURL: "Trellis compliance confirmed across both rows. The wire is doing what it was built to do." Onion Man: "That trellis has held for years. Seeing it used right does something to me."
 10. **Unlock reward:** Trellis Zone overlay. The board now visually differentiates trellis rows from access rows with persistent color coding.
 11. **Why this chapter is memorable:** It is the first time the game says no. The first hard violation. The first time the player realizes the bed has rules that are not suggestions. And Vegeman's introduction makes the lesson land through comedy instead of lecture.
 
@@ -51,7 +51,7 @@
 3. **New mechanic introduced:** Companion planting and adjacency. Crops placed next to compatible neighbors receive a score buff. Crops placed next to hostile neighbors receive a penalty. The player can now see adjacency relationships before placing.
 4. **Returning mechanics tested:** Basic placement, trellis compliance.
 5. **Score target:** 6.0 average. At least 3 companion pairings.
-6. **Narrative beat:** Onion Man takes the lead. He talks about the neighborhood. How Mom knew her neighbors. How the tomato seedling she started with came from the guy two doors down. Good neighbors matter in gardens and on blocks.
+6. **Narrative beat:** Onion Man takes the lead. He talks about the neighborhood. How gardeners learn a block by trading seedlings, advice, and complaints. Good neighbors matter in gardens and on blocks.
 7. **Character spotlight:** Onion Man. This is his chapter. He connects the adjacency mechanic to something human without being heavy about it.
 8. **Failure flavor:** Onion Man: "You put enemies next to each other and expected peace. That is not how gardens work. That is not how anything works." Garden GURL: "Three conflict penalties. The adjacency report is hostile."
 9. **Success flavor:** Onion Man: "Good neighbors make good gardens. Also good neighborhoods. I have been saying this." Garden GURL: "Companion bonus confirmed on three pairings. The bed is cooperating."
@@ -192,13 +192,13 @@
 
 1. **Title:** Sauce
 2. **Year and season:** Year 3, Fall
-3. **New mechanic introduced:** Harvest inventory. For the first time, the post-simulation screen does not lead with the score. It leads with a list of what the bed produced. Tomatoes. Basil. Peppers. Carrots. Onions. The game checks whether the harvest contains the ingredients for Mom's sauce recipe.
+3. **New mechanic introduced:** Harvest inventory. For the first time, the post-simulation screen does not lead with the score. It leads with a list of what the bed produced. Tomatoes. Basil. Peppers. Carrots. Onions. The game checks whether the harvest contains the ingredients for the gardener's sauce recipe.
 4. **Returning mechanics tested:** All mechanics, but the score is secondary to the harvest output.
 5. **Score target:** Any passing score. The real objective is the ingredient list.
 6. **Narrative beat:** This is the emotional peak of the campaign. The harvest is real. Onion Man reads the list slowly. Garden GURL calculates the yield. Neither of them says anything dramatic. The bed produced enough for sauce. The player can see it. The recipe is not shown as text on screen. It is implied by what grew.
-7. **Character spotlight:** Onion Man. This is his moment. He has been building toward this for eleven chapters. His line: "She would have made sauce with this. I am not crying. The onion is crying."
+7. **Character spotlight:** Onion Man. This is his moment. He has been building toward this for eleven chapters. His line: "That is sauce. I am not crying. The onion is crying."
 8. **Failure flavor:** Onion Man: "We are close. We are missing basil. Or maybe peppers. The recipe needs all of them and the bed gave us most of them. Most is not enough for sauce. Most is enough for next year." Garden GURL: "Harvest inventory incomplete for target recipe. Recommend adjusting fall composition."
-9. **Success flavor:** Onion Man: "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying." Garden GURL: "Harvest inventory matches target recipe. Yield sufficient. Season objective complete."
+9. **Success flavor:** Onion Man: "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is sauce. I am not crying. The onion is crying." Garden GURL: "Harvest inventory matches target recipe. Yield sufficient. Season objective complete."
 10. **Unlock reward:** Mom's Recipe card. A persistent item in the Season Journal. It does not contain the recipe. It contains the harvest list and the date. That is enough.
 11. **Why this chapter is memorable:** It is the reason the game exists. Eleven chapters of learning mechanics, raising scores, and managing a grid converge in a list of vegetables that add up to a recipe. The player did not know they were working toward this. The game never told them the recipe was the goal. But when the harvest list appears and Onion Man reads it, the player understands what the bed was always for. This is the moment the game earns the word "care."
 

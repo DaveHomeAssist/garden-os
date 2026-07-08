@@ -1,3 +1,13 @@
+Original prompt: Make the player character the gardener, with Mom as the default canonical identity, add a small New Game character setup for name/look/clothes, pipe the profile through saves/UI/player rendering, and rewire the story away from Mom as a dead or offscreen figure.
+
+Update 2026-07-08 Story Mode playable gardener profile pass:
+- Added a normalized `playerProfile` campaign field with Mom as the default gardener identity plus name, skin tone, hair, and outfit options.
+- Added a reusable gardener profile editor used by the New Game title flow and the in-game pause menu, so players can start as Mom by default or customize this save's gardener.
+- Wired profile display into save slot labels, runtime text state, profile-aware sauce recipe labels, and the Three.js player character material colors.
+- Reframed active chapter/cutscene/guide copy away from inheritance or absent-Mom language toward a returning/playable gardener canon.
+- Updated key narrative docs (`docs/INTRO.md`, `docs/CAMPAIGN_DESIGN.md`, and writers-room positioning) to state that Mom is the default playable identity.
+- Validation: focused profile/save/store Vitest passed 33 tests; cutscene text regression passed 1828 checks; full Story Mode Vitest passed 36 files / 453 tests; `npm run build`, `npm audit --audit-level=high`, isolated Story Mode screenshot regression, `git diff --check`, generic web-game client screenshot pass, and focused Playwright New Game + pause profile browser smoke passed. `node scripts/verify-all.mjs` passed the Story Mode gates and then hit a later planner reasoning screenshot timeout; rerunning that planner smoke in isolation with the verifier browser env passed.
+
 Update 2026-07-08 Story Mode tool repair authority pass:
 - Routed `REPAIR_TOOL` through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache so repair material spend and tool restoration now land as one signed authority action.
 - Server authority now owns canonical repair costs for starter tools, rejects client-submitted inventory/slot state, rejects client-submitted durability totals, rejects tool/item mismatches, rejects bad material recipes, rejects insufficient server-owned repair materials, and emits signed `lastToolRepair` ack metadata.

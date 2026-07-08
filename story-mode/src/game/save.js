@@ -14,6 +14,7 @@ import {
   IndexedDbAuthorityJournal,
   sessionPointerKey,
 } from '../engine/authority-cache.js';
+import { normalizePlayerProfile } from '../data/player-profile.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -37,6 +38,7 @@ function normalizeCampaignSave(parsed) {
   return {
     ...parsed,
     version: CAMPAIGN_SCHEMA_VERSION,
+    playerProfile: normalizePlayerProfile(parsed.playerProfile),
     questLog: parsed.questLog ?? {},
     choiceLog: parsed.choiceLog ?? {},
     storyLog: Array.isArray(parsed.storyLog) ? [...parsed.storyLog] : [],
@@ -128,6 +130,7 @@ function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
   return {
     slot,
     campaign,
+    playerProfile: normalizePlayerProfile(campaign.playerProfile),
     isEmpty: false,
     isCorrupt,
     chapter: campaign.currentChapter,
@@ -167,6 +170,7 @@ export function saveCampaign(campaign, slot) {
   const toSave = {
     ...campaign,
     version: CAMPAIGN_SCHEMA_VERSION,
+    playerProfile: normalizePlayerProfile(campaign.playerProfile),
     questLog: { ...(campaign.questLog ?? {}) },
     choiceLog: { ...(campaign.choiceLog ?? {}) },
     storyLog: Array.isArray(campaign.storyLog) ? [...campaign.storyLog] : [],

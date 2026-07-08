@@ -161,6 +161,12 @@ describe('save', () => {
     state.campaign.reputation.old_gus = 20;
     state.campaign.worldState.currentZone = 'neighborhood';
     state.campaign.worldState.visitedZones.push('neighborhood');
+    state.campaign.playerProfile = {
+      displayName: 'Ana',
+      skinTone: 'brown',
+      hair: 'auburn',
+      outfit: 'workDenim',
+    };
 
     saveCampaign(state.campaign, 0);
     const loaded = loadCampaign(0);
@@ -168,6 +174,8 @@ describe('save', () => {
     expect(loaded.questLog.gus_tomatoes.state).toBe('ACCEPTED');
     expect(loaded.reputation.old_gus).toBe(20);
     expect(loaded.worldState.currentZone).toBe('neighborhood');
+    expect(loaded.playerProfile.displayName).toBe('Ana');
+    expect(loaded.playerProfile.outfit).toBe('workDenim');
     expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
   });
 
@@ -182,6 +190,7 @@ describe('save', () => {
     expect(loaded.questLog).toEqual({});
     expect(loaded.reputation).toMatchObject({ old_gus: 0, maya: 0, lila: 0 });
     expect(loaded.worldState.currentZone).toBe('player_plot');
+    expect(loaded.playerProfile.displayName).toBe('Mom');
   });
 
   it('surfaces quest and zone summary fields in listSaves', () => {
@@ -190,11 +199,13 @@ describe('save', () => {
     state.campaign.questLog.b = { state: 'IN_PROGRESS' };
     state.campaign.questLog.c = { state: 'COMPLETED' };
     state.campaign.worldState.visitedZones.push('neighborhood', 'forest_edge');
+    state.campaign.playerProfile.displayName = 'Jess';
     saveCampaign(state.campaign, 2);
 
     const slot = listSaves()[2];
     expect(slot.activeQuests).toBe(2);
     expect(slot.zonesVisited).toBe(3);
+    expect(slot.playerProfile.displayName).toBe('Jess');
   });
 
   it('reports corrupt campaign data as unreadable instead of empty', () => {

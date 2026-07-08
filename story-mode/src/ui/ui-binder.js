@@ -61,6 +61,7 @@ import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
+import { getProfileRecipeName } from '../data/player-profile.js';
 
 function bindUI({
   store,
@@ -140,6 +141,7 @@ function bindUI({
   let fabPlantWasVisible = false;
 
   let state = store.getState();
+  scene.setPlayerProfile?.(state.campaign.playerProfile);
   let interactionSystem = null;
   const playerController = createPlayerController();
   const simulationWorker = createSimulationWorkerClient({
@@ -172,6 +174,9 @@ function bindUI({
   }
   const unsubscribeState = store.subscribe((nextState, action) => {
     state = nextState;
+    if (action?.type === Actions.UPDATE_PLAYER_PROFILE) {
+      scene.setPlayerProfile?.(nextState.campaign.playerProfile);
+    }
     if (action?.type === Actions.ZONE_CHANGED) {
       syncPlayerMovementForZone(nextState.campaign.worldState?.currentZone);
     }
@@ -992,7 +997,7 @@ function bindUI({
       const recipe = getRecipeById(recipeId);
       return {
         id: recipeId,
-        name: recipe?.name ?? recipeId,
+        name: getProfileRecipeName(recipeId, recipe?.name, currentState.campaign),
         crops: (recipe?.crops ?? []).map((cropId) => {
           const crop = getCropById(cropId);
           return {
@@ -1144,7 +1149,7 @@ function bindUI({
         unlockedCount: state.campaign.keepsakes.length,
         totalKeepsakes: getKeepsakeSlots().length,
         recipeNames: (state.season.harvestResult.recipeMatches ?? [])
-          .map((recipeId) => getRecipeById(recipeId)?.name ?? recipeId),
+          .map((recipeId) => getProfileRecipeName(recipeId, getRecipeById(recipeId)?.name, state.campaign)),
         recipeRewards: buildHarvestRecipeRewards(state),
         onViewBackpack: () => {
           showBackpack();
@@ -1770,6 +1775,7 @@ function bindUI({
       pauseMenuOpen: pauseController.isOpen(),
       cutsceneActive: cutsceneMachine.isActive(),
       selectedCropId: state.selectedCropId,
+      playerProfile: state.campaign.playerProfile,
       plantedCount: plantedCells.length,
       plantedCells: plantedCells.slice(0, 12),
       score: hudScore?.textContent ?? '--',
