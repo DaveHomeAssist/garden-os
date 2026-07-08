@@ -176,6 +176,48 @@ export function buildScenery(tracker = null) {
   backDoor.position.set(-2.95, 0.95, -6.18);
   group.add(backDoor);
 
+  // --- Perimeter fence — frames the yard at the movement bounds (±9) ------
+  // Cheap slatted cedar: posts + two rails per run, one shared material, no
+  // shadow casting. A gap is left at the back for the neighborhood exit
+  // (x -1.8..1.8 at z -8.5) and around the porch.
+  {
+    const fenceTexture = createBoardTexture(0x96683c, 0x6f4a28, 2.6, 1.4);
+    const fenceMat = new THREE.MeshStandardMaterial({ color: 0x96683c, roughness: 0.92, map: fenceTexture });
+    const fenceGroup = new THREE.Group();
+    fenceGroup.name = 'yard-fence';
+
+    function fenceRun(x1, z1, x2, z2) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const length = Math.hypot(dx, dz);
+      if (length < 0.4) return;
+      const angle = Math.atan2(dx, dz);
+      const run = new THREE.Group();
+      run.position.set((x1 + x2) / 2, 0, (z1 + z2) / 2);
+      run.rotation.y = angle;
+      for (const railY of [0.34, 0.62]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, length), fenceMat);
+        rail.position.y = railY;
+        run.add(rail);
+      }
+      const postCount = Math.max(2, Math.round(length / 1.5) + 1);
+      for (let i = 0; i < postCount; i++) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.78, 0.09), fenceMat);
+        post.position.set(0, 0.39, -length / 2 + (i / (postCount - 1)) * length);
+        run.add(post);
+      }
+      fenceGroup.add(run);
+    }
+
+    fenceRun(-9.3, -9.3, -9.3, 9.3);   // left side
+    fenceRun(9.3, -9.3, 9.3, 9.3);     // right side
+    fenceRun(-9.3, 9.3, 9.3, 9.3);     // front
+    fenceRun(-9.3, -9.3, -1.8, -9.3);  // back, left of the exit gate gap
+    fenceRun(1.8, -9.3, 9.3, -9.3);    // back, right of the exit gate gap
+
+    group.add(fenceGroup);
+  }
+
   // Back window on the compact house face.
   const backWindow = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.12, 0.08), trimMat);
   backWindow.position.set(-1.35, 1.95, -6.18);
