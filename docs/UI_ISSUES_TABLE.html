@@ -925,6 +925,20 @@
       "location": "story-mode/src/game/save.js; story-mode/src/game/game-init.js",
       "added": "2026-06-24",
       "resolved": "2026-06-24"
+    },
+    {
+      "id": "053",
+      "severity": "P1",
+      "status": "deferred",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Live Story Mode authority API storage env is not configured",
+      "impact": "The static Story Mode app remains playable with local IndexedDB persistence, but the advertised Vercel authority endpoint cannot create sessions or sign server acks until production HMAC and Redis REST env vars exist.",
+      "fix": "Provision production env vars for GOS_AUTHORITY_HMAC_SECRET plus GOS_AUTHORITY_REDIS_REST_URL or UPSTASH_REDIS_REST_URL and GOS_AUTHORITY_REDIS_REST_TOKEN or UPSTASH_REDIS_REST_TOKEN, then redeploy Vercel and run the live authority backend smoke.",
+      "verification": "2026-07-08 live POST to https://garden-os-theta.vercel.app/api/session returned HTTP 503 AUTHORITY_STORE_UNCONFIGURED and Vercel env inspection for project garden-os returned no env vars. Added scripts/verify-authority-backend.mjs and node scripts/verify-all.mjs --include-authority-backend to make the live backend gate explicit.",
+      "location": "story-mode/index.html authority meta; api/session.mjs; api/action.mjs; api/ack/verify.mjs; Vercel project garden-os",
+      "notes": "Deferred because secrets and hosted storage credentials cannot be invented or committed from the repo. Keep the full authority objective open until this issue is configured and the live backend smoke passes.",
+      "added": "2026-07-08"
     }
   ]
 }
