@@ -2926,7 +2926,13 @@ function getGrowthScale(phase, season) {
       // ── End scenery state-driven updates ──────────────────────────────
 
       weather.update(0.016);
-      camCtrl.update();
+      // While a cutscene owns the camera, suspend the gameplay orbit/follow
+      // controller. Otherwise it rewrites camera.position every frame and, the
+      // instant each preset transition finishes, snaps the camera back to its
+      // orbit pose — the abrupt, repetitive zoom-in-then-snap during the intro.
+      if (!cutsceneActive) {
+        camCtrl.update();
+      }
       updateTransitions(performance.now());
 
       // ── Creature visibility ────────────────────────────────────────────
