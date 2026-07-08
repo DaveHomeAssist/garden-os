@@ -32,9 +32,31 @@
     <div id="title-screen" class="title-screen">
       <div class="title-screen__atmosphere" aria-hidden="true">
         <div class="title-screen__sun"></div>
-        <div class="title-screen__grid"></div>
-        <div class="title-screen__stamp title-screen__stamp--north">South Philly Soil Ledger</div>
-        <div class="title-screen__stamp title-screen__stamp--south">12 Chapters · One Raised Bed</div>
+        <div class="title-screen__clouds">
+          <span class="title-cloud title-cloud--1"></span>
+          <span class="title-cloud title-cloud--2"></span>
+          <span class="title-cloud title-cloud--3"></span>
+        </div>
+        <svg class="title-screen__scene" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+          <path class="ts-hill ts-hill--far" d="M0 300 Q 300 262 620 288 T 1200 286 V500 H0 Z"/>
+          <g class="ts-rowhomes">
+            <path d="M120 300 v-72 h58 v72 z M178 228 h58 v72 h-58 z M236 244 h54 v56 h-54 z M290 212 h60 v88 h-60 z M350 246 h50 v54 h-50 z"/>
+            <path d="M840 300 v-58 h56 v58 z M896 230 h60 v70 h-60 z M956 250 h52 v50 h-52 z M1008 218 h64 v82 h-64 z M1072 248 h48 v52 h-48 z"/>
+            <path d="M114 230 l35 -26 l35 26 z M284 214 l36 -28 l36 28 z M1002 220 l35 -26 l35 26 z"/>
+          </g>
+          <path class="ts-hill ts-hill--near" d="M0 360 Q 320 326 640 352 T 1200 348 V500 H0 Z"/>
+          <g class="ts-fence"><rect x="40" y="326" width="1120" height="8" rx="3"/></g>
+          <g class="ts-bed">
+            <path class="ts-bed-soil" d="M462 470 L738 470 L806 392 L394 392 Z"/>
+            <path class="ts-bed-frame" d="M394 392 L806 392 L820 412 L380 412 Z"/>
+            <path class="ts-bed-frame ts-bed-frame--front" d="M444 470 L756 470 L756 486 L444 486 Z"/>
+            <g class="ts-sprouts">
+              <path d="M512 430 q -7 -18 -1 -30 q 9 9 1 30 M512 430 q 7 -16 14 -22 q -2 14 -14 22"/>
+              <path d="M600 424 q -7 -20 -1 -32 q 9 10 1 32 M600 424 q 8 -17 15 -24 q -2 15 -15 24"/>
+              <path d="M688 430 q -7 -18 -1 -30 q 9 9 1 30 M688 430 q 7 -16 14 -22 q -2 14 -14 22"/>
+            </g>
+          </g>
+        </svg>
       </div>
       <div class="title-screen__poster">
         <div class="title-screen__rail">
@@ -45,11 +67,6 @@
           <div class="title-eyebrow">Mom's Backyard</div>
           <h1 class="title-name">Garden OS</h1>
           <div class="title-tagline">A 12-chapter story about soil, seasons, and sauce.</div>
-        </div>
-        <div class="title-ledger">
-          <span class="title-ledger__item">Seasonal scorecards</span>
-          <span class="title-ledger__item">Neighborhood cast</span>
-          <span class="title-ledger__item">Three-year archive</span>
         </div>
         <div class="save-slots" id="save-slots">
           <!-- 3 save slot cards rendered by JS -->

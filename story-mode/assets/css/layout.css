@@ -4033,3 +4033,71 @@
         max-height: 68dvh;
       }
     }
+
+    /* ── Title key-art pass ──────────────────────────────────────────────
+       Turn the old "settings page" title into key art: a South-Philly backyard
+       at golden hour behind a translucent glass menu. Scoped + appended so it
+       wins the cascade over the base title rules above. */
+    .title-screen {
+      background:
+        radial-gradient(120% 60% at 78% 8%, rgba(255, 214, 138, 0.55), transparent 55%),
+        radial-gradient(90% 50% at 20% 4%, rgba(192, 98, 58, 0.28), transparent 60%),
+        linear-gradient(180deg, #2f4a63 0%, #6d86a0 22%, #d7b784 44%, #c8703f 56%, #7a4a2c 63%, #38492c 74%, #223019 100%);
+    }
+    .title-ledger { display: none !important; }
+    .title-screen__grid { display: none; }
+
+    .title-screen__scene {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      width: 100%; height: min(56%, 460px);
+      pointer-events: none; z-index: 0;
+    }
+    .title-screen__scene .ts-hill--far { fill: rgba(86, 104, 88, 0.5); }
+    .title-screen__scene .ts-rowhomes { fill: rgba(52, 37, 31, 0.82); }
+    .title-screen__scene .ts-rowhomes path:last-child { fill: rgba(70, 48, 38, 0.82); }
+    .title-screen__scene .ts-hill--near { fill: rgba(35, 44, 30, 0.95); }
+    .title-screen__scene .ts-fence rect { fill: rgba(40, 30, 22, 0.7); }
+    .title-screen__scene .ts-bed-soil { fill: #3a2a1c; }
+    .title-screen__scene .ts-bed-frame { fill: #8a5a30; }
+    .title-screen__scene .ts-bed-frame--front { fill: #6f4526; }
+    .title-screen__scene .ts-sprouts { fill: none; stroke: #8fbf6a; stroke-width: 4; stroke-linecap: round; }
+
+    .title-screen__sun {
+      top: 9%; right: 16%;
+      width: clamp(120px, 20vw, 220px); height: clamp(120px, 20vw, 220px);
+      background: radial-gradient(circle, rgba(255, 236, 178, 0.85), rgba(255, 214, 128, 0.28) 45%, transparent 72%);
+      filter: blur(2px);
+      animation: ts-sun-pulse 7s ease-in-out infinite;
+    }
+    @keyframes ts-sun-pulse { 0%, 100% { transform: scale(1); opacity: 0.92; } 50% { transform: scale(1.06); opacity: 1; } }
+    .title-screen__clouds { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .title-cloud {
+      position: absolute; background: rgba(255, 246, 232, 0.5);
+      border-radius: 999px; filter: blur(6px);
+      animation: ts-cloud-drift linear infinite;
+    }
+    .title-cloud--1 { top: 14%; left: -20%; width: 200px; height: 42px; animation-duration: 68s; }
+    .title-cloud--2 { top: 22%; left: -30%; width: 140px; height: 32px; opacity: 0.7; animation-duration: 92s; animation-delay: -30s; }
+    .title-cloud--3 { top: 8%;  left: -25%; width: 260px; height: 50px; opacity: 0.55; animation-duration: 120s; animation-delay: -60s; }
+    @keyframes ts-cloud-drift { from { transform: translateX(0); } to { transform: translateX(160vw); } }
+
+    .title-screen__poster {
+      width: min(760px, calc(100vw - 36px));
+      background: linear-gradient(180deg, rgba(247, 241, 232, 0.82), rgba(244, 236, 224, 0.72));
+      backdrop-filter: blur(9px) saturate(1.05);
+      -webkit-backdrop-filter: blur(9px) saturate(1.05);
+      border: 1px solid rgba(255, 250, 242, 0.5);
+      box-shadow: 0 30px 70px rgba(18, 12, 6, 0.42);
+      z-index: 1;
+    }
+    .title-name { font-size: clamp(2.6rem, 7vw, 4rem); }
+
+    .save-slots { gap: 12px; }
+    .save-slot-card--empty {
+      min-height: 128px; background: rgba(255, 251, 245, 0.5);
+      gap: 8px; padding: 14px 12px;
+    }
+    .save-slot-card--empty .save-slot-empty-copy { display: none; }
+    .save-slot-card--empty .save-slot-empty-label { font-size: 12px; opacity: 0.75; }
+
+    @media (prefers-reduced-motion: reduce) { .title-screen__sun, .title-cloud { animation: none; } }
