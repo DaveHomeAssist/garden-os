@@ -48,11 +48,19 @@ function createRedisFetchHarness() {
   return { calls, fetchFn, records };
 }
 
-function createNodeRequest({ body = {}, headers = {}, method = 'POST', url = '/api/session' } = {}) {
-  const req = Readable.from([JSON.stringify(body)]);
+function createNodeRequest({
+  body = {},
+  headers = {},
+  method = 'POST',
+  parsedBody,
+  streamBody = JSON.stringify(body),
+  url = '/api/session',
+} = {}) {
+  const req = Readable.from([streamBody]);
   req.headers = { 'content-type': 'application/json', host: 'authority.example.test', ...headers };
   req.method = method;
   req.url = url;
+  if (parsedBody !== undefined) req.body = parsedBody;
   return req;
 }
 
@@ -213,6 +221,35 @@ describe('vercel authority handler', () => {
     expect(JSON.parse(res.body)).toMatchObject({
       error: 'AUTHORITY_STORE_UNCONFIGURED',
       ok: false,
+    });
+  });
+
+  it('uses Vercel parsed Node request bodies before stream fallback', async () => {
+    const { fetchFn } = createRedisFetchHarness();
+    const handler = createVercelAuthorityNodeHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        KV_REST_API_TOKEN: 'kv-token',
+        KV_REST_API_URL: 'https://kv.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+    const req = createNodeRequest({
+      parsedBody: { sessionId: 'session-parsed-body' },
+      streamBody: '{',
+    });
+    const res = createNodeResponse();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body)).toMatchObject({
+      ok: true,
+      session: {
+        sessionId: 'session-parsed-body',
+        tick: 0,
+      },
     });
   });
 });
