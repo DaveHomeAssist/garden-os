@@ -1198,7 +1198,7 @@ function InGroundStrip({ bed, dimensions, onPickCrop, cellScores }) {
                 <button type="button" key={r + '-' + c}
                   onClick={() => cell && onPickCrop(cell.crop)}
                   aria-label={cell ? `${crop.name} at row ${r + 1}, column ${c + 1}${band ? `, suitability ${sc.total.toFixed(1)} of 10 (${band.label})` : ''}` : `Empty row ${r + 1}, column ${c + 1}`}
-                  title={band ? `${crop.name}: ${sc.total.toFixed(1)}/10 — ${band.label}` : undefined}
+                  title={band ? `${crop.name}: ${sc.total.toFixed(1)}/10, ${band.label}` : undefined}
                   style={{
                     background: crop ? crop.color + '55' : T.cedarWash,
                     border: `1px solid ${crop ? crop.color + 'aa' : T.borderSoft}`,
