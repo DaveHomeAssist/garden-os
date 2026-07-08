@@ -33,14 +33,17 @@ export function createPlayerCharacter(tracker = null) {
   torsoPivot.position.y = 0.38;
   rig.add(torsoPivot);
 
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.14, 7, 12), shirtMat);
-  torso.scale.set(1.2, 1.02, 0.82);
-  torso.position.y = 0.14;
+  // Fuller torso — taller and broader so the character reads as a body, not a
+  // head balanced on a stub. (Head is 0.085; the old 0.07 torso was narrower
+  // than the head, which is what made it look like a bobblehead.)
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.088, 0.22, 8, 14), shirtMat);
+  torso.scale.set(1.12, 1.0, 0.86);
+  torso.position.y = 0.18;
   torso.castShadow = true;
   torsoPivot.add(torso);
 
-  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.1, 0.16, 14, 1, true), apronMat);
-  apron.position.set(0, 0.09, 0.065);
+  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 16, 1, true), apronMat);
+  apron.position.set(0, 0.12, 0.07);
   apron.rotation.y = Math.PI / 2;
   apron.rotation.z = Math.PI / 2;
   apron.scale.set(1, 1, 0.36);
@@ -48,7 +51,7 @@ export function createPlayerCharacter(tracker = null) {
   torsoPivot.add(apron);
 
   const headPivot = new THREE.Group();
-  headPivot.position.y = 0.31;
+  headPivot.position.y = 0.4;
   torsoPivot.add(headPivot);
 
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 16), skinMat);

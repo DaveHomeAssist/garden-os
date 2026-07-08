@@ -643,15 +643,19 @@ export function createGardenScene(container) {
   sheepdogGroup.name = 'calvin-sheepdog';
   sheepdogGroup.visible = false;
 
-  const dogFurDark = new THREE.MeshStandardMaterial({ color: 0x3c3129, roughness: 0.95 });
-  const dogFurLight = new THREE.MeshStandardMaterial({ color: 0xe6dfd4, roughness: 0.96 });
+  // Old English Sheepdog coat: blue-grey rear/back, white head and front.
+  const dogFurDark = new THREE.MeshStandardMaterial({ color: 0x9098a1, roughness: 0.97 });
+  const dogFurLight = new THREE.MeshStandardMaterial({ color: 0xefeae2, roughness: 0.97 });
   const dogNoseMat = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.72 });
   const dogEyeMat = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.6 });
-  const dogShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false });
+  const dogShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.17, depthWrite: false });
 
-  const dogShadow = new THREE.Mesh(new THREE.CircleGeometry(0.42, 18), dogShadowMat);
+  const dogShadow = new THREE.Mesh(new THREE.CircleGeometry(0.33, 18), dogShadowMat);
   dogShadow.rotation.x = -Math.PI / 2;
-  dogShadow.position.y = 0.012;
+  // Sit the shadow at paw level (~0.05 below the rig origin) so it rests on
+  // whatever surface Calvin stands on, instead of floating up with the body
+  // now that he stands on the raised bed.
+  dogShadow.position.y = -0.05;
   sheepdogGroup.add(dogShadow);
 
   const dogTorso = new THREE.Group();
@@ -664,36 +668,28 @@ export function createGardenScene(container) {
   dogBody.castShadow = true;
   dogTorso.add(dogBody);
 
-  const dogSaddle = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.14, 6, 12), dogFurDark);
-  dogSaddle.rotation.z = Math.PI / 2;
-  dogSaddle.scale.set(1.02, 0.88, 0.8);
-  dogSaddle.position.set(-0.04, 0.05, 0);
+  // OES coat: a shaggy blue-grey blanket over the back and rear. This breed IS
+  // a big ball of fluff, so it stays round — but symmetric and grey (not the
+  // old dark-brown offset lumps that read as tumours), so it looks like coat.
+  const dogSaddle = new THREE.Mesh(new THREE.SphereGeometry(0.132, 20, 16), dogFurDark);
+  dogSaddle.scale.set(1.5, 0.92, 1.04);
+  dogSaddle.position.set(-0.07, 0.02, 0);
   dogSaddle.castShadow = true;
   dogTorso.add(dogSaddle);
 
-  const dogRump = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), dogFurDark);
-  dogRump.position.set(-0.22, -0.01, 0);
-  dogRump.scale.set(1.1, 1.0, 0.95);
+  // Grey fluffy rear (OES hindquarters are grey).
+  const dogRump = new THREE.Mesh(new THREE.SphereGeometry(0.132, 20, 16), dogFurDark);
+  dogRump.position.set(-0.205, 0.0, 0);
+  dogRump.scale.set(0.98, 0.96, 0.95);
   dogRump.castShadow = true;
   dogTorso.add(dogRump);
 
-  const dogChest = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), dogFurLight);
-  dogChest.position.set(0.21, -0.02, 0);
-  dogChest.scale.set(0.95, 1.05, 0.95);
+  // White chest/front (OES forequarters are white).
+  const dogChest = new THREE.Mesh(new THREE.SphereGeometry(0.125, 20, 16), dogFurLight);
+  dogChest.position.set(0.2, -0.01, 0);
+  dogChest.scale.set(0.92, 1.0, 0.9);
   dogChest.castShadow = true;
   dogTorso.add(dogChest);
-
-  for (const [x, y, z, sx, sy, sz, mat] of [
-    [-0.04, 0.12, -0.09, 0.12, 0.1, 0.1, dogFurDark],
-    [0.06, 0.13, 0.09, 0.13, 0.11, 0.1, dogFurDark],
-    [0.18, 0.12, -0.08, 0.1, 0.09, 0.08, dogFurLight],
-  ]) {
-    const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), mat);
-    tuft.position.set(x, y, z);
-    tuft.scale.set(sx, sy, sz);
-    tuft.castShadow = true;
-    dogTorso.add(tuft);
-  }
 
   const dogHeadPivot = new THREE.Group();
   dogHeadPivot.position.set(0.3, 0.08, 0);
@@ -887,7 +883,7 @@ export function createGardenScene(container) {
     dogTongue.visible = false;
     dogThoughtBubble.visible = false;
     dogShadow.scale.setScalar(1);
-    dogShadow.material.opacity = 0.22;
+    dogShadow.material.opacity = 0.17;
     dustPuffs.forEach((puff) => {
       puff.userData.active = false;
       puff.visible = false;
@@ -2740,7 +2736,10 @@ function getGrowthScale(phase, season) {
       sheepdogHoldState.remainingMs = opts.cueDuration ?? 8000;
       sheepdogHoldState.position.set(
         opts.cueFromX ?? 0.15,
-        0,
+        // Stand him ON the raised bed's soil (top ≈ 0.09) rather than at ground
+        // y=0 — otherwise his legs bury below the soil and the body appears to
+        // float. 0.09 soil + ~0.05 paw drop below the rig origin.
+        opts.cueStandY ?? 0.14,
         opts.cueFromZ ?? 0.34,
       );
       resetSheepdogVisuals();
@@ -2758,14 +2757,16 @@ function getGrowthScale(phase, season) {
     sheepdogRunState.duration = opts.cueDuration ?? 2600;
     sheepdogRunState.arcHeight = opts.cueArcHeight ?? 0.1;
     sheepdogRunState.sway = opts.cueSway ?? 0.18;
+    // Start on the bed soil (if he's bolting out of the bed) and land on the
+    // yard ground, so he hops down as he leaves rather than snapping to y=0.
     sheepdogRunState.start.set(
       opts.cueFromX ?? -4.15,
-      0,
+      opts.cueFromStandY ?? 0.14,
       opts.cueFromZ ?? 2.1,
     );
     sheepdogRunState.end.set(
       opts.cueToX ?? 4.7,
-      0,
+      opts.cueToStandY ?? 0.05,
       opts.cueToZ ?? 1.88,
     );
     resetSheepdogVisuals();
@@ -3164,7 +3165,7 @@ function getGrowthScale(phase, season) {
         const bob = Math.abs(Math.sin(stridePhase)) * sheepdogRunState.arcHeight * speed;
         const zArc = Math.sin(progress * Math.PI) * sheepdogRunState.sway;
         sheepdogGroup.visible = true;
-        sheepdogGroup.position.set(pathPos.x, 0, pathPos.z + zArc);
+        sheepdogGroup.position.set(pathPos.x, pathPos.y, pathPos.z + zArc);
 
         // Facing: atan2 for travel direction along XZ plane
         const runDirection = sheepdogRunState.end.clone().sub(sheepdogRunState.start).normalize();
