@@ -878,8 +878,20 @@ function gameReducer(state, action = {}) {
 
     case Actions.REPAIR_TOOL: {
       const nextState = cloneGameState(state);
+      const materialsConsumed = Array.isArray(payload.materialsConsumed)
+        ? payload.materialsConsumed
+        : (Array.isArray(payload.repairCost) ? payload.repairCost : []);
+      let inventory = nextState.campaign.inventory;
+      materialsConsumed.forEach((material) => {
+        if (typeof material?.itemId !== 'string' || !Number.isInteger(material.count) || material.count <= 0) return;
+        inventory = removeItemFromInventoryState(
+          inventory,
+          material.itemId,
+          material.count,
+        ).inventory;
+      });
       nextState.campaign.inventory = repairToolInInventoryState(
-        nextState.campaign.inventory,
+        inventory,
         payload.slotIndex,
         payload.restoredTo,
       ).inventory;

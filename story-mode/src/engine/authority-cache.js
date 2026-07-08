@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -149,6 +149,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
+  if (actionId.endsWith(':REPAIR_TOOL')) return 'REPAIR_TOOL';
   if (actionId.endsWith(':HARVEST_CELL')) return 'HARVEST_CELL';
   if (actionId.endsWith(':SET_DAMAGE')) return 'SET_DAMAGE';
   if (actionId.endsWith(':SET_SELECTED_CROP')) return 'SET_SELECTED_CROP';
@@ -462,6 +463,52 @@ function authorityAckToStoreAction(ack, currentState = null) {
           : undefined,
       },
       type: 'ADD_ITEM',
+    };
+  }
+
+  if (actionType === 'REPAIR_TOOL') {
+    const toolRepair = data.lastToolRepair;
+    const slotIndex = Number(toolRepair?.slotIndex);
+    const durability = Number(toolRepair?.durability);
+    const itemId = typeof toolRepair?.itemId === 'string' ? toolRepair.itemId : null;
+    if (!Number.isInteger(slotIndex) || !Number.isFinite(durability)) return null;
+    const currentSlot = currentState?.campaign?.inventory?.slots?.[slotIndex];
+    if (!currentSlot || (itemId && currentSlot.itemId !== itemId)) return null;
+
+    const remainingMaterials = toolRepair?.remainingMaterials && typeof toolRepair.remainingMaterials === 'object'
+      ? toolRepair.remainingMaterials
+      : {};
+    const materialsConsumed = Array.isArray(toolRepair?.materialsConsumed)
+      ? toolRepair.materialsConsumed
+      : [];
+    const pendingMaterials = materialsConsumed
+      .map((material) => {
+        const materialItemId = typeof material?.itemId === 'string' ? material.itemId : null;
+        const fallbackCount = Number(material?.count ?? 1);
+        const remainingCount = Number(remainingMaterials[materialItemId]);
+        if (!materialItemId) return null;
+        if (Number.isFinite(remainingCount)) {
+          const currentCount = getInventoryItemCount(currentState?.campaign?.inventory, materialItemId);
+          const count = Math.max(0, currentCount - remainingCount);
+          return count > 0 ? { count, itemId: materialItemId } : null;
+        }
+        return Number.isInteger(fallbackCount) && fallbackCount > 0
+          ? { count: fallbackCount, itemId: materialItemId }
+          : null;
+      })
+      .filter(Boolean);
+
+    const currentDurability = Number(currentSlot.durability ?? 0);
+    if (currentDurability === durability && pendingMaterials.length === 0) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        itemId,
+        materialsConsumed: pendingMaterials,
+        restoredTo: durability,
+        slotIndex,
+      },
+      type: 'REPAIR_TOOL',
     };
   }
 

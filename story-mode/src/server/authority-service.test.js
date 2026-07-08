@@ -826,6 +826,78 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(1);
   });
 
+  it('routes tool repairs through canonical inventory once', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-add-repair-material',
+      idempotencyKey: 'idem-add-repair-material',
+      payload: {
+        count: 2,
+        itemId: 'plant_matter',
+      },
+      type: Actions.ADD_ITEM,
+    }));
+    await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-damage-tool',
+      idempotencyKey: 'idem-damage-tool',
+      payload: {
+        durabilityCost: 40,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+      type: Actions.USE_TOOL,
+    }));
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-repair-tool',
+      idempotencyKey: 'idem-repair-tool',
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+        slotIndex: 0,
+      },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-repair-tool-retry',
+      idempotencyKey: 'idem-repair-tool',
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+        slotIndex: 0,
+      },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.REPAIR_TOOL);
+    expect(applied.body.ack.authoritativePatch.data.lastToolRepair).toEqual({
+      durability: 100,
+      itemId: 'watering_can',
+      materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+      maxDurability: 100,
+      remainingMaterials: { plant_matter: 0 },
+      slotIndex: 0,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[0]).toMatchObject({
+      durability: 100,
+      itemId: 'watering_can',
+      maxDurability: 100,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[5]).toBeNull();
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(3);
+    expect(state.data.inventory.slots[0].durability).toBe(100);
+    expect(state.data.inventory.slots[5]).toBeNull();
+    expect(state.ledger.entries).toHaveLength(3);
+  });
+
   it('routes protect and mulch interventions through one canonical transaction', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
@@ -1163,6 +1235,73 @@ describe('authority service', () => {
     expect(mismatch.body.ok).toBe(false);
     expect(mismatch.body.ack.rejection.code).toBe('TOOL_MISMATCH');
     expect(verifyAuthorityAckSignature(mismatch.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.inventory.slots[0].durability).toBe(100);
+  });
+
+  it('rejects malformed or client-owned tool repair payloads before mutation', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedInventory = await postJson(handle, '/api/action', envelope({
+      id: 'action-trusted-tool-repair',
+      idempotencyKey: 'idem-trusted-tool-repair',
+      payload: { inventory: { slots: [] }, itemId: 'watering_can', slotIndex: 0 },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const clientTotal = await postJson(handle, '/api/action', envelope({
+      id: 'action-client-repair-total',
+      idempotencyKey: 'idem-client-repair-total',
+      payload: { itemId: 'watering_can', restoredTo: 100, slotIndex: 0 },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const notTool = await postJson(handle, '/api/action', envelope({
+      id: 'action-repair-not-tool',
+      idempotencyKey: 'idem-repair-not-tool',
+      payload: { slotIndex: 2 },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const mismatch = await postJson(handle, '/api/action', envelope({
+      id: 'action-repair-mismatch',
+      idempotencyKey: 'idem-repair-mismatch',
+      payload: { itemId: 'pruning_shears', slotIndex: 0 },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const badCost = await postJson(handle, '/api/action', envelope({
+      id: 'action-repair-bad-cost',
+      idempotencyKey: 'idem-repair-bad-cost',
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 1, itemId: 'plant_matter' }],
+        slotIndex: 0,
+      },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const notEnough = await postJson(handle, '/api/action', envelope({
+      id: 'action-repair-not-enough',
+      idempotencyKey: 'idem-repair-not-enough',
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+        slotIndex: 0,
+      },
+      type: Actions.REPAIR_TOOL,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedInventory.body.ok).toBe(false);
+    expect(trustedInventory.body.ack.rejection.code).toBe('TRUSTED_INVENTORY_PAYLOAD');
+    expect(clientTotal.body.ok).toBe(false);
+    expect(clientTotal.body.ack.rejection.code).toBe('CLIENT_REPAIR_TOTAL');
+    expect(notTool.body.ok).toBe(false);
+    expect(notTool.body.ack.rejection.code).toBe('NOT_TOOL');
+    expect(mismatch.body.ok).toBe(false);
+    expect(mismatch.body.ack.rejection.code).toBe('TOOL_MISMATCH');
+    expect(badCost.body.ok).toBe(false);
+    expect(badCost.body.ack.rejection.code).toBe('REPAIR_COST_MISMATCH');
+    expect(notEnough.body.ok).toBe(false);
+    expect(notEnough.body.ack.rejection.code).toBe('NOT_ENOUGH_ITEM');
+    expect(verifyAuthorityAckSignature(notEnough.body.ack, SECRET)).toBe(true);
     expect(state.tick).toBe(0);
     expect(state.data.inventory.slots[0].durability).toBe(100);
   });

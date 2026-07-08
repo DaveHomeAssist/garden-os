@@ -402,14 +402,16 @@ export function repairTool(store, inventory, slotIndex) {
     }
   }
 
-  repairCost.forEach((material) => {
-    inventory.removeItem(material.itemId, material.count);
-  });
-
-  const restoredTo = getMaxDurability(slot.itemId);
   store.dispatch({
     type: Actions.REPAIR_TOOL,
-    payload: { slotIndex, restoredTo },
+    payload: {
+      itemId: slot.itemId,
+      materialsConsumed: repairCost.map((material) => ({
+        count: material.count,
+        itemId: material.itemId,
+      })),
+      slotIndex,
+    },
   });
 
   return { success: true, message: 'Tool repaired!' };

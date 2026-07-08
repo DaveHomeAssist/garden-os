@@ -388,10 +388,17 @@ export function repairToolInInventoryState(inventoryState, slotIndex, restoredTo
   const inventory = cloneInventory(inventoryState);
   const slot = inventory.slots[slotIndex];
   if (!slot) return { inventory, success: false, reason: 'Missing tool slot' };
+  const def = getItemDef(slot.itemId);
+  if (def.category !== ItemCategories.TOOLS) {
+    return { inventory, success: false, reason: 'Not a tool' };
+  }
+  const nextDurability = Number.isFinite(restoredTo)
+    ? restoredTo
+    : (slot.maxDurability ?? def.durability ?? slot.durability ?? 0);
   inventory.slots[slotIndex] = {
     ...slot,
-    durability: restoredTo,
-    maxDurability: restoredTo,
+    durability: nextDurability,
+    maxDurability: nextDurability,
   };
   return { inventory, success: true };
 }

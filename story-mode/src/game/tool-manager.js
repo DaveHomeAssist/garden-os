@@ -130,7 +130,7 @@ export class ToolManager {
 
     this.store.dispatch({
       type: 'REPAIR_TOOL',
-      payload: { slotIndex, restoredTo },
+      payload: { itemId: toolId, slotIndex },
     });
 
     return { success: true };

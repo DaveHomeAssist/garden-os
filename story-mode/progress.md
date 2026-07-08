@@ -1,3 +1,15 @@
+Update 2026-07-08 Story Mode tool repair authority pass:
+- Routed `REPAIR_TOOL` through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache so repair material spend and tool restoration now land as one signed authority action.
+- Server authority now owns canonical repair costs for starter tools, rejects client-submitted inventory/slot state, rejects client-submitted durability totals, rejects tool/item mismatches, rejects bad material recipes, rejects insufficient server-owned repair materials, and emits signed `lastToolRepair` ack metadata.
+- Local repair now dispatches one atomic `REPAIR_TOOL` action with the tool item id and material costs; the reducer spends those materials and derives max durability when no trusted restore total is supplied.
+- Client reconciliation maps signed `lastToolRepair` acks back into local `REPAIR_TOOL` only when optimistic local inventory or durability differs, so duplicate idempotency-key retries do not double-spend materials.
+- Validation: focused authority/cache/intervention/tool-manager Vitest passed 81 tests; direct authority worker security test passed 35 tests; full Story Mode Vitest passed 35 files / 444 tests; `npm audit --audit-level=high` found 0 vulnerabilities; `npm run build`, `git diff --check`, and `node scripts/verify-all.mjs` passed all requested Garden OS gates.
+- Deferred:
+  - Crafting remains partially local; material spends and crafted-item recipe validation are not yet server-owned.
+  - Quest/festival/harvest reward rules remain local until reward derivation itself is server-owned.
+  - Expanded-grid and multi-bed authority are still deferred; current authority grid matches the starter 8x4 Story Mode bed.
+  - Live signed `/session` -> `/action` -> `/ack/verify` remains blocked until Vercel HMAC and Redis REST envs are provisioned.
+
 Update 2026-07-07 Story Mode item addition authority pass:
 - Routed `ADD_ITEM` through the Node authority service, fetch-compatible authority worker, and IndexedDB authority cache so inventory awards now enter the signed action ledger instead of staying purely local.
 - Server authority now owns canonical item addition totals, rejects client-submitted inventory/slot state, rejects malformed item ids/counts, rejects inventory-full additions, and emits signed `lastItemAddition` ack metadata with the server-owned total count.

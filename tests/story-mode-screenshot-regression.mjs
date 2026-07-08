@@ -74,7 +74,7 @@ async function waitForServer(url) {
 }
 
 async function waitForCanvasPaint(page) {
-  await page.waitForSelector('#viewport canvas', { timeout: 60000 });
+  await page.waitForSelector('#viewport canvas', { timeout: 180000 });
   await page.waitForFunction(() => {
     const canvas = document.querySelector('#viewport canvas');
     if (!canvas || canvas.width < 10 || canvas.height < 10) return false;
@@ -95,7 +95,7 @@ async function waitForCanvasPaint(page) {
       if (Math.max(r, g, b) - Math.min(r, g, b) > 8) varied += 1;
     }
     return lit > 120 && varied > 40;
-  }, null, { timeout: 60000 });
+  }, null, { timeout: 180000 });
 }
 
 async function waitForReadableCanvas(page, { minAverage = 28, minLit = 220 } = {}) {

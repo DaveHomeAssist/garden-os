@@ -29,12 +29,24 @@ const AUTHORITY_ITEM_CATEGORIES = {
 };
 const AUTHORITY_ITEM_DEFS = {
   fertilizer_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
+  crystal_shard: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   mulch_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  plant_matter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   pest_spray: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   pruning_shears: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 50, stackable: false },
+  scrap_metal: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   smart_watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 80, stackable: false },
   soil_scanner: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 30, stackable: false },
   watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 100, stackable: false },
+};
+const AUTHORITY_REPAIR_COSTS = {
+  pruning_shears: [{ itemId: 'scrap_metal', count: 1 }],
+  smart_watering_can: [
+    { itemId: 'plant_matter', count: 2 },
+    { itemId: 'crystal_shard', count: 1 },
+  ],
+  soil_scanner: [{ itemId: 'crystal_shard', count: 1 }],
+  watering_can: [{ itemId: 'plant_matter', count: 2 }],
 };
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const COOLDOWN_KEY_RE = /^[A-Za-z0-9_-]+_[0-9]+$/;
@@ -137,6 +149,24 @@ function applyAuthorityToolDurability(inventory, slotIndex, durabilityCost = 1) 
     maxDurability,
   };
   return { inventory: next, success: true };
+}
+
+function repairAuthorityTool(inventory, slotIndex) {
+  const next = cloneAuthorityInventory(inventory);
+  const slot = next.slots[slotIndex];
+  if (!slot || slot.category !== 'tools') {
+    return { inventory: next, success: false };
+  }
+  const itemDef = getAuthorityItemDef(slot.itemId);
+  const restoredTo = Number.isFinite(slot.maxDurability)
+    ? slot.maxDurability
+    : (itemDef.durability ?? slot.durability ?? 0);
+  next.slots[slotIndex] = {
+    ...slot,
+    durability: restoredTo,
+    maxDurability: restoredTo,
+  };
+  return { inventory: next, restoredTo, success: true };
 }
 
 function addAuthorityInventoryItem(inventory, itemId, count = 1, options = {}) {
@@ -251,6 +281,7 @@ function createInitialAuthorityData({
   lastRemoval = null,
   lastSoil = null,
   lastToolIntervention = null,
+  lastToolRepair = null,
   lastToolUse = null,
   lastWatering = null,
   lastSpawnPoint = null,
@@ -274,6 +305,7 @@ function createInitialAuthorityData({
     lastRemoval,
     lastSoil,
     lastToolIntervention,
+    lastToolRepair,
     lastToolUse,
     lastWatering,
     lastSpawnPoint,
@@ -363,6 +395,51 @@ function normalizeAddItemPayload(payload = {}) {
       ? structuredClone(payload.metadata)
       : {},
   };
+}
+
+function normalizeRepairMaterialPayload(value) {
+  if (!Array.isArray(value)) return null;
+  return value.map((material) => ({
+    count: Number(material?.count ?? 1),
+    itemId: typeof material?.itemId === 'string' && material.itemId.trim()
+      ? material.itemId.trim()
+      : null,
+  }));
+}
+
+function normalizeRepairToolPayload(payload = {}) {
+  const slotIndex = Number.isInteger(payload.slotIndex) ? payload.slotIndex : null;
+  const itemId = typeof payload.itemId === 'string' && payload.itemId.trim()
+    ? payload.itemId.trim()
+    : (typeof payload.toolItemId === 'string' && payload.toolItemId.trim() ? payload.toolItemId.trim() : null);
+  const materialPayload = hasOwn(payload, 'materialsConsumed')
+    ? payload.materialsConsumed
+    : (hasOwn(payload, 'repairCost') ? payload.repairCost : null);
+  return {
+    itemId,
+    materialsConsumed: normalizeRepairMaterialPayload(materialPayload),
+    slotIndex,
+  };
+}
+
+function getAuthorityRepairCost(itemId) {
+  return (AUTHORITY_REPAIR_COSTS[itemId] ?? []).map((material) => ({ ...material }));
+}
+
+function repairMaterialsMatch(submitted, expected) {
+  if (submitted == null) return true;
+  if (
+    submitted.length !== expected.length
+    || submitted.some((material) => (
+      typeof material.itemId !== 'string'
+      || !Number.isInteger(material.count)
+      || material.count <= 0
+    ))
+  ) {
+    return false;
+  }
+  const key = (material) => `${material.itemId}:${material.count}`;
+  return submitted.map(key).sort().join('|') === expected.map(key).sort().join('|');
 }
 
 const AUTHORITY_REDUCERS = {
@@ -636,6 +713,34 @@ const AUTHORITY_REDUCERS = {
         durabilityCost,
         itemId: beforeSlot?.itemId ?? null,
         slotIndex,
+      },
+    };
+  },
+  REPAIR_TOOL: (data, payload) => {
+    const repair = normalizeRepairToolPayload(payload);
+    let inventory = createAuthorityInventory(data.inventory);
+    const beforeSlot = inventory.slots[repair.slotIndex];
+    const repairCost = getAuthorityRepairCost(beforeSlot?.itemId);
+    const materialsConsumed = [];
+    const remainingMaterials = {};
+    repairCost.forEach((material) => {
+      const result = removeAuthorityInventoryItem(inventory, material.itemId, material.count);
+      inventory = result.inventory;
+      materialsConsumed.push({ count: material.count, itemId: material.itemId });
+      remainingMaterials[material.itemId] = getAuthorityInventoryItemCount(inventory, material.itemId);
+    });
+    const result = repairAuthorityTool(inventory, repair.slotIndex);
+    const afterSlot = result.inventory.slots[repair.slotIndex];
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastToolRepair: {
+        durability: Number.isFinite(afterSlot?.durability) ? afterSlot.durability : null,
+        itemId: afterSlot?.itemId ?? beforeSlot?.itemId ?? repair.itemId ?? null,
+        materialsConsumed,
+        maxDurability: Number.isFinite(afterSlot?.maxDurability) ? afterSlot.maxDurability : null,
+        remainingMaterials,
+        slotIndex: repair.slotIndex,
       },
     };
   },
@@ -1139,6 +1244,45 @@ function validateAuthorityPayload(envelope, state) {
     }
     if ((slot.durability ?? 0) <= 0) {
       return { code: 'TOOL_BROKEN', message: 'Tool use action requires a usable tool.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === 'REPAIR_TOOL') {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Tool repair action cannot submit trusted inventory state.' };
+    }
+    if (hasOwn(envelope.payload, 'restoredTo') || hasOwn(envelope.payload, 'durability') || hasOwn(envelope.payload, 'maxDurability')) {
+      return { code: 'CLIENT_REPAIR_TOTAL', message: 'Tool repair action cannot submit trusted durability totals.' };
+    }
+    const repair = normalizeRepairToolPayload(envelope.payload);
+    if (!Number.isInteger(repair.slotIndex) || repair.slotIndex < 0) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool repair action requires a valid inventory slot index.' };
+    }
+    const inventory = createAuthorityInventory(state?.data?.inventory);
+    if (repair.slotIndex >= inventory.slots.length) {
+      return { code: 'BAD_TOOL_SLOT', message: 'Tool repair slot index is outside the server-owned inventory.' };
+    }
+    const slot = inventory.slots[repair.slotIndex];
+    if (!slot) {
+      return { code: 'MISSING_TOOL_SLOT', message: 'Tool repair action requires a populated server-owned tool slot.' };
+    }
+    if (slot.category !== 'tools') {
+      return { code: 'NOT_TOOL', message: 'Tool repair action requires a tool slot.' };
+    }
+    if (repair.itemId && repair.itemId !== slot.itemId) {
+      return { code: 'TOOL_MISMATCH', message: 'Tool repair item id must match the server-owned tool slot.' };
+    }
+    const repairCost = getAuthorityRepairCost(slot.itemId);
+    if (!repairCost.length) {
+      return { code: 'NO_REPAIR_RECIPE', message: 'Tool repair action requires a known repair recipe.' };
+    }
+    if (!repairMaterialsMatch(repair.materialsConsumed, repairCost)) {
+      return { code: 'REPAIR_COST_MISMATCH', message: 'Tool repair material payload must match the server repair recipe.' };
+    }
+    const missing = repairCost.find((material) => getAuthorityInventoryItemCount(inventory, material.itemId) < material.count);
+    if (missing) {
+      return { code: 'NOT_ENOUGH_ITEM', message: 'Tool repair action requires enough server-owned repair materials.' };
     }
     return null;
   }

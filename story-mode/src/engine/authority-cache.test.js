@@ -310,6 +310,7 @@ describe('authority IndexedDB cache', () => {
     expect(isAuthorityRoutedAction({ type: Actions.UPDATE_SOIL })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.CARRY_FORWARD })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.USE_TOOL })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.REPAIR_TOOL })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.ADD_ITEM, payload: { itemId: 'plant_matter' } })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.REMOVE_ITEM, payload: { itemId: 'pest_spray' } })).toBe(true);
     expect(isAuthorityRoutedAction({ type: Actions.REMOVE_ITEM, payload: { itemId: 'scrap_metal' } })).toBe(false);
@@ -376,6 +377,60 @@ describe('authority IndexedDB cache', () => {
         },
       },
     }, itemAdditionState)).toBeNull();
+
+    const toolRepairState = createGameState();
+    toolRepairState.campaign.inventory.slots[0].durability = 40;
+    toolRepairState.campaign.inventory.slots[5] = {
+      category: 'materials',
+      count: 2,
+      durability: null,
+      itemId: 'plant_matter',
+      maxDurability: null,
+      metadata: {},
+    };
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.REPAIR_TOOL,
+      authoritativePatch: {
+        data: {
+          lastToolRepair: {
+            durability: 100,
+            itemId: 'watering_can',
+            materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+            maxDurability: 100,
+            remainingMaterials: { plant_matter: 0 },
+            slotIndex: 0,
+          },
+        },
+      },
+    }, toolRepairState)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+        restoredTo: 100,
+        slotIndex: 0,
+      },
+      type: Actions.REPAIR_TOOL,
+    });
+    toolRepairState.campaign.inventory.slots[0].durability = 100;
+    toolRepairState.campaign.inventory.slots[5] = null;
+    expect(authorityAckToStoreAction({
+      accepted: true,
+      actionType: Actions.REPAIR_TOOL,
+      authoritativePatch: {
+        data: {
+          lastToolRepair: {
+            durability: 100,
+            itemId: 'watering_can',
+            materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+            maxDurability: 100,
+            remainingMaterials: { plant_matter: 0 },
+            slotIndex: 0,
+          },
+        },
+      },
+    }, toolRepairState)).toBeNull();
 
     expect(authorityAckToStoreAction({
       accepted: true,
@@ -2107,6 +2162,99 @@ describe('authority IndexedDB cache', () => {
       count: 2,
       itemId: 'plant_matter',
     });
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues tool repair transactions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    store.dispatch({
+      type: Actions.ADD_ITEM,
+      payload: {
+        count: 2,
+        itemId: 'plant_matter',
+      },
+    });
+    store.dispatch({
+      type: Actions.USE_TOOL,
+      payload: {
+        durabilityCost: 60,
+        itemId: 'watering_can',
+        slotIndex: 0,
+      },
+    });
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastToolRepair: {
+                durability: 100,
+                itemId: body.payload.itemId,
+                materialsConsumed: body.payload.materialsConsumed,
+                maxDurability: 100,
+                remainingMaterials: { plant_matter: 0 },
+                slotIndex: body.payload.slotIndex,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.REPAIR_TOOL,
+      payload: {
+        itemId: 'watering_can',
+        materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+        slotIndex: 0,
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.inventory.slots[0]).toMatchObject({
+      durability: 100,
+      itemId: 'watering_can',
+      maxDurability: 100,
+    });
+    expect(store.getState().campaign.inventory.slots[5]).toBeNull();
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

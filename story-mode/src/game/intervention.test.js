@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { executeToolAction, canUseTool, repairTool } from './intervention.js';
 import { PHASES, createGameState } from './state.js';
 import { Actions, Store } from './store.js';
-import { Inventory } from './inventory.js';
+import { getInventoryItemCount, Inventory } from './inventory.js';
 
 function makeStore() {
   return new Store(createGameState());
@@ -194,8 +194,18 @@ describe('executeToolAction', () => {
 
     const inventory = new Inventory(store);
     inventory.addItem('plant_matter', 2);
+    const dispatch = vi.spyOn(store, 'dispatch');
     const result = repairTool(store, inventory, 0);
     expect(result.success).toBe(true);
+    expect(dispatch.mock.calls.map(([action]) => action.type)).toEqual([
+      Actions.REPAIR_TOOL,
+    ]);
+    expect(dispatch.mock.calls[0][0].payload).toEqual({
+      itemId: 'watering_can',
+      materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+      slotIndex: 0,
+    });
     expect(store.getState().campaign.inventory.slots[0].durability).toBe(100);
+    expect(getInventoryItemCount(store.getState().campaign.inventory, 'plant_matter')).toBe(0);
   });
 });

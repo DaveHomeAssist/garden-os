@@ -1245,6 +1245,82 @@ test('authority action routes item additions through canonical inventory once', 
   assert.equal(second.state.data.inventory.slots[5].count, 2);
 });
 
+test('authority action routes tool repairs through canonical inventory once', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-add-repair-material',
+    idempotencyKey: 'idem-add-repair-material',
+    payload: {
+      count: 2,
+      itemId: 'plant_matter',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-damage-tool',
+    idempotencyKey: 'idem-damage-tool',
+    payload: {
+      durabilityCost: 40,
+      itemId: 'watering_can',
+      slotIndex: 0,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'USE_TOOL',
+  }), env);
+
+  const action = {
+    clientSeq: 3,
+    expectedTick: 2,
+    gameId: 'garden',
+    id: 'action-repair-tool',
+    idempotencyKey: 'idem-repair-tool',
+    payload: {
+      itemId: 'watering_can',
+      materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+      slotIndex: 0,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    id: 'action-repair-tool-retry',
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'REPAIR_TOOL');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.deepEqual(first.state.data.lastToolRepair, {
+    durability: 100,
+    itemId: 'watering_can',
+    materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+    maxDurability: 100,
+    remainingMaterials: { plant_matter: 0 },
+    slotIndex: 0,
+  });
+  assert.equal(first.state.data.inventory.slots[0].durability, 100);
+  assert.equal(first.state.data.inventory.slots[5], null);
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 3);
+  assert.equal(second.state.data.inventory.slots[0].durability, 100);
+  assert.equal(second.state.data.inventory.slots[5], null);
+});
+
 test('authority rejects malformed cooldown payloads before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {
@@ -1323,6 +1399,104 @@ test('authority rejects malformed or client-owned tool durability payloads befor
   assert.equal(mismatch.ack.accepted, false);
   assert.equal(mismatch.ack.rejection.code, 'TOOL_MISMATCH');
   assert.equal(await verifyServerAckSignature(mismatch.ack, SECRET), true);
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.inventory.slots[0].durability, 100);
+});
+
+test('authority rejects malformed or client-owned tool repair payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const trustedResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-trusted-tool-repair',
+    idempotencyKey: 'idem-trusted-tool-repair',
+    payload: { inventory: { slots: [] }, itemId: 'watering_can', slotIndex: 0 },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  }), env);
+  const trusted = await trustedResponse.json();
+
+  const clientTotalResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-client-repair-total',
+    idempotencyKey: 'idem-client-repair-total',
+    payload: { itemId: 'watering_can', restoredTo: 100, slotIndex: 0 },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  }), env);
+  const clientTotal = await clientTotalResponse.json();
+
+  const mismatchResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-repair-mismatch',
+    idempotencyKey: 'idem-repair-mismatch',
+    payload: { itemId: 'pruning_shears', slotIndex: 0 },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  }), env);
+  const mismatch = await mismatchResponse.json();
+
+  const badCostResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 4,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-repair-bad-cost',
+    idempotencyKey: 'idem-repair-bad-cost',
+    payload: {
+      itemId: 'watering_can',
+      materialsConsumed: [{ count: 1, itemId: 'plant_matter' }],
+      slotIndex: 0,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  }), env);
+  const badCost = await badCostResponse.json();
+
+  const notEnoughResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 5,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-repair-not-enough',
+    idempotencyKey: 'idem-repair-not-enough',
+    payload: {
+      itemId: 'watering_can',
+      materialsConsumed: [{ count: 2, itemId: 'plant_matter' }],
+      slotIndex: 0,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'REPAIR_TOOL',
+  }), env);
+  const notEnough = await notEnoughResponse.json();
+
+  assert.equal(trustedResponse.status, 422);
+  assert.equal(trusted.ack.accepted, false);
+  assert.equal(trusted.ack.rejection.code, 'TRUSTED_INVENTORY_PAYLOAD');
+  assert.equal(clientTotalResponse.status, 422);
+  assert.equal(clientTotal.ack.accepted, false);
+  assert.equal(clientTotal.ack.rejection.code, 'CLIENT_REPAIR_TOTAL');
+  assert.equal(mismatchResponse.status, 422);
+  assert.equal(mismatch.ack.accepted, false);
+  assert.equal(mismatch.ack.rejection.code, 'TOOL_MISMATCH');
+  assert.equal(badCostResponse.status, 422);
+  assert.equal(badCost.ack.accepted, false);
+  assert.equal(badCost.ack.rejection.code, 'REPAIR_COST_MISMATCH');
+  assert.equal(notEnoughResponse.status, 422);
+  assert.equal(notEnough.ack.accepted, false);
+  assert.equal(notEnough.ack.rejection.code, 'NOT_ENOUGH_ITEM');
+  assert.equal(await verifyServerAckSignature(notEnough.ack, SECRET), true);
 
   const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
   const session = await sessionResponse.json();
