@@ -868,6 +868,9 @@ export function createGardenScene(container) {
     fadeOutMs: 0,
     appearCount: 0,          // cycles through loiter spots deterministically
   };
+  // True while a cutscene/dialogue is on screen. Suppresses the ambient idle
+  // loiter so Calvin only appears where the script wants him during a scene.
+  let cutsceneActive = false;
 
   // Spots where Calvin hangs out in the yard
   const CALVIN_LOITER_SPOTS = [
@@ -3086,9 +3089,16 @@ function getGrowthScale(phase, season) {
             });
           }
         } else {
-          // Cooldown ticking
-          calvinIdleState.cooldownMs -= dt * 1000;
-          if (calvinIdleState.cooldownMs <= 0) {
+          // Cooldown ticking. While a cutscene/dialogue is on screen, keep a
+          // grace floor so ambient Calvin never wanders back into the yard
+          // mid-scene (during the intro he was reappearing behind the family's
+          // reaction lines, which made the sequence feel like it dragged).
+          if (cutsceneActive) {
+            calvinIdleState.cooldownMs = Math.max(calvinIdleState.cooldownMs, 6000);
+          } else {
+            calvinIdleState.cooldownMs -= dt * 1000;
+          }
+          if (calvinIdleState.cooldownMs <= 0 && !cutsceneActive) {
             // Pick next loiter spot deterministically
             const spot = CALVIN_LOITER_SPOTS[calvinIdleState.appearCount % CALVIN_LOITER_SPOTS.length];
             calvinIdleState.appearCount++;
@@ -3308,6 +3318,17 @@ function getGrowthScale(phase, season) {
     setSceneStyle,
     setDayNightEnabled(enabled) {
       dayNight.setEnabled(Boolean(enabled));
+    },
+    setCutsceneActive(active) {
+      cutsceneActive = Boolean(active);
+      // When a scene begins, retire any ambient Calvin already loitering so he
+      // does not overlap the scripted sheepdog cues. The scripted hold/run
+      // states are independent and unaffected.
+      if (cutsceneActive && calvinIdleState.active
+        && !sheepdogHoldState.active && !sheepdogRunState.active) {
+        calvinIdleState.active = false;
+        calvinIdleState.fadeOutMs = calvinIdleState.fadeOutMs > 0 ? calvinIdleState.fadeOutMs : 300;
+      }
     },
     setCameraPreset,
     applyCameraOrbitDelta(dTheta, dPhi) {

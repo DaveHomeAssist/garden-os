@@ -255,12 +255,14 @@ function bindUI({
       setElementInteractive(cutsceneLayer, uiState.visible);
       phaseDots?.classList.toggle('is-cutscene', uiState.visible);
       scene.setScenePhase?.(uiState.visible ? 'CUTSCENE' : state.season.phase);
+      scene.setCutsceneActive?.(uiState.visible);
     },
     onFinish: () => {
       dialoguePanel.hide();
       setElementInteractive(cutsceneLayer, false);
       phaseDots?.classList.remove('is-cutscene');
       scene.setScenePhase?.(state.season.phase, { force: true });
+      scene.setCutsceneActive?.(false);
       phaseRouter?.onCutsceneFinish();
     },
     onEffect: (effect) => {
