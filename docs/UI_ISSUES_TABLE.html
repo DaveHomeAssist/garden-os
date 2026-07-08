@@ -934,8 +934,8 @@
       "tool": "engine",
       "title": "Live Story Mode authority API storage env is not configured",
       "impact": "The static Story Mode app remains playable with local IndexedDB persistence, but the advertised Vercel authority endpoint cannot create sessions or sign server acks until production HMAC and Redis REST env vars exist.",
-      "fix": "Provision production env vars for GOS_AUTHORITY_HMAC_SECRET plus GOS_AUTHORITY_REDIS_REST_URL or UPSTASH_REDIS_REST_URL and GOS_AUTHORITY_REDIS_REST_TOKEN or UPSTASH_REDIS_REST_TOKEN, then redeploy Vercel and run the live authority backend smoke.",
-      "verification": "2026-07-08 live POST to https://garden-os-theta.vercel.app/api/session returned HTTP 503 AUTHORITY_STORE_UNCONFIGURED and Vercel env inspection for project garden-os returned no env vars. Added scripts/verify-authority-backend.mjs and node scripts/verify-all.mjs --include-authority-backend to make the live backend gate explicit.",
+      "fix": "Provision production env vars for GOS_AUTHORITY_HMAC_SECRET plus either GOS_AUTHORITY_REDIS_REST_URL/TOKEN, UPSTASH_REDIS_REST_URL/TOKEN, or the Vercel Marketplace Upstash KV_REST_API_URL/TOKEN pair, then redeploy Vercel and run the live authority backend smoke.",
+      "verification": "2026-07-08 live POST to https://garden-os-theta.vercel.app/api/session returned HTTP 503 AUTHORITY_STORE_UNCONFIGURED and Vercel env inspection for project garden-os returned no env vars or Marketplace resources. Added scripts/verify-authority-backend.mjs and node scripts/verify-all.mjs --include-authority-backend to make the live backend gate explicit; Vercel authority tests now cover KV_REST_API_URL/TOKEN aliases.",
       "location": "story-mode/index.html authority meta; api/session.mjs; api/action.mjs; api/ack/verify.mjs; Vercel project garden-os",
       "notes": "Deferred because secrets and hosted storage credentials cannot be invented or committed from the repo. Keep the full authority objective open until this issue is configured and the live backend smoke passes.",
       "added": "2026-07-08"

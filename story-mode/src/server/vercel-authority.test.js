@@ -116,8 +116,8 @@ describe('vercel authority handler', () => {
     });
     expect(response.body.missing).toEqual([
       'GOS_AUTHORITY_HMAC_SECRET',
-      'GOS_AUTHORITY_REDIS_REST_URL or UPSTASH_REDIS_REST_URL',
-      'GOS_AUTHORITY_REDIS_REST_TOKEN or UPSTASH_REDIS_REST_TOKEN',
+      'GOS_AUTHORITY_REDIS_REST_URL, UPSTASH_REDIS_REST_URL, or KV_REST_API_URL',
+      'GOS_AUTHORITY_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_TOKEN, or KV_REST_API_TOKEN',
     ]);
   });
 
@@ -171,6 +171,32 @@ describe('vercel authority handler', () => {
       },
       method: 'POST',
       url: 'https://redis.example.test',
+    });
+  });
+
+  it('accepts Vercel Marketplace KV_REST_API env aliases for Upstash Redis', async () => {
+    const { calls, fetchFn } = createRedisFetchHarness();
+    const handle = createVercelAuthorityFetchHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        GOS_AUTHORITY_REDIS_PREFIX: 'test:vercel-kv-alias',
+        KV_REST_API_TOKEN: 'kv-token',
+        KV_REST_API_URL: 'https://kv.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+
+    const created = await postJson(handle, '/api/session', { sessionId: 'session-kv-alias' });
+
+    expect(created.status).toBe(200);
+    expect(created.body.session.sessionId).toBe('session-kv-alias');
+    expect(calls[0]).toMatchObject({
+      headers: {
+        Authorization: 'Bearer kv-token',
+        'Content-Type': 'application/json',
+      },
+      url: 'https://kv.example.test',
     });
   });
 
