@@ -652,10 +652,12 @@ export function createGardenScene(container) {
 
   const dogShadow = new THREE.Mesh(new THREE.CircleGeometry(0.33, 18), dogShadowMat);
   dogShadow.rotation.x = -Math.PI / 2;
-  // Sit the shadow at paw level (~0.05 below the rig origin) so it rests on
-  // whatever surface Calvin stands on, instead of floating up with the body
-  // now that he stands on the raised bed.
-  dogShadow.position.y = -0.05;
+  dogShadow.position.y = -0.038;
+  // The renderer already casts a real shadow for Calvin (castShadow meshes +
+  // shadow-mapped sun). The fake blob disc double-shadowed him — and z-fought
+  // the bed soil as black blotches — so it stays hidden; kept only because the
+  // run/idle animations still write its scale/opacity.
+  dogShadow.visible = false;
   sheepdogGroup.add(dogShadow);
 
   const dogTorso = new THREE.Group();
@@ -760,6 +762,21 @@ export function createGardenScene(container) {
     dogHeadPivot.add(dogEye);
   }
 
+  // Signature OES fur-mop: a shaggy white fringe overhanging the brow so the
+  // eyes peek out from under it.
+  const dogMop = new THREE.Mesh(new THREE.SphereGeometry(0.062, 14, 12), dogFurLight);
+  dogMop.position.set(0.185, 0.065, 0);
+  dogMop.scale.set(1.05, 0.62, 1.3);
+  dogMop.castShadow = true;
+  dogHeadPivot.add(dogMop);
+  for (const tuftZ of [-0.045, 0, 0.045]) {
+    const mopTuft = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), dogFurLight);
+    mopTuft.position.set(0.225, 0.045, tuftZ);
+    mopTuft.scale.set(1, 0.75, 0.9);
+    mopTuft.castShadow = true;
+    dogHeadPivot.add(mopTuft);
+  }
+
   const dogEars = [];
   for (const [ez, rz] of [[-0.05, 0.22], [0.05, -0.22]]) {
     const earPivot = new THREE.Group();
@@ -795,9 +812,11 @@ export function createGardenScene(container) {
     hipPivot.position.set(x, -0.08, z);
     dogTorso.add(hipPivot);
 
-    const upperLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.08, 5, 10), dogFurLight);
-    upperLeg.position.set(0, -0.08, 0);
-    upperLeg.scale.set(1, 1.02, 0.9);
+    // Fluffy OES trouser-leg: a fat furry thigh that tapers into a stockier
+    // lower leg, instead of the old thin segmented sticks.
+    const upperLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.042, 0.07, 6, 12), dogFurLight);
+    upperLeg.position.set(0, -0.07, 0);
+    upperLeg.scale.set(1, 1.05, 0.94);
     upperLeg.castShadow = true;
     hipPivot.add(upperLeg);
 
@@ -805,9 +824,9 @@ export function createGardenScene(container) {
     kneePivot.position.set(0, -0.16, 0);
     hipPivot.add(kneePivot);
 
-    const lowerLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.075, 5, 10), dogFurDark);
-    lowerLeg.position.set(0, -0.07, 0);
-    lowerLeg.scale.set(1, 1, 0.88);
+    const lowerLeg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.06, 6, 12), dogFurLight);
+    lowerLeg.position.set(0, -0.065, 0);
+    lowerLeg.scale.set(1, 1, 0.92);
     lowerLeg.castShadow = true;
     kneePivot.add(lowerLeg);
 
