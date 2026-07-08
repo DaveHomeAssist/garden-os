@@ -118,12 +118,44 @@ export function buildScenery(tracker = null) {
     return mesh;
   }
 
-  // --- Back house wall directly behind the bed ---
-  const houseWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.2), sidingMat);
-  houseWall.position.set(-2.1, 1.6, -6.15);
+  // --- Rowhouse mass behind the bed ---
+  // A real volume instead of the old floating PlaneGeometry billboard: the box
+  // gives the house sides and edges that catch light, topped with a cornice
+  // and flat roof cap (South Philly rowhouses are flat-roofed), plus a party-
+  // wall stub and chimney so the silhouette reads at a glance.
+  const houseWall = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.2, 0.5), sidingMat);
+  houseWall.position.set(-2.1, 1.6, -6.4); // front face stays at z=-6.15
   houseWall.receiveShadow = true;
+  houseWall.castShadow = true;
   markPlaceCue(houseWall, 'rowhouse-siding');
   group.add(houseWall);
+
+  const cornice = new THREE.Mesh(new THREE.BoxGeometry(3.78, 0.16, 0.62), trimMat);
+  cornice.position.set(-2.1, 3.22, -6.4);
+  cornice.castShadow = true;
+  group.add(cornice);
+
+  const roofCap = new THREE.Mesh(
+    new THREE.BoxGeometry(3.66, 0.08, 0.54),
+    new THREE.MeshStandardMaterial({ color: 0x4a423a, roughness: 0.95 }),
+  );
+  roofCap.position.set(-2.1, 3.34, -6.4);
+  group.add(roofCap);
+
+  // Party wall stub on the left — rowhouses share walls; a hint of the
+  // neighbor's house anchors this one in a block instead of open space.
+  const partyWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.6, 0.5), sidingMat);
+  partyWall.position.set(-4.15, 1.3, -6.4);
+  partyWall.receiveShadow = true;
+  group.add(partyWall);
+
+  const chimney = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.55, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0x8a5a44, roughness: 0.92 }),
+  );
+  chimney.position.set(-3.3, 3.55, -6.45);
+  chimney.castShadow = true;
+  group.add(chimney);
 
   for (const { x, z, scale, color } of [
     { x: -2.0, z: -4.86, scale: 1.08, color: 0x527d46 },
@@ -544,7 +576,7 @@ export function buildScenery(tracker = null) {
   springFlowers.visible = false;
   group.add(springFlowers);
 
-  // 8. Mom's notebook on porch
+  // 8. Gardener notebook on porch
   const narrativeProps = new THREE.Group();
   {
     const notebookMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.9 });
