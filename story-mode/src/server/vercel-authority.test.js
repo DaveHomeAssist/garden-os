@@ -136,6 +136,7 @@ describe('vercel authority handler', () => {
 
     const created = await postJson(handle, '/api/session', { sessionId: 'session-vercel' });
     const applied = await postJson(handle, '/api/action', envelope());
+    const resumed = await postJson(handle, '/api/session', { sessionId: 'session-vercel' });
     const verified = await postJson(handle, '/api/ack/verify', { ack: applied.body.ack });
 
     expect(created.status).toBe(200);
@@ -143,9 +144,17 @@ describe('vercel authority handler', () => {
     expect(applied.status).toBe(200);
     expect(applied.body.ack.accepted).toBe(true);
     expect(applied.body.ack.authoritativePatch.data.activeTool).toBe('water');
+    expect(resumed.status).toBe(200);
+    expect(resumed.body.session).toMatchObject({
+      checksum: applied.body.ack.checksum,
+      ledgerCursor: '1',
+      sessionId: 'session-vercel',
+      tick: 1,
+    });
     expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
     expect(verified).toMatchObject({ body: { verified: true }, status: 200 });
     expect(calls.map((call) => call.command[0])).toEqual([
+      'GET',
       'SET',
       'RPUSH',
       'RPUSH',
@@ -153,6 +162,7 @@ describe('vercel authority handler', () => {
       'SET',
       'RPUSH',
       'RPUSH',
+      'GET',
     ]);
     expect(calls[0]).toMatchObject({
       headers: {

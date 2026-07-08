@@ -1420,6 +1420,13 @@ function createAuthorityService({
       };
     }
     const sessionId = body.sessionId || sessionIdFactory();
+    const existingState = body.sessionId ? await sessionStore.get(sessionId) : null;
+    if (existingState) {
+      return {
+        ok: true,
+        session: sessionSummary(existingState),
+      };
+    }
     const state = createEngineState({
       data: createInitialAuthorityData(),
       gameId: body.gameId ?? DEFAULT_GAME_ID,
