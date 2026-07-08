@@ -39,14 +39,17 @@ export function createPlayerCharacter(tracker = null) {
   // Fuller torso — taller and broader so the character reads as a body, not a
   // head balanced on a stub. (Head is 0.085; the old 0.07 torso was narrower
   // than the head, which is what made it look like a bobblehead.)
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.088, 0.22, 8, 14), shirtMat);
+  // Torso must SPAN hips (world ~0.31) to head (world ~0.80): capsule total
+  // height 0.516 centered at pivot+0.12 covers 0.33..0.85. The previous short
+  // capsule left a visible gap of lawn between shirt and pants.
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.088, 0.34, 8, 14), shirtMat);
   torso.scale.set(1.12, 1.0, 0.86);
-  torso.position.y = 0.18;
+  torso.position.y = 0.12;
   torso.castShadow = true;
   torsoPivot.add(torso);
 
-  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 16, 1, true), apronMat);
-  apron.position.set(0, 0.12, 0.07);
+  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.28, 16, 1, true), apronMat);
+  apron.position.set(0, 0.06, 0.07);
   apron.rotation.y = Math.PI / 2;
   apron.rotation.z = Math.PI / 2;
   apron.scale.set(1, 1, 0.36);
