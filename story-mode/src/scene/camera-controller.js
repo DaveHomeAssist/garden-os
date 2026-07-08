@@ -111,6 +111,11 @@ export function createCameraController(camera, domElement) {
   updateOrbit();
 
   return {
+    // Horizontal orbit angle. Movement input is rotated by this so "up" walks
+    // the way the camera faces (camera-relative), not fixed world-north.
+    getAzimuth() {
+      return theta;
+    },
     setPose(poseName) {
       const pose = POSES[poseName];
       if (!pose) return;

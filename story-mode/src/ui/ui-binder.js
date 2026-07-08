@@ -532,6 +532,19 @@ function bindUI({
       }
     }
 
+    // Make movement camera-relative: rotate the raw input by the camera's
+    // orbit angle so "up" always walks the way the camera faces, not fixed
+    // world-north. At the default view (azimuth 0) this is the identity, so
+    // the standard camera is unchanged.
+    const azimuth = scene.getCameraAzimuth?.() ?? 0;
+    if (azimuth !== 0 && (x !== 0 || z !== 0)) {
+      const cos = Math.cos(azimuth);
+      const sin = Math.sin(azimuth);
+      const worldX = x * cos + z * sin;
+      const worldZ = -x * sin + z * cos;
+      return { x: worldX, z: worldZ };
+    }
+
     return { x, z };
   }
 

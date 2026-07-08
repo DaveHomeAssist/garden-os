@@ -3338,6 +3338,9 @@ function getGrowthScale(phase, season) {
       }
     },
     setCameraPreset,
+    getCameraAzimuth() {
+      return camCtrl.getAzimuth?.() ?? 0;
+    },
     applyCameraOrbitDelta(dTheta, dPhi) {
       camCtrl.applyOrbitDelta(dTheta, dPhi);
     },
