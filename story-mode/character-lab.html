@@ -17,12 +17,18 @@
   <script type="module">
     import * as THREE from 'three';
     import { buildCharacterModel } from './src/scene/player-character.js';
+    import { getPlayerProfilePalette } from './src/data/player-profile.js';
 
     const VIEWS = [
       { label: 'front', yaw: 0, dist: 1.1, height: 0.42 },
       { label: 'three-quarter', yaw: Math.PI * 0.22, dist: 1.1, height: 0.42 },
       { label: 'side', yaw: Math.PI / 2, dist: 1.1, height: 0.42 },
       { label: 'face close-up', yaw: 0, dist: 0.5, height: 0.62, focusY: 0.64 },
+      // Profile-derived variants prove the template retints cleanly.
+      { label: 'sun shirt · olive', yaw: 0, dist: 1.1, height: 0.42, profile: { skinTone: 'olive', hair: 'auburn', outfit: 'sunShirt' } },
+      { label: 'work denim · deep', yaw: 0, dist: 1.1, height: 0.42, profile: { skinTone: 'deep', hair: 'black', outfit: 'workDenim' } },
+      { label: 'garden apron · brown · silver', yaw: 0, dist: 1.1, height: 0.42, profile: { skinTone: 'brown', hair: 'silver', outfit: 'gardenApron' } },
+      { label: 'no hat variant', yaw: 0, dist: 1.1, height: 0.42, features: { hat: false } },
     ];
 
     const grid = document.getElementById('grid');
@@ -62,9 +68,10 @@
       fill.position.set(4.4, 2.0, -2.6);
       scene.add(fill);
 
-      const { rig } = buildCharacterModel();
-      rig.position.y = 0.02;
-      scene.add(rig);
+      const model = buildCharacterModel({ features: view.features });
+      if (view.profile) model.applyPalette(getPlayerProfilePalette(view.profile));
+      model.rig.position.y = 0.02;
+      scene.add(model.rig);
 
       const camera = new THREE.PerspectiveCamera(38, 420 / 560, 0.05, 20);
       camera.position.set(
