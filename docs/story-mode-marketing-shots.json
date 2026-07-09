@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "title": "Garden OS Story Mode Marketing Shots",
+  "purpose": "Canonical public screenshot and trailer beat set for the worn print South Philly Story Mode surface.",
+  "storeShotCount": 6,
+  "budgets": {
+    "totalMaxBytes": 30000000,
+    "defaultMaxBytes": 4000000
+  },
+  "shots": [
+    {
+      "id": "grid",
+      "file": "desktop-crop-accents.png",
+      "caption": "The Grid",
+      "storeSlot": 1,
+      "trailerBeat": "core_strategy",
+      "viewport": "desktop",
+      "minWidth": 1200,
+      "minHeight": 850,
+      "maxBytes": 4000000,
+      "mustReadAs": "8x4 strategy board with cosmetic crop identity accents"
+    },
+    {
+      "id": "score",
+      "file": "harvest-reward-desktop.png",
+      "caption": "The Score",
+      "storeSlot": 2,
+      "trailerBeat": "reward_payoff",
+      "viewport": "desktop",
+      "minWidth": 1200,
+      "minHeight": 850,
+      "maxBytes": 4000000,
+      "mustReadAs": "harvest grade, recipes, keepsakes, and tactile reward feedback"
+    },
+    {
+      "id": "backyard",
+      "file": "season-place-july.png",
+      "caption": "The Backyard",
+      "storeSlot": 3,
+      "trailerBeat": "place_establishing",
+      "viewport": "desktop-medium",
+      "minWidth": 1000,
+      "minHeight": 720,
+      "maxBytes": 4000000,
+      "mustReadAs": "July South Philly rowhome backyard with concrete, brick, weeds, and summer light"
+    },
+    {
+      "id": "conversation",
+      "file": "desktop-dialogue.png",
+      "caption": "The Conversation",
+      "storeSlot": 4,
+      "trailerBeat": "character_voice",
+      "viewport": "desktop",
+      "minWidth": 1200,
+      "minHeight": 850,
+      "maxBytes": 4000000,
+      "mustReadAs": "visible character identity with field-note dialogue and bed context"
+    },
+    {
+      "id": "problem",
+      "file": "desktop-play-event.png",
+      "caption": "The Problem",
+      "storeSlot": 5,
+      "trailerBeat": "season_pressure",
+      "viewport": "desktop",
+      "minWidth": 1200,
+      "minHeight": 850,
+      "maxBytes": 4000000,
+      "mustReadAs": "season event pressure with readable response controls"
+    },
+    {
+      "id": "quiet",
+      "file": "season-place-winter.png",
+      "caption": "The Quiet Moment",
+      "storeSlot": 6,
+      "trailerBeat": "seasonal_emotion",
+      "viewport": "desktop-medium",
+      "minWidth": 1000,
+      "minHeight": 720,
+      "maxBytes": 4000000,
+      "mustReadAs": "winter backyard stillness and seasonal passage"
+    },
+    {
+      "id": "title",
+      "file": "desktop-title.png",
+      "caption": "Title Card",
+      "trailerBeat": "opening_title",
+      "viewport": "desktop",
+      "minWidth": 1200,
+      "minHeight": 850,
+      "maxBytes": 4000000,
+      "mustReadAs": "launchable public title screen"
+    },
+    {
+      "id": "critter_cat",
+      "file": "critter-alley-cat.png",
+      "caption": "Alley Cat Patrol",
+      "trailerBeat": "ambient_life",
+      "viewport": "desktop-medium",
+      "minWidth": 1000,
+      "minHeight": 720,
+      "maxBytes": 4000000,
+      "mustReadAs": "intentional urban critter event cue"
+    },
+    {
+      "id": "critter_bird",
+      "file": "critter-bird.png",
+      "caption": "Fence Sparrow Watch",
+      "trailerBeat": "ambient_life",
+      "viewport": "desktop-medium",
+      "minWidth": 1000,
+      "minHeight": 720,
+      "maxBytes": 4000000,
+      "mustReadAs": "second deterministic critter cue"
+    },
+    {
+      "id": "mobile_reward",
+      "file": "harvest-reward-mobile.png",
+      "caption": "Mobile Reward",
+      "trailerBeat": "mobile_proof",
+      "viewport": "mobile",
+      "minWidth": 390,
+      "minHeight": 800,
+      "maxBytes": 3000000,
+      "mustReadAs": "same reward moment without mobile overflow"
+    },
+    {
+      "id": "mobile_event",
+      "file": "mobile-play-event.png",
+      "caption": "Mobile Event",
+      "trailerBeat": "mobile_proof",
+      "viewport": "mobile",
+      "minWidth": 390,
+      "minHeight": 800,
+      "maxBytes": 3000000,
+      "mustReadAs": "legible event pressure on mobile"
+    }
+  ]
+}

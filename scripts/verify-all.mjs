@@ -145,9 +145,11 @@ async function runLocalVerification() {
   await runStep('Story Mode Vitest suite', 'npm', ['test'], { cwd: storyModeDir });
   await runStep('Open world phases smoke', nodeBin, ['docs/open-world-phases-smoke.mjs']);
   await runStep('Story Mode production build', 'npm', ['run', 'build'], { cwd: storyModeDir });
+  const screenshotOutputDir = process.env.GOS_SCREENSHOT_OUTPUT_DIR || join(tmpdir(), `garden-os-story-screens-${Date.now()}`);
   await runStep('Story Mode screenshot regression', nodeBin, ['tests/story-mode-screenshot-regression.mjs'], {
-    env: browserEnv(),
+    env: browserEnv({ GOS_SCREENSHOT_OUTPUT_DIR: screenshotOutputDir }),
   });
+  await runStep('Story Mode marketing screenshot budget', nodeBin, ['scripts/verify-story-mode-marketing-shots.mjs', screenshotOutputDir]);
 
   const nodeRegressionScripts = [
     ['V5 nav copy regression', ['tests/v5-nav-copy-regression.mjs']],

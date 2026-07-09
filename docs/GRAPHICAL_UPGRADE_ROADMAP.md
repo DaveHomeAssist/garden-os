@@ -1,7 +1,7 @@
 # Garden OS Graphical Upgrade Roadmap
 
 Status: Active execution plan
-Last verified: 2026-07-03
+Last verified: 2026-07-09
 Scope: `story-mode/` visual system, screenshot proof, and later asset wiring
 
 ## Visual Thesis
@@ -89,6 +89,16 @@ Trailer polish and marketing screenshot templates.
 | Recipe rewards are visible artifacts, not loose tags | `story-mode/src/ui/harvest-reveal.js` renders recipe reward cards with ingredient chips from crop data |
 | Reward moments have tactile feedback | Recipe/keepsake cards expose `data-reward-card` hooks and a deterministic paper-fleck burst via `data-reward-burst` |
 | Reward visuals are desktop and mobile proven | `tests/story-mode-screenshot-regression.mjs` captures `harvest-reward-desktop.png` and `harvest-reward-mobile.png` |
+
+## P4 Trailer And Screenshot Readiness Gates
+
+| Requirement | Evidence |
+| --- | --- |
+| Canonical public screenshot set exists | `docs/story-mode-marketing-shots.json` maps the six store slots to `desktop-crop-accents.png`, `harvest-reward-desktop.png`, `season-place-july.png`, `desktop-dialogue.png`, `desktop-play-event.png`, and `season-place-winter.png` |
+| Trailer beats are named, not implicit | The same manifest tags opening title, core strategy, reward payoff, place establishing, character voice, season pressure, seasonal emotion, ambient life, and mobile proof captures |
+| Screenshot dimensions and asset budgets are enforced | `scripts/verify-story-mode-marketing-shots.mjs` validates PNG headers, minimum dimensions, per-shot byte budgets, unique store slots, and total set size |
+| Main verifier includes marketing readiness | `scripts/verify-all.mjs` now runs the marketing screenshot budget gate immediately after Story Mode screenshot regression |
+| Latest generated evidence is under budget | `/private/tmp/garden-os-story-screens-reconcile-full-20260709/story-mode-marketing-shots.manifest.json` recorded 11 shots, 6 store slots, and 4,917,553 bytes total under a 30,000,000 byte cap |
 
 ## Asset Rule
 
