@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garden OS — Character Lab</title>
+  <style>
+    body { margin: 0; background: #2c3a2b; font-family: monospace; color: #f7f2ea; }
+    #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; }
+    .cell { position: relative; }
+    .cell canvas { width: 100%; display: block; border-radius: 6px; }
+    .label { position: absolute; top: 6px; left: 8px; font-size: 12px; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div id="grid"></div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { buildCharacterModel } from './src/scene/player-character.js';
+
+    const VIEWS = [
+      { label: 'front', yaw: 0, dist: 1.1, height: 0.42 },
+      { label: 'three-quarter', yaw: Math.PI * 0.22, dist: 1.1, height: 0.42 },
+      { label: 'side', yaw: Math.PI / 2, dist: 1.1, height: 0.42 },
+      { label: 'face close-up', yaw: 0, dist: 0.5, height: 0.62, focusY: 0.64 },
+    ];
+
+    const grid = document.getElementById('grid');
+
+    for (const view of VIEWS) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = view.label;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(420, 560);
+      renderer.setPixelRatio(1);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.18;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x8ca07a);
+
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(2.4, 32),
+        new THREE.MeshStandardMaterial({ color: 0x6b8557, roughness: 1 }),
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      const sun = new THREE.DirectionalLight(0xfff4de, 1.9);
+      sun.position.set(-1.6, 3.2, 4.2);
+      sun.castShadow = true;
+      scene.add(sun);
+      scene.add(new THREE.AmbientLight(0xffefd0, 0.85));
+      const fill = new THREE.DirectionalLight(0xdfe8ff, 0.5);
+      fill.position.set(4.4, 2.0, -2.6);
+      scene.add(fill);
+
+      const { rig } = buildCharacterModel();
+      rig.position.y = 0.02;
+      scene.add(rig);
+
+      const camera = new THREE.PerspectiveCamera(38, 420 / 560, 0.05, 20);
+      camera.position.set(
+        Math.sin(view.yaw) * view.dist,
+        view.height,
+        Math.cos(view.yaw) * view.dist,
+      );
+      camera.lookAt(0, view.focusY ?? 0.4, 0);
+
+      renderer.render(scene, camera);
+      cell.appendChild(renderer.domElement);
+      cell.appendChild(label);
+      grid.appendChild(cell);
+    }
+
+    window.__characterLabReady = true;
+  </script>
+</body>
+</html>
