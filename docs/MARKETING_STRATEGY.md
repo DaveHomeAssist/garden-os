@@ -8,7 +8,7 @@
 
 *Under 300 characters.*
 
-Mom left you an 8x4 raised bed in a South Philly backyard. Now you have 12 chapters, 3 years, and three opinionated companions to prove you deserve it. A narrative strategy game about dirt, grief, and companion planting.
+Play as Mom returning to an 8x4 raised bed in a South Philly backyard, or customize the gardener for your household. Twelve chapters, three years, and three opinionated companions. A narrative strategy game about dirt, care, and companion planting.
 
 (267 characters)
 
@@ -16,9 +16,9 @@ Mom left you an 8x4 raised bed in a South Philly backyard. Now you have 12 chapt
 
 ## 2. Steam Long Description
 
-**Inherit the Bed. Earn the Garden.**
+**Return to the Bed. Earn the Garden.**
 
-Your mother kept a raised bed in the backyard of her South Philly rowhome. 8 feet by 4 feet. Thirty-two square feet of soil, sun, and whatever she was working through. She's gone now. The bed is yours.
+Mom is the default gardener: back at the raised bed in the backyard of a South Philly rowhome. 8 feet by 4 feet. Thirty-two square feet of soil, sun, and hard-won habits. Change the name and look if this is your household instead. The bed is yours because you are the one tending it.
 
 Garden OS is a narrative strategy game played across 12 chapters and 3 real growing seasons. You will plan, plant, and defend a single raised bed — not a sprawling farm, not a fantasy meadow. One bed. The stakes are small. The decisions are not.
 
@@ -37,7 +37,7 @@ Nothing is random. Every outcome traces back to a decision you made. When a crop
 Spring frost. August heatwaves. Block party weekend. The neighbor's cat. The calendar is not decorative — it is a constraint system. Each season introduces mechanical pressure that forces you to adapt or lose ground.
 
 **12 CHAPTERS. 3 YEARS. ONE BED.**
-The campaign is structured, authored, and finite. There is no endless sandbox. There is a story about a garden your mother kept, and whether you can keep it too.
+The campaign is structured, authored, and finite. There is no endless sandbox. There is a story about returning to a garden, keeping it alive, and making sauce from what you grew.
 
 ---
 
@@ -60,7 +60,7 @@ The campaign is structured, authored, and finite. There is no endless sandbox. T
 
 **VISUAL:** Tight overhead shot of an empty 8x4 raised bed. Real dirt. One pair of hands at the edge of frame, resting on the wooden border. The wood is weathered — this bed has been here for years. Slowly, a single seed packet is set down on the soil. The label reads "Roma Tomato" in faded ink with handwriting on the back we can't quite read.
 
-**AUDIO:** Neighborhood ambient — distant traffic, a screen door closing, someone's radio two houses over. No music. Then a single dry voice (Garden GURL): *"She kept better records than you do."*
+**AUDIO:** Neighborhood ambient — distant traffic, a screen door closing, someone's radio two houses over. No music. Then a single dry voice (Garden GURL): *"You kept better records than this."*
 
 **TEXT ON SCREEN (plain, no animation):** FROM THE DIRT UP
 
@@ -78,7 +78,7 @@ Cut to the game UI — the 8x4 grid from above. A hand drags a tomato seedling i
 Trellis placement casting a shadow across two squares. A root-depth cross-section view showing crops competing underground. A calendar advancing — frost date approaching, marked in red. Vegeman's voice, fast and manic: *"Technically if you stagger the beets in a chevron pattern you gain half a pH point but you will lose your mind."* Show the scoring overlay — Garden GURL's grading matrix appearing over the bed, crisp and unforgiving.
 
 **0:30–0:42 — THE SEASONS**
-Montage across three years. Spring: bare soil, careful first plantings. Summer: the bed overflowing, green and dense. Fall: harvest, scoring, some squares empty. Winter: the bed under a thin layer of snow, the backyard quiet. Then spring again — different plants, higher difficulty. Intercut with chapter title cards: "Chapter 4: July, Year One." "Chapter 9: April, Year Three." Onion Man, quieter now: *"She grew the same tomatoes every year. Did you know that?"*
+Montage across three years. Spring: bare soil, careful first plantings. Summer: the bed overflowing, green and dense. Fall: harvest, scoring, some squares empty. Winter: the bed under a thin layer of snow, the backyard quiet. Then spring again — different plants, higher difficulty. Intercut with chapter title cards: "Chapter 4: July, Year One." "Chapter 9: April, Year Three." Onion Man, quieter now: *"Same tomatoes every year. Did you know that?"*
 
 **0:42–0:52 — THE COMPANIONS**
 Brief character moments. Garden GURL delivering a score with zero warmth. Onion Man reacting to a failed crop like a blown save. Vegeman drawing a diagram that makes no sense and perfect sense simultaneously. These are not tutorial NPCs. These are people with opinions about your dirt.
@@ -136,7 +136,7 @@ Just the bed from above. Green on brown. The 8x4 grid faintly visible. Title ove
 
 The story press will tell about this game:
 
-**"A strategy game about grief disguised as a gardening game."** This is the pitch that writes itself. Every preview will mention the mother. Every review will spend a paragraph on how the 8x4 constraint mirrors something emotional. The raised bed as inherited obligation, as memorial, as the bounded space of what one person can tend.
+**"A strategy game about returning to care disguised as a gardening game."** This is the pitch that writes itself. Every preview will mention the mother because Mom is the default playable gardener. Every review can still spend a paragraph on how the 8x4 constraint mirrors something emotional: the raised bed as responsibility, practice, and the bounded space one person can actually tend.
 
 Secondary angles:
 - **The South Philly specificity.** Games journalism is hungry for settings that aren't medieval Europe or space. A rowhome backyard in South Philly is a hook. Onion Man being a Phillies fan is a hook. The block party as a seasonal event is a hook. Specificity is coverage.
@@ -164,11 +164,11 @@ An 8x4 bed sounds tiny. The marketing must reframe constraint as depth. "32 squa
 
 ## 10. Three Possible Taglines
 
-**1.** *Thirty-two square feet. Three years. Everything she left you.*
+**1.** *Thirty-two square feet. Three years. Everything you can tend.*
 
-**2.** *A strategy game about one raised bed and the woman who kept it.*
+**2.** *A strategy game about one raised bed and the gardener who comes back to it.*
 
-**3.** *Plan the garden. Tend the grief. Earn the score.*
+**3.** *Plan the garden. Tend the bed. Earn the score.*
 
 ---
 

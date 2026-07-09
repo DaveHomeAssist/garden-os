@@ -17,7 +17,7 @@ Artifact Class: Spec
 **Year 1 — Spring | Score Target: 4.0 | Mechanic: Basic Placement**
 
 ### OPENING
-The bed is under a blue tarp. Rain has pooled in the center fold. The player pulls the tarp back and sees 32 empty cells of cedar and soil, built by someone who does not use them anymore. No music. Ambient neighborhood noise: a screen door, a distant radio, traffic on Broad Street.
+The bed is under a blue tarp. Rain has pooled in the center fold. The player pulls the tarp back and sees 32 empty cells of cedar and soil. For the default profile, Mom is back at the bed she built; for a customized profile, this is the household bed they are claiming as their own. No music. Ambient neighborhood noise: a screen door, a distant radio, traffic on Broad Street.
 
 ### MECHANIC INTRODUCTION
 GURL: "This bed has good bones. Let us see if you do."
@@ -54,7 +54,7 @@ The season resolves. The bed produces something small. The screen fades to a war
 **Year 1 — Summer | Score Target: 5.5 | Mechanic: Trellis and Support**
 
 ### OPENING
-The trellis is visible for the first time. Wire and cedar, running along the back two rows. It has been here since Mom installed it. The wire has a slight green patina. Vegeman is standing in front of it holding a tomato seedling sideways.
+The trellis is visible for the first time. Wire and cedar, running along the back two rows. It has been here long enough to carry weather and habit. The wire has a slight green patina. Vegeman is standing in front of it holding a tomato seedling sideways.
 
 ### MECHANIC INTRODUCTION
 Vegeman: "Watch this. I am going to put this tomato right here in the front."
@@ -70,12 +70,12 @@ GURL: "Climbing crops go in trellis rows. Rows zero and one. The wire is structu
 
 GURL: "That crop does not climb. It is occupying infrastructure it cannot use. That is wasted support capacity."
 
-Onion Man: "Mom put that wire up for a reason. Not everything belongs everywhere."
+Onion Man: "You put that wire up for a reason. Not everything belongs everywhere."
 
 ### SUCCESS RESOLUTION
 GURL: "Trellis compliance confirmed across both rows. The wire is doing what it was built to do."
 
-Onion Man: "Mom put that trellis up herself. Seeing it used right does something to me."
+Onion Man: "That trellis still knows what it was built to do. Seeing it used right does something to me."
 
 **Unlock:** Trellis Zone overlay. The board visually differentiates trellis rows from access rows with persistent color coding.
 
@@ -441,23 +441,23 @@ Onion Man: "Tomatoes. Basil. Peppers. Onions. Carrots."
 
 A pause.
 
-Onion Man: "That is the list. That is her list."
+Onion Man: "That is the list. That is your list."
 
 Another pause. Shorter.
 
-Onion Man: "She would have made sauce with this. I am not crying. The onion is crying."
+Onion Man: "You made sauce possible with this. I am not crying. The onion is crying."
 
 **Beat 7 — The Unlock:**
-Mom's Recipe card appears in the Season Journal. It does not contain the recipe. It contains the harvest list and the date. That is enough.
+The Sauce Recipe card appears in the Season Journal. With the default profile it is labelled Mom's Recipe; with a custom profile it uses the gardener's name. It contains the harvest list and the date. That is enough.
 
 No other character speaks. Vegeman does not appear. The Critters are silent. The screen holds on the harvest list and the Recipe card for as long as the player lets it.
 
 ### SUCCESS RESOLUTION
 GURL: "Harvest inventory matches target recipe. Yield sufficient. Season objective complete."
 
-Onion Man: "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is her list. She would have made sauce with this. I am not crying. The onion is crying."
+Onion Man: "Tomatoes. Basil. Peppers. Onions. Carrots. That is the list. That is your list. You made sauce possible with this. I am not crying. The onion is crying."
 
-**Unlock:** Mom's Recipe card. Persistent item in the Season Journal. Contains the harvest list and the date.
+**Unlock:** Sauce Recipe card. Default label: Mom's Recipe. Persistent item in the Season Journal. Contains the harvest list and the date.
 
 ### FAILURE RESOLUTION
 Onion Man: "We are close. We are missing [ingredient]. The recipe needs all of them and the bed gave us most of them. Most is not enough for sauce. Most is enough for next year."
@@ -524,13 +524,13 @@ The final screen: the bed, covered, in the gray yard. The legacy record below it
 | Chapter | Garden GURL | Onion Man | Vegeman | Garden Critters |
 |---|---|---|---|---|
 | 1 — First Light | Arrives as judge, sets the standard | Already here, already invested | Absent | Absent |
-| 2 — Vertical Law | Enforces first hard rule | Connects trellis to Mom's work | Fails publicly, teaches by mistake | Absent |
+| 2 — Vertical Law | Enforces first hard rule | Connects trellis to the gardener's own work | Fails publicly, teaches by mistake | Absent |
 | 3 — Good Neighbors | Scores relationships, not just cells | Leads the chapter, connects garden to block | Absent | Absent |
 | 4 — Dormant | Reviews data without sentiment | Feels the weight of three seasons | Absent | Absent |
 | 5 — Quick Harvest | Shifts from judge to strategist | Translates factions into meals | Absent | Absent |
 | 6 — Heat Check | Delivers forecast like a legal warning | Sweats through August, survives | Absent | First appearance, reports damage |
 | 7 — Underground | Holds the row standard | Quietly proud of roots, almost cries | Absent | Exploits heat damage from prior chapter |
-| 8 — The Seedling | Notes infrastructure, respects history | Tells the seedling story, carries memory | Absent | Absent |
+| 8 — The Seedling | Notes infrastructure, respects history | Tells the seedling story, carries continuity | Absent | Absent |
 | 9 — The Board | Tests instead of teaches, respect is conditional | Recognizes the shift to proving | Absent | Event-driven pressure |
 | 10 — Full House | Demands full capacity, no mercy | Watches from the side, lets Vegeman return | Returns triumphant, confused by competence | Opportunistic during full-bed stress |
 | 11 — Sauce | Reports the harvest like compliance | Reads the list, says the line, goes quiet | Absent, correctly | Silent, correctly |
@@ -549,7 +549,7 @@ The final screen: the bed, covered, in the gray yard. The legacy record below it
 7. No ellipses in dialogue.
 8. The word "journey" is never used.
 9. Phillies references follow seasonal cadence: spring (hope and opener energy), summer (grind and pennant race), fall (tension and October pressure), winter (hot stove speculation and offseason trades).
-10. Mom is never shown, never quoted, never given dialogue. She exists in the bed, the trellis, the cedar, and what other characters say about her.
+10. Mom is the default playable identity. Dialogue should address the active gardener; if the player customizes the profile, swap to profile-aware labels without turning Mom into a ghost story.
 11. Every line fires from a deterministic game-state trigger. No random dialogue selection.
 
 ---
@@ -561,7 +561,7 @@ The final screen: the bed, covered, in the gray yard. The legacy record below it
 - Chapters 1-2: Curiosity and first friction. The bed is a puzzle. The characters are entertaining but sharp.
 - Chapters 3-4: Growing familiarity. The bed is becoming the player's. The winter review makes them accountable to their own record.
 - Chapters 5-6: Confidence and first real pressure. The system is deeper than they thought. The environment pushes back.
-- Chapters 7-8: Quiet competence and inherited weight. The roots chapter and the seedling story land because the player has been doing the work. They did not earn sentiment. They earned context.
+- Chapters 7-8: Quiet competence and returning ownership. The roots chapter and the seedling story land because the player has been doing the work. They did not earn sentiment. They earned context.
 - Chapters 9-10: Mastery under constraint. The game respects the player enough to demand more. Vegeman's return recontextualizes the entire arc.
 - Chapter 11: The harvest list. No speech. No crescendo. Just five ingredients and one man reading them aloud.
 - Chapter 12: Two words present or absent. The bed, covered. The record, complete. The game, continuing.
@@ -572,5 +572,5 @@ The final screen: the bed, covered, in the gray yard. The legacy record below it
 - Plays music designed to trigger tears.
 - Has a character deliver a monologue about loss or memory.
 - Uses the word "healing" in any context.
-- Shows Mom.
+- Treats Mom as dead, absent, or impossible to play.
 - Explains why the sauce matters. The player either understands or they do not. The game trusts them.

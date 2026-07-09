@@ -80,7 +80,7 @@ Reactive content should sound different in:
 - spring: possibility, caution, reopening
 - summer: pressure, density, pests, heat, overreach
 - fall: payoff, scarcity, preservation, seriousness
-- winter: memory, review, inheritance, quiet
+- winter: memory, review, returning ownership, quiet
 
 ### Rule 4: Critters are not the default warning system
 

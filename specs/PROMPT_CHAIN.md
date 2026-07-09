@@ -31,7 +31,7 @@ product well; framework code, build tooling, or packages are allowed when the
 surface needs them. Offline-capable. localStorage or a stronger local store as
 needed.
 SCOPE: 12-chapter campaign (6-8 hour playthrough). 8x4 raised bed. 20 crops. 40 events.
-SETTING: South Philadelphia rowhome backyard. Mom built the bed. She does not garden anymore. The player inherited it.
+SETTING: South Philadelphia rowhome backyard. Mom is the default playable gardener returning to her own 8x4 raised bed. If the player customizes the profile, the story reads as their household, their garden, and their sauce recipe.
 CHARACTERS: Garden GURL (scoring judge, dry), Onion Man (emotional reactor, Phillies fan), Vegeman (chaos tutorial agent), Garden Critters (collective nuisance voice).
 ART DIRECTION: Editorial Realism + Graphic Overlays. Grounded backyard environment with bold comic character inserts and utility UI. Not cozy. Not children's game. Not fantasy.
 DESIGN PILLAR: Partial irreversibility. Once a season starts, most placements lock. Interventions are scarce. Consequences carry forward.
@@ -79,7 +79,7 @@ CONSTRAINTS:
 - Every Vegeman line must sound like a bad idea pitched with dangerous confidence.
 - Every Critter line must sound like a nuisance report from the yard itself.
 - No character uses em dashes, ellipses for drama, or the word "journey."
-- Mom is never shown. She is referenced. The bed is her presence.
+- Mom is playable by default. Do not write her as dead, absent, or impossible to show. If the player customizes the profile, keep the same agency language and swap to player-profile labels.
 - No line should beg the player to feel something. The feeling arrives through precision.
 
 FORMAT: Markdown. Chapter sections clearly delineated. Dialogue in quotes with character name prefix.
@@ -423,7 +423,7 @@ TRIGGER CATEGORIES (minimum 8 lines per character per category):
 - phillies_summer (midseason grind)
 - phillies_fall (playoff tension)
 - phillies_winter (hot stove speculation)
-- mom_memory (triggered by specific crop combinations)
+- gardener_memory (legacy data key `mom_memory` accepted; triggered by specific crop combinations)
 
 FILE 2: DIALOGUE_SYSTEM.md
 The selection logic:
@@ -439,7 +439,7 @@ CONSTRAINTS:
 - Every line must pass the Voice Bible recognition test (identifiable without character label)
 - No em dashes. No ellipses for drama. No "journey."
 - Phillies references are seasonal (spring: hope, summer: grind, fall: tension, winter: speculation)
-- Mom lines must be specific (a crop, a habit, a place in the bed) not generic ("she loved this garden")
+- Gardener memory lines must be specific (a crop, a habit, a place in the bed) and must work when Mom is the playable default or when the profile is customized.
 - Vegeman lines must be structurally wrong but entertainingly confident
 - Critter lines must be terse, observational, and indifferent to player feelings
 
@@ -643,16 +643,16 @@ ADD:
    - Between-season: soil fatigue, pantry update, journal entry, bed condition
    - Recipe tracking: ingredients accumulate across seasons; recipe completion triggers narrative artifact
    - Mastery rank: computed at campaign end from cumulative performance
-   - Keepsakes: Mom's Trowel (Ch1), First Seed Packet (first save), The Photo (Ch8), Sauce Card (Ch11)
+   - Keepsakes: Gardener's Trowel (default label: Mom's Trowel), First Seed Packet (first save), The Photo (Ch8), Sauce Card (Ch11)
 
 5. CHAPTER 11 SAUCE SEQUENCE
    - After harvest scoring, check if planted crops include: tomato, basil, pepper, onion, carrot
-   - If yes: display harvest list one ingredient at a time (400ms stagger), then GURL's yield calculation, then Onion Man's line: "She would have made sauce with this. I am not crying. The onion is crying."
+   - If yes: display harvest list one ingredient at a time (400ms stagger), then GURL's yield calculation, then Onion Man's line: "That is the sauce list. You grew every ingredient. I am not crying. The onion is crying."
    - If no: display what's missing, Onion Man's "almost" line, motivation to retry
 
 6. JOURNAL SYSTEM
    - Persistent record across chapters: planting log, harvest record, technique notes
-   - Mom's Pages: unlock one per chapter (handwritten-style content)
+   - Gardener Pages: unlock one per chapter, labelled as Mom's Pages only for the default Mom profile.
    - Viewable from winter review chapters and main menu
 
 7. CHAPTER 12 EPILOGUE

@@ -845,7 +845,7 @@
     },
     "commentary": {
       "gurl": "No physical intervention observed. Emotional survey of back row noted. No scoring impact beyond the attention itself.",
-      "onion": "The back row. She always started with the back row. I do not know why I remember that right now.",
+      "onion": "The back row. Always start with the back row. I do not know why I remember that right now.",
       "vegeman": "Standing around looking at dirt is not gardening. But I was not going to say anything.",
       "critters": "Human stationary at perimeter. No threat. No food. Disregard."
     },
@@ -969,8 +969,8 @@
     },
     "commentary": {
       "gurl": "Mail received for previous resident. Seed catalog. Botanical content is current year. No action required.",
-      "onion": "It still comes. Every January. Her name on the label. I do not change it. I will not change it.",
-      "vegeman": "Order from it. Use her account. She would want the garden to have good seeds.",
+      "onion": "It still comes. Every January. The same catalog, same tomatoes circled first. I do not change it. I will not change it.",
+      "vegeman": "Order from it. Seeds are seeds. The garden wants the good ones.",
       "critters": "Paper material detected in mailbox. Not relevant to operations."
     },
     "chapterAvailability": [4, 8, 12],

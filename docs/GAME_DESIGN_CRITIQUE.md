@@ -166,7 +166,7 @@ Award-friendly is not just "emotional." It is specific, coherent, and authored.
 
 To hit that lane:
 - Commit to one strong thesis: care is a skill under pressure
-- Keep the world extremely specific: South Philly, rowhouse yard, inherited family habits
+- Keep the world extremely specific: South Philly, rowhouse yard, household garden habits
 - Use restraint in writing: fewer lines, sharper lines
 - Let mechanics carry meaning: the bed teaches the story
 - Avoid cozy aesthetic autopilot

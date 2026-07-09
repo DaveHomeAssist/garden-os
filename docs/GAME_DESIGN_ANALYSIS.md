@@ -7,11 +7,11 @@
 
 ## High Concept
 
-Garden OS is a grounded narrative strategy game where you inherit your mom's 8 by 4 raised bed and learn to care for it, one season, one layout, and one emotionally loaded decision at a time.
+Garden OS is a grounded narrative strategy game where Mom is the default playable gardener returning to an 8 by 4 raised bed, with customization for other household reads. You learn to care for the bed one season, one layout, and one consequential decision at a time.
 
 ## Elevator Pitch
 
-Garden OS is a small-scale, high-meaning strategy game set in a real South Philly backyard, where the player inherits a raised bed their mom no longer tends and must figure out how to make it thrive across seasons. Instead of fantasy farming sprawl, the game focuses on tight spatial planning, companion planting, trellis logic, weather events, pests, and hard tradeoffs inside a single 8 by 4 plot. Its voice is carried by a cast of grounded, strange, memorable characters — Garden GURL, Onion Man, Vegeman, and the Garden Critters — but the emotional weight comes from something simple and human: taking over a space that used to belong to someone you love, and slowly becoming worthy of it.
+Garden OS is a small-scale, high-meaning strategy game set in a real South Philly backyard, where the player is the gardener returning to a raised bed and must figure out how to make it thrive across seasons. Instead of fantasy farming sprawl, the game focuses on tight spatial planning, companion planting, trellis logic, weather events, pests, and hard tradeoffs inside a single 8 by 4 plot. Its voice is carried by a cast of grounded, strange, memorable characters — Garden GURL, Onion Man, Vegeman, and the Garden Critters — but the emotional weight comes from something simple and human: coming back to a space that still needs care, and proving that care through practice.
 
 ---
 
@@ -42,9 +42,9 @@ Garden OS is a small-scale, high-meaning strategy game set in a real South Phill
 
 ## What Makes It Emotionally Unique
 
-Its emotion is not "wholesome gardening." Its emotion is **inheritance through maintenance**.
+Its emotion is not "wholesome gardening." Its emotion is **return through maintenance**.
 
-You are not building a dream farm. You are stepping into a space someone else made, someone who mattered, and discovering that care is a skill before it is a feeling. The bed becomes a stand-in for family memory, aging, responsibility, guilt, pride, and earned competence. The game does not sentimentalize the garden. It asks the player to prove love through attention, learning, restraint, and follow-through.
+You are not building a dream farm. You are stepping back into a specific space and discovering that care is a skill before it is a feeling. The bed becomes a stand-in for family memory, aging, responsibility, pride, and earned competence. The game does not sentimentalize the garden. It asks the player to prove care through attention, learning, restraint, and follow-through.
 
 That is much rarer, and much stronger, than cozy nostalgia.
 
@@ -84,7 +84,7 @@ Under the hood, each planted cell is judged on sun, support, shade, access, seas
 **Plan → Commit → Weather the Season → Spend One Intervention → Harvest → Carry Forward**
 
 ### Start of Season
-Choose the season goal, review inherited constraints, draft the bed.
+Choose the season goal, review returning-bed constraints, draft the bed.
 
 ### Commit Phase
 Lock the layout. Once locked, most placements cannot be freely edited.
@@ -154,7 +154,7 @@ A few things persist to the next season: unlocked crop notes, bed condition, sav
 - Completing Mom-linked dishes and rituals
 - Mastering each season type
 - Earning "clean season" runs
-- Unlocking harder inheritance scenarios
+- Unlocking harder returning-gardener scenarios
 - Changing how the characters talk to you
 - Building a final Year 3 capstone harvest that feels earned
 
@@ -260,7 +260,7 @@ If the bed feels small but deep, you win. If it feels small and shallow, the who
 
 3. Failure should be poignant, not punishing. Bad layouts, pests, or poor timing should sting, but they should create story and learning, not just reset the player.
 
-4. Optimize for quotable press language: "a strategy game about inheritance," "an 8x4 plot with the emotional weight of a whole family story," "gardening as spatial reasoning and care work."
+4. Optimize for quotable press language: "a strategy game about returning to care," "an 8x4 plot with the emotional weight of a whole family story," "gardening as spatial reasoning and care work."
 
 ---
 

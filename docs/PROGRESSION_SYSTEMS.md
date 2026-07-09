@@ -11,7 +11,7 @@ The 12-chapter campaign advances on four linked tracks:
 | System mastery | mechanics depth, score targets, pressure combinations | keeps strategic depth alive |
 | Bed relationship | familiarity with this exact 8x4 layout | emotional continuity |
 | Household meaning | pantry outcomes, recipe milestones | makes outcomes concrete |
-| Legacy ownership | keepsakes, notes, repeatable routines | turns inheritance into stewardship |
+| Returning ownership | keepsakes, notes, repeatable routines | turns care into stewardship |
 
 Each chapter should answer:
 - What new pressure can the player read now?

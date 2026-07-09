@@ -1,6 +1,6 @@
 # Garden OS: 12-Chapter Campaign Design
 
-> Each chapter teaches one major mechanic, raises the score target, advances the story, and deepens the player's relationship to the raised bed. Mom is the default playable gardener, not an absent figure.
+> Each chapter teaches one major mechanic, raises the score target, advances the story, and deepens the player's relationship to the raised bed. Mom is the default playable gardener.
 > The campaign escalates in both system mastery and emotional meaning.
 
 ---

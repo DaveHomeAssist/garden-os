@@ -147,7 +147,7 @@ The bed's **heart leak**. He feels things too fast, ties garden outcomes to memo
 - Big therapy speech
 - Fake toughness
 - Fairy tale wonder
-- Grand philosophical monologues about grief
+- Grand philosophical monologues about loss
 
 ## 6. Humor Style
 

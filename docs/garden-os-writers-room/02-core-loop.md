@@ -5,7 +5,7 @@ Project: Garden OS
 
 Task: Audit the current implied gameplay loop and redesign it into a compelling, replayable, game-worthy core loop.
 
-Context: The game centers on planning and simulating an 8x4 raised bed with spacing, companion planting, trellis usage, access paths, seasonal events, and harvest outcomes. Emotional wrapper: inheritance, family memory, and learning to care for Mom's bed across 3 in-game years.
+Context: The game centers on planning and simulating an 8x4 raised bed with spacing, companion planting, trellis usage, access paths, seasonal events, and harvest outcomes. Emotional wrapper: Mom as the default playable gardener returning to the bed, with custom profile support for the player's household, across 3 in-game years.
 
 Output:
 1. Current likely core loop
@@ -25,4 +25,4 @@ Constraints:
 - No combat
 - Do not turn it into Stardew
 - Respect one raised bed scale
-- Keep loop grounded in gardening + inheritance
+- Keep loop grounded in gardening + returning ownership

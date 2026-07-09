@@ -1030,9 +1030,9 @@
       "npc": "lila",
       "type": "fetch",
       "title": "Mom's Secret Recipe",
-      "description": "Lila's mother left behind a handwritten recipe card — a sauce that takes eight ingredients, all garden-fresh. She's never made it before. This is personal, and every ingredient has to be perfect.",
-      "acceptDialogue": "This is my mother's recipe. She never made it for anyone outside the family. I've never made it at all. I need tomatoes, basil, peppers, onion, carrot, and garlic — all from the garden. Not because it tastes better. Because she would have wanted it that way. Every ingredient matters. Don't bring me anything you wouldn't eat raw, standing in the dirt.",
-      "progressDialogue": "I keep reading her handwriting on the card. She underlined 'fresh' three times. She spelled 'garlic' wrong. I'm not changing it. Just — bring me what I asked for. Take your time. But not too much time. Fall doesn't last forever.",
+      "description": "Lila brings a handwritten family recipe card — a sauce that takes eight ingredients, all garden-fresh. She has not made it for the block before. This is personal, and every ingredient has to be perfect.",
+      "acceptDialogue": "This is my family's recipe. We do not make it for just anyone. I need tomatoes, basil, peppers, onion, carrot, and garlic — all from the garden. Not because it tastes better. Because the garden has to be part of it. Every ingredient matters. Don't bring me anything you wouldn't eat raw, standing in the dirt.",
+      "progressDialogue": "I keep reading the handwriting on the card. 'Fresh' is underlined three times. Garlic is spelled wrong. I'm not changing it. Just bring me what I asked for. Take your time. But not too much time. Fall doesn't last forever.",
       "completeDialogue": "Everything's here. All of it, perfect. I can smell her kitchen already. ...Thank you. I mean it. Here — these seeds are rare. I've been saving them for someone who understands that food isn't just food. It's memory. It's people. You get that.",
       "requirements": [
         {

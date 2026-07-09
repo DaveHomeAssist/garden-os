@@ -53,7 +53,7 @@ Source: Playtesting analysis of cutscene-machine.js, cutscenes.js, speakers.js
 | pest-mixed | Beneficial insects, pest-repellent companion | Critters + GURL |
 | neighbor-positive | Compost gift, seed swap, block party | Onion Man (community) |
 | neighbor-negative | Foot traffic, cat patrol, stolen harvest | Critters (intrusion) |
-| memory-neutral | Mom's trowel, seedling lineage, photo | Onion Man (memory) |
+| memory-neutral | gardener's trowel, seedling lineage, photo | Onion Man (memory) |
 | infrastructure | Compaction, enrichment, trellis stress | GURL (structural) |
 | windfall | Lucky break, bonus yield, surprise growth | Vegeman (enthusiasm) |
 

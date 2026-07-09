@@ -247,18 +247,18 @@ Seasonal mapping:
 - Fall chapters (3, 7, 11): `phillies_fall`
 - Winter chapters (4, 8, 12): `phillies_winter`
 
-### 6.2 Mom Memory Triggers
+### 6.2 Gardener Memory Triggers
 
-Mom memory lines fire once per chapter, during a quiet moment. The trigger fires at the REVIEW phase of each season (or during winter review for winter chapters).
+Gardener memory lines fire once per chapter, during a quiet moment. The runtime may keep the legacy `mom_memory` data key, but the writing rule is profile-aware: Mom is the default playable gardener, and customized profiles should read as the active gardener's own household history.
 
 Frequency: maximum one `mom_memory` trigger per chapter.
 
 Chapter gating:
-- Chapters 1-2: No mom memory lines. Too early.
-- Chapters 3-4: Mom memory lines available. Focus on infrastructure (trellis, cedar, bed dimensions).
-- Chapters 5-8: Mom memory lines available. Focus on specific crops and habits.
-- Chapters 9-11: Mom memory lines available. Focus on specific cells, routines, food.
-- Chapter 12: No mom memory trigger. The epilogue handles the emotional weight.
+- Chapters 1-2: No gardener memory lines. Too early.
+- Chapters 3-4: Gardener memory lines available. Focus on infrastructure (trellis, cedar, bed dimensions).
+- Chapters 5-8: Gardener memory lines available. Focus on specific crops and habits.
+- Chapters 9-11: Gardener memory lines available. Focus on specific cells, routines, food.
+- Chapter 12: No gardener memory trigger. The epilogue handles the emotional weight.
 
 Selection: When mom_memory fires, GURL and Onion Man each deliver one line from the `mom_memory` pool. Pool selection follows the standard algorithm (Section 4.1).
 
@@ -288,14 +288,14 @@ The line pools in DIALOGUE_ENGINE.json are universal across all three years. Dif
 - Reduced trigger variety: no challenge triggers, no critter triggers, no full-bed trigger (32/32 unlikely in Year 1).
 - Vegeman only in Chapter 2.
 - Phillies lines seasonal as normal.
-- Mom memory lines start at Chapter 3.
+- Gardener memory lines start at Chapter 3.
 - Placement dialogue fires at standard 1-in-3 rate.
 
 ### 7.2 Year 2 (Chapters 5-8)
 
 - Critters join at Chapter 6. Event triggers now include critter lines.
 - Challenge triggers not yet available (challenges unlock at Chapter 9).
-- Mom memory lines fire with crop/habit specifics.
+- Gardener memory lines fire with crop/habit specifics.
 - Phillies lines seasonal as normal.
 - Full bed trigger theoretically possible but unlikely.
 
@@ -303,7 +303,7 @@ The line pools in DIALOGUE_ENGINE.json are universal across all three years. Dif
 
 - Full trigger set available: challenges, full bed, critters, all event types.
 - Vegeman returns in Chapter 10.
-- Mom memory lines fire with cell-specific and food-specific content.
+- Gardener memory lines fire with cell-specific and food-specific content.
 - Chapter 11 sauce moment is the only chapter-locked trigger in the game.
 - Chapter 12 epilogue fires fixed lines with sauce-conditional branching.
 
@@ -369,8 +369,8 @@ UI Renderer (text overlay, character label, timing delays)
 - [ ] Epilogue branching: verify Onion Man's final line includes "and so are you" only when sauce was completed.
 - [ ] No-repeat: trigger the same event type 4 times consecutively, verify no line repeats within 3 firings.
 - [ ] Phillies frequency: run 30 season starts, verify Phillies lines appear approximately 10 times (1-in-3).
-- [ ] Mom memory: verify zero mom memory lines in Chapters 1-2 and Chapter 12.
-- [ ] Mom specificity: audit all mom_memory lines for concrete details (crop, cell, tool, habit).
+- [ ] Gardener memory: verify zero `mom_memory`/gardener-memory lines in Chapters 1-2 and Chapter 12.
+- [ ] Gardener specificity: audit all `mom_memory` lines for concrete details (crop, cell, tool, habit) and profile-aware wording.
 
 ---
 

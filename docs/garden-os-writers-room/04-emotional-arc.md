@@ -20,5 +20,5 @@ Output:
 Constraints:
 - No fantasy
 - No melodrama
-- No dead-parent monologue energy unless fully justified
+- No loss monologue energy unless fully justified
 - Quiet pride over big speeches

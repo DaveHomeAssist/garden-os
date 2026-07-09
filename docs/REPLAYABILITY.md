@@ -16,7 +16,7 @@ The first playthrough teaches the player how the garden works. The second playth
 
 - **The 8x4 bed is a tight constraint.** 32 squares is not enough to do everything in one run. The player who grew tomatoes and peppers knows they skipped the root vegetable path entirely. The bed's smallness is the replayability engine.
 
-- **Mom's journal entries unlock based on what you grew.** Different crop families reveal different memories. No playthrough sees all of them. This is the emotional reason to replay — the mechanical reasons above just give it structure.
+- **Gardener journal entries unlock based on what you grew.** With the default profile these are Mom's pages; with a customized profile they become the household's garden notes. Different crop families reveal different routines. No playthrough sees all of them. This is the emotional reason to replay — the mechanical reasons above just give it structure.
 
 **What we are NOT doing:** No stat-inflation New Game Plus, no fake "true ending," and no vertical grind ladder. Replay value comes from lateral variety and stricter mastery contexts. A post-campaign **Legacy Mode** is allowed only if it preserves the same ending and core 8x4 identity.
 
@@ -50,7 +50,7 @@ Sharing must be organic to the game's identity. A South Philly raised bed is inh
 
 - **End-of-season garden portrait.** A stylized overhead export of the 8x4 bed at harvest, using the game's print-texture visual language, with yield stats rendered as a seed-packet label. This is the primary share artifact. It should look like something you would pin to a refrigerator.
 
-- **Mom's recipe card.** Based on what you actually grew, the game generates a recipe card from Mom's collection that uses those ingredients. A tomato-heavy garden gets her marinara. A root-heavy garden gets her roasted root soup. These are real recipes, formatted as handwritten index cards. Players share these because they are genuinely useful and personal.
+- **Sauce and recipe cards.** Based on what you actually grew, the game generates a recipe card from the active gardener's collection that uses those ingredients. With the default profile this is Mom's collection. A tomato-heavy garden gets marinara. A root-heavy garden gets roasted root soup. These are real recipes, formatted as handwritten index cards. Players share these because they are genuinely useful and personal.
 
 - **Chapter report cards.** Simple letter grades per chapter with one-line summaries: "Chapter 4: The Aphid Siege — B+. Lost the basil, saved the tomatoes." These are compact enough for a text message.
 
@@ -70,7 +70,7 @@ Wants the highest possible score per square foot. Cares about companion planting
 **What the game provides:** Full scoring transparency. No hidden multipliers. A clear best-possible score per chapter that can be theoretically calculated. Post-chapter breakdowns that show exactly where points were gained or lost.
 
 ### The Storyteller
-Wants to see every Mom journal entry, every character interaction, every critter event. Score is secondary to narrative completeness. They replay to find the conversation they missed when they chose Onion Man over Garden GURL in Chapter 7.
+Wants to see every gardener journal entry, every character interaction, every critter event. Score is secondary to narrative completeness. They replay to find the conversation they missed when they chose Onion Man over Garden GURL in Chapter 7.
 
 **What the game provides:** A journal collection screen that shows silhouettes of undiscovered entries. Character relationship summaries that hint at unvisited dialogue. No numerical completion percentage — just visible gaps.
 
@@ -85,7 +85,7 @@ Wants to finish a season in minimum real-time with minimum score threshold met. 
 **What the game provides:** An in-game timer (off by default, toggle in settings). Chapter-split tracking. The fast-forward system for mastered chapters supports this without being designed for it.
 
 ### The Roleplayer
-Wants to grow what Mom would have grown, or what their own family grows, or a historically accurate South Philly Italian-American garden. Score is irrelevant.
+Wants to grow what Mom would grow by default, what their own family grows in a customized run, or a historically accurate South Philly Italian-American garden. Score is irrelevant.
 
 **What the game provides:** No score penalty harsh enough to prevent any crop combination from reaching the ending. The game always completes. You can grow a terrible garden and the story still resolves — you just get a different tone in the final chapter.
 
@@ -100,7 +100,7 @@ Unlocked after completing the campaign once. Presented as "conditions" for the s
 | **Drought Year** | "Summer of '03 all over again" | Water is limited per chapter. Must prioritize which rows get watered. |
 | **The Neighbor's Shade Tree** | "Mr. Petrosino's maple finally hit the fence line" | Two columns of the bed are now partial shade. Full-sun crops penalized there. |
 | **Community Plot** | "The block captain asked if you could grow for the food bank too" | Yield targets increased by 40%. Score based on total output, not optimization. |
-| **Heirloom Only** | "Only seeds from Mom's tin" | No hybrid varieties available. Reduced pest resistance across the board. |
+| **Heirloom Only** | "Only seeds from the old tin" | No hybrid varieties available. Reduced pest resistance across the board. |
 | **No-Till** | "Garden GURL's challenge" | Cannot reset soil between seasons. Must manage nutrient depletion across chapters. |
 | **Late Start** | "You didn't get the keys until May" | First two planting windows are gone. Must work with a compressed season. |
 | **The Apprentice** | "Vegeman's kid wants to help" | Random squares get planted with wrong crops between chapters. Must adapt or replant. |
@@ -116,7 +116,7 @@ Modifiers can be combined. The game does not balance for all combinations — th
 ### What Fits Naturally
 
 **Weekly Seed of the Week (passive, non-FOMO):**
-Each real-world week, the main menu features a different crop variety with a short write-up — botanical history, growing tips, a Mom memory. This is purely informational. It does not unlock anything. It does not expire. It is a garden almanac page. All past entries remain accessible in the seed catalog. Nothing is missable.
+Each real-world week, the main menu features a different crop variety with a short write-up — botanical history, growing tips, a gardener memory. This is purely informational. It does not unlock anything. It does not expire. It is a garden almanac page. All past entries remain accessible in the seed catalog. Nothing is missable.
 
 **Seasonal real-world alignment (gentle):**
 If the player opens the game during real-world spring, the menu background shows spring. If winter, winter. The characters' idle dialogue on the menu screen shifts. This is ambiance, not content.
@@ -212,7 +212,7 @@ The 8x4 bed is not a limitation we are working around. It is the design.
 | The 8x4 bed dimensions | This is the identity of the game. It never changes. |
 | The 12-chapter structure | Players should be able to plan around a known timeline. |
 | Core crop behavior | Tomatoes always grow the same way. Determinism is sacred. |
-| Mom's backstory and the reason you inherited the garden | The emotional foundation cannot shift. |
+| Mom as the default playable gardener and the reason for returning to the bed | The emotional foundation cannot shift. |
 | The South Philly setting and seasonal weather patterns | The sense of place is non-negotiable. |
 | Scoring formulas | Optimizers need stable ground to optimize on. |
 | Chapter-to-chapter time progression | Spring is always spring. The calendar does not shuffle. |
@@ -223,7 +223,7 @@ The 8x4 bed is not a limitation we are working around. It is the design.
 |---|---|
 | Player crop choices and bed layout | This is the primary expression space. |
 | Character emphasis path | Garden GURL / Onion Man / Vegeman dialogue weighting and challenge framing should vary by player behavior. |
-| Which Mom journal entries appear | Tied to crop choices. Different gardens, different memories. |
+| Which gardener journal entries appear | Tied to crop choices. Different gardens, different memories. |
 | Critter encounters | Which critters appear depends on what is planted. Deterministic but varied. |
 | Available seeds in later chapters | Gated by character relationships and prior choices. |
 | End-of-season narrative tone | The story resolves differently based on yield, relationships, and garden health. |
