@@ -49,12 +49,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davehomeassist.github.io/garden-os/garden-doctor.html</loc>
-    <lastmod>2026-07-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html</loc>
     <lastmod>2026-07-03</lastmod>
     <changefreq>weekly</changefreq>
@@ -79,12 +73,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davehomeassist.github.io/garden-os/garden-planner-v4.html</loc>
-    <lastmod>2026-07-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://davehomeassist.github.io/garden-os/garden-planner-v5.html</loc>
     <lastmod>2026-07-03</lastmod>
     <changefreq>weekly</changefreq>
@@ -98,12 +86,6 @@
   </url>
   <url>
     <loc>https://davehomeassist.github.io/garden-os/how-it-thinks-v5.html</loc>
-    <lastmod>2026-07-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://davehomeassist.github.io/garden-os/how-it-thinks.html</loc>
     <lastmod>2026-07-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -152,12 +134,6 @@
   </url>
   <url>
     <loc>https://davehomeassist.github.io/garden-os/story-mode/</loc>
-    <lastmod>2026-07-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://davehomeassist.github.io/garden-os/system-map%20copy.html</loc>
     <lastmod>2026-07-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

@@ -2207,7 +2207,7 @@ if($('gameMenuPlanner')) $('gameMenuPlanner').onclick=()=>{location.href='garden
 if($('gameMenuHome')) $('gameMenuHome').onclick=()=>{location.href='home.html'};
 if($('gameMenuHub')) $('gameMenuHub').onclick=()=>{location.href='index.html'};
 if($('gameMenuHowTo')) $('gameMenuHowTo').onclick=()=>{closeGameMenu();showHowToOverlay(howToSection||'quickstart')};
-if($('gameMenuHowItThinks')) $('gameMenuHowItThinks').onclick=()=>{window.open('how-it-thinks.html','_blank')};
+if($('gameMenuHowItThinks')) $('gameMenuHowItThinks').onclick=()=>{window.open('how-it-thinks-v5.html','_blank')};
 if($('gameMenuRestart')) $('gameMenuRestart').onclick=()=>{
   closeGameMenu();
   if(S) startChapter(S.chapter||1);
@@ -2293,7 +2293,7 @@ function renderRes(){
   }
   // Scoring explanation link
   const scoreLink=h('a','','How scoring works \u2192');
-  scoreLink.href='how-it-thinks.html';
+  scoreLink.href='how-it-thinks-v5.html';
   scoreLink.style.cssText='font-family:var(--ff-mono);font-size:var(--type-label);color:var(--char-gurl);text-decoration:none;display:block;padding:4px 0;opacity:0.7';
   f.appendChild(scoreLink);
 
@@ -3164,7 +3164,7 @@ function renderHowToOverlay(){
   lm.style.marginTop='8px';
   lm.appendChild(h('h3',null,'Learn More'));
   const ll=h('ul','howto-list');
-  [['how-it-thinks.html','How Garden OS evaluates placements'],['scoring-visualizer.html','Scoring visualizer'],['garden-cage-build-guide.html','Cage build guide'],['garden-cage-ops-guide.html','Cage operations guide']].forEach(([href,text])=>{
+  [['how-it-thinks-v5.html','How Garden OS evaluates placements'],['scoring-visualizer.html','Scoring visualizer'],['garden-cage-build-guide.html','Cage build guide'],['garden-cage-ops-guide.html','Cage operations guide']].forEach(([href,text])=>{
     const li=h('li','');
     const a=h('a','',text);a.href=href;a.style.cssText='color:var(--char-gurl);text-decoration:none';
     li.appendChild(a);ll.appendChild(li);

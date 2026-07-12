@@ -36,7 +36,7 @@ Sub-paths served from this repo:
 | [/web-templates](https://davehomeassist.github.io/web-templates/) | web-templates | `main` `/` | 2026-03-14 | 2026-03-15 | Live |
 | [/sdlc-tool-stack-map](https://davehomeassist.github.io/sdlc-tool-stack-map/) | sdlc-tool-stack-map | `main` `/` | 2026-03-14 | 2026-03-15 | Live |
 | [/elysium-landing](https://davehomeassist.github.io/elysium-landing/) | elysium-landing | `main` `/` | 2026-03-15 | 2026-03-15 | Live |
-| [/shieldbox-security-event-quote-request-v4-gold-master.html](https://davehomeassist.github.io/shieldbox-security-event-quote-request-v4-gold-master.html/) | shieldbox-security-event-quote-request-v4-gold-master.html | `main` `/` | 2026-03-15 | 2026-03-15 | Live |
+| [/shieldbox-event-quote](https://davehomeassist.github.io/shieldbox-event-quote/) | shieldbox-event-quote (renamed 2026-07-11; custom domain shieldboxsecurity.com) | `main` `/` | 2026-03-15 | 2026-07-11 | Live |
 | [/freelance](https://davehomeassist.github.io/freelance/) | freelance | `main` `/` | 2026-03-15 | 2026-03-15 | Live (newly enabled) |
 | [/contractor](https://davehomeassist.github.io/contractor/) | contractor | `main` `/` | 2026-03-15 | 2026-03-15 | Live (newly enabled) |
 
@@ -61,10 +61,8 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 | [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
 | [`/story-mode-live/`](https://davehomeassist.github.io/garden-os/story-mode-live/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
 | [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Legacy season sandbox / predecessor to Story Mode |
-| [`/garden-planner-v4.html`](https://davehomeassist.github.io/garden-os/garden-planner-v4.html) | Planner v4.4 |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
-| [`/how-it-thinks.html`](https://davehomeassist.github.io/garden-os/how-it-thinks.html) | How the planner thinks |
 
 **Dev Track** (nav: ← Garden → Visualizer → Scoring Map → Fairness Tester → System Map → Topology)
 
@@ -80,7 +78,6 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
 | Path | Description |
 |------|-------------|
-| [`/system-map%20copy.html`](https://davehomeassist.github.io/garden-os/system-map%20copy.html) | Draft system-map variant retained for internal reference |
 | [`/garden-os-sprite-viewer.html`](https://davehomeassist.github.io/garden-os/garden-os-sprite-viewer.html) | Sprite viewer for internal asset inspection |
 | [`/prompt-explorer.html`](https://davehomeassist.github.io/garden-os/prompt-explorer.html) | Prompt explorer for internal testing |
 
@@ -88,9 +85,6 @@ All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
 | Path | Description |
 |------|-------------|
-| [`/garden-os-home.html`](https://davehomeassist.github.io/garden-os/garden-os-home.html) | Original marketing home (pre-redesign) |
-| [`/garden-league-simulator-v3.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v3.html) | Season Engine v3 (archived, superseded by v4) |
-| [`/garden-league-simulator.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator.html) | Season Engine v1 (archived) |
 
 ---
 
