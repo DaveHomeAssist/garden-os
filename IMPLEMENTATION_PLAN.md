@@ -1,6 +1,6 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-04-20
+**Last verified:** 2026-07-11
 
 ## Immediate Stabilization Plan — 2026-03-31
 
@@ -597,7 +597,11 @@ Architecture: zero-backend, browser-only tools, localStorage persistence, URL ha
 - `gos-schema.json` defines `$defs.ReasonedExport`.
 - `README.md` and this plan document the reasoned export contract and smoke coverage.
 
-### Next Concrete Step — Re-open planner feature work
+### Superseded Next Step — Re-open v4 planner feature work
+
+> Historical note: this step targeted `garden-planner-v4.html`. That file is now
+> archived and is not an active Garden OS v5 surface. The active recovery plan
+> begins below and supersedes this step.
 
 **Owner:** Claude Code
 **Window:** 2026-04-22 onward
@@ -614,3 +618,345 @@ Architecture: zero-backend, browser-only tools, localStorage persistence, URL ha
 - Do not change scoring totals while reasoning is still being separated from the UI layer.
 - Do not ship a save migration in the same pass as a new reasoning contract unless rollback has been rehearsed.
 - Keep planner-track work additive to the existing planner surface; no file rename and no product-surface split during this track.
+
+---
+
+## Garden OS v5 Roadmap Reconciliation — 2026-07-11
+
+### Stated Goal
+
+Restore Garden OS's highest-value missing decision-support capability in the
+active v5 product: let a gardener test a layout without changing the saved bed,
+then compare two real beds as a controlled A/B experiment over time.
+
+The recovery must use the current v5 architecture instead of reviving the
+archived v4 monolith. `garden-painting.html` owns layout editing and scoring,
+`garden-planner-v5.html` owns the seasonal view, `gos-bed.js` owns canonical bed
+records, `gos-suitability-core.js` owns deterministic scoring, and `journal.html`
+owns the durable activity record.
+
+**Program status:** PLANNED
+**Implementation owner:** Codex
+**Product approval:** Dave
+**Target slice:** Phase 9A through Phase 9D below
+
+### Desired User Outcome
+
+A gardener can open Beds, start a What-If trial, rearrange crops freely, see the
+saved-versus-trial score and cell changes, and either apply or discard the trial.
+If the gardener has two beds, they can link them around one controlled variable,
+record dated observations, and see a deterministic comparison in Beds and the
+season Planner without corrupting either bed's saved layout.
+
+### Product Boundary
+
+Inside this recovery slice:
+
+- Transient What-If layout editing in `garden-painting.html`
+- Saved-versus-trial scoring and changed-cell comparison
+- Apply and Discard with explicit recovery behavior
+- Cross-bed A/B experiment records and observations
+- Read-only experiment summary in `garden-planner-v5.html`
+- Journal events for experiment lifecycle actions
+- Deterministic tests, browser regression coverage, docs, deploy, and live smoke
+
+Outside this recovery slice:
+
+- Live weather, Open-Meteo, notifications, or service-worker periodic sync
+- Printable garden-plan layout
+- Statistical causal claims or ML recommendations
+- Cloud sync, accounts, collaboration, or a new backend
+- Story Mode experiment mechanics
+- Changes to scoring weights or crop suitability rules
+- Importing the archived v4 implementation wholesale
+
+### Reconciled Feature Status
+
+| Capability | Archived v4 | Active v5 reality | Roadmap disposition |
+|---|---|---|---|
+| Score explanation | Shipped | Active in Beds and Planner | Maintain |
+| Companion guidance | Shipped | Active in Beds | Maintain |
+| Planting calendar and frost windows | Shipped | Active in Planner | Maintain |
+| Harvest logging | Shipped | Active in Planner and Journal | Maintain |
+| Garden Doctor | Shipped | Active as `garden-doctor-v5.html` | Maintain |
+| Season retrospective | Shipped | Active in Garden Doctor v5 | Maintain |
+| What-If layout simulation | Shipped | Missing from active v5 | **Recover first** |
+| A/B bed experiments | Shipped | Missing from active v5 | **Recover first** |
+| Live weather coach | Shipped in archived v4; reference modules remain | Not active in v5 | Recover after experiments |
+| Print layout | Shipped in archived v4 | Not active in v5 | Recover after experiments; likely before weather if treated as a quick win |
+
+### Priority Decision
+
+| Candidate | User impact | Recovery complexity | Architectural risk | Priority |
+|---|---:|---:|---:|---:|
+| What-If plus A/B experiments | High | Medium | Medium | **1** |
+| Print layout | High but narrow | Low | Low | 2 |
+| Live weather coach | High | Medium-high | High due to network, location, cache, and notification states | 3 |
+
+What-If plus A/B experiments is first because it restores the largest missing
+decision loop: compare before committing, then learn from real outcomes. Print
+layout is the recommended follow-up quick win. Weather follows after the local
+state and experiment contracts are stable.
+
+## Phase 9 — Active v5 What-If and A/B Experiment Recovery
+
+### System Overview
+
+The saved `GosBed` record remains the only authority for a real bed. A What-If
+session clones that record into React state, scores the clone through the shared
+deterministic suitability engine, and performs no storage write until Apply.
+A/B experiments are cross-bed records stored separately because no single bed
+owns the relationship. Planner and Journal consume those records without gaining
+layout-write authority.
+
+```text
+[Start What-If in Beds]
+          |
+          v
+[Clone active GosBed] -> [Edit transient trial] -> [GosSuitability score]
+          |                         |                       |
+          |                         v                       v
+          |                [Changed-cell diff]      [Saved/trial delta]
+          |                         |                       |
+          +-------------------------+-----------------------+
+                                    |
+                       [Apply -> GosBed.write]
+                       [Discard -> restore clone]
+
+[Link two saved beds] -> [Experiment store] -> [Beds comparison]
+                                |              [Planner summary]
+                                +------------> [Journal lifecycle events]
+```
+
+### Component Contract
+
+| Component | Single responsibility | Inputs | Outputs | Owner |
+|---|---|---|---|---|
+| `garden-painting.html` | Edit beds and host the What-If/A/B controls | Active `GosBed`, crop catalog, user actions | Transient trial UI, Apply/Discard command, experiment commands | Beds surface |
+| `gos-bed.js` | Persist canonical bed records with revision checks | Validated bed payload and expected revision | Saved bed record or explicit conflict error | Shared data layer |
+| `gos-suitability-core.js` | Score saved and trial beds deterministically | Bed snapshot, crop lookup, current week | Bed score, per-cell scores, weakest cells | Shared scoring layer |
+| Planned `gos-experiments.js` | Persist and validate cross-bed experiment records | Bed ids, controlled variable, observations | Experiment list, one experiment record, validation errors | Shared experiment layer |
+| `garden-planner-v5.html` | Show read-only seasonal experiment status | Saved beds and experiment records | Current comparison summary and observation history | Planner surface |
+| `gos-journal.js` / `journal.html` | Record and display experiment lifecycle events | Created, observed, applied, closed events | Durable chronological entries | Journal surface |
+| Planned browser regressions | Prove storage and UI contracts | Fixture beds and scripted actions | Pass/fail evidence and screenshots | Verification layer |
+
+### Planned Experiment Record
+
+The cross-bed relationship is stored under the planned key
+`gos.experiments.v1`, not inside either bed record.
+
+```js
+{
+  schemaVersion: 1,
+  id: "experiment-<stable-id>",
+  aBedId: "front-bed",
+  bBedId: "side-bed",
+  variable: "spacing",
+  hypothesis: "Wider spacing will improve the tomato bed score and yield.",
+  status: "active", // active | closed
+  createdAt: "<ISO8601>",
+  updatedAt: "<ISO8601>",
+  baseline: {
+    a: { revision: 4, score: 76, plantedCount: 18 },
+    b: { revision: 2, score: 71, plantedCount: 18 }
+  },
+  observations: [
+    {
+      id: "observation-<stable-id>",
+      bedId: "front-bed",
+      date: "2026-07-18",
+      note: "Less leaf crowding after one week.",
+      scoreSnapshot: 79,
+      plantedCount: 18
+    }
+  ]
+}
+```
+
+Allowed v1 variables: spacing, mulch, fertilizer, variety, sun exposure,
+watering, and protection. Free-form variables are deferred until filtering and
+reporting requirements justify them.
+
+### Interface and Error Contracts
+
+| Connection | Protocol and format | Success | Failure behavior |
+|---|---|---|---|
+| Beds -> trial state | In-memory structured clone | Independent trial snapshot | If cloning fails, do not enter simulation and leave saved bed untouched |
+| Trial -> suitability | Direct function call using canonical bed shape | Saved/trial scores and per-cell details | Show score unavailable; editing may continue but Apply requires a valid bed |
+| Trial -> `GosBed.write` | Direct call with `expectedRevision` | One new canonical revision | On concurrent write, keep the trial open and offer Reload or Export; never overwrite silently |
+| Beds -> experiment store | Direct shared-module call with validated JSON | Created or updated experiment | Reject missing/duplicate bed ids, invalid variables, malformed dates, or unknown beds |
+| Experiment store -> Planner | Read-only shared-module call | Current deterministic summary | Missing/deleted bed renders an actionable degraded state; no record is silently deleted |
+| Experiment actions -> Journal | Direct append through existing journal contract | Dated lifecycle event | Experiment action succeeds with a visible warning if journal append fails |
+
+## Phase 9A — Contract Lock and Fixture Baseline
+
+**Goal:** Freeze the current v5 bed/scoring behavior and define experiment
+storage before UI recovery begins.
+
+**Status:** PLANNED
+**Estimated effort:** 0.5 to 1 day
+
+Tasks:
+
+- Add fixture beds covering two 4x8 layouts, distinct revisions, and known scores.
+- Specify the transient trial state and `gos.experiments.v1` validation rules.
+- Confirm `GosBed.write(..., { expectedRevision })` is the only Apply path.
+- Lock deterministic score outputs for saved and trial fixtures.
+- Define delete behavior: deleting a bed leaves its experiment visible as
+  incomplete until the user closes or relinks it.
+- Define export behavior: v1 experiments remain a separate local product record;
+  adding them to `.gos.json` is deferred to a later explicit contract revision.
+
+Definition of done:
+
+- Fixture beds produce identical scores on repeated runs.
+- Invalid experiment shapes fail with useful errors and no partial write.
+- A same-bed A/B link is rejected.
+- A missing-bed record has a documented degraded-state contract.
+- No current bed schema or scoring output changes.
+
+## Phase 9B — What-If Simulation in Beds
+
+**Goal:** Let users trial layout edits without touching the saved bed.
+
+**Status:** PLANNED
+**Estimated effort:** 1.5 to 2 days
+**Dependency:** Phase 9A complete
+
+Tasks:
+
+- Add a prominent `What-If` action to `garden-painting.html`.
+- Clone the active bed and capture its starting revision and score.
+- Route paint, erase, and crop-swap actions to the trial snapshot while active.
+- Show Saved score, Trial score, delta, changed-cell count, and filled-cell count.
+- Visually distinguish changed cells without relying on color alone.
+- Disable bed switching, deletion, import, and other destructive actions while a
+  trial is unresolved, or require Apply/Discard first.
+- Apply through one revision-checked `GosBed.write` call.
+- Discard by dropping transient state and restoring the canonical bed view.
+- Warn before navigation or refresh when an unresolved changed trial exists.
+
+Definition of done:
+
+- Starting What-If performs zero localStorage writes.
+- Editing a trial does not change the saved bed, revision, events, or active-bed id.
+- Saved and Trial scores are calculated by the same shared scoring engine.
+- Discard restores exact saved cells and score.
+- Apply writes exactly once and increments the canonical bed revision once.
+- A concurrent revision change cannot be overwritten silently.
+- Keyboard, mobile, reduced-motion, and screen-reader labels are verified.
+
+## Phase 9C — A/B Experiment Lifecycle
+
+**Goal:** Link two saved beds around one controlled variable and accumulate
+useful observations without claiming causality.
+
+**Status:** PLANNED
+**Estimated effort:** 2 to 2.5 days
+**Dependency:** Phase 9B complete
+
+Tasks:
+
+- Add experiment creation to Beds with bed A, bed B, variable, and hypothesis.
+- Capture immutable baseline revisions, scores, and planted counts.
+- Render current side-by-side scores, delta, weakest cells, and observation count.
+- Add dated observations against either bed with automatic score snapshots.
+- Support closing and relinking an experiment without deleting its history.
+- Add read-only experiment summary and recent observations to Planner v5.
+- Append journal events for create, observe, apply-trial, close, and relink actions.
+- Use restrained language: `leads by`, `observed difference`, and `likely factor`;
+  never claim the selected variable caused the outcome.
+
+Definition of done:
+
+- Two distinct existing beds can be linked and reopened after refresh.
+- Baselines remain unchanged when current bed revisions change.
+- Observations are ordered deterministically by date then id.
+- Current comparison scores always come from the latest canonical bed records.
+- Deleted or unavailable beds render a recoverable incomplete state.
+- Planner is read-only and cannot mutate bed layouts.
+- Journal failures never discard an otherwise valid experiment write.
+- Closing an experiment preserves its observations.
+
+## Phase 9D — Verification, Documentation, Deploy, and Live Proof
+
+**Goal:** Make the recovered slice a supported v5 capability, not an isolated UI
+patch.
+
+**Status:** PLANNED
+**Estimated effort:** 1 day
+**Dependency:** Phases 9A through 9C complete
+
+Tasks:
+
+- Add planned Node-level experiment-store contract coverage.
+- Add planned browser regression for Start -> Edit -> Discard and
+  Start -> Edit -> Apply.
+- Add planned browser regression for Create -> Observe -> Refresh -> Close.
+- Add concurrent-write, malformed-storage, missing-bed, and journal-failure cases.
+- Add the new checks to `scripts/verify-all.mjs`.
+- Update `docs/FEATURES.md`, `docs/HANDOFF.md`, README navigation/copy if needed,
+  and this plan with final evidence.
+- Run the full local verifier, commit, push, wait for deploy, and run live smoke on
+  Beds and Planner.
+
+Definition of done:
+
+- All new contract and browser tests pass.
+- Existing full verification remains green.
+- No console errors appear in the tested Beds/Planner flows.
+- Mobile and desktop screenshots show legible unresolved-trial and experiment states.
+- The pushed commit matches `origin/main`.
+- GitHub Pages deploy succeeds.
+- Live Beds proves Apply/Discard; live Planner proves read-only experiment summary.
+- Worktree is clean after deploy verification.
+
+## Program Definition of Done
+
+Phase 9 is complete only when all of the following are true:
+
+- The active v5 launcher exposes the feature; archived v4 does not count as proof.
+- A What-If trial cannot mutate persistent state before Apply.
+- Apply and Discard are deterministic and recoverable.
+- A/B experiments persist separately from beds and survive refresh.
+- The same canonical scoring engine scores saved beds, trials, and comparisons.
+- Cross-tab revision conflicts fail safely without silent overwrite.
+- Planner consumes experiment data read-only.
+- Journal lifecycle integration is present with explicit partial-failure feedback.
+- Accessibility and responsive checks cover the new controls and comparison states.
+- Full local verification, pushed commit, deploy, and live browser proof pass.
+- Canonical docs describe v5 filenames and no longer present archived v4 as active.
+
+## Failure Modes and Fallbacks
+
+| Failure | Required behavior | Fallback |
+|---|---|---|
+| localStorage disabled or full | Block Apply/create with a visible error | Keep trial in memory long enough to copy/export the layout manually |
+| Saved bed changes in another tab | Reject Apply with concurrent-write message | Reload canonical bed or preserve trial for manual comparison |
+| Experiment JSON malformed | Ignore malformed record, report it, preserve other valid records | Offer reset of experiment records only, never beds |
+| Linked bed deleted | Keep experiment history and mark the side unavailable | Relink or close experiment |
+| Suitability engine unavailable | Show score unavailable | Allow viewing but block score-dependent comparison claims |
+| Journal append fails | Keep successful bed/experiment action | Show warning and permit retry of journal entry |
+| Browser navigation during changed trial | Warn before leaving | Apply, Discard, or remain on page |
+
+## Operations and Health Checks
+
+- Deployment remains GitHub Pages from `main`.
+- No new service, API, credential, or recurring cost is introduced.
+- Storage monitoring continues through `GosBed.estimateStorageUsage()` and must
+  include the `gos.experiments.v1` key because it is inside the `gos.*` namespace.
+- Health check is the full verifier plus live browser smoke of Beds and Planner.
+- Updates to the experiment schema require a versioned migration and rollback
+  fixture; additive UI changes do not.
+- Current load is local single-user browser state. Design for dozens of beds and
+  hundreds of observations, not hypothetical multi-tenant scale.
+
+## Sequenced Follow-up Queue
+
+After Phase 9 is shipped and live-verified:
+
+1. Recover active-v5 printable garden plan as a bounded local-only slice.
+2. Re-plan the live weather coach against v5, including explicit offline, cache,
+   location, privacy, CSP, and notification-permission contracts.
+3. Reconcile remaining v4 references in `docs/HANDOFF.md`, `docs/FEATURES.md`,
+   README, and legacy trackers without rewriting historical evidence.
