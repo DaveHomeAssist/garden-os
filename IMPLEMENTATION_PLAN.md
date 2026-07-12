@@ -883,7 +883,7 @@ Definition of done:
 **Goal:** Make the recovered slice a supported v5 capability, not an isolated UI
 patch.
 
-**Status:** IN PROGRESS — full local verifier passed 2026-07-11; deploy/live closeout pending
+**Status:** COMPLETE — full verifier, Pages run 29175072853, and live v5 proof passed 2026-07-11
 **Estimated effort:** 1 day
 **Dependency:** Phases 9A through 9C complete
 
@@ -913,11 +913,11 @@ Definition of done:
 
 ## Program Definition of Done
 
-**Implementation status:** COMPLETE locally on 2026-07-11. The full verifier
-passed 453 Story Mode tests, the production build, all existing root regressions,
-6 experiment contract tests, and the mobile/desktop What-If and experiment
-browser flow with no tested console errors. Push, Pages deploy, and live proof
-remain the final operational closeout gates.
+**Implementation status:** COMPLETE on 2026-07-11. Commit `c122933` passed the
+full verifier (453 Story Mode tests, production build, existing root regressions,
+6 experiment contract tests, and mobile/desktop What-If and experiment browser
+flow), deployed through Pages run `29175072853`, and passed the same Beds/Planner
+flow against the live GitHub Pages origin with no tested console errors.
 
 Phase 9 is complete only when all of the following are true:
 
