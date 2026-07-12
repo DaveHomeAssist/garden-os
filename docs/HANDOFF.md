@@ -3,7 +3,7 @@ Status: Active
 Document Version: 1.3
 Compatible With: Garden OS v4.3, Story Mode v0.1, Schema v1, Season Engine v4
 Owner: Dave Robertson
-Last Updated: 2026-03-31
+Last Updated: 2026-07-11
 Artifact Class: Ref
 ---
 
@@ -23,9 +23,21 @@ Garden OS is now a hybrid browser-native repo with two active product layers:
 
 The core mission remains the same: make garden decisions explainable, playable, and reusable across planning, simulation, and narrative surfaces.
 
+### Active v5 recovery shipped 2026-07-11
+
+- `garden-painting.html` is the active Beds editor and owns transient What-If
+  trials plus A/B experiment commands.
+- `gos-experiments.js` owns `gos.experiments.v1`, validates cross-bed links,
+  preserves immutable baselines and observations, and retains missing-bed history.
+- `garden-planner-v5.html` displays experiment status read-only.
+- `GosBed.write(..., { expectedRevision })` remains the only What-If Apply path;
+  trial editing and Discard do not write canonical bed state.
+- `tests/experiments-contract.test.mjs` and
+  `tests/what-if-experiments-regression.mjs` are wired into the full verifier.
+
 **Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. Zero backend. GitHub Pages remains the delivery model.
 
-## Current State Snapshot (2026-03-23)
+## Current State Snapshot (2026-07-11)
 
 ### Repo Shape
 
@@ -48,7 +60,9 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 - Primary public entry: `index.html` with Story Mode as the lead CTA.
 - Current flagship playable build: `/story-mode-live/`.
-- Root planner and legacy season simulator remain live, but Story Mode is the active evolution path.
+- Active root planning is split between v5 Beds (`garden-painting.html`) and v5
+  Planner (`garden-planner-v5.html`). The v4 planner and season simulator remain
+  live only as archived references; they do not prove active-v5 capability.
 - Dev track tools remain important for inspection and validation, but the current `system-map.html` is planner-centric and no longer reflects the full repo accurately (see `docs/SYSTEM_MAP_PROPOSAL.md` for the redesign plan).
 
 ### Important Reality Checks

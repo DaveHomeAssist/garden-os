@@ -1,8 +1,8 @@
 # Garden OS — Complete Feature Set
 
-> **Version:** 1.1
-> **Updated:** 2026-03-16 original; partial refresh 2026-04-20
-> **Last verified:** 2026-04-20 (scope-limited: crop count, simulator version, application map)
+> **Version:** 1.2
+> **Updated:** 2026-03-16 original; active-v5 refresh 2026-07-11
+> **Last verified:** 2026-07-11 (active v5 What-If and A/B experiment slice)
 > **Architecture:** Static HTML root tools + `story-mode/` Vite and Three.js runtime. GitHub Pages, zero backend for the product.
 > **Live:** https://davehomeassist.github.io/garden-os/ (hub) · https://davehomeassist.github.io/garden-os/story-mode-live/ (flagship runtime)
 
@@ -21,7 +21,10 @@ State persists in `localStorage` today.
 | File | Purpose | State |
 |------|---------|-------|
 | `index.html` | Hub / landing page | Static |
-| `garden-planner-v4.html` | Grid planner + scoring engine (v4.4) | Active. Phases 1 to 3 complete 2026-03-31 |
+| `garden-painting.html` | Active v5 Beds editor, What-If trials, and A/B experiment lifecycle | Active |
+| `garden-planner-v5.html` | Active v5 seasonal Planner with read-only experiment summaries | Active |
+| `gos-experiments.js` | Versioned cross-bed experiment validation and local storage | Active shared module |
+| `garden-planner-v4.html` | Historical grid planner + scoring engine (v4.4) | Archived reference; not active-v5 proof |
 | `garden-league-simulator-v4.html` | Legacy deterministic season simulator | Stable, still playable |
 | `story-mode-live/` | Flagship Story Mode runtime (12 chapter campaign) | Active. Vite + Three.js + Vitest (329 tests passing) |
 | `garden-doctor.html` | Symptom triage tool (Phase 2B) | Shipped 2026-03-31 |
@@ -37,6 +40,19 @@ State persists in `localStorage` today.
 | `garden-os-theme.css` | Design tokens (colors, fonts, spacing) |
 | `specs/SCORING_RULES.md` | Canonical scoring algorithm |
 | `specs/CROP_SCORING_DATA.json` | 50-crop roster with full metadata (v3 schema, 2026-03-22) |
+
+## Active v5 Decision Support
+
+Beds supports transient What-If trials. Trial edits remain in memory, show a
+Saved-versus-Trial score and changed-cell marker, and reach `GosBed` only through
+one revision-checked Apply. Discard restores the exact saved snapshot.
+
+Beds can also link two distinct saved beds around one controlled variable.
+`gos-experiments.js` stores immutable baselines, deterministic dated
+observations, close/relink history, and a recoverable missing-bed state under
+`gos.experiments.v1`. Planner consumes the same records read-only, while Journal
+records lifecycle events. The UI describes observed differences and does not
+claim causality.
 
 ---
 

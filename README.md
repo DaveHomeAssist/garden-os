@@ -19,6 +19,8 @@ The system also highlights the limiting factor so users can make high-leverage c
 
 ## Features
 
+- Active v5 Beds What-If trials with zero persistent writes before Apply
+- Cross-bed A/B experiments with immutable baselines, dated observations, and read-only Planner summaries
 - Explainable scoring panel in Inspect tab
 - Limiting-factor detection for each selected crop/cell
 - Adjacency analysis (companion/conflict/water mismatch)
@@ -31,7 +33,8 @@ The system also highlights the limiting factor so users can make high-leverage c
 
 1. Clone the repo.
 2. Open `index.html` in a modern browser.
-3. Launch `garden-planner-v4.html` from the hub.
+3. Launch the active v5 surfaces: `garden-painting.html` for Beds and
+   `garden-planner-v5.html` for the seasonal Planner.
 
 The current root surfaces can run without install, build, or runtime services.
 That is a shipping mode, not a permanent architecture rule.
@@ -50,6 +53,9 @@ That is a shipping mode, not a permanent architecture rule.
 ```
 garden-os/
 ├── index.html                          # Hub / landing page
+├── garden-painting.html                # Active v5 Beds editor and experiments
+├── garden-planner-v5.html              # Active v5 seasonal planner
+├── gos-experiments.js                  # Cross-bed experiment contract/store
 ├── garden-planner-v4.html              # Core planner and scoring engine
 ├── garden-cage-build-guide.html        # Cage construction guide
 ├── garden-cage-ops-guide.html          # Operations and maintenance guide
@@ -73,7 +79,7 @@ garden-os/
 
 ## Tech
 
-- HTML5, CSS3, Vanilla JavaScript — no dependencies
+- HTML5, CSS3, JavaScript, and vendored React for active v5 surfaces
 - localStorage for persistence
 - JSON Schema for contract validation
 - Offline-capable (no network required except Google Fonts)

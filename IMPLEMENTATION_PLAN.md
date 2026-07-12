@@ -793,7 +793,7 @@ reporting requirements justify them.
 **Goal:** Freeze the current v5 bed/scoring behavior and define experiment
 storage before UI recovery begins.
 
-**Status:** PLANNED
+**Status:** COMPLETE — contract and fixture coverage passed 2026-07-11
 **Estimated effort:** 0.5 to 1 day
 
 Tasks:
@@ -819,7 +819,7 @@ Definition of done:
 
 **Goal:** Let users trial layout edits without touching the saved bed.
 
-**Status:** PLANNED
+**Status:** COMPLETE — zero-write trial, exact Discard, single-write Apply, and conflict handling verified 2026-07-11
 **Estimated effort:** 1.5 to 2 days
 **Dependency:** Phase 9A complete
 
@@ -851,7 +851,7 @@ Definition of done:
 **Goal:** Link two saved beds around one controlled variable and accumulate
 useful observations without claiming causality.
 
-**Status:** PLANNED
+**Status:** COMPLETE — create, observe, refresh, close, relink, missing-bed, Planner, and Journal flows verified 2026-07-11
 **Estimated effort:** 2 to 2.5 days
 **Dependency:** Phase 9B complete
 
@@ -883,7 +883,7 @@ Definition of done:
 **Goal:** Make the recovered slice a supported v5 capability, not an isolated UI
 patch.
 
-**Status:** PLANNED
+**Status:** IN PROGRESS — full local verifier passed 2026-07-11; deploy/live closeout pending
 **Estimated effort:** 1 day
 **Dependency:** Phases 9A through 9C complete
 
@@ -912,6 +912,12 @@ Definition of done:
 - Worktree is clean after deploy verification.
 
 ## Program Definition of Done
+
+**Implementation status:** COMPLETE locally on 2026-07-11. The full verifier
+passed 453 Story Mode tests, the production build, all existing root regressions,
+6 experiment contract tests, and the mobile/desktop What-If and experiment
+browser flow with no tested console errors. Push, Pages deploy, and live proof
+remain the final operational closeout gates.
 
 Phase 9 is complete only when all of the following are true:
 

@@ -156,6 +156,7 @@ async function runLocalVerification() {
     ['Mobile details sheet regression', ['tests/mobile-details-sheet-regression.mjs']],
     ['Mom garden data regression', ['tests/mom-garden-data-regression.mjs']],
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
+    ['Experiment storage contract tests', ['--test', 'tests/experiments-contract.test.mjs']],
     ['Authority cache IndexedDB tests', ['test', '--', 'src/engine/authority-cache.test.js'], { cwd: storyModeDir }],
     ['Fixed-step simulation worker tests', ['test', '--', 'src/engine/simulation-core.test.js', 'src/engine/simulation-worker.test.js'], { cwd: storyModeDir }],
     ['Sync client worker URL tests', ['--test', 'tests/sync-client-worker-url.test.mjs']],
@@ -182,6 +183,9 @@ async function runLocalVerification() {
     });
     await runStep('Browser HTML fixture tests', nodeBin, ['tests/browser-fixture-pages.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl }),
+    });
+    await runStep('V5 What-If and experiment browser regression', nodeBin, ['tests/what-if-experiments-regression.mjs'], {
+      env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'what-if-experiments') }),
     });
     await runStep('Planner reasoning browser smoke', nodeBin, ['docs/phase-reasoning-smoke.mjs'], {
       env: browserEnv({

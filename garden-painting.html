@@ -407,6 +407,8 @@
 <script src="gos-bed.js"></script>
 <script src="gos-suitability-core.js"></script>
 <script src="gos-suitability.js"></script>
+<script src="gos-experiments.js"></script>
+<script src="gos-journal.js"></script>
 <script src="data/mom-garden-data.js"></script>
 </head>
 <body>
@@ -975,7 +977,7 @@ function BedSwitcher({ beds, painted, activeId, onPick, onAdd, onManage }) {
     </div>
   );
 }
-function BedCell({ r, c, crop, planting, ghost, selected, showMono, size, onTap, onEnter, mode }) {
+function BedCell({ r, c, crop, planting, ghost, selected, changed, showMono, size, onTap, onEnter, mode }) {
   const visualCrop = cropVisualForPlanting(crop, planting);
   const cropColor = visualCrop ? visualCrop.color : '';
   const bg = visualCrop ? cropColor + 'DD' : T.panel;
@@ -991,6 +993,8 @@ function BedCell({ r, c, crop, planting, ghost, selected, showMono, size, onTap,
       data-cell={`${r}-${c}`}
       data-crop={visualCrop ? visualCrop.name : ''}
       data-crop-color={cropColor}
+      data-trial-changed={changed ? 'true' : 'false'}
+      aria-label={`${displayName || 'Empty cell'}, row ${r + 1}, column ${c + 1}${changed ? ', changed in What-If trial' : ''}`}
       style={{
         width: size, height: size, padding: 0,
         border: selected ? `2px solid ${T.sun}` : `1px solid ${cropColor || T.borderSoft}`,
@@ -1000,7 +1004,9 @@ function BedCell({ r, c, crop, planting, ghost, selected, showMono, size, onTap,
         fontFamily: T.fontMono, fontSize: size * 0.28, fontWeight: 600,
         color: visualCrop ? '#fff' : T.textSoft,
         letterSpacing: -0.2,
-        boxShadow: visualCrop ? 'inset 0 -2px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+        boxShadow: changed
+          ? `inset 0 0 0 2px ${T.sunPale}, 0 0 0 2px ${T.soil}`
+          : (visualCrop ? 'inset 0 -2px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none'),
         transition: 'transform 0.08s, border-color 0.1s',
         transform: selected ? 'scale(1.08)' : 'scale(1)',
         zIndex: selected ? 2 : 1,
@@ -1036,10 +1042,15 @@ function BedCell({ r, c, crop, planting, ghost, selected, showMono, size, onTap,
           background: T.borderSoft,
         }}/>
       )}
+      {changed && <span aria-hidden="true" style={{
+        position: 'absolute', top: 2, right: 2, minWidth: 12, height: 12,
+        borderRadius: 999, background: T.soil, color: T.sunPale,
+        fontFamily: T.fontMono, fontSize: 8, lineHeight: '12px', textAlign: 'center',
+      }}>Δ</span>}
     </button>
   );
 }
-function BedGrid({ bed, painted, onCellTap, onCellEnter, selected, ghostCrop, cellSize, mode }) {
+function BedGrid({ bed, painted, onCellTap, onCellEnter, selected, changedCells, ghostCrop, cellSize, mode }) {
   const cellAt = (r, c) => painted.find(p => p.r === r && p.c === c);
   return (
     <div className="v5-bed-grid" style={{ display: 'flex', gap: 6 }}>
@@ -1073,6 +1084,7 @@ function BedGrid({ bed, painted, onCellTap, onCellEnter, selected, ghostCrop, ce
             return (
               <BedCell key={r + '-' + c}
                 r={r} c={c} crop={crop} planting={cell} ghost={ghost} selected={isSel}
+                changed={changedCells && changedCells.has('r' + r + 'c' + c)}
                 showMono size={cellSize}
                 onTap={(event) => onCellTap && onCellTap(r, c, event.currentTarget)}
                 onEnter={() => onCellEnter && onCellEnter(r, c)}
@@ -2686,6 +2698,243 @@ function useViewportFlags() {
   };
 }
 
+function paintedCellMap(list) {
+  const map = new Map();
+  (list || []).forEach(cell => map.set('r' + cell.r + 'c' + cell.c, cell.crop || ''));
+  return map;
+}
+
+function changedTrialCells(saved, trial) {
+  const before = paintedCellMap(saved);
+  const after = paintedCellMap(trial);
+  const keys = new Set([...before.keys(), ...after.keys()]);
+  return new Set([...keys].filter(key => before.get(key) !== after.get(key)));
+}
+
+function scoreCanonicalBed(bed) {
+  if (!bed || typeof GosSuitability === 'undefined') return { score: null, weakestCells: [] };
+  return GosSuitability.scoreBed({
+    bed,
+    getCrop: paintingGetCrop,
+    currentWeek: currentIsoWeekSafe(),
+  });
+}
+
+function appendExperimentJournal(action, experiment, detail) {
+  if (typeof GardenJournal === 'undefined' || !GardenJournal.append) return true;
+  const titleMap = {
+    created: 'Started garden experiment',
+    observed: 'Logged experiment observation',
+    applied: 'Applied What-If layout',
+    closed: 'Closed garden experiment',
+    relinked: 'Relinked garden experiment',
+  };
+  try {
+    GardenJournal.append({
+      type: 'observation', source: 'planner', severity: action === 'applied' ? 'success' : 'info',
+      title: titleMap[action] || 'Garden experiment updated',
+      body: detail || (experiment ? experiment.variable + ' experiment updated.' : 'Experiment updated.'),
+      bedId: experiment ? experiment.aBedId : '',
+      tags: ['experiment', action],
+      dedupeKey: ['experiment', action, experiment && experiment.id, experiment && experiment.updatedAt].filter(Boolean).join(':'),
+      payload: { experimentId: experiment && experiment.id, action },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function WhatIfBar({ trial, savedScore, trialScore, changedCount, filled, onApply, onDiscard }) {
+  if (!trial) return null;
+  const delta = savedScore == null || trialScore == null ? null : trialScore - savedScore;
+  return (
+    <section data-testid="what-if-bar" aria-label="What-If trial status" style={{
+      margin: '0 14px 8px', padding: '10px 12px', borderRadius: 12,
+      background: T.soil, color: T.cream, border: `2px solid ${T.sun}`,
+      boxShadow: '0 8px 24px rgba(58,37,16,0.18)', flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <div style={{ flex: 1 }}>
+          <Label size={9} color={T.sunPale}>WHAT-IF TRIAL · UNSAVED</Label>
+          <div style={{ fontFamily: T.fontSerif, fontSize: 13, marginTop: 2 }}>
+            Try changes safely. Apply once or discard everything.
+          </div>
+        </div>
+        <span aria-label={`${changedCount} changed cells`} style={{
+          minWidth: 40, padding: '5px 8px', borderRadius: 999, textAlign: 'center',
+          background: T.sunPale, color: T.soil, fontFamily: T.fontMono, fontSize: 10, fontWeight: 700,
+        }}>Δ {changedCount}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 8 }}>
+        {[
+          ['SAVED', savedScore == null ? '--' : savedScore],
+          ['TRIAL', trialScore == null ? '--' : trialScore],
+          ['DELTA', delta == null ? '--' : (delta > 0 ? '+' : '') + delta],
+          ['FILLED', filled],
+        ].map(([label, value]) => <div key={label} style={{
+          background: 'rgba(255,255,255,0.09)', borderRadius: 8, padding: '6px 4px', textAlign: 'center',
+        }}><div style={{ fontFamily: T.fontDisp, fontSize: 17 }}>{value}</div><Label size={8} color={T.sunPale}>{label}</Label></div>)}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button type="button" onClick={onApply} disabled={changedCount === 0} style={{
+          flex: 1, minHeight: 42, borderRadius: 8, border: `1px solid ${T.sunBright}`,
+          background: changedCount ? T.sunBright : T.textMuted, color: T.soil,
+          fontFamily: T.fontSans, fontWeight: 700, cursor: changedCount ? 'pointer' : 'not-allowed',
+        }}>Apply trial</button>
+        <button type="button" onClick={onDiscard} style={{
+          flex: 1, minHeight: 42, borderRadius: 8, border: '1px solid rgba(255,255,255,0.45)',
+          background: 'transparent', color: T.cream, fontFamily: T.fontSans, fontWeight: 600, cursor: 'pointer',
+        }}>Discard</button>
+      </div>
+    </section>
+  );
+}
+
+function ExperimentPanel({ beds, activeBed, onClose, onChanged, notify }) {
+  const panelRef = React.useRef(null);
+  const partners = beds.filter(bed => bed.id !== activeBed.id);
+  const [partnerId, setPartnerId] = React.useState(partners[0] ? partners[0].id : '');
+  const [variable, setVariable] = React.useState('spacing');
+  const [hypothesis, setHypothesis] = React.useState('');
+  const [observation, setObservation] = React.useState('');
+  const [observationBed, setObservationBed] = React.useState(activeBed.id);
+  const [version, setVersion] = React.useState(0);
+  const experiments = typeof GosExperiments !== 'undefined'
+    ? GosExperiments.listForBed(activeBed.id)
+    : [];
+
+  React.useEffect(() => {
+    const node = panelRef.current;
+    if (node) node.focus();
+    const onKey = event => {
+      if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key !== 'Tab' || !node) return;
+      const focusable = [...node.querySelectorAll('button:not([disabled]), select:not([disabled]), textarea:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) { event.preventDefault(); node.focus(); return; }
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const bedExists = id => beds.some(bed => bed.id === id);
+  const canonical = id => typeof GosBed !== 'undefined' ? GosBed.read(id) : null;
+  const baselineSide = id => {
+    const bed = canonical(id);
+    const scored = scoreCanonicalBed(bed);
+    return { revision: bed && bed.revision || 0, score: scored.score, plantedCount: bed && bed.painted ? bed.painted.length : 0 };
+  };
+  const refresh = () => { setVersion(value => value + 1); onChanged(); };
+
+  const createExperiment = () => {
+    try {
+      const experiment = GosExperiments.create({
+        aBedId: activeBed.id, bBedId: partnerId, variable, hypothesis,
+        baseline: { a: baselineSide(activeBed.id), b: baselineSide(partnerId) },
+      }, { bedExists });
+      const journalOk = appendExperimentJournal('created', experiment, `Testing ${variable} between ${activeBed.name} and ${(beds.find(b => b.id === partnerId) || {}).name || partnerId}.`);
+      notify(journalOk ? 'Experiment started.' : 'Experiment started, but Journal could not be updated.', journalOk ? 'success' : 'error');
+      setHypothesis('');
+      refresh();
+    } catch (error) { notify(error.message || 'Could not start experiment.', 'error'); }
+  };
+
+  const addObservation = experiment => {
+    try {
+      const bed = canonical(observationBed);
+      const score = scoreCanonicalBed(bed);
+      const updated = GosExperiments.addObservation(experiment.id, {
+        bedId: observationBed, date: new Date().toISOString(), note: observation,
+        scoreSnapshot: score.score, plantedCount: bed && bed.painted ? bed.painted.length : 0,
+      });
+      const journalOk = appendExperimentJournal('observed', updated, observation);
+      notify(journalOk ? 'Observation saved.' : 'Observation saved, but Journal could not be updated.', journalOk ? 'success' : 'error');
+      setObservation('');
+      refresh();
+    } catch (error) { notify(error.message || 'Could not save observation.', 'error'); }
+  };
+
+  const closeExperiment = experiment => {
+    try {
+      const updated = GosExperiments.close(experiment.id);
+      appendExperimentJournal('closed', updated, `${updated.variable} experiment closed; history preserved.`);
+      notify('Experiment closed. History is preserved.', 'success');
+      refresh();
+    } catch (error) { notify(error.message || 'Could not close experiment.', 'error'); }
+  };
+
+  const relinkExperiment = experiment => {
+    try {
+      const updated = GosExperiments.relink(experiment.id, activeBed.id, partnerId,
+        { a: baselineSide(activeBed.id), b: baselineSide(partnerId) }, { bedExists });
+      appendExperimentJournal('relinked', updated, `Experiment relinked to ${activeBed.name} and ${(beds.find(b => b.id === partnerId) || {}).name || partnerId}.`);
+      notify('Experiment relinked.', 'success');
+      refresh();
+    } catch (error) { notify(error.message || 'Could not relink experiment.', 'error'); }
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(44,27,11,0.5)' }}/>
+      <section ref={panelRef} tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="experiment-title" style={{
+        position: 'absolute', inset: '76px 12px 64px', zIndex: 61, overflowY: 'auto',
+        background: T.panel, border: `1px solid ${T.border}`, borderRadius: 14,
+        boxShadow: '0 18px 54px rgba(44,27,11,0.32)', padding: 16,
+      }}>
+        <div style={{
+          position: 'sticky', top: -16, zIndex: 2, margin: '-16px -16px 0', padding: '12px 16px 10px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+          background: T.panel, borderBottom: `1px solid ${T.borderSoft}`,
+        }}>
+          <div><h2 id="experiment-title" style={{ margin: 0, fontFamily: T.fontDisp, fontSize: 20, color: T.text }}>Bed Experiments</h2><Body size={11} color={T.textSoft}>Compare observations, not causation.</Body></div>
+          <button type="button" onClick={onClose} aria-label="Close experiments" style={{ width: 44, height: 44, borderRadius: 8, border: `1px solid ${T.borderSoft}`, background: T.cream, cursor: 'pointer' }}>×</button>
+        </div>
+
+        {partners.length === 0 ? <div role="status" style={{ marginTop: 16, padding: 14, borderRadius: 10, background: T.sunPale }}>Add a second bed before starting an A/B experiment.</div> : (
+          <fieldset style={{ margin: '16px 0', padding: 12, borderRadius: 10, border: `1px solid ${T.borderSoft}` }}>
+            <legend style={{ fontFamily: T.fontMono, fontSize: 10, color: T.soilMid }}>START OR RELINK</legend>
+            <label style={{ display: 'block', marginBottom: 10 }}><Label size={9}>COMPARISON BED</Label><select value={partnerId} onChange={event => setPartnerId(event.target.value)} style={{ width: '100%', minHeight: 44, marginTop: 4 }}>
+              {partners.map(bed => <option key={bed.id} value={bed.id}>{bed.name}</option>)}
+            </select></label>
+            <label style={{ display: 'block', marginBottom: 10 }}><Label size={9}>CONTROLLED VARIABLE</Label><select value={variable} onChange={event => setVariable(event.target.value)} style={{ width: '100%', minHeight: 44, marginTop: 4 }}>
+              {GosExperiments.VARIABLES.map(item => <option key={item} value={item}>{item}</option>)}
+            </select></label>
+            <label style={{ display: 'block' }}><Label size={9}>HYPOTHESIS</Label><textarea value={hypothesis} onChange={event => setHypothesis(event.target.value)} maxLength="500" placeholder="What difference do you expect to observe?" style={{ width: '100%', minHeight: 70, marginTop: 4, boxSizing: 'border-box' }}/></label>
+            <button type="button" onClick={createExperiment} style={{ width: '100%', minHeight: 44, marginTop: 10, border: 'none', borderRadius: 8, background: T.leaf, color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Start experiment</button>
+          </fieldset>
+        )}
+
+        <div aria-live="polite" data-experiment-version={version}>
+          {experiments.length === 0 && <div style={{ padding: 14, borderRadius: 10, background: T.cream }}>No experiments linked to this bed yet.</div>}
+          {experiments.map(experiment => {
+            const summary = GosExperiments.summarize(experiment, { getBed: canonical, scoreBed: scoreCanonicalBed });
+            const aName = summary.a.bed ? summary.a.bed.name : experiment.aBedId;
+            const bName = summary.b.bed ? summary.b.bed.name : experiment.bBedId;
+            return <article key={experiment.id} data-experiment-id={experiment.id} style={{ marginTop: 12, padding: 12, borderRadius: 10, border: `1px solid ${experiment.status === 'active' ? T.leaf : T.borderSoft}`, background: T.cream }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><strong>{experiment.variable}</strong><Label size={9}>{experiment.status.toUpperCase()}</Label></div>
+              <Body size={11} color={T.textSoft}>{experiment.hypothesis || 'No hypothesis recorded.'}</Body>
+              {!summary.complete && <div role="status" style={{ marginTop: 8, color: T.bad }}>Missing bed: {summary.missingBedIds.join(', ')}. Relink or close this experiment.</div>}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+                {[[aName, summary.a.score], [bName, summary.b.score]].map(([name, score]) => <div key={name} style={{ padding: 8, background: T.panel, borderRadius: 8 }}><Label size={8}>{name}</Label><div style={{ fontFamily: T.fontDisp, fontSize: 22 }}>{score == null ? '--' : score}</div></div>)}
+              </div>
+              <Body size={10} color={T.textSoft} style={{ display: 'block', marginTop: 6 }}>{summary.delta == null ? 'Comparison unavailable' : (summary.leaderBedId ? `${summary.leaderBedId === experiment.aBedId ? aName : bName} leads by ${Math.abs(summary.delta)} points.` : 'Scores are even.')} {experiment.observations.length} observation{experiment.observations.length === 1 ? '' : 's'}.</Body>
+              {experiment.status === 'active' ? <>
+                <label style={{ display: 'block', marginTop: 10 }}><Label size={8}>OBSERVATION BED</Label><select value={observationBed} onChange={event => setObservationBed(event.target.value)} style={{ width: '100%', minHeight: 40, marginTop: 3 }}><option value={experiment.aBedId}>{aName}</option><option value={experiment.bBedId}>{bName}</option></select></label>
+                <label style={{ display: 'block', marginTop: 8 }}><Label size={8}>DATED OBSERVATION</Label><textarea value={observation} onChange={event => setObservation(event.target.value)} maxLength="1000" style={{ width: '100%', minHeight: 62, marginTop: 3, boxSizing: 'border-box' }}/></label>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}><button type="button" disabled={!observation.trim()} onClick={() => addObservation(experiment)} style={{ flex: 1, minHeight: 42 }}>Save observation</button><button type="button" onClick={() => closeExperiment(experiment)} style={{ flex: 1, minHeight: 42 }}>Close</button></div>
+              </> : <button type="button" disabled={!partnerId} onClick={() => relinkExperiment(experiment)} style={{ width: '100%', minHeight: 42, marginTop: 10 }}>Relink and reopen</button>}
+              {experiment.observations.slice().reverse().slice(0, 3).map(item => <div key={item.id} style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.borderSoft}` }}><Label size={8}>{item.date} · {item.scoreSnapshot == null ? 'score --' : 'score ' + item.scoreSnapshot}</Label><Body size={10}>{item.note}</Body></div>)}
+            </article>;
+          })}
+        </div>
+      </section>
+    </>
+  );
+}
+
 function Painting({ tweak, onOpenTweaks }) {
   const [activeBed, setActiveBed] = React.useState(loadActiveBedAsInternal);
   const [activeBedId, setActiveBedId] = React.useState(activeBed ? activeBed.id : '');
@@ -2709,9 +2958,18 @@ function Painting({ tweak, onOpenTweaks }) {
   const [paintLocked, setPaintLocked] = React.useState(loadPaintLock);
   const [cellSheet, setCellSheet] = React.useState(null);
   const [toast, setToast] = React.useState(null);
+  const [notice, setNotice] = React.useState(null);
+  const [trial, setTrial] = React.useState(null);
+  const [experimentsOpen, setExperimentsOpen] = React.useState(false);
+  const [experimentVersion, setExperimentVersion] = React.useState(0);
   const restoreFocusRef = React.useRef(null);
   const momAutoLoadStartedRef = React.useRef(false);
+  const skipAutosaveRef = React.useRef(false);
   const viewport = useViewportFlags();
+  const notify = React.useCallback((message, type) => {
+    setNotice({ message, type: type || 'info' });
+    window.setTimeout(() => setNotice(null), 5000);
+  }, []);
 
   // Apply user edits from the Site panel: merge into activeBed and let the
   // existing autosave effect write through to GosBed. The internalToGosBed
@@ -2735,6 +2993,8 @@ function Painting({ tweak, onOpenTweaks }) {
   // Debounced autosave: serialize current painted state to GosBed.
   React.useEffect(() => {
     if (!activeBed || typeof GosBed === 'undefined') return;
+    if (trial) return;
+    if (skipAutosaveRef.current) { skipAutosaveRef.current = false; return; }
     const list = painted[activeBed.id];
     if (!list) return;
     const t = setTimeout(() => {
@@ -2746,7 +3006,18 @@ function Painting({ tweak, onOpenTweaks }) {
       }
     }, 500);
     return () => clearTimeout(t);
-  }, [painted, activeBed]);
+  }, [painted, activeBed, trial]);
+
+  React.useEffect(() => {
+    const changed = trial && changedTrialCells(trial.baselinePainted, painted[trial.bedId] || []).size > 0;
+    const handler = event => {
+      if (!changed) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [trial, painted]);
 
   // Synchronously dispatch gosPaintedChanged on every painted-state mutation
   // so ScoreBadge can recompute against the live bed without waiting for the
@@ -2810,6 +3081,7 @@ function Painting({ tweak, onOpenTweaks }) {
   };
 
   const handleAddBedClick = () => {
+    if (trial) { notify('Apply or discard the What-If trial before adding a bed.', 'error'); return; }
     if (typeof GosBed !== 'undefined') GosBed.discardPending();
     setCreatorOpen(true);
   };
@@ -2835,6 +3107,7 @@ function Painting({ tweak, onOpenTweaks }) {
 
   const handlePickBed = React.useCallback((id) => {
     if (!id) return;
+    if (trial) { notify('Apply or discard the What-If trial before switching beds.', 'error'); return; }
     let next = allBeds.find(bed => bed && bed.id === id);
     if (!next && typeof GosBed !== 'undefined' && GosBed.read) {
       next = gosBedToInternal(GosBed.read(id));
@@ -2845,10 +3118,11 @@ function Painting({ tweak, onOpenTweaks }) {
     setActiveBedId(next.id);
     setPainted(prev => Object.assign({}, prev, { [next.id]: next.painted || [] }));
     setSelected(null);
-  }, [allBeds]);
+  }, [allBeds, trial, notify]);
 
   const handleMoveBed = React.useCallback((id, direction) => {
     if (!id || !direction) return;
+    if (trial) { notify('Apply or discard the What-If trial before reordering beds.', 'error'); return; }
     setAllBeds(prev => {
       const list = prev.slice();
       const idx = list.findIndex(b => b && b.id === id);
@@ -2862,7 +3136,7 @@ function Painting({ tweak, onOpenTweaks }) {
       }
       return list;
     });
-  }, []);
+  }, [trial, notify]);
 
   const handleLoadMomGarden = async (overwrite) => {
     const shouldOverwrite = !!overwrite;
@@ -2956,6 +3230,58 @@ function Painting({ tweak, onOpenTweaks }) {
         ? (bed.cols > 6 ? 44 : (bed.cols > 4 ? 56 : 74))
         : baseCellSize));
   const ghostCrop = tweak.ghostRecs && tool === 'paint' ? brush : null;
+  const trialChangedCells = trial ? changedTrialCells(trial.baselinePainted, bedPainted) : new Set();
+  const liveScore = computeBedScore(Object.assign({}, bed, { painted: bedPainted })).score;
+
+  const startTrial = () => {
+    if (trial || typeof GosBed === 'undefined') return;
+    const canonical = GosBed.read(activeBedId);
+    if (!canonical) { notify('The saved bed could not be loaded.', 'error'); return; }
+    setTrial({
+      bedId: activeBedId,
+      baselineRevision: canonical.revision || 0,
+      baselinePainted: structuredClone(bedPainted),
+      baselineScore: liveScore,
+    });
+    setHistory([]);
+    notify('What-If trial started. Saved bed is untouched.', 'success');
+  };
+
+  const discardTrial = () => {
+    if (!trial) return;
+    skipAutosaveRef.current = true;
+    setPainted(prev => Object.assign({}, prev, { [trial.bedId]: structuredClone(trial.baselinePainted) }));
+    setHistory([]);
+    setTrial(null);
+    notify('Trial discarded. Saved bed restored.', 'success');
+  };
+
+  const applyTrial = () => {
+    if (!trial || typeof GosBed === 'undefined') return;
+    try {
+      const payload = internalToGosBed(activeBed, bedPainted);
+      const saved = GosBed.write(payload, { expectedRevision: trial.baselineRevision });
+      const refreshed = gosBedToInternal(saved);
+      skipAutosaveRef.current = true;
+      setActiveBed(refreshed);
+      setAllBeds(prev => prev.map(item => item.id === refreshed.id ? refreshed : item));
+      setPainted(prev => Object.assign({}, prev, { [refreshed.id]: refreshed.painted }));
+      setHistory([]);
+      const experiment = typeof GosExperiments !== 'undefined'
+        ? GosExperiments.listForBed(activeBedId, { includeClosed: false })[0]
+        : null;
+      const journalOk = appendExperimentJournal('applied', experiment, `Applied a What-If layout to ${activeBed.name}; ${trialChangedCells.size} cells changed.`);
+      setTrial(null);
+      try { window.dispatchEvent(new CustomEvent('gosBedChanged', { detail: { id: saved.id, bed: saved } })); } catch (_) {}
+      notify(journalOk ? 'Trial applied to the saved bed.' : 'Trial applied, but Journal could not be updated.', journalOk ? 'success' : 'error');
+    } catch (error) {
+      if (error && (error.code === 'CONCURRENT_WRITE' || error.name === 'ConcurrentWriteError')) {
+        notify('This bed changed in another tab. Trial preserved; reload or discard before applying.', 'error');
+      } else {
+        notify(error.message || 'Trial could not be applied.', 'error');
+      }
+    }
+  };
 
   const pushHistory = () => {
     setHistory(h => [...h.slice(-19), JSON.parse(JSON.stringify(painted))]);
@@ -3116,11 +3442,12 @@ function Painting({ tweak, onOpenTweaks }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <Label size={9} color={T.textMuted}>BRUSH MODE · {filled}/{totalCells}</Label>
             <button className="v5-site-btn" type="button" aria-label={hasSiteContext ? 'Site details (set)' : 'Site details (not set)'}
-              onClick={() => setSiteOpen(true)} style={{
+              disabled={!!trial}
+              onClick={() => trial ? notify('Apply or discard the trial before editing site details.', 'error') : setSiteOpen(true)} style={{
               minHeight: 34, borderRadius: 8, padding: '6px 9px',
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              cursor: 'pointer', marginLeft: 4, position: 'relative',
+              cursor: trial ? 'not-allowed' : 'pointer', marginLeft: 4, position: 'relative', opacity: trial ? 0.55 : 1,
               fontFamily: T.fontMono, fontSize: 9, color: T.soil,
               textTransform: 'uppercase', fontWeight: 700,
             }}>
@@ -3145,7 +3472,10 @@ function Painting({ tweak, onOpenTweaks }) {
       </header>
 
       <BedSwitcher beds={beds} painted={painted} activeId={activeBedId} onPick={handlePickBed}
-        onAdd={handleAddBedClick} onManage={() => setBedManageOpen(true)}/>
+        onAdd={handleAddBedClick} onManage={() => trial ? notify('Apply or discard the trial before managing beds.', 'error') : setBedManageOpen(true)}/>
+
+      <WhatIfBar trial={trial} savedScore={trial && trial.baselineScore} trialScore={liveScore}
+        changedCount={trialChangedCells.size} filled={filled} onApply={applyTrial} onDiscard={discardTrial}/>
 
       <div className="v5-tool-strip" style={{ display: 'flex', gap: 6, padding: '8px 14px 4px', flexShrink: 0 }}>
         <ToolBtn label="Paint"   active={tool === 'paint'}   onClick={() => setTool('paint')}   icon={Icons.paint(13, 'currentColor')}/>
@@ -3154,6 +3484,10 @@ function Painting({ tweak, onOpenTweaks }) {
         <ToolBtn label={paintLocked ? 'Locked' : 'Unlocked'} active={paintLocked} muted={!paintLocked}
           onClick={togglePaintLock} ariaLabel={paintLocked ? 'Paint overwrite locked' : 'Paint overwrite unlocked'}
           icon={paintLocked ? Icons.lock(13, 'currentColor') : Icons.unlock(13, 'currentColor')}/>
+        <ToolBtn label={trial ? 'Trial live' : 'What-If'} active={!!trial} onClick={startTrial}
+          ariaLabel={trial ? 'What-If trial is active' : 'Start What-If trial'} icon={<span aria-hidden="true">◇</span>}/>
+        <ToolBtn label="Experiments" onClick={() => setExperimentsOpen(true)}
+          ariaLabel="Open A/B bed experiments" icon={<span aria-hidden="true">A/B</span>}/>
         <div style={{ flex: 1 }}/>
         <ToolBtn label="Undo" muted onClick={undo} ariaLabel="Undo last action" icon={Icons.undo(13, 'currentColor')}/>
       </div>
@@ -3177,6 +3511,7 @@ function Painting({ tweak, onOpenTweaks }) {
           <div className="v5-bed-grid-wrap" style={{ display: 'flex', justifyContent: 'center' }}>
             <BedGrid bed={bed} painted={bedPainted}
               selected={selected}
+              changedCells={trialChangedCells}
               onCellTap={paintCell}
               ghostCrop={ghostCrop}
               cellSize={cellSize}
@@ -3253,7 +3588,20 @@ function Painting({ tweak, onOpenTweaks }) {
       {bedManageOpen && <BedManagePanel beds={beds} painted={painted} activeId={activeBedId}
         onClose={() => setBedManageOpen(false)}
         onMove={handleMoveBed}
-        onPick={(id) => { handlePickBed(id); setBedManageOpen(false); }}/>}
+        onPick={(id) => { handlePickBed(id); setBedManageOpen(false); }}
+      />}
+      {experimentsOpen && typeof GosExperiments !== 'undefined' && (
+        <ExperimentPanel beds={beds} activeBed={activeBed}
+          onClose={() => setExperimentsOpen(false)}
+          onChanged={() => setExperimentVersion(value => value + 1)}
+          notify={notify}/>
+      )}
+      {notice && <div role={notice.type === 'error' ? 'alert' : 'status'} aria-live="polite" data-testid="painting-notice" style={{
+        position: 'absolute', left: 14, right: 14, bottom: 70, zIndex: 90,
+        padding: '10px 12px', borderRadius: 10,
+        background: notice.type === 'error' ? T.bad : T.soil, color: '#fff',
+        fontFamily: T.fontSans, fontSize: 12, boxShadow: '0 8px 24px rgba(44,27,11,0.25)',
+      }}>{notice.message}</div>}
     </div>
   );
 }
