@@ -391,7 +391,7 @@ function suitabilityCellMap(suitability) {
 }
 // Score band → color, shared by the cell bar, the header chip, and the panel.
 function scoreBand(total) {
-  if (total == null) return { label: '—', color: '#9a8f7d' };
+  if (total == null) return { label: '--', color: '#9a8f7d' };
   if (total >= 7.5) return { label: 'Great', color: '#4b8b3b' };
   if (total >= 5)   return { label: 'OK', color: '#b7860b' };
   return { label: 'Weak', color: '#b4532e' };
