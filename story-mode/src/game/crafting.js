@@ -56,17 +56,17 @@ export class CraftingSystem {
 
     const reduction = this.skillSystem.getBuffValue('material_cost_reduction');
     const adjustedMaterials = (recipe.materials ?? []).map((material) => ({
-      ...material,
       count: adjustMaterialCount(material.count, reduction),
+      itemId: material.itemId,
     }));
 
     const output = recipe.output ?? {};
     const itemDef = getItemDef(output.itemId);
-    const durabilityBonus = this.skillSystem.getBuffValue('crafted_tool_max_durability');
+    const durabilityBonus = Number(this.skillSystem.getBuffValue('crafted_tool_max_durability')) || 0;
     const masterwork = Boolean(this.skillSystem.getBuffValue('crafting_masterwork'));
     const craftedDurability = output.durability == null
       ? null
-      : output.durability + (durabilityBonus || 0);
+      : output.durability + durabilityBonus;
 
     const preview = addItemToInventoryState(
       this.store.getState().campaign.inventory,
@@ -82,13 +82,16 @@ export class CraftingSystem {
       return { success: false, producedItem: null, message: 'Inventory full.' };
     }
 
-    adjustedMaterials.forEach((material) => {
-      this.inventory.removeItem(material.itemId, material.count);
-    });
-    this.inventory.addItem(output.itemId, output.count ?? 1, {
-      durability: craftedDurability,
-      maxDurability: craftedDurability,
-      metadata: masterwork ? { masterwork: true } : {},
+    // One atomic authority-routed action owns the material spend and crafted output together.
+    this.store.dispatch({
+      type: Actions.CRAFT_ITEM,
+      payload: {
+        ...(output.durability != null && durabilityBonus > 0 ? { durabilityBonus } : {}),
+        ...(masterwork ? { masterwork: true } : {}),
+        materialsConsumed: adjustedMaterials,
+        recipeId,
+        xpGained: recipe.craftingXP ?? 20,
+      },
     });
 
     const producedItem = {
@@ -97,16 +100,6 @@ export class CraftingSystem {
       durability: itemDef.category === 'tools' ? craftedDurability : null,
       masterwork,
     };
-
-    this.store.dispatch({
-      type: Actions.CRAFT_ITEM,
-      payload: {
-        recipeId,
-        materialsConsumed: adjustedMaterials,
-        itemProduced: producedItem,
-        xpGained: recipe.craftingXP ?? 20,
-      },
-    });
 
     return {
       success: true,

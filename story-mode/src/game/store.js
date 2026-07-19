@@ -1,3 +1,5 @@
+import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
+
 import {
   attachGridMeta,
   createCampaignState,
@@ -37,6 +39,11 @@ import {
   getSkillXpMap,
   normalizeSkillsState,
 } from './skills.js';
+
+function getCraftingRecipeById(recipeId) {
+  if (typeof recipeId !== 'string' || !recipeId) return null;
+  return (craftingRecipeSpec.recipes ?? []).find((entry) => entry.id === recipeId) ?? null;
+}
 
 const DEFAULT_CELL = {
   cropId: null,
@@ -891,12 +898,46 @@ function gameReducer(state, action = {}) {
     }
 
     case Actions.CRAFT_ITEM: {
-      if (!payload.itemProduced?.itemId) return state;
+      const recipe = getCraftingRecipeById(payload.recipeId);
+      const produced = payload.itemProduced?.itemId
+        ? {
+          count: Number.isInteger(payload.itemProduced.count) ? payload.itemProduced.count : 1,
+          durability: Number.isFinite(payload.itemProduced.durability) ? payload.itemProduced.durability : null,
+          itemId: payload.itemProduced.itemId,
+          masterwork: payload.itemProduced.masterwork === true,
+        }
+        : (recipe?.output?.itemId
+          ? {
+            count: recipe.output.count ?? 1,
+            durability: recipe.output.durability == null
+              ? null
+              : recipe.output.durability + (Number.isInteger(payload.durabilityBonus) ? payload.durabilityBonus : 0),
+            itemId: recipe.output.itemId,
+            masterwork: payload.masterwork === true,
+          }
+          : null);
+      if (!produced?.itemId) return state;
       const nextState = cloneGameState(state);
-      nextState.campaign.craftedItems = {
-        ...(nextState.campaign.craftedItems ?? {}),
-        [payload.itemProduced.itemId]: (nextState.campaign.craftedItems?.[payload.itemProduced.itemId] ?? 0) + (payload.itemProduced.count ?? 1),
-      };
+      const materialsConsumed = Array.isArray(payload.materialsConsumed)
+        ? payload.materialsConsumed
+        : (payload.itemProduced?.itemId ? [] : (recipe?.materials ?? []));
+      let inventory = nextState.campaign.inventory;
+      materialsConsumed.forEach((material) => {
+        if (typeof material?.itemId !== 'string' || !Number.isInteger(material.count) || material.count <= 0) return;
+        inventory = removeItemFromInventoryState(inventory, material.itemId, material.count).inventory;
+      });
+      if (produced.count > 0) {
+        inventory = addItemToInventoryState(inventory, produced.itemId, produced.count, {
+          durability: produced.durability,
+          maxDurability: produced.durability,
+          metadata: produced.masterwork ? { masterwork: true } : {},
+        }).inventory;
+        nextState.campaign.craftedItems = {
+          ...(nextState.campaign.craftedItems ?? {}),
+          [produced.itemId]: (nextState.campaign.craftedItems?.[produced.itemId] ?? 0) + produced.count,
+        };
+      }
+      nextState.campaign.inventory = inventory;
       return nextState;
     }
 

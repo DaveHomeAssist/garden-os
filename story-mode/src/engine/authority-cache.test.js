@@ -861,6 +861,68 @@ describe('authority IndexedDB cache', () => {
     })).toBeNull();
   });
 
+  it('maps crafting acks back into one atomic craft action', () => {
+    expect(isAuthorityRoutedAction({ type: Actions.CRAFT_ITEM, payload: { recipeId: 'basic_fertilizer' } })).toBe(true);
+
+    const craftingAck = {
+      accepted: true,
+      actionType: Actions.CRAFT_ITEM,
+      authoritativePatch: {
+        data: {
+          lastCrafting: {
+            count: 1,
+            durability: null,
+            itemId: 'fertilizer_bag',
+            materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+            maxDurability: null,
+            recipeId: 'basic_fertilizer',
+            remainingMaterials: { compost: 0, plant_matter: 0 },
+            slotIndex: 2,
+            totalCount: 4,
+          },
+        },
+      },
+    };
+
+    const behindState = createGameState();
+    behindState.campaign.inventory.slots[5] = {
+      category: 'materials',
+      count: 2,
+      durability: null,
+      itemId: 'compost',
+      maxDurability: null,
+      metadata: {},
+    };
+    behindState.campaign.inventory.slots[6] = {
+      category: 'materials',
+      count: 3,
+      durability: null,
+      itemId: 'plant_matter',
+      maxDurability: null,
+      metadata: {},
+    };
+    expect(authorityAckToStoreAction(craftingAck, behindState)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        itemProduced: {
+          count: 1,
+          durability: null,
+          itemId: 'fertilizer_bag',
+          masterwork: false,
+          maxDurability: null,
+        },
+        materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 0,
+      },
+      type: Actions.CRAFT_ITEM,
+    });
+
+    const appliedState = createGameState();
+    appliedState.campaign.inventory.slots[2].count = 4;
+    expect(authorityAckToStoreAction(craftingAck, appliedState)).toBeNull();
+  });
+
   it('persists snapshots and deletes corrupt cached snapshots', async () => {
     const indexedDB = createFakeIndexedDB();
     const journal = new IndexedDbAuthorityJournal({ databaseName: 'snapshot-test', indexedDB });
@@ -2345,6 +2407,102 @@ describe('authority IndexedDB cache', () => {
       maxDurability: 100,
     });
     expect(store.getState().campaign.inventory.slots[5]).toBeNull();
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues crafting transactions and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    store.dispatch({
+      type: Actions.ADD_ITEM,
+      payload: {
+        count: 2,
+        itemId: 'compost',
+      },
+    });
+    store.dispatch({
+      type: Actions.ADD_ITEM,
+      payload: {
+        count: 3,
+        itemId: 'plant_matter',
+      },
+    });
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastCrafting: {
+                count: 1,
+                durability: null,
+                itemId: 'fertilizer_bag',
+                materialsConsumed: body.payload.materialsConsumed,
+                maxDurability: null,
+                recipeId: body.payload.recipeId,
+                remainingMaterials: { compost: 0, plant_matter: 0 },
+                slotIndex: 2,
+                totalCount: 4,
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.CRAFT_ITEM,
+      payload: {
+        materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 15,
+      },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.inventory.slots[2]).toMatchObject({
+      count: 4,
+      itemId: 'fertilizer_bag',
+    });
+    expect(store.getState().campaign.inventory.slots[5]).toBeNull();
+    expect(store.getState().campaign.inventory.slots[6]).toBeNull();
+    expect(store.getState().campaign.craftedItems?.fertilizer_bag).toBe(1);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

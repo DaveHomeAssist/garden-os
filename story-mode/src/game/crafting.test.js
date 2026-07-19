@@ -40,6 +40,32 @@ describe('CraftingSystem', () => {
     expect(crafting.canCraft('basic_fertilizer').craftable).toBe(true);
   });
 
+  it('applies crafted tool durability bonus and masterwork metadata at high skill', () => {
+    const { store, inventory, crafting } = makeCrafting(10);
+    inventory.addItem('scrap_metal', 1);
+    inventory.addItem('plant_fiber', 2);
+    inventory.addItem('crystal_shard', 1);
+
+    const result = crafting.craft('improved_watering_can');
+
+    expect(result.success).toBe(true);
+    expect(result.producedItem).toMatchObject({
+      durability: 110,
+      itemId: 'watering_can',
+      masterwork: true,
+    });
+    const craftedSlot = store.getState().campaign.inventory.slots.find((slot) => (
+      slot?.itemId === 'watering_can' && slot.durability === 110
+    ));
+    expect(craftedSlot).toMatchObject({
+      durability: 110,
+      maxDurability: 110,
+      metadata: { masterwork: true },
+    });
+    expect(inventory.getItemCount('scrap_metal')).toBe(0);
+    expect(store.getState().campaign.craftedItems.watering_can).toBe(1);
+  });
+
   it('shows gated recipes only when skill requirements are met', () => {
     const base = makeCrafting(1).crafting.getAvailableRecipes().map((recipe) => recipe.id);
     const advanced = makeCrafting(5).crafting.getAvailableRecipes().map((recipe) => recipe.id);
