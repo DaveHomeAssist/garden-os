@@ -47,7 +47,9 @@ const errors = [];
 page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
 page.on('console', message => {
   const location = message.location().url || '';
-  if (message.type() === 'error' && !location.endsWith('/favicon.ico')) {
+  // Google Fonts are allowed to fail offline (graceful degradation); every other error stays fatal.
+  const ignorableFontError = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(location);
+  if (message.type() === 'error' && !location.endsWith('/favicon.ico') && !ignorableFontError) {
     errors.push(`console: ${message.text()}`);
   }
 });
