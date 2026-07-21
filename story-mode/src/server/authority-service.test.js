@@ -230,8 +230,12 @@ describe('authority service', () => {
       cellIndex: 2,
       cropId: 'basil',
       harvestedAt: NOW,
+      newRecipes: [],
+      pantryCount: 1,
+      totalCount: 1,
       yieldCount: 1,
     });
+    expect(applied.body.ack.authoritativePatch.data.pantry).toEqual({ basil: 1 });
     expect(applied.body.ack.authoritativePatch.data.grid[2]).toMatchObject({
       cropId: null,
       damageState: null,
@@ -1139,6 +1143,240 @@ describe('authority service', () => {
       slot?.itemId === 'watering_can' && slot.durability === 110
     ));
     expect(craftedCan).toMatchObject({ durability: 110, maxDurability: 110 });
+  });
+
+  it('routes quest reward claims through canonical state exactly once', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      id: 'action-claim-quest',
+      idempotencyKey: 'idem-claim-quest',
+      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-claim-quest-retry',
+      idempotencyKey: 'idem-claim-quest',
+      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const reclaim = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-claim-quest-again',
+      idempotencyKey: 'idem-claim-quest-again',
+      payload: { choiceId: 'stewardship', completedAt: NOW + 1, questId: 'pat_watering' },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.COMPLETE_QUEST);
+    expect(applied.body.ack.authoritativePatch.data.lastQuestReward).toEqual({
+      choiceId: 'community',
+      completedAt: NOW,
+      itemTotals: { plant_matter: 5 },
+      questId: 'pat_watering',
+      rewards: [
+        { amount: 5, id: 'plant_matter', type: 'item' },
+        { amount: 10, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+      ],
+    });
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(reclaim.body.ack.rejection.code).toBe('QUEST_ALREADY_CLAIMED');
+    expect(state.data.claimedQuests).toEqual({ pat_watering: { choiceId: 'community' } });
+    expect(state.tick).toBe(1);
+    expect(state.data.inventory.slots[5]).toMatchObject({ count: 5, itemId: 'plant_matter' });
+  });
+
+  it('rejects quest claims that fake rewards or break the quest deck', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedRewards = await postJson(handle, '/api/action', envelope({
+      id: 'action-quest-rewards',
+      idempotencyKey: 'idem-quest-rewards',
+      payload: {
+        choiceId: 'community',
+        questId: 'pat_watering',
+        rewards: [{ amount: 99, id: 'legendary_trowel', type: 'item' }],
+      },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const unknownQuest = await postJson(handle, '/api/action', envelope({
+      id: 'action-quest-unknown',
+      idempotencyKey: 'idem-quest-unknown',
+      payload: { questId: 'duplication_glitch' },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const badChoice = await postJson(handle, '/api/action', envelope({
+      id: 'action-quest-choice',
+      idempotencyKey: 'idem-quest-choice',
+      payload: { choiceId: 'jackpot', questId: 'pat_watering' },
+      type: Actions.COMPLETE_QUEST,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedRewards.body.ack.rejection.code).toBe('CLIENT_REWARD_PAYLOAD');
+    expect(unknownQuest.body.ack.rejection.code).toBe('BAD_QUEST_ID');
+    expect(badChoice.body.ack.rejection.code).toBe('BAD_QUEST_CHOICE');
+    expect(verifyAuthorityAckSignature(badChoice.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.claimedQuests).toEqual({});
+  });
+
+  it('routes festival lifecycle and activity claims through canonical state once', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const started = await postJson(handle, '/api/action', envelope({
+      id: 'action-festival-start',
+      idempotencyKey: 'idem-festival-start',
+      payload: { festivalId: 'growth_surge', month: 2, season: 'summer' },
+      type: Actions.FESTIVAL_START,
+    }));
+    const restarted = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-festival-restart',
+      idempotencyKey: 'idem-festival-restart',
+      payload: { festivalId: 'bloom_festival' },
+      type: Actions.FESTIVAL_START,
+    }));
+    const activity = await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-festival-activity',
+      idempotencyKey: 'idem-festival-activity',
+      payload: { activityId: 'shade_building', festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_ACTIVITY,
+    }));
+    const reclaim = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-festival-activity-again',
+      idempotencyKey: 'idem-festival-activity-again',
+      payload: { activityId: 'shade_building', festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_ACTIVITY,
+    }));
+    const fakeRewards = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-festival-fake',
+      idempotencyKey: 'idem-festival-fake',
+      payload: {
+        activityId: 'watering_race',
+        rewards: [{ amount: 99, id: 'festival_token', type: 'item' }],
+      },
+      type: Actions.FESTIVAL_ACTIVITY,
+    }));
+    const ended = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-festival-end',
+      idempotencyKey: 'idem-festival-end',
+      payload: { festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_END,
+    }));
+    const endedAgain = await postJson(handle, '/api/action', envelope({
+      expectedTick: 3,
+      id: 'action-festival-end-again',
+      idempotencyKey: 'idem-festival-end-again',
+      payload: {},
+      type: Actions.FESTIVAL_END,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(started.body.ok).toBe(true);
+    expect(started.body.ack.authoritativePatch.data.activeFestival).toEqual({
+      activitiesCompleted: [],
+      id: 'growth_surge',
+    });
+    expect(restarted.body.ack.rejection.code).toBe('FESTIVAL_ALREADY_ACTIVE');
+    expect(activity.body.ok).toBe(true);
+    expect(activity.body.ack.authoritativePatch.data.lastFestivalReward).toEqual({
+      activityId: 'shade_building',
+      festivalId: 'growth_surge',
+      itemTotals: { festival_token: 1 },
+      rewards: [{ amount: 1, id: 'festival_token', type: 'item' }],
+    });
+    expect(reclaim.body.ack.rejection.code).toBe('ACTIVITY_ALREADY_CLAIMED');
+    expect(fakeRewards.body.ack.rejection.code).toBe('CLIENT_REWARD_PAYLOAD');
+    expect(ended.body.ok).toBe(true);
+    expect(ended.body.ack.authoritativePatch.data.activeFestival).toBeNull();
+    expect(endedAgain.body.ack.rejection.code).toBe('NO_ACTIVE_FESTIVAL');
+    expect(verifyAuthorityAckSignature(ended.body.ack, SECRET)).toBe(true);
+    expect(state.data.activeFestival).toBeNull();
+    expect(state.tick).toBe(3);
+  });
+
+  it('derives harvest pantry totals and recipe completion server-side', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    const steps = [
+      { cellIndex: 0, cropId: 'basil' },
+      { cellIndex: 1, cropId: 'dill' },
+    ];
+    let tick = 0;
+    for (const step of steps) {
+      await postJson(handle, '/api/action', envelope({
+        expectedTick: tick,
+        id: `action-plant-${step.cropId}`,
+        idempotencyKey: `idem-plant-${step.cropId}`,
+        payload: step,
+        type: Actions.PLANT_CROP,
+      }));
+      tick += 1;
+      await postJson(handle, '/api/action', envelope({
+        expectedTick: tick,
+        id: `action-harvest-${step.cropId}`,
+        idempotencyKey: `idem-harvest-${step.cropId}`,
+        payload: { cellIndex: step.cellIndex },
+        type: Actions.HARVEST_CELL,
+      }));
+      tick += 1;
+    }
+    const state = service.sessions.get('session-http');
+
+    expect(state.data.pantry).toEqual({ basil: 1, dill: 1 });
+    expect(state.data.recipesCompleted).toEqual(['herb_bowl']);
+    expect(state.data.lastHarvesting).toMatchObject({
+      cropId: 'dill',
+      newRecipes: ['herb_bowl'],
+      pantryCount: 1,
+      totalCount: 1,
+    });
+    expect(state.data.inventory.slots[5]).toMatchObject({ count: 1, itemId: 'basil' });
+    expect(state.data.inventory.slots[6]).toMatchObject({ count: 1, itemId: 'dill' });
+  });
+
+  it('fails closed when reward grants would overflow server-owned inventory', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-fill-inventory',
+      idempotencyKey: 'idem-fill-inventory',
+      payload: { count: 15, itemId: 'watering_can' },
+      type: Actions.ADD_ITEM,
+    }));
+    await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-festival-start-full',
+      idempotencyKey: 'idem-festival-start-full',
+      payload: { festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_START,
+    }));
+
+    const blocked = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-festival-activity-full',
+      idempotencyKey: 'idem-festival-activity-full',
+      payload: { activityId: 'shade_building' },
+      type: Actions.FESTIVAL_ACTIVITY,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(blocked.body.ack.rejection.code).toBe('INVENTORY_FULL');
+    expect(state.data.activeFestival.activitiesCompleted).toEqual([]);
+    expect(state.tick).toBe(2);
   });
 
   it('routes protect and mulch interventions through one canonical transaction', async () => {

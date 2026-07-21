@@ -359,6 +359,35 @@ describe('gameReducer', () => {
     expect(reconciled.campaign.craftedItems.fertilizer_bag).toBe(1);
   });
 
+  it('derives quest and festival rewards from canonical tables for lean payloads', () => {
+    const completed = gameReducer(makeState(), {
+      type: Actions.COMPLETE_QUEST,
+      payload: { choiceId: 'community', completedAt: 12345, questId: 'pat_watering' },
+    });
+    const plantMatter = (completed.campaign.inventory.slots ?? []).reduce((total, slot) => (
+      slot?.itemId === 'plant_matter' ? total + slot.count : total
+    ), 0);
+    expect(completed.campaign.questLog.pat_watering.state).toBe('COMPLETED');
+    expect(completed.campaign.choiceLog.pat_watering.outcomeId).toBe('community');
+    expect(plantMatter).toBe(5);
+    expect(completed.campaign.reputation.neighbor_pat).toBe(13);
+
+    let festivalState = gameReducer(makeState(), {
+      type: Actions.FESTIVAL_START,
+      payload: { festivalId: 'growth_surge', month: 2, season: 'summer', startedAt: 12345 },
+    });
+    expect(festivalState.campaign.activeFestival.mechanics.growthSpeed.multiplier).toBe(1.5);
+    festivalState = gameReducer(festivalState, {
+      type: Actions.FESTIVAL_ACTIVITY,
+      payload: { activityId: 'shade_building', festivalId: 'growth_surge' },
+    });
+    const tokens = (festivalState.campaign.inventory.slots ?? []).reduce((total, slot) => (
+      slot?.itemId === 'festival_token' ? total + slot.count : total
+    ), 0);
+    expect(festivalState.campaign.activeFestival.activitiesCompleted).toEqual(['shade_building']);
+    expect(tokens).toBe(1);
+  });
+
   it('returns the previous state for unknown actions', () => {
     const base = makeState();
     const next = gameReducer(base, { type: 'UNKNOWN_ACTION' });

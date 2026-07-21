@@ -923,6 +923,105 @@ describe('authority IndexedDB cache', () => {
     expect(authorityAckToStoreAction(craftingAck, appliedState)).toBeNull();
   });
 
+  it('maps quest and festival reward acks back into claim-once store actions', () => {
+    expect(isAuthorityRoutedAction({ type: Actions.COMPLETE_QUEST, payload: { questId: 'pat_watering' } })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.FESTIVAL_START, payload: { festivalId: 'growth_surge' } })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.FESTIVAL_ACTIVITY, payload: { activityId: 'shade_building' } })).toBe(true);
+    expect(isAuthorityRoutedAction({ type: Actions.FESTIVAL_END, payload: {} })).toBe(true);
+
+    const questAck = {
+      accepted: true,
+      actionType: Actions.COMPLETE_QUEST,
+      authoritativePatch: {
+        data: {
+          lastQuestReward: {
+            choiceId: 'community',
+            completedAt: 1_783_368_000_000,
+            itemTotals: { plant_matter: 5 },
+            questId: 'pat_watering',
+            rewards: [{ amount: 5, id: 'plant_matter', type: 'item' }],
+          },
+        },
+      },
+    };
+    expect(authorityAckToStoreAction(questAck, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        choiceId: 'community',
+        completedAt: 1_783_368_000_000,
+        questId: 'pat_watering',
+        rewards: [{ amount: 5, id: 'plant_matter', type: 'item' }],
+      },
+      type: Actions.COMPLETE_QUEST,
+    });
+    const claimedState = createGameState();
+    claimedState.campaign.questLog = { pat_watering: { state: 'COMPLETED' } };
+    expect(authorityAckToStoreAction(questAck, claimedState)).toBeNull();
+
+    const startAck = {
+      accepted: true,
+      actionType: Actions.FESTIVAL_START,
+      authoritativePatch: {
+        data: {
+          activeFestival: { activitiesCompleted: [], id: 'growth_surge' },
+          lastFestivalStart: { festivalId: 'growth_surge' },
+        },
+      },
+    };
+    expect(authorityAckToStoreAction(startAck, createGameState())).toEqual({
+      meta: { authorityAck: true },
+      payload: { festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_START,
+    });
+    const startedState = createGameState();
+    startedState.campaign.activeFestival = { activitiesCompleted: [], id: 'growth_surge' };
+    expect(authorityAckToStoreAction(startAck, startedState)).toBeNull();
+
+    const activityAck = {
+      accepted: true,
+      actionType: Actions.FESTIVAL_ACTIVITY,
+      authoritativePatch: {
+        data: {
+          lastFestivalReward: {
+            activityId: 'shade_building',
+            festivalId: 'growth_surge',
+            itemTotals: { festival_token: 1 },
+            rewards: [{ amount: 1, id: 'festival_token', type: 'item' }],
+          },
+        },
+      },
+    };
+    expect(authorityAckToStoreAction(activityAck, startedState)).toEqual({
+      meta: { authorityAck: true },
+      payload: {
+        activityId: 'shade_building',
+        festivalId: 'growth_surge',
+        rewards: [{ amount: 1, id: 'festival_token', type: 'item' }],
+      },
+      type: Actions.FESTIVAL_ACTIVITY,
+    });
+    const claimedActivityState = createGameState();
+    claimedActivityState.campaign.activeFestival = { activitiesCompleted: ['shade_building'], id: 'growth_surge' };
+    expect(authorityAckToStoreAction(activityAck, claimedActivityState)).toBeNull();
+
+    const endAck = {
+      accepted: true,
+      actionType: Actions.FESTIVAL_END,
+      authoritativePatch: {
+        data: {
+          activeFestival: null,
+          lastFestivalEnd: { festivalId: 'growth_surge' },
+        },
+      },
+    };
+    expect(authorityAckToStoreAction(endAck, startedState)).toEqual({
+      meta: { authorityAck: true },
+      payload: { festivalId: 'growth_surge' },
+      type: Actions.FESTIVAL_END,
+    });
+    expect(authorityAckToStoreAction(endAck, createGameState())).toBeNull();
+  });
+
   it('persists snapshots and deletes corrupt cached snapshots', async () => {
     const indexedDB = createFakeIndexedDB();
     const journal = new IndexedDbAuthorityJournal({ databaseName: 'snapshot-test', indexedDB });
@@ -2503,6 +2602,86 @@ describe('authority IndexedDB cache', () => {
     expect(store.getState().campaign.inventory.slots[5]).toBeNull();
     expect(store.getState().campaign.inventory.slots[6]).toBeNull();
     expect(store.getState().campaign.craftedItems?.fertilizer_bag).toBe(1);
+    expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
+
+    persistence.cleanup();
+  });
+
+  it('queues quest reward claims and skips duplicate server reconciliation', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    let actionCalls = 0;
+    const fetchFn = async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (url.endsWith('/session')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          session: { ledgerCursor: '0', sessionId: body.sessionId, tick: 0 },
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      if (url.endsWith('/ack/verify')) {
+        return new Response(JSON.stringify({ ok: true, verified: true }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+      actionCalls += 1;
+      return new Response(JSON.stringify({
+        ack: {
+          ...ackFor(body),
+          actionType: body.type,
+          authoritativePatch: {
+            data: {
+              lastQuestReward: {
+                choiceId: body.payload.choiceId,
+                completedAt: body.payload.completedAt ?? null,
+                itemTotals: { plant_matter: 5 },
+                questId: body.payload.questId,
+                rewards: [
+                  { amount: 5, id: 'plant_matter', type: 'item' },
+                  { amount: 10, id: 'neighbor_pat', type: 'reputation' },
+                ],
+              },
+            },
+          },
+        },
+        ok: true,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    };
+    const persistence = createStoryAuthorityPersistence(store, {
+      authorityUrl: 'https://authority.example.test',
+      fetchFn,
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+
+    await persistence.flush();
+    store.dispatch({
+      type: Actions.ACCEPT_QUEST,
+      payload: { questId: 'pat_watering', acceptedAt: NOW },
+    });
+    store.dispatch({
+      type: Actions.COMPLETE_QUEST,
+      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+    });
+    await persistence.flush();
+
+    expect(actionCalls).toBe(1);
+    expect(store.getState().campaign.questLog.pat_watering.state).toBe('COMPLETED');
+    const plantMatter = (store.getState().campaign.inventory.slots ?? []).reduce((total, slot) => (
+      slot?.itemId === 'plant_matter' ? total + slot.count : total
+    ), 0);
+    expect(plantMatter).toBe(5);
+    expect(store.getState().campaign.reputation.neighbor_pat).toBe(13);
     expect(await persistence.journal.listPendingActions(persistence.sessionId)).toHaveLength(0);
 
     persistence.cleanup();

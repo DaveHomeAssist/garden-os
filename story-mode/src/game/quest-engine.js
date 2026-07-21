@@ -19,6 +19,10 @@ class QuestEngine {
   constructor(store, questDeck = questDeckData?.quests ?? []) {
     this.store = store;
     this.questDeck = Array.isArray(questDeck) ? questDeck : [];
+    // Canonical-deck engines dispatch lean authority-routable payloads; custom
+    // decks (tests, mods) keep the legacy full payload since the server would
+    // reject their quest ids anyway.
+    this.usesCanonicalDeck = questDeck === (questDeckData?.quests ?? []);
   }
 
   getState() {
@@ -179,17 +183,25 @@ class QuestEngine {
     const outcome = this.resolveQuestOutcome(questId, choiceId);
     if (this.getQuestOutcomes(quest).length && !outcome) return null;
     const rewards = outcome?.rewards ?? quest.rewards ?? [];
+    // Lean authority-routable payload: the reducer and the server both derive
+    // rewards, outcome, and story entries from the canonical quest deck.
     this.store.dispatch({
       type: Actions.COMPLETE_QUEST,
-      payload: {
-        questId,
-        title: quest.title,
-        choiceId: choiceId ?? outcome?.id ?? null,
-        outcome,
-        rewards,
-        storyEntries: outcome?.storyLog ?? [],
-        completedAt: Date.now(),
-      },
+      payload: this.usesCanonicalDeck
+        ? {
+          questId,
+          choiceId: choiceId ?? outcome?.id ?? null,
+          completedAt: Date.now(),
+        }
+        : {
+          questId,
+          title: quest.title,
+          choiceId: choiceId ?? outcome?.id ?? null,
+          outcome,
+          rewards,
+          storyEntries: outcome?.storyLog ?? [],
+          completedAt: Date.now(),
+        },
     });
     return rewards;
   }

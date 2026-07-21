@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'CRAFT_ITEM', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'COMPLETE_QUEST', 'CRAFT_ITEM', 'FESTIVAL_ACTIVITY', 'FESTIVAL_END', 'FESTIVAL_START', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -146,7 +146,11 @@ function inferAckActionType(ack) {
   const actionId = String(ack?.actionId ?? '');
   if (actionId.endsWith(':ADD_ITEM')) return 'ADD_ITEM';
   if (actionId.endsWith(':APPLY_TOOL_INTERVENTION')) return 'APPLY_TOOL_INTERVENTION';
+  if (actionId.endsWith(':COMPLETE_QUEST')) return 'COMPLETE_QUEST';
   if (actionId.endsWith(':CRAFT_ITEM')) return 'CRAFT_ITEM';
+  if (actionId.endsWith(':FESTIVAL_ACTIVITY')) return 'FESTIVAL_ACTIVITY';
+  if (actionId.endsWith(':FESTIVAL_END')) return 'FESTIVAL_END';
+  if (actionId.endsWith(':FESTIVAL_START')) return 'FESTIVAL_START';
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
@@ -510,6 +514,62 @@ function authorityAckToStoreAction(ack, currentState = null) {
         slotIndex,
       },
       type: 'REPAIR_TOOL',
+    };
+  }
+
+  if (actionType === 'COMPLETE_QUEST') {
+    const questReward = data.lastQuestReward;
+    const questId = typeof questReward?.questId === 'string' ? questReward.questId : null;
+    if (!questId) return null;
+    if (currentState?.campaign?.questLog?.[questId]?.state === 'COMPLETED') return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        choiceId: typeof questReward.choiceId === 'string' ? questReward.choiceId : null,
+        completedAt: Number.isFinite(questReward.completedAt) ? questReward.completedAt : null,
+        questId,
+        rewards: Array.isArray(questReward.rewards) ? cloneValue(questReward.rewards) : [],
+      },
+      type: 'COMPLETE_QUEST',
+    };
+  }
+
+  if (actionType === 'FESTIVAL_START') {
+    const festivalId = typeof data.lastFestivalStart?.festivalId === 'string' ? data.lastFestivalStart.festivalId : null;
+    if (!festivalId) return null;
+    if (currentState?.campaign?.activeFestival?.id === festivalId) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { festivalId },
+      type: 'FESTIVAL_START',
+    };
+  }
+
+  if (actionType === 'FESTIVAL_ACTIVITY') {
+    const festivalReward = data.lastFestivalReward;
+    const activityId = typeof festivalReward?.activityId === 'string' ? festivalReward.activityId : null;
+    if (!activityId) return null;
+    const completed = currentState?.campaign?.activeFestival?.activitiesCompleted ?? [];
+    if (completed.includes(activityId)) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        activityId,
+        festivalId: typeof festivalReward.festivalId === 'string' ? festivalReward.festivalId : null,
+        rewards: Array.isArray(festivalReward.rewards) ? cloneValue(festivalReward.rewards) : [],
+      },
+      type: 'FESTIVAL_ACTIVITY',
+    };
+  }
+
+  if (actionType === 'FESTIVAL_END') {
+    const festivalId = typeof data.lastFestivalEnd?.festivalId === 'string' ? data.lastFestivalEnd.festivalId : null;
+    if (!festivalId) return null;
+    if (!currentState?.campaign?.activeFestival) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: { festivalId },
+      type: 'FESTIVAL_END',
     };
   }
 
