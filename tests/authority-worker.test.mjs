@@ -1321,6 +1321,152 @@ test('authority action routes tool repairs through canonical inventory once', as
   assert.equal(second.state.data.inventory.slots[5], null);
 });
 
+test('authority action routes crafting through canonical inventory once', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-add-compost',
+    idempotencyKey: 'idem-add-compost',
+    payload: {
+      count: 2,
+      itemId: 'compost',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-add-plant-matter',
+    idempotencyKey: 'idem-add-plant-matter',
+    payload: {
+      count: 3,
+      itemId: 'plant_matter',
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'ADD_ITEM',
+  }), env);
+
+  const action = {
+    clientSeq: 3,
+    expectedTick: 2,
+    gameId: 'garden',
+    id: 'action-craft-fertilizer',
+    idempotencyKey: 'idem-craft-fertilizer',
+    payload: {
+      materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+      recipeId: 'basic_fertilizer',
+      xpGained: 15,
+    },
+    playerId: 'local',
+    sessionId,
+    type: 'CRAFT_ITEM',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const secondResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    id: 'action-craft-fertilizer-retry',
+  }), env);
+  const second = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'CRAFT_ITEM');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.deepEqual(first.state.data.lastCrafting, {
+    count: 1,
+    durability: null,
+    itemId: 'fertilizer_bag',
+    materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+    maxDurability: null,
+    recipeId: 'basic_fertilizer',
+    remainingMaterials: { compost: 0, plant_matter: 0 },
+    slotIndex: 2,
+    totalCount: 4,
+  });
+  assert.equal(first.state.data.inventory.slots[2].count, 4);
+  assert.equal(first.state.data.inventory.slots[5], null);
+  assert.equal(first.state.data.inventory.slots[6], null);
+  assert.equal(second.duplicate, true);
+  assert.equal(second.state.tick, 3);
+  assert.equal(second.state.data.inventory.slots[2].count, 4);
+});
+
+test('authority rejects malformed or client-owned crafting payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const cases = [
+    {
+      code: 'TRUSTED_INVENTORY_PAYLOAD',
+      id: 'craft-trusted',
+      payload: { inventory: { slots: [] }, recipeId: 'basic_fertilizer' },
+    },
+    {
+      code: 'CLIENT_CRAFT_TOTAL',
+      id: 'craft-output',
+      payload: { itemProduced: { count: 99, itemId: 'legendary_trowel' }, recipeId: 'basic_fertilizer' },
+    },
+    {
+      code: 'BAD_RECIPE_ID',
+      id: 'craft-unknown',
+      payload: { recipeId: 'duplication_glitch' },
+    },
+    {
+      code: 'CRAFT_COST_MISMATCH',
+      id: 'craft-underpaid',
+      payload: {
+        materialsConsumed: [{ count: 1, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+      },
+    },
+    {
+      code: 'BAD_DURABILITY_BONUS',
+      id: 'craft-bonus',
+      payload: { durabilityBonus: 25, recipeId: 'improved_watering_can' },
+    },
+    {
+      code: 'BAD_MASTERWORK_VALUE',
+      id: 'craft-masterwork',
+      payload: { masterwork: 'yes', recipeId: 'basic_fertilizer' },
+    },
+    {
+      code: 'NOT_ENOUGH_ITEM',
+      id: 'craft-missing',
+      payload: { recipeId: 'basic_fertilizer' },
+    },
+  ];
+
+  for (const [index, entry] of cases.entries()) {
+    const response = await worker.fetch(jsonRequest('/action', {
+      clientSeq: index + 1,
+      expectedTick: 0,
+      gameId: 'garden',
+      id: `action-${entry.id}`,
+      idempotencyKey: `idem-${entry.id}`,
+      payload: entry.payload,
+      playerId: 'local',
+      sessionId,
+      type: 'CRAFT_ITEM',
+    }), env);
+    const body = await response.json();
+    assert.equal(response.status, 422);
+    assert.equal(body.ack.accepted, false);
+    assert.equal(body.ack.rejection.code, entry.code);
+    assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+  }
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.equal(session.state.data.lastCrafting, null);
+});
+
 test('authority rejects malformed cooldown payloads before mutation', async () => {
   const { env, sessionId } = await createSession();
   const response = await worker.fetch(jsonRequest('/action', {

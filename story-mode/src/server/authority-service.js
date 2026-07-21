@@ -18,16 +18,32 @@ const AUTHORITY_ITEM_CATEGORIES = {
   TOOLS: 'tools',
 };
 const AUTHORITY_ITEM_DEFS = {
+  auto_composter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
+  companion_patch_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  compost: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
+  dried_leaves: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   fertilizer_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
   crystal_shard: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
+  garden_twine: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 50, stackable: true },
+  greenhouse_panel: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
+  herb_extract: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 30, stackable: true },
+  legendary_trowel: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, stackable: false },
+  lens: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
+  masterwork_fertilizer: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
+  mechanism: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
   mulch_bag: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  plant_fiber: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   plant_matter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   pest_spray: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   pruning_shears: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 50, stackable: false },
+  rare_earth: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 25, stackable: true },
   scrap_metal: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
+  seed_hybridizer: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 20, stackable: false },
   smart_watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 80, stackable: false },
   soil_scanner: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 30, stackable: false },
+  trellis_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
   watering_can: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, durability: 100, stackable: false },
+  wood: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
 };
 const AUTHORITY_REPAIR_COSTS = {
   pruning_shears: [{ itemId: 'scrap_metal', count: 1 }],
@@ -38,6 +54,72 @@ const AUTHORITY_REPAIR_COSTS = {
   soil_scanner: [{ itemId: 'crystal_shard', count: 1 }],
   watering_can: [{ itemId: 'plant_matter', count: 2 }],
 };
+// Mirrors specs/CRAFTING_RECIPES.json; authority runtimes must stay import-free of browser spec aliases.
+const AUTHORITY_CRAFTING_RECIPES = {
+  basic_fertilizer: {
+    materials: [{ itemId: 'compost', count: 2 }, { itemId: 'plant_matter', count: 3 }],
+    output: { itemId: 'fertilizer_bag', count: 1, durability: null },
+  },
+  pest_spray: {
+    materials: [{ itemId: 'herb_extract', count: 2 }, { itemId: 'plant_matter', count: 1 }],
+    output: { itemId: 'pest_spray', count: 1, durability: null },
+  },
+  garden_twine: {
+    materials: [{ itemId: 'plant_fiber', count: 3 }],
+    output: { itemId: 'garden_twine', count: 1, durability: null },
+  },
+  improved_watering_can: {
+    materials: [{ itemId: 'scrap_metal', count: 1 }, { itemId: 'plant_fiber', count: 2 }, { itemId: 'crystal_shard', count: 1 }],
+    output: { itemId: 'watering_can', count: 1, durability: 100 },
+  },
+  pruning_shears: {
+    materials: [{ itemId: 'scrap_metal', count: 2 }, { itemId: 'garden_twine', count: 1 }],
+    output: { itemId: 'pruning_shears', count: 1, durability: 50 },
+  },
+  mulch_bag: {
+    materials: [{ itemId: 'compost', count: 3 }, { itemId: 'dried_leaves', count: 2 }],
+    output: { itemId: 'mulch_bag', count: 2, durability: null },
+  },
+  trellis_extension: {
+    materials: [{ itemId: 'wood', count: 4 }, { itemId: 'garden_twine', count: 2 }],
+    output: { itemId: 'trellis_kit', count: 1, durability: null },
+  },
+  soil_scanner: {
+    materials: [{ itemId: 'crystal_shard', count: 1 }, { itemId: 'scrap_metal', count: 2 }, { itemId: 'lens', count: 1 }],
+    output: { itemId: 'soil_scanner', count: 1, durability: 30 },
+  },
+  smart_watering_can: {
+    materials: [{ itemId: 'watering_can', count: 1 }, { itemId: 'crystal_shard', count: 2 }, { itemId: 'mechanism', count: 1 }],
+    output: { itemId: 'smart_watering_can', count: 1, durability: 80 },
+  },
+  companion_patch_kit: {
+    materials: [{ itemId: 'herb_extract', count: 3 }, { itemId: 'compost', count: 2 }, { itemId: 'plant_fiber', count: 1 }],
+    output: { itemId: 'companion_patch_kit', count: 1, durability: null },
+  },
+  greenhouse_panel: {
+    materials: [{ itemId: 'crystal_shard', count: 4 }, { itemId: 'scrap_metal', count: 2 }],
+    output: { itemId: 'greenhouse_panel', count: 1, durability: null },
+  },
+  seed_hybridizer: {
+    materials: [{ itemId: 'crystal_shard', count: 3 }, { itemId: 'mechanism', count: 2 }, { itemId: 'rare_earth', count: 1 }],
+    output: { itemId: 'seed_hybridizer', count: 1, durability: 20 },
+  },
+  masterwork_fertilizer: {
+    materials: [{ itemId: 'fertilizer_bag', count: 3 }, { itemId: 'crystal_shard', count: 2 }],
+    output: { itemId: 'masterwork_fertilizer', count: 1, durability: null },
+  },
+  auto_composter: {
+    materials: [{ itemId: 'mechanism', count: 4 }, { itemId: 'scrap_metal', count: 3 }, { itemId: 'crystal_shard', count: 2 }],
+    output: { itemId: 'auto_composter', count: 1, durability: null },
+  },
+  legendary_trowel: {
+    materials: [{ itemId: 'rare_earth', count: 5 }, { itemId: 'crystal_shard', count: 3 }, { itemId: 'mechanism', count: 2 }],
+    output: { itemId: 'legendary_trowel', count: 1, durability: null },
+  },
+};
+// Bounds derived from specs/SKILL_TREE.json crafting buffs; skills stay client-side until skill authority lands.
+const AUTHORITY_MAX_MATERIAL_REDUCTION = 0.2;
+const AUTHORITY_MAX_CRAFTED_DURABILITY_BONUS = 10;
 const DEFAULT_AUTHORITY_CELL = {
   carryForwardType: null,
   cropId: null,
@@ -50,10 +132,12 @@ const DEFAULT_AUTHORITY_CELL = {
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
+const BLOCKED_CRAFT_PAYLOAD_KEYS = new Set(['craftedItems', 'itemProduced', 'output']);
 const ACTIONS = {
   ADD_ITEM: 'ADD_ITEM',
   APPLY_TOOL_INTERVENTION: 'APPLY_TOOL_INTERVENTION',
   CARRY_FORWARD: 'CARRY_FORWARD',
+  CRAFT_ITEM: 'CRAFT_ITEM',
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
   REMOVE_CROP: 'REMOVE_CROP',
@@ -73,6 +157,7 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.ADD_ITEM,
   ACTIONS.APPLY_TOOL_INTERVENTION,
   ACTIONS.CARRY_FORWARD,
+  ACTIONS.CRAFT_ITEM,
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
   ACTIONS.REMOVE_CROP,
@@ -312,6 +397,7 @@ function createInitialAuthorityData({
   inventory = null,
   lastCarryForward = null,
   lastCooldown = null,
+  lastCrafting = null,
   lastDamage = null,
   lastHarvesting = null,
   lastItemAddition = null,
@@ -336,6 +422,7 @@ function createInitialAuthorityData({
     inventory: createAuthorityInventory(inventory),
     lastCarryForward,
     lastCooldown,
+    lastCrafting,
     lastDamage,
     lastHarvesting,
     lastItemAddition,
@@ -499,6 +586,58 @@ function normalizeRepairToolPayload(payload = {}) {
 
 function getAuthorityRepairCost(itemId) {
   return (AUTHORITY_REPAIR_COSTS[itemId] ?? []).map((material) => ({ ...material }));
+}
+
+function normalizeCraftItemPayload(payload = {}) {
+  const recipeId = typeof payload.recipeId === 'string' && payload.recipeId.trim()
+    ? payload.recipeId.trim()
+    : null;
+  const durabilityBonusValue = Number(payload.durabilityBonus ?? 0);
+  return {
+    durabilityBonus: Number.isFinite(durabilityBonusValue) ? durabilityBonusValue : null,
+    masterwork: payload.masterwork === true,
+    materialsConsumed: hasOwn(payload, 'materialsConsumed')
+      ? normalizeRepairMaterialPayload(payload.materialsConsumed)
+      : null,
+    recipeId,
+  };
+}
+
+function reducedCraftMaterialFloor(count) {
+  return Math.max(1, Math.ceil(count * (1 - AUTHORITY_MAX_MATERIAL_REDUCTION)));
+}
+
+function resolveCraftMaterials(submitted, recipe) {
+  const base = (recipe?.materials ?? []).map((material) => ({ ...material }));
+  if (submitted == null) return base;
+  if (!Array.isArray(submitted) || submitted.length !== base.length) return null;
+  const submittedCounts = new Map();
+  for (const material of submitted) {
+    if (
+      typeof material?.itemId !== 'string'
+      || !Number.isInteger(material.count)
+      || material.count <= 0
+      || submittedCounts.has(material.itemId)
+    ) {
+      return null;
+    }
+    submittedCounts.set(material.itemId, material.count);
+  }
+  const resolved = [];
+  for (const material of base) {
+    const count = submittedCounts.get(material.itemId);
+    if (!Number.isInteger(count) || count < reducedCraftMaterialFloor(material.count) || count > material.count) {
+      return null;
+    }
+    resolved.push({ count, itemId: material.itemId });
+  }
+  return resolved;
+}
+
+function resolveCraftedDurability(recipe, durabilityBonus) {
+  if (recipe?.output?.durability == null) return null;
+  const bonus = Number.isInteger(durabilityBonus) ? durabilityBonus : 0;
+  return recipe.output.durability + bonus;
 }
 
 function repairMaterialsMatch(submitted, expected) {
@@ -945,6 +1084,44 @@ function reduceStoryAction(data, payload, envelope) {
       },
     };
   }
+  if (envelope.type === ACTIONS.CRAFT_ITEM) {
+    const craft = normalizeCraftItemPayload(payload);
+    const recipe = AUTHORITY_CRAFTING_RECIPES[craft.recipeId];
+    const materials = resolveCraftMaterials(craft.materialsConsumed, recipe) ?? [];
+    let inventory = createAuthorityInventory(data.inventory);
+    const materialsConsumed = [];
+    const remainingMaterials = {};
+    materials.forEach((material) => {
+      const result = removeAuthorityInventoryItem(inventory, material.itemId, material.count);
+      inventory = result.inventory;
+      materialsConsumed.push({ count: material.count, itemId: material.itemId });
+      remainingMaterials[material.itemId] = getAuthorityInventoryItemCount(inventory, material.itemId);
+    });
+    const durability = resolveCraftedDurability(recipe, craft.durabilityBonus);
+    const outputItemId = recipe?.output?.itemId ?? null;
+    const outputCount = recipe?.output?.count ?? 1;
+    const result = addAuthorityInventoryItem(inventory, outputItemId, outputCount, {
+      durability: durability ?? undefined,
+      maxDurability: durability ?? undefined,
+      metadata: craft.masterwork ? { masterwork: true } : {},
+    });
+    return {
+      ...data,
+      inventory: result.inventory,
+      lastCrafting: {
+        count: outputCount,
+        durability,
+        itemId: outputItemId,
+        masterwork: craft.masterwork ? true : undefined,
+        materialsConsumed,
+        maxDurability: durability,
+        recipeId: craft.recipeId,
+        remainingMaterials,
+        slotIndex: result.slotIndex,
+        totalCount: getAuthorityInventoryItemCount(result.inventory, outputItemId),
+      },
+    };
+  }
   if (envelope.type === ACTIONS.ZONE_CHANGED) {
     const currentZone = typeof payload.toZone === 'string' && payload.toZone
       ? payload.toZone
@@ -1324,6 +1501,58 @@ function validateStoryActionPayload(envelope, state) {
     const missing = repairCost.find((material) => getAuthorityInventoryItemCount(inventory, material.itemId) < material.count);
     if (missing) {
       return { code: 'NOT_ENOUGH_ITEM', message: 'Tool repair action requires enough server-owned repair materials.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.CRAFT_ITEM) {
+    if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
+      return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Craft action cannot submit trusted inventory state.' };
+    }
+    const blockedCraftKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_CRAFT_PAYLOAD_KEYS.has(key));
+    if (blockedCraftKey) {
+      return { code: 'CLIENT_CRAFT_TOTAL', message: `Craft action cannot submit trusted crafted field "${blockedCraftKey}".` };
+    }
+    const craft = normalizeCraftItemPayload(envelope.payload);
+    if (!craft.recipeId || !AUTHORITY_CRAFTING_RECIPES[craft.recipeId]) {
+      return { code: 'BAD_RECIPE_ID', message: 'Craft action requires a known crafting recipe id.' };
+    }
+    const recipe = AUTHORITY_CRAFTING_RECIPES[craft.recipeId];
+    const materials = resolveCraftMaterials(craft.materialsConsumed, recipe);
+    if (!materials) {
+      return { code: 'CRAFT_COST_MISMATCH', message: 'Craft action material payload must match the server crafting recipe.' };
+    }
+    if (hasOwn(envelope.payload, 'durabilityBonus')) {
+      if (recipe.output.durability == null) {
+        return { code: 'BAD_DURABILITY_BONUS', message: 'Craft action durability bonus requires a durable tool recipe.' };
+      }
+      if (
+        !Number.isInteger(craft.durabilityBonus)
+        || craft.durabilityBonus < 0
+        || craft.durabilityBonus > AUTHORITY_MAX_CRAFTED_DURABILITY_BONUS
+      ) {
+        return { code: 'BAD_DURABILITY_BONUS', message: `Craft action requires an integer durability bonus from 0 to ${AUTHORITY_MAX_CRAFTED_DURABILITY_BONUS}.` };
+      }
+    }
+    if (hasOwn(envelope.payload, 'masterwork') && typeof envelope.payload.masterwork !== 'boolean') {
+      return { code: 'BAD_MASTERWORK_VALUE', message: 'Craft action requires masterwork to be boolean.' };
+    }
+    let inventory = createAuthorityInventory(state?.data?.inventory);
+    const missing = materials.find((material) => getAuthorityInventoryItemCount(inventory, material.itemId) < material.count);
+    if (missing) {
+      return { code: 'NOT_ENOUGH_ITEM', message: 'Craft action requires enough server-owned crafting materials.' };
+    }
+    materials.forEach((material) => {
+      inventory = removeAuthorityInventoryItem(inventory, material.itemId, material.count).inventory;
+    });
+    const durability = resolveCraftedDurability(recipe, craft.durabilityBonus);
+    const preview = addAuthorityInventoryItem(inventory, recipe.output.itemId, recipe.output.count ?? 1, {
+      durability: durability ?? undefined,
+      maxDurability: durability ?? undefined,
+      metadata: craft.masterwork ? { masterwork: true } : {},
+    });
+    if (!preview.success) {
+      return { code: 'INVENTORY_FULL', message: 'Craft action requires enough server-owned inventory space for the crafted item.' };
     }
     return null;
   }

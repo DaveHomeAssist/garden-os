@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'CRAFT_ITEM', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -146,6 +146,7 @@ function inferAckActionType(ack) {
   const actionId = String(ack?.actionId ?? '');
   if (actionId.endsWith(':ADD_ITEM')) return 'ADD_ITEM';
   if (actionId.endsWith(':APPLY_TOOL_INTERVENTION')) return 'APPLY_TOOL_INTERVENTION';
+  if (actionId.endsWith(':CRAFT_ITEM')) return 'CRAFT_ITEM';
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
@@ -509,6 +510,56 @@ function authorityAckToStoreAction(ack, currentState = null) {
         slotIndex,
       },
       type: 'REPAIR_TOOL',
+    };
+  }
+
+  if (actionType === 'CRAFT_ITEM') {
+    const crafting = data.lastCrafting;
+    const itemId = typeof crafting?.itemId === 'string' ? crafting.itemId : null;
+    const totalCount = Number(crafting?.totalCount);
+    if (!itemId || !Number.isFinite(totalCount)) return null;
+
+    const remainingMaterials = crafting?.remainingMaterials && typeof crafting.remainingMaterials === 'object'
+      ? crafting.remainingMaterials
+      : {};
+    const materialsConsumed = Array.isArray(crafting?.materialsConsumed)
+      ? crafting.materialsConsumed
+      : [];
+    const pendingMaterials = materialsConsumed
+      .map((material) => {
+        const materialItemId = typeof material?.itemId === 'string' ? material.itemId : null;
+        const fallbackCount = Number(material?.count ?? 1);
+        const remainingCount = Number(remainingMaterials[materialItemId]);
+        if (!materialItemId) return null;
+        if (Number.isFinite(remainingCount)) {
+          const currentCount = getInventoryItemCount(currentState?.campaign?.inventory, materialItemId);
+          const count = Math.max(0, currentCount - remainingCount);
+          return count > 0 ? { count, itemId: materialItemId } : null;
+        }
+        return Number.isInteger(fallbackCount) && fallbackCount > 0
+          ? { count: fallbackCount, itemId: materialItemId }
+          : null;
+      })
+      .filter(Boolean);
+
+    const currentCount = getInventoryItemCount(currentState?.campaign?.inventory, itemId);
+    const addCount = Math.max(0, totalCount - currentCount);
+    if (addCount === 0 && pendingMaterials.length === 0) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        itemProduced: {
+          count: addCount,
+          durability: Number.isFinite(crafting?.durability) ? crafting.durability : null,
+          itemId,
+          masterwork: crafting?.masterwork === true,
+          maxDurability: Number.isFinite(crafting?.maxDurability) ? crafting.maxDurability : null,
+        },
+        materialsConsumed: pendingMaterials,
+        recipeId: typeof crafting?.recipeId === 'string' ? crafting.recipeId : null,
+        xpGained: 0,
+      },
+      type: 'CRAFT_ITEM',
     };
   }
 

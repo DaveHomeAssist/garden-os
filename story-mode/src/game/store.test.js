@@ -318,6 +318,47 @@ describe('gameReducer', () => {
     });
   });
 
+  it('crafts recipes atomically through the reducer', () => {
+    let state = makeState();
+    state = gameReducer(state, { type: Actions.ADD_ITEM, payload: { count: 2, itemId: 'compost' } });
+    state = gameReducer(state, { type: Actions.ADD_ITEM, payload: { count: 3, itemId: 'plant_matter' } });
+
+    const crafted = gameReducer(state, {
+      type: Actions.CRAFT_ITEM,
+      payload: {
+        materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 15,
+      },
+    });
+
+    const countOf = (target, itemId) => (target.campaign.inventory.slots ?? []).reduce((total, slot) => (
+      slot?.itemId === itemId ? total + slot.count : total
+    ), 0);
+    expect(countOf(crafted, 'compost')).toBe(0);
+    expect(countOf(crafted, 'plant_matter')).toBe(0);
+    expect(countOf(crafted, 'fertilizer_bag')).toBe(countOf(state, 'fertilizer_bag') + 1);
+    expect(crafted.campaign.craftedItems.fertilizer_bag).toBe(1);
+
+    const unknownRecipe = gameReducer(state, {
+      type: Actions.CRAFT_ITEM,
+      payload: { recipeId: 'duplication_glitch' },
+    });
+    expect(unknownRecipe).toBe(state);
+
+    const reconciled = gameReducer(crafted, {
+      type: Actions.CRAFT_ITEM,
+      payload: {
+        itemProduced: { count: 0, durability: null, itemId: 'fertilizer_bag', masterwork: false, maxDurability: null },
+        materialsConsumed: [{ count: 1, itemId: 'fertilizer_bag' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 0,
+      },
+    });
+    expect(countOf(reconciled, 'fertilizer_bag')).toBe(countOf(crafted, 'fertilizer_bag') - 1);
+    expect(reconciled.campaign.craftedItems.fertilizer_bag).toBe(1);
+  });
+
   it('returns the previous state for unknown actions', () => {
     const base = makeState();
     const next = gameReducer(base, { type: 'UNKNOWN_ACTION' });

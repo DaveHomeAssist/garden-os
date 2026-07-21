@@ -17,8 +17,13 @@ async function run() {
   page.on("pageerror", (err) => {
     errors.push(`pageerror: ${err.message}`);
   });
+  // Google Fonts are allowed to fail offline (graceful degradation); every other error stays fatal.
+  const isIgnorableFontError = (msg) =>
+    /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(msg.location()?.url ?? "");
   page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(`console: ${msg.text()}`);
+    if (msg.type() === "error" && !isIgnorableFontError(msg)) {
+      errors.push(`console: ${msg.text()}`);
+    }
   });
 
   await page.goto(url, { waitUntil: "networkidle" });

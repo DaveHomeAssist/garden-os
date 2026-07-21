@@ -925,6 +925,222 @@ describe('authority service', () => {
     expect(state.ledger.entries).toHaveLength(3);
   });
 
+  it('routes crafting material spend and output through one canonical transaction', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    await postJson(handle, '/api/action', envelope({
+      id: 'action-add-compost',
+      idempotencyKey: 'idem-add-compost',
+      payload: { count: 2, itemId: 'compost' },
+      type: Actions.ADD_ITEM,
+    }));
+    await postJson(handle, '/api/action', envelope({
+      expectedTick: 1,
+      id: 'action-add-plant-matter',
+      idempotencyKey: 'idem-add-plant-matter',
+      payload: { count: 3, itemId: 'plant_matter' },
+      type: Actions.ADD_ITEM,
+    }));
+
+    const applied = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-craft-fertilizer',
+      idempotencyKey: 'idem-craft-fertilizer',
+      payload: {
+        materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 15,
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const duplicate = await postJson(handle, '/api/action', envelope({
+      expectedTick: 2,
+      id: 'action-craft-fertilizer-retry',
+      idempotencyKey: 'idem-craft-fertilizer',
+      payload: {
+        materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+        xpGained: 15,
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(applied.body.ok).toBe(true);
+    expect(applied.body.ack.actionType).toBe(Actions.CRAFT_ITEM);
+    expect(applied.body.ack.authoritativePatch.data.lastCrafting).toEqual({
+      count: 1,
+      durability: null,
+      itemId: 'fertilizer_bag',
+      materialsConsumed: [{ count: 2, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+      maxDurability: null,
+      recipeId: 'basic_fertilizer',
+      remainingMaterials: { compost: 0, plant_matter: 0 },
+      slotIndex: 2,
+      totalCount: 4,
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[2]).toMatchObject({
+      count: 4,
+      itemId: 'fertilizer_bag',
+    });
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[5]).toBeNull();
+    expect(applied.body.ack.authoritativePatch.data.inventory.slots[6]).toBeNull();
+    expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
+    expect(duplicate.body.duplicate).toBe(true);
+    expect(duplicate.body.session.tick).toBe(3);
+    expect(state.data.inventory.slots[2].count).toBe(4);
+    expect(state.data.inventory.slots[5]).toBeNull();
+    expect(state.data.inventory.slots[6]).toBeNull();
+    expect(state.ledger.entries).toHaveLength(3);
+  });
+
+  it('rejects crafting payloads that fake state or break the server recipe', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+
+    const trustedInventory = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-trusted',
+      idempotencyKey: 'idem-craft-trusted',
+      payload: { inventory: { slots: [] }, recipeId: 'basic_fertilizer' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const trustedOutput = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-output',
+      idempotencyKey: 'idem-craft-output',
+      payload: {
+        itemProduced: { count: 99, itemId: 'legendary_trowel' },
+        recipeId: 'basic_fertilizer',
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const unknownRecipe = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-unknown',
+      idempotencyKey: 'idem-craft-unknown',
+      payload: { recipeId: 'duplication_glitch' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const underpaidMaterials = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-underpaid',
+      idempotencyKey: 'idem-craft-underpaid',
+      payload: {
+        materialsConsumed: [{ count: 1, itemId: 'compost' }, { count: 3, itemId: 'plant_matter' }],
+        recipeId: 'basic_fertilizer',
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const badDurabilityBonus = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-bonus',
+      idempotencyKey: 'idem-craft-bonus',
+      payload: { durabilityBonus: 25, recipeId: 'improved_watering_can' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const bonusOnConsumable = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-bonus-consumable',
+      idempotencyKey: 'idem-craft-bonus-consumable',
+      payload: { durabilityBonus: 5, recipeId: 'basic_fertilizer' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const badMasterwork = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-masterwork',
+      idempotencyKey: 'idem-craft-masterwork',
+      payload: { masterwork: 'yes', recipeId: 'basic_fertilizer' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const missingMaterials = await postJson(handle, '/api/action', envelope({
+      id: 'action-craft-missing',
+      idempotencyKey: 'idem-craft-missing',
+      payload: { recipeId: 'basic_fertilizer' },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(trustedInventory.body.ack.rejection.code).toBe('TRUSTED_INVENTORY_PAYLOAD');
+    expect(trustedOutput.body.ack.rejection.code).toBe('CLIENT_CRAFT_TOTAL');
+    expect(unknownRecipe.body.ack.rejection.code).toBe('BAD_RECIPE_ID');
+    expect(underpaidMaterials.body.ack.rejection.code).toBe('CRAFT_COST_MISMATCH');
+    expect(badDurabilityBonus.body.ack.rejection.code).toBe('BAD_DURABILITY_BONUS');
+    expect(bonusOnConsumable.body.ack.rejection.code).toBe('BAD_DURABILITY_BONUS');
+    expect(badMasterwork.body.ack.rejection.code).toBe('BAD_MASTERWORK_VALUE');
+    expect(missingMaterials.body.ack.rejection.code).toBe('NOT_ENOUGH_ITEM');
+    expect(missingMaterials.body.ack.accepted).toBe(false);
+    expect(verifyAuthorityAckSignature(missingMaterials.body.ack, SECRET)).toBe(true);
+    expect(state.tick).toBe(0);
+    expect(state.data.lastCrafting).toBeNull();
+  });
+
+  it('applies bounded crafting reductions and crafted tool bonuses', async () => {
+    const { handle, service } = createHarness();
+    await postJson(handle, '/api/session', { sessionId: 'session-http' });
+    const seedItems = [
+      { count: 4, itemId: 'rare_earth' },
+      { count: 4, itemId: 'crystal_shard' },
+      { count: 2, itemId: 'mechanism' },
+      { count: 1, itemId: 'scrap_metal' },
+      { count: 2, itemId: 'plant_fiber' },
+    ];
+    for (const [index, payload] of seedItems.entries()) {
+      await postJson(handle, '/api/action', envelope({
+        expectedTick: index,
+        id: `action-seed-${payload.itemId}`,
+        idempotencyKey: `idem-seed-${payload.itemId}`,
+        payload,
+        type: Actions.ADD_ITEM,
+      }));
+    }
+
+    const reducedCraft = await postJson(handle, '/api/action', envelope({
+      expectedTick: 5,
+      id: 'action-craft-trowel',
+      idempotencyKey: 'idem-craft-trowel',
+      payload: {
+        masterwork: true,
+        materialsConsumed: [
+          { count: 4, itemId: 'rare_earth' },
+          { count: 3, itemId: 'crystal_shard' },
+          { count: 2, itemId: 'mechanism' },
+        ],
+        recipeId: 'legendary_trowel',
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const bonusCraft = await postJson(handle, '/api/action', envelope({
+      expectedTick: 6,
+      id: 'action-craft-can',
+      idempotencyKey: 'idem-craft-can',
+      payload: {
+        durabilityBonus: 10,
+        recipeId: 'improved_watering_can',
+      },
+      type: Actions.CRAFT_ITEM,
+    }));
+    const state = service.sessions.get('session-http');
+
+    expect(reducedCraft.body.ok).toBe(true);
+    expect(reducedCraft.body.ack.authoritativePatch.data.lastCrafting).toMatchObject({
+      itemId: 'legendary_trowel',
+      masterwork: true,
+      materialsConsumed: [
+        { count: 4, itemId: 'rare_earth' },
+        { count: 3, itemId: 'crystal_shard' },
+        { count: 2, itemId: 'mechanism' },
+      ],
+      recipeId: 'legendary_trowel',
+      totalCount: 1,
+    });
+    expect(bonusCraft.body.ok).toBe(true);
+    expect(bonusCraft.body.ack.authoritativePatch.data.lastCrafting).toMatchObject({
+      durability: 110,
+      itemId: 'watering_can',
+      maxDurability: 110,
+      recipeId: 'improved_watering_can',
+      totalCount: 2,
+    });
+    const craftedCan = state.data.inventory.slots.find((slot) => (
+      slot?.itemId === 'watering_can' && slot.durability === 110
+    ));
+    expect(craftedCan).toMatchObject({ durability: 110, maxDurability: 110 });
+  });
+
   it('routes protect and mulch interventions through one canonical transaction', async () => {
     const { handle, service } = createHarness();
     await postJson(handle, '/api/session', { sessionId: 'session-http' });
