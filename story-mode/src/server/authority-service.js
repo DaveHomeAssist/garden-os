@@ -7,6 +7,12 @@ import {
   createEngineState,
   stableStringify,
 } from '../engine/authoritative-engine.js';
+import {
+  AUTHORITY_FESTIVAL_ACTIVITY_REWARDS,
+  AUTHORITY_FESTIVALS,
+  AUTHORITY_QUEST_REWARDS,
+  AUTHORITY_RECIPE_TABLE,
+} from './authority-reward-tables.js';
 
 const ACK_SIGNATURE_PREFIX = 'hmac-sha256:';
 const DEFAULT_GAME_ID = 'garden';
@@ -133,11 +139,17 @@ const DEFAULT_AUTHORITY_CELL = {
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const BLOCKED_CRAFT_PAYLOAD_KEYS = new Set(['craftedItems', 'itemProduced', 'output']);
+const BLOCKED_QUEST_PAYLOAD_KEYS = new Set(['currency', 'inventory', 'outcome', 'pantry', 'reputation', 'rewards', 'skills', 'slots']);
+const BLOCKED_FESTIVAL_PAYLOAD_KEYS = new Set(['activitiesCompleted', 'inventory', 'mechanics', 'rewards', 'slots']);
 const ACTIONS = {
   ADD_ITEM: 'ADD_ITEM',
   APPLY_TOOL_INTERVENTION: 'APPLY_TOOL_INTERVENTION',
   CARRY_FORWARD: 'CARRY_FORWARD',
+  COMPLETE_QUEST: 'COMPLETE_QUEST',
   CRAFT_ITEM: 'CRAFT_ITEM',
+  FESTIVAL_ACTIVITY: 'FESTIVAL_ACTIVITY',
+  FESTIVAL_END: 'FESTIVAL_END',
+  FESTIVAL_START: 'FESTIVAL_START',
   HARVEST_CELL: 'HARVEST_CELL',
   PLANT_CROP: 'PLANT_CROP',
   REMOVE_CROP: 'REMOVE_CROP',
@@ -157,7 +169,11 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.ADD_ITEM,
   ACTIONS.APPLY_TOOL_INTERVENTION,
   ACTIONS.CARRY_FORWARD,
+  ACTIONS.COMPLETE_QUEST,
   ACTIONS.CRAFT_ITEM,
+  ACTIONS.FESTIVAL_ACTIVITY,
+  ACTIONS.FESTIVAL_END,
+  ACTIONS.FESTIVAL_START,
   ACTIONS.HARVEST_CELL,
   ACTIONS.PLANT_CROP,
   ACTIONS.REMOVE_CROP,
@@ -391,7 +407,9 @@ function createAuthorityCooldowns(cooldowns = {}) {
 }
 
 function createInitialAuthorityData({
+  activeFestival = null,
   activeTool = 'hand',
+  claimedQuests = {},
   currentZone = 'player_plot',
   grid = [],
   inventory = null,
@@ -399,7 +417,11 @@ function createInitialAuthorityData({
   lastCooldown = null,
   lastCrafting = null,
   lastDamage = null,
+  lastFestivalEnd = null,
+  lastFestivalReward = null,
+  lastFestivalStart = null,
   lastHarvesting = null,
+  lastQuestReward = null,
   lastItemAddition = null,
   lastItemRemoval = null,
   lastPlanting = null,
@@ -411,12 +433,16 @@ function createInitialAuthorityData({
   lastToolUse = null,
   lastWatering = null,
   lastSpawnPoint = null,
+  pantry = {},
+  recipesCompleted = [],
   selectedCropId = null,
   toolCooldowns = {},
   visitedZones = ['player_plot'],
 } = {}) {
   return {
+    activeFestival: createAuthorityActiveFestival(activeFestival),
     activeTool,
+    claimedQuests: createAuthorityClaimedQuests(claimedQuests),
     currentZone,
     grid: createAuthorityGrid(grid),
     inventory: createAuthorityInventory(inventory),
@@ -424,7 +450,11 @@ function createInitialAuthorityData({
     lastCooldown,
     lastCrafting,
     lastDamage,
+    lastFestivalEnd,
+    lastFestivalReward,
+    lastFestivalStart,
     lastHarvesting,
+    lastQuestReward,
     lastItemAddition,
     lastItemRemoval,
     lastPlanting,
@@ -436,6 +466,8 @@ function createInitialAuthorityData({
     lastToolUse,
     lastWatering,
     lastSpawnPoint,
+    pantry: createAuthorityPantry(pantry),
+    recipesCompleted: Array.isArray(recipesCompleted) ? [...new Set(recipesCompleted)] : [],
     selectedCropId,
     toolCooldowns: createAuthorityCooldowns(toolCooldowns),
     visitedZones: Array.isArray(visitedZones) && visitedZones.length ? [...new Set(visitedZones)] : ['player_plot'],
@@ -638,6 +670,64 @@ function resolveCraftedDurability(recipe, durabilityBonus) {
   if (recipe?.output?.durability == null) return null;
   const bonus = Number.isInteger(durabilityBonus) ? durabilityBonus : 0;
   return recipe.output.durability + bonus;
+}
+
+function createAuthorityPantry(pantry = {}) {
+  return Object.fromEntries(
+    Object.entries(pantry ?? {}).filter(([cropId, count]) => (
+      typeof cropId === 'string' && cropId && Number.isInteger(count) && count > 0
+    )),
+  );
+}
+
+function createAuthorityClaimedQuests(claimedQuests = {}) {
+  return Object.fromEntries(
+    Object.entries(claimedQuests ?? {}).filter(([questId, entry]) => (
+      typeof questId === 'string' && questId && entry && typeof entry === 'object'
+    )).map(([questId, entry]) => [questId, { choiceId: entry.choiceId ?? null }]),
+  );
+}
+
+function createAuthorityActiveFestival(activeFestival) {
+  if (!activeFestival?.id || !AUTHORITY_FESTIVALS[activeFestival.id]) return null;
+  return {
+    activitiesCompleted: [...new Set((activeFestival.activitiesCompleted ?? []).filter((id) => typeof id === 'string' && id))],
+    id: activeFestival.id,
+  };
+}
+
+function getAuthorityQuestRewards(questId, choiceId) {
+  const quest = AUTHORITY_QUEST_REWARDS[questId];
+  if (!quest) return null;
+  const outcomeRewards = choiceId ? quest.outcomes?.[choiceId] : null;
+  return (outcomeRewards ?? quest.rewards ?? []).map((reward) => ({ ...reward }));
+}
+
+function getAuthorityFestivalActivityRewards(festivalId, activityId) {
+  const rewardType = AUTHORITY_FESTIVALS[festivalId]?.activities?.[activityId];
+  if (!rewardType) return null;
+  return (AUTHORITY_FESTIVAL_ACTIVITY_REWARDS[rewardType] ?? []).map((reward) => ({ ...reward }));
+}
+
+function grantAuthorityItemRewards(inventoryState, rewards = []) {
+  let inventory = cloneAuthorityInventory(inventoryState);
+  const itemTotals = {};
+  let success = true;
+  for (const reward of rewards) {
+    if (reward?.type !== 'item' || typeof reward.id !== 'string' || !reward.id) continue;
+    const amount = Math.max(1, Math.floor(Number(reward.amount ?? 1)));
+    const result = addAuthorityInventoryItem(inventory, reward.id, amount);
+    inventory = result.inventory;
+    if (!result.success) success = false;
+    itemTotals[reward.id] = getAuthorityInventoryItemCount(inventory, reward.id);
+  }
+  return { inventory, itemTotals, success };
+}
+
+function deriveAuthorityRecipes(pantry = {}) {
+  return Object.entries(AUTHORITY_RECIPE_TABLE)
+    .filter(([, crops]) => crops.every((cropId) => (pantry[cropId] ?? 0) > 0))
+    .map(([recipeId]) => recipeId);
 }
 
 function repairMaterialsMatch(submitted, expected) {
@@ -989,15 +1079,84 @@ function reduceStoryAction(data, payload, envelope) {
     const cropId = grid[cellIndex]?.cropId;
     const harvestedAt = Number.isFinite(payload.harvestedAt) ? payload.harvestedAt : null;
     grid[cellIndex] = createAuthorityCell();
+    const pantry = createAuthorityPantry(data.pantry);
+    pantry[cropId] = (pantry[cropId] ?? 0) + 1;
+    const inventoryResult = addAuthorityInventoryItem(createAuthorityInventory(data.inventory), cropId, 1);
+    const previousRecipes = new Set(Array.isArray(data.recipesCompleted) ? data.recipesCompleted : []);
+    const recipesCompleted = [...new Set([...previousRecipes, ...deriveAuthorityRecipes(pantry)])];
+    const newRecipes = recipesCompleted.filter((recipeId) => !previousRecipes.has(recipeId));
     return {
       ...data,
       grid,
+      inventory: inventoryResult.inventory,
       lastHarvesting: {
         cellIndex,
         cropId,
         harvestedAt,
+        newRecipes,
+        pantryCount: pantry[cropId],
+        totalCount: getAuthorityInventoryItemCount(inventoryResult.inventory, cropId),
         yieldCount: 1,
       },
+      pantry,
+      recipesCompleted,
+    };
+  }
+  if (envelope.type === ACTIONS.COMPLETE_QUEST) {
+    const questId = payload.questId;
+    const choiceId = typeof payload.choiceId === 'string' && payload.choiceId ? payload.choiceId : null;
+    const rewards = getAuthorityQuestRewards(questId, choiceId) ?? [];
+    const grant = grantAuthorityItemRewards(data.inventory, rewards);
+    return {
+      ...data,
+      claimedQuests: {
+        ...createAuthorityClaimedQuests(data.claimedQuests),
+        [questId]: { choiceId },
+      },
+      inventory: grant.inventory,
+      lastQuestReward: {
+        choiceId,
+        completedAt: Number.isFinite(payload.completedAt) ? payload.completedAt : null,
+        itemTotals: grant.itemTotals,
+        questId,
+        rewards,
+      },
+    };
+  }
+  if (envelope.type === ACTIONS.FESTIVAL_START) {
+    const festivalId = payload.festivalId;
+    return {
+      ...data,
+      activeFestival: { activitiesCompleted: [], id: festivalId },
+      lastFestivalStart: { festivalId },
+    };
+  }
+  if (envelope.type === ACTIONS.FESTIVAL_ACTIVITY) {
+    const activeFestival = createAuthorityActiveFestival(data.activeFestival);
+    const activityId = payload.activityId;
+    const rewards = getAuthorityFestivalActivityRewards(activeFestival?.id, activityId) ?? [];
+    const grant = grantAuthorityItemRewards(data.inventory, rewards);
+    return {
+      ...data,
+      activeFestival: {
+        activitiesCompleted: [...new Set([...(activeFestival?.activitiesCompleted ?? []), activityId])],
+        id: activeFestival?.id ?? null,
+      },
+      inventory: grant.inventory,
+      lastFestivalReward: {
+        activityId,
+        festivalId: activeFestival?.id ?? null,
+        itemTotals: grant.itemTotals,
+        rewards,
+      },
+    };
+  }
+  if (envelope.type === ACTIONS.FESTIVAL_END) {
+    const activeFestival = createAuthorityActiveFestival(data.activeFestival);
+    return {
+      ...data,
+      activeFestival: null,
+      lastFestivalEnd: { festivalId: activeFestival?.id ?? null },
     };
   }
   if (envelope.type === ACTIONS.SET_SELECTED_CROP) {
@@ -1416,6 +1575,10 @@ function validateStoryActionPayload(envelope, state) {
     if ('harvestedAt' in (envelope.payload ?? {}) && envelope.payload.harvestedAt !== null && !Number.isFinite(envelope.payload.harvestedAt)) {
       return { code: 'BAD_HARVESTED_AT', message: 'Harvest action requires harvestedAt to be a finite timestamp or null.' };
     }
+    const harvestPreview = addAuthorityInventoryItem(createAuthorityInventory(state?.data?.inventory), grid[cellIndex].cropId, 1);
+    if (!harvestPreview.success) {
+      return { code: 'INVENTORY_FULL', message: 'Harvest action requires enough server-owned inventory space for the harvested crop.' };
+    }
     return null;
   }
 
@@ -1501,6 +1664,92 @@ function validateStoryActionPayload(envelope, state) {
     const missing = repairCost.find((material) => getAuthorityInventoryItemCount(inventory, material.itemId) < material.count);
     if (missing) {
       return { code: 'NOT_ENOUGH_ITEM', message: 'Tool repair action requires enough server-owned repair materials.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.COMPLETE_QUEST) {
+    const blockedQuestKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_QUEST_PAYLOAD_KEYS.has(key));
+    if (blockedQuestKey) {
+      return { code: 'CLIENT_REWARD_PAYLOAD', message: `Quest completion cannot submit trusted reward field "${blockedQuestKey}".` };
+    }
+    const questId = envelope.payload?.questId;
+    if (typeof questId !== 'string' || !AUTHORITY_QUEST_REWARDS[questId]) {
+      return { code: 'BAD_QUEST_ID', message: 'Quest completion requires a known quest id.' };
+    }
+    const claimedQuests = createAuthorityClaimedQuests(state?.data?.claimedQuests);
+    if (claimedQuests[questId]) {
+      return { code: 'QUEST_ALREADY_CLAIMED', message: 'Quest rewards can be claimed once per quest.' };
+    }
+    const quest = AUTHORITY_QUEST_REWARDS[questId];
+    const outcomeIds = Object.keys(quest.outcomes ?? {});
+    const choiceId = envelope.payload?.choiceId;
+    if (outcomeIds.length && (typeof choiceId !== 'string' || !quest.outcomes[choiceId])) {
+      return { code: 'BAD_QUEST_CHOICE', message: 'Quest completion requires a valid outcome choice id.' };
+    }
+    if (!outcomeIds.length && choiceId != null) {
+      return { code: 'BAD_QUEST_CHOICE', message: 'Quest completion cannot submit a choice for a quest without outcomes.' };
+    }
+    if ('completedAt' in (envelope.payload ?? {}) && envelope.payload.completedAt !== null && !Number.isFinite(envelope.payload.completedAt)) {
+      return { code: 'BAD_COMPLETED_AT', message: 'Quest completion requires completedAt to be a finite timestamp or null.' };
+    }
+    const rewards = getAuthorityQuestRewards(questId, typeof choiceId === 'string' ? choiceId : null) ?? [];
+    const grant = grantAuthorityItemRewards(state?.data?.inventory, rewards);
+    if (!grant.success) {
+      return { code: 'INVENTORY_FULL', message: 'Quest completion requires enough server-owned inventory space for item rewards.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.FESTIVAL_START) {
+    const blockedFestivalKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_FESTIVAL_PAYLOAD_KEYS.has(key));
+    if (blockedFestivalKey) {
+      return { code: 'CLIENT_REWARD_PAYLOAD', message: `Festival start cannot submit trusted festival field "${blockedFestivalKey}".` };
+    }
+    const festivalId = envelope.payload?.festivalId;
+    if (typeof festivalId !== 'string' || !AUTHORITY_FESTIVALS[festivalId]) {
+      return { code: 'BAD_FESTIVAL_ID', message: 'Festival start requires a known festival id.' };
+    }
+    if (createAuthorityActiveFestival(state?.data?.activeFestival)) {
+      return { code: 'FESTIVAL_ALREADY_ACTIVE', message: 'Festival start requires no active festival.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.FESTIVAL_ACTIVITY) {
+    const blockedFestivalKey = Object.keys(envelope.payload ?? {}).find((key) => BLOCKED_FESTIVAL_PAYLOAD_KEYS.has(key));
+    if (blockedFestivalKey) {
+      return { code: 'CLIENT_REWARD_PAYLOAD', message: `Festival activity cannot submit trusted festival field "${blockedFestivalKey}".` };
+    }
+    const activeFestival = createAuthorityActiveFestival(state?.data?.activeFestival);
+    if (!activeFestival) {
+      return { code: 'NO_ACTIVE_FESTIVAL', message: 'Festival activity requires an active festival.' };
+    }
+    if (
+      typeof envelope.payload?.festivalId === 'string'
+      && envelope.payload.festivalId
+      && envelope.payload.festivalId !== activeFestival.id
+    ) {
+      return { code: 'FESTIVAL_MISMATCH', message: 'Festival activity festival id must match the server-owned active festival.' };
+    }
+    const activityId = envelope.payload?.activityId;
+    if (typeof activityId !== 'string' || !AUTHORITY_FESTIVALS[activeFestival.id]?.activities?.[activityId]) {
+      return { code: 'BAD_ACTIVITY_ID', message: 'Festival activity requires a known activity for the active festival.' };
+    }
+    if (activeFestival.activitiesCompleted.includes(activityId)) {
+      return { code: 'ACTIVITY_ALREADY_CLAIMED', message: 'Festival activity rewards can be claimed once per festival.' };
+    }
+    const rewards = getAuthorityFestivalActivityRewards(activeFestival.id, activityId) ?? [];
+    const grant = grantAuthorityItemRewards(state?.data?.inventory, rewards);
+    if (!grant.success) {
+      return { code: 'INVENTORY_FULL', message: 'Festival activity requires enough server-owned inventory space for item rewards.' };
+    }
+    return null;
+  }
+
+  if (envelope?.type === ACTIONS.FESTIVAL_END) {
+    if (!createAuthorityActiveFestival(state?.data?.activeFestival)) {
+      return { code: 'NO_ACTIVE_FESTIVAL', message: 'Festival end requires an active festival.' };
     }
     return null;
   }

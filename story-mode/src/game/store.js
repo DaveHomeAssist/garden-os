@@ -1,4 +1,7 @@
 import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
+import questDeckSpec from 'specs/QUEST_DECK.json';
+
+import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
 
 import {
   attachGridMeta,
@@ -43,6 +46,17 @@ import {
 function getCraftingRecipeById(recipeId) {
   if (typeof recipeId !== 'string' || !recipeId) return null;
   return (craftingRecipeSpec.recipes ?? []).find((entry) => entry.id === recipeId) ?? null;
+}
+
+function getQuestDeckEntry(questId) {
+  if (typeof questId !== 'string' || !questId) return null;
+  return (questDeckSpec.quests ?? []).find((entry) => entry.id === questId) ?? null;
+}
+
+function getFestivalActivityRewards(festivalId, activityId) {
+  const activity = (FESTIVALS[festivalId]?.activities ?? []).find((entry) => entry.id === activityId);
+  if (!activity) return [];
+  return (ACTIVITY_REWARD_TABLE[activity.rewardType] ?? []).map((reward) => ({ ...reward }));
 }
 
 const DEFAULT_CELL = {
@@ -839,7 +853,10 @@ function gameReducer(state, action = {}) {
       if (!questId) return state;
       const nextState = cloneGameState(state);
       const current = nextState.campaign.questLog?.[questId] ?? {};
-      const outcome = cloneValue(payload.outcome) ?? null;
+      const quest = getQuestDeckEntry(questId);
+      const outcome = cloneValue(payload.outcome)
+        ?? cloneValue((quest?.outcomes ?? []).find((entry) => entry.id === payload.choiceId))
+        ?? null;
       nextState.campaign.questLog = {
         ...(nextState.campaign.questLog ?? {}),
         [questId]: {
@@ -875,19 +892,20 @@ function gameReducer(state, action = {}) {
           forageState: normalizeForageState(nextState.campaign.worldState?.forageState),
         };
       }
-      applyQuestRewards(nextState, payload.rewards ?? []);
+      applyQuestRewards(nextState, payload.rewards ?? outcome?.rewards ?? quest?.rewards ?? []);
+      const storyEntries = payload.storyEntries ?? outcome?.storyLog ?? null;
       nextState.campaign.storyLog = [
         ...(nextState.campaign.storyLog ?? []),
         createStoryLogEntry('quest_complete', {
           questId,
-          title: payload.title ?? questId,
+          title: payload.title ?? quest?.title ?? questId,
           outcomeId: outcome?.id ?? null,
           label: outcome?.label ?? null,
           reputation: cloneValue(nextState.campaign.reputation ?? {}),
           zoneReputation: cloneValue(nextState.campaign.zoneReputation ?? {}),
           timestamp: payload.completedAt ?? Date.now(),
         }),
-        ...(payload.storyEntries ? cloneArray(payload.storyEntries).map((entry) => normalizeStoryLogEntry(entry, {
+        ...(storyEntries ? cloneArray(storyEntries).map((entry) => normalizeStoryLogEntry(entry, {
           type: 'choice',
           questId,
           outcomeId: outcome?.id ?? null,
@@ -1052,7 +1070,7 @@ function gameReducer(state, action = {}) {
         month: payload.month ?? nextState.season.month ?? 1,
         startedAt: payload.startedAt ?? Date.now(),
         activitiesCompleted: cloneArray(payload.activitiesCompleted),
-        mechanics: cloneValue(payload.mechanics) ?? {},
+        mechanics: cloneValue(payload.mechanics) ?? cloneValue(FESTIVALS[festivalId]?.mechanics) ?? {},
       };
       return nextState;
     }
@@ -1067,6 +1085,7 @@ function gameReducer(state, action = {}) {
     case Actions.FESTIVAL_ACTIVITY: {
       if (!state.campaign.activeFestival || !payload.activityId) return state;
       const nextState = cloneGameState(state);
+      const festivalId = payload.festivalId ?? nextState.campaign.activeFestival?.id ?? null;
       nextState.campaign.activeFestival = {
         ...(nextState.campaign.activeFestival ?? {}),
         activitiesCompleted: [
@@ -1076,7 +1095,7 @@ function gameReducer(state, action = {}) {
           ]),
         ],
       };
-      applyQuestRewards(nextState, payload.rewards ?? []);
+      applyQuestRewards(nextState, payload.rewards ?? getFestivalActivityRewards(festivalId, payload.activityId));
       return nextState;
     }
 

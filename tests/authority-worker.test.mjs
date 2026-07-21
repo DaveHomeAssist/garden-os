@@ -220,8 +220,12 @@ test('authority action routes harvest cell through canonical grid state once', a
     cellIndex: 2,
     cropId: 'basil',
     harvestedAt: 1783370000000,
+    newRecipes: [],
+    pantryCount: 1,
+    totalCount: 1,
     yieldCount: 1,
   });
+  assert.deepEqual(first.state.data.pantry, { basil: 1 });
   assert.equal(second.duplicate, true);
   assert.equal(second.state.tick, 2);
   assert.equal(second.state.data.grid[2].cropId, null);
@@ -1465,6 +1469,190 @@ test('authority rejects malformed or client-owned crafting payloads before mutat
   const session = await sessionResponse.json();
   assert.equal(session.state.tick, 0);
   assert.equal(session.state.data.lastCrafting, null);
+});
+
+test('authority action routes quest reward claims through canonical state once', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-claim-quest',
+    idempotencyKey: 'idem-claim-quest',
+    payload: { choiceId: 'community', questId: 'pat_watering' },
+    playerId: 'local',
+    sessionId,
+    type: 'COMPLETE_QUEST',
+  };
+
+  const firstResponse = await worker.fetch(jsonRequest('/action', action), env);
+  const first = await firstResponse.json();
+  const retryResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    id: 'action-claim-quest-retry',
+  }), env);
+  const retry = await retryResponse.json();
+  const reclaimResponse = await worker.fetch(jsonRequest('/action', {
+    ...action,
+    id: 'action-claim-quest-again',
+    idempotencyKey: 'idem-claim-quest-again',
+    payload: { choiceId: 'stewardship', questId: 'pat_watering' },
+  }), env);
+  const reclaim = await reclaimResponse.json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(first.ack.actionType, 'COMPLETE_QUEST');
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  assert.deepEqual(first.state.data.lastQuestReward, {
+    choiceId: 'community',
+    completedAt: null,
+    itemTotals: { plant_matter: 5 },
+    questId: 'pat_watering',
+    rewards: [
+      { amount: 5, id: 'plant_matter', type: 'item' },
+      { amount: 10, id: 'neighbor_pat', type: 'reputation' },
+      { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+    ],
+  });
+  assert.deepEqual(first.state.data.claimedQuests, { pat_watering: { choiceId: 'community' } });
+  assert.equal(retry.duplicate, true);
+  assert.equal(reclaimResponse.status, 422);
+  assert.equal(reclaim.ack.rejection.code, 'QUEST_ALREADY_CLAIMED');
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 1);
+});
+
+test('authority rejects client-owned quest and festival reward payloads before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const cases = [
+    {
+      code: 'CLIENT_REWARD_PAYLOAD',
+      id: 'quest-fake-rewards',
+      payload: {
+        choiceId: 'community',
+        questId: 'pat_watering',
+        rewards: [{ amount: 99, id: 'legendary_trowel', type: 'item' }],
+      },
+      type: 'COMPLETE_QUEST',
+    },
+    {
+      code: 'BAD_QUEST_ID',
+      id: 'quest-unknown',
+      payload: { questId: 'duplication_glitch' },
+      type: 'COMPLETE_QUEST',
+    },
+    {
+      code: 'BAD_QUEST_CHOICE',
+      id: 'quest-bad-choice',
+      payload: { choiceId: 'jackpot', questId: 'pat_watering' },
+      type: 'COMPLETE_QUEST',
+    },
+    {
+      code: 'BAD_FESTIVAL_ID',
+      id: 'festival-unknown',
+      payload: { festivalId: 'jackpot_festival' },
+      type: 'FESTIVAL_START',
+    },
+    {
+      code: 'NO_ACTIVE_FESTIVAL',
+      id: 'festival-no-active',
+      payload: { activityId: 'shade_building' },
+      type: 'FESTIVAL_ACTIVITY',
+    },
+    {
+      code: 'NO_ACTIVE_FESTIVAL',
+      id: 'festival-end-idle',
+      payload: {},
+      type: 'FESTIVAL_END',
+    },
+  ];
+
+  for (const [index, entry] of cases.entries()) {
+    const response = await worker.fetch(jsonRequest('/action', {
+      clientSeq: index + 1,
+      expectedTick: 0,
+      gameId: 'garden',
+      id: `action-${entry.id}`,
+      idempotencyKey: `idem-${entry.id}`,
+      payload: entry.payload,
+      playerId: 'local',
+      sessionId,
+      type: entry.type,
+    }), env);
+    const body = await response.json();
+    assert.equal(response.status, 422);
+    assert.equal(body.ack.accepted, false);
+    assert.equal(body.ack.rejection.code, entry.code);
+    assert.equal(await verifyServerAckSignature(body.ack, SECRET), true);
+  }
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 0);
+  assert.deepEqual(session.state.data.claimedQuests, {});
+  assert.equal(session.state.data.activeFestival, null);
+});
+
+test('authority action routes festival activity claims through canonical state once', async () => {
+  const { env, sessionId } = await createSession();
+  await worker.fetch(jsonRequest('/action', {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'action-festival-start',
+    idempotencyKey: 'idem-festival-start',
+    payload: { festivalId: 'growth_surge' },
+    playerId: 'local',
+    sessionId,
+    type: 'FESTIVAL_START',
+  }), env);
+
+  const claimResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 2,
+    expectedTick: 1,
+    gameId: 'garden',
+    id: 'action-festival-activity',
+    idempotencyKey: 'idem-festival-activity',
+    payload: { activityId: 'shade_building', festivalId: 'growth_surge' },
+    playerId: 'local',
+    sessionId,
+    type: 'FESTIVAL_ACTIVITY',
+  }), env);
+  const claim = await claimResponse.json();
+  const reclaimResponse = await worker.fetch(jsonRequest('/action', {
+    clientSeq: 3,
+    expectedTick: 2,
+    gameId: 'garden',
+    id: 'action-festival-activity-again',
+    idempotencyKey: 'idem-festival-activity-again',
+    payload: { activityId: 'shade_building', festivalId: 'growth_surge' },
+    playerId: 'local',
+    sessionId,
+    type: 'FESTIVAL_ACTIVITY',
+  }), env);
+  const reclaim = await reclaimResponse.json();
+
+  assert.equal(claimResponse.status, 200);
+  assert.deepEqual(claim.state.data.lastFestivalReward, {
+    activityId: 'shade_building',
+    festivalId: 'growth_surge',
+    itemTotals: { festival_token: 1 },
+    rewards: [{ amount: 1, id: 'festival_token', type: 'item' }],
+  });
+  assert.deepEqual(claim.state.data.activeFestival, {
+    activitiesCompleted: ['shade_building'],
+    id: 'growth_surge',
+  });
+  assert.equal(reclaimResponse.status, 422);
+  assert.equal(reclaim.ack.rejection.code, 'ACTIVITY_ALREADY_CLAIMED');
+
+  const sessionResponse = await worker.fetch(new Request(`https://authority.example.test/session/${sessionId}`), env);
+  const session = await sessionResponse.json();
+  assert.equal(session.state.tick, 2);
+  assert.deepEqual(session.state.data.activeFestival.activitiesCompleted, ['shade_building']);
 });
 
 test('authority rejects malformed cooldown payloads before mutation', async () => {
