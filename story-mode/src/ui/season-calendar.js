@@ -19,6 +19,8 @@ const SEASON_EMOJI = {
 
 const BEAT_NAMES = ['early', 'mid', 'late'];
 
+const CAMPAIGN_YEARS = 3;
+
 export function createSeasonCalendar() {
   const el = document.createElement('div');
   el.id = 'season-calendar';
@@ -51,7 +53,9 @@ export function updateSeasonCalendar(state) {
   const chapter = state.campaign.currentChapter;
   const season = state.season.season;
   const phase = state.season.phase;
-  const year = Math.ceil(chapter / 4);
+  // A campaign is three years of four chapters. Free play can run past chapter
+  // 12, so clamp rather than render "Year 25 of 3".
+  const year = Math.min(CAMPAIGN_YEARS, Math.max(1, Math.ceil(chapter / 4)));
 
   // Determine beat index from phase
   let beatIdx = 0;
@@ -66,7 +70,7 @@ export function updateSeasonCalendar(state) {
 
   document.getElementById('cal-emoji').textContent = emoji;
   document.getElementById('cal-month').textContent = month;
-  document.getElementById('cal-year').textContent = `Year ${year} of 3`;
+  document.getElementById('cal-year').textContent = `Year ${year} of ${CAMPAIGN_YEARS}`;
 
   const chapterTitleEl = document.getElementById('cal-chapter-title');
   if (chapterTitleEl) {

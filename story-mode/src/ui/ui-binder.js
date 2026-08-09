@@ -1336,7 +1336,7 @@ function bindUI({
         } else if (!state.campaign?.sandbox && planted < 8) {
           helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
         } else {
-          helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
+          helperText = 'Bed is ready. Select Start Season to begin Early Season.';
         }
       } else if (state.season.phase === PHASES.TRANSITION) {
         helperText = 'Season complete. Use Continue to roll into the next chapter.';
