@@ -5,8 +5,12 @@ body[data-design-language="v0.10"] #fab-advance:focus {
   box-shadow: 0 0 0 2px rgba(30, 17, 10, 0.9) !important;
 }
 
-/* Snap the mobile dock into its viewport-safe anchor during live resizes. */
+/* Keep the mobile task stack and tool dock inside viewport-safe anchors. */
 @media (max-width: 900px) {
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper {
+    top: calc(194px + env(safe-area-inset-top, 0px)) !important;
+  }
+
   body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud {
     position: fixed !important;
     inset: auto auto calc(12px + env(safe-area-inset-bottom, 0px)) 10px !important;
