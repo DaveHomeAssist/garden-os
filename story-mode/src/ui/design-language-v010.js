@@ -1,3 +1,5 @@
+import '../../assets/css/design-language-v010-focus.css';
+
 const VERSION = 'v0.10';
 
 function setAttributeIfChanged(element, name, value) {
