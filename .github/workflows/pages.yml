@@ -41,7 +41,7 @@ jobs:
         run: node scripts/verify-all.mjs
 
       - name: Verify Story Mode design-language viewports
-        run: node tests/story-mode-design-language-regression.mjs
+        run: node tests/story-mode-design-language-diagnostic.mjs
 
       - name: Stage Story Mode for Pages
         run: |
