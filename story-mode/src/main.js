@@ -1,5 +1,9 @@
+import '../assets/css/design-language-v010.css';
+import { installDesignLanguageV010 } from './ui/design-language-v010.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
 import { loadContentPacks } from './game/pack-loader.js';
+
+installDesignLanguageV010();
 
 let runtimeModulesPromise = null;
 
