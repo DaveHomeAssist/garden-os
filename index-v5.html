@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Garden OS Home: this week, where to next, what's recently touched.">
-<title>Garden OS · Home (mobile beta)</title>
-<link rel="canonical" href="https://davehomeassist.github.io/garden-os/index-v5.html">
+<meta name="theme-color" content="#3a2510">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https:; base-uri 'self'; form-action 'self'">
+<title>Garden OS · Home</title>
+<link rel="canonical" href="https://davehomeassist.github.io/garden-os/">
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Garden OS">
-<meta property="og:title" content="Garden OS · Home (mobile beta)">
+<meta property="og:title" content="Garden OS · Home">
 <meta property="og:description" content="Garden OS Home: this week, where to next, what">
-<meta property="og:url" content="https://davehomeassist.github.io/garden-os/index-v5.html">
+<meta property="og:url" content="https://davehomeassist.github.io/garden-os/">
 <meta property="og:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Garden OS · Home (mobile beta)">
+<meta name="twitter:title" content="Garden OS · Home">
 <meta name="twitter:description" content="Garden OS Home: this week, where to next, what">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
 <link rel="stylesheet" href="garden-os-theme.css">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -36,7 +36,7 @@
   #root { display: contents; }
   @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
   @media (min-width: 900px) {
-    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-frame-outer { width: min(100vw - 64px, 1120px) !important; max-width: 1120px !important; }
     .v5-phone {
       width: 100% !important;
       height: min(100vh - 64px, 1000px) !important;
@@ -44,6 +44,10 @@
       border-radius: 16px !important;
     }
     .v5-status { display: none !important; }
+  }
+  @media (max-width: 430px) {
+    .v5-tabbar { overflow: visible !important; }
+    .v5-tabbar-link { flex: 1 1 20% !important; min-width: 0 !important; padding-inline: 2px !important; }
   }
   button:focus-visible, a:focus-visible { outline: 2.5px solid #4e8c3c; outline-offset: 2px; border-radius: 6px; }
   .v5-eyebrow {
@@ -61,47 +65,50 @@
 <script src="vendor/react-18.3.1.production.min.js"></script>
 <script src="vendor/react-dom-18.3.1.production.min.js"></script>
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
+<script src="gos-time.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-journal.js"></script>
 </head>
 <body>
-<a class="v5-eyebrow" href="index.html">← Legacy launcher</a>
+<a class="skip-link" href="#main-content">Skip to Garden OS</a>
+<a class="v5-eyebrow" href="garden-cage-build-guide.html">Build guide →</a>
 <div id="shell"><div id="root"></div></div>
 
 <script type="text/babel" data-presets="react">
 'use strict';
 
 // ── Theme tokens ────────────────────────────────────────────────────────────
+const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const T = {
-  soil:'#3a2510', soilMid:'#52331a',
-  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
-  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0', leafWash:'#edf5e8',
-  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0',
-  rust:'#b84a1a', rustLight:'#d4651a',
-  cream:'#f7f3ec', creamMid:'#ede5d8',
-  panel:'#fffdf9',
-  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
-  border:'#c8b090', borderSoft:'#dfd0b8',
-  rain:'#8ba8b5',
-  fontDisp: "'Fraunces', Georgia, serif",
-  fontSerif:"'Lora', Georgia, serif",
-  fontSans: "'DM Sans', system-ui, sans-serif",
-  fontMono: "'DM Mono', ui-monospace, monospace",
+  soil:token('--soil'), soilMid:token('--soil-mid'),
+  cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
+  leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'), leafWash:token('--leaf-wash'),
+  sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
+  rust:token('--rust'), rustLight:token('--rust-light'),
+  cream:token('--cream'), creamMid:token('--cream-mid'),
+  panel:token('--panel'),
+  text:token('--text'), textMid:token('--text-mid'), textSoft:token('--text-soft'), textMuted:token('--text-muted'),
+  border:token('--border'), borderSoft:token('--border-soft'),
+  rain:token('--accent-rain'),
+  fontDisp: token('--font-display'),
+  fontSerif: token('--font-serif'),
+  fontSans: token('--font-sans'),
+  fontMono: token('--font-mono'),
 };
 
 // ── Date helpers ────────────────────────────────────────────────────────────
-function isoWeek(d) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+const CURRENT_TIME = GosTime.currentContext();
+const TODAY = CURRENT_TIME.date;
+const WEEK_NOW = CURRENT_TIME.week;
+const DAY_OF_SEASON = CURRENT_TIME.dayOfYear;
+const WEEKDAY = CURRENT_TIME.weekday;
+const MONTH_DAY = CURRENT_TIME.monthDay;
+function currentSeasonLabel(date) {
+  return GosTime.currentContext(date).seasonLabel;
 }
-const TODAY = new Date();
-const WEEK_NOW = isoWeek(TODAY);
-const DAY_OF_SEASON = Math.floor((TODAY - new Date(TODAY.getFullYear(), 0, 1)) / 86400000) + 1;
-const WEEKDAY = TODAY.toLocaleDateString('en-US', { weekday: 'long' });
-const MONTH_DAY = TODAY.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+function currentWeekRange(date) {
+  return GosTime.currentContext(date).weekRangeLabel;
+}
 
 // ── Primitives ──────────────────────────────────────────────────────────────
 function Label({ children, color = T.textSoft, size = 10, style = {} }) {
@@ -136,14 +143,14 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'home',    label:'Home',    href:'index-v5.html' },
+    { id:'home',    label:'Home',    href:'./' },
     { id:'beds',    label:'Beds',    href:'garden-painting.html' },
     { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'journal.html' },
   ];
   return (
-    <nav style={{
+    <nav className="v5-tabbar" aria-label="Garden OS product" style={{
       flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
@@ -151,7 +158,7 @@ function TabBar({ active }) {
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          flex: '1 1 20%', minWidth: 0,
           textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
@@ -314,6 +321,7 @@ function loadActiveBedSummary() {
       seasonCount: seasonEvents.length,
       lastEvent,
       currentYear,
+      zone: typeof bed.zone === 'string' && bed.zone.trim() ? bed.zone.trim() : null,
     };
   } catch (_) { return null; }
 }
@@ -389,7 +397,7 @@ function TweaksPanel({ tweak, setTweak, onClose }) {
 }
 
 // ── Hub composition ────────────────────────────────────────────────────────
-function ThisWeekCapsule({ compact }) {
+function ThisWeekCapsule({ compact, summary }) {
   return (
     <section style={{
       borderRadius: 16, padding: compact ? '12px 14px' : '14px 16px',
@@ -404,25 +412,22 @@ function ThisWeekCapsule({ compact }) {
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Label size={9} color="rgba(245,237,224,0.6)">THIS WEEK</Label>
-          <Label size={9} color="rgba(245,237,224,0.6)">APR 20 - 26</Label>
-        </div>
-        <div style={{ display: 'flex', gap: 18, marginTop: 8, alignItems: 'baseline' }}>
-          <CapsuleStat n={3} label="sow" color={T.sunBright}/>
-          <CapsuleStat n={5} label="transplant" color={T.cedarPale}/>
-          <CapsuleStat n={2} label="harvesting" color={T.leafPale}/>
+          <Label size={9} color="rgba(245,237,224,0.72)">{currentWeekRange(TODAY).toUpperCase()}</Label>
         </div>
         <div style={{
-          marginTop: 10, fontFamily: T.fontSerif, fontSize: 14, color: '#f5ede0',
+          marginTop: 10, fontFamily: T.fontSerif, fontSize: 15, color: '#f5ede0',
           fontStyle: 'italic', lineHeight: 1.45, paddingRight: 20,
         }}>
-          Pull radishes today &mdash; <span style={{ color: T.sunBright }}>they're 28 days in.</span>
+          {summary
+            ? `${currentSeasonLabel(TODAY)} check-in for ${summary.bedName}. Planner calculates timing from this date and your saved bed.`
+            : `${currentSeasonLabel(TODAY)} check-in. Create a bed or try the labelled sample garden before Planner gives crop advice.`}
         </div>
         <a href="garden-planner-v5.html" style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           marginTop: 10, padding: '8px 14px', borderRadius: 999,
           background: T.leafBright, border: 'none', color: '#fff',
           fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
-          cursor: 'pointer', minHeight: 36, textDecoration: 'none',
+          cursor: 'pointer', minHeight: 44, textDecoration: 'none',
         }}>Open today's plan →</a>
       </div>
     </section>
@@ -553,8 +558,6 @@ function MomGardenTile({ compact, onLoaded }) {
       window.location.href = 'garden-painting.html';
       return;
     }
-    const ok = window.confirm("Load Mom Garden? This adds 3 beds and 44 planted cells.");
-    if (!ok) return;
     try {
       const result = await loadMomGardenDataFromHub();
       if (result && result.ok === false && result.reason === 'existing-beds') {
@@ -582,10 +585,10 @@ function MomGardenTile({ compact, onLoaded }) {
       }}>MOM</span>
       <span style={{ flex: 1 }}>
         <span style={{ display: 'block', fontFamily: T.fontDisp, fontSize: 16, fontWeight: 600 }}>
-          Mom's Garden
+          {loaded ? "Open Mom's sample garden" : "Try Mom's sample garden"}
         </span>
         <span style={{ display: 'block', fontSize: 12, color: T.textSoft, lineHeight: 1.35, marginTop: 1 }}>
-          44 planted cells · 3 beds · Real active garden
+          Labelled example data · 44 planted cells · 3 beds
         </span>
       </span>
       <span style={{ display: 'inline-flex' }}>{Icons.arrow(13, T.leaf)}</span>
@@ -708,14 +711,12 @@ function MoreToolsSheet({ onClose, onOpenDevTools }) {
           }}>{Icons.close(14, T.textSoft)}</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 18 }}>
-          <MoreToolsRow icon={Icons.story} title="Play Game"
-            subtitle="Play through a season" href="garden-league-simulator-v4.html"/>
+          <MoreToolsRow icon={Icons.story} title="Story Mode"
+            subtitle="Play the canonical garden campaign" href="story-mode/"/>
           <MoreToolsRow icon={Icons.build} title="Build Guide"
             subtitle="Pick a bed, list materials" href="garden-cage-build-guide.html"/>
           <MoreToolsRow icon={Icons.ops}   title="Ops Guide"
             subtitle="Weekly garden ops" href="garden-cage-ops-guide.html"/>
-          <MoreToolsRow icon={Icons.story} title="Story Mode"
-            subtitle="Play through a season" href="story-mode/"/>
           <MoreToolsRow icon={Icons.story} title="How It Thinks"
             subtitle="Scoring logic, plainly" href="how-it-thinks-v5.html"/>
           <MoreToolsRow icon={Icons.code}  title="Dev Tools"
@@ -1400,7 +1401,7 @@ function Hub() {
   }
 
   return (
-    <div style={{
+    <main id="main-content" tabIndex="-1" style={{
       width: '100%', height: '100%', background: T.cream,
       fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
       display: 'flex', flexDirection: 'column', position: 'relative',
@@ -1409,11 +1410,12 @@ function Hub() {
 
       <header style={{ padding: '2px 22px 10px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <h1 className="sr-only">Garden OS Home</h1>
           <Label size={9} color={T.soilMid}>GARDEN OS · W{WEEK_NOW}</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <Label size={9} color={T.soilMid}>ZONE 7a · DAY {DAY_OF_SEASON}</Label>
+            <Label size={9} color={T.soilMid}>{bedSummary && bedSummary.zone ? `ZONE ${bedSummary.zone}` : 'LOCATION NOT SET'} · DAY {DAY_OF_SEASON}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
-              width: 26, height: 26, borderRadius: 6, padding: 0,
+              width: 44, height: 44, borderRadius: 8, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}>{Icons.gear(12, T.soil)}</button>
@@ -1426,12 +1428,12 @@ function Hub() {
           {WEEKDAY}, <span style={{ fontStyle: 'italic', color: T.leaf }}>{MONTH_DAY}.</span>
         </div>
         <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft, fontStyle: 'italic' }}>
-          Late spring. Soil warm. Last frost five days behind us.
+          {currentSeasonLabel(TODAY)} · current date verified locally · crop timing lives in Planner.
         </div>
       </header>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
-        <ThisWeekCapsule compact={compact}/>
+        <ThisWeekCapsule compact={compact} summary={bedSummary}/>
 
         <SeasonLogTile summary={bedSummary} compact={compact}/>
 
@@ -1447,7 +1449,7 @@ function Hub() {
             <Tile title="Beds"    subtitle="Edit beds and crop placement" icon={Icons.paint}   href="garden-painting.html"    compact={compact}/>
             <Tile title="Doctor"  subtitle="What's wrong with this leaf" icon={Icons.doctor}  href="garden-doctor-v5.html"   compact={compact}/>
             <Tile title="Journal" subtitle="Garden memory and system inbox" icon={Icons.journal} href="journal.html" compact={compact}/>
-            <Tile title="Play Game" subtitle="Play through a season"        icon={Icons.story}   href="garden-league-simulator-v4.html" compact={compact}/>
+            <Tile title="Story Mode" subtitle="Play the garden campaign" icon={Icons.story} href="story-mode/" compact={compact}/>
           </div>
         </section>
 
@@ -1496,7 +1498,7 @@ function Hub() {
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
       {moreOpen && <MoreToolsSheet onClose={() => setMoreOpen(false)} onOpenDevTools={openDevTools}/>}
       {devOpen && <DevToolsOverlay onClose={() => setDevOpen(false)}/>}
-    </div>
+    </main>
   );
 }
 

@@ -52,18 +52,19 @@ Garden OS is a zero-backend, browser-native raised bed garden planning system. M
 
 The site uses a two-track navigation system:
 
-**User Track** (nav: Home → Story Mode → Planner → Build Guide → Ops Guide → How It Thinks → Dev Tools →)
+**User Track** (product nav: Home → Beds → Planner → Doctor → Journal; Story Mode and practical guides branch from Home)
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Hub page — launcher for Story Mode, planner, guides, and dev tools. |
-| `story-mode-live/` | Published Story Mode build. Vite + Three.js narrative runtime generated from `story-mode/`. |
+| `index.html` | Canonical Home route, forwarding to the current `index-v5.html` product Home implementation. |
+| `index-v5.html` | Current product Home: saved-bed truth, explicit sample garden, Story Mode, and guide paths. |
+| `story-mode/` | Story Mode source and canonical published route. Vite + Three.js narrative runtime is built in place by the Pages workflow. |
 | `garden-planner-v4.html` | Core planner. 8x4 grid, drag-to-place crops, real-time scoring with per-cell factor breakdown, adjacency analysis, export/import as `.gos.json`. |
 | `garden-league-simulator-v4.html` | Legacy deterministic season sandbox / predecessor to Story Mode. |
 | `garden-cage-build-guide.html` | Interactive construction guide for a cattle panel garden cage. Materials lists, assembly sequence, measurements. |
 | `garden-cage-ops-guide.html` | Seasonal ops checklist. Monthly breakdown of planting, maintenance, harvest, and defense tasks. |
 | `how-it-thinks.html` | Plain-English scoring explanation. Uses everyday analogies to explain the 6 scoring factors. |
-| `home.html` | Compatibility alias that redirects to `index.html`. |
+| `home.html` | Noindex compatibility alias that redirects into canonical Home. |
 
 **Dev Track** (nav: ← Garden → Visualizer → Scoring Map → Fairness Tester → System Map → Topology)
 
@@ -151,7 +152,7 @@ Computed at runtime from CageConfig. `isTrellisRow` (from climb zones), `hasVert
 
 ### Deployment
 
-GitHub Pages. Push to `main` → auto-deploys via `.github/workflows/pages.yml`. Root HTML tools are served directly from repo root. Story Mode builds from `story-mode/` and is copied to `story-mode-live/`. Local testing: `python3 -m http.server 8000` for root tools, `cd story-mode && npm run dev` for Story Mode.
+GitHub Pages. Push to `main` → auto-deploys via `.github/workflows/pages.yml`. Root HTML tools are served directly from repo root. Story Mode builds from source and is staged at the canonical `story-mode/` route; `story-mode-live/` is a noindex redirect. Local testing: `python3 -m http.server 8000` for root tools, `cd story-mode && npm run dev` for Story Mode.
 
 ### Spec & Doc Index
 

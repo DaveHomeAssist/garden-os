@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Garden OS Doctor: tap symptoms, get ranked likely causes and action steps in under 30 seconds.">
+<meta name="theme-color" content="#3a2510">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https:; base-uri 'self'; form-action 'self'">
 <title>Garden OS · Doctor (mobile beta)</title>
 <link rel="canonical" href="https://davehomeassist.github.io/garden-os/garden-doctor-v5.html">
 <meta name="robots" content="index,follow">
@@ -19,8 +21,6 @@
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
 <link rel="stylesheet" href="garden-os-theme.css">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -36,7 +36,7 @@
   #root { display: contents; }
   @media (min-width: 480px) { #shell { padding: 32px 16px 64px; align-items: center; } }
   @media (min-width: 900px) {
-    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-frame-outer { width: min(100vw - 64px, 1120px) !important; max-width: 1120px !important; }
     .v5-phone {
       width: 100% !important;
       height: min(100vh - 64px, 1000px) !important;
@@ -54,35 +54,40 @@
   }
   .v5-eyebrow:hover { color: #1e1208; }
   @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
+  @media (max-width: 700px) {
+    .v5-tabbar { overflow: visible !important; }
+    .v5-tabbar-link { flex: 1 1 20% !important; min-width: 0 !important; padding-inline: 2px !important; }
+  }
 </style>
 
 <script src="vendor/react-18.3.1.production.min.js"></script>
 <script src="vendor/react-dom-18.3.1.production.min.js"></script>
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
+<script src="gos-time.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-suitability-core.js"></script>
 <script src="gos-suitability.js"></script>
 </head>
 <body>
-<a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
+<a class="skip-link" href="#main-content">Skip to Doctor</a>
+<a class="v5-eyebrow" href="./">← Garden OS</a>
 <div id="shell"><div id="root"></div></div>
 
 <script type="text/babel" data-presets="react">
 'use strict';
 
+const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const T = {
-  soil:'#3a2510', soilMid:'#52331a',
-  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
-  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0', leafWash:'#edf5e8',
-  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0', sunWash:'#fdf8e8',
-  rust:'#b84a1a', rustLight:'#d4651a', rustPale:'#f5d8c8', rustWash:'#fdf0e8',
-  cream:'#f7f3ec', creamMid:'#ede5d8', panel:'#fffdf9',
-  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
-  border:'#c8b090', borderSoft:'#dfd0b8',
-  fontDisp: "'Fraunces', Georgia, serif",
-  fontSerif:"'Lora', Georgia, serif",
-  fontSans: "'DM Sans', system-ui, sans-serif",
-  fontMono: "'DM Mono', ui-monospace, monospace",
+  soil:token('--soil'), soilMid:token('--soil-mid'),
+  cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
+  leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'), leafWash:token('--leaf-wash'),
+  sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'), sunWash:token('--sun-wash'),
+  rust:token('--rust'), rustLight:token('--rust-light'), rustPale:token('--rust-pale'), rustWash:token('--rust-wash'),
+  cream:token('--cream'), creamMid:token('--cream-mid'), panel:token('--panel'),
+  text:token('--text'), textMid:token('--text-mid'), textSoft:token('--text-soft'), textMuted:token('--text-muted'),
+  border:token('--border'), borderSoft:token('--border-soft'),
+  fontDisp: token('--font-display'), fontSerif:token('--font-serif'),
+  fontSans: token('--font-sans'), fontMono: token('--font-mono'),
 };
 
 const CROPS = {
@@ -203,14 +208,14 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id:'home',    label:'Home',    href:'index-v5.html' },
+    { id:'home',    label:'Home',    href:'./' },
     { id:'beds',    label:'Beds',    href:'garden-painting.html' },
     { id:'planner', label:'Planner', href:'garden-planner-v5.html' },
     { id:'doctor',  label:'Doctor',  href:'garden-doctor-v5.html' },
     { id:'journal', label:'Journal', href:'journal.html' },
   ];
   return (
-    <nav style={{
+    <nav className="v5-tabbar" aria-label="Garden OS product" style={{
       flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
@@ -218,7 +223,7 @@ function TabBar({ active }) {
     }}>
       {tabs.map(t => (
         <a key={t.id} href={t.href} aria-current={t.id === active ? 'page' : undefined} style={{
-          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          flex: '1 1 20%', minWidth: 0,
           textAlign: 'center', padding: '4px 8px',
           borderTop: t.id === active ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
@@ -573,7 +578,7 @@ function CropPicker({ cropId, onPick, bed }) {
                 background: on ? T.soil : T.panel,
                 color: on ? '#f5ede0' : T.text,
                 display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 36,
+                fontFamily: T.fontSans, fontSize: 12, fontWeight: 500, minHeight: 44,
                 position: 'relative',
               }}>
               <CropChip crop={k} size={20}/>
@@ -705,7 +710,7 @@ function ViewSegment({ value, onChange }) {
           <button key={o[0]} role="tab" aria-selected={active}
             onClick={function () { onChange(o[0]); }}
             style={{
-              flex: 1, minHeight: 36, borderRadius: 8, border: 'none',
+              flex: 1, minHeight: 44, borderRadius: 8, border: 'none',
               cursor: 'pointer',
               background: active ? T.panel : 'transparent',
               color: active ? T.text : T.textSoft,
@@ -1139,7 +1144,7 @@ function Doctor() {
   const last = loadLastQuery();
   const [symptoms, setSymptoms] = React.useState(() => last?.symptoms || []);
   const [cropId, setCropId] = React.useState(() => readDoctorInitialCrop() || last?.cropId || 'tom');
-  const [season, setSeason] = React.useState(() => last?.season || 'late-spring');
+  const [season, setSeason] = React.useState(() => last?.season || GosTime.currentContext().doctorSeason);
   const [diagnosed, setDiagnosed] = React.useState(false);
   const [savedState, setSavedState] = React.useState({ id: null, until: 0 });
   const [view, setView] = React.useState('diag');
@@ -1192,7 +1197,7 @@ function Doctor() {
   const saveLabel = saveActive ? 'Saved · Undo' : 'Save to journal';
 
   return (
-    <div style={{
+    <main id="main-content" tabIndex="-1" style={{
       width: '100%', height: '100%', background: T.cream,
       fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
       display: 'flex', flexDirection: 'column', position: 'relative',
@@ -1209,20 +1214,20 @@ function Doctor() {
               <Label size={9} color={T.soilMid}>SEASON LOG</Label>
             )}
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
-              width: 26, height: 26, borderRadius: 6, padding: 0, background: T.panel,
+              width: 44, height: 44, borderRadius: 8, padding: 0, background: T.panel,
               border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}>{Icons.gear(12, T.soil)}</button>
           </div>
         </div>
-        <div style={{
+        <h1 style={{
           fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
-          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, marginTop: 2,
+          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, margin: '2px 0 0',
         }}>
           {view === 'diag'
             ? <>I see <span style={{ fontStyle: 'italic', color: T.rust }}>something</span>.</>
             : <>Looking <span style={{ fontStyle: 'italic', color: T.leaf }}>back</span>.</>}
-        </div>
+        </h1>
       </header>
 
       <ViewSegment value={view} onChange={setView}/>
@@ -1263,9 +1268,10 @@ function Doctor() {
               ['late-spring',  'Late spr'],
               ['summer',       'Summer'],
               ['fall',         'Fall'],
+              ['winter',       'Winter'],
             ].map(([k, lab]) => (
               <button key={k} onClick={() => setSeason(k)} aria-pressed={season === k} style={{
-                flex: 1, minHeight: 36, borderRadius: 8, border: 'none', cursor: 'pointer',
+                flex: 1, minHeight: 44, borderRadius: 8, border: 'none', cursor: 'pointer',
                 background: season === k ? T.panel : 'transparent',
                 color: season === k ? T.text : T.textSoft,
                 fontFamily: T.fontSans, fontSize: 11, fontWeight: season === k ? 600 : 500,
@@ -1323,7 +1329,7 @@ function Doctor() {
 
       <TabBar active="doctor"/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}
-    </div>
+    </main>
   );
 }
 

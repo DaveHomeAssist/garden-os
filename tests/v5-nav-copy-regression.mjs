@@ -11,7 +11,7 @@ const v5Files = [
 
 const expectedCompactNav = ["Home", "Beds", "Planner", "Doctor", "Journal"];
 const expectedHrefs = [
-  "index-v5.html",
+  "./",
   "garden-painting.html",
   "garden-planner-v5.html",
   "garden-doctor-v5.html",
@@ -61,7 +61,7 @@ if (!painting.includes("<title>Garden OS · Beds (mobile beta)</title>")) {
   failures.push("garden-painting.html: document title should say Beds");
 }
 
-if (!painting.includes("<Disp size={24}>Beds</Disp>")) {
+if (!/<h1\b[^>]*>Beds<\/h1>/.test(painting)) {
   failures.push("garden-painting.html: page heading should say Beds");
 }
 

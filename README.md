@@ -52,7 +52,8 @@ That is a shipping mode, not a permanent architecture rule.
 
 ```
 garden-os/
-├── index.html                          # Hub / landing page
+├── index.html                          # Canonical Home redirect
+├── index-v5.html                       # Current product Home implementation
 ├── garden-painting.html                # Active v5 Beds editor and experiments
 ├── garden-planner-v5.html              # Active v5 seasonal planner
 ├── gos-experiments.js                  # Cross-bed experiment contract/store

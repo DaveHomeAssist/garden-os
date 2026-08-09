@@ -23,8 +23,6 @@
 <link rel="stylesheet" href="garden-os-theme.css">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icons/favicon/apple-touch-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   /* Page shell — center the phone frame on desktop, full-bleed on real mobile */
   html, body { margin: 0; padding: 0; }
@@ -65,7 +63,7 @@
   }
   /* Tablet+: drop the iPhone bezel and let the column breathe to a real reading width. */
   @media (min-width: 900px) {
-    .v5-frame-outer { width: min(100vw - 64px, 820px) !important; max-width: 820px !important; }
+    .v5-frame-outer { width: min(100vw - 64px, 1120px) !important; max-width: 1120px !important; }
     .v5-phone {
       width: 100% !important;
       height: min(100vh - 64px, 1000px) !important;
@@ -90,11 +88,26 @@
   }
   .v5-eyebrow:hover { color: #1e1208; }
   @media (min-width: 768px) { .v5-eyebrow { display: inline-flex; } }
+  .planner-bed-scroller {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 8px;
+    padding-bottom: 6px;
+  }
+  .planner-bed-cell {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  @media (max-width: 700px) {
+    .v5-tabbar { overflow: visible !important; }
+    .v5-tabbar-link { flex: 1 1 20% !important; min-width: 0 !important; padding-inline: 2px !important; }
+  }
 </style>
 
 <script src="vendor/react-18.3.1.production.min.js"></script>
 <script src="vendor/react-dom-18.3.1.production.min.js"></script>
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
+<script src="gos-time.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-suitability-core.js"></script>
 <script src="gos-suitability.js"></script>
@@ -103,28 +116,30 @@
 <script src="data/mom-garden-data.js"></script>
 </head>
 <body>
-<a class="v5-eyebrow" href="index-v5.html">← Garden OS</a>
+<a class="skip-link" href="#main-content">Skip to Planner</a>
+<a class="v5-eyebrow" href="./">← Garden OS</a>
 <div id="shell"><div id="root"></div></div>
 
 <script type="text/babel" data-presets="react">
 'use strict';
 
 // ── Theme tokens (mirror garden-os-theme.css for inline-styled components) ──
+const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const T = {
-  soil:'#3a2510', soilMid:'#52331a',
-  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
-  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0',
-  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0',
-  rust:'#b84a1a', rustLight:'#d4651a',
-  cream:'#f7f3ec', creamMid:'#ede5d8', creamDeep:'#e4d8c8',
-  panel:'#fffdf9',
-  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
-  border:'#c8b090', borderSoft:'#dfd0b8',
-  good:'#2f7a3d', warn:'#c45a18', bad:'#a82018', info:'#3a6abf', rain:'#8ba8b5',
-  fontDisp: "'Fraunces', Georgia, serif",
-  fontSerif:"'Lora', Georgia, serif",
-  fontSans: "'DM Sans', system-ui, sans-serif",
-  fontMono: "'DM Mono', ui-monospace, monospace",
+  soil:token('--soil'), soilMid:token('--soil-mid'),
+  cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
+  leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'),
+  sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
+  rust:token('--rust'), rustLight:token('--rust-light'),
+  cream:token('--cream'), creamMid:token('--cream-mid'), creamDeep:token('--cream-deep'),
+  panel:token('--panel'),
+  text:token('--text'), textMid:token('--text-mid'), textSoft:token('--text-soft'), textMuted:token('--text-muted'),
+  border:token('--border'), borderSoft:token('--border-soft'),
+  good:token('--good'), warn:token('--warn'), bad:token('--bad'), info:token('--info'), rain:token('--accent-rain'),
+  fontDisp: token('--font-display'),
+  fontSerif: token('--font-serif'),
+  fontSans: token('--font-sans'),
+  fontMono: token('--font-mono'),
 };
 
 // ── Catalog + deterministic calendar data ──────────────────────────────────
@@ -211,7 +226,7 @@ function normalizeSpecCrop(id, raw, index) {
 }
 function normalizeCatalogPayload(payload) {
   if (!payload || typeof payload !== 'object' || !payload.crops || typeof payload.crops !== 'object') return null;
-  const out = {};
+  const out = { ...FALLBACK_CROPS };
   Object.keys(payload.crops).forEach((id, index) => {
     if (!/^[a-z0-9_-]{1,64}$/i.test(id)) return;
     const normalized = normalizeSpecCrop(id, payload.crops[id], index);
@@ -254,30 +269,23 @@ function unknownCrop(cropId) {
   };
 }
 function isoWeek(d) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return GosTime.isoWeek(d);
 }
 function isoWeekYear(d) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  return date.getUTCFullYear();
+  return GosTime.isoWeekYear(d);
 }
 function isoWeeksInYear(year) {
   return isoWeek(new Date(year, 11, 28));
 }
 function computeNow(date = new Date()) {
-  const yearStart = new Date(date.getFullYear(), 0, 1);
-  const dayOfSeason = Math.floor((date - yearStart) / 86400000) + 1;
+  const current = GosTime.currentContext(date);
   return {
-    date,
-    week: isoWeek(date),
-    seasonYear: String(isoWeekYear(date)),
-    label: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-    dayOfSeason,
+    date: current.date,
+    week: current.week,
+    seasonYear: current.seasonYear,
+    label: current.label,
+    dayOfSeason: current.dayOfYear,
+    season: current.season,
   };
 }
 function useNow() {
@@ -362,9 +370,8 @@ function bedFromGos(gosBed, now) {
   }).filter(Boolean);
 }
 
-// Single read of the active context. Returns the same shape regardless of
-// whether a real bed or the fixture is being shown. Callers branch on
-// isFixture for banners + write-disabled paths.
+// Single read of the active context. Empty storage stays honestly empty.
+// The legacy fixture is available only through an explicit ?demo=1 URL.
 // ── Suitability scoring (shared realism model, gos-suitability.js) ──────────
 // The normalized catalog crop already carries the fields GosSuitability needs
 // (sun, sowWeek, harvestStart, harvestEnd), so getCrop doubles as the adapter —
@@ -391,10 +398,16 @@ function suitabilityCellMap(suitability) {
 }
 // Score band → color, shared by the cell bar, the header chip, and the panel.
 function scoreBand(total) {
-  if (total == null) return { label: '--', color: '#9a8f7d' };
-  if (total >= 7.5) return { label: 'Great', color: '#4b8b3b' };
-  if (total >= 5)   return { label: 'OK', color: '#b7860b' };
-  return { label: 'Weak', color: '#b4532e' };
+  if (total == null) return { label: '--', glyph: '?', color: '#9a8f7d', borderStyle: 'solid', pattern: 'none' };
+  if (total >= 7.5) return { label: 'Great', glyph: '✓', color: '#4b8b3b', borderStyle: 'solid', pattern: 'none' };
+  if (total >= 5) return {
+    label: 'OK', glyph: '≈', color: '#8a6508', borderStyle: 'solid',
+    pattern: 'repeating-linear-gradient(135deg, transparent 0 5px, rgba(58,37,16,.12) 5px 7px)',
+  };
+  return {
+    label: 'Weak', glyph: '!', color: '#9f3f22', borderStyle: 'dashed',
+    pattern: 'repeating-linear-gradient(45deg, transparent 0 4px, rgba(58,37,16,.16) 4px 6px)',
+  };
 }
 function getBedDimensions(gosBed) {
   if (gosBed && gosBed.dimensions && typeof gosBed.dimensions === 'object') {
@@ -409,13 +422,14 @@ function getBedDimensions(gosBed) {
   return { rows: 4, cols: 8 };
 }
 function loadActiveContext(now) {
+  const demoRequested = new URLSearchParams(window.location.search).get('demo') === '1';
   if (typeof GosBed === 'undefined') {
-    return { bed: BED, events: [], gosBed: null, allBeds: [], isFixture: true, revision: null, dimensions: { rows: 4, cols: 8 } };
+    return { bed: demoRequested ? BED : [], events: [], gosBed: null, allBeds: [], isFixture: demoRequested, revision: null, dimensions: { rows: 4, cols: 8 } };
   }
   const allBeds = GosBed.readAll();
   const gosBed = GosBed.getActive();
   if (!gosBed) {
-    return { bed: BED, events: [], gosBed: null, allBeds, isFixture: true, revision: null, dimensions: { rows: 4, cols: 8 } };
+    return { bed: demoRequested ? BED : [], events: [], gosBed: null, allBeds, isFixture: demoRequested, revision: null, dimensions: { rows: 4, cols: 8 } };
   }
   const internalBed = bedFromGos(gosBed, now);
   return {
@@ -427,16 +441,6 @@ function loadActiveContext(now) {
     dimensions: getBedDimensions(gosBed),
     isFixture: false,
   };
-}
-
-function loadBundledMomGardenIfEmpty() {
-  if (typeof GosBed === 'undefined' || !GosBed.mom || !window.GOS_MOM_GARDEN_DATA) return;
-  if (GosBed.readAll().length > 0) return;
-  try {
-    GosBed.mom.loadFromData(window.GOS_MOM_GARDEN_DATA, { overwrite: false });
-  } catch (e) {
-    console.warn('Mom Garden planner auto-load failed:', e.message);
-  }
 }
 
 // Find the most recent crop-level mark_done or harvest event for a crop in
@@ -671,13 +675,16 @@ function pickWeeklyHeadline(bed, events, today, calendar, frostWeeks) {
     }
   }
   const thisWeek = calendar.find(x => x.week === week);
-  const sowCrop = thisWeek && thisWeek.sow.map(id => getCrop(id) ? id : null).filter(Boolean)[0];
+  const sowCrop = thisWeek && thisWeek.sow.find(id => cropIds.includes(id) && getCrop(id));
   if (sowCrop) return `Sow ${getCrop(sowCrop).name} this week.`;
   const activeHarvest = cropIds.filter(id => {
     const crop = getCrop(id);
     return crop && week >= crop.harvestStart && week <= crop.harvestEnd;
   }).length;
-  const readyToSow = Object.values(CROPS).filter(c => c && c.sowWeek === week).length;
+  const readyToSow = cropIds.filter(id => {
+    const crop = getCrop(id);
+    return crop && crop.sowWeek === week;
+  }).length;
   return `${activeHarvest} crops in active harvest, ${readyToSow} ready to sow.`;
 }
 function classifyWriteError(error) {
@@ -862,14 +869,14 @@ function FakeStatusBar() {
 }
 function TabBar({ active }) {
   const tabs = [
-    { id: 'home',    label: 'Home',    href: 'index-v5.html' },
+    { id: 'home',    label: 'Home',    href: './' },
     { id: 'beds',    label: 'Beds',    href: 'garden-painting.html' },
     { id: 'planner', label: 'Planner', href: 'garden-planner-v5.html' },
     { id: 'doctor',  label: 'Doctor',  href: 'garden-doctor-v5.html' },
     { id: 'journal', label: 'Journal', href: 'journal.html' },
   ];
   return (
-    <nav style={{
+    <nav className="v5-tabbar" aria-label="Garden OS product" style={{
       flexShrink: 0, height: 70, background: T.panel,
       borderTop: `1px solid ${T.borderSoft}`,
       display: 'flex', alignItems: 'flex-start', padding: '8px 0 0',
@@ -878,7 +885,7 @@ function TabBar({ active }) {
       {tabs.map(t => {
         const activeTab = t.id === active;
         const style = {
-          flex: '0 0 auto', minWidth: t.label.length > 9 ? 96 : 72,
+          flex: '1 1 20%', minWidth: 0,
           textAlign: 'center', padding: '4px 8px',
           borderTop: activeTab ? `2px solid ${T.leaf}` : '2px solid transparent',
           marginTop: -9, paddingTop: 11, textDecoration: 'none',
@@ -1151,10 +1158,13 @@ function CropLane({ cropKey, today, wStart, pxPerWeek, onPick, dim, done, actual
 }
 
 // ── In-ground strip — the bed reduced to a 4×8 ribbon ───────────────────────
-function InGroundStrip({ bed, dimensions, onPickCrop, cellScores }) {
+function InGroundStrip({ bed, dimensions, onPickCrop, onOpenBeds, cellScores, onEditCell, onUndoEdit, canUndoEdit, canEdit }) {
   const total = bed.length;
   const rows = dimensions.rows;
   const cols = dimensions.cols;
+  const [editing, setEditing] = React.useState(false);
+  const [brush, setBrush] = React.useState(() => bed[0] ? bed[0].crop : Object.keys(CROPS)[0]);
+  const cropChoices = Object.keys(CROPS).filter(id => getCrop(id));
   const bedByCell = React.useMemo(() => {
     const map = new Map();
     bed.forEach(x => map.set(x.r + ':' + x.c, x));
@@ -1172,19 +1182,64 @@ function InGroundStrip({ bed, dimensions, onPickCrop, cellScores }) {
         marginBottom: 6,
       }}>
         <Label size={10} color={T.soilMid}>IN GROUND · {rows}×{cols} BED</Label>
-        <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textSoft }}>
-          <b style={{ color: T.text, fontWeight: 600 }}>{total}</b>/{rows * cols} cells
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textSoft }}>
+            <b style={{ color: T.text, fontWeight: 600 }}>{total}</b>/{rows * cols} cells
+          </span>
+          <button type="button" onClick={() => canEdit ? setEditing(value => !value) : onOpenBeds()} aria-pressed={editing} style={{
+            minHeight: 44, padding: '7px 11px', borderRadius: 8, cursor: 'pointer',
+            border: `1px solid ${editing ? T.leaf : T.borderSoft}`,
+            background: editing ? T.leafWash : T.panel, color: editing ? T.leaf : T.text,
+            fontFamily: T.fontSans, fontSize: 12, fontWeight: 700,
+          }}>{editing ? 'Done editing' : (canEdit ? 'Edit bed' : 'Create in Beds')}</button>
         </div>
       </div>
-      <div style={{
-        overflowX: 'auto',
-      }}>
+      <p style={{ margin: '0 0 7px', color: T.textSoft, fontFamily: T.fontSans, fontSize: 12, lineHeight: 1.45 }}>
+        {editing
+          ? 'Choose a crop or Erase, then tap any cell. Replacing a planted cell is immediate; Undo restores the latest change.'
+          : 'Tap a planted cell for timing and score explanations. Choose Edit bed to change any cell, even when the bed is full. Swipe sideways for every column.'}
+      </p>
+      {editing && (
+        <div style={{ marginBottom: 8 }}>
+          <div role="toolbar" aria-label="Bed edit tools" style={{
+            display: 'flex', gap: 6, overflowX: 'auto', padding: '2px 1px 7px',
+            WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain',
+          }}>
+            {cropChoices.map(id => {
+              const crop = getCrop(id);
+              const selected = brush === id;
+              return <button type="button" key={id} aria-pressed={selected} onClick={() => setBrush(id)} style={{
+                flex: '0 0 auto', minWidth: 58, minHeight: 48, padding: '5px 8px', borderRadius: 8,
+                border: `2px solid ${selected ? T.leaf : T.borderSoft}`,
+                background: selected ? T.leafWash : T.panel, color: T.text, cursor: 'pointer',
+                fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
+              }}><span aria-hidden="true" style={{ display: 'block', fontFamily: T.fontMono }}>{crop.mono}</span>{crop.name}</button>;
+            })}
+            <button type="button" aria-pressed={brush === null} onClick={() => setBrush(null)} style={{
+              flex: '0 0 auto', minWidth: 64, minHeight: 48, padding: '5px 8px', borderRadius: 8,
+              border: `2px ${brush === null ? 'solid' : 'dashed'} ${brush === null ? T.rust : T.borderSoft}`,
+              background: brush === null ? T.cedarWash : T.panel, color: T.rust, cursor: 'pointer',
+              fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
+            }}><span aria-hidden="true" style={{ display: 'block', fontFamily: T.fontMono }}>×</span>Erase</button>
+            <button type="button" disabled={!canUndoEdit} onClick={onUndoEdit} style={{
+              flex: '0 0 auto', minWidth: 72, minHeight: 48, padding: '5px 8px', borderRadius: 8,
+              border: `1px solid ${T.borderSoft}`, background: T.panel, color: T.text,
+              cursor: canUndoEdit ? 'pointer' : 'not-allowed', opacity: canUndoEdit ? 1 : 0.45,
+              fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
+            }}><span aria-hidden="true" style={{ display: 'block', fontFamily: T.fontMono }}>↶</span>Undo</button>
+          </div>
+          <div style={{ fontFamily: T.fontSans, fontSize: 11, lineHeight: 1.4, color: T.textSoft }}>
+            Score key: <b style={{ color: T.leaf }}>✓ Great</b> · <b style={{ color: '#8a6508' }}>≈ OK, striped</b> · <b style={{ color: T.rust }}>! Weak, dashed</b>
+          </div>
+        </div>
+      )}
+      <div className="planner-bed-scroller" role="region" aria-label="Full bed cell map" tabIndex="0">
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `12px repeat(${cols}, minmax(18px, 1fr))`,
-        gridTemplateRows: `repeat(${rows}, 18px)`,
-        gap: 2,
-        minWidth: Math.max(0, cols * 22 + 12),
+        gridTemplateColumns: `28px repeat(${cols}, 44px)`,
+        gridTemplateRows: `repeat(${rows}, 44px)`,
+        gap: 4,
+        minWidth: cols * 48 + 28,
       }}>
         {Array.from({ length: rows }).map((_, r) => (
           <React.Fragment key={'row' + r}>
@@ -1199,19 +1254,25 @@ function InGroundStrip({ bed, dimensions, onPickCrop, cellScores }) {
               const sc = cell && cellScores && cellScores.get(r + ':' + c);
               const band = sc ? scoreBand(sc.total) : null;
               return (
-                <button type="button" key={r + '-' + c}
-                  onClick={() => cell && onPickCrop(cell.crop)}
-                  aria-label={cell ? `${crop.name} at row ${r + 1}, column ${c + 1}${band ? `, suitability ${sc.total.toFixed(1)} of 10 (${band.label})` : ''}` : `Empty row ${r + 1}, column ${c + 1}`}
+                <button className="planner-bed-cell" type="button" key={r + '-' + c}
+                  onClick={() => editing ? onEditCell({ r, c, cropId: brush }) : (cell ? onPickCrop(cell.crop) : setEditing(true))}
+                  aria-label={editing
+                    ? `${cell ? `Replace ${crop.name}` : 'Fill empty cell'} at row ${r + 1}, column ${c + 1} with ${brush ? getCrop(brush).name : 'nothing'}`
+                    : (cell ? `${crop.name} at row ${r + 1}, column ${c + 1}${band ? `, suitability ${sc.total.toFixed(1)} of 10 (${band.label})` : ''}` : `Empty row ${r + 1}, column ${c + 1}; activate to enter edit mode`)}
                   title={band ? `${crop.name}: ${sc.total.toFixed(1)}/10, ${band.label}` : undefined}
                   style={{
                     background: crop ? crop.color + '55' : T.cedarWash,
-                    border: `1px solid ${crop ? crop.color + 'aa' : T.borderSoft}`,
-                    borderRadius: 2, cursor: crop ? 'pointer' : 'default',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: T.fontMono, fontSize: 7, color: T.soil, fontWeight: 600,
-                    padding: 0,
-                    boxShadow: band ? `inset 0 -3px 0 ${band.color}` : 'none',
-                  }}>{crop && crop.mono}</button>
+                    border: `2px ${band ? band.borderStyle : 'solid'} ${crop ? crop.color + 'aa' : T.borderSoft}`,
+                    borderRadius: 6, cursor: 'pointer', position: 'relative',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                    fontFamily: T.fontMono, fontSize: 10, color: T.soil, fontWeight: 700,
+                    padding: 2,
+                    boxShadow: band ? `inset 0 -4px 0 ${band.color}` : 'none',
+                    backgroundImage: band ? band.pattern : 'none',
+                  }}>
+                    <span aria-hidden="true">{crop ? crop.mono : '+'}</span>
+                    {band && <span aria-hidden="true" style={{ fontSize: 7, lineHeight: 1, letterSpacing: 0.04 }}>{band.glyph} {band.label.toUpperCase()}</span>}
+                  </button>
               );
             })}
           </React.Fragment>
@@ -1849,7 +1910,8 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
                   onOpenTweaks, onAdd, onRecord, onRemove,
                   onPickBed,
                   onMarkDone, onHarvest, onUndoDone,
-                  onMarkCellDone, onHarvestCell, onUndoCellDone }) {
+                  onMarkCellDone, onHarvestCell, onUndoCellDone,
+                  onEditCell, onUndoEdit, canUndoEdit }) {
   const density = tweak.density || 'comfortable';
   const showEnded = tweak.showEnded !== false;
   const weekOffset = tweak.weekOffset || 0;
@@ -1872,7 +1934,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
     return Array.from(seen);
   }, [bed]);
 
-  const sourceCrops = isFixture ? Object.keys(CROPS) : cropsInBed;
+  const sourceCrops = cropsInBed;
   const crops = sourceCrops
     .filter(k => getCrop(k))
     .filter(k => showEnded || getCrop(k).harvestEnd >= today)
@@ -1883,7 +1945,14 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
     });
   const unknownCrops = sourceCrops.filter(k => !getCrop(k));
   const families = [...new Set(crops.map(k => getCrop(k).family))];
-  const thisWeek = calendar.find(w => w.week === today) || null;
+  const calendarWeek = calendar.find(w => w.week === today) || null;
+  const plantedCropSet = new Set(cropsInBed);
+  const thisWeek = calendarWeek ? {
+    ...calendarWeek,
+    sow: calendarWeek.sow.filter(id => plantedCropSet.has(id)),
+    transplant: calendarWeek.transplant.filter(id => plantedCropSet.has(id)),
+    harvestActive: calendarWeek.harvestActive.filter(id => plantedCropSet.has(id)),
+  } : null;
   const offSeason = today < ACTIVE_GROWING_WINDOW.start || today > ACTIVE_GROWING_WINDOW.end;
   const headline = pickWeeklyHeadline(bed, events, { ...now, week: today }, calendar, frostWeeks);
   React.useEffect(() => {
@@ -1950,7 +2019,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
   const isPreview = weekOffset !== 0;
 
   return (
-    <div style={{
+    <main id="main-content" tabIndex="-1" style={{
       width: '100%', height: '100%', background: T.cream,
       fontFamily: T.fontSans, color: T.text, overflow: 'hidden',
       display: 'flex', flexDirection: 'column', position: 'relative',
@@ -1982,9 +2051,9 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
       }}>
         <div>
-          <div style={{
+          <h1 style={{
             fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
-            letterSpacing: -0.5, lineHeight: 1,
+            letterSpacing: -0.5, lineHeight: 1, margin: 0,
           }}>
             {gosBed && gosBed.name
               ? <span>{gosBed.name}<span style={{ color: T.leaf, fontStyle: 'italic', fontWeight: 500 }}> / </span></span>
@@ -1998,7 +2067,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
                 border: `1px solid ${T.borderSoft}`, verticalAlign: 'middle',
               }}>{suitability.score}/100</span>
             )}
-          </div>
+          </h1>
           <div style={{ marginTop: 3, display: 'flex', gap: 8 }}>
             <Label size={10} color={T.textSoft}>{now.label.toUpperCase()}</Label>
             <Label size={10} color={T.textMuted}>·</Label>
@@ -2009,7 +2078,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button type="button" aria-label="Tweaks" onClick={onOpenTweaks} style={{
-            width: 32, height: 32, borderRadius: 8,
+            width: 44, height: 44, borderRadius: 8,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0,
@@ -2019,7 +2088,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
             disabled={isPreview}
             title={isPreview ? 'Reset season position to add crops' : 'Open Beds to add crops'}
             onClick={onAdd} style={{
-            width: 32, height: 32, borderRadius: 8,
+            width: 44, height: 44, borderRadius: 8,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: isPreview ? 'not-allowed' : 'pointer', padding: 0,
@@ -2057,10 +2126,10 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
           display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
         }}>
           <span style={{ fontFamily: T.fontSans, fontSize: 12, color: T.text, lineHeight: 1.45, flex: 1 }}>
-            Your bed has no crops yet.
+            {gosBed ? 'This saved bed has no crops yet.' : 'No garden data is loaded. Planner is showing zero, not example crops.'}
           </span>
           <a href="garden-painting.html" style={{
-            padding: '8px 12px', borderRadius: 999, minHeight: 36,
+            padding: '8px 12px', borderRadius: 8, minHeight: 44,
             display: 'inline-flex', alignItems: 'center',
             background: T.leafBright, color: '#fff', textDecoration: 'none',
             fontFamily: T.fontSans, fontSize: 12, fontWeight: 600,
@@ -2134,7 +2203,9 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
         </div>
       </section>
 
-      <InGroundStrip bed={bed} dimensions={dimensions} onPickCrop={setPicked} cellScores={cellScores}/>
+      <InGroundStrip bed={bed} dimensions={dimensions} onPickCrop={setPicked} cellScores={cellScores}
+        onOpenBeds={onAdd} onEditCell={onEditCell} onUndoEdit={onUndoEdit}
+        canUndoEdit={canUndoEdit} canEdit={!!gosBed && !isFixture}/>
       <TabBar active="planner"/>
 
       {picked && (
@@ -2150,7 +2221,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
           onRemove={onRemove}
           onClose={() => setPicked(null)}/>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -2307,6 +2378,7 @@ function App() {
   const [active, setActive] = React.useState(() => loadActiveContext(now));
   const [catalogWarning, setCatalogWarning] = React.useState('');
   const [catalogVersion, setCatalogVersion] = React.useState(0);
+  const [lastBedEdit, setLastBedEdit] = React.useState(null);
   const { toast, showToast, dismissToast, lastAction, setLastAction } = useToast();
   // refresh must keep stable identity. The previous useCallback(..., [now])
   // re-bound every minute (useNow ticks setNow), invalidating the deps of
@@ -2376,6 +2448,67 @@ function App() {
   // the real-bed paths route the user there to keep one canonical writer.
   const goToBeds = () => {
     try { window.location.href = 'garden-painting.html'; } catch (_) {}
+  };
+
+  const handleEditCell = ({ r, c, cropId }) => {
+    if (!gosBed || isFixture || typeof GosBed === 'undefined') { goToBeds(); return; }
+    const current = GosBed.getActive();
+    if (!current || current.id !== gosBed.id) {
+      refresh();
+      showToast({ type: 'error', message: 'The active bed changed. Try again.' });
+      return;
+    }
+    const cell = GosBed.formatCell(r, c);
+    const before = Array.isArray(current.painted) ? current.painted.map(entry => ({ ...entry })) : [];
+    const existing = before.find(entry => entry.cell === cell) || null;
+    if ((cropId && existing && existing.cropId === cropId) || (!cropId && !existing)) {
+      showToast({ type: 'success', message: 'That cell is already unchanged.' });
+      return;
+    }
+    const next = before.filter(entry => entry.cell !== cell);
+    if (cropId) {
+      const crop = getCrop(cropId) || unknownCrop(cropId);
+      const plantedAt = new Date().toISOString();
+      next.push({
+        cell, cropId,
+        cropName: crop.name || cropId,
+        displayName: crop.name || cropId,
+        cropIcon: crop.mono || '',
+        cropColor: crop.color || '#888',
+        status: 'Planted',
+        placementConfidence: 'planner-edit',
+        plantedAt,
+        plantedWeek: GosBed.currentIsoWeek ? GosBed.currentIsoWeek() : undefined,
+      });
+    }
+    try {
+      GosBed.write({ ...current, painted: next }, { expectedRevision: current.revision });
+      setLastBedEdit({ bedId: current.id, painted: before });
+      refresh();
+      showToast({ type: 'success', message: cropId ? 'Cell updated. Undo is available.' : 'Cell erased. Undo is available.' });
+    } catch (error) {
+      refresh();
+      showToast({ type: 'error', message: classifyWriteError(error) });
+    }
+  };
+
+  const handleUndoBedEdit = () => {
+    if (!lastBedEdit || typeof GosBed === 'undefined') return;
+    const current = GosBed.getActive();
+    if (!current || current.id !== lastBedEdit.bedId) {
+      setLastBedEdit(null);
+      showToast({ type: 'error', message: 'Undo belongs to a different bed.' });
+      return;
+    }
+    try {
+      GosBed.write({ ...current, painted: lastBedEdit.painted }, { expectedRevision: current.revision });
+      setLastBedEdit(null);
+      refresh();
+      showToast({ type: 'success', message: 'Latest bed edit undone.' });
+    } catch (error) {
+      refresh();
+      showToast({ type: 'error', message: classifyWriteError(error) });
+    }
   };
 
   const handleMarkDone = (cropKey) => {
@@ -2463,6 +2596,7 @@ function App() {
   const handlePickBed = (id) => {
     if (typeof GosBed === 'undefined') return;
     GosBed.setActive(id);
+    setLastBedEdit(null);
     refresh();
   };
 
@@ -2492,7 +2626,10 @@ function App() {
         onUndoDone={handleUndoDone}
         onMarkCellDone={handleMarkCellDone}
         onHarvestCell={handleHarvestCell}
-        onUndoCellDone={handleUndoCellDone}/>
+        onUndoCellDone={handleUndoCellDone}
+        onEditCell={handleEditCell}
+        onUndoEdit={handleUndoBedEdit}
+        canUndoEdit={!!lastBedEdit}/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} now={now} onClose={() => setTweaksOpen(false)}/>}
       <div role="status" aria-live="polite" className="sr-only">{lastAction}</div>
       <Toast toast={toast} onDismiss={dismissToast}/>
@@ -2500,15 +2637,13 @@ function App() {
   );
 }
 
-loadBundledMomGardenIfEmpty();
-
 // gos-bed.js wiring: report active bed for verification (no rendering change)
 if (typeof GosBed !== 'undefined') {
   const _activeBed = GosBed.getActive();
   if (_activeBed) {
     console.log('Active bed loaded: ' + _activeBed.name);
   } else {
-    console.log('No bed found — using fixture data');
+    console.log('No bed found — Planner remains empty');
   }
 }
 

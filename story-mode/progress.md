@@ -531,3 +531,14 @@ Update 2026-03-22 crop stage readability pass:
   - The current `dist` bundle now contains the stage-accent logic (`garden-scene-BsadH2ka.js`).
   - The `develop-web-game` Playwright client reaches the title screen cleanly on the refreshed `4174` route.
   - The automated click burst still did not advance into gameplay, so the final in-garden visual check remains a quick manual smoke step.
+
+Update 2026-08-09 mobile entry, canonical route, and visual-gate pass:
+- Reflowed the title screen into a vertically scrollable one-column start flow at narrow widths so New Game, save slots, modes, help, and the Garden OS return link remain visible at 320px, 375px, and 430px.
+- Raised title actions and save-slot controls to at least 44px and added a skip link, semantic title landmark, labelled bug-report field, and an obvious Garden OS Home return path.
+- Made `/story-mode/` the only public build route; `/story-mode-live/` is now a noindex compatibility redirect and the Pages workflow stages the Vite output in place at the canonical route.
+- Resized the five 2–7 MB bed/environment textures to their rendered mobile needs; `tests/asset-integrity-regression.mjs` now enforces byte and dimension ceilings.
+- Added decoded-PNG visual-content analysis to the marketing screenshot verifier so transparent, black, white, low-variance, and low-color captures fail instead of passing on file existence alone.
+- Verification complete: the full repo verifier passed 37 Vitest files / 471 tests, production build, mobile title checks and captures at 320px, 375px, and 430px, and the complete screenshot set.
+- The visual gate rejected one genuinely black `desktop-crop-accents.png`; the fixture now clears the arrival dialogue and requires a readable WebGL frame immediately before capture. The repaired shot passes with 41.64 luminance variation and 111 quantized colors, while the negative regression still rejects an opaque black PNG.
+- The `develop-web-game` Playwright client reached the title screen and opened the gardener chooser without browser errors.
+- `npm audit` reports zero vulnerabilities after advancing the three affected development transitive packages; all 471 tests and the production build pass after the lockfile update.

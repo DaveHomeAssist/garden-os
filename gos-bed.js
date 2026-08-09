@@ -47,20 +47,29 @@
   var BED_PREFIX     = 'gos.bed.';
   var PENDING_KEY    = 'gos.bed.pending';
   var LOCK_KEY       = 'gos.session.lock';
+  var SESSION_TAB_KEY = 'gos.session.tabId';
   var ACTIVE_BED_KEY = 'gos.activeBed';
   var ORDER_KEY      = 'gos.bed.order.v1';
   var SCHEMA_VERSION = 1;
   var WARNING_BYTES  = 4000000;
+  var LOCK_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
   var TAB_ID = generateTabId();
 
   function generateTabId() {
     try {
-      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        return crypto.randomUUID();
-      }
+      var existing = global.sessionStorage && global.sessionStorage.getItem(SESSION_TAB_KEY);
+      if (existing) return existing;
     } catch (_) { /* fall through */ }
-    return 'tab-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+    var generated = null;
+    try {
+      if (global.crypto && typeof global.crypto.randomUUID === 'function') generated = global.crypto.randomUUID();
+    } catch (_) { /* fall through */ }
+    if (!generated) generated = 'tab-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+    try {
+      if (global.sessionStorage) global.sessionStorage.setItem(SESSION_TAB_KEY, generated);
+    } catch (_) { /* sessionStorage unavailable; keep the in-memory id */ }
+    return generated;
   }
 
   function safeGet(key) {
@@ -110,6 +119,11 @@
     if (!raw) return; // no lock, fine
     var lock = parseJson(raw);
     if (!lock) return;
+    var lockedAt = Date.parse(lock.timestamp || '');
+    if (!isFinite(lockedAt) || Date.now() - lockedAt > LOCK_MAX_AGE_MS) {
+      safeRemove(LOCK_KEY);
+      return;
+    }
     if (lock.tabId && lock.tabId !== TAB_ID) {
       throw new Error('Concurrent write conflict: another window has an active session.');
     }
@@ -194,6 +208,7 @@
     if (typeof bedData.loadedAt === 'string' && bedData.loadedAt) record.loadedAt = bedData.loadedAt;
     if (typeof bedData.comment === 'string' && bedData.comment) record.comment = bedData.comment;
     if (typeof bedData.momGarden === 'boolean') record.momGarden = bedData.momGarden;
+    if (typeof bedData.sampleGarden === 'boolean') record.sampleGarden = bedData.sampleGarden;
     // Optional bedContext — only persist if the caller supplied it. Keeps
     // pre-context beds visually identical when re-saved.
     if (typeof bedData.zone === 'string' && bedData.zone) record.zone = bedData.zone;
@@ -352,6 +367,12 @@
     return TAB_ID;
   }
 
+  function releaseSessionLock() {
+    var lock = parseJson(safeGet(LOCK_KEY));
+    if (!lock || lock.tabId !== TAB_ID) return false;
+    return safeRemove(LOCK_KEY);
+  }
+
   function estimateStorageUsage() {
     var used = 0;
     if (!global.localStorage) {
@@ -398,6 +419,7 @@
   // surfaces compute plantedWeek from plantedAt the same way without copy-
   // pasting the algorithm.
   function isoWeek(date) {
+    if (global.GosTime && typeof global.GosTime.isoWeek === 'function') return global.GosTime.isoWeek(date);
     var d = (date instanceof Date) ? date : new Date(date);
     if (isNaN(d.getTime())) return null;
     var utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -408,7 +430,10 @@
   }
 
   function currentIsoDate() { return new Date().toISOString(); }
-  function currentIsoWeek() { return isoWeek(new Date()); }
+  function currentIsoWeek() {
+    if (global.GosTime && typeof global.GosTime.currentContext === 'function') return global.GosTime.currentContext().week;
+    return isoWeek(new Date());
+  }
 
   // Best-effort: return a numeric ISO week for a painted entry. Prefers an
   // explicit plantedWeek; falls back to deriving from plantedAt; returns null
@@ -576,9 +601,10 @@
         loadedAt: loadedAt,
         comment: srcBed.comment || null,
         momGarden: true,
+        sampleGarden: true,
         painted: painted,
         events: [createJournalEvent(
-          'Loaded Mom Garden data (' + plantingCount + ' planted cells, ' + data.beds.length + ' beds)',
+          'Loaded Mom sample garden (' + plantingCount + ' planted cells, ' + data.beds.length + ' beds)',
           srcBed.id,
           loadedAt,
           { plantingCount: plantingCount, bedCount: data.beds.length }
@@ -951,6 +977,7 @@
     commitPending: commitPending,
     discardPending: discardPending,
     initSessionLock: initSessionLock,
+    releaseSessionLock: releaseSessionLock,
     estimateStorageUsage: estimateStorageUsage,
     parseShape: parseShape,
     parseCell: parseCell,

@@ -141,6 +141,7 @@ assert.equal(context.GosBed.mom.isLoaded(), true, "GosBed.mom.isLoaded should de
 
 const loadedLeft = context.GosBed.read("raised_bed_left");
 assert.equal(loadedLeft.source, "mom-garden-data.json v2");
+assert.equal(loadedLeft.sampleGarden, true, "Mom records should remain explicitly labelled as sample data");
 assert.equal(loadedLeft.loadedAt, "2026-04-27T12:00:00.000Z");
 assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Wando").cropId, "peas");
 assert.equal(loadedLeft.painted.find((p) => p.varietyName === "Marvel of Four Seasons").cropId, "red_lettuce");
@@ -162,16 +163,18 @@ const painting = readFileSync(new URL("garden-painting.html", repo), "utf8");
 assert.match(painting, /data\/mom-garden-data\.js/, "Beds page should load Mom data JS for file:// fallback");
 assert.match(painting, /loadBundledMomGardenData/, "Beds page should fall back to bundled Mom data when fetch fails");
 assert.match(painting, /window\.location\.protocol === 'file:'/, "Beds page should skip fetch entirely under file://");
-assert.match(painting, /autoLoadMomGardenIfEmpty/, "Beds page should auto-load Mom Garden when no bed exists");
-assert.match(painting, /Loading Mom's Garden/, "Beds page should show a loading state during default Mom Garden load");
-assert.doesNotMatch(painting, /Garden OS needs one bed to begin/, "Beds page should not default to the old empty setup shell");
-assert.match(painting, /Load Mom Garden/, "Beds page should surface Load Mom Garden");
+assert.doesNotMatch(painting, /autoLoadMomGardenIfEmpty/, "Beds page must not seed Mom Garden silently");
+assert.match(painting, /NO SAVED GARDEN/i, "Beds page should describe the honest empty state");
+assert.match(painting, /Try Mom's sample garden/, "Beds page should offer the sample garden explicitly");
 assert.match(painting, /Reset to Mom Garden/, "Beds page should surface Reset to Mom Garden");
 assert.match(painting, /rows > 1 \? cell\.r : cell\.c/, "Beds page should render grow bag labels from bag rows");
 
+assert.doesNotMatch(planner, /loadBundledMomGardenIfEmpty\(\);/, "Planner must not seed Mom Garden silently");
+assert.match(planner, /demoRequested/, "Planner may use fixture data only behind an explicit demo query");
+
 const hub = readFileSync(new URL("index-v5.html", repo), "utf8");
-assert.match(hub, /Mom's Garden/, "Hub should include a Mom's Garden tile");
-assert.match(hub, /44 planted cells/, "Hub Mom tile should summarize planted cell count");
+assert.match(hub, /Try Mom's sample garden/, "Hub should identify Mom's Garden as an explicit sample action");
+assert.match(hub, /Labelled example data/, "Hub should clearly label example state");
 
 const journal = readFileSync(new URL("journal.html", repo), "utf8");
 assert.match(journal, /gos-bed\.js/, "Journal should load GosBed data");

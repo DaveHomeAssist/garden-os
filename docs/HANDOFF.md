@@ -3,7 +3,7 @@ Status: Active
 Document Version: 1.3
 Compatible With: Garden OS v4.3, Story Mode v0.1, Schema v1, Season Engine v4
 Owner: Dave Robertson
-Last Updated: 2026-07-11
+Last Updated: 2026-08-09
 Artifact Class: Ref
 ---
 
@@ -19,7 +19,7 @@ Artifact Class: Ref
 Garden OS is now a hybrid browser-native repo with two active product layers:
 
 1. **Root static tool suite**: planner, legacy season simulator, guides, explainers, and dev tools shipped as direct HTML files from repo root.
-2. **`story-mode/` app**: a Three.js + Vite story-driven prototype published at `/garden-os/story-mode-live/` from the `story-mode/` source tree.
+2. **`story-mode/` app**: a Three.js + Vite story-driven prototype published at the canonical `/garden-os/story-mode/` route from the `story-mode/` source tree.
 
 The core mission remains the same: make garden decisions explainable, playable, and reusable across planning, simulation, and narrative surfaces.
 
@@ -37,12 +37,12 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 **Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. Zero backend. GitHub Pages remains the delivery model.
 
-## Current State Snapshot (2026-07-11)
+## Current State Snapshot (2026-08-09)
 
 ### Repo Shape
 
-- Repo root is still the public Garden OS hub and tool surface.
-- `story-mode/` is the most actively evolving runtime and the primary public CTA from `index.html`.
+- Repo root is the one canonical Garden OS Home; `index.html` forwards to the current `index-v5.html` implementation.
+- `story-mode/` remains the flagship game runtime and has an obvious return to product Home.
 - `specs/` remains the canonical contract layer for scoring, season flow, dialogue, progression, and UI.
 - `docs/` remains the canonical repo-level context layer.
 - `docs/story-mode/` is an imported story-mode package covering product, systems, technical, and roadmap material for the Let It Grow expansion path.
@@ -58,8 +58,8 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 ### What Is Actually Live
 
-- Primary public entry: `index.html` with Story Mode as the lead CTA.
-- Current flagship playable build: `/story-mode-live/`.
+- Primary public entry: `/`; `index.html` forwards into the current product Home and `index-v5.html` declares `/` as canonical.
+- Current flagship playable build: `/story-mode/`; `/story-mode-live/` is a noindex redirect only.
 - Active root planning is split between v5 Beds (`garden-painting.html`) and v5
   Planner (`garden-planner-v5.html`). The v4 planner and season simulator remain
   live only as archived references; they do not prove active-v5 capability.
@@ -68,7 +68,9 @@ The core mission remains the same: make garden decisions explainable, playable, 
 ### Important Reality Checks
 
 - Root `CLAUDE.md` now documents the `story-mode/` exception correctly. Older notes may still refer to the retired `/story-mode/` publish route or the renamed `system-map.html` route.
-- The repo now has two active simulation surfaces: `garden-league-simulator-v4.html` as the legacy deterministic season sandbox, and Story Mode as the active narrative/3D branch built from `story-mode/` and published at `/story-mode-live/`.
+- Story Mode is the one active public game route. `garden-league-simulator-v4.html` remains an unlinked legacy reference, and `/story-mode-live/` redirects to `/story-mode/`.
+- `gos-time.js` is the current date, ISO-week, day-of-year, season, and week-range authority for Home, Beds, Planner, Doctor, and Journal. Do not add mock dates or independent season defaults to those surfaces.
+- Fresh storage is intentionally empty. Mom's garden is labelled sample data and loads only after the user explicitly chooses it; product counts and advice must come from the active saved bed.
 
 ---
 
@@ -80,8 +82,8 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 | Tool | File | Lines | Purpose |
 |------|------|-------|---------|
-| Hub | `index.html` | 409 | Public Garden OS launcher with Story Mode as primary CTA |
-| Story Mode | `story-mode-live/` | app | Published Vite/Three.js narrative prototype generated from `story-mode/` |
+| Home | `index.html` + `index-v5.html` | redirect + app | One canonical public Home backed by the current v5 product surface |
+| Story Mode | `story-mode/` | app | Canonical Vite/Three.js narrative runtime and source route |
 | Planner v4.3 | `garden-planner-v4.html` | 6,076 | Core placement UI, scoring breakdown, export/import |
 | Legacy Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | Prior chapter-based season sandbox; still live, no longer the flagship branch |
 | Build Guide | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |
@@ -106,7 +108,7 @@ The core mission remains the same: make garden decisions explainable, playable, 
 | App entry | `story-mode/index.html` | Source shell used for local dev and Vite build entry |
 | Runtime source | `story-mode/src/` | Scene, game, scoring, sync, data, and UI logic |
 | Build output | `story-mode/dist/` | Generated deployable bundle |
-| Published bundle | `story-mode-live/` | GitHub Pages deployment target copied from `story-mode/dist/` |
+| Published bundle | `story-mode/` | Vite output staged in place for the Pages artifact |
 | Package manifest | `story-mode/package.json` | Vite + Three.js + Vitest toolchain |
 | Implementation log | `story-mode/progress.md` | Most current build chronology |
 
@@ -356,7 +358,7 @@ Fixed speaking order. Deterministic triggers — no random chatter. 80+ triggers
 - **Vite v7** for dev/build
 - **Vitest** for unit tests
 - **Three.js v0.180** for 3D rendering
-- Output: `/dist/` → staged to `/story-mode-live/` on GitHub Pages via `.github/workflows/pages.yml`
+- Output: `/dist/` → staged to `/story-mode/` on GitHub Pages via `.github/workflows/pages.yml`
 - Node.js v22 required
 
 ### Key State Objects
@@ -463,7 +465,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 **GitHub Pages:** Push to `main` → auto-deploys via `.github/workflows/pages.yml`.
 
 - Root tools: currently served directly from repo root at `davehomeassist.github.io/garden-os/`
-- Story Mode: Vite build → `story-mode/dist/` → copied to `story-mode-live/` → served at `davehomeassist.github.io/garden-os/story-mode-live/`
+- Story Mode: Vite build → `story-mode/dist/` → staged at `story-mode/` → served at `davehomeassist.github.io/garden-os/story-mode/`
 
 **Testing locally:**
 - Root tools: `python3 -m http.server 8000` from repo root
@@ -528,7 +530,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 ## Legacy / Unlinked Files (safe to ignore)
 
-- `home.html` — original marketing page (superseded by `index.html` with Story Mode CTA)
+- `home.html` — noindex compatibility redirect to the canonical public root
 - `garden-league-simulator.html`, `garden-league-simulator-v2.html`, `garden-league-simulator-v3.html`, `garden-os-simulator.html` — old game versions
 - `archive/` folder — versioned HTML snapshots (v1-v7)
 - `output/`, `reports/` — build artifacts and analysis reports

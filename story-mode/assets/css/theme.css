@@ -1,3 +1,5 @@
+@import "../../../garden-os-theme.css";
+
 /* Garden OS Story Mode — Design Tokens */
 :root {
   /* Story Mode now inherits the shared Garden OS theme and only keeps

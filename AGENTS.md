@@ -27,7 +27,7 @@ Garden OS is a browser native garden planning and scoring ecosystem. It combines
 |----|----------|--------|-------|-------|
 | 014 | P2 | resolved | Reduce planner right sidebar overload | Summary now stays compact, dashboard moved behind its own reveal, and switching sections collapses stale side content |
 | 001 | P2 | resolved | Replace planner confirm flows with reversible recovery | Clear, reset, delete, import replace, and harvest delete now use undo or restore paths |
-| 002 | P2 | resolved | Separate home and hub roles | `home.html` is the guided start page and `index.html` is the live launcher |
+| 002 | P2 | resolved | One canonical home route | `/` routes to the current product Home; `home.html` and `index-v5.html` are implementation aliases |
 | 003 | P2 | resolved | Surface one dominant simulator action per phase | Added objective strip with current phase CTA and kept existing engine logic intact |
 | 004 | P2 | resolved | Share planner manage menu pattern with Season Engine | Added a matching manage drawer in the game shell with tool and learn routes |
 | 005 | P2 | resolved | Repair tutorial tomato targeting | Tutorial step 1 now forces the crop palette open before pointing at the tomato item |

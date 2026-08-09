@@ -4,7 +4,7 @@
 > **Updated:** 2026-03-16 original; active-v5 refresh 2026-07-11
 > **Last verified:** 2026-07-11 (active v5 What-If and A/B experiment slice)
 > **Architecture:** Static HTML root tools + `story-mode/` Vite and Three.js runtime. GitHub Pages, zero backend for the product.
-> **Live:** https://davehomeassist.github.io/garden-os/ (hub) · https://davehomeassist.github.io/garden-os/story-mode-live/ (flagship runtime)
+> **Live:** https://davehomeassist.github.io/garden-os/ (canonical product Home) · https://davehomeassist.github.io/garden-os/story-mode/ (flagship runtime)
 
 ---
 
@@ -20,13 +20,13 @@ State persists in `localStorage` today.
 
 | File | Purpose | State |
 |------|---------|-------|
-| `index.html` | Hub / landing page | Static |
+| `index.html` + `index-v5.html` | Canonical Home redirect + current product Home implementation | Active |
 | `garden-painting.html` | Active v5 Beds editor, What-If trials, and A/B experiment lifecycle | Active |
 | `garden-planner-v5.html` | Active v5 seasonal Planner with read-only experiment summaries | Active |
 | `gos-experiments.js` | Versioned cross-bed experiment validation and local storage | Active shared module |
 | `garden-planner-v4.html` | Historical grid planner + scoring engine (v4.4) | Archived reference; not active-v5 proof |
 | `garden-league-simulator-v4.html` | Legacy deterministic season simulator | Stable, still playable |
-| `story-mode-live/` | Flagship Story Mode runtime (12 chapter campaign) | Active. Vite + Three.js + Vitest (329 tests passing) |
+| `story-mode/` | Flagship Story Mode source and canonical built route (12 chapter campaign) | Active. Vite + Three.js + Vitest; current test count is verified by CI |
 | `garden-doctor.html` | Symptom triage tool (Phase 2B) | Shipped 2026-03-31 |
 | `scoring-visualizer.html` | Debug tool for scoring | Reference |
 | `fairness-tester.html` | Algorithm validation | Reference |

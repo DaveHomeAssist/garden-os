@@ -20,7 +20,7 @@
   "shortcuts": [
     {
       "name": "Play Story Mode",
-      "url": "/garden-os/story-mode-live/",
+      "url": "/garden-os/story-mode/",
       "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
     },
     {

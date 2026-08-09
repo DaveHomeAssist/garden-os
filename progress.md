@@ -740,3 +740,16 @@ TODO / next-agent suggestions:
 TODO / next-agent suggestions:
 - Decide whether to fold the deterministic Today plus Weather browser checks into `docs/phase-reasoning-smoke.mjs` or keep them as a separate planner verification script.
 - Phase 4 local notifications and any crop-schema expansion are still deferred; do not mix them into the current shipped Today pass without a separate gate.
+
+- 2026-08-09 Garden OS priority remediation implementation:
+  - stopped first-run Mom Garden seeding across Home, Beds, and Planner; the sample is now an explicit, labelled action and saved records retain `sampleGarden: true`
+  - made current date and saved bed data the sole source for Home and Planner counts, season labels, week ranges, and advice; an empty bed now reports zero without fallback crops
+  - rebuilt the Planner bed strip as a complete horizontally scrollable bed with 44px cells, score labels/patterns, a touch crop/erase toolbar, immediate saved edits, and one-step undo
+  - consolidated the public route model around `/`, the five product tabs, and `/story-mode/`; compatibility aliases are noindex redirects and the sitemap contains only public user routes
+  - centralized active product color/type tokens in `garden-os-theme.css`, standardized Fraunces/DM Sans/limited DM Mono, and added skip links, semantic landmarks, visible focus, and 44px controls
+  - restored `images/sheet1-cover.png`, added asset integrity assertions, and reduced the five oversized Story environment/bed textures to a combined 3.39 MB
+  - strengthened the Story marketing-shot gate with PNG luminance, variance, transparency, and color-content checks
+  - verification complete locally: `node scripts/verify-all.mjs` passed the full Story suite (37 files / 471 tests), production build, 19 screenshot captures, decoded-PNG visual gates, 1,089 crop fixtures, state/session contracts, and browser flows at 320px, 375px, 430px, and 1440px
+  - the new visual gate caught a real black `desktop-crop-accents.png`; the capture now dismisses the arrival dialogue and requires a readable WebGL canvas immediately before the screenshot, and the regenerated shot passes with 41.64 luminance variation and 111 quantized colors
+  - Story development dependencies were advanced to non-vulnerable transitive releases (`nanoid` 3.3.18, `postcss` 8.5.26, `undici` 7.29.0); `npm audit` now reports zero vulnerabilities and the 471 tests plus build pass after the lockfile change
+  - publication pending: commit, push, Pages workflow, and live URL readback are the remaining release steps

@@ -54,13 +54,17 @@ Sub-paths served from this repo:
 
 All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
 
-**User Track** (nav: Story Mode → Hub → Planner → Build Guide → Ops Guide → Brand Guide → How It Thinks → Dev Tools →)
+**User Track** (product nav: Home → Beds → Planner → Doctor → Journal; Story Mode is the canonical game route)
 
 | Path | Description |
 |------|-------------|
-| [`/index.html`](https://davehomeassist.github.io/garden-os/) | Hub page and public entry, with Story Mode as the primary CTA |
-| [`/story-mode-live/`](https://davehomeassist.github.io/garden-os/story-mode-live/) | Current Story Mode build (Calvin, sheepdog intro, month-aware seasons, winter review, richer 3D scene/dialogue) |
-| [`/garden-league-simulator-v4.html`](https://davehomeassist.github.io/garden-os/garden-league-simulator-v4.html) | Legacy season sandbox / predecessor to Story Mode |
+| [`/index.html`](https://davehomeassist.github.io/garden-os/) | Canonical public Home; redirects to the current Home implementation at `index-v5.html` |
+| [`/story-mode/`](https://davehomeassist.github.io/garden-os/story-mode/) | Canonical Story Mode build (Calvin, month-aware seasons, winter review, richer 3D scene/dialogue) |
+| [`/index-v5.html`](https://davehomeassist.github.io/garden-os/index-v5.html) | Current Home implementation; canonical metadata points to `/` |
+| [`/garden-painting.html`](https://davehomeassist.github.io/garden-os/garden-painting.html) | Beds editor and explicit sample-garden entry |
+| [`/garden-planner-v5.html`](https://davehomeassist.github.io/garden-os/garden-planner-v5.html) | Planner driven by saved bed data and current date |
+| [`/garden-doctor-v5.html`](https://davehomeassist.github.io/garden-os/garden-doctor-v5.html) | Garden Doctor |
+| [`/journal.html`](https://davehomeassist.github.io/garden-os/journal.html) | Garden Journal |
 | [`/garden-cage-build-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-build-guide.html) | Cage build guide |
 | [`/garden-cage-ops-guide.html`](https://davehomeassist.github.io/garden-os/garden-cage-ops-guide.html) | Cage ops guide |
 
@@ -107,7 +111,8 @@ A master project registry is maintained in Notion:
 
 - **Garden OS uses a two-track nav** — user track (6 items) and dev track (5 items) with bridge links between them.
 - **All filenames are now kebab-case.** Snake_case duplicates have been removed.
-- **`home.html` is now a compatibility alias.** It redirects to the active hub and should not be treated as the primary public entry route.
+- **One Home model.** `/` and `home.html` route into the current product Home; only `/` is canonical and sitemap-listed.
+- **`story-mode-live/` is now a compatibility alias.** It redirects to canonical `/story-mode/` and is excluded from the sitemap.
 - **All live projects are listed on the root index.** Freelance, Contractor, Elysium, and Shieldbox added 2026-03-16.
 - **Elysium duplication:** Both the standalone `elysium-landing` repo and a subfolder in `DaveHomeAssist.github.io` serve to the same path. The standalone repo takes precedence.
 - **2 archived repos still serving:** `garden-cage-build-guide` and `garden-planner` are archived but their Pages remain live and accessible.

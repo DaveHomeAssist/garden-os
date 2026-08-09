@@ -22,11 +22,10 @@
 /* ── GOOGLE FONTS ──────────────────────────────────────────
    Single load for the entire ecosystem.
    Fraunces  — display headings (expressive serif)
-   Lora      — body serif (warm, readable)
    DM Sans   — body sans (clean, friendly)
    DM Mono   — monospace / labels / badges
 ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
 
 /* ── TOKEN DEFINITIONS ─────────────────────────────────────
@@ -48,8 +47,8 @@
 
   /* Leaf — primary green, actions, success states */
   --leaf:           #3a6b2a;
-  --leaf-bright:    #4e8c3c;
-  --leaf-light:     #6aab4a;
+  --leaf-bright:    #447d35;
+  --leaf-light:     #477f36;
   --leaf-pale:      #c8e6c0;
   --leaf-wash:      #edf5e8;
 
@@ -61,7 +60,7 @@
 
   /* Rust — warnings, alerts, destructive states */
   --rust:           #b84a1a;
-  --rust-light:     #d4651a;
+  --rust-light:     #b84a1a;
   --rust-pale:      #f5d8c8;
   --rust-wash:      #fdf0e8;
 
@@ -77,7 +76,7 @@
   --text:           #1e1208;
   --text-mid:       #4a3018;
   --text-soft:      #6f5840;
-  --text-muted:     #9a8068;
+  --text-muted:     #75614f;
 
   /* Borders */
   --border:         #c8b090;
@@ -86,10 +85,10 @@
 
   /* Semantic status colors */
   --good:           #2f7a3d;
-  --warn:           #c45a18;
+  --warn:           #ad4612;
   --bad:            #a82018;
   --info:           #3a6abf;
-  --accent-rain:    #8ba8b5;
+  --accent-rain:    #496b7a;
 
   /* Shadows */
   --shadow-xs:      0 1px 3px rgba(44, 27, 11, 0.06);
@@ -108,7 +107,7 @@
 
   /* Font families */
   --font-display:   'Fraunces', Georgia, serif;
-  --font-serif:     'Lora', Georgia, serif;
+  --font-serif:     'Fraunces', Georgia, serif;
   --font-sans:      'DM Sans', 'Helvetica Neue', sans-serif;
   --font-mono:      'DM Mono', 'Courier New', monospace;
 
@@ -170,6 +169,43 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--soil);
+  color: var(--panel);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--leaf-bright);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 /* ── TYPOGRAPHY DEFAULTS ─────────────────────────────────── */

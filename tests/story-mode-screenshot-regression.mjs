@@ -934,8 +934,68 @@ async function assertLayout(page) {
   assert(result.helperZone === 'player_plot', `Expected helper zone data, got ${result.helperZone}.`);
   assert(result.helperLabel === 'Your Garden', `Expected helper label, got ${result.helperLabel}.`);
   assert(result.hudHeight > 0 && result.hudHeight < 150, `HUD height out of range: ${result.hudHeight}.`);
-  assert(result.cardBottom <= result.viewportHeight + 2, 'Event card extends beyond the viewport.');
+  assert(
+    result.cardBottom <= result.viewportHeight + 2,
+    `Event card extends beyond the viewport (${result.cardBottom}px > ${result.viewportHeight}px).`,
+  );
   assert(!result.overflowX, 'Page has horizontal overflow.');
+}
+
+async function assertMobileTitleFlow(page, baseUrl, width) {
+  const failures = [];
+  page.on('pageerror', (error) => failures.push(`pageerror: ${error.message}`));
+  page.on('response', (response) => {
+    if (response.status() >= 400) failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.save-slot-card', { state: 'visible', timeout: 15000 });
+  const top = await page.evaluate(() => {
+    const screen = document.querySelector('#title-screen');
+    const visibleTargets = [...document.querySelectorAll('.save-slot-btn, .title-link-btn, .mode-card')]
+      .filter((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      })
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          label: element.textContent.trim().replace(/\s+/g, ' '),
+          width: rect.width,
+          height: rect.height,
+        };
+      });
+    return {
+      mainCount: document.querySelectorAll('main').length,
+      h1Count: document.querySelectorAll('h1').length,
+      hasSkipLink: Boolean(document.querySelector('.skip-link')),
+      overflowX: screen.scrollWidth > screen.clientWidth + 1,
+      scrollHeight: screen.scrollHeight,
+      clientHeight: screen.clientHeight,
+      visibleTargets,
+    };
+  });
+  assert(top.mainCount === 1 && top.h1Count === 1 && top.hasSkipLink, `${width}px title semantics are incomplete.`);
+  assert(!top.overflowX, `${width}px title screen has horizontal overflow.`);
+  assert(top.visibleTargets.filter((target) => target.label === 'New Game').length === 3, `${width}px title screen must show all three New Game actions.`);
+  assert(top.visibleTargets.some((target) => target.label.includes('Garden OS Home')), `${width}px title screen is missing its Home return.`);
+  assert(top.visibleTargets.some((target) => target.label.includes('How To Play')), `${width}px title screen is missing help.`);
+  assert(
+    top.visibleTargets.every((target) => target.width >= 44 && target.height >= 44),
+    `${width}px title screen has a target smaller than 44px.`,
+  );
+
+  await page.locator('#title-screen').evaluate((screen) => { screen.scrollTop = screen.scrollHeight; });
+  await page.waitForTimeout(100);
+  const footer = await page.evaluate(() => {
+    const screenRect = document.querySelector('#title-screen').getBoundingClientRect();
+    return [...document.querySelectorAll('.title-footer .title-link-btn, .title-footer .mode-card')].map((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.top >= screenRect.top - 1 && rect.bottom <= screenRect.bottom + 1;
+    });
+  });
+  assert(footer.length >= 7 && footer.every(Boolean), `${width}px title footer cannot be fully reached by scrolling.`);
+  assert(failures.length === 0, `${width}px title flow emitted browser errors: ${failures.join(', ')}`);
 }
 
 const suppliedBaseUrl = process.env.GOS_SCREENSHOT_BASE_URL;
@@ -947,6 +1007,20 @@ const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.
 try {
   await mkdir(outputDir, { recursive: true });
   await waitForServer(baseUrl);
+
+  const mobileTitleScreenshots = [];
+  for (const width of [320, 375, 430]) {
+    const titlePage = await browser.newPage({
+      viewport: { width, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await assertMobileTitleFlow(titlePage, baseUrl, width);
+    const screenshotName = `mobile-title-${width}.png`;
+    await titlePage.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
+    mobileTitleScreenshots.push(screenshotName);
+    await titlePage.close();
+  }
 
   const desktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
   await seedAndStart(desktop, baseUrl, {
@@ -961,6 +1035,13 @@ try {
   const accentDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
   await seedAndStartAccentRun(accentDesktop, baseUrl);
   await assertCropAccentLayer(accentDesktop);
+  // Seeded Story saves can open with the arrival dialogue and a transient
+  // WebGL clear frame. Dismiss it, then require a readable canvas immediately
+  // before capture so this marketing shot cannot race the title transition.
+  await captureDialogueThenDismiss(accentDesktop);
+  await waitForCanvasPaint(accentDesktop);
+  await waitForReadableCanvas(accentDesktop);
+  await accentDesktop.waitForTimeout(250);
   await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
   await accentDesktop.close();
 
@@ -1036,6 +1117,7 @@ try {
     outputDir,
     screenshots: [
       'desktop-title.png',
+      ...mobileTitleScreenshots,
       'desktop-dialogue.png',
       'desktop-play-event.png',
       'desktop-crop-accents.png',

@@ -153,8 +153,14 @@ async function runLocalVerification() {
 
   const nodeRegressionScripts = [
     ['V5 nav copy regression', ['tests/v5-nav-copy-regression.mjs']],
+    ['Public route and sitemap regression', ['tests/public-route-regression.mjs']],
+    ['Shared date and seasonal authority regression', ['tests/time-authority-regression.mjs']],
     ['Mobile details sheet regression', ['tests/mobile-details-sheet-regression.mjs']],
     ['Mom garden data regression', ['tests/mom-garden-data-regression.mjs']],
+    ['Bed session lock regression', ['tests/gos-bed-session-lock-regression.mjs']],
+    ['Asset integrity and texture budgets', ['tests/asset-integrity-regression.mjs']],
+    ['Shared theme contrast regression', ['tests/theme-contrast-regression.mjs']],
+    ['Marketing shot visual rejection regression', ['tests/marketing-shot-visual-gate-regression.mjs']],
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
     ['Experiment storage contract tests', ['--test', 'tests/experiments-contract.test.mjs']],
     ['Authority cache IndexedDB tests', ['test', '--', 'src/engine/authority-cache.test.js'], { cwd: storyModeDir }],
@@ -183,6 +189,9 @@ async function runLocalVerification() {
     });
     await runStep('Browser HTML fixture tests', nodeBin, ['tests/browser-fixture-pages.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl }),
+    });
+    await runStep('Priority remediation browser regression', nodeBin, ['tests/priority-remediation-browser-regression.mjs'], {
+      env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'priority-remediation') }),
     });
     await runStep('V5 What-If and experiment browser regression', nodeBin, ['tests/what-if-experiments-regression.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'what-if-experiments') }),
