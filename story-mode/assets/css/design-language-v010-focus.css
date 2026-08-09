@@ -1,0 +1,6 @@
+/* Deterministic focus fallback for programmatic and assistive focus. */
+body[data-design-language="v0.10"] #fab-advance:focus {
+  outline: 3px solid var(--gos-ui-focus) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px rgba(30, 17, 10, 0.9) !important;
+}
