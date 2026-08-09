@@ -40,6 +40,9 @@ jobs:
       - name: Verify before deploy
         run: node scripts/verify-all.mjs
 
+      - name: Verify Story Mode design-language viewports
+        run: node tests/story-mode-design-language-regression.mjs
+
       - name: Stage Story Mode for Pages
         run: |
           cp -rf story-mode/dist/* story-mode/
