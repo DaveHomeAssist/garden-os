@@ -7,13 +7,27 @@ function isCoarsePointer() {
   return window.matchMedia?.('(pointer: coarse)').matches ?? false;
 }
 
+function isNarrowViewport() {
+  return window.matchMedia?.('(max-width: 900px)').matches ?? window.innerWidth <= 900;
+}
+
+function applyShellPosition(root, visible = false) {
+  const narrow = isNarrowViewport();
+  root.style.left = narrow ? '10px' : '50%';
+  root.style.right = 'auto';
+  root.style.bottom = narrow
+    ? 'calc(12px + env(safe-area-inset-bottom, 0px))'
+    : 'calc(16px + env(safe-area-inset-bottom, 0px))';
+  root.style.transform = narrow
+    ? (visible ? 'translateY(0)' : 'translateY(8px)')
+    : (visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(8px)');
+}
+
 function createShell() {
   const root = document.createElement('div');
   root.className = 'tool-hud';
   root.style.position = 'absolute';
-  root.style.left = '50%';
-  root.style.bottom = 'calc(16px + env(safe-area-inset-bottom, 0px))';
-  root.style.transform = 'translateX(-50%)';
+  applyShellPosition(root, false);
   root.style.display = 'flex';
   root.style.alignItems = 'center';
   root.style.gap = '10px';
@@ -68,6 +82,8 @@ export class ToolHUD {
     this.visible = false;
     this.root = createShell();
     this.container.append(this.root);
+    this.handleResize = () => applyShellPosition(this.root, this.visible);
+    window.addEventListener('resize', this.handleResize, { passive: true });
 
     this.inputManager.registerAction('tool_slot_1', { keys: ['1'] });
     this.inputManager.registerAction('tool_slot_2', { keys: ['2'] });
@@ -77,6 +93,7 @@ export class ToolHUD {
     this.inputManager.registerAction('tool_slot_6', { keys: ['6'] });
 
     this.disposers = [
+      () => window.removeEventListener('resize', this.handleResize),
       this.inputManager.on('next_tool', (payload) => {
         if (!this.visible || isInteractiveField(payload.event?.target)) return;
         payload.preventDefault();
@@ -132,9 +149,7 @@ export class ToolHUD {
     this.visible = Boolean(visible);
     this.root.hidden = !this.visible;
     this.root.style.opacity = this.visible ? '1' : '0';
-    this.root.style.transform = this.visible
-      ? 'translateX(-50%) translateY(0)'
-      : 'translateX(-50%) translateY(8px)';
+    applyShellPosition(this.root, this.visible);
     this.root.setAttribute('aria-hidden', this.visible ? 'false' : 'true');
   }
 
