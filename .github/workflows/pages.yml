@@ -37,11 +37,11 @@ jobs:
         working-directory: story-mode
         run: npx playwright install --with-deps chromium
 
-      - name: Verify before deploy
-        run: node scripts/verify-all.mjs
-
       - name: Verify Story Mode design-language viewports
         run: node tests/story-mode-design-language-diagnostic.mjs
+
+      - name: Verify before deploy
+        run: node scripts/verify-all.mjs
 
       - name: Stage Story Mode for Pages
         run: |
