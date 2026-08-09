@@ -1,5 +1,10 @@
 # Garden OS — Changelog
 
+> **Superseded 2026-08-09** by the canonical [`/CHANGELOG.md`](../CHANGELOG.md)
+> at the repo root, which carries the full history from v4.0 to present.
+> This file is retained as the long-form v4.0 to v4.3 archive (stats tables,
+> architecture notes, per-patch detail).
+
 ---
 
 ## v4.3 (2026-03-14)

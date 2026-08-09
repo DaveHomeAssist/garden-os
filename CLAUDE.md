@@ -91,6 +91,7 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 
 ## Documentation Maintenance
 
+- **Changelog**: `CHANGELOG.md` (repo root) is the canonical release history. Any push to `main` that changes a user-facing surface (root tools, story-mode, guides) adds one line to `[Unreleased]` in the same commit — past tense, action verb first, user's point of view. Chores roll up into a single Maintenance line. When a deploy is verified live (daily verification or an `sw.js` CACHE_VERSION bump), rename `[Unreleased]` to a dated block (or a version number if one is actually published) and open a fresh empty `[Unreleased]`. The archived v4 changelog in `archive/` is a historical appendix; do not append to it.
 - **Issues**: `docs/UI_ISSUES_TABLE.html` — update the JSON data array when opening, resolving, or deferring issues. AGENTS.md issue tracker is deprecated.
 - **Session log**: Append to `/Users/daverobertson/Desktop/Code/95-docs-personal/today.csv` after each meaningful change
 - **Implementation plan**: `IMPLEMENTATION_PLAN.md` — update `Last verified:` date when reviewing
