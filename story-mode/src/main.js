@@ -1,9 +1,10 @@
-import '../assets/css/design-language-v010.css';
-import { installDesignLanguageV010 } from './ui/design-language-v010.js';
+import '../assets/css/hud-foundation.css';
+import '../assets/css/hud-controls.css';
+import '../assets/css/hud-interactions.css';
 import { initGame, showTitleScreen } from './game/game-init.js';
 import { loadContentPacks } from './game/pack-loader.js';
 
-installDesignLanguageV010();
+document.body.dataset.designLanguage = 'field-kit';
 
 let runtimeModulesPromise = null;
 

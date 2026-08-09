@@ -974,8 +974,14 @@ function bindUI({
 
     if (canAdvance(state.season)) {
       const wasVisible = fabWasVisible;
+      const actionLabel = getAdvanceLabel();
       fab.classList.add('is-visible');
-      fab.textContent = getAdvanceLabel();
+      fab.textContent = actionLabel;
+      fab.dataset.uiRole = 'primary-action';
+      fab.setAttribute('aria-describedby', 'phase-helper');
+      fab.setAttribute('aria-label', phaseHelper?.textContent
+        ? `${actionLabel}. ${phaseHelper.textContent}`
+        : actionLabel);
       setButtonInteractive(fab, true);
       pulseOnEnter(fab, wasVisible);
       fabWasVisible = true;
@@ -1290,10 +1296,17 @@ function bindUI({
     if (hudScore) hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
 
     if (hudAction) {
-      const visible = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargeting.isActive() && canAdvance(state.season);
-      hudAction.textContent = getAdvanceLabel();
-      hudAction.disabled = !visible;
+      const advanceReady = gameInputEnabled
+        && !cutsceneMachine.isActive()
+        && !interventionTargeting.isActive()
+        && canAdvance(state.season);
+      const visible = advanceReady && !fab;
+      const actionLabel = getAdvanceLabel();
+      hudAction.textContent = actionLabel;
+      hudAction.setAttribute('aria-describedby', 'phase-helper');
+      hudAction.setAttribute('aria-label', actionLabel);
       hudAction.classList.toggle('is-visible', visible);
+      setButtonInteractive(hudAction, visible);
     }
 
     const seasonIcon = document.getElementById('hud-season-icon');
@@ -1333,7 +1346,7 @@ function bindUI({
         } else if (!state.campaign?.sandbox && planted < 8) {
           helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
         } else {
-          helperText = 'Bed is ready. Tap Commit Plan to begin Early Season.';
+          helperText = 'Bed is ready. Select Start Season to begin Early Season.';
         }
       } else if (state.season.phase === PHASES.TRANSITION) {
         helperText = 'Season complete. Use Continue to roll into the next chapter.';
@@ -1348,6 +1361,13 @@ function bindUI({
 
       phaseHelper.textContent = helperText;
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
+    }
+
+    if (hudAction?.classList.contains('is-visible')) {
+      const actionLabel = getAdvanceLabel();
+      hudAction.setAttribute('aria-label', phaseHelper?.textContent
+        ? `${actionLabel}. ${phaseHelper.textContent}`
+        : actionLabel);
     }
 
     updatePhaseDots();

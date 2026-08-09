@@ -16,6 +16,7 @@ const { chromium } = await import(playwrightSpecifier);
 
 const outputDir = process.env.GOS_DESIGN_OUTPUT_DIR
   || join(tmpdir(), `garden-os-design-language-${Date.now()}`);
+const configuredBaseUrl = process.env.GOS_DESIGN_BASE_URL?.trim() || '';
 const timeoutMs = Number(process.env.GOS_DESIGN_TIMEOUT_MS ?? 240000);
 const hardTimeout = setTimeout(() => {
   console.error(`Story Mode design-language regression timed out after ${timeoutMs}ms.`);
@@ -204,6 +205,9 @@ async function readLayout(page) {
     const calendar = document.querySelector('#season-calendar');
     const canvas = document.querySelector('#viewport canvas');
     const toolHud = document.querySelector('.tool-hud');
+    const calendarMonth = document.querySelector('#cal-month');
+    const calendarYear = document.querySelector('#cal-year');
+    const selectedTool = document.querySelector('.tool-hud__slot[aria-pressed="true"]');
     const focusable = [fab, hudAction].filter(Boolean).filter((element) => {
       const style = getComputedStyle(element);
       const rect = element.getBoundingClientRect();
@@ -221,6 +225,9 @@ async function readLayout(page) {
       fabInteractive: !fab?.disabled && getComputedStyle(fab).pointerEvents !== 'none',
       calendarRole: calendar?.getAttribute('role') ?? '',
       calendarLabel: calendar?.getAttribute('aria-label') ?? '',
+      calendarMonthFontSize: calendarMonth ? Number.parseFloat(getComputedStyle(calendarMonth).fontSize) : 0,
+      calendarYearFontSize: calendarYear ? Number.parseFloat(getComputedStyle(calendarYear).fontSize) : 0,
+      selectedToolMarked: Boolean(selectedTool?.classList.contains('is-selected')),
       primaryVisibleCount: focusable.length,
       overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
       viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -231,6 +238,8 @@ async function readLayout(page) {
       helper: visibleRect('#phase-helper'),
       calendar: visibleRect('#season-calendar'),
       fab: visibleRect('#fab-advance'),
+      fabPlant: visibleRect('#fab-plant'),
+      fabBackpack: visibleRect('#fab-backpack'),
       toolHud: toolHud && !toolHud.hidden ? visibleRect('.tool-hud') : null,
     };
   });
@@ -243,7 +252,7 @@ async function assertViewport(page, viewport) {
   const layout = await readLayout(page);
   const label = viewport.name;
 
-  assert(layout.designLanguage === 'v0.10', `${label}: design-language marker is ${layout.designLanguage}.`);
+  assert(layout.designLanguage === 'field-kit', `${label}: design-language marker is ${layout.designLanguage}.`);
   assert(layout.storyScreen === 'play', `${label}: expected play screen, got ${layout.storyScreen}.`);
   assert(layout.helperVisible, `${label}: current-task helper is not visible.`);
   assert(layout.helperText.includes('Start Season'), `${label}: helper does not name Start Season: ${layout.helperText}`);
@@ -253,6 +262,9 @@ async function assertViewport(page, viewport) {
   assert(layout.fabInteractive, `${label}: progression action is not interactive.`);
   assert(layout.calendarRole === 'status', `${label}: season calendar is not exposed as status.`);
   assert(layout.calendarLabel.includes('March'), `${label}: season calendar lacks an aggregate accessible label.`);
+  assert(layout.calendarMonthFontSize >= 17, `${label}: calendar month is too small at ${layout.calendarMonthFontSize}px.`);
+  assert(layout.calendarYearFontSize >= (viewport.mobile ? 11 : 12), `${label}: calendar metadata is too small at ${layout.calendarYearFontSize}px.`);
+  assert(layout.selectedToolMarked, `${label}: selected tool lacks its persistent non-color marker.`);
   assert(layout.primaryVisibleCount === 1, `${label}: expected one visible progression action, got ${layout.primaryVisibleCount}.`);
   assert(!layout.overflowX, `${label}: page has horizontal overflow.`);
   assert(layout.canvas?.width >= viewport.width * 0.98, `${label}: garden scene does not fill the viewport width.`);
@@ -260,16 +272,26 @@ async function assertViewport(page, viewport) {
   assert(layout.fab?.width >= 44 && layout.fab?.height >= 44, `${label}: progression target is smaller than 44px.`);
   assert(layout.helperFontSize >= (viewport.mobile ? 12 : 13), `${label}: helper text is too small at ${layout.helperFontSize}px.`);
 
-  for (const [name, rect] of Object.entries({ helper: layout.helper, calendar: layout.calendar, fab: layout.fab, toolHud: layout.toolHud })) {
+  for (const [name, rect] of Object.entries({
+    helper: layout.helper,
+    calendar: layout.calendar,
+    fab: layout.fab,
+    fabPlant: layout.fabPlant,
+    fabBackpack: layout.fabBackpack,
+    toolHud: layout.toolHud,
+  })) {
     if (!rect) continue;
-    assert(rect.left >= -1 && rect.top >= -1, `${label}: ${name} leaves the top or left viewport edge.`);
-    assert(rect.right <= viewport.width + 1, `${label}: ${name} leaves the right viewport edge.`);
-    assert(rect.bottom <= viewport.height + 1, `${label}: ${name} leaves the bottom viewport edge.`);
+    const geometry = JSON.stringify(rect);
+    assert(rect.left >= -1 && rect.top >= -1, `${label}: ${name} leaves the top or left viewport edge: ${geometry}`);
+    assert(rect.right <= viewport.width + 1, `${label}: ${name} leaves the right viewport edge: ${geometry}`);
+    assert(rect.bottom <= viewport.height + 1, `${label}: ${name} leaves the bottom viewport edge: ${geometry}`);
   }
 
   assert(!rectanglesOverlap(layout.calendar, layout.helper, 4), `${label}: season calendar overlaps the current task.`);
   if (layout.toolHud) {
     assert(!rectanglesOverlap(layout.toolHud, layout.fab, 3), `${label}: tool dock overlaps the primary action.`);
+    assert(!rectanglesOverlap(layout.toolHud, layout.fabPlant, 3), `${label}: tool dock overlaps the Plant action.`);
+    assert(!rectanglesOverlap(layout.toolHud, layout.fabBackpack, 3), `${label}: tool dock overlaps the Backpack action.`);
   }
 
   await page.locator('#fab-advance').focus();
@@ -286,9 +308,73 @@ async function assertViewport(page, viewport) {
   return layout;
 }
 
-const port = await getOpenPort();
-const baseUrl = `http://127.0.0.1:${port}/`;
-const server = await startDevServer(port);
+async function assertContextMenuKeyboardFlow(page) {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.locator('#fab-advance').focus();
+
+  const openedAt = await page.evaluate(() => {
+    const viewport = document.getElementById('viewport');
+    const rect = viewport?.getBoundingClientRect();
+    if (!viewport || !rect) return null;
+
+    const xSteps = 12;
+    const ySteps = 7;
+    for (let yIndex = 1; yIndex < ySteps; yIndex += 1) {
+      for (let xIndex = 1; xIndex < xSteps; xIndex += 1) {
+        const x = rect.left + ((rect.width * xIndex) / xSteps);
+        const y = rect.top + ((rect.height * yIndex) / ySteps);
+        viewport.dispatchEvent(new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: x,
+          clientY: y,
+        }));
+        const menu = document.querySelector('.world-context-menu:not([hidden])');
+        if (menu) return { x, y };
+      }
+    }
+    return null;
+  });
+
+  assert(openedAt, 'context-menu: no deterministic scene point opened the action menu.');
+  const menu = page.locator('.world-context-menu:not([hidden])');
+  await menu.waitFor({ state: 'visible' });
+
+  const before = await menu.evaluate((element) => {
+    const items = [...element.querySelectorAll('[role="menuitem"]:not(:disabled)')];
+    const first = items[0];
+    const firstRect = first?.getBoundingClientRect();
+    return {
+      role: element.getAttribute('role'),
+      itemCount: items.length,
+      firstFocused: document.activeElement === first,
+      firstHeight: firstRect?.height ?? 0,
+    };
+  });
+  assert(before.role === 'menu', 'context-menu: menu role is missing.');
+  assert(before.itemCount >= 1, 'context-menu: no enabled menu items rendered.');
+  assert(before.firstFocused, 'context-menu: initial focus did not move to the first enabled item.');
+  assert(before.firstHeight >= 44, `context-menu: first target is only ${before.firstHeight}px high.`);
+
+  if (before.itemCount > 1) {
+    await page.keyboard.press('ArrowDown');
+    const moved = await menu.evaluate((element) => (
+      document.activeElement === element.querySelectorAll('[role="menuitem"]:not(:disabled)')[1]
+    ));
+    assert(moved, 'context-menu: ArrowDown did not move focus to the next enabled item.');
+  }
+
+  await page.screenshot({ path: join(outputDir, 'desktop-context-menu.png'), fullPage: false });
+  await page.keyboard.press('Escape');
+  assert(await menu.count() === 0, 'context-menu: Escape did not hide the menu.');
+  const focusReturned = await page.locator('#fab-advance').evaluate((element) => document.activeElement === element);
+  assert(focusReturned, 'context-menu: Escape did not restore focus to the prior control.');
+}
+
+const port = configuredBaseUrl ? null : await getOpenPort();
+const baseUrl = configuredBaseUrl || `http://127.0.0.1:${port}/`;
+const server = configuredBaseUrl ? null : await startDevServer(port);
 const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
 
 try {
@@ -343,7 +429,7 @@ try {
   await page.waitForFunction(() => {
     const helper = document.querySelector('#phase-helper');
     const fab = document.querySelector('#fab-advance');
-    return document.body.dataset.designLanguage === 'v0.10'
+    return document.body.dataset.designLanguage === 'field-kit'
       && helper?.classList.contains('is-visible')
       && fab?.classList.contains('is-visible');
   }, null, { timeout: 60000 });
@@ -352,6 +438,7 @@ try {
   for (const viewport of VIEWPORTS) {
     results.push({ viewport: viewport.name, layout: await assertViewport(page, viewport) });
   }
+  await assertContextMenuKeyboardFlow(page);
 
   const requiredAssetFailures = networkFailures.filter((entry) => isRequiredLocalAssetFailure(entry, baseUrl));
   assert(
@@ -375,5 +462,5 @@ try {
 } finally {
   clearTimeout(hardTimeout);
   await browser.close();
-  await server.stop();
+  await server?.stop();
 }

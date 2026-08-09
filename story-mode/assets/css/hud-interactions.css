@@ -1,0 +1,135 @@
+/* Story Mode field-kit interactions: contextual prompt and world action menu. */
+
+body[data-design-language="field-kit"] .interaction-prompt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 7px 11px;
+  border: 1px solid var(--hud-rule-strong);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  color: var(--hud-ink);
+  box-shadow: var(--hud-shadow);
+  font: 600 13px/1.25 'DM Sans', system-ui, sans-serif;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -115%);
+  transition: opacity var(--hud-motion), transform var(--hud-motion);
+}
+
+body[data-design-language="field-kit"] .interaction-prompt.is-visible {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+body[data-design-language="field-kit"] .interaction-prompt.is-coarse {
+  transform: translate(-50%, -105%);
+}
+
+body[data-design-language="field-kit"] .interaction-prompt__hint {
+  display: inline-grid;
+  min-width: 30px;
+  height: 30px;
+  padding-inline: 7px;
+  place-items: center;
+  border: 1px solid var(--hud-rule);
+  border-radius: 999px;
+  background: var(--hud-leaf-soft);
+  color: var(--hud-leaf-dark);
+  font: 700 11px/1 'DM Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+}
+
+body[data-design-language="field-kit"] .interaction-prompt__label {
+  white-space: nowrap;
+}
+
+body[data-design-language="field-kit"] .world-context-menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  min-width: 220px;
+  max-width: min(330px, calc(100vw - 16px));
+  overflow: hidden;
+  border: 1px solid var(--hud-rule-strong);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper);
+  box-shadow: var(--hud-shadow-raised);
+  color: var(--hud-ink);
+  font: 600 13px/1.3 'DM Sans', system-ui, sans-serif;
+  user-select: none;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hud-rule);
+  background: var(--hud-paper-soft);
+  color: var(--hud-ink-soft);
+  font: 700 11px/1.2 'DM Mono', ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__list {
+  padding: 4px;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__option {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--hud-ink);
+  font: inherit;
+  letter-spacing: 0.01em;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--hud-motion), border-color var(--hud-motion);
+}
+
+body[data-design-language="field-kit"] .world-context-menu__option:hover:not(:disabled),
+body[data-design-language="field-kit"] .world-context-menu__option:focus-visible {
+  border-color: var(--hud-rule);
+  background: var(--hud-leaf-soft);
+}
+
+body[data-design-language="field-kit"] .world-context-menu__target {
+  color: var(--hud-leaf-dark);
+  font-weight: 700;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__hint {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--hud-ink-muted);
+  font: 600 11px/1.2 'DM Mono', ui-monospace, monospace;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__option:disabled {
+  border-color: transparent;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 5px,
+      rgba(79, 48, 27, 0.05) 5px 10px
+    );
+  color: var(--hud-ink-muted);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+body[data-design-language="field-kit"] .world-context-menu__option:disabled .world-context-menu__target {
+  color: var(--hud-ink-muted);
+}

@@ -92,3 +92,8 @@ jobs:
 
       - name: Smoke live Story Mode
         run: node scripts/verify-all.mjs --live-only --live-url https://davehomeassist.github.io/garden-os/story-mode/
+
+      - name: Verify live Story Mode field-kit viewports
+        env:
+          GOS_DESIGN_BASE_URL: https://davehomeassist.github.io/garden-os/story-mode/
+        run: node tests/story-mode-design-language-diagnostic.mjs

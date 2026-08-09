@@ -1,0 +1,473 @@
+/* Story Mode field-kit controls: status rail, objective, calendar, tools, and progression. */
+
+body[data-design-language="field-kit"][data-story-screen="play"] #hud {
+  padding: var(--hud-safe-block) var(--hud-safe-inline);
+  align-items: flex-start;
+  background: linear-gradient(180deg, rgba(30, 17, 10, 0.42), transparent 100%);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-left,
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-right {
+  min-height: 52px;
+  gap: 7px;
+  padding: 6px;
+  border: 1px solid var(--hud-rule);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(4px);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pause-btn,
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill {
+  min-height: 40px;
+  border: 1px solid var(--hud-rule);
+  border-radius: var(--hud-radius);
+  background: rgba(255, 255, 255, 0.26);
+  color: var(--hud-ink-soft);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pause-btn {
+  width: 44px;
+  height: 44px;
+  color: var(--hud-ink);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pause-btn:hover {
+  border-color: var(--hud-rule-strong);
+  background: var(--hud-paper-soft);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 11px;
+  font-size: clamp(11px, 0.74vw, 13px);
+  letter-spacing: 0.075em;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill.chapter {
+  color: var(--hud-ink);
+  font-weight: 600;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill.season-icon {
+  min-width: 40px;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid var(--hud-rule);
+  background: var(--hud-paper-soft);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-score {
+  min-width: 38px;
+  color: var(--hud-ink);
+  font-size: clamp(20px, 1.45vw, 25px);
+  text-shadow: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-label {
+  color: var(--hud-ink-muted);
+  font-size: 10px;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .hud-action-btn.is-visible {
+  display: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #phase-dots {
+  top: clamp(66px, 8.5vh, 82px);
+  gap: 7px;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .phase-dot {
+  width: 8px;
+  height: 8px;
+  border-color: rgba(247, 239, 226, 0.72);
+  background: rgba(42, 25, 13, 0.34);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+  top: clamp(92px, 11.5vh, 116px);
+  width: max-content;
+  max-width: min(690px, calc(100vw - 430px));
+  min-height: 50px;
+  padding: 10px 16px 10px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--hud-rule-strong);
+  border-left: 5px solid var(--story-season-accent, var(--hud-gold));
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: none;
+  color: var(--hud-ink);
+  font-size: clamp(13px, 0.9vw, 15px);
+  line-height: 1.42;
+  text-align: left;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper::before {
+  content: "Current objective";
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 12px;
+  border-right: 1px solid var(--hud-rule);
+  color: var(--hud-ink-soft);
+  font: 700 10px/1.2 'DM Mono', ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
+  position: absolute;
+  top: calc(76px + env(safe-area-inset-top, 0px));
+  left: var(--hud-safe-inline);
+  z-index: 10;
+  min-width: 176px;
+  padding: 14px;
+  border: 1px solid var(--hud-rule);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-ink);
+  pointer-events: none;
+}
+
+.season-card__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+
+.season-card__emoji {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.season-card__month {
+  color: var(--hud-ink);
+  font: 600 19px/1.15 'Fraunces', Georgia, serif;
+}
+
+.season-card__chapter,
+.season-card__year,
+.season-card__beat-label {
+  color: var(--hud-ink-soft);
+}
+
+.season-card__chapter {
+  margin-top: 2px;
+  font: 500 13px/1.25 'DM Sans', system-ui, sans-serif;
+}
+
+.season-card__year,
+.season-card__beat-label {
+  font: 600 12px/1.3 'DM Mono', ui-monospace, monospace;
+  letter-spacing: 0.06em;
+}
+
+.season-card__year { margin-top: 3px; }
+.season-card__beat-label { margin-top: 7px; text-transform: uppercase; }
+
+.season-card__beats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.season-card__beat {
+  width: 39px;
+  height: 6px;
+  border: 1px solid var(--hud-rule);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.season-card__beat[data-state="complete"] {
+  border-color: var(--hud-leaf-dark);
+  background: var(--hud-leaf);
+}
+
+.season-card__beat[data-state="current"] {
+  border: 2px solid var(--hud-leaf-dark);
+  background: var(--hud-leaf-soft);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
+  right: var(--hud-safe-inline);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  min-width: 154px;
+  min-height: 56px;
+  height: auto;
+  padding: 17px 22px 13px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--hud-leaf-dark);
+  border-radius: var(--hud-radius);
+  background: var(--hud-leaf);
+  color: #fff8e8;
+  box-shadow: var(--hud-shadow-raised);
+  font: 700 15px/1.05 'DM Sans', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance::before {
+  content: "Next step";
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255, 248, 232, 0.82);
+  font: 700 10px/1 'DM Mono', ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance:hover {
+  border-color: #24451a;
+  background: var(--hud-leaf-dark);
+  transform: translateY(-2px);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance:active {
+  transform: translateY(0) scale(0.98);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance:disabled,
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-plant:disabled,
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot:disabled {
+  border-style: dashed;
+  border-color: var(--hud-rule-strong);
+  background: var(--hud-paper-soft);
+  color: var(--hud-ink-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-plant,
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-backpack,
+body[data-design-language="field-kit"][data-story-screen="play"] #fab-bug {
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid var(--hud-rule);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  color: var(--hud-ink);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--hud-rule);
+  border-radius: var(--hud-radius);
+  background: var(--hud-paper-wash);
+  box-shadow: var(--hud-shadow);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px);
+  transition: opacity var(--hud-motion), transform var(--hud-motion);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--hud-rule);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.38);
+  color: var(--hud-ink);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--hud-motion), border-color var(--hud-motion), transform var(--hud-motion);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot:hover {
+  border-color: var(--hud-rule-strong);
+  background: var(--hud-paper-soft);
+  transform: translateY(-1px);
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot[aria-pressed="true"] {
+  border: 2px solid var(--hud-leaf-dark);
+  background: var(--hud-leaf-soft);
+  box-shadow: inset 0 -4px 0 var(--hud-leaf);
+  transform: translateY(-3px);
+}
+
+.tool-hud__icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.tool-hud__shortcut {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  color: var(--hud-ink-muted);
+  font: 700 10px/1 'DM Mono', ui-monospace, monospace;
+}
+
+.tool-hud__cooldown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: rgba(42, 25, 13, 0.74);
+  pointer-events: none;
+}
+
+.tool-hud__cooldown-time {
+  color: #fff8e8;
+  font: 700 11px/1 'DM Mono', ui-monospace, monospace;
+}
+
+@media (min-width: 1600px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    max-width: 690px;
+    font-size: 15px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (max-width: 900px) {
+  body[data-design-language="field-kit"] {
+    --hud-safe-inline: 10px;
+    --hud-safe-block: 8px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-left,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-right {
+    min-height: 46px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill {
+    min-height: 36px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud-crops,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-label {
+    display: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-dots {
+    top: 62px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    left: 10px;
+    min-width: 150px;
+    padding: 11px 12px;
+  }
+
+  .season-card__month { font-size: 17px; }
+  .season-card__chapter,
+  .season-card__year,
+  .season-card__beat-label { font-size: 11px; }
+  .season-card__beat { width: 33px; }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    top: calc(194px + env(safe-area-inset-top, 0px));
+    width: calc(100vw - 20px);
+    max-width: none;
+    min-height: 46px;
+    padding: 9px 11px;
+    gap: 9px;
+    font-size: 12px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper::before {
+    padding-right: 9px;
+    font-size: 8px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud {
+    position: fixed !important;
+    inset: auto auto calc(150px + env(safe-area-inset-bottom, 0px)) 10px !important;
+    margin: 0 !important;
+    width: min(354px, calc(100vw - 20px));
+    max-width: calc(100vw - 20px);
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    transform: none !important;
+    transition: opacity var(--hud-motion) !important;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud.is-visible {
+    transform: none !important;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    min-width: 108px;
+    min-height: 54px;
+    padding: 15px 14px 11px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 430px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill.season-icon,
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud-tokens {
+    display: none !important;
+  }
+
+}
+
+@media (pointer: coarse) {
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+}

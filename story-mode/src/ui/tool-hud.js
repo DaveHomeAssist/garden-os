@@ -3,71 +3,36 @@ function isInteractiveField(target) {
   return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 }
 
-function isCoarsePointer() {
-  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
-}
-
-function isNarrowViewport() {
-  return window.matchMedia?.('(max-width: 900px)').matches ?? window.innerWidth <= 900;
-}
-
-function applyShellPosition(root, visible = false) {
-  const narrow = isNarrowViewport();
-  root.style.left = narrow ? '10px' : '50%';
-  root.style.right = 'auto';
-  root.style.bottom = narrow
-    ? 'calc(12px + env(safe-area-inset-bottom, 0px))'
-    : 'calc(16px + env(safe-area-inset-bottom, 0px))';
-  root.style.transform = narrow
-    ? (visible ? 'translateY(0)' : 'translateY(8px)')
-    : (visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(8px)');
-}
-
 function createShell() {
   const root = document.createElement('div');
   root.className = 'tool-hud';
-  root.style.position = 'absolute';
-  applyShellPosition(root, false);
-  root.style.display = 'flex';
-  root.style.alignItems = 'center';
-  root.style.gap = '10px';
-  root.style.padding = '10px 12px';
-  root.style.borderRadius = '18px';
-  root.style.background = 'rgba(26, 18, 12, 0.68)';
-  root.style.border = '1px solid rgba(247, 242, 234, 0.08)';
-  root.style.boxShadow = '0 20px 44px rgba(0, 0, 0, 0.28)';
-  root.style.backdropFilter = 'blur(12px)';
-  root.style.zIndex = '22';
-  root.style.pointerEvents = 'none';
-  root.style.transition = 'opacity 150ms ease, transform 150ms ease';
-  root.style.opacity = '0';
+  root.setAttribute('role', 'toolbar');
+  root.setAttribute('aria-label', 'Garden tools');
+  root.setAttribute('aria-hidden', 'true');
   root.hidden = true;
   return root;
 }
 
-function applyButtonStyles(button, selected) {
-  const size = isCoarsePointer() ? 56 : 48;
-  button.style.position = 'relative';
-  button.style.display = 'flex';
-  button.style.alignItems = 'center';
-  button.style.justifyContent = 'center';
-  button.style.width = `${size}px`;
-  button.style.height = `${size}px`;
-  button.style.borderRadius = '8px';
-  button.style.border = selected
-    ? '1px solid #e8c84a'
-    : '1px solid rgba(247, 242, 234, 0.08)';
-  button.style.background = selected
-    ? 'rgba(92, 61, 30, 0.92)'
-    : 'rgba(92, 61, 30, 0.84)';
-  button.style.color = 'var(--cream, #f7f2ea)';
-  button.style.fontSize = isCoarsePointer() ? '1.3rem' : '1.1rem';
-  button.style.lineHeight = '1';
-  button.style.cursor = 'pointer';
-  button.style.pointerEvents = 'auto';
-  button.style.transition = 'transform 150ms ease, border-color 150ms ease, background 150ms ease';
-  button.style.transform = selected ? 'scale(1.1)' : 'scale(1)';
-  button.style.outline = 'none';
+function createToolSlot(tool, index) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'tool-hud__slot';
+  button.dataset.toolId = tool.id;
+  button.title = tool.label;
+  button.setAttribute('aria-label', `${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`);
+
+  const icon = document.createElement('span');
+  icon.className = 'tool-hud__icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = tool.icon ?? '•';
+
+  const shortcut = document.createElement('span');
+  shortcut.className = 'tool-hud__shortcut';
+  shortcut.setAttribute('aria-hidden', 'true');
+  shortcut.textContent = tool.shortcut ?? String(index + 1);
+
+  button.append(icon, shortcut);
+  return button;
 }
 
 export class ToolHUD {
@@ -82,8 +47,6 @@ export class ToolHUD {
     this.visible = false;
     this.root = createShell();
     this.container.append(this.root);
-    this.handleResize = () => applyShellPosition(this.root, this.visible);
-    window.addEventListener('resize', this.handleResize, { passive: true });
 
     this.inputManager.registerAction('tool_slot_1', { keys: ['1'] });
     this.inputManager.registerAction('tool_slot_2', { keys: ['2'] });
@@ -93,7 +56,6 @@ export class ToolHUD {
     this.inputManager.registerAction('tool_slot_6', { keys: ['6'] });
 
     this.disposers = [
-      () => window.removeEventListener('resize', this.handleResize),
       this.inputManager.on('next_tool', (payload) => {
         if (!this.visible || isInteractiveField(payload.event?.target)) return;
         payload.preventDefault();
@@ -148,8 +110,7 @@ export class ToolHUD {
   setVisible(visible) {
     this.visible = Boolean(visible);
     this.root.hidden = !this.visible;
-    this.root.style.opacity = this.visible ? '1' : '0';
-    applyShellPosition(this.root, this.visible);
+    this.root.classList.toggle('is-visible', this.visible);
     this.root.setAttribute('aria-hidden', this.visible ? 'false' : 'true');
   }
 
@@ -168,25 +129,11 @@ export class ToolHUD {
   }
 
   render() {
-    this.root.innerHTML = '';
+    this.root.replaceChildren();
     this.buttons.clear();
 
     this.tools.forEach((tool, index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'tool-hud__slot';
-      button.dataset.toolId = tool.id;
-      button.title = tool.label;
-      button.setAttribute('aria-label', `${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`);
-      button.setAttribute('aria-pressed', tool.id === this.selectedToolId ? 'true' : 'false');
-      button.innerHTML = `
-        <span aria-hidden="true">${tool.icon ?? '•'}</span>
-        <span
-          aria-hidden="true"
-          style="position:absolute;top:5px;right:5px;font-family:'DM Mono', ui-monospace, monospace;font-size:10px;color:rgba(247,242,234,0.62);line-height:1;"
-        >${tool.shortcut ?? index + 1}</span>
-      `;
-      applyButtonStyles(button, tool.id === this.selectedToolId);
+      const button = createToolSlot(tool, index);
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -203,7 +150,7 @@ export class ToolHUD {
     this.buttons.forEach((button, toolId) => {
       const selected = toolId === this.selectedToolId;
       button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-      applyButtonStyles(button, selected);
+      button.classList.toggle('is-selected', selected);
     });
   }
 
@@ -242,18 +189,8 @@ export class ToolHUD {
           overlay = document.createElement('div');
           overlay.className = 'tool-hud__cooldown';
           overlay.setAttribute('aria-hidden', 'true');
-          overlay.style.cssText = [
-            'position:absolute;inset:0;border-radius:7px',
-            'background:rgba(10,6,3,0.60)',
-            'display:flex;align-items:center;justify-content:center',
-            'pointer-events:none',
-          ].join(';');
           const timeEl = document.createElement('span');
           timeEl.className = 'tool-hud__cooldown-time';
-          timeEl.style.cssText = [
-            "font-family:'DM Mono',ui-monospace,monospace",
-            'font-size:11px;color:#f7f2ea;line-height:1',
-          ].join(';');
           overlay.append(timeEl);
           button.append(overlay);
         }

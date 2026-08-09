@@ -12,6 +12,10 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ### Added
 - Added a versioned design-audit deployment prompt with explicit run controls,
   a four-part source-mapping gate, and measurable release acceptance checks.
+- Added arrow, Home, End, and Escape navigation to Free Play context actions,
+  including disabled-item semantics and focus return to the prior control.
+- Added a release-blocking Story Mode field-kit check across four desktop and
+  two supported phone viewports, with the same gate repeated after deployment.
 ### Changed
 - Unified the Story Mode HUD, current task, season calendar, tool dock, context
   menu, and progression action into one warmer and more legible field-kit
@@ -19,6 +23,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ### Fixed
 - Removed duplicate progression emphasis and aligned the planning objective
   copy with the visible Start Season action.
+- Kept the mobile tool tray above Plant, Backpack, and progression controls so
+  every action remains visible and independently targetable.
 
 ## [Unversioned - 2026-08-09] Field Companion update and Free Play right-click menu
 ### Added

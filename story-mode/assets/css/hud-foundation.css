@@ -1,0 +1,64 @@
+/* Story Mode field-kit foundation: shared tokens, safe frame, focus, and motion. */
+
+body[data-design-language="field-kit"] {
+  --hud-paper: #f7efe2;
+  --hud-paper-soft: #ede1cf;
+  --hud-paper-wash: rgba(247, 239, 226, 0.96);
+  --hud-paper-soft-wash: rgba(237, 225, 207, 0.94);
+  --hud-ink: #2a190d;
+  --hud-ink-soft: #674d38;
+  --hud-ink-muted: #725943;
+  --hud-leaf: #3a6b2a;
+  --hud-leaf-dark: #2f5722;
+  --hud-leaf-soft: #dbe8d2;
+  --hud-gold: #b6811c;
+  --hud-rust: #a94424;
+  --hud-rule: rgba(79, 48, 27, 0.28);
+  --hud-rule-strong: rgba(79, 48, 27, 0.46);
+  --hud-radius: 8px;
+  --hud-shadow: 0 8px 22px rgba(42, 25, 13, 0.24);
+  --hud-shadow-raised: 0 14px 34px rgba(42, 25, 13, 0.3);
+  --hud-motion: 160ms ease;
+  --hud-safe-inline: max(
+    clamp(12px, 1.6vw, 28px),
+    calc((100vw - 1872px) / 2 + 20px)
+  );
+  --hud-safe-block: clamp(10px, 1.4vh, 18px);
+}
+
+body[data-design-language="field-kit"] button:focus-visible,
+body[data-design-language="field-kit"] [role="button"]:focus-visible,
+body[data-design-language="field-kit"] [role="menuitem"]:focus-visible,
+body[data-design-language="field-kit"] a:focus-visible {
+  outline: 3px solid #fff8e8 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px var(--hud-leaf-dark) !important;
+}
+
+body[data-design-language="field-kit"] #fab-advance:focus {
+  outline: 3px solid #fff8e8 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px var(--hud-leaf-dark) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-design-language="field-kit"] #fab-advance,
+  body[data-design-language="field-kit"] #phase-helper,
+  body[data-design-language="field-kit"] .tool-hud,
+  body[data-design-language="field-kit"] .tool-hud__slot,
+  body[data-design-language="field-kit"] .interaction-prompt,
+  body[data-design-language="field-kit"] .world-context-menu__option {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  body[data-design-language="field-kit"] button:focus-visible,
+  body[data-design-language="field-kit"] [role="menuitem"]:focus-visible,
+  body[data-design-language="field-kit"] a:focus-visible {
+    outline-color: Highlight !important;
+    box-shadow: none !important;
+  }
+}

@@ -1,70 +1,29 @@
 /**
- * RuneScape-style "Choose Option" context menu for the 3D world.
+ * RuneScape-style "Choose Option" menu for the 3D world.
  * Options are { verb, target?, hint?, disabled?, onSelect? }.
- * Verb renders in cream, target in leaf-green, hover rows glow sun-yellow.
  */
 
-const MENU_Z_INDEX = '60';
-
-function applyRootStyles(root) {
-  root.style.position = 'fixed';
-  root.style.left = '0';
-  root.style.top = '0';
-  root.style.minWidth = '170px';
-  root.style.maxWidth = '280px';
-  root.style.background = 'rgba(24, 14, 8, 0.97)';
-  root.style.border = '1px solid rgba(232, 200, 74, 0.35)';
-  root.style.borderRadius = '8px';
-  root.style.boxShadow = '0 14px 32px rgba(0, 0, 0, 0.45)';
-  root.style.fontFamily = '"DM Mono", ui-monospace, SFMono-Regular, monospace';
-  root.style.fontSize = '0.78rem';
-  root.style.overflow = 'hidden';
-  root.style.zIndex = MENU_Z_INDEX;
-  root.style.userSelect = 'none';
-  root.style.display = 'none';
-}
-
-function applyHeaderStyles(header) {
-  header.textContent = 'Choose Option';
-  header.style.padding = '0.4rem 0.75rem';
-  header.style.background = 'rgba(92, 61, 30, 0.92)';
-  header.style.color = '#e8c84a';
-  header.style.letterSpacing = '0.04em';
-  header.style.fontSize = '0.72rem';
-  header.style.borderBottom = '1px solid rgba(232, 200, 74, 0.25)';
-}
-
-function applyOptionStyles(button, disabled) {
-  button.type = 'button';
-  button.style.display = 'flex';
-  button.style.alignItems = 'baseline';
-  button.style.gap = '0.4rem';
-  button.style.width = '100%';
-  button.style.textAlign = 'left';
-  button.style.padding = '0.42rem 0.75rem';
-  button.style.background = 'transparent';
-  button.style.border = 'none';
-  button.style.fontFamily = 'inherit';
-  button.style.fontSize = 'inherit';
-  button.style.letterSpacing = '0.02em';
-  button.style.cursor = disabled ? 'default' : 'pointer';
+function getEnabledItems(list) {
+  return [...list.querySelectorAll('[role="menuitem"]:not(:disabled)')];
 }
 
 export function createWorldContextMenu({ onOutsideDismiss = null } = {}) {
   const root = document.createElement('div');
   root.className = 'world-context-menu';
-  applyRootStyles(root);
+  root.setAttribute('role', 'menu');
+  root.setAttribute('aria-labelledby', 'world-context-menu-title');
+  root.hidden = true;
 
   const header = document.createElement('div');
-  applyHeaderStyles(header);
-  root.appendChild(header);
+  header.id = 'world-context-menu-title';
+  header.className = 'world-context-menu__header';
+  header.textContent = 'Choose Option';
 
   const list = document.createElement('div');
-  list.style.padding = '0.25rem 0';
-  root.appendChild(list);
+  list.className = 'world-context-menu__list';
+  list.setAttribute('role', 'presentation');
+  root.append(header, list);
 
-  // Keep interactions inside the menu from reaching the game canvas beneath it,
-  // and suppress the browser menu when right-clicking the menu itself.
   ['pointerdown', 'pointerup', 'click'].forEach((type) => {
     root.addEventListener(type, (event) => event.stopPropagation());
   });
@@ -74,30 +33,59 @@ export function createWorldContextMenu({ onOutsideDismiss = null } = {}) {
   });
 
   let openState = false;
+  let returnFocus = null;
 
-  function close() {
+  function restoreFocus() {
+    if (!(returnFocus instanceof HTMLElement) || !returnFocus.isConnected) return;
+    returnFocus.focus({ preventScroll: true });
+  }
+
+  function close({ restore = true } = {}) {
     if (!openState) return;
     openState = false;
-    root.style.display = 'none';
-    list.innerHTML = '';
+    root.hidden = true;
+    root.style.visibility = '';
+    list.replaceChildren();
     removeDismissListeners();
+    if (restore) restoreFocus();
+    returnFocus = null;
+  }
+
+  function focusItem(nextIndex) {
+    const items = getEnabledItems(list);
+    if (!items.length) return;
+    const currentIndex = items.indexOf(document.activeElement);
+    const normalizedIndex = (nextIndex(currentIndex, items.length) + items.length) % items.length;
+    items.forEach((item, index) => { item.tabIndex = index === normalizedIndex ? 0 : -1; });
+    items[normalizedIndex].focus({ preventScroll: true });
   }
 
   function handleWindowPointerDown(event) {
     if (root.contains(event.target)) return;
     close();
-    // Let the host suppress the click this gesture will produce — dismissing
-    // the menu must never double as a game action on whatever was clicked.
     onOutsideDismiss?.(event);
   }
 
   function handleWindowKeyDown(event) {
-    if (event.key !== 'Escape' && event.key !== 'Esc') return;
-    // Consume the keystroke: Escape here means "dismiss the menu", not
-    // "toggle the pause menu" — stop it before the game's key bindings.
+    const key = event.key;
+    if (key === 'Escape' || key === 'Esc') {
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+      return;
+    }
+
+    const navigation = {
+      ArrowDown: (index) => index + 1,
+      ArrowUp: (index, length) => (index < 0 ? length - 1 : index - 1),
+      Home: () => 0,
+      End: (_index, length) => length - 1,
+    }[key];
+    if (!navigation) return;
+
     event.preventDefault();
     event.stopPropagation();
-    close();
+    focusItem(navigation);
   }
 
   function handleWindowDismiss() {
@@ -120,65 +108,59 @@ export function createWorldContextMenu({ onOutsideDismiss = null } = {}) {
     window.removeEventListener('wheel', handleWindowDismiss);
   }
 
-  function renderOption(option) {
+  function renderOption(option, index) {
     const button = document.createElement('button');
     const disabled = Boolean(option.disabled);
-    applyOptionStyles(button, disabled);
+    button.type = 'button';
+    button.className = 'world-context-menu__option';
+    button.setAttribute('role', 'menuitem');
+    button.disabled = disabled;
+    button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    button.tabIndex = disabled || index > 0 ? -1 : 0;
 
     const verb = document.createElement('span');
+    verb.className = 'world-context-menu__verb';
     verb.textContent = option.verb ?? option.label ?? 'Interact';
-    verb.style.color = disabled ? 'rgba(247, 242, 234, 0.38)' : '#f7f2ea';
-    button.appendChild(verb);
+    button.append(verb);
 
     if (option.target) {
       const target = document.createElement('span');
+      target.className = 'world-context-menu__target';
       target.textContent = option.target;
-      target.style.color = disabled ? 'rgba(90, 171, 107, 0.4)' : '#5aab6b';
-      button.appendChild(target);
+      button.append(target);
     }
 
     if (option.hint) {
       const hint = document.createElement('span');
+      hint.className = 'world-context-menu__hint';
       hint.textContent = option.hint;
-      hint.style.marginLeft = 'auto';
-      hint.style.paddingLeft = '0.6rem';
-      hint.style.fontSize = '0.66rem';
-      hint.style.color = 'rgba(247, 242, 234, 0.45)';
-      button.appendChild(hint);
+      button.append(hint);
     }
 
     if (!disabled) {
-      button.addEventListener('pointerenter', () => {
-        button.style.background = 'rgba(232, 200, 74, 0.16)';
-        verb.style.color = '#e8c84a';
-      });
-      button.addEventListener('pointerleave', () => {
-        button.style.background = 'transparent';
-        verb.style.color = '#f7f2ea';
-      });
       button.addEventListener('click', () => {
         close();
         option.onSelect?.();
       });
     }
 
-    list.appendChild(button);
+    list.append(button);
   }
 
   function open({ x, y, options = [] }) {
     if (!options.length) return false;
-    list.innerHTML = '';
+    if (openState) close({ restore: false });
+
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    list.replaceChildren();
     options.forEach(renderOption);
 
-    root.style.display = 'block';
+    root.hidden = false;
     root.style.visibility = 'hidden';
-    // Reset position before measuring: a stale left from a previous open near
-    // the screen edge squeezes shrink-to-fit width and wraps the rows.
     root.style.left = '0px';
     root.style.top = '0px';
-    if (!root.isConnected) document.body.appendChild(root);
+    if (!root.isConnected) document.body.append(root);
 
-    // Center the header under the pointer, clamped to the window.
     const width = root.offsetWidth;
     const height = root.offsetHeight;
     const left = Math.max(4, Math.min(x - Math.min(width / 2, 70), window.innerWidth - width - 4));
@@ -187,15 +169,14 @@ export function createWorldContextMenu({ onOutsideDismiss = null } = {}) {
     root.style.top = `${Math.round(top)}px`;
     root.style.visibility = 'visible';
 
-    if (!openState) {
-      openState = true;
-      addDismissListeners();
-    }
+    openState = true;
+    addDismissListeners();
+    focusItem(() => 0);
     return true;
   }
 
   function dispose() {
-    close();
+    close({ restore: false });
     root.remove();
   }
 
