@@ -112,6 +112,28 @@ describe('InteractionSystem', () => {
     );
   });
 
+  it('lists registered custom interactables', () => {
+    const interaction = new InteractionSystem(null, null, createMovementController({ x: 0, y: 0, z: 0 }), []);
+    interaction.registerInteractable('gate', {
+      label: 'Open gate',
+      position: { x: 1, y: 0, z: 2 },
+      onInteract: vi.fn(),
+    });
+    interaction.registerInteractable('stall', {
+      label: 'Browse stall',
+      position: { x: -1, y: 0, z: 0 },
+    });
+
+    const listed = interaction.listInteractables();
+    expect(listed).toHaveLength(2);
+    expect(listed.map((entry) => entry.id).sort()).toEqual(['gate', 'stall']);
+    expect(listed[0]).toHaveProperty('position');
+    expect(listed[0]).toHaveProperty('anchor');
+
+    interaction.unregisterInteractable('gate');
+    expect(interaction.listInteractables().map((entry) => entry.id)).toEqual(['stall']);
+  });
+
   it('clears the highlight when disabled or when the player moves out of range', () => {
     const movementController = createMovementController({ x: 0, y: 0, z: 0.1 });
     const interaction = new InteractionSystem(

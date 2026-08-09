@@ -134,6 +134,10 @@ class InteractionSystem {
     this.customInteractables.set(id, normalizeCustomInteractable(id, definition));
   }
 
+  listInteractables() {
+    return [...this.customInteractables.values()];
+  }
+
   unregisterInteractable(id) {
     if (!id) return;
     this.customInteractables.delete(id);

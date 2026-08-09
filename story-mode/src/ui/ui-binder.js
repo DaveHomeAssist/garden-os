@@ -19,6 +19,7 @@ import {
 import { createPlayerController } from '../game/player-controller.js';
 import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
+import { createWorldContextMenu } from './context-menu.js';
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
 import { createTouchControls } from '../input/touch-controls.js';
@@ -396,6 +397,7 @@ function bindUI({
   }
 
   async function travelToZone(zoneId) {
+    clearWalkTarget();
     const currentZone = getCurrentZoneId();
     const check = evaluateZoneAccess(zoneId, state, getWorldSystems());
     if (!check.allowed) {
@@ -519,6 +521,65 @@ function bindUI({
     toolHUD?.setVisible(shouldShowToolHUD());
   }
 
+  // RuneScape-style walk-then-act: a queued destination the player auto-walks
+  // to, with an optional action fired on arrival. Manual input always wins.
+  let walkTarget = null;
+
+  function clearWalkTarget() {
+    walkTarget = null;
+  }
+
+  function queueWalkAction({ x, z, radius = 0.6, onArrive = null }) {
+    const zoneAtQueue = getCurrentZoneId();
+    const arrive = onArrive
+      ? () => {
+        if (getCurrentZoneId() === zoneAtQueue) onArrive();
+      }
+      : null;
+    const position = playerController.getState()?.position;
+    if (position && Math.hypot(x - position.x, z - position.z) <= radius) {
+      arrive?.();
+      return;
+    }
+    walkTarget = {
+      x,
+      z,
+      radius,
+      onArrive: arrive,
+      bestDistance: Infinity,
+      lastProgressAt: Date.now(),
+    };
+  }
+
+  function getAutoWalkVector() {
+    if (!walkTarget) return { x: 0, z: 0 };
+    const position = playerController.getState()?.position;
+    if (!position) return { x: 0, z: 0 };
+
+    const dx = walkTarget.x - position.x;
+    const dz = walkTarget.z - position.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance <= walkTarget.radius) {
+      const arrived = walkTarget;
+      clearWalkTarget();
+      arrived.onArrive?.();
+      return { x: 0, z: 0 };
+    }
+
+    const now = Date.now();
+    if (distance < walkTarget.bestDistance - 0.02) {
+      walkTarget.bestDistance = distance;
+      walkTarget.lastProgressAt = now;
+    } else if (now - walkTarget.lastProgressAt > 1200) {
+      const hadAction = Boolean(walkTarget.onArrive);
+      clearWalkTarget();
+      if (hadAction) showToast("You can't reach that.", 1500, 'info');
+      return { x: 0, z: 0 };
+    }
+
+    return { x: dx / distance, z: dz / distance };
+  }
+
   function getMovementVector() {
     let x = 0;
     let z = 0;
@@ -536,6 +597,11 @@ function bindUI({
         z = stick.y;
       }
     }
+
+    if (x === 0 && z === 0) {
+      return getAutoWalkVector();
+    }
+    clearWalkTarget();
 
     // Make movement camera-relative: rotate the raw input by the camera's
     // orbit angle so "up" always walks the way the camera faces, not fixed
@@ -1412,7 +1478,10 @@ function bindUI({
   });
 
   function handleEquippedToolInteraction(cellIndex) {
-    const activeToolId = getSelectedToolId();
+    return applyToolToCell(getSelectedToolId(), cellIndex);
+  }
+
+  function applyToolToCell(activeToolId, cellIndex) {
     if (!activeToolId || cellIndex < 0) {
       return false;
     }
@@ -1537,6 +1606,238 @@ function bindUI({
     handleCellInteraction(cellIndex, 'pointer');
   }
 
+  // ── RuneScape-style right-click menu (Free Play only) ──────────────────
+  const worldContextMenu = state.campaign?.sandbox ? createWorldContextMenu() : null;
+
+  function describeCellForExamine(cellIndex) {
+    const cell = state.season.grid[cellIndex];
+    if (!cell) return 'Just soil.';
+    if (!cell.cropId) {
+      return cell.carryForwardType === 'enriched'
+        ? 'An open patch of enriched soil. Something would grow well here.'
+        : 'An open patch of bed soil, ready for planting.';
+    }
+    const crop = getCropById(cell.cropId);
+    const details = [];
+    if (cell.protected) details.push('protected');
+    if (cell.mulched || cell.carryForwardType === 'enriched') details.push('mulched');
+    if (cell.damageState && cell.damageState !== 'healthy') {
+      details.push(String(cell.damageState).replace(/_/g, ' '));
+    }
+    const suffix = details.length ? ` Looks ${details.join(', ')}.` : '';
+    return `${crop?.emoji ?? '🌱'} ${crop?.name ?? 'A crop'}, growing steadily.${suffix}`;
+  }
+
+  function buildCellMenuOptions(cellIndex) {
+    const options = [];
+    const cell = state.season.grid[cellIndex];
+    if (!cell) return options;
+
+    const layout = scene.getGridLayout?.();
+    const cellPosition = layout?.[cellIndex] ?? null;
+    const cropName = cell.cropId ? (getCropById(cell.cropId)?.name ?? 'crop') : null;
+
+    const walkThenRun = (action) => {
+      if (!cellPosition) {
+        action();
+        return;
+      }
+      queueWalkAction({
+        x: cellPosition.x,
+        z: cellPosition.z,
+        radius: 1.05,
+        onArrive: action,
+      });
+    };
+    const walkThenApplyTool = (toolId) => walkThenRun(() => {
+      if (applyToolToCell(toolId, cellIndex)) updateHUD();
+    });
+
+    if (state.season.phase === PHASES.PLANNING) {
+      if (!cell.cropId) {
+        const selectedCrop = state.selectedCropId ? getCropById(state.selectedCropId) : null;
+        options.push({
+          verb: 'Plant',
+          target: selectedCrop?.name ?? '…',
+          onSelect: () => {
+            if (selectedCrop) walkThenApplyTool('plant');
+            else showCropPalette();
+          },
+        });
+      }
+
+      [
+        ['water', 'Water', cropName],
+        ['harvest', 'Harvest', cropName],
+        ['protect', 'Protect', cropName],
+        ['mulch', 'Mulch', null],
+      ].forEach(([toolId, verb, target]) => {
+        if (toolId !== 'mulch' && !cell.cropId) return;
+        const availability = canUseTool(state, toolId, cellIndex);
+        if (availability.valid) {
+          options.push({ verb, target, onSelect: () => walkThenApplyTool(toolId) });
+        } else if (availability.reason) {
+          options.push({ verb, target, disabled: true, hint: availability.reason });
+        }
+      });
+
+      if (cell.cropId) {
+        options.push({
+          verb: 'Remove',
+          target: cropName,
+          onSelect: () => walkThenRun(() => {
+            dispatch({ type: Actions.REMOVE_CROP, payload: { cellIndex } });
+            showToast('Crop removed', 1400);
+            updateHUD();
+          }),
+        });
+      }
+    }
+
+    options.push({
+      verb: 'Examine',
+      target: cropName ?? 'Soil',
+      onSelect: () => showToast(describeCellForExamine(cellIndex), 2600, 'info'),
+    });
+
+    return options;
+  }
+
+  function findInteractablesNearScreenPoint(clientX, clientY, maxDistancePx = 48) {
+    const host = viewport ?? document.getElementById('viewport');
+    const rect = host?.getBoundingClientRect?.();
+    if (!rect) return [];
+    const pointX = clientX - rect.left;
+    const pointY = clientY - rect.top;
+    const project = (position) => (shouldRenderActiveZone()
+      ? zoneManager.projectWorldPosition?.(position)
+      : scene.projectWorldPosition?.(position));
+
+    return interactionSystem.listInteractables()
+      .map((entry) => {
+        const projected = project(entry.anchor ?? entry.position);
+        if (!projected?.visible) return null;
+        const distancePx = Math.hypot(projected.x - pointX, projected.y - pointY);
+        return distancePx <= maxDistancePx ? { entry, distancePx } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.distancePx - b.distancePx);
+  }
+
+  function openWorldContextMenu(clientX, clientY) {
+    if (!worldContextMenu) return false;
+    if (!gameInputEnabled || pauseController.isOpen() || cutsceneMachine.isActive() || interventionTargeting.isActive()) {
+      return false;
+    }
+
+    const options = [];
+    const inZone = shouldRenderActiveZone();
+
+    if (!inZone) {
+      const cellIndex = scene.raycastCell(clientX, clientY);
+      if (cellIndex >= 0) options.push(...buildCellMenuOptions(cellIndex));
+    }
+
+    findInteractablesNearScreenPoint(clientX, clientY).slice(0, 4).forEach(({ entry }) => {
+      options.push({
+        verb: interactionSystem.resolveLabel(entry),
+        onSelect: () => {
+          queueWalkAction({
+            x: entry.position.x,
+            z: entry.position.z,
+            radius: Math.max(entry.radius ?? 0.6, 0.55),
+            onArrive: () => entry.onInteract?.({ source: 'context-menu', store, target: entry }),
+          });
+        },
+      });
+    });
+
+    if (!inZone) {
+      const ground = scene.raycastGround?.(clientX, clientY);
+      if (ground) {
+        options.push({
+          verb: 'Walk here',
+          onSelect: () => queueWalkAction({ x: ground.x, z: ground.z, radius: 0.12 }),
+        });
+      }
+    }
+
+    if (!options.length) return false;
+    options.push({ verb: 'Cancel', onSelect: () => {} });
+
+    if (audioInitialized) audioManager.playSFX('ui_click');
+    return worldContextMenu.open({ x: clientX, y: clientY, options });
+  }
+
+  function handleViewportContextMenu(event) {
+    if (!worldContextMenu) return;
+    event.preventDefault();
+    openWorldContextMenu(event.clientX, event.clientY);
+  }
+
+  // Touch: long-press opens the same menu (500ms hold, cancelled by drift).
+  let longPressState = null;
+  let suppressNextViewportClick = false;
+  let suppressClickTimer = null;
+
+  function armViewportClickSuppression() {
+    suppressNextViewportClick = true;
+    clearTimeout(suppressClickTimer);
+    suppressClickTimer = setTimeout(() => {
+      suppressNextViewportClick = false;
+    }, 700);
+  }
+
+  // Capture-phase: the click that trails a long-press (implicit pointer
+  // capture routes it to the viewport) must not reach the select handlers.
+  function handleViewportClickCapture(event) {
+    if (!suppressNextViewportClick) return;
+    suppressNextViewportClick = false;
+    clearTimeout(suppressClickTimer);
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function cancelLongPress() {
+    if (!longPressState) return;
+    clearTimeout(longPressState.timer);
+    longPressState = null;
+  }
+
+  function handleViewportPointerDownForMenu(event) {
+    if (!worldContextMenu || event.pointerType !== 'touch' || !event.isPrimary) return;
+    cancelLongPress();
+    const { clientX, clientY, pointerId } = event;
+    longPressState = {
+      pointerId,
+      x: clientX,
+      y: clientY,
+      timer: setTimeout(() => {
+        longPressState = null;
+        if (openWorldContextMenu(clientX, clientY)) {
+          armViewportClickSuppression();
+        }
+      }, 500),
+    };
+  }
+
+  function handleViewportPointerMoveForMenu(event) {
+    if (!longPressState || event.pointerId !== longPressState.pointerId) return;
+    if (Math.hypot(event.clientX - longPressState.x, event.clientY - longPressState.y) > 12) {
+      cancelLongPress();
+    }
+  }
+
+  if (worldContextMenu && viewport) {
+    viewport.addEventListener('contextmenu', handleViewportContextMenu);
+    viewport.addEventListener('pointerdown', handleViewportPointerDownForMenu);
+    viewport.addEventListener('pointermove', handleViewportPointerMoveForMenu);
+    viewport.addEventListener('pointerup', cancelLongPress);
+    viewport.addEventListener('pointercancel', cancelLongPress);
+    viewport.addEventListener('click', handleViewportClickCapture, true);
+  }
+  // ── End right-click menu ───────────────────────────────────────────────
+
   inputManager.on('select_cell', ({ source, position }) => {
     if ((source === 'keyboard' || source === 'touch') && activateHighlightedInteraction(source)) {
       return;
@@ -1567,7 +1868,7 @@ function bindUI({
       return;
     }
 
-    const activeReadOnlySheet = pauseContainer?.querySelector('#season-journal-sheet, #story-log-sheet, #bug-reports-sheet');
+    const activeReadOnlySheet = panelContainer?.querySelector('#season-journal-sheet, #story-log-sheet, #bug-reports-sheet');
     if (event?.key === 'Escape' && activeReadOnlySheet) {
       payload.preventDefault();
       activeReadOnlySheet.querySelector('[data-close="true"]')?.click();
@@ -1825,6 +2126,19 @@ function bindUI({
   function cleanupGame() {
     destroyInit?.();
     unsubscribeState();
+    cancelLongPress();
+    clearTimeout(suppressClickTimer);
+    if (worldContextMenu) {
+      worldContextMenu.dispose();
+      if (viewport) {
+        viewport.removeEventListener('contextmenu', handleViewportContextMenu);
+        viewport.removeEventListener('pointerdown', handleViewportPointerDownForMenu);
+        viewport.removeEventListener('pointermove', handleViewportPointerMoveForMenu);
+        viewport.removeEventListener('pointerup', cancelLongPress);
+        viewport.removeEventListener('pointercancel', cancelLongPress);
+        viewport.removeEventListener('click', handleViewportClickCapture, true);
+      }
+    }
     inputManager.dispose();
     interactionSystem.dispose();
     interactionPrompt.dispose();

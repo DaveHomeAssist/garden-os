@@ -2836,6 +2836,19 @@ function getGrowthScale(phase, season) {
     return -1;
   }
 
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const groundHitScratch = new THREE.Vector3();
+
+  function raycastGround(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.ray.intersectPlane(groundPlane, groundHitScratch);
+    if (!hit) return null;
+    return { x: hit.x, z: hit.z };
+  }
+
   function getGridLayout() {
     return bed.cellMeshes.map((mesh, index) => {
       mesh.updateWorldMatrix(true, false);
@@ -3333,6 +3346,7 @@ function getGrowthScale(phase, season) {
     },
     applySeason,
     raycastCell,
+    raycastGround,
     getGridLayout,
     projectWorldPosition,
     updatePointer,
