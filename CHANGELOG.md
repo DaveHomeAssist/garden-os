@@ -9,6 +9,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 2026-03-11 are reconstructed and marked (reconstructed).
 
 ## [Unreleased]
+
+## [Unversioned - 2026-08-09] Story Mode field-kit design language
 ### Added
 - Added a versioned design-audit deployment prompt with explicit run controls,
   a four-part source-mapping gate, and measurable release acceptance checks.
