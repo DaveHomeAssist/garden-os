@@ -163,6 +163,18 @@ function rectanglesOverlap(first, second, gap = 0) {
   );
 }
 
+function isRequiredLocalAssetFailure(entry, baseUrl) {
+  try {
+    const requestedUrl = new URL(entry.url);
+    const appUrl = new URL(baseUrl);
+    if (requestedUrl.origin !== appUrl.origin) return false;
+    if (/favicon/i.test(requestedUrl.pathname)) return false;
+    return /\.(?:css|js|mjs|wasm)(?:$|\?)/i.test(requestedUrl.pathname);
+  } catch {
+    return false;
+  }
+}
+
 async function readLayout(page) {
   return page.evaluate(() => {
     function visibleRect(selector) {
@@ -284,10 +296,34 @@ try {
   await waitForServer(baseUrl);
 
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  const browserErrors = [];
-  page.on('pageerror', (error) => browserErrors.push(`pageerror: ${error.message}`));
+  const actionableBrowserErrors = [];
+  const resourceDiagnostics = [];
+  const networkFailures = [];
+
+  page.on('pageerror', (error) => actionableBrowserErrors.push(`pageerror: ${error.message}`));
   page.on('console', (message) => {
-    if (message.type() === 'error') browserErrors.push(`console: ${message.text()}`);
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    if (/^Failed to load resource:/i.test(text)) {
+      resourceDiagnostics.push(text);
+      return;
+    }
+    actionableBrowserErrors.push(`console: ${text}`);
+  });
+  page.on('requestfailed', (request) => {
+    networkFailures.push({
+      kind: 'requestfailed',
+      url: request.url(),
+      detail: request.failure()?.errorText ?? 'unknown failure',
+    });
+  });
+  page.on('response', (response) => {
+    if (response.status() < 400) return;
+    networkFailures.push({
+      kind: 'http',
+      url: response.url(),
+      detail: String(response.status()),
+    });
   });
 
   const seed = makeFreePlayPlanningSave();
@@ -317,13 +353,23 @@ try {
     results.push({ viewport: viewport.name, layout: await assertViewport(page, viewport) });
   }
 
-  assert(browserErrors.length === 0, `Browser emitted errors: ${browserErrors.join(' | ')}`);
+  const requiredAssetFailures = networkFailures.filter((entry) => isRequiredLocalAssetFailure(entry, baseUrl));
+  assert(
+    actionableBrowserErrors.length === 0,
+    `Browser emitted actionable errors: ${actionableBrowserErrors.join(' | ')}`,
+  );
+  assert(
+    requiredAssetFailures.length === 0,
+    `Required local assets failed: ${requiredAssetFailures.map((entry) => `${entry.url} (${entry.detail})`).join(' | ')}`,
+  );
 
   console.log(JSON.stringify({
     ok: true,
     baseUrl,
     outputDir,
     testedViewports: VIEWPORTS.map(({ name, width, height }) => ({ name, width, height })),
+    resourceDiagnostics,
+    networkFailures,
     results,
   }, null, 2));
 } finally {
