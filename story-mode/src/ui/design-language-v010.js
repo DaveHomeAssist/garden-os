@@ -5,6 +5,12 @@ function setAttributeIfChanged(element, name, value) {
   element.setAttribute(name, value);
 }
 
+function findById(root, id) {
+  return root.getElementById?.(id)
+    ?? root.querySelector?.(`#${id}`)
+    ?? document.getElementById(id);
+}
+
 function normalizeHelperCopy(helper) {
   if (!helper) return;
   const text = helper.textContent?.trim() ?? '';
@@ -43,33 +49,77 @@ function syncCalendar(calendar) {
   }
 }
 
+function resolveSurfaces(root) {
+  return {
+    helper: findById(root, 'phase-helper'),
+    fabAdvance: findById(root, 'fab-advance'),
+    hudAction: findById(root, 'hud-action'),
+    seasonCalendar: findById(root, 'season-calendar'),
+  };
+}
+
 function syncDynamicSurfaces(root = document) {
   const body = root.body ?? document.body;
-  if (!body) return;
+  if (!body) return resolveSurfaces(root);
   setAttributeIfChanged(body, 'data-design-language', VERSION);
 
-  const helper = root.getElementById?.('phase-helper') ?? document.getElementById('phase-helper');
-  normalizeHelperCopy(helper);
-  syncPrimaryAction(root.getElementById?.('fab-advance') ?? document.getElementById('fab-advance'), helper);
-  syncPrimaryAction(root.getElementById?.('hud-action') ?? document.getElementById('hud-action'), helper);
-  syncCalendar(root.getElementById?.('season-calendar') ?? document.getElementById('season-calendar'));
+  const surfaces = resolveSurfaces(root);
+  normalizeHelperCopy(surfaces.helper);
+  syncPrimaryAction(surfaces.fabAdvance, surfaces.helper);
+  syncPrimaryAction(surfaces.hudAction, surfaces.helper);
+  syncCalendar(surfaces.seasonCalendar);
+  return surfaces;
 }
 
 export function installDesignLanguageV010(root = document) {
-  syncDynamicSurfaces(root);
+  const targetObservers = new Map();
+  const body = root.body ?? document.body;
+  const mount = findById(root, 'app') ?? body;
 
-  const observer = new MutationObserver(() => syncDynamicSurfaces(root));
-  observer.observe(root.body ?? document.body, {
-    subtree: true,
-    childList: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ['class', 'hidden', 'aria-hidden', 'data-story-screen', 'data-phase'],
-  });
+  function watchTarget(key, element) {
+    const current = targetObservers.get(key);
+    if (current?.element === element) return;
+    current?.observer.disconnect();
+    targetObservers.delete(key);
+    if (!element) return;
+
+    const observer = new MutationObserver(syncAndBind);
+    observer.observe(element, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+    targetObservers.set(key, { element, observer });
+  }
+
+  function syncAndBind() {
+    const surfaces = syncDynamicSurfaces(root);
+    watchTarget('helper', surfaces.helper);
+    watchTarget('fabAdvance', surfaces.fabAdvance);
+    watchTarget('hudAction', surfaces.hudAction);
+    watchTarget('seasonCalendar', surfaces.seasonCalendar);
+  }
+
+  syncAndBind();
+
+  // Only watch top-level app remounts. Runtime label changes are handled by
+  // the four targeted observers above, avoiding a whole-document observer on
+  // every scene, inventory, cooldown, and animation mutation.
+  const mountObserver = new MutationObserver(syncAndBind);
+  if (mount) {
+    mountObserver.observe(mount, {
+      childList: true,
+      subtree: false,
+    });
+  }
 
   return {
     version: VERSION,
-    sync: () => syncDynamicSurfaces(root),
-    dispose: () => observer.disconnect(),
+    sync: syncAndBind,
+    dispose: () => {
+      mountObserver.disconnect();
+      targetObservers.forEach(({ observer }) => observer.disconnect());
+      targetObservers.clear();
+    },
   };
 }
