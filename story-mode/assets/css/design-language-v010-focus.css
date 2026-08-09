@@ -19,3 +19,10 @@ body[data-design-language="v0.10"] #fab-advance:focus {
     transition: opacity 150ms ease !important;
   }
 }
+
+@media (max-width: 430px) {
+  body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud {
+    width: min(230px, calc(100vw - 160px)) !important;
+    max-width: calc(100vw - 160px) !important;
+  }
+}
