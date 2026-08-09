@@ -20,6 +20,8 @@ import { createPlayerController } from '../game/player-controller.js';
 import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
 import { createWorldContextMenu } from './context-menu.js';
+import { createWalkAutopilot, nearestPointOutsideBlockers } from '../game/walk-autopilot.js';
+import { DEFAULT_BLOCKERS } from '../engine/simulation-core.js';
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
 import { createTouchControls } from '../input/touch-controls.js';
@@ -522,65 +524,23 @@ function bindUI({
   }
 
   // RuneScape-style walk-then-act: a queued destination the player auto-walks
-  // to, with an optional action fired on arrival. Manual input always wins.
-  let walkTarget = null;
+  // to, with an optional action fired on arrival. Manual input always wins;
+  // arrivals re-validate zone and a caller-supplied predicate before acting.
+  const walkAutopilot = createWalkAutopilot({
+    getPosition: () => playerController.getState()?.position,
+    getZoneId: () => getCurrentZoneId(),
+    onUnreachable: () => showToast("You can't reach that.", 1500, 'info'),
+  });
 
   function clearWalkTarget() {
-    walkTarget = null;
+    walkAutopilot.clear();
   }
 
-  function queueWalkAction({ x, z, radius = 0.6, onArrive = null }) {
-    const zoneAtQueue = getCurrentZoneId();
-    const arrive = onArrive
-      ? () => {
-        if (getCurrentZoneId() === zoneAtQueue) onArrive();
-      }
-      : null;
-    const position = playerController.getState()?.position;
-    if (position && Math.hypot(x - position.x, z - position.z) <= radius) {
-      arrive?.();
-      return;
-    }
-    walkTarget = {
-      x,
-      z,
-      radius,
-      onArrive: arrive,
-      bestDistance: Infinity,
-      lastProgressAt: Date.now(),
-    };
+  function queueWalkAction(options) {
+    walkAutopilot.queue(options);
   }
 
-  function getAutoWalkVector() {
-    if (!walkTarget) return { x: 0, z: 0 };
-    const position = playerController.getState()?.position;
-    if (!position) return { x: 0, z: 0 };
-
-    const dx = walkTarget.x - position.x;
-    const dz = walkTarget.z - position.z;
-    const distance = Math.hypot(dx, dz);
-    if (distance <= walkTarget.radius) {
-      const arrived = walkTarget;
-      clearWalkTarget();
-      arrived.onArrive?.();
-      return { x: 0, z: 0 };
-    }
-
-    const now = Date.now();
-    if (distance < walkTarget.bestDistance - 0.02) {
-      walkTarget.bestDistance = distance;
-      walkTarget.lastProgressAt = now;
-    } else if (now - walkTarget.lastProgressAt > 1200) {
-      const hadAction = Boolean(walkTarget.onArrive);
-      clearWalkTarget();
-      if (hadAction) showToast("You can't reach that.", 1500, 'info');
-      return { x: 0, z: 0 };
-    }
-
-    return { x: dx / distance, z: dz / distance };
-  }
-
-  function getMovementVector() {
+  function getMovementVector(dt = 1 / 60) {
     let x = 0;
     let z = 0;
     if (inputManager.isKeyHeld('a') || inputManager.isKeyHeld('ArrowLeft')) x -= 1;
@@ -599,7 +559,7 @@ function bindUI({
     }
 
     if (x === 0 && z === 0) {
-      return getAutoWalkVector();
+      return walkAutopilot.getVector(dt);
     }
     clearWalkTarget();
 
@@ -1607,7 +1567,31 @@ function bindUI({
   }
 
   // ── RuneScape-style right-click menu (Free Play only) ──────────────────
-  const worldContextMenu = state.campaign?.sandbox ? createWorldContextMenu() : null;
+  // Bed cells sit inside the collision blocker, so the player can never stand
+  // on one. The walk targets the cell center anyway: south-side rows come
+  // within the 1.5 arrival radius directly, and for far rows the wall pins
+  // the player straight in front of the cell (direction turns perpendicular
+  // to the wall, sliding stops), the stall timer fires, and the reach
+  // fallback performs the action from the bed edge — deterministic, unlike
+  // routing through the 0.04-wide side corridors the zone bounds leave
+  // beside the bed. Reach 2.75 covers the farthest row (2.35) with margin.
+  const WALK_CLEARANCE = 0.25; // player radius 0.18 + margin
+  const BED_CELL_ARRIVE_RADIUS = 1.5;
+  const BED_CELL_REACH = 2.75;
+
+  function standableWalkPoint(x, z) {
+    return nearestPointOutsideBlockers(x, z, DEFAULT_BLOCKERS, WALK_CLEARANCE);
+  }
+
+  const worldContextMenu = state.campaign?.sandbox
+    ? createWorldContextMenu({
+      onOutsideDismiss: (event) => {
+        if (event?.target && viewport?.contains(event.target)) {
+          armViewportClickSuppression(event);
+        }
+      },
+    })
+    : null;
 
   function describeCellForExamine(cellIndex) {
     const cell = state.season.grid[cellIndex];
@@ -1637,16 +1621,23 @@ function bindUI({
     const cellPosition = layout?.[cellIndex] ?? null;
     const cropName = cell.cropId ? (getCropById(cell.cropId)?.name ?? 'crop') : null;
 
+    // Deferred actions must still be legal when the walk ends, not just when
+    // the menu was built — the phase can advance mid-walk.
+    const phaseAtBuild = state.season.phase;
+    const cellActionStillValid = () => state.season.phase === phaseAtBuild;
+
     const walkThenRun = (action) => {
       if (!cellPosition) {
-        action();
+        if (cellActionStillValid()) action();
         return;
       }
       queueWalkAction({
         x: cellPosition.x,
         z: cellPosition.z,
-        radius: 1.05,
+        radius: BED_CELL_ARRIVE_RADIUS,
+        reachDistance: BED_CELL_REACH,
         onArrive: action,
+        stillValid: cellActionStillValid,
       });
     };
     const walkThenApplyTool = (toolId) => walkThenRun(() => {
@@ -1686,6 +1677,7 @@ function bindUI({
           verb: 'Remove',
           target: cropName,
           onSelect: () => walkThenRun(() => {
+            if (!state.season.grid[cellIndex]?.cropId) return;
             dispatch({ type: Actions.REMOVE_CROP, payload: { cellIndex } });
             showToast('Crop removed', 1400);
             updateHUD();
@@ -1738,26 +1730,34 @@ function bindUI({
       if (cellIndex >= 0) options.push(...buildCellMenuOptions(cellIndex));
     }
 
-    findInteractablesNearScreenPoint(clientX, clientY).slice(0, 4).forEach(({ entry }) => {
-      options.push({
-        verb: interactionSystem.resolveLabel(entry),
-        onSelect: () => {
-          queueWalkAction({
-            x: entry.position.x,
-            z: entry.position.z,
-            radius: Math.max(entry.radius ?? 0.6, 0.55),
-            onArrive: () => entry.onInteract?.({ source: 'context-menu', store, target: entry }),
-          });
-        },
+    // Match the proximity-prompt path's gating: interactables are only
+    // offered during PLANNING (isProximityInteractionEnabled), so the menu
+    // must not open travel/forage routes the walk-up prompt refuses.
+    if (state.season.phase === PHASES.PLANNING) {
+      findInteractablesNearScreenPoint(clientX, clientY).slice(0, 4).forEach(({ entry }) => {
+        options.push({
+          verb: interactionSystem.resolveLabel(entry),
+          onSelect: () => {
+            queueWalkAction({
+              x: entry.position.x,
+              z: entry.position.z,
+              radius: Math.max(entry.radius ?? 0.6, 0.55),
+              onArrive: () => entry.onInteract?.({ source: 'context-menu', store, target: entry }),
+            });
+          },
+        });
       });
-    });
+    }
 
     if (!inZone) {
       const ground = scene.raycastGround?.(clientX, clientY);
       if (ground) {
+        // Clicks onto the bed (or any blocker) walk to its edge instead of
+        // grinding against the wall until the stall timeout fires.
+        const walkable = standableWalkPoint(ground.x, ground.z);
         options.push({
           verb: 'Walk here',
-          onSelect: () => queueWalkAction({ x: ground.x, z: ground.z, radius: 0.12 }),
+          onSelect: () => queueWalkAction({ x: walkable.x, z: walkable.z, radius: 0.12 }),
         });
       }
     }
@@ -1778,24 +1778,32 @@ function bindUI({
   // Touch: long-press opens the same menu (500ms hold, cancelled by drift).
   let longPressState = null;
   let suppressNextViewportClick = false;
-  let suppressClickTimer = null;
+  let suppressionArmingEvent = null;
 
-  function armViewportClickSuppression() {
+  // One-shot, event-anchored (not timer-based): the flag survives until the
+  // armed gesture's click arrives, or until a NEW pointerdown proves that
+  // click will never reach the viewport. A held long-press can no longer
+  // outlive a timer window and leak its trailing click into the game.
+  function armViewportClickSuppression(event = null) {
     suppressNextViewportClick = true;
-    clearTimeout(suppressClickTimer);
-    suppressClickTimer = setTimeout(() => {
-      suppressNextViewportClick = false;
-    }, 700);
+    suppressionArmingEvent = event;
   }
 
-  // Capture-phase: the click that trails a long-press (implicit pointer
-  // capture routes it to the viewport) must not reach the select handlers.
+  // Capture-phase: the click that trails a long-press or a menu-dismissing
+  // pointerdown (implicit pointer capture routes it to the viewport) must
+  // not reach the select handlers.
   function handleViewportClickCapture(event) {
     if (!suppressNextViewportClick) return;
     suppressNextViewportClick = false;
-    clearTimeout(suppressClickTimer);
+    suppressionArmingEvent = null;
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  function handleViewportPointerDownCapture(event) {
+    if (!suppressNextViewportClick || event === suppressionArmingEvent) return;
+    suppressNextViewportClick = false;
+    suppressionArmingEvent = null;
   }
 
   function cancelLongPress() {
@@ -1815,7 +1823,7 @@ function bindUI({
       timer: setTimeout(() => {
         longPressState = null;
         if (openWorldContextMenu(clientX, clientY)) {
-          armViewportClickSuppression();
+          armViewportClickSuppression(null);
         }
       }, 500),
     };
@@ -1831,11 +1839,24 @@ function bindUI({
   if (worldContextMenu && viewport) {
     viewport.addEventListener('contextmenu', handleViewportContextMenu);
     viewport.addEventListener('pointerdown', handleViewportPointerDownForMenu);
+    viewport.addEventListener('pointerdown', handleViewportPointerDownCapture, true);
     viewport.addEventListener('pointermove', handleViewportPointerMoveForMenu);
     viewport.addEventListener('pointerup', cancelLongPress);
     viewport.addEventListener('pointercancel', cancelLongPress);
     viewport.addEventListener('click', handleViewportClickCapture, true);
   }
+
+  // Zone changes (both travelToZone and exit-trigger transitions dispatch
+  // ZONE_CHANGED) and phase advances invalidate any open menu and queued
+  // walk — their options and destinations were built for the old context.
+  const unsubscribeMenuInvalidation = store.subscribe((nextState, action) => {
+    if (action?.type === Actions.ZONE_CHANGED) {
+      clearWalkTarget();
+      worldContextMenu?.close();
+    } else if (action?.type === Actions.ADVANCE_PHASE) {
+      worldContextMenu?.close();
+    }
+  });
   // ── End right-click menu ───────────────────────────────────────────────
 
   inputManager.on('select_cell', ({ source, position }) => {
@@ -2028,7 +2049,7 @@ function bindUI({
       touchStick.setEnabled(movementEnabled);
       playerController.setEnabled(movementEnabled);
       simulationWorker.setEnabled(movementEnabled);
-      const movementVector = movementEnabled ? getMovementVector() : null;
+      const movementVector = movementEnabled ? getMovementVector(dt) : null;
       simulationWorker.setInput(movementVector);
       const playerState = simulationWorker.available
         ? (simulationWorker.getSnapshot() ?? playerController.getState())
@@ -2127,12 +2148,13 @@ function bindUI({
     destroyInit?.();
     unsubscribeState();
     cancelLongPress();
-    clearTimeout(suppressClickTimer);
+    unsubscribeMenuInvalidation();
     if (worldContextMenu) {
       worldContextMenu.dispose();
       if (viewport) {
         viewport.removeEventListener('contextmenu', handleViewportContextMenu);
         viewport.removeEventListener('pointerdown', handleViewportPointerDownForMenu);
+        viewport.removeEventListener('pointerdown', handleViewportPointerDownCapture, true);
         viewport.removeEventListener('pointermove', handleViewportPointerMoveForMenu);
         viewport.removeEventListener('pointerup', cancelLongPress);
         viewport.removeEventListener('pointercancel', cancelLongPress);

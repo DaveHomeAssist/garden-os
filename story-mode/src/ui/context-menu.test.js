@@ -72,4 +72,64 @@ describe('createWorldContextMenu', () => {
 
     expect(menu.isOpen()).toBe(false);
   });
+
+  it('consumes the Escape keystroke so game key bindings never see it', () => {
+    menu = createWorldContextMenu();
+    menu.open({ x: 50, y: 50, options: [{ verb: 'Cancel', onSelect: vi.fn() }] });
+
+    const documentSpy = vi.fn();
+    document.addEventListener('keydown', documentSpy);
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    window.dispatchEvent(escape);
+    document.removeEventListener('keydown', documentSpy);
+
+    expect(menu.isOpen()).toBe(false);
+    expect(escape.defaultPrevented).toBe(true);
+    expect(documentSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports outside-pointerdown dismissals so the host can suppress the click', () => {
+    const onOutsideDismiss = vi.fn();
+    menu = createWorldContextMenu({ onOutsideDismiss });
+    menu.open({ x: 50, y: 50, options: [{ verb: 'Cancel', onSelect: vi.fn() }] });
+
+    // Pointerdown inside the menu: stays open, no dismissal callback.
+    menu.element.querySelector('button').dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true }),
+    );
+    expect(menu.isOpen()).toBe(true);
+    expect(onOutsideDismiss).not.toHaveBeenCalled();
+
+    // Pointerdown outside: closes and reports the event.
+    const outside = new MouseEvent('pointerdown', { bubbles: true });
+    document.body.dispatchEvent(outside);
+    expect(menu.isOpen()).toBe(false);
+    expect(onOutsideDismiss).toHaveBeenCalledTimes(1);
+    expect(onOutsideDismiss).toHaveBeenCalledWith(outside);
+
+    // Escape dismissal must NOT trigger the pointer suppression path.
+    menu.open({ x: 50, y: 50, options: [{ verb: 'Cancel', onSelect: vi.fn() }] });
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(onOutsideDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('measures its size from a reset position on reopen (no stale-left squeeze)', () => {
+    menu = createWorldContextMenu();
+    // Emulate CSS shrink-to-fit: reported width depends on the left offset at
+    // measure time, exactly the mechanism behind the stale-left bug.
+    Object.defineProperty(menu.element, 'offsetWidth', {
+      get() { return parseInt(this.style.left, 10) > 800 ? 170 : 240; },
+    });
+    Object.defineProperty(menu.element, 'offsetHeight', {
+      get() { return 120; },
+    });
+
+    const options = () => [{ verb: 'Cancel', onSelect: vi.fn() }];
+    menu.open({ x: 1000, y: 100, options: options() });
+    const firstLeft = menu.element.style.left;
+    menu.close();
+
+    menu.open({ x: 1000, y: 100, options: options() });
+    expect(menu.element.style.left).toBe(firstLeft);
+  });
 });

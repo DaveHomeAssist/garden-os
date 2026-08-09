@@ -50,7 +50,7 @@ function applyOptionStyles(button, disabled) {
   button.style.cursor = disabled ? 'default' : 'pointer';
 }
 
-export function createWorldContextMenu() {
+export function createWorldContextMenu({ onOutsideDismiss = null } = {}) {
   const root = document.createElement('div');
   root.className = 'world-context-menu';
   applyRootStyles(root);
@@ -84,11 +84,20 @@ export function createWorldContextMenu() {
   }
 
   function handleWindowPointerDown(event) {
-    if (!root.contains(event.target)) close();
+    if (root.contains(event.target)) return;
+    close();
+    // Let the host suppress the click this gesture will produce — dismissing
+    // the menu must never double as a game action on whatever was clicked.
+    onOutsideDismiss?.(event);
   }
 
   function handleWindowKeyDown(event) {
-    if (event.key === 'Escape' || event.key === 'Esc') close();
+    if (event.key !== 'Escape' && event.key !== 'Esc') return;
+    // Consume the keystroke: Escape here means "dismiss the menu", not
+    // "toggle the pause menu" — stop it before the game's key bindings.
+    event.preventDefault();
+    event.stopPropagation();
+    close();
   }
 
   function handleWindowDismiss() {
@@ -163,6 +172,10 @@ export function createWorldContextMenu() {
 
     root.style.display = 'block';
     root.style.visibility = 'hidden';
+    // Reset position before measuring: a stale left from a previous open near
+    // the screen edge squeezes shrink-to-fit width and wraps the rows.
+    root.style.left = '0px';
+    root.style.top = '0px';
     if (!root.isConnected) document.body.appendChild(root);
 
     // Center the header under the pointer, clamped to the window.
