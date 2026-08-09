@@ -1,0 +1,447 @@
+/* Garden OS Story Mode design-language refinement v0.10 */
+
+body[data-design-language="v0.10"] {
+  --gos-ui-surface: rgba(33, 22, 15, 0.88);
+  --gos-ui-surface-strong: #21160f;
+  --gos-ui-surface-soft: rgba(92, 61, 30, 0.72);
+  --gos-ui-border: rgba(247, 242, 234, 0.18);
+  --gos-ui-border-strong: rgba(232, 200, 74, 0.58);
+  --gos-ui-text: #f7f2ea;
+  --gos-ui-text-muted: #d8cab8;
+  --gos-ui-accent: #e8c84a;
+  --gos-ui-accent-soft: #f4dfa1;
+  --gos-ui-accent-ink: #1e110a;
+  --gos-ui-success: #9ac88f;
+  --gos-ui-focus: #f5d96b;
+  --gos-ui-radius-sm: 8px;
+  --gos-ui-radius-md: 12px;
+  --gos-ui-radius-lg: 16px;
+  --gos-ui-safe-inline: clamp(12px, 1.6vw, 34px);
+  --gos-ui-safe-block: clamp(10px, 1.4vh, 18px);
+  --gos-ui-shadow: 0 14px 36px rgba(12, 8, 5, 0.34);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #hud {
+  padding: var(--gos-ui-safe-block) var(--gos-ui-safe-inline);
+  background:
+    linear-gradient(180deg, rgba(22, 14, 9, 0.9) 0%, rgba(22, 14, 9, 0.5) 68%, transparent 100%);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-left,
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-right {
+  min-height: 48px;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--gos-ui-border);
+  border-radius: var(--gos-ui-radius-md);
+  background: var(--gos-ui-surface);
+  box-shadow: var(--gos-ui-shadow);
+  backdrop-filter: blur(8px);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-pause-btn {
+  width: 44px;
+  height: 44px;
+  border-color: var(--gos-ui-border);
+  color: var(--gos-ui-text-muted);
+  background: rgba(247, 242, 234, 0.06);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-pause-btn:hover {
+  color: var(--gos-ui-text);
+  border-color: var(--gos-ui-border-strong);
+  background: rgba(232, 200, 74, 0.12);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-pill {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: var(--gos-ui-radius-sm);
+  border-color: var(--gos-ui-border);
+  background: rgba(26, 17, 11, 0.78);
+  color: var(--gos-ui-accent-soft);
+  font-size: clamp(10px, 0.75vw, 12px);
+  letter-spacing: 0.075em;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-pill.chapter {
+  color: var(--gos-ui-text);
+  border-color: rgba(247, 242, 234, 0.24);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-pill.season-icon {
+  min-width: 34px;
+  justify-content: center;
+  padding: 6px;
+  background: rgba(247, 242, 234, 0.06);
+  border: 1px solid var(--gos-ui-border);
+}
+
+/* One dominant progression action. The bottom action remains the single CTA. */
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-action-btn.is-visible {
+  display: none;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-score {
+  min-width: 34px;
+  font-size: clamp(18px, 1.45vw, 24px);
+  color: var(--gos-ui-accent-soft);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .hud-score-label {
+  font-size: 9px;
+  color: var(--gos-ui-text-muted);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #phase-dots {
+  top: clamp(64px, 8vh, 78px);
+  gap: 7px;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .phase-dot {
+  width: 8px;
+  height: 8px;
+  border-color: rgba(247, 242, 234, 0.24);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper {
+  top: clamp(88px, 11vh, 110px);
+  width: max-content;
+  max-width: min(680px, calc(100vw - 430px));
+  min-height: 48px;
+  padding: 10px 16px 10px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--gos-ui-radius-md);
+  border: 1px solid var(--gos-ui-border-strong);
+  background:
+    linear-gradient(90deg, rgba(232, 200, 74, 0.1), transparent 26%),
+    var(--gos-ui-surface-strong);
+  box-shadow: var(--gos-ui-shadow);
+  backdrop-filter: blur(8px);
+  color: var(--gos-ui-text);
+  font-size: clamp(13px, 0.9vw, 15px);
+  line-height: 1.42;
+  text-align: left;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper::before {
+  content: "Current task";
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 12px;
+  border-right: 1px solid rgba(232, 200, 74, 0.28);
+  color: var(--gos-ui-accent-soft);
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #season-calendar {
+  top: calc(74px + env(safe-area-inset-top, 0px)) !important;
+  left: var(--gos-ui-safe-inline) !important;
+  min-width: 166px !important;
+  padding: 13px 14px !important;
+  border: 1px solid var(--gos-ui-border) !important;
+  border-radius: var(--gos-ui-radius-md) !important;
+  background: var(--gos-ui-surface) !important;
+  box-shadow: var(--gos-ui-shadow) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-month {
+  color: var(--gos-ui-text) !important;
+  font-size: 17px !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-chapter-title,
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-year,
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-beat-label {
+  color: var(--gos-ui-text-muted) !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-chapter-title {
+  font-size: 12px !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-year,
+body[data-design-language="v0.10"][data-story-screen="play"] #cal-beat-label {
+  font-size: 10px !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance {
+  right: var(--gos-ui-safe-inline);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  min-width: 148px;
+  min-height: 58px;
+  padding: 17px 22px 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(244, 223, 161, 0.88);
+  border-radius: var(--gos-ui-radius-md);
+  background:
+    linear-gradient(180deg, #f4dfa1 0%, #e8c84a 100%);
+  color: var(--gos-ui-accent-ink);
+  box-shadow:
+    0 12px 28px rgba(12, 8, 5, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  text-transform: none;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance::before {
+  content: "Next step";
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(30, 17, 10, 0.72);
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance:hover {
+  border-color: #fff0b8;
+  background: linear-gradient(180deg, #fae9b8 0%, #edcf58 100%);
+  transform: translateY(-2px);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance:active {
+  transform: translateY(0) scale(0.98);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance:disabled,
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-plant:disabled,
+body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot:disabled,
+body[data-design-language="v0.10"][data-story-screen="play"] .world-context-menu button:disabled {
+  opacity: 0.46 !important;
+  filter: saturate(0.45);
+  cursor: not-allowed !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-plant,
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-backpack,
+body[data-design-language="v0.10"][data-story-screen="play"] #fab-bug {
+  min-width: 48px;
+  min-height: 48px;
+  border-color: var(--gos-ui-border);
+  background: var(--gos-ui-surface);
+  color: var(--gos-ui-text);
+  box-shadow: var(--gos-ui-shadow);
+  backdrop-filter: blur(8px);
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud {
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--gos-ui-border) !important;
+  border-radius: var(--gos-ui-radius-md) !important;
+  background: var(--gos-ui-surface) !important;
+  box-shadow: var(--gos-ui-shadow) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot {
+  width: 48px !important;
+  height: 48px !important;
+  border: 1px solid var(--gos-ui-border) !important;
+  border-radius: var(--gos-ui-radius-sm) !important;
+  background: rgba(92, 61, 30, 0.82) !important;
+  color: var(--gos-ui-text) !important;
+  transform: none !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot:hover {
+  border-color: var(--gos-ui-border-strong) !important;
+  background: rgba(112, 74, 35, 0.94) !important;
+  transform: translateY(-1px) !important;
+}
+
+body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot[aria-pressed="true"] {
+  border: 2px solid var(--gos-ui-accent) !important;
+  background: rgba(92, 61, 30, 1) !important;
+  box-shadow:
+    0 0 0 3px rgba(232, 200, 74, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+body[data-design-language="v0.10"] .world-context-menu {
+  min-width: 210px !important;
+  max-width: min(320px, calc(100vw - 16px)) !important;
+  border: 1px solid var(--gos-ui-border-strong) !important;
+  border-radius: var(--gos-ui-radius-md) !important;
+  background: var(--gos-ui-surface-strong) !important;
+  box-shadow: 0 18px 44px rgba(12, 8, 5, 0.48) !important;
+  font-size: 13px !important;
+}
+
+body[data-design-language="v0.10"] .world-context-menu > div:first-child {
+  padding: 9px 12px !important;
+  border-bottom: 1px solid var(--gos-ui-border) !important;
+  background: var(--gos-ui-surface-soft) !important;
+  color: var(--gos-ui-accent-soft) !important;
+  font-size: 10px !important;
+  font-weight: 700;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase;
+}
+
+body[data-design-language="v0.10"] .world-context-menu button {
+  min-height: 42px;
+  padding: 10px 12px !important;
+  color: var(--gos-ui-text);
+}
+
+body[data-design-language="v0.10"] .world-context-menu button:hover:not(:disabled) {
+  background: rgba(232, 200, 74, 0.14) !important;
+}
+
+body[data-design-language="v0.10"] button:focus-visible,
+body[data-design-language="v0.10"] [role="button"]:focus-visible,
+body[data-design-language="v0.10"] a:focus-visible {
+  outline: 3px solid var(--gos-ui-focus) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px rgba(30, 17, 10, 0.9) !important;
+}
+
+@media (min-width: 1600px) {
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper {
+    max-width: 720px;
+    font-size: 15px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #season-calendar {
+    min-width: 178px !important;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot {
+    width: 52px !important;
+    height: 52px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  body[data-design-language="v0.10"] {
+    --gos-ui-safe-inline: 10px;
+    --gos-ui-safe-block: 8px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #hud {
+    align-items: flex-start;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .hud-left,
+  body[data-design-language="v0.10"][data-story-screen="play"] .hud-right {
+    min-height: 44px;
+    gap: 5px;
+    padding: 4px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .hud-pill {
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #hud-crops,
+  body[data-design-language="v0.10"][data-story-screen="play"] .hud-score-label {
+    display: none;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-dots {
+    top: 58px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #season-calendar {
+    top: calc(72px + env(safe-area-inset-top, 0px)) !important;
+    left: 10px !important;
+    min-width: 142px !important;
+    padding: 10px 11px !important;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper {
+    top: calc(166px + env(safe-area-inset-top, 0px));
+    width: calc(100vw - 20px);
+    max-width: none;
+    min-height: 44px;
+    padding: 9px 11px;
+    gap: 9px;
+    font-size: 12px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper::before {
+    padding-right: 9px;
+    font-size: 8px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud {
+    left: 10px !important;
+    right: auto !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    width: min(260px, calc(100vw - 128px));
+    max-width: calc(100vw - 128px);
+    padding: 6px !important;
+    gap: 6px !important;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    transform: none !important;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] .tool-hud__slot {
+    width: 44px !important;
+    height: 44px !important;
+    flex: 0 0 44px;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #fab-advance {
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    min-width: 104px;
+    min-height: 52px;
+    padding: 15px 14px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 430px) {
+  body[data-design-language="v0.10"][data-story-screen="play"] .hud-pill.season-icon,
+  body[data-design-language="v0.10"][data-story-screen="play"] #hud-tokens {
+    display: none !important;
+  }
+
+  body[data-design-language="v0.10"][data-story-screen="play"] #phase-helper {
+    top: calc(166px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-design-language="v0.10"] #fab-advance,
+  body[data-design-language="v0.10"] .tool-hud,
+  body[data-design-language="v0.10"] .tool-hud__slot,
+  body[data-design-language="v0.10"] #phase-helper {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}
