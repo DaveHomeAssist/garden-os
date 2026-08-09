@@ -1290,9 +1290,12 @@ function bindUI({
     if (hudScore) hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
 
     if (hudAction) {
-      const visible = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargeting.isActive() && canAdvance(state.season);
+      // #fab-advance is the primary advance affordance. #hud-action stays in the
+      // DOM as a fallback and only surfaces where the FAB is unavailable.
+      const advanceReady = gameInputEnabled && !cutsceneMachine.isActive() && !interventionTargeting.isActive() && canAdvance(state.season);
+      const visible = advanceReady && !document.getElementById('fab-advance');
       hudAction.textContent = getAdvanceLabel();
-      hudAction.disabled = !visible;
+      hudAction.disabled = !advanceReady;
       hudAction.classList.toggle('is-visible', visible);
     }
 

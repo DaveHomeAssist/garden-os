@@ -4417,3 +4417,220 @@
     }
 
     @media (prefers-reduced-motion: reduce) { .title-screen__sun, .title-cloud { animation: none; } }
+
+    /* ── Field Kit ──────────────────────────────────────────────────────
+       The month card, the advance CTA, wide-viewport tiers, and the shared
+       focus ring. The card sits in the paper family: same background stack,
+       rule, ink, and registration shadow as .hud-pill. */
+
+    .field-card {
+      position: absolute;
+      top: calc(60px + env(safe-area-inset-top, 0px));
+      left: calc(16px + env(safe-area-inset-left, 0px));
+      z-index: 10;
+      pointer-events: none;
+      min-width: 140px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--story-print-rule);
+      background:
+        var(--story-print-fiber),
+        linear-gradient(135deg, var(--story-zone-wash), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0)),
+        var(--story-print-paper);
+      color: var(--story-print-ink);
+      box-shadow: var(--story-registration-shadow);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .field-card__row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .field-card__emoji {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .field-card__month {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 1.2;
+      color: var(--story-print-ink);
+    }
+
+    .field-card__chapter {
+      font-size: 12px;
+      line-height: 1.25;
+      margin-top: 1px;
+      color: var(--story-print-ink-soft);
+    }
+
+    .field-card__year {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+      color: var(--story-print-ink-soft);
+    }
+
+    .field-card__beats {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .field-card__beat {
+      width: 32px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(79, 48, 27, 0.22);
+    }
+
+    .field-card__beat.is-filled {
+      background: rgba(var(--story-season-accent-rgb), 0.95);
+    }
+
+    .field-card__beat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+      text-transform: uppercase;
+      color: var(--story-print-ink-soft);
+    }
+
+    /* Advance CTA — solid seasonal fill so the primary action reads as one
+       object rather than a translucent pill. The fall accent is lifted to
+       #c26b2e because #b86027 only reaches 4.03:1 against the #241405 ink;
+       every other season uses the accent verbatim. */
+    body[data-season="fall"] {
+      --story-fab-advance-fill: #c26b2e;
+    }
+
+    #fab-advance {
+      background: var(--story-fab-advance-fill, var(--story-season-accent));
+      color: #241405;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      min-height: 48px;
+      font-size: 16px;
+    }
+
+    #fab-advance:disabled {
+      background: var(--story-print-paper);
+      color: var(--story-print-ink-soft);
+      border-style: dashed;
+      border-color: var(--story-print-rule);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Shared focus ring for every interactive shell control. */
+    #hud button:focus-visible,
+    #fab-advance:focus-visible,
+    #fab-plant:focus-visible,
+    #fab-backpack:focus-visible,
+    #fab-bug:focus-visible,
+    .tool-hud button:focus-visible,
+    .pause-action:focus-visible {
+      outline: 3px solid #f2d98a;
+      outline-offset: 2px;
+    }
+
+    /* ── Wide-viewport tiers ──────────────────────────────────────────── */
+
+    @media (min-width: 1600px) {
+      .hud-pill {
+        font-size: 12px;
+        padding: 6px 12px;
+      }
+
+      #hud {
+        padding: 12px 32px;
+      }
+
+      #phase-helper {
+        top: 84px;
+        max-width: min(680px, calc(100vw - 64px));
+        padding: 11px 18px;
+        font-size: 15px;
+      }
+
+      .field-card {
+        top: calc(72px + env(safe-area-inset-top, 0px));
+        left: calc(32px + env(safe-area-inset-left, 0px));
+        min-width: 168px;
+        padding: 14px 17px;
+      }
+
+      .field-card__emoji { font-size: 21px; }
+      .field-card__month { font-size: 19px; }
+      .field-card__chapter { font-size: 13px; }
+      .field-card__year { font-size: 12px; }
+      .field-card__beat-label { font-size: 11px; }
+
+      .field-card__beat {
+        width: 38px;
+        height: 5px;
+      }
+
+      #fab-advance {
+        right: 32px;
+        bottom: 32px;
+        height: 60px;
+        min-width: 72px;
+        border-radius: 30px;
+        padding: 0 24px;
+        font-size: 17px;
+      }
+    }
+
+    @media (min-width: 2100px) {
+      .hud-pill {
+        font-size: 13px;
+        padding: 7px 14px;
+      }
+
+      #hud {
+        padding: 14px 40px;
+      }
+
+      #phase-helper {
+        top: 96px;
+        max-width: min(800px, calc(100vw - 80px));
+        padding: 13px 22px;
+        font-size: 17px;
+      }
+
+      .field-card {
+        top: calc(84px + env(safe-area-inset-top, 0px));
+        left: calc(40px + env(safe-area-inset-left, 0px));
+        min-width: 196px;
+        padding: 17px 20px;
+      }
+
+      .field-card__emoji { font-size: 24px; }
+      .field-card__month { font-size: 22px; }
+      .field-card__chapter { font-size: 15px; }
+      .field-card__year { font-size: 13px; }
+      .field-card__beat-label { font-size: 12px; }
+
+      .field-card__beat {
+        width: 44px;
+        height: 6px;
+      }
+
+      #fab-advance {
+        right: 40px;
+        bottom: 40px;
+        height: 68px;
+        min-width: 84px;
+        border-radius: 34px;
+        padding: 0 28px;
+        font-size: 19px;
+      }
+    }

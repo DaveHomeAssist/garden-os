@@ -22,36 +22,23 @@ const BEAT_NAMES = ['early', 'mid', 'late'];
 export function createSeasonCalendar() {
   const el = document.createElement('div');
   el.id = 'season-calendar';
-  el.style.cssText = `
-    position:absolute;
-    top:calc(60px + env(safe-area-inset-top, 0px));
-    left:calc(16px + env(safe-area-inset-left, 0px));
-    z-index:10;
-    background:rgba(30,17,10,0.82);
-    backdrop-filter:blur(12px);
-    border:1px solid rgba(232,200,74,0.12);
-    border-radius:12px;
-    padding:12px 14px;
-    min-width:140px;
-    pointer-events:none;
-    font-family:'DM Sans',sans-serif;
-  `;
+  el.className = 'field-card';
 
   el.innerHTML = `
-    <div id="cal-season-row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-      <span id="cal-emoji" style="font-size:18px;">🌱</span>
+    <div id="cal-season-row" class="field-card__row">
+      <span id="cal-emoji" class="field-card__emoji">🌱</span>
       <div>
-        <div id="cal-month" style="font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:#f7f2ea;line-height:1.2;">March</div>
-        <div id="cal-chapter-title" style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(247,242,234,0.52);line-height:1.25;margin-top:1px;"></div>
-        <div id="cal-year" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,242,234,0.35);letter-spacing:0.08em;margin-top:2px;">Year 1 of 3</div>
+        <div id="cal-month" class="field-card__month">March</div>
+        <div id="cal-chapter-title" class="field-card__chapter"></div>
+        <div id="cal-year" class="field-card__year">Year 1 of 3</div>
       </div>
     </div>
-    <div style="display:flex;gap:4px;align-items:center;" id="cal-beats">
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(232,200,74,0.5);"></div>
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(247,242,234,0.08);"></div>
-      <div class="cal-beat" style="width:32px;height:4px;border-radius:2px;background:rgba(247,242,234,0.08);"></div>
+    <div class="field-card__beats" id="cal-beats">
+      <div class="cal-beat field-card__beat is-filled"></div>
+      <div class="cal-beat field-card__beat"></div>
+      <div class="cal-beat field-card__beat"></div>
     </div>
-    <div id="cal-beat-label" style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(247,242,234,0.25);letter-spacing:0.08em;margin-top:4px;text-transform:uppercase;">Early Season</div>
+    <div id="cal-beat-label" class="field-card__beat-label">Early Season</div>
   `;
 
   return el;
@@ -86,16 +73,11 @@ export function updateSeasonCalendar(state) {
     chapterTitleEl.textContent = getChapterTitle(chapter);
   }
 
-  // Beat progress bars
+  // Beat progress bars — fill state is styled by .field-card__beat.is-filled
+  const beatPhase = ['EARLY_SEASON','MID_SEASON','LATE_SEASON','HARVEST','TRANSITION'].includes(phase);
   const beats = el.querySelectorAll('.cal-beat');
   beats.forEach((b, i) => {
-    if (i <= beatIdx && ['EARLY_SEASON','MID_SEASON','LATE_SEASON','HARVEST','TRANSITION'].includes(phase)) {
-      b.style.background = 'rgba(232,200,74,0.5)';
-    } else if (phase === 'PLANNING') {
-      b.style.background = 'rgba(247,242,234,0.08)';
-    } else {
-      b.style.background = 'rgba(247,242,234,0.08)';
-    }
+    b.classList.toggle('is-filled', beatPhase && i <= beatIdx);
   });
 
   // Beat label

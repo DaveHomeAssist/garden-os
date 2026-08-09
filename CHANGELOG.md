@@ -10,7 +10,13 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 ### Added
+- Added a keyboard focus ring to every Story Mode shell control, so tabbing
+  through the HUD, the field buttons, the tool bar, and the pause menu always
+  shows where you are.
 ### Changed
+- Restyled the Story Mode month card to match the rest of the paper HUD and
+  made the advance button a solid seasonal fill, with both scaling up on
+  1600 px and 2100 px displays.
 ### Fixed
 
 ## [Unversioned - 2026-08-09] Field Companion update and Free Play right-click menu
