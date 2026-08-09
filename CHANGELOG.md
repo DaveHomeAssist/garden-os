@@ -10,8 +10,15 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 ### Added
+- Added a versioned design-audit deployment prompt with explicit run controls,
+  a four-part source-mapping gate, and measurable release acceptance checks.
 ### Changed
+- Unified the Story Mode HUD, current task, season calendar, tool dock, context
+  menu, and progression action into one warmer and more legible field-kit
+  design language across desktop, ultrawide, and supported phone layouts.
 ### Fixed
+- Removed duplicate progression emphasis and aligned the planning objective
+  copy with the visible Start Season action.
 
 ## [Unversioned - 2026-08-09] Field Companion update and Free Play right-click menu
 ### Added
