@@ -314,7 +314,7 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
     const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.92 });
     const sprite = new THREE.Sprite(spriteMat);
     sprite.scale.set(0.78, 0.195, 1);
-    sprite.position.set(markerX - 0.48 - (row * 0.22), FRAME_HEIGHT * 0.62, z);
+    sprite.position.set(markerX - 0.48, FRAME_HEIGHT * 0.62, z);
     group.add(sprite);
     labelSprites.push(sprite);
   }
