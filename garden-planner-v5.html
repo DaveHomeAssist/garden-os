@@ -399,7 +399,7 @@ function suitabilityCellMap(suitability) {
 // Score band → color, shared by the cell bar, the header chip, and the panel.
 function scoreBand(total) {
   if (total == null) return { label: '--', glyph: '?', color: '#9a8f7d', borderStyle: 'solid', pattern: 'none' };
-  if (total >= 7.5) return { label: 'Great', glyph: '✓', color: '#4b8b3b', borderStyle: 'solid', pattern: 'none' };
+  if (total >= 7.5) return { label: 'Great', glyph: '+', color: '#4b8b3b', borderStyle: 'solid', pattern: 'none' };
   if (total >= 5) return {
     label: 'OK', glyph: '≈', color: '#8a6508', borderStyle: 'solid',
     pattern: 'repeating-linear-gradient(135deg, transparent 0 5px, rgba(58,37,16,.12) 5px 7px)',
