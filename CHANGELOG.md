@@ -9,6 +9,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 2026-03-11 are reconstructed and marked (reconstructed).
 
 ## [Unreleased]
+### Fixed
+- Replaced U+2713 check mark glyph in planner score chip with ASCII '+' per brand-rule no-Unicode policy.
 
 ## [Unversioned - 2026-08-09] Story Mode field-kit design language
 ### Added
