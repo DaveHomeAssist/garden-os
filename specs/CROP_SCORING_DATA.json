@@ -1,8 +1,8 @@
 {
   "$schema": "garden-os-crop-scoring-v2",
   "version": 3,
-  "description": "Definitive crop roster and scoring data for Garden OS. 50 crops, deterministic scoring. Same inputs = same outputs.",
-  "lastUpdated": "2026-03-22",
+  "description": "Definitive crop roster and scoring data for Garden OS. 51 crops, deterministic scoring. Same inputs = same outputs.",
+  "lastUpdated": "2026-08-25",
 
   "recipes": {
     "herb_bowl":        { "name": "Herb Bowl",         "crops": ["basil", "dill"] },
@@ -119,6 +119,27 @@
       "recipes": [],
       "eventVulnerabilities": ["heat-sensitive", "frost-hardy"],
       "seasonalMultipliers": { "spring": 1.0, "summer": 0.3, "fall": 0.9 }
+    },
+
+    "red_lettuce": {
+      "id": "red_lettuce",
+      "name": "Red Lettuce",
+      "emoji": "🥬",
+      "short": "RLET",
+      "faction": "fast_cycles",
+      "sunMin": 3,
+      "sunIdeal": 5,
+      "support": false,
+      "shadeScore": 4,
+      "coolSeason": true,
+      "tall": false,
+      "water": 2,
+      "companions": ["carrot", "radish", "chives"],
+      "conflicts": [],
+      "chapterUnlock": 5,
+      "recipes": [],
+      "eventVulnerabilities": ["heat-sensitive", "pest-target", "frost-hardy"],
+      "seasonalMultipliers": { "spring": 1.0, "summer": 0.3, "fall": 1.0 }
     },
 
     "spinach": {
