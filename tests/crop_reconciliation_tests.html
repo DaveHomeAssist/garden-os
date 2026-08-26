@@ -27,7 +27,7 @@ h1{font-family:'Fraunces',serif;font-size:1.6rem;margin-bottom:.5rem;color:#5c3d
 </head>
 <body>
 <h1>Crop Reconciliation Test Suite</h1>
-<div class="meta">Garden OS v4.3 · Crop Data v3 · 50 crops · <span id="ts"></span></div>
+<div class="meta">Garden OS v4.3 · Crop Data v3 · 51 crops · <span id="ts"></span></div>
 <div class="summary" id="summary"></div>
 <div id="results"></div>
 
@@ -161,8 +161,8 @@ function runUnitTests() {
       assertEqual(Object.keys(CROPS).length, Object.keys(spec.crops).length);
     });
 
-    it('Canonical spec defines 50 crops', () => {
-      assertEqual(Object.keys(spec.crops).length, 50);
+    it('Canonical spec defines 51 crops', () => {
+      assertEqual(Object.keys(spec.crops).length, 51);
     });
 
     it('Planner and spec have identical key sets', () => {

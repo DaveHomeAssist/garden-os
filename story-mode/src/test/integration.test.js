@@ -4061,7 +4061,7 @@ describe('Phase 4 — Inventory, Skills, Crafting, Durability', () => {
 // Phase 5K — Open World, Zones, Foraging, Grid Expansion
 // Tests for zone navigation, gating, foraging, expanded garden grids,
 // multiple beds, biome crops, and the full end-to-end game loop.
-// Data specs: WORLD_MAP.json (8 zones), CROP_SCORING_DATA.json (50 crops).
+// Data specs: WORLD_MAP.json (8 zones), CROP_SCORING_DATA.json (51 crops).
 
 describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
 
@@ -4810,7 +4810,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
   // 5-F. Biome Crops
   // -------------------------------------------------------------------------
   describe('Biome Crops', () => {
-    it('all 50 crops in CROP_SCORING_DATA.json have valid scoring data', async () => {
+    it('all 51 crops in CROP_SCORING_DATA.json have valid scoring data', async () => {
       // This test can run NOW — it validates the spec file directly.
       const fs = await import('node:fs');
       const path = await import('node:path');
@@ -4822,7 +4822,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       const crops = Object.values(data.crops);
 
       // Verify total count matches the spec description
-      expect(crops.length).toBe(50);
+      expect(crops.length).toBe(51);
 
       // Verify every crop has required scoring fields
       for (const crop of crops) {
@@ -4932,7 +4932,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(salsaResult.score).toBeGreaterThan(0);
     });
 
-    it('total crop count including biome crops is 50', async () => {
+    it('total crop count including biome crops is 51', async () => {
       // This test can run NOW — validates the canonical crop count.
       const fs = await import('node:fs');
       const path = await import('node:path');
@@ -4942,8 +4942,8 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       const raw = fs.readFileSync(dataPath, 'utf-8');
       const data = JSON.parse(raw);
 
-      expect(Object.keys(data.crops).length).toBe(50);
-      expect(data.description).toContain('50 crops');
+      expect(Object.keys(data.crops).length).toBe(51);
+      expect(data.description).toContain('51 crops');
     });
   });
 
