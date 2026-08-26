@@ -875,6 +875,10 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+    .read-only-sheet__footer .pause-action {
+      text-transform: none;
+      letter-spacing: normal;
+    }
     .read-only-sheet__empty {
       padding: 14px 16px;
       border-radius: 12px;

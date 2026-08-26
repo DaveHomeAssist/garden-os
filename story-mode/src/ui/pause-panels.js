@@ -82,13 +82,51 @@ export function showSeasonJournalSheet(container, entries, options = {}) {
   });
 }
 
+export function buildBugReportExport(reports, now = new Date()) {
+  return {
+    tool: 'garden-os-story-mode',
+    kind: 'bug-reports',
+    exportedAt: now.toISOString(),
+    reportCount: reports.length,
+    reports,
+  };
+}
+
+function downloadBugReports(reports) {
+  const now = new Date();
+  const payload = buildBugReportExport(reports, now);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `garden-os-bug-reports-${now.toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function showBugReportsSheet(container, reports, options = {}) {
-  return showReadOnlySheet(container, {
+  const footerHtml = reports.length ? `
+    <button type="button" id="bug-reports-export" class="pause-action" data-export-bugs="true">
+      <span class="pause-action__icon" aria-hidden="true">⇩</span>
+      <span>
+        <span class="pause-action__title">Export Reports (.json)</span>
+        <span class="pause-action__copy">Download every saved report as one JSON file you can attach to a GitHub issue or email. Nothing is sent anywhere automatically.</span>
+      </span>
+    </button>
+  ` : '';
+  const sheet = showReadOnlySheet(container, {
     id: 'bug-reports-sheet',
     title: 'Bug Reports',
     subtitle: 'Read-only local archive from this device',
     bodyHtml: renderBugReports(reports),
+    footerHtml,
     closeLabel: 'Close bug reports',
     onClose: options.onClose,
   });
+  sheet.querySelector('[data-export-bugs]')?.addEventListener('click', () => {
+    downloadBugReports(reports);
+  });
+  return sheet;
 }

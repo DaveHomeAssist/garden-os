@@ -13,6 +13,10 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Added Export Save Backup and Import Save Backup to the Story Mode pause menu
   so a save slot can be downloaded as JSON and restored later, closing the
   data-loss path where Danger Zone deletes destroyed the only copy of a save.
+- Added an Export Reports button to the Story Mode Bug Reports sheet that
+  downloads every saved report as one JSON file, so filed bugs can finally
+  reach a maintainer instead of staying trapped in localStorage; the save
+  toast now points at the export path. (audit M-4, issue #41)
 ### Changed
 - Hardened the public authority API: request bodies are capped at 64KB,
   session ids, seeds, and game ids are validated before storage writes,
@@ -28,6 +32,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - `scripts/verify-all.mjs` now runs on Windows by spawning npm through a shell
   (npm is `npm.cmd` there and cannot be spawned directly).
 - Replaced U+2713 check mark glyph in planner score chip with ASCII '+' per brand-rule no-Unicode policy.
+- Maintenance: converted the shop-panel test to the standard
+  `@vitest-environment jsdom` pragma, removing the dynamic jsdom import that
+  could exceed the 10s beforeEach hook timeout on a cold start. (audit M-3)
 
 ## [Unversioned - 2026-08-09] Story Mode field-kit design language
 ### Added

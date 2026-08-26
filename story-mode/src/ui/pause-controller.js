@@ -345,7 +345,7 @@ export function createPauseController({
 
     bugPanel?.classList.remove('is-open');
     setElementInteractive(bugPanel, false);
-    showToast('Bug report saved on this device.', 2500);
+    showToast('Bug report saved on this device. Export it from Pause → Bug Reports.', 3200);
   });
 
   const bugPanelOutsideHandler = (event) => {
