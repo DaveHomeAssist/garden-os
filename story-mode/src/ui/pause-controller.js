@@ -1,7 +1,7 @@
 import { Actions } from '../game/store.js';
 import { getPhaseLabel } from '../game/phase-machine.js';
 import { createSeasonState } from '../game/state.js';
-import { deleteCampaign } from '../game/save.js';
+import { deleteCampaign, exportSaveSlot, importSaveSlot } from '../game/save.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
@@ -157,6 +157,65 @@ export function createPauseController({
     }
   });
 
+  document.getElementById('pause-export')?.addEventListener('click', () => {
+    persistState();
+    const backup = exportSaveSlot(slot);
+    if (!backup) {
+      showToast('Nothing saved in this slot to export yet.', 2200);
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `garden-os-save-slot-${slot + 1}-${stamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Save backup downloaded.', 2200, 'success');
+  });
+
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.accept = 'application/json,.json';
+  importInput.hidden = true;
+  document.body.appendChild(importInput);
+
+  importInput.addEventListener('change', () => {
+    const file = importInput.files?.[0];
+    importInput.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onerror = () => showToast('Could not read that file.', 2600);
+    reader.onload = () => {
+      let payload;
+      try {
+        payload = JSON.parse(String(reader.result));
+      } catch {
+        showToast('That file is not a valid save backup.', 2600);
+        return;
+      }
+      if (!confirm('Replace the save in this slot with the imported backup? The current progress in this slot will be overwritten.')) return;
+      const result = importSaveSlot(payload, slot);
+      if (!result.ok) {
+        showToast(result.error ?? 'Import failed.', 2600);
+        return;
+      }
+      showToast('Save backup imported.', 2200, 'success');
+      closePauseMenu();
+      stopLoop();
+      cleanupGame();
+      remount();
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('pause-import')?.addEventListener('click', () => {
+    importInput.click();
+  });
+
   document.getElementById('pause-restart')?.addEventListener('click', () => {
     if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
     const state = getState();
@@ -185,7 +244,7 @@ export function createPauseController({
   });
 
   document.getElementById('pause-new')?.addEventListener('click', () => {
-    if (!confirm('Delete this save slot and return to the title screen? This cannot be undone.')) return;
+    if (!confirm('Delete this save slot and return to the title screen? This cannot be undone. Tip: use Export Save Backup first if you want a copy.')) return;
     deleteCampaign(slot);
     closePauseMenu();
     stopLoop();
@@ -303,6 +362,7 @@ export function createPauseController({
     toggleBugPanel,
     dispose() {
       document.removeEventListener('click', bugPanelOutsideHandler);
+      importInput.remove();
     },
   };
 }

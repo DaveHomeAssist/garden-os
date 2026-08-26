@@ -230,6 +230,53 @@ export function loadCampaign(slot) {
   }
 }
 
+const SAVE_BACKUP_FORMAT = 'garden-os-story-save';
+const SAVE_BACKUP_VERSION = 1;
+
+export function exportSaveSlot(slot) {
+  if (!isValidSlot(slot)) return null;
+  const campaign = loadCampaign(slot);
+  if (!campaign) return null;
+  return {
+    format: SAVE_BACKUP_FORMAT,
+    formatVersion: SAVE_BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    slot,
+    campaign,
+    season: loadSeasonState(slot),
+  };
+}
+
+export function importSaveSlot(payload, slot) {
+  if (!isValidSlot(slot)) {
+    return { ok: false, error: 'Invalid save slot.' };
+  }
+  if (!payload || typeof payload !== 'object' || payload.format !== SAVE_BACKUP_FORMAT) {
+    return { ok: false, error: 'This file is not a Garden OS save backup.' };
+  }
+  const campaign = normalizeCampaignSave(payload.campaign);
+  if (!campaign) {
+    return { ok: false, error: 'This backup has no campaign data.' };
+  }
+  const season = normalizeSeasonSave(payload.season);
+  try {
+    localStorage.setItem(campaignKey(slot), JSON.stringify(campaign));
+    if (season) {
+      localStorage.setItem(seasonKey(slot), JSON.stringify(season));
+    } else {
+      localStorage.removeItem(seasonKey(slot));
+    }
+  } catch (error) {
+    return { ok: false, error: error?.message ?? 'Save storage failed.' };
+  }
+  // The imported local save is now the source of truth for this slot; drop any
+  // stale authority-session pointer so an older cloud snapshot cannot shadow it.
+  deleteAuthoritySessionPointer(slot);
+  corruptCampaignSlots.delete(slot);
+  corruptSeasonSlots.delete(slot);
+  return { ok: true, campaign };
+}
+
 export function deleteCampaign(slot) {
   localStorage.removeItem(campaignKey(slot));
   localStorage.removeItem(seasonKey(slot));
