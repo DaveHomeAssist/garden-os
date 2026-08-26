@@ -1,51 +1,11 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+// @vitest-environment jsdom
+import { describe, expect, it, beforeEach } from 'vitest';
 import { createShopPanel } from './shop-panel.js';
 import { Store, Actions } from '../game/store.js';
 import { createGameState } from '../game/state.js';
 
-/**
- * Minimal DOM container stub for tests running in node environment.
- * The vitest config uses environment: 'node', so we provide a lightweight
- * container that tracks appended children and supports querySelector.
- */
-function createContainer() {
-  const children = [];
-  return {
-    children,
-    appendChild(el) { children.push(el); },
-    querySelector(sel) {
-      for (const child of children) {
-        if (child.id && sel === `#${child.id}`) return child;
-        if (typeof child.querySelector === 'function') {
-          const found = child.querySelector(sel);
-          if (found) return found;
-        }
-      }
-      return null;
-    },
-    innerHTML: '',
-  };
-}
-
-/**
- * Because we run in a node environment without full DOM, we use jsdom for
- * these UI tests. The shop panel manipulates document.createElement, so
- * we need a real DOM.
- */
-let jsdomModule;
-let dom;
-let document;
-
-beforeEach(async () => {
-  if (!jsdomModule) {
-    jsdomModule = await import('jsdom');
-  }
-  dom = new jsdomModule.JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>');
-  document = dom.window.document;
-  // Patch global document and window for the shop-panel module
-  globalThis.document = document;
-  globalThis.window = dom.window;
-  globalThis.HTMLElement = dom.window.HTMLElement;
+beforeEach(() => {
+  document.body.innerHTML = '<div id="root"></div>';
 });
 
 function getRoot() {
