@@ -35,11 +35,14 @@ function readOption(name) {
 
 function runStep(name, command, commandArgs, options = {}) {
   console.log(`\n==> ${name}`);
+  // On Windows npm is npm.cmd, and .cmd shims can only be spawned through a
+  // shell; everywhere else keep shell:false so arguments pass through verbatim.
+  const useShell = command === 'npm' && process.platform === 'win32';
   return new Promise((resolveStep, rejectStep) => {
     const child = spawn(command, commandArgs, {
       cwd: options.cwd || repoRoot,
       env: options.env || process.env,
-      shell: false,
+      shell: useShell,
       stdio: 'inherit',
     });
 
