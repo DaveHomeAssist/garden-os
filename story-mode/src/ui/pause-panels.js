@@ -109,7 +109,7 @@ function downloadBugReports(reports) {
 export function showBugReportsSheet(container, reports, options = {}) {
   const footerHtml = reports.length ? `
     <button type="button" id="bug-reports-export" class="pause-action" data-export-bugs="true">
-      <span class="pause-action__icon" aria-hidden="true">⇩</span>
+      <span class="pause-action__icon" aria-hidden="true">⬇</span>
       <span>
         <span class="pause-action__title">Export Reports (.json)</span>
         <span class="pause-action__copy">Download every saved report as one JSON file you can attach to a GitHub issue or email. Nothing is sent anywhere automatically.</span>
