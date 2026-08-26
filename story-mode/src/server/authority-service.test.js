@@ -1875,6 +1875,15 @@ describe('authority service', () => {
         records.set(key, [...(records.get(key) ?? []), value]);
         return Response.json({ result: records.get(key).length });
       }
+      if (operation === 'LTRIM') {
+        const [, , start, stop] = command;
+        const list = records.get(key) ?? [];
+        records.set(key, list.slice(Number(start) < 0 ? Number(start) : 0, Number(stop) === -1 ? undefined : Number(stop) + 1));
+        return Response.json({ result: 'OK' });
+      }
+      if (operation === 'EXPIRE') {
+        return Response.json({ result: 1 });
+      }
       return Response.json({ error: `Unsupported command ${operation}` }, { status: 400 });
     };
     const config = {
@@ -1899,7 +1908,7 @@ describe('authority service', () => {
     await ledgerStore.append({ recordType: 'action', sessionId: 'session-http' });
 
     expect(stored.data.selectedCropId).toBe('basil');
-    expect(calls.map((call) => call.command[0])).toEqual(['SET', 'GET', 'RPUSH', 'RPUSH']);
+    expect(calls.map((call) => call.command[0])).toEqual(['SET', 'GET', 'RPUSH', 'LTRIM', 'RPUSH', 'EXPIRE']);
     expect(calls[0]).toMatchObject({
       headers: {
         Authorization: 'Bearer redis-token',
@@ -1909,7 +1918,11 @@ describe('authority service', () => {
       url: 'https://redis.example.test',
     });
     expect(calls[0].command[1]).toBe('test:authority:session:session-http');
+    expect(calls[0].command[3]).toBe('EX');
+    expect(Number(calls[0].command[4])).toBeGreaterThan(0);
     expect(calls[2].command[1]).toBe('test:authority:ledger');
-    expect(calls[3].command[1]).toBe('test:authority:ledger:session-http');
+    expect(calls[3].command[1]).toBe('test:authority:ledger');
+    expect(calls[4].command[1]).toBe('test:authority:ledger:session-http');
+    expect(calls[5].command[1]).toBe('test:authority:ledger:session-http');
   });
 });

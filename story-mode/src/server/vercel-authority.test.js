@@ -43,6 +43,14 @@ function createRedisFetchHarness() {
       records.set(key, [...(records.get(key) ?? []), value]);
       return Response.json({ result: records.get(key).length });
     }
+    if (operation === 'INCR') {
+      const next = (Number(records.get(key)) || 0) + 1;
+      records.set(key, next);
+      return Response.json({ result: next });
+    }
+    if (operation === 'LTRIM' || operation === 'EXPIRE') {
+      return Response.json({ result: operation === 'LTRIM' ? 'OK' : 1 });
+    }
     return Response.json({ error: `Unsupported command ${operation}` }, { status: 400 });
   };
   return { calls, fetchFn, records };
@@ -162,15 +170,24 @@ describe('vercel authority handler', () => {
     expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
     expect(verified).toMatchObject({ body: { verified: true }, status: 200 });
     expect(calls.map((call) => call.command[0])).toEqual([
+      'INCR',
+      'EXPIRE',
       'GET',
       'SET',
       'RPUSH',
+      'LTRIM',
       'RPUSH',
+      'EXPIRE',
+      'INCR',
       'GET',
       'SET',
       'RPUSH',
+      'LTRIM',
       'RPUSH',
+      'EXPIRE',
+      'INCR',
       'GET',
+      'INCR',
     ]);
     expect(calls[0]).toMatchObject({
       headers: {
@@ -251,5 +268,87 @@ describe('vercel authority handler', () => {
         tick: 0,
       },
     });
+  });
+
+  it('rate limits repeated requests from one caller through the Redis store', async () => {
+    const { fetchFn } = createRedisFetchHarness();
+    const handle = createVercelAuthorityFetchHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        GOS_AUTHORITY_RATE_LIMIT: '2',
+        UPSTASH_REDIS_REST_TOKEN: 'redis-token',
+        UPSTASH_REDIS_REST_URL: 'https://redis.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+
+    const first = await postJson(handle, '/api/session', { sessionId: 'session-rate-limit' });
+    const second = await postJson(handle, '/api/session', { sessionId: 'session-rate-limit' });
+    const third = await postJson(handle, '/api/session', { sessionId: 'session-rate-limit' });
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(third.status).toBe(429);
+    expect(third.body).toMatchObject({ error: 'RATE_LIMITED', ok: false });
+  });
+
+  it('rejects requests from origins outside a configured allowlist', async () => {
+    const { fetchFn } = createRedisFetchHarness();
+    const handle = createVercelAuthorityFetchHandler({
+      env: {
+        GOS_AUTHORITY_ALLOWED_ORIGINS: 'https://davehomeassist.github.io',
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        UPSTASH_REDIS_REST_TOKEN: 'redis-token',
+        UPSTASH_REDIS_REST_URL: 'https://redis.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+
+    const blocked = await handle(new Request('https://authority.example.test/api/session', {
+      body: JSON.stringify({ sessionId: 'session-origin-check' }),
+      headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example.test' },
+      method: 'POST',
+    }));
+    const allowed = await handle(new Request('https://authority.example.test/api/session', {
+      body: JSON.stringify({ sessionId: 'session-origin-check' }),
+      headers: { 'Content-Type': 'application/json', Origin: 'https://davehomeassist.github.io' },
+      method: 'POST',
+    }));
+
+    expect(blocked.status).toBe(403);
+    expect((await blocked.json()).error).toBe('ORIGIN_NOT_ALLOWED');
+    expect(allowed.status).toBe(200);
+  });
+
+  it('rejects malformed session ids and oversized bodies before storage writes', async () => {
+    const { calls, fetchFn } = createRedisFetchHarness();
+    const handle = createVercelAuthorityFetchHandler({
+      env: {
+        GOS_AUTHORITY_HMAC_SECRET: SECRET,
+        UPSTASH_REDIS_REST_TOKEN: 'redis-token',
+        UPSTASH_REDIS_REST_URL: 'https://redis.example.test',
+      },
+      fetchFn,
+      now: () => NOW,
+    });
+
+    const badId = await postJson(handle, '/api/session', { sessionId: 'no' });
+    expect(badId.status).toBe(400);
+    expect(badId.body.rejection.code).toBe('BAD_SESSION_ID');
+
+    const badAction = await postJson(handle, '/api/action', envelope({ sessionId: '../../etc' }));
+    expect(badAction.status).toBe(200);
+    expect(badAction.body.ok).toBe(false);
+    expect(badAction.body.ack.rejection.code).toBe('BAD_SESSION');
+
+    const oversized = await postJson(handle, '/api/session', {
+      seed: 'x'.repeat(70 * 1024),
+      sessionId: 'session-too-big',
+    });
+    expect(oversized.status).toBe(413);
+
+    expect(calls.filter((call) => call.command[0] === 'SET' || call.command[0] === 'RPUSH')).toEqual([]);
   });
 });

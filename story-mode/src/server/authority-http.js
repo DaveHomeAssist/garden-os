@@ -7,6 +7,12 @@ const JSON_HEADERS = {
   'Content-Type': 'application/json',
 };
 
+// Action envelopes and session requests are small JSON documents; anything
+// larger is either a mistake or an attempt to burn storage at owner cost.
+const MAX_BODY_BYTES = 64 * 1024;
+
+class PayloadTooLargeError extends Error {}
+
 function jsonResponse(body, { status = 200 } = {}) {
   return new Response(JSON.stringify(body), {
     headers: JSON_HEADERS,
@@ -15,7 +21,14 @@ function jsonResponse(body, { status = 200 } = {}) {
 }
 
 async function readJson(request) {
+  const declaredLength = Number(request.headers.get('content-length') ?? '');
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    throw new PayloadTooLargeError('Request body too large.');
+  }
   const text = await request.text();
+  if (text.length > MAX_BODY_BYTES) {
+    throw new PayloadTooLargeError('Request body too large.');
+  }
   if (!text.trim()) return {};
   return JSON.parse(text);
 }
@@ -40,7 +53,10 @@ function createAuthorityFetchHandler(service = createAuthorityService()) {
     let body;
     try {
       body = await readJson(request);
-    } catch {
+    } catch (error) {
+      if (error instanceof PayloadTooLargeError) {
+        return jsonResponse({ ok: false, error: 'Request body too large.' }, { status: 413 });
+      }
       return jsonResponse({ ok: false, error: 'Invalid JSON body.' }, { status: 400 });
     }
 

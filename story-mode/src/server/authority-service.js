@@ -137,6 +137,23 @@ const DEFAULT_AUTHORITY_CELL = {
   soilFatigue: 0,
 };
 const BLOCKED_SESSION_KEYS = new Set(['data', 'entityTotals', 'entities', 'fullState', 'gameState', 'players', 'resourceTotals', 'resources', 'state']);
+// Caller-selected session ids are allowed (clients mint their own UUIDs), but
+// they must look like generated ids so the public API cannot be used to write
+// arbitrary keys or unbounded identifiers into persistent storage.
+const SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
+const MAX_SEED_LENGTH = 200;
+const MAX_GAME_ID_LENGTH = 64;
+
+function isValidSessionId(value) {
+  return typeof value === 'string' && SESSION_ID_PATTERN.test(value);
+}
+
+function normalizeRequestedGameId(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > MAX_GAME_ID_LENGTH) return null;
+  return trimmed;
+}
 const BLOCKED_HARVEST_PAYLOAD_KEYS = new Set(['currency', 'harvestResult', 'inventory', 'pantry', 'recipesCompleted', 'yield', 'yieldCount']);
 const BLOCKED_CRAFT_PAYLOAD_KEYS = new Set(['craftedItems', 'itemProduced', 'output']);
 const BLOCKED_QUEST_PAYLOAD_KEYS = new Set(['currency', 'inventory', 'outcome', 'pantry', 'reputation', 'rewards', 'skills', 'slots']);
@@ -822,8 +839,19 @@ async function upstashCommand(config, command) {
   return body?.result;
 }
 
+// Persistent keys expire so anonymous callers cannot grow storage without
+// bound at owner cost. Override with env; 0 disables the expiry or cap.
+const DEFAULT_SESSION_TTL_SECONDS = 60 * 60 * 24 * 60; // 60 days
+const DEFAULT_LEDGER_MAX_ENTRIES = 20000;
+
+function resolveNonNegativeIntEnv(name, fallback, env = process.env) {
+  const parsed = Number.parseInt(env[name] ?? '', 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
 function createUpstashSessionStore({
   keyPrefix = process.env.GOS_AUTHORITY_REDIS_PREFIX ?? 'gos:story-authority',
+  ttlSeconds = resolveNonNegativeIntEnv('GOS_AUTHORITY_SESSION_TTL_SECONDS', DEFAULT_SESSION_TTL_SECONDS),
   ...configOptions
 } = {}) {
   const config = resolveUpstashConfig(configOptions);
@@ -837,7 +865,9 @@ function createUpstashSessionStore({
     },
     async set(state) {
       if (!state?.sessionId) return null;
-      await upstashCommand(config, ['SET', keyFor(state.sessionId), stableStringify(state)]);
+      const command = ['SET', keyFor(state.sessionId), stableStringify(state)];
+      if (ttlSeconds > 0) command.push('EX', String(ttlSeconds));
+      await upstashCommand(config, command);
       return cloneValue(state);
     },
   };
@@ -845,6 +875,8 @@ function createUpstashSessionStore({
 
 function createUpstashLedgerStore({
   keyPrefix = process.env.GOS_AUTHORITY_REDIS_PREFIX ?? 'gos:story-authority',
+  maxEntries = resolveNonNegativeIntEnv('GOS_AUTHORITY_LEDGER_MAX_ENTRIES', DEFAULT_LEDGER_MAX_ENTRIES),
+  ttlSeconds = resolveNonNegativeIntEnv('GOS_AUTHORITY_SESSION_TTL_SECONDS', DEFAULT_SESSION_TTL_SECONDS),
   ...configOptions
 } = {}) {
   const config = resolveUpstashConfig(configOptions);
@@ -852,8 +884,15 @@ function createUpstashLedgerStore({
     async append(entry) {
       const serialized = stableStringify(entry);
       await upstashCommand(config, ['RPUSH', `${keyPrefix}:ledger`, serialized]);
+      if (maxEntries > 0) {
+        await upstashCommand(config, ['LTRIM', `${keyPrefix}:ledger`, String(-maxEntries), '-1']);
+      }
       if (entry?.sessionId) {
-        await upstashCommand(config, ['RPUSH', `${keyPrefix}:ledger:${entry.sessionId}`, serialized]);
+        const sessionLedgerKey = `${keyPrefix}:ledger:${entry.sessionId}`;
+        await upstashCommand(config, ['RPUSH', sessionLedgerKey, serialized]);
+        if (ttlSeconds > 0) {
+          await upstashCommand(config, ['EXPIRE', sessionLedgerKey, String(ttlSeconds)]);
+        }
       }
     },
   };
@@ -1901,6 +1940,33 @@ function createAuthorityService({
         },
       };
     }
+    if (body.sessionId !== undefined && !isValidSessionId(body.sessionId)) {
+      return {
+        ok: false,
+        rejection: {
+          code: 'BAD_SESSION_ID',
+          message: 'Session id must be 8-128 characters of letters, numbers, ".", "_", ":", or "-".',
+        },
+      };
+    }
+    if (body.seed !== undefined && (typeof body.seed !== 'string' || body.seed.length > MAX_SEED_LENGTH)) {
+      return {
+        ok: false,
+        rejection: {
+          code: 'BAD_SEED',
+          message: `Session seed must be a string of at most ${MAX_SEED_LENGTH} characters.`,
+        },
+      };
+    }
+    if (body.gameId !== undefined && normalizeRequestedGameId(body.gameId) === null) {
+      return {
+        ok: false,
+        rejection: {
+          code: 'BAD_GAME_ID',
+          message: `Game id must be a non-empty string of at most ${MAX_GAME_ID_LENGTH} characters.`,
+        },
+      };
+    }
     const sessionId = body.sessionId || sessionIdFactory();
     const existingState = body.sessionId ? await sessionStore.get(sessionId) : null;
     if (existingState) {
@@ -1933,12 +1999,12 @@ function createAuthorityService({
   }
 
   async function getSessionState(envelope) {
-    if (!envelope?.sessionId) return null;
+    if (!isValidSessionId(envelope?.sessionId)) return null;
     let state = await sessionStore.get(envelope.sessionId);
     if (!state) {
       state = createEngineState({
         data: createInitialAuthorityData(),
-        gameId: envelope.gameId ?? DEFAULT_GAME_ID,
+        gameId: normalizeRequestedGameId(envelope.gameId) ?? DEFAULT_GAME_ID,
         seed: `garden-os:${envelope.sessionId}`,
         sessionId: envelope.sessionId,
         now: isoNow(now),
@@ -1955,7 +2021,7 @@ function createAuthorityService({
         actionId: envelope?.id,
         actionType: envelope?.type,
         code: 'BAD_SESSION',
-        message: 'Session id is required.',
+        message: 'A valid session id is required.',
         serverTime: isoNow(now),
         sessionId: envelope?.sessionId,
       }, hmacSecret);

@@ -9,7 +9,24 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 2026-03-11 are reconstructed and marked (reconstructed).
 
 ## [Unreleased]
+### Added
+- Added Export Save Backup and Import Save Backup to the Story Mode pause menu
+  so a save slot can be downloaded as JSON and restored later, closing the
+  data-loss path where Danger Zone deletes destroyed the only copy of a save.
+### Changed
+- Hardened the public authority API: request bodies are capped at 64KB,
+  session ids, seeds, and game ids are validated before storage writes,
+  Upstash session and per-session ledger keys expire (default 60 days,
+  `GOS_AUTHORITY_SESSION_TTL_SECONDS`), the global ledger is length-capped
+  (`GOS_AUTHORITY_LEDGER_MAX_ENTRIES`), and the Vercel handler enforces a
+  per-caller fixed-window rate limit (`GOS_AUTHORITY_RATE_LIMIT`,
+  `GOS_AUTHORITY_RATE_WINDOW_SECONDS`) plus an optional origin allowlist
+  (`GOS_AUTHORITY_ALLOWED_ORIGINS`).
 ### Fixed
+- Updated crop-count regression assertions to the canonical 51-crop roster so
+  the Pages deploy gate passes again after the red_lettuce spec addition.
+- `scripts/verify-all.mjs` now runs on Windows by spawning npm through a shell
+  (npm is `npm.cmd` there and cannot be spawned directly).
 - Replaced U+2713 check mark glyph in planner score chip with ASCII '+' per brand-rule no-Unicode policy.
 
 ## [Unversioned - 2026-08-09] Story Mode field-kit design language
