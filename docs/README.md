@@ -4,6 +4,7 @@ Status snapshot: 2026-03-16
 Purpose: single entry point for design docs, implementation specs, and canonical source-of-truth references.
 
 ## Status Legend
+- `Proposed`: documented plan; implementation and release remain uncompleted.
 - `Canonical`: source of truth — if code and doc disagree, the doc wins.
 - `Committed`: tracked in git and ready for reference.
 - `Active`: under active development or maintenance.
@@ -65,6 +66,7 @@ Use these categories when discussing the primary repo-root HTML surfaces.
 | [SYSTEM_MAP_PROPOSAL.md](./SYSTEM_MAP_PROPOSAL.md) | Proposal for updating the system map around the hybrid root-tools plus story-mode architecture. | Active |
 | [PROGRESSION_SYSTEMS.md](./PROGRESSION_SYSTEMS.md) | Progression architecture without grind loops. | Committed |
 | [REPLAYABILITY.md](./REPLAYABILITY.md) | Retention/replay systems and challenge framing. | Committed |
+| [FREE_PLAY_FEATURE_PLANS.md](./FREE_PLAY_FEATURE_PLANS.md) | Source-grounded implementation plans, dependencies, and acceptance checks for 50 Free Play features. | Proposed |
 | [SEASONAL_EVENT_SYSTEM.md](./SEASONAL_EVENT_SYSTEM.md) | Seasonal event taxonomy, triggers, effects, and commentary. | Committed |
 | [VOICE_BIBLE.md](./VOICE_BIBLE.md) | Character voice constraints and role boundaries. | Canonical |
 | [MIGRATION-CONTRACT.md](./MIGRATION-CONTRACT.md) | Schema migration contract and forward-compat policy. | Committed |
