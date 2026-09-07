@@ -11,6 +11,10 @@ function pngDimensions(buffer, name) {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
+function assertRgbaPng(buffer, name) {
+  assert.equal(buffer[25], 6, `${name} must use RGBA color so crop billboards stay transparent`);
+}
+
 const guide = await readFile(resolve(repoRoot, 'garden-cage-build-guide.html'), 'utf8');
 assert.match(guide, /images\/sheet1-cover\.png/, 'Build guide must reference its cover asset');
 
@@ -40,9 +44,29 @@ for (const [name, budget] of Object.entries(textureBudgets)) {
 }
 assert.ok(textureTotal <= 4000000, `Priority Story textures exceed 4 MB total (${textureTotal})`);
 
+const priorityCropTextures = [
+  'crop-cherry_tom.png',
+  'crop-carrot.png',
+  'crop-onion.png',
+  'crop-bush_beans.png',
+  'crop-peas.png',
+];
+let priorityCropTextureBytes = 0;
+for (const name of priorityCropTextures) {
+  const texturePath = resolve(repoRoot, 'story-mode/assets/textures', name);
+  const buffer = await readFile(texturePath);
+  const dimensions = pngDimensions(buffer, name);
+  assert.deepEqual(dimensions, { width: 256, height: 256 }, `${name} must be 256 by 256`);
+  assertRgbaPng(buffer, name);
+  priorityCropTextureBytes += (await stat(texturePath)).size;
+}
+assert.ok(priorityCropTextureBytes <= 1500000, `Priority crop textures exceed 1.5 MB total (${priorityCropTextureBytes})`);
+
 console.log(JSON.stringify({
   ok: true,
   cover: coverSize,
   optimizedTextureBytes: textureTotal,
   optimizedTextureCount: Object.keys(textureBudgets).length,
+  priorityCropTextureBytes,
+  priorityCropTextureCount: priorityCropTextures.length,
 }, null, 2));

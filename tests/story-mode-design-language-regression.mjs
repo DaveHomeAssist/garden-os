@@ -310,34 +310,49 @@ async function assertViewport(page, viewport) {
 
 async function assertContextMenuKeyboardFlow(page) {
   await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('#viewport canvas');
+    const rect = canvas?.getBoundingClientRect();
+    const cells = window.gardenOS?.getVisualDebug?.()?.gridCells;
+    return Boolean(
+      rect
+      && Math.abs(rect.width - window.innerWidth) <= 2
+      && Math.abs(rect.height - window.innerHeight) <= 2
+      && cells?.some((cell) => cell.visible),
+    );
+  }, null, { timeout: 180000 });
   await page.locator('#fab-advance').focus();
 
-  const openedAt = await page.evaluate(() => {
-    const viewport = document.getElementById('viewport');
-    const rect = viewport?.getBoundingClientRect();
-    if (!viewport || !rect) return null;
+  const target = await page.evaluate(() => {
+    const canvas = document.querySelector('#viewport canvas');
+    const rect = canvas?.getBoundingClientRect();
+    const cells = window.gardenOS?.getVisualDebug?.()?.gridCells ?? [];
+    if (!canvas || !rect) return null;
 
-    const xSteps = 12;
-    const ySteps = 7;
-    for (let yIndex = 1; yIndex < ySteps; yIndex += 1) {
-      for (let xIndex = 1; xIndex < xSteps; xIndex += 1) {
-        const x = rect.left + ((rect.width * xIndex) / xSteps);
-        const y = rect.top + ((rect.height * yIndex) / ySteps);
-        viewport.dispatchEvent(new MouseEvent('contextmenu', {
-          bubbles: true,
-          cancelable: true,
-          button: 2,
-          clientX: x,
-          clientY: y,
-        }));
-        const menu = document.querySelector('.world-context-menu:not([hidden])');
-        if (menu) return { x, y };
-      }
-    }
-    return null;
+    const centerX = rect.left + (rect.width / 2);
+    const centerY = rect.top + (rect.height / 2);
+    return cells
+      .filter((cell) => cell.visible)
+      .map((cell) => ({
+        cellIndex: cell.index,
+        x: rect.left + cell.screenX,
+        y: rect.top + cell.screenY,
+      }))
+      .filter(({ x, y }) => (
+        x >= rect.left
+        && x <= rect.right
+        && y >= rect.top
+        && y <= rect.bottom
+        && document.elementFromPoint(x, y) === canvas
+      ))
+      .sort((first, second) => (
+        Math.hypot(first.x - centerX, first.y - centerY)
+        - Math.hypot(second.x - centerX, second.y - centerY)
+      ))[0] ?? null;
   });
 
-  assert(openedAt, 'context-menu: no deterministic scene point opened the action menu.');
+  assert(target, 'context-menu: no unobstructed rendered bed cell was available.');
+  await page.mouse.click(target.x, target.y, { button: 'right' });
   const menu = page.locator('.world-context-menu:not([hidden])');
   await menu.waitFor({ state: 'visible' });
 

@@ -230,8 +230,11 @@ function makeSeededAccentSave() {
     'radish',
     'basil',
     'marigold',
-    'lettuce',
-    'spinach',
+    'cherry_tom',
+    'carrot',
+    'onion',
+    'bush_beans',
+    'peas',
   ];
   const cells = Array.from({ length: 32 }, (_, index) => makeCell(cropIds[index] ?? null));
   const timestamp = '2026-07-03T12:00:00.000Z';
@@ -242,7 +245,7 @@ function makeSeededAccentSave() {
       updatedAt: timestamp,
       currentChapter: 1,
       currentSeason: 'spring',
-      cropsUnlocked: ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'],
+      cropsUnlocked: cropIds,
       worldState: {
         currentZone: 'player_plot',
         visitedZones: ['player_plot'],
@@ -553,13 +556,20 @@ async function seedAndStartBirdCritterRun(page, baseUrl) {
 
 async function assertCropAccentLayer(page) {
   const debug = await readVisualDebug(page);
+  const priorityCropIds = ['cherry_tom', 'carrot', 'onion', 'bush_beans', 'peas'];
   assert(debug, 'Expected visual debug state.');
-  assert(debug.cropMeshCount >= 8, `Expected procedural crop meshes, got ${debug.cropMeshCount}.`);
+  assert(debug.cropMeshCount >= 11, `Expected procedural crop meshes, got ${debug.cropMeshCount}.`);
   assert(debug.cropAccents.spriteAssetsReady, 'Expected crop sprite assets to be ready.');
   assert(debug.cropAccents.lastSync.phase === 'MID_SEASON', `Expected MID_SEASON accent sync, got ${debug.cropAccents.lastSync.phase}.`);
   assert(debug.cropAccents.lastSync.stage === 2, `Expected growing stage index 2, got ${debug.cropAccents.lastSync.stage}.`);
   assert(!debug.cropAccents.lastSync.suppressedByPlanner, 'Story crop accents should not be planner-suppressed.');
-  assert(debug.cropAccents.count >= 8, `Expected at least 8 crop accents, got ${debug.cropAccents.count}.`);
+  assert(debug.cropAccents.count >= 11, `Expected at least 11 crop accents, got ${debug.cropAccents.count}.`);
+  priorityCropIds.forEach((cropId) => {
+    assert(
+      debug.cropAccents.accents.some((accent) => accent.cropId === cropId),
+      `Expected a loaded crop accent for ${cropId}.`,
+    );
+  });
   assert(
     debug.cropAccents.accents.every((accent) => accent.accentType === 'growth-billboard' && accent.opacity > 0.3 && accent.scale >= 0.3),
     `Unexpected crop accent tuning: ${JSON.stringify(debug.cropAccents.accents.slice(0, 3))}`,

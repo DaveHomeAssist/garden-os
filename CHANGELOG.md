@@ -10,6 +10,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 ### Added
+- Added transparent Story Mode crop textures for cherry tomato, carrot, onion,
+  bush beans, and peas so the highest-priority missing crops render as authored
+  plants instead of procedural stand-ins.
 - Added Export Save Backup and Import Save Backup to the Story Mode pause menu
   so a save slot can be downloaded as JSON and restored later, closing the
   data-loss path where Danger Zone deletes destroyed the only copy of a save.
@@ -27,6 +30,10 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
   `GOS_AUTHORITY_RATE_WINDOW_SECONDS`) plus an optional origin allowlist
   (`GOS_AUTHORITY_ALLOWED_ORIGINS`).
 ### Fixed
+- Made the Story Mode context-menu release gate target a rendered, unobstructed
+  bed cell with a real browser right-click after viewport resize, removing the
+  timing-sensitive synthetic event that blocked Pages despite a working menu;
+  secondary-clicks now also preserve the control to which Escape returns focus.
 - Updated crop-count regression assertions to the canonical 51-crop roster so
   the Pages deploy gate passes again after the red_lettuce spec addition.
 - `scripts/verify-all.mjs` now runs on Windows by spawning npm through a shell

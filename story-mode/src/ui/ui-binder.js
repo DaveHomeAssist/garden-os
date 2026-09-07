@@ -1833,7 +1833,14 @@ function bindUI({
   }
 
   function handleViewportPointerDownForMenu(event) {
-    if (!worldContextMenu || event.pointerType !== 'touch' || !event.isPrimary) return;
+    if (!worldContextMenu) return;
+    if (event.button === 2) {
+      // Preserve the control that had keyboard focus so Escape can restore it
+      // after a mouse-opened context menu closes.
+      event.preventDefault();
+      return;
+    }
+    if (event.pointerType !== 'touch' || !event.isPrimary) return;
     cancelLongPress();
     const { clientX, clientY, pointerId } = event;
     longPressState = {
