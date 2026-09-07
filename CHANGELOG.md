@@ -9,6 +9,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 2026-03-11 are reconstructed and marked (reconstructed).
 
 ## [Unreleased]
+
+## [Unversioned - 2026-09-06] Story Mode Pages recovery, save durability, and release hardening
 ### Added
 - Added transparent Story Mode crop textures for cherry tomato, carrot, onion,
   bush beans, and peas so the highest-priority missing crops render as authored
