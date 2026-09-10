@@ -1893,7 +1893,9 @@ const worker = {
     }
   },
   __test: {
+    AUTHORITY_CRAFTING_RECIPES,
     AUTHORITY_REDUCERS,
+    AUTHORITY_REPAIR_COSTS,
     constantTimeEqual,
     handle,
     MAX_BODY_BYTES,

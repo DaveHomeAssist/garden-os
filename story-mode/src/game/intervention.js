@@ -25,7 +25,7 @@ const TOOL_REQUIREMENTS = {
   mulch: { itemId: 'mulch_bag', mode: 'consumable' },
 };
 
-const REPAIR_COSTS = {
+export const REPAIR_COSTS = {
   watering_can: [{ itemId: 'plant_matter', count: 2, name: 'Plant Matter' }],
   pruning_shears: [{ itemId: 'scrap_metal', count: 1, name: 'Scrap Metal' }],
   soil_scanner: [{ itemId: 'crystal_shard', count: 1, name: 'Crystal Shard' }],
