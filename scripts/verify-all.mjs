@@ -166,6 +166,7 @@ async function runLocalVerification() {
     ['Marketing shot visual rejection regression', ['tests/marketing-shot-visual-gate-regression.mjs']],
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
     ['Experiment storage contract tests', ['--test', 'tests/experiments-contract.test.mjs']],
+    ['V5 suitability core unit tests', ['--test', 'gos-suitability.test.mjs']],
     ['Authority cache IndexedDB tests', ['test', '--', 'src/engine/authority-cache.test.js'], { cwd: storyModeDir }],
     ['Fixed-step simulation worker tests', ['test', '--', 'src/engine/simulation-core.test.js', 'src/engine/simulation-worker.test.js'], { cwd: storyModeDir }],
     ['Sync client worker URL tests', ['--test', 'tests/sync-client-worker-url.test.mjs']],
