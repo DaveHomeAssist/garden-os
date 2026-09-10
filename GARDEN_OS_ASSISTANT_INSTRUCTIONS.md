@@ -90,7 +90,7 @@ Do not propose work against these unless explicitly asked.
 
 - Deterministic. Same inputs always produce same outputs. No randomness.
 - Six weighted factors: sun fit (2x weight), support fit, shade tolerance, access fit, season fit, adjacency (additive).
-- Crop data canonical at `specs/CROP_SCORING_DATA.json`: 50 crops, 8 factions, 8 recipes.
+- Crop data canonical at `specs/CROP_SCORING_DATA.json`: crop count declared by its `description` field (51 as of 2026-08-25), 8 factions, 8 recipes.
 
 ## Spatial logic
 

@@ -32,7 +32,7 @@ Browser-based garden planning game and tool suite. Deterministic crop scoring en
 - **Deterministic.** Same inputs must always produce the same outputs. Never add randomness to scoring.
 - **Six factors:** sun fit (2x weight), support fit, shade tolerance, access fit, season fit, adjacency (additive).
 - **Canonical spec:** `specs/SCORING_RULES.md` is the single source of truth for the algorithm. If code and spec disagree, the spec wins — fix the code.
-- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. 50 crops, 8 factions, 8 recipes.
+- **Crop data:** `specs/CROP_SCORING_DATA.json` is canonical. The crop count is whatever its `description` field declares (51 as of 2026-08-25), 8 factions, 8 recipes. Do not hand-copy the count into tests or docs; derive it from the spec.
 
 ## Navigation — Two-Track Model
 

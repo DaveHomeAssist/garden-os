@@ -27,7 +27,7 @@ h1{font-family:'Fraunces',serif;font-size:1.6rem;margin-bottom:.5rem;color:#5c3d
 </head>
 <body>
 <h1>Crop Reconciliation Test Suite</h1>
-<div class="meta">Garden OS v4.3 · Crop Data v3 · 51 crops · <span id="ts"></span></div>
+<div class="meta">Garden OS v4.3 · Crop Data v3 · <span id="crop-count">spec-declared</span> crops · <span id="ts"></span></div>
 <div class="summary" id="summary"></div>
 <div id="results"></div>
 
@@ -161,8 +161,11 @@ function runUnitTests() {
       assertEqual(Object.keys(CROPS).length, Object.keys(spec.crops).length);
     });
 
-    it('Canonical spec defines 51 crops', () => {
-      assertEqual(Object.keys(spec.crops).length, 51);
+    it('Canonical spec crop table matches its own declared crop count', () => {
+      // The count is owned by the spec description, not by this fixture.
+      const match = /(\d+)\s+crops\b/.exec(String(spec.description || ''));
+      assert(match, 'spec description does not declare a crop count');
+      assertEqual(Object.keys(spec.crops).length, Number(match[1]));
     });
 
     it('Planner and spec have identical key sets', () => {
@@ -621,6 +624,7 @@ function render() {
   const total = totalPass + totalFail + totalSkip;
 
   document.getElementById('ts').textContent = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  document.getElementById('crop-count').textContent = spec && spec.crops ? String(Object.keys(spec.crops).length) : '?';
   document.getElementById('summary').innerHTML = `
     <div class="summary-block"><div class="summary-n">${total}</div><div class="summary-l">Total</div></div>
     <div class="summary-block pass"><div class="summary-n">${totalPass}</div><div class="summary-l">Pass</div></div>

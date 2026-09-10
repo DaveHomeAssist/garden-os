@@ -2139,6 +2139,8 @@ function createAuthorityService({
 
 export {
   ACK_SIGNATURE_PREFIX,
+  AUTHORITY_CRAFTING_RECIPES,
+  AUTHORITY_REPAIR_COSTS,
   createAuthorityService,
   createFileLedgerStore,
   createMemoryLedgerStore,

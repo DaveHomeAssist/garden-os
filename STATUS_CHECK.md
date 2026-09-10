@@ -13,6 +13,7 @@ Garden OS status check. Report the following:
 2. **Last 5 commits** — one-line format
 3. **Test health** — run `npm test` from `story-mode/`, report pass/fail/skip counts
 4. **Build health** — run `npm run build` from `story-mode/`, report success or errors
+4b. **Full gate** — run `node scripts/verify-all.mjs` from the repo root (the same gate `.github/workflows/pages.yml` runs before deploy) and report the first failing step, if any
 5. **Sandbox mode** — does `state.js` export `createSandboxState`? Is it wired into `game-init.js`?
 6. **Sky rendering** — check `garden-scene.js` sky canvas: does `fillRect` width match `skyCanvas.width`?
 7. **Open UX items** — grep for `TODO|FIXME|HACK` across `src/ui/` and `src/scene/`
@@ -27,8 +28,11 @@ Working directory: `<repo-root>/story-mode/`
 
 ```
 Branch: main (clean)
-Tests:  28 files passed, 329 tests passed, 0 failed
+Tests:  all files passed, 0 failed (do not hand-copy counts here; the
+        number changes with every test added and a stale figure reads
+        as a regression)
 Build:  npm run build success
+Gate:   node scripts/verify-all.mjs passed every step
 Sky:    fillRect covers full canvas width
 Specs:  crop count matches
 ```
