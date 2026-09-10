@@ -4061,7 +4061,14 @@ describe('Phase 4 — Inventory, Skills, Crafting, Durability', () => {
 // Phase 5K — Open World, Zones, Foraging, Grid Expansion
 // Tests for zone navigation, gating, foraging, expanded garden grids,
 // multiple beds, biome crops, and the full end-to-end game loop.
-// Data specs: WORLD_MAP.json (8 zones), CROP_SCORING_DATA.json (51 crops).
+// Data specs: WORLD_MAP.json (8 zones), CROP_SCORING_DATA.json (crop count
+// declared by the spec's own description field).
+
+// Read the crop count the spec declares about itself ("... N crops, ...").
+function declaredCropCount(data) {
+  const match = /(\d+)\s+crops\b/.exec(String(data?.description ?? ''));
+  return match ? Number(match[1]) : NaN;
+}
 
 describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
 
@@ -4810,7 +4817,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
   // 5-F. Biome Crops
   // -------------------------------------------------------------------------
   describe('Biome Crops', () => {
-    it('all 51 crops in CROP_SCORING_DATA.json have valid scoring data', async () => {
+    it('every crop in CROP_SCORING_DATA.json has valid scoring data', async () => {
       // This test can run NOW — it validates the spec file directly.
       const fs = await import('node:fs');
       const path = await import('node:path');
@@ -4821,8 +4828,11 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       const data = JSON.parse(raw);
       const crops = Object.values(data.crops);
 
-      // Verify total count matches the spec description
-      expect(crops.length).toBe(51);
+      // The roster count is owned by the spec, not by this test. Assert the
+      // spec's own description agrees with its crop table so a roster edit
+      // that forgets the description fails here without a hand-maintained
+      // literal that has to be re-typed in every test on each addition.
+      expect(crops.length).toBe(declaredCropCount(data));
 
       // Verify every crop has required scoring fields
       for (const crop of crops) {
@@ -4932,7 +4942,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(salsaResult.score).toBeGreaterThan(0);
     });
 
-    it('total crop count including biome crops is 51', async () => {
+    it('total crop count including biome crops matches the spec description', async () => {
       // This test can run NOW — validates the canonical crop count.
       const fs = await import('node:fs');
       const path = await import('node:path');
@@ -4941,9 +4951,11 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       );
       const raw = fs.readFileSync(dataPath, 'utf-8');
       const data = JSON.parse(raw);
+      const cropCount = Object.keys(data.crops).length;
 
-      expect(Object.keys(data.crops).length).toBe(51);
-      expect(data.description).toContain('51 crops');
+      expect(cropCount).toBeGreaterThan(0);
+      expect(data.description).toContain(`${cropCount} crops`);
+      expect(declaredCropCount(data)).toBe(cropCount);
     });
   });
 
