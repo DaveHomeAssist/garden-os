@@ -1,9 +1,9 @@
 ---
 Status: Active
 Document Version: 1.3
-Compatible With: Garden OS v4.3, Story Mode v0.1, Schema v1, Season Engine v4
+Compatible With: Garden OS v5, Story Mode v1, Schema v3, Season Engine v4 (legacy)
 Owner: Dave Robertson
-Last Updated: 2026-08-09
+Last Updated: 2026-09-17
 Artifact Class: Ref
 ---
 
@@ -80,16 +80,20 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 #### Root Track (GitHub Pages repo root)
 
-| Tool | File | Lines | Purpose |
-|------|------|-------|---------|
-| Home | `index.html` + `index-v5.html` | redirect + app | One canonical public Home backed by the current v5 product surface |
-| Story Mode | `story-mode/` | app | Canonical Vite/Three.js narrative runtime and source route |
-| Planner v4.3 | `garden-planner-v4.html` | 6,076 | Core placement UI, scoring breakdown, export/import |
-| Legacy Season Engine v4.0 | `garden-league-simulator-v4.html` | 2,971 | Prior chapter-based season sandbox; still live, no longer the flagship branch |
-| Build Guide | `garden-cage-build-guide.html` | 2,270 | Interactive cage construction specs |
-| Ops Guide | `garden-cage-ops-guide.html` | 1,313 | Seasonal maintenance checklist |
-| Brand Guide | `brand-guide.html` | — | Design tokens and reference surface |
-| How It Thinks | `how-it-thinks.html` | ~500 | Plain-English scoring walkthrough |
+| Tool | File | Purpose |
+|------|------|---------|
+| Home | `index.html` + `index-v5.html` | One canonical public Home backed by the current v5 product surface |
+| Beds (What-If / A/B) | `garden-painting.html` | Active v5 layout editor, transient What-If trials, A/B experiment lifecycle |
+| Planner | `garden-planner-v5.html` | Active v5 seasonal planner with read-only experiment summaries |
+| Garden Doctor | `garden-doctor-v5.html` | Symptom triage: symptom picker, diagnosis, action steps |
+| Journal | `journal.html` | Durable activity log and experiment lifecycle events |
+| How It Thinks | `how-it-thinks-v5.html` | Plain-English scoring walkthrough |
+| Story Mode | `story-mode/` | Canonical Vite/Three.js narrative runtime and source route |
+| Build Guide | `garden-cage-build-guide.html` | Interactive cage construction specs |
+| Ops Guide | `garden-cage-ops-guide.html` | Seasonal maintenance checklist |
+| Brand Guide | `brand-guide.html` | Design tokens and reference surface |
+| Planner v4 *(archived)* | `garden-planner-v4.html` | Historical standalone planner; not active-v5 proof |
+| Season Engine v4 *(archived)* | `garden-league-simulator-v4.html` | Prior chapter-based season sandbox; still playable, not the active branch |
 
 #### Developer / Analysis Track
 
@@ -124,8 +128,8 @@ Story Mode currently includes:
 ### Navigation Structure
 
 Two-track nav with bridge links:
-- **User track:** Story Mode → Hub → Planner → Build Guide → Ops Guide → Brand Guide → How It Thinks → Dev Tools →
-- **Dev track:** 5 items + "← Garden" left-aligned at 55% opacity
+- **User track:** Home → Beds → Planner → Doctor → Journal → [Dev Tools →]
+- **Dev track:** Visualizer → Scoring Map → Fairness Tester → System Map → Topology + "← Garden" left-aligned at 55% opacity
 - Shared nav bar style: dark soil (`#5c3d1e`) background, `DM Mono` font, sun (`#e8c84a`) accent
 
 ---
@@ -173,7 +177,7 @@ Dev pages use their own visual language:
 
 ## Crop Data Model
 
-**Source:** `/specs/CROP_SCORING_DATA.json` — 50 crops (20 campaign + 30 expansion), 8 factions, 8 scoring recipes
+**Source:** `/specs/CROP_SCORING_DATA.json` — 51 crops, 8 factions, 8 scoring recipes
 
 ```json
 {
@@ -217,7 +221,7 @@ Climbers, Fast Cycles, Brassicas, Roots, Greens, Herbs, Fruiting, Companions
 
 ### Recipes
 
-7 campaign recipes + 5 hidden Mom recipes. See `specs/PROGRESSION_SPEC.md` for the full registry.
+8 recipes (herb_bowl, tomato_sandwich, weeknight_pasta, moms_sauce, stir_fry, garden_salad, foragers_stew, garden_deluxe_salsa). See `specs/PROGRESSION_SPEC.md` for narrative unlock context.
 
 ---
 
@@ -377,10 +381,10 @@ Fixed speaking order. Deterministic triggers — no random chatter. 80+ triggers
 ### Cross-Runtime Scoring
 
 Both runtimes implement the same scoring algorithm from `specs/SCORING_RULES.md` independently:
-- Planner: inline `scoreCropInCell()` in `garden-planner-v4.html`
+- Active v5 surfaces: `gos-suitability-core.js` shared engine (Beds, Planner, Doctor)
 - Story Mode: `story-mode/src/scoring/cell-score.js`
 
-No shared code module exists. The spec is the single source of truth.
+No code module is shared between root tools and Story Mode. The spec is the single source of truth.
 
 ---
 
@@ -408,7 +412,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 | File | Content |
 |------|---------|
-| `CROP_SCORING_DATA.json` | 50 crops (20 campaign + 30 expansion), 8 factions, recipes, vulnerabilities |
+| `CROP_SCORING_DATA.json` | 51 crops, 8 factions, 8 recipes, vulnerabilities |
 | `SCORING_RULES.md` | Complete deterministic scoring algorithm (single source of truth) |
 | `SEASON_ENGINE_SPEC.md` | State machine, phases, carry-forward |
 | `NARRATIVE_SPEC.md` | 12 chapters, score targets, story beats |
@@ -441,22 +445,20 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 ## Roadmap
 
-### Phase 1 ✅ Complete
+### Phases 1-9 Complete
 
-- Canonical schema + explainable score breakdown + export/import + all user-track tools live
+All implementation plan phases shipped:
+- Phases 1-3 (2026-03-31): Schema, explainable scores, export/import, Garden Doctor, season intelligence
+- Phases 4-8 (2026-06-22): Structure-aware planner reasoning, temporal and multi-bed export contracts
+- Phase 9 (2026-07-11): Active v5 What-If simulation and cross-bed A/B experiments
 
-### Phase 2 (Days 31-60)
+See `IMPLEMENTATION_PLAN.md` for full evidence and ship-gate records.
 
-- Layout simulator / "What If?" mode
-- Garden Doctor symptom triage tool
-- Yield forecast + harvest window
-- Difficulty presets (easy/standard/hard)
+### Sequenced Follow-up Queue
 
-### Phase 3 (Days 61-90)
-
-- A/B experiment tracking between beds
-- Succession planting timeline
-- Season retrospective with printable summary
+1. Printable garden plan (local-only, bounded scope)
+2. Live weather coach re-planned against v5 (offline, cache, CSP, location contracts required)
+3. Docs reconciliation -- remaining v4 references in HANDOFF.md, FEATURES.md, README
 
 ---
 
@@ -475,22 +477,27 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 
 ## Code Entry Points
 
-### Planner (`garden-planner-v4.html`)
+### Active v5 Scoring Engine (`gos-suitability-core.js`)
 
-- `scoreCropInCell()` — core scoring function
-- `deriveCellTraits()` — computes traits from cage config
-- `renderGrid()` — draws the bed
-- `exportWorkspace()` / `importWorkspace()` — `.gos.json` I/O
-- `CROPS` object — full crop roster
-- `SCORING_CONSTANTS` — weights, shadow penalties, clamps
+- `GardenScoringCore` / `GosSuitability` — deterministic scoring shared by Beds, Planner, Doctor
+- Loads crop catalog from `specs/CROP_SCORING_DATA.json` via localStorage cache
+- Falls back to `FALLBACK_CROPS` (12 crops) when spec is unavailable
 
-### Season Engine (`garden-league-simulator-v4.html`)
+### Active v5 Beds (`garden-painting.html`)
 
-- `mkSeason()` — creates a new season state
-- Phase transition functions: `commitGrid()`, `advancePhase()`, `resolveEvent()`, `calculateHarvest()`
-- `DIALOGUE_ENGINE` — trigger → character line mapping
-- `EVENT_DECK` — event cards with modifiers
-- `carryForward()` — persists fatigue, event memory, infrastructure between seasons
+- What-If trial: clone → edit transient state → Apply via `GosBed.write(..., { expectedRevision })`
+- A/B experiments: `gos-experiments.js` manages `gos.experiments.v1` records
+- Scoring via `GosSuitability`
+
+### Planner v4 (`garden-planner-v4.html`) -- *archived reference*
+
+- `scoreCropInCell()`, `deriveCellTraits()`, `renderGrid()`, `exportWorkspace()` / `importWorkspace()`
+- Historical surface; not an active v5 entry point
+
+### Season Engine v4 (`garden-league-simulator-v4.html`) -- *archived reference*
+
+- `mkSeason()`, `commitGrid()`, `advancePhase()`, `resolveEvent()`, `calculateHarvest()`
+- `DIALOGUE_ENGINE`, `EVENT_DECK`, `carryForward()` -- all historical, still playable
 
 ### Story Mode (`story-mode/src/`)
 
@@ -524,7 +531,7 @@ Defines: Workspace, Bed, CageConfig, PlannerState, SiteSettings, CropRecord, Sco
 ## File Naming Conventions
 
 - All kebab-case (snake_case duplicates removed as of 2026-03-16)
-- User-track: descriptive names (`how-it-thinks.html`, `garden-planner-v4.html`)
+- User-track: descriptive names (`how-it-thinks-v5.html`, `garden-planner-v5.html`)
 - Dev-track: short functional names (`scoring-visualizer.html`, `fairness-tester.html`)
 - Specs: UPPER_SNAKE_CASE markdown/json (`SCORING_RULES.md`, `EVENT_DECK.json`)
 

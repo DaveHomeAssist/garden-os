@@ -39,7 +39,7 @@ State persists in `localStorage` today.
 |------|---------|
 | `garden-os-theme.css` | Design tokens (colors, fonts, spacing) |
 | `specs/SCORING_RULES.md` | Canonical scoring algorithm |
-| `specs/CROP_SCORING_DATA.json` | 50-crop roster with full metadata (v3 schema, 2026-03-22) |
+| `specs/CROP_SCORING_DATA.json` | 51-crop roster with full metadata (v3 schema, 2026-08-25) |
 
 ## Active v5 Decision Support
 
@@ -56,7 +56,9 @@ claim causality.
 
 ---
 
-# Garden Planner (garden-planner-v4.html)
+# Garden Planner v4 (garden-planner-v4.html) -- archived reference
+
+> Active v5 planning uses `garden-painting.html` (Beds) and `garden-planner-v5.html` (Planner). This section is a historical reference for the archived v4 planner.
 
 ## Core: Grid Planner + Scoring Engine
 
@@ -96,7 +98,7 @@ Score range: 0-10 per cell. Bed average reported as overall score.
 }
 ```
 
-### Crop Roster (50 crops, 8 factions)
+### Crop Roster (51 crops, 8 factions)
 
 Canonical roster in `specs/CROP_SCORING_DATA.json` (v3, last updated 2026-03-22). Factions: `brassicas`, `climbers`, `companions`, `fast_cycles`, `fruiting`, `greens`, `herbs`, `roots`. The earlier 20 crop, 4 faction roster below is historical from the v1.0 era of this doc and is retained as an audit trail only; do not treat it as current.
 
@@ -230,7 +232,7 @@ A searchable reference tab in the right sidebar showing all companion and confli
 
 - "Companions" tab in right sidebar
 - Search input with live filtering
-- Crop dropdown selector (all 20 crops)
+- Crop dropdown selector
 - Crop header: emoji, name, category badge
 - Tag summary: likes/avoids
 - Three sections: Companions (green ✓), Conflicts (red ✗), Neutral (gray —)
@@ -406,7 +408,9 @@ Stored in `_workspace.harvests` array. Persists via existing `saveState()` pipel
 
 ---
 
-# Season Engine (garden-league-simulator-v3.html)
+# Season Engine (garden-league-simulator-v4.html) -- archived reference
+
+> This section documents the archived v4 Season Engine. It is still playable but not the active Story Mode runtime (`story-mode/`).
 
 ## Core: 12-Chapter Narrative Game
 
@@ -580,9 +584,11 @@ PLANNING → (place crops) → SIMULATION → (events fire) → HARVEST → (sco
 
 ---
 
-## Feature: Today's Garden Coach + Weather (v4.5)
+## Feature: Today's Garden Coach + Weather (v4.5) -- archived v4 feature
 
-**Shipped:** 2026-04-22
+> Implemented in `garden-planner-v4.html` (archived). Not active in v5 surfaces. See `IMPLEMENTATION_PLAN.md` sequenced follow-up queue for the v5 re-plan.
+
+**Shipped in v4:** 2026-04-22
 
 ### What it does
 Opens the planner to a ranked list of 3 to 5 concrete tasks for today: water, check, harvest, cover for frost, shade for heat, succession plant, thin, trellis check. Tasks derive from crop stage plus a live local weather forecast.
@@ -609,7 +615,7 @@ Opens the planner to a ranked list of 3 to 5 concrete tasks for today: water, ch
 - CSP scoped to `api.open-meteo.com` and `geocoding-api.open-meteo.com`
 
 ### Reference implementations
-Clean reference copies of the weather fetch and today engine live at `tools/weather.dev.js` and `tools/today.dev.js`, with fixtures at `tests/fixtures/weather/` and test harnesses at `tests/weather.test.html` and `tests/today.test.html`. The authoritative logic is inlined in `garden-planner-v4.html`.
+Clean reference copies of the weather fetch and today engine live at `tools/weather.dev.js` and `tools/today.dev.js`, with fixtures at `tests/fixtures/weather/` and test harnesses at `tests/weather.test.html` and `tests/today.test.html`. The authoritative logic is inlined in `garden-planner-v4.html` (archived).
 
 ### Deferred (v4.6 candidates)
 - `frostSensitive: boolean` crop schema patch to narrow cover-frost tasks

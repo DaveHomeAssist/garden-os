@@ -65,7 +65,7 @@ garden-os/
 ├── brand-guide.html                    # Brand token and component reference
 ├── specs/                              # Data schemas and reference JSON
 ├── docs/                               # Design docs, audits, roadmaps
-├── AGENTS.md                           # Agent instructions and issue tracker
+├── AGENTS.md                           # Agent instructions (issue tracker deprecated; see docs/UI_ISSUES_TABLE.html)
 ├── CLAUDE.md                           # Architecture constraints
 └── README.md                           # This file
 ```
@@ -101,7 +101,7 @@ garden-os/
 - Planner recovers to a safe empty workspace if localStorage JSON is malformed.
 - Planner tool state stays in sync across click, keyboard, reload, and bed switching.
 - Planner mobile shell shows the board before side panels and sidebar toggles still work.
-- Season Engine v4 neutral clicks inspect/select without mutating the grid.
+- Season Engine v4 (`garden-league-simulator-v4.html`, archived) neutral clicks inspect/select without mutating the grid.
 - Season Engine v4 `E` toggles eraser and `Escape` returns to neutral inspect behavior.
 - Menus and dialogs open with focus on an action, trap Tab where expected, and close on `Escape`.
 - Phase reasoning smoke verifies score payload parity, temporal context, multi-bed experiment summaries, companion findings, and deterministic reasoned export output.

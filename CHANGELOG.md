@@ -10,6 +10,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 
+### Changed
+- Reconciled v4 references in HANDOFF.md, FEATURES.md, and README: active v5 surfaces now listed correctly in Root Track table, nav track updated to current two-track model, crop count updated to 51, recipe count corrected to 8, Cross-Runtime Scoring updated to reference gos-suitability-core.js, Code Entry Points and Roadmap sections reflect shipped Phases 1-9, Season Engine and Today Coach sections marked as archived references.
+
 ## [Unversioned - 2026-09-06] Story Mode Pages recovery, save durability, and release hardening
 ### Added
 - Added transparent Story Mode crop textures for cherry tomato, carrot, onion,
