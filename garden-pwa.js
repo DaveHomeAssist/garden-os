@@ -17,8 +17,6 @@
     if (isLocalStoryDev) return null;
     try {
       const url = serviceWorkerUrl();
-      const probe = await fetch(url.href, { method: 'HEAD', cache: 'no-store' });
-      if (!probe.ok) return null;
       return await navigator.serviceWorker.register(url.href, {
         scope: new URL('./', url).pathname,
       });
