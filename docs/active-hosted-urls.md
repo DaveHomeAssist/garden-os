@@ -46,7 +46,7 @@ Sub-paths served from this repo:
 
 | URL | Repo | Source | First Published | Last Deployed | Status |
 |-----|------|--------|-----------------|---------------|--------|
-| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-09-17 | Live — Pages run 35214066468 at `a8815e` |
+| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-09-20 | Live — Pages run 35517067325 at `12d7469` |
 | [/garden-cage-build-guide](https://davehomeassist.github.io/garden-cage-build-guide/) | garden-cage-build-guide | `main` `/` | 2026-03-14 | 2026-03-14 | Archived — still serving |
 | [/garden-planner](https://davehomeassist.github.io/garden-planner/) | garden-planner | `main` `/` | 2026-03-09 | 2026-03-09 | Archived — still serving (legacy) |
 

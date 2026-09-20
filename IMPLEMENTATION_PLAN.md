@@ -979,8 +979,10 @@ After Phase 9 is shipped and live-verified:
 
 ## Phase 10 — Public-Surface Integrity Foundation
 
-**Status:** LOCAL VERIFICATION COMPLETE — deploy and live readback pending
+**Status:** COMPLETE — live-verified 2026-09-20
 **Started:** 2026-09-20
+**Implementation commit:** `12d7469`
+**Pages proof:** run `35517067325` passed build, deploy, live Story smoke, and live six-viewport field-kit/context-menu verification
 
 This phase removes ambiguity before adding another decision-support feature:
 
@@ -996,9 +998,15 @@ Exit gates:
 - Pushed `main` equals the tested commit and GitHub Pages deploys it.
 - Live browser readback proves theme persistence, Story Mode title semantics, and PWA registration.
 
+Completion evidence:
+
+- Local full verifier passed every requested gate; Story Mode passed 46 files / 517 tests.
+- Independent live-only Story smoke reached the meadow and verified multi-zone traversal/foraging.
+- Independent live browser proof verified all nine routes, the `/garden-os/` service-worker scope, offline Home reload, light/dark persistence, keyboard mode selection, session-only copy, and locked-mode semantics.
+
 ## Phase 11 — Active-v5 Printable Garden Plan
 
-**Status:** READY AFTER PHASE 10 LIVE PROOF
+**Status:** READY — PHASE 10 LIVE PROOF COMPLETE
 **Boundary:** local-only, no schema migration, no backend
 
 The printable plan must render from the same canonical `GosBed` and Planner data

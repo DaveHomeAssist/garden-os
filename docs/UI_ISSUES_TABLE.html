@@ -953,7 +953,7 @@
       "title": "Story Mode title choices are keyboard controls with truthful persistence copy",
       "impact": "Story, Free Play, and Story Planner can now be selected with native buttons and arrow keys. Players see which modes persist before launch. Locked-mode timing or unlock-condition detail is still absent.",
       "fix": "Replaced clickable div cards with native buttons, pressed and disabled semantics, arrow navigation, live status, and explicit persistent versus session-only labels. Free Play and Story Planner repeat the session boundary after launch.",
-      "verification": "2026-09-20 game-init Vitest passed 5 tests; required web-game client screenshots verified Story, Free Play, Story Planner, dark theme, and Chapter 1 gameplay. GitHub issue #38 remains open for richer unlock-condition or release-ETA detail.",
+      "verification": "2026-09-20 game-init Vitest passed 5 tests; local and live browser checks verified native buttons, arrow navigation, Story, Free Play, Story Planner, dark theme, explicit unsaved labels, disabled locked modes, and Chapter 1 gameplay. GitHub issue #38 remains open for richer unlock-condition or release-ETA detail.",
       "location": "story-mode/src/game/game-init.js; story-mode/src/ui/pause-controller.js; story-mode/src/ui/planner-binder.js; story-mode/src/ui/gameplay-guide.js",
       "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/38",
       "added": "2026-09-20"
@@ -967,7 +967,7 @@
       "title": "Canonical routes share theme preference and PWA registration",
       "impact": "The suite now defaults to light, offers a visible saved dark-mode choice, and registers one current service worker instead of route-specific snippets.",
       "fix": "Added shared theme and PWA controllers, dual-theme tokens, suite-level manifest identity, service-worker cache update, and Story Mode integration.",
-      "verification": "2026-09-20 token contrast, canonical integrity, route regression, browser theme persistence, 44px target, service-worker activation, and offline Home reload gates passed.",
+      "verification": "2026-09-20 token contrast, canonical integrity, route regression, browser theme persistence, 44px target, service-worker activation, and offline Home reload gates passed locally and against the public Pages deployment in run 35517067325.",
       "location": "garden-theme.js; garden-pwa.js; garden-os-theme.css; garden-theme-compat.css; manifest.json; sw.js",
       "added": "2026-09-20",
       "resolved": "2026-09-20"
