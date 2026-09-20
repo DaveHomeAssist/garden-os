@@ -38,6 +38,8 @@
   --soil:           #3a2510;
   --soil-mid:       #52331a;
   --soil-light:     #7a5230;
+  --soil-ink:       #3a2510;
+  --soil-mid-ink:   #52331a;
 
   /* Cedar — mid-brown accents, borders, interactive highlights */
   --cedar:          #8b5e3c;
@@ -143,6 +145,57 @@
   --radius-lg:           24px;
 }
 
+/* WEB-1: the first visit is light; an explicit saved choice sets this scope. */
+html[data-theme="dark"] {
+  --soil:           #171008;
+  --soil-mid:       #2b1d11;
+  --soil-light:     #745439;
+  --soil-ink:       #f4f0e8;
+  --soil-mid-ink:   #e2d8c7;
+  --cedar:          #c4926b;
+  --cedar-light:    #d3a67f;
+  --cedar-pale:     #6e5540;
+  --cedar-wash:     #30251d;
+  --leaf:           #8ec77c;
+  --leaf-bright:    #3a6b2a;
+  --leaf-light:     #8ec77c;
+  --leaf-pale:      #49663f;
+  --leaf-wash:      #263323;
+  --sun:            #e1bb42;
+  --sun-bright:     #f0d166;
+  --sun-pale:       #554a24;
+  --sun-wash:       #302b1c;
+  --rust:           #e17d57;
+  --rust-light:     #ef9877;
+  --rust-pale:      #70402f;
+  --rust-wash:      #38231c;
+  --cream:          #171b16;
+  --cream-mid:      #20251e;
+  --cream-deep:     #2a3027;
+  --panel:          #242a21;
+  --text:           #f4f0e8;
+  --text-mid:       #e2d8c7;
+  --text-soft:      #c9bca8;
+  --text-muted:     #b4a590;
+  --border:         #81705d;
+  --border-soft:    #5f5243;
+  --border-subtle:  #3d352c;
+  --good:           #8fd49a;
+  --warn:           #f0ad72;
+  --bad:            #ff9188;
+  --info:           #91b7f2;
+  --accent-rain:    #8db2c1;
+  --shadow-xs:      0 1px 3px rgba(0, 0, 0, 0.24);
+  --shadow-sm:      0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md:      0 4px 18px rgba(0, 0, 0, 0.36);
+  --shadow-lg:      0 8px 32px rgba(0, 0, 0, 0.42);
+  --shadow-xl:      0 16px 56px rgba(0, 0, 0, 0.5);
+  --paper-strong:   rgba(36, 42, 33, 0.96);
+  --paper-soft:     rgba(36, 42, 33, 0.78);
+  --artifact-line:  rgba(226, 216, 199, 0.2);
+  --artifact-line-strong: rgba(226, 216, 199, 0.36);
+}
+
 
 /* ── RESET & BASE ──────────────────────────────────────────── */
 *, *::before, *::after {
@@ -169,6 +222,49 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.garden-theme-toggle {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 10020;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 76px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  font: 600 0.72rem/1 var(--font-sans);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.garden-theme-toggle:hover {
+  border-color: var(--leaf);
+  box-shadow: var(--shadow-md);
+}
+
+.garden-theme-toggle [data-theme-icon] {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+html[data-theme="dark"] .v5-eyebrow {
+  color: var(--text-soft) !important;
+}
+
+@media (max-width: 479px) {
+  .garden-theme-toggle {
+    top: auto;
+    bottom: max(80px, calc(10px + env(safe-area-inset-bottom)));
+  }
 }
 
 .skip-link {

@@ -284,7 +284,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="os-nav" id="navBar" aria-label="Garden OS"></nav>
-<main id="main" data-last-verified="2026-07-08">
+<main id="main" data-last-verified="2026-09-20">
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow"></div>
@@ -366,14 +366,17 @@
 <script type="application/json" id="issue-data">
 {
   "project": "Garden OS",
-  "subtitle": "Repo-state tracker for Planner v4 and Season Engine v3/v4. Verified fixes are closed against the current codebase, open items are still actionable, and deferred items are backlog work rather than live regressions.",
+  "subtitle": "Repo-state tracker for the active v5 product and Story Mode. Verified fixes are closed against current source and tests; open and partial items map to actionable backlog rather than archived v4 assumptions.",
   "navLinks": [
     { "label": "Home", "href": "../index.html" },
-    { "label": "Play Game", "href": "../garden-league-simulator-v3.html" },
-    { "label": "Planner", "href": "../garden-planner-v4.html" },
+    { "label": "Beds", "href": "../garden-painting.html" },
+    { "label": "Planner", "href": "../garden-planner-v5.html" },
+    { "label": "Doctor", "href": "../garden-doctor-v5.html" },
+    { "label": "Journal", "href": "../journal.html" },
+    { "label": "Story Mode", "href": "../story-mode/" },
     { "label": "Build Guide", "href": "../garden-cage-build-guide.html" },
     { "label": "Ops Guide", "href": "../garden-cage-ops-guide.html" },
-    { "label": "How It Thinks", "href": "../how-it-thinks.html" },
+    { "label": "How It Thinks", "href": "../how-it-thinks-v5.html" },
     { "label": "Dev Tools \u2192", "href": "../scoring-visualizer.html", "class": "bridge" }
   ],
   "areaOptions": [
@@ -940,6 +943,60 @@
       "notes": "Vercel production now uses Upstash KV env aliases from the Marketplace resource upstash-kv-fuchsia-forest. Secrets are configured in Vercel and are not stored in the repo.",
       "added": "2026-07-08",
       "resolved": "2026-07-08"
+    },
+    {
+      "id": "054",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Accessibility",
+      "tool": "engine",
+      "title": "Story Mode title choices are keyboard controls with truthful persistence copy",
+      "impact": "Story, Free Play, and Story Planner can now be selected with native buttons and arrow keys. Players see which modes persist before launch. Locked-mode timing or unlock-condition detail is still absent.",
+      "fix": "Replaced clickable div cards with native buttons, pressed and disabled semantics, arrow navigation, live status, and explicit persistent versus session-only labels. Free Play and Story Planner repeat the session boundary after launch.",
+      "verification": "2026-09-20 game-init Vitest passed 5 tests; required web-game client screenshots verified Story, Free Play, Story Planner, dark theme, and Chapter 1 gameplay. GitHub issue #38 remains open for richer unlock-condition or release-ETA detail.",
+      "location": "story-mode/src/game/game-init.js; story-mode/src/ui/pause-controller.js; story-mode/src/ui/planner-binder.js; story-mode/src/ui/gameplay-guide.js",
+      "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/38",
+      "added": "2026-09-20"
+    },
+    {
+      "id": "055",
+      "severity": "P1",
+      "status": "done",
+      "area": "Resilience",
+      "tool": "product",
+      "title": "Canonical routes share theme preference and PWA registration",
+      "impact": "The suite now defaults to light, offers a visible saved dark-mode choice, and registers one current service worker instead of route-specific snippets.",
+      "fix": "Added shared theme and PWA controllers, dual-theme tokens, suite-level manifest identity, service-worker cache update, and Story Mode integration.",
+      "verification": "2026-09-20 token contrast, canonical integrity, route regression, browser theme persistence, 44px target, service-worker activation, and offline Home reload gates passed.",
+      "location": "garden-theme.js; garden-pwa.js; garden-os-theme.css; garden-theme-compat.css; manifest.json; sw.js",
+      "added": "2026-09-20",
+      "resolved": "2026-09-20"
+    },
+    {
+      "id": "056",
+      "severity": "P2",
+      "status": "open",
+      "area": "Touch",
+      "tool": "engine",
+      "title": "Backpack drag-and-drop has no touch path",
+      "impact": "Seed dragging is unavailable on phones and tablets because the current interaction uses desktop HTML drag events.",
+      "verification": "Confirmed open in GitHub issue #40 on 2026-09-20; no Pointer Events fallback is present yet.",
+      "location": "story-mode/src/ui/backpack-panel.js",
+      "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/40",
+      "added": "2026-09-20"
+    },
+    {
+      "id": "057",
+      "severity": "P3",
+      "status": "open",
+      "area": "Audio",
+      "tool": "engine",
+      "title": "Story Mode windows open and close silently",
+      "impact": "Journal, log, and character windows lack the subtle feedback already used for gameplay actions.",
+      "verification": "Confirmed open in GitHub issue #42 on 2026-09-20; pause and panel controllers do not route window actions through audioManager.",
+      "location": "story-mode/src/ui/pause-controller.js; story-mode/src/ui/pause-panels.js",
+      "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/42",
+      "added": "2026-09-20"
     }
   ]
 }

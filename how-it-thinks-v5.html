@@ -18,7 +18,10 @@
 <meta name="twitter:description" content="Garden OS How It Thinks: how the score decides, plain English. Try-it mini-bed, six factor cards, link to specs.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
+<script src="garden-theme.js"></script>
 <link rel="stylesheet" href="garden-os-theme.css">
+<link rel="manifest" href="manifest.json">
+<script src="garden-pwa.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -61,25 +64,25 @@
 <script src="vendor/babel-standalone-7.29.0.min.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to How It Thinks</a>
 <a class="v5-eyebrow" href="./">← Garden OS</a>
 <div id="shell"><div id="root"></div></div>
 
 <script type="text/babel" data-presets="react">
 'use strict';
 
+const token = name => `var(${name})`;
 const T = {
-  soil:'#3a2510', soilMid:'#52331a',
-  cedar:'#8b5e3c', cedarPale:'#e0c8a8', cedarWash:'#f2e8d8',
-  leaf:'#3a6b2a', leafBright:'#4e8c3c', leafPale:'#c8e6c0', leafWash:'#edf5e8',
-  sun:'#d4a820', sunBright:'#e8c84a', sunPale:'#faf0c0',
-  rust:'#b84a1a', rustLight:'#d4651a',
-  cream:'#f7f3ec', creamMid:'#ede5d8', panel:'#fffdf9',
-  text:'#1e1208', textMid:'#4a3018', textSoft:'#6f5840', textMuted:'#9a8068',
-  border:'#c8b090', borderSoft:'#dfd0b8',
-  fontDisp: "'Fraunces', Georgia, serif",
-  fontSerif:"'Lora', Georgia, serif",
-  fontSans: "'DM Sans', system-ui, sans-serif",
-  fontMono: "'DM Mono', ui-monospace, monospace",
+  soil:token('--soil'), soilMid:token('--soil-mid'), soilInk:token('--soil-ink'), soilMidInk:token('--soil-mid-ink'),
+  cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
+  leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'), leafWash:token('--leaf-wash'),
+  sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
+  rust:token('--rust'), rustLight:token('--rust-light'),
+  cream:token('--cream'), creamMid:token('--cream-mid'), panel:token('--panel'),
+  text:token('--text'), textMid:token('--text-mid'), textSoft:token('--text-soft'), textMuted:token('--text-muted'),
+  border:token('--border'), borderSoft:token('--border-soft'),
+  fontDisp:token('--font-display'), fontSerif:token('--font-serif'),
+  fontSans:token('--font-sans'), fontMono:token('--font-mono'),
 };
 
 const CROPS = {
@@ -197,7 +200,7 @@ function PhoneFrame({ children }) {
     <div className="v5-frame-outer" style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
       <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
-        background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
+        background: T.panel, borderRadius: 38, overflow: 'hidden', position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
       }}>{children}</div>
     </div>
@@ -463,7 +466,7 @@ function FactorCard({ factor, open, detailLevel, onToggle }) {
           {(showNum || detailLevel === 'deep') && (
             <div style={{
               marginTop: 10, padding: '8px 10px', background: T.cream, borderRadius: 8,
-              fontFamily: T.fontMono, fontSize: 11, color: T.soilMid, lineHeight: 1.5,
+              fontFamily: T.fontMono, fontSize: 11, color: T.soilMidInk, lineHeight: 1.5,
               border: `1px solid ${T.borderSoft}`,
             }}>{factor.num}</div>
           )}
@@ -494,28 +497,28 @@ function HowItThinks() {
 
       <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Label size={9} color={T.soilMid}>HOW IT THINKS</Label>
+          <Label size={9} color={T.soilMidInk}>HOW IT THINKS</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <Label size={9} color={T.soilMid}>{tweak.detailLevel.toUpperCase()}</Label>
+            <Label size={9} color={T.soilMidInk}>{tweak.detailLevel.toUpperCase()}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
               width: 26, height: 26, borderRadius: 6, padding: 0, background: T.panel,
               border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}>{Icons.gear(12, T.soil)}</button>
+            }}>{Icons.gear(12, T.soilInk)}</button>
           </div>
         </div>
-        <div style={{
+        <h1 style={{
           fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
-          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, marginTop: 2,
+          letterSpacing: -0.4, color: T.soilInk, lineHeight: 1.1, marginTop: 2,
         }}>
           How it <span style={{ fontStyle: 'italic', color: T.leaf }}>thinks</span>.
-        </div>
+        </h1>
         <div style={{ fontFamily: T.fontSerif, fontSize: 13, color: T.textSoft, fontStyle: 'italic', marginTop: 2 }}>
           Six factors. Same math every time.
         </div>
       </header>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
+      <main id="main-content" tabIndex="-1" style={{ flex: 1, overflowY: 'auto', padding: '0 18px 24px' }}>
         <TryItBed/>
 
         <Label size={9} color={T.textSoft} style={{ marginLeft: 2, marginTop: 18, display: 'block' }}>SIX FACTORS</Label>
@@ -549,7 +552,7 @@ function HowItThinks() {
           fontFamily: T.fontMono, fontSize: 11, color: T.leaf,
           textDecoration: 'none', letterSpacing: 0.1,
         }}>See specs/SCORING_RULES.md →</a>
-      </div>
+      </main>
 
       <TabBar active="think"/>
       {tweaksOpen && <TweaksPanel tweak={tweak} setTweak={setTweak} onClose={() => setTweaksOpen(false)}/>}

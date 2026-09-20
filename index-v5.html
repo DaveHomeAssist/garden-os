@@ -20,7 +20,10 @@
 <meta name="twitter:description" content="Garden OS Home: this week, where to next, what">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
+<script src="garden-theme.js"></script>
 <link rel="stylesheet" href="garden-os-theme.css">
+<link rel="manifest" href="manifest.json">
+<script src="garden-pwa.js" defer></script>
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -78,9 +81,9 @@
 'use strict';
 
 // ── Theme tokens ────────────────────────────────────────────────────────────
-const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const token = name => `var(${name})`;
 const T = {
-  soil:token('--soil'), soilMid:token('--soil-mid'),
+  soil:token('--soil'), soilMid:token('--soil-mid'), soilInk:token('--soil-ink'), soilMidInk:token('--soil-mid-ink'),
   cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
   leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'), leafWash:token('--leaf-wash'),
   sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
@@ -177,7 +180,7 @@ function PhoneFrame({ children }) {
     <div className="v5-frame-outer" style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
       <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
-        background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
+        background: T.panel, borderRadius: 38, overflow: 'hidden', position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
       }}>{children}</div>
     </div>
@@ -1299,7 +1302,7 @@ function DevToolsOverlay({ onClose }) {
                           ? 'none' : `1px solid ${T.borderSoft}`,
                         color: T.textMid,
                       }}>
-                        <span style={{ color: T.soilMid }}>{dateStr}</span>
+                        <span style={{ color: T.soilMidInk }}>{dateStr}</span>
                         {' · '}
                         <span style={{ color: ev.type === 'harvest' ? T.leaf : T.cedar, fontWeight: 600 }}>
                           {(ev.type || '').toUpperCase()}
@@ -1411,19 +1414,19 @@ function Hub() {
       <header style={{ padding: '2px 22px 10px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h1 className="sr-only">Garden OS Home</h1>
-          <Label size={9} color={T.soilMid}>GARDEN OS · W{WEEK_NOW}</Label>
+          <Label size={9} color={T.soilMidInk}>GARDEN OS · W{WEEK_NOW}</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <Label size={9} color={T.soilMid}>{bedSummary && bedSummary.zone ? `ZONE ${bedSummary.zone}` : 'LOCATION NOT SET'} · DAY {DAY_OF_SEASON}</Label>
+            <Label size={9} color={T.soilMidInk}>{bedSummary && bedSummary.zone ? `ZONE ${bedSummary.zone}` : 'LOCATION NOT SET'} · DAY {DAY_OF_SEASON}</Label>
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
               width: 44, height: 44, borderRadius: 8, padding: 0,
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}>{Icons.gear(12, T.soil)}</button>
+            }}>{Icons.gear(12, T.soilInk)}</button>
           </div>
         </div>
         <div style={{
           fontFamily: T.fontDisp, fontSize: 30, fontWeight: 600,
-          letterSpacing: -0.5, color: T.soil, lineHeight: 1.05, marginTop: 2,
+          letterSpacing: -0.5, color: T.soilInk, lineHeight: 1.05, marginTop: 2,
         }}>
           {WEEKDAY}, <span style={{ fontStyle: 'italic', color: T.leaf }}>{MONTH_DAY}.</span>
         </div>
@@ -1464,7 +1467,7 @@ function Hub() {
             width: 28, height: 28, borderRadius: 8,
             background: T.cedarWash, display: 'inline-flex',
             alignItems: 'center', justifyContent: 'center',
-          }}>{Icons.code(16, T.soil)}</span>
+          }}>{Icons.code(16, T.soilInk)}</span>
           <span style={{ flex: 1 }}>
             <span style={{
               display: 'block', fontFamily: T.fontDisp, fontSize: 14,

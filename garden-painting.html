@@ -20,7 +20,10 @@
 <meta name="twitter:description" content="Garden OS Beds screen: edit real-shaped raised beds, place crops, erase, and inspect scoring.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
+<script src="garden-theme.js"></script>
 <link rel="stylesheet" href="garden-os-theme.css">
+<link rel="manifest" href="manifest.json">
+<script src="garden-pwa.js" defer></script>
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -444,9 +447,9 @@
 'use strict';
 
 // ── Theme tokens (mirror garden-os-theme.css for inline-styled components) ──
-const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const token = name => `var(${name})`;
 const T = {
-  soil:token('--soil'), soilMid:token('--soil-mid'),
+  soil:token('--soil'), soilMid:token('--soil-mid'), soilInk:token('--soil-ink'), soilMidInk:token('--soil-mid-ink'),
   cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
   leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'),
   sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
@@ -930,7 +933,7 @@ function PhoneFrame({ children }) {
     }}>
       <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
-        background: '#fff', borderRadius: 38, overflow: 'hidden',
+        background: T.panel, borderRadius: 38, overflow: 'hidden',
         position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
       }}>{children}</div>
@@ -1439,7 +1442,7 @@ function TweaksPanel({ tweak, setTweak, onClose, onResetMomGarden }) {
           borderRadius: 6, cursor: 'pointer',
           fontFamily: T.fontMono, fontSize: 9,
           letterSpacing: 0.15, textTransform: 'uppercase',
-          color: T.soil, fontWeight: 600,
+          color: T.soilInk, fontWeight: 600,
         }}>Reset to Mom Garden</button>
         <button type="button" onClick={onResetMomGarden} style={{
           width: '100%', padding: '6px 10px', marginTop: 6,
@@ -1881,7 +1884,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
 
             <div style={{
               fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
-              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 10,
+              letterSpacing: -0.3, color: T.soilInk, lineHeight: 1.15, marginBottom: 10,
             }}>What do you call this bed?</div>
 
             <input ref={nameInputRef} type="text" value={name} maxLength={40}
@@ -1924,7 +1927,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
           <div>
             <div style={{
               fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
-              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 12,
+              letterSpacing: -0.3, color: T.soilInk, lineHeight: 1.15, marginBottom: 12,
             }}>How big is this bed?</div>
 
             <div className="gos-creator-grid" style={{
@@ -2021,7 +2024,7 @@ function BedCreator({ hasInitialBeds, onComplete, onCancel }) {
           <div>
             <div style={{
               fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
-              letterSpacing: -0.3, color: T.soil, lineHeight: 1.15, marginBottom: 12,
+              letterSpacing: -0.3, color: T.soilInk, lineHeight: 1.15, marginBottom: 12,
             }}>How much sun does this bed get?</div>
 
             <div className="gos-creator-sun" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
@@ -2438,7 +2441,7 @@ function CellBottomSheet({
             {cell && cell.varietyName && (
               <div style={{
                 display: 'inline-flex', marginTop: 5, padding: '3px 7px',
-                borderRadius: 999, background: T.cedarWash, color: T.soil,
+                borderRadius: 999, background: T.cedarWash, color: T.soilInk,
                 fontFamily: T.fontSans, fontSize: 11, fontWeight: 700,
               }}>{cropName} · {cell.varietyName}</div>
             )}
@@ -2469,7 +2472,7 @@ function CellBottomSheet({
           <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 12, background: T.panel, border: `1px solid ${T.borderSoft}` }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
               <div>
-                <Label size={11} color={T.soilMid}>PLANT PROFILE</Label>
+                <Label size={11} color={T.soilMidInk}>PLANT PROFILE</Label>
                 <Body size={12.5} color={T.text} style={{ display: 'block', marginTop: 5, lineHeight: 1.35 }}>
                   {cellDisplayWithVariety(cell)}
                 </Body>
@@ -2583,7 +2586,7 @@ function CellBottomSheet({
 
         {(mode === 'details' || emptyCell) && (
           <div style={{ marginTop: 14 }}>
-            <Label size={11} color={T.soilMid}>WHY THIS PLACEMENT</Label>
+            <Label size={11} color={T.soilMidInk}>WHY THIS PLACEMENT</Label>
             {cell ? (
               <div style={{ marginTop: 7, background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 10, padding: '2px 10px' }}>
                 <FactorLine label="Sun fit" value={scoreDetail && scoreDetail.factors.sunFit} note={crop && crop.sun ? crop.sun + ' sun' : ''}/>
@@ -2610,7 +2613,7 @@ function CellBottomSheet({
 
             {relations.length > 0 && (
               <div style={{ marginTop: 14 }}>
-                <Label size={11} color={T.soilMid}>COMPANIONS / CONFLICTS</Label>
+                <Label size={11} color={T.soilMidInk}>COMPANIONS / CONFLICTS</Label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 7 }}>
                   {relations.map(item => (
                     <span key={item.cell.r + '-' + item.cell.c} style={{
@@ -2628,7 +2631,7 @@ function CellBottomSheet({
             )}
 
             <div style={{ marginTop: 14 }}>
-              <Label size={11} color={T.soilMid}>RELATED JOURNAL ENTRIES</Label>
+              <Label size={11} color={T.soilMidInk}>RELATED JOURNAL ENTRIES</Label>
               <div style={{ marginTop: 7, background: T.panel, border: `1px solid ${T.borderSoft}`, borderRadius: 10, padding: '9px 10px' }}>
                 {journal.length ? journal.map((event, idx) => (
                   <div key={idx} style={{ fontFamily: T.fontSans, fontSize: 11.5, color: T.text, lineHeight: 1.35, marginTop: idx ? 6 : 0 }}>
@@ -2923,7 +2926,7 @@ function ExperimentPanel({ beds, activeBed, onClose, onChanged, notify }) {
 
         {partners.length === 0 ? <div role="status" style={{ marginTop: 16, padding: 14, borderRadius: 10, background: T.sunPale }}>Add a second bed before starting an A/B experiment.</div> : (
           <fieldset style={{ margin: '16px 0', padding: 12, borderRadius: 10, border: `1px solid ${T.borderSoft}` }}>
-            <legend style={{ fontFamily: T.fontMono, fontSize: 10, color: T.soilMid }}>START OR RELINK</legend>
+            <legend style={{ fontFamily: T.fontMono, fontSize: 10, color: T.soilMidInk }}>START OR RELINK</legend>
             <label style={{ display: 'block', marginBottom: 10 }}><Label size={9}>COMPARISON BED</Label><select value={partnerId} onChange={event => setPartnerId(event.target.value)} style={{ width: '100%', minHeight: 44, marginTop: 4 }}>
               {partners.map(bed => <option key={bed.id} value={bed.id}>{bed.name}</option>)}
             </select></label>
@@ -3455,10 +3458,10 @@ function Painting({ tweak, onOpenTweaks }) {
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               cursor: trial ? 'not-allowed' : 'pointer', marginLeft: 4, position: 'relative', opacity: trial ? 0.55 : 1,
-              fontFamily: T.fontMono, fontSize: 9, color: T.soil,
+              fontFamily: T.fontMono, fontSize: 9, color: T.soilInk,
               textTransform: 'uppercase', fontWeight: 700,
             }}>
-              {Icons.site(12, T.soil)}
+              {Icons.site(12, T.soilInk)}
               <span>Site</span>
               {hasSiteContext && (
                 <span aria-hidden="true" style={{
@@ -3473,7 +3476,7 @@ function Painting({ tweak, onOpenTweaks }) {
               background: T.panel, border: `1px solid ${T.borderSoft}`,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', marginLeft: 4,
-            }}>{Icons.gear(12, T.soil)}</button>
+            }}>{Icons.gear(12, T.soilInk)}</button>
           </div>
         </div>
       </header>
@@ -3544,7 +3547,7 @@ function Painting({ tweak, onOpenTweaks }) {
           <div className="v5-crop-heading" style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6,
           }}>
-            <Label size={10} color={T.soilMid}>CROP · tap to select</Label>
+            <Label size={10} color={T.soilMidInk}>CROP · tap to select</Label>
           </div>
           <div className="v5-crop-rail" style={{ display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
             {paletteCropIds().map(k => {

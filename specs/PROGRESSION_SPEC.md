@@ -21,11 +21,11 @@ Each chapter = one season of play (spring, summer, or fall). Chapters 1-4 cover 
 | 9 | Y3 Spring | Challenge modifiers available — 7 optional difficulty mutators for any season | **Challenge Ladder** — modifier selection screen before season start, stacking rules | +watermelon, +cantaloupe (space-hungry) | — | — | GURL respects the garden ("I stopped writing you up"); Onion Man shares a real memory; Vegeman makes final pitch |
 | 10 | Y3 Summer | Bed density scoring — reward for high-output layouts that maintain soil health | **Bed Density badge** — live density score in header, threshold indicators | +herb variants (Thai basil, oregano, cilantro) | — | — | Dialogue unlocks based on mastery rank; Onion Man gets quiet (a good sign) |
 | 11 | Y3 Fall | Sauce recipe reconstruction — hidden recipes become findable through journal clues | **Sauce Recipe card** — handwritten-style card UI, ingredient checklist from pantry; default label is Mom's Recipe | No new crops | **Mom's Sauce** (default apex recipe label) | **Handwritten Sauce Card** — profile-aware label, stain marks | GURL: "This sauce passes inspection"; Onion Man: "You grew the whole list"; Vegeman concedes |
-| 12 | Y3 Winter | Free play — all systems active, all crops available, legacy scoring begins | **Legacy View** — full garden history timeline, season-by-season replay, final score | Full roster unlocked (20 crops) | — | — | Characters deliver final lines; game enters free-play loop with challenge modifiers |
+| 12 | Y3 Winter | Free play — all campaign systems active and expansion crops become available through their zone gates | **Legacy View** — full garden history timeline, season-by-season replay, final score | Full 20-crop campaign track unlocked; biome roster remains zone-gated | — | — | Characters deliver final lines; game enters free-play loop with challenge modifiers |
 
 **Crop Roster Summary (20 campaign-track crops, cumulative):**
 
-> **Note:** The full roster in `CROP_SCORING_DATA.json` (v3) contains 50 crops. The additional 30 are expansion-zone and biome-specific crops unlocked through the Let It Grow free-roam mode, not the 12-chapter campaign. This table tracks the campaign unlock sequence only.
+> **Note:** The full roster in `CROP_SCORING_DATA.json` (v3) contains 51 crops. The additional 31 are expansion-zone and biome-specific crops unlocked through the Let It Grow free-roam mode, not the 12-chapter campaign. This table tracks the 20-crop campaign sequence only.
 
 | Chapter | Crops Added | Running Total |
 |---------|-------------|---------------|

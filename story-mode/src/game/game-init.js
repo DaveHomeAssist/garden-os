@@ -212,53 +212,89 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
   if (modesContainer) {
     const freshModes = modesContainer.cloneNode(false);
     modesContainer.parentNode.replaceChild(freshModes, modesContainer);
+    freshModes.setAttribute('role', 'group');
+    freshModes.setAttribute('aria-label', 'Choose a play mode');
     freshModes.innerHTML = `
-      <div class="mode-card mode-card--active" data-mode="story">
-        <span class="mode-icon">📖</span>
-        <span>Story Mode</span>
-      </div>
-      <div class="mode-card mode-card--selectable" data-mode="freeplay">
-        <span class="mode-icon">🌿</span>
-        <span>Free Play</span>
-      </div>
-      <div class="mode-card mode-card--selectable" data-mode="planner">
-        <span class="mode-icon">📐</span>
-        <span>Planner</span>
-        <span class="mode-desc">Design your bed. See instant score feedback. No seasons, no pressure.</span>
-      </div>
-      <div class="mode-card mode-card--locked">
-        <span class="mode-icon">📅</span>
-        <span>Daily Challenge</span>
-        <span class="mode-lock">🔒</span>
-        <span class="mode-soon">Coming Soon</span>
-      </div>
-      <div class="mode-card mode-card--locked">
-        <span class="mode-icon">⏱</span>
-        <span>Speedrun</span>
-        <span class="mode-lock">🔒</span>
-        <span class="mode-soon">Coming Soon</span>
-      </div>
+      <button type="button" class="mode-card mode-card--active" data-mode="story" aria-pressed="true">
+        <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">📖</span><span>Story Mode</span></span>
+        <span class="mode-desc">3 save slots · local with optional signed backup</span>
+      </button>
+      <button type="button" class="mode-card mode-card--selectable" data-mode="freeplay" aria-pressed="false">
+        <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">🌿</span><span>Free Play</span></span>
+        <span class="mode-desc">Session only · progress is not saved after refresh</span>
+      </button>
+      <button type="button" class="mode-card mode-card--selectable" data-mode="planner" aria-pressed="false">
+        <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">📐</span><span>Planner</span></span>
+        <span class="mode-desc">Session only · use the main Planner for saved beds</span>
+      </button>
+      <button type="button" class="mode-card mode-card--locked" data-locked-mode="daily" aria-disabled="true" aria-describedby="mode-availability-note">
+        <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">📅</span><span>Daily Challenge</span></span>
+        <span class="mode-soon">Coming soon · not available in this release</span>
+      </button>
+      <button type="button" class="mode-card mode-card--locked" data-locked-mode="speedrun" aria-disabled="true" aria-describedby="mode-availability-note">
+        <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">⏱</span><span>Speedrun</span></span>
+        <span class="mode-soon">Coming soon · not available in this release</span>
+      </button>
     `;
 
+    titleScreen.querySelector('.mode-availability-note')?.remove();
+    const modeStatus = document.createElement('p');
+    modeStatus.className = 'mode-availability-note';
+    modeStatus.id = 'mode-availability-note';
+    modeStatus.setAttribute('role', 'status');
+    modeStatus.setAttribute('aria-live', 'polite');
+    freshModes.insertAdjacentElement('afterend', modeStatus);
+
     let selectedMode = 'story';
-    freshModes.addEventListener('click', (event) => {
-      const card = event.target.closest('[data-mode]');
-      if (!card || card.classList.contains('mode-card--locked')) return;
+    const modeCopy = {
+      story: 'Story Mode uses three persistent save slots.',
+      freeplay: 'Free Play is session only. Progress is discarded when this page refreshes.',
+      planner: 'Story Planner is session only. Use the main Garden OS Planner to save beds.',
+    };
+
+    function selectMode(card, { focus = false } = {}) {
+      if (!card) return;
+      if (card.getAttribute('aria-disabled') === 'true') {
+        modeStatus.textContent = `${card.textContent.trim()}: not available in this release.`;
+        if (focus) card.focus();
+        return;
+      }
       selectedMode = card.dataset.mode;
       freshModes.querySelectorAll('.mode-card').forEach((c) => {
         c.classList.toggle('mode-card--active', c.dataset.mode === selectedMode);
-        if (c.dataset.mode && !c.classList.contains('mode-card--locked')) {
+        if (c.dataset.mode) {
           c.classList.toggle('mode-card--selectable', c.dataset.mode !== selectedMode);
+          c.setAttribute('aria-pressed', String(c.dataset.mode === selectedMode));
         }
       });
+      modeStatus.textContent = modeCopy[selectedMode];
       updateSlotsVisibility();
+      if (focus) card.focus();
+    }
+
+    freshModes.addEventListener('click', (event) => {
+      selectMode(event.target.closest('.mode-card'));
+    });
+
+    freshModes.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      const cards = [...freshModes.querySelectorAll('[data-mode]')];
+      const currentIndex = cards.indexOf(event.target.closest('[data-mode]'));
+      if (currentIndex < 0) return;
+      event.preventDefault();
+      const nextIndex = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? cards.length - 1
+          : (currentIndex + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + cards.length) % cards.length;
+      selectMode(cards[nextIndex], { focus: true });
     });
 
     titleScreen.querySelector('.freeplay-start-btn')?.remove();
     const freeplayBtn = document.createElement('button');
     freeplayBtn.type = 'button';
     freeplayBtn.className = 'save-slot-btn save-slot-btn--primary freeplay-start-btn';
-    freeplayBtn.textContent = 'Start Free Play';
+    freeplayBtn.textContent = 'Start Unsaved Free Play';
     freeplayBtn.style.display = 'none';
     freeplayBtn.addEventListener('click', () => {
       dismissTitleScreen(titleScreen, () => {
@@ -276,7 +312,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     const plannerBtn = document.createElement('button');
     plannerBtn.type = 'button';
     plannerBtn.className = 'save-slot-btn save-slot-btn--primary planner-start-btn';
-    plannerBtn.textContent = 'Start Planner';
+    plannerBtn.textContent = 'Start Unsaved Story Planner';
     plannerBtn.style.display = 'none';
     plannerBtn.addEventListener('click', () => {
       dismissTitleScreen(titleScreen, () => {
@@ -298,7 +334,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
       plannerBtn.style.display = isPlanner ? '' : 'none';
     }
 
-    updateSlotsVisibility();
+    selectMode(freshModes.querySelector('[data-mode="story"]'));
   }
 
   if (actionsContainer) {

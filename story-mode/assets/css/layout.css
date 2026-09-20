@@ -4421,3 +4421,159 @@
     }
 
     @media (prefers-reduced-motion: reduce) { .title-screen__sun, .title-cloud { animation: none; } }
+
+    /* Mode selection is a real keyboard control, not a clickable card shell. */
+    .mode-card {
+      appearance: none;
+      cursor: pointer;
+      flex: 1 1 190px;
+      flex-direction: column;
+      justify-content: center;
+      white-space: normal;
+      text-align: center;
+    }
+
+    .mode-card__lead {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .mode-card .mode-desc,
+    .mode-card .mode-soon {
+      max-width: 28ch;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      line-height: 1.35;
+      letter-spacing: 0;
+      text-transform: none;
+      color: currentColor;
+      opacity: 0.76;
+    }
+
+    .mode-card--selectable {
+      opacity: 1;
+    }
+
+    .mode-card--locked {
+      cursor: help;
+      opacity: 0.72;
+    }
+
+    .mode-availability-note {
+      min-height: 1.5em;
+      margin: -10px 0 0;
+      color: rgba(74, 50, 30, 0.72);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .planner-session-notice {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      left: 50%;
+      z-index: 35;
+      width: min(560px, calc(100% - 140px));
+      min-height: 44px;
+      padding: 10px 14px;
+      transform: translateX(-50%);
+      border: 1px solid var(--hud-rule-strong);
+      border-radius: 999px;
+      background: var(--hud-paper-wash);
+      color: var(--hud-ink);
+      box-shadow: var(--hud-shadow);
+      font: 600 11px/1.35 'DM Sans', sans-serif;
+      text-align: center;
+    }
+
+    html[data-theme="dark"] {
+      --story-shell-paper: rgba(30, 35, 28, 0.94);
+      --story-shell-paper-strong: rgba(36, 42, 33, 0.97);
+      --story-shell-paper-soft: rgba(36, 42, 33, 0.78);
+      --story-shell-ink: #f4f0e8;
+      --story-shell-ink-soft: rgba(226, 216, 199, 0.78);
+      --story-shell-border: rgba(226, 216, 199, 0.22);
+      --story-shell-border-strong: rgba(226, 216, 199, 0.38);
+    }
+
+    html[data-theme="dark"] .title-screen__poster {
+      background: linear-gradient(180deg, rgba(29, 35, 27, 0.94), rgba(23, 27, 22, 0.9));
+      border-color: rgba(244, 240, 232, 0.2);
+    }
+
+    html[data-theme="dark"] :is(
+      .title-name,
+      .save-slot-chapter,
+      .save-slot-empty-label,
+      .mode-card--active
+    ) {
+      color: rgba(244, 240, 232, 0.96);
+    }
+
+    html[data-theme="dark"] :is(
+      .title-screen__issue,
+      .title-version,
+      .title-eyebrow,
+      .title-tagline,
+      .save-slot-label,
+      .save-slot-empty-copy,
+      .save-slot-meta,
+      .mode-card,
+      .mode-availability-note
+    ) {
+      color: rgba(226, 216, 199, 0.78);
+    }
+
+    html[data-theme="dark"] .title-link-btn {
+      color: rgba(226, 216, 199, 0.9);
+    }
+
+    html[data-theme="dark"] :is(.save-slot-card, .save-slot-card--empty, .mode-card, .title-link-btn) {
+      background: rgba(36, 42, 33, 0.82);
+      border-color: rgba(226, 216, 199, 0.18);
+    }
+
+    html[data-theme="dark"] .mode-card--active {
+      background: rgba(var(--story-season-accent-rgb), 0.2);
+      border-color: rgba(var(--story-season-accent-rgb), 0.48);
+    }
+
+    body[data-story-screen="play"] .garden-theme-toggle {
+      top: max(78px, calc(env(safe-area-inset-top) + 68px));
+      bottom: auto;
+    }
+
+    @media (max-width: 640px) {
+      .planner-session-notice {
+        top: 64px;
+        width: calc(100% - 24px);
+        border-radius: 12px;
+      }
+
+      .title-footer-actions,
+      .title-modes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .title-link-btn,
+      .mode-card {
+        width: auto;
+      }
+
+      .mode-card {
+        min-height: 64px;
+        padding: 8px 6px;
+      }
+
+      .mode-card .mode-desc,
+      .mode-card .mode-soon {
+        font-size: 9px;
+        line-height: 1.25;
+      }
+    }

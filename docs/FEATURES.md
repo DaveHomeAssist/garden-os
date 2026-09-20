@@ -1,9 +1,9 @@
 # Garden OS — Complete Feature Set
 
 > **Version:** 1.2
-> **Updated:** 2026-03-16 original; active-v5 refresh 2026-07-11
-> **Last verified:** 2026-07-11 (active v5 What-If and A/B experiment slice)
-> **Architecture:** Static HTML root tools + `story-mode/` Vite and Three.js runtime. GitHub Pages, zero backend for the product.
+> **Updated:** 2026-03-16 original; active-v5 refresh 2026-09-20
+> **Last verified:** 2026-09-20 (46 Story Mode files / 517 tests, production build, theme/PWA browser and offline gates)
+> **Architecture:** Static HTML root tools + `story-mode/` Vite and Three.js runtime. GitHub Pages remains the product host; Story Mode has an optional signed authority API with local fallback.
 > **Live:** https://davehomeassist.github.io/garden-os/ (canonical product Home) · https://davehomeassist.github.io/garden-os/story-mode/ (flagship runtime)
 
 ---
@@ -27,7 +27,9 @@ State persists in `localStorage` today.
 | `garden-planner-v4.html` | Historical grid planner + scoring engine (v4.4) | Archived reference; not active-v5 proof |
 | `garden-league-simulator-v4.html` | Legacy deterministic season simulator | Stable, still playable |
 | `story-mode/` | Flagship Story Mode source and canonical built route (12 chapter campaign) | Active. Vite + Three.js + Vitest; current test count is verified by CI |
-| `garden-doctor.html` | Symptom triage tool (Phase 2B) | Shipped 2026-03-31 |
+| `garden-doctor-v5.html` | Active v5 symptom triage tool | Active |
+| `journal.html` | Local-first field log and experiment lifecycle | Active |
+| `how-it-thinks-v5.html` | Plain-English scoring walkthrough | Active |
 | `scoring-visualizer.html` | Debug tool for scoring | Reference |
 | `fairness-tester.html` | Algorithm validation | Reference |
 | `garden-cage-build-guide.html` | Physical build instructions | Static |
@@ -38,8 +40,17 @@ State persists in `localStorage` today.
 | File | Purpose |
 |------|---------|
 | `garden-os-theme.css` | Design tokens (colors, fonts, spacing) |
+| `garden-theme.js` | Shared light-default theme preference and visible toggle |
+| `garden-pwa.js` | Shared service-worker registration for canonical routes |
 | `specs/SCORING_RULES.md` | Canonical scoring algorithm |
 | `specs/CROP_SCORING_DATA.json` | 51-crop roster with full metadata (v3 schema, 2026-08-25) |
+
+## Public Experience Contracts
+
+- All nine canonical public routes default to light and share one saved light/dark choice.
+- The manifest identifies the whole Garden OS suite and starts at the canonical Home.
+- One shared service-worker registration path covers root tools and Story Mode; offline reload is a release gate.
+- Story Mode uses persistent save slots. Free Play and Story Planner are session-only and say so before and after launch.
 
 ## Active v5 Decision Support
 

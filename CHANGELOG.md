@@ -10,8 +10,23 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 
+### Added
+- Added one visible, light-default light/dark preference across all canonical
+  public routes, including Story Mode, with saved cross-route selection and
+  WCAG AA token/browser contrast gates.
+- Added one shared PWA registration path, a suite-level manifest identity, and
+  a browser release gate that proves service-worker activation and offline Home
+  reload.
+- Added keyboard-native Story Mode selection, arrow navigation, explicit
+  persistent versus session-only mode copy, and in-session Free Play/Story
+  Planner reminders.
+
 ### Changed
 - Reconciled v4 references in HANDOFF.md, FEATURES.md, and README: active v5 surfaces now listed correctly in Root Track table, nav track updated to current two-track model, crop count updated to 51, recipe count corrected to 8, Cross-Runtime Scoring updated to reference gos-suitability-core.js, Code Entry Points and Roadmap sections reflect shipped Phases 1-9, Season Engine and Today Coach sections marked as archived references.
+- Reconciled the implementation plan, progression roster, gameplay guide,
+  hosted-route inventory, brand theme policy, and UI backlog with current v5 and
+  Story Mode reality; printable plan is the next bounded active-v5 slice and
+  live weather follows under explicit offline/privacy contracts.
 
 ## [Unversioned - 2026-09-06] Story Mode Pages recovery, save durability, and release hardening
 ### Added

@@ -20,9 +20,11 @@
 <meta name="twitter:description" content="Garden OS Planner v5: a mobile-first vertical-timeline view of your season. Sow, grow, and harvest at a glance.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
+<script src="garden-theme.js"></script>
 <link rel="stylesheet" href="garden-os-theme.css">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icons/favicon/apple-touch-icon.png">
+<script src="garden-pwa.js" defer></script>
 <style>
   /* Page shell — center the phone frame on desktop, full-bleed on real mobile */
   html, body { margin: 0; padding: 0; }
@@ -124,9 +126,9 @@
 'use strict';
 
 // ── Theme tokens (mirror garden-os-theme.css for inline-styled components) ──
-const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const token = name => `var(${name})`;
 const T = {
-  soil:token('--soil'), soilMid:token('--soil-mid'),
+  soil:token('--soil'), soilMid:token('--soil-mid'), soilInk:token('--soil-ink'), soilMidInk:token('--soil-mid-ink'),
   cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
   leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'),
   sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'),
@@ -922,7 +924,7 @@ function PhoneFrame({ children }) {
         width: 390, maxWidth: '100%',
         height: 844,
         maxHeight: '100vh',
-        background: '#fff',
+        background: T.panel,
         borderRadius: 38,
         overflow: 'hidden',
         position: 'relative',
@@ -964,7 +966,7 @@ function ThisWeekStrip({ thisWeek, headline, gosBed, frostWeeks, today, offSeaso
           <div style={{ marginTop: 3, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <Chip n={countSow}  label="SOW"        color={T.leafPale}  fg={T.leaf}/>
             <Chip n={countTp}   label="TRANSPLANT" color={T.sunPale}   fg={T.rustLight}/>
-            <Chip n={countHarv} label="HARVESTING" color={T.cream}     fg={T.soil}/>
+            <Chip n={countHarv} label="HARVESTING" color={T.cream}     fg={T.soilInk}/>
           </div>
         )}
       </div>
@@ -1005,7 +1007,7 @@ function TimeAxis({ wStart, wEnd, pxPerWeek, today, timelineH, calendar }) {
           <div style={{
             position: 'absolute', left: 0, top: -6,
             fontFamily: T.fontDisp, fontSize: 11, fontWeight: 600,
-            color: T.soilMid, letterSpacing: -0.2,
+            color: T.soilMidInk, letterSpacing: -0.2,
           }}>{m.name}</div>
           <div style={{
             position: 'absolute', left: 32, top: 0, width: 6, height: 1,
@@ -1181,7 +1183,7 @@ function InGroundStrip({ bed, dimensions, onPickCrop, onOpenBeds, cellScores, on
         display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         marginBottom: 6,
       }}>
-        <Label size={10} color={T.soilMid}>IN GROUND · {rows}×{cols} BED</Label>
+        <Label size={10} color={T.soilMidInk}>IN GROUND · {rows}×{cols} BED</Label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textSoft }}>
             <b style={{ color: T.text, fontWeight: 600 }}>{total}</b>/{rows * cols} cells
@@ -1265,7 +1267,7 @@ function InGroundStrip({ bed, dimensions, onPickCrop, onOpenBeds, cellScores, on
                     border: `2px ${band ? band.borderStyle : 'solid'} ${crop ? crop.color + 'aa' : T.borderSoft}`,
                     borderRadius: 6, cursor: 'pointer', position: 'relative',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-                    fontFamily: T.fontMono, fontSize: 10, color: T.soil, fontWeight: 700,
+                    fontFamily: T.fontMono, fontSize: 10, color: T.soilInk, fontWeight: 700,
                     padding: 2,
                     boxShadow: band ? `inset 0 -4px 0 ${band.color}` : 'none',
                     backgroundImage: band ? band.pattern : 'none',
@@ -1399,7 +1401,7 @@ function WhyThisScore({ cropKey, suitability }) {
       border: `1px solid ${T.borderSoft}`, padding: '10px 12px',
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Label size={10} color={T.soilMid}>WHY THIS SCORE?</Label>
+        <Label size={10} color={T.soilMidInk}>WHY THIS SCORE?</Label>
         <span style={{
           fontFamily: T.fontMono, fontSize: 11, fontWeight: 600, color: band.color,
         }}>{worst.total.toFixed(1)}/10 · {band.label}{cells.length > 1 ? ` · weakest of ${cells.length}` : ''}</span>
@@ -1555,7 +1557,7 @@ function CropSheet({ cropKey, today, bed, events, season, gosBed, isFixture,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
             borderRadius: 10,
           }}>
-            <Label size={9} color={T.soilMid}>PLANT PROFILES</Label>
+            <Label size={9} color={T.soilMidInk}>PLANT PROFILES</Label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
               {plantProfiles.map(profile => {
                 const first = profile.cells[0] || {};
@@ -1882,7 +1884,7 @@ function PlannerExperimentSummary({ gosBed }) {
       background: T.cedarWash, border: `1px solid ${T.cedarPale}`, flexShrink: 0,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><Label size={9} color={T.soilMid}>ACTIVE EXPERIMENT</Label><Disp size={14}>{experiments[0].variable}</Disp></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><Label size={9} color={T.soilMidInk}>ACTIVE EXPERIMENT</Label><Disp size={14}>{experiments[0].variable}</Disp></div>
         <a href="garden-painting.html" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', color: T.leaf, fontFamily: T.fontMono, fontSize: 9, fontWeight: 700 }}>Open in Beds →</a>
       </div>
       {experiments.slice(0, 2).map(experiment => {
@@ -2082,7 +2084,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
             background: T.panel, border: `1px solid ${T.borderSoft}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0,
-          }}>{Icons.gear(14, T.soil)}</button>
+          }}>{Icons.gear(14, T.soilInk)}</button>
           <button type="button"
             aria-label={isPreview ? 'Reset season position to add crops' : 'Open Beds to add crops'}
             disabled={isPreview}
@@ -2093,7 +2095,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: isPreview ? 'not-allowed' : 'pointer', padding: 0,
             opacity: isPreview ? 0.45 : 1,
-          }}>{Icons.plus(14, T.soil)}</button>
+          }}>{Icons.plus(14, T.soilInk)}</button>
         </div>
       </header>
 
@@ -2158,7 +2160,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
           borderBottom: `1px solid ${T.borderSoft}`,
         }}>
-          <Label size={10} color={T.soilMid}>THE SEASON · W1 → W{wEnd}</Label>
+          <Label size={10} color={T.soilMidInk}>THE SEASON · W1 → W{wEnd}</Label>
           <div style={{ display: 'flex', gap: 10 }}>
             <KeyDot label="SOW"  color={T.leafPale} border={T.leaf}/>
             <KeyDot label="GROW" color={T.sunPale}  border={T.sun}/>
@@ -2180,7 +2182,7 @@ function Planner({ tweak, bed, events, gosBed, allBeds, isFixture, season,
                         justifyContent: 'center', borderBottom: `1px solid ${T.borderSoft}`,
                         background: T.cedarWash,
                       }}>
-                        <Label size={8} color={T.soilMid} style={{ fontWeight: 600 }}>
+                        <Label size={8} color={T.soilMidInk} style={{ fontWeight: 600 }}>
                           {fam.toUpperCase()}
                         </Label>
                       </div>
@@ -2647,11 +2649,6 @@ if (typeof GosBed !== 'undefined') {
   }
 }
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function (e) {
-    console.warn('SW registration failed:', e);
-  });
-}
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>

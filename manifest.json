@@ -1,13 +1,13 @@
 {
-  "name": "Garden OS Planner",
+  "name": "Garden OS",
   "short_name": "Garden OS",
-  "description": "Local-first raised bed garden planner. Zero backend. Works offline after first visit.",
-  "start_url": "garden-planner-v5.html",
+  "description": "A local-first raised-bed planner, field journal, diagnostic guide, and 12-chapter garden story.",
+  "start_url": "/garden-os/",
   "scope": "/garden-os/",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#5c3d1e",
-  "background_color": "#f7f2ea",
+  "theme_color": "#f7f3ec",
+  "background_color": "#f7f3ec",
   "categories": ["lifestyle", "education"],
   "icons": [
     { "src": "assets/icons/favicon/favicon.svg", "type": "image/svg+xml", "sizes": "any" },

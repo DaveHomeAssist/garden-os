@@ -1,11 +1,10 @@
 # Garden OS — Feature Roadmap
 
 > **Superseded:** This roadmap is superseded by IMPLEMENTATION_PLAN.md (System A).
-> **Status detail:** Reconciled against active v5 on 2026-07-11. Score explanation, companion guidance, planting calendar/frost windows, harvest logging, Garden Doctor, retrospective behavior, and What-If/A-B experiments are active across the v5 surfaces. Live weather and print layout remain recovery work because archived v4 does not count as active-v5 delivery.
+> **Status detail:** Reconciled against active v5 on 2026-09-20. Score explanation, companion guidance, planting calendar/frost windows, harvest logging, Garden Doctor, retrospective behavior, What-If/A-B experiments, dual-theme support, and consistent PWA/offline behavior are active. Live weather and print layout remain recovery work because archived v4 does not count as active-v5 delivery.
 > **Next priority:** Active-v5 printable garden plan, followed by a separately contracted live weather coach.
-> **Updated:** 2026-03-16 original; superseded 2026-04-20; v5 reconciliation 2026-07-11
-> **Architecture:** Current browser app on GitHub Pages, zero backend; stronger
-> architecture remains allowed when product needs it
+> **Updated:** 2026-03-16 original; superseded 2026-04-20; v5 reconciliation 2026-09-20
+> **Architecture:** Current browser app on GitHub Pages with local-first root tools and optional signed Story Mode authority; stronger architecture remains allowed when product needs it
 > **Namespace:** `window.GOS`
 
 ---

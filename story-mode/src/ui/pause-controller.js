@@ -51,7 +51,7 @@ export function createPauseController({
       const state = getState();
       if (pauseStatus) {
         pauseStatus.textContent = state.campaign?.sandbox
-          ? `Free Play · ${getPhaseLabel(state.season.phase)}`
+          ? `Free Play · session only, not saved · ${getPhaseLabel(state.season.phase)}`
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
       pauseOverlay?.classList.add('is-open');
@@ -80,7 +80,7 @@ export function createPauseController({
       <div class="palette-header read-only-sheet__header">
         <div>
           <div class="palette-title">Gardener Profile</div>
-          <div class="read-only-sheet__subtitle">Saved with this campaign slot</div>
+          <div class="read-only-sheet__subtitle">${state.campaign?.sandbox ? 'Session only · changes are not saved' : 'Saved with this campaign slot'}</div>
         </div>
         <button type="button" class="palette-dismiss read-only-sheet__close" data-close="true" aria-label="Close gardener profile">&times;</button>
       </div>
@@ -95,7 +95,9 @@ export function createPauseController({
     const editor = createPlayerProfileEditor({
       initialProfile: state.campaign.playerProfile,
       title: 'Edit Gardener',
-      subtitle: 'These choices update the in-scene character and future save slot label.',
+      subtitle: state.campaign?.sandbox
+        ? 'These choices last for this Free Play session only.'
+        : 'These choices update the in-scene character and future save slot label.',
       submitLabel: 'Save Profile',
       cancelLabel: 'Close',
       onSubmit(profile) {

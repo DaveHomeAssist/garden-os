@@ -2,7 +2,7 @@
 // Strategy: network-first for HTML, cache-first for fonts, stale-while-revalidate for assets
 // Update CACHE_VERSION on every deploy to bust stale caches.
 
-const CACHE_VERSION = '2026-08-09-priority-remediation';
+const CACHE_VERSION = '2026-09-20-integrity-sprint';
 const CACHE_NAME = 'garden-os-' + CACHE_VERSION;
 
 const CORE_ASSETS = [
@@ -22,6 +22,9 @@ const CORE_ASSETS = [
   'data/mom-garden-data.js',
   'journal.html',
   'garden-os-theme.css',
+  'garden-theme.js',
+  'garden-pwa.js',
+  'garden-theme-compat.css',
   'gos-journal.js',
   'specs/CROP_SCORING_DATA.json',
   'vendor/react-18.3.1.production.min.js',

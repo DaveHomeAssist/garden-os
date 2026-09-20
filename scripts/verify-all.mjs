@@ -163,6 +163,7 @@ async function runLocalVerification() {
     ['Bed session lock regression', ['tests/gos-bed-session-lock-regression.mjs']],
     ['Asset integrity and texture budgets', ['tests/asset-integrity-regression.mjs']],
     ['Shared theme contrast regression', ['tests/theme-contrast-regression.mjs']],
+    ['Theme, PWA, and canonical surface integrity', ['tests/garden-integrity-regression.mjs']],
     ['Marketing shot visual rejection regression', ['tests/marketing-shot-visual-gate-regression.mjs']],
     ['Journal filter sort regression', ['tests/journal-filter-sort-regression.mjs']],
     ['Experiment storage contract tests', ['--test', 'tests/experiments-contract.test.mjs']],
@@ -196,6 +197,9 @@ async function runLocalVerification() {
     });
     await runStep('Priority remediation browser regression', nodeBin, ['tests/priority-remediation-browser-regression.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'priority-remediation') }),
+    });
+    await runStep('Theme persistence and PWA offline browser regression', nodeBin, ['tests/theme-pwa-browser-regression.mjs'], {
+      env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'theme-pwa') }),
     });
     await runStep('V5 What-If and experiment browser regression', nodeBin, ['tests/what-if-experiments-regression.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'what-if-experiments') }),

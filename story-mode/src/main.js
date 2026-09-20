@@ -1,6 +1,8 @@
 import '../assets/css/hud-foundation.css';
 import '../assets/css/hud-controls.css';
 import '../assets/css/hud-interactions.css';
+import '../../garden-theme.js';
+import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
 import { loadContentPacks } from './game/pack-loader.js';
 

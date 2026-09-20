@@ -46,13 +46,17 @@ Sub-paths served from this repo:
 
 | URL | Repo | Source | First Published | Last Deployed | Status |
 |-----|------|--------|-----------------|---------------|--------|
-| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-03-21 | Live |
+| [/garden-os](https://davehomeassist.github.io/garden-os/) | garden-os | `main` `/` | 2026-03-12 | 2026-09-17 | Live — Pages run 35214066468 at `a8815e` |
 | [/garden-cage-build-guide](https://davehomeassist.github.io/garden-cage-build-guide/) | garden-cage-build-guide | `main` `/` | 2026-03-14 | 2026-03-14 | Archived — still serving |
 | [/garden-planner](https://davehomeassist.github.io/garden-planner/) | garden-planner | `main` `/` | 2026-03-09 | 2026-03-09 | Archived — still serving (legacy) |
 
 ### Garden OS Sub-Pages
 
 All served from the `garden-os` repo at `davehomeassist.github.io/garden-os/`:
+
+> **Garden OS route audit:** 2026-09-20 against the repository sitemap and
+> latest successful Pages run. The account-wide inventory at the top of this
+> document was not re-audited in this pass.
 
 **User Track** (product nav: Home → Beds → Planner → Doctor → Journal; Story Mode is the canonical game route)
 

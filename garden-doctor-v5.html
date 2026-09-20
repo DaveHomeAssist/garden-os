@@ -20,7 +20,10 @@
 <meta name="twitter:description" content="Garden OS Doctor: tap symptoms, get ranked likely causes and action steps in under 30 seconds.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
 
+<script src="garden-theme.js"></script>
 <link rel="stylesheet" href="garden-os-theme.css">
+<link rel="manifest" href="manifest.json">
+<script src="garden-pwa.js" defer></script>
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -76,9 +79,9 @@
 <script type="text/babel" data-presets="react">
 'use strict';
 
-const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const token = name => `var(${name})`;
 const T = {
-  soil:token('--soil'), soilMid:token('--soil-mid'),
+  soil:token('--soil'), soilMid:token('--soil-mid'), soilInk:token('--soil-ink'), soilMidInk:token('--soil-mid-ink'),
   cedar:token('--cedar'), cedarPale:token('--cedar-pale'), cedarWash:token('--cedar-wash'),
   leaf:token('--leaf'), leafBright:token('--leaf-bright'), leafPale:token('--leaf-pale'), leafWash:token('--leaf-wash'),
   sun:token('--sun'), sunBright:token('--sun-bright'), sunPale:token('--sun-pale'), sunWash:token('--sun-wash'),
@@ -242,7 +245,7 @@ function PhoneFrame({ children }) {
     <div className="v5-frame-outer" style={{ width: 'min(100vw, 410px)', maxWidth: 410, display: 'flex', justifyContent: 'center' }}>
       <div className="v5-phone" style={{
         width: 390, maxWidth: '100%', height: 844, maxHeight: '100vh',
-        background: '#fff', borderRadius: 38, overflow: 'hidden', position: 'relative',
+        background: T.panel, borderRadius: 38, overflow: 'hidden', position: 'relative',
         boxShadow: '0 24px 60px rgba(20,12,4,0.22), 0 0 0 1px rgba(0,0,0,0.06)',
       }}>{children}</div>
     </div>
@@ -608,7 +611,7 @@ function DoctorContextBar({ context }) {
       <Label size={9} color={T.leaf}>TRIAGING</Label>
       <div style={{
         marginTop: 3, fontFamily: T.fontDisp, fontSize: 17,
-        fontWeight: 600, color: T.soil, lineHeight: 1.15,
+        fontWeight: 600, color: T.soilInk, lineHeight: 1.15,
       }}>
         {context.cropName}{context.varietyName ? ` · ${context.varietyName}` : ''}
       </div>
@@ -653,7 +656,7 @@ function DiagCard({ diag, rank, showProbs }) {
           <a href={`garden-cage-ops-guide.html#${diag.ref}`} style={{
             display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8,
             padding: '4px 8px', borderRadius: 6, background: wash,
-            fontFamily: T.fontMono, fontSize: 9.5, color: T.soilMid,
+            fontFamily: T.fontMono, fontSize: 9.5, color: T.soilMidInk,
             letterSpacing: 0.1, textTransform: 'uppercase', textDecoration: 'none',
           }}>open ops guide ›</a>
         </div>
@@ -1061,7 +1064,7 @@ function BedSuitabilityCard({ bed }) {
       <div style={{
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
       }}>
-        <Label size={9} color={T.soilMid}>SUITABILITY</Label>
+        <Label size={9} color={T.soilMidInk}>SUITABILITY</Label>
         <span style={{
           fontFamily: T.fontDisp, fontSize: 22, fontWeight: 600,
           color: tone, lineHeight: 1, letterSpacing: -0.4,
@@ -1206,23 +1209,23 @@ function Doctor() {
 
       <header style={{ padding: '2px 22px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Label size={9} color={T.soilMid}>DOCTOR</Label>
+          <Label size={9} color={T.soilMidInk}>DOCTOR</Label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             {view === 'diag' ? (
-              <Label size={9} color={T.soilMid}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
+              <Label size={9} color={T.soilMidInk}>{symptoms.length} SYMPTOMS · {cropId.toUpperCase()}</Label>
             ) : (
-              <Label size={9} color={T.soilMid}>SEASON LOG</Label>
+              <Label size={9} color={T.soilMidInk}>SEASON LOG</Label>
             )}
             <button aria-label="Tweaks" onClick={() => setTweaksOpen(true)} style={{
               width: 44, height: 44, borderRadius: 8, padding: 0, background: T.panel,
               border: `1px solid ${T.borderSoft}`, display: 'inline-flex',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}>{Icons.gear(12, T.soil)}</button>
+            }}>{Icons.gear(12, T.soilInk)}</button>
           </div>
         </div>
         <h1 style={{
           fontFamily: T.fontDisp, fontSize: 28, fontWeight: 600,
-          letterSpacing: -0.4, color: T.soil, lineHeight: 1.1, margin: '2px 0 0',
+          letterSpacing: -0.4, color: T.soilInk, lineHeight: 1.1, margin: '2px 0 0',
         }}>
           {view === 'diag'
             ? <>I see <span style={{ fontStyle: 'italic', color: T.rust }}>something</span>.</>

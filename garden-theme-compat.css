@@ -1,0 +1,82 @@
+/* Theme bridge for the two long-form Garden OS field guides. */
+html[data-theme="dark"] {
+  --soil: #171008;
+  --soil-mid: #2b1d11;
+  --cedar: #d3a67f;
+  --cedar-lt: #e0b98f;
+  --cedar-pale: #6e5540;
+  --gravel: #766c5b;
+  --leaf: #8ec77c;
+  --leaf-dark: #315b25;
+  --seedling: #9bd184;
+  --wire: #a7b3a5;
+  --wire-lt: #536052;
+  --rust: #ef9877;
+  --rust-lt: #4d2c22;
+  --cream: #171b16;
+  --cream-dark: #20251e;
+  --cream-mid: #20251e;
+  --parchment: #2a3027;
+  --paper: #2a3027;
+  --white: #242a21;
+  --ink: #f4f0e8;
+  --text: #f4f0e8;
+  --faded: #c9bca8;
+  --muted: #c9bca8;
+  --line: #5f5243;
+  --highlight: #263323;
+  --tag-bg: #30402b;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.44);
+}
+
+html[data-theme="dark"] body {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] :is(
+  .masthead-title h1,
+  .masthead-sub,
+  .menu-toggle,
+  .search-input,
+  .spec-box,
+  .spec-box .spec-table td
+) {
+  color: #f4f0e8;
+}
+
+.garden-theme-toggle {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 10020;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 76px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--wire-lt, #536052);
+  border-radius: 999px;
+  background: var(--white, #fff);
+  color: var(--ink, #1e1608);
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
+  font: 600 0.72rem/1 'DM Sans', system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.garden-theme-toggle:focus-visible {
+  outline: 3px solid var(--seedling, #6aab4a);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .garden-theme-toggle {
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}

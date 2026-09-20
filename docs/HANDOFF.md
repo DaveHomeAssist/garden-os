@@ -35,9 +35,9 @@ The core mission remains the same: make garden decisions explainable, playable, 
 - `tests/experiments-contract.test.mjs` and
   `tests/what-if-experiments-regression.mjs` are wired into the full verifier.
 
-**Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. Zero backend. GitHub Pages remains the delivery model.
+**Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. GitHub Pages remains the delivery model; Story Mode can use the signed Vercel authority API and falls back to local persistence.
 
-## Current State Snapshot (2026-08-09)
+## Current State Snapshot (2026-09-20)
 
 ### Repo Shape
 
@@ -49,12 +49,11 @@ The core mission remains the same: make garden decisions explainable, playable, 
 
 ### Working Inventory
 
-- Approximate raw repo size: ~3000 files / ~560 directories.
-- Approximate working source footprint excluding `.git`, `dist`, and `story-mode/node_modules`: ~300 files.
-- Root HTML surfaces: 12 public/dev entry files.
-- `docs/`: ~85 files.
-- `specs/`: 16 canonical or historical spec files.
-- `story-mode/src/`: 32 source files.
+- Working source/assets excluding `.git`, `story-mode/dist`, and `story-mode/node_modules`: 1,438 files / 262 directories.
+- Root HTML surfaces: 21 total; 9 routes are canonical and sitemap-listed.
+- `docs/`: 109 files.
+- `specs/`: 24 canonical or historical files.
+- `story-mode/src/`: 160 source and test files.
 
 ### What Is Actually Live
 
@@ -71,6 +70,8 @@ The core mission remains the same: make garden decisions explainable, playable, 
 - Story Mode is the one active public game route. `garden-league-simulator-v4.html` remains an unlinked legacy reference, and `/story-mode-live/` redirects to `/story-mode/`.
 - `gos-time.js` is the current date, ISO-week, day-of-year, season, and week-range authority for Home, Beds, Planner, Doctor, and Journal. Do not add mock dates or independent season defaults to those surfaces.
 - Fresh storage is intentionally empty. Mom's garden is labelled sample data and loads only after the user explicitly chooses it; product counts and advice must come from the active saved bed.
+- All canonical public routes now share a visible, light-default light/dark toggle and one PWA registration path. Browser coverage verifies saved theme persistence, 44px toggle targets, route-level dark contrast, service-worker activation, and an offline Home reload.
+- Story Mode title choices are native keyboard buttons. Story saves persist; Free Play and Story Planner are explicitly session-only. Daily Challenge and Speedrun remain unavailable, with their existing backlog item still open for richer unlock/ETA detail.
 
 ---
 
@@ -124,6 +125,7 @@ Story Mode currently includes:
 - keepsakes, recipe matches, and carry-forward campaign state
 - mobile-responsive HUD/panel work
 - front-of-bed camera/scenery reorientation
+- 46 passing Vitest files / 517 passing tests as of 2026-09-20
 
 ### Navigation Structure
 

@@ -23,6 +23,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="var(--soil)">
+<script src="garden-theme.js"></script>
+<script src="garden-pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,700;9..144,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -720,6 +722,7 @@
     *, *::before, *::after { transition: none !important; animation: none !important; }
   }
 </style>
+<link rel="stylesheet" href="garden-theme-compat.css">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -1333,6 +1336,5 @@ FRONT DOORS</pre>
   if (firstOpen) setActiveNav(firstOpen.id);
 })();
 </script>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>

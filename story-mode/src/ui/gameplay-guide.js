@@ -11,11 +11,12 @@ const GUIDE_NAV = [
 ];
 
 const MODE_ROWS = [
-  ['Story Mode', pill('Live', 'green'), 'Main menu -> save slot'],
-  ['Planner Mode', pill('In development', 'amber'), 'Not yet a menu path'],
-  ['Let It Grow', pill('Gated', 'amber'), 'Proximity mode flag'],
-  ['Daily Challenge', pill('Coming soon', 'gray'), 'Locked'],
-  ['Speedrun', pill('Coming soon', 'gray'), 'Locked'],
+  ['Story Mode', pill('Live + saved', 'green'), 'Title -> persistent save slot'],
+  ['Free Play', pill('Live + session only', 'amber'), 'Title -> Start Unsaved Free Play'],
+  ['Story Planner', pill('Preview + session only', 'amber'), 'Title -> Start Unsaved Story Planner'],
+  ['Let It Grow', pill('Live in Free Play', 'green'), 'Proximity movement and world tools'],
+  ['Daily Challenge', pill('Coming soon', 'gray'), 'Locked in this release'],
+  ['Speedrun', pill('Coming soon', 'gray'), 'Locked in this release'],
 ];
 
 const SCORE_ROWS = [
@@ -68,7 +69,7 @@ const TOUCH_ROWS = [
 ];
 
 const GUIDE_FOOTER =
-  'Current build focus: Story Mode is playable now. Planner Mode and Let It Grow are being folded into the same codebase, but they are not full menu modes yet.';
+  'Story Mode uses persistent save slots. Free Play and Story Planner are session-only previews and are discarded when the page refreshes.';
 
 function pill(label, tone = 'gray') {
   return `<span class="gameplay-guide__pill gameplay-guide__pill--${tone}">${escapeHtml(label)}</span>`;
@@ -134,7 +135,7 @@ function renderOverviewSection() {
         tone: 'green',
         label: 'Story Mode is live',
         body:
-          'Choose your gardener, tend the backyard one season at a time, ride out three season beats, harvest and review. Planner Mode and Let It Grow are being built on top of these systems.',
+          'Choose your gardener, tend the backyard one season at a time, ride out three season beats, harvest and review. Free Play and Story Planner are available from the title screen as clearly labelled session-only modes.',
       })}
       ${renderTable(
         ['Mode', 'Status', 'Entry'],
@@ -302,7 +303,7 @@ function renderToolsSection() {
   return renderSection({
     id: 'tools',
     title: 'Let It Grow tool layer',
-    subtitle: 'Active branch, not the primary Story Mode menu path yet.',
+    subtitle: 'Active in Free Play through the title-screen menu.',
     bodyHtml: `
       ${renderCallout({
         tone: 'amber',

@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const css = readFileSync(new URL('../garden-os-theme.css', import.meta.url), 'utf8');
-const tokens = new Map([...css.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map((match) => [match[1], match[2]]));
+
+function readTokens(selector) {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const block = css.match(new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm'))?.[1] ?? '';
+  return new Map([...block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map((match) => [match[1], match[2]]));
+}
+
+const lightTokens = readTokens(':root');
+const darkTokens = readTokens('html[data-theme="dark"]');
 
 function luminance(hex) {
   const channels = hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255);
@@ -22,15 +30,21 @@ function requireAa(foreground, background, label) {
   return Number(value.toFixed(2));
 }
 
-const panel = tokens.get('panel');
 const white = '#ffffff';
 const results = {};
+const panel = lightTokens.get('panel');
 for (const name of ['text', 'text-mid', 'text-soft', 'text-muted', 'cedar', 'warn', 'bad', 'info', 'accent-rain']) {
-  results[`${name}-on-panel`] = requireAa(tokens.get(name), panel, `${name} on panel`);
+  results[`light-${name}-on-panel`] = requireAa(lightTokens.get(name), panel, `${name} on light panel`);
 }
 for (const name of ['leaf', 'leaf-bright', 'leaf-light', 'rust', 'rust-light', 'warn', 'bad', 'info']) {
-  results[`white-on-${name}`] = requireAa(white, tokens.get(name), `white on ${name}`);
+  results[`light-white-on-${name}`] = requireAa(white, lightTokens.get(name), `white on light ${name}`);
 }
-results['text-on-sun-bright'] = requireAa(tokens.get('text'), tokens.get('sun-bright'), 'text on sun-bright');
+results['light-text-on-sun-bright'] = requireAa(lightTokens.get('text'), lightTokens.get('sun-bright'), 'light text on sun-bright');
+
+const darkPanel = darkTokens.get('panel');
+for (const name of ['text', 'text-mid', 'text-soft', 'text-muted', 'leaf', 'cedar', 'warn', 'bad', 'info', 'accent-rain']) {
+  results[`dark-${name}-on-panel`] = requireAa(darkTokens.get(name), darkPanel, `${name} on dark panel`);
+}
+results['dark-white-on-leaf-bright'] = requireAa(white, darkTokens.get('leaf-bright'), 'white on dark-theme primary action');
 
 console.log(JSON.stringify({ ok: true, ratios: results }, null, 2));

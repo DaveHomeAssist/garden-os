@@ -1,6 +1,16 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-08-09
+**Last verified:** 2026-09-20
+
+## Current Verified Baseline — 2026-09-20
+
+- Authoritative branch: `main`, reconciled to `origin/main` before this sprint.
+- Story Mode unit gate: 46 files / 517 tests, 0 failed.
+- Story Mode production build: passes and stamps `dist/build-meta.json`.
+- Canonical public surface: nine sitemap routes, one shared light-default theme preference, one manifest, and one service-worker registration path.
+- Browser proof: theme persistence, 44px toggle target, route-level dark contrast, service-worker activation, and offline Home reload pass locally.
+- Story Mode persistence contract: three persistent Story save slots; Free Play and Story Planner are explicitly session-only.
+- Remaining open GitHub product backlog: #38 locked-mode detail, #40 touch drag-and-drop, and #42 window SFX. This sprint partially addresses #38 but does not close its unlock-condition/ETA requirement.
 
 ## Immediate Stabilization Plan — 2026-03-31
 
@@ -9,7 +19,7 @@
 - Fresh clone path: `/Users/daverobertson/Desktop/Code/garden-os-fresh`
 - Active app surface: `story-mode/` Vite + Three.js runtime
 - `npm ci`: complete in `story-mode/`
-- `npm test`: `28` files passed, `329` tests passed, `0` failed
+- Historical 2026-03-31 gate: `28` files passed, `329` tests passed, `0` failed. Current verified gate is recorded above.
 - `npm run build`: succeeds and writes `dist/build-meta.json`
 - Primary published Story Mode route: `/garden-os/story-mode/`
 - Canonical docs now distinguish root static tools from the built `story-mode/` runtime; remaining drift is limited to lower-priority docs and inventory details
@@ -115,7 +125,7 @@
 | SCHEMA.md | 170 | — | Human-readable schema reference (new) |
 | **Total** | **9,160** | **144** | |
 
-Architecture: zero-backend, browser-only tools, localStorage persistence, URL hash sharing, .gos.json file export/import. 50 crops, 8 categories, 5 scoring factors (sun, support, shade, access, season) + structural bonuses + adjacency scoring. Explainable score breakdown in Inspect tab.
+Historical Phase 1 architecture: browser-only root tools, localStorage persistence, URL hash sharing, and `.gos.json` file export/import. The roster had 50 crops at this checkpoint and now contains 51. Five weighted factors (sun, support, shade, access, season), structural bonuses, adjacency scoring, and an explainable Inspect breakdown remain active.
 
 ---
 
@@ -635,7 +645,7 @@ archived v4 monolith. `garden-painting.html` owns layout editing and scoring,
 records, `gos-suitability-core.js` owns deterministic scoring, and `journal.html`
 owns the durable activity record.
 
-**Program status:** PLANNED
+**Program status:** COMPLETE — shipped and live-verified 2026-07-11
 **Implementation owner:** Codex
 **Product approval:** Dave
 **Target slice:** Phase 9A through Phase 9D below
@@ -735,10 +745,10 @@ layout-write authority.
 | `garden-painting.html` | Edit beds and host the What-If/A/B controls | Active `GosBed`, crop catalog, user actions | Transient trial UI, Apply/Discard command, experiment commands | Beds surface |
 | `gos-bed.js` | Persist canonical bed records with revision checks | Validated bed payload and expected revision | Saved bed record or explicit conflict error | Shared data layer |
 | `gos-suitability-core.js` | Score saved and trial beds deterministically | Bed snapshot, crop lookup, current week | Bed score, per-cell scores, weakest cells | Shared scoring layer |
-| Planned `gos-experiments.js` | Persist and validate cross-bed experiment records | Bed ids, controlled variable, observations | Experiment list, one experiment record, validation errors | Shared experiment layer |
+| `gos-experiments.js` | Persist and validate cross-bed experiment records | Bed ids, controlled variable, observations | Experiment list, one experiment record, validation errors | Shared experiment layer |
 | `garden-planner-v5.html` | Show read-only seasonal experiment status | Saved beds and experiment records | Current comparison summary and observation history | Planner surface |
 | `gos-journal.js` / `journal.html` | Record and display experiment lifecycle events | Created, observed, applied, closed events | Durable chronological entries | Journal surface |
-| Planned browser regressions | Prove storage and UI contracts | Fixture beds and scripted actions | Pass/fail evidence and screenshots | Verification layer |
+| Browser regressions | Prove storage and UI contracts | Fixture beds and scripted actions | Pass/fail evidence and screenshots | Verification layer |
 
 ### Planned Experiment Record
 
@@ -966,3 +976,62 @@ After Phase 9 is shipped and live-verified:
    location, privacy, CSP, and notification-permission contracts.
 3. Reconcile remaining v4 references in `docs/HANDOFF.md`, `docs/FEATURES.md`,
    README, and legacy trackers without rewriting historical evidence.
+
+## Phase 10 — Public-Surface Integrity Foundation
+
+**Status:** LOCAL VERIFICATION COMPLETE — deploy and live readback pending
+**Started:** 2026-09-20
+
+This phase removes ambiguity before adding another decision-support feature:
+
+- Keyboard-native Story Mode selection with arrow navigation and pressed/disabled semantics.
+- Truthful persistence language for Story saves versus session-only Free Play and Story Planner.
+- WEB-1 light/dark support with light as the first-visit default and one visible saved toggle across canonical public routes.
+- One manifest identity and one service-worker registration contract, including first-visit install and offline reload proof.
+- Canonical docs, progression counts, guide copy, and backlog state reconciled to current v5/Story behavior.
+
+Exit gates:
+
+- Full `node scripts/verify-all.mjs` passes.
+- Pushed `main` equals the tested commit and GitHub Pages deploys it.
+- Live browser readback proves theme persistence, Story Mode title semantics, and PWA registration.
+
+## Phase 11 — Active-v5 Printable Garden Plan
+
+**Status:** READY AFTER PHASE 10 LIVE PROOF
+**Boundary:** local-only, no schema migration, no backend
+
+The printable plan must render from the same canonical `GosBed` and Planner data
+already visible on screen. It must not revive the archived v4 implementation.
+
+Minimum slice:
+
+- A Print plan action on the active Planner.
+- A semantic print document containing garden/bed name, generated date, bed grid,
+  crop legend, planting/harvest windows, score summary, limiting factors, and a
+  blank field-notes area.
+- `@media print` output that removes app chrome, uses black-on-white readable
+  typography, preserves non-color crop labels, and fits a normal US Letter page.
+- Empty, missing-bed, and multi-bed states are explicit; printing never writes
+  product state.
+- Browser regression saves a PDF or print screenshot at desktop and verifies
+  headings, legend labels, page overflow, and no console errors.
+
+## Phase 12 — Active-v5 Live Weather Coach
+
+**Status:** PLANNED AFTER PRINTABLE PLAN
+**Boundary:** user-initiated network feature with a deterministic offline fallback
+
+The weather coach may reuse archived v4 ideas, but its active-v5 contract must be
+new and explicit:
+
+- Location is opt-in and editable; ZIP/city input is the default, browser
+  geolocation is never required.
+- Open-Meteo requests are read-only, timeout-bounded, CSP-allowed, and cached with
+  fetched-at/source labels. Stale data is labelled; it is never presented as live.
+- No notification permission prompt on load. Notifications remain a separate,
+  user-triggered follow-up.
+- Advice is derived from canonical saved beds/crops plus forecast facts, with
+  deterministic fixture tests for frost, heat, rain, stale cache, API failure,
+  offline first visit, and malformed responses.
+- Weather failure cannot block Beds, Planner, Journal, Story Mode, or offline PWA use.

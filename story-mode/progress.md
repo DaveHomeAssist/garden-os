@@ -1,5 +1,13 @@
 Original prompt: Make the player character the gardener, with Mom as the default canonical identity, add a small New Game character setup for name/look/clothes, pipe the profile through saves/UI/player rendering, and rewire the story away from Mom as a dead or offscreen figure.
 
+Update 2026-09-20 integrity sprint, foundation checkpoint:
+- Reconciled the working checkout to authoritative `origin/main` at `a8815ee17be1e1aa2a445f4c23a2bb28d03c2381` before editing; the retired topic branch remains preserved locally and the working branch is now `main`.
+- Added one shared, light-default theme preference and visible 44px theme toggle across all nine canonical public routes. Root React surfaces now use live CSS-variable token references, Story Mode shares the same preference, and both the field-kit HUD and title screen expose dark surfaces without changing the default light presentation.
+- Consolidated PWA registration through `garden-pwa.js`, linked the manifest from every canonical route, corrected the suite-level manifest identity/start URL, and bumped the precache contract to the integrity-sprint version.
+- Rebuilt Story Mode mode selection as native buttons with arrow-key navigation, pressed/disabled semantics, explicit persistent versus session-only copy, and truthful unsaved launch labels. Free Play pause/profile copy and the Story Planner viewport now repeat the session-only boundary.
+- Local validation is complete: Story Mode passed 46 test files / 517 tests, the production build and responsive screenshot suite passed (including the 320px title screen), the design-language/context-menu diagnostic passed all six viewports, and the full repository verifier passed every requested gate including theme persistence, offline reload, route integrity, planner reasoning, security, and asset budgets.
+- Remaining in this sprint: commit and push the tested tree, pass GitHub Pages, and perform live theme, Story Mode semantics, and PWA readback. Printable-plan and live-weather work remain sequenced after that public proof.
+
 Update 2026-09-06 context-menu release gate and priority crop texture pass:
 - Replaced the context-menu design-language diagnostic's synthetic viewport scan with a real browser right-click on an unobstructed, camera-projected bed cell after the desktop resize has settled. Secondary-button pointerdown now preserves the previously focused control so Escape can restore it after a mouse-opened menu; the existing role, enabled-item, focus, 44px target, arrow-key, Escape, and focus-return assertions remain intact.
 - Added transparent 256x256 crop textures for cherry tomato (`cherry_tom`), carrot, onion, bush beans, and peas, and registered them with the Story Mode sprite loader so they supersede procedural fallbacks.

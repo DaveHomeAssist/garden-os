@@ -22,6 +22,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="var(--soil)">
+<script src="garden-theme.js"></script>
+<script src="garden-pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
@@ -1133,6 +1135,7 @@ mark.search-hl {
   .masthead-title h1 { font-size: 19.5px; }
 }
 </style>
+<link rel="stylesheet" href="garden-theme-compat.css">
 </head>
 <body>
 
@@ -2292,6 +2295,5 @@ document.addEventListener('keydown', e => {
 /* ── INIT ── */
 updateProgress();
 </script>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW registration failed:",e)})}</script>
 </body>
 </html>

@@ -161,6 +161,31 @@ describe('game-init title screen', () => {
     expect(document.querySelector('.freeplay-start-btn').style.display).toBe('');
   });
 
+  it('renders mode choices as keyboard controls with truthful persistence copy', () => {
+    showTitleScreen(vi.fn());
+
+    const story = document.querySelector('[data-mode="story"]');
+    const freeplay = document.querySelector('[data-mode="freeplay"]');
+    const planner = document.querySelector('[data-mode="planner"]');
+    const locked = document.querySelector('[data-locked-mode="daily"]');
+
+    expect(story.tagName).toBe('BUTTON');
+    expect(story.getAttribute('aria-pressed')).toBe('true');
+    expect(freeplay.textContent).toMatch(/session only.*not saved/i);
+    expect(planner.textContent).toMatch(/session only.*main Planner/i);
+    expect(locked.getAttribute('aria-disabled')).toBe('true');
+
+    freeplay.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+    expect(planner.getAttribute('aria-pressed')).toBe('true');
+    expect(document.activeElement).toBe(planner);
+    expect(document.querySelector('.planner-start-btn').textContent).toMatch(/Unsaved Story Planner/);
+    expect(document.querySelector('.mode-availability-note').textContent).toMatch(/session only/i);
+
+    locked.click();
+    expect(document.querySelector('.mode-availability-note').textContent).toMatch(/not available in this release/i);
+  });
+
   it('launches sandbox free play from the title screen', async () => {
     const onStart = vi.fn();
 

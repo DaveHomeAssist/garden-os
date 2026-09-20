@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Garden OS — Brand Guide">
 <meta name="twitter:description" content="Garden OS is a browser-based raised bed planning ecosystem with explainable scoring, build guides, seasonal operations, and story mode.">
 <meta name="twitter:image" content="https://davehomeassist.github.io/garden-os/images/gos-wordmark-lockup.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f7f3ec">
+<script src="garden-theme.js"></script>
+<script src="garden-pwa.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,200;1,9..144,300;1,9..144,400;1,9..144,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════
@@ -123,6 +127,28 @@
   --text-3xl:  2rem;       /* 32px */
   --text-4xl:  2.5rem;     /* 40px */
   --text-5xl:  3.5rem;     /* 56px */
+}
+
+html[data-theme="dark"] {
+  --bg:          #151a15;
+  --bg-panel:    #20251e;
+  --bg-card:     #242a21;
+  --bg-code:     #2a3027;
+  --text:        #f4f0e8;
+  --text-mid:    #d9cfbf;
+  --text-dim:    #b8aa96;
+  --text-link:   #9bd184;
+  --border:      #4d5849;
+  --border-mid:  #697462;
+  --accent:      #f5c14a;
+  --accent-soft: #4a3b18;
+  --good:        #8ec77c;
+  --warn:        #f0ad72;
+  --bad:         #ff9188;
+  --shadow-sm:   0 1px 4px rgba(0,0,0,.28);
+  --shadow-md:   0 2px 12px rgba(0,0,0,.34);
+  --shadow-lg:   0 4px 24px rgba(0,0,0,.4);
+  --shadow-lift: 0 8px 32px rgba(0,0,0,.48);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1034,6 +1060,7 @@ pre.code-block {
   .type-ramp-meta { min-width: unset; }
 }
 </style>
+<link rel="stylesheet" href="garden-theme-compat.css">
 </head>
 <body>
 
@@ -1124,7 +1151,7 @@ pre.code-block {
       <span class="section-num">§ 1</span>
       <div>
         <h2 class="section-title">Colour Palette</h2>
-        <p class="section-desc">Four families. One intentional light theme. Click any swatch to copy its hex value.</p>
+        <p class="section-desc">Four families, with systematic light and dark semantic aliases. Click any swatch to copy its hex value.</p>
       </div>
       <span class="section-rule"></span>
     </div>
@@ -1156,7 +1183,7 @@ pre.code-block {
 
     <div class="callout callout-info" style="margin-top: var(--sp-6);">
       <span class="callout-icon">🎨</span>
-      <div class="callout-text"><strong>Single-theme policy</strong>Garden OS ships one intentional light theme. Do not add dark mode without updating all surface, text, and border tokens systematically. Do not introduce purple, blue, or grey as primary tones — they undermine the warm soil aesthetic.</div>
+      <div class="callout-text"><strong>Dual-theme policy</strong>Garden OS defaults to light and honors the user’s saved light/dark choice across every canonical public route. New components must use semantic surface, text, border, and action tokens and pass WCAG AA in both themes. Do not introduce purple, blue, or grey as primary tones — they undermine the warm soil aesthetic.</div>
     </div>
   </section>
 

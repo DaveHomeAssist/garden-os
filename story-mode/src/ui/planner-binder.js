@@ -184,6 +184,12 @@ export function bindPlannerUI(store, scene, viewport) {
   let disposed = false;
   let rafId = 0;
 
+  const sessionNotice = document.createElement('div');
+  sessionNotice.className = 'planner-session-notice';
+  sessionNotice.setAttribute('role', 'status');
+  sessionNotice.textContent = 'Story Planner · session only · use the main Planner to save beds';
+  viewport?.appendChild(sessionNotice);
+
   function syncAndRender() {
     scene.sync?.(store.getState());
     scene.render?.();
@@ -258,6 +264,7 @@ export function bindPlannerUI(store, scene, viewport) {
   function dispose() {
     disposed = true;
     cancelAnimationFrame(rafId);
+    sessionNotice.remove();
     canvas?.removeEventListener('click', handleCanvasClick);
     unsubscribe?.();
     scorePanel.dispose();

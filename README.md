@@ -1,6 +1,8 @@
 # Garden OS
 
-> A local-first raised-bed planning system that runs entirely in the browser. Explains placement decisions, not just layouts.
+> A local-first raised-bed planning and story system. Root tools run entirely in
+> the browser; Story Mode can also use an optional signed authority service while
+> retaining local offline persistence.
 
 ## Problem Statement
 
@@ -27,7 +29,9 @@ The system also highlights the limiting factor so users can make high-leverage c
 - Workspace export/import with `.gos.json`
 - Export-only reasoned summaries for temporal context, multi-bed comparison, companion findings, and active-cell explanation
 - Canonical data contract in `gos-schema.json`
-- Zero-backend, offline-capable architecture
+- Light-default, user-selectable light/dark themes shared across public routes
+- Installable PWA with verified first-visit registration and offline reload
+- Story Mode, Free Play, and Story Planner with explicit persistence boundaries
 
 ## Quick Start
 
@@ -56,6 +60,11 @@ garden-os/
 ├── index-v5.html                       # Current product Home implementation
 ├── garden-painting.html                # Active v5 Beds editor and experiments
 ├── garden-planner-v5.html              # Active v5 seasonal planner
+├── garden-doctor-v5.html               # Active symptom triage
+├── journal.html                        # Local-first garden journal
+├── how-it-thinks-v5.html               # Plain-English scoring walkthrough
+├── garden-theme.js                     # Shared light/dark preference + visible toggle
+├── garden-pwa.js                       # Shared service-worker registration
 ├── gos-experiments.js                  # Cross-bed experiment contract/store
 ├── garden-cage-build-guide.html        # Cage construction guide
 ├── garden-cage-ops-guide.html          # Operations and maintenance guide
@@ -80,7 +89,8 @@ garden-os/
 ## Tech
 
 - HTML5, CSS3, JavaScript, and vendored React for active v5 surfaces
-- localStorage for persistence
+- localStorage/file persistence for root tools; IndexedDB/local fallback plus an
+  optional signed authority API for Story Mode
 - JSON Schema for contract validation
 - Offline-capable (no network required except Google Fonts)
 
@@ -108,10 +118,10 @@ garden-os/
 
 ## Roadmap
 
-- Planner accessibility hardening (ARIA, keyboard clarity)
-- Scoring visualization polish and diagnostics depth
-- Workspace lifecycle improvements
-- Additional decision-support modules
+- Recover the printable garden plan on the active v5 bed contract
+- Re-plan the live weather coach with explicit privacy, cache, offline, CSP, and
+  permission behavior
+- Close the remaining Story Mode touch-drag and window-SFX backlog items
 
 ## Links
 

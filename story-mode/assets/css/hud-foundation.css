@@ -26,6 +26,25 @@ body[data-design-language="field-kit"] {
   --hud-safe-block: clamp(10px, 1.4vh, 18px);
 }
 
+html[data-theme="dark"] body[data-design-language="field-kit"] {
+  --hud-paper: #242a21;
+  --hud-paper-soft: #30372c;
+  --hud-paper-wash: rgba(36, 42, 33, 0.96);
+  --hud-paper-soft-wash: rgba(48, 55, 44, 0.94);
+  --hud-ink: #f4f0e8;
+  --hud-ink-soft: #d9cfbf;
+  --hud-ink-muted: #b8aa96;
+  --hud-leaf: #8ec77c;
+  --hud-leaf-dark: #315b25;
+  --hud-leaf-soft: #34472f;
+  --hud-gold: #e0b950;
+  --hud-rust: #ef9877;
+  --hud-rule: rgba(226, 216, 199, 0.24);
+  --hud-rule-strong: rgba(226, 216, 199, 0.42);
+  --hud-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+  --hud-shadow-raised: 0 14px 34px rgba(0, 0, 0, 0.48);
+}
+
 body[data-design-language="field-kit"] button:focus-visible,
 body[data-design-language="field-kit"] [role="button"]:focus-visible,
 body[data-design-language="field-kit"] [role="menuitem"]:focus-visible,
