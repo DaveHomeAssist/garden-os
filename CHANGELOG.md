@@ -10,6 +10,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 
+### Fixed
+- Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
+
 ### Added
 - Added one visible, light-default light/dark preference across all canonical
   public routes, including Story Mode, with saved cross-route selection and
