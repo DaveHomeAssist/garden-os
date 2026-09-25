@@ -11,6 +11,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Fixed
+- Story Mode: Main Menu then Continue no longer leaks the previous game session. Click listeners on the static HUD and pause buttons are now removed at session cleanup (one AbortController per session), the old renderer's WebGL context and the startup WebGL probe context are released, and stale handlers no longer fire again on each click. Six round trips now leave 0 live WebGL contexts and a flat heap (headless Chrome probe: 4 live contexts and 13.8 MB before, 0 and 5.2 MB after).
+- Story Mode: weather, day/night, atmosphere animation and camera easing now follow real frame time (capped) instead of a fixed 1/60 s step, so they no longer run at double speed on 120 Hz displays. Manual ticks (`window.advanceTime`, tests) still step 1/60 s.
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 
 ### Added

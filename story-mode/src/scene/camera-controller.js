@@ -135,17 +135,21 @@ export function createCameraController(camera, domElement) {
     clearFollowTarget() {
       followEnabled = false;
     },
-    update() {
+    // lerpSpeed and followStrength are tuned per 60 Hz frame; convert them to
+    // the actual frame time so easing speed doesn't depend on refresh rate.
+    update(dt = 1 / 60) {
+      const frames = Math.max(0, dt) * 60;
       if (targetPose) {
-        camera.position.lerp(targetPose.position, lerpSpeed);
-        target.lerp(targetPose.target, lerpSpeed);
+        const k = 1 - Math.pow(1 - lerpSpeed, frames);
+        camera.position.lerp(targetPose.position, k);
+        target.lerp(targetPose.target, k);
         camera.lookAt(target);
 
         if (camera.position.distanceTo(targetPose.position) < 0.01) {
           targetPose = null;
         }
       } else if (followEnabled) {
-        target.lerp(followTarget, followStrength);
+        target.lerp(followTarget, 1 - Math.pow(1 - followStrength, frames));
         updateOrbit();
       }
     },

@@ -322,6 +322,9 @@ export function disposeGardenScene({ container, renderer, scene, weather, dayNig
   scene?.clear?.();
   resourceTracker?.disposeAll();
   renderer?.dispose();
+  // dispose() frees GPU resources but leaves the context itself alive until
+  // GC; release it now so repeated sessions never pile up live contexts.
+  renderer?.forceContextLoss?.();
   renderer?.domElement?.remove?.();
 }
 
@@ -330,6 +333,8 @@ export function createGardenScene(container) {
   const testCanvas = document.createElement('canvas');
   const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl');
   if (!gl) throw new Error('WebGL not available');
+  // Release the probe context immediately instead of leaving it for GC.
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
 
   const scene = new THREE.Scene();
   const resourceTracker = new ResourceTracker();
@@ -1170,6 +1175,7 @@ export function createGardenScene(container) {
 
   // Camera controller
   const camCtrl = createCameraController(camera, renderer.domElement);
+  let frameDt = 1 / 60;
 
   // Raycaster for cell picking + hover
   const raycaster = new THREE.Raycaster();
@@ -2962,13 +2968,13 @@ function getGrowthScale(phase, season) {
       scenery.showNarrativeProps(state.season.chapter ?? 1, state.campaign ?? []);
       // ── End scenery state-driven updates ──────────────────────────────
 
-      weather.update(0.016);
+      weather.update(frameDt);
       // While a cutscene owns the camera, suspend the gameplay orbit/follow
       // controller. Otherwise it rewrites camera.position every frame and, the
       // instant each preset transition finishes, snaps the camera back to its
       // orbit pose — the abrupt, repetitive zoom-in-then-snap during the intro.
       if (!cutsceneActive) {
-        camCtrl.update();
+        camCtrl.update(frameDt);
       }
       updateTransitions(performance.now());
 
@@ -3000,6 +3006,13 @@ function getGrowthScale(phase, season) {
     // textures synchronously (the intro's "frozen black screen" hitch).
     // compileAsync uses KHR_parallel_shader_compile to do the work off the
     // blocking path; awaiting it keeps the page responsive meanwhile.
+    // Seconds since the previous frame, supplied by the game loop (already
+    // capped there). Weather, day/night, atmosphere and the camera use it so
+    // they run at the same speed on 60 Hz and 120 Hz displays. Manual ticks
+    // (window.advanceTime, tests) pass 1/60, so they stay deterministic.
+    setFrameDelta(dt) {
+      if (Number.isFinite(dt) && dt > 0) frameDt = Math.min(dt, 0.1);
+    },
     async warmup() {
       try {
         if (typeof renderer.compileAsync === 'function') {
@@ -3010,7 +3023,7 @@ function getGrowthScale(phase, season) {
       } catch { /* warmup is best-effort — never block startup on it */ }
     },
     render() {
-      dayNight.update(1 / 60);
+      dayNight.update(frameDt);
       const time = performance.now() * 0.001; // seconds
 
       // ── Trellis wire wind oscillation ──────────────────────────────────
@@ -3030,7 +3043,7 @@ function getGrowthScale(phase, season) {
 
       // ── Atmosphere animations ──────────────────────────────────────────
       const now = performance.now();
-      const dt = 1 / 60;
+      const dt = frameDt;
       atmosphereLastNow = now;
       atmosphereTime += dt;
 
