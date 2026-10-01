@@ -57,8 +57,13 @@ describe('supportFit', () => {
     expect(supportFit({ support: true }, true)).toBe(5.0);
   });
 
-  it('returns 1.0 for climber without trellis', () => {
+  it('returns 1.0 for climber without trellis and not in trellis row', () => {
     expect(supportFit({ support: true }, false)).toBe(1.0);
+    expect(supportFit({ support: true }, false, false)).toBe(1.0);
+  });
+
+  it('returns 2.0 for climber in trellis row but trellis disabled', () => {
+    expect(supportFit({ support: true }, false, true)).toBe(2.0);
   });
 });
 

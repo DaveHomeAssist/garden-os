@@ -11,6 +11,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Fixed
+- Fixed story-mode supportFit to return 2.0 for climbing crops placed in the trellis row when the trellis is disabled, matching the SCORING_RULES.md Factor 2 spec (previously returned 1.0, losing the proximity bonus).
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 
 ### Added

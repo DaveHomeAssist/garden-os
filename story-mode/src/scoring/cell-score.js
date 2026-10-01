@@ -78,10 +78,14 @@ export function sunFit(crop, effectiveLight) {
 
 /**
  * Factor 2: Support Fit
+ * hasVerticalSupport: cell is in trellis row AND trellis is enabled (5.0)
+ * isTrellisRow: cell is positionally adjacent to wall but trellis disabled (2.0)
  */
-export function supportFit(crop, hasTrellis) {
+export function supportFit(crop, hasVerticalSupport, isTrellisRow = false) {
   if (!crop.support) return 3.0;
-  return hasTrellis ? 5.0 : 1.0;
+  if (hasVerticalSupport) return 5.0;
+  if (isTrellisRow) return 2.0;
+  return 1.0;
 }
 
 /**
@@ -184,10 +188,11 @@ export function scoreCell(cellIndex, grid, siteConfig, season) {
   const wallSide = siteConfig.wallSide || 'back';
   const effectiveLight = computeEffectiveLight(cellIndex, grid, siteConfig);
   const trellisRow = wallSide === 'front' ? rows - 1 : wallSide === 'left' ? 0 : wallSide === 'right' ? rows - 1 : 0;
-  const hasTrellis = row === trellisRow && (siteConfig.trellis ?? true);
+  const isInTrellisRow = row === trellisRow;
+  const hasVerticalSupport = isInTrellisRow && (siteConfig.trellis ?? true);
 
   const sf = sunFit(crop, effectiveLight);
-  const sup = supportFit(crop, hasTrellis);
+  const sup = supportFit(crop, hasVerticalSupport, isInTrellisRow);
   const shd = shadeFit(crop, effectiveLight);
   const acc = accessFit(crop, row, col, rows, cols, wallSide);
 
