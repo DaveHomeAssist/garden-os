@@ -22,6 +22,7 @@ export function createPauseController({
   slot,
   isInterventionTargeting,
   isCropPaletteOpen,
+  playSFX = () => {},
 }) {
   const pauseOverlay = document.getElementById('pause-menu');
   const pauseStatus = document.getElementById('pause-status');
@@ -49,6 +50,7 @@ export function createPauseController({
     if (isInterventionTargeting()) return;
     pauseMenuOpen = !pauseMenuOpen;
     if (pauseMenuOpen) {
+      playSFX('ui_click');
       bugPanel?.classList.remove('is-open');
       setElementInteractive(bugPanel, false);
       if (isCropPaletteOpen()) closePalette();
@@ -75,6 +77,7 @@ export function createPauseController({
   }
 
   function showProfileSheet() {
+    playSFX('ui_click');
     closePauseMenu();
     const state = getState();
     const sheet = document.createElement('div');
@@ -93,6 +96,7 @@ export function createPauseController({
     `;
 
     const closeSheet = () => {
+      playSFX('ui_click');
       sheet.classList.remove('is-open');
       setTimeout(() => sheet.remove(), 260);
     };
@@ -142,18 +146,21 @@ export function createPauseController({
   }, listenerOptions);
 
   document.getElementById('pause-journal')?.addEventListener('click', () => {
+    playSFX('ui_click');
     closePauseMenu();
     const state = getState();
     showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
   }, listenerOptions);
 
   document.getElementById('pause-story-log')?.addEventListener('click', () => {
+    playSFX('ui_click');
     closePauseMenu();
     const state = getState();
     showStoryLogSheet(pauseContainer, state.campaign);
   }, listenerOptions);
 
   document.getElementById('pause-bugs')?.addEventListener('click', () => {
+    playSFX('ui_click');
     const bugsKey = 'gos-story-bugs';
     closePauseMenu();
     try {

@@ -2042,6 +2042,7 @@ function bindUI({
     slot,
     isInterventionTargeting: () => !!interventionTargeting.isActive(),
     isCropPaletteOpen: () => cropPaletteOpen,
+    playSFX: (id) => { if (audioInitialized) audioManager.playSFX(id); },
   });
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
