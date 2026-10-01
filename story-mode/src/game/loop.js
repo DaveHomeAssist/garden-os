@@ -9,6 +9,7 @@ export function createLoop(services) {
 
 function runStep(dt, { manual = false } = {}) {
   services.update?.(dt, { manual });
+  services.scene.setFrameDelta?.(dt);
   services.scene.sync(services.getState());
   if (typeof services.render === 'function') {
     services.render();
