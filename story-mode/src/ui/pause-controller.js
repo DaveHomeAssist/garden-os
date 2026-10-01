@@ -36,6 +36,11 @@ export function createPauseController({
 
   let pauseMenuOpen = false;
 
+  // Everything below binds to static index.html elements that outlive this
+  // session; dispose() aborts this so no closure keeps the session alive.
+  const listenerAbort = new AbortController();
+  const listenerOptions = { signal: listenerAbort.signal };
+
   setElementInteractive(pauseOverlay, false);
   setElementInteractive(bugPanel, false);
   setButtonInteractive(fabBug, true);
@@ -130,23 +135,23 @@ export function createPauseController({
   document.getElementById('hud-pause')?.addEventListener('click', (event) => {
     event.stopPropagation();
     togglePauseMenu();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-resume')?.addEventListener('click', () => {
     togglePauseMenu();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-journal')?.addEventListener('click', () => {
     closePauseMenu();
     const state = getState();
     showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-story-log')?.addEventListener('click', () => {
     closePauseMenu();
     const state = getState();
     showStoryLogSheet(pauseContainer, state.campaign);
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-bugs')?.addEventListener('click', () => {
     const bugsKey = 'gos-story-bugs';
@@ -157,7 +162,7 @@ export function createPauseController({
     } catch {
       showBugReportsSheet(pauseContainer, []);
     }
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-export')?.addEventListener('click', () => {
     persistState();
@@ -177,7 +182,7 @@ export function createPauseController({
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast('Save backup downloaded.', 2200, 'success');
-  });
+  }, listenerOptions);
 
   const importInput = document.createElement('input');
   importInput.type = 'file';
@@ -216,7 +221,7 @@ export function createPauseController({
 
   document.getElementById('pause-import')?.addEventListener('click', () => {
     importInput.click();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-restart')?.addEventListener('click', () => {
     if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
@@ -231,7 +236,7 @@ export function createPauseController({
     closePauseMenu();
     updateHUD();
     showToast('Chapter restarted.', 1800);
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-main-menu')?.addEventListener('click', () => {
     persistState();
@@ -239,11 +244,11 @@ export function createPauseController({
     stopLoop();
     cleanupGame();
     remount();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-profile')?.addEventListener('click', () => {
     showProfileSheet();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-new')?.addEventListener('click', () => {
     if (!confirm('Delete this save slot and return to the title screen? This cannot be undone. Tip: use Export Save Backup first if you want a copy.')) return;
@@ -252,17 +257,17 @@ export function createPauseController({
     stopLoop();
     cleanupGame();
     remount();
-  });
+  }, listenerOptions);
 
   document.getElementById('pause-close')?.addEventListener('click', () => {
     closePauseMenu();
-  });
+  }, listenerOptions);
 
   pauseOverlay?.addEventListener('click', (event) => {
     if (event.target === pauseOverlay) {
       closePauseMenu();
     }
-  });
+  }, listenerOptions);
 
   // --- Bug panel wiring ---
   function toggleBugPanel() {
@@ -297,12 +302,12 @@ export function createPauseController({
   fabBug?.addEventListener('click', (event) => {
     event.stopPropagation();
     toggleBugPanel();
-  });
+  }, listenerOptions);
 
   bugCancel?.addEventListener('click', () => {
     bugPanel?.classList.remove('is-open');
     setElementInteractive(bugPanel, false);
-  });
+  }, listenerOptions);
 
   bugSend?.addEventListener('click', () => {
     const text = bugText?.value.trim();
@@ -348,14 +353,14 @@ export function createPauseController({
     bugPanel?.classList.remove('is-open');
     setElementInteractive(bugPanel, false);
     showToast('Bug report saved on this device. Export it from Pause → Bug Reports.', 3200);
-  });
+  }, listenerOptions);
 
   const bugPanelOutsideHandler = (event) => {
     if (bugPanel?.classList.contains('is-open') && !bugPanel.contains(event.target) && event.target !== fabBug) {
       bugPanel.classList.remove('is-open');
     }
   };
-  document.addEventListener('click', bugPanelOutsideHandler);
+  document.addEventListener('click', bugPanelOutsideHandler, listenerOptions);
 
   return {
     toggle: togglePauseMenu,
@@ -363,7 +368,7 @@ export function createPauseController({
     isOpen,
     toggleBugPanel,
     dispose() {
-      document.removeEventListener('click', bugPanelOutsideHandler);
+      listenerAbort.abort();
       importInput.remove();
     },
   };

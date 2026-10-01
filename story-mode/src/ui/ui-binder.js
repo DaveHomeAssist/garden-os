@@ -78,6 +78,14 @@ function bindUI({
   remount,
   zoneManager,
 }) {
+  // One AbortController per game session. Every listener this session adds to
+  // DOM that outlives it (static index.html buttons, document) takes this
+  // signal, so cleanupGame() can drop them all at once. Without it, each
+  // Main Menu -> Continue kept the old session (and its WebGL context) alive
+  // through these closures, and stale handlers fired again on every click.
+  const sessionListeners = new AbortController();
+  const sessionSignal = { signal: sessionListeners.signal };
+
   const {
     getCropById,
     getCropsForChapter,
@@ -336,8 +344,8 @@ function bindUI({
     document.removeEventListener('pointerdown', onFirstInteraction);
     document.removeEventListener('keydown', onFirstInteraction);
   }
-  document.addEventListener('pointerdown', onFirstInteraction, { once: true });
-  document.addEventListener('keydown', onFirstInteraction, { once: true });
+  document.addEventListener('pointerdown', onFirstInteraction, { once: true, ...sessionSignal });
+  document.addEventListener('keydown', onFirstInteraction, { once: true, ...sessionSignal });
 
   let registeredWorldInteractableIds = [];
 
@@ -1993,12 +2001,12 @@ function bindUI({
   fab?.addEventListener('click', (event) => {
     event.stopPropagation();
     phaseRouter.doAdvance();
-  });
+  }, sessionSignal);
 
   hudAction?.addEventListener('click', (event) => {
     event.stopPropagation();
     phaseRouter.doAdvance();
-  });
+  }, sessionSignal);
 
   fabPlant?.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -2012,12 +2020,12 @@ function bindUI({
     } else {
       showCropPalette();
     }
-  });
+  }, sessionSignal);
 
   fabBackpack?.addEventListener('click', (event) => {
     event.stopPropagation();
     toggleBackpack();
-  });
+  }, sessionSignal);
 
   const pauseController = createPauseController({
     getState: () => state,
@@ -2171,7 +2179,13 @@ function bindUI({
     },
   };
 
+  let cleanedUp = false;
   function cleanupGame() {
+    // Stale handlers from earlier sessions used to call this repeatedly;
+    // keep it idempotent anyway.
+    if (cleanedUp) return;
+    cleanedUp = true;
+    sessionListeners.abort();
     destroyInit?.();
     unsubscribeState();
     cancelLongPress();
