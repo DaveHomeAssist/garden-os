@@ -22,8 +22,9 @@ const FACTOR_EXPLAIN = {
     weight: '1×',
     what: 'Whether climbers and viners have a trellis to grow on.',
     good: 'Trellis is in place — vining crops are happy.',
-    mid: 'This crop doesn\'t need support, so this factor is neutral.',
-    bad: 'This crop needs a trellis but doesn\'t have one. Big penalty.',
+    mid: 'This crop does not need support, so this factor is neutral.',
+    near: 'Trellis row, but no trellis enabled. Partial credit only.',
+    bad: 'This crop needs a trellis and is not near one. Big penalty.',
     improve: 'Place crops that need support in the back row where the trellis is.',
   },
   shadeFit: {
@@ -82,6 +83,11 @@ export function explainFactor(factorKey, value) {
   if (factorKey === 'adjacency') {
     if (value > 0.5) { verdict = info.good; tip = null; }
     else if (value >= -0.3) { verdict = info.mid; tip = info.improve; }
+    else { verdict = info.bad; tip = info.improve; }
+  } else if (factorKey === 'supportFit') {
+    if (value >= 4.0) { verdict = info.good; tip = null; }
+    else if (value >= 2.5) { verdict = info.mid; tip = null; }
+    else if (value >= 1.5) { verdict = info.near; tip = info.improve; }
     else { verdict = info.bad; tip = info.improve; }
   } else {
     if (value >= 4.0) { verdict = info.good; tip = null; }
