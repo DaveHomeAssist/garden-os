@@ -11,6 +11,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Fixed
+- Fixed Story Mode never loading the 40 new crop textures: they are now registered in the sprite loader manifest, so crops render their authored art instead of procedural stand-ins.
 - Story Mode pause menu, profile editor, journal, story log, and bug-reports sheets now play the `ui_click` SFX when opened or closed, routing through the existing audioManager guard so sounds are silent before the first user gesture.
 - Fixed story-mode supportFit to return 2.0 for climbing crops placed in the trellis row when the trellis is disabled, matching the SCORING_RULES.md Factor 2 spec (previously returned 1.0, losing the proximity bonus). Score-explain now shows a distinct "partial credit" verdict for the 2.0 state instead of the full-penalty bad message.
 - Story Mode: Main Menu then Continue no longer leaks the previous game session. Click listeners on the static HUD and pause buttons are now removed at session cleanup (one AbortController per session), the old renderer's WebGL context and the startup WebGL probe context are released, and stale handlers no longer fire again on each click. Six round trips now leave 0 live WebGL contexts and a flat heap (headless Chrome probe: 4 live contexts and 13.8 MB before, 0 and 5.2 MB after).
