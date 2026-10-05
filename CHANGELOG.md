@@ -18,6 +18,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 
 ### Added
+- Added scripts/smoke-live.cjs: Playwright live-site smoke test for the five user-track pages. Runs through the CCR agent proxy by passing proxy CA SPKI hashes via --ignore-certificate-errors-spki-list, so B4 checks no longer fall back to curl-only.
 - Added one visible, light-default light/dark preference across all canonical
   public routes, including Story Mode, with saved cross-route selection and
   WCAG AA token/browser contrast gates.
