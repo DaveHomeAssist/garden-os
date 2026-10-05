@@ -4,6 +4,10 @@
 
 Inherits root rules from `/Users/daverobertson/Desktop/Code/AGENTS.md`.
 
+## Workspace contract
+
+Read `~/Code/ops-hub/90-governance/WORKSPACE_OPERATING_RULES.md` before project rules, including COMMS (one entry on the shared Agent Communications Page per session).
+
 ## Project Overview
 
 Garden OS is a browser native garden planning and scoring ecosystem. It combines planning tools, scoring visualizers, and system maps into a static deployable hub.
