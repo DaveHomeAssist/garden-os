@@ -12,6 +12,12 @@ const { chromium } = await import(playwrightSpecifier);
 const LIVE_URL = process.env.LIVE_URL || 'https://davehomeassist.github.io/garden-os/story-mode/';
 const outputDir = process.env.SMOKE_OUTPUT_DIR || join(tmpdir(), 'garden-os-live-smoke');
 
+// Test fixture only: a sandbox campaign with every gate pre-opened so the
+// smoke run can walk all zones in one pass. Pre-completing gus_river_path here
+// opens Riverside for zone-travel coverage; it says nothing about whether the
+// quest is reachable in play. Quest reachability is covered by
+// story-mode/src/test/quest-reachability-*.test.js, which starts from a fresh
+// campaign and completes every quest through player actions.
 function seededCampaign() {
   return {
     version: 8,
@@ -20,7 +26,7 @@ function seededCampaign() {
     currentSeason: 'spring',
     updatedAt: new Date().toISOString(),
     questLog: {
-      gus_river_path: { state: 'COMPLETED' },
+      gus_river_path: { state: 'COMPLETED' }, // fixture: unlocks Riverside for travel coverage
     },
     choiceLog: {},
     storyLog: [],

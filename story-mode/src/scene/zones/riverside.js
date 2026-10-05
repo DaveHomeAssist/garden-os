@@ -11,6 +11,7 @@ const ZONE_DEF = {
 const FORAGE_SPOTS = [
   { id: 'riverside_berries', position: { x: -1.4, z: 2.6 }, type: 'berry_bush' },
   { id: 'riverside_driftwood', position: { x: 2.9, z: -0.7 }, type: 'driftwood' },
+  { id: 'riverside_watercress', position: { x: -5.2, z: 0.4 }, type: 'watercress_bed' },
 ];
 
 export function createRiverside(store, tracker) {

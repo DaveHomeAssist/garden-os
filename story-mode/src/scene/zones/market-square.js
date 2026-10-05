@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
-import { getNPCsInZone } from '../../data/npcs.js';
+import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh } from './zone-interactables.js';
 import { createTradePanel } from '../../ui/trade-panel.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
@@ -61,7 +61,6 @@ export function createMarketSquare(store, tracker) {
   });
 
   const state = store.getState();
-  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
   getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
@@ -71,7 +70,7 @@ export function createMarketSquare(store, tracker) {
   });
 
   // NPCs scheduled for this zone
-  getNPCsInZone('market_square', season).forEach((npc) => {
+  getNPCsPresentInZone('market_square', state).forEach((npc) => {
     const mesh = makeNpcMesh(npc); root.add(mesh);
     interactables.push(mesh.userData.interactable);
   });

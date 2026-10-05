@@ -24,6 +24,7 @@ const ZONE_SPOTS = {
   riverside: [
     { id: 'riverside_berries', position: { x: -1.4, z: 2.6 }, type: 'berry_bush' },
     { id: 'riverside_driftwood', position: { x: 2.9, z: -0.7 }, type: 'driftwood' },
+    { id: 'riverside_watercress', position: { x: -5.2, z: 0.4 }, type: 'watercress_bed' },
   ],
   forest_edge: [
     { id: 'forest_herbs', position: { x: -2.8, z: 0.9 }, type: 'herb_patch' },
@@ -52,6 +53,12 @@ const LOOT_TABLES = {
     common: [{ itemId: 'wood', count: [1, 3], weight: 55 }, { itemId: 'scrap_metal', count: [1, 2], weight: 25 }],
     uncommon: [{ itemId: 'festival_seed_bundle', count: [1, 1], weight: 15 }, { itemId: 'watercress_seed', count: [1, 1], weight: 8, biomeCrop: 'watercress' }],
     rare: [{ itemId: 'crystal_shard', count: [1, 1], weight: 5 }, { itemId: 'wild_rice_seed', count: [1, 1], weight: 4, biomeCrop: 'wild_rice' }],
+  },
+  // Wild watercress growing in the cold shallows. Common-only on purpose: the
+  // loot roll is deterministic per day, so a seed/uncommon entry here could
+  // lock a player out of fresh bunches for a whole day (lila_watercress).
+  watercress_bed: {
+    common: [{ itemId: 'watercress', count: [1, 2], weight: 100 }],
   },
   mushroom_log: {
     common: [{ itemId: 'mushroom_spores', count: [1, 2], weight: 55 }, { itemId: 'compost', count: [1, 2], weight: 30 }],
@@ -222,3 +229,9 @@ export class ForagingSystem {
     this.cooldowns.clear();
   }
 }
+
+export {
+  BIOME_CROP_SEEDS,
+  LOOT_TABLES,
+  ZONE_SPOTS,
+};

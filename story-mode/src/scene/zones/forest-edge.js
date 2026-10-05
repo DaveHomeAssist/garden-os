@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
-import { getNPCsInZone } from '../../data/npcs.js';
+import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh, makeForageSpotMesh } from './zone-interactables.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
@@ -66,7 +66,6 @@ export function createForestEdge(store, tracker) {
   });
 
   const state = store.getState();
-  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
   getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
@@ -76,7 +75,7 @@ export function createForestEdge(store, tracker) {
   });
 
   // NPCs scheduled for this zone
-  getNPCsInZone('forest_edge', season).forEach((npc) => {
+  getNPCsPresentInZone('forest_edge', state).forEach((npc) => {
     const mesh = makeNpcMesh(npc); root.add(mesh);
     interactables.push(mesh.userData.interactable);
   });

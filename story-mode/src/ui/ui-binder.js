@@ -32,6 +32,7 @@ import { ForagingSystem } from '../game/foraging.js';
 import { ReputationSystem } from '../game/reputation.js';
 import { QuestEngine } from '../game/quest-engine.js';
 import { FestivalEngine } from '../game/festivals.js';
+import { createQuestController } from './quest-controller.js';
 import { evaluateZoneAccess } from '../scene/zone-manager.js';
 import { DayNightController } from '../game/day-night-controller.js';
 import { AudioManager } from '../audio/audio-manager.js';
@@ -282,6 +283,11 @@ function bindUI({
       phaseRouter?.onCutsceneFinish();
     },
     onEffect: (effect) => {
+      // Quest talk scenes attach callbacks (accept, turn in, deliver) to choices.
+      if (typeof effect?.run === 'function') {
+        effect.run();
+        return;
+      }
       if (!effect?.action) return;
       dispatch({
         type: effect.action,
@@ -304,6 +310,20 @@ function bindUI({
   const festivalEngine = new FestivalEngine(store);
   const craftingSystem = new CraftingSystem(store, inventory, skillSystem);
   const foragingSystem = new ForagingSystem(store, inventory, skillSystem);
+  const questController = createQuestController({
+    store,
+    questEngine,
+    festivalEngine,
+    cutsceneMachine,
+    getZoneId: () => getCurrentZoneId(),
+    showToast: (message, durationMs, variant) => showToast(message, durationMs, variant),
+    persist: () => persistState(),
+    playSfx: (sfxId) => {
+      if (audioInitialized) audioManager.playSFX(sfxId);
+    },
+    isInputBlocked: () => pauseController.isOpen() || cutsceneMachine.isActive(),
+    signal: sessionListeners.signal,
+  });
   const dayNightController = new DayNightController(scene, store);
 
   const audioManager = new AudioManager();
@@ -477,6 +497,11 @@ function bindUI({
       });
       registeredWorldInteractableIds.push(interactableId);
     });
+
+    questController.getSiteInteractables(currentZone).forEach((definition) => {
+      interactionSystem.registerInteractable(definition.id, definition);
+      registeredWorldInteractableIds.push(definition.id);
+    });
   }
 
   function setGameInputEnabled(enabled) {
@@ -632,7 +657,7 @@ function bindUI({
       if (!definition?.position || definition.type === 'exit' || definition.type === 'forage') {
         return null;
       }
-      interactionSystem.registerInteractable(id, definition);
+      interactionSystem.registerInteractable(id, questController.decorateNpcInteractable(definition));
       return id;
     },
     unregister(id) {
@@ -2169,6 +2194,12 @@ function bindUI({
     render_game_to_text: renderGameToText,
     advanceTime,
     activateForageForSmoke,
+    quests: {
+      talkTo: (npcId) => questController.talkTo(npcId),
+      interactSite: (siteId) => questController.interactSite(siteId),
+      toggleLog: () => questController.toggleLog(),
+      getSnapshot: () => questController.getSnapshot(),
+    },
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
     showHarvestRevealDebug: (result, extras = {}) => {
       showHarvestReveal(
@@ -2187,6 +2218,7 @@ function bindUI({
     if (cleanedUp) return;
     cleanedUp = true;
     sessionListeners.abort();
+    questController.dispose();
     destroyInit?.();
     unsubscribeState();
     cancelLongPress();

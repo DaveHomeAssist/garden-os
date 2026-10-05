@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { getNPCsInZone } from '../../data/npcs.js';
-import { makeNpcMesh } from './zone-interactables.js';
+import { getNPCsPresentInZone } from '../npc-presence.js';
+import { makeNpcMesh, makeQuestSiteMesh } from './zone-interactables.js';
+import { getQuestSitesForZone } from '../../data/quest-sites.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 // Greenhouse intentionally ignores external season — always warm and green inside.
 
@@ -65,7 +66,6 @@ export function createGreenhouse(store, tracker) {
   barrel.position.set(-4, 0.45, -3.5); root.add(barrel);
 
   const state = store.getState();
-  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
   getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
@@ -75,10 +75,13 @@ export function createGreenhouse(store, tracker) {
   });
 
   // NPCs scheduled for this zone (Lila in winter)
-  getNPCsInZone('greenhouse', season).forEach((npc) => {
+  getNPCsPresentInZone('greenhouse', state).forEach((npc) => {
     const mesh = makeNpcMesh(npc); root.add(mesh);
     interactables.push(mesh.userData.interactable);
   });
+
+  // Quest sites (greenhouse planter for the warm-house crops)
+  getQuestSitesForZone(ZONE_DEF.id).forEach((site) => root.add(makeQuestSiteMesh(site)));
 
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };

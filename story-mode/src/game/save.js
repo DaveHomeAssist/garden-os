@@ -15,6 +15,7 @@ import {
   sessionPointerKey,
 } from '../engine/authority-cache.js';
 import { normalizePlayerProfile } from '../data/player-profile.js';
+import { normalizeQuestLedger } from './quest-ledger.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -40,6 +41,8 @@ function normalizeCampaignSave(parsed) {
     version: CAMPAIGN_SCHEMA_VERSION,
     playerProfile: normalizePlayerProfile(parsed.playerProfile),
     questLog: parsed.questLog ?? {},
+    // Saves from before the quest ledger existed get an empty ledger here.
+    questLedger: normalizeQuestLedger(parsed.questLedger),
     choiceLog: parsed.choiceLog ?? {},
     storyLog: Array.isArray(parsed.storyLog) ? [...parsed.storyLog] : [],
     reputation: { ...DEFAULT_REPUTATION, ...(parsed.reputation ?? {}) },
@@ -172,6 +175,7 @@ export function saveCampaign(campaign, slot) {
     version: CAMPAIGN_SCHEMA_VERSION,
     playerProfile: normalizePlayerProfile(campaign.playerProfile),
     questLog: { ...(campaign.questLog ?? {}) },
+    questLedger: normalizeQuestLedger(campaign.questLedger),
     choiceLog: { ...(campaign.choiceLog ?? {}) },
     storyLog: Array.isArray(campaign.storyLog) ? [...campaign.storyLog] : [],
     reputation: { ...DEFAULT_REPUTATION, ...(campaign.reputation ?? {}) },

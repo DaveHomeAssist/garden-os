@@ -415,3 +415,85 @@ describe('save', () => {
     });
   });
 });
+
+describe('save: quest ledger migration', () => {
+  it('loads a v9 save without a quest ledger with an empty ledger and keeps quest states', () => {
+    localStorage.setItem('gos-story-slot-2-campaign', JSON.stringify({
+      version: 9,
+      currentChapter: 6,
+      currentSeason: 'summer',
+      questLog: {
+        lila_basil: { state: 'COMPLETED', choiceId: 'community' },
+        maya_sprinkler: { state: 'READY_TO_TURN_IN' },
+        gus_tomatoes: { state: 'ACCEPTED', acceptedAt: 1 },
+      },
+      reputation: { old_gus: 15, lila: 10 },
+      worldState: { currentZone: 'neighborhood', visitedZones: ['player_plot', 'neighborhood'] },
+    }));
+
+    const loaded = loadCampaign(2);
+
+    expect(loaded.questLedger).toEqual({
+      version: 1,
+      found: {},
+      foundByZone: {},
+      delivered: {},
+      plantings: [],
+      harvestedByZone: {},
+      festivalsCompleted: [],
+    });
+    expect(loaded.questLog.lila_basil.state).toBe('COMPLETED');
+    expect(loaded.questLog.maya_sprinkler.state).toBe('READY_TO_TURN_IN');
+    expect(loaded.questLog.gus_tomatoes.state).toBe('ACCEPTED');
+    expect(loaded.currentChapter).toBe(6);
+  });
+
+  it('round-trips quest ledger progress', () => {
+    const state = createGameState();
+    state.campaign.questLedger = {
+      version: 1,
+      found: { watercress: 2, old_map: 1 },
+      foundByZone: { riverside: { watercress: 2 }, neighborhood: { old_map: 1 } },
+      delivered: { gus_mushroom_logs: { wood: 3 } },
+      plantings: [{
+        id: 'greenhouse_planter:vanilla_orchid:8:0',
+        siteId: 'greenhouse_planter',
+        zoneId: 'greenhouse',
+        cropId: 'vanilla_orchid',
+        plantedChapter: 8,
+        harvestedChapter: null,
+      }],
+      harvestedByZone: { greenhouse: { ghost_pepper: 1 } },
+      festivalsCompleted: [{ festivalId: 'bloom_festival', season: 'spring', year: 1, chapter: 1 }],
+    };
+
+    saveCampaign(state.campaign, 0);
+    const loaded = loadCampaign(0);
+
+    expect(loaded.questLedger).toEqual(state.campaign.questLedger);
+  });
+
+  it('repairs a malformed quest ledger instead of failing the load', () => {
+    localStorage.setItem('gos-story-slot-1-campaign', JSON.stringify({
+      version: 9,
+      currentChapter: 3,
+      currentSeason: 'fall',
+      questLedger: {
+        found: { watercress: 'two', old_map: 1 },
+        delivered: 'nope',
+        plantings: [null, { siteId: 'meadow_clover_plot' }, { siteId: 'meadow_clover_plot', cropId: 'wild_clover', plantedChapter: 5 }],
+        festivalsCompleted: [{ festivalId: 'growth_surge', year: 1 }, 'bad'],
+      },
+    }));
+
+    const loaded = loadCampaign(1);
+
+    expect(loaded.questLedger.found).toEqual({ old_map: 1 });
+    expect(loaded.questLedger.delivered).toEqual({});
+    expect(loaded.questLedger.plantings).toHaveLength(1);
+    expect(loaded.questLedger.plantings[0]).toMatchObject({ siteId: 'meadow_clover_plot', cropId: 'wild_clover', zoneId: 'meadow' });
+    expect(loaded.questLedger.festivalsCompleted).toEqual([
+      expect.objectContaining({ festivalId: 'growth_surge', season: 'summer', year: 1 }),
+    ]);
+  });
+});

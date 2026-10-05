@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
-import { getNPCsInZone } from '../../data/npcs.js';
+import { getNPCsPresentInZone } from '../npc-presence.js';
+import { getQuestSitesForZone } from '../../data/quest-sites.js';
+import { makeQuestSiteMesh } from './zone-interactables.js';
 
 function makeLabelTexture(text) {
   const canvas = document.createElement('canvas');
@@ -89,7 +91,7 @@ function makeNpcMarker(tracker, npc) {
   return group;
 }
 
-export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone }) {
+export function createNeighborhood(store, tracker, npcRegistry = null) {
   const state = store.getState();
   const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
   const scene = new THREE.Scene();
@@ -139,8 +141,13 @@ export function createNeighborhood(store, tracker, npcRegistry = { getNPCsInZone
     [-7, -7], [-7, 7], [7, -7], [7, 7], [-1, 7], [6, -2], [-6, 1],
   ].forEach(([x, z]) => root.add(makeTree(tracker, x, z, season)));
 
+  getQuestSitesForZone('neighborhood').forEach((site) => root.add(makeQuestSiteMesh(site)));
+
   const interactables = [];
-  const npcs = npcRegistry.getNPCsInZone('neighborhood', season);
+  // NPCs whose scheduled zone is still locked (or empty) wait here; see npc-presence.js.
+  const npcs = npcRegistry
+    ? npcRegistry.getNPCsInZone('neighborhood', season)
+    : getNPCsPresentInZone('neighborhood', state);
   npcs.forEach((npc) => {
     const marker = makeNpcMarker(tracker, npc);
     root.add(marker);

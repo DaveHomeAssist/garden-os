@@ -1,0 +1,225 @@
+/* Story Mode quests: HUD tracker and quest log sheet. Uses the field-kit tokens. */
+
+.quest-tracker {
+  position: fixed;
+  /* Below the play-screen theme toggle (layout.css pins it at top: 78px on the right). */
+  top: calc(130px + env(safe-area-inset-top, 0px));
+  right: var(--hud-safe-inline, 12px);
+  z-index: 10;
+  width: min(270px, calc(100vw - 24px));
+  max-height: min(46vh, 380px);
+  overflow-y: auto;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: var(--hud-radius, 8px);
+  background: var(--hud-paper-wash, rgba(247, 239, 226, 0.96));
+  box-shadow: var(--hud-shadow, 0 8px 22px rgba(42, 25, 13, 0.24));
+  color: var(--hud-ink, #2a190d);
+  font: 500 12px/1.35 'DM Sans', system-ui, sans-serif;
+}
+
+body:not([data-story-screen="play"]) .quest-tracker {
+  display: none;
+}
+
+.quest-tracker__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 2px 0 6px;
+  border: 0;
+  border-bottom: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  background: transparent;
+  color: var(--hud-ink-soft, #674d38);
+  font: 700 10px/1.2 'DM Mono', ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quest-tracker__header:focus-visible {
+  outline: 2px solid var(--hud-leaf, #3a6b2a);
+  outline-offset: 2px;
+}
+
+.quest-tracker__count {
+  margin-left: auto;
+  color: var(--hud-ink-muted, #725943);
+}
+
+.quest-tracker__header kbd,
+.quest-log__header kbd {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 999px;
+  background: var(--hud-leaf-soft, #dbe8d2);
+  color: var(--hud-leaf-dark, #2f5722);
+  font: 700 10px/1 'DM Mono', ui-monospace, monospace;
+}
+
+.quest-tracker__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quest-tracker__item {
+  padding: 7px 0 6px;
+  border-bottom: 1px dashed var(--hud-rule, rgba(79, 48, 27, 0.28));
+}
+
+.quest-tracker__item:last-child {
+  border-bottom: 0;
+}
+
+.quest-tracker__title {
+  font: 600 13px/1.25 'Fraunces', Georgia, serif;
+}
+
+.quest-tracker__giver {
+  margin-top: 3px;
+  color: var(--hud-leaf, #3a6b2a);
+  font-weight: 700;
+}
+
+.quest-tracker__item.is-ready .quest-tracker__title::after {
+  content: ' ✓';
+  color: var(--hud-leaf, #3a6b2a);
+}
+
+.quest-tracker__steps,
+.quest-log__steps {
+  margin: 3px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quest-tracker__steps li,
+.quest-log__steps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--hud-ink-soft, #674d38);
+}
+
+.quest-tracker__steps li span,
+.quest-log__steps li span {
+  flex: none;
+  font: 600 11px/1.35 'DM Mono', ui-monospace, monospace;
+}
+
+.quest-tracker__steps li.is-done,
+.quest-log__steps li.is-done {
+  color: var(--hud-leaf, #3a6b2a);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.quest-tracker__empty {
+  margin: 6px 0 0;
+  color: var(--hud-ink-muted, #725943);
+}
+
+/* Centered sheet like the market trade panel; overrides the docked .panel-sheet layout. */
+.panel-sheet.quest-log,
+.panel-sheet.quest-log.is-open {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 20;
+  width: min(92vw, 560px);
+  height: auto;
+  max-height: min(84vh, 720px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(232, 200, 74, 0.15);
+  border-radius: 16px;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+}
+
+.quest-log__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.quest-log__title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  color: #f7f2ea;
+}
+
+.quest-log__subtitle {
+  margin-top: 4px;
+  font: 12px/1.3 'DM Mono', monospace;
+  color: #e8c84a;
+}
+
+.quest-log__body {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.quest-log__section + .quest-log__section {
+  margin-top: 14px;
+}
+
+.quest-log__heading {
+  margin: 0 0 8px;
+  font: 700 11px/1.2 'DM Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(247, 242, 234, 0.7);
+}
+
+.quest-log__heading span {
+  color: #e8c84a;
+}
+
+.quest-log__desc {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(247, 242, 234, 0.72);
+}
+
+.quest-log .quest-log__steps li {
+  color: rgba(247, 242, 234, 0.82);
+}
+
+.quest-log .quest-log__steps li.is-done {
+  color: #9fd38a;
+}
+
+.quest-log__drop {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px solid rgba(247, 242, 234, 0.25);
+  border-radius: 999px;
+  background: transparent;
+  font: 11px/1.2 'DM Mono', monospace;
+  color: rgba(247, 242, 234, 0.75);
+  cursor: pointer;
+}
+
+.quest-log__drop:hover,
+.quest-log__drop:focus-visible {
+  border-color: #e8c84a;
+  color: #e8c84a;
+}
+
+@media (max-width: 720px) {
+  .quest-tracker {
+    top: auto;
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    width: min(220px, calc(100vw - 24px));
+    max-height: 30vh;
+  }
+}
