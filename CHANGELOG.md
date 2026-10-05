@@ -18,6 +18,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 
 ### Added
+- Added Story Mode crop textures for the remaining 26 crops (parsley, cilantro, dill, chives, broccoli, compact_cabbage, kohlrabi, pole_beans, beit_cucumber, bush_cucumber, nasturtium, mizuna, tatsoi, mustard_greens, ghost_pepper, lemon_tree, vanilla_orchid, wild_rice, shiitake_mushroom, watercress, wild_clover, wild_garlic, woodland_strawberry, prairie_onion, meadow_sage, marsh_marigold), so every crop in the spec now renders an authored texture (256×256 RGBA, Grok batch 4).
 - Added Story Mode crop textures for beet, garlic, scallion, and turnip (256×256 RGBA, white-background removed, Grok batch 3 of 40 missing crops).
 - Added Story Mode crop textures for kale, chard, head_lettuce, red_lettuce, and bok_choy (256×256 RGBA, white-background removed, Grok batch 2 of 40 missing crops).
 - Added Story Mode crop textures for compact_tomato, pepper, slicing_cucumber, zucchini, and eggplant (256×256 RGBA, white-background removed, Grok batch 1 of 40 missing crops).

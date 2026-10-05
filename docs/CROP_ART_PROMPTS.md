@@ -1,6 +1,6 @@
 # Crop Art Prompt Pack (Draft)
 
-Status: DRAFT, prompt rules locked 2026-10-04. Covers the 40 spec crops with no `story-mode/assets/textures/crop-<id>.png`.
+Status: COMPLETE 2026-10-05, all 40 textures delivered in four Grok batches (prompt rules locked 2026-10-04). Covers the 40 spec crops with no `story-mode/assets/textures/crop-<id>.png`.
 Goal: match the 12 existing photo cutout textures so new crops sit beside them without a style break.
 
 Reference set (use as style anchors): `crop-arugula.png`, `crop-basil.png`, `crop-carrot.png`, `crop-cherry_tom.png`, `crop-radish.png`, `crop-marigold.png`.
