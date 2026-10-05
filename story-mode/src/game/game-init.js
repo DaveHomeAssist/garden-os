@@ -105,6 +105,8 @@ function shouldRefreshTitleSaves(currentEntries, hydratedEntries) {
 
 function dismissTitleScreen(titleScreen, callback) {
   document.body.dataset.storyScreen = 'play';
+  // Belt-and-braces: never carry a leftover How To Play blur overlay into play.
+  document.querySelectorAll('.title-guide-overlay').forEach((el) => el.remove());
   syncTitleInteractivity(false);
   titleScreen.classList.add('is-exiting');
   setTimeout(() => {

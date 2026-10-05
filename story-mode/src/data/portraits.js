@@ -60,7 +60,7 @@ export const PORTRAITS = {
     cssOnly: false,
     emoji: '🐕',
     layers: {
-      base: '../../assets/textures/portrait-calvin.svg',
+      base: new URL('../../assets/textures/portrait-calvin.svg', import.meta.url).href,
       body: null,
       eyes: null,
       mouth: null,

@@ -4542,9 +4542,11 @@
       border-color: rgba(var(--story-season-accent-rgb), 0.48);
     }
 
+    /* Hide the shared floating theme toggle during play so it cannot cover
+       panel × buttons or world-map Travel controls (Phase 0.5). Theme lives
+       in the pause menu instead. */
     body[data-story-screen="play"] .garden-theme-toggle {
-      top: max(78px, calc(env(safe-area-inset-top) + 68px));
-      bottom: auto;
+      display: none !important;
     }
 
     @media (max-width: 640px) {

@@ -61,6 +61,7 @@ export function createPauseController({
           ? `Free Play · session only, not saved · ${getPhaseLabel(state.season.phase)}`
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
+      syncPauseThemeButton();
       pauseOverlay?.classList.add('is-open');
       setElementInteractive(pauseOverlay, true);
     } else {
@@ -74,6 +75,24 @@ export function createPauseController({
     pauseMenuOpen = false;
     pauseOverlay?.classList.remove('is-open');
     setElementInteractive(pauseOverlay, false);
+  }
+
+  function syncPauseThemeButton() {
+    const button = document.getElementById('pause-theme');
+    if (!button) return;
+    const current = window.GardenTheme?.getTheme?.() === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    const icon = button.querySelector('[data-pause-theme-icon]');
+    const title = button.querySelector('[data-pause-theme-title]');
+    const copy = button.querySelector('[data-pause-theme-copy]');
+    if (icon) icon.textContent = current === 'dark' ? '☀' : '☾';
+    if (title) title.textContent = `Switch to ${next}`;
+    if (copy) {
+      copy.textContent = current === 'dark'
+        ? 'Use the light appearance.'
+        : 'Use the dark appearance.';
+    }
+    button.setAttribute('aria-label', `Switch to ${next} theme`);
   }
 
   function showProfileSheet() {
@@ -255,6 +274,20 @@ export function createPauseController({
 
   document.getElementById('pause-profile')?.addEventListener('click', () => {
     showProfileSheet();
+  }, listenerOptions);
+
+  document.getElementById('pause-theme')?.addEventListener('click', () => {
+    playSFX('ui_click');
+    const current = window.GardenTheme?.getTheme?.() === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    if (window.GardenTheme?.setTheme) {
+      window.GardenTheme.setTheme(next);
+    } else {
+      document.documentElement.dataset.theme = next;
+      document.documentElement.style.colorScheme = next;
+    }
+    syncPauseThemeButton();
+    showToast(`Switched to ${next} theme.`, 1400);
   }, listenerOptions);
 
   document.getElementById('pause-new')?.addEventListener('click', () => {
