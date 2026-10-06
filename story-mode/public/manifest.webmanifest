@@ -1,0 +1,37 @@
+{
+  "name": "Garden OS",
+  "short_name": "Garden OS",
+  "description": "A local-first raised-bed planner, field journal, diagnostic guide, and 12-chapter garden story.",
+  "start_url": "/garden-os/",
+  "scope": "/garden-os/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#f7f3ec",
+  "background_color": "#f7f3ec",
+  "categories": ["lifestyle", "education"],
+  "icons": [
+    { "src": "icons/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "icons/favicon-16.png", "type": "image/png", "sizes": "16x16" },
+    { "src": "icons/favicon-32.png", "type": "image/png", "sizes": "32x32" },
+    { "src": "icons/android-chrome-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "icons/android-chrome-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "icons/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Play Story Mode",
+      "url": "/garden-os/story-mode/",
+      "icons": [{ "src": "icons/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Open Planner",
+      "url": "/garden-os/garden-planner-v5.html",
+      "icons": [{ "src": "icons/garden-planner.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Open Journal",
+      "url": "/garden-os/journal.html",
+      "icons": [{ "src": "icons/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}

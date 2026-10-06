@@ -449,7 +449,8 @@ export function showGameplayGuide({
     bodyHtml: buildGuideBodyHtml(),
     footerHtml: `<span>${escapeHtml(GUIDE_FOOTER)}</span>`,
     closeLabel: 'Close gameplay guide',
-    onClose: cleanup,
+    // × must tear down the blur overlay, not only the inner sheet (Phase 0.1 softlock).
+    onRequestClose: () => closeGuideOverlay(overlay, cleanup),
   });
 
   sheet.classList.add('read-only-sheet--gameplay-guide');

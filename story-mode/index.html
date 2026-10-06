@@ -18,7 +18,7 @@
   <meta name="twitter:description" content="Calvin, month-aware seasons, winter review, and a rebuilt 3D South Philly backyard scene." />
   <title>Garden OS - Story Mode</title>
   <link rel="icon" href="../assets/icons/favicon/favicon.svg" type="image/svg+xml" />
-  <link rel="manifest" href="../manifest.json" />
+  <link rel="manifest" href="/manifest.webmanifest" />
 <link rel="canonical" href="https://davehomeassist.github.io/garden-os/story-mode/">
 <meta name="robots" content="index,follow">
 <meta property="og:site_name" content="Garden OS">
@@ -151,6 +151,13 @@
               <span>
                 <span class="pause-action__title">Gardener Profile</span>
                 <span class="pause-action__copy">Change name, skin, hair, and clothes for this save.</span>
+              </span>
+            </button>
+            <button id="pause-theme" class="pause-action" type="button" aria-label="Toggle light or dark theme">
+              <span class="pause-action__icon" data-pause-theme-icon aria-hidden="true">☾</span>
+              <span>
+                <span class="pause-action__title" data-pause-theme-title>Theme</span>
+                <span class="pause-action__copy" data-pause-theme-copy>Switch between light and dark appearance.</span>
               </span>
             </button>
           </div>
