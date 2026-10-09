@@ -195,6 +195,11 @@ function oxfordJoin(items) {
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 }
 
+/** Singular/plural noun for harvest yield counts ("1 thing", "2 things"). */
+export function plural(n, singular, pluralForm = `${singular}s`) {
+  return Number(n) === 1 ? singular : pluralForm;
+}
+
 function buildReactiveBeat({
   speaker,
   text,
@@ -426,28 +431,28 @@ function buildHarvestText(speaker, triggerPayload) {
   const yieldCount = triggerPayload.yieldCount ?? 0;
 
   if (triggerPayload.recipeMatches?.includes('moms_sauce')) {
-    if (speaker === 'onion_man') return `That is {sauceLabel} on the table. ${yieldCount} good pulls out of the bed, and the right five among them.`;
+    if (speaker === 'onion_man') return `That is {sauceLabel} on the table. ${yieldCount} good ${plural(yieldCount, 'pull')} out of the bed, and the right five among them.`;
     return 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
   }
 
   if (recipeNames.length > 0) {
-    if (speaker === 'onion_man') return `${yieldCount} good things out of the bed, and now ${recipeText} is real. That is pantry work, not theory.`;
+    if (speaker === 'onion_man') return `${yieldCount} good ${plural(yieldCount, 'thing')} out of the bed, and now ${recipeText} is real. That is pantry work, not theory.`;
     if (speaker === 'garden_gurl') return `Harvest converted into recipe progress. Useful output. No sentiment required.`;
   }
 
   if (triggerPayload.grade === 'A+') {
     if (speaker === 'onion_man') return 'That one would have made the whole house stop and look.';
-    return `A+ harvest. ${yieldCount} useful pulls and no wasted structure anywhere in the bed.`;
+    return `A+ harvest. ${yieldCount} useful ${plural(yieldCount, 'pull')} and no wasted structure anywhere in the bed.`;
   }
 
   if (triggerPayload.grade === 'A') {
     if (speaker === 'vegeman') return `That is a real summer harvest. Loud, heavy, and somehow still under control.`;
-    return `Clean harvest. ${yieldCount} solid pulls, and none of them feel accidental.`;
+    return `Clean harvest. ${yieldCount} solid ${plural(yieldCount, 'pull')}, and none of them feel accidental.`;
   }
 
   if (triggerPayload.grade === 'B') {
     if (speaker === 'vegeman') return `Not perfect, but the bed stayed in the fight. Summer counts that as a win.`;
-    return `Solid season. ${yieldCount} things for the pantry and enough proof that the plan held.`;
+    return `Solid season. ${yieldCount} ${plural(yieldCount, 'thing')} for the pantry and enough proof that the plan held.`;
   }
 
   if (triggerPayload.grade === 'C') {
@@ -457,7 +462,7 @@ function buildHarvestText(speaker, triggerPayload) {
   }
 
   if (triggerPayload.grade === 'D') {
-    return `Rough season. Still, ${yieldCount} things came in, and rough seasons are part of the record too.`;
+    return `Rough season. Still, ${yieldCount} ${plural(yieldCount, 'thing')} came in, and rough seasons are part of the record too.`;
   }
 
   if (triggerPayload.grade === 'F') {

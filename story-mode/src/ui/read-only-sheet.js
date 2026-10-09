@@ -14,6 +14,7 @@ export function showReadOnlySheet(container, {
   footerHtml = '',
   closeLabel = 'Close',
   onClose,
+  onRequestClose,
 }) {
   const sheet = document.createElement('div');
   sheet.className = 'panel-sheet is-open read-only-sheet';
@@ -32,13 +33,17 @@ export function showReadOnlySheet(container, {
   `;
 
   sheet.addEventListener('click', (event) => {
-    if (event.target.closest('[data-close="true"]')) {
-      sheet.classList.remove('is-open');
-      setTimeout(() => {
-        sheet.remove();
-        onClose?.();
-      }, 260);
+    if (!event.target.closest('[data-close="true"]')) return;
+    // Let the container own teardown when it provides onRequestClose (e.g. guide overlay).
+    if (typeof onRequestClose === 'function') {
+      onRequestClose();
+      return;
     }
+    sheet.classList.remove('is-open');
+    setTimeout(() => {
+      sheet.remove();
+      onClose?.();
+    }, 260);
   });
 
   container.innerHTML = '';

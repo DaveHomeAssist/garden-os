@@ -1,0 +1,50 @@
+name: Tests
+
+# Runs the same verification gates as the "build" job in pages.yml so pull
+# requests are tested before merge (pages.yml only runs on push to main).
+# The job name "Verify (story-mode + verify-all)" is stable so it can be marked
+# as a required status check in branch protection.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify (story-mode + verify-all)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: story-mode/package-lock.json
+
+      - name: Install Story Mode dependencies
+        working-directory: story-mode
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: story-mode
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify Story Mode design-language viewports
+        run: node tests/story-mode-design-language-diagnostic.mjs
+
+      - name: Verify all
+        run: node scripts/verify-all.mjs

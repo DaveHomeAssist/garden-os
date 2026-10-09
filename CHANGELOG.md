@@ -11,6 +11,14 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Fixed
+- Story Mode How To Play × now dismisses the full blur overlay (not only the inner sheet), so Continue is clickable again without a reload.
+- Harvest dialogue now uses singular/plural correctly ("1 thing" / "N things", "1 pull" / "N pulls") instead of always pluralizing.
+- Story Mode hides the floating light/dark toggle during play and offers Theme in the pause menu, so the toggle no longer covers panel close or Travel buttons.
+- Story Mode now links its own unhashed `manifest.webmanifest` with icons shipped under `story-mode/icons/`, fixing the manifest icon 404 (doubled `assets/assets/...` path) on both GitHub Pages and local `vite preview`; the root `manifest.json` keeps its relative icon paths.
+- Story Mode pause menu scrolls inside short viewports (e.g. 1024×570) with the title and × pinned, so the close button is always reachable without Esc.
+- Story Mode pause menu now follows the dark theme when switched from the pause Session panel.
+- How To Play table cells, pills, callout labels, and grades use dark ink on the paper sheet so Overview/Controls text is readable in both themes.
+- Calvin's dialogue portrait resolves via `import.meta.url` so it loads under the Story Mode base path instead of the site root.
 - Fixed Story Mode never loading the 40 new crop textures: they are now registered in the sprite loader manifest, so crops render their authored art instead of procedural stand-ins.
 - Story Mode pause menu, profile editor, journal, story log, and bug-reports sheets now play the `ui_click` SFX when opened or closed, routing through the existing audioManager guard so sounds are silent before the first user gesture.
 - Fixed story-mode supportFit to return 2.0 for climbing crops placed in the trellis row when the trellis is disabled, matching the SCORING_RULES.md Factor 2 spec (previously returned 1.0, losing the proximity bonus). Score-explain now shows a distinct "partial credit" verdict for the 2.0 state instead of the full-penalty bad message.

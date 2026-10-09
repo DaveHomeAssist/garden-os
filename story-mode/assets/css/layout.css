@@ -4542,9 +4542,11 @@
       border-color: rgba(var(--story-season-accent-rgb), 0.48);
     }
 
+    /* Hide the shared floating theme toggle during play so it cannot cover
+       panel × buttons or world-map Travel controls (Phase 0.5). Theme lives
+       in the pause menu instead. */
     body[data-story-screen="play"] .garden-theme-toggle {
-      top: max(78px, calc(env(safe-area-inset-top) + 68px));
-      bottom: auto;
+      display: none !important;
     }
 
     @media (max-width: 640px) {
@@ -4576,4 +4578,139 @@
         font-size: 9px;
         line-height: 1.25;
       }
+    }
+
+    /* Pause menu fits short viewports (e.g. 1024x570): the shell scrolls inside
+       the overlay and the header with × stays pinned so it is always clickable. */
+    .pause-overlay {
+      padding: 12px 0;
+      box-sizing: border-box;
+    }
+
+    .pause-shell {
+      max-height: calc(100% - 8px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+
+    /* Sticky offsets resolve against the shell's content box, so pull the
+       header out over the shell padding and stick it at the border edge. */
+    .pause-shell__top {
+      position: sticky;
+      top: calc(-1 * var(--pause-shell-pad-top, 30px));
+      z-index: 2;
+      margin: calc(-1 * var(--pause-shell-pad-top, 30px)) calc(-1 * var(--pause-shell-pad-x, 26px)) 18px;
+      padding: var(--pause-shell-pad-top, 30px) var(--pause-shell-pad-x, 26px) 14px;
+      background: inherit;
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+    }
+
+    @media (max-width: 640px) {
+      .pause-shell {
+        --pause-shell-pad-top: 24px;
+        --pause-shell-pad-x: 18px;
+      }
+    }
+
+    /* How To Play on the paper sheet: darken the legacy cream-on-dark tokens so
+       table cells, pills, callout labels, and grades stay readable. */
+    .gameplay-guide__table td,
+    .gameplay-guide__microheading {
+      color: rgba(56, 35, 19, 0.88);
+    }
+
+    .gameplay-guide__tool-cell--label,
+    .gameplay-guide__tool-head-cell {
+      color: rgba(34, 20, 10, 0.94);
+    }
+
+    .gameplay-guide__grade-score {
+      color: rgba(74, 50, 30, 0.74);
+    }
+
+    .gameplay-guide__callout--green .gameplay-guide__callout-label,
+    .gameplay-guide__pill--green,
+    .gameplay-guide__loop-num,
+    .gameplay-guide__grade-letter--green {
+      color: #2f5a10;
+    }
+
+    .gameplay-guide__grade-letter--green-soft { color: #4a7a1c; }
+
+    .gameplay-guide__callout--amber .gameplay-guide__callout-label,
+    .gameplay-guide__pill--amber,
+    .gameplay-guide__grade-letter--amber-deep {
+      color: #7a4508;
+    }
+
+    .gameplay-guide__grade-letter--amber { color: #8a5c0c; }
+    .gameplay-guide__grade-letter--red { color: #a3392c; }
+    .gameplay-guide__grade-letter--red-deep { color: #862b20; }
+
+    .gameplay-guide__pill--blue {
+      color: #164a7d;
+    }
+
+    .gameplay-guide__pill--gray {
+      background: rgba(104, 68, 40, 0.08);
+      border-color: rgba(104, 68, 40, 0.18);
+      color: rgba(56, 35, 19, 0.82);
+    }
+
+    .gameplay-guide__nav-dot--gray {
+      background: rgba(74, 50, 30, 0.4);
+    }
+
+    /* Dark theme: the pause panel follows the Session theme switch. */
+    html[data-theme="dark"] .pause-shell {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+        linear-gradient(135deg, var(--story-zone-wash), transparent 58%),
+        #232920;
+      border-color: rgba(226, 216, 199, 0.22);
+      color: #f4f0e8;
+    }
+
+    html[data-theme="dark"] .pause-shell__top {
+      border-bottom-color: rgba(226, 216, 199, 0.2);
+    }
+
+    html[data-theme="dark"] .pause-title,
+    html[data-theme="dark"] .pause-action__title {
+      color: #f4f0e8;
+    }
+
+    html[data-theme="dark"] .pause-subtitle,
+    html[data-theme="dark"] .pause-footer-note,
+    html[data-theme="dark"] .pause-section-label {
+      color: rgba(226, 216, 199, 0.74);
+    }
+
+    html[data-theme="dark"] .pause-action__copy {
+      color: rgba(226, 216, 199, 0.8);
+    }
+
+    html[data-theme="dark"] .pause-close-btn,
+    html[data-theme="dark"] .pause-action {
+      background: rgba(244, 240, 232, 0.06);
+      border-color: rgba(226, 216, 199, 0.18);
+      color: #f4f0e8;
+    }
+
+    html[data-theme="dark"] .pause-close-btn:hover,
+    html[data-theme="dark"] .pause-action:hover {
+      background: rgba(244, 240, 232, 0.12);
+      border-color: rgba(var(--story-season-accent-rgb), 0.5);
+    }
+
+    html[data-theme="dark"] .pause-action--primary {
+      background: rgba(var(--story-season-accent-rgb), 0.22);
+      border-color: rgba(var(--story-season-accent-rgb), 0.42);
+    }
+
+    html[data-theme="dark"] .pause-action--danger {
+      background: rgba(239, 152, 119, 0.1);
+      border-color: rgba(239, 152, 119, 0.28);
     }
