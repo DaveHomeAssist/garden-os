@@ -308,6 +308,63 @@ async function assertViewport(page, viewport) {
   return layout;
 }
 
+async function findStableContextMenuTarget(page) {
+  // Require the chosen cell's projected screen position to hold still across
+  // consecutive animation frames so the click is not aimed at a camera that is
+  // still re-framing after the viewport change.
+  return page.evaluate(async () => {
+    const nextFrame = () => new Promise((resolveFrame) => requestAnimationFrame(() => resolveFrame()));
+    const pickTarget = () => {
+      const canvas = document.querySelector('#viewport canvas');
+      const rect = canvas?.getBoundingClientRect();
+      const cells = window.gardenOS?.getVisualDebug?.()?.gridCells ?? [];
+      if (!canvas || !rect) return null;
+
+      const centerX = rect.left + (rect.width / 2);
+      const centerY = rect.top + (rect.height / 2);
+      return cells
+        .filter((cell) => cell.visible)
+        .map((cell) => ({
+          cellIndex: cell.index,
+          x: rect.left + cell.screenX,
+          y: rect.top + cell.screenY,
+        }))
+        .filter(({ x, y }) => (
+          x >= rect.left
+          && x <= rect.right
+          && y >= rect.top
+          && y <= rect.bottom
+          && document.elementFromPoint(x, y) === canvas
+        ))
+        .sort((first, second) => (
+          Math.hypot(first.x - centerX, first.y - centerY)
+          - Math.hypot(second.x - centerX, second.y - centerY)
+        ))[0] ?? null;
+    };
+
+    let previous = null;
+    let stableFrames = 0;
+    const deadline = performance.now() + 15000;
+    while (performance.now() < deadline) {
+      await nextFrame();
+      const current = pickTarget();
+      if (
+        current
+        && previous
+        && current.cellIndex === previous.cellIndex
+        && Math.hypot(current.x - previous.x, current.y - previous.y) <= 1
+      ) {
+        stableFrames += 1;
+        if (stableFrames >= 3) return current;
+      } else {
+        stableFrames = 0;
+      }
+      previous = current;
+    }
+    return previous;
+  });
+}
+
 async function assertContextMenuKeyboardFlow(page) {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.waitForFunction(() => {
@@ -323,38 +380,62 @@ async function assertContextMenuKeyboardFlow(page) {
   }, null, { timeout: 180000 });
   await page.locator('#fab-advance').focus();
 
-  const target = await page.evaluate(() => {
-    const canvas = document.querySelector('#viewport canvas');
-    const rect = canvas?.getBoundingClientRect();
-    const cells = window.gardenOS?.getVisualDebug?.()?.gridCells ?? [];
-    if (!canvas || !rect) return null;
-
-    const centerX = rect.left + (rect.width / 2);
-    const centerY = rect.top + (rect.height / 2);
-    return cells
-      .filter((cell) => cell.visible)
-      .map((cell) => ({
-        cellIndex: cell.index,
-        x: rect.left + cell.screenX,
-        y: rect.top + cell.screenY,
-      }))
-      .filter(({ x, y }) => (
-        x >= rect.left
-        && x <= rect.right
-        && y >= rect.top
-        && y <= rect.bottom
-        && document.elementFromPoint(x, y) === canvas
-      ))
-      .sort((first, second) => (
-        Math.hypot(first.x - centerX, first.y - centerY)
-        - Math.hypot(second.x - centerX, second.y - centerY)
-      ))[0] ?? null;
-  });
-
-  assert(target, 'context-menu: no unobstructed rendered bed cell was available.');
-  await page.mouse.click(target.x, target.y, { button: 'right' });
+  // The right-click is a single, fire-once gesture against a live 3D scene.
+  // Under slow CI GPUs (software GL) and on the freshly deployed Pages site,
+  // the camera/projection can still be settling after the viewport change, a
+  // transient overlay can briefly cover the canvas, or a store update can
+  // invalidate the menu right after it opens. Any of those makes a single
+  // click flaky (Deploy GitHub Pages run 37407007332, attempt 1). Wait for a
+  // stable projection, then retry the gesture a bounded number of times,
+  // recording what the page looked like on each miss so a real regression
+  // still fails loudly with diagnostics.
   const menu = page.locator('.world-context-menu:not([hidden])');
-  await menu.waitFor({ state: 'visible' });
+  const attempts = [];
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const target = await findStableContextMenuTarget(page);
+    assert(target, 'context-menu: no unobstructed rendered bed cell was available.');
+    await page.locator('#fab-advance').focus();
+    await page.mouse.click(target.x, target.y, { button: 'right' });
+    try {
+      await menu.waitFor({ state: 'visible', timeout: 10000 });
+      break;
+    } catch (error) {
+      const diagnostics = await page.evaluate(({ x, y }) => {
+        const hit = document.elementFromPoint(x, y);
+        const describe = (element) => (element
+          ? `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}${element.className && typeof element.className === 'string' ? `.${element.className.trim().split(/\s+/).join('.')}` : ''}`
+          : null);
+        let gameText = null;
+        try {
+          const parsed = JSON.parse(window.render_game_to_text?.() ?? 'null');
+          gameText = parsed && typeof parsed === 'object'
+            ? { mode: parsed.mode, phase: parsed.phase ?? parsed.season?.phase, zone: parsed.zone ?? parsed.currentZone }
+            : null;
+        } catch {
+          gameText = null;
+        }
+        return {
+          hitElement: describe(hit),
+          activeElement: describe(document.activeElement),
+          menuInDom: Boolean(document.querySelector('.world-context-menu')),
+          hasFocus: document.hasFocus(),
+          storyScreen: document.body.dataset.storyScreen ?? null,
+          openOverlays: [...document.querySelectorAll('#overlay-container > *, [role="dialog"]:not([hidden])')]
+            .filter((element) => element.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? element.getClientRects().length > 0)
+            .map(describe)
+            .slice(0, 6),
+          gameText,
+        };
+      }, target);
+      attempts.push({ attempt, target, diagnostics, error: error.message.split('\n')[0] });
+      console.warn(`context-menu: right-click attempt ${attempt} did not open the menu: ${JSON.stringify(attempts.at(-1))}`);
+      if (attempt === maxAttempts) {
+        throw new Error(`context-menu: right-click never opened the menu after ${maxAttempts} attempts: ${JSON.stringify(attempts)}`);
+      }
+      await page.waitForTimeout(500);
+    }
+  }
 
   const before = await menu.evaluate((element) => {
     const items = [...element.querySelectorAll('[role="menuitem"]:not(:disabled)')];
