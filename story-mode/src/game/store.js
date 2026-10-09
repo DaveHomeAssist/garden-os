@@ -37,6 +37,15 @@ import {
   upgradeInventoryState,
 } from './inventory.js';
 import {
+  applyQuestDelivery,
+  applyQuestItemFound,
+  applyQuestSiteHarvest,
+  applyQuestSitePlant,
+  normalizeQuestLedger,
+  recordFestivalIfComplete,
+  recordForagedItems,
+} from './quest-ledger.js';
+import {
   awardXPToSkillsState,
   getDefaultSkillsState,
   getSkillXpMap,
@@ -133,6 +142,10 @@ const Actions = {
   MARK_CUTSCENE_SEEN: 'MARK_CUTSCENE_SEEN',
   RECORD_AUTHORITY_ACK: 'RECORD_AUTHORITY_ACK',
   UPDATE_PLAYER_PROFILE: 'UPDATE_PLAYER_PROFILE',
+  QUEST_ITEM_FOUND: 'QUEST_ITEM_FOUND',
+  QUEST_DELIVER: 'QUEST_DELIVER',
+  QUEST_SITE_PLANT: 'QUEST_SITE_PLANT',
+  QUEST_SITE_HARVEST: 'QUEST_SITE_HARVEST',
 };
 
 const REPUTATION_ZONE_EFFECTS = {
@@ -268,6 +281,7 @@ function normalizeCampaign(rawCampaign) {
     skills,
     skillXp: getSkillXpMap(skills),
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
+    questLedger: normalizeQuestLedger(campaign.questLedger),
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
     tokens: Number(campaign.tokens ?? fallbackCampaign.tokens ?? 0),
     currency: {
@@ -1069,6 +1083,7 @@ function gameReducer(state, action = {}) {
         season: payload.season ?? nextState.season.season,
         month: payload.month ?? nextState.season.month ?? 1,
         startedAt: payload.startedAt ?? Date.now(),
+        chapter: Number.isInteger(payload.chapter) ? payload.chapter : (nextState.campaign.currentChapter ?? 1),
         activitiesCompleted: cloneArray(payload.activitiesCompleted),
         mechanics: cloneValue(payload.mechanics) ?? cloneValue(FESTIVALS[festivalId]?.mechanics) ?? {},
       };
@@ -1096,7 +1111,29 @@ function gameReducer(state, action = {}) {
         ],
       };
       applyQuestRewards(nextState, payload.rewards ?? getFestivalActivityRewards(festivalId, payload.activityId));
+      recordFestivalIfComplete(nextState.campaign);
       return nextState;
+    }
+
+    case Actions.QUEST_ITEM_FOUND: {
+      if (!payload.itemId) return state;
+      const nextState = cloneGameState(state);
+      return applyQuestItemFound(nextState.campaign, payload) ? nextState : state;
+    }
+
+    case Actions.QUEST_DELIVER: {
+      const nextState = cloneGameState(state);
+      return applyQuestDelivery(nextState.campaign, payload) ? nextState : state;
+    }
+
+    case Actions.QUEST_SITE_PLANT: {
+      const nextState = cloneGameState(state);
+      return applyQuestSitePlant(nextState.campaign, payload) ? nextState : state;
+    }
+
+    case Actions.QUEST_SITE_HARVEST: {
+      const nextState = cloneGameState(state);
+      return applyQuestSiteHarvest(nextState.campaign, payload) ? nextState : state;
     }
 
     case Actions.FORAGE: {
@@ -1131,6 +1168,7 @@ function gameReducer(state, action = {}) {
           },
         },
       };
+      recordForagedItems(nextState.campaign, payload);
       return nextState;
     }
 

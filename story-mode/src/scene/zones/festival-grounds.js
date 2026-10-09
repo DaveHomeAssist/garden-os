@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
+import { makeQuestSiteMesh } from './zone-interactables.js';
+import { getQuestSitesForZone } from '../../data/quest-sites.js';
 
 const ZONE_DEF = {
   id: 'festival_grounds', name: 'Festival Grounds', biome: 'festival',
@@ -67,6 +69,8 @@ export function createFestivalGrounds(store, tracker) {
     mk.position.set(exit.position.x, 0.08, exit.position.z); root.add(mk);
     interactables.push({ id: exit.id, type: 'exit', label: exit.destination, position: { ...exit.position }, radius: 1.4, destination: exit.destination });
   });
+  // Festival activity booths (one per activity of the season's festival)
+  getQuestSitesForZone(ZONE_DEF.id).forEach((site) => root.add(makeQuestSiteMesh(site)));
   const hemi = scene.children.find(c => c.isHemisphereLight);
 
   tracker.track(root);

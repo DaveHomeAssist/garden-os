@@ -5,6 +5,7 @@ import { getAllCrops, getCropsForChapter } from '../data/crops.js';
 import { normalizePlayerProfile } from '../data/player-profile.js';
 import { addItemToInventoryState, createInventoryState } from './inventory.js';
 import { getDefaultSkillsState, getSkillXpMap } from './skills.js';
+import { createQuestLedger } from './quest-ledger.js';
 
 const PHASES = {
   PLANNING: 'PLANNING',
@@ -154,6 +155,7 @@ function createCampaignState() {
     soilHealth: Array(CELL_COUNT).fill(1.0),
     previousGrid: null,
     questLog: {},
+    questLedger: createQuestLedger(),
     choiceLog: {},
     storyLog: [],
     reputation: { ...DEFAULT_REPUTATION },

@@ -41,6 +41,9 @@ const ITEM_BASE = {
   trellis_kit: { id: 'trellis_kit', name: 'Trellis Kit', icon: '🪜', category: ItemCategories.DECOR, stackable: true, maxStack: 5 },
   festival_token: { id: 'festival_token', name: 'Festival Token', icon: '🎟️', category: ItemCategories.QUEST_ITEMS, stackable: true, maxStack: 99 },
   festival_seed_bundle: { id: 'festival_seed_bundle', name: 'Festival Seed Bundle', icon: '🎁', category: ItemCategories.QUEST_ITEMS, stackable: true, maxStack: 10 },
+  basic_sprinkler: { id: 'basic_sprinkler', name: 'Basic Sprinkler', icon: '💦', category: ItemCategories.MATERIALS, stackable: true, maxStack: 10, description: "Maya's first sprinkler prototype." },
+  hybrid_seed: { id: 'hybrid_seed', name: 'Hybrid Seed', icon: '🧬', category: ItemCategories.QUEST_ITEMS, stackable: true, maxStack: 20, description: 'A hand-pollinated cherry tomato × pepper seed for Maya.' },
+  old_map: { id: 'old_map', name: 'Old River Map', icon: '🗺️', category: ItemCategories.QUEST_ITEMS, stackable: true, maxStack: 1, description: "Gus's hand-drawn path to the river crossing." },
   heirloom_herb_seed: { id: 'heirloom_herb_seed', name: 'Heirloom Herb Seeds', icon: '🌿', category: ItemCategories.SEEDS, stackable: true, maxStack: 25 },
 };
 

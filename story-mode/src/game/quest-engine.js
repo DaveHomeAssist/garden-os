@@ -2,6 +2,42 @@ import questDeckData from 'specs/QUEST_DECK.json';
 
 import { Actions } from './store.js';
 import { getInventoryItemCount } from './inventory.js';
+import { normalizeQuestLedger } from './quest-ledger.js';
+
+function sumMatching(map, matches) {
+  return Object.entries(map ?? {}).reduce((sum, [key, value]) => (
+    matches(key) ? sum + (Number(value) || 0) : sum
+  ), 0);
+}
+
+function countPlantedCells(season, matches, adjacentTo = null) {
+  const grid = Array.isArray(season.grid) ? season.grid : [];
+  const cols = Number.isInteger(season.gridCols) ? season.gridCols : (Number.isInteger(grid.cols) ? grid.cols : 8);
+  return grid.filter((cell, index) => {
+    if (!cell?.cropId || !matches(cell.cropId)) return false;
+    if (!adjacentTo) return true;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    return [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]].some(([r, c]) => {
+      if (r < 0 || c < 0 || c >= cols) return false;
+      return grid[(r * cols) + c]?.cropId === adjacentTo;
+    });
+  }).length;
+}
+
+function countTradedItems(campaign, matches, sinceTimestamp = null) {
+  const since = Number.isFinite(sinceTimestamp) ? sinceTimestamp : null;
+  return (campaign.market?.transactions ?? []).reduce((sum, transaction) => {
+    if (since != null && Number.isFinite(transaction?.timestamp) && transaction.timestamp < since) return sum;
+    if (transaction?.type === 'barter') {
+      return matches(transaction.offerItemId) ? sum + (Number(transaction.offerCount) || 0) : sum;
+    }
+    if (transaction?.type === 'buy' || transaction?.type === 'sell') {
+      return matches(transaction.itemId) ? sum + (Number(transaction.count) || 0) : sum;
+    }
+    return sum;
+  }, 0);
+}
 
 const QuestStates = {
   AVAILABLE: 'AVAILABLE',
@@ -67,31 +103,133 @@ class QuestEngine {
     return true;
   }
 
-  meetsRequirement(requirement, state) {
-    const count = requirement.count ?? 1;
+  /**
+   * Progress for one requirement as { current, target, met }.
+   *
+   * Requirement fields beyond { type, id, count }:
+   * - zone: count only events in that zone (found items, plantings and
+   *   harvests at quest sites, deliveries). Without it the home bed and the
+   *   lifetime pantry count, as before.
+   * - adjacentTo (crop_planted): only cells orthogonally next to that crop count.
+   * - sameYear (festival_completed): all sameYear festival requirements of a
+   *   quest must be met within one campaign year.
+   * id "any" matches every crop or item for crop_harvested, crop_planted and
+   * item_traded.
+   */
+  getRequirementProgress(requirement, state, quest = null) {
+    const target = Math.max(1, Math.floor(Number(requirement?.count ?? 1) || 1));
+    const current = this.countRequirement(requirement ?? {}, state, quest);
+    return { current, target, met: current >= target };
+  }
+
+  countRequirement(requirement, state, quest) {
+    const campaign = state.campaign ?? {};
+    const ledger = normalizeQuestLedger(campaign.questLedger);
+    const id = requirement.id;
+    const zone = requirement.zone ?? null;
+    const matches = (value) => id === 'any' || value === id;
     switch (requirement.type) {
       case 'crop_harvested':
-        return (state.campaign.pantry?.[requirement.id] ?? 0) >= count;
+        if (zone) return sumMatching(ledger.harvestedByZone[zone], matches);
+        return sumMatching(campaign.pantry, matches);
       case 'crop_planted':
-        return state.season.grid.filter((cell) => cell.cropId === requirement.id).length >= count;
+        if (zone && zone !== 'player_plot') {
+          return ledger.plantings.filter((entry) => entry.zoneId === zone && matches(entry.cropId)).length;
+        }
+        return countPlantedCells(state.season ?? {}, matches, requirement.adjacentTo ?? null);
       case 'reputation':
-        return (state.campaign.reputation?.[requirement.id] ?? 0) >= count;
+        return campaign.reputation?.[id] ?? 0;
       case 'item_crafted':
-        return (
-          (state.campaign.craftedItems?.[requirement.id] ?? 0) >= count
-          || getInventoryItemCount(state.campaign.inventory, requirement.id) >= count
+        return Math.max(
+          campaign.craftedItems?.[id] ?? 0,
+          getInventoryItemCount(campaign.inventory, id),
         );
+      case 'item_found':
+        if (zone) return sumMatching(ledger.foundByZone[zone], matches);
+        return sumMatching(ledger.found, matches);
+      case 'item_delivered':
+        return quest?.id ? (ledger.delivered[quest.id]?.[id] ?? 0) : 0;
+      case 'item_traded':
+        return countTradedItems(campaign, matches, quest?.id ? campaign.questLog?.[quest.id]?.acceptedAt : null);
+      case 'festival_completed': {
+        const completions = ledger.festivalsCompleted.filter((entry) => entry.season === id || entry.festivalId === id);
+        if (!requirement.sameYear || !quest) return completions.length;
+        const year = this.getFestivalYear(quest, ledger);
+        return year == null ? 0 : completions.filter((entry) => entry.year === year).length;
+      }
+      case 'spot_foraged':
+        return campaign.worldState?.forageState?.history?.[id] ? 1 : 0;
       case 'zone_visited':
-        return (state.campaign.worldState?.visitedZones ?? []).includes(requirement.id);
+        return (campaign.worldState?.visitedZones ?? []).includes(id) ? 1 : 0;
       case 'season':
-        return state.season.season === (requirement.id ?? requirement.season);
+        return state.season?.season === (id ?? requirement.season) ? 1 : 0;
       default:
-        return false;
+        return 0;
     }
   }
 
+  /** The campaign year that best satisfies a quest's sameYear festival requirements. */
+  getFestivalYear(quest, ledger) {
+    const grouped = (quest.requirements ?? []).filter((entry) => entry.type === 'festival_completed' && entry.sameYear);
+    let bestYear = null;
+    let bestScore = -1;
+    const years = [...new Set(ledger.festivalsCompleted.map((entry) => entry.year))].sort((a, b) => a - b);
+    years.forEach((year) => {
+      const score = grouped.filter((entry) => ledger.festivalsCompleted.some((done) => (
+        done.year === year && (done.season === entry.id || done.festivalId === entry.id)
+      ))).length;
+      if (score > bestScore) {
+        bestScore = score;
+        bestYear = year;
+      }
+    });
+    return bestYear;
+  }
+
+  meetsRequirement(requirement, state, quest = null) {
+    return this.getRequirementProgress(requirement, state, quest).met;
+  }
+
   requirementsMet(quest, state) {
-    return (quest.requirements ?? []).every((requirement) => this.meetsRequirement(requirement, state));
+    return (quest.requirements ?? []).every((requirement) => this.meetsRequirement(requirement, state, quest));
+  }
+
+  getQuestProgress(questOrId, state = this.getState()) {
+    const quest = typeof questOrId === 'string' ? this.getQuestById(questOrId) : questOrId;
+    if (!quest) return [];
+    return (quest.requirements ?? []).map((requirement) => ({
+      requirement,
+      ...this.getRequirementProgress(requirement, state, quest),
+    }));
+  }
+
+  /**
+   * Items the player could hand over right now for a quest's item_delivered
+   * requirements, honoring the requirement zone. Returns [{ itemId, count }].
+   */
+  getDeliverableItems(questId, zoneId, state = this.getState()) {
+    const quest = this.getQuestById(questId);
+    if (!quest) return [];
+    return (quest.requirements ?? [])
+      .filter((requirement) => requirement.type === 'item_delivered')
+      .filter((requirement) => !requirement.zone || requirement.zone === zoneId)
+      .map((requirement) => {
+        const progress = this.getRequirementProgress(requirement, state, quest);
+        const remaining = Math.max(0, progress.target - progress.current);
+        const have = getInventoryItemCount(state.campaign.inventory, requirement.id);
+        return { itemId: requirement.id, count: Math.min(remaining, have) };
+      })
+      .filter((entry) => entry.count > 0);
+  }
+
+  deliverItems(questId, zoneId) {
+    const items = this.getDeliverableItems(questId, zoneId);
+    if (!items.length) return [];
+    this.store.dispatch({
+      type: Actions.QUEST_DELIVER,
+      payload: { questId, zoneId, items },
+    });
+    return items;
   }
 
   getAvailableQuests() {
@@ -159,19 +297,20 @@ class QuestEngine {
     for (const quest of this.getActiveQuests()) {
       const entry = state.campaign.questLog?.[quest.id];
       if (!entry) continue;
+      let newState = null;
       if (this.requirementsMet(quest, state)) {
-        this.store.dispatch({
-          type: Actions.UPDATE_QUEST_STATE,
-          payload: { questId: quest.id, newState: QuestStates.READY_TO_TURN_IN },
-        });
-        changes.push({ questId: quest.id, newState: QuestStates.READY_TO_TURN_IN });
-      } else if (entry.state === QuestStates.ACCEPTED) {
-        this.store.dispatch({
-          type: Actions.UPDATE_QUEST_STATE,
-          payload: { questId: quest.id, newState: QuestStates.IN_PROGRESS },
-        });
-        changes.push({ questId: quest.id, newState: QuestStates.IN_PROGRESS });
+        if (entry.state !== QuestStates.READY_TO_TURN_IN) newState = QuestStates.READY_TO_TURN_IN;
+      } else if (entry.state !== QuestStates.IN_PROGRESS) {
+        // ACCEPTED starts tracking; READY drops back if a requirement was undone
+        // (for example a planted crop was pulled before turn-in).
+        newState = QuestStates.IN_PROGRESS;
       }
+      if (!newState) continue;
+      this.store.dispatch({
+        type: Actions.UPDATE_QUEST_STATE,
+        payload: { questId: quest.id, newState },
+      });
+      changes.push({ questId: quest.id, newState });
     }
     return changes;
   }

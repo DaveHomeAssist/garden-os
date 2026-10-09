@@ -40,6 +40,12 @@
       "rarity": "uncommon",
       "sources": ["foraging_rocks", "quest_rewards"]
     },
+    "stone": {
+      "name": "Stone",
+      "description": "Smooth fieldstone from rock piles",
+      "rarity": "common",
+      "sources": ["foraging_rocks"]
+    },
     "wood": {
       "name": "Wood",
       "description": "Sturdy lumber pieces",
@@ -129,6 +135,41 @@
       },
       "skillRequirement": { "crafting": 1 },
       "craftingXP": 10,
+      "unlockCondition": null
+    },
+    {
+      "id": "basic_sprinkler",
+      "name": "Basic Sprinkler",
+      "description": "Maya's napkin design: a scrap-metal spinner on a stone base. The first prototype for her flow-rate test.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "scrap_metal", "count": 2, "name": "Scrap Metal" },
+        { "itemId": "stone", "count": 1, "name": "Stone" }
+      ],
+      "output": {
+        "itemId": "basic_sprinkler",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 20,
+      "unlockCondition": null
+    },
+    {
+      "id": "hybrid_seed",
+      "name": "Hybrid Seed",
+      "description": "Hand-pollinated seed: brush pepper pollen onto cherry tomato flowers growing side by side, then save the seed. Maya walks you through it.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "plant_matter", "count": 3, "name": "Plant Matter" }
+      ],
+      "output": {
+        "itemId": "hybrid_seed",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 20,
       "unlockCondition": null
     },
     {
@@ -262,6 +303,24 @@
       "unlockCondition": null
     },
     {
+      "id": "clockwork_mechanism",
+      "name": "Clockwork Mechanism",
+      "description": "Hand-filed gears and a crystal escapement. Fiddly, but it is how advanced builds get their moving parts.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "scrap_metal", "count": 3, "name": "Scrap Metal" },
+        { "itemId": "crystal_shard", "count": 1, "name": "Crystal Shard" }
+      ],
+      "output": {
+        "itemId": "mechanism",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 5 },
+      "craftingXP": 35,
+      "unlockCondition": null
+    },
+    {
       "id": "greenhouse_panel",
       "name": "Greenhouse Panel",
       "description": "A crystal-infused panel that extends the growing season for a zone.",
@@ -275,7 +334,7 @@
         "count": 1,
         "durability": null
       },
-      "skillRequirement": { "crafting": 7 },
+      "skillRequirement": { "crafting": 5 },
       "craftingXP": 50,
       "unlockCondition": "quest_maya_masterwork"
     },

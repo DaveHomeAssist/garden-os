@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
-import { getNPCsInZone } from '../../data/npcs.js';
-import { makeNpcMesh, makeForageSpotMesh } from './zone-interactables.js';
+import { getNPCsPresentInZone } from '../npc-presence.js';
+import { makeNpcMesh, makeForageSpotMesh, makeQuestSiteMesh } from './zone-interactables.js';
+import { getQuestSitesForZone } from '../../data/quest-sites.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
@@ -60,7 +61,6 @@ export function createMeadow(store, tracker) {
   }
 
   const state = store.getState();
-  const season = state.season?.season ?? state.campaign?.currentSeason ?? 'spring';
 
   const interactables = [];
   getZoneExitPoints(ZONE_DEF.id).forEach((exit) => {
@@ -70,7 +70,7 @@ export function createMeadow(store, tracker) {
   });
 
   // NPCs scheduled for this zone
-  getNPCsInZone('meadow', season).forEach((npc) => {
+  getNPCsPresentInZone('meadow', state).forEach((npc) => {
     const mesh = makeNpcMesh(npc); root.add(mesh);
     interactables.push(mesh.userData.interactable);
   });
@@ -80,6 +80,9 @@ export function createMeadow(store, tracker) {
     const mesh = makeForageSpotMesh(spot); root.add(mesh);
     interactables.push(mesh.userData.interactable);
   });
+
+  // Quest sites (Sam's clover restoration plot)
+  getQuestSitesForZone(ZONE_DEF.id).forEach((site) => root.add(makeQuestSiteMesh(site)));
 
   // Collect wildflower patches for seasonal toggling
   const wildflowers = root.children.filter(c => c.geometry?.type === 'CircleGeometry');

@@ -25,6 +25,7 @@ const AUTHORITY_ITEM_CATEGORIES = {
 };
 const AUTHORITY_ITEM_DEFS = {
   auto_composter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
+  basic_sprinkler: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   companion_patch_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   compost: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   dried_leaves: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
@@ -33,6 +34,7 @@ const AUTHORITY_ITEM_DEFS = {
   garden_twine: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 50, stackable: true },
   greenhouse_panel: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
   herb_extract: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 30, stackable: true },
+  hybrid_seed: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
   legendary_trowel: { category: AUTHORITY_ITEM_CATEGORIES.TOOLS, stackable: false },
   lens: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
   masterwork_fertilizer: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 20, stackable: true },
@@ -74,6 +76,14 @@ const AUTHORITY_CRAFTING_RECIPES = {
     materials: [{ itemId: 'plant_fiber', count: 3 }],
     output: { itemId: 'garden_twine', count: 1, durability: null },
   },
+  basic_sprinkler: {
+    materials: [{ itemId: 'scrap_metal', count: 2 }, { itemId: 'stone', count: 1 }],
+    output: { itemId: 'basic_sprinkler', count: 1, durability: null },
+  },
+  hybrid_seed: {
+    materials: [{ itemId: 'plant_matter', count: 3 }],
+    output: { itemId: 'hybrid_seed', count: 1, durability: null },
+  },
   improved_watering_can: {
     materials: [{ itemId: 'scrap_metal', count: 1 }, { itemId: 'plant_fiber', count: 2 }, { itemId: 'crystal_shard', count: 1 }],
     output: { itemId: 'watering_can', count: 1, durability: 100 },
@@ -101,6 +111,10 @@ const AUTHORITY_CRAFTING_RECIPES = {
   companion_patch_kit: {
     materials: [{ itemId: 'herb_extract', count: 3 }, { itemId: 'compost', count: 2 }, { itemId: 'plant_fiber', count: 1 }],
     output: { itemId: 'companion_patch_kit', count: 1, durability: null },
+  },
+  clockwork_mechanism: {
+    materials: [{ itemId: 'scrap_metal', count: 3 }, { itemId: 'crystal_shard', count: 1 }],
+    output: { itemId: 'mechanism', count: 1, durability: null },
   },
   greenhouse_panel: {
     materials: [{ itemId: 'crystal_shard', count: 4 }, { itemId: 'scrap_metal', count: 2 }],

@@ -60,6 +60,19 @@ const SPOT_BUILDERS = {
     });
     g.position.set(pos.x, 0, pos.z); return g;
   },
+  watercress_bed(pos) {
+    const g = new THREE.Group();
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(0.5, 12), new THREE.MeshStandardMaterial({ color: 0x3f8fa8, roughness: 0.3 }));
+    pool.rotation.x = -Math.PI / 2; pool.position.y = 0.025; g.add(pool);
+    const lm = new THREE.MeshStandardMaterial({ color: 0x4fb84a, roughness: 1 });
+    for (let i = 0; i < 6; i++) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), lm);
+      const a = (i / 6) * Math.PI * 2;
+      leaf.scale.set(1, 0.45, 1);
+      leaf.position.set(Math.cos(a) * 0.28, 0.06, Math.sin(a) * 0.28); g.add(leaf);
+    }
+    g.position.set(pos.x, 0, pos.z); return g;
+  },
   driftwood(pos) {
     const g = new THREE.Group();
     const d = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.4, 6), new THREE.MeshStandardMaterial({ color: 0x7a5a3a, roughness: 1 }));
@@ -67,6 +80,65 @@ const SPOT_BUILDERS = {
     g.position.set(pos.x, 0, pos.z); return g;
   },
 };
+
+const SITE_BUILDERS = {
+  notice_board(pos) {
+    const g = new THREE.Group();
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 });
+    [-0.45, 0.45].forEach((dx) => {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.08), wood);
+      post.position.set(dx, 0.65, 0); g.add(post);
+    });
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 0.06), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 1 }));
+    board.position.set(0, 1.05, 0); g.add(board);
+    const paper = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 1 });
+    [[-0.28, 1.12], [0.05, 0.98], [0.3, 1.14]].forEach(([dx, y]) => {
+      const note = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26), paper);
+      note.position.set(dx, y, 0.035); g.add(note);
+    });
+    g.position.set(pos.x, 0, pos.z); return g;
+  },
+  discovery(pos) {
+    const g = new THREE.Group();
+    const roots = new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 1 });
+    [[-0.2, 0.4], [0.15, -0.5], [0.3, 0.9]].forEach(([dz, rot]) => {
+      const root = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.7, 6), roots);
+      root.rotation.z = Math.PI / 2; root.rotation.y = rot; root.position.set(0, 0.05, dz); g.add(root);
+    });
+    const hollow = new THREE.Mesh(new THREE.CircleGeometry(0.18, 10), new THREE.MeshStandardMaterial({ color: 0x1e140a, roughness: 1 }));
+    hollow.rotation.x = -Math.PI / 2; hollow.position.y = 0.02; g.add(hollow);
+    g.position.set(pos.x, 0, pos.z); return g;
+  },
+  planter(pos) {
+    const g = new THREE.Group();
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.22, 0.9), new THREE.MeshStandardMaterial({ color: 0x7d5a39, roughness: 1 }));
+    frame.position.y = 0.11; g.add(frame);
+    const soil = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.05, 0.75), new THREE.MeshStandardMaterial({ color: 0x3b2a1a, roughness: 1 }));
+    soil.position.y = 0.23; g.add(soil);
+    g.position.set(pos.x, 0, pos.z); return g;
+  },
+  festival_booth(pos) {
+    const g = new THREE.Group();
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 0.6), new THREE.MeshStandardMaterial({ color: 0x8a5a32, roughness: 1 }));
+    counter.position.y = 0.4; g.add(counter);
+    const awning = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.9), new THREE.MeshStandardMaterial({ color: 0xe8c84a, roughness: 0.9 }));
+    awning.position.set(0, 1.6, -0.1); g.add(awning);
+    const pole = new THREE.MeshStandardMaterial({ color: 0x5d3b22, roughness: 1 });
+    [-0.7, 0.7].forEach((dx) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.6, 6), pole);
+      p.position.set(dx, 0.8, -0.45); g.add(p);
+    });
+    g.position.set(pos.x, 0, pos.z - 0.6); return g;
+  },
+};
+
+/** Static scenery for a quest site (data/quest-sites.js). Interaction is registered by the quest UI. */
+export function makeQuestSiteMesh(site) {
+  const builder = SITE_BUILDERS[site.kind];
+  const g = builder ? builder(site.position) : new THREE.Group();
+  g.name = `quest-site:${site.id}`;
+  return g;
+}
 
 export function makeNpcMesh(npc) {
   const colors = NPC_COLORS[npc.id] ?? { body: 0xaaaaaa, head: 0xdddddd };
