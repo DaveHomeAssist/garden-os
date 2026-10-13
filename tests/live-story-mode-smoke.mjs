@@ -38,12 +38,12 @@ function seededCampaign() {
     zoneReputation: {},
     activeFestival: { id: 'smoke_festival' },
     skills: {
-      gardening: { level: 10, xp: 0 },
-      soil_science: { level: 10, xp: 0 },
-      crafting: { level: 10, xp: 0 },
-      foraging: { level: 10, xp: 0 },
-      tool_use: { level: 10, xp: 0 },
-      social: { level: 10, xp: 0 },
+      gardening: { level: 10, xp: 5200 },
+      soil_science: { level: 10, xp: 5200 },
+      crafting: { level: 10, xp: 5200 },
+      foraging: { level: 10, xp: 5200 },
+      tool_use: { level: 10, xp: 5200 },
+      social: { level: 10, xp: 5200 },
     },
     worldState: {
       currentZone: 'player_plot',
@@ -58,7 +58,32 @@ function seededCampaign() {
     market: { seed: 'garden-os-market', priceHistory: [], transactions: [] },
     contentPacks: { loaded: [], rejected: [] },
     contentProvenance: [],
-    beds: {},
+    // Fixture: a second bed parked with a crop in it, so the smoke can prove
+    // beds persist independently across zone travel and reload.
+    beds: {
+      bed_2: {
+        id: 'bed_2',
+        name: 'Smoke Bed',
+        zone: 'player_plot',
+        grid: Array.from({ length: 32 }, (_, index) => ({
+          cropId: index === 5 ? 'lettuce' : null,
+          protected: false,
+          mulched: false,
+          damageState: null,
+          carryForwardType: null,
+          eventModifier: 0,
+          interventionBonus: 0,
+          soilFatigue: 0,
+          lastWateredAt: null,
+        })),
+        gridCols: 8,
+        gridRows: 4,
+        harvestResult: null,
+        soilHealth: null,
+        previousGrid: null,
+        history: [],
+      },
+    },
     activeBedId: 'player_plot',
     biomeCropsUnlocked: [],
     gameMode: 'sandbox',
@@ -162,24 +187,20 @@ async function travel(page, zoneId) {
   await page.waitForTimeout(700);
 }
 
-async function forageHistorySaved(page, timeout = 8000) {
-  const campaign = await waitForSavedCampaign(
-    page,
-    (saved) => Object.keys(saved.worldState?.forageState?.history ?? {}).length > 0,
-    timeout,
-  );
-  return Boolean(campaign);
-}
-
-async function activateForage(page) {
-  const result = await page.evaluate(() => {
+async function activateForage(page, spotId) {
+  const result = await page.evaluate((targetSpotId) => {
     const activate = window.gardenOS?.activateForageForSmoke;
     if (typeof activate !== 'function') {
       return { success: false, message: 'Forage smoke helper unavailable.' };
     }
-    return activate('meadow_flowers');
-  });
-  if (result?.success && await forageHistorySaved(page, 5000)) return;
+    return activate(targetSpotId);
+  }, spotId);
+  const saved = await waitForSavedCampaign(
+    page,
+    (campaign) => Boolean(campaign.worldState?.forageState?.history?.[spotId]),
+    5000,
+  );
+  if (result?.success && saved) return;
   const current = await snapshot(page).catch(() => null);
   throw new Error(`Forage smoke helper did not persist. Result: ${JSON.stringify(result)} State: ${JSON.stringify({
     currentZone: current?.currentZone,
@@ -208,12 +229,19 @@ try {
   await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
   await waitForRenderedZone(page, 'player_plot');
 
+  // Phase 5 smoke from docs/GAME_PHASE_TIMELINE.md: travel 6+ zones, forage
+  // in 3, return, and verify bed state.
   await travel(page, 'neighborhood');
+  await travel(page, 'market_square');
+  await travel(page, 'greenhouse');
   await travel(page, 'meadow');
+  await activateForage(page, 'meadow_flowers');
+  await travel(page, 'forest_edge');
+  await activateForage(page, 'forest_mushrooms');
   await travel(page, 'riverside');
+  await activateForage(page, 'riverside_driftwood');
+  await travel(page, 'festival_grounds');
   await travel(page, 'meadow');
-
-  await activateForage(page);
 
   const savedBeforeReload = await readSavedCampaign(page);
   assert(savedBeforeReload.worldState.currentZone === 'meadow', 'Save should persist current zone before reload.');
@@ -228,11 +256,17 @@ try {
   const afterReload = await snapshot(page);
   const savedAfterReload = await readSavedCampaign(page);
   assert(afterReload.currentZone === 'meadow', `Expected meadow after reload, got ${afterReload.currentZone}.`);
+  const smokePath = ['player_plot', 'neighborhood', 'market_square', 'greenhouse', 'meadow', 'forest_edge', 'riverside', 'festival_grounds'];
   assert(
-    ['player_plot', 'neighborhood', 'meadow', 'riverside'].every((zoneId) => savedAfterReload.worldState.visitedZones.includes(zoneId)),
-    'Visited zone history should include the traveled smoke path.',
+    smokePath.every((zoneId) => savedAfterReload.worldState.visitedZones.includes(zoneId)),
+    `Visited zone history should include the traveled smoke path, got ${savedAfterReload.worldState.visitedZones.join(', ')}.`,
   );
-  assert(Object.keys(savedAfterReload.worldState.forageState.history).length > 0, 'Forage history should persist after reload.');
+  assert(
+    ['meadow_flowers', 'forest_mushrooms', 'riverside_driftwood'].every((spotId) => savedAfterReload.worldState.forageState.history[spotId]),
+    'Forage history should persist for all three foraged zones after reload.',
+  );
+  assert(savedAfterReload.activeBedId === 'player_plot', `Home bed should stay active, got ${savedAfterReload.activeBedId}.`);
+  assert(savedAfterReload.beds?.bed_2?.grid?.[5]?.cropId === 'lettuce', 'The parked second bed should keep its crop across travel and reload.');
 
   console.log(JSON.stringify({
     ok: true,
@@ -240,6 +274,7 @@ try {
     currentZone: afterReload.currentZone,
     visitedZones: savedAfterReload.worldState.visitedZones,
     forageHistoryCount: Object.keys(savedAfterReload.worldState.forageState.history).length,
+    beds: Object.keys(savedAfterReload.beds ?? {}),
   }, null, 2));
 } catch (error) {
   await mkdir(outputDir, { recursive: true });

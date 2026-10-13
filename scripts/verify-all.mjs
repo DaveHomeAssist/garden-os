@@ -145,6 +145,7 @@ async function startStaticServer() {
 }
 
 async function runLocalVerification() {
+  await runStep('Authority tables match specs', nodeBin, ['story-mode/scripts/generate-authority-tables.mjs', '--check']);
   await runStep('Story Mode Vitest suite', 'npm', ['test'], { cwd: storyModeDir });
   await runStep('Open world phases smoke', nodeBin, ['docs/open-world-phases-smoke.mjs']);
   await runStep('Story Mode production build', 'npm', ['run', 'build'], { cwd: storyModeDir });

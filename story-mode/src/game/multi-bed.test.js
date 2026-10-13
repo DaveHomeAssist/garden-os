@@ -70,6 +70,22 @@ describe('BedManager', () => {
     expect(beds.getActiveBed().id).toBe(HOME_BED_ID);
   });
 
+  it('keeps the implicit home bed active when the player enters the home plot', () => {
+    // A save where the home bed was never parked (no record) but a second
+    // home-plot bed exists. Arriving home must not swap to the second bed.
+    const state = createGameState();
+    state.campaign.beds = {
+      bed_2: { id: 'bed_2', name: 'Second', zone: HOME_BED_ID, grid: [], gridCols: COLS, gridRows: ROWS, history: [] },
+    };
+    state.campaign.activeBedId = HOME_BED_ID;
+    const homeStore = new Store(state);
+    homeStore.dispatch({ type: Actions.ZONE_CHANGED, payload: { toZone: HOME_BED_ID } });
+    expect(homeStore.getState().campaign.activeBedId).toBe(HOME_BED_ID);
+    homeStore.dispatch({ type: Actions.ZONE_CHANGED, payload: { toZone: 'neighborhood' } });
+    homeStore.dispatch({ type: Actions.ZONE_CHANGED, payload: { toZone: HOME_BED_ID } });
+    expect(homeStore.getState().campaign.activeBedId).toBe(HOME_BED_ID);
+  });
+
   it('returns false for unknown beds and the bed already active', () => {
     expect(beds.switchActiveBed('missing')).toBe(false);
     beds.buildBed('Second');

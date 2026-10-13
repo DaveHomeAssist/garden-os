@@ -231,7 +231,7 @@ function sameToolIntervention(intervention, currentState) {
   return true;
 }
 
-function authorityAckToStoreAction(ack, currentState = null) {
+function authorityAckToStoreAction(ack, currentState = null, record = null) {
   if (!ack?.accepted) return null;
   const data = ack.authoritativePatch?.data;
   if (!data || typeof data !== 'object') return null;
@@ -679,6 +679,17 @@ function authorityAckToStoreAction(ack, currentState = null) {
   if (actionType === 'ZONE_CHANGED' && typeof data.currentZone === 'string' && data.currentZone) {
     const spawnPoint = clonePosition(data.lastSpawnPoint);
     const worldState = currentState?.campaign?.worldState ?? {};
+    // A late ack for a trip the player already took must not pull them back:
+    // they asked for this zone, saw it, and have since travelled on.
+    const requestedZone = record?.envelope?.payload?.toZone ?? data.currentZone;
+    const movedOn = (
+      requestedZone === data.currentZone
+      && typeof worldState.currentZone === 'string'
+      && worldState.currentZone !== data.currentZone
+      && Array.isArray(worldState.visitedZones)
+      && worldState.visitedZones.includes(data.currentZone)
+    );
+    if (movedOn) return null;
     const alreadyApplied = (
       worldState.currentZone === data.currentZone
       && samePosition(clonePosition(worldState.lastSpawnPoint), spawnPoint)
@@ -985,8 +996,8 @@ function createStoryAuthorityPersistence(store, {
   const resolvedAuthorityUrl = resolveAuthorityUrl({ authorityUrl, storage });
   let sessionPromise = null;
 
-  async function reconcileAck(ack) {
-    const action = authorityAckToStoreAction(ack, store.getState?.());
+  async function reconcileAck(ack, record = null) {
+    const action = authorityAckToStoreAction(ack, store.getState?.(), record);
     if (action) store.dispatch(action);
     if (Number.isInteger(ack?.tick)) {
       store.dispatch({

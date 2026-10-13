@@ -22,6 +22,14 @@ body:not([data-story-screen="play"]) .quest-tracker {
   display: none;
 }
 
+/* Sheets (world map, journal, beds, packs) sit in #panel-container, whose
+   stacking context is below this fixed tracker. Step aside while one is
+   open so the tracker never covers a sheet's buttons. */
+body:has(#panel-container .panel-sheet) .quest-tracker,
+body:has(#trade-panel) .quest-tracker {
+  display: none;
+}
+
 .quest-tracker__header {
   display: flex;
   align-items: center;

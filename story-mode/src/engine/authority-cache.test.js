@@ -855,6 +855,27 @@ describe('authority IndexedDB cache', () => {
       },
     }, alreadyInMeadow)).toBeNull();
 
+    // The player travelled meadow -> forest_edge before the meadow ack came
+    // back. The late ack must not pull them back to the meadow.
+    const movedOn = createGameState();
+    movedOn.campaign.worldState.currentZone = 'forest_edge';
+    movedOn.campaign.worldState.visitedZones = ['player_plot', 'meadow', 'forest_edge'];
+    const lateMeadowAck = {
+      accepted: true,
+      actionType: Actions.ZONE_CHANGED,
+      authoritativePatch: {
+        data: {
+          currentZone: 'meadow',
+          lastSpawnPoint: { x: -6, z: 0 },
+          visitedZones: ['player_plot', 'meadow'],
+        },
+      },
+    };
+    expect(authorityAckToStoreAction(lateMeadowAck, movedOn, {
+      envelope: { payload: { toZone: 'meadow' } },
+    })).toBeNull();
+    expect(authorityAckToStoreAction(lateMeadowAck, movedOn)).toBeNull();
+
     expect(authorityAckToStoreAction({
       accepted: false,
       authoritativePatch: { data: { selectedCropId: 'basil' } },

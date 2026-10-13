@@ -10,6 +10,7 @@ import {
   checkBedAcquisition,
   createBedRecord,
   ensureActiveBedRecord,
+  HOME_BED_ID,
   switchActiveBedInState,
 } from './beds.js';
 
@@ -230,8 +231,12 @@ function normalizeForageState(rawForageState) {
 
 function findPreferredBedIdForZone(campaign, zoneId) {
   const beds = campaign?.beds ?? {};
-  if (campaign?.activeBedId && beds[campaign.activeBedId]?.zone === zoneId) {
-    return campaign.activeBedId;
+  const activeId = campaign?.activeBedId ?? HOME_BED_ID;
+  // The active bed has no parked record until it is first parked; it lives
+  // in the home plot. Keep it when the player is in its zone.
+  const activeZone = beds[activeId]?.zone ?? HOME_BED_ID;
+  if (activeZone === zoneId) {
+    return activeId;
   }
 
   return Object.entries(beds).find(([, bed]) => bed?.zone === zoneId)?.[0] ?? null;

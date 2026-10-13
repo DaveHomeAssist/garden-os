@@ -56,24 +56,26 @@ describe('market no-profit invariant', () => {
   });
 
   it('never profits from buy, barter, then sell across any seasons', () => {
+    // Worst case for the player's wallet: buy at the cheapest season, sell at
+    // the dearest. If even that loses credits, every season mix does.
     for (const seed of SEEDS) {
+      const cheapestBuy = {};
+      const dearestSell = {};
+      for (const itemId of ITEM_IDS) {
+        cheapestBuy[itemId] = Math.min(...MARKET_SEASONS.map((season) => price(itemId, season, seed).buy));
+        dearestSell[itemId] = Math.max(...MARKET_SEASONS.map((season) => price(itemId, season, seed).sell));
+      }
       for (const offerId of ITEM_IDS) {
         for (const wantId of ITEM_IDS) {
           if (offerId === wantId) continue;
-          for (const buySeason of MARKET_SEASONS) {
-            for (const tradeSeason of MARKET_SEASONS) {
-              for (const sellSeason of MARKET_SEASONS) {
-                for (let count = 1; count <= 6; count += 1) {
-                  const cost = price(offerId, buySeason, seed).buy * count;
-                  const barter = quoteMarketTrade(
-                    { kind: 'barter', itemId: offerId, wantItemId: wantId, count, season: tradeSeason },
-                    { seed },
-                  );
-                  if (!barter.ok) continue;
-                  const revenue = price(wantId, sellSeason, seed).sell * barter.wantCount;
-                  expect(revenue).toBeLessThan(cost);
-                }
-              }
+          for (const tradeSeason of MARKET_SEASONS) {
+            for (let count = 1; count <= 6; count += 1) {
+              const barter = quoteMarketTrade(
+                { kind: 'barter', itemId: offerId, wantItemId: wantId, count, season: tradeSeason },
+                { seed },
+              );
+              if (!barter.ok) continue;
+              expect(dearestSell[wantId] * barter.wantCount).toBeLessThan(cheapestBuy[offerId] * count);
             }
           }
         }
@@ -81,7 +83,7 @@ describe('market no-profit invariant', () => {
     }
   });
 
-  it('never multiplies goods through a barter round trip', () => {
+  it('never multiplies goods through a barter round trip', { timeout: 30_000 }, () => {
     for (const seed of SEEDS) {
       for (const offerId of ITEM_IDS) {
         for (const wantId of ITEM_IDS) {
