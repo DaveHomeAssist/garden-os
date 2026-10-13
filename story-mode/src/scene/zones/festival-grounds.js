@@ -3,6 +3,7 @@ import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 import { makeQuestSiteMesh } from './zone-interactables.js';
 import { getQuestSitesForZone } from '../../data/quest-sites.js';
+import { createTradePanel } from '../../ui/trade-panel.js';
 
 const ZONE_DEF = {
   id: 'festival_grounds', name: 'Festival Grounds', biome: 'festival',
@@ -71,6 +72,25 @@ export function createFestivalGrounds(store, tracker) {
   });
   // Festival activity booths (one per activity of the season's festival)
   getQuestSitesForZone(ZONE_DEF.id).forEach((site) => root.add(makeQuestSiteMesh(site)));
+
+  // Festival steward's trade stall, scheduled in specs/MARKET_PRICES.json
+  const stewardStall = { id: 'festival_steward_stall', name: 'Festival Steward', x: 5, z: -3 };
+  root.add(box(1.6, 1, 1, 0x7d5a39, stewardStall.x, 0.5, stewardStall.z));
+  root.add(box(1.8, 0.08, 1.2, 0xe8c84a, stewardStall.x, 1.6, stewardStall.z));
+  const tradeContainer = typeof document !== 'undefined' ? document.body : null;
+  const tradePanel = tradeContainer ? createTradePanel(tradeContainer, { zoneId: ZONE_DEF.id }) : null;
+  interactables.push({
+    id: stewardStall.id,
+    type: 'custom',
+    label: stewardStall.name,
+    position: { x: stewardStall.x, y: 0.5, z: stewardStall.z },
+    radius: 1.8,
+    onInteract: ({ store: interactStore }) => {
+      if (tradePanel && !tradePanel.isOpen()) {
+        tradePanel.open({ name: stewardStall.name }, interactStore ?? store);
+      }
+    },
+  });
   const hemi = scene.children.find(c => c.isHemisphereLight);
 
   tracker.track(root);
@@ -88,6 +108,6 @@ export function createFestivalGrounds(store, tracker) {
     },
     update() {},
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
-    dispose() { tracker.disposeObject(root); },
+    dispose() { tradePanel?.dispose(); tracker.disposeObject(root); },
   };
 }

@@ -23,6 +23,11 @@ import {
   AUTHORITY_QUEST_REWARDS,
   AUTHORITY_RECIPE_TABLE,
 } from './story-mode/src/server/authority-reward-tables.js';
+import {
+  AUTHORITY_MARKET_STARTING_BALANCE,
+  marketTradeAckMetadata,
+  settleMarketTrade,
+} from './story-mode/src/server/authority-market.js';
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 64 * 1024;
@@ -370,10 +375,28 @@ function createAuthorityCooldowns(cooldowns = {}) {
   );
 }
 
+function createAuthorityCurrency(currency) {
+  const balance = Number(currency?.balance);
+  return {
+    balance: Number.isFinite(balance) ? Math.max(0, Math.round(balance)) : AUTHORITY_MARKET_STARTING_BALANCE,
+  };
+}
+
+function settleAuthorityMarketTrade(data, payload) {
+  return settleMarketTrade(payload ?? {}, {
+    addItem: addAuthorityInventoryItem,
+    balance: createAuthorityCurrency(data?.currency).balance,
+    getItemCount: getAuthorityInventoryItemCount,
+    inventory: createAuthorityInventory(data?.inventory),
+    removeItem: removeAuthorityInventoryItem,
+  });
+}
+
 function createInitialAuthorityData({
   activeFestival = null,
   activeTool = null,
   claimedQuests = {},
+  currency = null,
   currentZone = 'player_plot',
   grid = [],
   inventory = null,
@@ -388,6 +411,7 @@ function createInitialAuthorityData({
   lastQuestReward = null,
   lastItemAddition = null,
   lastItemRemoval = null,
+  lastMarketTrade = null,
   lastPlanting = null,
   lastProtection = null,
   lastRemoval = null,
@@ -407,6 +431,7 @@ function createInitialAuthorityData({
     activeFestival: createAuthorityActiveFestival(activeFestival),
     activeTool,
     claimedQuests: createAuthorityClaimedQuests(claimedQuests),
+    currency: createAuthorityCurrency(currency),
     currentZone,
     grid: createAuthorityGrid(grid),
     inventory: createAuthorityInventory(inventory),
@@ -421,6 +446,7 @@ function createInitialAuthorityData({
     lastQuestReward,
     lastItemAddition,
     lastItemRemoval,
+    lastMarketTrade,
     lastPlanting,
     lastProtection,
     lastRemoval,
@@ -677,6 +703,16 @@ function repairMaterialsMatch(submitted, expected) {
 
 const AUTHORITY_REDUCERS = {
   NOOP: (data) => data,
+  MARKET_TRADE: (data, payload) => {
+    const settlement = settleAuthorityMarketTrade(data, payload);
+    if (!settlement.ok) return data;
+    return {
+      ...data,
+      currency: { balance: settlement.balance },
+      inventory: settlement.inventory,
+      lastMarketTrade: marketTradeAckMetadata(settlement, getAuthorityInventoryItemCount),
+    };
+  },
   ADD_ITEM: (data, payload) => {
     const addition = normalizeAddItemPayload(payload);
     const result = addAuthorityInventoryItem(data.inventory, addition.itemId, addition.count, {
@@ -1261,6 +1297,11 @@ function publicState(state) {
 function validateAuthorityPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === 'MARKET_TRADE') {
+    const settlement = settleAuthorityMarketTrade(state?.data, envelope.payload);
+    if (!settlement.ok) return { code: settlement.code, message: settlement.message };
+    return null;
+  }
   if (envelope?.type === 'ADD_ITEM') {
     if (hasOwn(envelope.payload, 'inventory') || hasOwn(envelope.payload, 'slots')) {
       return { code: 'TRUSTED_INVENTORY_PAYLOAD', message: 'Add item action cannot submit trusted inventory state.' };

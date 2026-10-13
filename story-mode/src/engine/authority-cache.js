@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'COMPLETE_QUEST', 'CRAFT_ITEM', 'FESTIVAL_ACTIVITY', 'FESTIVAL_END', 'FESTIVAL_START', 'HARVEST_CELL', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'COMPLETE_QUEST', 'CRAFT_ITEM', 'FESTIVAL_ACTIVITY', 'FESTIVAL_END', 'FESTIVAL_START', 'HARVEST_CELL', 'MARKET_TRADE', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -151,6 +151,7 @@ function inferAckActionType(ack) {
   if (actionId.endsWith(':FESTIVAL_ACTIVITY')) return 'FESTIVAL_ACTIVITY';
   if (actionId.endsWith(':FESTIVAL_END')) return 'FESTIVAL_END';
   if (actionId.endsWith(':FESTIVAL_START')) return 'FESTIVAL_START';
+  if (actionId.endsWith(':MARKET_TRADE')) return 'MARKET_TRADE';
   if (actionId.endsWith(':PLANT_CROP')) return 'PLANT_CROP';
   if (actionId.endsWith(':REMOVE_CROP')) return 'REMOVE_CROP';
   if (actionId.endsWith(':REMOVE_ITEM')) return 'REMOVE_ITEM';
@@ -446,6 +447,31 @@ function authorityAckToStoreAction(ack, currentState = null) {
       meta: { authorityAck: true },
       payload: { count: currentCount - remainingCount, itemId },
       type: 'REMOVE_ITEM',
+    };
+  }
+
+  if (actionType === 'MARKET_TRADE') {
+    const trade = data.lastMarketTrade;
+    if (!trade || typeof trade !== 'object') return null;
+    const balance = Number(trade.balance);
+    const localBalance = Number(currentState?.campaign?.currency?.balance ?? 0);
+    const itemTotals = {};
+    Object.entries(trade.itemTotals ?? {}).forEach(([itemId, total]) => {
+      const serverTotal = Number(total);
+      if (!Number.isInteger(serverTotal) || serverTotal < 0) return;
+      if (getInventoryItemCount(currentState?.campaign?.inventory, itemId) !== serverTotal) {
+        itemTotals[itemId] = serverTotal;
+      }
+    });
+    const balanceDiffers = Number.isFinite(balance) && balance !== localBalance;
+    if (!balanceDiffers && !Object.keys(itemTotals).length) return null;
+    return {
+      meta: { authorityAck: true },
+      payload: {
+        balance: balanceDiffers ? balance : undefined,
+        itemTotals,
+      },
+      type: 'MARKET_RECONCILE',
     };
   }
 

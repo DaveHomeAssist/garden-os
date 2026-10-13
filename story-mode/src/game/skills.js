@@ -17,6 +17,8 @@ const ACTION_XP_MAP = {
   HARVEST_CELL: [{ skillId: Skills.GARDENING, amount: 25 }],
   WATER_CELL: [{ skillId: Skills.GARDENING, amount: 5 }],
   COMPLETE_QUEST: [{ skillId: Skills.SOCIAL, amount: 30 }],
+  // SKILL_TREE.json social xpSources: TRADE_ITEM is one settled market trade.
+  MARKET_TRADE: [{ skillId: Skills.SOCIAL, amount: 10 }],
   REPAIR_TOOL: [{ skillId: Skills.CRAFTING, amount: 10 }],
 };
 

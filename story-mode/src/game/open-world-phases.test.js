@@ -223,9 +223,13 @@ describe('open world phases 5 to 8', () => {
     expect(sell.success).toBe(true);
     expect(sell.balanceAfter).toBeGreaterThan(sell.balanceBefore);
 
-    store.dispatch({ type: Actions.ADD_ITEM, payload: { itemId: 'garden_twine', count: 2 } });
-    const barter = market.barter('garden_twine', 'compost', 1);
+    store.dispatch({ type: Actions.ADD_ITEM, payload: { itemId: 'garden_twine', count: 4 } });
+    // One twine is worth less than one compost, so a 1-for-1 offer is refused
+    // instead of rounded up into free goods.
+    expect(market.barter('garden_twine', 'compost', 1).success).toBe(false);
+    const barter = market.barter('garden_twine', 'compost', 4);
     expect(barter.success).toBe(true);
+    expect(barter.wantCount).toBeGreaterThanOrEqual(1);
 
     ['spring', 'summer', 'fall', 'winter'].forEach((season) => market.recordSeasonPrices(season));
     expect(store.getState().campaign.market.priceHistory).toHaveLength(3);

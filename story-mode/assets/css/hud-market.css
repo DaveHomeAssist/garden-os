@@ -1,0 +1,164 @@
+/* Market trade sheet. Shares the dark panel-sheet surface with the other
+   read-only sheets, so it reads the same in light and dark page themes. */
+.panel-sheet.trade-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  right: auto;
+  width: min(92vw, 560px);
+  max-height: min(84dvh, 720px);
+  transform: translate(-50%, -50%);
+  border-radius: 8px;
+  border: 1px solid rgba(232, 200, 74, 0.2);
+  z-index: 20;
+  padding: 0 16px 16px;
+  color: var(--cream, #f7f2ea);
+}
+
+.trade-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.trade-panel__title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  color: var(--cream, #f7f2ea);
+}
+
+.trade-panel__meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(247, 242, 234, 0.62);
+}
+
+.trade-panel__note,
+.trade-panel__traders {
+  font-size: 13px;
+  color: rgba(247, 242, 234, 0.78);
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.trade-panel__days { color: rgba(247, 242, 234, 0.5); }
+
+.trade-panel__message:empty { display: none; }
+
+.trade-panel__message {
+  font-size: 13px;
+  color: var(--sun, #e8c84a);
+  margin: 0 0 8px;
+}
+
+.trade-panel__section { margin-top: 12px; }
+
+.trade-panel__heading {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sun, #e8c84a);
+  margin: 0 0 6px;
+}
+
+.trade-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.trade-panel__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(247, 242, 234, 0.05);
+  border: 1px solid rgba(247, 242, 234, 0.1);
+}
+
+.trade-panel__row--stack { flex-wrap: wrap; }
+
+.trade-panel__item { font-size: 15px; }
+
+.trade-panel__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.trade-panel__btn,
+.trade-panel__select,
+.trade-panel__count {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(247, 242, 234, 0.25);
+  background: rgba(247, 242, 234, 0.08);
+  color: var(--cream, #f7f2ea);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 12px;
+}
+
+.trade-panel__count { width: 64px; }
+
+.trade-panel__btn:disabled { opacity: 0.45; }
+
+.trade-panel__btn:focus-visible,
+.trade-panel__select:focus-visible,
+.trade-panel__count:focus-visible {
+  outline: 2px solid var(--sun, #e8c84a);
+  outline-offset: 2px;
+}
+
+.trade-panel__preview {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(90, 171, 107, 0.5);
+  background: rgba(90, 171, 107, 0.12);
+}
+
+.trade-panel__preview.is-blocked {
+  border-color: rgba(232, 200, 74, 0.5);
+  background: rgba(232, 200, 74, 0.1);
+}
+
+.trade-panel__preview p { margin: 0 0 8px; font-size: 14px; }
+
+.trade-panel__history summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: rgba(247, 242, 234, 0.8);
+}
+
+.trade-panel__table-wrap { overflow-x: auto; }
+
+.trade-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.trade-panel__table th,
+.trade-panel__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(247, 242, 234, 0.1);
+  text-align: left;
+}
+
+.trade-panel__table td { font-family: 'DM Mono', monospace; }

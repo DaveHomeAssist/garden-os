@@ -2061,3 +2061,54 @@ test('authority fails closed without hmac secret', async () => {
   assert.equal(response.status, 503);
   assert.equal(body.error, 'secret_unavailable');
 });
+
+test('authority action settles market trades from canonical prices once', async () => {
+  const { env, sessionId } = await createSession();
+  const base = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    playerId: 'local',
+    sessionId,
+    type: 'MARKET_TRADE',
+  };
+
+  const buy = { ...base, id: 'market-buy', idempotencyKey: 'idem-market-buy', payload: { count: 2, itemId: 'compost', kind: 'buy', season: 'spring' } };
+  const firstResponse = await worker.fetch(jsonRequest('/action', buy), env);
+  const first = await firstResponse.json();
+  const replay = await (await worker.fetch(jsonRequest('/action', buy), env)).json();
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(first.ack.accepted, true);
+  assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
+  const trade = first.state.data.lastMarketTrade;
+  assert.equal(trade.kind, 'buy');
+  assert.equal(trade.count, 2);
+  assert.ok(trade.total > 0);
+  assert.equal(first.state.data.currency.balance, 100 - trade.total);
+  assert.equal(replay.duplicate, true);
+  assert.equal(replay.state.data.currency.balance, 100 - trade.total);
+
+  const tinyBarter = { ...base, clientSeq: 2, expectedTick: 1, id: 'market-barter', idempotencyKey: 'idem-market-barter', payload: { count: 1, itemId: 'compost', kind: 'barter', season: 'spring', wantItemId: 'watering_can' } };
+  const barter = await (await worker.fetch(jsonRequest('/action', tinyBarter), env)).json();
+  assert.equal(barter.ack.accepted, false);
+  assert.equal(barter.ack.rejection.code, 'BARTER_TOO_SMALL');
+});
+
+test('authority rejects client-submitted market totals before mutation', async () => {
+  const { env, sessionId } = await createSession();
+  const action = {
+    clientSeq: 1,
+    expectedTick: 0,
+    gameId: 'garden',
+    id: 'market-forged',
+    idempotencyKey: 'idem-market-forged',
+    payload: { cost: 0, count: 1, itemId: 'watering_can', kind: 'buy', season: 'spring' },
+    playerId: 'local',
+    sessionId,
+    type: 'MARKET_TRADE',
+  };
+  const body = await (await worker.fetch(jsonRequest('/action', action), env)).json();
+  assert.equal(body.ack.accepted, false);
+  assert.equal(body.ack.rejection.code, 'CLIENT_TRADE_TOTAL');
+});

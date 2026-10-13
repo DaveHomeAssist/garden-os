@@ -2,6 +2,7 @@ import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
 import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
+import { quoteMarketTrade } from '../server/authority-market.js';
 
 import {
   attachGridMeta,
@@ -137,6 +138,8 @@ const Actions = {
   ADJUST_CURRENCY: 'ADJUST_CURRENCY',
   RECORD_MARKET_PRICES: 'RECORD_MARKET_PRICES',
   RECORD_MARKET_TRANSACTION: 'RECORD_MARKET_TRANSACTION',
+  MARKET_TRADE: 'MARKET_TRADE',
+  MARKET_RECONCILE: 'MARKET_RECONCILE',
   REGISTER_CONTENT_PACK: 'REGISTER_CONTENT_PACK',
   REJECT_CONTENT_PACK: 'REJECT_CONTENT_PACK',
   MARK_CUTSCENE_SEEN: 'MARK_CUTSCENE_SEEN',
@@ -1387,11 +1390,114 @@ function gameReducer(state, action = {}) {
         prices: cloneValue(payload.prices),
         timestamp: payload.timestamp ?? Date.now(),
       };
+      // One entry per season, most recent last, so the history covers the
+      // last three distinct seasons instead of three repeats of today.
+      const previous = (nextState.campaign.market?.priceHistory ?? [])
+        .filter((existing) => !(existing?.season === entry.season && existing?.seed === entry.seed));
       nextState.campaign.market = {
         ...(nextState.campaign.market ?? DEFAULT_MARKET_STATE),
-        priceHistory: [...(nextState.campaign.market?.priceHistory ?? []), entry].slice(-3),
+        priceHistory: [...previous, entry].slice(-3),
       };
       return nextState;
+    }
+
+    case Actions.MARKET_TRADE: {
+      // One atomic trade: canonical prices, inventory, credits, and the
+      // transaction record change together or not at all. The payload carries
+      // only the request; every total is derived from the shared market math
+      // so the client and the authority settle identically.
+      const campaign = state.campaign ?? {};
+      const balance = clampCurrency(campaign.currency?.balance ?? 0);
+      const quote = quoteMarketTrade({
+        count: payload.count,
+        itemId: payload.itemId,
+        kind: payload.kind,
+        season: payload.season,
+        wantItemId: payload.wantItemId,
+      }, {
+        balance,
+        getItemCount: (itemId) => getInventoryItemCount(campaign.inventory, itemId),
+        seed: campaign.market?.seed ?? DEFAULT_MARKET_STATE.seed,
+      });
+      if (!quote.ok) return state;
+
+      let inventory = campaign.inventory;
+      for (const give of quote.gives) {
+        const removed = removeItemFromInventoryState(inventory, give.itemId, give.count);
+        if (!removed.success) return state;
+        inventory = removed.inventory;
+      }
+      for (const get of quote.gets) {
+        const added = addItemToInventoryState(inventory, get.itemId, get.count);
+        if (!added.success) return state;
+        inventory = added.inventory;
+      }
+
+      const nextState = cloneGameState(state);
+      const timestamp = Number.isFinite(payload.timestamp) ? payload.timestamp : Date.now();
+      const after = clampCurrency(balance + quote.balanceDelta);
+      nextState.campaign.inventory = inventory;
+      nextState.campaign.currency = {
+        ...(nextState.campaign.currency ?? DEFAULT_CURRENCY_STATE),
+        balance: after,
+        ledger: [
+          ...(nextState.campaign.currency?.ledger ?? []),
+          { type: `market_${quote.kind}`, delta: quote.balanceDelta, before: balance, after, timestamp },
+        ].slice(-50),
+      };
+      const transaction = {
+        type: quote.kind,
+        itemId: quote.itemId,
+        count: quote.count,
+        unitPrice: quote.unitPrice,
+        total: quote.kind === 'buy' ? quote.cost : quote.revenue,
+        season: quote.season,
+        timestamp,
+      };
+      if (quote.kind === 'barter') {
+        transaction.offerItemId = quote.itemId;
+        transaction.offerCount = quote.count;
+        transaction.wantItemId = quote.wantItemId;
+        transaction.wantCount = quote.wantCount;
+      }
+      nextState.campaign.market = {
+        ...(nextState.campaign.market ?? DEFAULT_MARKET_STATE),
+        transactions: [...(nextState.campaign.market?.transactions ?? []), transaction],
+      };
+      return nextState;
+    }
+
+    case Actions.MARKET_RECONCILE: {
+      // Applied only from a signed authority ack whose totals disagree with the
+      // optimistic local trade: credits and the traded items snap to the
+      // server-owned totals.
+      const nextState = cloneGameState(state);
+      let changed = false;
+      if (Number.isFinite(payload.balance)) {
+        const balance = clampCurrency(payload.balance);
+        if (balance !== clampCurrency(nextState.campaign.currency?.balance ?? 0)) {
+          nextState.campaign.currency = {
+            ...(nextState.campaign.currency ?? DEFAULT_CURRENCY_STATE),
+            balance,
+          };
+          changed = true;
+        }
+      }
+      Object.entries(payload.itemTotals ?? {}).forEach(([itemId, total]) => {
+        if (!Number.isInteger(total) || total < 0) return;
+        const current = getInventoryItemCount(nextState.campaign.inventory, itemId);
+        if (current > total) {
+          nextState.campaign.inventory = removeItemFromInventoryState(nextState.campaign.inventory, itemId, current - total).inventory;
+          changed = true;
+        } else if (current < total) {
+          const added = addItemToInventoryState(nextState.campaign.inventory, itemId, total - current);
+          if (added.success) {
+            nextState.campaign.inventory = added.inventory;
+            changed = true;
+          }
+        }
+      });
+      return changed ? nextState : state;
     }
 
     case Actions.RECORD_MARKET_TRANSACTION: {
