@@ -172,12 +172,14 @@ Garden OS may use a bounded exchange balance for readable trade previews, but it
 Rules:
 1. Credits are a settlement record for buy, sell, and barter at the market.
 2. Prices are deterministic from seed and season, not demand simulation.
-3. Sell values stay below buy values, so cycling transactions cannot generate profit.
+3. Sell values stay below the item's settlement value, the cheapest buy price across all seasons, and barter converts at settlement value. No cycle of buys, sells, and barters across seasons can generate profit (enforced by property tests in `story-mode/src/server/authority-market.test.js`).
 4. Market history is informational and limited to the last three seasons.
 5. Exchange supports stewardship pacing only: seeds, tools, and garden materials.
 6. No rarity drops, loot boxes, speculation, idle income, or live-service pressure.
 
 This resolves Phase 7 by scoping the market as a transparent household ledger, not a loot economy.
+
+Implementation note 2026-10-13: the settlement value rule replaced a per season sell below buy rule, which let a player buy cheap in one season and sell or barter dear in another. Trades settle on the save authority as one signed `MARKET_TRADE` action; the client sends what it wants to trade, never a price or total.
 
 Core thesis:
 > Garden OS progression is the slow accumulation of practical judgment, trust, and continuity in one specific backyard system.

@@ -3,7 +3,7 @@ Status: Active
 Document Version: 1.3
 Compatible With: Garden OS v5, Story Mode v1, Schema v3, Season Engine v4 (legacy)
 Owner: Dave Robertson
-Last Updated: 2026-09-17
+Last Updated: 2026-10-13
 Artifact Class: Ref
 ---
 
@@ -34,6 +34,14 @@ The core mission remains the same: make garden decisions explainable, playable, 
   trial editing and Discard do not write canonical bed state.
 - `tests/experiments-contract.test.mjs` and
   `tests/what-if-experiments-regression.mjs` are wired into the full verifier.
+
+### Story Mode open world closeout shipped 2026-10-13
+
+- Phases 5 to 8 of `docs/GAME_PHASE_TIMELINE.md` are observable in play: 8 zone travel with gates, forage spots from `specs/FORAGE_TABLES.json`, up to 3 home plot beds, 25 two choice quests with cross zone echoes, a seasonal market with barter and price history, and installable content packs.
+- Market math lives in `story-mode/src/server/authority-market.js` and is shared by the client facade, the Node authority, and the fetch worker. Sell and barter settle at the settlement value (cheapest buy across seasons), so no trade cycle makes credits.
+- Multiple beds use an active bed projection: `season.grid`, `campaign.soilHealth`, and `campaign.previousGrid` always describe `campaign.activeBedId`; parked beds live in `campaign.beds` (`story-mode/src/game/beds.js`).
+- Content packs register through `story-mode/src/content/content-registry.js`; official content is never replaced.
+- Authority tables are generated from `specs/` by `story-mode/scripts/generate-authority-tables.mjs`; run it with `--check` after any spec edit.
 
 **Architecture:** static root tools + canonical specs/docs + localStorage/file persistence + a separate `story-mode` runtime for richer 3D play. GitHub Pages remains the delivery model; Story Mode can use the signed Vercel authority API and falls back to local persistence.
 
@@ -353,6 +361,8 @@ Fixed speaking order. Deterministic triggers — no random chatter. 80+ triggers
 | Directory | Purpose |
 |-----------|---------|
 | `src/main.js` | Entry point, app initialization, game loop setup |
+| `src/content/` | Content pack runtime registry, installed packs, official id list |
+| `src/server/` | Save authority: Node service, shared market and world rules, generated authority tables |
 | `src/data/` | Data loaders: crops, cutscenes, events, speakers, portraits, keepsakes |
 | `src/game/` | Game logic: phase machine, state management, event engine, cutscene machine, interventions, save system |
 | `src/scene/` | Three.js rendering: garden bed model, camera controller, scenery, weather effects |

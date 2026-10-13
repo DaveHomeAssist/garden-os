@@ -753,3 +753,14 @@ TODO / next-agent suggestions:
   - the new visual gate caught a real black `desktop-crop-accents.png`; the capture now dismisses the arrival dialogue and requires a readable WebGL canvas immediately before the screenshot, and the regenerated shot passes with 41.64 luminance variation and 111 quantized colors
   - Story development dependencies were advanced to non-vulnerable transitive releases (`nanoid` 3.3.18, `postcss` 8.5.26, `undici` 7.29.0); `npm audit` now reports zero vulnerabilities and the 471 tests plus build pass after the lockfile change
   - publication pending: commit, push, Pages workflow, and live URL readback are the remaining release steps
+
+- 2026-10-13 Story Mode open world gap closeout (game track Phases 5 to 8):
+  - closed the market credit loop: sell and barter settle at the cheapest buy price across seasons, trades go to the save authority as one `MARKET_TRADE`, and the trade panel previews every trade before Confirm
+  - sourced every crafting material from forage spots (`specs/FORAGE_TABLES.json`) and proved it with `material-sources.test.js`
+  - added up to 3 home plot beds from a craftable raised bed kit, with switching from the pause menu and parked beds rolling into the next season
+  - made content packs installable from the pause menu, with Modded tags, pack neighbors in their zones, and pack quests on the notice board
+  - authored two real outcomes for all 25 quests plus choice echoes heard from other neighbors
+  - moved zone travel validation onto the authority (quest and festival gates) and generated authority tables from specs with a `--check` drift guard
+  - fixed a late zone ack pulling the player back to the previous zone, the home plot arrival swapping to a second bed, and the quest tracker covering the world map
+  - extended `tests/live-story-mode-smoke.mjs` to 8 zones, 3 forage spots, a parked bed, and reload; passed twice locally against `vite preview`
+  - deferred edges logged as issues 058 to 062 in `docs/UI_ISSUES_TABLE.html`

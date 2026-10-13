@@ -1,8 +1,16 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-09-20
+**Last verified:** 2026-10-13
 
-## Current Verified Baseline — 2026-09-20
+## Current Verified Baseline — 2026-10-13
+
+- Story Mode unit gate: 64 files / 614 tests, 0 failed. Authority worker suite green.
+- Game track open world Phases 5 to 8 (`docs/GAME_PHASE_TIMELINE.md`): every exit criterion is observable in the game, with three recorded scope reconciliations (biome crops counted on the 4 biome zones, market limited to seeds, tools, and materials per the Stewardship Exchange Doctrine, packs installed from the pause menu instead of a directory).
+- Save authority now settles market trades, bed acquisition and switching, and zone travel (quest and festival gates). Its reward, market, crafting, and world tables are generated from `specs/` with a drift check (`story-mode/scripts/generate-authority-tables.mjs --check`).
+- Post deploy live smoke covers 8 zones, 3 forage spots, a parked second bed, and reload.
+- Known open edges: skill and reputation zone gates, trader stock limits, and the bed phase lock are checked on the device only; pack places cannot be visited; pack quest rewards are not authority signed.
+
+## Prior Verified Baseline — 2026-09-20
 
 - Authoritative branch: `main`, reconciled to `origin/main` before this sprint.
 - Story Mode unit gate: 46 files / 517 tests, 0 failed.

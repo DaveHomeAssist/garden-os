@@ -997,6 +997,66 @@
       "location": "story-mode/src/ui/pause-controller.js; story-mode/src/ui/pause-panels.js",
       "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/42",
       "added": "2026-09-20"
+    },
+    {
+      "id": "058",
+      "severity": "P2",
+      "status": "deferred",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Skill and reputation zone gates are checked on the device only",
+      "impact": "A tampered save could travel to the meadow, greenhouse, market square, or forest edge early. Quest and festival gates are already refused by the save authority.",
+      "location": "story-mode/src/server/authority-world.js validateZoneChange",
+      "notes": "Needs the authority to hold skills and reputation before it can check these gates.",
+      "added": "2026-10-13"
+    },
+    {
+      "id": "059",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Resilience",
+      "tool": "engine",
+      "title": "Trader stock limits and market season are client asserted",
+      "impact": "The authority checks prices, credits, and inventory for every trade, but trusts which trader stock is on offer and the season the client names (enum checked).",
+      "location": "story-mode/src/server/authority-market.js; story-mode/src/data/market-schedule.js",
+      "notes": "Close when the authority owns the season clock.",
+      "added": "2026-10-13"
+    },
+    {
+      "id": "060",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "State",
+      "tool": "engine",
+      "title": "Bed switch phase lock and parked bed season rollover are client only",
+      "impact": "The authority accepts SWITCH_BED in any phase and does not roll parked beds into the next season; the client does both.",
+      "location": "story-mode/src/server/authority-world.js; story-mode/src/game/phase-machine.js",
+      "notes": "Pre-existing gap: the authority does not model season rollover for any bed.",
+      "added": "2026-10-13"
+    },
+    {
+      "id": "061",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Feature",
+      "tool": "engine",
+      "title": "Content pack places cannot be visited",
+      "impact": "Zones in a pack are listed under Content Packs but have no scene, so pack authors cannot add new places yet.",
+      "location": "story-mode/src/content/content-registry.js; docs/CREATOR_GUIDE.md",
+      "notes": "Needs a declarative scene format for pack zones.",
+      "added": "2026-10-13"
+    },
+    {
+      "id": "062",
+      "severity": "P3",
+      "status": "deferred",
+      "area": "Feature",
+      "tool": "engine",
+      "title": "Only the active bed renders in the scene",
+      "impact": "Players with 2 or 3 beds see one bed at a time and switch from the pause menu instead of walking between beds.",
+      "location": "story-mode/src/ui/beds-panel.js; story-mode/src/scene/",
+      "notes": "Beds keep independent grids, soil, and history; this is a presentation gap only.",
+      "added": "2026-10-13"
     }
   ]
 }
