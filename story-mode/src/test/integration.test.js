@@ -42,7 +42,7 @@ import { FESTIVALS, FestivalEngine } from '../game/festivals.js';
 import { Inventory, findToolSlotIndex, getItemDef } from '../game/inventory.js';
 import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
-import { ForagingSystem } from '../game/foraging.js';
+import { ForagingSystem, LOOT_TABLES } from '../game/foraging.js';
 import { ZoneManager, evaluateZoneAccess, DEFAULT_ZONE_GATES } from '../scene/zone-manager.js';
 import * as ZONE_REGISTRY from '../scene/zones/zone-registry.js';
 import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
@@ -4473,13 +4473,14 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       const result = foraging.forage('forest_herbs');
       expect(result.success).toBe(true);
       expect(result.items.length).toBeGreaterThan(0);
-      const herbItems = ['basil_seed', 'cilantro_seed', 'dried_herbs', 'rosemary_seed', 'heirloom_herb_seed'];
+      // Derived from specs/FORAGE_TABLES.json so loot edits do not need a test edit.
+      const herbItems = Object.values(LOOT_TABLES.herb_patch).flat().map((entry) => entry.itemId);
       expect(result.items.every((item) => herbItems.includes(item.itemId))).toBe(true);
 
       const { foraging: meadowForaging } = makeForagingIntegration('meadow', 1);
       const rockResult = meadowForaging.forage('meadow_rocks');
       expect(rockResult.success).toBe(true);
-      const rockItems = ['stone', 'scrap_metal', 'crystal_shard', 'rare_earth'];
+      const rockItems = [...Object.values(LOOT_TABLES.rock_pile).flat().map((entry) => entry.itemId), 'rare_earth'];
       expect(rockResult.items.every((item) => rockItems.includes(item.itemId))).toBe(true);
 
       vi.restoreAllMocks();

@@ -1,0 +1,416 @@
+{
+  "$schema": "garden-os-forage-tables-v1",
+  "version": 1,
+  "description": "Loot tables for each forage spot type. Zones list their spots in specs/WORLD_MAP.json under foraging.spots; this file says what each spot type can yield. Entries with a seasons list only roll in those seasons.",
+  "lastUpdated": "2026-10-13",
+  "rarityRules": {
+    "rareWeightMultiplierAtLevel": {
+      "level": 5,
+      "multiplier": 2
+    },
+    "bonusRareEarthAtLevel": {
+      "level": 10,
+      "weight": 2
+    },
+    "secondPullAtLevel": 3,
+    "doubleCountAtLevel": 7
+  },
+  "spotTypes": {
+    "herb_patch": {
+      "common": [
+        {
+          "itemId": "basil_seed",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 40
+        },
+        {
+          "itemId": "cilantro_seed",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30
+        },
+        {
+          "itemId": "dried_herbs",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30
+        },
+        {
+          "itemId": "plant_fiber",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 25
+        },
+        {
+          "itemId": "dried_leaves",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30,
+          "seasons": [
+            "fall",
+            "winter"
+          ]
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "rosemary_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 20
+        },
+        {
+          "itemId": "meadow_sage_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 8,
+          "biomeCrop": "meadow_sage"
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "heirloom_herb_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 10
+        }
+      ]
+    },
+    "berry_bush": {
+      "common": [
+        {
+          "itemId": "fresh_berries",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 45
+        },
+        {
+          "itemId": "strawberry_seed",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30
+        },
+        {
+          "itemId": "dried_leaves",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 20,
+          "seasons": [
+            "fall",
+            "winter"
+          ]
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "blueberry_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 20
+        },
+        {
+          "itemId": "woodland_strawberry_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 8,
+          "biomeCrop": "woodland_strawberry"
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "rare_earth",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 5
+        }
+      ]
+    },
+    "rock_pile": {
+      "common": [
+        {
+          "itemId": "stone",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 50
+        },
+        {
+          "itemId": "scrap_metal",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "crystal_shard",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 15
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "rare_earth",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 5
+        }
+      ]
+    },
+    "driftwood": {
+      "common": [
+        {
+          "itemId": "wood",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 55
+        },
+        {
+          "itemId": "scrap_metal",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 25
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "festival_seed_bundle",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 15
+        },
+        {
+          "itemId": "watercress_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 8,
+          "biomeCrop": "watercress"
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "crystal_shard",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 5
+        },
+        {
+          "itemId": "wild_rice_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 4,
+          "biomeCrop": "wild_rice"
+        },
+        {
+          "itemId": "lens",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 4
+        }
+      ]
+    },
+    "watercress_bed": {
+      "comment": "Common only on purpose: the loot roll is deterministic per day, so a seed or uncommon entry here could lock a player out of fresh bunches for a whole day (lila_watercress).",
+      "common": [
+        {
+          "itemId": "watercress",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 100
+        }
+      ]
+    },
+    "mushroom_log": {
+      "common": [
+        {
+          "itemId": "mushroom_spores",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 55
+        },
+        {
+          "itemId": "compost",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30
+        },
+        {
+          "itemId": "dried_leaves",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 25,
+          "seasons": [
+            "fall",
+            "winter"
+          ]
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "plant_matter",
+          "count": [
+            2,
+            4
+          ],
+          "weight": 10
+        },
+        {
+          "itemId": "shiitake_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 8,
+          "biomeCrop": "shiitake_mushroom"
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "rare_earth",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 5
+        },
+        {
+          "itemId": "wild_garlic_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 4,
+          "biomeCrop": "wild_garlic"
+        }
+      ]
+    },
+    "wildflower_field": {
+      "common": [
+        {
+          "itemId": "plant_matter",
+          "count": [
+            1,
+            3
+          ],
+          "weight": 50
+        },
+        {
+          "itemId": "marigold_seed",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 35
+        },
+        {
+          "itemId": "plant_fiber",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 20
+        },
+        {
+          "itemId": "dried_leaves",
+          "count": [
+            1,
+            2
+          ],
+          "weight": 30,
+          "seasons": [
+            "fall",
+            "winter"
+          ]
+        }
+      ],
+      "uncommon": [
+        {
+          "itemId": "lavender_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 10
+        },
+        {
+          "itemId": "wild_clover_seed",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 8,
+          "biomeCrop": "wild_clover"
+        }
+      ],
+      "rare": [
+        {
+          "itemId": "festival_token",
+          "count": [
+            1,
+            1
+          ],
+          "weight": 5
+        }
+      ]
+    }
+  }
+}

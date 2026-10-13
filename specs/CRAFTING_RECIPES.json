@@ -2,7 +2,7 @@
   "$schema": "garden-os-crafting-recipes-v1",
   "version": 1,
   "description": "Complete crafting recipe deck for Let It Grow. 15 recipes across 4 skill tiers.",
-  "lastUpdated": "2026-03-22",
+  "lastUpdated": "2026-10-13",
   "materials": {
     "plant_matter": {
       "name": "Plant Matter",
@@ -20,13 +20,19 @@
       "name": "Dried Leaves",
       "description": "Crispy autumn leaves",
       "rarity": "common",
-      "sources": ["fall_foraging", "harvest_byproduct"]
+      "sources": ["fall_foraging", "winter_foraging"]
     },
     "plant_fiber": {
       "name": "Plant Fiber",
       "description": "Strong fibers from herb stems",
       "rarity": "common",
-      "sources": ["harvesting_herbs"]
+      "sources": ["foraging_herbs", "foraging_wildflowers"]
+    },
+    "dried_herbs": {
+      "name": "Dried Herbs",
+      "description": "Bundled wild herbs, dried for pressing",
+      "rarity": "common",
+      "sources": ["foraging_herbs"]
     },
     "herb_extract": {
       "name": "Herb Extract",
@@ -68,7 +74,7 @@
       "name": "Mechanism",
       "description": "Intricate clockwork gears",
       "rarity": "rare",
-      "sources": ["maya_quest_reward", "advanced_crafting"]
+      "sources": ["advanced_crafting"]
     },
     "rare_earth": {
       "name": "Rare Earth",
@@ -100,6 +106,24 @@
       },
       "skillRequirement": { "crafting": 1 },
       "craftingXP": 15,
+      "unlockCondition": null
+    },
+    {
+      "id": "press_herb_extract",
+      "name": "Herb Extract",
+      "description": "Steep dried herbs with a handful of plant matter and press out the oil. The base for pest spray and companion kits.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "dried_herbs", "count": 2, "name": "Dried Herbs" },
+        { "itemId": "plant_matter", "count": 1, "name": "Plant Matter" }
+      ],
+      "output": {
+        "itemId": "herb_extract",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 10,
       "unlockCondition": null
     },
     {

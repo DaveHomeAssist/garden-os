@@ -2,7 +2,7 @@
   "$schema": "garden-os-world-map-v1",
   "version": 1,
   "description": "World map for Let It Grow. 8 zones with connections, gates, and content.",
-  "lastUpdated": "2026-03-22",
+  "lastUpdated": "2026-10-13",
   "zones": {
     "player_plot": {
       "id": "player_plot",
@@ -24,11 +24,10 @@
         { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": 7 } }
       ],
       "foraging": {
-        "enabled": true,
-        "spots": 3,
-        "lootTable": ["basil_seed", "marigold_seed", "plant_matter", "stone", "scrap_metal"],
+        "enabled": false,
         "cooldownMinutes": 5,
-        "skillModifier": "foraging"
+        "skillModifier": "foraging",
+        "spots": []
       },
       "npcSlots": [],
       "interactables": [
@@ -67,7 +66,16 @@
         { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "market_square", "spawnPoint": { "x": 0, "z": 6.5 } },
         { "edge": "south", "position": { "x": 5, "z": -8.5 }, "destination": "festival_grounds", "spawnPoint": { "x": 0, "z": 10 } }
       ],
-      "foraging": false,
+      "foraging": {
+        "enabled": true,
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": [
+          { "id": "neighborhood_mailbox_mint", "type": "herb_patch", "position": { "x": -4.8, "z": 0.2 }, "xpGained": 50 },
+          { "id": "neighborhood_corner_bed", "type": "wildflower_field", "position": { "x": 2.8, "z": 4.8 }, "xpGained": 50 },
+          { "id": "neighborhood_curb_stones", "type": "rock_pile", "position": { "x": 5.3, "z": -2.4 }, "xpGained": 50 }
+        ]
+      },
       "npcSlots": [
         { "npcId": "old_gus", "position": { "x": -3, "z": 4 }, "seasons": ["spring", "summer", "fall", "winter"] },
         { "npcId": "maya", "position": { "x": 4, "z": 2 }, "seasons": ["spring", "summer", "fall"] },
@@ -114,10 +122,13 @@
       ],
       "foraging": {
         "enabled": true,
-        "spots": 4,
-        "lootTable": ["plant_matter", "plant_fiber", "dried_leaves", "herb_extract", "wild_clover_seeds", "prairie_onion_seeds", "meadow_sage_seeds"],
-        "cooldownMinutes": 30,
-        "skillModifier": "foraging"
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": [
+          { "id": "meadow_herbs", "type": "herb_patch", "position": { "x": -2.2, "z": 1.1 } },
+          { "id": "meadow_rocks", "type": "rock_pile", "position": { "x": 1.8, "z": -1.2 } },
+          { "id": "meadow_flowers", "type": "wildflower_field", "position": { "x": 2.7, "z": 2.4 } }
+        ]
       },
       "npcSlots": [],
       "interactables": [
@@ -159,10 +170,13 @@
       ],
       "foraging": {
         "enabled": true,
-        "spots": 3,
-        "lootTable": ["plant_matter", "wood", "scrap_metal", "watercress_seeds", "wild_rice_seeds", "marsh_marigold_seeds"],
-        "cooldownMinutes": 30,
-        "skillModifier": "foraging"
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": [
+          { "id": "riverside_berries", "type": "berry_bush", "position": { "x": -1.4, "z": 2.6 } },
+          { "id": "riverside_driftwood", "type": "driftwood", "position": { "x": 2.9, "z": -0.7 } },
+          { "id": "riverside_watercress", "type": "watercress_bed", "position": { "x": -5.2, "z": 0.4 } }
+        ]
       },
       "npcSlots": [],
       "interactables": [
@@ -205,10 +219,13 @@
       ],
       "foraging": {
         "enabled": true,
-        "spots": 4,
-        "lootTable": ["wood", "plant_matter", "herb_extract", "crystal_shard", "shiitake_spores", "wild_garlic_seeds", "woodland_strawberry_seeds"],
-        "cooldownMinutes": 30,
-        "skillModifier": "foraging"
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": [
+          { "id": "forest_herbs", "type": "herb_patch", "position": { "x": -2.8, "z": 0.9 } },
+          { "id": "forest_berries", "type": "berry_bush", "position": { "x": 1.9, "z": 1.7 } },
+          { "id": "forest_mushrooms", "type": "mushroom_log", "position": { "x": 0.4, "z": -2.1 } }
+        ]
       },
       "npcSlots": [
         { "npcId": "old_gus", "position": { "x": -4, "z": 3 }, "seasons": ["fall", "winter"] }
@@ -250,7 +267,12 @@
       "exitPoints": [
         { "edge": "north", "position": { "x": 0, "z": 7.5 }, "destination": "forest_edge", "spawnPoint": { "x": 0, "z": -8 } }
       ],
-      "foraging": false,
+      "foraging": {
+        "enabled": false,
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": []
+      },
       "npcSlots": [
         { "npcId": "maya", "position": { "x": 3, "z": -4 }, "seasons": ["winter"] }
       ],
@@ -291,7 +313,12 @@
       "exitPoints": [
         { "edge": "south", "position": { "x": 0, "z": -11.5 }, "destination": "neighborhood", "spawnPoint": { "x": 5, "z": -7 } }
       ],
-      "foraging": false,
+      "foraging": {
+        "enabled": false,
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": []
+      },
       "npcSlots": [
         { "npcId": "old_gus", "position": { "x": -5, "z": 3 }, "seasons": ["spring", "summer", "fall", "winter"] },
         { "npcId": "maya", "position": { "x": 5, "z": 3 }, "seasons": ["spring", "summer", "fall", "winter"] },
@@ -334,7 +361,12 @@
       "exitPoints": [
         { "edge": "north", "position": { "x": 0, "z": 8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": -7 } }
       ],
-      "foraging": false,
+      "foraging": {
+        "enabled": false,
+        "cooldownMinutes": 5,
+        "skillModifier": "foraging",
+        "spots": []
+      },
       "npcSlots": [
         { "npcId": "lila", "position": { "x": -3, "z": -2 }, "seasons": ["spring", "summer"] }
       ],
