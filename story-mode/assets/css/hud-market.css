@@ -162,3 +162,11 @@
 }
 
 .trade-panel__table td { font-family: 'DM Mono', monospace; }
+
+/* World map: the reason a zone is locked, shown on its card. */
+.world-map__lock {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(232, 200, 74, 0.9);
+}
