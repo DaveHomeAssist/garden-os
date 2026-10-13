@@ -3,6 +3,14 @@ import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
 import { quoteMarketTrade } from '../server/authority-market.js';
+import {
+  BED_KIT_ITEM_ID,
+  canSwitchBed,
+  checkBedAcquisition,
+  createBedRecord,
+  ensureActiveBedRecord,
+  switchActiveBedInState,
+} from './beds.js';
 
 import {
   attachGridMeta,
@@ -1056,8 +1064,8 @@ function gameReducer(state, action = {}) {
         forageState: normalizeForageState(nextState.campaign.worldState?.forageState),
       };
       const preferredBedId = findPreferredBedIdForZone(nextState.campaign, toZone);
-      if (preferredBedId) {
-        nextState.campaign.activeBedId = preferredBedId;
+      if (preferredBedId && preferredBedId !== nextState.campaign.activeBedId && canSwitchBed(nextState)) {
+        switchActiveBedInState(nextState, preferredBedId);
       }
       return nextState;
     }
@@ -1290,41 +1298,54 @@ function gameReducer(state, action = {}) {
     }
 
     case Actions.ACQUIRE_BED: {
-      const { bedId, bed } = payload;
-      if (!bedId || !bed) return state;
-      const nextState = cloneGameState(state);
-      nextState.campaign.beds = {
-        ...(nextState.campaign.beds ?? {}),
-        [bedId]: cloneValue(bed),
-      };
+      // Building a bed spends one raised bed kit and claims a bed slot from
+      // WORLD_MAP. The payload names the bed; the record is built here.
+      const check = checkBedAcquisition(state, {
+        bedId: payload.bedId,
+        name: payload.name,
+        zone: payload.zone,
+      }, {
+        getItemCount: (itemId) => getInventoryItemCount(state.campaign.inventory, itemId),
+      });
+      if (!check.ok) return state;
+      const removed = removeItemFromInventoryState(state.campaign.inventory, BED_KIT_ITEM_ID, 1);
+      if (!removed.success) return state;
+      const nextState = ensureActiveBedRecord(cloneGameState(state));
+      nextState.campaign.inventory = removed.inventory;
+      nextState.campaign.beds[check.bedId] = createBedRecord({
+        bedId: check.bedId,
+        name: check.name,
+        zone: check.zone,
+      });
       return nextState;
     }
 
     case Actions.SWITCH_BED: {
       const { bedId } = payload;
-      if (!bedId) return state;
+      if (!bedId || !canSwitchBed(state)) return state;
       const nextState = cloneGameState(state);
-      if (!nextState.campaign.beds?.[bedId]) return state;
-      nextState.campaign.activeBedId = bedId;
-      return nextState;
+      return switchActiveBedInState(nextState, bedId) ? nextState : state;
     }
 
     case Actions.EXPAND_BED_GRID: {
       const { bedId, rows: newRows } = payload;
       if (!bedId || !Number.isInteger(newRows)) return state;
-      const nextState = cloneGameState(state);
+      const nextState = ensureActiveBedRecord(cloneGameState(state));
       const bed = nextState.campaign.beds?.[bedId];
       if (!bed) return state;
+      const bedIsActive = bedId === nextState.campaign.activeBedId;
 
-      const currentRows = bed.gridRows ?? 4;
-      const currentCols = bed.gridCols ?? 8;
+      const currentRows = (bedIsActive ? nextState.season.gridRows : bed.gridRows) ?? 4;
+      const currentCols = (bedIsActive ? nextState.season.gridCols : bed.gridCols) ?? 8;
       const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
 
       if (newRows <= currentRows || newRows > maxRows) return state;
 
+      const isActive = bedId === (nextState.campaign.activeBedId ?? 'player_plot');
       const newGrid = createGrid(currentCols, newRows);
-      // Copy existing cell data into the new grid
-      const oldGrid = bed.grid ?? [];
+      // Copy existing cell data into the new grid; the active bed lives in the
+      // season projection, so expand that copy.
+      const oldGrid = isActive ? (nextState.season.grid ?? []) : (bed.grid ?? []);
       for (let i = 0; i < oldGrid.length; i++) {
         newGrid[i] = { ...newGrid[i], ...oldGrid[i] };
       }
@@ -1332,6 +1353,11 @@ function gameReducer(state, action = {}) {
       bed.grid = attachGridMeta(newGrid, currentCols, newRows);
       bed.gridRows = newRows;
       bed.gridCols = currentCols;
+      if (isActive) {
+        nextState.season.grid = attachGridMeta(newGrid.map((cell) => ({ ...cell })), currentCols, newRows);
+        nextState.season.gridCols = currentCols;
+        nextState.season.gridRows = newRows;
+      }
       return nextState;
     }
 

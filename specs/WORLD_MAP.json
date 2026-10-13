@@ -17,6 +17,7 @@
       },
       "connections": ["neighborhood"],
       "gate": null,
+      "bedSlots": 3,
       "features": ["garden_bed", "tool_shed"],
       "bounds": { "minX": -2.5, "maxX": 2.5, "minZ": -2.0, "maxZ": 2.0 },
       "spawnPoint": { "x": 0, "z": 0 },

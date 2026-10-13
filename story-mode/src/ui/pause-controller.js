@@ -4,6 +4,7 @@ import { createSeasonState } from '../game/state.js';
 import { deleteCampaign, exportSaveSlot, importSaveSlot } from '../game/save.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
+import { showBedsPanel } from './beds-panel.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { createPlayerProfileEditor } from './player-profile-editor.js';
 
@@ -169,6 +170,20 @@ export function createPauseController({
     closePauseMenu();
     const state = getState();
     showSeasonJournalSheet(pauseContainer, state.campaign.journalEntries || []);
+  }, listenerOptions);
+
+  document.getElementById('pause-beds')?.addEventListener('click', () => {
+    playSFX('ui_click');
+    closePauseMenu();
+    showBedsPanel(pauseContainer, {
+      getState,
+      dispatch,
+      showToast,
+      onChange: () => {
+        persistState();
+        updateHUD?.();
+      },
+    });
   }, listenerOptions);
 
   document.getElementById('pause-story-log')?.addEventListener('click', () => {

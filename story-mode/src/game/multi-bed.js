@@ -1,31 +1,24 @@
 /**
- * MultiBedManager — manages multiple garden beds per campaign.
- *
- * Each bed has its own independent grid, name, zone, and dimensions.
- * The manager coordinates with the store via ACQUIRE_BED and SWITCH_BED actions.
+ * MultiBedManager: the player-facing API for owning and tending more than one
+ * garden bed. State rules live in ./beds.js and the store reducers; this class
+ * only reads through them and dispatches ACQUIRE_BED, SWITCH_BED, and
+ * EXPAND_BED_GRID, all of which the authority runtimes also validate.
  */
-import { createGrid, attachGridMeta, COLS, ROWS, GRID_UNLOCKS } from './state.js';
+import { GRID_UNLOCKS, ROWS } from './state.js';
 import { Actions } from './store.js';
+import { getInventoryItemCount } from './inventory.js';
+import {
+  BED_KIT_ITEM_ID,
+  HOME_BED_ID,
+  canSwitchBed,
+  checkBedAcquisition,
+  createBedRecord,
+  getBedGrid,
+  listBeds,
+} from './beds.js';
 
-/**
- * Create a BedState object.
- * @param {string} id
- * @param {string} name
- * @param {string} zone
- * @param {number} cols
- * @param {number} rows
- * @returns {BedState}
- */
-function createBedState(id, name, zone, cols = COLS, rows = ROWS) {
-  return {
-    id,
-    name,
-    zone,
-    grid: createGrid(cols, rows),
-    gridCols: cols,
-    gridRows: rows,
-    harvestResult: null,
-  };
+function createBedState(id, name, zone = HOME_BED_ID, cols, rows) {
+  return createBedRecord({ bedId: id, name, zone, cols, rows });
 }
 
 class MultiBedManager {
@@ -37,180 +30,127 @@ class MultiBedManager {
     this._disposed = false;
   }
 
+  _state() {
+    return this._store.getState();
+  }
+
+  /** Next free id in the bed_2, bed_3 pattern. */
+  nextBedId() {
+    const state = this._state();
+    const taken = new Set([...Object.keys(state.campaign.beds ?? {}), state.campaign.activeBedId ?? HOME_BED_ID]);
+    for (let index = 2; index < 100; index += 1) {
+      const candidate = `bed_${index}`;
+      if (!taken.has(candidate)) return candidate;
+    }
+    return null;
+  }
+
+  /** Whether the player can build another bed right now, and why not. */
+  canBuildBed({ zone = HOME_BED_ID } = {}) {
+    const state = this._state();
+    const bedId = this.nextBedId();
+    const check = checkBedAcquisition(state, { bedId, name: `Bed ${listBeds(state).length + 1}`, zone }, {
+      getItemCount: (itemId) => getInventoryItemCount(state.campaign.inventory, itemId),
+    });
+    return check.ok ? { ok: true, bedId } : { ok: false, code: check.code, reason: check.message };
+  }
+
   /**
-   * Acquire a new garden bed.
-   * Creates a bed with an empty grid and dispatches ACQUIRE_BED.
-   * @param {string} bedId
-   * @param {{ name: string, zone: string, initialGridCols?: number, initialGridRows?: number }} opts
-   * @returns {BedState}
+   * Build a new bed from a raised bed kit.
+   * @returns {{ ok: boolean, bed?: object, reason?: string, code?: string }}
    */
-  acquireBed(bedId, { name, zone, initialGridCols = COLS, initialGridRows = ROWS } = {}) {
-    if (this._disposed) return null;
-
-    const bed = createBedState(bedId, name, zone, initialGridCols, initialGridRows);
-
+  buildBed(name, { bedId = this.nextBedId(), zone = HOME_BED_ID } = {}) {
+    if (this._disposed) return { ok: false, reason: 'Unavailable.' };
+    const state = this._state();
+    const check = checkBedAcquisition(state, { bedId, name, zone }, {
+      getItemCount: (itemId) => getInventoryItemCount(state.campaign.inventory, itemId),
+    });
+    if (!check.ok) return { ok: false, code: check.code, reason: check.message };
     this._store.dispatch({
       type: Actions.ACQUIRE_BED,
-      payload: { bedId, bed },
+      payload: { bedId: check.bedId, name: check.name, zone: check.zone },
     });
-
-    return bed;
+    const bed = this.getBed(check.bedId);
+    return bed ? { ok: true, bed } : { ok: false, reason: 'The bed could not be built.' };
   }
 
-  /**
-   * Get a bed by ID from the store state.
-   * @param {string} bedId
-   * @returns {BedState|null}
-   */
+  /** Compatibility wrapper: acquireBed(id, { name, zone }) returns the bed or null. */
+  acquireBed(bedId, { name, zone = HOME_BED_ID } = {}) {
+    const result = this.buildBed(name, { bedId, zone });
+    return result.ok ? result.bed : null;
+  }
+
+  /** A bed record; for the active bed the grid comes from the live season. */
   getBed(bedId) {
-    const state = this._store.getState();
-    return state.campaign.beds?.[bedId] ?? null;
+    return listBeds(this._state()).find((bed) => bed.id === bedId) ?? null;
   }
 
-  /**
-   * Get all beds as an array.
-   * @returns {BedState[]}
-   */
   getAllBeds() {
-    const state = this._store.getState();
-    const beds = state.campaign.beds ?? {};
-    return Object.values(beds);
+    return listBeds(this._state());
   }
 
-  /**
-   * Get all beds in a specific zone.
-   * @param {string} zoneId
-   * @returns {BedState[]}
-   */
   getBedsForZone(zoneId) {
     return this.getAllBeds().filter((bed) => bed?.zone === zoneId);
   }
 
-  /**
-   * Get the currently active bed.
-   * @returns {BedState|null}
-   */
   getActiveBed() {
-    const state = this._store.getState();
-    const activeBedId = state.campaign.activeBedId;
-    if (!activeBedId) return null;
-    return state.campaign.beds?.[activeBedId] ?? null;
+    return this.getAllBeds().find((bed) => bed.active) ?? null;
+  }
+
+  canSwitch() {
+    return canSwitchBed(this._state());
   }
 
   /**
-   * Switch the active bed. Returns true if the bed exists and was switched.
+   * Tend another bed. Returns true when the active bed changed.
    * @param {string} bedId
-   * @returns {boolean}
    */
   switchActiveBed(bedId) {
     if (this._disposed) return false;
-
-    const state = this._store.getState();
-    if (!state.campaign.beds?.[bedId]) return false;
-
-    this._store.dispatch({
-      type: Actions.SWITCH_BED,
-      payload: { bedId },
-    });
-
-    return true;
+    const before = this._state().campaign.activeBedId;
+    if (!this._state().campaign.beds?.[bedId] || bedId === before) return false;
+    this._store.dispatch({ type: Actions.SWITCH_BED, payload: { bedId } });
+    return this._state().campaign.activeBedId === bedId;
   }
 
-  /**
-   * Switch the active bed to the first bed assigned to a zone.
-   * Returns the bed that became active or null when no bed exists in the zone.
-   * @param {string} zoneId
-   * @returns {BedState|null}
-   */
   syncActiveBedToZone(zoneId) {
     if (this._disposed) return null;
     const nextBed = this.getBedsForZone(zoneId)[0] ?? null;
     if (!nextBed) return null;
     this.switchActiveBed(nextBed.id);
-    return this.getBed(nextBed.id);
+    return this.getActiveBed();
   }
 
-  /**
-   * Get the grid of the currently active bed.
-   * @returns {Cell[]|null}
-   */
   getActiveGrid() {
-    const bed = this.getActiveBed();
-    return bed?.grid ?? null;
+    const state = this._state();
+    return getBedGrid(state, state.campaign.activeBedId ?? HOME_BED_ID);
   }
 
-  /**
-   * Get the grid for a specific bed.
-   * @param {string} bedId
-   * @returns {Cell[]|null}
-   */
   getGridForBed(bedId) {
-    const bed = this.getBed(bedId);
-    return bed?.grid ?? null;
+    return getBedGrid(this._state(), bedId);
   }
 
-  /**
-   * Expand a bed's grid by adding rows.
-   * Dispatches EXPAND_BED_GRID action.
-   * @param {string} bedId
-   * @param {number} newRows
-   * @returns {boolean}
-   */
   expandBedGrid(bedId, newRows) {
     if (this._disposed) return false;
-
-    const state = this._store.getState();
+    const state = this._state();
+    const isActive = bedId === (state.campaign.activeBedId ?? HOME_BED_ID);
     const bed = state.campaign.beds?.[bedId];
-    if (!bed) return false;
-
-    const currentRows = bed.gridRows ?? ROWS;
-    const maxRows = Math.max(...GRID_UNLOCKS.map((u) => u.rows));
-
-    if (!Number.isInteger(newRows) || newRows <= currentRows || newRows > maxRows) {
-      return false;
-    }
-
-    this._store.dispatch({
-      type: Actions.EXPAND_BED_GRID,
-      payload: { bedId, rows: newRows },
-    });
-
+    if (!bed && !isActive) return false;
+    const currentRows = (isActive ? state.season.gridRows : bed.gridRows) ?? ROWS;
+    const maxRows = Math.max(...GRID_UNLOCKS.map((unlock) => unlock.rows));
+    if (!Number.isInteger(newRows) || newRows <= currentRows || newRows > maxRows) return false;
+    this._store.dispatch({ type: Actions.EXPAND_BED_GRID, payload: { bedId, rows: newRows } });
     return true;
   }
 
-  /**
-   * Serialize all beds for save/load.
-   * @returns {BedState[]}
-   */
   serializeBeds() {
     return this.getAllBeds();
   }
 
-  /**
-   * Load beds from serialized state.
-   * Dispatches ACQUIRE_BED for each bed.
-   * @param {BedState[]} bedStates
-   */
-  loadBeds(bedStates) {
-    if (this._disposed) return;
-    if (!Array.isArray(bedStates)) return;
-
-    for (const bed of bedStates) {
-      if (!bed?.id) continue;
-      this._store.dispatch({
-        type: Actions.ACQUIRE_BED,
-        payload: { bedId: bed.id, bed },
-      });
-    }
-  }
-
-  /**
-   * Clean up references.
-   */
   dispose() {
     this._disposed = true;
     this._store = null;
   }
 }
 
-export { MultiBedManager, createBedState };
+export { BED_KIT_ITEM_ID, MultiBedManager, createBedState };

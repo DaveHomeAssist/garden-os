@@ -2112,3 +2112,50 @@ test('authority rejects client-submitted market totals before mutation', async (
   assert.equal(body.ack.accepted, false);
   assert.equal(body.ack.rejection.code, 'CLIENT_TRADE_TOTAL');
 });
+
+async function sendAction(env, sessionId, seq, type, payload) {
+  const response = await worker.fetch(jsonRequest('/action', {
+    clientSeq: seq,
+    expectedTick: seq - 1,
+    gameId: 'garden',
+    id: `world-${seq}`,
+    idempotencyKey: `world-idem-${seq}`,
+    payload,
+    playerId: 'local',
+    sessionId,
+    type,
+  }), env);
+  return response.json();
+}
+
+test('authority rejects unknown zones and holds quest and festival gates', async () => {
+  const { env, sessionId } = await createSession();
+  const unknown = await sendAction(env, sessionId, 1, 'ZONE_CHANGED', { toZone: 'moon_base' });
+  assert.equal(unknown.ack.accepted, false);
+  assert.equal(unknown.ack.rejection.code, 'BAD_ZONE_ID');
+  const riverside = await sendAction(env, sessionId, 1, 'ZONE_CHANGED', { toZone: 'riverside' });
+  assert.equal(riverside.ack.rejection.code, 'ZONE_GATED');
+  const festival = await sendAction(env, sessionId, 1, 'ZONE_CHANGED', { toZone: 'festival_grounds' });
+  assert.equal(festival.ack.rejection.code, 'ZONE_GATED');
+});
+
+test('authority builds beds from kits and keeps grids per bed', async () => {
+  const { env, sessionId } = await createSession();
+  const noKit = await sendAction(env, sessionId, 1, 'ACQUIRE_BED', { bedId: 'bed_2', name: 'Second' });
+  assert.equal(noKit.ack.rejection.code, 'NO_BED_KIT');
+
+  await sendAction(env, sessionId, 1, 'ADD_ITEM', { itemId: 'raised_bed_kit', count: 1 });
+  await sendAction(env, sessionId, 2, 'PLANT_CROP', { cellIndex: 0, cropId: 'basil' });
+  const built = await sendAction(env, sessionId, 3, 'ACQUIRE_BED', { bedId: 'bed_2', name: 'Second' });
+  assert.equal(built.ack.accepted, true);
+  assert.equal(await verifyServerAckSignature(built.ack, SECRET), true);
+
+  const switched = await sendAction(env, sessionId, 4, 'SWITCH_BED', { bedId: 'bed_2' });
+  assert.equal(switched.ack.accepted, true);
+  assert.equal(switched.state.data.activeBedId, 'bed_2');
+  assert.equal(switched.state.data.grid[0].cropId ?? null, null);
+  assert.equal(switched.state.data.beds.player_plot.grid[0].cropId, 'basil');
+
+  const forged = await sendAction(env, sessionId, 5, 'SWITCH_BED', { bedId: 'player_plot', grid: [] });
+  assert.equal(forged.ack.rejection.code, 'TRUSTED_BED_PAYLOAD');
+});

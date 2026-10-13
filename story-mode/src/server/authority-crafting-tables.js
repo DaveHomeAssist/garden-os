@@ -72,6 +72,14 @@ const AUTHORITY_CRAFTING_RECIPES = {
     ],
     output: { itemId: 'trellis_kit', count: 1, durability: null },
   },
+  raised_bed_kit: {
+    materials: [
+      { itemId: 'wood', count: 6 },
+      { itemId: 'garden_twine', count: 2 },
+      { itemId: 'scrap_metal', count: 2 },
+    ],
+    output: { itemId: 'raised_bed_kit', count: 1, durability: null },
+  },
   soil_scanner: {
     materials: [
       { itemId: 'crystal_shard', count: 1 },

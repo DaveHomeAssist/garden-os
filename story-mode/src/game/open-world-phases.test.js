@@ -7,6 +7,7 @@ import { getCropById } from '../data/crops.js';
 import { buildWorldMapModel } from '../ui/world-map.js';
 import { WORLD_ZONE_INTERACTABLES } from '../ui/zone-travel.js';
 import { ZONE_FACTORIES } from '../scene/zones/zone-registry.js';
+import { addItemToInventoryState } from './inventory.js';
 import { createGameState, CAMPAIGN_SCHEMA_VERSION } from './state.js';
 import { Actions, Store } from './store.js';
 import { BedManager } from './bed-manager.js';
@@ -98,22 +99,28 @@ describe('open world phases 5 to 8', () => {
     });
   });
 
-  it('keeps active beds synced to zone travel and preserves bed state', () => {
-    const store = new Store(createGameState());
+  it('keeps beds independent across zone travel and preserves bed state', () => {
+    const state = createGameState();
+    state.campaign.inventory = addItemToInventoryState(state.campaign.inventory, 'raised_bed_kit', 1).inventory;
+    const store = new Store(state);
     const beds = new BedManager(store);
-    beds.acquireBed('player_plot_bed', { name: 'Home Bed', zone: 'player_plot' });
-    beds.acquireBed('meadow_bed', { name: 'Meadow Bed', zone: 'meadow' });
-    beds.switchActiveBed('player_plot_bed');
+    expect(beds.buildBed('Second Bed').ok).toBe(true);
+    store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'basil' } });
+    beds.switchActiveBed('bed_2');
 
     store.dispatch({
       type: Actions.ZONE_CHANGED,
       payload: { fromZone: 'player_plot', toZone: 'meadow', spawnPoint: { x: 1, z: 1 } },
     });
+    store.dispatch({
+      type: Actions.ZONE_CHANGED,
+      payload: { fromZone: 'meadow', toZone: 'player_plot', spawnPoint: { x: 0, z: 3 } },
+    });
 
     const campaign = store.getState().campaign;
-    expect(campaign.activeBedId).toBe('meadow_bed');
-    expect(campaign.beds.player_plot_bed.name).toBe('Home Bed');
-    expect(campaign.beds.meadow_bed.name).toBe('Meadow Bed');
+    expect(campaign.activeBedId).toBe('bed_2');
+    expect(campaign.beds.player_plot.grid[0].cropId).toBe('basil');
+    expect(campaign.beds.bed_2.name).toBe('Second Bed');
   });
 
   it('has scene factories and valid biome crops for every zone', () => {

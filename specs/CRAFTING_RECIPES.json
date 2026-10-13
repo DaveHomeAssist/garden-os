@@ -270,6 +270,25 @@
       "unlockCondition": null
     },
     {
+      "id": "raised_bed_kit",
+      "name": "Raised Bed Kit",
+      "description": "Cut boards, corner stakes, and twine for a second cedar-style bed. Build it in your yard to tend another bed alongside the first.",
+      "category": "upgrade",
+      "materials": [
+        { "itemId": "wood", "count": 6, "name": "Wood" },
+        { "itemId": "garden_twine", "count": 2, "name": "Garden Twine" },
+        { "itemId": "scrap_metal", "count": 2, "name": "Scrap Metal" }
+      ],
+      "output": {
+        "itemId": "raised_bed_kit",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 3 },
+      "craftingXP": 30,
+      "unlockCondition": null
+    },
+    {
       "id": "soil_scanner",
       "name": "Soil Scanner",
       "description": "A crystal-powered device that reveals hidden soil properties and nutrient levels.",

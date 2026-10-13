@@ -39,7 +39,7 @@ import { QuestEngine, QuestStates } from '../game/quest-engine.js';
 import { ReputationSystem, ReputationTiers } from '../game/reputation.js';
 import { NPC_REGISTRY, getNPCsInZone, getNPCGreeting } from '../data/npcs.js';
 import { FESTIVALS, FestivalEngine } from '../game/festivals.js';
-import { Inventory, findToolSlotIndex, getItemDef } from '../game/inventory.js';
+import { Inventory, addItemToInventoryState, findToolSlotIndex, getItemDef } from '../game/inventory.js';
 import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
 import { ForagingSystem, LOOT_TABLES } from '../game/foraging.js';
@@ -4664,65 +4664,52 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
   // 5-E. Multiple Beds
   // -------------------------------------------------------------------------
   describe('Multiple Beds', () => {
-    it('player can own multiple garden beds', () => {
-      const store = new Store(createGameState());
+    function stateWithBedKits(count = 2) {
+      const state = createGameState();
+      state.campaign.inventory = addItemToInventoryState(state.campaign.inventory, 'raised_bed_kit', count).inventory;
+      return state;
+    }
+
+    it('player can own multiple garden beds, built from raised bed kits', () => {
+      const store = new Store(stateWithBedKits(2));
       const manager = new MultiBedManager(store);
 
-      manager.acquireBed('player_plot', { name: 'Player Plot', zone: 'player_plot' });
-      manager.acquireBed('community_plot', { name: 'Community Plot', zone: 'community' });
+      expect(manager.buildBed('Back Fence').ok).toBe(true);
+      expect(manager.buildBed('Shed Side').ok).toBe(true);
 
-      const allBeds = manager.getAllBeds();
-      expect(allBeds.length).toBe(2);
-
-      const ids = allBeds.map((b) => b.id);
-      expect(ids).toContain('player_plot');
-      expect(ids).toContain('community_plot');
+      const ids = manager.getAllBeds().map((bed) => bed.id).sort();
+      expect(ids).toEqual(['bed_2', 'bed_3', 'player_plot']);
+      expect(manager.canBuildBed()).toMatchObject({ ok: false, code: 'BED_LIMIT' });
 
       manager.dispose();
     });
 
     it('each bed has independent grid state', () => {
-      const store = new Store(createGameState());
+      const store = new Store(stateWithBedKits(1));
       const manager = new MultiBedManager(store);
+      manager.buildBed('Second');
 
-      manager.acquireBed('bed_a', { name: 'Bed A', zone: 'player_plot' });
-      manager.acquireBed('bed_b', { name: 'Bed B', zone: 'community' });
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'basil' } });
 
-      // Plant basil in bed A, cell 0 via state mutation
-      const state = store.getState();
-      state.campaign.beds.bed_a.grid[0].cropId = 'basil';
-      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
-
-      const bedA = manager.getBed('bed_a');
-      const bedB = manager.getBed('bed_b');
-      expect(bedA.grid[0].cropId).toBe('basil');
-      expect(bedB.grid[0].cropId).toBeNull();
+      expect(manager.getGridForBed('player_plot')[0].cropId).toBe('basil');
+      expect(manager.getGridForBed('bed_2')[0].cropId).toBeNull();
 
       manager.dispose();
     });
 
-    it('switching active bed updates the garden scene', () => {
-      const store = new Store(createGameState());
+    it('switching active bed swaps the grid the garden scene renders', () => {
+      const store = new Store(stateWithBedKits(1));
       const manager = new MultiBedManager(store);
+      manager.buildBed('Second');
 
-      manager.acquireBed('bed_a', { name: 'Bed A', zone: 'player_plot' });
-      manager.acquireBed('bed_b', { name: 'Bed B', zone: 'community' });
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'cherry_tom' } });
+      manager.switchActiveBed('bed_2');
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'lettuce' } });
 
-      // Plant different crops in each bed so grids differ
-      const state = store.getState();
-      state.campaign.beds.bed_a.grid[0].cropId = 'tomato';
-      state.campaign.beds.bed_b.grid[0].cropId = 'lettuce';
-      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
-
-      // Switch to bed A
-      manager.switchActiveBed('bed_a');
-      const gridA = manager.getActiveGrid();
-      expect(gridA[0].cropId).toBe('tomato');
-
-      // Switch to bed B
-      manager.switchActiveBed('bed_b');
-      const gridB = manager.getActiveGrid();
-      expect(gridB[0].cropId).toBe('lettuce');
+      expect(store.getState().season.grid[0].cropId).toBe('lettuce');
+      manager.switchActiveBed('player_plot');
+      expect(store.getState().season.grid[0].cropId).toBe('cherry_tom');
+      expect(manager.getActiveGrid()[0].cropId).toBe('cherry_tom');
 
       manager.dispose();
     });
@@ -4730,55 +4717,47 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
     it('all beds are saved and loaded correctly', () => {
       globalThis.localStorage = createMockStorage();
 
-      const store = new Store(createGameState());
+      const store = new Store(stateWithBedKits(1));
       const manager = new MultiBedManager(store);
+      manager.buildBed('Second');
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 0, cropId: 'basil' } });
+      manager.switchActiveBed('bed_2');
+      store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex: 3, cropId: 'lettuce' } });
 
-      // Acquire two beds
-      manager.acquireBed('bed_a', { name: 'Bed A', zone: 'player_plot' });
-      manager.acquireBed('bed_b', { name: 'Bed B', zone: 'community' });
-
-      // Plant crops in each bed
-      const state = store.getState();
-      state.campaign.beds.bed_a.grid[0].cropId = 'basil';
-      state.campaign.beds.bed_b.grid[0].cropId = 'lettuce';
-      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
-
-      // Save
       const saved = saveCampaign(store.getState().campaign, 0);
       expect(saved).not.toBeNull();
 
-      // Load into a fresh campaign
       const loaded = loadCampaign(0);
-      expect(loaded).not.toBeNull();
-      expect(loaded.beds).toBeDefined();
-      expect(loaded.beds.bed_a).toBeDefined();
-      expect(loaded.beds.bed_b).toBeDefined();
-      expect(loaded.beds.bed_a.grid[0].cropId).toBe('basil');
-      expect(loaded.beds.bed_b.grid[0].cropId).toBe('lettuce');
+      expect(loaded.activeBedId).toBe('bed_2');
+      // The parked home bed keeps its crop in its record; the active bed's
+      // live grid travels with the season save.
+      expect(loaded.beds.player_plot.grid[0].cropId).toBe('basil');
+      expect(loaded.beds.bed_2).toBeDefined();
+      expect(loaded.beds.bed_2.name).toBe('Second');
 
       manager.dispose();
       delete globalThis.localStorage;
     });
 
-    it('zone travel and save/load preserve per-zone active beds and forage cooldowns', () => {
+    it('zone travel and save/load keep the home bed active and forage cooldowns', () => {
       globalThis.localStorage = createMockStorage();
       const now = 1_700_000_000_000;
       vi.spyOn(Date, 'now').mockReturnValue(now);
 
-      const state = createGameState();
+      const state = stateWithBedKits(1);
       state.campaign.skills.foraging = { xp: 0, level: 3 };
       const store = new Store(state);
       const manager = new MultiBedManager(store);
-
-      manager.acquireBed('player_plot', { name: 'Player Plot', zone: 'player_plot' });
-      manager.acquireBed('meadow_bed', { name: 'Meadow Bed', zone: 'meadow' });
+      manager.buildBed('Second');
+      manager.switchActiveBed('bed_2');
 
       store.dispatch({
         type: Actions.ZONE_CHANGED,
         payload: { fromZone: 'player_plot', toZone: 'meadow', spawnPoint: { x: -6, z: 0 } },
       });
 
-      expect(store.getState().campaign.activeBedId).toBe('meadow_bed');
+      // Beds stay where they were built; walking to the meadow does not swap them.
+      expect(store.getState().campaign.activeBedId).toBe('bed_2');
 
       const inventory = new Inventory(store);
       const skillSystem = new SkillSystem(store);
@@ -4791,7 +4770,7 @@ describe('Phase 5 — Open World, Zones, Foraging, Grid Expansion', () => {
       expect(saved).not.toBeNull();
 
       const loaded = loadCampaign(0);
-      expect(loaded.activeBedId).toBe('meadow_bed');
+      expect(loaded.activeBedId).toBe('bed_2');
       expect(loaded.worldState.currentZone).toBe('meadow');
       expect(loaded.worldState.forageState.cooldowns.meadow_herbs).toBeGreaterThan(now);
       expect(loaded.worldState.forageState.history.meadow_herbs.zoneId).toBe('meadow');

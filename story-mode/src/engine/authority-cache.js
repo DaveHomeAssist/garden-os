@@ -13,7 +13,7 @@ const AUTHORITY_URL_KEY = 'gos-story-authority-url';
 const AUTHORITY_META_NAME = 'garden-os-authority-url';
 const BUILD_AUTHORITY_URL = import.meta.env?.VITE_GARDEN_OS_AUTHORITY_URL ?? null;
 const AUTHORITY_ROUTED_REMOVE_ITEM_IDS = new Set(['fertilizer_bag', 'mulch_bag', 'pest_spray']);
-const ROUTED_ACTION_TYPES = new Set(['ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'COMPLETE_QUEST', 'CRAFT_ITEM', 'FESTIVAL_ACTIVITY', 'FESTIVAL_END', 'FESTIVAL_START', 'HARVEST_CELL', 'MARKET_TRADE', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
+const ROUTED_ACTION_TYPES = new Set(['ACQUIRE_BED', 'ADD_ITEM', 'APPLY_TOOL_INTERVENTION', 'CARRY_FORWARD', 'COMPLETE_QUEST', 'CRAFT_ITEM', 'FESTIVAL_ACTIVITY', 'FESTIVAL_END', 'FESTIVAL_START', 'HARVEST_CELL', 'MARKET_TRADE', 'PLANT_CROP', 'REMOVE_CROP', 'REMOVE_ITEM', 'REPAIR_TOOL', 'SET_ACTIVE_TOOL', 'SET_COOLDOWN', 'SET_DAMAGE', 'SET_PROTECTION', 'SET_SELECTED_CROP', 'SWITCH_BED', 'UPDATE_SOIL', 'USE_TOOL', 'WATER_CELL', 'ZONE_CHANGED']);
 const MAX_DRAIN_ACTIONS = 20;
 
 function cloneValue(value) {
@@ -144,7 +144,9 @@ function clonePosition(value) {
 function inferAckActionType(ack) {
   if (typeof ack?.actionType === 'string') return ack.actionType;
   const actionId = String(ack?.actionId ?? '');
+  if (actionId.endsWith(':ACQUIRE_BED')) return 'ACQUIRE_BED';
   if (actionId.endsWith(':ADD_ITEM')) return 'ADD_ITEM';
+  if (actionId.endsWith(':SWITCH_BED')) return 'SWITCH_BED';
   if (actionId.endsWith(':APPLY_TOOL_INTERVENTION')) return 'APPLY_TOOL_INTERVENTION';
   if (actionId.endsWith(':COMPLETE_QUEST')) return 'COMPLETE_QUEST';
   if (actionId.endsWith(':CRAFT_ITEM')) return 'CRAFT_ITEM';

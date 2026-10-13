@@ -1,230 +1,117 @@
 /**
- * Unit tests for MultiBedManager.
+ * Multiple beds: each bed keeps its own crops, soil, and history; the active
+ * bed is projected into the live season grid and parked on every switch.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { MultiBedManager } from './multi-bed.js';
-import { Store, Actions } from './store.js';
-import { createGameState, COLS, ROWS } from './state.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-describe('MultiBedManager', () => {
+import { BedManager } from './bed-manager.js';
+import { Actions, Store } from './store.js';
+import { COLS, PHASES, ROWS, createGameState } from './state.js';
+import { addItemToInventoryState, getInventoryItemCount } from './inventory.js';
+import { BED_KIT_ITEM_ID, HOME_BED_ID, getBedGrid } from './beds.js';
+import { advance } from './phase-machine.js';
+
+function stateWithKits(count = 2) {
+  const state = createGameState();
+  state.campaign.inventory = addItemToInventoryState(state.campaign.inventory, BED_KIT_ITEM_ID, count).inventory;
+  return state;
+}
+
+function plant(store, cellIndex, cropId) {
+  store.dispatch({ type: Actions.PLANT_CROP, payload: { cellIndex, cropId } });
+}
+
+describe('BedManager', () => {
   let store;
-  let manager;
+  let beds;
 
   beforeEach(() => {
-    store = new Store(createGameState());
-    manager = new MultiBedManager(store);
+    store = new Store(stateWithKits(2));
+    beds = new BedManager(store);
   });
 
-  describe('acquireBed', () => {
-    it('creates a new bed with correct properties', () => {
-      const bed = manager.acquireBed('test_bed', {
-        name: 'Test Bed',
-        zone: 'player_plot',
-      });
-
-      expect(bed).toBeTruthy();
-      expect(bed.id).toBe('test_bed');
-      expect(bed.name).toBe('Test Bed');
-      expect(bed.zone).toBe('player_plot');
-      expect(bed.gridCols).toBe(COLS);
-      expect(bed.gridRows).toBe(ROWS);
-      expect(bed.grid.length).toBe(COLS * ROWS);
-      expect(bed.harvestResult).toBeNull();
-    });
-
-    it('stores the bed in campaign state', () => {
-      manager.acquireBed('plot_a', { name: 'Plot A', zone: 'player_plot' });
-
-      const state = store.getState();
-      expect(state.campaign.beds.plot_a).toBeTruthy();
-      expect(state.campaign.beds.plot_a.name).toBe('Plot A');
-    });
-
-    it('supports custom grid dimensions', () => {
-      manager.acquireBed('big_bed', {
-        name: 'Big Bed',
-        zone: 'community',
-        initialGridCols: 8,
-        initialGridRows: 6,
-      });
-
-      const bed = manager.getBed('big_bed');
-      expect(bed.gridCols).toBe(8);
-      expect(bed.gridRows).toBe(6);
-      expect(bed.grid.length).toBe(48);
-    });
+  it('builds a bed from a raised bed kit and spends the kit', () => {
+    const result = beds.buildBed('Back Fence');
+    expect(result.ok).toBe(true);
+    expect(result.bed).toMatchObject({ id: 'bed_2', name: 'Back Fence', zone: HOME_BED_ID, gridCols: COLS, gridRows: ROWS });
+    expect(result.bed.grid).toHaveLength(COLS * ROWS);
+    expect(getInventoryItemCount(store.getState().campaign.inventory, BED_KIT_ITEM_ID)).toBe(1);
+    // The implicit first bed became a real record so it can be parked.
+    expect(store.getState().campaign.beds[HOME_BED_ID]).toBeTruthy();
   });
 
-  describe('getBed / getAllBeds', () => {
-    it('returns null for non-existent bed', () => {
-      expect(manager.getBed('nope')).toBeNull();
-    });
+  it('refuses to build without a kit and past the home plot bed slots', () => {
+    const bare = new BedManager(new Store(createGameState()));
+    expect(bare.canBuildBed()).toMatchObject({ ok: false, code: 'NO_BED_KIT' });
 
-    it('returns all acquired beds', () => {
-      manager.acquireBed('bed_1', { name: 'Bed 1', zone: 'z1' });
-      manager.acquireBed('bed_2', { name: 'Bed 2', zone: 'z2' });
-
-      const all = manager.getAllBeds();
-      expect(all.length).toBe(2);
-      const ids = all.map((b) => b.id);
-      expect(ids).toContain('bed_1');
-      expect(ids).toContain('bed_2');
-    });
-
-    it('returns only the beds assigned to a zone', () => {
-      manager.acquireBed('bed_1', { name: 'Bed 1', zone: 'meadow' });
-      manager.acquireBed('bed_2', { name: 'Bed 2', zone: 'forest_edge' });
-      manager.acquireBed('bed_3', { name: 'Bed 3', zone: 'meadow' });
-
-      const meadowBeds = manager.getBedsForZone('meadow');
-      expect(meadowBeds.map((bed) => bed.id)).toEqual(['bed_1', 'bed_3']);
-    });
+    const rich = new BedManager(new Store(stateWithKits(5)));
+    expect(rich.buildBed('Two').ok).toBe(true);
+    expect(rich.buildBed('Three').ok).toBe(true);
+    const fourth = rich.buildBed('Four');
+    expect(fourth).toMatchObject({ ok: false, code: 'BED_LIMIT' });
   });
 
-  describe('getActiveBed / switchActiveBed', () => {
-    it('returns null when no beds exist', () => {
-      expect(manager.getActiveBed()).toBeNull();
-    });
-
-    it('switches to an acquired bed', () => {
-      manager.acquireBed('bed_a', { name: 'A', zone: 'z1' });
-      manager.acquireBed('bed_b', { name: 'B', zone: 'z2' });
-
-      const switched = manager.switchActiveBed('bed_b');
-      expect(switched).toBe(true);
-
-      const active = manager.getActiveBed();
-      expect(active.id).toBe('bed_b');
-    });
-
-    it('returns false when switching to non-existent bed', () => {
-      expect(manager.switchActiveBed('ghost_bed')).toBe(false);
-    });
-
-    it('syncs the active bed to the current zone bed', () => {
-      manager.acquireBed('plot_bed', { name: 'Plot Bed', zone: 'player_plot' });
-      manager.acquireBed('meadow_bed', { name: 'Meadow Bed', zone: 'meadow' });
-
-      const synced = manager.syncActiveBedToZone('meadow');
-
-      expect(synced?.id).toBe('meadow_bed');
-      expect(manager.getActiveBed()?.id).toBe('meadow_bed');
-    });
+  it('refuses beds where WORLD_MAP has no bed slots', () => {
+    expect(beds.buildBed('Meadow Bed', { zone: 'meadow' })).toMatchObject({ ok: false, code: 'NO_BED_SLOT' });
   });
 
-  describe('independent grids', () => {
-    it('each bed has its own grid state', () => {
-      manager.acquireBed('bed_a', { name: 'A', zone: 'z1' });
-      manager.acquireBed('bed_b', { name: 'B', zone: 'z2' });
+  it('keeps each bed independent across switches', () => {
+    plant(store, 0, 'basil');
+    beds.buildBed('Second');
+    expect(beds.switchActiveBed('bed_2')).toBe(true);
+    expect(store.getState().season.grid[0].cropId).toBeNull();
 
-      // Manually plant in bed_a via the store
-      const state = store.getState();
-      state.campaign.beds.bed_a.grid[0].cropId = 'basil';
-      store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
-
-      const bedA = manager.getBed('bed_a');
-      const bedB = manager.getBed('bed_b');
-      expect(bedA.grid[0].cropId).toBe('basil');
-      expect(bedB.grid[0].cropId).toBeNull();
-    });
+    plant(store, 1, 'lettuce');
+    expect(beds.switchActiveBed(HOME_BED_ID)).toBe(true);
+    const state = store.getState();
+    expect(state.season.grid[0].cropId).toBe('basil');
+    expect(state.season.grid[1].cropId).toBeNull();
+    expect(getBedGrid(state, 'bed_2')[1].cropId).toBe('lettuce');
+    expect(beds.getActiveBed().id).toBe(HOME_BED_ID);
   });
 
-  describe('expandBedGrid', () => {
-    it('expands a bed grid with more rows', () => {
-      manager.acquireBed('expandable', { name: 'Expandable', zone: 'z1' });
-
-      const result = manager.expandBedGrid('expandable', 6);
-      expect(result).toBe(true);
-
-      const bed = manager.getBed('expandable');
-      expect(bed.gridRows).toBe(6);
-      expect(bed.grid.length).toBe(COLS * 6);
-    });
-
-    it('rejects invalid row counts', () => {
-      manager.acquireBed('small', { name: 'Small', zone: 'z1' });
-
-      // Same rows
-      expect(manager.expandBedGrid('small', ROWS)).toBe(false);
-      // Fewer rows
-      expect(manager.expandBedGrid('small', 2)).toBe(false);
-      // Way too many rows
-      expect(manager.expandBedGrid('small', 100)).toBe(false);
-    });
-
-    it('returns false for non-existent bed', () => {
-      expect(manager.expandBedGrid('nope', 6)).toBe(false);
-    });
+  it('returns false for unknown beds and the bed already active', () => {
+    expect(beds.switchActiveBed('missing')).toBe(false);
+    beds.buildBed('Second');
+    expect(beds.switchActiveBed(HOME_BED_ID)).toBe(false);
   });
 
-  describe('getActiveGrid / getGridForBed', () => {
-    it('returns grid for active bed', () => {
-      manager.acquireBed('my_bed', { name: 'My Bed', zone: 'z1' });
-      manager.switchActiveBed('my_bed');
-
-      const grid = manager.getActiveGrid();
-      expect(grid).toBeTruthy();
-      expect(grid.length).toBe(COLS * ROWS);
-    });
-
-    it('returns null when no active bed', () => {
-      expect(manager.getActiveGrid()).toBeNull();
-    });
-
-    it('returns grid for specific bed', () => {
-      manager.acquireBed('specific', { name: 'S', zone: 'z1' });
-
-      const grid = manager.getGridForBed('specific');
-      expect(grid).toBeTruthy();
-      expect(grid.length).toBe(COLS * ROWS);
-    });
-
-    it('returns null for non-existent bed', () => {
-      expect(manager.getGridForBed('missing')).toBeNull();
-    });
+  it('locks switching while harvest is being scored', () => {
+    beds.buildBed('Second');
+    const state = store.getState();
+    state.season.phase = PHASES.HARVEST;
+    store.dispatch({ type: Actions.REPLACE_STATE, payload: { state } });
+    expect(beds.canSwitch()).toBe(false);
+    expect(beds.switchActiveBed('bed_2')).toBe(false);
   });
 
-  describe('serialize / load', () => {
-    it('serializes and loads beds correctly', () => {
-      manager.acquireBed('bed_1', { name: 'Bed 1', zone: 'z1' });
-      manager.acquireBed('bed_2', { name: 'Bed 2', zone: 'z2' });
-
-      const serialized = manager.serializeBeds();
-      expect(serialized.length).toBe(2);
-
-      // Create a fresh store and manager
-      const freshStore = new Store(createGameState());
-      const freshManager = new MultiBedManager(freshStore);
-
-      freshManager.loadBeds(serialized);
-
-      const loaded = freshManager.getAllBeds();
-      expect(loaded.length).toBe(2);
-
-      const ids = loaded.map((b) => b.id);
-      expect(ids).toContain('bed_1');
-      expect(ids).toContain('bed_2');
-
-      freshManager.dispose();
-    });
-
-    it('handles null/invalid input gracefully', () => {
-      manager.loadBeds(null);
-      manager.loadBeds('not-an-array');
-      manager.loadBeds([null, undefined, { noId: true }]);
-
-      expect(manager.getAllBeds().length).toBe(0);
-    });
+  it('expands a parked bed and the active bed through the projection', () => {
+    beds.buildBed('Second');
+    expect(beds.expandBedGrid('bed_2', 6)).toBe(true);
+    expect(beds.getBed('bed_2').grid).toHaveLength(COLS * 6);
+    expect(beds.expandBedGrid(HOME_BED_ID, 6)).toBe(true);
+    expect(store.getState().season.grid).toHaveLength(COLS * 6);
+    expect(beds.expandBedGrid('bed_2', 3)).toBe(false);
   });
 
-  describe('dispose', () => {
-    it('prevents further operations after disposal', () => {
-      manager.dispose();
+  it('rolls parked beds into the next season with their own soil and history', () => {
+    plant(store, 0, 'basil');
+    beds.buildBed('Second');
+    beds.switchActiveBed('bed_2');
+    plant(store, 2, 'cherry_tom');
+    beds.switchActiveBed(HOME_BED_ID);
 
-      const bed = manager.acquireBed('after_dispose', { name: 'X', zone: 'z' });
-      expect(bed).toBeNull();
-      expect(manager.switchActiveBed('any')).toBe(false);
-      expect(manager.expandBedGrid('any', 6)).toBe(false);
-    });
+    const state = store.getState();
+    state.season.campaign = state.campaign;
+    state.season.phase = PHASES.TRANSITION;
+    advance(state);
+    expect(state.season.phase).toBe(PHASES.PLANNING);
+
+    const parked = state.campaign.beds.bed_2;
+    expect(parked.history.at(-1)).toMatchObject({ chapter: 1 });
+    expect(parked.previousGrid[2].cropId).toBe('cherry_tom');
+    expect(parked.grid[2].cropId).toBeNull();
+    expect(parked.grid[2].soilFatigue).toBeGreaterThan(0);
+    expect(state.campaign.beds[HOME_BED_ID].history.length).toBeGreaterThan(0);
   });
 });

@@ -19,6 +19,14 @@ import {
   settleMarketTrade,
 } from './authority-market.js';
 import { AUTHORITY_CRAFTING_RECIPES } from './authority-crafting-tables.js';
+import {
+  applyAcquireBed,
+  applySwitchBed,
+  applyZoneChange,
+  validateAcquireBed,
+  validateSwitchBed,
+  validateZoneChange,
+} from './authority-world.js';
 
 const ACK_SIGNATURE_PREFIX = 'hmac-sha256:';
 const DEFAULT_GAME_ID = 'garden';
@@ -32,6 +40,7 @@ const AUTHORITY_ITEM_CATEGORIES = {
 const AUTHORITY_ITEM_DEFS = {
   auto_composter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
   basic_sprinkler: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  raised_bed_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 3, stackable: true },
   companion_patch_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   compost: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   dried_leaves: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
@@ -105,6 +114,7 @@ const BLOCKED_CRAFT_PAYLOAD_KEYS = new Set(['craftedItems', 'itemProduced', 'out
 const BLOCKED_QUEST_PAYLOAD_KEYS = new Set(['currency', 'inventory', 'outcome', 'pantry', 'reputation', 'rewards', 'skills', 'slots']);
 const BLOCKED_FESTIVAL_PAYLOAD_KEYS = new Set(['activitiesCompleted', 'inventory', 'mechanics', 'rewards', 'slots']);
 const ACTIONS = {
+  ACQUIRE_BED: 'ACQUIRE_BED',
   ADD_ITEM: 'ADD_ITEM',
   APPLY_TOOL_INTERVENTION: 'APPLY_TOOL_INTERVENTION',
   CARRY_FORWARD: 'CARRY_FORWARD',
@@ -124,12 +134,14 @@ const ACTIONS = {
   SET_DAMAGE: 'SET_DAMAGE',
   SET_PROTECTION: 'SET_PROTECTION',
   SET_SELECTED_CROP: 'SET_SELECTED_CROP',
+  SWITCH_BED: 'SWITCH_BED',
   UPDATE_SOIL: 'UPDATE_SOIL',
   USE_TOOL: 'USE_TOOL',
   WATER_CELL: 'WATER_CELL',
   ZONE_CHANGED: 'ZONE_CHANGED',
 };
 const ROUTED_ACTION_TYPES = new Set([
+  ACTIONS.ACQUIRE_BED,
   ACTIONS.ADD_ITEM,
   ACTIONS.APPLY_TOOL_INTERVENTION,
   ACTIONS.CARRY_FORWARD,
@@ -149,6 +161,7 @@ const ROUTED_ACTION_TYPES = new Set([
   ACTIONS.SET_ACTIVE_TOOL,
   ACTIONS.SET_COOLDOWN,
   ACTIONS.SET_PROTECTION,
+  ACTIONS.SWITCH_BED,
   ACTIONS.UPDATE_SOIL,
   ACTIONS.USE_TOOL,
   ACTIONS.WATER_CELL,
@@ -390,12 +403,15 @@ function settleAuthorityMarketTrade(data, payload) {
 
 function createInitialAuthorityData({
   activeFestival = null,
+  activeBedId = 'player_plot',
   activeTool = 'hand',
+  beds = {},
   claimedQuests = {},
   currency = null,
   currentZone = 'player_plot',
   grid = [],
   inventory = null,
+  lastBedChange = null,
   lastCarryForward = null,
   lastCooldown = null,
   lastCrafting = null,
@@ -425,12 +441,15 @@ function createInitialAuthorityData({
 } = {}) {
   return {
     activeFestival: createAuthorityActiveFestival(activeFestival),
+    activeBedId: typeof activeBedId === 'string' ? activeBedId : 'player_plot',
     activeTool,
+    beds: beds && typeof beds === 'object' ? structuredClone(beds) : {},
     claimedQuests: createAuthorityClaimedQuests(claimedQuests),
     currency: createAuthorityCurrency(currency),
     currentZone,
     grid: createAuthorityGrid(grid),
     inventory: createAuthorityInventory(inventory),
+    lastBedChange,
     lastCarryForward,
     lastCooldown,
     lastCrafting,
@@ -1300,24 +1319,32 @@ function reduceStoryAction(data, payload, envelope) {
     };
   }
   if (envelope.type === ACTIONS.ZONE_CHANGED) {
-    const currentZone = typeof payload.toZone === 'string' && payload.toZone
-      ? payload.toZone
-      : data.currentZone;
-    const visitedZones = new Set(Array.isArray(data.visitedZones) ? data.visitedZones : ['player_plot']);
-    if (currentZone) visitedZones.add(currentZone);
-    return {
-      ...data,
-      currentZone,
-      lastSpawnPoint: cloneValue(payload.spawnPoint ?? null),
-      visitedZones: [...visitedZones],
-    };
+    return applyZoneChange(data, payload);
   }
+  if (envelope.type === ACTIONS.ACQUIRE_BED) {
+    return applyAcquireBed(data, payload, { createGrid: createAuthorityGrid, removeItem: removeAuthorityInventoryItem });
+  }
+  if (envelope.type === ACTIONS.SWITCH_BED) {
+    return applySwitchBed(data, payload, { createGrid: createAuthorityGrid });
+  }
+
   return data;
 }
 
 function validateStoryActionPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === ACTIONS.ZONE_CHANGED) {
+    return validateZoneChange(state?.data, envelope.payload);
+  }
+  if (envelope?.type === ACTIONS.ACQUIRE_BED) {
+    return validateAcquireBed(state?.data, envelope.payload, {
+      getItemCount: (inventory, itemId) => getAuthorityInventoryItemCount(createAuthorityInventory(inventory), itemId),
+    });
+  }
+  if (envelope?.type === ACTIONS.SWITCH_BED) {
+    return validateSwitchBed(state?.data, envelope.payload);
+  }
   if (envelope?.type === ACTIONS.MARKET_TRADE) {
     const settlement = settleAuthorityMarketTrade(state?.data, envelope.payload);
     if (!settlement.ok) return { code: settlement.code, message: settlement.message };

@@ -1,7 +1,7 @@
 /**
  * Phase Machine — implements SEASON_ENGINE_SPEC.md state transitions.
  */
-import { PHASES, BEAT_PHASES, SEASONS, createSeasonState, getAvailableGridSizes } from './state.js';
+import { PHASES, BEAT_PHASES, SEASONS, attachGridMeta, createGrid, createSeasonState, getAvailableGridSizes } from './state.js';
 import { getCropsForChapter } from '../data/crops.js';
 import { drawEvent } from '../data/events.js';
 import { scoreBed } from '../scoring/bed-score.js';
@@ -103,6 +103,8 @@ function recordSeasonJournal(season) {
     grade: harvest.grade,
     eventsEncountered: season.eventTitles,
     cropsPlanted: listPlantedCropIds(season.grid),
+    bedId: campaign.activeBedId ?? 'player_plot',
+    bedName: campaign.beds?.[campaign.activeBedId]?.name ?? null,
     timestamp: new Date().toISOString(),
   });
   return true;
@@ -173,6 +175,59 @@ function applyCarryForwardInfrastructure(nextCell, previousCell) {
   }
 }
 
+/**
+ * Season rollover for the beds that are not active. Each parked bed is scored
+ * for its own history, then rolls into a fresh grid with the same soil fatigue
+ * and infrastructure carry-forward the active bed gets. The active bed rolls
+ * through the season projection as before; its record only gains history.
+ */
+function rollParkedBedsForward(season) {
+  const campaign = season.campaign;
+  if (!campaign?.beds) return;
+  const activeBedId = campaign.activeBedId ?? 'player_plot';
+  const pantry = campaign.pantry ?? {};
+
+  if (campaign.beds[activeBedId]) {
+    const record = campaign.beds[activeBedId];
+    record.history = [...(record.history ?? []), {
+      chapter: season.chapter,
+      season: season.season,
+      score: season.harvestResult?.score ?? 0,
+      grade: season.harvestResult?.grade ?? 'F',
+    }].slice(-12);
+  }
+
+  Object.values(campaign.beds).forEach((bed) => {
+    if (!bed || bed.id === activeBedId) return;
+    const cols = bed.gridCols ?? 8;
+    const rows = bed.gridRows ?? 4;
+    const previous = Array.isArray(bed.grid) ? bed.grid.map((cell) => ({ ...cell })) : [];
+    const planted = previous.some((cell) => cell?.cropId);
+    const harvest = planted
+      ? scoreBed(attachGridMeta(previous.map((cell) => ({ ...cell })), cols, rows), season.siteConfig, season.season, pantry)
+      : null;
+    bed.history = [...(bed.history ?? []), {
+      chapter: season.chapter,
+      season: season.season,
+      score: harvest?.score ?? 0,
+      grade: harvest?.grade ?? (planted ? 'F' : '·'),
+      unplanted: !planted || undefined,
+    }].slice(-12);
+
+    const nextGrid = createGrid(cols, rows);
+    for (let i = 0; i < nextGrid.length; i += 1) {
+      const prevCell = previous[i];
+      if (prevCell?.cropId && HEAVY_FEEDERS.has(prevCell.cropId)) {
+        nextGrid[i].soilFatigue = Math.min((nextGrid[i].soilFatigue || 0) + 0.3, 0.9);
+      }
+      applyCarryForwardInfrastructure(nextGrid[i], prevCell);
+    }
+    bed.previousGrid = previous;
+    bed.grid = nextGrid.map((cell) => ({ ...cell }));
+    bed.harvestResult = null;
+  });
+}
+
 function rollCampaignForward(season) {
   const campaign = season.campaign;
   if (!campaign) {
@@ -188,11 +243,13 @@ function rollCampaignForward(season) {
     season: season.season,
     score: season.harvestResult?.score ?? 0,
     grade: season.harvestResult?.grade ?? 'F',
+    bedId: campaign.activeBedId ?? 'player_plot',
   });
 
   // Bug 2/8: Save current grid as previousGrid before creating next season
   campaign.lastSeasonReview = buildSeasonReviewSnapshot(season);
   campaign.previousGrid = season.grid.map((cell) => ({ ...cell }));
+  rollParkedBedsForward(season);
 
   if (campaign.sandbox) {
     const nextSeason = rotateSeason(season.season);

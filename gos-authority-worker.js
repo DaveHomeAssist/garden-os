@@ -29,6 +29,14 @@ import {
   settleMarketTrade,
 } from './story-mode/src/server/authority-market.js';
 import { AUTHORITY_CRAFTING_RECIPES } from './story-mode/src/server/authority-crafting-tables.js';
+import {
+  applyAcquireBed,
+  applySwitchBed,
+  applyZoneChange,
+  validateAcquireBed,
+  validateSwitchBed,
+  validateZoneChange,
+} from './story-mode/src/server/authority-world.js';
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 64 * 1024;
@@ -42,6 +50,7 @@ const AUTHORITY_ITEM_CATEGORIES = {
 const AUTHORITY_ITEM_DEFS = {
   auto_composter: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 5, stackable: true },
   basic_sprinkler: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
+  raised_bed_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 3, stackable: true },
   companion_patch_kit: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 10, stackable: true },
   compost: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
   dried_leaves: { category: AUTHORITY_ITEM_CATEGORIES.MATERIALS, maxStack: 99, stackable: true },
@@ -321,7 +330,9 @@ function settleAuthorityMarketTrade(data, payload) {
 
 function createInitialAuthorityData({
   activeFestival = null,
+  activeBedId = 'player_plot',
   activeTool = null,
+  beds = {},
   claimedQuests = {},
   currency = null,
   currentZone = 'player_plot',
@@ -356,7 +367,9 @@ function createInitialAuthorityData({
 } = {}) {
   return {
     activeFestival: createAuthorityActiveFestival(activeFestival),
+    activeBedId: typeof activeBedId === 'string' ? activeBedId : 'player_plot',
     activeTool,
+    beds: beds && typeof beds === 'object' ? structuredClone(beds) : {},
     claimedQuests: createAuthorityClaimedQuests(claimedQuests),
     currency: createAuthorityCurrency(currency),
     currentZone,
@@ -1044,24 +1057,10 @@ const AUTHORITY_REDUCERS = {
       },
     };
   },
-  ZONE_CHANGED: (data, payload) => {
-    const currentZone = typeof payload.toZone === 'string' && payload.toZone
-      ? payload.toZone
-      : data.currentZone;
-    const visitedZones = new Set(Array.isArray(data.visitedZones) ? data.visitedZones : ['player_plot']);
-    if (currentZone) visitedZones.add(currentZone);
-    const spawnX = Number(payload.spawnPoint?.x);
-    const spawnZ = Number(payload.spawnPoint?.z);
-    const lastSpawnPoint = Number.isFinite(spawnX) && Number.isFinite(spawnZ)
-      ? { x: spawnX, z: spawnZ }
-      : null;
-    return {
-      ...data,
-      currentZone,
-      lastSpawnPoint,
-      visitedZones: [...visitedZones],
-    };
-  },
+  ZONE_CHANGED: (data, payload) => applyZoneChange(data, payload),
+  ACQUIRE_BED: (data, payload) => applyAcquireBed(data, payload, { createGrid: createAuthorityGrid, removeItem: removeAuthorityInventoryItem }),
+  SWITCH_BED: (data, payload) => applySwitchBed(data, payload, { createGrid: createAuthorityGrid }),
+
 };
 
 const CORS_HEADERS = {
@@ -1224,6 +1223,17 @@ function publicState(state) {
 function validateAuthorityPayload(envelope, state) {
   const grid = createAuthorityGrid(state?.data?.grid);
   const cellIndex = envelope.payload?.cellIndex;
+  if (envelope?.type === 'ZONE_CHANGED') {
+    return validateZoneChange(state?.data, envelope.payload);
+  }
+  if (envelope?.type === 'ACQUIRE_BED') {
+    return validateAcquireBed(state?.data, envelope.payload, {
+      getItemCount: (inventory, itemId) => getAuthorityInventoryItemCount(createAuthorityInventory(inventory), itemId),
+    });
+  }
+  if (envelope?.type === 'SWITCH_BED') {
+    return validateSwitchBed(state?.data, envelope.payload);
+  }
   if (envelope?.type === 'MARKET_TRADE') {
     const settlement = settleAuthorityMarketTrade(state?.data, envelope.payload);
     if (!settlement.ok) return { code: settlement.code, message: settlement.message };
