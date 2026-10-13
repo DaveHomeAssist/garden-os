@@ -365,8 +365,15 @@ export class QuestPlaythrough {
   }
 
   outcomeLabel(quest) {
+    // Every quest authors its own outcome ids. The harness walks one side of
+    // the deck at a time: 'community' takes each quest's first outcome,
+    // 'stewardship' its second, and any other value names an outcome id.
     const outcomes = this.quests.getQuestOutcomes(quest);
-    return (outcomes.find((entry) => entry.id === this.outcome) ?? outcomes[0])?.label ?? '';
+    const byPath = { community: 0, stewardship: 1 };
+    const picked = this.outcome in byPath
+      ? outcomes[byPath[this.outcome]]
+      : outcomes.find((entry) => entry.id === this.outcome);
+    return (picked ?? outcomes[0])?.label ?? '';
   }
 
   turnIn(quest) {

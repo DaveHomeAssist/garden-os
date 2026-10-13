@@ -8,15 +8,16 @@
 const AUTHORITY_QUEST_REWARDS = {
   gus_tomatoes: {
     outcomes: {
-      community: [
+      share_seed: [
         { amount: 1, id: 'heritage_pepper', type: 'seed' },
         { amount: 15, id: 'old_gus', type: 'reputation' },
         { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      save_seed_line: [
         { amount: 1, id: 'heritage_pepper', type: 'seed' },
         { amount: 15, id: 'old_gus', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -26,17 +27,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   gus_compost: {
     outcomes: {
-      community: [
+      teach_layers: [
         { amount: 1, id: 'compost_supplies', type: 'item' },
         { amount: 20, id: 'old_gus', type: 'reputation' },
         { amount: 15, id: 'soil_science', type: 'xp' },
-        { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 8, id: 'neighbor_jo', type: 'reputation' },
       ],
-      stewardship: [
+      keep_bin: [
         { amount: 1, id: 'compost_supplies', type: 'item' },
         { amount: 20, id: 'old_gus', type: 'reputation' },
         { amount: 15, id: 'soil_science', type: 'xp' },
-        { amount: 5, id: 'social', type: 'xp' },
+        { amount: 2, id: 'compost', type: 'item' },
+        { amount: 5, id: 'soil_science', type: 'xp' },
       ],
     },
     rewards: [
@@ -47,17 +49,19 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   gus_frost: {
     outcomes: {
-      community: [
+      cover_neighbors: [
         { amount: 1, id: 'rare_seed_bundle', type: 'seed' },
         { amount: 25, id: 'old_gus', type: 'reputation' },
         { amount: 20, id: 'gardening', type: 'xp' },
-        { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 5, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 5, id: 'neighbor_sam', type: 'reputation' },
       ],
-      stewardship: [
+      save_cold_seed: [
         { amount: 1, id: 'rare_seed_bundle', type: 'seed' },
         { amount: 25, id: 'old_gus', type: 'reputation' },
         { amount: 20, id: 'gardening', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
+        { amount: 2, id: 'plant_matter', type: 'item' },
       ],
     },
     rewards: [
@@ -68,16 +72,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   maya_sprinkler: {
     outcomes: {
-      community: [
+      share_design: [
         { amount: 1, id: 'smart_watering_can', type: 'item' },
         { amount: 15, id: 'maya', type: 'reputation' },
         { amount: 15, id: 'crafting', type: 'xp' },
         { amount: 3, id: 'maya', type: 'reputation' },
+        { amount: 5, id: 'neighbor_pat', type: 'reputation' },
       ],
-      stewardship: [
+      keep_parts: [
         { amount: 1, id: 'smart_watering_can', type: 'item' },
         { amount: 15, id: 'maya', type: 'reputation' },
         { amount: 15, id: 'crafting', type: 'xp' },
+        { amount: 1, id: 'lens', type: 'item' },
         { amount: 5, id: 'crafting', type: 'xp' },
       ],
     },
@@ -89,17 +95,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   maya_scanner: {
     outcomes: {
-      community: [
+      share_map: [
         { amount: 1, id: 'soil_scanner', type: 'item' },
         { amount: 20, id: 'maya', type: 'reputation' },
         { amount: 20, id: 'soil_science', type: 'xp' },
-        { amount: 3, id: 'maya', type: 'reputation' },
-      ],
-      stewardship: [
-        { amount: 1, id: 'soil_scanner', type: 'item' },
-        { amount: 20, id: 'maya', type: 'reputation' },
-        { amount: 20, id: 'soil_science', type: 'xp' },
+        { amount: 5, id: 'lila', type: 'reputation' },
         { amount: 5, id: 'social', type: 'xp' },
+      ],
+      field_notes: [
+        { amount: 1, id: 'soil_scanner', type: 'item' },
+        { amount: 20, id: 'maya', type: 'reputation' },
+        { amount: 20, id: 'soil_science', type: 'xp' },
+        { amount: 10, id: 'soil_science', type: 'xp' },
       ],
     },
     rewards: [
@@ -110,17 +117,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   maya_hybrid: {
     outcomes: {
-      community: [
+      name_it_together: [
         { amount: 1, id: 'hybrid_seeds', type: 'seed' },
         { amount: 25, id: 'maya', type: 'reputation' },
         { amount: 20, id: 'gardening', type: 'xp' },
         { amount: 3, id: 'maya', type: 'reputation' },
+        { amount: 5, id: 'neighbor_robin', type: 'reputation' },
       ],
-      stewardship: [
+      stabilize_line: [
         { amount: 1, id: 'hybrid_seeds', type: 'seed' },
         { amount: 25, id: 'maya', type: 'reputation' },
         { amount: 20, id: 'gardening', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -131,17 +139,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   lila_basil: {
     outcomes: {
-      community: [
+      extra_bunch: [
         { amount: 1, id: 'herb_seeds', type: 'seed' },
         { amount: 10, id: 'lila', type: 'reputation' },
         { amount: 10, id: 'social', type: 'xp' },
-        { amount: 3, id: 'lila', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      save_basil_seed: [
         { amount: 1, id: 'herb_seeds', type: 'seed' },
         { amount: 10, id: 'lila', type: 'reputation' },
         { amount: 10, id: 'social', type: 'xp' },
         { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 2, id: 'basil_seed', type: 'item' },
       ],
     },
     rewards: [
@@ -152,17 +161,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   lila_salsa: {
     outcomes: {
-      community: [
+      block_party: [
         { amount: 1, id: 'recipe_card_salsa', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'gardening', type: 'xp' },
-        { amount: 3, id: 'lila', type: 'reputation' },
+        { amount: 5, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 5, id: 'social', type: 'xp' },
       ],
-      stewardship: [
+      write_ripeness: [
         { amount: 1, id: 'recipe_card_salsa', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'gardening', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -173,18 +183,20 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   lila_recipe: {
     outcomes: {
-      community: [
+      cook_for_block: [
         { amount: 1, id: 'exclusive_seed', type: 'seed' },
         { amount: 30, id: 'lila', type: 'reputation' },
         { amount: 20, id: 'social', type: 'xp' },
         { amount: 15, id: 'crafting', type: 'xp' },
-        { amount: 3, id: 'lila', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
+        { amount: 5, id: 'old_gus', type: 'reputation' },
       ],
-      stewardship: [
+      keep_card: [
         { amount: 1, id: 'exclusive_seed', type: 'seed' },
         { amount: 30, id: 'lila', type: 'reputation' },
         { amount: 20, id: 'social', type: 'xp' },
         { amount: 15, id: 'crafting', type: 'xp' },
+        { amount: 5, id: 'crafting', type: 'xp' },
         { amount: 5, id: 'gardening', type: 'xp' },
       ],
     },
@@ -197,15 +209,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   pat_watering: {
     outcomes: {
-      community: [
+      water_whole_row: [
         { amount: 5, id: 'plant_matter', type: 'item' },
         { amount: 10, id: 'neighbor_pat', type: 'reputation' },
         { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 3, id: 'neighbor_sam', type: 'reputation' },
       ],
-      stewardship: [
+      leave_watering_notes: [
         { amount: 5, id: 'plant_matter', type: 'item' },
         { amount: 10, id: 'neighbor_pat', type: 'reputation' },
-        { amount: 5, id: 'social', type: 'xp' },
+        { amount: 5, id: 'soil_science', type: 'xp' },
       ],
     },
     rewards: [
@@ -215,15 +228,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   sam_bees: {
     outcomes: {
-      community: [
+      flower_border: [
         { amount: 1, id: 'honey_jar', type: 'item' },
         { amount: 10, id: 'neighbor_sam', type: 'reputation' },
         { amount: 3, id: 'neighbor_sam', type: 'reputation' },
+        { amount: 2, id: 'marigold_seed', type: 'item' },
       ],
-      stewardship: [
+      track_hive: [
         { amount: 1, id: 'honey_jar', type: 'item' },
         { amount: 10, id: 'neighbor_sam', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -233,15 +247,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   jo_compost: {
     outcomes: {
-      community: [
+      open_pile: [
         { amount: 2, id: 'fertilizer', type: 'item' },
         { amount: 10, id: 'neighbor_jo', type: 'reputation' },
         { amount: 3, id: 'neighbor_jo', type: 'reputation' },
+        { amount: 1, id: 'compost', type: 'item' },
       ],
-      stewardship: [
+      measure_pile: [
         { amount: 2, id: 'fertilizer', type: 'item' },
         { amount: 10, id: 'neighbor_jo', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'composting', type: 'xp' },
       ],
     },
     rewards: [
@@ -251,15 +266,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   robin_birds: {
     outcomes: {
-      community: [
+      hang_feeders: [
         { amount: 1, id: 'rare_wildflower_seeds', type: 'seed' },
         { amount: 15, id: 'neighbor_robin', type: 'reputation' },
         { amount: 3, id: 'neighbor_robin', type: 'reputation' },
+        { amount: 3, id: 'neighbor_sam', type: 'reputation' },
       ],
-      stewardship: [
+      census_record: [
         { amount: 1, id: 'rare_wildflower_seeds', type: 'seed' },
         { amount: 15, id: 'neighbor_robin', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'foraging', type: 'xp' },
       ],
     },
     rewards: [
@@ -269,15 +285,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   explore_meadow: {
     outcomes: {
-      community: [
+      trail_markers: [
         { amount: 2, id: 'rare_wildflower_seeds', type: 'seed' },
         { amount: 20, id: 'foraging', type: 'xp' },
         { amount: 3, id: 'neighbor_robin', type: 'reputation' },
+        { amount: 5, id: 'social', type: 'xp' },
       ],
-      stewardship: [
+      leave_it_wild: [
         { amount: 2, id: 'rare_wildflower_seeds', type: 'seed' },
         { amount: 20, id: 'foraging', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'foraging', type: 'xp' },
       ],
     },
     rewards: [
@@ -287,15 +304,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   gus_river_path: {
     outcomes: {
-      community: [
+      clear_for_all: [
         { amount: 1, id: 'riverside_access', type: 'item' },
         { amount: 20, id: 'old_gus', type: 'reputation' },
         { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      keep_it_quiet: [
         { amount: 1, id: 'riverside_access', type: 'item' },
         { amount: 20, id: 'old_gus', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 8, id: 'old_gus', type: 'reputation' },
       ],
     },
     rewards: [
@@ -305,15 +323,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   greenhouse_access: {
     outcomes: {
-      community: [
+      shared_benches: [
         { amount: 1, id: 'greenhouse_access', type: 'item' },
         { amount: 30, id: 'crafting', type: 'xp' },
         { amount: 3, id: 'maya', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      tune_climate: [
         { amount: 1, id: 'greenhouse_access', type: 'item' },
         { amount: 30, id: 'crafting', type: 'xp' },
-        { amount: 5, id: 'crafting', type: 'xp' },
+        { amount: 10, id: 'crafting', type: 'xp' },
       ],
     },
     rewards: [
@@ -323,17 +342,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   lila_watercress: {
     outcomes: {
-      community: [
+      stew_night: [
         { amount: 1, id: 'recipe_card_foragers_stew', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'social', type: 'xp' },
-        { amount: 3, id: 'lila', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
+        { amount: 3, id: 'neighbor_jo', type: 'reputation' },
       ],
-      stewardship: [
+      leave_patch: [
         { amount: 1, id: 'recipe_card_foragers_stew', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'social', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'foraging', type: 'xp' },
       ],
     },
     rewards: [
@@ -344,17 +364,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   gus_mushroom_logs: {
     outcomes: {
-      community: [
+      logs_for_neighbors: [
         { amount: 3, id: 'shiitake_spores', type: 'seed' },
         { amount: 25, id: 'old_gus', type: 'reputation' },
         { amount: 20, id: 'soil_science', type: 'xp' },
-        { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 3, id: 'neighbor_sam', type: 'reputation' },
+        { amount: 3, id: 'neighbor_jo', type: 'reputation' },
       ],
-      stewardship: [
+      keep_spawn: [
         { amount: 3, id: 'shiitake_spores', type: 'seed' },
         { amount: 25, id: 'old_gus', type: 'reputation' },
         { amount: 20, id: 'soil_science', type: 'xp' },
-        { amount: 5, id: 'social', type: 'xp' },
+        { amount: 10, id: 'soil_science', type: 'xp' },
       ],
     },
     rewards: [
@@ -365,15 +386,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   vanilla_challenge: {
     outcomes: {
-      community: [
+      show_the_bloom: [
         { amount: 1, id: 'legendary_seed', type: 'seed' },
         { amount: 30, id: 'gardening', type: 'xp' },
         { amount: 3, id: 'maya', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      hand_pollinate: [
         { amount: 1, id: 'legendary_seed', type: 'seed' },
         { amount: 30, id: 'gardening', type: 'xp' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -383,15 +405,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   prairie_restore: {
     outcomes: {
-      community: [
+      meadow_work_day: [
         { amount: 40, id: 'composting', type: 'xp' },
         { amount: 1, id: 'rare_earth', type: 'item' },
         { amount: 3, id: 'neighbor_sam', type: 'reputation' },
+        { amount: 5, id: 'social', type: 'xp' },
       ],
-      stewardship: [
+      soil_tests: [
         { amount: 40, id: 'composting', type: 'xp' },
         { amount: 1, id: 'rare_earth', type: 'item' },
-        { amount: 5, id: 'social', type: 'xp' },
+        { amount: 10, id: 'soil_science', type: 'xp' },
       ],
     },
     rewards: [
@@ -401,15 +424,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   maya_masterpiece: {
     outcomes: {
-      community: [
+      open_hours: [
         { amount: 1, id: 'ability_crop_crossbreeding', type: 'item' },
         { amount: 30, id: 'maya', type: 'reputation' },
         { amount: 3, id: 'maya', type: 'reputation' },
+        { amount: 5, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      calibrate_first: [
         { amount: 1, id: 'ability_crop_crossbreeding', type: 'item' },
         { amount: 30, id: 'maya', type: 'reputation' },
-        { amount: 5, id: 'crafting', type: 'xp' },
+        { amount: 10, id: 'crafting', type: 'xp' },
       ],
     },
     rewards: [
@@ -419,17 +443,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   gus_legacy: {
     outcomes: {
-      community: [
+      plant_together: [
         { amount: 1, id: 'legendary_trowel_recipe', type: 'item' },
         { amount: 3, id: 'heirloom_seeds', type: 'seed' },
         { amount: 30, id: 'old_gus', type: 'reputation' },
         { amount: 3, id: 'old_gus', type: 'reputation' },
+        { amount: 5, id: 'social', type: 'xp' },
       ],
-      stewardship: [
+      draw_the_plan: [
         { amount: 1, id: 'legendary_trowel_recipe', type: 'item' },
         { amount: 3, id: 'heirloom_seeds', type: 'seed' },
         { amount: 30, id: 'old_gus', type: 'reputation' },
-        { amount: 5, id: 'social', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -440,17 +465,18 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   lila_cookbook: {
     outcomes: {
-      community: [
+      community_edition: [
         { amount: 1, id: 'exclusive_cosmetics', type: 'item' },
         { amount: 40, id: 'social', type: 'xp' },
         { amount: 30, id: 'lila', type: 'reputation' },
         { amount: 3, id: 'lila', type: 'reputation' },
+        { amount: 3, id: 'neighbor_pat', type: 'reputation' },
       ],
-      stewardship: [
+      growing_notes: [
         { amount: 1, id: 'exclusive_cosmetics', type: 'item' },
         { amount: 40, id: 'social', type: 'xp' },
         { amount: 30, id: 'lila', type: 'reputation' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
@@ -461,14 +487,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   market_day: {
     outcomes: {
-      community: [
+      stall_for_neighbors: [
         { amount: 1, id: 'rare_materials_bundle', type: 'item' },
         { amount: 25, id: 'social', type: 'xp' },
         { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 3, id: 'lila', type: 'reputation' },
       ],
-      stewardship: [
+      price_ledger: [
         { amount: 1, id: 'rare_materials_bundle', type: 'item' },
         { amount: 25, id: 'social', type: 'xp' },
+        { amount: 5, id: 'social', type: 'xp' },
         { amount: 5, id: 'gardening', type: 'xp' },
       ],
     },
@@ -479,15 +507,16 @@ const AUTHORITY_QUEST_REWARDS = {
   },
   festival_champion: {
     outcomes: {
-      community: [
+      share_trophy: [
         { amount: 1, id: 'trophy_festival_champion', type: 'item' },
         { amount: 1, id: 'scoring_buff_global_5pct', type: 'item' },
         { amount: 3, id: 'neighbor_jo', type: 'reputation' },
+        { amount: 5, id: 'social', type: 'xp' },
       ],
-      stewardship: [
+      festival_journal: [
         { amount: 1, id: 'trophy_festival_champion', type: 'item' },
         { amount: 1, id: 'scoring_buff_global_5pct', type: 'item' },
-        { amount: 5, id: 'gardening', type: 'xp' },
+        { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [

@@ -37,6 +37,7 @@ import { ReputationTiers } from '../game/reputation.js';
 import { PHASES } from '../game/state.js';
 import { Actions } from '../game/store.js';
 import { resolveNpcPresence } from '../scene/npc-presence.js';
+import { getLatestChoiceEcho } from '../data/quest-echoes.js';
 import {
   describeQuestGiverLocation,
   getNoticeBoardGivers,
@@ -330,10 +331,13 @@ export function createQuestController({
     questEngine.evaluateProgress();
     const state = getState();
     const tier = getTierId(state.campaign?.reputation?.[npcId] ?? 0);
+    // Choices made in other neighbors' quests come back around in greetings.
+    const baseGreeting = getNPCGreeting(npcId, tier) || `${npc.name} looks up from the soil.`;
+    const echo = getLatestChoiceEcho(npcId, state.campaign);
     return startScene(buildTalkScene([npcId], {
       sceneId: `quest_talk:${npcId}`,
       speaker: npcId,
-      greeting: getNPCGreeting(npcId, tier) || `${npc.name} looks up from the soil.`,
+      greeting: echo ? `${baseGreeting} ${echo.line}` : baseGreeting,
       farewell: getNPCFarewell(npcId, tier) || 'See you around.',
     }));
   }

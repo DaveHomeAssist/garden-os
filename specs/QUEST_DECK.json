@@ -2,7 +2,7 @@
   "$schema": "garden-os-quest-deck-v1",
   "version": 2,
   "description": "Quest deck for Let It Grow. 25 quests across 7 NPCs, including zone-specific exploration, biome, advanced, and community quests.",
-  "lastUpdated": "2026-06-24",
+  "lastUpdated": "2026-10-13",
   "quests": [
     {
       "id": "gus_tomatoes",
@@ -42,9 +42,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Grandpa's Tomatoes becomes a neighborhood trust beat.",
+          "id": "share_seed",
+          "label": "Share the seed with the block",
+          "summary": "The old tomato's seed goes around the neighborhood, one paper envelope at a time.",
           "rewards": [
             {
               "type": "seed",
@@ -60,25 +60,36 @@
               "type": "reputation",
               "id": "old_gus",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "gus_tomatoes:community",
+            "branch": "share_seed",
+            "flag": "gus_tomatoes:share_seed",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Grandpa's Tomatoes becomes a neighborhood trust beat."
+              "label": "Share the seed with the block",
+              "summary": "The old tomato's seed goes around the neighborhood, one paper envelope at a time."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Gus's grandfather's tomato is in half the yards on the block now. You started that."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Grandpa's Tomatoes becomes a documented garden lesson.",
+          "id": "save_seed_line",
+          "label": "Keep the seed line pure",
+          "summary": "You bag and label the seed so the variety stays true to type.",
           "rewards": [
             {
               "type": "seed",
@@ -93,19 +104,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_tomatoes:stewardship",
+            "branch": "save_seed_line",
+            "flag": "gus_tomatoes:save_seed_line",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Grandpa's Tomatoes becomes a documented garden lesson."
+              "label": "Keep the seed line pure",
+              "summary": "You bag and label the seed so the variety stays true to type."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Gus says you are keeping his grandfather's tomato true to type. That is real seed discipline."
             }
           ]
         }
@@ -159,9 +176,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Old Compost Method becomes a neighborhood trust beat.",
+          "id": "teach_layers",
+          "label": "Teach the layering to Jo",
+          "summary": "Gus's layering method goes into Jo's community pile.",
           "rewards": [
             {
               "type": "item",
@@ -180,27 +197,33 @@
             },
             {
               "type": "reputation",
-              "id": "old_gus",
-              "amount": 3
+              "id": "neighbor_jo",
+              "amount": 8
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "gus_compost:community",
+            "branch": "teach_layers",
+            "flag": "gus_compost:teach_layers",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "The Old Compost Method becomes a neighborhood trust beat."
+              "label": "Teach the layering to Jo",
+              "summary": "Gus's layering method goes into Jo's community pile."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Jo's compost pile finally smells right. Word is Gus showed you, and you showed Jo."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Old Compost Method becomes a documented garden lesson.",
+          "id": "keep_bin",
+          "label": "Keep Gus's bin going",
+          "summary": "You take a turn tending Gus's bin every week.",
           "rewards": [
             {
               "type": "item",
@@ -218,21 +241,32 @@
               "amount": 15
             },
             {
+              "type": "item",
+              "id": "compost",
+              "amount": 2
+            },
+            {
               "type": "xp",
-              "id": "social",
+              "id": "soil_science",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_compost:stewardship",
+            "branch": "keep_bin",
+            "flag": "gus_compost:keep_bin",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Old Compost Method becomes a documented garden lesson."
+              "label": "Keep Gus's bin going",
+              "summary": "You take a turn tending Gus's bin every week."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Gus's compost readings jumped once you started turning that bin."
             }
           ]
         }
@@ -301,9 +335,9 @@
       "deadline": "end_of_fall",
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Before the First Frost becomes a neighborhood trust beat.",
+          "id": "cover_neighbors",
+          "label": "Cover the neighbors' beds too",
+          "summary": "You spend the last warm evening throwing frost cloth over the block's beds.",
           "rewards": [
             {
               "type": "seed",
@@ -322,59 +356,81 @@
             },
             {
               "type": "reputation",
-              "id": "old_gus",
-              "amount": 3
-            }
-          ],
-          "worldState": {
-            "branch": "community",
-            "flag": "gus_frost:community",
-            "npc": "old_gus"
-          },
-          "storyLog": [
-            {
-              "type": "choice",
-              "label": "Share the result",
-              "summary": "Before the First Frost becomes a neighborhood trust beat."
-            }
-          ]
-        },
-        {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Before the First Frost becomes a documented garden lesson.",
-          "rewards": [
-            {
-              "type": "seed",
-              "id": "rare_seed_bundle",
-              "amount": 1
+              "id": "neighbor_pat",
+              "amount": 5
             },
             {
               "type": "reputation",
-              "id": "old_gus",
-              "amount": 25
-            },
-            {
-              "type": "xp",
-              "id": "gardening",
-              "amount": 20
-            },
-            {
-              "type": "xp",
-              "id": "gardening",
+              "id": "neighbor_sam",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_frost:stewardship",
+            "branch": "cover_neighbors",
+            "flag": "gus_frost:cover_neighbors",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Before the First Frost becomes a documented garden lesson."
+              "label": "Cover the neighbors' beds too",
+              "summary": "You spend the last warm evening throwing frost cloth over the block's beds."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Pat told me you covered half the street before the frost. People remember that."
+            }
+          ]
+        },
+        {
+          "id": "save_cold_seed",
+          "label": "Save seed from the survivors",
+          "summary": "The crops that made it through get their seed saved for next year.",
+          "rewards": [
+            {
+              "type": "seed",
+              "id": "rare_seed_bundle",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 25
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 10
+            },
+            {
+              "type": "item",
+              "id": "plant_matter",
+              "amount": 2
+            }
+          ],
+          "worldState": {
+            "branch": "save_cold_seed",
+            "flag": "gus_frost:save_cold_seed",
+            "npc": "old_gus"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Save seed from the survivors",
+              "summary": "The crops that made it through get their seed saved for next year."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "That cold-hardy seed you saved from Gus's frost run. I want to scan it."
             }
           ]
         }
@@ -423,9 +479,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Prototype Sprinkler becomes a neighborhood trust beat.",
+          "id": "share_design",
+          "label": "Post the design for the block",
+          "summary": "Maya's napkin sketch becomes a printout on the notice board.",
           "rewards": [
             {
               "type": "item",
@@ -446,25 +502,36 @@
               "type": "reputation",
               "id": "maya",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "maya_sprinkler:community",
+            "branch": "share_design",
+            "flag": "maya_sprinkler:share_design",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "The Prototype Sprinkler becomes a neighborhood trust beat."
+              "label": "Post the design for the block",
+              "summary": "Maya's napkin sketch becomes a printout on the notice board."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Every yard on the block has one of those spinners now. Maya's design, your hands."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Prototype Sprinkler becomes a documented garden lesson.",
+          "id": "keep_parts",
+          "label": "Keep the spare parts",
+          "summary": "You pocket the leftover lens and fittings for the next build.",
           "rewards": [
             {
               "type": "item",
@@ -482,21 +549,32 @@
               "amount": 15
             },
             {
+              "type": "item",
+              "id": "lens",
+              "amount": 1
+            },
+            {
               "type": "xp",
               "id": "crafting",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "maya_sprinkler:stewardship",
+            "branch": "keep_parts",
+            "flag": "maya_sprinkler:keep_parts",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Prototype Sprinkler becomes a documented garden lesson."
+              "label": "Keep the spare parts",
+              "summary": "You pocket the leftover lens and fittings for the next build."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Maya says you keep every spare part. She means it as a compliment."
             }
           ]
         }
@@ -555,9 +633,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Soil Scanner Calibration becomes a neighborhood trust beat.",
+          "id": "share_map",
+          "label": "Post the soil map at the market",
+          "summary": "Maya's readings go up as a soil map anyone can use.",
           "rewards": [
             {
               "type": "item",
@@ -576,42 +654,8 @@
             },
             {
               "type": "reputation",
-              "id": "maya",
-              "amount": 3
-            }
-          ],
-          "worldState": {
-            "branch": "community",
-            "flag": "maya_scanner:community",
-            "npc": "maya"
-          },
-          "storyLog": [
-            {
-              "type": "choice",
-              "label": "Share the result",
-              "summary": "Soil Scanner Calibration becomes a neighborhood trust beat."
-            }
-          ]
-        },
-        {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Soil Scanner Calibration becomes a documented garden lesson.",
-          "rewards": [
-            {
-              "type": "item",
-              "id": "soil_scanner",
-              "amount": 1
-            },
-            {
-              "type": "reputation",
-              "id": "maya",
-              "amount": 20
-            },
-            {
-              "type": "xp",
-              "id": "soil_science",
-              "amount": 20
+              "id": "lila",
+              "amount": 5
             },
             {
               "type": "xp",
@@ -620,15 +664,66 @@
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "maya_scanner:stewardship",
+            "branch": "share_map",
+            "flag": "maya_scanner:share_map",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Soil Scanner Calibration becomes a documented garden lesson."
+              "label": "Post the soil map at the market",
+              "summary": "Maya's readings go up as a soil map anyone can use."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "That soil map you and Maya posted? Half my regulars are planting by it."
+            }
+          ]
+        },
+        {
+          "id": "field_notes",
+          "label": "Keep detailed field notes",
+          "summary": "You log every reading with the weather and the hour.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "soil_scanner",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "maya",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "soil_science",
+              "amount": 10
+            }
+          ],
+          "worldState": {
+            "branch": "field_notes",
+            "flag": "maya_scanner:field_notes",
+            "npc": "maya"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Keep detailed field notes",
+              "summary": "You log every reading with the weather and the hour."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Maya showed me your field notes. Neat handwriting. Means you were paying attention."
             }
           ]
         }
@@ -688,9 +783,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Experimental Hybrid becomes a neighborhood trust beat.",
+          "id": "name_it_together",
+          "label": "Name the hybrid with the block",
+          "summary": "The block votes on a name for the cross. It is a silly name. It sticks.",
           "rewards": [
             {
               "type": "seed",
@@ -711,25 +806,36 @@
               "type": "reputation",
               "id": "maya",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_robin",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "maya_hybrid:community",
+            "branch": "name_it_together",
+            "flag": "maya_hybrid:name_it_together",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "The Experimental Hybrid becomes a neighborhood trust beat."
+              "label": "Name the hybrid with the block",
+              "summary": "The block votes on a name for the cross. It is a silly name. It sticks."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "The hybrid is on my menu under the name the block picked. People order it just to say it."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Experimental Hybrid becomes a documented garden lesson.",
+          "id": "stabilize_line",
+          "label": "Grow it out until it breeds true",
+          "summary": "You commit a bed to growing the cross out until the seed breeds true.",
           "rewards": [
             {
               "type": "seed",
@@ -749,19 +855,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "maya_hybrid:stewardship",
+            "branch": "stabilize_line",
+            "flag": "maya_hybrid:stabilize_line",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Experimental Hybrid becomes a documented garden lesson."
+              "label": "Grow it out until it breeds true",
+              "summary": "You commit a bed to growing the cross out until the seed breeds true."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Maya's cross is breeding true? That takes patience. Most folks quit at the second generation."
             }
           ]
         }
@@ -810,9 +922,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Fresh Basil, Please becomes a neighborhood trust beat.",
+          "id": "extra_bunch",
+          "label": "Bring an extra bunch for the crew",
+          "summary": "Lila's kitchen crew gets the extra bunch for family meal.",
           "rewards": [
             {
               "type": "seed",
@@ -832,26 +944,32 @@
             {
               "type": "reputation",
               "id": "lila",
-              "amount": 3
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "lila_basil:community",
+            "branch": "extra_bunch",
+            "flag": "lila_basil:extra_bunch",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Fresh Basil, Please becomes a neighborhood trust beat."
+              "label": "Bring an extra bunch for the crew",
+              "summary": "Lila's kitchen crew gets the extra bunch for family meal."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Lila's crew still talks about the basil you brought for family meal."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Fresh Basil, Please becomes a documented garden lesson.",
+          "id": "save_basil_seed",
+          "label": "Let one plant bolt for seed",
+          "summary": "You leave one basil plant to flower and save its seed.",
           "rewards": [
             {
               "type": "seed",
@@ -872,18 +990,29 @@
               "type": "xp",
               "id": "gardening",
               "amount": 5
+            },
+            {
+              "type": "item",
+              "id": "basil_seed",
+              "amount": 2
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "lila_basil:stewardship",
+            "branch": "save_basil_seed",
+            "flag": "lila_basil:save_basil_seed",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Fresh Basil, Please becomes a documented garden lesson."
+              "label": "Let one plant bolt for seed",
+              "summary": "You leave one basil plant to flower and save its seed."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Saw you let a basil go to flower. Good. The bees will thank you, and so will next year."
             }
           ]
         }
@@ -947,9 +1076,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Perfect Salsa becomes a neighborhood trust beat.",
+          "id": "block_party",
+          "label": "Serve it at the block party",
+          "summary": "The salsa goes out in a big bowl on Pat's porch.",
           "rewards": [
             {
               "type": "item",
@@ -968,59 +1097,76 @@
             },
             {
               "type": "reputation",
-              "id": "lila",
-              "amount": 3
-            }
-          ],
-          "worldState": {
-            "branch": "community",
-            "flag": "lila_salsa:community",
-            "npc": "lila"
-          },
-          "storyLog": [
-            {
-              "type": "choice",
-              "label": "Share the result",
-              "summary": "The Perfect Salsa becomes a neighborhood trust beat."
-            }
-          ]
-        },
-        {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Perfect Salsa becomes a documented garden lesson.",
-          "rewards": [
-            {
-              "type": "item",
-              "id": "recipe_card_salsa",
-              "amount": 1
-            },
-            {
-              "type": "reputation",
-              "id": "lila",
-              "amount": 20
+              "id": "neighbor_pat",
+              "amount": 5
             },
             {
               "type": "xp",
-              "id": "gardening",
-              "amount": 15
-            },
-            {
-              "type": "xp",
-              "id": "gardening",
+              "id": "social",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "lila_salsa:stewardship",
+            "branch": "block_party",
+            "flag": "lila_salsa:block_party",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Perfect Salsa becomes a documented garden lesson."
+              "label": "Serve it at the block party",
+              "summary": "The salsa goes out in a big bowl on Pat's porch."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "That salsa at Pat's party had some kick. Your peppers?"
+            }
+          ]
+        },
+        {
+          "id": "write_ripeness",
+          "label": "Write down the ripeness tests",
+          "summary": "You and Lila write down how to tell each ingredient is ready.",
+          "rewards": [
+            {
+              "type": "item",
+              "id": "recipe_card_salsa",
+              "amount": 1
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 20
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "gardening",
+              "amount": 10
+            }
+          ],
+          "worldState": {
+            "branch": "write_ripeness",
+            "flag": "lila_salsa:write_ripeness",
+            "npc": "lila"
+          },
+          "storyLog": [
+            {
+              "type": "choice",
+              "label": "Write down the ripeness tests",
+              "summary": "You and Lila write down how to tell each ingredient is ready."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Lila showed me your ripeness notes. That is basically a sensor spec."
             }
           ]
         }
@@ -1102,9 +1248,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Mom's Secret Recipe becomes a neighborhood trust beat.",
+          "id": "cook_for_block",
+          "label": "Cook it for the whole block",
+          "summary": "The sauce gets made in a pot big enough for everyone.",
           "rewards": [
             {
               "type": "seed",
@@ -1129,26 +1275,37 @@
             {
               "type": "reputation",
               "id": "lila",
-              "amount": 3
+              "amount": 5
+            },
+            {
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "lila_recipe:community",
+            "branch": "cook_for_block",
+            "flag": "lila_recipe:cook_for_block",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Mom's Secret Recipe becomes a neighborhood trust beat."
+              "label": "Cook it for the whole block",
+              "summary": "The sauce gets made in a pot big enough for everyone."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Had a bowl of that sauce. Tasted like somebody's kitchen from forty years back."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Mom's Secret Recipe becomes a documented garden lesson.",
+          "id": "keep_card",
+          "label": "Keep the recipe card safe",
+          "summary": "The card goes in your journal, copied out in your own hand.",
           "rewards": [
             {
               "type": "seed",
@@ -1169,6 +1326,11 @@
               "type": "xp",
               "id": "crafting",
               "amount": 15
+            },
+            {
+              "type": "xp",
+              "id": "crafting",
+              "amount": 5
             },
             {
               "type": "xp",
@@ -1177,15 +1339,21 @@
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "lila_recipe:stewardship",
+            "branch": "keep_card",
+            "flag": "lila_recipe:keep_card",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Mom's Secret Recipe becomes a documented garden lesson."
+              "label": "Keep the recipe card safe",
+              "summary": "The card goes in your journal, copied out in your own hand."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Lila trusted you with the card itself. She does not do that."
             }
           ]
         }
@@ -1229,9 +1397,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Weekend Watering becomes a neighborhood trust beat.",
+          "id": "water_whole_row",
+          "label": "Water the whole row",
+          "summary": "You water Pat's beds and the two yards next door.",
           "rewards": [
             {
               "type": "item",
@@ -1247,25 +1415,36 @@
               "type": "reputation",
               "id": "neighbor_pat",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "pat_watering:community",
+            "branch": "water_whole_row",
+            "flag": "pat_watering:water_whole_row",
             "npc": "neighbor_pat"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Weekend Watering becomes a neighborhood trust beat."
+              "label": "Water the whole row",
+              "summary": "You water Pat's beds and the two yards next door."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Pat came back to a whole row of happy beds and told everyone."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Weekend Watering becomes a documented garden lesson.",
+          "id": "leave_watering_notes",
+          "label": "Leave Pat a watering schedule",
+          "summary": "You leave a note on how much each bed drank.",
           "rewards": [
             {
               "type": "item",
@@ -1279,20 +1458,26 @@
             },
             {
               "type": "xp",
-              "id": "social",
+              "id": "soil_science",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "pat_watering:stewardship",
+            "branch": "leave_watering_notes",
+            "flag": "pat_watering:leave_watering_notes",
             "npc": "neighbor_pat"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Weekend Watering becomes a documented garden lesson."
+              "label": "Leave Pat a watering schedule",
+              "summary": "You leave a note on how much each bed drank."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Pat's watering schedule? I would like a copy. That is good data."
             }
           ]
         }
@@ -1341,9 +1526,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Bee-Friendly Garden becomes a neighborhood trust beat.",
+          "id": "flower_border",
+          "label": "Plant a border for the whole street",
+          "summary": "Marigolds go in along the curb for every hive and yard.",
           "rewards": [
             {
               "type": "item",
@@ -1359,25 +1544,36 @@
               "type": "reputation",
               "id": "neighbor_sam",
               "amount": 3
+            },
+            {
+              "type": "item",
+              "id": "marigold_seed",
+              "amount": 2
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "sam_bees:community",
+            "branch": "flower_border",
+            "flag": "sam_bees:flower_border",
             "npc": "neighbor_sam"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Bee-Friendly Garden becomes a neighborhood trust beat."
+              "label": "Plant a border for the whole street",
+              "summary": "Marigolds go in along the curb for every hive and yard."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Sam's flower border runs the whole street now. Bees everywhere. Good for the tomatoes."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Bee-Friendly Garden becomes a documented garden lesson.",
+          "id": "track_hive",
+          "label": "Track which flowers the bees work",
+          "summary": "You and Sam log which blooms the bees visit most.",
           "rewards": [
             {
               "type": "item",
@@ -1392,19 +1588,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "sam_bees:stewardship",
+            "branch": "track_hive",
+            "flag": "sam_bees:track_hive",
             "npc": "neighbor_sam"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Bee-Friendly Garden becomes a documented garden lesson."
+              "label": "Track which flowers the bees work",
+              "summary": "You and Sam log which blooms the bees visit most."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Sam says your bee log shows the nasturtiums win. I want that dataset."
             }
           ]
         }
@@ -1448,9 +1650,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Compost Contribution becomes a neighborhood trust beat.",
+          "id": "open_pile",
+          "label": "Open the pile to everyone",
+          "summary": "Jo's pile gets a sign: bring scraps, take compost.",
           "rewards": [
             {
               "type": "item",
@@ -1466,25 +1668,36 @@
               "type": "reputation",
               "id": "neighbor_jo",
               "amount": 3
+            },
+            {
+              "type": "item",
+              "id": "compost",
+              "amount": 1
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "jo_compost:community",
+            "branch": "open_pile",
+            "flag": "jo_compost:open_pile",
             "npc": "neighbor_jo"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Compost Contribution becomes a neighborhood trust beat."
+              "label": "Open the pile to everyone",
+              "summary": "Jo's pile gets a sign: bring scraps, take compost."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Jo's pile takes my kitchen scraps now. Your idea, I hear."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Compost Contribution becomes a documented garden lesson.",
+          "id": "measure_pile",
+          "label": "Measure the pile's heat",
+          "summary": "You check the pile temperature until it cooks properly.",
           "rewards": [
             {
               "type": "item",
@@ -1498,20 +1711,26 @@
             },
             {
               "type": "xp",
-              "id": "gardening",
-              "amount": 5
+              "id": "composting",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "jo_compost:stewardship",
+            "branch": "measure_pile",
+            "flag": "jo_compost:measure_pile",
             "npc": "neighbor_jo"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Compost Contribution becomes a documented garden lesson."
+              "label": "Measure the pile's heat",
+              "summary": "You check the pile temperature until it cooks properly."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Jo's pile is running hot now. You measured it? Smart."
             }
           ]
         }
@@ -1565,9 +1784,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Bird Census becomes a neighborhood trust beat.",
+          "id": "hang_feeders",
+          "label": "Hang feeders along the route",
+          "summary": "Robin's census route gets feeders so the count keeps going.",
           "rewards": [
             {
               "type": "seed",
@@ -1583,25 +1802,36 @@
               "type": "reputation",
               "id": "neighbor_robin",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_sam",
+              "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "robin_birds:community",
+            "branch": "hang_feeders",
+            "flag": "robin_birds:hang_feeders",
             "npc": "neighbor_robin"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Bird Census becomes a neighborhood trust beat."
+              "label": "Hang feeders along the route",
+              "summary": "Robin's census route gets feeders so the count keeps going."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Robin's feeders are full of finches, right outside my windows."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Bird Census becomes a documented garden lesson.",
+          "id": "census_record",
+          "label": "Keep a careful census record",
+          "summary": "Every sighting goes in the log with the time and the place.",
           "rewards": [
             {
               "type": "seed",
@@ -1615,20 +1845,26 @@
             },
             {
               "type": "xp",
-              "id": "gardening",
-              "amount": 5
+              "id": "foraging",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "robin_birds:stewardship",
+            "branch": "census_record",
+            "flag": "robin_birds:census_record",
             "npc": "neighbor_robin"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Bird Census becomes a documented garden lesson."
+              "label": "Keep a careful census record",
+              "summary": "Every sighting goes in the log with the time and the place."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Robin's census sheet is in your handwriting. Very clean."
             }
           ]
         }
@@ -1682,9 +1918,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Map the Meadow becomes a neighborhood trust beat.",
+          "id": "trail_markers",
+          "label": "Mark a trail for the neighbors",
+          "summary": "You stake small markers so others can find the patches.",
           "rewards": [
             {
               "type": "seed",
@@ -1700,25 +1936,36 @@
               "type": "reputation",
               "id": "neighbor_robin",
               "amount": 3
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "explore_meadow:community",
+            "branch": "trail_markers",
+            "flag": "explore_meadow:trail_markers",
             "npc": "neighbor_robin"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Map the Meadow becomes a neighborhood trust beat."
+              "label": "Mark a trail for the neighbors",
+              "summary": "You stake small markers so others can find the patches."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Somebody marked the meadow trails. Robin says it was you."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Map the Meadow becomes a documented garden lesson.",
+          "id": "leave_it_wild",
+          "label": "Leave the patches unmarked",
+          "summary": "You map the spots but leave the meadow as you found it.",
           "rewards": [
             {
               "type": "seed",
@@ -1732,20 +1979,26 @@
             },
             {
               "type": "xp",
-              "id": "gardening",
-              "amount": 5
+              "id": "foraging",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "explore_meadow:stewardship",
+            "branch": "leave_it_wild",
+            "flag": "explore_meadow:leave_it_wild",
             "npc": "neighbor_robin"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Map the Meadow becomes a documented garden lesson."
+              "label": "Leave the patches unmarked",
+              "summary": "You map the spots but leave the meadow as you found it."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Your meadow survey, and not a single stake in the ground. Respect."
             }
           ]
         }
@@ -1797,9 +2050,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "River Crossing becomes a neighborhood trust beat.",
+          "id": "clear_for_all",
+          "label": "Clear the path for everyone",
+          "summary": "The brambles come out and the old crossing opens to the block.",
           "rewards": [
             {
               "type": "item",
@@ -1815,25 +2068,36 @@
               "type": "reputation",
               "id": "old_gus",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "gus_river_path:community",
+            "branch": "clear_for_all",
+            "flag": "gus_river_path:clear_for_all",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "River Crossing becomes a neighborhood trust beat."
+              "label": "Clear the path for everyone",
+              "summary": "The brambles come out and the old crossing opens to the block."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "I take the river path for watercress now. Gus says you cleared it."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "River Crossing becomes a documented garden lesson.",
+          "id": "keep_it_quiet",
+          "label": "Keep the crossing quiet",
+          "summary": "You and Gus agree the fishing spot stays between the two of you.",
           "rewards": [
             {
               "type": "item",
@@ -1846,21 +2110,27 @@
               "amount": 20
             },
             {
-              "type": "xp",
-              "id": "gardening",
-              "amount": 5
+              "type": "reputation",
+              "id": "old_gus",
+              "amount": 8
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_river_path:stewardship",
+            "branch": "keep_it_quiet",
+            "flag": "gus_river_path:keep_it_quiet",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "River Crossing becomes a documented garden lesson."
+              "label": "Keep the crossing quiet",
+              "summary": "You and Gus agree the fishing spot stays between the two of you."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Gus will not tell me where his fishing spot is. He says you know. Fine."
             }
           ]
         }
@@ -1904,9 +2174,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Greenhouse Key becomes a neighborhood trust beat.",
+          "id": "shared_benches",
+          "label": "Open the benches to the block",
+          "summary": "The greenhouse gets a sign-up sheet for winter benches.",
           "rewards": [
             {
               "type": "item",
@@ -1922,25 +2192,36 @@
               "type": "reputation",
               "id": "maya",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "greenhouse_access:community",
+            "branch": "shared_benches",
+            "flag": "greenhouse_access:shared_benches",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "The Greenhouse Key becomes a neighborhood trust beat."
+              "label": "Open the benches to the block",
+              "summary": "The greenhouse gets a sign-up sheet for winter benches."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "I have a winter bench in the greenhouse for herbs now. Thank you."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Greenhouse Key becomes a documented garden lesson.",
+          "id": "tune_climate",
+          "label": "Tune the climate first",
+          "summary": "You spend a week dialing in heat and vents before anything goes in.",
           "rewards": [
             {
               "type": "item",
@@ -1955,19 +2236,25 @@
             {
               "type": "xp",
               "id": "crafting",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "greenhouse_access:stewardship",
+            "branch": "tune_climate",
+            "flag": "greenhouse_access:tune_climate",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Greenhouse Key becomes a documented garden lesson."
+              "label": "Tune the climate first",
+              "summary": "You spend a week dialing in heat and vents before anything goes in."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Maya says you will not let a plant into that greenhouse till the vents are right. Good instinct."
             }
           ]
         }
@@ -2019,9 +2306,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Watercress for Lila becomes a neighborhood trust beat.",
+          "id": "stew_night",
+          "label": "Make it a stew night",
+          "summary": "Lila turns the watercress into a pot of stew for the neighbors.",
           "rewards": [
             {
               "type": "item",
@@ -2041,26 +2328,37 @@
             {
               "type": "reputation",
               "id": "lila",
+              "amount": 5
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
               "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "lila_watercress:community",
+            "branch": "stew_night",
+            "flag": "lila_watercress:stew_night",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Watercress for Lila becomes a neighborhood trust beat."
+              "label": "Make it a stew night",
+              "summary": "Lila turns the watercress into a pot of stew for the neighbors."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Lila's forager stew. Have not had watercress like that since I was a boy."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Watercress for Lila becomes a documented garden lesson.",
+          "id": "leave_patch",
+          "label": "Leave the patch to regrow",
+          "summary": "You take only what Lila needs and leave the rest of the bed.",
           "rewards": [
             {
               "type": "item",
@@ -2079,20 +2377,26 @@
             },
             {
               "type": "xp",
-              "id": "gardening",
-              "amount": 5
+              "id": "foraging",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "lila_watercress:stewardship",
+            "branch": "leave_patch",
+            "flag": "lila_watercress:leave_patch",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Watercress for Lila becomes a documented garden lesson."
+              "label": "Leave the patch to regrow",
+              "summary": "You take only what Lila needs and leave the rest of the bed."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "The watercress bed came back thick this year. Light harvesting works."
             }
           ]
         }
@@ -2150,9 +2454,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Mushroom Log Inoculation becomes a neighborhood trust beat.",
+          "id": "logs_for_neighbors",
+          "label": "Inoculate extra logs for neighbors",
+          "summary": "A few extra logs go to Sam's and Jo's shady corners.",
           "rewards": [
             {
               "type": "seed",
@@ -2171,27 +2475,38 @@
             },
             {
               "type": "reputation",
-              "id": "old_gus",
+              "id": "neighbor_sam",
+              "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_jo",
               "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "gus_mushroom_logs:community",
+            "branch": "logs_for_neighbors",
+            "flag": "gus_mushroom_logs:logs_for_neighbors",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Mushroom Log Inoculation becomes a neighborhood trust beat."
+              "label": "Inoculate extra logs for neighbors",
+              "summary": "A few extra logs go to Sam's and Jo's shady corners."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Sam brought me shiitake off a log you inoculated. Beautiful."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Mushroom Log Inoculation becomes a documented garden lesson.",
+          "id": "keep_spawn",
+          "label": "Keep a spawn culture going",
+          "summary": "You keep a jar of spawn alive for next season's logs.",
           "rewards": [
             {
               "type": "seed",
@@ -2210,20 +2525,26 @@
             },
             {
               "type": "xp",
-              "id": "social",
-              "amount": 5
+              "id": "soil_science",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_mushroom_logs:stewardship",
+            "branch": "keep_spawn",
+            "flag": "gus_mushroom_logs:keep_spawn",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Mushroom Log Inoculation becomes a documented garden lesson."
+              "label": "Keep a spawn culture going",
+              "summary": "You keep a jar of spawn alive for next season's logs."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Gus says your spawn jar is still alive. That is not easy."
             }
           ]
         }
@@ -2270,9 +2591,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "The Vanilla Challenge becomes a neighborhood trust beat.",
+          "id": "show_the_bloom",
+          "label": "Invite the block to see the bloom",
+          "summary": "The orchid opens for one day and half the block comes to look.",
           "rewards": [
             {
               "type": "seed",
@@ -2288,25 +2609,36 @@
               "type": "reputation",
               "id": "maya",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "vanilla_challenge:community",
+            "branch": "show_the_bloom",
+            "flag": "vanilla_challenge:show_the_bloom",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "The Vanilla Challenge becomes a neighborhood trust beat."
+              "label": "Invite the block to see the bloom",
+              "summary": "The orchid opens for one day and half the block comes to look."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Saw that orchid bloom. Did not think a vanilla would flower around here."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "The Vanilla Challenge becomes a documented garden lesson.",
+          "id": "hand_pollinate",
+          "label": "Hand pollinate it and log every step",
+          "summary": "You pollinate the flower by hand and record each step.",
           "rewards": [
             {
               "type": "seed",
@@ -2321,19 +2653,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "vanilla_challenge:stewardship",
+            "branch": "hand_pollinate",
+            "flag": "vanilla_challenge:hand_pollinate",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "The Vanilla Challenge becomes a documented garden lesson."
+              "label": "Hand pollinate it and log every step",
+              "summary": "You pollinate the flower by hand and record each step."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Maya says your vanilla pod is hand pollinated. I want that pod."
             }
           ]
         }
@@ -2378,9 +2716,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Prairie Restoration becomes a neighborhood trust beat.",
+          "id": "meadow_work_day",
+          "label": "Hold a meadow work day",
+          "summary": "Sam and the neighbors plant clover together on a Saturday.",
           "rewards": [
             {
               "type": "xp",
@@ -2396,25 +2734,36 @@
               "type": "reputation",
               "id": "neighbor_sam",
               "amount": 3
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "prairie_restore:community",
+            "branch": "meadow_work_day",
+            "flag": "prairie_restore:meadow_work_day",
             "npc": "neighbor_sam"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Prairie Restoration becomes a neighborhood trust beat."
+              "label": "Hold a meadow work day",
+              "summary": "Sam and the neighbors plant clover together on a Saturday."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Heard about the meadow work day. The clover is coming in thick."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Prairie Restoration becomes a documented garden lesson.",
+          "id": "soil_tests",
+          "label": "Test the soil as it recovers",
+          "summary": "You check the meadow soil each season to see the clover work.",
           "rewards": [
             {
               "type": "xp",
@@ -2428,20 +2777,26 @@
             },
             {
               "type": "xp",
-              "id": "social",
-              "amount": 5
+              "id": "soil_science",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "prairie_restore:stewardship",
+            "branch": "soil_tests",
+            "flag": "prairie_restore:soil_tests",
             "npc": "neighbor_sam"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Prairie Restoration becomes a documented garden lesson."
+              "label": "Test the soil as it recovers",
+              "summary": "You check the meadow soil each season to see the clover work."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Your meadow soil tests show nitrogen climbing. The clover is doing its job."
             }
           ]
         }
@@ -2487,9 +2842,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Maya's Masterpiece becomes a neighborhood trust beat.",
+          "id": "open_hours",
+          "label": "Hold open hours at the hybridizer",
+          "summary": "Maya sets hours so neighbors can try crosses with you.",
           "rewards": [
             {
               "type": "item",
@@ -2505,25 +2860,36 @@
               "type": "reputation",
               "id": "maya",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "maya_masterpiece:community",
+            "branch": "open_hours",
+            "flag": "maya_masterpiece:open_hours",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Maya's Masterpiece becomes a neighborhood trust beat."
+              "label": "Hold open hours at the hybridizer",
+              "summary": "Maya sets hours so neighbors can try crosses with you."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Maya has folks lined up at that machine. You built it right."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Maya's Masterpiece becomes a documented garden lesson.",
+          "id": "calibrate_first",
+          "label": "Calibrate it before anyone uses it",
+          "summary": "You run test crosses until the results repeat.",
           "rewards": [
             {
               "type": "item",
@@ -2538,19 +2904,25 @@
             {
               "type": "xp",
               "id": "crafting",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "maya_masterpiece:stewardship",
+            "branch": "calibrate_first",
+            "flag": "maya_masterpiece:calibrate_first",
             "npc": "maya"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Maya's Masterpiece becomes a documented garden lesson."
+              "label": "Calibrate it before anyone uses it",
+              "summary": "You run test crosses until the results repeat."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Maya says the hybridizer does not run a cross until you sign off. Careful of you."
             }
           ]
         }
@@ -2621,9 +2993,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Gus's Legacy Garden becomes a neighborhood trust beat.",
+          "id": "plant_together",
+          "label": "Plant it with Gus",
+          "summary": "You and Gus put in every plant together, him pointing, you digging.",
           "rewards": [
             {
               "type": "item",
@@ -2644,25 +3016,36 @@
               "type": "reputation",
               "id": "old_gus",
               "amount": 3
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "gus_legacy:community",
+            "branch": "plant_together",
+            "flag": "gus_legacy:plant_together",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Gus's Legacy Garden becomes a neighborhood trust beat."
+              "label": "Plant it with Gus",
+              "summary": "You and Gus put in every plant together, him pointing, you digging."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Gus walked me through his grandfather's garden yesterday. He was smiling the whole time."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Gus's Legacy Garden becomes a documented garden lesson.",
+          "id": "draw_the_plan",
+          "label": "Draw the plan for the archive",
+          "summary": "You draw the layout to scale so it outlasts both of you.",
           "rewards": [
             {
               "type": "item",
@@ -2681,20 +3064,26 @@
             },
             {
               "type": "xp",
-              "id": "social",
-              "amount": 5
+              "id": "gardening",
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "gus_legacy:stewardship",
+            "branch": "draw_the_plan",
+            "flag": "gus_legacy:draw_the_plan",
             "npc": "old_gus"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Gus's Legacy Garden becomes a documented garden lesson."
+              "label": "Draw the plan for the archive",
+              "summary": "You draw the layout to scale so it outlasts both of you."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Your drawing of Gus's legacy garden is going in the library archive. I made sure."
             }
           ]
         }
@@ -2785,9 +3174,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Lila's Cookbook becomes a neighborhood trust beat.",
+          "id": "community_edition",
+          "label": "Print a community edition",
+          "summary": "Every neighbor who grew an ingredient gets a page credit.",
           "rewards": [
             {
               "type": "item",
@@ -2808,25 +3197,36 @@
               "type": "reputation",
               "id": "lila",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "neighbor_pat",
+              "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "lila_cookbook:community",
+            "branch": "community_edition",
+            "flag": "lila_cookbook:community_edition",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Lila's Cookbook becomes a neighborhood trust beat."
+              "label": "Print a community edition",
+              "summary": "Every neighbor who grew an ingredient gets a page credit."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "My name is in Lila's cookbook. Page twelve. Do not tell anyone I read it."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Lila's Cookbook becomes a documented garden lesson.",
+          "id": "growing_notes",
+          "label": "Add growing notes to each recipe",
+          "summary": "Each recipe gets a note on how its ingredients were grown.",
           "rewards": [
             {
               "type": "item",
@@ -2846,19 +3246,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "lila_cookbook:stewardship",
+            "branch": "growing_notes",
+            "flag": "lila_cookbook:growing_notes",
             "npc": "lila"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Lila's Cookbook becomes a documented garden lesson."
+              "label": "Add growing notes to each recipe",
+              "summary": "Each recipe gets a note on how its ingredients were grown."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Lila's cookbook has growing notes now. It reads like a field manual."
             }
           ]
         }
@@ -2902,9 +3308,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Market Day becomes a neighborhood trust beat.",
+          "id": "stall_for_neighbors",
+          "label": "Run a stall for the neighbors",
+          "summary": "You sell for the neighbors who could not make it.",
           "rewards": [
             {
               "type": "item",
@@ -2920,25 +3326,36 @@
               "type": "reputation",
               "id": "neighbor_pat",
               "amount": 3
+            },
+            {
+              "type": "reputation",
+              "id": "lila",
+              "amount": 3
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "market_day:community",
+            "branch": "stall_for_neighbors",
+            "flag": "market_day:stall_for_neighbors",
             "npc": "neighbor_pat"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Market Day becomes a neighborhood trust beat."
+              "label": "Run a stall for the neighbors",
+              "summary": "You sell for the neighbors who could not make it."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "Pat's market day was the best one in years. You worked three stalls."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Market Day becomes a documented garden lesson.",
+          "id": "price_ledger",
+          "label": "Keep the day's price ledger",
+          "summary": "You record every trade so next year's market can plan.",
           "rewards": [
             {
               "type": "item",
@@ -2952,20 +3369,31 @@
             },
             {
               "type": "xp",
+              "id": "social",
+              "amount": 5
+            },
+            {
+              "type": "xp",
               "id": "gardening",
               "amount": 5
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "market_day:stewardship",
+            "branch": "price_ledger",
+            "flag": "market_day:price_ledger",
             "npc": "neighbor_pat"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Market Day becomes a documented garden lesson."
+              "label": "Keep the day's price ledger",
+              "summary": "You record every trade so next year's market can plan."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "maya",
+              "line": "Your market ledger from Pat's day. Clean numbers. I could build a model off it."
             }
           ]
         }
@@ -3028,9 +3456,9 @@
       "deadline": null,
       "outcomes": [
         {
-          "id": "community",
-          "label": "Share the result",
-          "summary": "Festival Champion becomes a neighborhood trust beat.",
+          "id": "share_trophy",
+          "label": "Put the trophy in the community room",
+          "summary": "The trophy goes where the whole block can see it.",
           "rewards": [
             {
               "type": "item",
@@ -3046,25 +3474,36 @@
               "type": "reputation",
               "id": "neighbor_jo",
               "amount": 3
+            },
+            {
+              "type": "xp",
+              "id": "social",
+              "amount": 5
             }
           ],
           "worldState": {
-            "branch": "community",
-            "flag": "festival_champion:community",
+            "branch": "share_trophy",
+            "flag": "festival_champion:share_trophy",
             "npc": "neighbor_jo"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Share the result",
-              "summary": "Festival Champion becomes a neighborhood trust beat."
+              "label": "Put the trophy in the community room",
+              "summary": "The trophy goes where the whole block can see it."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "lila",
+              "line": "The festival trophy is in the community room. Jo dusts it."
             }
           ]
         },
         {
-          "id": "stewardship",
-          "label": "Document the lesson",
-          "summary": "Festival Champion becomes a documented garden lesson.",
+          "id": "festival_journal",
+          "label": "Write up a year of festivals",
+          "summary": "You write down what worked at each festival for next year's champion.",
           "rewards": [
             {
               "type": "item",
@@ -3079,19 +3518,25 @@
             {
               "type": "xp",
               "id": "gardening",
-              "amount": 5
+              "amount": 10
             }
           ],
           "worldState": {
-            "branch": "stewardship",
-            "flag": "festival_champion:stewardship",
+            "branch": "festival_journal",
+            "flag": "festival_champion:festival_journal",
             "npc": "neighbor_jo"
           },
           "storyLog": [
             {
               "type": "choice",
-              "label": "Document the lesson",
-              "summary": "Festival Champion becomes a documented garden lesson."
+              "label": "Write up a year of festivals",
+              "summary": "You write down what worked at each festival for next year's champion."
+            }
+          ],
+          "echoes": [
+            {
+              "npc": "old_gus",
+              "line": "Jo showed me your festival write-up. Next year's champion will have it easier."
             }
           ]
         }

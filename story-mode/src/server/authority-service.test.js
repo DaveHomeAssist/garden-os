@@ -1152,21 +1152,21 @@ describe('authority service', () => {
     const applied = await postJson(handle, '/api/action', envelope({
       id: 'action-claim-quest',
       idempotencyKey: 'idem-claim-quest',
-      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+      payload: { choiceId: 'water_whole_row', completedAt: NOW, questId: 'pat_watering' },
       type: Actions.COMPLETE_QUEST,
     }));
     const duplicate = await postJson(handle, '/api/action', envelope({
       expectedTick: 1,
       id: 'action-claim-quest-retry',
       idempotencyKey: 'idem-claim-quest',
-      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+      payload: { choiceId: 'water_whole_row', completedAt: NOW, questId: 'pat_watering' },
       type: Actions.COMPLETE_QUEST,
     }));
     const reclaim = await postJson(handle, '/api/action', envelope({
       expectedTick: 1,
       id: 'action-claim-quest-again',
       idempotencyKey: 'idem-claim-quest-again',
-      payload: { choiceId: 'stewardship', completedAt: NOW + 1, questId: 'pat_watering' },
+      payload: { choiceId: 'leave_watering_notes', completedAt: NOW + 1, questId: 'pat_watering' },
       type: Actions.COMPLETE_QUEST,
     }));
     const state = service.sessions.get('session-http');
@@ -1174,7 +1174,7 @@ describe('authority service', () => {
     expect(applied.body.ok).toBe(true);
     expect(applied.body.ack.actionType).toBe(Actions.COMPLETE_QUEST);
     expect(applied.body.ack.authoritativePatch.data.lastQuestReward).toEqual({
-      choiceId: 'community',
+      choiceId: 'water_whole_row',
       completedAt: NOW,
       itemTotals: { plant_matter: 5 },
       questId: 'pat_watering',
@@ -1182,12 +1182,13 @@ describe('authority service', () => {
         { amount: 5, id: 'plant_matter', type: 'item' },
         { amount: 10, id: 'neighbor_pat', type: 'reputation' },
         { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+        { amount: 3, id: 'neighbor_sam', type: 'reputation' },
       ],
     });
     expect(verifyAuthorityAckSignature(applied.body.ack, SECRET)).toBe(true);
     expect(duplicate.body.duplicate).toBe(true);
     expect(reclaim.body.ack.rejection.code).toBe('QUEST_ALREADY_CLAIMED');
-    expect(state.data.claimedQuests).toEqual({ pat_watering: { choiceId: 'community' } });
+    expect(state.data.claimedQuests).toEqual({ pat_watering: { choiceId: 'water_whole_row' } });
     expect(state.tick).toBe(1);
     expect(state.data.inventory.slots[5]).toMatchObject({ count: 5, itemId: 'plant_matter' });
   });
@@ -1200,7 +1201,7 @@ describe('authority service', () => {
       id: 'action-quest-rewards',
       idempotencyKey: 'idem-quest-rewards',
       payload: {
-        choiceId: 'community',
+        choiceId: 'water_whole_row',
         questId: 'pat_watering',
         rewards: [{ amount: 99, id: 'legendary_trowel', type: 'item' }],
       },

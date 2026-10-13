@@ -1479,7 +1479,7 @@ test('authority action routes quest reward claims through canonical state once',
     gameId: 'garden',
     id: 'action-claim-quest',
     idempotencyKey: 'idem-claim-quest',
-    payload: { choiceId: 'community', questId: 'pat_watering' },
+    payload: { choiceId: 'water_whole_row', questId: 'pat_watering' },
     playerId: 'local',
     sessionId,
     type: 'COMPLETE_QUEST',
@@ -1496,7 +1496,7 @@ test('authority action routes quest reward claims through canonical state once',
     ...action,
     id: 'action-claim-quest-again',
     idempotencyKey: 'idem-claim-quest-again',
-    payload: { choiceId: 'stewardship', questId: 'pat_watering' },
+    payload: { choiceId: 'leave_watering_notes', questId: 'pat_watering' },
   }), env);
   const reclaim = await reclaimResponse.json();
 
@@ -1505,7 +1505,7 @@ test('authority action routes quest reward claims through canonical state once',
   assert.equal(first.ack.actionType, 'COMPLETE_QUEST');
   assert.equal(await verifyServerAckSignature(first.ack, SECRET), true);
   assert.deepEqual(first.state.data.lastQuestReward, {
-    choiceId: 'community',
+    choiceId: 'water_whole_row',
     completedAt: null,
     itemTotals: { plant_matter: 5 },
     questId: 'pat_watering',
@@ -1513,9 +1513,10 @@ test('authority action routes quest reward claims through canonical state once',
       { amount: 5, id: 'plant_matter', type: 'item' },
       { amount: 10, id: 'neighbor_pat', type: 'reputation' },
       { amount: 3, id: 'neighbor_pat', type: 'reputation' },
+      { amount: 3, id: 'neighbor_sam', type: 'reputation' },
     ],
   });
-  assert.deepEqual(first.state.data.claimedQuests, { pat_watering: { choiceId: 'community' } });
+  assert.deepEqual(first.state.data.claimedQuests, { pat_watering: { choiceId: 'water_whole_row' } });
   assert.equal(retry.duplicate, true);
   assert.equal(reclaimResponse.status, 422);
   assert.equal(reclaim.ack.rejection.code, 'QUEST_ALREADY_CLAIMED');
@@ -1532,7 +1533,7 @@ test('authority rejects client-owned quest and festival reward payloads before m
       code: 'CLIENT_REWARD_PAYLOAD',
       id: 'quest-fake-rewards',
       payload: {
-        choiceId: 'community',
+        choiceId: 'water_whole_row',
         questId: 'pat_watering',
         rewards: [{ amount: 99, id: 'legendary_trowel', type: 'item' }],
       },

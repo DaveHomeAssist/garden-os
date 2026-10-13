@@ -188,6 +188,7 @@ describe('open world phases 5 to 8', () => {
   it('validates quest branches and persists divergent choices', () => {
     expect(assertValidQuestDeck().branchingQuestCount).toBeGreaterThanOrEqual(10);
     const quest = readJson('specs/QUEST_DECK.json').quests.find((entry) => entry.id === 'lila_basil');
+    const [shareId, saveId] = quest.outcomes.map((outcome) => outcome.id);
     const runChoice = (choiceId) => {
       const store = new Store(createGameState());
       const engine = new QuestEngine(store, [quest]);
@@ -200,17 +201,17 @@ describe('open world phases 5 to 8', () => {
       return store.getState().campaign;
     };
 
-    const community = runChoice('community');
-    const stewardship = runChoice('stewardship');
-    expect(community.worldState.questOutcomes.lila_basil.branch).toBe('community');
-    expect(stewardship.worldState.questOutcomes.lila_basil.branch).toBe('stewardship');
-    expect(community.reputation.lila).toBeGreaterThan(stewardship.reputation.lila);
-    expect(community.storyLog.some((entry) => entry.outcomeId === 'community')).toBe(true);
-    expect(stewardship.storyLog.some((entry) => entry.outcomeId === 'stewardship')).toBe(true);
+    const shared = runChoice(shareId);
+    const saved = runChoice(saveId);
+    expect(shared.worldState.questOutcomes.lila_basil.branch).toBe(shareId);
+    expect(saved.worldState.questOutcomes.lila_basil.branch).toBe(saveId);
+    expect(shared.reputation.lila).toBeGreaterThan(saved.reputation.lila);
+    expect(shared.storyLog.some((entry) => entry.outcomeId === shareId)).toBe(true);
+    expect(saved.storyLog.some((entry) => entry.outcomeId === saveId)).toBe(true);
 
-    saveCampaign(community, 2);
+    saveCampaign(shared, 2);
     const loaded = loadCampaign(2);
-    expect(loaded.choiceLog.lila_basil.outcomeId).toBe('community');
+    expect(loaded.choiceLog.lila_basil.outcomeId).toBe(shareId);
     expect(loaded.zoneReputation.neighborhood).toBeGreaterThan(0);
   });
 

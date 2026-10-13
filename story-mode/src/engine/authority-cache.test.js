@@ -935,7 +935,7 @@ describe('authority IndexedDB cache', () => {
       authoritativePatch: {
         data: {
           lastQuestReward: {
-            choiceId: 'community',
+            choiceId: 'water_whole_row',
             completedAt: 1_783_368_000_000,
             itemTotals: { plant_matter: 5 },
             questId: 'pat_watering',
@@ -947,7 +947,7 @@ describe('authority IndexedDB cache', () => {
     expect(authorityAckToStoreAction(questAck, createGameState())).toEqual({
       meta: { authorityAck: true },
       payload: {
-        choiceId: 'community',
+        choiceId: 'water_whole_row',
         completedAt: 1_783_368_000_000,
         questId: 'pat_watering',
         rewards: [{ amount: 5, id: 'plant_matter', type: 'item' }],
@@ -2671,7 +2671,7 @@ describe('authority IndexedDB cache', () => {
     });
     store.dispatch({
       type: Actions.COMPLETE_QUEST,
-      payload: { choiceId: 'community', completedAt: NOW, questId: 'pat_watering' },
+      payload: { choiceId: 'water_whole_row', completedAt: NOW, questId: 'pat_watering' },
     });
     await persistence.flush();
 

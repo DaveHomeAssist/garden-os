@@ -362,13 +362,13 @@ describe('gameReducer', () => {
   it('derives quest and festival rewards from canonical tables for lean payloads', () => {
     const completed = gameReducer(makeState(), {
       type: Actions.COMPLETE_QUEST,
-      payload: { choiceId: 'community', completedAt: 12345, questId: 'pat_watering' },
+      payload: { choiceId: 'water_whole_row', completedAt: 12345, questId: 'pat_watering' },
     });
     const plantMatter = (completed.campaign.inventory.slots ?? []).reduce((total, slot) => (
       slot?.itemId === 'plant_matter' ? total + slot.count : total
     ), 0);
     expect(completed.campaign.questLog.pat_watering.state).toBe('COMPLETED');
-    expect(completed.campaign.choiceLog.pat_watering.outcomeId).toBe('community');
+    expect(completed.campaign.choiceLog.pat_watering.outcomeId).toBe('water_whole_row');
     expect(plantMatter).toBe(5);
     expect(completed.campaign.reputation.neighbor_pat).toBe(13);
 
