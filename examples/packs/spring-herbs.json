@@ -1,5 +1,6 @@
 {
   "id": "spring_herbs",
+  "formatVersion": 1,
   "version": "1.0.0",
   "title": "Spring Herbs",
   "author": "Garden OS",
@@ -18,11 +19,18 @@
         "coolSeason": true,
         "tall": false,
         "water": 2,
-        "companions": ["basil"],
+        "companions": [
+          "basil"
+        ],
         "conflicts": [],
         "chapterUnlock": 2,
         "recipes": [],
-        "seasonalMultipliers": { "spring": 1.0, "summer": 0.8, "fall": 0.8, "winter": 0.2 }
+        "seasonalMultipliers": {
+          "spring": 1.0,
+          "summer": 0.8,
+          "fall": 0.8,
+          "winter": 0.2
+        }
       }
     ]
   }

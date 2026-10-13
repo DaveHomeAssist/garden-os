@@ -150,7 +150,7 @@ export function makeNpcMesh(npc) {
   const pos = npc.activeSchedule.position;
   g.position.set(pos.x, 0, pos.z);
   g.userData.interactable = {
-    id: `npc_${npc.id}`, type: 'npc', npcId: npc.id, label: npc.name,
+    id: `npc_${npc.id}`, type: 'npc', npcId: npc.id, label: npc.modded ? `${npc.name} · Modded` : npc.name,
     position: { x: pos.x, z: pos.z }, radius: 1.0,
   };
   return g;

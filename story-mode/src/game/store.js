@@ -3,6 +3,7 @@ import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
 import { quoteMarketTrade } from '../server/authority-market.js';
+import { getPackQuest } from '../content/content-registry.js';
 import {
   BED_KIT_ITEM_ID,
   canSwitchBed,
@@ -68,7 +69,7 @@ function getCraftingRecipeById(recipeId) {
 
 function getQuestDeckEntry(questId) {
   if (typeof questId !== 'string' || !questId) return null;
-  return (questDeckSpec.quests ?? []).find((entry) => entry.id === questId) ?? null;
+  return (questDeckSpec.quests ?? []).find((entry) => entry.id === questId) ?? getPackQuest(questId) ?? null;
 }
 
 function getFestivalActivityRewards(festivalId, activityId) {

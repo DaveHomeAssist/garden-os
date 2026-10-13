@@ -223,3 +223,31 @@ body:not([data-story-screen="play"]) .quest-tracker {
     max-height: 30vh;
   }
 }
+
+/* Content-pack quests are labeled so players can tell official from modded. */
+.quest-modded-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(139, 168, 181, 0.22);
+  color: inherit;
+}
+
+/* Content-pack quests are labeled so players can tell official from modded. */
+.quest-modded-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(139, 168, 181, 0.22);
+  color: inherit;
+}

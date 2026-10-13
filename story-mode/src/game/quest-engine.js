@@ -1,4 +1,5 @@
 import questDeckData from 'specs/QUEST_DECK.json';
+import { listPackQuests } from '../content/content-registry.js';
 
 import { Actions } from './store.js';
 import { getInventoryItemCount } from './inventory.js';
@@ -52,13 +53,22 @@ const QuestStates = {
 const ACTIVE_QUEST_LIMIT = 3;
 
 class QuestEngine {
-  constructor(store, questDeck = questDeckData?.quests ?? []) {
+  constructor(store, questDeck) {
     this.store = store;
-    this.questDeck = Array.isArray(questDeck) ? questDeck : [];
-    // Canonical-deck engines dispatch lean authority-routable payloads; custom
-    // decks (tests, mods) keep the legacy full payload since the server would
-    // reject their quest ids anyway.
-    this.usesCanonicalDeck = questDeck === (questDeckData?.quests ?? []);
+    // The runtime deck is the official deck plus installed content-pack
+    // quests. The store reducer looks both up by id, so these engines send
+    // lean payloads; pack quest completions stay local (never authority
+    // routed) because the server cannot vouch for pack-defined rewards.
+    // Custom decks passed in directly (tests) keep the legacy full payload.
+    const officialDeck = questDeckData?.quests ?? [];
+    if (questDeck === undefined) {
+      const packQuests = listPackQuests();
+      this.questDeck = packQuests.length ? [...officialDeck, ...packQuests] : officialDeck;
+      this.usesCanonicalDeck = true;
+    } else {
+      this.questDeck = Array.isArray(questDeck) ? questDeck : [];
+      this.usesCanonicalDeck = questDeck === officialDeck;
+    }
   }
 
   getState() {

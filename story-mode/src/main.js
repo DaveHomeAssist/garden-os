@@ -5,6 +5,9 @@ import '../../garden-theme.js';
 import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
 import { loadContentPacks } from './game/pack-loader.js';
+import { installPackContent, resetPackContent } from './content/content-registry.js';
+import { loadInstalledPacks } from './content/installed-packs.js';
+import { isOfficialContent } from './content/official-content.js';
 
 document.body.dataset.designLanguage = 'field-kit';
 
@@ -79,7 +82,12 @@ async function startSession({ initialState, slot, viewport, planner }) {
       viewport.innerHTML = '';
     }
 
-    const packResult = loadContentPacks(initialState, globalThis.GARDEN_OS_CONTENT_PACKS ?? []);
+    // Player-installed packs (pause menu > Content Packs) load at boot, plus
+    // any a developer injects through globalThis.GARDEN_OS_CONTENT_PACKS.
+    const packs = [...loadInstalledPacks(), ...(globalThis.GARDEN_OS_CONTENT_PACKS ?? [])];
+    const packResult = loadContentPacks(initialState, packs, { isOfficial: isOfficialContent });
+    resetPackContent();
+    installPackContent(packResult.content, { isOfficial: isOfficialContent, packs: packResult.loaded });
     globalThis.GARDEN_OS_LOADED_CONTENT = packResult;
 
     const scene = createGardenScene(viewport);

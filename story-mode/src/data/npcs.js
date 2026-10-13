@@ -1,4 +1,5 @@
 import worldMap from 'specs/WORLD_MAP.json';
+import { getPackNpc, listPackNpcs } from '../content/content-registry.js';
 
 const NEIGHBOR_TEMPLATES = [
   { id: 'neighbor_gardener', name: 'Pat', role: 'Weekend Gardener', questType: 'assist' },
@@ -120,12 +121,44 @@ const TIER_KEY_MAP = {
   family: 'family',
 };
 
+const PACK_NPC_SEASONS = ['spring', 'summer', 'fall', 'winter'];
+
+/** Shape a content-pack NPC like an official one so the same code can host it. */
+function toRuntimeNpc(packNpc) {
+  if (!packNpc) return null;
+  const seasons = Array.isArray(packNpc.seasons) && packNpc.seasons.length ? packNpc.seasons : PACK_NPC_SEASONS;
+  const position = packNpc.position ? { x: packNpc.position.x, z: packNpc.position.z } : { x: 2, z: -2 };
+  const schedule = packNpc.zone
+    ? Object.fromEntries(seasons.map((season) => [season, { zone: packNpc.zone, position: { ...position } }]))
+    : {};
+  return {
+    id: packNpc.id,
+    name: packNpc.name,
+    role: packNpc.role,
+    personality: packNpc.personality ?? '',
+    modded: true,
+    provenance: packNpc.provenance ?? null,
+    schedule,
+    reputation: { initial: 0, decayPerSeason: 0 },
+    dialogueDefaults: {
+      greeting: { stranger: packNpc.greeting ?? `${packNpc.name}, ${packNpc.role}, nods hello.` },
+      farewell: { stranger: packNpc.farewell ?? 'See you around.' },
+    },
+  };
+}
+
 function getNPC(id) {
-  return NPC_REGISTRY[id] ?? null;
+  return NPC_REGISTRY[id] ?? toRuntimeNpc(getPackNpc(id));
+}
+
+/** Official NPCs plus installed content-pack NPCs. */
+function listAllNPCs() {
+  const packNpcs = listPackNpcs().map(toRuntimeNpc);
+  return [...Object.values(NPC_REGISTRY), ...packNpcs];
 }
 
 function getNPCsInZone(zone, season) {
-  return Object.values(NPC_REGISTRY)
+  return listAllNPCs()
     .filter((npc) => npc.schedule?.[season]?.zone === zone)
     .map((npc) => ({
       ...npc,
@@ -158,6 +191,7 @@ function getNPCFarewell(npcId, reputationTier = 'stranger') {
 
 export {
   NPC_REGISTRY,
+  listAllNPCs,
   NEIGHBOR_TEMPLATES,
   getNPC,
   getNPCsInZone,

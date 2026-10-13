@@ -5,6 +5,7 @@ import { deleteCampaign, exportSaveSlot, importSaveSlot } from '../game/save.js'
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
 import { showBedsPanel } from './beds-panel.js';
+import { showPacksPanel } from './packs-panel.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { createPlayerProfileEditor } from './player-profile-editor.js';
 
@@ -184,6 +185,12 @@ export function createPauseController({
         updateHUD?.();
       },
     });
+  }, listenerOptions);
+
+  document.getElementById('pause-packs')?.addEventListener('click', () => {
+    playSFX('ui_click');
+    closePauseMenu();
+    showPacksPanel(pauseContainer, { persistState });
   }, listenerOptions);
 
   document.getElementById('pause-story-log')?.addEventListener('click', () => {

@@ -2,6 +2,7 @@
 // quest UI and its tests share one wording.
 import { getCropById } from '../data/crops.js';
 import { getNPC } from '../data/npcs.js';
+import { listPackQuests } from '../content/content-registry.js';
 import { getItemDef } from '../game/inventory.js';
 import { ZONE_NAMES } from './zone-travel.js';
 
@@ -24,8 +25,22 @@ function getQuestGiverName(npcId) {
   return NEIGHBOR_NAMES[npcId] ?? getNPC(npcId)?.name ?? String(npcId ?? 'Someone');
 }
 
+// Content-pack quests whose giver cannot be met in person (no pack NPC with a
+// zone) post their requests on the notice board like the neighbors do.
+function isPackBoardGiver(npcId) {
+  const npc = getNPC(npcId);
+  return !npc || (npc.modded && !Object.keys(npc.schedule ?? {}).length);
+}
+
 function isNoticeBoardQuest(quest) {
-  return Boolean(NEIGHBOR_NAMES[quest?.npc]);
+  if (NEIGHBOR_NAMES[quest?.npc]) return true;
+  return Boolean(quest?.modded) && isPackBoardGiver(quest?.npc);
+}
+
+/** Everyone whose requests go on the board: the neighbors plus pack givers. */
+function getNoticeBoardGivers() {
+  const packGivers = listPackQuests().filter((quest) => isNoticeBoardQuest(quest)).map((quest) => quest.npc);
+  return [...new Set([...Object.keys(NEIGHBOR_NAMES), ...packGivers])];
 }
 
 function zoneName(zoneId) {
@@ -88,6 +103,7 @@ export {
   describeQuestGiverLocation,
   describeRequirement,
   getQuestGiverName,
+  getNoticeBoardGivers,
   isNoticeBoardQuest,
   itemName,
   zoneName,

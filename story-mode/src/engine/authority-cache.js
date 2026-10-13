@@ -1,4 +1,5 @@
 import { createActionEnvelope } from './authoritative-engine.js';
+import { isModdedQuest } from '../content/content-registry.js';
 
 const DB_NAME = 'gos-story-authority-v1';
 const DB_VERSION = 1;
@@ -106,6 +107,9 @@ function resolveAuthorityUrl({
 }
 
 function isAuthorityRoutedAction(action) {
+  // Content-pack quests are player-installed data; the authority cannot vouch
+  // for their rewards, so their completions stay local and unsigned.
+  if (action?.type === 'COMPLETE_QUEST' && isModdedQuest(action.payload?.questId)) return false;
   if (action?.type === 'REMOVE_ITEM') {
     return AUTHORITY_ROUTED_REMOVE_ITEM_IDS.has(action.payload?.itemId);
   }

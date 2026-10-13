@@ -1,6 +1,7 @@
 {
   "id": "riverside_neighbor",
-  "version": "1.0.0",
+  "formatVersion": 1,
+  "version": "1.1.0",
   "title": "Riverside Neighbor",
   "author": "Garden OS",
   "content": {
@@ -9,7 +10,63 @@
         "id": "rhea",
         "name": "Rhea",
         "role": "Riverside Seed Saver",
-        "personality": "Careful and observant"
+        "personality": "Careful and observant",
+        "zone": "riverside",
+        "position": { "x": 3.5, "z": 2.5 },
+        "seasons": ["spring", "summer", "fall"],
+        "greeting": "Rhea looks up from a tray of drying seed heads. \"Watercress likes cold feet. Did you know that?\"",
+        "farewell": "\"Bring me what the river gives you.\""
+      }
+    ],
+    "quests": [
+      {
+        "id": "rhea_cold_feet",
+        "npc": "rhea",
+        "type": "fetch",
+        "title": "Cold Feet",
+        "description": "Rhea wants proof that watercress grows in a raised bed, not just in the river shallows.",
+        "requirements": [
+          { "type": "crop_harvested", "id": "watercress", "count": 2 }
+        ],
+        "rewards": [
+          { "type": "seed", "id": "watercress", "amount": 1 }
+        ],
+        "outcomes": [
+          {
+            "id": "seed_library",
+            "label": "Add your seed to her library",
+            "summary": "Rhea files your watercress seed with a note about the bed it came from.",
+            "rewards": [
+              { "type": "reputation", "id": "rhea", "amount": 10 },
+              { "type": "seed", "id": "watercress", "amount": 2 }
+            ],
+            "worldState": { "branch": "seed_library", "npc": "rhea" },
+            "storyLog": [
+              { "type": "choice", "label": "Add your seed to her library", "summary": "Your watercress joins Rhea's seed library." }
+            ]
+          },
+          {
+            "id": "bed_notes",
+            "label": "Trade notes on bed moisture",
+            "summary": "You and Rhea compare how wet each of you keeps the soil.",
+            "rewards": [
+              { "type": "xp", "id": "soil_science", "amount": 15 },
+              { "type": "reputation", "id": "rhea", "amount": 5 }
+            ],
+            "worldState": { "branch": "bed_notes", "npc": "rhea" },
+            "storyLog": [
+              { "type": "choice", "label": "Trade notes on bed moisture", "summary": "Rhea's moisture notes go in your journal." }
+            ]
+          }
+        ],
+        "prerequisites": {
+          "chapter_min": 1,
+          "season": null,
+          "reputation": {},
+          "quests_completed": []
+        },
+        "timed": false,
+        "deadline": null
       }
     ],
     "zones": [

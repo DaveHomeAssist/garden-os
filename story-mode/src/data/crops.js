@@ -2,35 +2,39 @@
  * Crop Registry — typed accessors over CROP_SCORING_DATA.json
  */
 import { cropData } from './loader.js';
+import { getPackCrop, listPackCrops } from '../content/content-registry.js';
 
 const ALL_CROPS = Object.values(cropData.crops);
 const CROP_MAP = cropData.crops;
 const RECIPES = cropData.recipes;
 
+// Official crops come from the spec; content-pack crops are appended from the
+// runtime registry and can never shadow an official id.
 export function getCropById(id) {
-  return CROP_MAP[id] ?? null;
+  return CROP_MAP[id] ?? getPackCrop(id) ?? null;
 }
 
 export function getAllCrops() {
-  return ALL_CROPS;
+  const packCrops = listPackCrops();
+  return packCrops.length ? [...ALL_CROPS, ...packCrops] : ALL_CROPS;
 }
 
 export function getCropsForChapter(chapter) {
-  return ALL_CROPS.filter(c => c.chapterUnlock <= chapter);
+  return getAllCrops().filter(c => c.chapterUnlock <= chapter);
 }
 
 export function getAvailableCrops(chapter, biomeCropsUnlocked = []) {
   const byChapter = new Set(getCropsForChapter(chapter).map(c => c.id));
   const byBiome = new Set(biomeCropsUnlocked);
-  return ALL_CROPS.filter(c => byChapter.has(c.id) || byBiome.has(c.id));
+  return getAllCrops().filter(c => byChapter.has(c.id) || byBiome.has(c.id));
 }
 
 export function getCropsByFaction(faction) {
-  return ALL_CROPS.filter(c => c.faction === faction);
+  return getAllCrops().filter(c => c.faction === faction);
 }
 
 export function getFactions() {
-  const factions = new Set(ALL_CROPS.map(c => c.faction));
+  const factions = new Set(getAllCrops().map(c => c.faction));
   return [...factions].sort();
 }
 

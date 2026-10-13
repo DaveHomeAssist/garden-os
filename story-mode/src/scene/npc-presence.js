@@ -10,7 +10,7 @@
  */
 import WORLD_MAP from 'specs/WORLD_MAP.json';
 
-import { NPC_REGISTRY, getNPC } from '../data/npcs.js';
+import { getNPC, listAllNPCs } from '../data/npcs.js';
 import { evaluateZoneAccess } from './zone-manager.js';
 
 const FALLBACK_ZONE = 'neighborhood';
@@ -31,11 +31,19 @@ function resolveNpcPresence(npcId, state, { canEnterZone } = {}) {
   if (scheduled?.zone && (scheduled.zone === FALLBACK_ZONE || isOpen(scheduled.zone))) {
     return { zone: scheduled.zone, position: { ...scheduled.position }, fallback: false };
   }
+  if (npc.modded) {
+    // Pack NPCs keep to their own seasons; out of season they are not around.
+    if (!scheduled?.zone) return null;
+    return { zone: FALLBACK_ZONE, position: { ...scheduled.position }, fallback: true };
+  }
   return { zone: FALLBACK_ZONE, position: getNeighborhoodSlot(npc), fallback: true };
 }
 
 function getNPCsPresentInZone(zoneId, state, options = {}) {
-  return Object.values(NPC_REGISTRY)
+  // Content-pack NPCs only appear where their pack placed them; with no zone
+  // they are met through the notice board instead.
+  return listAllNPCs()
+    .filter((npc) => !npc.modded || Object.keys(npc.schedule ?? {}).length)
     .map((npc) => {
       const presence = resolveNpcPresence(npc.id, state, options);
       if (!presence || presence.zone !== zoneId) return null;

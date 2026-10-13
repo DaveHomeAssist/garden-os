@@ -417,6 +417,13 @@
   text-transform: uppercase;
   margin-top: 2px;
 }
+.palette-modded {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8ba8b5;
+}
 .palette-fit--great { color: #5aab6b; }
 .palette-fit--ok    { color: #e8c84a; }
 .palette-fit--poor  { color: rgba(247,242,234,0.35); }

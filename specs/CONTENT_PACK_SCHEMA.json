@@ -4,7 +4,12 @@
   "title": "Garden OS Content Pack",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "version", "title", "content"],
+  "required": [
+    "id",
+    "version",
+    "title",
+    "content"
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -27,70 +32,376 @@
       "properties": {
         "crops": {
           "type": "array",
-          "items": { "$ref": "#/$defs/crop" }
+          "items": {
+            "$ref": "#/$defs/crop"
+          }
         },
         "zones": {
           "type": "array",
-          "items": { "$ref": "#/$defs/zone" }
+          "items": {
+            "$ref": "#/$defs/zone"
+          }
         },
         "quests": {
           "type": "array",
-          "items": { "$ref": "#/$defs/quest" }
+          "items": {
+            "$ref": "#/$defs/quest"
+          }
         },
         "npcs": {
           "type": "array",
-          "items": { "$ref": "#/$defs/npc" }
+          "items": {
+            "$ref": "#/$defs/npc"
+          }
         }
       }
+    },
+    "formatVersion": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "description": "Manifest format this pack targets. Optional; defaults to 1."
     }
   },
   "$defs": {
     "crop": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "name", "faction", "chapterUnlock", "seasonalMultipliers"],
+      "required": [
+        "id",
+        "name",
+        "faction",
+        "chapterUnlock",
+        "seasonalMultipliers",
+        "sunMin",
+        "sunIdeal",
+        "support",
+        "shadeScore",
+        "coolSeason",
+        "tall",
+        "water",
+        "companions",
+        "conflicts"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "name": { "type": "string", "minLength": 1 },
-        "emoji": { "type": "string" },
-        "short": { "type": "string" },
-        "faction": { "type": "string", "minLength": 1 },
-        "chapterUnlock": { "type": "number", "minimum": 1 },
-        "seasonalMultipliers": { "type": "object" }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emoji": {
+          "type": "string"
+        },
+        "short": {
+          "type": "string"
+        },
+        "faction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapterUnlock": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "seasonalMultipliers": {
+          "type": "object"
+        },
+        "sunMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "sunIdeal": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "support": {
+          "type": "boolean"
+        },
+        "shadeScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "coolSeason": {
+          "type": "boolean"
+        },
+        "tall": {
+          "type": "boolean"
+        },
+        "water": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "companions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        }
       }
     },
     "zone": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "name", "biome"],
+      "required": [
+        "id",
+        "name",
+        "biome"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "name": { "type": "string", "minLength": 1 },
-        "biome": { "type": "string", "minLength": 1 }
-      }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "biome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 280
+        }
+      },
+      "description": "Recorded with the pack for provenance. Pack places are not visitable yet; a scene format for them is not defined."
     },
     "quest": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "npc", "title", "requirements", "rewards", "outcomes"],
+      "required": [
+        "id",
+        "npc",
+        "title",
+        "requirements",
+        "rewards",
+        "outcomes"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "npc": { "type": "string", "minLength": 1 },
-        "title": { "type": "string", "minLength": 1 },
-        "requirements": { "type": "array" },
-        "rewards": { "type": "array" },
-        "outcomes": { "type": "array", "minItems": 2 }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "npc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "crop_harvested",
+                  "crop_planted",
+                  "festival_completed",
+                  "item_crafted",
+                  "item_delivered",
+                  "item_found",
+                  "item_traded",
+                  "reputation",
+                  "season",
+                  "spot_foraged",
+                  "zone_visited"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99
+              }
+            }
+          }
+        },
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "reputation",
+                  "xp",
+                  "seed",
+                  "item"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50
+              }
+            }
+          }
+        },
+        "outcomes": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "rewards"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 60
+              },
+              "summary": {
+                "type": "string"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "id"
+                  ],
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "reputation",
+                        "xp",
+                        "seed",
+                        "item"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    }
+                  }
+                }
+              },
+              "worldState": {
+                "type": "object"
+              },
+              "storyLog": {
+                "type": "array"
+              }
+            }
+          }
+        }
       }
     },
     "npc": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "name", "role"],
+      "required": [
+        "id",
+        "name",
+        "role"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "name": { "type": "string", "minLength": 1 },
-        "role": { "type": "string", "minLength": 1 }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "personality": {
+          "type": "string",
+          "maxLength": 280
+        },
+        "zone": {
+          "type": "string",
+          "description": "A WORLD_MAP zone id where the neighbor stands. Without a zone, their quests post on the neighborhood notice board."
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": -12,
+              "maximum": 12
+            },
+            "z": {
+              "type": "number",
+              "minimum": -12,
+              "maximum": 12
+            }
+          },
+          "required": [
+            "x",
+            "z"
+          ]
+        },
+        "seasons": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "spring",
+              "summer",
+              "fall",
+              "winter"
+            ]
+          }
+        },
+        "greeting": {
+          "type": "string",
+          "maxLength": 280
+        },
+        "farewell": {
+          "type": "string",
+          "maxLength": 280
+        }
       }
     }
-  }
+  },
+  "$comment": "Content pack manifest, format version 1 (schema revision 1.1.0, 2026-10-13). Packs are declarative data; story-mode/src/game/pack-validator.js enforces every rule here plus id collisions with official content.",
+  "x-schemaRevision": "1.1.0"
 }

@@ -38,15 +38,15 @@ import { PHASES } from '../game/state.js';
 import { Actions } from '../game/store.js';
 import { resolveNpcPresence } from '../scene/npc-presence.js';
 import {
-  NEIGHBOR_NAMES,
   describeQuestGiverLocation,
+  getNoticeBoardGivers,
+  isNoticeBoardQuest,
   describeRequirement,
   getQuestGiverName,
   itemName,
 } from './quest-text.js';
 
 const ACTIVE_STATES = new Set([QuestStates.ACCEPTED, QuestStates.IN_PROGRESS, QuestStates.READY_TO_TURN_IN]);
-const BOARD_GIVERS = Object.keys(NEIGHBOR_NAMES);
 const BOARD_SITE_ID = 'neighborhood_notice_board';
 const FESTIVAL_HOSTS = ['old_gus', 'maya', 'lila'];
 const ORDERED_TIERS = Object.values(ReputationTiers).sort((a, b) => a.threshold - b.threshold);
@@ -212,7 +212,7 @@ export function createQuestController({
   function drop(questId) {
     const quest = questById(questId);
     if (!quest || !isActive(questId) || !questEngine.abandonQuest(questId)) return false;
-    showToast(`Dropped “${quest.title}”. You can pick it up again from ${NEIGHBOR_NAMES[quest.npc] ? 'the notice board' : getQuestGiverName(quest.npc)}.`, 3000, 'info');
+    showToast(`Dropped “${quest.title}”. You can pick it up again from ${isNoticeBoardQuest(quest) ? 'the notice board' : getQuestGiverName(quest.npc)}.`, 3000, 'info');
     persist();
     render();
     return true;
@@ -340,7 +340,7 @@ export function createQuestController({
 
   function readNoticeBoard() {
     questEngine.evaluateProgress();
-    return startScene(buildTalkScene(BOARD_GIVERS, {
+    return startScene(buildTalkScene(getNoticeBoardGivers(), {
       sceneId: 'quest_talk:notice_board',
       speaker: 'narrator',
       greeting: 'The neighborhood notice board is layered with handwritten notes from Pat, Sam, Jo and Robin.',
@@ -358,7 +358,7 @@ export function createQuestController({
     const ledger = normalizeQuestLedger(state.campaign?.questLedger);
     switch (site.kind) {
       case 'notice_board': {
-        const status = giverStatus(BOARD_GIVERS, state);
+        const status = giverStatus(getNoticeBoardGivers(), state);
         if (status.ready) return 'Notice board · quest ready';
         if (status.offers) return 'Notice board · new request';
         return 'Read the notice board';
@@ -617,7 +617,7 @@ export function createQuestController({
       .forEach((change) => {
         const quest = questById(change.questId);
         if (!quest) return;
-        const where = NEIGHBOR_NAMES[quest.npc] ? 'the notice board' : getQuestGiverName(quest.npc);
+        const where = isNoticeBoardQuest(quest) ? 'the notice board' : getQuestGiverName(quest.npc);
         showToast(`Ready to turn in: ${quest.title}. Return to ${where}.`, 3200, 'success');
       });
     if (changes.length) persist();
@@ -646,7 +646,7 @@ export function createQuestController({
   // --- HUD tracker and quest log ------------------------------------------------
 
   function presenceZone(quest, state) {
-    if (NEIGHBOR_NAMES[quest.npc]) return 'neighborhood';
+    if (isNoticeBoardQuest(quest)) return 'neighborhood';
     return resolveNpcPresence(quest.npc, state, canEnterZone ? { canEnterZone } : {})?.zone ?? null;
   }
 
@@ -669,9 +669,9 @@ export function createQuestController({
       const lines = progressLines(quest, state);
       return `
         <li class="quest-tracker__item${ready ? ' is-ready' : ''}">
-          <div class="quest-tracker__title">${escapeHtml(quest.title)}</div>
+          <div class="quest-tracker__title">${escapeHtml(quest.title)}${quest.modded ? ' <span class="quest-modded-tag">Modded</span>' : ''}</div>
           ${ready
-    ? `<div class="quest-tracker__giver">Return to ${escapeHtml(NEIGHBOR_NAMES[quest.npc] ? 'the notice board' : giver)}</div>`
+    ? `<div class="quest-tracker__giver">Return to ${escapeHtml(isNoticeBoardQuest(quest) ? 'the notice board' : giver)}</div>`
     : `<ul class="quest-tracker__steps">${lines.map((line) => `
               <li class="${line.met ? 'is-done' : ''}">${escapeHtml(line.label)} <span>${line.current}/${line.target}</span></li>`).join('')}
             </ul>`}
@@ -701,7 +701,7 @@ export function createQuestController({
       : '';
     return `
       <article class="read-only-sheet__card quest-log__card">
-        <div class="read-only-sheet__card-title">${escapeHtml(quest.title)}</div>
+        <div class="read-only-sheet__card-title">${escapeHtml(quest.title)}${quest.modded ? ' <span class="quest-modded-tag">Modded</span>' : ''}</div>
         <div class="read-only-sheet__card-meta">${escapeHtml(meta)}</div>
         ${mode === 'completed' ? '' : `<p class="quest-log__desc">${escapeHtml(quest.description)}</p>`}
         ${steps}

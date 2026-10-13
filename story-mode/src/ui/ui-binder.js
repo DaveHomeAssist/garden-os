@@ -67,6 +67,14 @@ import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
 
+function escapePaletteText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function bindUI({
   store,
   data,
@@ -1434,12 +1442,16 @@ function bindUI({
           const fit = crop.seasonalMultipliers?.[state.season.season] ?? 0;
           const fitLabel = fit >= 0.8 ? 'Great fit' : fit >= 0.5 ? 'OK fit' : 'Poor fit';
           const fitClass = fit >= 0.8 ? 'palette-fit--great' : fit >= 0.5 ? 'palette-fit--ok' : 'palette-fit--poor';
+          // Pack crops carry author-written names, so every crop field is escaped.
+          const name = escapePaletteText(crop.name);
+          const moddedTag = crop.modded ? '<span class="palette-modded">Modded</span>' : '';
           return `
-            <button type="button" class="palette-item ${selected ? 'is-selected' : ''}" data-crop="${crop.id}" aria-label="${crop.name}, ${badgeName}, ${fitLabel}">
-              <div class="palette-emoji">${crop.emoji}</div>
-              <div class="palette-name">${crop.name}</div>
-              <span class="palette-badge" style="--badge-color:${badgeColor};">${badgeName}</span>
+            <button type="button" class="palette-item ${selected ? 'is-selected' : ''}" data-crop="${escapePaletteText(crop.id)}" aria-label="${name}, ${escapePaletteText(badgeName)}, ${fitLabel}${crop.modded ? ', modded' : ''}">
+              <div class="palette-emoji">${escapePaletteText(crop.emoji ?? '🌱')}</div>
+              <div class="palette-name">${name}</div>
+              <span class="palette-badge" style="--badge-color:${badgeColor};">${escapePaletteText(badgeName)}</span>
               <span class="palette-fit ${fitClass}">${fitLabel}</span>
+              ${moddedTag}
             </button>
           `;
         }).join('')}

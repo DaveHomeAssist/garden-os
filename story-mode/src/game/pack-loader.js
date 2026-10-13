@@ -32,17 +32,24 @@ function normalizePackState(campaign) {
   return {
     ...DEFAULT_CONTENT_PACK_STATE,
     ...(campaign.contentPacks ?? {}),
-    loaded: Array.isArray(campaign.contentPacks?.loaded) ? [...campaign.contentPacks.loaded] : [],
-    rejected: Array.isArray(campaign.contentPacks?.rejected) ? [...campaign.contentPacks.rejected] : [],
+    loaded: [],
+    rejected: [],
   };
 }
 
-export function loadContentPacks(initialState, packs = []) {
+/**
+ * Validate packs and tag their content for the runtime registry. Campaign
+ * pack status and provenance are rebuilt for this boot, so reloading the
+ * same packs does not stack duplicate entries in the save.
+ */
+export function loadContentPacks(initialState, packs = [], { isOfficial } = {}) {
   const state = clone(initialState);
   state.campaign = {
     ...(state.campaign ?? {}),
     version: CAMPAIGN_SCHEMA_VERSION,
     contentPacks: normalizePackState(state.campaign ?? {}),
+    // Provenance from earlier boots is kept for entities a save still uses;
+    // this boot's packs refresh their own rows.
     contentProvenance: Array.isArray(state.campaign?.contentProvenance) ? [...state.campaign.contentProvenance] : [],
   };
 
@@ -62,8 +69,18 @@ export function loadContentPacks(initialState, packs = []) {
     return result;
   }
 
+  const seenPackIds = new Set();
+  const provenanceKey = (entry) => `${entry.packId}:${entry.contentType}:${entry.id}`;
+  const provenanceRows = new Map(state.campaign.contentProvenance.map((entry) => [provenanceKey(entry), entry]));
+
   packs.forEach((pack) => {
-    const validation = validateContentPack(pack);
+    if (pack?.id && seenPackIds.has(pack.id)) {
+      const duplicate = { id: pack.id, errors: ['pack id is already loaded'] };
+      result.rejected.push(duplicate);
+      state.campaign.contentPacks.rejected.push(duplicate);
+      return;
+    }
+    const validation = validateContentPack(pack, { isOfficial });
     if (!validation.valid) {
       const rejected = {
         id: pack?.id ?? 'unknown_pack',
@@ -74,6 +91,7 @@ export function loadContentPacks(initialState, packs = []) {
       return;
     }
 
+    seenPackIds.add(pack.id);
     const loaded = {
       id: pack.id,
       version: pack.version,
@@ -85,10 +103,12 @@ export function loadContentPacks(initialState, packs = []) {
     CONTENT_TYPES.forEach((type) => {
       (pack.content?.[type] ?? []).forEach((entry) => {
         result.content[type].push(tagContent(pack, type, entry));
-        state.campaign.contentProvenance.push(createProvenanceEntry(pack, type, entry));
+        const row = createProvenanceEntry(pack, type, entry);
+        provenanceRows.set(provenanceKey(row), row);
       });
     });
   });
 
+  state.campaign.contentProvenance = [...provenanceRows.values()];
   return result;
 }
