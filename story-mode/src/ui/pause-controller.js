@@ -1,7 +1,9 @@
 import { Actions } from '../game/store.js';
 import { getPhaseLabel } from '../game/phase-machine.js';
 import { createSeasonState } from '../game/state.js';
-import { deleteCampaign, exportSaveSlot, importSaveSlot } from '../game/save.js';
+import { deleteCampaign } from '../game/save.js';
+import { exportLiveState } from '../game/save-file.js';
+import { downloadSaveFile, runImportFlow } from './save-transfer.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
 import { showBedsPanel } from './beds-panel.js';
@@ -212,63 +214,42 @@ export function createPauseController({
     }
   }, listenerOptions);
 
+  // Export the live in-memory state, not localStorage: when the IndexedDB
+  // authority cache is active the session never writes the localStorage slot,
+  // so reading it back exported nothing (or a stale save).
   document.getElementById('pause-export')?.addEventListener('click', () => {
+    playSFX('ui_click');
     persistState();
-    const backup = exportSaveSlot(slot);
-    if (!backup) {
-      showToast('Nothing saved in this slot to export yet.', 2200);
+    const state = getState();
+    if (state.campaign?.sandbox || slot < 0) {
+      showToast('Free Play is not saved, so there is nothing to export.', 2400);
       return;
     }
-    const stamp = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `garden-os-save-slot-${slot + 1}-${stamp}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast('Save backup downloaded.', 2200, 'success');
+    const file = exportLiveState(state, slot);
+    const name = file ? downloadSaveFile(file, { slot }) : null;
+    if (!name) {
+      showToast('Could not create the save file.', 2400);
+      return;
+    }
+    showToast(`Save downloaded as ${name}.`, 2600, 'success');
   }, listenerOptions);
 
-  const importInput = document.createElement('input');
-  importInput.type = 'file';
-  importInput.accept = 'application/json,.json';
-  importInput.hidden = true;
-  document.body.appendChild(importInput);
-
-  importInput.addEventListener('change', () => {
-    const file = importInput.files?.[0];
-    importInput.value = '';
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onerror = () => showToast('Could not read that file.', 2600);
-    reader.onload = () => {
-      let payload;
-      try {
-        payload = JSON.parse(String(reader.result));
-      } catch {
-        showToast('That file is not a valid save backup.', 2600);
-        return;
-      }
-      if (!confirm('Replace the save in this slot with the imported backup? The current progress in this slot will be overwritten.')) return;
-      const result = importSaveSlot(payload, slot);
-      if (!result.ok) {
-        showToast(result.error ?? 'Import failed.', 2600);
-        return;
-      }
-      showToast('Save backup imported.', 2200, 'success');
-      closePauseMenu();
-      stopLoop();
-      cleanupGame();
-      remount();
-    };
-    reader.readAsText(file);
-  });
-
-  document.getElementById('pause-import')?.addEventListener('click', () => {
-    importInput.click();
+  document.getElementById('pause-import')?.addEventListener('click', async (event) => {
+    if (getState().campaign?.sandbox || slot < 0) {
+      showToast('Free Play has no save slot to import into.', 2400);
+      return;
+    }
+    playSFX('ui_click');
+    const launcher = event.currentTarget;
+    // The dialog validates + migrates the file and confirms the overwrite
+    // before anything is written; the session signal closes it on teardown.
+    const result = await runImportFlow({ fixedSlot: slot, launcher, signal: listenerAbort.signal });
+    if (!result.ok || listenerAbort.signal.aborted) return;
+    showToast('Save imported.', 2200, 'success');
+    closePauseMenu();
+    stopLoop();
+    cleanupGame();
+    remount();
   }, listenerOptions);
 
   document.getElementById('pause-restart')?.addEventListener('click', () => {
@@ -431,7 +412,6 @@ export function createPauseController({
     toggleBugPanel,
     dispose() {
       listenerAbort.abort();
-      importInput.remove();
     },
   };
 }
