@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Actions } from './store.js';
 import { createGameState } from './state.js';
-import { initGame, showTitleScreen } from './game-init.js';
+import { initGame, LOCKED_MODE_COPY, showTitleScreen } from './game-init.js';
 import { loadAuthoritySnapshotSave } from './save.js';
 
 const localStorageMock = (() => {
@@ -184,6 +184,30 @@ describe('game-init title screen', () => {
 
     locked.click();
     expect(document.querySelector('.mode-availability-note').textContent).toMatch(/not available in this release/i);
+  });
+
+  it('explains each locked mode on click, keyboard focus and hover (GD-101)', () => {
+    showTitleScreen(vi.fn());
+    const note = () => document.querySelector('.mode-availability-note').textContent;
+    const daily = document.querySelector('[data-locked-mode="daily"]');
+    const speedrun = document.querySelector('[data-locked-mode="speedrun"]');
+
+    expect(daily.getAttribute('aria-describedby')).toBe('mode-availability-note');
+    expect(document.getElementById('mode-availability-note').getAttribute('aria-live')).toBe('polite');
+
+    daily.click();
+    expect(note()).toBe(LOCKED_MODE_COPY.daily);
+    expect(note()).toMatch(/^Daily Challenge · Coming soon\./);
+
+    // Keyboard: Tab focus alone explains the mode, no click needed.
+    speedrun.focus();
+    expect(note()).toBe(LOCKED_MODE_COPY.speedrun);
+
+    daily.dispatchEvent(new Event('pointerover', { bubbles: true }));
+    expect(note()).toBe(LOCKED_MODE_COPY.daily);
+
+    // Locked cards never change the selected mode.
+    expect(document.querySelector('[data-mode="story"]').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('launches sandbox free play from the title screen', async () => {

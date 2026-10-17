@@ -19,6 +19,16 @@ import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.j
 import { normalizePlayerProfile } from '../data/player-profile.js';
 import { createPlayerProfileEditor } from '../ui/player-profile-editor.js';
 
+// Daily Challenge and Speedrun have no implementation and no unlock condition
+// anywhere in the code (no chapter, score or flag gates them), so the copy says
+// "Coming soon" rather than inventing a requirement. Matches the gameplay
+// guide's "Coming soon · Locked in this release" rows.
+export const LOCKED_MODE_COPY = {
+  daily: 'Daily Challenge · Coming soon. Not available in this release, and nothing in Story Mode unlocks it yet.',
+  speedrun: 'Speedrun · Coming soon. Not available in this release, and nothing in Story Mode unlocks it yet.',
+};
+
+
 const GRADE_DOT_CLASS = {
   'A+': 'sparkline-dot--a', A: 'sparkline-dot--a',
   'B+': 'sparkline-dot--b', B: 'sparkline-dot--b',
@@ -254,10 +264,19 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
       planner: 'Story Planner is session only. Use the main Garden OS Planner to save beds.',
     };
 
+    function explainLockedMode(card) {
+      const copy = LOCKED_MODE_COPY[card?.dataset.lockedMode];
+      if (!copy) return false;
+      modeStatus.textContent = copy;
+      return true;
+    }
+
     function selectMode(card, { focus = false } = {}) {
       if (!card) return;
       if (card.getAttribute('aria-disabled') === 'true') {
-        modeStatus.textContent = `${card.textContent.trim()}: not available in this release.`;
+        if (!explainLockedMode(card)) {
+          modeStatus.textContent = `${card.textContent.trim()}: not available in this release.`;
+        }
         if (focus) card.focus();
         return;
       }
@@ -276,6 +295,16 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
 
     freshModes.addEventListener('click', (event) => {
       selectMode(event.target.closest('.mode-card'));
+    });
+
+    // Locked modes explain themselves on hover and on keyboard focus too, not
+    // only on click. freshModes is rebuilt on every title render, so these
+    // listeners go away with it.
+    freshModes.addEventListener('focusin', (event) => {
+      explainLockedMode(event.target.closest('[data-locked-mode]'));
+    });
+    freshModes.addEventListener('pointerover', (event) => {
+      explainLockedMode(event.target.closest('[data-locked-mode]'));
     });
 
     freshModes.addEventListener('keydown', (event) => {
