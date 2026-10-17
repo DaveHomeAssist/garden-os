@@ -21,7 +21,6 @@ import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
 import { createWorldContextMenu } from './context-menu.js';
 import { createWalkAutopilot, nearestPointOutsideBlockers } from '../game/walk-autopilot.js';
-import { DEFAULT_BLOCKERS } from '../engine/simulation-core.js';
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
 import { createTouchControls } from '../input/touch-controls.js';
@@ -43,6 +42,7 @@ import {
   ZONE_NAMES,
   applyZoneTravelState,
   getZoneMovementBounds,
+  getZoneMovementBlockers,
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
@@ -170,7 +170,7 @@ function bindUI({
 
   function syncPlayerMovementForZone(zoneId = state.campaign.worldState?.currentZone ?? 'player_plot') {
     const bounds = getZoneMovementBounds(zoneId);
-    const blockers = zoneId === 'player_plot' ? null : [];
+    const blockers = getZoneMovementBlockers(zoneId);
     playerController.setBounds(bounds);
     playerController.setBlockers(blockers);
     simulationWorker.configure({ bounds, blockers });
@@ -1638,14 +1638,13 @@ function bindUI({
   // the player straight in front of the cell (direction turns perpendicular
   // to the wall, sliding stops), the stall timer fires, and the reach
   // fallback performs the action from the bed edge — deterministic, unlike
-  // routing through the 0.04-wide side corridors the zone bounds leave
-  // beside the bed. Reach 2.75 covers the farthest row (2.35) with margin.
+  // routing around the bed. Reach 2.75 covers the farthest row (2.35) with margin.
   const WALK_CLEARANCE = 0.25; // player radius 0.18 + margin
   const BED_CELL_ARRIVE_RADIUS = 1.5;
   const BED_CELL_REACH = 2.75;
 
   function standableWalkPoint(x, z) {
-    return nearestPointOutsideBlockers(x, z, DEFAULT_BLOCKERS, WALK_CLEARANCE);
+    return nearestPointOutsideBlockers(x, z, getZoneMovementBlockers(getCurrentZoneId()), WALK_CLEARANCE);
   }
 
   const worldContextMenu = state.campaign?.sandbox
@@ -2111,6 +2110,52 @@ function bindUI({
 
   window.addEventListener('resize', resize);
   resize();
+
+  // ── Work avoidance: hidden tab, pause menu, idle ─────────────────────────
+  // Hidden tab / pause menu: hold the render loop and stop the simulation
+  // worker's 60 Hz tick. Idle (no input for IDLE_AFTER_MS, player still, no
+  // cutscene): cap rendering at IDLE_FPS so ambient life (butterflies, Calvin,
+  // day/night) keeps moving at a fraction of the cost.
+  const IDLE_AFTER_MS = 5000;
+  const IDLE_FPS = 20;
+  let lastActivityAt = performance.now();
+  const markActivity = () => { lastActivityAt = performance.now(); };
+  const activityOptions = { capture: true, passive: true, signal: sessionListeners.signal };
+  ['pointerdown', 'pointermove', 'pointerup', 'keydown', 'keyup', 'wheel', 'touchstart', 'touchmove'].forEach((type) => {
+    window.addEventListener(type, markActivity, activityOptions);
+  });
+  const sceneHolds = new Set();
+  let sessionLoop = null; // assigned once createLoop() below has run
+  function setSceneHold(reason, on) {
+    if (on) sceneHolds.add(reason); else sceneHolds.delete(reason);
+    if (!sessionLoop) return; // applied when the loop is created
+    if (on) sessionLoop.hold(reason); else sessionLoop.release(reason);
+    if (sceneHolds.size) {
+      simulationWorker.pause();
+      sessionLoop.requestRender();
+    } else {
+      simulationWorker.resume();
+      markActivity();
+    }
+  }
+  function isSessionIdle() {
+    if (performance.now() - lastActivityAt < IDLE_AFTER_MS) return false;
+    if (cutsceneMachine.isActive()) return false;
+    const player = playerController.getState();
+    if (player?.moving) return false;
+    return true;
+  }
+  // Pause menu: follow the overlay's is-open class instead of hooking
+  // pause-controller internals (it has several open/close paths).
+  const pauseOverlayEl = document.getElementById('pause-menu');
+  const pauseOverlayObserver = pauseOverlayEl && typeof MutationObserver === 'function'
+    ? new MutationObserver(() => setSceneHold('pause-menu', pauseOverlayEl.classList.contains('is-open')))
+    : null;
+  pauseOverlayObserver?.observe(pauseOverlayEl, { attributes: true, attributeFilter: ['class'] });
+  sessionListeners.signal.addEventListener('abort', () => pauseOverlayObserver?.disconnect(), { once: true });
+  const onVisibilityChange = () => setSceneHold('hidden', document.visibilityState === 'hidden');
+  document.addEventListener('visibilitychange', onVisibilityChange, { signal: sessionListeners.signal });
+  window.addEventListener('resize', () => sessionLoop?.requestRender(), { signal: sessionListeners.signal });
   const perfHud = isPerfDebugEnabled() ? createPerfHud({ renderer: scene.getRenderer?.() }) : null;
 
   const loop = createLoop({
@@ -2151,6 +2196,15 @@ function bindUI({
     onFrame: ({ dt }) => {
       perfHud?.sample({ dt });
     },
+    getMinFrameIntervalMs: () => (isSessionIdle() ? 1000 / IDLE_FPS : 0),
+  });
+  sessionLoop = loop;
+  sceneHolds.forEach((reason) => loop.hold(reason));
+  if (document.visibilityState === 'hidden') setSceneHold('hidden', true);
+  // Any state change wakes the idle cap, and redraws once behind a hold.
+  const unsubscribeRenderOnChange = store.subscribe(() => {
+    markActivity();
+    if (loop.isHeld()) loop.requestRender();
   });
 
   function renderGameToText() {
@@ -2213,6 +2267,7 @@ function bindUI({
       getSnapshot: () => questController.getSnapshot(),
     },
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
+    getLoopStats: () => ({ ...loop.getStats(), idle: isSessionIdle(), workerPaused: simulationWorker.paused }),
     showHarvestRevealDebug: (result, extras = {}) => {
       showHarvestReveal(
         document.getElementById('overlay-container'),
@@ -2233,6 +2288,7 @@ function bindUI({
     questController.dispose();
     destroyInit?.();
     unsubscribeState();
+    unsubscribeRenderOnChange();
     cancelLongPress();
     unsubscribeMenuInvalidation();
     if (worldContextMenu) {

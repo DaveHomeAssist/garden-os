@@ -19,7 +19,13 @@
       "gate": null,
       "bedSlots": 3,
       "features": ["garden_bed", "tool_shed"],
-      "bounds": { "minX": -2.5, "maxX": 2.5, "minZ": -2.0, "maxZ": 2.0 },
+      "bounds": { "minX": -9.0, "maxX": 9.0, "minZ": -9.0, "maxZ": 9.0 },
+      "blockers": [
+        { "id": "cedar_bed", "minX": -2.28, "maxX": 2.28, "minZ": -1.42, "maxZ": 1.42 },
+        { "id": "rowhouse", "minX": -4.4, "maxX": -0.3, "minZ": -9.3, "maxZ": -6.15 },
+        { "id": "tree_east", "minX": 4.68, "maxX": 4.92, "minZ": -0.02, "maxZ": 0.22 },
+        { "id": "tree_west", "minX": -4.82, "maxX": -4.58, "minZ": 3.68, "maxZ": 3.92 }
+      ],
       "spawnPoint": { "x": 0, "z": 0 },
       "exitPoints": [
         { "edge": "south", "position": { "x": 0, "z": -8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": 7 } }
