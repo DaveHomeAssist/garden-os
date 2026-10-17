@@ -193,6 +193,8 @@ describe('zone exits are reachable on foot', () => {
     for (const zoneId of zoneIds) {
       // The home plot has interior blockers; its single exit has a dedicated waypoint walk above.
       if (zoneId === 'player_plot') continue;
+      // Zones with interior blockers need routed walks: neighborhood-walkability.test.js covers them.
+      if (getZoneMovementBlockers(zoneId).length) continue;
       for (const { from, point } of arrivalPoints(zoneId)) {
         for (const exit of WORLD_ZONE_INTERACTABLES[zoneId]) {
           const result = walk(zoneId, point, [
