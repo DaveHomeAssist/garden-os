@@ -284,6 +284,7 @@ export function createDialoguePanel(rootEl) {
       renderCastStrip(uiState);
       renderChoices(uiState);
       renderDots(uiState.beatIndex, uiState.beatCount);
+      els.advanceHint.hidden = false;
       els.advanceHint.style.opacity = uiState.canAdvance && !(uiState.choices?.length) ? '1' : '0';
       els.skipBtn.style.display = uiState.canSkip ? '' : 'none';
     },
@@ -291,6 +292,17 @@ export function createDialoguePanel(rootEl) {
     hide() {
       els.panel.classList.remove('dp-panel--visible');
       els.panel.classList.remove('dp-panel--thought');
+      // Clear the finished scene so nothing stale ("tap to continue", Skip,
+      // old choices) is left behind in the hidden panel. hasVisibleChoices()
+      // reads the choice row, so it must be emptied too.
+      els.text.textContent = '';
+      els.choiceRow.innerHTML = '';
+      els.choiceRow.classList.remove('is-visible');
+      lastChoiceSignature = '';
+      els.dots.innerHTML = '';
+      els.advanceHint.style.opacity = '0';
+      els.advanceHint.hidden = true;
+      els.skipBtn.style.display = 'none';
     },
 
     getSkipButton() {
