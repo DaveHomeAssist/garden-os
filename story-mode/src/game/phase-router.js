@@ -45,7 +45,12 @@ function createPhaseRouter({
       return;
     }
 
+    // Re-enabling input alone is not enough: the HUD (Start Season / Next,
+    // Plant, backpack) was last rendered while the cutscene was active, so it
+    // is still hidden and inert. Refresh it or the player is stuck until
+    // something else (e.g. the pause menu) happens to redraw the HUD.
     setGameInputEnabled(true);
+    updateHUD();
   }
 
   function handleNarrativeTrigger(trigger) {
@@ -77,6 +82,7 @@ function createPhaseRouter({
         openSeasonTransitionOverlay();
       } else {
         setGameInputEnabled(true);
+        updateHUD();
       }
       return false;
     }
