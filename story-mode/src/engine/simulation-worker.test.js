@@ -93,3 +93,20 @@ describe('fixed-step simulation worker', () => {
     expect(snapshots.at(-1).state.position.z).toBeLessThan(2.55);
   });
 });
+
+describe('simulation worker work avoidance', () => {
+  it('stops posting interval snapshots once the player is standing still', () => {
+    const scope = createFakeWorkerScope();
+    createSimulationWorkerRuntime(scope);
+    scope.send({ config: CONFIG, state: createSimulationState(CONFIG), type: 'INIT' });
+    scope.send({ type: 'START' });
+    scope.tickIntervals(120);
+    const idleSnapshots = scope.posts.filter((m) => m.type === 'SIMULATION_SNAPSHOT' && m.reason === 'interval');
+    expect(idleSnapshots.length).toBeLessThanOrEqual(1);
+
+    scope.send({ input: { x: 1, z: 0 }, type: 'INPUT' });
+    scope.tickIntervals(10);
+    const moving = scope.posts.filter((m) => m.reason === 'interval').length - idleSnapshots.length;
+    expect(moving).toBe(10);
+  });
+});
