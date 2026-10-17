@@ -13,6 +13,15 @@ function createDefaultWorker() {
   return new Worker(new URL('./simulation-worker.js', import.meta.url), { type: 'module' });
 }
 
+function inputKey(input) {
+  if (!input) return 'none';
+  try {
+    return JSON.stringify(input);
+  } catch {
+    return String(Math.random());
+  }
+}
+
 function createSimulationWorkerClient({
   config = {},
   fixedDt = FIXED_SIMULATION_DT,
@@ -28,6 +37,11 @@ function createSimulationWorkerClient({
     : createSimulationState(currentConfig);
   let frame = 0;
   let worker = null;
+  let paused = false;
+  // Last values actually posted, so the per-frame setEnabled/setInput calls
+  // only cross the thread boundary when something changed.
+  let postedEnabled;
+  let postedInputKey;
 
   try {
     worker = workerFactory?.() ?? null;
@@ -97,11 +111,31 @@ function createSimulationWorkerClient({
     },
     setEnabled(nextEnabled) {
       enabled = Boolean(nextEnabled);
+      if (enabled === postedEnabled) return;
+      postedEnabled = enabled;
       post({ enabled, type: 'ENABLED' });
     },
     setInput(nextInput) {
       input = nextInput ?? null;
+      const key = inputKey(input);
+      if (key === postedInputKey) return;
+      postedInputKey = key;
       post({ input, type: 'INPUT' });
+    },
+    // Stop the worker's 60 Hz tick (tab hidden, pause menu open). Snapshots
+    // stop too, so the main thread keeps the last known state.
+    pause() {
+      if (paused) return;
+      paused = true;
+      post({ type: 'STOP' });
+    },
+    resume() {
+      if (!paused) return;
+      paused = false;
+      post({ type: 'START' });
+    },
+    get paused() {
+      return paused;
     },
     stepLocal(dt = fixedDt, nextInput = input, nextEnabled = enabled) {
       latest = stepSimulationState(latest, {

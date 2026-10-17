@@ -16,10 +16,19 @@ function createSimulationWorkerRuntime(scope = globalThis) {
   let input = null;
   let state = createSimulationState({ ...config });
   let timer = null;
+  let lastEmittedKey = null;
 
   function emitSnapshot(reason = 'step') {
+    const checksum = checksumSimulationState(state);
+    // The 60 Hz tick used to post a snapshot every tick even when the player
+    // stood still. Interval ticks are skipped when nothing but the sim clock
+    // moved (the main thread never reads state.time); init/reset/config/
+    // manual steps always answer.
+    const key = checksumSimulationState({ ...state, time: 0 });
+    if (reason === 'interval' && key === lastEmittedKey) return;
+    lastEmittedKey = key;
     scope.postMessage?.({
-      checksum: checksumSimulationState(state),
+      checksum,
       frame,
       reason,
       state,
