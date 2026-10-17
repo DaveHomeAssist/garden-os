@@ -25,7 +25,6 @@ export function createPauseController({
   isInterventionTargeting,
   isCropPaletteOpen,
   playSFX = () => {},
-  onOpenChange = () => {},
 }) {
   const pauseOverlay = document.getElementById('pause-menu');
   const pauseStatus = document.getElementById('pause-status');
@@ -39,14 +38,6 @@ export function createPauseController({
   const hudScore = document.getElementById('hud-score');
 
   let pauseMenuOpen = false;
-  let notifiedOpen = false;
-  // Tell the session when the menu opens/closes so it can stop rendering and
-  // the simulation worker behind it.
-  function notifyOpenChange() {
-    if (notifiedOpen === pauseMenuOpen) return;
-    notifiedOpen = pauseMenuOpen;
-    onOpenChange(pauseMenuOpen);
-  }
 
   // Everything below binds to static index.html elements that outlive this
   // session; dispose() aborts this so no closure keeps the session alive.
@@ -80,14 +71,12 @@ export function createPauseController({
       setElementInteractive(pauseOverlay, false);
     }
     syncToolHUDVisibility();
-    notifyOpenChange();
   }
 
   function closePauseMenu() {
     pauseMenuOpen = false;
     pauseOverlay?.classList.remove('is-open');
     setElementInteractive(pauseOverlay, false);
-    notifyOpenChange();
   }
 
   function syncPauseThemeButton() {
@@ -349,7 +338,6 @@ export function createPauseController({
       pauseMenuOpen = false;
       pauseOverlay?.classList.remove('is-open');
       setElementInteractive(pauseOverlay, false);
-      notifyOpenChange();
     }
     const isOpen = bugPanel?.classList.toggle('is-open');
     setElementInteractive(bugPanel, Boolean(isOpen));

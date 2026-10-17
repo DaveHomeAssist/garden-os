@@ -2080,7 +2080,6 @@ function bindUI({
     isInterventionTargeting: () => !!interventionTargeting.isActive(),
     isCropPaletteOpen: () => cropPaletteOpen,
     playSFX: (id) => { if (audioInitialized) audioManager.playSFX(id); },
-    onOpenChange: (open) => setSceneHold('pause-menu', open),
   });
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
@@ -2147,6 +2146,14 @@ function bindUI({
     if (player?.moving) return false;
     return true;
   }
+  // Pause menu: follow the overlay's is-open class instead of hooking
+  // pause-controller internals (it has several open/close paths).
+  const pauseOverlayEl = document.getElementById('pause-menu');
+  const pauseOverlayObserver = pauseOverlayEl && typeof MutationObserver === 'function'
+    ? new MutationObserver(() => setSceneHold('pause-menu', pauseOverlayEl.classList.contains('is-open')))
+    : null;
+  pauseOverlayObserver?.observe(pauseOverlayEl, { attributes: true, attributeFilter: ['class'] });
+  sessionListeners.signal.addEventListener('abort', () => pauseOverlayObserver?.disconnect(), { once: true });
   const onVisibilityChange = () => setSceneHold('hidden', document.visibilityState === 'hidden');
   document.addEventListener('visibilitychange', onVisibilityChange, { signal: sessionListeners.signal });
   window.addEventListener('resize', () => sessionLoop?.requestRender(), { signal: sessionListeners.signal });
