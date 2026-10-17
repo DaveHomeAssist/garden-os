@@ -59,9 +59,6 @@ const CROP_TEXTURE_IDS = [
 ];
 
 const SINGLE_ASSETS = {
-  'bed-empty':     { file: 'bed-empty.png',     w: 1024, h: 512 },
-  'bed-grid':      { file: 'bed-grid.png',      w: 1024, h: 512 },
-  'bed-cell':      { file: 'bed-cell.png',      w: 256,  h: 256 },
   'crop-lettuce':  { file: 'crop-lettuce.png',  w: 256,  h: 256 },
   'crop-spinach':  { file: 'crop-spinach.png',  w: 256,  h: 256 },
   'crop-arugula':  { file: 'crop-arugula.png',  w: 256,  h: 256 },
@@ -74,16 +71,9 @@ const SINGLE_ASSETS = {
   'crop-bush_beans': { file: 'crop-bush_beans.png', w: 256, h: 256 },
   'crop-peas':       { file: 'crop-peas.png',       w: 256, h: 256 },
   ...Object.fromEntries(CROP_TEXTURE_IDS.map((id) => [`crop-${id}`, { file: `crop-${id}.png`, w: 256, h: 256 }])),
-  'env-spigot':    { file: 'env-spigot.png',    w: 128,  h: 256 },
-  'env-path':      { file: 'env-path.png',      w: 512,  h: 512 },
-  'env-grass':     { file: 'env-grass.png',     w: 512,  h: 512 },
-  'ui-badges':     { file: 'ui-badges.png',     w: 512,  h: 64  },
-  'ui-month-card': { file: 'ui-month-card.png', w: 320,  h: 96  },
-  'ui-nav-pills':  { file: 'ui-nav-pills.png',  w: 320,  h: 48  },
 };
 
 const SHEET_ASSETS = {
-  'crop-sheet':    { file: 'crop-sheet.png',    w: 1536, h: 256, cols: 6, rows: 1 },
   'grow-lettuce':  { file: 'grow-lettuce.png',  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-spinach':  { file: 'grow-spinach.png',  w: 1024, h: 256, cols: 4, rows: 1 },
   'grow-arugula':  { file: 'grow-arugula.png',  w: 1024, h: 256, cols: 4, rows: 1 },
@@ -92,16 +82,15 @@ const SHEET_ASSETS = {
   'grow-marigold': { file: 'grow-marigold.png', w: 1024, h: 256, cols: 4, rows: 1 },
 };
 
+/** Every texture file the loader fetches (for asset-trim tests). */
+export function getSpriteManifestFiles() {
+  return [...Object.values(SINGLE_ASSETS), ...Object.values(SHEET_ASSETS)].map(({ file }) => file);
+}
+
 /** Named growth stage indices */
 export const GROWTH_STAGE = { SEED: 0, SPROUT: 1, GROWING: 2, HARVEST: 3 };
 
-/** Reserved season indices for future bed-season sheets */
-export const SEASON_INDEX = { SPRING: 0, SUMMER: 1, AUTUMN: 2, WINTER: 3 };
 
-/** Named crop indices for crop-sheet */
-export const CROP_SHEET_INDEX = {
-  LETTUCE: 0, SPINACH: 1, ARUGULA: 2, RADISH: 3, BASIL: 4, MARIGOLD: 5,
-};
 
 /* ── Internal State ─────────────────────────────────────────────────── */
 
@@ -185,7 +174,7 @@ export function getTexture(key) {
  * Slice a single frame from a sprite sheet.
  * Uses UV offset/repeat on a cloned texture — no canvas copy needed.
  *
- * @param {string} sheetKey  e.g. 'grow-lettuce', 'bed-seasons', 'crop-sheet'
+ * @param {string} sheetKey  e.g. 'grow-lettuce'
  * @param {number} index     0-based frame index (left to right, top to bottom)
  * @returns {THREE.Texture|null}
  */
@@ -222,13 +211,7 @@ export function getFrame(sheetKey, index) {
 export function getCropIcon(cropId) {
   const key = `crop-${cropId}`;
   const single = getTexture(key);
-  if (single) return single;
-
-  // Fall back to crop-sheet by name
-  const sheetIndex = CROP_SHEET_INDEX[cropId.toUpperCase()];
-  if (sheetIndex !== undefined) return getFrame('crop-sheet', sheetIndex);
-
-  return null;
+  return single ?? null;
 }
 
 /**
@@ -343,33 +326,6 @@ export function getProceduralGrowthTexture(cropId, stage) {
   texture.colorSpace = THREE.SRGBColorSpace;
   proceduralCache.set(key, texture);
   return texture;
-}
-
-/**
- * Get the bed texture for a given season.
- *
- * @param {number} seasonIndex  SEASON_INDEX.SPRING through SEASON_INDEX.WINTER
- * @returns {THREE.Texture|null}
- */
-export function getSeasonBed(seasonIndex) {
-  return getFrame('bed-seasons', seasonIndex) ?? getTexture('bed-grid') ?? getTexture('bed-empty');
-}
-
-/**
- * Get the tileable texture for ground/path surfaces.
- * Sets wrap mode to RepeatWrapping for seamless tiling.
- *
- * @param {'path'|'grass'} surface
- * @returns {THREE.Texture|null}
- */
-export function getTileable(surface) {
-  const key = `env-${surface}`;
-  const tex = getTexture(key);
-  if (tex) {
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-  }
-  return tex;
 }
 
 /**
