@@ -24,13 +24,20 @@ const coverSize = pngDimensions(cover, 'sheet1-cover.png');
 assert.ok(coverSize.width >= 800 && coverSize.height >= 800, 'Build guide cover must be at least 800 by 800');
 assert.ok((await stat(coverPath)).size <= 2500000, 'Build guide cover must stay under 2.5 MB');
 
-const textureBudgets = {
-  'bed-cell.png': { maxBytes: 650000, maxDimension: 512 },
-  'bed-empty.png': { maxBytes: 1200000, maxDimension: 1024 },
-  'bed-grid.png': { maxBytes: 1200000, maxDimension: 1024 },
-  'env-grass.png': { maxBytes: 800000, maxDimension: 512 },
-  'env-path.png': { maxBytes: 700000, maxDimension: 512 },
-};
+// Unused PNGs were removed from the Story Mode bundle (sprint item 4). Keep
+// them out: the loader's dynamic `new URL(...)` path makes Vite ship every
+// file in assets/textures/, used or not.
+const removedTextures = [
+  'bed-cell.png', 'bed-empty.png', 'bed-grid.png', 'crop-sheet.png', 'env-grass.png', 'env-path.png',
+  'env-spigot.png', 'grow-master.png', 'ui-badges.png', 'ui-month-card.png', 'ui-nav-pills.png',
+];
+for (const name of removedTextures) {
+  await assert.rejects(stat(resolve(repoRoot, 'story-mode/assets/textures', name)), `${name} was trimmed as unused; do not re-add it without a runtime consumer`);
+}
+
+const textureBudgets = Object.fromEntries(
+  ['lettuce', 'spinach', 'arugula', 'radish', 'basil', 'marigold'].map((id) => [`grow-${id}.png`, { maxBytes: 200000, maxDimension: 1024 }]),
+);
 
 let textureTotal = 0;
 for (const [name, budget] of Object.entries(textureBudgets)) {
@@ -42,7 +49,7 @@ for (const [name, budget] of Object.entries(textureBudgets)) {
   assert.ok(bytes <= budget.maxBytes, `${name} exceeds ${budget.maxBytes} bytes`);
   assert.ok(Math.max(dimensions.width, dimensions.height) <= budget.maxDimension, `${name} exceeds ${budget.maxDimension}px`);
 }
-assert.ok(textureTotal <= 4000000, `Priority Story textures exceed 4 MB total (${textureTotal})`);
+assert.ok(textureTotal <= 1000000, `Growth sheets exceed 1 MB total (${textureTotal})`);
 
 const priorityCropTextures = [
   'crop-cherry_tom.png',
