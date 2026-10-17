@@ -269,6 +269,8 @@ export function createDialoguePanel(rootEl) {
       els.panel.dataset.side = uiState.side ?? 'left';
       els.panel.classList.toggle('dp-panel--thought', Boolean(uiState.thoughtBubble));
       els.panel.dataset.speaker = uiState.speaker ?? '';
+      // theme.css only animates the bouncing hint while it is actually shown.
+      els.panel.dataset.hint = uiState.canAdvance && !(uiState.choices?.length) ? 'on' : 'off';
 
       if (uiState.speakerName) {
         els.speakerBadge.textContent = uiState.speakerName;

@@ -1335,3 +1335,29 @@ select:focus-visible {
     font-size: 7px;
   }
 }
+
+/* ── Idle dialogue panel: stop paint work nobody can see ──────────────
+   The hidden panel (opacity 0) kept its backdrop blur and the infinite
+   "tap to continue" bounce running, so the compositor re-blurred the 3D
+   scene behind it every frame, including while the pause menu was open.
+   Only blur and animate while the panel is on screen and the scene is not
+   held (pause menu / hidden tab: body[data-scene-held], set by ui-binder),
+   and only bounce the hint while it is actually shown. */
+#cutscene-layer .dp-panel:not(.dp-panel--visible),
+body[data-scene-held] #cutscene-layer .dp-panel {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+#cutscene-layer .dp-panel:not(.dp-panel--visible) *,
+body[data-scene-held] #cutscene-layer .dp-panel *,
+#cutscene-layer .dp-panel:not([data-hint="on"]) .dp-advance-hint {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cutscene-layer .dp-advance-hint {
+    animation: none;
+  }
+}
+
