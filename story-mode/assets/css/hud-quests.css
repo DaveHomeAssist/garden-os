@@ -22,12 +22,25 @@ body:not([data-story-screen="play"]) .quest-tracker {
   display: none;
 }
 
-/* Sheets (world map, journal, beds, packs) sit in #panel-container, whose
-   stacking context is below this fixed tracker. Step aside while one is
-   open so the tracker never covers a sheet's buttons. */
+/* Sheets (world map, journal, beds, packs, the Select Crop palette and the
+   season event card with its Protect / Mulch / Swap responses) sit in
+   #panel-container, whose stacking context is below this fixed tracker.
+   Step aside while one is open so the tracker never covers a sheet's
+   cards or buttons. */
 body:has(#panel-container .panel-sheet) .quest-tracker,
 body:has(#trade-panel) .quest-tracker {
   display: none;
+}
+
+/* The centred "Current objective" banner (#phase-helper) is allowed to grow
+   to 100vw - 430px, which reaches into the tracker's column on laptop-sized
+   screens (at 1024x570 it ran under the tracker's top-left corner). While the
+   tracker is on screen, keep the banner inside the space between the two
+   side columns: tracker width + inline inset + a 16px gap, on both sides. */
+@media (min-width: 901px) {
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.quest-tracker) #phase-helper {
+    max-width: min(690px, calc(100vw - 2 * (270px + var(--hud-safe-inline, 12px) + 16px)));
+  }
 }
 
 .quest-tracker__header {

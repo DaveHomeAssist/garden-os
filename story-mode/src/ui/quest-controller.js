@@ -783,6 +783,16 @@ export function createQuestController({
       if (isInputBlocked()) return;
       toggleLog();
     }, signal ? { signal } : undefined);
+
+    // Escape closes the quest log before anything else sees the key. The
+    // input manager's pause/cancel bindings listen on document in the bubble
+    // phase, so without this the pause menu opened behind the open log.
+    document.addEventListener('keydown', (event) => {
+      if (disposed || !logEl || event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeLog();
+    }, signal ? { capture: true, signal } : { capture: true });
   }
 
   render();
