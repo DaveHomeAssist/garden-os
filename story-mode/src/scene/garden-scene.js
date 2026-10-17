@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three';
 import { batchCropGroup, setCropBatchBreeze } from './crop-batch.js';
+import { createParticlePool } from './particle-pool.js';
 import { buildBed } from './bed-model.js';
 import { buildScenery } from './scenery.js';
 import { applySceneStyle, getStyleForPhase } from './scene-style.js';
@@ -1343,9 +1344,14 @@ export function createGardenScene(container) {
 
   // ── Plant juice: pop-in tween + soil poof particles (deterministic, no Math.random) ──
   const plantPops = [];
-  const soilPoofs = [];
   let cropSyncCount = 0; // first sync restores saves — no juice on load
   const POOF_GEO = new THREE.SphereGeometry(0.016, 6, 5);
+  // All soil-poof dots share one InstancedMesh (1 draw call, 0 when idle).
+  // Capacity covers two full-bed replants (64 cells x 8 dots) in flight.
+  const SOIL_POOF_DOTS = 8;
+  const soilPoofPool = createParticlePool({ geometry: POOF_GEO, capacity: 1024, name: 'soil-poofs' });
+  resourceTracker.trackObject(soilPoofPool.mesh);
+  root.add(soilPoofPool.mesh);
 
   function easeOutBack(t) {
     const c1 = 1.70158;
@@ -1356,22 +1362,26 @@ export function createGardenScene(container) {
   function spawnPlantJuice(mesh, cellIndex, baseScale) {
     plantPops.push({ mesh, t: 0, base: baseScale });
     mesh.scale.setScalar(baseScale * 0.01);
-    const group = new THREE.Group();
-    group.position.set(mesh.position.x, bed.soilY + 0.02, mesh.position.z);
-    const parts = [];
-    for (let p = 0; p < 8; p++) {
+    const baseY = bed.soilY + 0.02;
+    for (let p = 0; p < SOIL_POOF_DOTS; p++) {
       const seed = cellIndex * 13 + p * 7;
       const angle = (p / 8) * Math.PI * 2 + (seed % 5) * 0.13;
       const speed = 0.55 + ((seed % 7) / 7) * 0.5;
-      const mat = new THREE.MeshBasicMaterial({ color: p % 2 ? 0x6b4e33 : 0x8a6a45, transparent: true, opacity: 0.9 });
-      const dot = new THREE.Mesh(POOF_GEO, mat);
-      dot.scale.setScalar(0.8 + (seed % 4) * 0.15);
-      group.add(dot);
-      parts.push({ dot, vx: Math.cos(angle) * speed, vz: Math.sin(angle) * speed, vy: 1.1 + ((seed % 3) / 3) * 0.6 });
+      soilPoofPool.add({
+        x: mesh.position.x,
+        y: baseY,
+        z: mesh.position.z,
+        baseY,
+        localY: 0,
+        t: 0,
+        scale: 0.8 + (seed % 4) * 0.15,
+        color: p % 2 ? 0x6b4e33 : 0x8a6a45,
+        opacity: 0.9,
+        vx: Math.cos(angle) * speed,
+        vz: Math.sin(angle) * speed,
+        vy: 1.1 + ((seed % 3) / 3) * 0.6,
+      });
     }
-    resourceTracker.trackObject(group);
-    root.add(group);
-    soilPoofs.push({ group, parts, t: 0 });
   }
 
   function updatePlantFX(dt) {
@@ -1382,22 +1392,18 @@ export function createGardenScene(container) {
       pop.mesh.scale.setScalar(pop.base * Math.max(easeOutBack(k), 0.01));
       if (k >= 1) plantPops.splice(i, 1);
     }
-    for (let i = soilPoofs.length - 1; i >= 0; i--) {
-      const poof = soilPoofs[i];
-      poof.t += dt;
-      const life = poof.t / 0.55;
-      for (const part of poof.parts) {
-        part.dot.position.x += part.vx * dt;
-        part.dot.position.z += part.vz * dt;
-        part.vy -= 4.6 * dt;
-        part.dot.position.y = Math.max(part.dot.position.y + part.vy * dt, 0);
-        part.dot.material.opacity = 0.9 * Math.max(1 - life, 0);
-      }
-      if (life >= 1) {
-        resourceTracker.disposeObject(poof.group);
-        soilPoofs.splice(i, 1);
-      }
+    for (const dot of soilPoofPool.live()) {
+      dot.t += dt;
+      const life = dot.t / 0.55;
+      dot.x += dot.vx * dt;
+      dot.z += dot.vz * dt;
+      dot.vy -= 4.6 * dt;
+      dot.localY = Math.max(dot.localY + dot.vy * dt, 0);
+      dot.y = dot.baseY + dot.localY;
+      dot.opacity = 0.9 * Math.max(1 - life, 0);
+      if (life >= 1) dot.dead = true;
     }
+    soilPoofPool.sync();
   }
 
   const supportMeshes = new Map();
@@ -1677,27 +1683,16 @@ export function createGardenScene(container) {
   // ── Harvest FX particle pool ────────────────────────────────────────────────
   const HARVEST_FX_POOL_SIZE = 48;  // 4 particles × 12 max simultaneous harvests
   const HARVEST_FX_LIFETIME = 1.5;  // seconds
-  const harvestParticles = [];
   const harvestFXColors = [0xe8c84a, 0x5aab6b, 0xd44a2a, 0x87CEEB, 0xff9944, 0xcc55aa];
-  {
-    const particleGeo = new THREE.SphereGeometry(0.012, 8, 6);
-    for (let i = 0; i < HARVEST_FX_POOL_SIZE; i++) {
-      const mat = new THREE.MeshBasicMaterial({
-        color: harvestFXColors[i % harvestFXColors.length],
-        transparent: true,
-        opacity: 1,
-      });
-      const p = new THREE.Mesh(particleGeo, mat);
-      p.visible = false;
-      p.userData.active = false;
-      p.userData.age = 0;
-      p.userData.vx = 0;
-      p.userData.vy = 0;
-      p.userData.vz = 0;
-      root.add(p);
-      harvestParticles.push(p);
-    }
-  }
+  // One InstancedMesh for all confetti (was 48 separate meshes).
+  const harvestPool = createParticlePool({
+    geometry: new THREE.SphereGeometry(0.012, 8, 6),
+    capacity: HARVEST_FX_POOL_SIZE,
+    name: 'harvest-fx',
+  });
+  resourceTracker.trackObject(harvestPool.mesh);
+  root.add(harvestPool.mesh);
+  let harvestColorCursor = 0;
 
   function triggerHarvestFX(cellIndex) {
     const row = Math.floor(cellIndex / COLS);
@@ -1706,48 +1701,47 @@ export function createGardenScene(container) {
     const cz = (row - (ROWS - 1) / 2) * bed.cellSize;
     const cy = bed.soilY + 0.3;
 
-    // Burst 8 particles from this cell
-    let spawned = 0;
-    for (const p of harvestParticles) {
-      if (spawned >= 8) break;
-      if (p.userData.active) continue;
-      p.userData.active = true;
-      p.userData.age = 0;
-      p.position.set(cx, cy, cz);
-      // Radial burst with upward bias
+    // Burst 8 particles from this cell (fewer if the pool is full)
+    for (let spawned = 0; spawned < 8; spawned++) {
       const angle = (spawned / 8) * Math.PI * 2 + Math.sin(cellIndex) * 0.5;
       const speed = 0.6 + (spawned % 3) * 0.2;
-      p.userData.vx = Math.cos(angle) * speed * 0.3;
-      p.userData.vy = 1.2 + (spawned % 4) * 0.3;
-      p.userData.vz = Math.sin(angle) * speed * 0.3;
-      p.visible = true;
-      p.material.opacity = 1;
-      p.scale.setScalar(0.8 + (spawned % 3) * 0.4);
-      spawned++;
+      const added = harvestPool.add({
+        x: cx,
+        y: cy,
+        z: cz,
+        age: 0,
+        vx: Math.cos(angle) * speed * 0.3,
+        vy: 1.2 + (spawned % 4) * 0.3,
+        vz: Math.sin(angle) * speed * 0.3,
+        opacity: 1,
+        scale: 0.8 + (spawned % 3) * 0.4,
+        color: harvestFXColors[harvestColorCursor % harvestFXColors.length],
+      });
+      if (!added) break;
+      harvestColorCursor += 1;
     }
   }
 
   function updateHarvestFX(dt) {
-    for (const p of harvestParticles) {
-      if (!p.userData.active) continue;
-      p.userData.age += dt;
-      const t = p.userData.age / HARVEST_FX_LIFETIME;
+    for (const p of harvestPool.live()) {
+      p.age += dt;
+      const t = p.age / HARVEST_FX_LIFETIME;
       if (t >= 1) {
-        p.userData.active = false;
-        p.visible = false;
+        p.dead = true;
         continue;
       }
       // Gravity
-      p.userData.vy -= 3.2 * dt;
-      p.position.x += p.userData.vx * dt;
-      p.position.y += p.userData.vy * dt;
-      p.position.z += p.userData.vz * dt;
+      p.vy -= 3.2 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
       // Fade out
-      p.material.opacity = Math.max(0, 1 - t * t);
+      p.opacity = Math.max(0, 1 - t * t);
       // Spin
-      p.rotation.x += dt * 4;
-      p.rotation.z += dt * 3;
+      p.rotX += dt * 4;
+      p.rotZ += dt * 3;
     }
+    harvestPool.sync();
   }
 
   // Track which cells have already triggered harvest FX this phase
