@@ -17,6 +17,8 @@ import { createStoryAuthorityPersistence } from '../engine/authority-cache.js';
 import { showGameplayGuide } from '../ui/gameplay-guide.js';
 import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.js';
 import { normalizePlayerProfile } from '../data/player-profile.js';
+import { describeSlotsForImport, exportStoredSlots } from './save-file.js';
+import { downloadSaveFile, runImportFlow, showSaveFileError } from '../ui/save-transfer.js';
 import { createPlayerProfileEditor } from '../ui/player-profile-editor.js';
 
 const GRADE_DOT_CLASS = {
@@ -203,6 +205,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
         </div>
         <div class="save-slot-actions">
           <button type="button" class="save-slot-btn save-slot-btn--primary" data-action="continue" data-slot="${entry.slot}">Continue</button>
+          <button type="button" class="save-slot-btn" data-action="export" data-slot="${entry.slot}" aria-label="Export Slot ${entry.slot + 1} to a file">Export</button>
           <button type="button" class="save-slot-btn save-slot-btn--danger" data-action="delete" data-slot="${entry.slot}">Delete</button>
         </div>
       </div>`;
@@ -348,6 +351,50 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
         showGameplayGuide({ launcher: event.currentTarget });
       });
     }
+
+    // Save files (D4 part A): carry saves between origins, e.g. the direct
+    // GitHub Pages URL and the mixmash.games embed. These are static
+    // index.html buttons, so they are cloned like the guide button above to
+    // drop the previous render's listeners instead of stacking them.
+    const exportButton = actionsContainer.querySelector('#title-export-saves');
+    if (exportButton) {
+      const freshExport = exportButton.cloneNode(true);
+      exportButton.parentNode.replaceChild(freshExport, exportButton);
+      freshExport.addEventListener('click', (event) => {
+        void exportFromTitle(null, event.currentTarget);
+      });
+    }
+    const importButton = actionsContainer.querySelector('#title-import-save');
+    if (importButton) {
+      const freshImport = importButton.cloneNode(true);
+      importButton.parentNode.replaceChild(freshImport, importButton);
+      freshImport.addEventListener('click', (event) => {
+        void importFromTitle(event.currentTarget);
+      });
+    }
+  }
+
+  async function exportFromTitle(slot, launcher) {
+    const file = await exportStoredSlots({ slots: Number.isInteger(slot) ? [slot] : null });
+    if (!file) {
+      await showSaveFileError('There are no saves to export yet. Start a game in a slot first.', { launcher });
+      return;
+    }
+    downloadSaveFile(file, { slot: Number.isInteger(slot) ? slot : null });
+  }
+
+  async function importFromTitle(launcher) {
+    const result = await runImportFlow({
+      // Read slots (incl. IndexedDB snapshots) only after the file picker opened.
+      slots: async () => describeSlotsForImport(
+        await listSavesWithAuthoritySnapshots().catch(() => listSaves()),
+      ),
+      launcher,
+    });
+    if (result.ok && document.body.dataset.storyScreen === 'title') {
+      renderTitleScreen(onStart);
+      document.querySelector(`#save-slots [data-action="continue"][data-slot="${result.slot}"]`)?.focus();
+    }
   }
 
   if (hydrateAuthority) {
@@ -415,6 +462,11 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
       if (!confirm(`Delete save in Slot ${slot + 1}? This cannot be undone.`)) return;
       deleteCampaign(slot);
       renderTitleScreen(onStart);
+      return;
+    }
+
+    if (action === 'export') {
+      void exportFromTitle(slot, button);
       return;
     }
 
