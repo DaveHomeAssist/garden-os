@@ -124,8 +124,8 @@
       "bounds": { "minX": -10, "maxX": 10, "minZ": -10, "maxZ": 10 },
       "spawnPoint": { "x": -8, "z": 0 },
       "exitPoints": [
-        { "edge": "west", "position": { "x": -11.5, "z": 0 }, "destination": "neighborhood", "spawnPoint": { "x": 8.5, "z": 1.4 } },
-        { "edge": "east", "position": { "x": 11.5, "z": 0 }, "destination": "riverside", "spawnPoint": { "x": -6, "z": 0 } }
+        { "edge": "west", "position": { "x": -9.5, "z": 0 }, "destination": "neighborhood", "spawnPoint": { "x": 8.5, "z": 1.4 } },
+        { "edge": "east", "position": { "x": 9.5, "z": 0 }, "destination": "riverside", "spawnPoint": { "x": -6, "z": 0 } }
       ],
       "foraging": {
         "enabled": true,
@@ -366,7 +366,7 @@
       "bounds": { "minX": -8, "maxX": 8, "minZ": -6, "maxZ": 6 },
       "spawnPoint": { "x": 0, "z": 5 },
       "exitPoints": [
-        { "edge": "north", "position": { "x": 0, "z": 8.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": -7 } }
+        { "edge": "north", "position": { "x": 0, "z": 5.5 }, "destination": "neighborhood", "spawnPoint": { "x": 0, "z": -7 } }
       ],
       "foraging": {
         "enabled": false,
