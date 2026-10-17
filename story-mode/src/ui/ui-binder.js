@@ -2080,6 +2080,7 @@ function bindUI({
     isInterventionTargeting: () => !!interventionTargeting.isActive(),
     isCropPaletteOpen: () => cropPaletteOpen,
     playSFX: (id) => { if (audioInitialized) audioManager.playSFX(id); },
+    onOpenChange: (open) => setSceneHold('pause-menu', open),
   });
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
@@ -2111,6 +2112,44 @@ function bindUI({
 
   window.addEventListener('resize', resize);
   resize();
+
+  // ── Work avoidance: hidden tab, pause menu, idle ─────────────────────────
+  // Hidden tab / pause menu: hold the render loop and stop the simulation
+  // worker's 60 Hz tick. Idle (no input for IDLE_AFTER_MS, player still, no
+  // cutscene): cap rendering at IDLE_FPS so ambient life (butterflies, Calvin,
+  // day/night) keeps moving at a fraction of the cost.
+  const IDLE_AFTER_MS = 5000;
+  const IDLE_FPS = 20;
+  let lastActivityAt = performance.now();
+  const markActivity = () => { lastActivityAt = performance.now(); };
+  const activityOptions = { capture: true, passive: true, signal: sessionListeners.signal };
+  ['pointerdown', 'pointermove', 'pointerup', 'keydown', 'keyup', 'wheel', 'touchstart', 'touchmove'].forEach((type) => {
+    window.addEventListener(type, markActivity, activityOptions);
+  });
+  const sceneHolds = new Set();
+  let sessionLoop = null; // assigned once createLoop() below has run
+  function setSceneHold(reason, on) {
+    if (on) sceneHolds.add(reason); else sceneHolds.delete(reason);
+    if (!sessionLoop) return; // applied when the loop is created
+    if (on) sessionLoop.hold(reason); else sessionLoop.release(reason);
+    if (sceneHolds.size) {
+      simulationWorker.pause();
+      sessionLoop.requestRender();
+    } else {
+      simulationWorker.resume();
+      markActivity();
+    }
+  }
+  function isSessionIdle() {
+    if (performance.now() - lastActivityAt < IDLE_AFTER_MS) return false;
+    if (cutsceneMachine.isActive()) return false;
+    const player = playerController.getState();
+    if (player?.moving) return false;
+    return true;
+  }
+  const onVisibilityChange = () => setSceneHold('hidden', document.visibilityState === 'hidden');
+  document.addEventListener('visibilitychange', onVisibilityChange, { signal: sessionListeners.signal });
+  window.addEventListener('resize', () => sessionLoop?.requestRender(), { signal: sessionListeners.signal });
   const perfHud = isPerfDebugEnabled() ? createPerfHud({ renderer: scene.getRenderer?.() }) : null;
 
   const loop = createLoop({
@@ -2151,6 +2190,15 @@ function bindUI({
     onFrame: ({ dt }) => {
       perfHud?.sample({ dt });
     },
+    getMinFrameIntervalMs: () => (isSessionIdle() ? 1000 / IDLE_FPS : 0),
+  });
+  sessionLoop = loop;
+  sceneHolds.forEach((reason) => loop.hold(reason));
+  if (document.visibilityState === 'hidden') setSceneHold('hidden', true);
+  // Any state change wakes the idle cap, and redraws once behind a hold.
+  const unsubscribeRenderOnChange = store.subscribe(() => {
+    markActivity();
+    if (loop.isHeld()) loop.requestRender();
   });
 
   function renderGameToText() {
@@ -2213,6 +2261,7 @@ function bindUI({
       getSnapshot: () => questController.getSnapshot(),
     },
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
+    getLoopStats: () => ({ ...loop.getStats(), idle: isSessionIdle(), workerPaused: simulationWorker.paused }),
     showHarvestRevealDebug: (result, extras = {}) => {
       showHarvestReveal(
         document.getElementById('overlay-container'),
@@ -2233,6 +2282,7 @@ function bindUI({
     questController.dispose();
     destroyInit?.();
     unsubscribeState();
+    unsubscribeRenderOnChange();
     cancelLongPress();
     unsubscribeMenuInvalidation();
     if (worldContextMenu) {
