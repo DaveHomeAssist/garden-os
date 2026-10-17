@@ -77,8 +77,9 @@ function renderInventoryGrid(data, selectedSlotIndex) {
           align-items:center;
           justify-content:center;
           font-size:20px;
+          ${slot ? 'touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;' : ''}
         "
-        draggable="${slot ? 'true' : 'false'}"
+        draggable="false"
         aria-label="${slot ? escapeHtml(slot.itemDef?.name ?? slot.itemId) : `Empty slot ${index + 1}`}"
       >
         ${slot ? escapeHtml(slot.itemDef?.icon ?? '📦') : ''}
@@ -266,9 +267,12 @@ export function showBackpackPanel(container, initialData, onClose) {
   let data = initialData;
   let activeTab = 'inventory';
   let selectedSlotIndex = 0;
-  let dragIndex = null;
-  let touchDrag = null;
+  // GD-103: one pointer-events drag path for mouse, touch and pen. The old
+  // HTML5 dragstart/drop path never fires on phones, and its pointer fallback
+  // lost the gesture to scrolling (no touch-action, no capture, no cancel).
+  let drag = null;
   let ghost = null;
+  let suppressClickUntil = 0;
 
   const sheet = document.createElement('div');
   sheet.className = 'panel-sheet is-open';
@@ -280,8 +284,6 @@ export function showBackpackPanel(container, initialData, onClose) {
 
   const close = () => {
     cleanupDrag();
-    window.removeEventListener('pointermove', handlePointerMove);
-    window.removeEventListener('pointerup', handlePointerUp);
     sheet.classList.remove('is-open');
     setTimeout(() => {
       sheet.remove();
@@ -290,10 +292,13 @@ export function showBackpackPanel(container, initialData, onClose) {
   };
 
   function cleanupDrag() {
+    if (drag?.source?.hasPointerCapture?.(drag.pointerId)) {
+      drag.source.releasePointerCapture(drag.pointerId);
+    }
+    setDropHighlight(null);
     if (ghost) ghost.remove();
     ghost = null;
-    touchDrag = null;
-    dragIndex = null;
+    drag = null;
   }
 
   function getLatest() {
@@ -388,41 +393,21 @@ export function showBackpackPanel(container, initialData, onClose) {
     slots.forEach((button) => {
       const slotIndex = Number(button.dataset.slotIndex);
       button.addEventListener('click', () => {
+        // The click that trails a finished drag would re-select the origin slot.
+        if (performance.now() < suppressClickUntil) return;
         selectedSlotIndex = slotIndex;
         rerender();
       });
-      button.addEventListener('dragstart', (event) => {
-        dragIndex = slotIndex;
-        event.dataTransfer?.setData('text/plain', String(slotIndex));
+      button.addEventListener('pointerdown', (event) => onSlotPointerDown(event, button, slotIndex));
+      button.addEventListener('pointermove', onSlotPointerMove);
+      button.addEventListener('pointerup', onSlotPointerUp);
+      button.addEventListener('pointercancel', () => cleanupDrag());
+      button.addEventListener('lostpointercapture', () => {
+        if (drag && !drag.finishing) cleanupDrag();
       });
-      button.addEventListener('dragover', (event) => {
-        event.preventDefault();
-      });
-      button.addEventListener('drop', (event) => {
-        event.preventDefault();
-        if (dragIndex == null) return;
-        data.actions?.onMoveSlot?.(dragIndex, slotIndex);
-        selectedSlotIndex = slotIndex;
-        cleanupDrag();
-        rerender();
-      });
-      button.addEventListener('pointerdown', (event) => {
-        if (!data.inventory?.slots?.[slotIndex]) return;
-        const pointerType = event.pointerType || 'mouse';
-        touchDrag = {
-          slotIndex,
-          pointerId: event.pointerId,
-          pointerType,
-          x: event.clientX,
-          y: event.clientY,
-          started: pointerType === 'mouse',
-          timer: pointerType === 'touch'
-            ? window.setTimeout(() => startGhost(slotIndex, event.clientX, event.clientY), 300)
-            : null,
-        };
-        if (pointerType === 'mouse') {
-          startGhost(slotIndex, event.clientX, event.clientY);
-        }
+      // Long-press on a touch slot must not open the OS context menu.
+      button.addEventListener('contextmenu', (event) => {
+        if (data.inventory?.slots?.[slotIndex]) event.preventDefault();
       });
     });
 
@@ -440,14 +425,93 @@ export function showBackpackPanel(container, initialData, onClose) {
     });
   }
 
-  function startGhost(slotIndex, x, y) {
+  const DRAG_THRESHOLD_PX = 6;
+
+  function onSlotPointerDown(event, button, slotIndex) {
+    if (!data.inventory?.slots?.[slotIndex]) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (drag) cleanupDrag();
+    drag = {
+      fromIndex: slotIndex,
+      pointerId: event.pointerId,
+      source: button,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      targetIndex: null,
+      finishing: false,
+    };
+    // Capture keeps the gesture on this slot even when the finger leaves it,
+    // so the browser can't hand it to scrolling mid-drag.
+    try { button.setPointerCapture?.(event.pointerId); } catch { /* pointer already gone */ }
+  }
+
+  function onSlotPointerMove(event) {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.active) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      drag.active = true;
+      startGhost(drag.fromIndex);
+    }
+    event.preventDefault();
+    moveGhost(event.clientX, event.clientY);
+    const target = slotAtPoint(event.clientX, event.clientY);
+    drag.targetIndex = target ? Number(target.dataset.slotIndex) : null;
+    setDropHighlight(target);
+  }
+
+  function onSlotPointerUp(event) {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    if (!drag.active) {
+      // A tap: let the normal click select the slot.
+      cleanupDrag();
+      return;
+    }
+    drag.finishing = true;
+    const fromIndex = drag.fromIndex;
+    const target = slotAtPoint(event.clientX, event.clientY);
+    const toIndex = target ? Number(target.dataset.slotIndex) : null;
+    suppressClickUntil = performance.now() + 400;
+    cleanupDrag();
+    if (toIndex != null && Number.isInteger(toIndex)) {
+      if (toIndex !== fromIndex) data.actions?.onMoveSlot?.(fromIndex, toIndex);
+      selectedSlotIndex = toIndex;
+    }
+    rerender();
+  }
+
+  function slotAtPoint(x, y) {
+    const hit = typeof document.elementFromPoint === 'function' ? document.elementFromPoint(x, y) : null;
+    const slot = hit?.closest?.('.backpack-slot');
+    return slot && sheet.contains(slot) ? slot : null;
+  }
+
+  let highlighted = null;
+  function setDropHighlight(slot) {
+    if (highlighted === slot) return;
+    if (highlighted) {
+      highlighted.style.outline = '';
+      highlighted.removeAttribute('data-drop-target');
+    }
+    highlighted = slot && slot !== drag?.source ? slot : null;
+    if (highlighted) {
+      highlighted.style.outline = '2px solid #e8c84a';
+      highlighted.style.outlineOffset = '1px';
+      highlighted.setAttribute('data-drop-target', 'true');
+    }
+  }
+
+  function startGhost(slotIndex) {
     if (ghost || !data.inventory?.slots?.[slotIndex]) return;
-    dragIndex = slotIndex;
     const slot = data.inventory.slots[slotIndex];
     ghost = document.createElement('div');
+    ghost.className = 'backpack-drag-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
     ghost.style.position = 'fixed';
-    ghost.style.left = `${x - 20}px`;
-    ghost.style.top = `${y - 20}px`;
+    ghost.style.left = '0px';
+    ghost.style.top = '0px';
     ghost.style.width = '40px';
     ghost.style.height = '40px';
     ghost.style.borderRadius = '10px';
@@ -457,36 +521,25 @@ export function showBackpackPanel(container, initialData, onClose) {
     ghost.style.alignItems = 'center';
     ghost.style.justifyContent = 'center';
     ghost.style.zIndex = '1000';
+    // The ghost sits under the finger; it must not be the hit-test target.
+    ghost.style.pointerEvents = 'none';
     ghost.textContent = slot.itemDef?.icon ?? '📦';
     document.body.appendChild(ghost);
   }
 
-  function handlePointerMove(event) {
-    if (!touchDrag) return;
-    if (ghost) {
-      ghost.style.left = `${event.clientX - 20}px`;
-      ghost.style.top = `${event.clientY - 20}px`;
-    }
+  function moveGhost(x, y) {
+    if (!ghost) return;
+    ghost.style.left = `${x - 20}px`;
+    ghost.style.top = `${y - 20}px`;
   }
 
-  function handlePointerUp(event) {
-    if (!touchDrag) return;
-    if (touchDrag.timer) window.clearTimeout(touchDrag.timer);
-    if (ghost && dragIndex != null) {
-      const dropTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest?.('.backpack-slot');
-      if (dropTarget) {
-        const toIndex = Number(dropTarget.dataset.slotIndex);
-        data.actions?.onMoveSlot?.(dragIndex, toIndex);
-        selectedSlotIndex = toIndex;
-      }
-      rerender();
-    }
-    cleanupDrag();
-  }
-
-  window.addEventListener('pointermove', handlePointerMove);
-  window.addEventListener('pointerup', handlePointerUp);
   sheet.addEventListener('keydown', (event) => {
+    if (drag && event.key === 'Escape') {
+      cleanupDrag();
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (activeTab !== 'inventory') return;
     const total = data.inventory?.slots?.length ?? 0;
     if (!total) return;
