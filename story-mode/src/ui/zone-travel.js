@@ -67,6 +67,15 @@ function getZoneMovementBounds(zoneId, worldMap = WORLD_MAP) {
   return cloneBounds(worldMap.zones?.[zoneId]?.bounds ?? null);
 }
 
+// Solid footprints (x/z rectangles) the player can't walk through, authored
+// next to the zone's bounds so collision and visible scenery stay in one place.
+// Zones without a list are open ([]).
+function getZoneMovementBlockers(zoneId, worldMap = WORLD_MAP) {
+  const blockers = worldMap.zones?.[zoneId]?.blockers;
+  if (!Array.isArray(blockers)) return [];
+  return blockers.map(({ minX, maxX, minZ, maxZ }) => ({ minX, maxX, minZ, maxZ }));
+}
+
 function resolveZoneSpawnPoint(fromZone, toZone) {
   if (!toZone) return null;
 
@@ -110,5 +119,6 @@ export {
   buildZoneNames,
   getZoneExitInteractables,
   getZoneMovementBounds,
+  getZoneMovementBlockers,
   resolveZoneSpawnPoint,
 };

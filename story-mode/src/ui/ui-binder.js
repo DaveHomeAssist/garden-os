@@ -21,7 +21,6 @@ import { InteractionSystem } from '../game/interaction.js';
 import { createInteractionPrompt } from './interaction-prompt.js';
 import { createWorldContextMenu } from './context-menu.js';
 import { createWalkAutopilot, nearestPointOutsideBlockers } from '../game/walk-autopilot.js';
-import { DEFAULT_BLOCKERS } from '../engine/simulation-core.js';
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
 import { createTouchControls } from '../input/touch-controls.js';
@@ -43,6 +42,7 @@ import {
   ZONE_NAMES,
   applyZoneTravelState,
   getZoneMovementBounds,
+  getZoneMovementBlockers,
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
@@ -170,7 +170,7 @@ function bindUI({
 
   function syncPlayerMovementForZone(zoneId = state.campaign.worldState?.currentZone ?? 'player_plot') {
     const bounds = getZoneMovementBounds(zoneId);
-    const blockers = zoneId === 'player_plot' ? null : [];
+    const blockers = getZoneMovementBlockers(zoneId);
     playerController.setBounds(bounds);
     playerController.setBlockers(blockers);
     simulationWorker.configure({ bounds, blockers });
@@ -1638,14 +1638,13 @@ function bindUI({
   // the player straight in front of the cell (direction turns perpendicular
   // to the wall, sliding stops), the stall timer fires, and the reach
   // fallback performs the action from the bed edge — deterministic, unlike
-  // routing through the 0.04-wide side corridors the zone bounds leave
-  // beside the bed. Reach 2.75 covers the farthest row (2.35) with margin.
+  // routing around the bed. Reach 2.75 covers the farthest row (2.35) with margin.
   const WALK_CLEARANCE = 0.25; // player radius 0.18 + margin
   const BED_CELL_ARRIVE_RADIUS = 1.5;
   const BED_CELL_REACH = 2.75;
 
   function standableWalkPoint(x, z) {
-    return nearestPointOutsideBlockers(x, z, DEFAULT_BLOCKERS, WALK_CLEARANCE);
+    return nearestPointOutsideBlockers(x, z, getZoneMovementBlockers(getCurrentZoneId()), WALK_CLEARANCE);
   }
 
   const worldContextMenu = state.campaign?.sandbox
