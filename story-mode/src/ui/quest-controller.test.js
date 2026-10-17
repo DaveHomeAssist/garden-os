@@ -186,6 +186,28 @@ describe('quest controller', () => {
     expect(document.querySelector('.quest-tracker')).toBeNull();
   });
 
+  it('closes the open quest log on Escape before the pause binding sees it', () => {
+    harness = setup();
+    const pauseSpy = vi.fn();
+    const pauseListener = new AbortController();
+    // Stands in for the input manager's pause/cancel bindings (document, bubble phase).
+    document.addEventListener('keydown', pauseSpy, { signal: pauseListener.signal });
+    const esc = () => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    harness.controller.openLog();
+    esc();
+    expect(harness.controller.isLogOpen()).toBe(false);
+    expect(pauseSpy).not.toHaveBeenCalled();
+    // With the log closed, Escape reaches the pause binding as before.
+    esc();
+    expect(pauseSpy).toHaveBeenCalledTimes(1);
+    harness.controller.openLog();
+    harness.controller.dispose();
+    harness.sessionListeners.abort();
+    esc();
+    expect(pauseSpy).toHaveBeenCalledTimes(2);
+    pauseListener.abort();
+  });
+
   it('only shows the big oak find while the river path quest is active', () => {
     harness = setup({ mutate: (state) => { state.campaign.currentChapter = 5; state.campaign.reputation.old_gus = 30; } });
     const { store, questEngine, controller } = harness;
