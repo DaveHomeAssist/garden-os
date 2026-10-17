@@ -471,3 +471,21 @@ body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot
     flex-basis: 52px;
   }
 }
+
+/* While a sheet is open in #panel-container (Select Crop, season event card,
+   world map, journal, ...) the right-hand column belongs to the sheet:
+   - the bug-report FAB sat on top of the sheet's top-right corner and
+     swallowed clicks on the crop picker's close (x) button;
+   - Start Season / Plant are disabled while an event card is up, yet still
+     painted over its response cards (Accept on phones, the card's lower edge
+     at 1024x570).
+   Step them aside until the sheet closes. An enabled Next stays, since it
+   is still the way forward during planning. */
+body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container .panel-sheet) #fab-bug {
+  display: none;
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container .panel-sheet) #fab-advance:disabled,
+body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container .panel-sheet) #fab-plant:disabled {
+  visibility: hidden;
+}
