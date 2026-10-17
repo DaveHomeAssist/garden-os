@@ -15,6 +15,7 @@ import {
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { getNPC } from '../data/npcs.js';
+import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
 
 // The home plot used to clamp the player to a 5 x 4 m box hugging the bed
 // (bounds ±2.5 / ±2.0), so walking north toward the rowhouse hit an invisible
@@ -150,6 +151,22 @@ describe('zone exits are reachable on foot', () => {
         const gap = Math.hypot(exit.position.x - stand.x, exit.position.z - stand.z);
         if (gap > exit.radius - EXIT_STAND_MARGIN) problems.push(`${exit.id}: ${gap.toFixed(2)} m outside bounds`);
         if (insideBlocker(stand.x, stand.z, blockers, PLAYER_RADIUS)) problems.push(`${exit.id}: inside a blocker`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('every walk-in exit trigger box (ZoneManager auto-travel) touches the walkable area', () => {
+    // zone-registry.js feeds these boxes to ZoneManager.checkTriggers, which
+    // tests the clamped player centre inclusively against them.
+    const problems = [];
+    for (const zoneId of zoneIds) {
+      const bounds = getZoneMovementBounds(zoneId);
+      for (const exit of getZoneExitPoints(zoneId)) {
+        const box = exit.triggerBounds;
+        const overlapX = Math.min(box.maxX, bounds.maxX) - Math.max(box.minX, bounds.minX);
+        const overlapZ = Math.min(box.maxZ, bounds.maxZ) - Math.max(box.minZ, bounds.minZ);
+        if (overlapX < 0 || overlapZ < 0) problems.push(`${exit.id}: box ${overlapX.toFixed(2)} x ${overlapZ.toFixed(2)}`);
       }
     }
     expect(problems).toEqual([]);
