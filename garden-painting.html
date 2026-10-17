@@ -51,12 +51,15 @@
     position: relative;
   }
   .gos-cell-weak::after {
-    content: "↓";
+    content: "";
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
     right: 3px;
-    font-size: 10px;
-    color: #f5a623;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #f5a623;
     pointer-events: none;
   }
   @media (min-width: 480px) {

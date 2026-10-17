@@ -11,6 +11,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Fixed
+- Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.
 - Fixed Story Mode switching to a second home plot bed when the player arrived at the home plot.
