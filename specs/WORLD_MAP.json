@@ -39,7 +39,7 @@
       "npcSlots": [],
       "interactables": [
         { "id": "cedar_bed", "type": "object", "position": { "x": 0, "z": 0.5 }, "label": "8×4 raised cedar bed — your main growing area" },
-        { "id": "tool_shed", "type": "object", "position": { "x": -2.0, "z": -1.0 }, "label": "Tool shed — store and upgrade your gardening tools" }
+        { "id": "tool_shed", "type": "object", "position": { "x": -3.0, "z": -1.0 }, "label": "Tool shed — store and upgrade your gardening tools" }
       ],
       "ambientAudio": "suburban_spring",
       "seasonalVariation": {
@@ -65,6 +65,20 @@
       "gate": null,
       "features": ["community_plot", "npc_houses", "notice_board"],
       "bounds": { "minX": -8, "maxX": 8, "minZ": -8, "maxZ": 8 },
+      "blockers": [
+        { "id": "house_west", "minX": -5.9, "maxX": -3.5, "minZ": 3.9, "maxZ": 5.7 },
+        { "id": "house_east", "minX": 3.6, "maxX": 5.6, "minZ": 1.4, "maxZ": 3.0 },
+        { "id": "cottage_south", "minX": -2.6, "maxX": -0.2, "minZ": -4.2, "maxZ": -2.8 },
+        { "id": "gate_post_east", "minX": 0.61, "maxX": 0.79, "minZ": 7.01, "maxZ": 7.19 },
+        { "id": "gate_post_west", "minX": -0.79, "maxX": -0.61, "minZ": 7.01, "maxZ": 7.19 },
+        { "id": "tree_m7_m7", "minX": -7.18, "maxX": -6.82, "minZ": -7.18, "maxZ": -6.82 },
+        { "id": "tree_m7_7", "minX": -7.18, "maxX": -6.82, "minZ": 6.82, "maxZ": 7.18 },
+        { "id": "tree_7_m7", "minX": 6.82, "maxX": 7.18, "minZ": -7.18, "maxZ": -6.82 },
+        { "id": "tree_7_7", "minX": 6.82, "maxX": 7.18, "minZ": 6.82, "maxZ": 7.18 },
+        { "id": "tree_m1_7", "minX": -1.18, "maxX": -0.82, "minZ": 6.82, "maxZ": 7.18 },
+        { "id": "tree_6_m2", "minX": 5.82, "maxX": 6.18, "minZ": -2.18, "maxZ": -1.82 },
+        { "id": "tree_m6_1", "minX": -6.18, "maxX": -5.82, "minZ": 0.82, "maxZ": 1.18 }
+      ],
       "spawnPoint": { "x": 0, "z": 0 },
       "exitPoints": [
         { "edge": "north", "position": { "x": 0, "z": 7.5 }, "destination": "player_plot", "spawnPoint": { "x": 0, "z": 3 } },
