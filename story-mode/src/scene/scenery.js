@@ -3,6 +3,7 @@
  * All procedural geometry, no external models.
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const GRASS_DARK = 0x3a5a2a;
 const SEASON_TREE_COLORS = {
@@ -215,8 +216,7 @@ export function buildScenery(tracker = null) {
   {
     const fenceTexture = createBoardTexture(0x96683c, 0x6f4a28, 2.6, 1.4);
     const fenceMat = new THREE.MeshStandardMaterial({ color: 0x96683c, roughness: 0.92, map: fenceTexture });
-    const fenceGroup = new THREE.Group();
-    fenceGroup.name = 'yard-fence';
+    const fenceGroup = new THREE.Group(); // build-time only, merged below
 
     function fenceRun(x1, z1, x2, z2) {
       const dx = x2 - x1;
@@ -247,7 +247,19 @@ export function buildScenery(tracker = null) {
     fenceRun(-9.3, -9.3, -1.8, -9.3);  // back, left of the exit gate gap
     fenceRun(1.8, -9.3, 9.3, -9.3);    // back, right of the exit gate gap
 
-    group.add(fenceGroup);
+    // Bake every rail and post into one static mesh: same material, never
+    // animated, so 61 draw calls become 1.
+    fenceGroup.updateMatrixWorld(true);
+    const parts = [];
+    fenceGroup.traverse((child) => {
+      if (!child.isMesh) return;
+      parts.push(child.geometry.clone().applyMatrix4(child.matrixWorld));
+      child.geometry.dispose();
+    });
+    const fenceMesh = new THREE.Mesh(mergeGeometries(parts, false), fenceMat);
+    parts.forEach((part) => part.dispose());
+    fenceMesh.name = 'yard-fence';
+    group.add(fenceMesh);
   }
 
   // Back window on the compact house face.

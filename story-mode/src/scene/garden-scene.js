@@ -3,6 +3,7 @@
  * Returns { resize, sync, render, dispose, raycastCell }
  */
 import * as THREE from 'three';
+import { batchCropGroup, setCropBatchBreeze } from './crop-batch.js';
 import { buildBed } from './bed-model.js';
 import { buildScenery } from './scenery.js';
 import { applySceneStyle, getStyleForPhase } from './scene-style.js';
@@ -475,8 +476,12 @@ export function createGardenScene(container) {
       depthWrite: true,
     });
 
-    // Deterministic scatter — avoid bed area and path
+    // Deterministic scatter — avoid bed area and path.
+    // One InstancedMesh for every tuft and cross-plane (was ~1 draw call per
+    // plane plus a cloned material each). Per-tuft color lives in instanceColor;
+    // a tuft and its cross-plane always share a color, as they shared a material.
     const GRASS_COUNT = 220;
+    const tufts = [];
     for (let i = 0; i < GRASS_COUNT; i++) {
       const nx = seededRandom(i * 11 + 503) * 2 - 1;
       const nz = seededRandom(i * 11 + 509) * 2 - 1;
@@ -496,23 +501,36 @@ export function createGardenScene(container) {
       const scale = 0.7 + seededRandom(i * 11 + 521) * 0.6;
       const rotY = seededRandom(i * 11 + 523) * Math.PI;
       const tint = 0.85 + seededRandom(i * 11 + 541) * 0.3;
-
-      const tuft = new THREE.Mesh(tuftGeo, tuftMat.clone());
-      tuft.material.color = new THREE.Color(tint * 0.3, tint * 0.45, tint * 0.22);
-      tuft.scale.set(scale, scale, scale);
-      tuft.position.set(gx, 0.07 * scale, gz);
-      tuft.rotation.y = rotY;
-      grassGroup.add(tuft);
-
-      // Cross-plane for volume (second plane at 90 degrees)
-      if (i % 2 === 0) {
-        const cross = new THREE.Mesh(tuftGeo, tuft.material);
-        cross.scale.copy(tuft.scale);
-        cross.position.copy(tuft.position);
-        cross.rotation.y = rotY + Math.PI / 2;
-        grassGroup.add(cross);
-      }
+      tufts.push({ gx, gz, scale, rotY, tint, cross: i % 2 === 0 });
     }
+
+    const planeCount = tufts.reduce((n, t) => n + (t.cross ? 2 : 1), 0);
+    const grassMesh = new THREE.InstancedMesh(tuftGeo, tuftMat, planeCount);
+    grassMesh.name = 'grass-tufts';
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
+    // planeTuft[k] = index into tufts for instance k (season tinting below).
+    const planeTuft = new Uint16Array(planeCount);
+    let k = 0;
+    tufts.forEach((t, tuftIndex) => {
+      const planes = t.cross ? [t.rotY, t.rotY + Math.PI / 2] : [t.rotY];
+      for (const rotY of planes) {
+        dummy.position.set(t.gx, 0.07 * t.scale, t.gz);
+        dummy.rotation.set(0, rotY, 0);
+        dummy.scale.setScalar(t.scale);
+        dummy.updateMatrix();
+        grassMesh.setMatrixAt(k, dummy.matrix);
+        grassMesh.setColorAt(k, color.setRGB(t.tint * 0.3, t.tint * 0.45, t.tint * 0.22));
+        planeTuft[k] = tuftIndex;
+        k += 1;
+      }
+    });
+    grassMesh.instanceMatrix.needsUpdate = true;
+    grassMesh.instanceColor.needsUpdate = true;
+    grassMesh.computeBoundingSphere();
+    grassMesh.userData.planeTuft = planeTuft;
+    grassMesh.userData.tuftHasCross = tufts.map((t) => t.cross);
+    grassGroup.add(grassMesh);
 
     resourceTracker.trackObject(grassGroup);
   }
@@ -2179,6 +2197,7 @@ export function createGardenScene(container) {
       default: { radiusX: 0.1, radiusZ: 0.09, opacity: 0.13 },
     };
     addGroundShadow(mesh, shadowProfiles[crop.faction] || shadowProfiles.default);
+    batchCropGroup(mesh);
     return mesh;
   }
 
@@ -2498,6 +2517,9 @@ function getGrowthScale(phase, season) {
       mesh.rotation.z = (mesh.userData.restRotationZ ?? 0) + primary * sway.tilt * breezeStrength;
       mesh.position.y = bed.soilY + Math.max(0, primary) * sway.lift * breezeStrength;
 
+      // Batched leaves sway in the vertex shader (crop-batch.js).
+      setCropBatchBreeze(mesh, time, phaseSeed, breezeStrength);
+
       mesh.traverse((child) => {
         const breeze = child.userData?.breeze;
         if (!breeze) return;
@@ -2607,14 +2629,22 @@ function getGrowthScale(phase, season) {
       winter: { r: 0.32, g: 0.32, b: 0.28 },
     };
     const gTint = grassTints[season] || grassTints.spring;
-    let grassTintIndex = 0;
-    grassGroup.traverse((child) => {
-      if (child.isMesh && child.material?.color) {
-        const v = 0.85 + seededRandom(grassTintIndex * 19.7 + String(season).length * 11.3) * 0.3;
-        grassTintIndex += 1;
-        child.material.color.setRGB(gTint.r * v, gTint.g * v, gTint.b * v);
+    // Same sequence as the old per-mesh traverse: one random draw per plane, and
+    // a tuft's shared color ends up as its last plane's draw.
+    const grassTufts = grassGroup.getObjectByName('grass-tufts');
+    if (grassTufts?.instanceColor) {
+      const { planeTuft } = grassTufts.userData;
+      const tuftColor = new THREE.Color();
+      for (let plane = 0; plane < grassTufts.count; plane += 1) {
+        const v = 0.85 + seededRandom(plane * 19.7 + String(season).length * 11.3) * 0.3;
+        const last = plane + 1 >= grassTufts.count || planeTuft[plane + 1] !== planeTuft[plane];
+        if (!last) continue;
+        tuftColor.setRGB(gTint.r * v, gTint.g * v, gTint.b * v);
+        grassTufts.setColorAt(plane, tuftColor);
+        if (plane > 0 && planeTuft[plane - 1] === planeTuft[plane]) grassTufts.setColorAt(plane - 1, tuftColor);
       }
-    });
+      grassTufts.instanceColor.needsUpdate = true;
+    }
     grassGroup.visible = season !== 'winter';
 
     // ── Atmosphere element visibility by season ────────────────────────────
