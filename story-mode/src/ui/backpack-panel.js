@@ -30,8 +30,8 @@ function renderTabButton(tabId, activeTab, label) {
         letter-spacing:0.08em;
         text-transform:uppercase;
         cursor:pointer;
-        color:${active ? '#1a120c' : 'rgba(247,242,234,0.72)'};
-        background:${active ? '#e8c84a' : 'rgba(247,242,234,0.06)'};
+        color:${active ? '#1a120c' : 'var(--bp-ink-soft)'};
+        background:${active ? '#e8c84a' : 'rgba(var(--bp-tone-rgb),0.06)'};
       "
     >${label}</button>
   `;
@@ -41,14 +41,14 @@ function renderInventoryGrid(data, selectedSlotIndex) {
   const slots = data.inventory?.slots ?? [];
   return slots.map((slot, index) => {
     const selected = selectedSlotIndex === index;
-    const tint = CATEGORY_TINTS[slot?.category] ?? 'rgba(247,242,234,0.03)';
-    const border = selected ? '#e8c84a' : (slot ? 'rgba(247,242,234,0.12)' : 'rgba(247,242,234,0.1)');
+    const tint = CATEGORY_TINTS[slot?.category] ?? 'rgba(var(--bp-tone-rgb),0.03)';
+    const border = selected ? '#e8c84a' : (slot ? 'rgba(var(--bp-tone-rgb),0.12)' : 'rgba(var(--bp-tone-rgb),0.1)');
     const badge = slot && slot.count > 1
-      ? `<span style="position:absolute;right:4px;bottom:4px;font-family:'DM Mono',monospace;font-size:10px;color:#f7f2ea;">x${slot.count}</span>`
+      ? `<span style="position:absolute;right:4px;bottom:4px;font-family:'DM Mono',monospace;font-size:10px;color:var(--bp-ink);">x${slot.count}</span>`
       : '';
     const durability = slot?.maxDurability
       ? `
-        <span style="position:absolute;left:4px;right:4px;bottom:4px;height:3px;border-radius:999px;background:rgba(247,242,234,0.12);overflow:hidden;">
+        <span style="position:absolute;left:4px;right:4px;bottom:4px;height:3px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.12);overflow:hidden;">
           <span style="
             display:block;
             width:${Math.max(0, Math.min(100, Math.round(((slot.durability ?? 0) / slot.maxDurability) * 100)))}%;
@@ -70,8 +70,8 @@ function renderInventoryGrid(data, selectedSlotIndex) {
           height:44px;
           border-radius:8px;
           border:2px ${slot ? 'solid' : 'dashed'} ${border};
-          background:${slot ? tint : 'rgba(247,242,234,0.03)'};
-          color:#f7f2ea;
+          background:${slot ? tint : 'rgba(var(--bp-tone-rgb),0.03)'};
+          color:var(--bp-ink);
           cursor:pointer;
           display:flex;
           align-items:center;
@@ -97,9 +97,9 @@ function renderKeepsakes(data) {
       ${(data.keepsakeSlots ?? []).map((slot) => {
         const unlocked = unlockedMap.get(slot.id);
         return `
-          <div style="padding:12px;border-radius:10px;background:${unlocked ? 'rgba(90,171,107,0.12)' : 'rgba(247,242,234,0.03)'};border:1px solid ${unlocked ? 'rgba(90,171,107,0.24)' : 'rgba(247,242,234,0.08)'};">
-            <div style="font-family:'Fraunces',serif;font-size:15px;color:${unlocked ? '#f7f2ea' : 'rgba(247,242,234,0.42)'};">${escapeHtml(slot.name)}</div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.5);margin-top:4px;">${unlocked ? (unlocked.chapter === 99 ? 'Earned in Free Play' : `Earned in Ch ${unlocked.chapter}`) : 'Locked keepsake slot'}</div>
+          <div style="padding:12px;border-radius:10px;background:${unlocked ? 'rgba(90,171,107,0.12)' : 'rgba(var(--bp-tone-rgb),0.03)'};border:1px solid ${unlocked ? 'rgba(90,171,107,0.24)' : 'rgba(var(--bp-tone-rgb),0.08)'};">
+            <div style="font-family:'Fraunces',serif;font-size:15px;color:${unlocked ? 'var(--bp-ink)' : 'var(--bp-ink-muted)'};">${escapeHtml(slot.name)}</div>
+            <div style="font-size:12px;color:var(--bp-ink-muted);margin-top:4px;">${unlocked ? (unlocked.chapter === 99 ? 'Earned in Free Play' : `Earned in Ch ${unlocked.chapter}`) : 'Locked keepsake slot'}</div>
           </div>
         `;
       }).join('')}
@@ -113,38 +113,38 @@ function renderPantry(data) {
   const seasonHistory = (data.seasonHistory ?? []).slice(-6).reverse();
   return `
     <section style="margin-bottom:14px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Pantry</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--bp-label);margin-bottom:8px;">Pantry</div>
       ${pantryEntries.length ? `
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
           ${pantryEntries.map((entry) => `
-            <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.03);border:1px solid rgba(247,242,234,0.08);">
-              <span style="font-size:13px;color:#f7f2ea;">${escapeHtml(entry.name)}</span>
-              <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.55);">x${entry.count}</span>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(var(--bp-tone-rgb),0.03);border:1px solid rgba(var(--bp-tone-rgb),0.08);">
+              <span style="font-size:13px;color:var(--bp-ink);">${escapeHtml(entry.name)}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">x${entry.count}</span>
             </div>
           `).join('')}
         </div>
-      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">Pantry is empty. Harvest crops to collect ingredients.</div>'}
+      ` : '<div style="font-size:13px;color:var(--bp-ink-muted);">Pantry is empty. Harvest crops to collect ingredients.</div>'}
     </section>
     <section style="margin-bottom:14px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Recipes</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--bp-label);margin-bottom:8px;">Recipes</div>
       ${recipesCompleted.length ? `
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${recipesCompleted.map((recipe) => `<span style="padding:7px 10px;border-radius:999px;background:rgba(232,200,74,0.14);color:#f4dfa1;font-size:12px;">${escapeHtml(recipe.name)}</span>`).join('')}
+          ${recipesCompleted.map((recipe) => `<span style="padding:7px 10px;border-radius:999px;background:rgba(232,200,74,0.14);color:var(--bp-chip-ink);font-size:12px;">${escapeHtml(recipe.name)}</span>`).join('')}
         </div>
-      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">Plant the right crop combos to unlock recipes.</div>'}
+      ` : '<div style="font-size:13px;color:var(--bp-ink-muted);">Plant the right crop combos to unlock recipes.</div>'}
     </section>
     <section>
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:8px;">Season Log</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--bp-label);margin-bottom:8px;">Season Log</div>
       ${seasonHistory.length ? `
         <div style="display:grid;gap:8px;">
           ${seasonHistory.map((entry) => `
-            <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(247,242,234,0.03);border:1px solid rgba(247,242,234,0.08);">
-              <span style="font-size:13px;color:#f7f2ea;">${entry.chapter === 99 ? 'Free Play' : `Ch ${entry.chapter}`} · ${escapeHtml(entry.season)}</span>
-              <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.55);">${entry.score} · ${escapeHtml(entry.grade)}</span>
+            <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(var(--bp-tone-rgb),0.03);border:1px solid rgba(var(--bp-tone-rgb),0.08);">
+              <span style="font-size:13px;color:var(--bp-ink);">${entry.chapter === 99 ? 'Free Play' : `Ch ${entry.chapter}`} · ${escapeHtml(entry.season)}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">${entry.score} · ${escapeHtml(entry.grade)}</span>
             </div>
           `).join('')}
         </div>
-      ` : '<div style="font-size:13px;color:rgba(247,242,234,0.48);">No completed chapters yet.</div>'}
+      ` : '<div style="font-size:13px;color:var(--bp-ink-muted);">No completed chapters yet.</div>'}
     </section>
   `;
 }
@@ -162,18 +162,18 @@ function renderCrafting(data) {
       <section>
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:10px;">
           <div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:6px;">Crafting</div>
-            <div style="font-family:'Fraunces',serif;font-size:17px;color:#f7f2ea;">Workbench Offline</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--bp-label);margin-bottom:6px;">Crafting</div>
+            <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--bp-ink);">Workbench Offline</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.58);">Crafting Lv ${craftingLevel}</div>
-            <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.4);">${unlockedCount}/${totalRecipes} recipes unlocked</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">Crafting Lv ${craftingLevel}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">${unlockedCount}/${totalRecipes} recipes unlocked</div>
           </div>
         </div>
-        <div style="height:8px;border-radius:999px;background:rgba(247,242,234,0.08);overflow:hidden;margin-bottom:12px;">
+        <div style="height:8px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.08);overflow:hidden;margin-bottom:12px;">
           <div style="height:100%;width:${craftingProgress}%;background:linear-gradient(90deg,#7fbf7f,#e8c84a);"></div>
         </div>
-        <div style="padding:14px;border-radius:12px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);font-size:13px;color:rgba(247,242,234,0.56);">
+        <div style="padding:14px;border-radius:12px;background:rgba(var(--bp-tone-rgb),0.04);border:1px solid rgba(var(--bp-tone-rgb),0.08);font-size:13px;color:var(--bp-ink-muted);">
           No recipes are unlocked yet. Raise your crafting level or progress quests to open the workbench.
         </div>
       </section>
@@ -184,15 +184,15 @@ function renderCrafting(data) {
     <section>
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:10px;">
         <div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,200,74,0.6);margin-bottom:6px;">Crafting</div>
-          <div style="font-family:'Fraunces',serif;font-size:17px;color:#f7f2ea;">Workbench</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--bp-label);margin-bottom:6px;">Crafting</div>
+          <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--bp-ink);">Workbench</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.58);">Crafting Lv ${craftingLevel}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.4);">${unlockedCount}/${totalRecipes} recipes unlocked</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">Crafting Lv ${craftingLevel}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">${unlockedCount}/${totalRecipes} recipes unlocked</div>
         </div>
       </div>
-      <div style="height:8px;border-radius:999px;background:rgba(247,242,234,0.08);overflow:hidden;margin-bottom:14px;">
+      <div style="height:8px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.08);overflow:hidden;margin-bottom:14px;">
         <div style="height:100%;width:${craftingProgress}%;background:linear-gradient(90deg,#7fbf7f,#e8c84a);"></div>
       </div>
       <div style="display:grid;gap:10px;">
@@ -206,38 +206,38 @@ function renderCrafting(data) {
             const need = missing ? missing.need : material.count;
             const ready = have >= need;
             return `
-              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:${ready ? 'rgba(247,242,234,0.72)' : '#e8b58d'};">
+              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:${ready ? 'var(--bp-ink-soft)' : 'var(--bp-warn)'};">
                 <span>${escapeHtml(material.name ?? material.itemId)}</span>
                 <span style="font-family:'DM Mono',monospace;">${have}/${need}</span>
               </div>
             `;
           }).join('');
           return `
-            <article style="padding:12px;border-radius:12px;background:rgba(247,242,234,0.04);border:1px solid ${craftable ? 'rgba(127,191,127,0.2)' : 'rgba(247,242,234,0.08)'};">
+            <article style="padding:12px;border-radius:12px;background:rgba(var(--bp-tone-rgb),0.04);border:1px solid ${craftable ? 'rgba(127,191,127,0.2)' : 'rgba(var(--bp-tone-rgb),0.08)'};">
               <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
                 <div>
                   <div style="display:flex;gap:8px;align-items:center;">
                     <span style="font-size:20px;">${escapeHtml(outputIcon)}</span>
-                    <div style="font-family:'Fraunces',serif;font-size:16px;color:#f7f2ea;">${escapeHtml(recipe.name)}</div>
-                    ${completed.has(recipe.id) ? '<span style="padding:3px 7px;border-radius:999px;background:rgba(127,191,127,0.18);color:#9dd59d;font-size:10px;font-family:\'DM Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;">made</span>' : ''}
+                    <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--bp-ink);">${escapeHtml(recipe.name)}</div>
+                    ${completed.has(recipe.id) ? '<span style="padding:3px 7px;border-radius:999px;background:rgba(127,191,127,0.18);color:var(--bp-ok);font-size:10px;font-family:\'DM Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;">made</span>' : ''}
                   </div>
-                  <div style="font-size:12px;color:rgba(247,242,234,0.5);margin-top:4px;">${escapeHtml(recipe.description ?? outputLabel)}</div>
+                  <div style="font-size:12px;color:var(--bp-ink-muted);margin-top:4px;">${escapeHtml(recipe.description ?? outputLabel)}</div>
                 </div>
                 <div style="text-align:right;min-width:84px;">
-                  <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.5);">Output</div>
-                  <div style="font-size:13px;color:#f7f2ea;">${escapeHtml(outputLabel)}${recipe.output?.count > 1 ? ` x${recipe.output.count}` : ''}</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);">Output</div>
+                  <div style="font-size:13px;color:var(--bp-ink);">${escapeHtml(outputLabel)}${recipe.output?.count > 1 ? ` x${recipe.output.count}` : ''}</div>
                 </div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px;">
-                <span style="padding:5px 8px;border-radius:999px;background:rgba(232,200,74,0.14);color:#f4dfa1;font-size:11px;">${escapeHtml(recipe.category ?? 'recipe')}</span>
-                <span style="padding:5px 8px;border-radius:999px;background:rgba(247,242,234,0.06);color:rgba(247,242,234,0.66);font-size:11px;">Crafting ${recipe.skillRequirement?.crafting ?? 1}</span>
-                <span style="padding:5px 8px;border-radius:999px;background:rgba(247,242,234,0.06);color:rgba(247,242,234,0.66);font-size:11px;">+${recipe.craftingXP ?? 0} XP</span>
+                <span style="padding:5px 8px;border-radius:999px;background:rgba(232,200,74,0.14);color:var(--bp-chip-ink);font-size:11px;">${escapeHtml(recipe.category ?? 'recipe')}</span>
+                <span style="padding:5px 8px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.06);color:var(--bp-ink-soft);font-size:11px;">Crafting ${recipe.skillRequirement?.crafting ?? 1}</span>
+                <span style="padding:5px 8px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.06);color:var(--bp-ink-soft);font-size:11px;">+${recipe.craftingXP ?? 0} XP</span>
               </div>
               <div style="display:grid;gap:4px;margin-bottom:10px;">
                 ${materials}
               </div>
               <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
-                <div style="font-size:12px;color:${craftable ? '#9dd59d' : 'rgba(247,242,234,0.45)'};">
+                <div style="font-size:12px;color:${craftable ? 'var(--bp-ok)' : 'var(--bp-ink-muted)'};">
                   ${craftable ? 'Ready to craft now.' : 'Missing materials.'}
                 </div>
                 <button
@@ -248,8 +248,8 @@ function renderCrafting(data) {
                     border:none;
                     border-radius:999px;
                     padding:8px 12px;
-                    background:${craftable ? '#e8c84a' : 'rgba(247,242,234,0.08)'};
-                    color:${craftable ? '#1a120c' : 'rgba(247,242,234,0.35)'};
+                    background:${craftable ? '#e8c84a' : 'rgba(var(--bp-tone-rgb),0.08)'};
+                    color:${craftable ? '#1a120c' : 'var(--bp-ink-muted)'};
                     font-weight:700;
                     cursor:${craftable ? 'pointer' : 'not-allowed'};
                   "
@@ -317,7 +317,7 @@ export function showBackpackPanel(container, initialData, onClose) {
       <div class="palette-header">
         <div>
           <div class="palette-title">Backpack</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(247,242,234,0.35);margin-top:4px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--bp-ink-muted);margin-top:4px;">
             Inventory, keepsakes, pantry, and season log
           </div>
         </div>
@@ -341,23 +341,23 @@ export function showBackpackPanel(container, initialData, onClose) {
           </div>
 
           <div style="margin-bottom:14px;">
-            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,242,234,0.58);margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--bp-ink-muted);margin-bottom:6px;">
               <span>Capacity</span>
               <span>${used}/${total}</span>
             </div>
-            <div style="height:8px;border-radius:999px;background:rgba(247,242,234,0.08);overflow:hidden;">
+            <div style="height:8px;border-radius:999px;background:rgba(var(--bp-tone-rgb),0.08);overflow:hidden;">
               <div style="height:100%;width:${capacityPercent}%;background:linear-gradient(90deg,#7fbf7f,#e8c84a);"></div>
             </div>
           </div>
 
-          <div style="padding:12px;border-radius:12px;background:rgba(247,242,234,0.04);border:1px solid rgba(247,242,234,0.08);">
-            <div style="font-family:'Fraunces',serif;font-size:16px;color:#f7f2ea;">${selectedSlot ? escapeHtml(selectedSlot.itemDef?.name ?? selectedSlot.itemId) : 'Empty Slot'}</div>
-            <div style="font-size:12px;color:rgba(247,242,234,0.52);margin-top:4px;">
+          <div style="padding:12px;border-radius:12px;background:rgba(var(--bp-tone-rgb),0.04);border:1px solid rgba(var(--bp-tone-rgb),0.08);">
+            <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--bp-ink);">${selectedSlot ? escapeHtml(selectedSlot.itemDef?.name ?? selectedSlot.itemId) : 'Empty Slot'}</div>
+            <div style="font-size:12px;color:var(--bp-ink-muted);margin-top:4px;">
               ${selectedSlot ? `${escapeHtml(selectedSlot.itemDef?.description ?? 'Stored item.')} ${selectedSlot.count > 1 ? `(x${selectedSlot.count})` : ''}` : 'Select a slot to inspect or move it.'}
             </div>
             <div style="display:flex;gap:8px;margin-top:10px;">
               <button type="button" id="backpack-use" ${selectedSlot ? '' : 'disabled'} style="border:none;border-radius:999px;padding:8px 12px;background:#e8c84a;color:#1a120c;font-weight:700;cursor:pointer;">Use</button>
-              <button type="button" id="backpack-drop" ${selectedSlot ? '' : 'disabled'} style="border:1px solid rgba(247,242,234,0.12);border-radius:999px;padding:8px 12px;background:rgba(247,242,234,0.04);color:#f7f2ea;cursor:pointer;">Drop</button>
+              <button type="button" id="backpack-drop" ${selectedSlot ? '' : 'disabled'} style="border:1px solid rgba(var(--bp-tone-rgb),0.12);border-radius:999px;padding:8px 12px;background:rgba(var(--bp-tone-rgb),0.04);color:var(--bp-ink);cursor:pointer;">Drop</button>
             </div>
           </div>
         ` : ''}
