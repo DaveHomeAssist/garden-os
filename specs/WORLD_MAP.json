@@ -39,7 +39,7 @@
       "npcSlots": [],
       "interactables": [
         { "id": "cedar_bed", "type": "object", "position": { "x": 0, "z": 0.5 }, "label": "8×4 raised cedar bed — your main growing area" },
-        { "id": "tool_shed", "type": "object", "position": { "x": -2.0, "z": -1.0 }, "label": "Tool shed — store and upgrade your gardening tools" }
+        { "id": "tool_shed", "type": "object", "position": { "x": -3.0, "z": -1.0 }, "label": "Tool shed — store and upgrade your gardening tools" }
       ],
       "ambientAudio": "suburban_spring",
       "seasonalVariation": {
