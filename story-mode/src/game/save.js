@@ -163,14 +163,19 @@ export function setActiveSaveSlot(slot) {
   localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
 }
 
-export function saveCampaign(campaign, slot) {
-  if (!campaign || !isValidSlot(slot)) return null;
+/**
+ * Shape a live campaign into the object that gets persisted (and exported).
+ * Pure: does not touch storage. `touch: false` keeps the campaign's own
+ * updatedAt (export) instead of stamping now (save).
+ */
+export function prepareCampaignForSave(campaign, { touch = true } = {}) {
+  if (!campaign || typeof campaign !== 'object') return null;
   const worldState = {
     ...DEFAULT_WORLD_STATE,
     ...(campaign.worldState ?? {}),
     visitedZones: [...new Set(campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones)],
   };
-  const toSave = {
+  return {
     ...campaign,
     version: CAMPAIGN_SCHEMA_VERSION,
     playerProfile: normalizePlayerProfile(campaign.playerProfile),
@@ -205,8 +210,13 @@ export function saveCampaign(campaign, slot) {
       ? [...campaign.biomeCropsUnlocked]
       : [],
     gameMode: campaign.gameMode ?? 'story',
-    updatedAt: new Date().toISOString(),
+    updatedAt: touch ? new Date().toISOString() : (campaign.updatedAt ?? new Date().toISOString()),
   };
+}
+
+export function saveCampaign(campaign, slot) {
+  if (!campaign || !isValidSlot(slot)) return null;
+  const toSave = prepareCampaignForSave(campaign);
   try {
     localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
     corruptCampaignSlots.delete(slot);
@@ -234,51 +244,49 @@ export function loadCampaign(slot) {
   }
 }
 
-const SAVE_BACKUP_FORMAT = 'garden-os-story-save';
-const SAVE_BACKUP_VERSION = 1;
-
-export function exportSaveSlot(slot) {
-  if (!isValidSlot(slot)) return null;
-  const campaign = loadCampaign(slot);
-  if (!campaign) return null;
-  return {
-    format: SAVE_BACKUP_FORMAT,
-    formatVersion: SAVE_BACKUP_VERSION,
-    exportedAt: new Date().toISOString(),
-    slot,
-    campaign,
-    season: loadSeasonState(slot),
-  };
-}
-
-export function importSaveSlot(payload, slot) {
+/**
+ * Overwrite one slot with an already-validated campaign + season pair (used
+ * by save-file import). Both go through the same migration a normal load
+ * uses, so older saves are brought up to the current schema on the way in.
+ */
+export function writeSlotSave(slot, { campaign, season = null } = {}) {
   if (!isValidSlot(slot)) {
     return { ok: false, error: 'Invalid save slot.' };
   }
-  if (!payload || typeof payload !== 'object' || payload.format !== SAVE_BACKUP_FORMAT) {
-    return { ok: false, error: 'This file is not a Garden OS save backup.' };
-  }
-  const campaign = normalizeCampaignSave(payload.campaign);
-  if (!campaign) {
+  const migratedCampaign = normalizeCampaignSave(campaign);
+  if (!migratedCampaign) {
     return { ok: false, error: 'This backup has no campaign data.' };
   }
-  const season = normalizeSeasonSave(payload.season);
+  const migratedSeason = normalizeSeasonSave(season);
+  const campaignJson = JSON.stringify(migratedCampaign);
+  const seasonJson = migratedSeason ? JSON.stringify(migratedSeason) : null;
+  const previousCampaign = localStorage.getItem(campaignKey(slot));
+  const previousSeason = localStorage.getItem(seasonKey(slot));
   try {
-    localStorage.setItem(campaignKey(slot), JSON.stringify(campaign));
-    if (season) {
-      localStorage.setItem(seasonKey(slot), JSON.stringify(season));
+    localStorage.setItem(campaignKey(slot), campaignJson);
+    if (seasonJson) {
+      localStorage.setItem(seasonKey(slot), seasonJson);
     } else {
       localStorage.removeItem(seasonKey(slot));
     }
   } catch (error) {
-    return { ok: false, error: error?.message ?? 'Save storage failed.' };
+    // Do not leave a half-written slot behind (e.g. quota hit on the season).
+    try {
+      if (previousCampaign === null) localStorage.removeItem(campaignKey(slot));
+      else localStorage.setItem(campaignKey(slot), previousCampaign);
+      if (previousSeason === null) localStorage.removeItem(seasonKey(slot));
+      else localStorage.setItem(seasonKey(slot), previousSeason);
+    } catch {
+      // Best effort only.
+    }
+    return { ok: false, error: `Could not write the save to this browser's storage (${error?.message ?? 'storage error'}).` };
   }
   // The imported local save is now the source of truth for this slot; drop any
-  // stale authority-session pointer so an older cloud snapshot cannot shadow it.
+  // stale authority-session pointer so an older IndexedDB snapshot cannot shadow it.
   deleteAuthoritySessionPointer(slot);
   corruptCampaignSlots.delete(slot);
   corruptSeasonSlots.delete(slot);
-  return { ok: true, campaign };
+  return { ok: true, campaign: migratedCampaign, season: migratedSeason };
 }
 
 export function deleteCampaign(slot) {
@@ -289,19 +297,27 @@ export function deleteCampaign(slot) {
   corruptSeasonSlots.delete(slot);
 }
 
+/**
+ * Copy of a live season without the circular campaign reference, with the
+ * grid in its persisted { cells, cols, rows } shape. Pure.
+ */
+export function prepareSeasonForSave(season) {
+  if (!season || typeof season !== 'object') return null;
+  return {
+    ...season,
+    campaign: undefined,
+    grid: {
+      cells: Array.isArray(season.grid) ? season.grid : (season.grid?.cells ?? []),
+      cols: season.gridCols ?? season.grid?.cols ?? 8,
+      rows: season.gridRows ?? season.grid?.rows ?? 4,
+    },
+  };
+}
+
 export function saveSeasonState(season, slot) {
   if (!season || !isValidSlot(slot)) return null;
   try {
-    // Save a copy without the circular campaign reference
-    const toSave = {
-      ...season,
-      campaign: undefined,
-      grid: {
-        cells: Array.isArray(season.grid) ? season.grid : (season.grid?.cells ?? []),
-        cols: season.gridCols ?? season.grid?.cols ?? 8,
-        rows: season.gridRows ?? season.grid?.rows ?? 4,
-      },
-    };
+    const toSave = prepareSeasonForSave(season);
     localStorage.setItem(seasonKey(slot), JSON.stringify(toSave));
     corruptSeasonSlots.delete(slot);
     return toSave;
@@ -458,4 +474,8 @@ export function subscribeToStoreSaves(store, resolveSlot, options = {}) {
   });
 }
 
-export { SAVE_SLOTS };
+export {
+  SAVE_SLOTS,
+  normalizeCampaignSave as migrateCampaignSave,
+  normalizeSeasonSave as migrateSeasonSave,
+};

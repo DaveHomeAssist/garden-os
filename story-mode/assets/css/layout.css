@@ -4714,3 +4714,91 @@
       background: rgba(239, 152, 119, 0.1);
       border-color: rgba(239, 152, 119, 0.28);
     }
+
+    /* Save file export/import dialog (title screen + pause menu). */
+    .save-transfer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(15, 9, 4, 0.62);
+      backdrop-filter: blur(10px);
+    }
+    .save-transfer-dialog {
+      width: min(520px, 100%);
+      max-height: min(86vh, 720px);
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+      padding: 20px;
+      border: 1px solid rgba(104, 68, 40, 0.18);
+      border-radius: 18px;
+      background: rgba(255, 250, 244, 0.97);
+      box-shadow: 0 24px 70px rgba(24, 12, 6, 0.36);
+      color: rgba(38, 22, 10, 0.94);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .save-transfer-dialog__title {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .save-transfer-dialog__body { display: grid; gap: 10px; }
+    .save-transfer-dialog__body p { margin: 0; }
+    .save-transfer-dialog__note { color: rgba(56, 35, 19, 0.72); font-size: 13px; }
+    .save-transfer-dialog__summary { font-weight: 600; }
+    .save-transfer-dialog__error { color: rgba(150, 50, 20, 0.96); font-weight: 600; }
+    .save-transfer-dialog__warning { color: rgba(150, 50, 20, 0.96); font-size: 13px; min-height: 1em; }
+    .save-transfer-dialog__warning:empty { display: none; }
+    .save-transfer-dialog__group {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid rgba(104, 68, 40, 0.16);
+      border-radius: 12px;
+    }
+    .save-transfer-dialog__group legend {
+      padding: 0 4px;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(56, 35, 19, 0.72);
+    }
+    .save-transfer-dialog__choice {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      min-height: 32px;
+      cursor: pointer;
+    }
+    .save-transfer-dialog__choice input { margin-top: 3px; }
+    .save-transfer-dialog__actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .save-transfer-dialog :focus-visible {
+      outline: 3px solid rgba(var(--story-season-accent-rgb, 212, 168, 32), 0.9);
+      outline-offset: 2px;
+    }
+    html[data-theme="dark"] .save-transfer-dialog {
+      background: rgba(34, 22, 13, 0.97);
+      border-color: rgba(232, 200, 74, 0.18);
+      color: rgba(247, 242, 234, 0.94);
+    }
+    html[data-theme="dark"] .save-transfer-dialog__note,
+    html[data-theme="dark"] .save-transfer-dialog__group legend { color: rgba(247, 242, 234, 0.7); }
+    html[data-theme="dark"] .save-transfer-dialog__error,
+    html[data-theme="dark"] .save-transfer-dialog__warning { color: #f0a080; }
+    /* Occupied slots carry three buttons (Continue / Export / Delete); let them wrap. */
+    .save-slot-card--occupied .save-slot-actions { flex-wrap: wrap; }
+    .save-slot-card--occupied .save-slot-actions [data-action="continue"] { flex: 1 1 100%; }
+    .save-slot-card--occupied .save-slot-actions [data-action="export"],
+    .save-slot-card--occupied .save-slot-actions [data-action="delete"] { flex: 1 1 0; }
+    .save-transfer-dialog__actions .save-slot-btn { flex: 0 1 auto; padding-inline: 20px; }
