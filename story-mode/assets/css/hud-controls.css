@@ -265,6 +265,44 @@ body[data-design-language="field-kit"][data-story-screen="play"] #fab-bug {
   backdrop-filter: none;
 }
 
+/* Backpack sheet ink. The sheet paints on var(--text), which is cream
+   (#f1e3ce-ish) in both themes, so the old near-white inline text
+   (#f7f2ea, rgba(247,242,234,.35-.72)) measured ~1.1:1. These dark inks
+   clear WCAG AA (4.5:1) on the cream and on the darkest slot/chip tints
+   the panel lays over it (see backpack-contrast.test.js). */
+#backpack-panel {
+  --bp-ink: #2a190d;
+  --bp-ink-soft: #674d38;
+  --bp-ink-muted: #5f4734;
+  --bp-label: #6a4a0e;
+  --bp-chip-ink: #6b4a0c;
+  --bp-warn: #943a1d;
+  --bp-ok: #2f5722;
+  --bp-tone-rgb: 42, 25, 13;
+  color: var(--bp-ink);
+}
+
+/* The shared palette title / close glyph are tuned for the darker crop
+   sheets and land at ~4.4:1 / 3.9:1 here. */
+#backpack-panel .palette-title,
+#backpack-panel .palette-dismiss {
+  color: var(--bp-ink-soft);
+}
+
+/* Backpack open: step the floating buttons aside (same approach as the
+   other panel sheets). The bug FAB sits over the sheet's close (x) at every
+   width; on phones / narrow tablets Plant, Backpack and Next/Start Season
+   also land on the docked sheet. Esc, B or the x close it again. */
+body[data-design-language="field-kit"][data-story-screen="play"]:has(#backpack-panel.is-open) #fab-bug {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#backpack-panel.is-open) :is(#fab-plant, #fab-advance, #fab-backpack) {
+    display: none;
+  }
+}
+
 body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud {
   position: absolute;
   left: 50%;
