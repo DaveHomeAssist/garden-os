@@ -54,6 +54,33 @@ export function getYieldListForGrid(grid) {
   )];
 }
 
+/**
+ * Per-crop cell counts for a harvested grid: three basil cells yield three
+ * basil. getYieldListForGrid stays de-duplicated for recipe matching and the
+ * "N things for the pantry" summary.
+ */
+export function getYieldCountsForGrid(grid) {
+  const counts = {};
+  for (const cell of grid ?? []) {
+    if (cell?.cropId) counts[cell.cropId] = (counts[cell.cropId] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/**
+ * Add a season's harvest to the pantry, one per planted cell. Older harvest
+ * results (saved before yieldCounts existed) fall back to one per crop type.
+ */
+export function addHarvestToPantry(pantry, harvestResult) {
+  const next = { ...(pantry ?? {}) };
+  const counts = harvestResult?.yieldCounts
+    ?? Object.fromEntries((harvestResult?.yieldList ?? []).map((cropId) => [cropId, 1]));
+  for (const [cropId, count] of Object.entries(counts)) {
+    next[cropId] = (next[cropId] ?? 0) + count;
+  }
+  return next;
+}
+
 export function getRecipeMatchesForGrid(grid) {
   const yieldList = new Set(getYieldListForGrid(grid));
   return Object.entries(RECIPES)

@@ -3,7 +3,7 @@
  */
 import { scoreCell } from './cell-score.js';
 import { CELL_COUNT, getGridCols, getGridRows } from '../game/state.js';
-import { checkRecipeComplete, getRecipes, getCropById, getYieldListForGrid, getRecipeMatchesForGrid } from '../data/crops.js';
+import { checkRecipeComplete, getRecipes, getCropById, getYieldListForGrid, getYieldCountsForGrid, getRecipeMatchesForGrid } from '../data/crops.js';
 
 function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
@@ -29,13 +29,14 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
   }
 
   if (occupiedCount === 0) {
-    return { score: 0, grade: 'F', cellScores, occupiedCount, yieldList: [], recipeMatches: [], details: {} };
+    return { score: 0, grade: 'F', cellScores, occupiedCount, yieldList: [], yieldCounts: {}, recipeMatches: [], details: {} };
   }
 
   const cellAvg = totalScore / occupiedCount;
   const fillRatio = occupiedCount / totalCells;
   const fillPenalty = (1 - Math.sqrt(fillRatio)) * 1.5;
   const yieldList = getYieldListForGrid(grid);
+  const yieldCounts = getYieldCountsForGrid(grid);
   const recipeMatches = getRecipeMatchesForGrid(grid);
 
   let diversityBonus = 0;
@@ -88,6 +89,7 @@ export function scoreBed(grid, siteConfig, season, pantry = {}) {
       cellScores,
       occupiedCount,
       yieldList,
+      yieldCounts,
       recipeMatches,
       details: {
       cellAvg,
