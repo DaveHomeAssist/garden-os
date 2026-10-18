@@ -11,13 +11,21 @@ permissions:
   pages: write
   id-token: write
 
+# Runner selection: GitHub-hosted ubuntu-latest unless the repo variable
+# GARDEN_OS_RUNNER is set to a self-hosted runner label (see test.yml). This
+# workflow only runs on push to main and manual dispatch, never on fork code.
+# Steps run in bash; on a Windows runner that is Git for Windows' bash.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GARDEN_OS_RUNNER || 'ubuntu-latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -35,7 +43,9 @@ jobs:
 
       - name: Install Playwright browser
         working-directory: story-mode
-        run: npx playwright install --with-deps chromium
+        # --with-deps installs Linux system packages only (needs sudo on a
+        # self-hosted Linux box); Windows and macOS need no extra packages.
+        run: npx playwright install ${{ runner.os == 'Linux' && '--with-deps' || '' }} chromium
 
       - name: Verify Story Mode design-language viewports
         run: node tests/story-mode-design-language-diagnostic.mjs
@@ -60,7 +70,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GARDEN_OS_RUNNER || 'ubuntu-latest' }}
     needs: build
     steps:
       - name: Deploy to GitHub Pages
@@ -69,7 +79,7 @@ jobs:
 
   smoke:
     name: Post-deploy smoke
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GARDEN_OS_RUNNER || 'ubuntu-latest' }}
     needs: deploy
     steps:
       - name: Checkout
@@ -88,7 +98,9 @@ jobs:
 
       - name: Install Playwright browser
         working-directory: story-mode
-        run: npx playwright install --with-deps chromium
+        # --with-deps installs Linux system packages only (needs sudo on a
+        # self-hosted Linux box); Windows and macOS need no extra packages.
+        run: npx playwright install ${{ runner.os == 'Linux' && '--with-deps' || '' }} chromium
 
       - name: Smoke live Story Mode
         run: node scripts/verify-all.mjs --live-only --live-url https://davehomeassist.github.io/garden-os/story-mode/
