@@ -236,7 +236,18 @@ body:has(#trade-panel) .quest-tracker {
   color: #e8c84a;
 }
 
-@media (max-width: 720px) {
+/* At 900px and below the "Current objective" banner (#phase-helper) goes
+   full width at top: 194px (hud-controls.css), straight through the tracker's
+   top-right slot (top: 130px). Use the bottom-anchored placement from 900px
+   down, matching the HUD's own breakpoint, instead of only from 720px. */
+@media (max-width: 900px) {
+  /* Bottom-anchored, the tracker sits over the cutscene dialog (and took
+     clicks meant for its Skip button at 820x1180). Step aside while a
+     cutscene is showing; the layer is only non-inert during one. */
+  body:has(#cutscene-layer:not([inert])) .quest-tracker {
+    display: none;
+  }
+
   .quest-tracker {
     top: auto;
     bottom: calc(150px + env(safe-area-inset-bottom, 0px));
