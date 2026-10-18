@@ -48,7 +48,7 @@ try {
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
     const q = qualityArg ? `?quality=${qualityArg}` : '';
-    await page.addInitScript(() => { globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true; });
+    await page.addInitScript(() => { globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true; performance.setResourceTimingBufferSize?.(5000); });
     await page.goto(`http://127.0.0.1:${port}/${q}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#title-screen', { state: 'visible', timeout: 120000 });
     await page.locator('[data-action="new"][data-slot="0"]').first().click();
@@ -93,7 +93,7 @@ try {
       const res = performance.getEntriesByType('resource');
       const art = res.filter((e) => /\.(png|jpe?g|webp|ktx2|glb|gltf|bin|basis)(\?|$)/i.test(e.name));
       const artBytes = art.reduce((s, e) => s + (e.decodedBodySize || e.transferSize || 0), 0);
-      return { calls, tris, mem, artCount: art.length, artBytes, artFiles: art.map((e) => [e.name.replace(location.origin, ''), e.decodedBodySize]), quality: document.body.dataset.artQuality || null, yardArt: scene.getYardArtDebug?.() ?? null, text: JSON.parse(window.gardenOS.render_game_to_text()).currentZone };
+      return { calls, tris, mem, artCount: art.length, artBytes, artFiles: art.map((e) => [e.name.replace(location.origin, ''), e.decodedBodySize]), quality: document.body.dataset.artQuality || null, yardArt: scene.getYardArtDebug?.() ?? null, camProbe: [[0,0,0],[0,0,-6.15],[4.8,0,0.1],[-9.3,0,-9.3]].map(([x,y,z]) => { const p = scene.projectWorldPosition?.({ x, y, z }); return p ? [Math.round(p.x ?? p.screenX ?? 0), Math.round(p.y ?? p.screenY ?? 0)] : null; }), azimuth: scene.getCameraAzimuth?.(), text: JSON.parse(window.gardenOS.render_game_to_text()).currentZone };
     });
     const file = join(outDir, `${label}-${vp.name}.png`);
     await page.screenshot({ path: file });
