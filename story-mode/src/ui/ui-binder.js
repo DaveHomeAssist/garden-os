@@ -2133,6 +2133,9 @@ function bindUI({
   let sessionLoop = null; // assigned once createLoop() below has run
   function setSceneHold(reason, on) {
     if (on) sceneHolds.add(reason); else sceneHolds.delete(reason);
+    // CSS hook: theme.css stops the dialogue panel's animations and blur
+    // while the scene is held (pause menu open or tab hidden).
+    document.body.toggleAttribute('data-scene-held', sceneHolds.size > 0);
     if (!sessionLoop) return; // applied when the loop is created
     if (on) sessionLoop.hold(reason); else sessionLoop.release(reason);
     if (sceneHolds.size) {
@@ -2290,6 +2293,7 @@ function bindUI({
     if (cleanedUp) return;
     cleanedUp = true;
     sessionListeners.abort();
+    document.body.removeAttribute('data-scene-held');
     questController.dispose();
     destroyInit?.();
     unsubscribeState();
