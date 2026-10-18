@@ -15,6 +15,7 @@ import {
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { getNPC } from '../data/npcs.js';
+import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
 
 // The home plot used to clamp the player to a 5 x 4 m box hugging the bed
 // (bounds ±2.5 / ±2.0), so walking north toward the rowhouse hit an invisible
@@ -108,30 +109,102 @@ describe('home plot walkability', () => {
     const arrival = resolveZoneSpawnPoint('neighborhood', 'player_plot');
     expect(insideBlocker(arrival.x, arrival.z, blockers, PLAYER_RADIUS)).toBe(false);
   });
+});
 
-  // Exit paths whose trigger circle lies entirely outside the zone's movement
-  // bounds, so they only work from the world map. Known and out of scope for
-  // the home-plot fix; listed so a new one fails here and a fixed one has to be
-  // removed from the list.
-  const KNOWN_UNREACHABLE_EXITS = [
-    'meadow_to_neighborhood',
-    'meadow_to_riverside_2',
-    'market_square_to_neighborhood',
-  ];
+// The simulation clamps the player's centre to the zone's movement bounds and
+// pushes it out of blockers (inflated by PLAYER_RADIUS). An exit only works on
+// foot if some spot the player can stand on lies inside its trigger circle.
+// meadow_to_neighborhood, meadow_to_riverside_2 and market_square_to_neighborhood
+// used to sit 1.5-2.5 m outside their zone bounds (world-map travel only).
+const EXIT_STAND_MARGIN = 0.3; // stand at least this far inside the trigger radius
 
-  it('every zone exit trigger overlaps its zone bounds (except the known list)', () => {
-    const unreachable = [];
-    for (const zoneId of Object.keys(WORLD_MAP.zones)) {
+function standPoint(zoneId, exit) {
+  const bounds = getZoneMovementBounds(zoneId);
+  return {
+    x: Math.max(bounds.minX, Math.min(bounds.maxX, exit.position.x)),
+    z: Math.max(bounds.minZ, Math.min(bounds.maxZ, exit.position.z)),
+  };
+}
+
+function arrivalPoints(zoneId) {
+  // Every way the player can enter this zone: from each neighbour's exit.
+  return Object.keys(WORLD_MAP.zones)
+    .filter((from) => WORLD_ZONE_INTERACTABLES[from].some((entry) => entry.zoneId === zoneId))
+    .map((from) => ({ from, point: resolveZoneSpawnPoint(from, zoneId) }));
+}
+
+describe('zone exits are reachable on foot', () => {
+  const zoneIds = Object.keys(WORLD_MAP.zones);
+
+  it('covers every zone and exit in the world map', () => {
+    expect(zoneIds.length).toBeGreaterThanOrEqual(8);
+    const count = zoneIds.reduce((n, id) => n + WORLD_ZONE_INTERACTABLES[id].length, 0);
+    expect(count).toBe(zoneIds.reduce((n, id) => n + (WORLD_MAP.zones[id].exitPoints ?? []).length, 0));
+  });
+
+  it('every exit trigger in every zone sits within the walkable area', () => {
+    const problems = [];
+    for (const zoneId of zoneIds) {
+      const blockers = getZoneMovementBlockers(zoneId);
       for (const exit of WORLD_ZONE_INTERACTABLES[zoneId]) {
-        const bounds = getZoneMovementBounds(zoneId);
-        const nearestX = Math.max(bounds.minX, Math.min(bounds.maxX, exit.position.x));
-        const nearestZ = Math.max(bounds.minZ, Math.min(bounds.maxZ, exit.position.z));
-        if (Math.hypot(exit.position.x - nearestX, exit.position.z - nearestZ) >= exit.radius) {
-          unreachable.push(exit.id);
+        const stand = standPoint(zoneId, exit);
+        const gap = Math.hypot(exit.position.x - stand.x, exit.position.z - stand.z);
+        if (gap > exit.radius - EXIT_STAND_MARGIN) problems.push(`${exit.id}: ${gap.toFixed(2)} m outside bounds`);
+        if (insideBlocker(stand.x, stand.z, blockers, PLAYER_RADIUS)) problems.push(`${exit.id}: inside a blocker`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('every walk-in exit trigger box (ZoneManager auto-travel) touches the walkable area', () => {
+    // zone-registry.js feeds these boxes to ZoneManager.checkTriggers, which
+    // tests the clamped player centre inclusively against them.
+    const problems = [];
+    for (const zoneId of zoneIds) {
+      const bounds = getZoneMovementBounds(zoneId);
+      for (const exit of getZoneExitPoints(zoneId)) {
+        const box = exit.triggerBounds;
+        const overlapX = Math.min(box.maxX, bounds.maxX) - Math.max(box.minX, bounds.minX);
+        const overlapZ = Math.min(box.maxZ, bounds.maxZ) - Math.max(box.minZ, bounds.minZ);
+        if (overlapX < 0 || overlapZ < 0) problems.push(`${exit.id}: box ${overlapX.toFixed(2)} x ${overlapZ.toFixed(2)}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('the three formerly unreachable exits now sit inside their zone bounds', () => {
+    for (const [zoneId, id] of [
+      ['meadow', 'meadow_to_neighborhood'],
+      ['meadow', 'meadow_to_riverside_2'],
+      ['market_square', 'market_square_to_neighborhood'],
+    ]) {
+      const exit = WORLD_ZONE_INTERACTABLES[zoneId].find((entry) => entry.id === id);
+      expect(exit, id).toBeTruthy();
+      const bounds = getZoneMovementBounds(zoneId);
+      expect(exit.position.x).toBeGreaterThanOrEqual(bounds.minX);
+      expect(exit.position.x).toBeLessThanOrEqual(bounds.maxX);
+      expect(exit.position.z).toBeGreaterThanOrEqual(bounds.minZ);
+      expect(exit.position.z).toBeLessThanOrEqual(bounds.maxZ);
+    }
+  });
+
+  it('walks from every arrival point of every zone (except the walled home plot) to each of its exits', () => {
+    const failures = [];
+    for (const zoneId of zoneIds) {
+      // The home plot has interior blockers; its single exit has a dedicated waypoint walk above.
+      if (zoneId === 'player_plot') continue;
+      // Zones with interior blockers need routed walks: neighborhood-walkability.test.js covers them.
+      if (getZoneMovementBlockers(zoneId).length) continue;
+      for (const { from, point } of arrivalPoints(zoneId)) {
+        for (const exit of WORLD_ZONE_INTERACTABLES[zoneId]) {
+          const result = walk(zoneId, point, [
+            { x: exit.position.x, z: exit.position.z, radius: exit.radius - EXIT_STAND_MARGIN },
+          ]);
+          if (!result.ok) failures.push(`${zoneId} (from ${from}) -> ${exit.id} stuck at ${result.at.x.toFixed(2)},${result.at.z.toFixed(2)}`);
         }
       }
     }
-    expect(unreachable.sort()).toEqual([...KNOWN_UNREACHABLE_EXITS].sort());
+    expect(failures).toEqual([]);
   });
 });
 
