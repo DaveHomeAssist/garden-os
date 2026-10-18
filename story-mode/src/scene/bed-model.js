@@ -2,7 +2,9 @@
  * Bed Model — cedar frame + configurable soil grid.
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { COLS, ROWS } from '../game/state.js';
+import { projectUVs } from './yard-art/yard-backdrop.js';
 
 const CELL_SIZE = 0.5;
 const FRAME_HEIGHT = 0.15;
@@ -99,7 +101,7 @@ function createSoilTexture() {
   }, 1.4, 1.4);
 }
 
-function createSoilGeometry(seed) {
+function createSoilGeometry(seed, mound = 0.013) {
   const span = CELL_SIZE * 0.985;
   const geo = new THREE.PlaneGeometry(span, span, 12, 12);
   const pos = geo.getAttribute('position');
@@ -111,7 +113,7 @@ function createSoilGeometry(seed) {
     const nx = x / half;
     const ny = y / half;
     const radial = Math.min(1, Math.sqrt(nx * nx + ny * ny));
-    const centerLift = (1 - radial) ** 2 * 0.013;
+    const centerLift = (1 - radial) ** 2 * mound;
     const edgeDip = radial * 0.0018;
     const noise = (seededNoise2D(seed, x * 3.1, y * 3.1) - 0.5) * 0.0048;
     const furrow = Math.sin((x + seed * 0.07) * 20) * 0.0012 * (1 - radial);
@@ -203,6 +205,8 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
   const rightBevel = new THREE.Mesh(shortBevel, cedarBevelMat);
   rightBevel.position.set(bedWidth / 2 + FRAME_THICKNESS / 2, FRAME_HEIGHT + BEVEL_INSET / 2, 0);
   group.add(rightBevel);
+
+  const legacyFrame = [front, frontBevel, back, backBevel, left, leftBevel, right, rightBevel];
 
   // Grid lines between cells (thin dark strips)
   const gridLineThickness = 0.004;
@@ -321,8 +325,99 @@ export function buildBed(tracker = null, cols = COLS, rows = ROWS) {
 
   tracker?.trackObject(group);
 
+  /**
+   * Yard art pass: swap the canvas-painted frame for a two-board wood frame
+   * with corner posts (one merged mesh), give the soil the painted texture,
+   * a fuller mound and a berm under the cells. Cell meshes, their userData,
+   * materials and raycast targets are unchanged.
+   */
+  function setArtMaterials({ wood, soil } = {}) {
+    if (!wood || !soil || group.userData.artFrame) return;
+    legacyFrame.forEach((m) => { m.visible = false; });
+    const parts = [];
+    const outerW = bedWidth / 2 + FRAME_THICKNESS;
+    const outerD = bedDepth / 2 + FRAME_THICKNESS;
+    const boardH = FRAME_HEIGHT / 2;
+    const add = (geo, x, y, z, rotY = 0, vertical = false) => {
+      geo.rotateY(rotY);
+      geo.translate(x, y, z);
+      parts.push(projectUVs(geo, 2.2, vertical));
+    };
+    for (let b = 0; b < 2; b++) {
+      const y = boardH * (b + 0.5);
+      const inset = b === 0 ? 0.004 : 0;
+      add(new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2, boardH - 0.006, FRAME_THICKNESS - inset), 0, y, bedDepth / 2 + FRAME_THICKNESS / 2);
+      add(new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2, boardH - 0.006, FRAME_THICKNESS - inset), 0, y, -bedDepth / 2 - FRAME_THICKNESS / 2);
+      add(new THREE.BoxGeometry(FRAME_THICKNESS - inset, boardH - 0.006, bedDepth), -bedWidth / 2 - FRAME_THICKNESS / 2, y, 0);
+      add(new THREE.BoxGeometry(FRAME_THICKNESS - inset, boardH - 0.006, bedDepth), bedWidth / 2 + FRAME_THICKNESS / 2, y, 0);
+    }
+    // top cap boards, slightly proud of the frame
+    const capT = 0.018;
+    const capY = FRAME_HEIGHT + capT / 2;
+    add(new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2 + 0.03, capT, FRAME_THICKNESS + 0.03), 0, capY, bedDepth / 2 + FRAME_THICKNESS / 2);
+    add(new THREE.BoxGeometry(bedWidth + FRAME_THICKNESS * 2 + 0.03, capT, FRAME_THICKNESS + 0.03), 0, capY, -bedDepth / 2 - FRAME_THICKNESS / 2);
+    add(new THREE.BoxGeometry(FRAME_THICKNESS + 0.03, capT, bedDepth), -bedWidth / 2 - FRAME_THICKNESS / 2, capY, 0);
+    add(new THREE.BoxGeometry(FRAME_THICKNESS + 0.03, capT, bedDepth), bedWidth / 2 + FRAME_THICKNESS / 2, capY, 0);
+    // corner posts and a mid post on each long side
+    const post = 0.085;
+    for (const [x, z] of [[-outerW, -outerD], [outerW, -outerD], [-outerW, outerD], [outerW, outerD], [0, outerD], [0, -outerD]]) {
+      const px = x === 0 ? 0 : x - Math.sign(x) * (post / 2 - 0.012);
+      const pz = z - Math.sign(z) * (post / 2 - 0.012);
+      add(new THREE.BoxGeometry(post, FRAME_HEIGHT + 0.05, post), px, (FRAME_HEIGHT + 0.05) / 2, pz, 0, true);
+      add(new THREE.ConeGeometry(post * 0.74, 0.03, 4, 1).rotateY(Math.PI / 4), px, FRAME_HEIGHT + 0.065, pz);
+    }
+    const merged = mergeGeometries(parts.map((g) => {
+      for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+      return g;
+    }), false);
+    merged.computeVertexNormals();
+    const frameMat = new THREE.MeshStandardMaterial({ map: wood, color: 0xcdb293, roughness: 0.86, metalness: 0 });
+    frameMat.name = 'yard-art-bed-frame';
+    const frame = new THREE.Mesh(merged, frameMat);
+    frame.name = 'yard-art-bed-frame';
+    frame.castShadow = true;
+    frame.receiveShadow = true;
+    group.add(frame);
+    group.userData.artFrame = frame;
+
+    // soil berm under the cells hides the seams between cell tiles
+    const soilTex = soil.clone();
+    soilTex.repeat.set(cols, rows);
+    soilTex.needsUpdate = true;
+    const bermGeo = new THREE.PlaneGeometry(bedWidth, bedDepth, cols * 4, rows * 4);
+    const bp = bermGeo.getAttribute('position');
+    for (let i = 0; i < bp.count; i++) {
+      const ex = Math.abs(bp.getX(i)) / (bedWidth / 2);
+      const ey = Math.abs(bp.getY(i)) / (bedDepth / 2);
+      bp.setZ(i, (1 - Math.max(ex, ey) ** 6) * 0.004);
+    }
+    bermGeo.computeVertexNormals();
+    const berm = new THREE.Mesh(bermGeo, new THREE.MeshStandardMaterial({ map: soilTex, color: 0x9a8a78, roughness: 1, metalness: 0 }));
+    berm.name = 'yard-art-bed-berm';
+    berm.rotation.x = -Math.PI / 2;
+    berm.position.y = SOIL_Y - 0.006;
+    berm.receiveShadow = true;
+    berm.raycast = () => {};
+    group.add(berm);
+
+    // painted soil + fuller mound on the existing cell meshes
+    cellMeshes.forEach((cell, index) => {
+      const old = cell.geometry;
+      cell.geometry = createSoilGeometry(index * 17 + 23, 0.024);
+      old.dispose();
+      cell.material.map = soil;
+      cell.material.bumpMap = soil;
+      cell.material.bumpScale = 0.02;
+      cell.material.needsUpdate = true;
+      cell.castShadow = false;
+    });
+    tracker?.trackObject(frame);
+    tracker?.trackObject(berm);
+  }
+
   return {
     group,
+    setArtMaterials,
     cellMeshes,
     gridLineMeshes,
     labelSprites,

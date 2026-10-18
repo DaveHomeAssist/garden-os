@@ -4802,3 +4802,9 @@
     .save-slot-card--occupied .save-slot-actions [data-action="export"],
     .save-slot-card--occupied .save-slot-actions [data-action="delete"] { flex: 1 1 0; }
     .save-transfer-dialog__actions .save-slot-btn { flex: 0 1 auto; padding-inline: 20px; }
+
+    /* Yard art pass: the scene carries its own graded vignette, so the CSS
+       overlay only keeps a light edge for HUD contrast. */
+    body[data-art-quality] .vignette-overlay {
+      opacity: 0.5;
+    }

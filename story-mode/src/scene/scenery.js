@@ -616,6 +616,7 @@ export function buildScenery(tracker = null) {
   group.add(narrativeProps);
 
   // 10. Phillies pennant on the porch trim
+  let pennantMesh = null;
   {
     const pennantShape = new THREE.Shape();
     pennantShape.moveTo(0, 0);
@@ -627,6 +628,7 @@ export function buildScenery(tracker = null) {
       color: 0xE81828, roughness: 0.7, side: THREE.DoubleSide,
     });
     const pennant = new THREE.Mesh(pennantGeo, pennantMat);
+    pennantMesh = pennant;
     pennant.position.set(-1.95, 0.86, -4.66);
     pennant.rotation.y = -0.05;
     markPlaceCue(pennant, 'phillies-pennant');
@@ -778,6 +780,7 @@ export function buildScenery(tracker = null) {
   // 19. Chimney smoke (winter)
   const winterSmoke = new THREE.Group();
   let smokePositions;
+  const smokeOrigin = { x: 4.7, y: 2.5, z: -2.1, top: 4.5 };
   {
     const count = 20;
     const positions = new Float32Array(count * 3);
@@ -827,8 +830,58 @@ export function buildScenery(tracker = null) {
 
   tracker?.trackObject(group);
 
+  // Layers the yard art pass keeps (gameplay-driven seasonal/narrative state,
+  // place cues). Everything else in this group is replaced by yard-art meshes.
+  const artKeep = new Set([
+    seasonalProps, fallLeaves, winterSnow, springFlowers, narrativeProps, pennantMesh,
+    planningProps, fireflies, puddles, summerGrit, summerHeatHaze, winterSmoke, porchLight,
+  ]);
+  const artHidden = [];
+  let artOverlay = false;
+
   return {
     group,
+
+    /**
+     * Yard art overlay: hide the legacy meshes the art replaces and re-seat the
+     * kept narrative pieces on the new cottage. Visual only; place cues stay
+     * registered and seasonal/narrative layers keep their visibility logic.
+     */
+    setArtOverlay(enabled, anchors = {}) {
+      artOverlay = Boolean(enabled);
+      if (artOverlay) {
+        for (const child of group.children) {
+          if (artKeep.has(child) || artHidden.some(([c]) => c === child)) continue;
+          artHidden.push([child, child.visible]);
+          child.visible = false;
+        }
+      } else {
+        artHidden.splice(0).forEach(([child, wasVisible]) => { child.visible = wasVisible; });
+      }
+      if (!artOverlay) return;
+      if (anchors.pennant && pennantMesh) {
+        pennantMesh.position.set(anchors.pennant.x, anchors.pennant.y, anchors.pennant.z);
+        pennantMesh.rotation.y = anchors.pennant.rotationY ?? 0;
+      }
+      if (anchors.porchLight) porchLight.position.set(anchors.porchLight.x, anchors.porchLight.y, anchors.porchLight.z);
+      if (Array.isArray(anchors.narrative)) {
+        anchors.narrative.forEach((p, i) => narrativeProps.children[i]?.position.set(p.x, p.y, p.z));
+      }
+      if (anchors.smoke) {
+        Object.assign(smokeOrigin, { x: anchors.smoke.x, y: anchors.smoke.y, z: anchors.smoke.z, top: anchors.smoke.y + 2 });
+        for (let i = 0; i < smokePositions.length / 3; i++) {
+          smokePositions[i * 3] = smokeOrigin.x + Math.sin(i * 1.5) * 0.1;
+          smokePositions[i * 3 + 1] = smokeOrigin.y + i * 0.1;
+          smokePositions[i * 3 + 2] = smokeOrigin.z + Math.cos(i * 1.3) * 0.1;
+        }
+        winterSmoke.children[0]?.geometry.getAttribute('position') && (winterSmoke.children[0].geometry.getAttribute('position').needsUpdate = true);
+        if (winterSmoke.children[0]?.material) winterSmoke.children[0].material.size = 0.09;
+      }
+    },
+
+    isArtOverlay() {
+      return artOverlay;
+    },
 
     updateSeason(season) {
       currentSeason = season || 'spring';
@@ -909,10 +962,10 @@ export function buildScenery(tracker = null) {
         smokePositions[i * 3 + 1] += dt * 0.12;
         smokePositions[i * 3] += Math.sin(performance.now() * 0.001 + i) * dt * 0.02;
         // Reset when too high
-        if (smokePositions[i * 3 + 1] > 4.5) {
-          smokePositions[i * 3] = 4.7 + (Math.sin(i * 1.5) * 0.1);
-          smokePositions[i * 3 + 1] = 2.5;
-          smokePositions[i * 3 + 2] = -2.1 + (Math.cos(i * 1.3) * 0.1);
+        if (smokePositions[i * 3 + 1] > smokeOrigin.top) {
+          smokePositions[i * 3] = smokeOrigin.x + (Math.sin(i * 1.5) * 0.1);
+          smokePositions[i * 3 + 1] = smokeOrigin.y;
+          smokePositions[i * 3 + 2] = smokeOrigin.z + (Math.cos(i * 1.3) * 0.1);
         }
       }
       posAttr.needsUpdate = true;

@@ -7,6 +7,7 @@ import { batchCropGroup, setCropBatchBreeze } from './crop-batch.js';
 import { createParticlePool } from './particle-pool.js';
 import { buildBed } from './bed-model.js';
 import { buildScenery } from './scenery.js';
+import { createYardArt } from './yard-art/yard-art.js';
 import { applySceneStyle, getStyleForPhase } from './scene-style.js';
 import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
@@ -981,6 +982,14 @@ export function createGardenScene(container) {
   rim.position.set(-4.4, 3.1, -4.7);
   scene.add(rim);
   scene.userData.lightingRig = { hemi, ambient, sun, fill, rim, skyMat };
+
+  // Opening-yard art pass (visual only; see yard-art/yard-art.js).
+  const yardArt = createYardArt({
+    scene, renderer, camera, ground, skyMesh, grassGroup, scenery, bed,
+    hemi, ambient, sun, fill, rim,
+    getStyleName: () => currentSceneStyle,
+    tracker: resourceTracker,
+  });
   scene.userData.weatherFx = weather;
   scene.userData.scenery = scenery;
   const dayNight = new DayNightCycle(scene, { enabled: false });
@@ -1646,6 +1655,7 @@ export function createGardenScene(container) {
       sceneStyle: currentSceneStyle,
       seasonalAtmosphere: getSeasonalAtmosphereDebug(),
       creatureCompanions: getCreatureCompanionDebug(),
+      yardArt: yardArt.getDebugState(),
       cropMeshCount: cropMeshes.size,
       supportMeshCount: supportMeshes.size,
       gridCells: getGridLayout().map((cell) => {
@@ -2655,6 +2665,7 @@ function getGrowthScale(phase, season) {
     scenery.showFireflies(season === 'summer');
     // Scenery puddles: show in spring
     scenery.showPuddles(season === 'spring');
+    yardArt.applySeason(season);
     // ── End season visibility ──────────────────────────────────────────────
   }
 
@@ -2750,6 +2761,7 @@ function getGrowthScale(phase, season) {
   function applyMood(name, opts = {}) {
     const preset = MOOD_PRESETS[name];
     if (!preset) return;
+    yardArt.setMood(name);
 
     moodTransition = {
       startedAt: performance.now(),
@@ -3038,6 +3050,8 @@ function getGrowthScale(phase, season) {
       if (Number.isFinite(dt) && dt > 0) frameDt = Math.min(dt, 0.1);
     },
     async warmup() {
+      // Let the yard art glTFs land first so their programs compile here too.
+      await Promise.race([yardArt.ready, new Promise((r) => setTimeout(r, 5000))]).catch(() => {});
       try {
         if (typeof renderer.compileAsync === 'function') {
           await renderer.compileAsync(scene, camera);
@@ -3379,7 +3393,7 @@ function getGrowthScale(phase, season) {
       updateHarvestFX(dt);
       // ── End harvest FX ──────────────────────────────────────────────
 
-      renderer.render(scene, camera);
+      yardArt.render(skyMat.color);
     },
     applySeason,
     raycastCell,
@@ -3428,7 +3442,11 @@ function getGrowthScale(phase, season) {
     getRenderer() { return renderer; },
     getResourceTracker() { return resourceTracker; },
     getVisualDebug,
+    getArtQuality() { return yardArt.quality; },
+    setArtQuality(choice) { return yardArt.setQualityChoice(choice); },
+    getYardArtDebug() { return yardArt.getDebugState(); },
     dispose() {
+      yardArt.dispose();
       disposeGardenScene({
         container,
         renderer,
