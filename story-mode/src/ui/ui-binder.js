@@ -2008,7 +2008,12 @@ function bindUI({
     toggleWorldMap();
   });
 
-  dialoguePanel.getSkipButton().addEventListener('click', () => cutsceneMachine.skip());
+  dialoguePanel.getSkipButton().addEventListener('click', (event) => {
+    // Skip lives inside the panel; without this the same click bubbles to the
+    // panel's tap-to-continue handler and advances whatever scene comes next.
+    event.stopPropagation();
+    cutsceneMachine.skip();
+  });
 
   dialoguePanel.getPanelElement().addEventListener('click', (event) => {
     if (dialoguePanel.isChoiceTarget(event.target) || dialoguePanel.hasVisibleChoices()) {
