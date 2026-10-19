@@ -32,6 +32,14 @@ body:has(#trade-panel) .quest-tracker {
   display: none;
 }
 
+/* The pause overlay (#pause-menu, z-index 50) lives inside the app's
+   stacking context, which sits below this body-level fixed tracker, so the
+   tracker painted over the pause cards (Content Packs at 800px) and took
+   their clicks. Hide it while pause is open. */
+body:has(#pause-menu.is-open) .quest-tracker {
+  display: none;
+}
+
 /* The centred "Current objective" banner (#phase-helper) is allowed to grow
    to 100vw - 430px, which reaches into the tracker's column on laptop-sized
    screens (at 1024x570 it ran under the tracker's top-left corner). While the
