@@ -2,6 +2,7 @@
 // quest UI and its tests share one wording.
 import { getCropById } from '../data/crops.js';
 import { getNPC } from '../data/npcs.js';
+import { QUEST_SITES } from '../data/quest-sites.js';
 import { listPackQuests } from '../content/content-registry.js';
 import { getItemDef } from '../game/inventory.js';
 import { ZONE_NAMES } from './zone-travel.js';
@@ -71,7 +72,11 @@ function describeRequirement(requirement, quest = null) {
     case 'item_crafted':
       return `Craft ${itemName(id)}`;
     case 'item_found':
-      return zone ? `Find wild ${itemName(id)} at ${zoneName(zone)}` : `Find ${itemName(id)}`;
+      if (!zone) return `Find ${itemName(id)}`;
+      // Quest-site discoveries (Gus's Old River Map) aren't forage, so not "wild".
+      return QUEST_SITES.some((site) => site.itemId === id && site.zoneId === zone)
+        ? `Find ${itemName(id)} at ${zoneName(zone)}`
+        : `Find wild ${itemName(id)} at ${zoneName(zone)}`;
     case 'item_delivered':
       return `Bring ${itemName(id)} to ${getQuestGiverName(quest?.npc)}${zone ? ` at ${zoneName(zone)}` : ''}`;
     case 'item_traded':
