@@ -17,7 +17,7 @@ import { createStoryAuthorityPersistence } from '../engine/authority-cache.js';
 import { showGameplayGuide } from '../ui/gameplay-guide.js';
 import { setButtonInteractive, setElementInteractive } from '../ui/focus-state.js';
 import { normalizePlayerProfile } from '../data/player-profile.js';
-import { describeSlotsForImport, exportStoredSlots } from './save-file.js';
+import { describeSlotsForImportWithSnapshots, exportStoredSlots } from './save-file.js';
 import { downloadSaveFile, runImportFlow, showSaveFileError } from '../ui/save-transfer.js';
 import { createPlayerProfileEditor } from '../ui/player-profile-editor.js';
 
@@ -415,9 +415,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
   async function importFromTitle(launcher) {
     const result = await runImportFlow({
       // Read slots (incl. IndexedDB snapshots) only after the file picker opened.
-      slots: async () => describeSlotsForImport(
-        await listSavesWithAuthoritySnapshots().catch(() => listSaves()),
-      ),
+      slots: () => describeSlotsForImportWithSnapshots(),
       launcher,
     });
     if (result.ok && document.body.dataset.storyScreen === 'title') {

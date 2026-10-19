@@ -30,6 +30,7 @@ import { CAMPAIGN_SCHEMA_VERSION } from './state.js';
 import {
   SAVE_SLOTS,
   listSaves,
+  listSavesWithAuthoritySnapshots,
   loadBestAvailableSave,
   migrateCampaignSave,
   migrateSeasonSave,
@@ -278,6 +279,25 @@ export function parseSaveFile(input) {
 export function importSaveRecord(record, targetSlot) {
   if (!record?.campaign) return fail('Nothing to import.', 'no-campaign');
   return writeSlotSave(targetSlot, { campaign: record.campaign, season: record.season ?? null });
+}
+
+/**
+ * Slot occupancy for the import dialog, including saves that live only in
+ * the IndexedDB authority snapshot. A live Story save keeps just a session
+ * pointer in localStorage, so the plain listSaves() view reports it as an
+ * unreadable save; the title and pause import flows both use this instead.
+ */
+export async function describeSlotsForImportWithSnapshots({
+  loadWithSnapshots = listSavesWithAuthoritySnapshots,
+  loadLocal = listSaves,
+} = {}) {
+  let entries;
+  try {
+    entries = await loadWithSnapshots();
+  } catch {
+    entries = loadLocal();
+  }
+  return describeSlotsForImport(entries);
 }
 
 /** Slot occupancy for the import dialog (local storage view, same as the title screen). */

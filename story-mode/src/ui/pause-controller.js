@@ -2,7 +2,7 @@ import { Actions } from '../game/store.js';
 import { getPhaseLabel } from '../game/phase-machine.js';
 import { createSeasonState } from '../game/state.js';
 import { deleteCampaign } from '../game/save.js';
-import { exportLiveState } from '../game/save-file.js';
+import { describeSlotsForImportWithSnapshots, exportLiveState } from '../game/save-file.js';
 import { downloadSaveFile, runImportFlow } from './save-transfer.js';
 import { showSeasonJournalSheet, showBugReportsSheet } from './pause-panels.js';
 import { showStoryLogSheet } from './story-log.js';
@@ -243,7 +243,14 @@ export function createPauseController({
     const launcher = event.currentTarget;
     // The dialog validates + migrates the file and confirms the overwrite
     // before anything is written; the session signal closes it on teardown.
-    const result = await runImportFlow({ fixedSlot: slot, launcher, signal: listenerAbort.signal });
+    // Read slot occupancy with the IndexedDB authority snapshots, like the
+    // title flow; the localStorage-only view calls the live save "unreadable".
+    const result = await runImportFlow({
+      fixedSlot: slot,
+      slots: () => describeSlotsForImportWithSnapshots(),
+      launcher,
+      signal: listenerAbort.signal,
+    });
     if (!result.ok || listenerAbort.signal.aborted) return;
     showToast('Save imported.', 2200, 'success');
     closePauseMenu();
