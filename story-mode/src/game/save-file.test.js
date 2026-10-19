@@ -2,12 +2,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CAMPAIGN_SCHEMA_VERSION, createGameState } from './state.js';
-import { loadCampaign, loadSeasonState, saveCampaign, saveSeasonState } from './save.js';
+import { listSaves, loadCampaign, loadSeasonState, saveCampaign, saveSeasonState } from './save.js';
 import {
   SAVE_FILE_FORMAT,
   SAVE_FILE_VERSION,
   buildSaveFile,
   computeSaveChecksum,
+  describeSlotsForImport,
+  describeSlotsForImportWithSnapshots,
   exportLiveState,
   exportStoredSlots,
   importSaveRecord,
@@ -215,5 +217,32 @@ describe('migrating old saves on import', () => {
     expect(parsed.records[0].campaign.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     expect(parsed.records[0].campaign.questLedger.found).toEqual({});
     expect(Array.isArray(parsed.records[0].campaign.questLedger.plantings)).toBe(true);
+  });
+});
+
+describe('describeSlotsForImportWithSnapshots (pause + title import dialog)', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  it('a live Story save (session pointer + IndexedDB snapshot) is not "unreadable"', async () => {
+    // Story keeps only the session pointer in localStorage; the campaign is in IndexedDB.
+    localStorage.setItem(sessionPointerKey(0), 'live-session');
+    const { campaign } = makeState({ name: 'Mom', chapter: 1 });
+    // The localStorage-only view (what the pause menu used) flags it as corrupt.
+    expect(describeSlotsForImport()[0]).toMatchObject({ slot: 0, isCorrupt: true });
+    const slots = await describeSlotsForImportWithSnapshots({
+      loadWithSnapshots: async () => listSaves({ authoritySaves: { 0: campaign } }),
+    });
+    expect(slots[0]).toMatchObject({ slot: 0, isEmpty: false, isCorrupt: false, chapter: 1, gardenerName: 'Mom' });
+    expect(slots[1]).toMatchObject({ slot: 1, isEmpty: true, isCorrupt: false });
+  });
+
+  it('falls back to the localStorage view when the snapshot read fails', async () => {
+    const state = makeState({ name: 'Ana', chapter: 2 });
+    saveCampaign(state.campaign, 1);
+    const slots = await describeSlotsForImportWithSnapshots({
+      loadWithSnapshots: async () => { throw new Error('idb unavailable'); },
+    });
+    expect(slots[1]).toMatchObject({ slot: 1, isEmpty: false, isCorrupt: false, gardenerName: 'Ana' });
   });
 });

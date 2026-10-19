@@ -1,4 +1,5 @@
 import { createLoop } from '../game/loop.js';
+import { topEscapeLayer } from './escape-layers.js';
 import { Actions, cloneGameState } from '../game/store.js';
 import { advance, canAdvance, getPhaseLabel } from '../game/phase-machine.js';
 import { createPhaseRouter } from '../game/phase-router.js';
@@ -1965,7 +1966,26 @@ function bindUI({
     if (event?.key === 'Escape' && activeReadOnlySheet) {
       payload.preventDefault();
       activeReadOnlySheet.querySelector('[data-close="true"]')?.click();
+      return;
     }
+
+    // Esc closes only the top-most sheet; it reaches pause (next binding on
+    // the same key) only when nothing is open. Without this, pause's own
+    // "close every sheet" ran too and one Esc closed the crop picker AND
+    // opened the pause menu.
+    if (event?.key !== 'Escape') return;
+    const layer = topEscapeLayer({
+      pauseOpen: pauseController.isOpen(),
+      cutsceneActive: cutsceneMachine.isActive(),
+      cropPaletteOpen,
+      backpackOpen,
+      worldMapOpen,
+    });
+    if (!layer) return;
+    payload.preventDefault();
+    if (layer === 'crop-palette') closePalette();
+    else if (layer === 'backpack') closeBackpackPanel();
+    else if (layer === 'world-map') closeWorldMap();
   });
 
   inputManager.on('pause', (payload) => {
