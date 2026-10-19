@@ -3,6 +3,13 @@
 // Do not hand edit. Pure data, no imports.
 
 const AUTHORITY_CRAFTING_RECIPES = {
+  compost_batch: {
+    materials: [
+      { itemId: 'dried_leaves', count: 2 },
+      { itemId: 'plant_matter', count: 1 },
+    ],
+    output: { itemId: 'compost', count: 1, durability: null },
+  },
   basic_fertilizer: {
     materials: [
       { itemId: 'compost', count: 2 },

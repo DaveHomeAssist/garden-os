@@ -1,7 +1,7 @@
 {
   "$schema": "garden-os-crafting-recipes-v1",
   "version": 1,
-  "description": "Complete crafting recipe deck for Let It Grow. 15 recipes across 4 skill tiers.",
+  "description": "Complete crafting recipe deck for Let It Grow. 21 recipes across 4 skill tiers.",
   "lastUpdated": "2026-10-13",
   "materials": {
     "plant_matter": {
@@ -90,6 +90,24 @@
     }
   },
   "recipes": [
+    {
+      "id": "compost_batch",
+      "name": "Compost Batch",
+      "description": "Gus's layering method: brown leaves, green plant matter, repeat. Turn it and wait until it goes dark as coffee.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "dried_leaves", "count": 2, "name": "Dried Leaves" },
+        { "itemId": "plant_matter", "count": 1, "name": "Plant Matter" }
+      ],
+      "output": {
+        "itemId": "compost",
+        "count": 1,
+        "durability": null
+      },
+      "skillRequirement": { "crafting": 1 },
+      "craftingXP": 10,
+      "unlockCondition": null
+    },
     {
       "id": "basic_fertilizer",
       "name": "Basic Fertilizer",
@@ -379,7 +397,7 @@
       },
       "skillRequirement": { "crafting": 5 },
       "craftingXP": 50,
-      "unlockCondition": "quest_maya_masterwork"
+      "unlockCondition": null
     },
     {
       "id": "seed_hybridizer",
