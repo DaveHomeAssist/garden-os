@@ -77,7 +77,18 @@ function formatItems(items) {
   return items.map((entry) => `${entry.count} ${itemName(entry.itemId)}`).join(' and ');
 }
 
-function summarizeRewards(rewards = []) {
+// Seed rewards are either a crop or variety (basil, heritage_pepper ->
+// "Basil seeds", "Heritage Pepper seeds") or a named packet whose id already
+// says what it is (herb_seeds, legendary_seed, rare_seed_bundle,
+// shiitake_spores). Don't append "seeds" to those, so herb_seeds reads
+// "Herb Seeds", not "Herb Seeds seeds".
+const SEED_PACKET_NAME = /\b(seeds?|spores|bundle)$/i;
+export function formatSeedReward(reward) {
+  const name = getCropById(reward?.id)?.name ?? titleCase(reward?.id);
+  return SEED_PACKET_NAME.test(name) ? name : `${name} seeds`;
+}
+
+export function summarizeRewards(rewards = []) {
   const reputation = {};
   const parts = [];
   rewards.forEach((reward) => {
@@ -86,7 +97,7 @@ function summarizeRewards(rewards = []) {
     } else if (reward.type === 'xp') {
       parts.push(`+${reward.amount} ${titleCase(reward.id)} XP`);
     } else if (reward.type === 'seed') {
-      parts.push(`${getCropById(reward.id)?.name ?? titleCase(reward.id)} seeds`);
+      parts.push(formatSeedReward(reward));
     } else if (reward.type === 'item') {
       const def = getItemDef(reward.id);
       parts.push(`${reward.amount > 1 ? `${reward.amount} ` : ''}${def.name}`);

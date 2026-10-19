@@ -15,6 +15,16 @@ on:
 permissions:
   contents: read
 
+# Runner selection: GitHub-hosted ubuntu-latest unless the repo variable
+# GARDEN_OS_RUNNER is set (Settings > Secrets and variables > Actions >
+# Variables), e.g. to a self-hosted runner label such as "garden-os".
+# Pull requests from forks always use ubuntu-latest so outside code never runs
+# on a self-hosted machine. Steps run in bash; on a Windows runner that is Git
+# for Windows' bash, which must be on PATH.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -22,7 +32,7 @@ concurrency:
 jobs:
   verify:
     name: Verify (story-mode + verify-all)
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && vars.GARDEN_OS_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -41,7 +51,21 @@ jobs:
 
       - name: Install Playwright browser
         working-directory: story-mode
-        run: npx playwright install --with-deps chromium
+        env:
+          WITH_DEPS: ${{ runner.environment == 'github-hosted' && runner.os == 'Linux' }}
+        # Hosted Linux runners install Chromium's system packages with
+        # --with-deps (apt). Self-hosted runners never run apt from CI: their
+        # system libraries are provisioned on the machine (the box runner's
+        # install-deps.sh), so CI only checks them and installs the browser.
+        run: |
+          if [ "$WITH_DEPS" = "true" ]; then
+            npx playwright install --with-deps chromium
+          else
+            if [ "$RUNNER_OS" = "Linux" ] && ! npx playwright install-deps --dry-run chromium | grep -q 'All system dependencies are installed'; then
+              echo "::warning::Playwright system dependencies are missing on this self-hosted runner. CI does not install them (no apt); provision them on the machine."
+            fi
+            npx playwright install chromium
+          fi
 
       - name: Verify Story Mode design-language viewports
         run: node tests/story-mode-design-language-diagnostic.mjs

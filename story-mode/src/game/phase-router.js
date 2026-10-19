@@ -120,8 +120,13 @@ function createPhaseRouter({
     updateHUD();
     persistState();
 
+    // updateHUD() above ran while input was disabled, so it hid Start Season /
+    // Next, Plant and the backpack. Any branch that hands control straight back
+    // (no cutscene, no event card) has to redraw the HUD after re-enabling
+    // input, or the player is stuck in the new phase with every action hidden.
     if (!result.advanced) {
       setGameInputEnabled(true);
+      updateHUD();
       return;
     }
 
@@ -131,8 +136,10 @@ function createPhaseRouter({
     }
 
     if (!result.trigger) {
+      // A beat with no event drawn (common in summer/fall) has no trigger.
       showToast(getPhaseLabel(getState().season.phase), 1800);
       setGameInputEnabled(true);
+      updateHUD();
       return;
     }
 

@@ -4,6 +4,7 @@ import { advance, canAdvance, getPhaseLabel } from '../game/phase-machine.js';
 import { createPhaseRouter } from '../game/phase-router.js';
 import { createSeasonState, PHASES, PHASE_ORDER } from '../game/state.js';
 import { scoreBed } from '../scoring/bed-score.js';
+import { addHarvestToPantry } from '../data/crops.js';
 import { saveCampaign, saveSeasonState } from '../game/save.js';
 import { showEventCard } from './event-card.js';
 import { showHarvestReveal } from './harvest-reveal.js';
@@ -838,9 +839,9 @@ function bindUI({
       const awarded = [];
       draft.season.newlyEarnedKeepsakes = [];
 
-      for (const cropId of result.yieldList ?? []) {
-        draft.campaign.pantry[cropId] = (draft.campaign.pantry[cropId] ?? 0) + 1;
-      }
+      // One pantry unit per harvested cell (3 basil cells -> basil +3).
+      // yieldList stays de-duplicated for recipes and the summary text.
+      draft.campaign.pantry = addHarvestToPantry(draft.campaign.pantry, result);
 
       for (const recipeId of result.recipeMatches ?? []) {
         if (!draft.campaign.recipesCompleted.includes(recipeId)) {
