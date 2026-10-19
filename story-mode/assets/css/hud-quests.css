@@ -264,6 +264,19 @@ body:has(#pause-menu.is-open) .quest-tracker {
   }
 }
 
+/* Phones: the tool hotbar (hud-controls.css: fixed, bottom 150px, left 10px,
+   up to 354px wide, 58px tall) and the tracker's bottom-right slot share a
+   row below ~600px, and the tracker covered hotbar slots 4-6 at 390px. Stack
+   the tracker just above the hotbar instead (150 + 58 + 10px gap), and cap
+   its height so it stays below the "Current objective" banner
+   (#phase-helper ends ~265px from the top) on short phones. */
+@media (max-width: 600px) {
+  .quest-tracker {
+    bottom: calc(218px + env(safe-area-inset-bottom, 0px));
+    max-height: max(72px, min(30vh, calc(100vh - 218px - 280px - env(safe-area-inset-bottom, 0px))));
+  }
+}
+
 /* Content-pack quests are labeled so players can tell official from modded. */
 .quest-modded-tag {
   display: inline-block;

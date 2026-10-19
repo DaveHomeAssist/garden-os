@@ -63,3 +63,19 @@ describe('the quest tracker hides while the pause menu is open', () => {
     expect(document.querySelector(PAUSE_TRACKER)).toBeNull();
   });
 });
+
+describe('phones: the quest tracker stacks above the tool hotbar (playtest5 bug 6)', () => {
+  const px = (re, src) => Number(src.match(re)?.[1]);
+  it('the tracker bottom clears the hotbar top', () => {
+    const narrow = questCss.match(/@media \(max-width: 600px\) \{\s*\.quest-tracker \{([^}]*)\}/);
+    expect(narrow, '600px tracker rule missing from hud-quests.css').not.toBeNull();
+    const trackerBottom = px(/bottom:\s*calc\((\d+)px/, narrow[1]);
+    const hotbar = controlsCss.match(/\.tool-hud \{\s*position: fixed !important;([^}]*)\}/)[1];
+    const hotbarBottom = px(/inset: auto auto calc\((\d+)px/, hotbar);
+    const padding = px(/padding:\s*(\d+)px/, hotbar);
+    const slot = px(/\.tool-hud__slot \{\s*width: (\d+)px;\s*height: \d+px;\s*flex: 0 0 \d+px;/, controlsCss);
+    expect(hotbarBottom).toBe(150);
+    // hotbar top = bottom offset + slot + vertical padding (+1px borders).
+    expect(trackerBottom).toBeGreaterThanOrEqual(hotbarBottom + slot + 2 * padding + 2);
+  });
+});
