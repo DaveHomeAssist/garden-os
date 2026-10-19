@@ -527,3 +527,13 @@ body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-cont
 body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container .panel-sheet) #fab-plant:disabled {
   visibility: hidden;
 }
+
+/* Phones / narrow tablets: the sheet docks to the bottom edge, so even
+   enabled Plant / Backpack / Next land on its cards (Plant + Backpack covered
+   the Basil card in the Select Crop picker at 390px). Step them aside like
+   the backpack does (#61); the sheet's x or Esc brings them back. */
+@media (max-width: 900px) {
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container .panel-sheet) :is(#fab-plant, #fab-advance, #fab-backpack) {
+    display: none;
+  }
+}
