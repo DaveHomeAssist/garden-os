@@ -11,7 +11,8 @@
     "preview:dist": "node scripts/local-dist-transform-server.mjs",
     "authority": "node scripts/authority-server.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:campaign": "node tests/campaign-e2e.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
