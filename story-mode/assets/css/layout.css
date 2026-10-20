@@ -4820,3 +4820,17 @@
 .campaign-recap__grade { font-family: 'Fraunces', serif; font-size: 20px; color: var(--sun); }
 .campaign-recap__season.is-review .campaign-recap__grade { font-family: 'DM Sans', sans-serif; font-size: 12px; color: rgba(247, 242, 234, 0.6); }
 .campaign-recap .start-choice-actions { gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* The recap sits on the cream chapter card: it is taller than a chapter intro,
+   so grow the card, and use ink colors instead of the light-on-dark ones. */
+.chapter-intro.campaign-recap::before { height: min(580px, calc(100vh - 24px)); }
+.campaign-recap > * { margin-top: 0; }
+.campaign-recap h2 { margin: 2px 0 6px; }
+.campaign-recap__grid { margin: 10px auto 6px; gap: 6px; }
+.campaign-recap__year-label { color: rgba(84, 53, 29, 0.62); }
+.campaign-recap__season { padding: 5px 6px; background: rgba(104, 68, 40, 0.06); border-color: rgba(104, 68, 40, 0.16); }
+.campaign-recap__season-name { color: rgba(74, 50, 30, 0.72); }
+.campaign-recap__grade { color: #8a5a12; font-size: 18px; line-height: 1.1; }
+.campaign-recap__season.is-review .campaign-recap__grade { color: rgba(74, 50, 30, 0.6); }
+.campaign-recap__notes { margin: 4px auto 10px; }
+.campaign-recap .tap-hint { margin-top: 8px; }
