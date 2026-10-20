@@ -392,7 +392,10 @@ export function advance(state) {
       type: 'harvest_complete',
       score: result.scoreResult.score,
       grade: result.scoreResult.grade,
-      yieldCount: result.scoreResult.yieldList?.length ?? 0,
+      // Harvested cells (3 basil cells = 3), not the number of crop types.
+      yieldCount: Object.values(result.scoreResult.yieldCounts ?? {}).reduce((sum, n) => sum + (Number(n) || 0), 0)
+        || (result.scoreResult.yieldList?.length ?? 0),
+      cropTypeCount: result.scoreResult.yieldList?.length ?? 0,
       yieldList: result.scoreResult.yieldList ?? [],
       recipeMatches: result.scoreResult.recipeMatches ?? [],
       season: season.season,

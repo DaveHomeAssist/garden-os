@@ -123,7 +123,7 @@ export function createInterventionTargeting(ctx) {
 
     ctx.showToast(
       interventionId === 'accept_loss'
-        ? 'Accepted the loss'
+        ? (resolvedEvent?.valence === 'negative' ? 'No response · token saved' : 'Let it ride · token saved')
         : `${INTERVENTION_LABELS[interventionId]}${targetSummary ? ` · ${targetSummary}` : ''}`,
       2200,
     );

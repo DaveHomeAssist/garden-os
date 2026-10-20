@@ -72,8 +72,12 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     </div>
 
     <div class="intervention-grid" id="intervention-grid">
-      ${availableInterventions.map(iv => {
-        const isAccept = iv.id === 'accept_loss';
+      ${availableInterventions.map(base => {
+        const isAccept = base.id === 'accept_loss';
+        // Accepting good news is not "taking a hit".
+        const iv = isAccept && event.valence !== 'negative'
+          ? { ...base, label: 'Let it ride', desc: 'No response needed, keep your token' }
+          : base;
         const disabled = !isAccept && tokensLeft <= 0;
         return `
           <button data-intervention="${iv.id}" ${disabled ? 'disabled' : ''} class="intervention-btn ${disabled ? 'is-disabled' : ''}" aria-label="${iv.label}: ${iv.desc}">

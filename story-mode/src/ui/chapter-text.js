@@ -10,11 +10,11 @@ const CHAPTERS = {
   },
   2: {
     title: "First Shoots",
-    narrative: "Spring came fast this year. The trellises are up because climbers need something to reach for. Pole beans and peas are in the packet drawer. The neighborhood cat is already interested.",
+    narrative: "Summer came fast this year. The trellises are up because climbers need something to reach for. Pole beans and peas are in the packet drawer. The neighborhood cat is already interested.",
   },
   3: {
     title: "Root Work",
-    narrative: "Summer heat bakes the soil by noon. You learned to water early. Carrots, beets, onions — roots hold steady when the surface burns. The score is climbing. You're starting to understand what the bed wants.",
+    narrative: "Fall came in warm. The soil still bakes by noon, so you learned to water early. Carrots, beets, onions — roots hold steady when the surface burns. The score is climbing. You're starting to understand what the bed wants.",
   },
   4: {
     title: "Winter Rest",
