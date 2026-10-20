@@ -203,7 +203,9 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
           </div>
           <div class="save-slot-chapter">
             <span class="season-emoji">${entry.seasonEmoji}</span>
-            Chapter ${entry.chapter}
+            ${entry.campaign?.postCampaign || entry.chapter === 99
+              ? 'Free Play · story complete'
+              : entry.campaign?.complete ? 'Story complete' : `Chapter ${Math.min(entry.chapter ?? 1, 12)}`}
           </div>
           <div class="save-slot-meta">Score ${entry.score} &middot; Updated ${dateStr}</div>
           <div class="save-slot-ledger">

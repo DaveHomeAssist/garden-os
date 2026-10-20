@@ -4802,3 +4802,16 @@
     .save-slot-card--occupied .save-slot-actions [data-action="export"],
     .save-slot-card--occupied .save-slot-actions [data-action="delete"] { flex: 1 1 0; }
     .save-transfer-dialog__actions .save-slot-btn { flex: 0 1 auto; padding-inline: 20px; }
+
+/* Campaign recap (shown after the ending scene) */
+.campaign-recap { overflow-y: auto; }
+.campaign-recap__grid { display: grid; gap: 10px; margin: 18px 0 8px; width: min(560px, 100%); }
+.campaign-recap__year { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; }
+.campaign-recap__year-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 200, 74, 0.8); text-align: left; }
+.campaign-recap__seasons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.campaign-recap__season { display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; border-radius: 10px; background: rgba(247, 242, 234, 0.06); border: 1px solid rgba(247, 242, 234, 0.1); }
+.campaign-recap__season.is-review { opacity: 0.6; }
+.campaign-recap__season-name { font-size: 11px; color: rgba(247, 242, 234, 0.7); }
+.campaign-recap__grade { font-family: 'Fraunces', serif; font-size: 20px; color: var(--sun); }
+.campaign-recap__season.is-review .campaign-recap__grade { font-family: 'DM Sans', sans-serif; font-size: 12px; color: rgba(247, 242, 234, 0.6); }
+.campaign-recap .start-choice-actions { gap: 10px; flex-wrap: wrap; justify-content: center; }
