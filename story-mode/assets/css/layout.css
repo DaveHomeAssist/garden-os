@@ -264,7 +264,12 @@
       left: 0;
       right: 0;
       z-index: 20;
+      /* On desktop this is a full-height 340px column on the right. Empty, it
+         must not swallow clicks: it was eating the bed's two right-hand
+         columns (8 of 32 cells) after Select Crop closed. Only sheets take input. */
+      pointer-events: none;
     }
+    #panel-container > * { pointer-events: auto; }
     .panel-sheet {
       background: var(--text);
       border-top: 1px solid rgba(232,200,74,0.15);

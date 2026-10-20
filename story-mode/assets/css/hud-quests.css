@@ -40,6 +40,14 @@ body:has(#pause-menu.is-open) .quest-tracker {
   display: none;
 }
 
+/* Full-screen story moments live in #overlay-container: the harvest reveal,
+   the winter review, chapter / season cards and the campaign ending recap.
+   The fixed tracker sat on top of them (it covered the harvest grade dial and
+   the winter review's Fall card), so it steps aside while any is showing. */
+body:has(#overlay-container > *) .quest-tracker {
+  display: none;
+}
+
 /* The centred "Current objective" banner (#phase-helper) is allowed to grow
    to 100vw - 430px, which reaches into the tracker's column on laptop-sized
    screens (at 1024x570 it ran under the tracker's top-left corner). While the
