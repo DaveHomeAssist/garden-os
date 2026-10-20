@@ -233,8 +233,12 @@ export function createCutsceneMachine({
         if (!beat) return;
         state.currentTypedChars = beat.text.length;
         state.typingDone = true;
+        // Finishing the line early must still offer its choices (as typeNextChar
+        // does). Without this, Space/click to finish typing on a quest offer left
+        // the scene with no choices, and the next press closed it unanswered.
+        state.awaitingChoice = Array.isArray(beat.choices) && beat.choices.length > 0;
         emitState();
-        if (beat.duration != null) {
+        if (!state.awaitingChoice && beat.duration != null) {
           state._autoAdvanceTimer = setTimeout(() => machine.next(), beat.duration);
         }
         return;
