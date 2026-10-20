@@ -1047,15 +1047,26 @@ function createStoryAuthorityPersistence(store, {
     }
   }
 
+  // Snapshot writes coalesce: a queued write stores the newest state seen so
+  // far, and later queued writes with nothing newer skip the clone + put. On a
+  // slow device every store action used to clone and write the full state in
+  // turn, and the saved slot fell minutes (whole chapters) behind play.
+  let latestSnapshotState = null;
+
   function persistState(state, action = null, { force = false } = {}) {
+    latestSnapshotState = state;
     return enqueue(async () => {
-      await journal.putSnapshot({
-        ledgerCursor: String(state?.authorityTick ?? 0),
-        savedAt: isoNow(now),
-        sessionId,
-        slot,
-        state,
-      });
+      const snapshotState = latestSnapshotState;
+      if (snapshotState) {
+        latestSnapshotState = null;
+        await journal.putSnapshot({
+          ledgerCursor: String(snapshotState?.authorityTick ?? 0),
+          savedAt: isoNow(now),
+          sessionId,
+          slot,
+          state: snapshotState,
+        });
+      }
 
       if (isAuthorityRoutedAction(action) && action?.meta?.authorityAck !== true) {
         clientSeq += 1;
@@ -1088,7 +1099,9 @@ function createStoryAuthorityPersistence(store, {
     cleanup() {
       active = false;
       unsubscribe();
-      void flushSettled().finally(() => journal.close());
+      // Returned so the title screen can wait for the last snapshot to land
+      // before it reads the slot back (a backlog here showed stale chapters).
+      return flushSettled().finally(() => journal.close());
     },
     drain() {
       return enqueue(async () => {

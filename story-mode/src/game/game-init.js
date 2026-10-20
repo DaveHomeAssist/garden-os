@@ -90,7 +90,16 @@ function createInitialState(slot, savedCampaign, savedSeason = undefined, option
   return initialState;
 }
 
+// Set when a session is torn down: the authority snapshot queue may still be
+// writing. Readers of saved slots wait on it so they never see an old chapter.
+let pendingSessionFlush = Promise.resolve();
+
+function waitForSessionFlush() {
+  return pendingSessionFlush.catch(() => null);
+}
+
 async function createInitialStateFromSave(slot) {
+  await waitForSessionFlush();
   const restored = await loadBestAvailableSave(slot);
   return createInitialState(slot, restored.campaign, restored.season);
 }
@@ -427,7 +436,8 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
   }
 
   if (hydrateAuthority) {
-    void listSavesWithAuthoritySnapshots()
+    void waitForSessionFlush()
+      .then(() => listSavesWithAuthoritySnapshots())
       .then((hydratedEntries) => {
         if (
           document.body.dataset.storyScreen === 'title'
@@ -552,12 +562,13 @@ function initGame(initialState, { slot }) {
     persistGameState,
     cleanup() {
       unsubscribePersistence();
-      authorityPersistence.cleanup();
+      pendingSessionFlush = Promise.resolve(authorityPersistence.cleanup());
     },
   };
 }
 
 export {
   initGame,
+  waitForSessionFlush,
   showTitleScreen,
 };

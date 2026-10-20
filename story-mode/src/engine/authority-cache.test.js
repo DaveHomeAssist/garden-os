@@ -1410,6 +1410,54 @@ describe('authority IndexedDB cache', () => {
     expect(snapshot.state.selectedCropId).toBe('shutdown-basil');
   });
 
+  it('coalesces queued snapshot writes so a backlog cannot leave the slot chapters behind', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const persistence = createStoryAuthorityPersistence(store, {
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+    await persistence.flush();
+    const putSpy = vi.spyOn(persistence.journal, 'putSnapshot');
+
+    for (let index = 0; index < 40; index += 1) {
+      persistence.saveSnapshot({ ...store.getState(), selectedCropId: `crop-${index}` });
+    }
+    await persistence.flush();
+
+    expect(putSpy.mock.calls.length).toBeLessThan(5);
+    const snapshot = await persistence.journal.readSnapshot(persistence.sessionId);
+    expect(snapshot.state.selectedCropId).toBe('crop-39');
+    putSpy.mockRestore();
+    persistence.cleanup();
+  });
+
+  it('cleanup resolves only after the last snapshot is written', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const storage = createLocalStorage();
+    const store = new Store(createGameState());
+    const persistence = createStoryAuthorityPersistence(store, {
+      indexedDB,
+      now: () => NOW,
+      slot: 0,
+      storage,
+    });
+    await persistence.flush();
+    const { journal, sessionId } = persistence;
+    void persistence.saveSnapshot({ ...store.getState(), selectedCropId: 'last-before-title' });
+    const done = persistence.cleanup();
+    expect(done).toBeInstanceOf(Promise);
+    await done;
+
+    const reader = new IndexedDbAuthorityJournal({ indexedDB });
+    const snapshot = await reader.readSnapshot(sessionId);
+    expect(snapshot.state.selectedCropId).toBe('last-before-title');
+    expect(journal).toBeTruthy();
+  });
+
   it('reconciles configured authority acks back into the live store once', async () => {
     const indexedDB = createFakeIndexedDB();
     const storage = createLocalStorage();
