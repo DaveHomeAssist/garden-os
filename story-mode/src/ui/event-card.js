@@ -1,3 +1,5 @@
+import { describeEventEffect } from './plain-text.js';
+
 /**
  * Event Card — bottom-sheet panel showing season event with intervention buttons.
  * Called when a beat phase begins and an event is active.
@@ -5,9 +7,9 @@
 
 const INTERVENTIONS = [
   { id: 'protect', label: 'Protect', emoji: '🛡️', desc: 'Shield one cell from this event' },
-  { id: 'mulch', label: 'Mulch', emoji: '🍂', desc: '+0.5 now, +0.25 next season' },
+  { id: 'mulch', label: 'Mulch', emoji: '🍂', desc: 'Small boost now and next season' },
   { id: 'swap', label: 'Swap', emoji: '🔄', desc: 'Exchange two adjacent crops' },
-  { id: 'companion_patch', label: 'Patch', emoji: '🌼', desc: '+1.0 adjacency bonus this beat' },
+  { id: 'companion_patch', label: 'Patch', emoji: '🌼', desc: 'Boost from neighboring crops this step' },
   { id: 'prune', label: 'Prune', emoji: '✂️', desc: 'Remove one crop entirely' },
   { id: 'accept_loss', label: 'Accept', emoji: '🤷', desc: 'Take the hit, save your token' },
 ];
@@ -60,7 +62,7 @@ export function showEventCard(container, event, tokensLeft, onChoose) {
     ${event.mechanicalEffect ? `
       <div class="event-card__effect">
         <div class="event-card__effect-label">Effect</div>
-        ${event.mechanicalEffect.modifier > 0 ? '+' : ''}${event.mechanicalEffect.modifier} · ${event.mechanicalEffect.duration || 'this beat'}
+        ${escapeHtml(describeEventEffect(event.mechanicalEffect))}
       </div>
     ` : ''}
 

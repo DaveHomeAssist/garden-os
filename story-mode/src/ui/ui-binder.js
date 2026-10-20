@@ -64,6 +64,7 @@ import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported,
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
 import { buildCampaignRecap, renderCampaignRecapHTML } from './campaign-recap.js';
+import { buildObjectiveText } from './plain-text.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
@@ -1386,32 +1387,23 @@ function bindUI({
     }
 
     if (phaseHelper) {
-      const isWinter = state.season.season === 'winter';
       let helperText = '';
       phaseHelper.dataset.zone = getCurrentZoneId();
       phaseHelper.dataset.zoneLabel = getCurrentZoneName();
 
-      if (state.season.phase === PHASES.PLANNING) {
-        if (isWinter) {
-          helperText = state.season.winterReviewSeen
-            ? 'Winter review complete. Continue to roll into the next chapter.'
-            : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
-        } else if (!state.campaign?.sandbox && planted < 8) {
-          helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
-        } else {
-          helperText = 'Bed is ready. Select Start Season to begin Early Season.';
-        }
-      } else if (state.season.phase === PHASES.TRANSITION) {
-        helperText = 'Season complete. Use Continue to roll into the next chapter.';
-      }
-
-      if (letItGrowInteractionMode && state.season.phase === PHASES.PLANNING) {
-        const routes = getZoneTravelSummary();
-        const foraging = getForagingSummary();
-        const zonePrefix = `Zone: ${getCurrentZoneName()} · Paths ${routes.available}/${routes.total}${foraging.total ? ` · Forage ${foraging.available}/${foraging.total}` : ''}.`;
-        helperText = helperText ? `${zonePrefix} ${helperText}` : zonePrefix;
-      }
-
+      const foraging = letItGrowInteractionMode ? getForagingSummary() : { available: 0 };
+      const nextPhase = { EARLY_SEASON: PHASES.MID_SEASON, MID_SEASON: PHASES.LATE_SEASON, LATE_SEASON: PHASES.HARVEST }[state.season.phase];
+      helperText = buildObjectiveText({
+        phase: state.season.phase,
+        season: state.season.season,
+        sandbox: Boolean(state.campaign?.sandbox),
+        planted,
+        winterReviewSeen: Boolean(state.season.winterReviewSeen),
+        zoneId: letItGrowInteractionMode ? getCurrentZoneId() : 'player_plot',
+        zoneName: getCurrentZoneName(),
+        forageAvailable: foraging.available ?? 0,
+        nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+      });
       phaseHelper.textContent = helperText;
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
     }
