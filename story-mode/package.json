@@ -18,6 +18,7 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "jsdom": "^29.0.1",
     "playwright": "^1.61.1",
     "vite": "^7.1.7",
