@@ -1068,6 +1068,9 @@ function bindUI({
       fabWasVisible = true;
     } else {
       fab.classList.remove('is-visible');
+      // Keep the faded label current: after a Free Play rollover it still read
+      // "Harvest" while the empty bed was waiting for its first crop.
+      fab.textContent = getAdvanceLabel();
       setButtonInteractive(fab, false);
       fabWasVisible = false;
     }
