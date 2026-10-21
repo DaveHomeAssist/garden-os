@@ -37,6 +37,17 @@ export const SCENE_STYLES = {
     sunIntensityMultiplier: 0.58,
     fillIntensityMultiplier: 0.44,
     rimIntensityMultiplier: 0.22,
+    // The multipliers above dim the rig so the planning grid reads flat and
+    // calm. On their own they took spring/fall/winter (the season every game
+    // opens in) down to dusk, so the first frame of Story and Free Play loaded
+    // dark. Planning is a daytime view: never let the rig drop below this.
+    // Summer already sits above every floor, so it is unchanged.
+    daylightFloor: {
+      hemi: 1.5,
+      ambient: 0.3,
+      sun: 1.2,
+      fill: 0.45,
+    },
     material: {
       roughness: 0.92,
       metalness: 0,
@@ -187,8 +198,17 @@ export function getMaterialProps(styleName) {
   };
 }
 
+function lit(base, multiplier, floor) {
+  return Math.max(base * multiplier, floor ?? 0);
+}
+
+export function getStyleDaylightFloor(styleName) {
+  return SCENE_STYLES[styleName]?.daylightFloor ?? null;
+}
+
 export function applySceneStyle(styleName, refs) {
   const style = SCENE_STYLES[styleName] || SCENE_STYLES.story;
+  const floor = style.daylightFloor ?? {};
   const {
     renderer,
     scene,
@@ -229,25 +249,25 @@ export function applySceneStyle(styleName, refs) {
   if (hemi && lightingState) {
     hemi.color.copy(style.hemiSkyTint ?? lightingState.hemiSky);
     hemi.groundColor.copy(style.hemiGroundTint ?? lightingState.hemiGround);
-    hemi.intensity = lightingState.hemiIntensity * style.hemiIntensityMultiplier;
+    hemi.intensity = lit(lightingState.hemiIntensity, style.hemiIntensityMultiplier, floor.hemi);
   }
 
   if (ambient && lightingState) {
     ambient.color.copy(lightingState.ambientColor);
-    ambient.intensity = lightingState.ambientIntensity * style.ambientIntensityMultiplier;
+    ambient.intensity = lit(lightingState.ambientIntensity, style.ambientIntensityMultiplier, floor.ambient);
   }
 
   if (sun && lightingState) {
     sun.color.copy(lightingState.sunColor);
     sun.position.copy(lightingState.sunPosition);
-    sun.intensity = lightingState.sunIntensity * style.sunIntensityMultiplier;
+    sun.intensity = lit(lightingState.sunIntensity, style.sunIntensityMultiplier, floor.sun);
     sun.castShadow = style.shadowsEnabled;
   }
 
   if (fill && lightingState) {
     fill.color.copy(lightingState.fillColor);
     fill.position.copy(lightingState.fillPosition);
-    fill.intensity = lightingState.fillIntensity * style.fillIntensityMultiplier;
+    fill.intensity = lit(lightingState.fillIntensity, style.fillIntensityMultiplier, floor.fill);
   }
 
   if (rim && lightingState) {
