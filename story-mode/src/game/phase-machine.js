@@ -2,10 +2,12 @@
  * Phase Machine — implements SEASON_ENGINE_SPEC.md state transitions.
  */
 import { PHASES, BEAT_PHASES, SEASONS, attachGridMeta, createGrid, createSeasonState, getAvailableGridSizes } from './state.js';
-import { getCropsForChapter } from '../data/crops.js';
+import { getAllCrops, getCropsForChapter } from '../data/crops.js';
 import { drawEvent } from '../data/events.js';
 import { scoreBed } from '../scoring/bed-score.js';
 import { pushJournalEntry, saveCampaign } from './save.js';
+
+export const CAMPAIGN_CHAPTERS = 12;
 
 const TRANSITIONS = {
   [PHASES.PLANNING]: PHASES.EARLY_SEASON,
@@ -234,6 +236,12 @@ function rollCampaignForward(season) {
     return { complete: false, chapterChanged: false };
   }
 
+  // A finished campaign stays finished: re-advancing a completed save (e.g. after
+  // reloading it) replays the ending without re-recording history.
+  if (!campaign.sandbox && campaign.complete) {
+    return { complete: true, chapterChanged: false };
+  }
+
   if (!campaign.completedChapters.includes(season.chapter)) {
     campaign.completedChapters.push(season.chapter);
   }
@@ -276,15 +284,17 @@ function rollCampaignForward(season) {
   const nextChapter = campaign.currentChapter + 1;
   const nextSeason = rotateSeason(season.season);
 
+  // End-game guard: the campaign has 12 chapters. Finishing Chapter 12 marks the
+  // campaign complete but never moves the save to a "Chapter 13".
+  if (nextChapter > CAMPAIGN_CHAPTERS) {
+    campaign.complete = true;
+    saveCampaign(campaign);
+    return { complete: true, chapterChanged: false };
+  }
+
   campaign.currentChapter = nextChapter;
   campaign.currentSeason = nextSeason;
-  campaign.complete = nextChapter > 12;
-
-  // Bug 7: End-game guard — don't create a new season if campaign is complete
-  if (campaign.complete) {
-    saveCampaign(campaign);
-    return { complete: true, chapterChanged: true };
-  }
+  campaign.complete = false;
 
   campaign.cropsUnlocked = getCropsForChapter(nextChapter).map((crop) => crop.id);
 
@@ -382,7 +392,10 @@ export function advance(state) {
       type: 'harvest_complete',
       score: result.scoreResult.score,
       grade: result.scoreResult.grade,
-      yieldCount: result.scoreResult.yieldList?.length ?? 0,
+      // Harvested cells (3 basil cells = 3), not the number of crop types.
+      yieldCount: Object.values(result.scoreResult.yieldCounts ?? {}).reduce((sum, n) => sum + (Number(n) || 0), 0)
+        || (result.scoreResult.yieldList?.length ?? 0),
+      cropTypeCount: result.scoreResult.yieldList?.length ?? 0,
       yieldList: result.scoreResult.yieldList ?? [],
       recipeMatches: result.scoreResult.recipeMatches ?? [],
       season: season.season,
@@ -420,6 +433,30 @@ export function advance(state) {
 
   season.phase = nextPhase;
   return result;
+}
+
+/**
+ * "Keep gardening" after the campaign: the same save carries on as Free Play
+ * (chapter 99, every crop unlocked, seasons rotate with no chapter rollover).
+ */
+export function enterPostCampaignFreePlay(state) {
+  const campaign = state.campaign;
+  if (!campaign) return state;
+  const cols = state.season?.gridCols ?? 8;
+  const rows = state.season?.gridRows ?? 4;
+  const nextSeason = rotateSeason(state.season?.season ?? 'winter');
+  campaign.complete = true;
+  campaign.postCampaign = true;
+  campaign.sandbox = true;
+  campaign.currentChapter = 99;
+  campaign.currentSeason = nextSeason;
+  campaign.cropsUnlocked = getAllCrops().map((crop) => crop.id);
+  if (Array.isArray(campaign.soilHealth)) {
+    while (campaign.soilHealth.length < cols * rows) campaign.soilHealth.push(1.0);
+  }
+  const nextSeasonState = createSeasonState(99, nextSeason, campaign, cols, rows);
+  Object.assign(state.season, nextSeasonState);
+  return state;
 }
 
 export function getPhaseLabel(phase) {

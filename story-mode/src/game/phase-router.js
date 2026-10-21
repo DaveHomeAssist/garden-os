@@ -39,6 +39,12 @@ function createPhaseRouter({
       return;
     }
 
+    if (postCutsceneAction === 'ending') {
+      postCutsceneAction = null;
+      showEndGameOverlay();
+      return;
+    }
+
     if (postCutsceneAction === 'winter_review') {
       postCutsceneAction = null;
       openWinterReviewOverlay();
@@ -131,7 +137,14 @@ function createPhaseRouter({
     }
 
     if (result.campaignComplete) {
-      showEndGameOverlay();
+      // Play the written ending scene first (once per save), then the recap.
+      clearSceneTargeting();
+      const queued = cutsceneMachine.queueFromTrigger({ type: 'campaign_complete' }, getState().campaign);
+      if (queued) {
+        postCutsceneAction = 'ending';
+      } else {
+        showEndGameOverlay();
+      }
       return;
     }
 

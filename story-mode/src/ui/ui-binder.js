@@ -1,7 +1,7 @@
 import { createLoop } from '../game/loop.js';
 import { topEscapeLayer } from './escape-layers.js';
 import { Actions, cloneGameState } from '../game/store.js';
-import { advance, canAdvance, getPhaseLabel } from '../game/phase-machine.js';
+import { advance, canAdvance, enterPostCampaignFreePlay, getPhaseLabel } from '../game/phase-machine.js';
 import { createPhaseRouter } from '../game/phase-router.js';
 import { createSeasonState, PHASES, PHASE_ORDER } from '../game/state.js';
 import { scoreBed } from '../scoring/bed-score.js';
@@ -63,6 +63,8 @@ import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
+import { buildCampaignRecap, renderCampaignRecapHTML } from './campaign-recap.js';
+import { buildObjectiveText } from './plain-text.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
@@ -1271,7 +1273,7 @@ function bindUI({
       <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
       <p>
         ${campaignComplete
-          ? 'You have reached the end of the current campaign. Continue to view the closing season.'
+          ? 'All twelve chapters are done. Continue for the ending.'
           : isSandbox
             ? `${SEASON_LABELS[state.season.season]} is finished. Continue into ${nextSeasonLabel}.`
             : state.season.season === 'winter'
@@ -1302,21 +1304,30 @@ function bindUI({
 
   function showEndGameOverlay() {
     const overlayContainer = document.getElementById('overlay-container');
+    overlayContainer?.querySelector('#campaign-recap-overlay')?.remove();
     const overlay = document.createElement('div');
-    overlay.className = 'chapter-intro';
-    overlay.innerHTML = `
-      <div class="chapter-num">Garden OS</div>
-      <h2>The Garden Stays</h2>
-      <p>All 12 chapters complete. Your garden has grown through every season.</p>
-      <div class="start-choice-actions">
-        <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-endgame-close">Close</button>
-      </div>
-    `;
-    overlay.querySelector('#btn-endgame-close')?.addEventListener('click', () => {
+    overlay.className = 'chapter-intro campaign-recap';
+    overlay.id = 'campaign-recap-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', 'Campaign complete');
+    overlay.innerHTML = renderCampaignRecapHTML(buildCampaignRecap(state.campaign));
+    overlay.querySelector('#btn-endgame-keep')?.addEventListener('click', () => {
       overlay.remove();
+      produceState(Actions.REPLACE_STATE, (draft) => enterPostCampaignFreePlay(draft));
+      persistState();
       setGameInputEnabled(true);
+      updateHUD();
+      showToast('Free Play: every crop is unlocked. Plant whatever you like.', 3200, 'success');
+    });
+    overlay.querySelector('#btn-endgame-menu')?.addEventListener('click', () => {
+      persistState();
+      overlay.remove();
+      loop.stop();
+      cleanupGame();
+      remount();
     });
     overlayContainer?.appendChild(overlay);
+    overlay.querySelector('#btn-endgame-keep')?.focus();
   }
 
   function updateHUD() {
@@ -1329,7 +1340,7 @@ function bindUI({
 
     syncToolHUDVisibility();
 
-    if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${state.campaign.currentChapter}`;
+    if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${Math.min(state.campaign.currentChapter, 12)}`;
     if (hudPhase) hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
     if (hudCrops) hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
@@ -1376,32 +1387,23 @@ function bindUI({
     }
 
     if (phaseHelper) {
-      const isWinter = state.season.season === 'winter';
       let helperText = '';
       phaseHelper.dataset.zone = getCurrentZoneId();
       phaseHelper.dataset.zoneLabel = getCurrentZoneName();
 
-      if (state.season.phase === PHASES.PLANNING) {
-        if (isWinter) {
-          helperText = state.season.winterReviewSeen
-            ? 'Winter review complete. Continue to roll into the next chapter.'
-            : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
-        } else if (!state.campaign?.sandbox && planted < 8) {
-          helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
-        } else {
-          helperText = 'Bed is ready. Select Start Season to begin Early Season.';
-        }
-      } else if (state.season.phase === PHASES.TRANSITION) {
-        helperText = 'Season complete. Use Continue to roll into the next chapter.';
-      }
-
-      if (letItGrowInteractionMode && state.season.phase === PHASES.PLANNING) {
-        const routes = getZoneTravelSummary();
-        const foraging = getForagingSummary();
-        const zonePrefix = `Zone: ${getCurrentZoneName()} · Paths ${routes.available}/${routes.total}${foraging.total ? ` · Forage ${foraging.available}/${foraging.total}` : ''}.`;
-        helperText = helperText ? `${zonePrefix} ${helperText}` : zonePrefix;
-      }
-
+      const foraging = letItGrowInteractionMode ? getForagingSummary() : { available: 0 };
+      const nextPhase = { EARLY_SEASON: PHASES.MID_SEASON, MID_SEASON: PHASES.LATE_SEASON, LATE_SEASON: PHASES.HARVEST }[state.season.phase];
+      helperText = buildObjectiveText({
+        phase: state.season.phase,
+        season: state.season.season,
+        sandbox: Boolean(state.campaign?.sandbox),
+        planted,
+        winterReviewSeen: Boolean(state.season.winterReviewSeen),
+        zoneId: letItGrowInteractionMode ? getCurrentZoneId() : 'player_plot',
+        zoneName: getCurrentZoneName(),
+        forageAvailable: foraging.available ?? 0,
+        nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+      });
       phaseHelper.textContent = helperText;
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
     }

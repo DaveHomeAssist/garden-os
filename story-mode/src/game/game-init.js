@@ -90,7 +90,16 @@ function createInitialState(slot, savedCampaign, savedSeason = undefined, option
   return initialState;
 }
 
+// Set when a session is torn down: the authority snapshot queue may still be
+// writing. Readers of saved slots wait on it so they never see an old chapter.
+let pendingSessionFlush = Promise.resolve();
+
+function waitForSessionFlush() {
+  return pendingSessionFlush.catch(() => null);
+}
+
 async function createInitialStateFromSave(slot) {
+  await waitForSessionFlush();
   const restored = await loadBestAvailableSave(slot);
   return createInitialState(slot, restored.campaign, restored.season);
 }
@@ -203,7 +212,9 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
           </div>
           <div class="save-slot-chapter">
             <span class="season-emoji">${entry.seasonEmoji}</span>
-            Chapter ${entry.chapter}
+            ${entry.campaign?.postCampaign || entry.chapter === 99
+              ? 'Free Play · story complete'
+              : entry.campaign?.complete ? 'Story complete' : `Chapter ${Math.min(entry.chapter ?? 1, 12)}`}
           </div>
           <div class="save-slot-meta">Score ${entry.score} &middot; Updated ${dateStr}</div>
           <div class="save-slot-ledger">
@@ -425,7 +436,8 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
   }
 
   if (hydrateAuthority) {
-    void listSavesWithAuthoritySnapshots()
+    void waitForSessionFlush()
+      .then(() => listSavesWithAuthoritySnapshots())
       .then((hydratedEntries) => {
         if (
           document.body.dataset.storyScreen === 'title'
@@ -550,12 +562,13 @@ function initGame(initialState, { slot }) {
     persistGameState,
     cleanup() {
       unsubscribePersistence();
-      authorityPersistence.cleanup();
+      pendingSessionFlush = Promise.resolve(authorityPersistence.cleanup());
     },
   };
 }
 
 export {
   initGame,
+  waitForSessionFlush,
   showTitleScreen,
 };
