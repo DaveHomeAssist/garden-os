@@ -92,6 +92,20 @@ describe('save file export -> import round trip', () => {
     expect(exportLiveState(makeState(), -1)).toBeNull();
   });
 
+  it('exports and re-imports Keep gardening (post-campaign Free Play on a real slot)', () => {
+    const state = makeState();
+    state.campaign.sandbox = true;
+    state.campaign.postCampaign = true;
+    state.campaign.complete = true;
+    state.campaign.currentChapter = 99;
+    const file = exportLiveState(state, 0);
+    expect(file).not.toBeNull();
+    const parsed = parseSaveFile(JSON.stringify(file));
+    expect(parsed.ok).toBe(true);
+    expect(importSaveRecord(parsed.records[0], 2).ok).toBe(true);
+    expect(loadCampaign(2).postCampaign).toBe(true);
+  });
+
   it('survives re-indenting the file (checksum uses sorted keys)', async () => {
     storeInSlot(makeState(), 0);
     const file = await exportStoredSlots();
