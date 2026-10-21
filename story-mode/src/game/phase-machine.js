@@ -262,8 +262,9 @@ function rollCampaignForward(season) {
   if (campaign.sandbox) {
     const nextSeason = rotateSeason(season.season);
     campaign.currentSeason = nextSeason;
+    campaign.freePlaySeasonIndex = (Number.isInteger(campaign.freePlaySeasonIndex) ? campaign.freePlaySeasonIndex : 0) + 1;
     const cols = season.gridCols ?? 8;
-    const rows = season.gridRows ?? 8;
+    const rows = season.gridRows ?? 4;
     const nextSeasonState = createSeasonState(campaign.currentChapter, nextSeason, campaign, cols, rows);
     if (campaign.previousGrid) {
       for (let i = 0; i < nextSeasonState.grid.length; i++) {
@@ -335,8 +336,10 @@ function rollCampaignForward(season) {
 export function canAdvance(season) {
   const { phase } = season;
   if (phase === PHASES.PLANNING) {
-    if (season.campaign?.sandbox) return true;
     const planted = season.grid.filter((cell) => cell.cropId !== null).length;
+    // Free Play has no 8-crop minimum, but an empty bed would just score "--".
+    // Winter may rest empty.
+    if (season.campaign?.sandbox) return season.season === 'winter' || planted >= 1;
     return planted >= 8;
   }
   if (BEAT_PHASES.includes(phase)) {
@@ -400,6 +403,7 @@ export function advance(state) {
       recipeMatches: result.scoreResult.recipeMatches ?? [],
       season: season.season,
       chapter: season.chapter,
+      ...(season.campaign?.sandbox ? { sandbox: true } : {}),
     };
     return result;
   }
@@ -411,6 +415,7 @@ export function advance(state) {
       type: 'chapter_complete',
       chapter: season.chapter,
       season: season.season,
+      ...(season.campaign?.sandbox ? { sandbox: true } : {}),
     };
     return result;
   }

@@ -246,10 +246,14 @@ function createPlannerState() {
 
 function createSandboxState() {
   const campaign = createCampaignState();
-  const SANDBOX_COLS = 8;
-  const SANDBOX_ROWS = 8;
+  // Free Play scores exactly the bed the scene draws (8×4, see garden-scene.js
+  // COLS/ROWS). A larger state grid left half the cells invisible and the
+  // "0 / 64" counter impossible to fill. Bed size becomes an option later.
+  const SANDBOX_COLS = COLS;
+  const SANDBOX_ROWS = ROWS;
   campaign.sandbox = true;
   campaign.currentChapter = 99;
+  campaign.freePlaySeasonIndex = 0;
   campaign.cropsUnlocked = getAllCrops().map((c) => c.id);
   campaign.soilHealth = Array(SANDBOX_COLS * SANDBOX_ROWS).fill(1.0);
   const season = createSeasonState(99, 'spring', campaign, SANDBOX_COLS, SANDBOX_ROWS);

@@ -29,6 +29,22 @@ describe('plain objective text', () => {
   });
 });
 
+describe('Free Play objective text', () => {
+  it('never mentions chapters, the 8-crop minimum or the winter review', () => {
+    const inputs = [
+      { phase: 'PLANNING', season: 'spring', sandbox: true, planted: 0 },
+      { phase: 'PLANNING', season: 'summer', sandbox: true, planted: 5, bedSize: 32 },
+      { phase: 'PLANNING', season: 'winter', sandbox: true },
+      { phase: 'PLANNING', season: 'winter', sandbox: true, planted: 2 },
+      { phase: 'TRANSITION', season: 'fall', sandbox: true },
+    ];
+    for (const input of inputs) {
+      expect(buildObjectiveText(input)).not.toMatch(/chapter|at least 8|review/i);
+    }
+    expect(buildObjectiveText(inputs[1])).toMatch(/5 \/ 32 planted/);
+  });
+});
+
 describe('plain event effects', () => {
   it('every event in the deck reads as words, not numbers', () => {
     for (const event of eventDeck.events) {

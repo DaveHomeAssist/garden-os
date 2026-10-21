@@ -70,6 +70,7 @@ export function buildObjectiveText({
   season,
   sandbox = false,
   planted = 0,
+  bedSize = 32,
   minPlanted = 8,
   winterReviewSeen = false,
   zoneId = 'player_plot',
@@ -78,6 +79,13 @@ export function buildObjectiveText({
   nextPhaseLabel = null,
 } = {}) {
   const atHome = !zoneId || zoneId === 'player_plot';
+  // Free Play has no chapters, no winter review and no 8-crop minimum.
+  if (sandbox && phase === 'PLANNING' && season === 'winter') {
+    return planted > 0
+      ? 'Winter bed is planted. Press Continue to grow it through the cold months.'
+      : 'Winter: plant cold-hardy crops, or leave the bed to rest and press Continue.';
+  }
+  if (sandbox && phase === 'TRANSITION') return 'Season complete. Press Continue for the next season.';
   if (phase === 'PLANNING') {
     if (season === 'winter') {
       return winterReviewSeen
@@ -88,7 +96,11 @@ export function buildObjectiveText({
       const forage = forageAvailable > 0 ? ` ${forageAvailable} foraging spot${forageAvailable === 1 ? '' : 's'} here.` : '';
       return `You're in ${zoneName}. Talk to neighbors with E.${forage} Head home to plant.`;
     }
-    if (sandbox) return 'Free Play: plant anything you like, then press Start Season.';
+    if (sandbox) {
+      return planted === 0
+        ? 'Free Play: press Plant, pick any crop, tap squares in the bed, then press Start Season.'
+        : `${planted} / ${bedSize} planted. Add more or press Start Season.`;
+    }
     if (planted === 0) return `Press Plant, pick a crop, then tap squares in the bed. Plant at least ${minPlanted}, then press Start Season.`;
     if (planted < minPlanted) return `Plant at least ${minPlanted} crops (${planted}/${minPlanted}), then press Start Season.`;
     return 'Bed is ready. Plant more if you like, or press Start Season.';

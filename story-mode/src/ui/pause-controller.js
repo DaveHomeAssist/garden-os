@@ -65,6 +65,12 @@ export function createPauseController({
           ? `Free Play · session only, not saved · ${getPhaseLabel(state.season.phase)}`
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
+      const mainMenuCopy = document.querySelector('#pause-main-menu .pause-action__copy');
+      if (mainMenuCopy) {
+        mainMenuCopy.textContent = slot < 0
+          ? 'Leave this garden and return to the title screen. Unsaved Free Play is not kept.'
+          : 'Save this run and return to the title screen.';
+      }
       syncPauseThemeButton();
       pauseOverlay?.classList.add('is-open');
       setElementInteractive(pauseOverlay, true);

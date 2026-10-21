@@ -5,6 +5,18 @@ import { getChapterTitle } from './chapter-text.js';
 
 const CAMPAIGN_YEARS = 3;
 
+const SEASON_NAMES = { spring: 'Spring', summer: 'Summer', fall: 'Fall', winter: 'Winter' };
+
+/**
+ * Free Play has no chapters (its chapter is the sentinel 99), so its year
+ * comes from how many seasons this garden has rolled through. Four seasons
+ * make a year, starting from Year 1.
+ */
+export function getFreePlayYear(campaign) {
+  const index = Number.isInteger(campaign?.freePlaySeasonIndex) ? campaign.freePlaySeasonIndex : 0;
+  return Math.floor(Math.max(0, index) / 4) + 1;
+}
+
 const SEASON_MONTHS = {
   spring: { early: 'March', mid: 'April', late: 'May' },
   summer: { early: 'June', mid: 'July', late: 'August' },
@@ -77,7 +89,10 @@ export function updateSeasonCalendar(state) {
   const chapter = state.campaign.currentChapter;
   const season = state.season.season;
   const phase = state.season.phase;
-  const year = Math.min(CAMPAIGN_YEARS, Math.max(1, Math.ceil(chapter / 4)));
+  const isFreePlay = Boolean(state.campaign?.sandbox);
+  const year = isFreePlay
+    ? getFreePlayYear(state.campaign)
+    : Math.min(CAMPAIGN_YEARS, Math.max(1, Math.ceil(chapter / 4)));
 
   let beatIndex = 0;
   if (phase === 'MID_SEASON') beatIndex = 1;
@@ -91,7 +106,9 @@ export function updateSeasonCalendar(state) {
 
   document.getElementById('cal-emoji').textContent = emoji;
   document.getElementById('cal-month').textContent = month;
-  document.getElementById('cal-year').textContent = `Year ${year} of ${CAMPAIGN_YEARS}`;
+  document.getElementById('cal-year').textContent = isFreePlay
+    ? `Year ${year} · ${SEASON_NAMES[season] ?? 'Spring'}`
+    : `Year ${year} of ${CAMPAIGN_YEARS}`;
   document.getElementById('cal-chapter-title').textContent = chapterTitle;
 
   const seasonIsActive = ['EARLY_SEASON', 'MID_SEASON', 'LATE_SEASON'].includes(phase);

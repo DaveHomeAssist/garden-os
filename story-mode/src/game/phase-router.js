@@ -64,13 +64,19 @@ function createPhaseRouter({
 
     clearSceneTargeting();
 
+    // Every branch that hands control straight back must redraw the HUD after
+    // re-enabling input (see onCutsceneFinish). Free Play's "Continue to
+    // Summer" lands here with no cutscene: without updateHUD() Plant and
+    // Start Season stayed hidden and a mouse-only player was stuck.
     if (!trigger) {
       setGameInputEnabled(true);
+      updateHUD();
       return false;
     }
 
     if (state.campaign?.sandbox && trigger.type === 'chapter_start') {
       setGameInputEnabled(true);
+      updateHUD();
       return false;
     }
 
@@ -112,7 +118,9 @@ function createPhaseRouter({
 
     if (!isGameInputEnabled() || cutsceneMachine.isActive()) return;
     if (!canAdvance(state.season)) {
-      if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter' && !state.campaign?.sandbox) {
+      if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter' && state.campaign?.sandbox) {
+        showToast('Plant at least one crop before you start the season.', 2400, 'error');
+      } else if (state.season.phase === PHASES.PLANNING && state.season.season !== 'winter') {
         const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
         if (planted < 8) {
           showToast(`Need at least 8 crops to commit (${planted} planted)`, 2400, 'error');
