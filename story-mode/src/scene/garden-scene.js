@@ -1046,7 +1046,11 @@ export function createGardenScene(container) {
   // setViewOffset so the bed fits in the uncovered area; clearing it eases
   // back. The camera itself never moves, so follow/orbit and picking keep
   // working (raycasts use the same offset projection).
-  const BED_FOCUS_EASE_MS = 320;
+  // Ease in over 320 ms; ease out faster (200 ms) so the bed is back in place
+  // before the sheet finishes closing (260 ms). Picking a crop closes the sheet
+  // and the very next tap lands on a cell, which should not still be moving.
+  const BED_FOCUS_EASE_IN_MS = 320;
+  const BED_FOCUS_EASE_OUT_MS = 200;
   let bedFocusInsets = null;
   let bedFocusAmount = 0;
   let bedFocusTarget = 0;
@@ -1093,10 +1097,12 @@ export function createGardenScene(container) {
   }
 
   function updateBedFocus(now) {
-    const dt = bedFocusLastNow ? Math.min(now - bedFocusLastNow, 100) : 16;
+    // Wall-clock, not frame-capped: a slow or throttled (idle) frame rate must
+    // not stretch the ease past the sheet's own close animation.
+    const dt = bedFocusLastNow ? Math.max(0, now - bedFocusLastNow) : 16;
     bedFocusLastNow = now;
     if (bedFocusAmount !== bedFocusTarget) {
-      const step = dt / BED_FOCUS_EASE_MS;
+      const step = dt / (bedFocusTarget > bedFocusAmount ? BED_FOCUS_EASE_IN_MS : BED_FOCUS_EASE_OUT_MS);
       bedFocusAmount = bedFocusTarget > bedFocusAmount
         ? Math.min(bedFocusTarget, bedFocusAmount + step)
         : Math.max(bedFocusTarget, bedFocusAmount - step);
