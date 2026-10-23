@@ -770,6 +770,42 @@ function bindUI({
     }, durationMs);
   }
 
+  // Planting a row used to stack one toast per cell (28 a season in Free
+  // Play). Plantings close together now share one toast that keeps a tally.
+  let plantedToast = null;
+  function showPlantedToast(cropInfo) {
+    if (!toastContainer || !cropInfo) return;
+    const HOLD_MS = 1600;
+    if (!plantedToast || !plantedToast.el.isConnected) {
+      const el = document.createElement('div');
+      el.className = 'toast-notification toast--success toast--planted';
+      toastContainer.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('is-visible'));
+      plantedToast = { el, counts: new Map(), timer: null };
+    }
+    const entry = plantedToast.counts.get(cropInfo.id) ?? { crop: cropInfo, count: 0 };
+    entry.count += 1;
+    plantedToast.counts.set(cropInfo.id, entry);
+    plantedToast.el.textContent = formatPlantedTally([...plantedToast.counts.values()]);
+    clearTimeout(plantedToast.timer);
+    const current = plantedToast;
+    current.timer = setTimeout(() => {
+      current.el.classList.remove('is-visible');
+      setTimeout(() => current.el.remove(), 300);
+      if (plantedToast === current) plantedToast = null;
+    }, HOLD_MS);
+  }
+
+  function formatPlantedTally(entries) {
+    if (entries.length === 1) {
+      const [{ crop, count }] = entries;
+      return `${crop.emoji} ${crop.name}${count > 1 ? ` ×${count}` : ''} planted`;
+    }
+    const total = entries.reduce((sum, entry) => sum + entry.count, 0);
+    const icons = entries.slice(0, 4).map((entry) => `${entry.crop.emoji}×${entry.count}`).join(' ');
+    return `${total} crops planted · ${icons}${entries.length > 4 ? ' …' : ''}`;
+  }
+
   function spawnFloatingScore(cellIndex, total) {
     const layout = scene.getGridLayout?.();
     const cell = layout?.[cellIndex];
@@ -1032,6 +1068,9 @@ function bindUI({
       fabWasVisible = true;
     } else {
       fab.classList.remove('is-visible');
+      // Keep the faded label current: after a Free Play rollover it still read
+      // "Harvest" while the empty bed was waiting for its first crop.
+      fab.textContent = getAdvanceLabel();
       setButtonInteractive(fab, false);
       fabWasVisible = false;
     }
@@ -1398,6 +1437,7 @@ function bindUI({
         season: state.season.season,
         sandbox: Boolean(state.campaign?.sandbox),
         planted,
+        bedSize: state.season.grid.length,
         winterReviewSeen: Boolean(state.season.winterReviewSeen),
         zoneId: letItGrowInteractionMode ? getCurrentZoneId() : 'player_plot',
         zoneName: getCurrentZoneName(),
@@ -1551,7 +1591,7 @@ function bindUI({
     if (activeToolId === 'plant' && beforeCropId == null && state.selectedCropId) {
       const cropInfo = getCropById(state.selectedCropId);
       if (cropInfo) {
-        showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
+        showPlantedToast(cropInfo);
       }
       try {
         const freshState = store.getState();
@@ -1612,7 +1652,7 @@ function bindUI({
       });
       scene.flashCell(cellIndex, 0x4a9a4a, 350);
       if (cropInfo) {
-        showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
+        showPlantedToast(cropInfo);
       }
       if (
         cellIndex === 0

@@ -133,6 +133,11 @@ export const CUTSCENES = [
     { speaker: 'garden_gurl', text: 'You understand rotation now. You feel the adjacency before you check the numbers.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
+  // Free Play season complete (outranks the generic chapter line below)
+  { id: 'freeplay-season-complete', trigger: 'chapter_complete', conditions: { sandbox: true }, priority: 112, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'That bed is done for the season. Note what grew well, then plan the next planting.', emotion: 'warm', portraitAnim: 'talk', camera: 'front-access', backdropTone: 'calm' },
+  ]},
+
   // Generic chapter complete
   { id: 'chapter-complete', trigger: 'chapter_complete', conditions: {}, priority: 110, once: false, skippable: true, beats: [
     { speaker: 'vegeman', text: 'Chapter closed. Keep the momentum. The next season will not wait.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'front-access', backdropTone: 'calm' },
@@ -466,7 +471,9 @@ function buildHarvestText(speaker, triggerPayload) {
 
   if (triggerPayload.recipeMatches?.includes('moms_sauce')) {
     if (speaker === 'onion_man') return `That is {sauceLabel} on the table. ${yieldCount} good ${plural(yieldCount, 'pull')} out of the bed, and the right five among them.`;
-    return 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
+    return triggerPayload.sandbox
+      ? 'Sauce from your own bed. That is what this whole garden is for.'
+      : 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
   }
 
   if (recipeNames.length > 0) {

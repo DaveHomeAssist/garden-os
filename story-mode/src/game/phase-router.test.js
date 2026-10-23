@@ -65,3 +65,52 @@ describe('phase router: advancing without a narrative trigger', () => {
     expect(h.fab).toEqual({ visible: true, disabled: false });
   });
 });
+
+describe('phase router: Free Play season rollover', () => {
+  function sandboxSetup() {
+    let inputEnabled = false; // the transition overlay disabled input
+    const hud = { advanceVisible: false, plantVisible: false };
+    const updateHUD = vi.fn(() => {
+      hud.advanceVisible = inputEnabled;
+      hud.plantVisible = inputEnabled;
+    });
+    const setGameInputEnabled = vi.fn((enabled) => { inputEnabled = enabled; });
+    const queueFromTrigger = vi.fn(() => false);
+    const router = createPhaseRouter({
+      getState: () => ({
+        season: { season: 'summer', phase: 'PLANNING', eventActive: null, interventionChosen: null, grid: [] },
+        campaign: { sandbox: true, currentChapter: 99 },
+      }),
+      isGameInputEnabled: () => inputEnabled,
+      produceState: vi.fn(),
+      cutsceneMachine: { isActive: () => false, queueFromTrigger },
+      clearSceneTargeting: () => {},
+      setGameInputEnabled,
+      showToast: vi.fn(),
+      updateHUD,
+      persistState: () => {},
+      openEventCard: vi.fn(),
+      openHarvestReveal: vi.fn(),
+      openSeasonTransitionOverlay: vi.fn(),
+      openWinterReviewOverlay: vi.fn(),
+      showEndGameOverlay: vi.fn(),
+    });
+    return { router, hud, updateHUD, setGameInputEnabled, queueFromTrigger };
+  }
+
+  it('shows Plant and Start Season again after "Continue to Summer"', () => {
+    const h = sandboxSetup();
+    h.router.handleNarrativeTrigger({ type: 'chapter_start', chapter: 99 });
+    expect(h.queueFromTrigger).not.toHaveBeenCalled();
+    const lastHud = h.updateHUD.mock.invocationCallOrder.at(-1);
+    const lastEnable = h.setGameInputEnabled.mock.invocationCallOrder.at(-1);
+    expect(lastHud).toBeGreaterThan(lastEnable);
+    expect(h.hud).toEqual({ advanceVisible: true, plantVisible: true });
+  });
+
+  it('redraws the HUD when the rollover returns no trigger', () => {
+    const h = sandboxSetup();
+    h.router.handleNarrativeTrigger(null);
+    expect(h.hud).toEqual({ advanceVisible: true, plantVisible: true });
+  });
+});

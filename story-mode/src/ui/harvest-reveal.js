@@ -267,7 +267,7 @@ export function showHarvestReveal(container, result, extras = {}, onDismiss) {
                   `).join('')}
                 </div>
               ` : `
-                <div class="harvest-reveal__empty-note">No new keepsakes this chapter.</div>
+                <div class="harvest-reveal__empty-note">No new keepsakes this season.</div>
               `}
             </section>
           </div>

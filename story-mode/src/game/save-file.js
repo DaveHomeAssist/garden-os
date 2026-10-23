@@ -126,7 +126,9 @@ export function stringifySaveFile(file) {
 
 /** Export the live, in-memory state of a running session (pause menu). */
 export function exportLiveState(state, slot, options = {}) {
-  if (!state?.campaign || state.campaign.sandbox || !Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOTS) {
+  // An unsaved Free Play session has no slot (slot < 0). Keep gardening after
+  // the campaign is Free Play on a real slot (postCampaign) and exports fine.
+  if (!state?.campaign || (state.campaign.sandbox && !state.campaign.postCampaign) || !Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOTS) {
     return null;
   }
   // The live campaign is newer than anything stored, so stamp it as of now.
@@ -185,7 +187,7 @@ function validateRecord(record, index) {
   if (!Number.isInteger(campaign.currentChapter) || campaign.currentChapter < 1) {
     return fail(`${label} has no valid chapter, so it can't be loaded.`, 'bad-chapter');
   }
-  if (campaign.sandbox === true) {
+  if (campaign.sandbox === true && campaign.postCampaign !== true) {
     return fail(`${label} is a Free Play session, which can't be imported into a save slot.`, 'sandbox');
   }
   if (season != null && (typeof season !== 'object' || Array.isArray(season))) {

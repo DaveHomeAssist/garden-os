@@ -271,7 +271,7 @@ function normalizeCampaign(rawCampaign) {
     soilHealth: (() => {
       const base = Array.isArray(campaign.soilHealth) ? [...campaign.soilHealth] : [...fallbackCampaign.soilHealth];
       const gardeningLevel = (normalizeSkillsState(campaign.skills ?? {})).gardening?.level ?? 1;
-      const sizes = getAvailableGridSizes(campaign.currentChapter ?? 1, gardeningLevel);
+      const sizes = campaign.sandbox ? [] : getAvailableGridSizes(campaign.currentChapter ?? 1, gardeningLevel);
       const best = sizes[sizes.length - 1];
       const needed = best ? best.cols * best.rows : base.length;
       while (base.length < needed) base.push(1.0);
@@ -332,9 +332,11 @@ function normalizeSeason(rawSeason, campaign) {
   let gridCols = rawSeason?.gridCols ?? rawSeason?.grid?.cols ?? 8;
   let gridRows = rawSeason?.gridRows ?? rawSeason?.grid?.rows ?? 4;
 
-  // Legacy grid migration: expand grid if chapter warrants larger size
+  // Legacy grid migration: expand grid if chapter warrants larger size.
+  // Not for Free Play: its chapter is the sentinel 99, which would always
+  // unlock the 8×8 grid even though the scene draws only the 8×4 bed.
   const gardeningLevel = campaign.skills?.gardening?.level ?? 1;
-  const available = getAvailableGridSizes(chapter, gardeningLevel);
+  const available = campaign.sandbox ? [] : getAvailableGridSizes(chapter, gardeningLevel);
   const best = available[available.length - 1];
   if (best && (best.cols > gridCols || best.rows > gridRows)) {
     gridCols = Math.max(gridCols, best.cols);
