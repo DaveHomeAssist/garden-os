@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Garden OS · Privacy note (draft, not yet active)</title>
+  <style>
+    :root { color-scheme: light dark; --ink: #2a1a0c; --paper: #fbf6ea; --accent: #5b7a2e; --warn-bg: #fff1c7; --warn-ink: #5a3d00; }
+    @media (prefers-color-scheme: dark) { :root { --ink: #efe6d2; --paper: #1d1810; --accent: #a9c97a; --warn-bg: #3d3110; --warn-ink: #ffe19a; } }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 Georgia, "Iowan Old Style", serif; }
+    main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .25rem; }
+    h2 { font-size: 1.2rem; margin: 2rem 0 .5rem; color: var(--accent); }
+    .meta { opacity: .75; margin: 0 0 1.25rem; font-size: .95rem; }
+    .status { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: .9rem 1.1rem; font-weight: 600; }
+    .status p { margin: .25rem 0; font-weight: 400; }
+    table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+    th, td { text-align: left; vertical-align: top; padding: .45rem .5rem; border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+    a { color: var(--accent); }
+    .back { display: inline-block; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← Back to Garden OS</a>
+  <h1>Garden OS privacy note</h1>
+  <p class="meta">Version 0 (draft) · Last updated 21 October 2026</p>
+
+  <div class="status" id="privacy-status" role="note">
+    Not yet active: Garden OS has no online features yet.
+    <p>Today the game sends nothing about you to any Garden OS server. Your saves stay in your browser on this device. This draft describes what <em>will</em> happen once optional online saving ships. We will update this page, and ask you to accept it, before anything is collected.</p>
+  </div>
+
+  <h2>Today: what stays on your device</h2>
+  <p>The game keeps its data in your browser's local storage, on your device only: your Story Mode save slots, Free Play progress, settings, and any bug notes you write with the in-game bug button. It doesn't go anywhere unless you export it yourself. Clearing your browser's site data deletes it.</p>
+  <p>The game is hosted on GitHub Pages and can also be played embedded at mixmash.games. Those hosts may keep standard web server logs, such as your IP address and browser type, under their own policies.</p>
+
+  <h2>Coming soon: optional online saves</h2>
+  <p>The first online feature will let you keep one Free Play garden in the cloud, so you can continue it on another device. It is <strong>optional</strong>. If you never turn it on, nothing below applies to you and the game works as it does today.</p>
+
+  <h3>How you sign in</h3>
+  <ul>
+    <li><strong>Anonymous sign-in.</strong> Turning on cloud save creates an anonymous account with a random ID. We don't ask for your name or email.</li>
+    <li><strong>Optional linking to Google or Discord.</strong> If you link one, you can recover your garden on another device. We receive the basics that provider shares for sign-in: your email address, a provider account ID and, if the provider supplies them, your display name and profile picture link. We don't get your password, contacts or messages, and we never post anything for you.</li>
+  </ul>
+
+  <h3>What we will store</h3>
+  <table>
+    <thead><tr><th>Data</th><th>Why</th><th>Who can see it</th></tr></thead>
+    <tbody>
+      <tr><td>Account ID (random), sign-in method, account creation and last sign-in times</td><td>To know which garden is yours</td><td>Only you (and us, to run the service)</td></tr>
+      <tr><td>Email and provider ID, only if you link Google or Discord</td><td>So you can sign back in on another device</td><td>Only you (and us)</td></tr>
+      <tr><td>Your handle (a gardener name you choose, optional)</td><td>To label your garden</td><td>Only you in this release. If later features show handles to other players, we will tell you first</td></tr>
+      <tr><td>Your cloud garden save (beds, crops, pantry, season progress), its version number and save times</td><td>Cloud save and sync</td><td>Only you</td></tr>
+      <tr><td>Technical logs from our database host (IP address, browser type, request times)</td><td>Security, abuse prevention and fixing bugs</td><td>Us and our host. These are kept briefly, about a day on our current plan</td></tr>
+    </tbody>
+  </table>
+  <p>We don't show ads, sell or rent your data, use tracking pixels, or collect payment details. This release has no chat and no free-text messages between players.</p>
+
+  <h3>Who processes it</h3>
+  <ul>
+    <li><strong>Supabase</strong> (database, sign-in and server functions), hosted in the United States (AWS us-east-1).</li>
+    <li><strong>Google</strong> or <strong>Discord</strong>, only if you choose to link one, under their own privacy policies.</li>
+    <li><strong>GitHub Pages</strong> and <strong>mixmash.games</strong>, which host the game files.</li>
+  </ul>
+
+  <h2>Your choices and rights</h2>
+  <ul>
+    <li><strong>Download my data.</strong> A button in the game will give you a JSON file with your profile and cloud garden.</li>
+    <li><strong>Delete my account.</strong> A button in the game will delete your account, handle and cloud garden right away. Copies in our host's backups, if any, disappear when those backups expire. Saves on your own device stay until you clear them.</li>
+    <li><strong>Unlink or stop syncing</strong> at any time. Local play keeps working.</li>
+    <li>You can also email us to ask for a copy, a correction or deletion: <a href="mailto:avbydave@gmail.com">avbydave@gmail.com</a>.</li>
+  </ul>
+
+  <h2>Children</h2>
+  <p>Garden OS is a family-friendly game, but online accounts are not meant for children under 13. If you are under 13, please play without cloud save, or ask a parent. If we learn that an account belongs to a child under 13, we will delete it. Parents can contact us at the address below.</p>
+
+  <h2>How long we keep it</h2>
+  <p>Your account and cloud garden are kept until you delete them. We may delete anonymous accounts that have never been linked and haven't been used for 12 months, and we'll say so in the game before doing that.</p>
+
+  <h2>Changes</h2>
+  <p>We will change the version number at the top whenever this note changes. The game will ask you to accept a new version before it collects anything new.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or requests: <a href="mailto:avbydave@gmail.com">avbydave@gmail.com</a></p>
+</main>
+</body>
+</html>

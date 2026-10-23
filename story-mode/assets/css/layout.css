@@ -848,6 +848,16 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+    .pause-footer-link {
+      color: inherit;
+      opacity: 1;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .pause-footer-link:hover,
+    .pause-footer-link:focus-visible {
+      color: var(--accent, #a9c97a);
+    }
 
     .read-only-sheet {
       padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
