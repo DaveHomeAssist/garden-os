@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getZoneMovementBlockers, getZoneMovementBounds, WORLD_ZONE_INTERACTABLES } from '../../ui/zone-travel.js';
 import {
-  COTTAGE, YARD_TREES, YARD_BUSHES, PROP_PLACEMENTS, PATHS, GATE,
+  COTTAGE, YARD_TREES, YARD_BUSHES, PROP_PLACEMENTS, PROP_SET1_PLACEMENTS, PATHS, GATE,
   buildTreeline, buildGroundScatter, isScatterBlocked, distanceToPath, groundMaskAt, makeRng,
 } from './yard-layout.js';
 import {
@@ -67,6 +67,17 @@ describe('yard art layout', () => {
     }
     for (const b of YARD_BUSHES) {
       for (const bl of blockers) expect(inside(bl, b.x, b.z, 0.2), `bush at ${b.x},${b.z}`).toBe(false);
+    }
+  });
+
+  it('keeps prop set 1 off blockers, paths, interactables and the exit lane', () => {
+    const interactables = [{ x: 0, z: 0.5, r: 2.8 }, { x: -3, z: -1, r: 1.1 }, { x: 0, z: -8.5, r: 1.6 }];
+    expect(PROP_SET1_PLACEMENTS.map((p) => p.prop).sort()).toEqual(['birdhouse', 'garden_bench', 'rain_barrel', 'wheelbarrow']);
+    for (const p of PROP_SET1_PLACEMENTS) {
+      for (const b of blockers) expect(inside(b, p.x, p.z, 0.3), `${p.prop} at ${p.x},${p.z}`).toBe(false);
+      expect(Math.abs(p.x) <= bounds.maxX - 0.5 && Math.abs(p.z) <= bounds.maxZ - 0.5).toBe(true);
+      for (const path of PATHS) expect(distanceToPath(path, p.x, p.z), `${p.prop} on ${path.id}`).toBeGreaterThan(path.width / 2 + 0.6);
+      for (const i of interactables) expect(Math.hypot(p.x - i.x, p.z - i.z), `${p.prop} near ${i.x},${i.z}`).toBeGreaterThan(i.r);
     }
   });
 

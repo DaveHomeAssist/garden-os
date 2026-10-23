@@ -20,7 +20,7 @@ import {
 } from './art-quality.js';
 import { YARD_PALETTE, YARD_LIGHT, MOOD_ART_WEIGHT, STYLE_ART_NUDGE } from './yard-palette.js';
 import {
-  COTTAGE, YARD_TREES, YARD_BUSHES, PROP_PLACEMENTS, buildTreeline, buildGroundScatter, makeRng,
+  COTTAGE, YARD_TREES, YARD_BUSHES, PROP_PLACEMENTS, PROP_SET1_PLACEMENTS, buildTreeline, buildGroundScatter, makeRng,
 } from './yard-layout.js';
 import { createSkyMaterial, paintSkyGradient } from './yard-sky.js';
 import { buildGroundMaskTexture, createGroundMaterial } from './yard-ground.js';
@@ -35,6 +35,8 @@ const ASSET_URLS = {
   props: new URL('../../../assets/art/yard/props.glb', import.meta.url).href,
   cottageAtlas: new URL('../../../assets/art/yard/cottage_atlas.webp', import.meta.url).href,
   propsAtlas: new URL('../../../assets/art/yard/props_atlas.webp', import.meta.url).href,
+  propsSet1: new URL('../../../assets/art/yard/props_set1.glb', import.meta.url).href,
+  propsSet1Atlas: new URL('../../../assets/art/yard/props_set1_atlas.webp', import.meta.url).href,
   grass: new URL('../../../assets/art/yard/grass.webp', import.meta.url).href,
   dirt: new URL('../../../assets/art/yard/dirt.webp', import.meta.url).href,
   path: new URL('../../../assets/art/yard/path.webp', import.meta.url).href,
@@ -185,10 +187,12 @@ export function createYardArt(refs) {
     soil: loadTexture(texLoader, ASSET_URLS.soil, { anisotropy: aniso }),
     cottageAtlas: loadTexture(texLoader, ASSET_URLS.cottageAtlas, { repeat: false, anisotropy: aniso }),
     propsAtlas: loadTexture(texLoader, ASSET_URLS.propsAtlas, { repeat: false, anisotropy: aniso }),
+    propsSet1Atlas: loadTexture(texLoader, ASSET_URLS.propsSet1Atlas, { repeat: false, anisotropy: aniso }),
   };
   // glTF UVs are top-left origin
   tex.cottageAtlas.flipY = false;
   tex.propsAtlas.flipY = false;
+  tex.propsSet1Atlas.flipY = false;
 
   // ---- ground: swap the material on the legacy mesh (raycast/receive unchanged)
   const legacy = { groundMaterial: ground.material, skyMaterial: skyMesh.material };
@@ -286,7 +290,42 @@ export function createYardArt(refs) {
   const bakedMaterial = (atlas) => new THREE.MeshStandardMaterial({ map: atlas, roughness: 0.88, metalness: 0 });
   let cottage = null;
   let props = null;
+  let propsSet1 = null;
   const assetErrors = [];
+  /** One prop-kit GLB (one named node per prop) -> one merged, shadowed mesh at its placements. */
+  const loadPropKit = (url, atlas, placements, name) => loadGlb(url).then((gltf) => {
+    const byName = {};
+    gltf.scene.updateMatrixWorld(true);
+    gltf.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const key = (o.name || o.parent?.name || '').replace(/_\d+$/, '');
+      byName[key] = toFloatGeometry(o.geometry).applyMatrix4(o.matrixWorld);
+    });
+    const parts = [];
+    const m = new THREE.Matrix4(); const q = new THREE.Quaternion(); const e = new THREE.Euler();
+    for (const p of placements) {
+      const g = byName[p.prop];
+      if (!g) { assetErrors.push(`missing prop ${p.prop}`); continue; }
+      e.set(p.lean ?? 0, p.rotationY ?? 0, p.leanZ ?? 0, 'YXZ');
+      q.setFromEuler(e);
+      m.compose(new THREE.Vector3(p.x, p.prop === 'stepping_stone' ? -0.005 : 0, p.z), q, new THREE.Vector3().setScalar(p.scale ?? 1));
+      parts.push(g.clone().applyMatrix4(m));
+    }
+    if (!parts.length) throw new Error(`${name}: no props placed`);
+    const merged = mergeGeometries(parts.map((g) => {
+      // identical attribute sets for merging
+      for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+      return g;
+    }), false);
+    const pm = bakedMaterial(atlas);
+    pm.name = name;
+    const mesh = new THREE.Mesh(merged, pm);
+    mesh.name = name;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return mesh;
+  });
   const ready = Promise.allSettled([
     loadGlb(ASSET_URLS.cottage).then((gltf) => {
       let src = null;
@@ -303,37 +342,9 @@ export function createYardArt(refs) {
       cottage.receiveShadow = true;
       group.add(cottage);
     }),
-    loadGlb(ASSET_URLS.props).then((gltf) => {
-      const byName = {};
-      gltf.scene.updateMatrixWorld(true);
-      gltf.scene.traverse((o) => {
-        if (!o.isMesh) return;
-        const key = (o.name || o.parent?.name || '').replace(/_\d+$/, '');
-        byName[key] = toFloatGeometry(o.geometry).applyMatrix4(o.matrixWorld);
-      });
-      const parts = [];
-      const m = new THREE.Matrix4(); const q = new THREE.Quaternion(); const e = new THREE.Euler();
-      for (const p of PROP_PLACEMENTS) {
-        const g = byName[p.prop];
-        if (!g) { assetErrors.push(`missing prop ${p.prop}`); continue; }
-        e.set(p.lean ?? 0, p.rotationY ?? 0, p.leanZ ?? 0, 'YXZ');
-        q.setFromEuler(e);
-        m.compose(new THREE.Vector3(p.x, p.prop === 'stepping_stone' ? -0.005 : 0, p.z), q, new THREE.Vector3().setScalar(p.scale ?? 1));
-        parts.push(g.clone().applyMatrix4(m));
-      }
-      const merged = mergeGeometries(parts.map((g) => {
-        // identical attribute sets for merging
-        for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
-        return g.index ? g : g;
-      }), false);
-      const pm = bakedMaterial(tex.propsAtlas);
-      pm.name = 'yard-art-props';
-      props = new THREE.Mesh(merged, pm);
-      props.name = 'yard-art-props';
-      props.castShadow = true;
-      props.receiveShadow = true;
-      group.add(props);
-    }),
+    loadPropKit(ASSET_URLS.props, tex.propsAtlas, PROP_PLACEMENTS, 'yard-art-props').then((m) => { props = m; }),
+    // prop set 1 (wheelbarrow, rain barrel, bench, birdhouse): own GLB + atlas, one more draw call
+    loadPropKit(ASSET_URLS.propsSet1, tex.propsSet1Atlas, PROP_SET1_PLACEMENTS, 'yard-art-props-set1').then((m) => { propsSet1 = m; }),
   ]).then((results) => {
     results.forEach((r) => { if (r.status === 'rejected') assetErrors.push(String(r.reason?.message ?? r.reason)); });
     loaded = true;

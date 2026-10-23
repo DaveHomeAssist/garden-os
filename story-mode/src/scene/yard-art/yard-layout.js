@@ -103,6 +103,21 @@ export const PROP_PLACEMENTS = [
   { prop: 'stepping_stone', x: -3.04, z: -2.6, rotationY: 2.9, scale: 0.9 },
 ];
 
+/**
+ * Prop set 1 (props_set1.glb). Blender -Y front = three.js +Z, so rotationY = -PI/2
+ * faces a prop toward -X. All clear of blockers, paths, interactables and the exit lane.
+ */
+export const PROP_SET1_PLACEMENTS = [
+  // parked just outside the tool corner (tool_shed interactable at -3, -1), handles toward the shed
+  { prop: 'wheelbarrow', x: -4.75, z: -2.35, rotationY: 2.35 },
+  // against the cottage's west wall, near the front corner
+  { prop: 'rain_barrel', x: -4.78, z: -6.6, rotationY: -1.2 },
+  // in the oak's shade, facing the bed
+  { prop: 'garden_bench', x: 4.05, z: 1.4, rotationY: -Math.PI / 2 },
+  // near the east fence, left of the gate path
+  { prop: 'birdhouse', x: 3.4, z: -4.6, rotationY: -0.5 },
+];
+
 /** Deterministic hash-based RNG (mulberry32). */
 export function makeRng(seed = 1) {
   let a = seed >>> 0;
@@ -173,7 +188,7 @@ export function groundMaskAt(x, z) {
   for (const zone of CONTACT_SHADOWS) ao = Math.max(ao, zoneValue(zone, x, z));
   for (const t of YARD_TREES) ao = Math.max(ao, (1 - smoothstep(0.15, 1.15 * t.scale, Math.hypot(x - t.x, z - t.z))) * 0.55);
   for (const b of YARD_BUSHES) ao = Math.max(ao, (1 - smoothstep(0.05, 0.6 * b.scale, Math.hypot(x - b.x, z - b.z))) * 0.5);
-  for (const p of PROP_PLACEMENTS) {
+  for (const p of [...PROP_PLACEMENTS, ...PROP_SET1_PLACEMENTS]) {
     if (p.prop === 'stepping_stone') continue;
     ao = Math.max(ao, (1 - smoothstep(0.04, 0.32 * (p.scale ?? 1), Math.hypot(x - p.x, z - p.z))) * 0.45);
   }

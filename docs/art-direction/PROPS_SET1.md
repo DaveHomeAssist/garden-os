@@ -6,11 +6,13 @@ Built by `story-mode/art-src/blender/build_yard_props_set1.py` (Blender 5.2.3, h
 helpers, palette and paint materials of `build_yard_assets.py`. Shipped as `story-mode/assets/art/yard/props_set1.glb`
 (geometry only, meshopt, one named node per prop, origin at base centre, metres) plus one shared 512 baked
 colour x AO atlas, `props_set1_atlas.webp` (runtime, same loader path as `props_atlas.webp`), and
-`props_set1_atlas.ktx2` (ETC1S + mipmaps, for when the scene moves to KTX2Loader). The scene doesn't load them yet.
+`props_set1_atlas.ktx2` (ETC1S + mipmaps, for when the scene moves to KTX2Loader). `yard-art.js` loads the GLB + WebP
+atlas exactly like `props.glb` (shared `loadPropKit`), merged into one shadowed mesh `yard-art-props-set1` (+1 draw
+call); placements live in `PROP_SET1_PLACEMENTS` (`yard-layout.js`), covered by `yard-art.test.js`.
 
 | Prop | Tris | Source / licence |
 |---|---|---|
-| wheelbarrow | 198 | original, procedural (this repo) |
+| wheelbarrow | 508 (rolled lip, flared bowl on cleats, rails from axle to grips, legs + foot bar) | original, procedural (this repo) |
 | rain_barrel | 340 | original, procedural (this repo) |
 | garden_bench | 404 | original, procedural (this repo) |
 | birdhouse | 176 | original, procedural (this repo) |

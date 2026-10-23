@@ -38,28 +38,50 @@ def prop(objs, name):
 
 
 # --- wheelbarrow (front = -Y, wheel at front) ------------------------------
-ps = []
-# tapered tray: wide top, narrow bottom, as a hull of 8 points
+# Bowl: a closed lathe-like shell of superellipse rings (outer wall, rolled lip,
+# inner wall), flared and leaning toward the wheel, sitting on two cleats that
+# join it to straight handle rails; the rails run from the axle to the grips.
+NB = 12
+
+
+def ring(a, b, c, z):
+    pts = []
+    for i in range(NB):
+        t = 2 * math.pi * (i + 0.5) / NB
+        ct, st = math.cos(t), math.sin(t)
+        pts.append((a * math.copysign(abs(ct) ** 0.5, ct), c + b * math.copysign(abs(st) ** 0.5, st), z))
+    return pts
+
+
+RINGS = [  # outer bottom -> outer wall -> rolled lip -> inner wall -> inner bottom
+    (0.19, 0.23, 0.02, 0.36), (0.27, 0.34, -0.03, 0.52), (0.335, 0.425, -0.075, 0.665),
+    (0.36, 0.45, -0.08, 0.69), (0.35, 0.44, -0.08, 0.715), (0.325, 0.415, -0.075, 0.70),
+    (0.31, 0.40, -0.07, 0.665), (0.175, 0.215, 0.02, 0.385),
+]
 bm = bmesh.new()
-top = [(-0.32, -0.42), (0.32, -0.42), (0.36, 0.38), (-0.36, 0.38)]
-bot = [(-0.2, -0.22), (0.2, -0.22), (0.22, 0.26), (-0.22, 0.26)]
-for x, y in top:
-    bm.verts.new((x, y, 0.62))
-for x, y in bot:
-    bm.verts.new((x, y, 0.36))
-bmesh.ops.convex_hull(bm, input=bm.verts)
-top_face = max(bm.faces, key=lambda f: f.calc_center_median().z)
-bmesh.ops.inset_region(bm, faces=[top_face], thickness=0.035, depth=-0.22)
+rv = [[bm.verts.new(p) for p in ring(*r)] for r in RINGS]
+for r0, r1 in zip(rv, rv[1:]):
+    for i in range(NB):
+        j = (i + 1) % NB
+        bm.faces.new((r0[i], r0[j], r1[j], r1[i]))
+bm.faces.new(rv[0][::-1])
+bm.faces.new(rv[-1])
 bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-ps.append(mesh_obj('tray', bm, M['tray']))
-ps.append(cyl('wheel', 0.17, 0.17, 0.07, (-0.035, -0.56, 0.17), M['iron'], segs=12, rot=(0, math.radians(90), 0)))
-ps.append(cyl('hub', 0.045, 0.045, 0.1, (-0.05, -0.56, 0.17), M['metal'], segs=6, rot=(0, math.radians(90), 0)))
+ps = [mesh_obj('bowl', bm, M['tray'])]
+SLOPE = 0.243  # rail rise per metre along +Y, from the axle (y -0.56, z 0.17)
+RA = math.atan(SLOPE)
+rz = lambda y: 0.17 + SLOPE * (y + 0.56)
 for sx in (-1, 1):
-    ps.append(box('handle', (0.04, 1.18, 0.04), (sx * 0.21, 0.125, 0.425), M['wood'], rot=(math.radians(12.3), 0, 0)))
-    ps.append(box('grip', (0.05, 0.16, 0.05), (sx * 0.21, 0.66, 0.545), M['wood_dark'], rot=(math.radians(12.3), 0, 0)))
-    ps.append(box('leg', (0.035, 0.035, 0.46), (sx * 0.21, 0.3, 0.23), M['metal_dark']))
-    ps.append(box('fork', (0.03, 0.42, 0.03), (sx * 0.055, -0.375, 0.285), M['metal_dark'], rot=(math.radians(33), 0, 0)))
-ps.append(blob('soil', 0.17, (0, 0.0, 0.52), M['soil'], sub=1, squash=(1.3, 1.8, 0.35), jitter=0.1))
+    ps.append(box('rail', (0.04, 1.40, 0.045), (sx * 0.17, 0.12, rz(0.12)), M['wood'], rot=(RA, 0, 0), bevel=0.006))
+    ps.append(box('grip', (0.05, 0.15, 0.05), (sx * 0.17, 0.81, rz(0.81)), M['wood_dark'], rot=(RA, 0, 0), bevel=0.008))
+    ps.append(box('leg', (0.035, 0.035, rz(0.32) + 0.01), (sx * 0.18, 0.32, (rz(0.32) + 0.01) / 2), M['metal_dark'], rot=(0, sx * math.radians(-4), 0)))
+ps.append(box('foot_bar', (0.4, 0.03, 0.03), (0, 0.32, 0.06), M['metal_dark']))
+for y in (-0.17, 0.17):
+    h = 0.375 - rz(y) + 0.02
+    ps.append(box('cleat', (0.40, 0.06, h), (0, y, rz(y) + h / 2 - 0.01), M['wood_dark']))
+ps.append(cyl('wheel', 0.17, 0.17, 0.07, (-0.035, -0.56, 0.17), M['iron'], segs=12, rot=(0, math.radians(90), 0)))
+ps.append(cyl('axle', 0.022, 0.022, 0.38, (-0.19, -0.56, 0.17), M['metal'], segs=6, rot=(0, math.radians(90), 0)))
+ps.append(blob('soil', 0.17, (0, -0.02, 0.6), M['soil'], sub=1, squash=(1.55, 1.95, 0.42), jitter=0.1))
 prop(ps, 'wheelbarrow')
 
 # --- rain barrel ------------------------------------------------------------
