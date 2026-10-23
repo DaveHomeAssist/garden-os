@@ -47,6 +47,7 @@ try {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('response', (r) => { if (r.status() >= 400) errors.push(`HTTP ${r.status()} ${r.url().replace(`http://127.0.0.1:${port}`, '')}`); });
     const q = qualityArg ? `?quality=${qualityArg}` : '';
     await page.addInitScript(() => { globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true; performance.setResourceTimingBufferSize?.(5000); });
     await page.goto(`http://127.0.0.1:${port}/${q}`, { waitUntil: 'domcontentloaded' });

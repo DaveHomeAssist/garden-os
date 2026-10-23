@@ -110,8 +110,8 @@ export const PROP_PLACEMENTS = [
 export const PROP_SET1_PLACEMENTS = [
   // parked just outside the tool corner (tool_shed interactable at -3, -1), handles toward the shed
   { prop: 'wheelbarrow', x: -4.75, z: -2.35, rotationY: 2.35 },
-  // against the cottage's west wall, near the front corner
-  { prop: 'rain_barrel', x: -4.78, z: -6.6, rotationY: -1.2 },
+  // under the front-right (east) eave corner, where the gutter downspout would drop; in view of the default camera
+  { prop: 'rain_barrel', x: -0.55, z: -5.75, rotationY: 0.4 },
   // in the oak's shade, facing the bed
   { prop: 'garden_bench', x: 4.05, z: 1.4, rotationY: -Math.PI / 2 },
   // near the east fence, left of the gate path
