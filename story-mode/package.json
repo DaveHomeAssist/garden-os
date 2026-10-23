@@ -11,12 +11,15 @@
     "preview:dist": "node scripts/local-dist-transform-server.mjs",
     "authority": "node scripts/authority-server.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:campaign": "node tests/campaign-e2e.mjs",
+    "e2e:freeplay": "node tests/freeplay-e2e.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "jsdom": "^29.0.1",
     "playwright": "^1.61.1",
     "vite": "^7.1.7",

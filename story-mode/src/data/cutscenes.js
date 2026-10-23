@@ -133,6 +133,11 @@ export const CUTSCENES = [
     { speaker: 'garden_gurl', text: 'You understand rotation now. You feel the adjacency before you check the numbers.', emotion: 'warm', portraitAnim: 'talk', camera: 'bed-low-angle' },
   ]},
 
+  // Free Play season complete (outranks the generic chapter line below)
+  { id: 'freeplay-season-complete', trigger: 'chapter_complete', conditions: { sandbox: true }, priority: 112, once: false, skippable: true, beats: [
+    { speaker: 'onion_man', text: 'That bed is done for the season. Note what grew well, then plan the next planting.', emotion: 'warm', portraitAnim: 'talk', camera: 'front-access', backdropTone: 'calm' },
+  ]},
+
   // Generic chapter complete
   { id: 'chapter-complete', trigger: 'chapter_complete', conditions: {}, priority: 110, once: false, skippable: true, beats: [
     { speaker: 'vegeman', text: 'Chapter closed. Keep the momentum. The next season will not wait.', emotion: 'smirk', portraitAnim: 'emphasis', camera: 'front-access', backdropTone: 'calm' },
@@ -350,6 +355,41 @@ function pickInterventionSpeakers(triggerPayload) {
   return ['garden_gurl'];
 }
 
+// "Accept" used to say the same line after every event card, three times a
+// season. Vary it by event and by whether the event was good or bad news.
+const ACCEPT_LINES = {
+  negative: {
+    garden_gurl: [
+      '{event} goes unanswered. The token stays in your pocket for a worse beat.',
+      'No response to {event}. The bed takes this one on its own.',
+      'Logged: {event}, no intervention. You will see what it cost at harvest.',
+      'You let {event} play out. Saving the token is a choice too.',
+    ],
+    critters: [
+      'You let it land. Honest, if nothing else.',
+      'Nobody stopped {event}. We noticed.',
+      'Left it alone? Bold. We will be watching that row.',
+    ],
+  },
+  other: {
+    garden_gurl: [
+      '{event}: nothing to fix. Let it ride.',
+      'Good news needs no answer. {event} works for you this beat.',
+      'You let {event} do its thing and kept the token.',
+    ],
+  },
+};
+
+function pickAcceptLine(speaker, triggerPayload) {
+  const bucket = triggerPayload.eventValence === 'negative' ? ACCEPT_LINES.negative : ACCEPT_LINES.other;
+  const lines = bucket[speaker] ?? bucket.garden_gurl ?? ACCEPT_LINES.negative.garden_gurl;
+  const key = `${triggerPayload.eventTitle ?? ''}|${triggerPayload.chapter ?? ''}|${triggerPayload.season ?? ''}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  const eventName = triggerPayload.eventTitle || 'That event';
+  return lines[hash % lines.length].replace('{event}', eventName);
+}
+
 function buildInterventionText(speaker, triggerPayload) {
   const cropText = oxfordJoin(triggerPayload.targetCropNames) || 'that cell';
   const targetText = triggerPayload.targetSummary || cropText;
@@ -383,8 +423,7 @@ function buildInterventionText(speaker, triggerPayload) {
   }
 
   if (triggerPayload.intervention === 'accept_loss') {
-    if (speaker === 'critters') return 'You let it land. Honest, if nothing else.';
-    return 'Accepted. The consequence belongs to this beat now.';
+    return pickAcceptLine(speaker, triggerPayload);
   }
 
   return 'Intervention logged.';
@@ -432,7 +471,9 @@ function buildHarvestText(speaker, triggerPayload) {
 
   if (triggerPayload.recipeMatches?.includes('moms_sauce')) {
     if (speaker === 'onion_man') return `That is {sauceLabel} on the table. ${yieldCount} good ${plural(yieldCount, 'pull')} out of the bed, and the right five among them.`;
-    return 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
+    return triggerPayload.sandbox
+      ? 'Sauce from your own bed. That is what this whole garden is for.'
+      : 'Three years of practice turned into dinner. That is what this whole bed was built to do.';
   }
 
   if (recipeNames.length > 0) {

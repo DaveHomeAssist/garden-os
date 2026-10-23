@@ -254,6 +254,9 @@ export function createDialoguePanel(rootEl) {
     } else if (event.key === 'Enter' || event.key === ' ') {
       const fallbackIndex = currentIndex >= 0 ? currentIndex : 0;
       event.preventDefault();
+      // One key press = one action. Letting it bubble also fired the global
+      // "next line" binding, which instantly finished the line the choice opened.
+      event.stopPropagation();
       choiceHandler?.(fallbackIndex);
     }
   });

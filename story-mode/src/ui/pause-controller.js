@@ -63,9 +63,18 @@ export function createPauseController({
       closePanelSheets();
       const state = getState();
       if (pauseStatus) {
+        // "Free Play rules" (campaign.sandbox) and "not saved" (slot < 0) are
+        // different things: Keep gardening after the campaign is Free Play on
+        // a real, saved slot.
         pauseStatus.textContent = state.campaign?.sandbox
-          ? `Free Play · session only, not saved · ${getPhaseLabel(state.season.phase)}`
+          ? `Free Play · ${slot < 0 ? 'session only, not saved' : `saved in slot ${slot + 1}`} · ${getPhaseLabel(state.season.phase)}`
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
+      }
+      const mainMenuCopy = document.querySelector('#pause-main-menu .pause-action__copy');
+      if (mainMenuCopy) {
+        mainMenuCopy.textContent = slot < 0
+          ? 'Leave this garden and return to the title screen. Unsaved Free Play is not kept.'
+          : 'Save this run and return to the title screen.';
       }
       syncPauseThemeButton();
       syncPauseGraphicsButton();
@@ -127,7 +136,7 @@ export function createPauseController({
       <div class="palette-header read-only-sheet__header">
         <div>
           <div class="palette-title">Gardener Profile</div>
-          <div class="read-only-sheet__subtitle">${state.campaign?.sandbox ? 'Session only · changes are not saved' : 'Saved with this campaign slot'}</div>
+          <div class="read-only-sheet__subtitle">${slot < 0 ? 'Session only · changes are not saved' : 'Saved with this campaign slot'}</div>
         </div>
         <button type="button" class="palette-dismiss read-only-sheet__close" data-close="true" aria-label="Close gardener profile">&times;</button>
       </div>
@@ -143,7 +152,7 @@ export function createPauseController({
     const editor = createPlayerProfileEditor({
       initialProfile: state.campaign.playerProfile,
       title: 'Edit Gardener',
-      subtitle: state.campaign?.sandbox
+      subtitle: slot < 0
         ? 'These choices last for this Free Play session only.'
         : 'These choices update the in-scene character and future save slot label.',
       submitLabel: 'Save Profile',
@@ -237,7 +246,7 @@ export function createPauseController({
     playSFX('ui_click');
     persistState();
     const state = getState();
-    if (state.campaign?.sandbox || slot < 0) {
+    if (slot < 0) {
       showToast('Free Play is not saved, so there is nothing to export.', 2400);
       return;
     }
@@ -251,7 +260,7 @@ export function createPauseController({
   }, listenerOptions);
 
   document.getElementById('pause-import')?.addEventListener('click', async (event) => {
-    if (getState().campaign?.sandbox || slot < 0) {
+    if (slot < 0) {
       showToast('Free Play has no save slot to import into.', 2400);
       return;
     }

@@ -517,6 +517,10 @@ export function createYardArt(refs) {
     setQualityChoice,
     groundHeightAt,
     /** Render one frame with the art rig, then restore the legacy light values. */
+    /** Re-dress a bed rebuilt by setBedSize() (new group, legacy frame) with the art frame + soil. */
+    setBed(nextBed) {
+      nextBed?.setArtMaterials?.({ wood: tex.wood, soil: tex.soil });
+    },
     render(skyTint) {
       const legacyState = snapshotRig(rigRefs);
       legacyState.skyTint = skyTint ?? new THREE.Color(1, 1, 1);

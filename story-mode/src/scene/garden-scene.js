@@ -15,6 +15,7 @@ import { createPlayerCharacter } from './player-character.js';
 import { ResourceTracker } from './resource-tracker.js';
 import { loadSprites, getMissingAssets, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
+import { computeBedFocusView, lerpBedFocusView } from './bed-focus.js';
 import { getCropById } from '../data/crops.js';
 
 const DESIGN_TOKENS = {
@@ -399,12 +400,26 @@ export function createGardenScene(container) {
   skyMesh.userData.skyDome = { seamless: true };
   scene.add(skyMesh);
 
-  // Build the garden bed
-  const bed = buildBed(resourceTracker);
+  // Build the garden bed. Sized from the game state's grid on every sync()
+  // (see setBedSize), so 8x4, 8x6 and 8x8 beds all draw every cell.
+  let bed = buildBed(resourceTracker, COLS, ROWS);
   root.add(bed.group);
   for (const mesh of bed.cellMeshes) {
     mesh.userData._baseColor = mesh.material.color.clone();
   }
+  const bedResizeListeners = new Set();
+
+  // World-space centre of a cell for the bed's current cols x rows.
+  function getCellCenter(index, target = { x: 0, z: 0 }) {
+    const cols = bed.cols;
+    const rows = bed.rows;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    target.x = (col - (cols - 1) / 2) * bed.cellSize;
+    target.z = (row - (rows - 1) / 2) * bed.cellSize;
+    return target;
+  }
+  const cellCenterScratch = { x: 0, z: 0 };
 
   // Ground plane — grass-like, slightly darker near the bed via vertex colors
   const groundGeo = new THREE.PlaneGeometry(360, 360, 128, 128);
@@ -532,6 +547,8 @@ export function createGardenScene(container) {
     grassMesh.computeBoundingSphere();
     grassMesh.userData.planeTuft = planeTuft;
     grassMesh.userData.tuftHasCross = tufts.map((t) => t.cross);
+    grassMesh.userData.tuftXZ = tufts.map((t) => [t.gx, t.gz]);
+    grassMesh.userData.baseMatrices = grassMesh.instanceMatrix.array.slice();
     grassGroup.add(grassMesh);
 
     resourceTracker.trackObject(grassGroup);
@@ -942,11 +959,183 @@ export function createGardenScene(container) {
 
   // Collect trellis wire refs after bed group is already added to root
   const trellisWires = [];
-  bed.group.traverse((child) => {
-    if (child.isMesh && child.name === 'trellis-wire') {
-      trellisWires.push({ mesh: child, baseX: child.position.x });
+  function collectTrellisWires() {
+    trellisWires.length = 0;
+    bed.group.traverse((child) => {
+      if (child.isMesh && child.name === 'trellis-wire') {
+        trellisWires.push({ mesh: child, baseX: child.position.x });
+      }
+    });
+  }
+  collectTrellisWires();
+
+  // Hide grass tufts that would poke up through the soil of a bigger bed.
+  // The scatter skips the 8x4 footprint; deeper beds reach past it.
+  const GRASS_HIDDEN_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
+  function updateGrassBedExclusion() {
+    const grassTufts = grassGroup.getObjectByName('grass-tufts');
+    const { planeTuft, tuftXZ, baseMatrices } = grassTufts?.userData ?? {};
+    if (!planeTuft || !tuftXZ || !baseMatrices) return;
+    const halfW = (bed.cols * bed.cellSize) / 2 + 0.25;
+    const halfD = (bed.rows * bed.cellSize) / 2 + 0.25;
+    for (let plane = 0; plane < grassTufts.count; plane += 1) {
+      const [gx, gz] = tuftXZ[planeTuft[plane]];
+      if (Math.abs(gx) < halfW && Math.abs(gz) < halfD) {
+        grassTufts.setMatrixAt(plane, GRASS_HIDDEN_MATRIX);
+      } else {
+        grassTufts.instanceMatrix.array.set(baseMatrices.subarray(plane * 16, plane * 16 + 16), plane * 16);
+      }
     }
-  });
+    grassTufts.instanceMatrix.needsUpdate = true;
+  }
+
+  /**
+   * Resize the bed to cols x rows (the game state's grid). Rebuilds the frame,
+   * soil cells, grid lines and row labels, re-seats every crop/prop on the new
+   * cell centres, and tells listeners (the interaction system) the layout
+   * changed. A future bed-size picker only needs to call this. Returns true
+   * when the bed was rebuilt.
+   */
+  function setBedSize(cols, rows) {
+    const nextCols = Math.max(1, Math.floor(Number(cols) || COLS));
+    const nextRows = Math.max(1, Math.floor(Number(rows) || ROWS));
+    if (nextCols === bed.cols && nextRows === bed.rows) return false;
+
+    root.remove(bed.group);
+    resourceTracker.disposeObject(bed.group);
+    bed = buildBed(resourceTracker, nextCols, nextRows);
+    root.add(bed.group);
+    for (const mesh of bed.cellMeshes) {
+      mesh.userData._baseColor = mesh.material.color.clone();
+    }
+    collectTrellisWires();
+    updateGrassBedExclusion();
+
+    // Cell-indexed state from the old size is meaningless on the new one.
+    hoveredCellIndex = -1;
+    interactionHighlightedCellIndex = -1;
+    targetableCellIndices = new Set([...targetableCellIndices].filter((i) => i < bed.cellMeshes.length));
+    // Props and accent billboards are cached by content, not position, so drop
+    // them; the next sync rebuilds them on the new cell centres. Crops are
+    // re-seated in place by syncCrops.
+    for (const map of [supportMeshes, accentMeshes]) {
+      for (const mesh of map.values()) resourceTracker.disposeObject(mesh);
+      map.clear();
+    }
+
+    applyCurrentSceneStyle();
+    for (let i = 0; i < bed.cellMeshes.length; i++) applyCellVisualState(i);
+    const size = { cols: bed.cols, rows: bed.rows };
+    for (const listener of bedResizeListeners) {
+      try { listener(size); } catch (error) { console.warn('[GOS] bed resize listener failed:', error); }
+    }
+    return true;
+  }
+
+  function getBedSizeFromState(season) {
+    const grid = season?.grid;
+    const cols = season?.gridCols ?? grid?.cols ?? COLS;
+    let rows = season?.gridRows ?? grid?.rows ?? ROWS;
+    // Trust the cell count over stale metadata so no cell goes undrawn.
+    if (Array.isArray(grid) && grid.length > cols * rows) rows = Math.ceil(grid.length / cols);
+    return { cols, rows };
+  }
+
+  // ── Bed focus (keep the whole bed visible beside an open sheet) ──────────
+  // `bedFocusInsets` is the part of the canvas (CSS px from each edge) that a
+  // sheet covers. While set, render() shifts/zooms the projection with
+  // setViewOffset so the bed fits in the uncovered area; clearing it eases
+  // back. The camera itself never moves, so follow/orbit and picking keep
+  // working (raycasts use the same offset projection).
+  // Ease in over 320 ms; ease out faster (200 ms) so the bed is back in place
+  // before the sheet finishes closing (260 ms). Picking a crop closes the sheet
+  // and the very next tap lands on a cell, which should not still be moving.
+  const BED_FOCUS_EASE_IN_MS = 320;
+  const BED_FOCUS_EASE_OUT_MS = 200;
+  let bedFocusInsets = null;
+  let bedFocusAmount = 0;
+  let bedFocusTarget = 0;
+  let bedFocusLastNow = 0;
+  let bedFocusView = null;
+  let viewOffsetActive = false;
+  const bedCornerScratch = new THREE.Vector3();
+
+  function setBedFocusInsets(insets) {
+    const valid = insets && ['left', 'top', 'right', 'bottom'].some((k) => (insets[k] ?? 0) > 0);
+    if (valid) {
+      bedFocusInsets = {
+        left: Math.max(0, insets.left ?? 0),
+        top: Math.max(0, insets.top ?? 0),
+        right: Math.max(0, insets.right ?? 0),
+        bottom: Math.max(0, insets.bottom ?? 0),
+      };
+      bedFocusTarget = 1;
+    } else {
+      bedFocusTarget = 0;
+    }
+  }
+
+  function getBedScreenBounds(width, height) {
+    // Bed footprint (frame included) projected with the un-offset camera.
+    // Planning shows row labels off the bed's left edge; keep them in view.
+    camera.updateMatrixWorld();
+    const halfW = (bed.cols * bed.cellSize) / 2 + 0.08;
+    const labelReach = bed.labelSprites?.some((sprite) => sprite.visible) ? 0.95 : 0;
+    const halfD = (bed.rows * bed.cellSize) / 2 + 0.08;
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (const x of [-halfW - labelReach, halfW]) {
+      for (const y of [0, bed.frameHeight + 0.05]) {
+        for (const z of [-halfD, halfD]) {
+          bedCornerScratch.set(x, y, z).project(camera);
+          const sx = (bedCornerScratch.x * 0.5 + 0.5) * width;
+          const sy = (-bedCornerScratch.y * 0.5 + 0.5) * height;
+          minX = Math.min(minX, sx); maxX = Math.max(maxX, sx);
+          minY = Math.min(minY, sy); maxY = Math.max(maxY, sy);
+        }
+      }
+    }
+    return { minX, minY, maxX, maxY };
+  }
+
+  function updateBedFocus(now) {
+    // Wall-clock, not frame-capped: a slow or throttled (idle) frame rate must
+    // not stretch the ease past the sheet's own close animation.
+    const dt = bedFocusLastNow ? Math.max(0, now - bedFocusLastNow) : 16;
+    bedFocusLastNow = now;
+    if (bedFocusAmount !== bedFocusTarget) {
+      const step = dt / (bedFocusTarget > bedFocusAmount ? BED_FOCUS_EASE_IN_MS : BED_FOCUS_EASE_OUT_MS);
+      bedFocusAmount = bedFocusTarget > bedFocusAmount
+        ? Math.min(bedFocusTarget, bedFocusAmount + step)
+        : Math.max(bedFocusTarget, bedFocusAmount - step);
+    }
+    const width = renderer.domElement.clientWidth;
+    const height = renderer.domElement.clientHeight;
+    if (bedFocusAmount <= 0 || !width || !height) {
+      if (viewOffsetActive) {
+        camera.clearViewOffset();
+        viewOffsetActive = false;
+      }
+      if (bedFocusAmount <= 0) bedFocusInsets = bedFocusTarget > 0 ? bedFocusInsets : null;
+      bedFocusView = null;
+      return;
+    }
+    if (viewOffsetActive) {
+      camera.clearViewOffset();
+      viewOffsetActive = false;
+    }
+    if (bedFocusInsets) {
+      bedFocusView = computeBedFocusView({
+        width,
+        height,
+        bounds: getBedScreenBounds(width, height),
+        insets: bedFocusInsets,
+      });
+    }
+    if (!bedFocusView) return;
+    const view = lerpBedFocusView(bedFocusView, easeInOutCubic(bedFocusAmount), width, height);
+    camera.setViewOffset(width, height, view.x, view.y, view.width, view.height);
+    viewOffsetActive = true;
+  }
   // ── End creature meshes ──────────────────────────────────────────────────
 
   // Weather effects (rain, frost, sun rays)
@@ -990,6 +1179,8 @@ export function createGardenScene(container) {
     getStyleName: () => currentSceneStyle,
     tracker: resourceTracker,
   });
+  // setBedSize() (from #73) rebuilds the bed from the grid; keep the art frame and soil on the new one.
+  bedResizeListeners.add(() => { yardArt.setBed(bed); applyCurrentSceneStyle(); });
   scene.userData.weatherFx = weather;
   scene.userData.scenery = scenery;
   const dayNight = new DayNightCycle(scene, { enabled: false });
@@ -1013,6 +1204,7 @@ export function createGardenScene(container) {
 
   function setSceneStyle(styleName, opts = {}) {
     if (!opts.force && styleName === currentSceneStyle) return;
+    if (styleName !== currentSceneStyle) moodTransition = null;
     currentSceneStyle = styleName;
     applyCurrentSceneStyle({ force: true });
   }
@@ -1529,11 +1721,7 @@ export function createGardenScene(container) {
       const sprite = new THREE.Sprite(spriteMat);
 
       // Position above the procedural crop mesh
-      const row = Math.floor(i / COLS);
-      const col = i % COLS;
-      const cellSize = bed.cellSize;
-      const x = (col - (COLS - 1) / 2) * cellSize;
-      const z = (row - (ROWS - 1) / 2) * cellSize;
+      const { x, z } = getCellCenter(i, cellCenterScratch);
       sprite.position.set(x, bed.soilY, z);
       sprite.userData.sig = sig;
       sprite.userData.cellIndex = i;
@@ -1651,6 +1839,8 @@ export function createGardenScene(container) {
 
   function getVisualDebug() {
     return {
+      bed: { cols: bed.cols, rows: bed.rows, cells: bed.cellMeshes.length },
+      bedFocus: { amount: bedFocusAmount, target: bedFocusTarget, insets: bedFocusInsets },
       scenePhase: currentScenePhase,
       sceneStyle: currentSceneStyle,
       seasonalAtmosphere: getSeasonalAtmosphereDebug(),
@@ -1705,10 +1895,7 @@ export function createGardenScene(container) {
   let harvestColorCursor = 0;
 
   function triggerHarvestFX(cellIndex) {
-    const row = Math.floor(cellIndex / COLS);
-    const col = cellIndex % COLS;
-    const cx = (col - (COLS - 1) / 2) * bed.cellSize;
-    const cz = (row - (ROWS - 1) / 2) * bed.cellSize;
+    const { x: cx, z: cz } = getCellCenter(cellIndex, cellCenterScratch);
     const cy = bed.soilY + 0.3;
 
     // Burst 8 particles from this cell (fewer if the pool is full)
@@ -2440,11 +2627,7 @@ function getGrowthScale(phase, season) {
       if (cropMeshes.has(key)) {
         const existing = cropMeshes.get(key);
         if (existing.userData.cropId === cell.cropId) {
-          const row = Math.floor(i / COLS);
-          const col = i % COLS;
-          const cellSize = bed.cellSize;
-          const x = (col - (COLS - 1) / 2) * cellSize;
-          const z = (row - (ROWS - 1) / 2) * cellSize;
+          const { x, z } = getCellCenter(i, cellCenterScratch);
           const anchor = existing.userData.anchor ?? getCellAnchor(i, 'crop');
           existing.userData.anchor = anchor;
           existing.userData.basePlacementRotationY = anchor.rotationY;
@@ -2462,11 +2645,7 @@ function getGrowthScale(phase, season) {
       if (!mesh) continue;
       resourceTracker.trackObject(mesh);
 
-      const row = Math.floor(i / COLS);
-      const col = i % COLS;
-      const cellSize = bed.cellSize;
-      const x = (col - (COLS - 1) / 2) * cellSize;
-      const z = (row - (ROWS - 1) / 2) * cellSize;
+      const { x, z } = getCellCenter(i, cellCenterScratch);
       const anchor = getCellAnchor(i, 'crop');
       mesh.userData.anchor = anchor;
       mesh.userData.basePlacementRotationY = anchor.rotationY;
@@ -2578,10 +2757,7 @@ function getGrowthScale(phase, season) {
       }
 
       resourceTracker.trackObject(propMesh);
-      const row = Math.floor(i / COLS);
-      const col = i % COLS;
-      const x = (col - (COLS - 1) / 2) * bed.cellSize;
-      const z = (row - (ROWS - 1) / 2) * bed.cellSize;
+      const { x, z } = getCellCenter(i, cellCenterScratch);
       const anchor = getCellAnchor(i, 'support');
       propMesh.position.set(x + anchor.xOffset, bed.soilY, z + anchor.zOffset);
       propMesh.rotation.y = anchor.rotationY;
@@ -2758,6 +2934,20 @@ function getGrowthScale(phase, season) {
     };
   }
 
+  function startMoodTransition(target, duration) {
+    moodTransition = {
+      startedAt: performance.now(),
+      duration,
+      fromFogColor: scene.fog.color.clone(),
+      fromFogDensity: scene.fog.density,
+      fromAmbientIntensity: hemi.intensity,
+      fromAmbientColor: hemi.color.clone(),
+      fromFillIntensity: fill.intensity,
+      fromSkyTint: skyMat.color.clone(),
+      ...target,
+    };
+  }
+
   function applyMood(name, opts = {}) {
     const preset = MOOD_PRESETS[name];
     if (!preset) return;
@@ -2785,8 +2975,37 @@ function getGrowthScale(phase, season) {
     scenery.showFireflies((name === 'night') || currentSeasonId === 'summer');
   }
 
-  function resetMood() {
-    applyMood('calm', { duration: 600 });
+  // Ease back to the lighting the current scene style and season define. A
+  // fixed 'calm' preset used to be the target, which pinned the hemisphere
+  // light at 0.6 and left planning dim after every cutscene.
+  function resetMood(opts = {}) {
+    const before = {
+      fogColor: scene.fog.color.clone(),
+      fogDensity: scene.fog.density,
+      hemiIntensity: hemi.intensity,
+      hemiColor: hemi.color.clone(),
+      fillIntensity: fill.intensity,
+      skyTint: skyMat.color.clone(),
+    };
+    moodTransition = null;
+    applyCurrentSceneStyle({ force: true });
+    const target = {
+      toFogColor: scene.fog.color.clone(),
+      toFogDensity: scene.fog.density,
+      toAmbientIntensity: hemi.intensity,
+      toAmbientColor: hemi.color.clone(),
+      toFillIntensity: fill.intensity,
+      toSkyTint: skyMat.color.clone(),
+    };
+    scene.fog.color.copy(before.fogColor);
+    scene.fog.density = before.fogDensity;
+    hemi.intensity = before.hemiIntensity;
+    hemi.color.copy(before.hemiColor);
+    fill.intensity = before.fillIntensity;
+    skyMat.color.copy(before.skyTint);
+    startMoodTransition(target, opts.duration ?? 600);
+    stringLights.visible = currentSeasonId === 'summer';
+    scenery.showFireflies(currentSeasonId === 'summer');
   }
 
   function pulseEventFocus(cellIndex) {
@@ -2979,6 +3198,8 @@ function getGrowthScale(phase, season) {
     sync(state) {
       lastSyncedState = state;
       currentGridState = state.season.grid;
+      const bedSize = getBedSizeFromState(state.season);
+      setBedSize(bedSize.cols, bedSize.rows);
       const seasonChanged = state.season.season !== currentSeasonId || !lightingState;
       currentSeasonId = state.season.season;
       for (let i = 0; i < bed.cellMeshes.length; i++) {
@@ -3393,9 +3614,18 @@ function getGrowthScale(phase, season) {
       updateHarvestFX(dt);
       // ── End harvest FX ──────────────────────────────────────────────
 
+      updateBedFocus(now);
       yardArt.render(skyMat.color);
     },
     applySeason,
+    setBedSize,
+    getBedSize() { return { cols: bed.cols, rows: bed.rows }; },
+    onBedResize(listener) {
+      if (typeof listener !== 'function') return () => {};
+      bedResizeListeners.add(listener);
+      return () => bedResizeListeners.delete(listener);
+    },
+    setBedFocusInsets,
     raycastCell,
     raycastGround,
     getGridLayout,

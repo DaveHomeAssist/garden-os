@@ -104,6 +104,16 @@ class InteractionSystem {
     this.options = options;
   }
 
+  // The bed can change size (Story chapter unlocks, a future size picker), so
+  // the scene pushes its new cell layout here.
+  setGridLayout(gridLayout) {
+    this.gridLayout = Array.isArray(gridLayout) ? gridLayout.map(normalizeGridCell) : [];
+    this.gridMeta = inferGridMeta(this.gridLayout);
+    if (this.highlighted?.type === 'cell') {
+      this.highlighted = null;
+    }
+  }
+
   setEnabled(nextEnabled) {
     const enabled = Boolean(nextEnabled);
     if (enabled === this.enabled) return;

@@ -537,3 +537,12 @@ body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-cont
     display: none;
   }
 }
+
+/* Phones: the Select Crop sheet covers the bottom two thirds, and the scene
+   slides the bed into the strip above it. The season card and objective
+   banner sit in that strip, so step them aside while picking a crop. */
+@media (max-width: 600px) {
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container #crop-palette-panel) :is(#season-calendar, #phase-helper) {
+    visibility: hidden;
+  }
+}

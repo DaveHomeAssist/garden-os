@@ -591,6 +591,8 @@ export function createQuestController({
 
   function syncFestival(state) {
     if (!festivalEngine) return;
+    // Free Play is bed-only for now; festivals return with its world loop.
+    if (state.campaign?.sandbox) return;
     const season = state.season?.season;
     const chapter = state.campaign?.currentChapter ?? 1;
     const active = state.campaign?.activeFestival;
@@ -677,6 +679,12 @@ export function createQuestController({
       hudRoot.appendChild(trackerEl);
     }
     const state = getState();
+    // Free Play is bed-only for now: no neighbour requests to track.
+    trackerEl.hidden = Boolean(state.campaign?.sandbox);
+    if (trackerEl.hidden) {
+      trackerEl.innerHTML = '';
+      return;
+    }
     const active = questEngine.getActiveQuests();
     const items = active.map((quest) => {
       const ready = isReady(quest, state);

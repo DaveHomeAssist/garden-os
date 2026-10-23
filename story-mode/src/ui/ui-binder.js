@@ -1,7 +1,7 @@
 import { createLoop } from '../game/loop.js';
 import { topEscapeLayer } from './escape-layers.js';
 import { Actions, cloneGameState } from '../game/store.js';
-import { advance, canAdvance, getPhaseLabel } from '../game/phase-machine.js';
+import { advance, canAdvance, enterPostCampaignFreePlay, getPhaseLabel } from '../game/phase-machine.js';
 import { createPhaseRouter } from '../game/phase-router.js';
 import { createSeasonState, PHASES, PHASE_ORDER } from '../game/state.js';
 import { scoreBed } from '../scoring/bed-score.js';
@@ -63,11 +63,14 @@ import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
+import { buildCampaignRecap, renderCampaignRecapHTML } from './campaign-recap.js';
+import { buildObjectiveText } from './plain-text.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
+import { getSheetInsets } from '../scene/bed-focus.js';
 
 function escapePaletteText(value) {
   return String(value ?? '')
@@ -661,6 +664,14 @@ function bindUI({
       onInteractCell: ({ cellIndex, source }) => handleCellInteraction(cellIndex, source),
     },
   );
+  // The bed is rebuilt when the season's grid size changes (8x4 -> 8x6 -> 8x8
+  // in Story); keep proximity interaction on the new cells.
+  const unsubscribeBedResize = scene.onBedResize?.(() => {
+    interactionSystem?.setGridLayout?.(scene.getGridLayout?.() ?? []);
+  });
+  if (unsubscribeBedResize) {
+    sessionListeners.signal.addEventListener('abort', unsubscribeBedResize, { once: true });
+  }
   zoneManager?.setSystems?.(getWorldSystems());
   zoneManager?.setInteractableRegistry?.({
     register(id, definition) {
@@ -766,6 +777,42 @@ function bindUI({
       toast.classList.remove('is-visible');
       setTimeout(() => toast.remove(), 300);
     }, durationMs);
+  }
+
+  // Planting a row used to stack one toast per cell (28 a season in Free
+  // Play). Plantings close together now share one toast that keeps a tally.
+  let plantedToast = null;
+  function showPlantedToast(cropInfo) {
+    if (!toastContainer || !cropInfo) return;
+    const HOLD_MS = 1600;
+    if (!plantedToast || !plantedToast.el.isConnected) {
+      const el = document.createElement('div');
+      el.className = 'toast-notification toast--success toast--planted';
+      toastContainer.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('is-visible'));
+      plantedToast = { el, counts: new Map(), timer: null };
+    }
+    const entry = plantedToast.counts.get(cropInfo.id) ?? { crop: cropInfo, count: 0 };
+    entry.count += 1;
+    plantedToast.counts.set(cropInfo.id, entry);
+    plantedToast.el.textContent = formatPlantedTally([...plantedToast.counts.values()]);
+    clearTimeout(plantedToast.timer);
+    const current = plantedToast;
+    current.timer = setTimeout(() => {
+      current.el.classList.remove('is-visible');
+      setTimeout(() => current.el.remove(), 300);
+      if (plantedToast === current) plantedToast = null;
+    }, HOLD_MS);
+  }
+
+  function formatPlantedTally(entries) {
+    if (entries.length === 1) {
+      const [{ crop, count }] = entries;
+      return `${crop.emoji} ${crop.name}${count > 1 ? ` ×${count}` : ''} planted`;
+    }
+    const total = entries.reduce((sum, entry) => sum + entry.count, 0);
+    const icons = entries.slice(0, 4).map((entry) => `${entry.crop.emoji}×${entry.count}`).join(' ');
+    return `${total} crops planted · ${icons}${entries.length > 4 ? ' …' : ''}`;
   }
 
   function spawnFloatingScore(cellIndex, total) {
@@ -949,6 +996,38 @@ function bindUI({
     setTimeout(() => element.classList.remove('is-entering'), 700);
   }
 
+  // While the crop sheet is open, tell the scene which edge it covers so the
+  // camera view slides the whole bed into the uncovered area (and back when
+  // it closes). Measured every frame: the sheet animates and the window can
+  // resize while it is open.
+  let lastBedFocusKey = '';
+  function syncBedFocusForSheets() {
+    let insets = null;
+    const sheet = cropPaletteOpen ? panelContainer?.querySelector('#crop-palette-panel') : null;
+    const canvas = scene.canvas;
+    if (sheet && canvas) {
+      const canvasRect = canvas.getBoundingClientRect();
+      insets = getSheetInsets(sheet.getBoundingClientRect(), canvasRect);
+      if (insets) {
+        // Keep the bed below whatever top HUD is still showing.
+        let hudBottom = 0;
+        for (const el of document.querySelectorAll('#hud .hud-left, #season-calendar, #phase-helper')) {
+          if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') continue;
+          const rect = el.getBoundingClientRect();
+          // Only HUD that spans the free area's width blocks it; side cards don't.
+          if (rect.width < canvasRect.width * 0.5 && insets.right) continue;
+          hudBottom = Math.max(hudBottom, rect.bottom - canvasRect.top);
+        }
+        insets.top = Math.max(0, Math.round(hudBottom));
+      }
+    }
+    const key = insets ? `${insets.top ?? 0}:${insets.right ?? 0}:${insets.bottom ?? 0}` : '';
+    if (key === lastBedFocusKey) return;
+    lastBedFocusKey = key;
+    scene.setBedFocusInsets?.(insets);
+    sessionLoop?.requestRender?.();
+  }
+
   function closePalette() {
     const sheet = panelContainer?.querySelector('#crop-palette-panel');
     if (sheet) {
@@ -1030,6 +1109,9 @@ function bindUI({
       fabWasVisible = true;
     } else {
       fab.classList.remove('is-visible');
+      // Keep the faded label current: after a Free Play rollover it still read
+      // "Harvest" while the empty bed was waiting for its first crop.
+      fab.textContent = getAdvanceLabel();
       setButtonInteractive(fab, false);
       fabWasVisible = false;
     }
@@ -1271,7 +1353,7 @@ function bindUI({
       <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
       <p>
         ${campaignComplete
-          ? 'You have reached the end of the current campaign. Continue to view the closing season.'
+          ? 'All twelve chapters are done. Continue for the ending.'
           : isSandbox
             ? `${SEASON_LABELS[state.season.season]} is finished. Continue into ${nextSeasonLabel}.`
             : state.season.season === 'winter'
@@ -1302,21 +1384,30 @@ function bindUI({
 
   function showEndGameOverlay() {
     const overlayContainer = document.getElementById('overlay-container');
+    overlayContainer?.querySelector('#campaign-recap-overlay')?.remove();
     const overlay = document.createElement('div');
-    overlay.className = 'chapter-intro';
-    overlay.innerHTML = `
-      <div class="chapter-num">Garden OS</div>
-      <h2>The Garden Stays</h2>
-      <p>All 12 chapters complete. Your garden has grown through every season.</p>
-      <div class="start-choice-actions">
-        <button type="button" class="start-choice-btn start-choice-btn--primary" id="btn-endgame-close">Close</button>
-      </div>
-    `;
-    overlay.querySelector('#btn-endgame-close')?.addEventListener('click', () => {
+    overlay.className = 'chapter-intro campaign-recap';
+    overlay.id = 'campaign-recap-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', 'Campaign complete');
+    overlay.innerHTML = renderCampaignRecapHTML(buildCampaignRecap(state.campaign));
+    overlay.querySelector('#btn-endgame-keep')?.addEventListener('click', () => {
       overlay.remove();
+      produceState(Actions.REPLACE_STATE, (draft) => enterPostCampaignFreePlay(draft));
+      persistState();
       setGameInputEnabled(true);
+      updateHUD();
+      showToast('Free Play: every crop is unlocked. Plant whatever you like.', 3200, 'success');
+    });
+    overlay.querySelector('#btn-endgame-menu')?.addEventListener('click', () => {
+      persistState();
+      overlay.remove();
+      loop.stop();
+      cleanupGame();
+      remount();
     });
     overlayContainer?.appendChild(overlay);
+    overlay.querySelector('#btn-endgame-keep')?.focus();
   }
 
   function updateHUD() {
@@ -1329,7 +1420,7 @@ function bindUI({
 
     syncToolHUDVisibility();
 
-    if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${state.campaign.currentChapter}`;
+    if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${Math.min(state.campaign.currentChapter, 12)}`;
     if (hudPhase) hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
     if (hudCrops) hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
@@ -1376,32 +1467,24 @@ function bindUI({
     }
 
     if (phaseHelper) {
-      const isWinter = state.season.season === 'winter';
       let helperText = '';
       phaseHelper.dataset.zone = getCurrentZoneId();
       phaseHelper.dataset.zoneLabel = getCurrentZoneName();
 
-      if (state.season.phase === PHASES.PLANNING) {
-        if (isWinter) {
-          helperText = state.season.winterReviewSeen
-            ? 'Winter review complete. Continue to roll into the next chapter.'
-            : 'Winter chapter. Review the year, the soil, and the carry-forward before spring returns.';
-        } else if (!state.campaign?.sandbox && planted < 8) {
-          helperText = `${planted} / 8 crops planted — fill the bed to begin the season.`;
-        } else {
-          helperText = 'Bed is ready. Select Start Season to begin Early Season.';
-        }
-      } else if (state.season.phase === PHASES.TRANSITION) {
-        helperText = 'Season complete. Use Continue to roll into the next chapter.';
-      }
-
-      if (letItGrowInteractionMode && state.season.phase === PHASES.PLANNING) {
-        const routes = getZoneTravelSummary();
-        const foraging = getForagingSummary();
-        const zonePrefix = `Zone: ${getCurrentZoneName()} · Paths ${routes.available}/${routes.total}${foraging.total ? ` · Forage ${foraging.available}/${foraging.total}` : ''}.`;
-        helperText = helperText ? `${zonePrefix} ${helperText}` : zonePrefix;
-      }
-
+      const foraging = letItGrowInteractionMode ? getForagingSummary() : { available: 0 };
+      const nextPhase = { EARLY_SEASON: PHASES.MID_SEASON, MID_SEASON: PHASES.LATE_SEASON, LATE_SEASON: PHASES.HARVEST }[state.season.phase];
+      helperText = buildObjectiveText({
+        phase: state.season.phase,
+        season: state.season.season,
+        sandbox: Boolean(state.campaign?.sandbox),
+        planted,
+        bedSize: state.season.grid.length,
+        winterReviewSeen: Boolean(state.season.winterReviewSeen),
+        zoneId: letItGrowInteractionMode ? getCurrentZoneId() : 'player_plot',
+        zoneName: getCurrentZoneName(),
+        forageAvailable: foraging.available ?? 0,
+        nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+      });
       phaseHelper.textContent = helperText;
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
     }
@@ -1549,7 +1632,7 @@ function bindUI({
     if (activeToolId === 'plant' && beforeCropId == null && state.selectedCropId) {
       const cropInfo = getCropById(state.selectedCropId);
       if (cropInfo) {
-        showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
+        showPlantedToast(cropInfo);
       }
       try {
         const freshState = store.getState();
@@ -1610,7 +1693,7 @@ function bindUI({
       });
       scene.flashCell(cellIndex, 0x4a9a4a, 350);
       if (cropInfo) {
-        showToast(`${cropInfo.emoji} ${cropInfo.name} planted`, 1600, 'success');
+        showPlantedToast(cropInfo);
       }
       if (
         cellIndex === 0
@@ -2215,6 +2298,7 @@ function bindUI({
       }
       interactionSystem.update(dt);
       syncInteractionPresentation();
+      syncBedFocusForSheets();
       dayNightController.sync();
       zoneManager?.update?.(dt, playerState);
     },
