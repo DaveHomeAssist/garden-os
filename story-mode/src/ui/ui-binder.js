@@ -70,6 +70,7 @@ import { createSimulationWorkerClient } from '../engine/simulation-worker-client
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
+import { getSheetInsets } from '../scene/bed-focus.js';
 
 function escapePaletteText(value) {
   return String(value ?? '')
@@ -663,6 +664,14 @@ function bindUI({
       onInteractCell: ({ cellIndex, source }) => handleCellInteraction(cellIndex, source),
     },
   );
+  // The bed is rebuilt when the season's grid size changes (8x4 -> 8x6 -> 8x8
+  // in Story); keep proximity interaction on the new cells.
+  const unsubscribeBedResize = scene.onBedResize?.(() => {
+    interactionSystem?.setGridLayout?.(scene.getGridLayout?.() ?? []);
+  });
+  if (unsubscribeBedResize) {
+    sessionListeners.signal.addEventListener('abort', unsubscribeBedResize, { once: true });
+  }
   zoneManager?.setSystems?.(getWorldSystems());
   zoneManager?.setInteractableRegistry?.({
     register(id, definition) {
@@ -985,6 +994,38 @@ function bindUI({
     void element.offsetWidth;
     element.classList.add('is-entering');
     setTimeout(() => element.classList.remove('is-entering'), 700);
+  }
+
+  // While the crop sheet is open, tell the scene which edge it covers so the
+  // camera view slides the whole bed into the uncovered area (and back when
+  // it closes). Measured every frame: the sheet animates and the window can
+  // resize while it is open.
+  let lastBedFocusKey = '';
+  function syncBedFocusForSheets() {
+    let insets = null;
+    const sheet = cropPaletteOpen ? panelContainer?.querySelector('#crop-palette-panel') : null;
+    const canvas = scene.canvas;
+    if (sheet && canvas) {
+      const canvasRect = canvas.getBoundingClientRect();
+      insets = getSheetInsets(sheet.getBoundingClientRect(), canvasRect);
+      if (insets) {
+        // Keep the bed below whatever top HUD is still showing.
+        let hudBottom = 0;
+        for (const el of document.querySelectorAll('#hud .hud-left, #season-calendar, #phase-helper')) {
+          if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') continue;
+          const rect = el.getBoundingClientRect();
+          // Only HUD that spans the free area's width blocks it; side cards don't.
+          if (rect.width < canvasRect.width * 0.5 && insets.right) continue;
+          hudBottom = Math.max(hudBottom, rect.bottom - canvasRect.top);
+        }
+        insets.top = Math.max(0, Math.round(hudBottom));
+      }
+    }
+    const key = insets ? `${insets.top ?? 0}:${insets.right ?? 0}:${insets.bottom ?? 0}` : '';
+    if (key === lastBedFocusKey) return;
+    lastBedFocusKey = key;
+    scene.setBedFocusInsets?.(insets);
+    sessionLoop?.requestRender?.();
   }
 
   function closePalette() {
@@ -2255,6 +2296,7 @@ function bindUI({
       }
       interactionSystem.update(dt);
       syncInteractionPresentation();
+      syncBedFocusForSheets();
       dayNightController.sync();
       zoneManager?.update?.(dt, playerState);
     },
