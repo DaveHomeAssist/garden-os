@@ -28,6 +28,8 @@ export function createPauseController({
   isInterventionTargeting,
   isCropPaletteOpen,
   playSFX = () => {},
+  getArtQuality = () => null,
+  setArtQuality = () => null,
 }) {
   const pauseOverlay = document.getElementById('pause-menu');
   const pauseStatus = document.getElementById('pause-status');
@@ -80,6 +82,7 @@ export function createPauseController({
           : 'Save this run and return to the title screen.';
       }
       syncPauseThemeButton();
+      syncPauseGraphicsButton();
       pauseOverlay?.classList.add('is-open');
       setElementInteractive(pauseOverlay, true);
     } else {
@@ -93,6 +96,19 @@ export function createPauseController({
     pauseMenuOpen = false;
     pauseOverlay?.classList.remove('is-open');
     setElementInteractive(pauseOverlay, false);
+  }
+
+  const GRAPHICS_ORDER = ['auto', 'high', 'low'];
+  const GRAPHICS_LABEL = { auto: 'Auto', high: 'High', low: 'Low' };
+  function syncPauseGraphicsButton() {
+    const button = document.getElementById('pause-graphics');
+    if (!button) return;
+    const q = getArtQuality();
+    if (!q) { button.hidden = true; return; }
+    const title = button.querySelector('[data-pause-graphics-title]');
+    const label = q.choice === 'auto' ? `Auto (${GRAPHICS_LABEL[q.tier]})` : GRAPHICS_LABEL[q.choice];
+    if (title) title.textContent = `Graphics: ${label}`;
+    button.setAttribute('aria-label', `Graphics quality ${label}. Activate to change.`);
   }
 
   function syncPauseThemeButton() {
@@ -298,6 +314,16 @@ export function createPauseController({
 
   document.getElementById('pause-profile')?.addEventListener('click', () => {
     showProfileSheet();
+  }, listenerOptions);
+
+  document.getElementById('pause-graphics')?.addEventListener('click', () => {
+    playSFX('ui_click');
+    const q = getArtQuality();
+    if (!q) return;
+    const next = GRAPHICS_ORDER[(GRAPHICS_ORDER.indexOf(q.choice) + 1) % GRAPHICS_ORDER.length];
+    const applied = setArtQuality(next);
+    syncPauseGraphicsButton();
+    showToast(`Graphics: ${next === 'auto' ? `Auto (${GRAPHICS_LABEL[applied?.tier] ?? ''})` : GRAPHICS_LABEL[next]}.`, 1400);
   }, listenerOptions);
 
   document.getElementById('pause-theme')?.addEventListener('click', () => {

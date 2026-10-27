@@ -4818,6 +4818,12 @@
     .save-slot-card--occupied .save-slot-actions [data-action="delete"] { flex: 1 1 0; }
     .save-transfer-dialog__actions .save-slot-btn { flex: 0 1 auto; padding-inline: 20px; }
 
+    /* Yard art pass: the scene carries its own graded vignette, so the CSS
+       overlay only keeps a light edge for HUD contrast. */
+    body[data-art-quality] .vignette-overlay {
+      opacity: 0.5;
+    }
+
 /* Campaign recap (shown after the ending scene) */
 .campaign-recap { overflow-y: auto; }
 .campaign-recap__grid { display: grid; gap: 10px; margin: 18px 0 8px; width: min(560px, 100%); }

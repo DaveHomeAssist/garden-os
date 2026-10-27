@@ -2188,6 +2188,8 @@ function bindUI({
     isInterventionTargeting: () => !!interventionTargeting.isActive(),
     isCropPaletteOpen: () => cropPaletteOpen,
     playSFX: (id) => { if (audioInitialized) audioManager.playSFX(id); },
+    getArtQuality: () => scene.getArtQuality?.() ?? null,
+    setArtQuality: (choice) => scene.setArtQuality?.(choice) ?? null,
   });
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
