@@ -1,3 +1,4 @@
+import { FREEPLAY_SAVE_TARGET, isPersistentSaveTarget, isCampaignCompatibleWithTarget } from './save-target.js';
 /**
  * Save files: export Story Mode save slots to a portable, versioned JSON file
  * and import them back.
@@ -87,7 +88,7 @@ function pad2(value) {
 /** garden-os-save-YYYYMMDD.json, or garden-os-save-slot2-YYYYMMDD.json for one slot. */
 export function saveFileName(date = new Date(), { slot = null } = {}) {
   const stamp = `${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}`;
-  const slotPart = Number.isInteger(slot) ? `-slot${slot + 1}` : '';
+  const slotPart = slot === FREEPLAY_SAVE_TARGET ? '-freeplay' : Number.isInteger(slot) ? `-slot${slot + 1}` : '';
   return `garden-os-save${slotPart}-${stamp}.json`;
 }
 
@@ -99,7 +100,7 @@ export function buildSaveFile(records, { now = new Date(), touch = false } = {})
   const slots = (records ?? [])
     .filter((record) => record?.campaign && typeof record.campaign === 'object')
     .map((record) => ({
-      slot: Number.isInteger(record.slot) ? record.slot : null,
+      slot: isPersistentSaveTarget(record.slot) ? record.slot : null,
       campaign: prepareCampaignForSave(record.campaign, { touch }),
       season: record.season ? prepareSeasonForSave(record.season) : null,
     }));
@@ -126,9 +127,9 @@ export function stringifySaveFile(file) {
 
 /** Export the live, in-memory state of a running session (pause menu). */
 export function exportLiveState(state, slot, options = {}) {
-  // An unsaved Free Play session has no slot (slot < 0). Keep gardening after
-  // the campaign is Free Play on a real slot (postCampaign) and exports fine.
-  if (!state?.campaign || (state.campaign.sandbox && !state.campaign.postCampaign) || !Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOTS) {
+  // Dedicated Free Play has its own target; Keep gardening remains on the
+  // original Story slot. Both use the same checksummed portable format.
+  if (!isCampaignCompatibleWithTarget(state?.campaign, slot)) {
     return null;
   }
   // The live campaign is newer than anything stored, so stamp it as of now.
@@ -143,7 +144,7 @@ export function exportLiveState(state, slot, options = {}) {
 export async function exportStoredSlots({ slots = null, now = new Date(), loadSave = loadBestAvailableSave } = {}) {
   const wanted = Array.isArray(slots)
     ? slots
-    : Array.from({ length: SAVE_SLOTS }, (_entry, index) => index);
+    : [...Array.from({ length: SAVE_SLOTS }, (_entry, index) => index), FREEPLAY_SAVE_TARGET];
   const records = [];
   for (const slot of wanted) {
     // eslint-disable-next-line no-await-in-loop
@@ -187,13 +188,13 @@ function validateRecord(record, index) {
   if (!Number.isInteger(campaign.currentChapter) || campaign.currentChapter < 1) {
     return fail(`${label} has no valid chapter, so it can't be loaded.`, 'bad-chapter');
   }
-  if (campaign.sandbox === true && campaign.postCampaign !== true) {
+  if (!isCampaignCompatibleWithTarget(campaign, record.slot === FREEPLAY_SAVE_TARGET ? FREEPLAY_SAVE_TARGET : 0)) {
     return fail(`${label} is a Free Play session, which can't be imported into a save slot.`, 'sandbox');
   }
   if (season != null && (typeof season !== 'object' || Array.isArray(season))) {
     return fail(`${label} has damaged season data.`, 'bad-season');
   }
-  const sourceSlot = Number.isInteger(record.slot) && record.slot >= 0 && record.slot < SAVE_SLOTS
+  const sourceSlot = isPersistentSaveTarget(record.slot)
     ? record.slot
     : null;
   const migrated = {
@@ -248,8 +249,8 @@ export function parseSaveFile(input) {
     if (!Array.isArray(payload.slots) || payload.slots.length === 0) {
       return fail('This save file has no save slots in it.', 'no-slots');
     }
-    if (payload.slots.length > SAVE_SLOTS) {
-      return fail(`This save file lists more than ${SAVE_SLOTS} slots, so it can't be from Garden OS.`, 'too-many-slots');
+    if (payload.slots.length > SAVE_SLOTS + 1) {
+      return fail(`This save file lists more than ${SAVE_SLOTS + 1} save targets, so it can't be from Garden OS.`, 'too-many-slots');
     }
     const checksum = payload.checksum;
     if (!checksum || checksum.algorithm !== CHECKSUM_ALGORITHM || typeof checksum.value !== 'string') {
@@ -299,7 +300,11 @@ export async function describeSlotsForImportWithSnapshots({
   } catch {
     entries = loadLocal();
   }
-  return describeSlotsForImport(entries);
+  const free = await loadBestAvailableSave(FREEPLAY_SAVE_TARGET);
+  return [...describeSlotsForImport(entries), {
+    slot: FREEPLAY_SAVE_TARGET, isEmpty: !free.campaign, isCorrupt: false,
+    gardenerName: free.campaign ? normalizePlayerProfile(free.campaign.playerProfile).displayName : null,
+  }];
 }
 
 /** Slot occupancy for the import dialog (local storage view, same as the title screen). */

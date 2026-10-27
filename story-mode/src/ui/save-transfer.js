@@ -1,3 +1,4 @@
+import { FREEPLAY_SAVE_TARGET, isPersistentSaveTarget, isCampaignCompatibleWithTarget } from '../game/save-target.js';
 /**
  * Save file UI: download a save file, pick one to import, and the modal that
  * confirms which slot an import replaces. Shared by the title screen and the
@@ -205,6 +206,7 @@ export function showSaveFileError(message, { launcher = null, signal, doc = docu
 
 function slotLabel(slotInfo) {
   if (!slotInfo) return '';
+  if (slotInfo.slot === FREEPLAY_SAVE_TARGET) return `Free Play · ${slotInfo.isEmpty ? 'empty' : slotInfo.gardenerName ?? 'Gardener'}`;
   if (slotInfo.isCorrupt) return `Slot ${slotInfo.slot + 1} · unreadable save`;
   if (slotInfo.isEmpty) return `Slot ${slotInfo.slot + 1} · empty`;
   return `Slot ${slotInfo.slot + 1} · ${slotInfo.gardenerName ?? 'Gardener'}, Chapter ${slotInfo.chapter ?? '?'}`;
@@ -212,7 +214,7 @@ function slotLabel(slotInfo) {
 
 function recordLabel(record) {
   const { summary } = record;
-  const from = record.sourceSlot != null ? `Slot ${record.sourceSlot + 1}: ` : '';
+  const from = record.sourceSlot === FREEPLAY_SAVE_TARGET ? 'Free Play: ' : record.sourceSlot != null ? `Slot ${record.sourceSlot + 1}: ` : '';
   return `${from}${summary.gardenerName}, Chapter ${summary.chapter} (${SEASON_LABEL[summary.season] ?? summary.season}) · last played ${formatDate(summary.updatedAt)}`;
 }
 
@@ -230,12 +232,16 @@ export function openImportDialog(parsed, {
 } = {}) {
   return new Promise((resolve) => {
     const records = parsed.records;
+    if (!slots.some(info => info.slot === FREEPLAY_SAVE_TARGET)) {
+      slots = [...slots, { slot: FREEPLAY_SAVE_TARGET, isEmpty: true }];
+    }
     let recordIndex = 0;
     const defaultTarget = () => {
-      if (Number.isInteger(fixedSlot)) return fixedSlot;
+      if (isPersistentSaveTarget(fixedSlot)) return fixedSlot;
       const source = records[recordIndex].sourceSlot;
+      if (source === FREEPLAY_SAVE_TARGET) return FREEPLAY_SAVE_TARGET;
       if (source != null && slots[source]?.isEmpty) return source;
-      return slots.find((info) => info.isEmpty)?.slot ?? source ?? 0;
+      return slots.find((info) => info.isEmpty && isCampaignCompatibleWithTarget(records[recordIndex].campaign, info.slot))?.slot ?? source ?? 0;
     };
     let target = defaultTarget();
 
@@ -259,7 +265,7 @@ export function openImportDialog(parsed, {
                 </label>`).join('')}
             </fieldset>`
           : `<p class="save-transfer-dialog__summary">${escapeHtml(recordLabel(records[0]))}</p>`;
-        const targetChoices = Number.isInteger(fixedSlot)
+        const targetChoices = isPersistentSaveTarget(fixedSlot)
           ? ''
           : `<fieldset class="save-transfer-dialog__group">
               <legend>Import into</legend>
@@ -285,30 +291,38 @@ export function openImportDialog(parsed, {
         function sync() {
           const info = slots.find((entry) => entry.slot === target);
           const occupied = info && !info.isEmpty;
-          confirmBtn.textContent = occupied ? `Replace Slot ${target + 1}` : `Import to Slot ${target + 1}`;
+          const compatible = isCampaignCompatibleWithTarget(records[recordIndex].campaign, target);
+          const targetLabel = target === FREEPLAY_SAVE_TARGET ? 'Free Play' : `Slot ${target + 1}`;
+          confirmBtn.textContent = occupied ? `Replace ${targetLabel}` : `Import to ${targetLabel}`;
+          confirmBtn.disabled = !compatible;
+          body.querySelectorAll('input[name="save-transfer-target"]').forEach(radio => {
+            const value = radio.value === FREEPLAY_SAVE_TARGET ? FREEPLAY_SAVE_TARGET : Number(radio.value);
+            radio.closest('label').hidden = !isCampaignCompatibleWithTarget(records[recordIndex].campaign, value);
+            radio.disabled = radio.closest('label').hidden;
+          });
           confirmBtn.classList.toggle('save-slot-btn--danger', Boolean(occupied));
           confirmBtn.classList.toggle('save-slot-btn--primary', !occupied);
-          warning.textContent = occupied
+          warning.textContent = !compatible ? 'Story saves and Free Play worlds cannot replace each other.' : occupied
             ? `${slotLabel(info)} will be overwritten. That progress is lost unless you exported it first.`
             : '';
         }
         body.addEventListener('change', (event) => {
           if (event.target.name === 'save-transfer-record') {
             recordIndex = Number(event.target.value);
-            if (!Number.isInteger(fixedSlot)) {
+            if (!isPersistentSaveTarget(fixedSlot)) {
               target = defaultTarget();
               const radio = body.querySelector(`input[name="save-transfer-target"][value="${target}"]`);
               if (radio) radio.checked = true;
             }
           }
           if (event.target.name === 'save-transfer-target') {
-            target = Number(event.target.value);
+            target = event.target.value === FREEPLAY_SAVE_TARGET ? FREEPLAY_SAVE_TARGET : Number(event.target.value);
           }
           sync();
         }, opts);
         body.querySelector('[data-role="cancel"]').addEventListener('click', () => close(null), opts);
-        confirmBtn.addEventListener('click', () => close({ record: records[recordIndex], slot: target }), opts);
-        if (Number.isInteger(fixedSlot) && records.length <= 1) confirmBtn.setAttribute('data-autofocus', '');
+        confirmBtn.addEventListener('click', () => { if (isCampaignCompatibleWithTarget(records[recordIndex].campaign, target)) close({ record: records[recordIndex], slot: target }); }, opts);
+        if (isPersistentSaveTarget(fixedSlot) && records.length <= 1) confirmBtn.setAttribute('data-autofocus', '');
         sync();
       },
     });

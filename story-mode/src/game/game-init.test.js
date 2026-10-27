@@ -2,9 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Actions } from './store.js';
-import { createGameState } from './state.js';
+import { createGameState, createSandboxState } from './state.js';
 import { initGame, LOCKED_MODE_COPY, showTitleScreen } from './game-init.js';
-import { loadAuthoritySnapshotSave } from './save.js';
+import { loadAuthoritySnapshotSave, saveCampaign, saveSeasonState } from './save.js';
 
 const localStorageMock = (() => {
   let store = {};
@@ -147,6 +147,24 @@ afterEach(() => {
 });
 
 describe('game-init title screen', () => {
+  it('resumes a saved Free Play bed without taking a Story slot', async () => {
+    const state = createSandboxState();
+    state.season.grid[0].cropId = 'basil';
+    state.campaign.currency.balance = 217;
+    saveCampaign(state.campaign, 'freeplay');
+    saveSeasonState(state.season, 'freeplay');
+    const onStart = vi.fn();
+    showTitleScreen(onStart);
+    expect(document.querySelector('.freeplay-start-btn').textContent).toBe('Continue Free Play');
+    document.querySelector('[data-mode="freeplay"]').click();
+    document.querySelector('.freeplay-start-btn').click();
+    await vi.runAllTimersAsync();
+    const resumed = onStart.mock.calls[0][0];
+    expect(resumed.slot).toBe('freeplay');
+    expect(resumed.initialState.season.grid).toHaveLength(32);
+    expect(resumed.initialState.season.grid[0].cropId).toBe('basil');
+    expect(resumed.initialState.campaign.currency.balance).toBe(217);
+  });
   it('switches between story and free play without duplicating the free-play start button', () => {
     const onStart = vi.fn();
 
@@ -171,7 +189,7 @@ describe('game-init title screen', () => {
 
     expect(story.tagName).toBe('BUTTON');
     expect(story.getAttribute('aria-pressed')).toBe('true');
-    expect(freeplay.textContent).toMatch(/session only.*not saved/i);
+    expect(freeplay.textContent).toMatch(/saved independently.*resume/i);
     expect(planner.textContent).toMatch(/session only.*main Planner/i);
     expect(locked.getAttribute('aria-disabled')).toBe('true');
 
@@ -220,7 +238,7 @@ describe('game-init title screen', () => {
 
     expect(onStart).toHaveBeenCalledWith(
       expect.objectContaining({
-        slot: -1,
+        slot: 'freeplay',
         sandbox: true,
         initialState: expect.objectContaining({
           campaign: expect.objectContaining({

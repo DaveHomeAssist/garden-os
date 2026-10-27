@@ -1,7 +1,9 @@
+import { FREEPLAY_SAVE_TARGET } from './save-target.js';
 import { createGameState, createSandboxState, createSeasonState, createPlannerState } from './state.js';
 import { Store } from './store.js';
 import {
   deleteCampaign,
+  hasSaveTarget,
   listSaves,
   listSavesWithAuthoritySnapshots,
   loadBestAvailableSave,
@@ -66,7 +68,7 @@ function escapeHtml(value) {
 }
 
 function createInitialState(slot, savedCampaign, savedSeason = undefined, options = {}) {
-  const initialState = createGameState();
+  const initialState = savedCampaign?.sandbox ? createSandboxState() : createGameState();
 
   if (!savedCampaign) {
     initialState.campaign.playerProfile = normalizePlayerProfile(options.playerProfile);
@@ -78,12 +80,19 @@ function createInitialState(slot, savedCampaign, savedSeason = undefined, option
 
   if (savedSeasonState) {
     Object.assign(initialState.season, savedSeasonState);
+    if (!Array.isArray(savedSeasonState.grid) && Array.isArray(savedSeasonState.grid?.cells)) {
+      initialState.season.grid = savedSeasonState.grid.cells;
+      initialState.season.gridCols = savedSeasonState.grid.cols;
+      initialState.season.gridRows = savedSeasonState.grid.rows;
+    }
     initialState.season.campaign = initialState.campaign;
   } else {
     initialState.season = createSeasonState(
       initialState.campaign.currentChapter,
       initialState.campaign.currentSeason ?? 'spring',
       initialState.campaign,
+      initialState.season.gridCols,
+      initialState.season.gridRows,
     );
   }
 
@@ -247,7 +256,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
       </button>
       <button type="button" class="mode-card mode-card--selectable" data-mode="freeplay" aria-pressed="false">
         <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">🌿</span><span>Free Play</span></span>
-        <span class="mode-desc">Session only · progress is not saved after refresh</span>
+        <span class="mode-desc">Saved independently · resume after refresh</span>
       </button>
       <button type="button" class="mode-card mode-card--selectable" data-mode="planner" aria-pressed="false">
         <span class="mode-card__lead"><span class="mode-icon" aria-hidden="true">📐</span><span>Planner</span></span>
@@ -274,7 +283,7 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     let selectedMode = 'story';
     const modeCopy = {
       story: 'Story Mode uses three persistent save slots.',
-      freeplay: 'Free Play is session only. Progress is discarded when this page refreshes.',
+      freeplay: 'Free Play saves its own world separately from your Story slots.',
       planner: 'Story Planner is session only. Use the main Garden OS Planner to save beds.',
     };
 
@@ -339,14 +348,20 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     const freeplayBtn = document.createElement('button');
     freeplayBtn.type = 'button';
     freeplayBtn.className = 'save-slot-btn save-slot-btn--primary freeplay-start-btn';
-    freeplayBtn.textContent = 'Start Unsaved Free Play';
+    freeplayBtn.textContent = hasSaveTarget(FREEPLAY_SAVE_TARGET) ? 'Continue Free Play' : 'Start Free Play';
     freeplayBtn.style.display = 'none';
-    freeplayBtn.addEventListener('click', () => {
+    freeplayBtn.addEventListener('click', async () => {
+      freeplayBtn.disabled = true;
+      await waitForSessionFlush();
+      const restored = await loadBestAvailableSave(FREEPLAY_SAVE_TARGET);
+      const initialState = restored.campaign
+        ? createInitialState(FREEPLAY_SAVE_TARGET, restored.campaign, restored.season)
+        : createSandboxState();
       dismissTitleScreen(titleScreen, () => {
         onStart({
-          slot: -1,
+          slot: FREEPLAY_SAVE_TARGET,
           viewport: document.getElementById('viewport'),
-          initialState: createSandboxState(),
+          initialState,
           sandbox: true,
         });
       });
@@ -546,6 +561,11 @@ function initGame(initialState, { slot }) {
     : subscribeToStoreSaves(store, () => slot, {
       shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
     });
+
+  if (!authorityPersistence.available) {
+    saveCampaign(initialState.campaign, slot);
+    saveSeasonState(initialState.season, slot);
+  }
 
   function persistGameState(state = store.getState()) {
     if (authorityPersistence.available) {
