@@ -17,6 +17,7 @@ import {
 } from '../engine/authority-cache.js';
 import { normalizePlayerProfile } from '../data/player-profile.js';
 import { normalizeQuestLedger } from './quest-ledger.js';
+import { normalizeVillageState } from './village/village-state.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -71,6 +72,8 @@ function normalizeCampaignSave(parsed) {
       ? [...parsed.biomeCropsUnlocked]
       : [],
     gameMode: parsed.gameMode ?? 'story',
+    // v9 -> v10: saves from before the village spawn at the village spawn point.
+    village: normalizeVillageState(parsed.village),
   };
 }
 
@@ -206,6 +209,7 @@ export function prepareCampaignForSave(campaign, { touch = true } = {}) {
       ? [...campaign.biomeCropsUnlocked]
       : [],
     gameMode: campaign.gameMode ?? 'story',
+    village: normalizeVillageState(campaign.village),
     updatedAt: touch ? new Date().toISOString() : (campaign.updatedAt ?? new Date().toISOString()),
   };
 }
