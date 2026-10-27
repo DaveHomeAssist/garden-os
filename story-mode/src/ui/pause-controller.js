@@ -1,3 +1,4 @@
+import { FREEPLAY_SAVE_TARGET, isPersistentSaveTarget } from '../game/save-target.js';
 import { Actions } from '../game/store.js';
 import { getPhaseLabel } from '../game/phase-machine.js';
 import { createSeasonState } from '../game/state.js';
@@ -41,6 +42,10 @@ export function createPauseController({
   const bugCancel = document.getElementById('bug-cancel');
   const hudScore = document.getElementById('hud-score');
 
+  const isFreePlay = slot === FREEPLAY_SAVE_TARGET;
+  const restartTitle = document.querySelector('#pause-restart .pause-action__title');
+  if (restartTitle) restartTitle.textContent = isFreePlay ? 'Restart Season' : 'Restart Chapter';
+  const targetDescription = slot === FREEPLAY_SAVE_TARGET ? 'Free Play world' : 'save slot';
   let pauseMenuOpen = false;
 
   // Everything below binds to static index.html elements that outlive this
@@ -67,7 +72,7 @@ export function createPauseController({
         // different things: Keep gardening after the campaign is Free Play on
         // a real, saved slot.
         pauseStatus.textContent = state.campaign?.sandbox
-          ? `Free Play · ${slot < 0 ? 'session only, not saved' : `saved in slot ${slot + 1}`} · ${getPhaseLabel(state.season.phase)}`
+          ? `Free Play · ${slot === FREEPLAY_SAVE_TARGET ? 'saved independently' : slot < 0 ? 'session only, not saved' : `saved in slot ${slot + 1}`} · ${getPhaseLabel(state.season.phase)}`
           : `Chapter ${state.campaign.currentChapter} · ${getPhaseLabel(state.season.phase)}`;
       }
       const mainMenuCopy = document.querySelector('#pause-main-menu .pause-action__copy');
@@ -136,7 +141,7 @@ export function createPauseController({
       <div class="palette-header read-only-sheet__header">
         <div>
           <div class="palette-title">Gardener Profile</div>
-          <div class="read-only-sheet__subtitle">${slot < 0 ? 'Session only · changes are not saved' : 'Saved with this campaign slot'}</div>
+          <div class="read-only-sheet__subtitle">${slot < 0 ? 'Session only · changes are not saved' : `Saved with this ${targetDescription}`}</div>
         </div>
         <button type="button" class="palette-dismiss read-only-sheet__close" data-close="true" aria-label="Close gardener profile">&times;</button>
       </div>
@@ -154,7 +159,7 @@ export function createPauseController({
       title: 'Edit Gardener',
       subtitle: slot < 0
         ? 'These choices last for this Free Play session only.'
-        : 'These choices update the in-scene character and future save slot label.',
+        : `These choices update the in-scene character and this ${targetDescription}.`,
       submitLabel: 'Save Profile',
       cancelLabel: 'Close',
       onSubmit(profile) {
@@ -246,7 +251,7 @@ export function createPauseController({
     playSFX('ui_click');
     persistState();
     const state = getState();
-    if (slot < 0) {
+    if (!isPersistentSaveTarget(slot)) {
       showToast('Free Play is not saved, so there is nothing to export.', 2400);
       return;
     }
@@ -260,7 +265,7 @@ export function createPauseController({
   }, listenerOptions);
 
   document.getElementById('pause-import')?.addEventListener('click', async (event) => {
-    if (slot < 0) {
+    if (!isPersistentSaveTarget(slot)) {
       showToast('Free Play has no save slot to import into.', 2400);
       return;
     }
@@ -285,18 +290,18 @@ export function createPauseController({
   }, listenerOptions);
 
   document.getElementById('pause-restart')?.addEventListener('click', () => {
-    if (!confirm('Restart this chapter? Your current grid progress will be lost.')) return;
+    if (!confirm(isFreePlay ? 'Restart this Free Play season? Your current grid progress will be lost.' : 'Restart this chapter? Your current grid progress will be lost.')) return;
     const state = getState();
     dispatch({
       type: Actions.RESET_SEASON,
       payload: {
-        season: createSeasonState(state.campaign.currentChapter, state.season.season, state.campaign),
+        season: createSeasonState(state.campaign.currentChapter, state.season.season, state.campaign, state.season.gridCols, state.season.gridRows),
         selectedCropId: null,
       },
     });
     closePauseMenu();
     updateHUD();
-    showToast('Chapter restarted.', 1800);
+    showToast(isFreePlay ? 'Free Play season restarted.' : 'Chapter restarted.', 1800);
   }, listenerOptions);
 
   document.getElementById('pause-main-menu')?.addEventListener('click', () => {
@@ -336,7 +341,7 @@ export function createPauseController({
   }, listenerOptions);
 
   document.getElementById('pause-new')?.addEventListener('click', () => {
-    if (!confirm('Delete this save slot and return to the title screen? This cannot be undone. Tip: use Export Save Backup first if you want a copy.')) return;
+    if (!confirm(`Delete this ${targetDescription} and return to the title screen? This cannot be undone. Export a save first if you want a copy.`)) return;
     deleteCampaign(slot);
     closePauseMenu();
     stopLoop();

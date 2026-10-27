@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createDialoguePanel } from './dialogue-panel.js';
 
 // jsdom swaps in its own URL class, so resolve the stylesheet by path.
-const themeCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../assets/css/theme.css'), 'utf8');
+// Git may check the stylesheet out with CRLF on Windows. Assert CSS content,
+// not the host's line-ending convention.
+const themeCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../assets/css/theme.css'), 'utf8').replace(/\r\n/g, '\n');
 
 function mount() {
   document.head.innerHTML = `<style>${themeCss}</style>`;

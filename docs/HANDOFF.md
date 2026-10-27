@@ -3,7 +3,7 @@ Status: Active
 Document Version: 1.3
 Compatible With: Garden OS v5, Story Mode v1, Schema v3, Season Engine v4 (legacy)
 Owner: Dave Robertson
-Last Updated: 2026-10-13
+Last Updated: 2026-10-27
 Artifact Class: Ref
 ---
 
@@ -13,6 +13,20 @@ Artifact Class: Ref
 > **Live:** [davehomeassist.github.io/garden-os/](https://davehomeassist.github.io/garden-os/)
 
 ---
+
+## Local integration — 2026-10-27
+
+Title-screen Free Play now persists under the `freeplay` save target, separate
+from Story slots 0–2. It uses the existing authority journal and localStorage
+fallback. Post-campaign **Keep gardening** stays in its original Story slot.
+The current version 2 checksummed save files, migration, import confirmation,
+live-state export and atomic storage rollback remain in use. Title exports
+can include the three Story slots and the independent Free Play world. Imports
+cannot cross between those modes; preserved version 1 Free Play backups can be
+imported into the independent world. Planner remains session-only.
+
+Browser regression: `story-mode/tests/freeplay-save-e2e.mjs` against a local
+Vite server; set `GOS_URL` and `GOS_OUT` to override the URL/output directory.
 
 ## What This Is
 

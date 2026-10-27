@@ -126,7 +126,7 @@ async function waitForWorldMapClosed(page) {
 async function readSavedCampaign(page) {
   return page.evaluate(async () => {
     async function readAuthorityCampaign() {
-      const sessionId = localStorage.getItem('gos-story-authority-session-0');
+      const sessionId = localStorage.getItem('gos-story-authority-session-freeplay');
       if (!sessionId || !indexedDB?.open) return null;
       if (typeof indexedDB.databases === 'function') {
         const databases = await indexedDB.databases();
@@ -156,7 +156,7 @@ async function readSavedCampaign(page) {
     const authorityCampaign = await readAuthorityCampaign().catch(() => null);
     if (authorityCampaign) return authorityCampaign;
 
-    return JSON.parse(localStorage.getItem('gos-story-slot-0-campaign') ?? '{}');
+    return JSON.parse(localStorage.getItem('gos-freeplay-campaign') ?? '{}');
   });
 }
 
@@ -219,13 +219,14 @@ try {
     }
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
-    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(campaign));
+    localStorage.setItem('gos-freeplay-campaign', JSON.stringify(campaign));
     localStorage.setItem('gos-live-smoke-seeded', '1');
   }, seededCampaign());
 
   await page.goto(LIVE_URL, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
-  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.locator('[data-mode="freeplay"]').click();
+  await page.getByRole('button', { name: 'Continue Free Play', exact: true }).click();
   await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
   await waitForRenderedZone(page, 'player_plot');
 
@@ -249,7 +250,8 @@ try {
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
-  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.locator('[data-mode="freeplay"]').click();
+  await page.getByRole('button', { name: 'Continue Free Play', exact: true }).click();
   await page.waitForFunction(() => window.gardenOS?.render_game_to_text, null, { timeout: 60000 });
   await waitForRenderedZone(page, 'meadow');
 

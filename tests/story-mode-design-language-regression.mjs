@@ -513,13 +513,14 @@ try {
     globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER = true;
     localStorage.clear();
     localStorage.setItem('gos-story-active-slot', '0');
-    localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify(save.campaign));
-    localStorage.setItem('gos-story-slot-0-season', JSON.stringify(save.season));
+    localStorage.setItem('gos-freeplay-campaign', JSON.stringify(save.campaign));
+    localStorage.setItem('gos-freeplay-season', JSON.stringify(save.season));
   }, seed);
 
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
-  await page.locator('[data-action="continue"][data-slot="0"]').click();
+  await page.locator('[data-mode="freeplay"]').click();
+  await page.getByRole('button', { name: 'Continue Free Play', exact: true }).click();
   await page.waitForFunction(() => document.body.dataset.storyScreen === 'play', null, { timeout: 120000 });
   await waitForCanvasPaint(page);
   await page.waitForFunction(() => {
