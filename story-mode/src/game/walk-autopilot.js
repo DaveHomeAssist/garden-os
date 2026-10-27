@@ -17,10 +17,42 @@ const STALL_TIMEOUT_SECONDS = 1.2;
  * straight-line autopilot can then actually arrive instead of grinding
  * against the wall until the stall timeout fires.
  */
+/**
+ * Oriented blocker (`rotationY` set, see simulation-core): same nearest-edge
+ * push, done in the rect's local frame and rotated back.
+ */
+function pushOutOfOrientedBlocker(x, z, blocker, clearance) {
+  const cx = (blocker.minX + blocker.maxX) / 2;
+  const cz = (blocker.minZ + blocker.maxZ) / 2;
+  const cos = Math.cos(blocker.rotationY);
+  const sin = Math.sin(blocker.rotationY);
+  const dx = x - cx;
+  const dz = z - cz;
+  let lx = (dx * cos) - (dz * sin);
+  let lz = (dx * sin) + (dz * cos);
+  const halfW = (blocker.maxX - blocker.minX) / 2 + clearance;
+  const halfD = (blocker.maxZ - blocker.minZ) / 2 + clearance;
+  if (lx <= -halfW || lx >= halfW || lz <= -halfD || lz >= halfD) return { x, z };
+  const pushLeft = lx + halfW;
+  const pushRight = halfW - lx;
+  const pushBack = lz + halfD;
+  const pushFront = halfD - lz;
+  const smallest = Math.min(pushLeft, pushRight, pushBack, pushFront);
+  if (smallest === pushLeft) lx = -halfW;
+  else if (smallest === pushRight) lx = halfW;
+  else if (smallest === pushBack) lz = -halfD;
+  else lz = halfD;
+  return { x: cx + (lx * cos) + (lz * sin), z: cz - (lx * sin) + (lz * cos) };
+}
+
 export function nearestPointOutsideBlockers(x, z, blockers = [], clearance = 0.25) {
   let px = x;
   let pz = z;
   for (const blocker of blockers) {
+    if (blocker.rotationY) {
+      ({ x: px, z: pz } = pushOutOfOrientedBlocker(px, pz, blocker, clearance));
+      continue;
+    }
     const minX = blocker.minX - clearance;
     const maxX = blocker.maxX + clearance;
     const minZ = blocker.minZ - clearance;

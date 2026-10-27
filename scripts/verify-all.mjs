@@ -154,6 +154,9 @@ async function runLocalVerification() {
     env: browserEnv({ GOS_SCREENSHOT_OUTPUT_DIR: screenshotOutputDir }),
   });
   await runStep('Story Mode marketing screenshot budget', nodeBin, ['scripts/verify-story-mode-marketing-shots.mjs', screenshotOutputDir]);
+  await runStep('Village V0 phone budget gate (low tier, <150 draw calls, <150k tris)', nodeBin, [
+    'story-mode/scripts/art/capture-village.mjs', join(screenshotOutputDir, 'village'), 'ci', '--quality=low', '--only=phone', '--gate',
+  ], { env: browserEnv() });
 
   const nodeRegressionScripts = [
     ['V5 nav copy regression', ['tests/v5-nav-copy-regression.mjs']],

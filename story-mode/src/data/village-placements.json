@@ -1,0 +1,796 @@
+{
+ "version": 1,
+ "units": "metres; three.js axes (+x right, +z toward default camera, y up); rotation = rotationY radians, local +Z faces the street",
+ "zoneId": "village",
+ "bounds": {
+  "minX": -50,
+  "maxX": 41,
+  "minZ": -29,
+  "maxZ": 41
+ },
+ "seed": 20261027,
+ "lot": {
+  "w": 10,
+  "d": 10,
+  "note": "every plot (home and np_1..np_6) holds the 8x8 max bed plus a 1 m border"
+ },
+ "credits": [
+  "© OpenStreetMap contributors (ODbL)"
+ ],
+ "entries": [
+  {
+   "id": "street_a",
+   "kind": "path",
+   "asset": "road_asphalt",
+   "displayName": "Hollyhock Avenue",
+   "points": [
+    [
+     24.71,
+     5.55
+    ],
+    [
+     21.64,
+     2.41
+    ],
+    [
+     19.72,
+     0.48
+    ],
+    [
+     16.66,
+     -1.24
+    ],
+    [
+     13.62,
+     -2.28
+    ],
+    [
+     11.08,
+     -2.68
+    ],
+    [
+     7.36,
+     -2.63
+    ],
+    [
+     5.09,
+     -2.11
+    ],
+    [
+     3.25,
+     -1.5
+    ],
+    [
+     1.44,
+     -0.8
+    ],
+    [
+     0.5,
+     -0.28
+    ],
+    [
+     -11.96,
+     6.6
+    ],
+    [
+     -16.67,
+     9.09
+    ],
+    [
+     -39.86,
+     20.68
+    ]
+   ],
+   "width": 6.0,
+   "sidewalkWidth": 1.5,
+   "collides": false,
+   "x": 0.0,
+   "z": 0.0,
+   "rotation": 0.0,
+   "footprint": null,
+   "trigger": null
+  },
+  {
+   "id": "street_b",
+   "kind": "path",
+   "asset": "road_asphalt",
+   "displayName": "Bramble Lane",
+   "points": [
+    [
+     -18.08,
+     -5.99
+    ],
+    [
+     -11.96,
+     6.6
+    ],
+    [
+     -5.27,
+     18.9
+    ]
+   ],
+   "width": 5.0,
+   "sidewalkWidth": 1.5,
+   "collides": false,
+   "x": -11.96,
+   "z": 6.6,
+   "rotation": 0.0,
+   "footprint": null,
+   "trigger": null
+  },
+  {
+   "id": "street_c",
+   "kind": "path",
+   "asset": "road_asphalt",
+   "displayName": "Clover Street",
+   "points": [
+    [
+     37.18,
+     -0.82
+    ],
+    [
+     24.71,
+     5.55
+    ],
+    [
+     12.24,
+     11.92
+    ]
+   ],
+   "width": 5.0,
+   "sidewalkWidth": 1.5,
+   "collides": false,
+   "x": 24.71,
+   "z": 5.55,
+   "rotation": 0.0,
+   "footprint": null,
+   "trigger": null
+  },
+  {
+   "id": "street_d",
+   "kind": "path",
+   "asset": "road_asphalt",
+   "displayName": "Creekside Way",
+   "points": [
+    [
+     -46.12,
+     8.16
+    ],
+    [
+     -39.86,
+     20.68
+    ],
+    [
+     -33.55,
+     33.18
+    ]
+   ],
+   "width": 5.0,
+   "sidewalkWidth": 1.5,
+   "collides": false,
+   "x": -39.86,
+   "z": 20.68,
+   "rotation": 0.0,
+   "footprint": null,
+   "trigger": null
+  },
+  {
+   "id": "np_6",
+   "plotId": "np_6",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": 24.5,
+   "z": -8.3,
+   "rotation": -0.5121,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": 21.44,
+    "z": -2.85,
+    "facingY": -0.5121
+   }
+  },
+  {
+   "id": "house_np_6",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": 28.91,
+   "z": -16.15,
+   "rotation": -0.5121,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_6",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": 17.09,
+   "z": -6.59,
+   "rotation": -0.3296,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "np_5",
+   "plotId": "np_5",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": 9.5,
+   "z": -12.66,
+   "rotation": 0.0134,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": 9.58,
+    "z": -6.41,
+    "facingY": 0.0134
+   }
+  },
+  {
+   "id": "house_np_5",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": 9.38,
+   "z": -21.66,
+   "rotation": 0.0134,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_5",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": 3.37,
+   "z": -7.02,
+   "rotation": 0.3201,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "np_4",
+   "plotId": "np_4",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": -5.24,
+   "z": -8.53,
+   "rotation": 0.5045,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": -2.22,
+    "z": -3.06,
+    "facingY": 0.5045
+   }
+  },
+  {
+   "id": "house_np_4",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": -9.59,
+   "z": -16.41,
+   "rotation": 0.5045,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_4",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": -7.04,
+   "z": -2.06,
+   "rotation": 0.5045,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "np_3",
+   "plotId": "np_3",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": 1.1,
+   "z": 10.81,
+   "rotation": -2.6371,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": -1.92,
+    "z": 5.34,
+    "facingY": -2.6371
+   }
+  },
+  {
+   "id": "house_np_3",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": 5.45,
+   "z": 18.69,
+   "rotation": -2.6371,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_3",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": -5.34,
+   "z": 8.88,
+   "rotation": -2.6371,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "plot_home",
+   "plotId": "home",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": -15.67,
+   "z": 19.77,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "enter_plot",
+    "radius": 1.8,
+    "prompt": "Your garden: tend your bed"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "exit": {
+    "x": -18.46,
+    "z": 14.18,
+    "facingY": -2.6781
+   }
+  },
+  {
+   "id": "house_home",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": -11.64,
+   "z": 27.82,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "tool_shed",
+   "kind": "building",
+   "asset": "shed_graybox",
+   "x": -4.82,
+   "z": 25.68,
+   "rotation": -2.6553,
+   "footprint": {
+    "w": 2.4,
+    "d": 2.0
+   },
+   "collides": true,
+   "trigger": {
+    "type": "open_tools",
+    "radius": 1.4,
+    "prompt": "Tool shed: swap and upgrade tools"
+   }
+  },
+  {
+   "id": "seed_box",
+   "kind": "prop",
+   "asset": "seed_box_graybox",
+   "x": -13.64,
+   "z": 13.71,
+   "rotation": -2.6553,
+   "footprint": {
+    "w": 0.9,
+    "d": 0.6
+   },
+   "collides": true,
+   "trigger": {
+    "type": "open_seeds",
+    "radius": 1.2,
+    "prompt": "Seed box: check your seeds"
+   }
+  },
+  {
+   "id": "prop_wheelbarrow",
+   "kind": "prop",
+   "asset": "props_set1.glb#wheelbarrow",
+   "x": -17.82,
+   "z": 25.09,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 0.708,
+    "d": 1.617,
+    "offsetX": 0.0,
+    "offsetZ": -0.079,
+    "source": "bbox"
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "prop_rain_barrel",
+   "kind": "prop",
+   "asset": "props_set1.glb#rain_barrel",
+   "x": -9.34,
+   "z": 21.62,
+   "rotation": -2.6553,
+   "footprint": {
+    "w": 0.55,
+    "d": 0.615,
+    "offsetX": 0.0,
+    "offsetZ": 0.033,
+    "source": "bbox"
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "prop_garden_bench",
+   "kind": "prop",
+   "asset": "props_set1.glb#garden_bench",
+   "x": -21.21,
+   "z": 18.74,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 1.3,
+    "d": 0.545,
+    "offsetX": 0.0,
+    "offsetZ": -0.042,
+    "source": "bbox"
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "prop_birdhouse",
+   "kind": "prop",
+   "asset": "props_set1.glb#birdhouse",
+   "x": -12.66,
+   "z": 15.34,
+   "rotation": -2.6553,
+   "footprint": {
+    "w": 0.3,
+    "d": 0.285,
+    "offsetX": 0.0,
+    "offsetZ": 0.018,
+    "source": "bbox"
+   },
+   "collides": false,
+   "trigger": null
+  },
+  {
+   "id": "sign_plot_home",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": -22.02,
+   "z": 17.58,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "shop_stand",
+   "kind": "building",
+   "asset": "market_stand_graybox",
+   "x": -23.22,
+   "z": 5.1,
+   "rotation": 0.4635,
+   "footprint": {
+    "w": 3.0,
+    "d": 2.0
+   },
+   "collides": true,
+   "trigger": {
+    "type": "open_shop",
+    "radius": 1.4,
+    "prompt": "Seed stand: buy seeds",
+    "target": "seeds"
+   }
+  },
+  {
+   "id": "shop_building",
+   "kind": "building",
+   "asset": "shop_graybox",
+   "x": -28.81,
+   "z": -6.08,
+   "rotation": 0.4635,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "np_1",
+   "plotId": "np_1",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": -25.15,
+   "z": 24.51,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": -27.94,
+    "z": 18.92,
+    "facingY": -2.6781
+   }
+  },
+  {
+   "id": "house_np_1",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": -21.13,
+   "z": 32.56,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_1",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": -31.5,
+   "z": 22.32,
+   "rotation": -2.6781,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "np_2",
+   "plotId": "np_2",
+   "kind": "plot",
+   "asset": "lot_graybox",
+   "x": -34.27,
+   "z": 6.71,
+   "rotation": 0.4635,
+   "footprint": {
+    "w": 10.0,
+    "d": 10.0
+   },
+   "collides": false,
+   "trigger": {
+    "type": "neighbour_plot_reserved",
+    "radius": 1.6,
+    "prompt": "Empty plot: neighbours coming soon"
+   },
+   "anchors": {
+    "nameSign": "front-left"
+   },
+   "triBudget": 8000,
+   "exit": {
+    "x": -31.48,
+    "z": 12.3,
+    "facingY": 0.4635
+   }
+  },
+  {
+   "id": "house_np_2",
+   "kind": "building",
+   "asset": "house_graybox",
+   "x": -38.29,
+   "z": -1.34,
+   "rotation": 0.4635,
+   "footprint": {
+    "w": 8.0,
+    "d": 7.0
+   },
+   "collides": true,
+   "trigger": null
+  },
+  {
+   "id": "sign_np_2",
+   "kind": "prop",
+   "asset": "plot_sign_blank",
+   "x": -36.33,
+   "z": 13.1,
+   "rotation": 0.4635,
+   "footprint": {
+    "w": 0.5,
+    "d": 0.1
+   },
+   "collides": false,
+   "trigger": null,
+   "labels": []
+  },
+  {
+   "id": "compost_bin",
+   "kind": "prop",
+   "asset": "compost_bin_graybox",
+   "x": 25.78,
+   "z": 10.94,
+   "rotation": 0.0,
+   "footprint": {
+    "w": 1.6,
+    "d": 1.2
+   },
+   "collides": true,
+   "trigger": {
+    "type": "open_compost",
+    "radius": 1.4,
+    "prompt": "Compost bin: add scraps / take compost"
+   }
+  },
+  {
+   "id": "sign_street_b",
+   "kind": "prop",
+   "asset": "street_sign",
+   "x": -10.5,
+   "z": -0.76,
+   "rotation": 0.0,
+   "footprint": {
+    "w": 0.2,
+    "d": 0.2
+   },
+   "collides": true,
+   "trigger": null,
+   "labels": [
+    "street_a",
+    "street_b"
+   ]
+  },
+  {
+   "id": "sign_street_c",
+   "kind": "prop",
+   "asset": "street_sign",
+   "x": 27.49,
+   "z": 9.71,
+   "rotation": 0.0,
+   "footprint": {
+    "w": 0.2,
+    "d": 0.2
+   },
+   "collides": true,
+   "trigger": null,
+   "labels": [
+    "street_a",
+    "street_c"
+   ]
+  },
+  {
+   "id": "sign_street_d",
+   "kind": "prop",
+   "asset": "street_sign",
+   "x": -44.02,
+   "z": 23.46,
+   "rotation": 0.0,
+   "footprint": {
+    "w": 0.2,
+    "d": 0.2
+   },
+   "collides": true,
+   "trigger": null,
+   "labels": [
+    "street_a",
+    "street_d"
+   ]
+  },
+  {
+   "id": "spawn_village",
+   "kind": "spawn",
+   "asset": null,
+   "x": -18.46,
+   "z": 14.18,
+   "rotation": 0.4635,
+   "footprint": null,
+   "collides": false,
+   "trigger": null
+  }
+ ]
+}

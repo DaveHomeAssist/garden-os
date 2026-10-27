@@ -204,6 +204,13 @@ function bindUI({
     }
     if (action?.type === Actions.ZONE_CHANGED) {
       syncPlayerMovementForZone(nextState.campaign.worldState?.currentZone);
+      // Village engine setPlayerPose() (game layer restore / back to village) moves the walk sim.
+      zoneManager?.getActiveZoneInstance?.()?.setPoseHandler?.((pose) => {
+        const reset = playerController.reset({ x: pose.x, z: pose.z });
+        const next = { ...reset, facing: pose.facingY ?? reset.facing };
+        playerController.setState(next);
+        simulationWorker.reset(next);
+      });
     }
     const zoneTravelPlayerState = applyZoneTravelState(action, nextState, { playerController, scene, interactionSystem });
     if (zoneTravelPlayerState) {
@@ -604,16 +611,22 @@ function bindUI({
       }
     }
 
+    const activeZone = shouldRenderActiveZone() ? zoneManager.getActiveZoneInstance?.() : null;
     if (x === 0 && z === 0) {
+      // Zones with their own pathing (village tap-to-move) steer first.
+      if (activeZone?.hasWalkTarget?.()) return activeZone.getMovementVector(dt);
       return walkAutopilot.getVector(dt);
     }
     clearWalkTarget();
+    activeZone?.clearWalk?.();
 
     // Make movement camera-relative: rotate the raw input by the camera's
     // orbit angle so "up" always walks the way the camera faces, not fixed
     // world-north. At the default view (azimuth 0) this is the identity, so
     // the standard camera is unchanged.
-    const azimuth = scene.getCameraAzimuth?.() ?? 0;
+    const azimuth = activeZone?.getCameraAzimuth
+      ? activeZone.getCameraAzimuth()
+      : (scene.getCameraAzimuth?.() ?? 0);
     if (azimuth !== 0 && (x !== 0 || z !== 0)) {
       const cos = Math.cos(azimuth);
       const sin = Math.sin(azimuth);
