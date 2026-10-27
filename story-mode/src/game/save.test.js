@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CAMPAIGN_SCHEMA_VERSION, createGameState } from './state.js';
+import { CAMPAIGN_SCHEMA_VERSION, createGameState, createSandboxState } from './state.js';
 import {
   deleteCampaign,
   listSaves,
@@ -155,6 +155,19 @@ afterEach(() => {
 });
 
 describe('save', () => {
+  it('restores an independent authority-backed Free Play world and rejects a crossed pointer', async () => {
+    const indexedDB = createFakeIndexedDB();
+    const state = createSandboxState();
+    state.season.grid[0].cropId = 'basil';
+    localStorage.setItem(sessionPointerKey('freeplay'), 'free-world');
+    await writeAuthoritySnapshot({ indexedDB, sessionId: 'free-world', slot: 'freeplay', state });
+    const restored = await loadBestAvailableSave('freeplay', { indexedDB, storage: localStorage });
+    expect(restored.campaign.sandbox).toBe(true);
+    expect(restored.source).toBe('authority');
+    localStorage.setItem(sessionPointerKey(0), 'free-world');
+    expect(await loadAuthoritySnapshotSave(0, { indexedDB, storage: localStorage })).toBeNull();
+    expect(loadCampaign(0)).toBeNull();
+  });
   it('persists and restores quest, reputation, and world data', () => {
     const state = createGameState();
     state.campaign.questLog.gus_tomatoes = { state: 'ACCEPTED' };

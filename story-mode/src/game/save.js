@@ -1,3 +1,4 @@
+import { isPersistentSaveTarget, isStorySaveSlot, campaignStorageKey, seasonStorageKey, isCampaignCompatibleWithTarget } from './save-target.js';
 /**
  * Save System — Multi-slot localStorage persistence.
  * 3 independent save slots, each storing campaign + season state.
@@ -22,17 +23,11 @@ const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
 const corruptCampaignSlots = new Set();
 const corruptSeasonSlots = new Set();
 
-function isValidSlot(slot) {
-  return Number.isInteger(slot) && slot >= 0 && slot < SAVE_SLOTS;
-}
+const isValidSlot = isPersistentSaveTarget;
 
-function campaignKey(slot) {
-  return `gos-story-slot-${slot}-campaign`;
-}
+const campaignKey = campaignStorageKey;
 
-function seasonKey(slot) {
-  return `gos-story-slot-${slot}-season`;
-}
+const seasonKey = seasonStorageKey;
 
 function normalizeCampaignSave(parsed) {
   if (!parsed || typeof parsed !== 'object') return null;
@@ -156,10 +151,11 @@ function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
 export function getActiveSaveSlot() {
   const raw = localStorage.getItem(ACTIVE_SLOT_KEY);
   const slot = raw !== null ? parseInt(raw, 10) : 0;
-  return slot >= 0 && slot < SAVE_SLOTS ? slot : 0;
+  return isStorySaveSlot(slot) ? slot : 0;
 }
 
 export function setActiveSaveSlot(slot) {
+  if (!isStorySaveSlot(slot)) return;
   localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
 }
 
@@ -215,7 +211,7 @@ export function prepareCampaignForSave(campaign, { touch = true } = {}) {
 }
 
 export function saveCampaign(campaign, slot) {
-  if (!campaign || !isValidSlot(slot)) return null;
+  if (!isCampaignCompatibleWithTarget(campaign, slot)) return null;
   const toSave = prepareCampaignForSave(campaign);
   try {
     localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
@@ -236,7 +232,8 @@ export function loadCampaign(slot) {
       return null;
     }
     const parsed = JSON.parse(raw);
-    return normalizeCampaignSave(parsed);
+    const campaign = normalizeCampaignSave(parsed);
+    return isCampaignCompatibleWithTarget(campaign, slot) ? campaign : null;
   } catch (error) {
     corruptCampaignSlots.add(slot);
     console.warn('[GOS] Campaign save unreadable:', error?.message ?? error);
@@ -256,6 +253,9 @@ export function writeSlotSave(slot, { campaign, season = null } = {}) {
   const migratedCampaign = normalizeCampaignSave(campaign);
   if (!migratedCampaign) {
     return { ok: false, error: 'This backup has no campaign data.' };
+  }
+  if (!isCampaignCompatibleWithTarget(migratedCampaign, slot)) {
+    return { ok: false, error: 'Story saves and the independent Free Play world cannot replace each other.' };
   }
   const migratedSeason = normalizeSeasonSave(season);
   const campaignJson = JSON.stringify(migratedCampaign);
@@ -290,6 +290,7 @@ export function writeSlotSave(slot, { campaign, season = null } = {}) {
 }
 
 export function deleteCampaign(slot) {
+  if (!isValidSlot(slot)) return;
   localStorage.removeItem(campaignKey(slot));
   localStorage.removeItem(seasonKey(slot));
   deleteAuthoritySessionPointer(slot);
@@ -357,7 +358,8 @@ export async function loadAuthoritySnapshotSave(slot, {
 
   try {
     const snapshot = await journal.readSnapshot(sessionId);
-    if (!snapshot?.state) return null;
+    if (!snapshot?.state || snapshot.slot !== slot
+      || !isCampaignCompatibleWithTarget(snapshot.state.campaign, slot)) return null;
     return {
       campaign: normalizeCampaignSave(snapshot.state.campaign),
       season: normalizeSeasonSave(snapshot.state.season),
@@ -479,3 +481,7 @@ export {
   normalizeCampaignSave as migrateCampaignSave,
   normalizeSeasonSave as migrateSeasonSave,
 };
+
+export function hasSaveTarget(target) {
+  return isPersistentSaveTarget(target) && Boolean(localStorage.getItem(campaignKey(target)) || getSessionPointer(target));
+}

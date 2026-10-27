@@ -1,3 +1,4 @@
+import { isPersistentSaveTarget } from '../game/save-target.js';
 import { createActionEnvelope } from './authoritative-engine.js';
 import { isModdedQuest } from '../content/content-registry.js';
 
@@ -63,7 +64,7 @@ function normalizeAuthorityUrl(url) {
 }
 
 function sessionPointerKey(slot) {
-  return `${SESSION_POINTER_PREFIX}-${slot}`;
+  return isPersistentSaveTarget(slot) ? `${SESSION_POINTER_PREFIX}-${slot}` : null;
 }
 
 function randomSessionId() {
@@ -76,6 +77,7 @@ function randomSessionId() {
 function ensureSessionPointer(slot, storage = globalThis.localStorage) {
   const safeStorage = getStorage(storage);
   const key = sessionPointerKey(slot);
+  if (!key) return null;
   const existing = safeStorage?.getItem(key);
   if (existing) return existing;
   const sessionId = randomSessionId();
@@ -977,7 +979,7 @@ function createStoryAuthorityPersistence(store, {
   verifyAck,
 } = {}) {
   const journal = new IndexedDbAuthorityJournal({ indexedDB });
-  if (!store?.subscribe || slot < 0 || !journal.available) {
+  if (!store?.subscribe || !isPersistentSaveTarget(slot) || !journal.available) {
     return {
       available: false,
       cleanup() {},

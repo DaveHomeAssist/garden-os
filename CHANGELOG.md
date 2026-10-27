@@ -10,6 +10,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 
+### Added
+- Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
+
 ### Fixed
 - Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.

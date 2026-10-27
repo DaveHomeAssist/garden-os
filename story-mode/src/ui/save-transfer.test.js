@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createGameState } from '../game/state.js';
+import { createGameState, createSandboxState } from '../game/state.js';
 import { loadCampaign, saveCampaign } from '../game/save.js';
 import { exportLiveState, stringifySaveFile } from '../game/save-file.js';
 import { pickSaveFile, runImportFlow } from './save-transfer.js';
@@ -39,6 +39,17 @@ afterEach(() => {
 });
 
 describe('import flow UI', () => {
+  it('routes a Free Play file only to its independent world', async () => {
+    const text = stringifySaveFile(exportLiveState(createSandboxState(), 'freeplay'));
+    const flow = runImportFlow({ pickFile: async () => fileOf(text) });
+    const confirm = await waitFor('.save-transfer-dialog [data-role="confirm"]');
+    expect(confirm.textContent).toBe('Import to Free Play');
+    expect(document.querySelectorAll('input[name="save-transfer-target"]:not(:disabled)')).toHaveLength(1);
+    confirm.click();
+    expect(await flow).toMatchObject({ ok: true, slot: 'freeplay' });
+    expect(loadCampaign('freeplay').sandbox).toBe(true);
+    expect(loadCampaign(0)).toBeNull();
+  });
   it('asks before replacing an occupied slot and writes only after confirm', async () => {
     saveCampaign(stateNamed('Keep', 2).campaign, 0);
     const text = stringifySaveFile(exportLiveState(stateNamed('Ana', 7), 0));
