@@ -32,6 +32,22 @@ function lap(label) {
   lapStartedAt = now;
 }
 
+// Chrome can answer Page.captureScreenshot with "Unable to capture screenshot"
+// when the GPU process is too busy to hand back a frame (seen once on the
+// shared runner). That is a capture hiccup, not a visual failure: try again.
+async function capture(page, options) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await page.screenshot(options);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt >= 3 || !/Unable to capture screenshot/.test(message)) throw error;
+      console.warn(`[screens] screenshot retry ${attempt} (${options?.path ?? ''}): ${message}`);
+      await page.waitForTimeout(500 * attempt);
+    }
+  }
+}
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -841,7 +857,7 @@ async function captureDialogueThenDismiss(page, screenshotName) {
 
   if (screenshotName) {
     await assertDialogueIdentity(page);
-    await page.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
+    await capture(page, { path: join(outputDir, screenshotName), fullPage: true });
   }
   const skip = page.locator('#dp-skip-btn');
   if (await skip.isVisible().catch(() => false)) {
@@ -862,7 +878,7 @@ async function seedAndStart(page, baseUrl, options = {}) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title-screen', { state: 'visible', timeout: 60000 });
   if (options.captureTitle) {
-    await page.screenshot({ path: join(outputDir, 'desktop-title.png'), fullPage: true });
+    await capture(page, { path: join(outputDir, 'desktop-title.png'), fullPage: true });
   }
   await page.locator('[data-action="new"][data-slot="0"]').click();
   await page.waitForSelector('.title-profile-setup', { state: 'visible', timeout: 60000 });
@@ -1033,9 +1049,9 @@ const scenarios = [
     const seasonalPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     await seedAndStartSeasonalPlaceRun(seasonalPage, baseUrl, season);
     await assertSeasonalPlaceLayer(seasonalPage, season);
-    await seasonalPage.screenshot({ path: join(outputDir, `season-place-${season}.png`), fullPage: true });
+    await capture(seasonalPage, { path: join(outputDir, `season-place-${season}.png`), fullPage: true });
     if (season === 'summer') {
-      await seasonalPage.screenshot({ path: join(outputDir, 'season-place-july.png'), fullPage: true });
+      await capture(seasonalPage, { path: join(outputDir, 'season-place-july.png'), fullPage: true });
     }
     await seasonalPage.close();
   }]),
@@ -1047,7 +1063,7 @@ const scenarios = [
     });
     await openSyntheticEventCard(desktop);
     await assertLayout(desktop);
-    await desktop.screenshot({ path: join(outputDir, 'desktop-play-event.png'), fullPage: true });
+    await capture(desktop, { path: join(outputDir, 'desktop-play-event.png'), fullPage: true });
     await desktop.close();
   }],
   ['crop accents', async (browser) => {
@@ -1061,7 +1077,7 @@ const scenarios = [
     await waitForCanvasPaint(accentDesktop);
     await waitForReadableCanvas(accentDesktop);
     await accentDesktop.waitForTimeout(250);
-    await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
+    await capture(accentDesktop, { path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
     await accentDesktop.close();
   }],
   ['mobile play + event', async (browser) => {
@@ -1075,7 +1091,7 @@ const scenarios = [
     });
     await openSyntheticEventCard(mobile);
     await assertLayout(mobile);
-    await mobile.screenshot({ path: join(outputDir, 'mobile-play-event.png'), fullPage: true });
+    await capture(mobile, { path: join(outputDir, 'mobile-play-event.png'), fullPage: true });
     await mobile.close();
   }],
   ['reward desktop', async (browser) => {
@@ -1084,7 +1100,7 @@ const scenarios = [
     await openHarvestRewardOverlay(rewardDesktop);
     await assertHarvestRewardOverlay(rewardDesktop);
     await scrollHarvestRewardOverlayToRewards(rewardDesktop);
-    await rewardDesktop.screenshot({ path: join(outputDir, 'harvest-reward-desktop.png'), fullPage: true });
+    await capture(rewardDesktop, { path: join(outputDir, 'harvest-reward-desktop.png'), fullPage: true });
     await rewardDesktop.close();
   }],
   ['reward mobile', async (browser) => {
@@ -1097,28 +1113,28 @@ const scenarios = [
     await openHarvestRewardOverlay(rewardMobile);
     await assertHarvestRewardOverlay(rewardMobile);
     await scrollHarvestRewardOverlayToRewards(rewardMobile);
-    await rewardMobile.screenshot({ path: join(outputDir, 'harvest-reward-mobile.png'), fullPage: true });
+    await capture(rewardMobile, { path: join(outputDir, 'harvest-reward-mobile.png'), fullPage: true });
     await rewardMobile.close();
   }],
   ['critter cat', async (browser) => {
     const critterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     await seedAndStartCritterRun(critterPage, baseUrl);
     await assertCritterCompanionLayer(critterPage);
-    await critterPage.screenshot({ path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
+    await capture(critterPage, { path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
     await critterPage.close();
   }],
   ['critter bird', async (browser) => {
     const birdCritterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     await seedAndStartBirdCritterRun(birdCritterPage, baseUrl);
     await assertBirdCritterCompanionLayer(birdCritterPage);
-    await birdCritterPage.screenshot({ path: join(outputDir, 'critter-bird.png'), fullPage: true });
+    await capture(birdCritterPage, { path: join(outputDir, 'critter-bird.png'), fullPage: true });
     await birdCritterPage.close();
   }],
   ['planner', async (browser) => {
     const planner = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     await startPlannerAndPlant(planner, baseUrl);
     await assertPlannerSuppressesAccents(planner);
-    await planner.screenshot({ path: join(outputDir, 'planner-procedural-no-accents.png'), fullPage: true });
+    await capture(planner, { path: join(outputDir, 'planner-procedural-no-accents.png'), fullPage: true });
     await planner.close();
   }],
   ['mobile title x3', async (browser) => {
@@ -1129,7 +1145,7 @@ const scenarios = [
         hasTouch: true,
       });
       await assertMobileTitleFlow(titlePage, baseUrl, width);
-      await titlePage.screenshot({ path: join(outputDir, `mobile-title-${width}.png`), fullPage: true });
+      await capture(titlePage, { path: join(outputDir, `mobile-title-${width}.png`), fullPage: true });
       await titlePage.close();
     }
   }],
