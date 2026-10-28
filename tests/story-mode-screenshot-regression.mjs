@@ -23,6 +23,15 @@ const hardTimeout = setTimeout(() => {
 }, timeoutMs);
 hardTimeout.unref?.();
 
+// Per-section wall-clock laps, so a slow CI run shows where the time went.
+const runStartedAt = Date.now();
+let lapStartedAt = runStartedAt;
+function lap(label) {
+  const now = Date.now();
+  console.log(`[screens] ${label}: ${((now - lapStartedAt) / 1000).toFixed(1)}s (total ${((now - runStartedAt) / 1000).toFixed(1)}s)`);
+  lapStartedAt = now;
+}
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -1012,126 +1021,168 @@ const suppliedBaseUrl = process.env.GOS_SCREENSHOT_BASE_URL;
 const port = suppliedBaseUrl ? null : await getOpenPort();
 const baseUrl = suppliedBaseUrl ? new URL(suppliedBaseUrl).href : `http://127.0.0.1:${port}/`;
 const server = suppliedBaseUrl ? { stop: async () => {} } : await startDevServer(port);
-const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
+
+// Each scenario opens its own page and closes it. They used to run one after
+// another in one browser, so every page's WebGL work queued on that browser's
+// single GPU-process main thread (software GL on CI): on a busy runner the
+// game drew ~1 frame/s and the run crept past the 360 s limit. Scenarios now
+// run in a few lanes, each with its own browser (own GPU process). Same pages,
+// same assertions, same screenshots; only the wall-clock overlap changes.
+const scenarios = [
+  ...['spring', 'summer', 'fall', 'winter'].map((season) => [`season ${season}`, async (browser) => {
+    const seasonalPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+    await seedAndStartSeasonalPlaceRun(seasonalPage, baseUrl, season);
+    await assertSeasonalPlaceLayer(seasonalPage, season);
+    await seasonalPage.screenshot({ path: join(outputDir, `season-place-${season}.png`), fullPage: true });
+    if (season === 'summer') {
+      await seasonalPage.screenshot({ path: join(outputDir, 'season-place-july.png'), fullPage: true });
+    }
+    await seasonalPage.close();
+  }]),
+  ['desktop play + event', async (browser) => {
+    const desktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await seedAndStart(desktop, baseUrl, {
+      captureTitle: true,
+      dialogueScreenshot: 'desktop-dialogue.png',
+    });
+    await openSyntheticEventCard(desktop);
+    await assertLayout(desktop);
+    await desktop.screenshot({ path: join(outputDir, 'desktop-play-event.png'), fullPage: true });
+    await desktop.close();
+  }],
+  ['crop accents', async (browser) => {
+    const accentDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await seedAndStartAccentRun(accentDesktop, baseUrl);
+    await assertCropAccentLayer(accentDesktop);
+    // Seeded Story saves can open with the arrival dialogue and a transient
+    // WebGL clear frame. Dismiss it, then require a readable canvas immediately
+    // before capture so this marketing shot cannot race the title transition.
+    await captureDialogueThenDismiss(accentDesktop);
+    await waitForCanvasPaint(accentDesktop);
+    await waitForReadableCanvas(accentDesktop);
+    await accentDesktop.waitForTimeout(250);
+    await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
+    await accentDesktop.close();
+  }],
+  ['mobile play + event', async (browser) => {
+    const mobile = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await seedAndStart(mobile, baseUrl, {
+      dialogueScreenshot: 'mobile-dialogue.png',
+    });
+    await openSyntheticEventCard(mobile);
+    await assertLayout(mobile);
+    await mobile.screenshot({ path: join(outputDir, 'mobile-play-event.png'), fullPage: true });
+    await mobile.close();
+  }],
+  ['reward desktop', async (browser) => {
+    const rewardDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await seedAndStart(rewardDesktop, baseUrl);
+    await openHarvestRewardOverlay(rewardDesktop);
+    await assertHarvestRewardOverlay(rewardDesktop);
+    await scrollHarvestRewardOverlayToRewards(rewardDesktop);
+    await rewardDesktop.screenshot({ path: join(outputDir, 'harvest-reward-desktop.png'), fullPage: true });
+    await rewardDesktop.close();
+  }],
+  ['reward mobile', async (browser) => {
+    const rewardMobile = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await seedAndStart(rewardMobile, baseUrl);
+    await openHarvestRewardOverlay(rewardMobile);
+    await assertHarvestRewardOverlay(rewardMobile);
+    await scrollHarvestRewardOverlayToRewards(rewardMobile);
+    await rewardMobile.screenshot({ path: join(outputDir, 'harvest-reward-mobile.png'), fullPage: true });
+    await rewardMobile.close();
+  }],
+  ['critter cat', async (browser) => {
+    const critterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+    await seedAndStartCritterRun(critterPage, baseUrl);
+    await assertCritterCompanionLayer(critterPage);
+    await critterPage.screenshot({ path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
+    await critterPage.close();
+  }],
+  ['critter bird', async (browser) => {
+    const birdCritterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+    await seedAndStartBirdCritterRun(birdCritterPage, baseUrl);
+    await assertBirdCritterCompanionLayer(birdCritterPage);
+    await birdCritterPage.screenshot({ path: join(outputDir, 'critter-bird.png'), fullPage: true });
+    await birdCritterPage.close();
+  }],
+  ['planner', async (browser) => {
+    const planner = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+    await startPlannerAndPlant(planner, baseUrl);
+    await assertPlannerSuppressesAccents(planner);
+    await planner.screenshot({ path: join(outputDir, 'planner-procedural-no-accents.png'), fullPage: true });
+    await planner.close();
+  }],
+  ['mobile title x3', async (browser) => {
+    for (const width of [320, 375, 430]) {
+      const titlePage = await browser.newPage({
+        viewport: { width, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      await assertMobileTitleFlow(titlePage, baseUrl, width);
+      await titlePage.screenshot({ path: join(outputDir, `mobile-title-${width}.png`), fullPage: true });
+      await titlePage.close();
+    }
+  }],
+];
+
+const lanes = Math.max(1, Math.min(scenarios.length, Number(process.env.GOS_SCREENSHOT_LANES ?? 3) || 1));
+const browsers = [];
 
 try {
   await mkdir(outputDir, { recursive: true });
   await waitForServer(baseUrl);
+  lap(`server ready (${lanes} lanes)`);
 
-  const mobileTitleScreenshots = [];
-  for (const width of [320, 375, 430]) {
-    const titlePage = await browser.newPage({
-      viewport: { width, height: 844 },
-      isMobile: true,
-      hasTouch: true,
-    });
-    await assertMobileTitleFlow(titlePage, baseUrl, width);
-    const screenshotName = `mobile-title-${width}.png`;
-    await titlePage.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
-    mobileTitleScreenshots.push(screenshotName);
-    await titlePage.close();
-  }
-
-  const desktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
-  await seedAndStart(desktop, baseUrl, {
-    captureTitle: true,
-    dialogueScreenshot: 'desktop-dialogue.png',
-  });
-  await openSyntheticEventCard(desktop);
-  await assertLayout(desktop);
-  await desktop.screenshot({ path: join(outputDir, 'desktop-play-event.png'), fullPage: true });
-  await desktop.close();
-
-  const accentDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
-  await seedAndStartAccentRun(accentDesktop, baseUrl);
-  await assertCropAccentLayer(accentDesktop);
-  // Seeded Story saves can open with the arrival dialogue and a transient
-  // WebGL clear frame. Dismiss it, then require a readable canvas immediately
-  // before capture so this marketing shot cannot race the title transition.
-  await captureDialogueThenDismiss(accentDesktop);
-  await waitForCanvasPaint(accentDesktop);
-  await waitForReadableCanvas(accentDesktop);
-  await accentDesktop.waitForTimeout(250);
-  await accentDesktop.screenshot({ path: join(outputDir, 'desktop-crop-accents.png'), fullPage: true });
-  await accentDesktop.close();
-
-  const seasonalScreenshots = [];
-  for (const season of ['spring', 'summer', 'fall', 'winter']) {
-    const seasonalPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
-    await seedAndStartSeasonalPlaceRun(seasonalPage, baseUrl, season);
-    await assertSeasonalPlaceLayer(seasonalPage, season);
-    const screenshotName = `season-place-${season}.png`;
-    await seasonalPage.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
-    seasonalScreenshots.push(screenshotName);
-    if (season === 'summer') {
-      await seasonalPage.screenshot({ path: join(outputDir, 'season-place-july.png'), fullPage: true });
-      seasonalScreenshots.push('season-place-july.png');
+  const queue = [...scenarios];
+  let failure = null;
+  async function runLane() {
+    const browser = await chromium.launch(chromiumLaunchOptions({ headless: process.env.HEADLESS !== '0' }));
+    browsers.push(browser);
+    while (queue.length && !failure) {
+      const [name, run] = queue.shift();
+      const startedAt = Date.now();
+      try {
+        await run(browser);
+      } catch (error) {
+        failure ??= new Error(`${name}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+        return;
+      }
+      console.log(`[screens] ${name}: ${((Date.now() - startedAt) / 1000).toFixed(1)}s (total ${((Date.now() - runStartedAt) / 1000).toFixed(1)}s)`);
     }
-    await seasonalPage.close();
   }
-
-  const critterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
-  await seedAndStartCritterRun(critterPage, baseUrl);
-  await assertCritterCompanionLayer(critterPage);
-  await critterPage.screenshot({ path: join(outputDir, 'critter-alley-cat.png'), fullPage: true });
-  await critterPage.close();
-
-  const birdCritterPage = await browser.newPage({ viewport: { width: 1024, height: 768 } });
-  await seedAndStartBirdCritterRun(birdCritterPage, baseUrl);
-  await assertBirdCritterCompanionLayer(birdCritterPage);
-  await birdCritterPage.screenshot({ path: join(outputDir, 'critter-bird.png'), fullPage: true });
-  await birdCritterPage.close();
-
-  const rewardDesktop = await browser.newPage({ viewport: { width: 1366, height: 900 } });
-  await seedAndStart(rewardDesktop, baseUrl);
-  await openHarvestRewardOverlay(rewardDesktop);
-  await assertHarvestRewardOverlay(rewardDesktop);
-  await scrollHarvestRewardOverlayToRewards(rewardDesktop);
-  await rewardDesktop.screenshot({ path: join(outputDir, 'harvest-reward-desktop.png'), fullPage: true });
-  await rewardDesktop.close();
-
-  const rewardMobile = await browser.newPage({
-    viewport: { width: 390, height: 844 },
-    isMobile: true,
-    hasTouch: true,
-  });
-  await seedAndStart(rewardMobile, baseUrl);
-  await openHarvestRewardOverlay(rewardMobile);
-  await assertHarvestRewardOverlay(rewardMobile);
-  await scrollHarvestRewardOverlayToRewards(rewardMobile);
-  await rewardMobile.screenshot({ path: join(outputDir, 'harvest-reward-mobile.png'), fullPage: true });
-  await rewardMobile.close();
-
-  const mobile = await browser.newPage({
-    viewport: { width: 390, height: 844 },
-    isMobile: true,
-    hasTouch: true,
-  });
-  await seedAndStart(mobile, baseUrl, {
-    dialogueScreenshot: 'mobile-dialogue.png',
-  });
-  await openSyntheticEventCard(mobile);
-  await assertLayout(mobile);
-  await mobile.screenshot({ path: join(outputDir, 'mobile-play-event.png'), fullPage: true });
-  await mobile.close();
-
-  const planner = await browser.newPage({ viewport: { width: 1024, height: 768 } });
-  await startPlannerAndPlant(planner, baseUrl);
-  await assertPlannerSuppressesAccents(planner);
-  await planner.screenshot({ path: join(outputDir, 'planner-procedural-no-accents.png'), fullPage: true });
-  await planner.close();
+  await Promise.all(Array.from({ length: lanes }, runLane));
+  if (failure) throw failure;
+  lap('all scenarios');
 
   console.log(JSON.stringify({
     ok: true,
     baseUrl,
     outputDir,
+    lanes,
+    seconds: Number(((Date.now() - runStartedAt) / 1000).toFixed(1)),
     screenshots: [
       'desktop-title.png',
-      ...mobileTitleScreenshots,
+      'mobile-title-320.png',
+      'mobile-title-375.png',
+      'mobile-title-430.png',
       'desktop-dialogue.png',
       'desktop-play-event.png',
       'desktop-crop-accents.png',
-      ...seasonalScreenshots,
+      'season-place-spring.png',
+      'season-place-summer.png',
+      'season-place-july.png',
+      'season-place-fall.png',
+      'season-place-winter.png',
       'critter-alley-cat.png',
       'critter-bird.png',
       'harvest-reward-desktop.png',
@@ -1143,6 +1194,6 @@ try {
   }, null, 2));
 } finally {
   clearTimeout(hardTimeout);
-  await browser.close();
+  await Promise.all(browsers.map((browser) => browser.close().catch(() => {})));
   await server.stop();
 }

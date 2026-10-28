@@ -208,9 +208,18 @@ function stepSimulationState(state, {
   }
 
   const normalized = normalizeInput(input);
-  const stepSpeed = PLAYER_SPEED * normalized.magnitude;
-  const nextX = current.position.x + (normalized.x * stepSpeed * dt);
-  const nextZ = current.position.z + (normalized.z * stepSpeed * dt);
+  let stepLength = PLAYER_SPEED * normalized.magnitude * dt;
+  // Optional input.stopAt {x, z}: never step past that point along the input
+  // direction. The worker re-applies the last input every tick until the main
+  // thread sends the next one, so a path goal needs this to stop dead on its
+  // target instead of overshooting by a frame's worth and ping-ponging.
+  const stopAt = input?.stopAt;
+  if (stepLength > 0 && Number.isFinite(stopAt?.x) && Number.isFinite(stopAt?.z)) {
+    const remaining = ((stopAt.x - current.position.x) * normalized.x) + ((stopAt.z - current.position.z) * normalized.z);
+    stepLength = Math.min(stepLength, Math.max(0, remaining));
+  }
+  const nextX = current.position.x + (normalized.x * stepLength);
+  const nextZ = current.position.z + (normalized.z * stepLength);
   const resolved = resolveAxis(nextX, nextZ, current.position.x, current.position.z, normalizedConfig);
   const velocityX = dt > 0 ? (resolved.x - current.position.x) / dt : 0;
   const velocityZ = dt > 0 ? (resolved.z - current.position.z) / dt : 0;

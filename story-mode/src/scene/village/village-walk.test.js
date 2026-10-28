@@ -119,3 +119,67 @@ describe('village 60 s random walk (V4)', () => {
     expect(reachedCount).toBe(40);
   });
 });
+
+// Live playtest 2026-10-28: the sim runs in a worker that keeps applying the
+// last input at 60 Hz until the main thread sends the next one, so on slow
+// frames (phones, software GL) the player stepped past the goal and
+// ping-ponged around it. `lagTicks` sim steps run per main-thread decision.
+function walkLagged(from, to, lagTicks, maxSeconds = 120) {
+  let state = createSimulationState({ ...config, initialPosition: from });
+  const path = findPath(grid, state.position, to);
+  let arrived = false;
+  let stalled = false;
+  const walker = createPathWalker({
+    getPosition: () => state.position,
+    lineOfSight: (a, b) => hasLineOfSight(grid, a, b),
+    replan: (pos, goal) => findPath(grid, pos, goal),
+    onArrive: () => { arrived = true; },
+    onStall: () => { stalled = true; },
+  });
+  walker.setPath(path);
+  const trace = [];
+  let input = { x: 0, z: 0 };
+  // keep stepping after arrival too: the last input must not carry the player on
+  const total = Math.round(maxSeconds / FIXED_SIMULATION_DT);
+  for (let f = 0; f < total; f += 1) {
+    if (f % lagTicks === 0) input = walker.getVector(FIXED_SIMULATION_DT * lagTicks);
+    state = stepSimulationState(state, { config, input });
+    trace.push({ ...state.position });
+    if (!walker.hasPath() && trace.length > 1 && f % lagTicks === lagTicks - 1 && arrived) break;
+  }
+  return { arrived, stalled, state, trace, path };
+}
+
+describe('tap-to-move arrival on slow frames', () => {
+  const homeExit = layout.plots.find((p) => p.id === 'plot_home').exit;
+  it.each([[1], [6], [20], [45]])('stops on the goal without overshoot or ping-pong (%i sim ticks per frame)', (lag) => {
+    const goal = { x: homeExit.x + 2, z: homeExit.z + 2 };
+    const { arrived, state, trace } = walkLagged(homeExit, goal, lag, 20);
+    expect(arrived).toBe(true);
+    expect(Math.hypot(state.position.x - goal.x, state.position.z - goal.z)).toBeLessThanOrEqual(0.1); // arriveRadius
+    // never further past the goal than a hair, and no reversal along the approach
+    const ux = goal.x - homeExit.x; const uz = goal.z - homeExit.z; const len = Math.hypot(ux, uz);
+    const along = trace.map((p) => ((p.x - homeExit.x) * ux + (p.z - homeExit.z) * uz) / len);
+    expect(Math.max(...along) - len).toBeLessThan(0.02);
+    for (let i = 1; i < along.length; i += 1) expect(along[i]).toBeGreaterThanOrEqual(along[i - 1] - 1e-6);
+  });
+
+  it('a long corner-to-corner walk reaches its target on slow frames (live sweep stopped 31 m short)', () => {
+    const corners = [
+      { x: layout.bounds.minX + 2, z: layout.bounds.minZ + 2 },
+      { x: layout.bounds.maxX - 2, z: layout.bounds.minZ + 2 },
+      { x: layout.bounds.maxX - 2, z: layout.bounds.maxZ - 2 },
+      { x: layout.bounds.minX + 2, z: layout.bounds.maxZ - 2 },
+    ];
+    let from = { ...homeExit };
+    for (const lag of [1, 20]) {
+      for (const c of corners) {
+        const { arrived, stalled, state } = walkLagged(from, c, lag, 180);
+        expect(stalled).toBe(false);
+        expect(arrived).toBe(true);
+        expect(Math.hypot(state.position.x - c.x, state.position.z - c.z)).toBeLessThan(0.3);
+        from = state.position;
+      }
+    }
+  });
+});

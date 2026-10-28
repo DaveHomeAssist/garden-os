@@ -6,7 +6,19 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-export function createTouchStick() {
+const STICK_BOTTOM_PX = 118;
+const TOOL_ROW_GAP_PX = 10;
+const CLEARANCE_CHECK_MS = 400;
+
+function stickBottom(px) {
+  return `calc(${Math.round(px)}px + env(safe-area-inset-bottom, 0px))`;
+}
+
+function rectsOverlap(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+export function createTouchStick({ getObstacle = () => document.querySelector('.tool-hud.is-visible') } = {}) {
   const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
   const touchCapable = (navigator.maxTouchPoints ?? 0) > 0 || coarsePointer;
 
@@ -15,7 +27,7 @@ export function createTouchStick() {
   applyStyles(root, {
     position: 'absolute',
     left: '18px',
-    bottom: 'calc(118px + env(safe-area-inset-bottom, 0px))',
+    bottom: stickBottom(STICK_BOTTOM_PX),
     width: '112px',
     height: '132px',
     display: touchCapable ? 'flex' : 'none',
@@ -125,6 +137,31 @@ export function createTouchStick() {
     reset();
   }
 
+  // The tool row (z 22) sits over the stick (z 14) on phones, so most of the
+  // ring could not be touched. Lift the stick just above the row whenever they
+  // would overlap; checked a few times a second (setEnabled runs per frame),
+  // and never mid-drag so the ring can't jump under the thumb.
+  let lift = 0;
+  let lastClearanceCheck = -Infinity;
+  function syncClearance(force = false) {
+    const now = performance.now();
+    if (!root.isConnected || activePointerId !== null) return;
+    if (!force && now - lastClearanceCheck < CLEARANCE_CHECK_MS) return;
+    lastClearanceCheck = now;
+    const obstacle = getObstacle?.();
+    const o = obstacle?.getBoundingClientRect?.();
+    let next = 0;
+    if (o && o.width > 0 && o.height > 0) {
+      const s = root.getBoundingClientRect();
+      // Rect at the un-lifted position (bottom grows upward by `lift`).
+      const base = { left: s.left, right: s.right, top: s.top + lift, bottom: s.bottom + lift };
+      if (rectsOverlap(base, o)) next = Math.max(0, base.bottom - o.top + TOOL_ROW_GAP_PX);
+    }
+    if (Math.abs(next - lift) < 0.5) return;
+    lift = next;
+    root.style.bottom = stickBottom(STICK_BOTTOM_PX + lift);
+  }
+
   ring.addEventListener('pointerdown', onPointerDown);
   ring.addEventListener('pointermove', onPointerMove);
   ring.addEventListener('pointerup', onPointerEnd);
@@ -141,7 +178,11 @@ export function createTouchStick() {
       root.style.opacity = enabled ? '1' : '0';
       root.style.transform = enabled ? 'translateY(0)' : 'translateY(8px)';
       if (!enabled) reset();
+      else syncClearance();
     },
+    /** Re-check the tool-row clearance now (tests, resize). */
+    syncClearance: () => syncClearance(true),
+    getLift: () => lift,
     getVector() {
       return { x: vector.x, y: vector.y, active: activePointerId !== null };
     },

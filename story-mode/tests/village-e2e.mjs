@@ -69,6 +69,52 @@ try {
   await page.screenshot({ path: `${OUT}/01-village-arrive.png` });
   pass('travel yard -> village lands on the home plot exit', { pose: d.pose });
 
+  // Regression (live playtest 2026-10-28): taps on plot soil used to walk to
+  // the plot's trigger centre, so the first tap after arriving (next to the
+  // home plot) overshot by ~6 m and every tap inside a plot stalled ~0.5 m out.
+  // The end of each walk must also settle without a back-and-forth.
+  const tapAndTrace = async (goal, ms = 6000) => {
+    const at = await page.evaluate(([x, z]) => window.gardenOS.village.project(x, z), [goal.x, goal.z]);
+    assert.ok(at?.visible, `tap target on screen ${JSON.stringify(goal)}`);
+    const from = (await dbg()).pose;
+    await page.mouse.click(at.x, at.y);
+    const trace = [];
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) { await page.waitForTimeout(200); trace.push((await dbg()).pose); }
+    const end = trace.at(-1);
+    const ux = goal.x - from.x; const uz = goal.z - from.z; const len = Math.hypot(ux, uz) || 1;
+    // progress along the approach, and how far it ever got past the goal
+    const along = trace.map((p) => ((p.x - from.x) * ux + (p.z - from.z) * uz) / len);
+    const overshoot = Math.max(0, ...along.map((a) => a - len));
+    let reversals = 0;
+    for (let i = 2; i < along.length; i += 1) {
+      const a = along[i - 1] - along[i - 2]; const b = along[i] - along[i - 1];
+      if (Math.abs(a) > 0.03 && Math.abs(b) > 0.03 && Math.sign(a) !== Math.sign(b)) reversals += 1;
+    }
+    return { left: Math.hypot(end.x - goal.x, end.z - goal.z), overshoot, reversals, from, end };
+  };
+  const plotHome = await page.evaluate(() => window.gardenOS.village.getInteractables().find((t) => t.id === 'plot_home'));
+  {
+    const p0 = (await dbg()).pose;
+    const cx = plotHome.position.x - p0.x; const cz = plotHome.position.z - p0.z; const cl = Math.hypot(cx, cz);
+    // 2.8 m from the exit toward the plot: on the home plot's soil, well outside its trigger
+    const goal = { x: p0.x + (cx / cl) * 2.8, z: p0.z + (cz / cl) * 2.8 };
+    const r = await tapAndTrace(goal);
+    assert.ok(r.left < 0.35, `first tap after arrival lands on target (${r.left.toFixed(2)} m left, end ${JSON.stringify(r.end)})`);
+    assert.ok(r.overshoot < 0.35, `first tap after arrival does not overshoot (${r.overshoot.toFixed(2)} m)`);
+    assert.equal(r.reversals, 0, 'no back-and-forth at the end of the walk');
+    pass('first tap after arrival (on plot soil) lands within tolerance, no oscillation', { left: +r.left.toFixed(2), overshoot: +r.overshoot.toFixed(2) });
+    // now standing inside the plot: a 2 m tap sideways must get there too
+    const g2 = { x: r.end.x + (-cz / cl) * 2, z: r.end.z + (cx / cl) * 2 };
+    const r2 = await tapAndTrace(g2);
+    assert.ok(r2.left < 0.35, `tap inside a plot reaches its target (${r2.left.toFixed(2)} m left)`);
+    assert.equal(r2.reversals, 0, 'no back-and-forth inside the plot');
+    pass('tap inside a plot reaches the tapped point', { left: +r2.left.toFixed(2) });
+    // back to the exit spot so the rest of the run starts where it always did
+    assert.ok(await page.evaluate(([x, z]) => window.gardenOS.village.walkTo(x, z), [p0.x, p0.z]));
+    await waitFor(([x, z]) => { const q = window.gardenOS.village.getDebugState().pose; return Math.hypot(q.x - x, q.z - z) < 0.2; }, [p0.x, p0.z], 60000);
+  }
+
   // Garden HUD hidden in the village; objective describes V0.
   const hudHidden = await page.evaluate(() => {
     const shown = (sel) => {

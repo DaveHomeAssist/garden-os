@@ -397,8 +397,13 @@ export function createVillageScene({
     // fall through to the ground behind it. An object with a trigger walks to
     // its trigger anchor (so its prompt opens); any other object walks to the
     // hit point, which findPath snaps to the nearest walkable cell.
+    // Walk-through surfaces (plots: soil + edging, collides: false) are ground,
+    // not objects: a tap on them walks to the tapped spot. Redirecting them to
+    // the plot's trigger anchor pinned every tap inside a plot to its centre
+    // and pulled taps near a plot metres off target.
     const objHit = raycaster.intersectObjects(instanced, false)
-      .find((h) => h.instanceId != null && !isCutAway(h.object, h.instanceId));
+      .find((h) => h.instanceId != null && !isCutAway(h.object, h.instanceId)
+        && h.object.userData.villageEntries?.[h.instanceId]?.collides !== false);
     if (objHit) {
       const entry = objHit.object.userData.villageEntries?.[objHit.instanceId];
       const item = entry && interactableById.get(entry.id);
