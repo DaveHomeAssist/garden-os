@@ -43,6 +43,14 @@ export function getHomePlotExit(layout = getVillageLayout()) {
   return { x: layout.spawn.x, z: layout.spawn.z, facingY: layout.spawn.facing ?? 0 };
 }
 
+/**
+ * True where the garden's phase input (Enter / Start Season / Plant) must not
+ * act: the village has no bed, so nothing there advances a phase.
+ */
+export function isGardenInputBlocked(zoneId) {
+  return zoneId === VILLAGE_ZONE_ID;
+}
+
 export function createVillageSession({
   store,
   zoneManager,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import eventDeck from 'specs/EVENT_DECK.json';
-import { buildObjectiveText, describeEventEffect } from './plain-text.js';
+import { buildObjectiveText, describeEventEffect, formatHudScore, VILLAGE_OBJECTIVE_TEXT } from './plain-text.js';
 
 const JARGON = /Paths \d|Zone:|current_beat|rest_of_season|carry_forward|row-\d|col-\d|[+-]\d+(\.\d+)? ·/;
 
@@ -57,5 +57,26 @@ describe('plain event effects', () => {
   it('describes Late Frost as a big hit to frost-sensitive crops this step', () => {
     expect(describeEventEffect({ modifier: -2, duration: 'current_beat', target: { type: 'crop_filter', filter: 'frost-sensitive' } }))
       .toBe('Big hit to frost sensitive crops, this step only.');
+  });
+});
+
+describe('village objective text (V0)', () => {
+  it('describes the V0 stations and the way home, in every phase, with no NPC talk', () => {
+    for (const phase of ['PLANNING', 'EARLY_SEASON', 'HARVEST', 'TRANSITION']) {
+      const text = buildObjectiveText({ phase, season: 'spring', sandbox: true, zoneId: 'village', zoneName: 'Village' });
+      expect(text).toBe(VILLAGE_OBJECTIVE_TEXT);
+    }
+    expect(VILLAGE_OBJECTIVE_TEXT).toMatch(/seed stand/);
+    expect(VILLAGE_OBJECTIVE_TEXT).toMatch(/compost bin/);
+    expect(VILLAGE_OBJECTIVE_TEXT).toMatch(/plot/);
+    expect(VILLAGE_OBJECTIVE_TEXT).not.toMatch(/neighbo|talk|Start Season|Plant,/i);
+  });
+});
+
+describe('HUD score readout', () => {
+  it('marks an unscored bed empty so phones can hide the bare "--"', () => {
+    expect(formatHudScore(0)).toEqual({ text: '--', empty: true });
+    expect(formatHudScore(undefined)).toEqual({ text: '--', empty: true });
+    expect(formatHudScore(42)).toEqual({ text: '42', empty: false });
   });
 });

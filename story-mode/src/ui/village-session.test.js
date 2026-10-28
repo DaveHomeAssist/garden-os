@@ -8,7 +8,7 @@ import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
 import { createMockTriggerEmitter } from '../game/village/village-trigger-adapter.js';
 import { getVillageLayout } from '../scene/village/village-layout.js';
-import { createVillageSession, getHomePlotExit, resolveVillageRestorePose } from './village-session.js';
+import { createVillageSession, getHomePlotExit, isGardenInputBlocked, resolveVillageRestorePose } from './village-session.js';
 
 const layout = getVillageLayout();
 const sessions = [];
@@ -169,5 +169,13 @@ describe('village session (yard <-> village travel)', () => {
     const before = store.getState().campaign.village;
     store.dispatch({ type: Actions.SET_VILLAGE_STATE, payload: { position: [1, 2], facingY: 0, insidePlot: true } });
     expect(store.getState().campaign.village).toEqual(before);
+  });
+});
+
+describe('garden phase input in the village', () => {
+  it('is blocked only in the village', () => {
+    expect(isGardenInputBlocked('village')).toBe(true);
+    expect(isGardenInputBlocked('player_plot')).toBe(false);
+    expect(isGardenInputBlocked('neighborhood')).toBe(false);
   });
 });

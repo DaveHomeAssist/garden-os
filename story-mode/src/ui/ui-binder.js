@@ -48,7 +48,7 @@ import {
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
-import { createVillageSession } from './village-session.js';
+import { createVillageSession, isGardenInputBlocked } from './village-session.js';
 import { VILLAGE_ZONE_ID } from '../scene/village/village-layout.js';
 import {
   FACTION_BADGE_COLORS,
@@ -66,7 +66,7 @@ import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported,
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
 import { buildCampaignRecap, renderCampaignRecapHTML } from './campaign-recap.js';
-import { buildObjectiveText } from './plain-text.js';
+import { buildObjectiveText, formatHudScore } from './plain-text.js';
 import { createPerfHud, isPerfDebugEnabled } from '../debug/perf-hud.js';
 import { createSimulationWorkerClient } from '../engine/simulation-worker-client.js';
 import { setButtonInteractive, setElementInteractive } from './focus-state.js';
@@ -395,6 +395,12 @@ function bindUI({
 
   function getCurrentZoneId() {
     return state.campaign.worldState?.currentZone ?? 'player_plot';
+  }
+
+  // The village has no bed: the garden HUD (Plant, Start Season, the crop
+  // counter) hides and phase-advance input is ignored there.
+  function isInVillage() {
+    return isGardenInputBlocked(getCurrentZoneId());
   }
 
   function getCurrentZoneName() {
@@ -1101,6 +1107,20 @@ function bindUI({
 
   function updateFAB() {
     if (!fab) return;
+    if (isInVillage()) {
+      fab.classList.remove('is-visible');
+      setButtonInteractive(fab, false);
+      fabWasVisible = false;
+      if (fabPlant) {
+        fabPlant.classList.remove('is-visible');
+        setButtonInteractive(fabPlant, false);
+        fabPlantWasVisible = false;
+      }
+      if (cropPaletteOpen) closePalette();
+      fabBackpack?.classList.remove('is-hidden');
+      setButtonInteractive(fabBackpack, gameInputEnabled && !cutsceneMachine.isActive());
+      return;
+    }
     if (!gameInputEnabled || cutsceneMachine.isActive() || interventionTargeting.isActive()) {
       fab.classList.remove('is-visible');
       setButtonInteractive(fab, false);
@@ -1444,17 +1464,32 @@ function bindUI({
     if (hudChapter) hudChapter.textContent = state.campaign?.sandbox ? 'Free Play' : `Ch ${Math.min(state.campaign.currentChapter, 12)}`;
     if (hudPhase) hudPhase.textContent = getPhaseLabel(state.season.phase);
     const planted = state.season.grid.filter((cell) => cell.cropId !== null).length;
-    if (hudCrops) hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
+    const inVillage = isInVillage();
+    if (hudCrops) {
+      hudCrops.textContent = `${planted} / ${state.season.grid.length}`;
+      hudCrops.hidden = inVillage;
+    }
 
     const scoreResult = state.season.harvestResult
       ?? scoreBed(state.season.grid, state.season.siteConfig, state.season.season, state.campaign.pantry);
-    if (hudScore) hudScore.textContent = scoreResult.score > 0 ? String(scoreResult.score) : '--';
+    if (hudScore) {
+      const scoreDisplay = formatHudScore(scoreResult.score);
+      hudScore.textContent = scoreDisplay.text;
+      const scoreWrap = hudScore.closest('.hud-score-wrap');
+      if (scoreWrap) {
+        // Phones hide the "Score" label, so an unscored bed showed a bare "--".
+        // CSS hides the empty score there and shows the crop counter instead.
+        scoreWrap.dataset.empty = String(scoreDisplay.empty);
+        scoreWrap.hidden = inVillage;
+      }
+    }
 
     if (hudAction) {
       const advanceReady = gameInputEnabled
         && !cutsceneMachine.isActive()
         && !interventionTargeting.isActive()
-        && canAdvance(state.season);
+        && canAdvance(state.season)
+        && !inVillage;
       const visible = advanceReady && !fab;
       const actionLabel = getAdvanceLabel();
       hudAction.textContent = actionLabel;
@@ -1501,7 +1536,7 @@ function bindUI({
         planted,
         bedSize: state.season.grid.length,
         winterReviewSeen: Boolean(state.season.winterReviewSeen),
-        zoneId: letItGrowInteractionMode ? getCurrentZoneId() : 'player_plot',
+        zoneId: (inVillage || letItGrowInteractionMode) ? getCurrentZoneId() : 'player_plot',
         zoneName: getCurrentZoneName(),
         forageAvailable: foraging.available ?? 0,
         nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
@@ -2114,12 +2149,15 @@ function bindUI({
 
   inputManager.on('advance', (payload) => {
     if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    // No phase advances in the village (and no "plant first" toast either).
+    if (isInVillage()) return;
     payload.preventDefault();
     phaseRouter.doAdvance();
   });
 
   inputManager.on('toggle_palette', (payload) => {
     if (pauseController.isOpen() || cutsceneMachine.isActive() || !gameInputEnabled) return;
+    if (isInVillage()) return;
     payload.preventDefault();
     showCropPalette();
   });
@@ -2169,11 +2207,13 @@ function bindUI({
 
   fab?.addEventListener('click', (event) => {
     event.stopPropagation();
+    if (isInVillage()) return;
     phaseRouter.doAdvance();
   }, sessionSignal);
 
   hudAction?.addEventListener('click', (event) => {
     event.stopPropagation();
+    if (isInVillage()) return;
     phaseRouter.doAdvance();
   }, sessionSignal);
 

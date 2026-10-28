@@ -417,8 +417,13 @@ body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot
     font-size: 10px;
   }
 
-  body[data-design-language="field-kit"][data-story-screen="play"] #hud-crops,
   body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-label {
+    display: none;
+  }
+
+  /* The "Score" label hides here, so an unscored bed would read a bare "--".
+     Show the crop counter instead and drop the empty score until there is one. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-wrap[data-empty="true"] {
     display: none;
   }
 
@@ -545,4 +550,10 @@ body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-cont
   body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-container #crop-palette-panel) :is(#season-calendar, #phase-helper) {
     visibility: hidden;
   }
+}
+
+/* The village has no bed: the crop counter and bed score hide there. */
+#hud-crops[hidden],
+.hud-score-wrap[hidden] {
+  display: none !important;
 }
