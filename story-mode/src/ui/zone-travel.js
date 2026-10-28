@@ -2,6 +2,7 @@ import WORLD_MAP from 'specs/WORLD_MAP.json';
 
 import { Actions } from '../game/store.js';
 import { getZoneExitPoints } from '../scene/zones/world-zone-contract.js';
+import { VILLAGE_ZONE_ID, getVillageLayout } from '../scene/village/village-layout.js';
 
 function clonePosition(position) {
   if (!position) return null;
@@ -63,7 +64,15 @@ const ZONE_NAMES = buildZoneNames(WORLD_MAP);
 const DEFAULT_ZONE_SPAWN_POINTS = buildDefaultZoneSpawnPoints(WORLD_MAP);
 const WORLD_ZONE_INTERACTABLES = buildWorldZoneInteractables(WORLD_MAP);
 
+// The village is registered at runtime for Free Play saves only (zone-registry.js).
+if (!ZONE_NAMES[VILLAGE_ZONE_ID]) ZONE_NAMES[VILLAGE_ZONE_ID] = 'The Village';
+if (!DEFAULT_ZONE_SPAWN_POINTS[VILLAGE_ZONE_ID]) {
+  const { x, z } = getVillageLayout().spawn;
+  DEFAULT_ZONE_SPAWN_POINTS[VILLAGE_ZONE_ID] = { x, y: 0, z };
+}
+
 function getZoneMovementBounds(zoneId, worldMap = WORLD_MAP) {
+  if (zoneId === VILLAGE_ZONE_ID && !worldMap.zones?.[zoneId]) return cloneBounds(getVillageLayout().bounds);
   return cloneBounds(worldMap.zones?.[zoneId]?.bounds ?? null);
 }
 
@@ -71,6 +80,12 @@ function getZoneMovementBounds(zoneId, worldMap = WORLD_MAP) {
 // next to the zone's bounds so collision and visible scenery stay in one place.
 // Zones without a list are open ([]).
 function getZoneMovementBlockers(zoneId, worldMap = WORLD_MAP) {
+  if (zoneId === VILLAGE_ZONE_ID && !worldMap.zones?.[zoneId]) {
+    // oriented rects: keep rotationY for simulation-core
+    return getVillageLayout().blockers.map(({ minX, maxX, minZ, maxZ, rotationY }) => (
+      rotationY ? { minX, maxX, minZ, maxZ, rotationY } : { minX, maxX, minZ, maxZ }
+    ));
+  }
   const blockers = worldMap.zones?.[zoneId]?.blockers;
   if (!Array.isArray(blockers)) return [];
   return blockers.map(({ minX, maxX, minZ, maxZ }) => ({ minX, maxX, minZ, maxZ }));

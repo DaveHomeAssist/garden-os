@@ -317,7 +317,11 @@ export class ZoneManager {
   update(dt, playerStateOrPosition = null) {
     const playerPosition = toWorldPosition(playerStateOrPosition?.position ?? playerStateOrPosition);
     if (playerPosition) {
-      this.activeZoneInstance?.setPlayerPosition?.(playerPosition);
+      if (playerStateOrPosition?.position && this.activeZoneInstance?.setPlayerState) {
+        this.activeZoneInstance.setPlayerState(playerStateOrPosition);
+      } else {
+        this.activeZoneInstance?.setPlayerPosition?.(playerPosition);
+      }
     }
     this.activeZoneInstance?.update?.(dt);
     const triggerPosition = playerPosition ?? this.activeZoneInstance?.getPlayerPosition?.() ?? null;
@@ -334,8 +338,16 @@ export class ZoneManager {
     if (!this.renderer || !this.activeZoneInstance?.scene || !this.activeZoneInstance?.camera) {
       return false;
     }
+    // Zones with their own light rig / tone mapping (the village) render themselves.
+    if (typeof this.activeZoneInstance.render === 'function') {
+      return this.activeZoneInstance.render(this.renderer) !== false;
+    }
     this.renderer.render(this.activeZoneInstance.scene, this.activeZoneInstance.camera);
     return true;
+  }
+
+  getActiveZoneInstance() {
+    return this.activeZoneInstance;
   }
 
   isRenderableActiveZone() {

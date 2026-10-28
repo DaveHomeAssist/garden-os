@@ -28,6 +28,7 @@ function loadRuntimeModules() {
       bindUI: uiModule.bindUI,
       ZoneManager: zmModule.ZoneManager,
       registerAllZones: zrModule.registerAllZones,
+      registerVillageZone: zrModule.registerVillageZone,
       ResourceTracker: rtModule.ResourceTracker,
     }));
   }
@@ -74,7 +75,7 @@ async function startSession({ initialState, slot, viewport, planner }) {
   try {
     const {
       InputManager, createGardenScene, bindUI,
-      ZoneManager, registerAllZones, ResourceTracker,
+      ZoneManager, registerAllZones, registerVillageZone, ResourceTracker,
     } = await loadRuntimeModules();
     clearLoading();
 
@@ -115,6 +116,8 @@ async function startSession({ initialState, slot, viewport, planner }) {
     const zoneResourceTracker = new ResourceTracker();
     const zoneManager = new ZoneManager(scene.getRenderer?.(), store, zoneResourceTracker);
     registerAllZones(zoneManager, store, zoneResourceTracker);
+    // Village V0: Free Play saves only (Story Mode keeps its yard).
+    registerVillageZone(zoneManager, { slot, store });
 
     // Transition to the player's current zone (or default to player_plot)
     const startZone = packResult.state.campaign?.worldState?.currentZone ?? 'player_plot';
