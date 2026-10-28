@@ -1,0 +1,19 @@
+/* Village overlays (Free Play).
+   The OSM street-layout credit is appended to <body> by the village scene, so
+   it paints above #app (isolated) and showed through the pause menu and the
+   village panels. Hide it while any modal is up; it comes back when they close.
+   The credit sets its z-index inline, so this hides instead of re-stacking. */
+body:has(#pause-menu.is-open) .village-credits,
+body:has(#shop-panel) .village-credits,
+body:has(#compost-panel) .village-credits,
+body:has(.panel-sheet.is-open) .village-credits,
+body:has(.harvest-reveal) .village-credits {
+  display: none !important;
+}
+
+/* "Back to village" sits top-right, right where the harvest reveal draws its
+   score circle. Step it aside while the reveal is open (Continue closes it). */
+body:has(.harvest-reveal) #village-back {
+  visibility: hidden;
+  pointer-events: none;
+}

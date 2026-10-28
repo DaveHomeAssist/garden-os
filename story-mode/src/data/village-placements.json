@@ -458,7 +458,7 @@
    "trigger": {
     "type": "open_tools",
     "radius": 1.4,
-    "prompt": "Tool shed: swap and upgrade tools"
+    "prompt": "Tool shed: buy tools"
    }
   },
   {
@@ -476,7 +476,7 @@
    "trigger": {
     "type": "open_seeds",
     "radius": 1.2,
-    "prompt": "Seed box: check your seeds"
+    "prompt": "Seed box: buy seed packets"
    }
   },
   {
@@ -724,7 +724,7 @@
    "trigger": {
     "type": "open_compost",
     "radius": 1.4,
-    "prompt": "Compost bin: add scraps / take compost"
+    "prompt": "Compost bin: turn scraps into compost"
    }
   },
   {

@@ -1,4 +1,4 @@
-import { getAllCrops } from '../data/crops.js';
+import { getAllCrops, getCropById, getRecipes } from '../data/crops.js';
 
 export const ItemCategories = {
   SEEDS: 'seeds',
@@ -90,8 +90,30 @@ function createEmptySlots(capacity) {
   return Array.from({ length: capacity }, () => null);
 }
 
+function getRecipeCardDef(itemId) {
+  const recipeId = String(itemId).replace(/^recipe_/, '');
+  const recipe = getRecipes()?.[recipeId];
+  if (!recipe) return null;
+  const crops = (recipe.crops ?? []).map((cropId) => getCropById(cropId)?.name ?? toTitleCase(cropId)).join(', ');
+  return {
+    id: itemId,
+    name: `${recipe.name} Recipe`,
+    icon: '📜',
+    category: ItemCategories.QUEST_ITEMS,
+    stackable: true,
+    maxStack: 9,
+    recipeId,
+    description: crops ? `Grow ${crops} in one bed to cook it.` : 'A recipe card.',
+  };
+}
+
 export function getItemDef(itemId) {
   if (ITEM_REGISTRY[itemId]) return ITEM_REGISTRY[itemId];
+  // Recipe cards bought at the village seed stand (shop-panel.js).
+  if (String(itemId).startsWith('recipe_')) {
+    const card = getRecipeCardDef(itemId);
+    if (card) return card;
+  }
   if (String(itemId).endsWith('_seed')) {
     return {
       id: itemId,

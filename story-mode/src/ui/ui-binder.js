@@ -26,7 +26,8 @@ import { createWalkAutopilot, nearestPointOutsideBlockers } from '../game/walk-a
 import { ToolHUD } from './tool-hud.js';
 import { createTouchStick } from './touch-stick.js';
 import { createTouchControls } from '../input/touch-controls.js';
-import { Inventory, getItemDef } from '../game/inventory.js';
+import { Inventory, getItemDef, addItemToInventoryState } from '../game/inventory.js';
+import { getCurrencyBalance, getHarvestCompostScraps } from '../game/village/village-economy.js';
 import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
 import { ForagingSystem } from '../game/foraging.js';
@@ -484,7 +485,8 @@ function bindUI({
     showToast(`Entered ${ZONE_NAMES[zoneId] ?? zoneId}.`, 1800, 'success');
     syncWorldInteractables();
     updateHUD();
-    persistState();
+    // Travel alone (e.g. the first walk into the village) earns no keepsake.
+    persistState({ awardFirstSave: false });
     return true;
   }
 
@@ -899,8 +901,10 @@ function bindUI({
     return awarded;
   }
 
-  function persistState() {
-    if (!hasKeepsake(state.campaign, 'first_seed_packet')) {
+  function persistState({ awardFirstSave = true } = {}) {
+    // First Seed Packet is the garden's first save. Village travel and the
+    // village autosave save too, but walking into the village earns nothing.
+    if (awardFirstSave && !isInVillage() && !hasKeepsake(state.campaign, 'first_seed_packet')) {
       awardCampaignKeepsake('first_seed_packet');
     }
     saveGameSnapshot(state);
@@ -917,6 +921,22 @@ function bindUI({
       // One pantry unit per harvested cell (3 basil cells -> basil +3).
       // yieldList stays de-duplicated for recipes and the summary text.
       draft.campaign.pantry = addHarvestToPantry(draft.campaign.pantry, result);
+
+      // Free Play: the harvest leaves compost scraps for the village bin (plant
+      // matter per harvested or failed cell, dried leaves at season end). The
+      // flag on the result stops a re-opened reveal from paying out twice.
+      if (draft.campaign.sandbox && !result.compostScrapsAwarded) {
+        const scraps = getHarvestCompostScraps(result);
+        let inventoryState = draft.campaign.inventory;
+        for (const [itemId, count] of Object.entries(scraps)) {
+          if (count <= 0) continue;
+          const added = addItemToInventoryState(inventoryState, itemId, count);
+          if (added.success) inventoryState = added.inventory;
+        }
+        draft.campaign.inventory = inventoryState;
+        result.compostScrapsAwarded = true;
+        result.compostScraps = scraps;
+      }
 
       for (const recipeId of result.recipeMatches ?? []) {
         if (!draft.campaign.recipesCompleted.includes(recipeId)) {
@@ -2498,7 +2518,9 @@ function bindUI({
     savePosition: () => villageSession.savePosition({ force: true }),
     // Economy readout for the shop / compost checks (read-only).
     getEconomy: (itemIds = []) => ({
-      tokens: store.getState().campaign.tokens ?? 0,
+      // The shops spend the shared coin balance (tokens kept as an alias for older checks).
+      balance: getCurrencyBalance(store.getState().campaign),
+      tokens: getCurrencyBalance(store.getState().campaign),
       items: Object.fromEntries(itemIds.map((id) => [id, inventory.getItemCount(id)])),
     }),
   } : null;

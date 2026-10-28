@@ -15,7 +15,7 @@ function getRoot() {
 describe('shop-panel', () => {
   it('opening panel renders seed items', () => {
     const state = createGameState();
-    state.campaign.tokens = 100;
+    state.campaign.currency.balance = 100;
     const store = new Store(state);
     const container = getRoot();
     const shop = createShopPanel(container);
@@ -32,9 +32,9 @@ describe('shop-panel', () => {
     shop.dispose();
   });
 
-  it('buy dispatches ADD_ITEM and deducts tokens', () => {
+  it('buy deducts coins from currency.balance and adds the item', () => {
     const state = createGameState();
-    state.campaign.tokens = 50;
+    state.campaign.currency.balance = 50;
     const store = new Store(state);
     const container = getRoot();
     const shop = createShopPanel(container);
@@ -52,15 +52,21 @@ describe('shop-panel', () => {
     buyButton.click();
 
     const afterState = store.getState();
-    // Tokens should be deducted
-    expect(afterState.campaign.tokens).toBe(50 - price);
+    // Coins come out of the shared balance; the seed goes in the backpack.
+    expect(afterState.campaign.currency.balance).toBe(50 - price);
+    expect(afterState.campaign.tokens).toBe(0);
+    const owned = afterState.campaign.inventory.slots.filter(Boolean)
+      .filter((slot) => slot.itemId === itemId).reduce((n, slot) => n + (slot.count ?? 1), 0);
+    expect(owned).toBe(1);
+    expect(afterState.campaign.currency.ledger.at(-1)).toMatchObject({ type: 'village_shop', itemId, delta: -price });
+    expect(panel.querySelector('[data-shop-message]').textContent).toContain('Bought');
 
     shop.dispose();
   });
 
-  it('cannot buy if insufficient tokens', () => {
+  it('cannot buy with too few coins', () => {
     const state = createGameState();
-    state.campaign.tokens = 0;
+    state.campaign.currency.balance = 0;
     const store = new Store(state);
     const container = getRoot();
     const shop = createShopPanel(container);
@@ -78,14 +84,14 @@ describe('shop-panel', () => {
       buyButtons[0].click();
     }
     const afterState = store.getState();
-    expect(afterState.campaign.tokens).toBe(0);
+    expect(afterState.campaign.currency.balance).toBe(0);
 
     shop.dispose();
   });
 
   it('close hides panel', () => {
     const state = createGameState();
-    state.campaign.tokens = 100;
+    state.campaign.currency.balance = 100;
     const store = new Store(state);
     const container = getRoot();
     const shop = createShopPanel(container);
@@ -102,7 +108,7 @@ describe('shop-panel', () => {
 
   it('switches tabs to tools and recipes', () => {
     const state = createGameState();
-    state.campaign.tokens = 100;
+    state.campaign.currency.balance = 100;
     const store = new Store(state);
     const container = getRoot();
     const shop = createShopPanel(container);
