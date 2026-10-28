@@ -4,7 +4,8 @@
 // it) -> home plot via E -> back -> save -> reload -> Continue restores the village pose.
 // Also: garden HUD hidden + Enter inert in the village, V0 objective text, tapping the
 // shop stand opens its prompt (V2), and a fixture save (tokens + scraps) for buying (V8)
-// and composting (V9), plus the phone crop counter (no bare "--").
+// and composting (V9), plus the phone crop counter (no bare "--") and phone arrival
+// toasts clear of the tool hotbar.
 // Usage (from story-mode/): npx vite --port 4318 --strictPort
 //   GOS_URL=http://localhost:4318/garden-os/story-mode/ node tests/village-e2e.mjs
 // Env: GOS_OUT (screenshots + results, default <tmpdir>/gos-village-e2e).
@@ -300,6 +301,23 @@ try {
   assert.match(phone.crops ?? '', /^\d+ \/ \d+$/, `phone crop counter ${JSON.stringify(phone)}`);
   assert.notEqual(phone.score, '--', 'no bare "--" on the phone');
   pass('phone HUD shows the crop counter, no bare "--"', phone);
+
+  // Phone: arrival toasts ("Entered The Village.", keepsakes) stack above the tool hotbar.
+  await page.locator('#village-back').click();
+  await page.locator('#toast-container .toast-notification.is-visible').first().waitFor({ timeout: 30000 });
+  await page.waitForTimeout(300);
+  const toastLayout = await page.evaluate(() => {
+    const box = (el) => { const b = el.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, left: b.left, right: b.right }; };
+    const hud = document.querySelector('.tool-hud');
+    const toasts = [...document.querySelectorAll('#toast-container .toast-notification.is-visible')].map((t) => ({ text: t.textContent, ...box(t) }));
+    return { hudVisible: Boolean(hud?.classList.contains('is-visible')), hud: hud ? box(hud) : null, toasts };
+  });
+  await page.screenshot({ path: `${OUT}/09-phone-arrival-toasts.png` });
+  assert.ok(toastLayout.hudVisible && toastLayout.toasts.length > 0, `hotbar + toast shown ${JSON.stringify(toastLayout)}`);
+  const covered = toastLayout.toasts.filter((t) => t.bottom > toastLayout.hud.top && t.top < toastLayout.hud.bottom
+    && t.right > toastLayout.hud.left && t.left < toastLayout.hud.right);
+  assert.deepEqual(covered, [], `toasts must not cover the hotbar ${JSON.stringify(toastLayout)}`);
+  pass('phone: arrival toasts sit above the tool hotbar', { toasts: toastLayout.toasts.map((t) => t.text), hudTop: toastLayout.hud.top });
 
   assert.deepEqual(errors, []);
   writeFileSync(join(OUT, 'results.json'), JSON.stringify({ passed: true, checks, pageErrors: errors }, null, 2));

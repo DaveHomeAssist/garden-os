@@ -479,6 +479,14 @@ body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud__slot
     transform: none !important;
   }
 
+  /* Toasts sat at bottom 96px (154px on phones), on top of the hotbar above
+     (bottom 150px, 58-66px tall), so "Entered The Village." and keepsake
+     toasts covered the tools on arrival. While the hotbar shows, stack the
+     toasts just above it: 150 + 66 (52px touch slots) + 10px gap. */
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible) #toast-container {
+    bottom: calc(226px + env(safe-area-inset-bottom, 0px));
+  }
+
   body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud::-webkit-scrollbar {
     display: none;
   }
