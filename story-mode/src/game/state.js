@@ -25,7 +25,8 @@ const COLS = 8;
 const ROWS = 4;
 const CELL_COUNT = COLS * ROWS;
 // v10: campaign.village { position [x,z], facingY, insidePlot } (Free Play village).
-const CAMPAIGN_SCHEMA_VERSION = 10;
+// v11: the village shops spend currency.balance; legacy campaign.tokens fold into it on load.
+const CAMPAIGN_SCHEMA_VERSION = 11;
 const GRID_UNLOCKS = [
   { cols: 8, rows: 4, chapter: 1, gardeningLevel: 1 },
   { cols: 8, rows: 6, chapter: 6, gardeningLevel: 5 },
@@ -171,6 +172,7 @@ function createCampaignState() {
     activeFestival: null,
     lastLevelUp: null,
     gameMode: 'story',
+    // Legacy (v10 and earlier shop tokens, never credited). Always 0 now; see village-economy.js.
     tokens: 0,
     currency: { ...DEFAULT_CURRENCY_STATE, ledger: [] },
     market: { ...DEFAULT_MARKET_STATE, priceHistory: [], transactions: [] },

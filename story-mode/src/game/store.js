@@ -1,5 +1,6 @@
 import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
 import { normalizeVillageState } from './village/village-state.js';
+import { foldLegacyTokens, LEDGER_LIMIT, VILLAGE_SHOP_LEDGER_TYPE } from './village/village-economy.js';
 import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
@@ -145,6 +146,7 @@ const Actions = {
   SWITCH_BED: 'SWITCH_BED',
   EXPAND_BED_GRID: 'EXPAND_BED_GRID',
   SET_TOKENS: 'SET_TOKENS',
+  VILLAGE_SHOP_BUY: 'VILLAGE_SHOP_BUY',
   ADD_STORY_LOG: 'ADD_STORY_LOG',
   RECORD_QUEST_CHOICE: 'RECORD_QUEST_CHOICE',
   ADJUST_CURRENCY: 'ADJUST_CURRENCY',
@@ -246,7 +248,8 @@ function findPreferredBedIdForZone(campaign, zoneId) {
 
 function normalizeCampaign(rawCampaign) {
   const fallbackCampaign = createCampaignState();
-  const campaign = rawCampaign ?? {};
+  // v10 -> v11: leftover shop tokens fold into currency.balance (village-economy.js).
+  const campaign = foldLegacyTokens(rawCampaign ?? {});
   const worldState = {
     ...fallbackCampaign.worldState,
     ...(campaign.worldState ?? {}),
@@ -302,7 +305,7 @@ function normalizeCampaign(rawCampaign) {
     activeFestival: cloneValue(campaign.activeFestival) ?? null,
     questLedger: normalizeQuestLedger(campaign.questLedger),
     lastLevelUp: cloneValue(campaign.lastLevelUp) ?? null,
-    tokens: Number(campaign.tokens ?? fallbackCampaign.tokens ?? 0),
+    tokens: 0,
     currency: {
       ...DEFAULT_CURRENCY_STATE,
       ...(campaign.currency ?? {}),
@@ -1385,6 +1388,38 @@ function gameReducer(state, action = {}) {
     case Actions.SET_TOKENS: {
       const nextState = cloneGameState(state);
       nextState.campaign.tokens = Math.max(0, Number(payload.tokens ?? 0));
+      return nextState;
+    }
+
+    case Actions.VILLAGE_SHOP_BUY: {
+      // One atomic village purchase: coins out, item in, or nothing changes.
+      const itemId = typeof payload.itemId === 'string' ? payload.itemId : '';
+      const price = Math.floor(Number(payload.price));
+      const count = Math.max(1, Math.floor(Number(payload.count ?? 1)) || 1);
+      if (!itemId || !Number.isFinite(price) || price < 0) return state;
+      const before = clampCurrency(state.campaign?.currency?.balance ?? 0);
+      if (before < price) return state;
+      const added = addItemToInventoryState(state.campaign.inventory, itemId, count);
+      if (!added.success) return state;
+      const nextState = cloneGameState(state);
+      const after = clampCurrency(before - price);
+      nextState.campaign.inventory = added.inventory;
+      nextState.campaign.currency = {
+        ...(nextState.campaign.currency ?? DEFAULT_CURRENCY_STATE),
+        balance: after,
+        ledger: [
+          ...(nextState.campaign.currency?.ledger ?? []),
+          {
+            type: VILLAGE_SHOP_LEDGER_TYPE,
+            itemId,
+            count,
+            delta: -price,
+            before,
+            after,
+            timestamp: Number.isFinite(payload.timestamp) ? payload.timestamp : Date.now(),
+          },
+        ].slice(-LEDGER_LIMIT),
+      };
       return nextState;
     }
 

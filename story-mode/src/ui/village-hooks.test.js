@@ -28,6 +28,7 @@ function make(state = createSandboxState()) {
   const deps = {
     container, store, inventory, craftingSystem, toolHUD,
     setMovementEnabled: vi.fn(), enterGardenScreen: vi.fn(), exitGardenScreen: vi.fn(),
+    showToast: vi.fn(),
   };
   const hooks = attachVillageHooks({ engine, ...deps });
   if (hooks) attached.push(hooks);
@@ -100,11 +101,12 @@ describe('village hooks (UI wiring with a mock engine)', () => {
     expect(deps.exitGardenScreen).toHaveBeenCalledTimes(2);
   });
 
-  it('neighbour plots show the reserved prompt and open nothing', () => {
-    const { engine, container } = make();
+  it('neighbour plots show the reserved prompt, toast on E, and open nothing', () => {
+    const { engine, container, deps } = make();
     engine.enter({ id: 'np_1', type: 'neighbour_plot_reserved' });
     expect(container.querySelector('#village-prompt').textContent).toContain('Reserved for a neighbour');
     key('e');
+    expect(deps.showToast).toHaveBeenCalledWith('Neighbours coming soon');
     expect(container.querySelector('#shop-panel')).toBeNull();
     expect(container.querySelector('#compost-panel')).toBeNull();
     expect(container.querySelector('#village-back')).toBeNull();

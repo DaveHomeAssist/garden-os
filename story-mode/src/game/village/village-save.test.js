@@ -17,9 +17,9 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe('save schema v10: village', () => {
-  it('is schema v10 and new campaigns start at the village spawn', () => {
-    expect(CAMPAIGN_SCHEMA_VERSION).toBe(10);
+describe('save schema v10+: village', () => {
+  it('is schema v11 and new campaigns start at the village spawn', () => {
+    expect(CAMPAIGN_SCHEMA_VERSION).toBe(11);
     expect(createSandboxState().campaign.village).toEqual(DEFAULT);
     expect(createDefaultVillageState()).toEqual(DEFAULT);
   });
@@ -36,16 +36,18 @@ describe('save schema v10: village', () => {
     }));
     const loaded = loadCampaign('freeplay');
     expect(loaded).not.toBeNull();
-    expect(loaded.version).toBe(10);
+    expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     expect(loaded.village).toEqual(DEFAULT);
-    expect(loaded.tokens).toBe(42);
+    // v11: the never-credited shop tokens fold into the coin balance (default 100).
+    expect(loaded.tokens).toBe(0);
+    expect(loaded.currency.balance).toBe(142);
     expect(loaded.worldState.currentZone).toBe('player_plot');
   });
 
   it('migrates a v9 Story save too (village is inert there)', () => {
     localStorage.setItem('gos-story-slot-0-campaign', JSON.stringify({ version: 9, currentChapter: 3 }));
     const loaded = loadCampaign(0);
-    expect(loaded.version).toBe(10);
+    expect(loaded.version).toBe(CAMPAIGN_SCHEMA_VERSION);
     expect(loaded.village).toEqual(DEFAULT);
     expect(loaded.currentChapter).toBe(3);
   });
@@ -56,7 +58,7 @@ describe('save schema v10: village', () => {
     saveCampaign(state.campaign, 'freeplay');
     const loaded = loadCampaign('freeplay');
     expect(loaded.village).toEqual({ position: [4.25, -3.5], facingY: 1.57, insidePlot: true });
-    expect(JSON.parse(localStorage.getItem('gos-freeplay-campaign')).version).toBe(10);
+    expect(JSON.parse(localStorage.getItem('gos-freeplay-campaign')).version).toBe(CAMPAIGN_SCHEMA_VERSION);
   });
 
   it('repairs garbage village data instead of failing the load', () => {

@@ -31,6 +31,7 @@ function makeUi() {
     openCompost: vi.fn((opts) => { closers.compost = opts.onClose; }),
     enterPlot: vi.fn((opts) => { closers.plot = opts.onExit; }),
     exitPlot: vi.fn(),
+    toast: vi.fn(),
   };
   return { ui, closers };
 }
@@ -129,10 +130,11 @@ describe('village trigger router', () => {
     expect(router.getOpenPanel()).toBe('compost');
   });
 
-  it('neighbour_plot_reserved is prompt-only: no panel, no save, no movement change', () => {
+  it('neighbour_plot_reserved: brief toast only, no panel, no save, no movement change', () => {
     const { engine, ui, saves, router } = setup();
     engine.enter(T.np1);
-    expect(router.activate()).toBe(false);
+    expect(router.activate()).toBe(true);
+    expect(ui.toast).toHaveBeenCalledWith('Neighbours coming soon');
     expect(ui.openShop).not.toHaveBeenCalled();
     expect(ui.openTools).not.toHaveBeenCalled();
     expect(ui.openCompost).not.toHaveBeenCalled();

@@ -18,6 +18,7 @@ import {
 import { normalizePlayerProfile } from '../data/player-profile.js';
 import { normalizeQuestLedger } from './quest-ledger.js';
 import { normalizeVillageState } from './village/village-state.js';
+import { foldLegacyTokens } from './village/village-economy.js';
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -30,8 +31,10 @@ const campaignKey = campaignStorageKey;
 
 const seasonKey = seasonStorageKey;
 
-function normalizeCampaignSave(parsed) {
-  if (!parsed || typeof parsed !== 'object') return null;
+function normalizeCampaignSave(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  // v10 -> v11: shop tokens (never credited) fold into the shared coin balance.
+  const parsed = foldLegacyTokens(raw);
   return {
     ...parsed,
     version: CAMPAIGN_SCHEMA_VERSION,

@@ -15,7 +15,7 @@
  *   openCompost({ onClose })               compost panel (new)
  *   enterPlot({ triggerId, onExit })       existing garden (bed) screen + "Back to village"
  *   exitPlot({ pose })                     leave the garden screen; pose = village exit spot
- *   toast(message)
+ *   toast(message)                         brief feedback (neighbour plots)
  *
  * Other deps:
  *   adapter       { subscribe, registerInteractables?, getPlayerPose?, setPlayerPose? }
@@ -37,13 +37,16 @@ export const VILLAGE_TRIGGER_TYPES = Object.freeze({
 export const DEFAULT_TRIGGER_PROMPTS = Object.freeze({
   enter_plot: 'Your garden — tend your bed',
   open_shop: 'Seed stand — buy seeds',
-  open_seeds: 'Seed box — check your seeds',
-  open_compost: 'Compost bin — add scraps',
-  open_tools: 'Tool shed — swap tools',
+  open_seeds: 'Seed box — buy seed packets',
+  open_compost: 'Compost bin — turn scraps into compost',
+  open_tools: 'Tool shed — buy tools',
   neighbour_plot_reserved: 'Reserved for a neighbour',
 });
 
 const HANDLED = new Set(Object.values(VILLAGE_TRIGGER_TYPES));
+
+/** Brief feedback when E / tap hits a neighbour plot that has no one yet. */
+export const NEIGHBOUR_PLOT_FEEDBACK = 'Neighbours coming soon';
 
 export function isHandledTriggerType(type) {
   return HANDLED.has(type);
@@ -161,8 +164,10 @@ export function createVillageTriggerRouter({
       case VILLAGE_TRIGGER_TYPES.OPEN_COMPOST:
         return openPanelOf('compost', ui.openCompost);
       case VILLAGE_TRIGGER_TYPES.NEIGHBOUR_PLOT_RESERVED:
-        // Prompt only: no panel, no state change.
-        return false;
+        // No panel, no save, no movement change: just a brief toast so E is
+        // not silently ignored.
+        ui.toast?.(NEIGHBOUR_PLOT_FEEDBACK);
+        return true;
       default:
         return false;
     }

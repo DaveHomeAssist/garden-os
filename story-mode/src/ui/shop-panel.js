@@ -1,9 +1,11 @@
 /**
  * Shop Panel — modal overlay for the Market Square shop.
- * Players can buy seeds, tools, and recipes with harvest tokens.
+ * Players buy seeds, tools, and recipes with their coins: the same
+ * campaign.currency.balance the market uses (village-economy.js).
  */
 import { getCropsForChapter, getRecipes } from '../data/crops.js';
-import { getSeedItemId, getItemDef } from '../game/inventory.js';
+import { getSeedItemId, getItemDef, getInventoryItemCount } from '../game/inventory.js';
+import { getCurrencyBalance } from '../game/village/village-economy.js';
 
 function escapeHtml(value) {
   return String(value)
@@ -94,6 +96,7 @@ function renderItemCard(item, tokens) {
         display:flex;
         align-items:center;
         gap:12px;
+        min-width:0;
         padding:10px 12px;
         border-radius:10px;
         background:rgba(247,242,234,0.04);
@@ -137,9 +140,10 @@ export function createShopPanel(container) {
   let currentStore = null;
   let currentShopData = null;
   let _isOpen = false;
+  let lastMessage = '';
 
   function getTokens() {
-    return currentStore?.getState?.()?.campaign?.tokens ?? 0;
+    return getCurrencyBalance(currentStore?.getState?.()?.campaign);
   }
 
   function getChapter() {
@@ -196,18 +200,20 @@ export function createShopPanel(container) {
         ${getVisibleTabs().map(([tabId, label]) => renderTabButton(tabId, activeTab, label)).join('')}
       </div>
 
-      <div id="shop-items" style="display:grid;gap:8px;max-height:50vh;overflow-y:auto;">
+      <div id="shop-items" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-height:50vh;overflow-y:auto;">
         ${listings.length
           ? listings.map((item) => renderItemCard(item, tokens)).join('')
           : '<div style="font-size:13px;color:rgba(247,242,234,0.48);padding:16px 0;">No items available in this category.</div>'
         }
       </div>
+      <div data-shop-message role="status" aria-live="polite" style="font-size:12px;color:rgba(247,242,234,0.72);margin-top:10px;min-height:16px;">${escapeHtml(lastMessage)}</div>
     `;
 
     // Bind tab buttons
     sheet.querySelectorAll('[data-shop-tab]').forEach((btn) => {
       btn.addEventListener('click', () => {
         activeTab = btn.dataset.shopTab;
+        lastMessage = '';
         rerender();
       });
     });
@@ -232,23 +238,19 @@ export function createShopPanel(container) {
     if (!currentStore) return;
     const tokens = getTokens();
     if (tokens < price) return;
-
-    // Deduct tokens
-    currentStore.dispatch({ type: 'SET_TOKENS', payload: { tokens: tokens - price } });
-
-    // Add item to inventory (recipes are added as quest_items)
-    if (isRecipe) {
-      currentStore.dispatch({
-        type: 'ADD_ITEM',
-        payload: { itemId: `recipe_${itemId}`, count: 1 },
-      });
-    } else {
-      currentStore.dispatch({
-        type: 'ADD_ITEM',
-        payload: { itemId, count: 1 },
-      });
-    }
-
+    // Recipes go in the backpack as recipe cards.
+    const inventoryItemId = isRecipe ? `recipe_${itemId}` : itemId;
+    const countOf = () => getInventoryItemCount(currentStore.getState()?.campaign?.inventory, inventoryItemId);
+    const before = countOf();
+    // One atomic action: coins out and item in together, or nothing changes.
+    currentStore.dispatch({
+      type: 'VILLAGE_SHOP_BUY',
+      payload: { itemId: inventoryItemId, price, count: 1 },
+    });
+    const bought = countOf() > before;
+    const name = getItemDef(inventoryItemId)?.name ?? inventoryItemId;
+    lastMessage = bought ? `Bought ${name}. It's in your backpack.` : 'Your backpack is full.';
+    if (bought) currentShopData?.onBuy?.({ itemId: inventoryItemId, price });
     rerender();
   }
 
@@ -258,6 +260,7 @@ export function createShopPanel(container) {
     const visibleTabs = getVisibleTabs().map(([tabId]) => tabId);
     activeTab = visibleTabs.includes(currentShopData.tab) ? currentShopData.tab : (visibleTabs[0] ?? 'seeds');
     _isOpen = true;
+    lastMessage = '';
 
     sheet = document.createElement('div');
     sheet.className = 'panel-sheet is-open';
@@ -267,6 +270,8 @@ export function createShopPanel(container) {
       top:50%;
       left:50%;
       transform:translate(-50%,-50%);
+      box-sizing:border-box;
+      width:min(92vw,420px);
       max-width:min(92vw,420px);
       max-height:82vh;
       overflow:auto;

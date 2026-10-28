@@ -30,6 +30,9 @@ function buttonStyle(enabled) {
   `;
 }
 
+// Shown while the bin cannot make a batch, so an empty bin is not a dead end.
+export const COMPOST_SCRAPS_HINT = 'Scraps come from your garden: each harvest leaves plant matter, and each season end leaves dried leaves.';
+
 export function createCompostPanel(container) {
   let sheet = null;
   let backdrop = null;
@@ -74,6 +77,8 @@ export function createCompostPanel(container) {
           </div>
         `).join('')}
       </div>
+
+      ${batches === 0 ? `<div data-compost-hint style="font-size:12px;color:#e8c84a;margin-bottom:10px;">${escapeHtml(COMPOST_SCRAPS_HINT)}</div>` : ''}
 
       <div aria-label="Bin fill" style="height:6px;border-radius:999px;background:rgba(247,242,234,0.08);margin-bottom:12px;overflow:hidden;">
         <div data-compost-fill style="height:100%;width:${fillPct}%;background:#5aab6b;"></div>

@@ -6,7 +6,7 @@ import { Store } from '../game/store.js';
 import { Inventory } from '../game/inventory.js';
 import { SkillSystem } from '../game/skills.js';
 import { CraftingSystem } from '../game/crafting.js';
-import { createCompostPanel } from './compost-panel.js';
+import { COMPOST_SCRAPS_HINT, createCompostPanel } from './compost-panel.js';
 
 const panels = [];
 beforeEach(() => {
@@ -75,5 +75,18 @@ describe('compost panel', () => {
     expect(onClose).toHaveBeenCalledTimes(3);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(onClose).toHaveBeenCalledTimes(3);
+  });
+
+  it('an empty bin says where scraps come from; the hint goes once a batch is possible', () => {
+    const { inventory, crafting, root, panel } = make();
+    panel.open({ craftingSystem: crafting, inventory });
+    const hint = root.querySelector('#compost-panel [data-compost-hint]');
+    expect(hint).not.toBeNull();
+    expect(hint.textContent).toBe(COMPOST_SCRAPS_HINT);
+    panel.close({ silent: true });
+    inventory.addItem('dried_leaves', 2);
+    inventory.addItem('plant_matter', 1);
+    panel.open({ craftingSystem: crafting, inventory });
+    expect(root.querySelector('#compost-panel [data-compost-hint]')).toBeNull();
   });
 });
