@@ -46,9 +46,9 @@ function createVillagePrompt(container, onActivate) {
   button.hidden = true;
   // The shared .interaction-prompt style anchors at a projected world point
   // (left/top). The village prompt has no world anchor, so pin it bottom-centre
-  // above the tool row and touch controls, where it is readable on a phone.
+  // above the tool row and the touch stick (clears both on a 390x844 phone).
   button.style.cssText = `
-    position:fixed;left:50%;top:auto;bottom:calc(27vh + env(safe-area-inset-bottom, 0px));
+    position:fixed;left:50%;top:auto;bottom:calc(27vh + 40px + env(safe-area-inset-bottom, 0px));
     transform:translateX(-50%);z-index:36;max-width:calc(100vw - 24px);
   `;
   const hint = document.createElement('span');

@@ -8,11 +8,18 @@
  * }
  *
  * Saves from v9 and earlier have no `village` and get the default spawn.
- * The real sidewalk spawn comes from 3D BOT's placement data; until that
- * lands this matches the existing walk-sim default spawn (0, 2.55).
+ * They get the village spawn from 3D BOT's placement data.
  */
 
-export const VILLAGE_DEFAULT_SPAWN = Object.freeze({ x: 0, z: 2.55, facingY: 0 });
+import VILLAGE_PLACEMENTS from '../../data/village-placements.json';
+
+// 3D BOT's sidewalk spawn from village-placements.json (#78). Saves without a
+// village (v9 and earlier) land here instead of the yard's old walk-sim spawn
+// (0, 2.55), which sits in the middle of the village street.
+const SPAWN_ENTRY = (VILLAGE_PLACEMENTS.entries ?? []).find((entry) => entry.kind === 'spawn');
+export const VILLAGE_DEFAULT_SPAWN = Object.freeze(SPAWN_ENTRY
+  ? { x: SPAWN_ENTRY.x, z: SPAWN_ENTRY.z, facingY: SPAWN_ENTRY.rotation ?? 0 }
+  : { x: 0, z: 2.55, facingY: 0 });
 
 export function createDefaultVillageState(spawn = VILLAGE_DEFAULT_SPAWN) {
   return {

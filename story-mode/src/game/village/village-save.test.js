@@ -11,7 +11,7 @@ import {
   resolveVillageSpawn,
 } from './village-state.js';
 
-const DEFAULT = { position: [VILLAGE_DEFAULT_SPAWN.x, VILLAGE_DEFAULT_SPAWN.z], facingY: 0, insidePlot: false };
+const DEFAULT = { position: [VILLAGE_DEFAULT_SPAWN.x, VILLAGE_DEFAULT_SPAWN.z], facingY: VILLAGE_DEFAULT_SPAWN.facingY, insidePlot: false };
 
 beforeEach(() => {
   localStorage.clear();
@@ -62,7 +62,7 @@ describe('save schema v10: village', () => {
   it('repairs garbage village data instead of failing the load', () => {
     expect(migrateCampaignSave({ version: 10, village: { position: ['a', null], facingY: 'x', insidePlot: 'yes' } }).village)
       .toEqual(DEFAULT);
-    expect(normalizeVillageState({ position: [1, 2] })).toEqual({ position: [1, 2], facingY: 0, insidePlot: false });
+    expect(normalizeVillageState({ position: [1, 2] })).toEqual({ position: [1, 2], facingY: VILLAGE_DEFAULT_SPAWN.facingY, insidePlot: false });
     expect(normalizeVillageState('nope')).toEqual(DEFAULT);
     expect(prepareCampaignForSave({ version: 9 }).village).toEqual(DEFAULT);
   });
@@ -95,7 +95,7 @@ describe('resolveVillageSpawn', () => {
   });
 
   it('falls back to the spawn when out of bounds or inside a blocker', () => {
-    expect(resolveVillageSpawn({ position: [50, 0] }, { bounds })).toMatchObject({ x: 0, z: 2.55 });
-    expect(resolveVillageSpawn({ position: [0, 0] }, { bounds, blockers })).toMatchObject({ x: 0, z: 2.55 });
+    expect(resolveVillageSpawn({ position: [50, 0] }, { bounds })).toMatchObject({ x: VILLAGE_DEFAULT_SPAWN.x, z: VILLAGE_DEFAULT_SPAWN.z });
+    expect(resolveVillageSpawn({ position: [0, 0] }, { bounds, blockers })).toMatchObject({ x: VILLAGE_DEFAULT_SPAWN.x, z: VILLAGE_DEFAULT_SPAWN.z });
   });
 });
