@@ -52,6 +52,33 @@ try {
 
   // Arm a crop so a stray click on the hidden bed would plant it.
   await page.locator('#fab-plant').click();
+  // Desktop (live playtest 2026-10-28): "Back to village" was drawn on top of the
+  // right-hand Select Crop column, just under its x. With the picker open it must
+  // not cover any of the picker (hidden, or clear of its rect).
+  await page.locator('#crop-palette-panel').waitFor({ state: 'visible' });
+  const backVsPicker = () => page.evaluate(() => {
+    const back = document.querySelector('#village-back');
+    const picker = document.querySelector('#crop-palette-panel');
+    const r = (el) => { const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom }; };
+    const cs = back && getComputedStyle(back);
+    const shown = Boolean(back && cs.display !== 'none' && cs.visibility !== 'hidden' && back.getBoundingClientRect().width > 0);
+    const b = back ? r(back) : null; const p = r(picker);
+    const overlaps = Boolean(shown && b.left < p.right && b.right > p.left && b.top < p.bottom && b.bottom > p.top);
+    const cx = b ? (b.left + b.right) / 2 : 0; const cy = b ? (b.top + b.bottom) / 2 : 0;
+    const hit = back ? document.elementFromPoint(cx, cy) : null;
+    return { shown, overlaps, back: b, picker: p, backTakesClick: Boolean(hit && back.contains(hit)), viewport: [innerWidth, innerHeight] };
+  });
+  for (const vp of [{ width: 960, height: 600 }, { width: 1280, height: 720 }]) {
+    await page.setViewportSize(vp);
+    await page.waitForTimeout(400);
+    const bp = await backVsPicker();
+    assert.equal(bp.overlaps, false, `Back to village must not sit on the crop picker ${JSON.stringify(bp)}`);
+    assert.equal(bp.backTakesClick, false, `Back to village must not take clicks over the picker ${JSON.stringify(bp)}`);
+    if (vp.width === 1280) await page.screenshot({ path: `${OUT}/00-desktop-crop-picker-open.png` });
+    pass(`desktop ${vp.width}x${vp.height}: Back to village clear of the open crop picker`, { shown: bp.shown });
+  }
+  await page.setViewportSize({ width: 960, height: 600 });
+  await page.waitForTimeout(300);
   await page.locator('.palette-item').first().click();
   const armed = (await game()).selectedCropId;
   assert.ok(armed, 'a crop is selected');
@@ -59,6 +86,8 @@ try {
   if (await page.locator('.palette-dismiss:visible').count()) await page.locator('.palette-dismiss:visible').first().click();
   await page.waitForTimeout(300);
   assert.equal((await game()).pauseMenuOpen, false);
+  await page.locator('#village-back').waitFor({ state: 'visible' });
+  pass('Back to village returns once the crop picker closes');
 
   await page.locator('#village-back').click();
   await waitZone('village');
@@ -364,6 +393,38 @@ try {
     && t.right > toastLayout.hud.left && t.left < toastLayout.hud.right);
   assert.deepEqual(covered, [], `toasts must not cover the hotbar ${JSON.stringify(toastLayout)}`);
   pass('phone: arrival toasts sit above the tool hotbar', { toasts: toastLayout.toasts.map((t) => t.text), hudTop: toastLayout.hud.top });
+
+  // Phone (live playtest 2026-10-28): the "Empty plot" prompt card sits right by the
+  // player at 390x844, so a tap meant to walk landed on the card and opened the
+  // prompt. The card now passes taps through; only its Tap / E chip activates.
+  await walkTo('np_1');
+  await page.locator('#village-prompt.is-visible').waitFor();
+  await page.waitForTimeout(300);
+  const neighbourToasts = () => page.evaluate(() => [...document.querySelectorAll('#toast-container .toast-notification')]
+    .filter((t) => /Neighbours coming soon/i.test(t.textContent)).length);
+  const label = await page.locator('#village-prompt .interaction-prompt__label').boundingBox();
+  assert.ok(label, 'prompt label on screen');
+  const toastsBeforeTap = await neighbourToasts();
+  const poseBeforeTap = (await dbg()).pose;
+  const tapAt = { x: label.x + label.width * 0.75, y: label.y + label.height / 2 };
+  const hitOnCard = await page.evaluate(([x, y]) => Boolean(document.elementFromPoint(x, y)?.closest('#village-prompt')), [tapAt.x, tapAt.y]);
+  assert.equal(hitOnCard, false, 'taps on the prompt card body reach the scene');
+  await page.mouse.click(tapAt.x, tapAt.y);
+  await page.waitForTimeout(2500);
+  const poseAfterTap = (await dbg()).pose;
+  const walked = Math.hypot(poseAfterTap.x - poseBeforeTap.x, poseAfterTap.z - poseBeforeTap.z);
+  await page.screenshot({ path: `${OUT}/10-phone-tap-on-prompt-card-walks.png` });
+  assert.equal(await neighbourToasts(), toastsBeforeTap, 'a tap on the card body must not activate the prompt');
+  assert.ok(walked > 0.3, `a tap near the player on the card walks (${walked.toFixed(2)} m)`);
+  pass('phone: a tap on the Empty plot card near the player walks instead of opening the prompt', { walked: +walked.toFixed(2), tapAt });
+  // The chip still activates.
+  await walkTo('np_1');
+  await page.locator('#village-prompt.is-visible').waitFor();
+  await page.waitForTimeout(300);
+  const chip = await page.locator('#village-prompt .interaction-prompt__hint').boundingBox();
+  await page.mouse.click(chip.x + chip.width / 2, chip.y + chip.height / 2);
+  await waitFor(() => [...document.querySelectorAll('#toast-container .toast-notification')].some((t) => /Neighbours coming soon/i.test(t.textContent)), null, 5000);
+  pass('phone: the prompt Tap chip still activates it');
 
   assert.deepEqual(errors, []);
   writeFileSync(join(OUT, 'results.json'), JSON.stringify({ passed: true, checks, pageErrors: errors }, null, 2));
