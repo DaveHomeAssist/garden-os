@@ -246,8 +246,11 @@ function roundNumber(value) {
   return Math.round(value * 1_000_000) / 1_000_000;
 }
 
-function checksumSimulationState(state) {
-  const normalized = normalizeSimulationState(state);
+// `config` (optional) normalizes against the zone's own bounds. Without it the
+// default yard box (±5.2 × -2.35..4.5 m) clamps the position, so two states
+// outside that box can hash the same.
+function checksumSimulationState(state, config = {}) {
+  const normalized = normalizeSimulationState(state, config);
   return hashString(stableStringify({
     enabled: normalized.enabled,
     facing: roundNumber(normalized.facing),

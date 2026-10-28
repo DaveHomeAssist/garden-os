@@ -24,7 +24,10 @@ function createSimulationWorkerRuntime(scope = globalThis) {
     // stood still. Interval ticks are skipped when nothing but the sim clock
     // moved (the main thread never reads state.time); init/reset/config/
     // manual steps always answer.
-    const key = checksumSimulationState({ ...state, time: 0 });
+    // Hash against the active config: with the default bounds every position
+    // outside the small default box clamped to the same key, so a walk across
+    // a larger zone (the village, the yard edges) posted no snapshots.
+    const key = checksumSimulationState({ ...state, time: 0 }, config);
     if (reason === 'interval' && key === lastEmittedKey) return;
     lastEmittedKey = key;
     scope.postMessage?.({

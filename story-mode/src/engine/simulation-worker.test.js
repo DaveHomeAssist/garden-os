@@ -109,4 +109,21 @@ describe('simulation worker work avoidance', () => {
     const moving = scope.posts.filter((m) => m.reason === 'interval').length - idleSnapshots.length;
     expect(moving).toBe(10);
   });
+
+  it('keeps posting interval snapshots while walking outside the default bounds', () => {
+    const scope = createFakeWorkerScope();
+    createSimulationWorkerRuntime(scope);
+    const village = { blockers: [], bounds: { minX: -40, maxX: 40, minZ: -30, maxZ: 30 } };
+    const initial = createSimulationState({ ...village, initialPosition: { x: -18, z: 14 } });
+    scope.send({ config: village, fixedDt: FIXED_SIMULATION_DT, state: initial, type: 'INIT' });
+    scope.send({ input: { x: 0, z: 1 }, type: 'INPUT' });
+    scope.send({ type: 'START' });
+    scope.tickIntervals(30); // accelerate to full speed
+    const before = scope.posts.length;
+    scope.tickIntervals(30); // constant velocity, position still changing
+    const interval = scope.posts.slice(before).filter((post) => post.reason === 'interval');
+    expect(interval).toHaveLength(30);
+    expect(interval.at(-1).state.position.z).toBeGreaterThan(interval[0].state.position.z);
+  });
 });
+
