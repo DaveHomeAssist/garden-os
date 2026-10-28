@@ -246,6 +246,7 @@ export function createVillageScene({
       const geo = track(spec.edging ? edgingGeometry(entries[0].footprint.w, entries[0].footprint.d) : spec.geo());
       const mesh = new THREE.InstancedMesh(geo, grayMat, entries.length);
       mesh.name = `village-${asset}-${spec.part}`;
+      mesh.userData.villageEntries = entries; // instanceId -> layout entry (tap picking)
       mesh.castShadow = preset.shadows;
       mesh.receiveShadow = preset.shadows;
       entries.forEach((e, i) => {
@@ -392,8 +393,24 @@ export function createVillageScene({
     if (!rect.width || !rect.height) return null;
     ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
+    // Solid objects first: a tap on the shop stand, a bin or a house must not
+    // fall through to the ground behind it. An object with a trigger walks to
+    // its trigger anchor (so its prompt opens); any other object walks to the
+    // hit point, which findPath snaps to the nearest walkable cell.
+    const objHit = raycaster.intersectObjects(instanced, false)
+      .find((h) => h.instanceId != null && !isCutAway(h.object, h.instanceId));
+    if (objHit) {
+      const entry = objHit.object.userData.villageEntries?.[objHit.instanceId];
+      const item = entry && interactableById.get(entry.id);
+      if (item) return { x: item.position.x, z: item.position.z, interactableId: item.id };
+      return { x: objHit.point.x, z: objHit.point.z, objectId: entry?.id ?? null };
+    }
     if (!raycaster.ray.intersectPlane(groundPlane, hit)) return null;
     return { x: hit.x, z: hit.z };
+  }
+  const interactableById = new Map(layout.interactables.map((i) => [i.id, i]));
+  function isCutAway(mesh, index) {
+    return cutaways.some((c) => c.mesh === mesh && c.index === index && c.cut > 0.5);
   }
   function planPathTo(target, from = playerState.position) {
     return findPath(grid, from, target);
