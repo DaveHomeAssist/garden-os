@@ -44,3 +44,20 @@ describe('Story Mode field-kit CSS contract', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 });
+
+describe('village + phone HUD CSS contract', () => {
+  it('lets the binder hide the crop counter and bed score in the village', () => {
+    expect(css).toMatch(/#hud-crops\[hidden\],\s*\.hud-score-wrap\[hidden\],/);
+    // The faded (inactive) Plant / Start Season buttons must not linger either.
+    expect(css).toMatch(/body\[data-zone="village"\] #fab-plant,\s*body\[data-zone="village"\] #fab-advance,\s*body\[data-zone="village"\] #hud-action\s*\{\s*display:\s*none !important;/);
+  });
+
+  it('shows the crop counter on phones and hides an empty score instead of a bare "--"', () => {
+    const narrow = css.slice(css.indexOf('@media (max-width: 900px)'));
+    expect(narrow).toContain('.hud-score-wrap[data-empty="true"]');
+    expect(narrow).not.toMatch(/#hud-crops,\s*\n?\s*body[^{]*\.hud-score-label\s*\{\s*display:\s*none/);
+    const layout = readFileSync(new URL('../../assets/css/layout.css', import.meta.url), 'utf8');
+    expect(layout).not.toMatch(/\.hud-pill#hud-crops\s*\{\s*display:\s*none/);
+  });
+});
+

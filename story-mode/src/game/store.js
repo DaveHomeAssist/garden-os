@@ -1,4 +1,5 @@
 import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
+import { normalizeVillageState } from './village/village-state.js';
 import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
@@ -121,6 +122,7 @@ const Actions = {
   DECAY_REPUTATION: 'DECAY_REPUTATION',
   ZONE_CHANGED: 'ZONE_CHANGED',
   ZONE_VISITED: 'ZONE_VISITED',
+  SET_VILLAGE_STATE: 'SET_VILLAGE_STATE',
   FESTIVAL_START: 'FESTIVAL_START',
   FESTIVAL_END: 'FESTIVAL_END',
   FESTIVAL_ACTIVITY: 'FESTIVAL_ACTIVITY',
@@ -1075,6 +1077,17 @@ function gameReducer(state, action = {}) {
       if (preferredBedId && preferredBedId !== nextState.campaign.activeBedId && canSwitchBed(nextState)) {
         switchActiveBedInState(nextState, preferredBedId);
       }
+      return nextState;
+    }
+
+    case Actions.SET_VILLAGE_STATE: {
+      // Free Play village only; Story Mode keeps today's behaviour.
+      if (!state.campaign?.sandbox) return state;
+      const nextState = cloneGameState(state);
+      nextState.campaign.village = normalizeVillageState({
+        ...(nextState.campaign.village ?? {}),
+        ...(payload ?? {}),
+      });
       return nextState;
     }
 

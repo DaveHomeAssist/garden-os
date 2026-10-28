@@ -6,6 +6,7 @@ import { normalizePlayerProfile } from '../data/player-profile.js';
 import { addItemToInventoryState, createInventoryState } from './inventory.js';
 import { getDefaultSkillsState, getSkillXpMap } from './skills.js';
 import { createQuestLedger } from './quest-ledger.js';
+import { createDefaultVillageState } from './village/village-state.js';
 
 const PHASES = {
   PLANNING: 'PLANNING',
@@ -23,7 +24,8 @@ const SEASONS = ['spring', 'summer', 'fall', 'winter'];
 const COLS = 8;
 const ROWS = 4;
 const CELL_COUNT = COLS * ROWS;
-const CAMPAIGN_SCHEMA_VERSION = 9;
+// v10: campaign.village { position [x,z], facingY, insidePlot } (Free Play village).
+const CAMPAIGN_SCHEMA_VERSION = 10;
 const GRID_UNLOCKS = [
   { cols: 8, rows: 4, chapter: 1, gardeningLevel: 1 },
   { cols: 8, rows: 6, chapter: 6, gardeningLevel: 5 },
@@ -176,6 +178,7 @@ function createCampaignState() {
     contentProvenance: [],
     beds: {},
     activeBedId: 'player_plot',
+    village: createDefaultVillageState(),
   };
 }
 

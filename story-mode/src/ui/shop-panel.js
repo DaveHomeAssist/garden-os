@@ -129,6 +129,8 @@ function renderItemCard(item, tokens) {
   `;
 }
 
+const SHOP_TABS = [['seeds', 'Seeds'], ['tools', 'Tools'], ['recipes', 'Recipes']];
+
 export function createShopPanel(container) {
   let sheet = null;
   let activeTab = 'seeds';
@@ -144,6 +146,15 @@ export function createShopPanel(container) {
     return currentShopData?.chapter
       ?? currentStore?.getState?.()?.campaign?.currentChapter
       ?? 1;
+  }
+
+  // shopData.tabs limits which tabs show (e.g. the village seed box shows
+  // only Seeds); shopData.tab picks the opening tab. Default: all, Seeds.
+  function getVisibleTabs() {
+    const allowed = Array.isArray(currentShopData?.tabs) && currentShopData.tabs.length
+      ? currentShopData.tabs
+      : null;
+    return SHOP_TABS.filter(([tabId]) => !allowed || allowed.includes(tabId));
   }
 
   function getListingsForTab(tab) {
@@ -182,9 +193,7 @@ export function createShopPanel(container) {
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-        ${renderTabButton('seeds', activeTab, 'Seeds')}
-        ${renderTabButton('tools', activeTab, 'Tools')}
-        ${renderTabButton('recipes', activeTab, 'Recipes')}
+        ${getVisibleTabs().map(([tabId, label]) => renderTabButton(tabId, activeTab, label)).join('')}
       </div>
 
       <div id="shop-items" style="display:grid;gap:8px;max-height:50vh;overflow-y:auto;">
@@ -246,7 +255,8 @@ export function createShopPanel(container) {
   function open(shopData, store) {
     currentStore = store;
     currentShopData = shopData ?? {};
-    activeTab = 'seeds';
+    const visibleTabs = getVisibleTabs().map(([tabId]) => tabId);
+    activeTab = visibleTabs.includes(currentShopData.tab) ? currentShopData.tab : (visibleTabs[0] ?? 'seeds');
     _isOpen = true;
 
     sheet = document.createElement('div');
@@ -285,6 +295,8 @@ export function createShopPanel(container) {
   }
 
   function close() {
+    const wasOpen = _isOpen;
+    const onClose = currentShopData?.onClose;
     _isOpen = false;
     const backdrop = container.querySelector('#shop-backdrop');
     if (backdrop) backdrop.remove();
@@ -294,6 +306,7 @@ export function createShopPanel(container) {
     }
     currentStore = null;
     currentShopData = null;
+    if (wasOpen && typeof onClose === 'function') onClose();
   }
 
   function isOpen() {

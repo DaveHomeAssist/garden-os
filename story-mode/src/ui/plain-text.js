@@ -62,6 +62,20 @@ export function describeEventEffect(effect) {
 }
 
 /**
+ * HUD score readout. An unscored bed reads "--" next to its "Score" label;
+ * `empty` lets narrow layouts (where the label hides) drop the bare dashes.
+ */
+export function formatHudScore(score) {
+  const value = Number(score);
+  return Number.isFinite(value) && value > 0
+    ? { text: String(value), empty: false }
+    : { text: '--', empty: true };
+}
+
+/** What the V0 village lets you do (no NPCs, no quests yet). */
+export const VILLAGE_OBJECTIVE_TEXT = 'Village: walk to the seed stand, seed box, tool shed or compost bin and press E or tap the prompt. Walk onto your plot to go home and garden.';
+
+/**
  * Text for the centred "Current objective" banner.
  * @returns {string} empty string when the banner should hide
  */
@@ -79,6 +93,9 @@ export function buildObjectiveText({
   nextPhaseLabel = null,
 } = {}) {
   const atHome = !zoneId || zoneId === 'player_plot';
+  // The village has no bed and no neighbours to talk to yet: describe V0's
+  // stations whatever the garden phase is.
+  if (zoneId === 'village') return VILLAGE_OBJECTIVE_TEXT;
   // Free Play has no chapters, no winter review and no 8-crop minimum.
   if (sandbox && phase === 'PLANNING' && season === 'winter') {
     return planted > 0
