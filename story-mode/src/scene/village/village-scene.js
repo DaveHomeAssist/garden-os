@@ -22,7 +22,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { getVillageLayout } from './village-layout.js';
 import { createTriggerTracker } from './village-triggers.js';
-import { createFollowRig, dampFactor, segmentHitsOrientedBox } from './follow-camera.js';
+import { createFollowRig, dampFactor, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
 import { buildWalkGrid, findPath, createPathWalker, hasLineOfSight } from '../../game/village-path.js';
 import { resolveArtQuality, getArtQualityPreset } from '../yard-art/art-quality.js';
 import { YARD_PALETTE, YARD_LIGHT } from '../yard-art/yard-palette.js';
@@ -293,6 +293,7 @@ export function createVillageScene({
   const shareTrees = quality.tier === 'low' ? 0.7 : 1;
   const foliageMat = track(new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.92, metalness: 0 }));
   const treeMeshes = [];
+  const treeCuts = []; // { mesh, index, tree placement, cut 0..1 } boundary-tree camera cutaway
   for (const variant of TREE_VARIANTS) {
     const placements = treeSets[variant].filter((_, i) => (i % 10) < shareTrees * 10);
     if (!placements.length) continue;
@@ -302,6 +303,7 @@ export function createVillageScene({
     m.castShadow = preset.shadows;
     scene.add(m);
     treeMeshes.push(m);
+    placements.forEach((p, index) => { treeCuts.push({ mesh: m, index, tree: p, cut: 0 }); });
   }
 
   // ---- props_set1 (wheelbarrow, rain barrel, bench, birdhouse): one merged mesh
@@ -476,6 +478,29 @@ export function createVillageScene({
     dirty.forEach((m) => { m.instanceMatrix.needsUpdate = true; });
   }
 
+  /** Shrink boundary trees standing between the follow camera and the player (north-edge treeline). */
+  function updateTreeCuts(dt) {
+    if (!treeCuts.length) return;
+    const k = dampFactor(10, dt);
+    const camPos = camera.position;
+    const dirty = new Set();
+    for (const c of treeCuts) {
+      const want = treeInViewCorridor(c.tree, camPos, playerState.position) ? 1 : 0;
+      const next = c.cut + (want - c.cut) * k;
+      const settled = Math.abs(next - want) < 0.002 ? want : next;
+      if (settled === c.cut) continue;
+      c.cut = settled;
+      const t = c.tree;
+      tmpPos.set(t.x, (t.y ?? 0) - (2 * c.cut), t.z);
+      tmpQuat.setFromAxisAngle(yAxis, t.rotationY ?? 0);
+      tmpScale.setScalar(Math.max(0.001, (t.scale ?? 1) * (1 - c.cut)));
+      tmpMat.compose(tmpPos, tmpQuat, tmpScale);
+      c.mesh.setMatrixAt(c.index, tmpMat);
+      dirty.add(c.mesh);
+    }
+    dirty.forEach((m) => { m.instanceMatrix.needsUpdate = true; });
+  }
+
   /** Portrait phones get a wider vertical FOV so the horizontal view stays usable (45 deg landscape, up to 68 deg). */
   function syncFov() {
     const aspect = camera.aspect || 1;
@@ -500,6 +525,7 @@ export function createVillageScene({
     skyTime += clamped;
     skyMat.uniforms.uTime.value = skyTime;
     updateCutaways(clamped);
+    updateTreeCuts(clamped);
     triggers.update(playerState.position);
   }
 
@@ -552,6 +578,7 @@ export function createVillageScene({
     playerState = { ...playerState, position: { x: pose.x, y: 0, z: pose.z }, facing: facingY, moving: false, speed: 0 };
     rig.snap(playerState.position);
     rig.apply(camera);
+    updateTreeCuts(1); // snap: no trees fading in/out after a teleport
     player.update(playerState);
     triggers.reseed(playerState.position);
     poseHandler?.({ x: pose.x, z: pose.z, facingY });
@@ -619,6 +646,7 @@ export function createVillageScene({
         tier: quality.tier, shadows: preset.shadows, meshes, instancedKinds: instanced.map((m) => m.name),
         trees: treeMeshes.map((m) => [m.name, m.count]), props: Boolean(propsMesh), propsBounds,
         errors: [...assetErrors], cutaway: cutaways.filter((c) => c.cut > 0.5).length,
+        treesCut: treeCuts.filter((c) => c.cut > 0.5).length,
         player: { ...playerState.position }, inside: triggers.getInside(),
       };
     },

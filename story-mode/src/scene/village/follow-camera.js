@@ -68,6 +68,41 @@ export function createFollowRig(options = {}) {
 }
 
 /**
+ * Boundary-tree cutaway. The follow camera sits ~7 m behind the player (+z),
+ * so at the north edge it backs over the treeline and canopies slice across
+ * the bottom of the frame. Clamping the camera inside the bounds would push the
+ * player off screen at this pitch, so instead any tree standing in the
+ * foreground corridor between the camera and the player (plan view) is cut.
+ *
+ * Corridor: along the camera->player axis from just behind the camera to just
+ * short of the player, and up to halfWidth (frame half-width near the bottom
+ * edge) to either side, both widened by the canopy radius. Trees level with or
+ * beyond the player stay, so the side and far treelines remain visible.
+ */
+export const TREE_CUT_DEFAULTS = Object.freeze({
+  halfWidth: 6.5, // m either side of the view axis
+  behindCamera: 1.5, // m behind the camera still counted (canopy overhang)
+  shortOfPlayer: 0.6, // m: trees this close to (or past) the player's depth stay
+  canopyRadius: 1.1, // per unit tree scale
+});
+
+export function treeInViewCorridor(tree, cam, player, opts = TREE_CUT_DEFAULTS) {
+  const o = { ...TREE_CUT_DEFAULTS, ...opts };
+  const ax = player.x - cam.x;
+  const az = player.z - cam.z;
+  const len = Math.hypot(ax, az);
+  if (len < 1e-6) return false;
+  const ux = ax / len;
+  const uz = az / len;
+  const dx = tree.x - cam.x;
+  const dz = tree.z - cam.z;
+  const along = (dx * ux) + (dz * uz);
+  const side = Math.abs((dx * -uz) + (dz * ux));
+  const r = o.canopyRadius * (tree.scale ?? 1);
+  return along >= -(o.behindCamera + r) && along <= len - o.shortOfPlayer && side <= o.halfWidth + r;
+}
+
+/**
  * Does the segment a->b pass through an oriented box (footprint rect + height)?
  * Slab test in the box's local frame. Used for the house cutaway.
  */
