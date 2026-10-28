@@ -17,3 +17,29 @@ body:has(.harvest-reveal) #village-back {
   visibility: hidden;
   pointer-events: none;
 }
+
+/* Desktop / tablet (>=768px): sheets (Select Crop, event cards, ...) dock as a
+   340px column on the right, and "Back to village" (top-right, 88px down) was
+   drawn over the crop picker, just under its x and on top of its second card.
+   Step it aside while a sheet is open; closing the sheet (x or Esc) brings it
+   back. Phones dock sheets to the bottom edge, so the button stays put there. */
+@media (min-width: 768px) {
+  body:has(#panel-container .panel-sheet) #village-back {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/* The village prompt card is pinned bottom-centre, which on a phone is right
+   around the player, so taps meant to walk landed on the card and opened the
+   prompt. The card passes taps through to the scene; only its Tap / E chip
+   activates (E on the keyboard still works anywhere). */
+#village-prompt.village-prompt.is-visible {
+  pointer-events: none;
+}
+#village-prompt.village-prompt.is-visible .interaction-prompt__hint {
+  pointer-events: auto;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 36px;
+}
