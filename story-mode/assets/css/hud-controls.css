@@ -554,6 +554,9 @@ body[data-design-language="field-kit"][data-story-screen="play"]:has(#panel-cont
 
 /* The village has no bed: the crop counter and bed score hide there. */
 #hud-crops[hidden],
-.hud-score-wrap[hidden] {
+.hud-score-wrap[hidden],
+body[data-zone="village"] #fab-plant,
+body[data-zone="village"] #fab-advance,
+body[data-zone="village"] #hud-action {
   display: none !important;
 }

@@ -2496,6 +2496,11 @@ function bindUI({
       return info ? { calls: info.calls, triangles: info.triangles } : null;
     },
     savePosition: () => villageSession.savePosition({ force: true }),
+    // Economy readout for the shop / compost checks (read-only).
+    getEconomy: (itemIds = []) => ({
+      tokens: store.getState().campaign.tokens ?? 0,
+      items: Object.fromEntries(itemIds.map((id) => [id, inventory.getItemCount(id)])),
+    }),
   } : null;
 
   let cleanedUp = false;
