@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Garden OS — Village Lab (V0, dev only)</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #a9cbe6; overscroll-behavior: none; }
+    #app { position: fixed; inset: 0; touch-action: none; }
+    #app canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #lab-hud { position: fixed; left: 8px; top: 8px; font: 11px/1.35 monospace; color: #f7f2ea; background: rgba(30,17,10,0.55); padding: 4px 8px; border-radius: 4px; pointer-events: none; white-space: pre; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="lab-hud"></div>
+  <script type="module" src="./src/scene/village/village-lab.js"></script>
+</body>
+</html>

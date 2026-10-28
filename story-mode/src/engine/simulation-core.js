@@ -40,7 +40,31 @@ function normalizeSimulationConfig(config = {}) {
   };
 }
 
+// Optional `rotationY` (radians, three.js Y rotation) turns a blocker into an
+// oriented rect: minX..maxX / minZ..maxZ describe the unrotated rect, which is
+// rotated about its own centre. Blockers without it (every legacy zone) keep
+// the original axis-aligned path below, so their results and checksums are
+// bit-for-bit unchanged.
+function circleIntersectsOrientedRect(x, z, radius, rect) {
+  const cx = (rect.minX + rect.maxX) / 2;
+  const cz = (rect.minZ + rect.maxZ) / 2;
+  const cos = Math.cos(rect.rotationY);
+  const sin = Math.sin(rect.rotationY);
+  const dx = x - cx;
+  const dz = z - cz;
+  const localX = (dx * cos) - (dz * sin);
+  const localZ = (dx * sin) + (dz * cos);
+  const halfW = (rect.maxX - rect.minX) / 2;
+  const halfD = (rect.maxZ - rect.minZ) / 2;
+  const ox = localX - clamp(localX, -halfW, halfW);
+  const oz = localZ - clamp(localZ, -halfD, halfD);
+  return (ox * ox) + (oz * oz) < radius * radius;
+}
+
 function circleIntersectsRect(x, z, radius, rect) {
+  if (rect.rotationY) {
+    return circleIntersectsOrientedRect(x, z, radius, rect);
+  }
   const closestX = clamp(x, rect.minX, rect.maxX);
   const closestZ = clamp(z, rect.minZ, rect.maxZ);
   const dx = x - closestX;
@@ -222,8 +246,11 @@ function roundNumber(value) {
   return Math.round(value * 1_000_000) / 1_000_000;
 }
 
-function checksumSimulationState(state) {
-  const normalized = normalizeSimulationState(state);
+// `config` (optional) normalizes against the zone's own bounds. Without it the
+// default yard box (±5.2 × -2.35..4.5 m) clamps the position, so two states
+// outside that box can hash the same.
+function checksumSimulationState(state, config = {}) {
+  const normalized = normalizeSimulationState(state, config);
   return hashString(stableStringify({
     enabled: normalized.enabled,
     facing: roundNumber(normalized.facing),
@@ -272,6 +299,7 @@ export {
   PLAYER_RADIUS,
   PLAYER_SPEED,
   checksumSimulationState,
+  circleIntersectsRect,
   cloneBlockers,
   cloneBounds,
   cloneSimulationState,

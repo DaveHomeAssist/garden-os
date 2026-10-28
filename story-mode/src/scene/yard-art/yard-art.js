@@ -29,6 +29,7 @@ import {
 } from './yard-foliage.js';
 import { buildHillsGeometry, buildFarTreePlacements, buildFenceGeometry } from './yard-backdrop.js';
 import { createGradePass } from './yard-post.js';
+import { toFloatGeometry, propKitGeometriesFromGltf, mergePropPlacements } from './prop-kit.js';
 
 const ASSET_URLS = {
   cottage: new URL('../../../assets/art/yard/cottage.glb', import.meta.url).href,
@@ -73,24 +74,7 @@ export function groundHeightAt(x, z) {
   return (swell + ripple + roll) * (0.15 + centerFade * 0.85) * THREE.MathUtils.smoothstep(d, 11, 17) - 0.01;
 }
 
-/**
- * Meshopt/quantized glTF attributes are normalized int8/int16 (decoded by the
- * node transform). Bake them to float so the geometry can be transformed and
- * merged without clamping to [-1, 1].
- */
-export function toFloatGeometry(source) {
-  const geo = new THREE.BufferGeometry();
-  for (const [name, attr] of Object.entries(source.attributes)) {
-    const n = attr.itemSize;
-    const out = new Float32Array(attr.count * n);
-    for (let i = 0; i < attr.count; i += 1) {
-      for (let k = 0; k < n; k += 1) out[i * n + k] = attr.getComponent ? attr.getComponent(i, k) : attr.array[i * n + k];
-    }
-    geo.setAttribute(name, new THREE.BufferAttribute(out, n));
-  }
-  if (source.index) geo.setIndex(Array.from(source.index.array));
-  return geo;
-}
+export { toFloatGeometry };
 
 function snapshotRig(r) {
   return {
@@ -294,29 +278,7 @@ export function createYardArt(refs) {
   const assetErrors = [];
   /** One prop-kit GLB (one named node per prop) -> one merged, shadowed mesh at its placements. */
   const loadPropKit = (url, atlas, placements, name) => loadGlb(url).then((gltf) => {
-    const byName = {};
-    gltf.scene.updateMatrixWorld(true);
-    gltf.scene.traverse((o) => {
-      if (!o.isMesh) return;
-      const key = (o.name || o.parent?.name || '').replace(/_\d+$/, '');
-      byName[key] = toFloatGeometry(o.geometry).applyMatrix4(o.matrixWorld);
-    });
-    const parts = [];
-    const m = new THREE.Matrix4(); const q = new THREE.Quaternion(); const e = new THREE.Euler();
-    for (const p of placements) {
-      const g = byName[p.prop];
-      if (!g) { assetErrors.push(`missing prop ${p.prop}`); continue; }
-      e.set(p.lean ?? 0, p.rotationY ?? 0, p.leanZ ?? 0, 'YXZ');
-      q.setFromEuler(e);
-      m.compose(new THREE.Vector3(p.x, p.prop === 'stepping_stone' ? -0.005 : 0, p.z), q, new THREE.Vector3().setScalar(p.scale ?? 1));
-      parts.push(g.clone().applyMatrix4(m));
-    }
-    if (!parts.length) throw new Error(`${name}: no props placed`);
-    const merged = mergeGeometries(parts.map((g) => {
-      // identical attribute sets for merging
-      for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
-      return g;
-    }), false);
+    const merged = mergePropPlacements(propKitGeometriesFromGltf(gltf), placements, name, assetErrors);
     const pm = bakedMaterial(atlas);
     pm.name = name;
     const mesh = new THREE.Mesh(merged, pm);
