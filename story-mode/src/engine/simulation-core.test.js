@@ -78,3 +78,19 @@ describe('fixed-step simulation core', () => {
     expect(checksumSimulationState(manual)).toBe(fixed.checksum);
   });
 });
+
+describe('input.stopAt (tap-to-move goal)', () => {
+  it('never steps past stopAt along the input direction, and stays there while the input repeats', async () => {
+    const { createSimulationState: create, stepSimulationState: step } = await import('./simulation-core.js');
+    const config = { bounds: { minX: -20, maxX: 20, minZ: -20, maxZ: 20 }, blockers: [] };
+    let s = create({ ...config, initialPosition: { x: 0, z: 0 } });
+    const input = { x: 1, z: 0, stopAt: { x: 0.5, z: 0 } };
+    for (let i = 0; i < 120; i += 1) s = step(s, { config, input, dt: 1 / 60 });
+    expect(s.position.x).toBeCloseTo(0.5, 6);
+    expect(s.moving).toBe(false);
+    // without stopAt the same input keeps going
+    let t = create({ ...config, initialPosition: { x: 0, z: 0 } });
+    for (let i = 0; i < 120; i += 1) t = step(t, { config, input: { x: 1, z: 0 }, dt: 1 / 60 });
+    expect(t.position.x).toBeGreaterThan(3);
+  });
+});

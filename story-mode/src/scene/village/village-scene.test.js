@@ -84,4 +84,31 @@ describe('village engine interface', () => {
     expect(ground?.interactableId).toBeUndefined();
     v.dispose();
   });
+  it('a tap on plot soil walks to the tapped spot, not the plot trigger centre (live playtest 2026-10-28)', () => {
+    const v = make();
+    const home = layout.interactables.find((i) => i.id === 'plot_home');
+    const el = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }) };
+    const toScreen = (p) => {
+      const ndc = new THREE.Vector3(p.x, p.y, p.z).project(v.camera);
+      return [((ndc.x + 1) / 2) * 800, ((1 - ndc.y) / 2) * 600];
+    };
+    const check = (standAt, target) => {
+      v.setPlayerPose({ x: standAt.x, z: standAt.z, facingY: 0 });
+      v.update(1 / 60);
+      v.scene.updateMatrixWorld(true);
+      v.camera.updateMatrixWorld(true);
+      const [sx, sy] = toScreen({ x: target.x, y: 0.05, z: target.z });
+      const picked = v.pickGround(sx, sy, el);
+      expect(picked?.interactableId).toBeUndefined();
+      expect(Math.hypot(picked.x - target.x, picked.z - target.z)).toBeLessThan(0.1);
+    };
+    // standing on the exit sidewalk, tapping 2.8 m into the plot (first tap after arrival)
+    const ex = home.exit;
+    const dx = home.position.x - ex.x; const dz = home.position.z - ex.z; const dl = Math.hypot(dx, dz);
+    check(ex, { x: ex.x + (dx / dl) * 2.8, z: ex.z + (dz / dl) * 2.8 });
+    // standing inside a neighbour plot, tapping 2 m away on the same soil
+    const np = layout.interactables.find((i) => i.type === 'neighbour_plot_reserved');
+    check({ x: np.position.x + 1, z: np.position.z + 1 }, { x: np.position.x - 1, z: np.position.z + 2.5 });
+    v.dispose();
+  });
 });

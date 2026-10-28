@@ -247,7 +247,12 @@ export function createPathWalker({
             return { x: 0, z: 0 };
           }
         }
-        return { x: (wp.x - pos.x) / d, z: (wp.z - pos.z) / d };
+        const dir = { x: (wp.x - pos.x) / d, z: (wp.z - pos.z) / d };
+        // Final leg: tell the sim where to stop, so a slow main-thread frame
+        // (the worker keeps stepping the last input) can't carry the player
+        // past the goal and start an arrival ping-pong.
+        if (waypoints.length === 1) dir.stopAt = { x: wp.x, z: wp.z };
+        return dir;
       }
     },
   };
