@@ -1,5 +1,6 @@
 // Engine interface used by the game layer (garden-os #77 village-trigger-adapter.js).
 import { describe, expect, it, vi } from 'vitest';
+import * as THREE from 'three';
 import { createVillageScene } from './village-scene.js';
 import { getVillageLayout } from './village-layout.js';
 
@@ -61,5 +62,26 @@ describe('village engine interface', () => {
     const plots = layout.interactables.filter((i) => i.type === 'enter_plot' || i.type === 'neighbour_plot_reserved');
     expect(plots).toHaveLength(7);
     plots.forEach((p) => expect(p.exit).toEqual(expect.objectContaining({ x: expect.any(Number), z: expect.any(Number), facingY: expect.any(Number) })));
+  });
+
+  it('a tap on the shop stand picks the stand (its trigger anchor), not the ground behind it', () => {
+    const v = make();
+    const shop = layout.interactables.find((i) => i.type === 'open_shop');
+    v.setPlayerPose({ x: shop.position.x, z: shop.position.z, facingY: 0 });
+    v.update(1 / 60);
+    v.scene.updateMatrixWorld(true);
+    v.camera.updateMatrixWorld(true);
+    const el = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }) };
+    const toScreen = (p) => {
+      const ndc = new THREE.Vector3(p.x, p.y, p.z).project(v.camera);
+      return [((ndc.x + 1) / 2) * 800, ((1 - ndc.y) / 2) * 600];
+    };
+    const [sx, sy] = toScreen({ x: shop.objectPosition.x, y: 0.6, z: shop.objectPosition.z });
+    const picked = v.pickGround(sx, sy, el);
+    expect(picked).toEqual(expect.objectContaining({ interactableId: shop.id, x: shop.position.x, z: shop.position.z }));
+    // Open ground still returns a plain ground point
+    const ground = v.pickGround(400, 599, el);
+    expect(ground?.interactableId).toBeUndefined();
+    v.dispose();
   });
 });
