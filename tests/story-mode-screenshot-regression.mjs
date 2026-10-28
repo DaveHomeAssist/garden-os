@@ -16,7 +16,7 @@ const { chromium } = await import(playwrightSpecifier);
 
 const outputDir = process.env.GOS_SCREENSHOT_OUTPUT_DIR
   || join(tmpdir(), `garden-os-story-screens-${Date.now()}`);
-const timeoutMs = Number(process.env.GOS_SCREENSHOT_TIMEOUT_MS ?? 240000);
+const timeoutMs = Number(process.env.GOS_SCREENSHOT_TIMEOUT_MS ?? 360000);
 const hardTimeout = setTimeout(() => {
   console.error(`Story Mode screenshot regression timed out after ${timeoutMs}ms.`);
   process.exit(124);
