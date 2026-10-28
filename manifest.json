@@ -2,8 +2,8 @@
   "name": "Garden OS",
   "short_name": "Garden OS",
   "description": "A local-first raised-bed planner, field journal, diagnostic guide, and 12-chapter garden story.",
-  "start_url": "/garden-os/",
-  "scope": "/garden-os/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#f7f3ec",
@@ -20,17 +20,17 @@
   "shortcuts": [
     {
       "name": "Play Story Mode",
-      "url": "/garden-os/story-mode/",
+      "url": "story-mode/",
       "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
     },
     {
       "name": "Open Planner",
-      "url": "/garden-os/garden-planner-v5.html",
+      "url": "garden-planner-v5.html",
       "icons": [{ "src": "assets/icons/favicon/garden-planner.svg", "sizes": "any" }]
     },
     {
       "name": "Open Journal",
-      "url": "/garden-os/journal.html",
+      "url": "journal.html",
       "icons": [{ "src": "assets/icons/favicon/favicon.svg", "sizes": "any" }]
     }
   ]
