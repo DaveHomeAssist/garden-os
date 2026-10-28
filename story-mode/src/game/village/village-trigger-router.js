@@ -14,7 +14,7 @@
  *   openTools({ onClose })                 tool HUD / tools view
  *   openCompost({ onClose })               compost panel (new)
  *   enterPlot({ triggerId, onExit })       existing garden (bed) screen + "Back to village"
- *   exitPlot()                             leave the garden screen
+ *   exitPlot({ pose })                     leave the garden screen; pose = village exit spot
  *   toast(message)
  *
  * Other deps:
@@ -133,8 +133,8 @@ export function createVillageTriggerRouter({
 
   function exitPlot() {
     if (!insidePlot) return false;
-    ui.exitPlot?.();
     const exitPose = plotTrigger?.exit ?? poseBeforePlot ?? currentPose();
+    ui.exitPlot?.({ pose: { ...exitPose } });
     adapter.setPlayerPose?.(exitPose);
     insidePlot = false;
     plotTrigger = null;

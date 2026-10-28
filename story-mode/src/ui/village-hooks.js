@@ -1,9 +1,12 @@
 /**
  * Village hooks — glue between the village trigger router and the existing
  * Free Play UI (shop panel, tool HUD, garden screen) plus the new compost
- * panel. Free Play only. Not wired into ui-binder yet: live wiring waits for
- * 3D BOT's V0 engine (onTrigger / registerInteractables). Call
- * attachVillageHooks() once the engine exists.
+ * panel. Free Play only. ui-binder wires this through village-session.js,
+ * which binds the live village zone (3D BOT's engine, #78) via
+ * createVillageEngineFacade().
+ *
+ * Keys: only E activates a village trigger, and only while one is active, so
+ * Enter / Space keep reaching select_cell, cutscene_next and advance.
  */
 import { createVillageTriggerAdapter } from '../game/village/village-trigger-adapter.js';
 import { createVillageTriggerRouter } from '../game/village/village-trigger-router.js';
@@ -11,6 +14,9 @@ import { Actions } from '../game/store.js';
 import { createCompostPanel } from './compost-panel.js';
 import { createShopPanel } from './shop-panel.js';
 
+// Top-right under the HUD bar: clear of the pause button (top-left), the
+// season card, the crop counter and the bottom tool / phase controls. z-index
+// 40 sits above the HUD (≤35) and below the pause overlay (50) and sheets (200).
 export function createBackToVillageButton(container, onClick) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -19,7 +25,7 @@ export function createBackToVillageButton(container, onClick) {
   button.textContent = '← Back to village';
   button.setAttribute('aria-label', 'Back to village (Esc)');
   button.style.cssText = `
-    position:fixed;top:calc(12px + env(safe-area-inset-top, 0px));left:12px;z-index:850;
+    position:fixed;top:calc(88px + env(safe-area-inset-top, 0px));right:12px;z-index:40;
     border:1px solid rgba(247,242,234,0.12);border-radius:999px;padding:8px 14px;
     font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
     background:#3a2516;color:#f7f2ea;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);
@@ -38,6 +44,13 @@ function createVillagePrompt(container, onActivate) {
   button.className = 'interaction-prompt village-prompt';
   button.id = 'village-prompt';
   button.hidden = true;
+  // The shared .interaction-prompt style anchors at a projected world point
+  // (left/top). The village prompt has no world anchor, so pin it bottom-centre
+  // above the tool row and touch controls, where it is readable on a phone.
+  button.style.cssText = `
+    position:fixed;left:50%;top:auto;bottom:calc(27vh + env(safe-area-inset-bottom, 0px));
+    transform:translateX(-50%);z-index:36;max-width:calc(100vw - 24px);
+  `;
   const hint = document.createElement('span');
   hint.className = 'interaction-prompt__hint';
   hint.setAttribute('aria-hidden', 'true');
@@ -126,10 +139,10 @@ export function createVillageUiPorts(deps) {
       backButton?.remove();
       backButton = createBackToVillageButton(container, onExit);
     },
-    exitPlot: () => {
+    exitPlot: ({ pose = null } = {}) => {
       backButton?.remove();
       backButton = null;
-      exitGardenScreen();
+      exitGardenScreen({ pose });
     },
     toast: (message) => showToast(message),
     dispose() {
@@ -150,7 +163,9 @@ function isTypingTarget(target) {
  * Wire everything: engine -> adapter -> router -> existing UI. Returns
  * { router, ports, dispose }. Free Play only; returns null otherwise.
  */
-export function attachVillageHooks({ engine, store, keyTarget = globalThis.document, placements = [], ...deps }) {
+export function attachVillageHooks({
+  engine, store, keyTarget = globalThis.document, placements = [], initialVillage, escapeExitsPlot = true, ...deps
+}) {
   if (!engine || !store?.getState?.()?.campaign?.sandbox) return null;
   const adapter = createVillageTriggerAdapter(engine);
   let router = null;
@@ -158,7 +173,7 @@ export function attachVillageHooks({ engine, store, keyTarget = globalThis.docum
   router = createVillageTriggerRouter({
     adapter,
     ui: ports,
-    initialVillage: store.getState().campaign.village,
+    initialVillage: initialVillage ?? store.getState().campaign.village,
     saveVillage: (village) => store.dispatch({ type: Actions.SET_VILLAGE_STATE, payload: village }),
   });
   router.registerFromPlacements(placements);
@@ -166,15 +181,21 @@ export function attachVillageHooks({ engine, store, keyTarget = globalThis.docum
   const onKeyDown = (event) => {
     if (isTypingTarget(event.target)) return;
     if (event.key === 'Escape') {
-      if (router.handleEscape()) {
+      if (escapeExitsPlot && router.handleEscape()) {
         event.preventDefault();
         event.stopImmediatePropagation?.();
       }
       return;
     }
     if (event.repeat) return;
-    if (event.key === 'e' || event.key === 'E' || event.key === 'Enter' || event.key === ' ') {
-      if (router.activate()) event.preventDefault();
+    // E only (never Enter / Space, which belong to select_cell, cutscene_next
+    // and advance), and only while a village trigger is active.
+    if (event.key !== 'e' && event.key !== 'E') return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (!router.getActiveTrigger() || router.isInsidePlot() || router.getOpenPanel()) return;
+    if (router.activate()) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
     }
   };
   keyTarget?.addEventListener?.('keydown', onKeyDown, true);
@@ -186,6 +207,77 @@ export function attachVillageHooks({ engine, store, keyTarget = globalThis.docum
       keyTarget?.removeEventListener?.('keydown', onKeyDown, true);
       router.dispose();
       ports.dispose();
+    },
+  };
+}
+
+/**
+ * Stable engine for the router while the live village zone comes and goes
+ * (ZoneManager disposes the village when you travel into your plot and builds
+ * a new one on the way back). bind(instance) forwards that instance's
+ * triggers; unbind() sends a synthetic `leave` for every trigger the player
+ * was inside, so the router never keeps a stale prompt across travel.
+ */
+export function createVillageEngineFacade() {
+  const listeners = new Set();
+  const inside = new Map();
+  let instance = null;
+  let off = null;
+  let registered = [];
+
+  function emit(phase, trigger) {
+    listeners.forEach((fn) => {
+      try { fn(phase, trigger); } catch (err) { console.error('[village] hook listener failed', err); }
+    });
+  }
+
+  function forward(phase, trigger) {
+    if (!trigger?.id) return;
+    if (phase === 'enter') inside.set(trigger.id, trigger);
+    else if (phase === 'leave') inside.delete(trigger.id);
+    emit(phase, trigger);
+  }
+
+  function bind(next = null) {
+    if (next === instance) return;
+    off?.();
+    off = null;
+    const stale = [...inside.values()];
+    inside.clear();
+    stale.forEach((trigger) => emit('leave', trigger));
+    instance = next;
+    if (instance?.onTrigger) {
+      off = instance.onTrigger(forward);
+      if (registered.length) instance.registerInteractables?.(registered);
+    }
+  }
+
+  return {
+    onTrigger(fn) {
+      listeners.add(fn);
+      return () => { listeners.delete(fn); };
+    },
+    registerInteractables(list) {
+      registered = Array.isArray(list) ? list.map((entry) => ({ ...entry })) : [];
+      instance?.registerInteractables?.(registered);
+    },
+    getPlayerPose() {
+      return instance?.getPlayerPose?.() ?? null;
+    },
+    setPlayerPose(pose) {
+      instance?.setPlayerPose?.(pose);
+    },
+    setTapToMoveEnabled(on) {
+      instance?.setTapToMoveEnabled?.(on);
+    },
+    bind,
+    unbind: () => bind(null),
+    getInstance: () => instance,
+    isBound: () => Boolean(instance),
+    listenerCount: () => listeners.size,
+    dispose() {
+      bind(null);
+      listeners.clear();
     },
   };
 }

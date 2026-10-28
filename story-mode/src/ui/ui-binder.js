@@ -48,6 +48,8 @@ import {
   resolveZoneSpawnPoint,
 } from './zone-travel.js';
 import { buildWorldMapModel, showWorldMapPanel } from './world-map.js';
+import { createVillageSession } from './village-session.js';
+import { VILLAGE_ZONE_ID } from '../scene/village/village-layout.js';
 import {
   FACTION_BADGE_COLORS,
   FACTION_NAMES,
@@ -168,6 +170,8 @@ function bindUI({
   let state = store.getState();
   scene.setPlayerProfile?.(state.campaign.playerProfile);
   let interactionSystem = null;
+  // Free Play village wiring (village-session.js); null in Story Mode.
+  let villageSession = null;
   const playerController = createPlayerController();
   const simulationWorker = createSimulationWorkerClient({
     initialState: playerController.getState(),
@@ -446,7 +450,7 @@ function bindUI({
     return blocker.message ?? 'Locked';
   }
 
-  async function travelToZone(zoneId) {
+  async function travelToZone(zoneId, { spawnPoint: spawnOverride = null } = {}) {
     clearWalkTarget();
     const currentZone = getCurrentZoneId();
     const check = evaluateZoneAccess(zoneId, state, getWorldSystems());
@@ -454,7 +458,7 @@ function bindUI({
       showToast(check.blockers[0]?.message ?? 'That area is still locked.', 2200, 'info');
       return false;
     }
-    const spawnPoint = resolveZoneSpawnPoint(currentZone, zoneId);
+    const spawnPoint = spawnOverride ?? resolveZoneSpawnPoint(currentZone, zoneId);
     if (zoneManager?.transitionTo) {
       const result = await zoneManager.transitionTo(zoneId, spawnPoint);
       if (result?.blocked) {
@@ -536,7 +540,11 @@ function bindUI({
   }
 
   function canMovePlayer() {
-    return gameInputEnabled && !pauseController.isOpen() && !cutsceneMachine.isActive() && !interventionTargeting.isActive();
+    return gameInputEnabled
+      && !pauseController.isOpen()
+      && !cutsceneMachine.isActive()
+      && !interventionTargeting.isActive()
+      && !villageSession?.isMovementLocked?.();
   }
 
   function isProximityInteractionEnabled() {
@@ -2033,6 +2041,9 @@ function bindUI({
       return;
     }
     if (source === 'keyboard') return;
+    // The village owns taps on the shared canvas (tap-to-move); the hidden
+    // garden scene must not pick bed cells behind it.
+    if (getCurrentZoneId() === VILLAGE_ZONE_ID) return;
     handleViewportSelection(position.clientX, position.clientY);
   });
 
@@ -2406,6 +2417,47 @@ function bindUI({
     },
   };
 
+  if (state.campaign?.sandbox) {
+    try {
+      villageSession = createVillageSession({
+        store,
+        zoneManager,
+        travelToZone,
+        getCurrentZoneId,
+        container: document.getElementById('app'),
+        inventory,
+        craftingSystem,
+        toolHUD,
+        showToast,
+      });
+    } catch (err) {
+      console.error('[village] session failed to start', err);
+      villageSession = null;
+    }
+  }
+  // Smoke / playtest hooks (read-only except walkTo, which uses the village's own tap-to-move path).
+  window.gardenOS.village = villageSession ? {
+    getDebugState: () => villageSession.getDebugState(),
+    getZoneDebug: () => (getCurrentZoneId() === VILLAGE_ZONE_ID
+      ? zoneManager?.getActiveZoneInstance?.()?.getDebugState?.() ?? null
+      : null),
+    getInteractables: () => (zoneManager?.getActiveZoneInstance?.()?.layout?.interactables ?? []).map((t) => ({
+      id: t.id, type: t.type, position: { ...t.position }, radius: t.radius, exit: t.exit ? { ...t.exit } : null,
+    })),
+    project: (x, z) => (getCurrentZoneId() === VILLAGE_ZONE_ID ? zoneManager?.projectWorldPosition?.({ x, y: 0, z }) ?? null : null),
+    walkTo: (x, z) => Boolean(getCurrentZoneId() === VILLAGE_ZONE_ID
+      && zoneManager?.getActiveZoneInstance?.()?.walkTo?.({ x, z })),
+    getCollision: () => {
+      const zone = getCurrentZoneId() === VILLAGE_ZONE_ID ? zoneManager?.getActiveZoneInstance?.() : null;
+      return zone ? { bounds: zone.getMovementBounds?.(), blockers: zone.getMovementBlockers?.() } : null;
+    },
+    getRenderInfo: () => {
+      const info = zoneManager?.renderer?.info?.render;
+      return info ? { calls: info.calls, triangles: info.triangles } : null;
+    },
+    savePosition: () => villageSession.savePosition({ force: true }),
+  } : null;
+
   let cleanedUp = false;
   function cleanupGame() {
     // Stale handlers from earlier sessions used to call this repeatedly;
@@ -2413,6 +2465,8 @@ function bindUI({
     if (cleanedUp) return;
     cleanedUp = true;
     sessionListeners.abort();
+    villageSession?.dispose();
+    villageSession = null;
     document.body.removeAttribute('data-scene-held');
     questController.dispose();
     destroyInit?.();

@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e:campaign": "node tests/campaign-e2e.mjs",
-    "e2e:freeplay": "node tests/freeplay-e2e.mjs"
+    "e2e:freeplay": "node tests/freeplay-e2e.mjs",
+    "e2e:village": "node tests/village-e2e.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
