@@ -4,7 +4,9 @@ import { resolve } from 'path';
 export default defineConfig({
   base: '/garden-os/story-mode/',
   server: {
-    host: '0.0.0.0',
+    // Loopback only: keep the dev server off the LAN (vite dev-server advisories,
+    // DEP-01). Pass `--host` explicitly to expose it for on-device testing.
+    host: 'localhost',
     port: 5174,
   },
   build: {
