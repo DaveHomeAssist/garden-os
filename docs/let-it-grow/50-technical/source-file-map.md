@@ -6,7 +6,7 @@
 garden-os/story-mode/
 ├── index.html              — Game shell (HUD, panels, canvas viewport)
 ├── package.json            — three@0.180, vite@7.1, vitest@3.2
-├── vite.config.js          — Base: /garden-os/story-mode-live/, dev: 0.0.0.0:5174
+├── vite.config.js          — Base: /garden-os/story-mode-live/, dev: localhost:5174 (pass --host to expose)
 ├── assets/
 │   └── css/
 │       └── theme.css       — Design system (colors, dialogue, portraits, responsive)
