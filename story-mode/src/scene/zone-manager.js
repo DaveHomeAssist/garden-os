@@ -139,6 +139,7 @@ export class ZoneManager {
     this.zoneGates = new Map();
     this.activeZoneId = null;
     this.activeZoneInstance = null;
+    this.viewportSize = null;
     this.activeZoneInteractableIds = [];
     this.interactableRegistry = null;
     this.triggerArmed = true;
@@ -275,6 +276,12 @@ export class ZoneManager {
     const instance = this.factories.get(zoneId)?.();
     this.activeZoneId = zoneId;
     this.activeZoneInstance = instance ?? null;
+    // A newly created camera must inherit the viewport even when the phone
+    // resized before entering this zone and no further resize event follows.
+    const canvas = this.renderer?.domElement;
+    const width = canvas?.clientWidth || this.viewportSize?.width;
+    const height = canvas?.clientHeight || this.viewportSize?.height;
+    this.resize(width, height);
     this.triggerArmed = false;
     this.activeZoneInstance?.setSpawnPoint?.(spawnPoint);
     this.activeZoneInstance?.setSeason?.(
@@ -355,8 +362,10 @@ export class ZoneManager {
   }
 
   resize(width, height) {
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+    this.viewportSize = { width, height };
     const camera = this.activeZoneInstance?.camera;
-    if (!camera || !width || !height) return;
+    if (!camera) return;
     camera.aspect = width / height;
     camera.updateProjectionMatrix?.();
   }
