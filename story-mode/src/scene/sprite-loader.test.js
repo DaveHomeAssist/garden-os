@@ -17,3 +17,17 @@ describe('sprite manifest', () => {
     expect(unused).toEqual([]);
   });
 });
+
+describe('on-demand crop sprites (PERF-01)', () => {
+  it('fetches nothing up front: loadSprites() with no crops starts no loads', async () => {
+    const { loadSprites, getPendingSpriteCount } = await import('./sprite-loader.js');
+    await loadSprites();
+    expect(getPendingSpriteCount()).toBe(0);
+  });
+
+  it('getGrowthTexture is safe before any PNG has loaded (no DOM: returns null, no fetch)', async () => {
+    const { getGrowthTexture, getPendingSpriteCount } = await import('./sprite-loader.js');
+    expect(getGrowthTexture('lettuce', 2)).toBeNull();
+    expect(getPendingSpriteCount()).toBe(0);
+  });
+});

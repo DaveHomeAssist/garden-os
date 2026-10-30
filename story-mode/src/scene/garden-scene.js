@@ -13,7 +13,7 @@ import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { createPlayerCharacter } from './player-character.js';
 import { ResourceTracker } from './resource-tracker.js';
-import { loadSprites, getMissingAssets, getGrowthTexture, GROWTH_STAGE } from './sprite-loader.js';
+import { getGrowthTexture, getPendingSpriteCount, onSpriteLoaded, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
 import { computeBedFocusView, lerpBedFocusView } from './bed-focus.js';
 import { getCropById } from '../data/crops.js';
@@ -559,31 +559,42 @@ export function createGardenScene(container) {
   const scenery = buildScenery(resourceTracker);
   root.add(scenery.group);
 
-  let spriteAssetsReady = false;
-
-  // Load sprite textures (async, non-blocking — accents appear once loaded)
-  loadSprites().then(() => {
-    spriteAssetsReady = true;
-    const missing = getMissingAssets();
-    if (missing.length > 0) {
-      const toast = document.getElementById('toast-container');
-      if (toast) {
-        const el = document.createElement('div');
-        el.className = 'toast-notification toast--info';
-        el.textContent = `${missing.length} sprite${missing.length === 1 ? '' : 's'} unavailable \u2014 some visuals may be simplified`;
-        toast.appendChild(el);
-        requestAnimationFrame(() => el.classList.add('is-visible'));
-        setTimeout(() => { el.classList.remove('is-visible'); setTimeout(() => el.remove(), 300); }, 4000);
+  // Crop sprites load on demand (PERF-01): syncCropAccents() asks the loader
+  // for each planted crop's texture, shows the procedural placeholder until the
+  // PNG lands, and this listener re-syncs (batched per frame) to swap it in.
+  // spriteAssetsReady = no requested sprite fetch is still in flight.
+  let spriteAssetsReady = true;
+  let spriteResyncQueued = false;
+  let spriteMissingToastShown = false;
+  const showSpriteMissingToast = () => {
+    if (spriteMissingToastShown) return;
+    spriteMissingToastShown = true;
+    const toast = document.getElementById('toast-container');
+    if (!toast) return;
+    const el = document.createElement('div');
+    el.className = 'toast-notification toast--info';
+    el.textContent = 'Some crop sprites are unavailable \u2014 some visuals may be simplified';
+    toast.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('is-visible'));
+    setTimeout(() => { el.classList.remove('is-visible'); setTimeout(() => el.remove(), 300); }, 4000);
+  };
+  const offSpriteLoaded = onSpriteLoaded((_key, texture) => {
+    if (!texture) showSpriteMissingToast();
+    spriteAssetsReady = getPendingSpriteCount() === 0;
+    if (spriteResyncQueued) return;
+    spriteResyncQueued = true;
+    requestAnimationFrame(() => {
+      spriteResyncQueued = false;
+      if (lastSyncedState?.season?.grid) {
+        syncCropAccents(
+          lastSyncedState.season.grid,
+          lastSyncedState.season.phase,
+          lastSyncedState.season.season,
+        );
       }
-    }
-    if (lastSyncedState?.season?.grid) {
-      syncCropAccents(
-        lastSyncedState.season.grid,
-        lastSyncedState.season.phase,
-        lastSyncedState.season.season,
-      );
-    }
-  }).catch(() => {});
+      spriteAssetsReady = getPendingSpriteCount() === 0;
+    });
+  });
 
   // ── Creature meshes ──────────────────────────────────────────────────────
   // Cat silhouette at the side-yard edge
@@ -1694,7 +1705,7 @@ export function createGardenScene(container) {
       }
 
       activeIds.add(key);
-      const sig = `${cell.cropId}:${stage}:${cell.damageState ?? 'none'}:${season}`;
+      const sig = `${cell.cropId}:${stage}:${cell.damageState ?? 'none'}:${season}:${tex.uuid}`;
 
       if (accentMeshes.has(key) && accentMeshes.get(key).userData.sig === sig) {
         const spr = accentMeshes.get(key);
@@ -1754,6 +1765,7 @@ export function createGardenScene(container) {
       plantedCount,
       activeCount: accentMeshes.size,
     };
+    spriteAssetsReady = getPendingSpriteCount() === 0;
   }
 
   function getGroupDebugState(target) {
@@ -3676,6 +3688,7 @@ function getGrowthScale(phase, season) {
     setArtQuality(choice) { return yardArt.setQualityChoice(choice); },
     getYardArtDebug() { return yardArt.getDebugState(); },
     dispose() {
+      offSpriteLoaded();
       yardArt.dispose();
       disposeGardenScene({
         container,
