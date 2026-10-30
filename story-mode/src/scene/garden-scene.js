@@ -8,6 +8,9 @@ import { createParticlePool } from './particle-pool.js';
 import { buildBed } from './bed-model.js';
 import { buildScenery } from './scenery.js';
 import { createYardArt } from './yard-art/yard-art.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { CALVIN_GLB_URL, applyCalvinModel } from './calvin-model.js';
 import { applySceneStyle, getStyleForPhase } from './scene-style.js';
 import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
@@ -897,6 +900,28 @@ export function createGardenScene(container) {
   sheepdogGroup.scale.setScalar(1.12);
   sheepdogGroup.position.set(-4.15, 0, 2.1);
   root.add(sheepdogGroup);
+
+  // Low-poly painted body (assets/art/yard/calvin.glb, built by
+  // art-src/blender/build_calvin.py) replaces the primitive fallback above once
+  // it loads; every part hangs on the same pivots, so the animation is unchanged.
+  const dogPrimitiveParts = [];
+  dogTorso.traverse((o) => { if (o.isMesh && o !== dogTongue) dogPrimitiveParts.push(o); });
+  if (typeof window !== 'undefined' && typeof fetch === 'function') {
+    const calvinLoader = new GLTFLoader();
+    calvinLoader.setMeshoptDecoder(MeshoptDecoder);
+    calvinLoader.load(CALVIN_GLB_URL, (gltf) => {
+      const added = applyCalvinModel({
+        torso: dogTorso,
+        headPivot: dogHeadPivot,
+        ears: dogEars,
+        tailPivot: dogTailPivot,
+        legRigs: dogLegRigs,
+        tongue: dogTongue,
+        primitives: dogPrimitiveParts,
+      }, gltf.scene);
+      if (!added) console.warn('[calvin] calvin.glb is missing rig parts; keeping the primitive dog');
+    }, undefined, (err) => console.warn('[calvin] calvin.glb failed to load; keeping the primitive dog', err?.message ?? err));
+  }
 
   const sheepdogRunState = {
     active: false,
