@@ -2,13 +2,18 @@
  * Sprite Loader — loads PNG sprite assets and sprite sheets for Three.js.
  *
  * All textures live in assets/textures/ and are resolved by Vite at build time.
- * Sprite sheets are sliced into individual frames via canvas offscreen rendering.
+ * Sprite sheets are sliced into individual frames via UV offset/repeat.
+ *
+ * Loading is ON DEMAND (perf audit PERF-01): nothing is fetched at scene init.
+ * The first getGrowthTexture()/getCropIcon() call for a crop starts that one
+ * crop's fetch and returns the procedural placeholder meanwhile; when the PNG
+ * arrives, onSpriteLoaded() listeners fire so the scene can swap it in.
  *
  * Usage:
- *   import { loadSprites, getTexture, getFrame, getSpriteMap } from './sprite-loader.js';
- *   await loadSprites();                        // call once at init
- *   const tex = getTexture('crop-lettuce');      // single PNG
- *   const frame = getFrame('grow-lettuce', 2);   // frame 2 of sprite sheet
+ *   import { getGrowthTexture, onSpriteLoaded } from './sprite-loader.js';
+ *   const off = onSpriteLoaded(() => resyncAccents());
+ *   const tex = getGrowthTexture('lettuce', 2);  // placeholder now, PNG later
+ *   await whenSpritesSettled();                  // every requested PNG settled
  */
 import * as THREE from 'three';
 import { getCropById } from '../data/crops.js';
@@ -97,9 +102,11 @@ export const GROWTH_STAGE = { SEED: 0, SPROUT: 1, GROWING: 2, HARVEST: 3 };
 const texLoader = new THREE.TextureLoader();
 const textureCache = new Map();   // key → THREE.Texture
 const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
-let loaded = false;
 let loadPromise = null;
 let missingAssets = [];
+const pendingLoads = new Map();   // key → Promise<THREE.Texture|null> (in flight)
+const failedKeys = new Set();     // keys whose PNG failed (never refetched)
+const loadListeners = new Set();  // (key, texture|null) => void
 
 /* ── Texture path resolution ────────────────────────────────────────── */
 
@@ -138,26 +145,63 @@ function loadOne(key, filename) {
   });
 }
 
+function notifyLoaded(key, texture) {
+  for (const listener of [...loadListeners]) {
+    try { listener(key, texture); } catch (err) { console.warn('[sprite-loader] listener failed', err); }
+  }
+}
+
 /**
- * Load all sprite assets. Call once during scene init.
- * Safe to call multiple times — subsequent calls return the cached promise.
- * Missing PNGs are silently skipped (returns null for those keys).
+ * Start fetching one manifest texture if it is not cached, in flight or failed.
+ * Returns the in-flight promise (or a resolved one). No-op outside a browser.
  */
-export function loadSprites() {
-  if (loadPromise) return loadPromise;
-
-  const singles = Object.entries(SINGLE_ASSETS).map(
-    ([key, { file }]) => loadOne(key, file),
-  );
-  const sheets = Object.entries(SHEET_ASSETS).map(
-    ([key, { file }]) => loadOne(key, file),
-  );
-
-  missingAssets = [];
-  loadPromise = Promise.all([...singles, ...sheets]).then(() => {
-    loaded = true;
+export function requestTexture(key) {
+  if (textureCache.has(key)) return Promise.resolve(textureCache.get(key));
+  if (pendingLoads.has(key)) return pendingLoads.get(key);
+  if (failedKeys.has(key)) return Promise.resolve(null);
+  const asset = SINGLE_ASSETS[key] ?? SHEET_ASSETS[key];
+  if (!asset || typeof document === 'undefined') return Promise.resolve(null);
+  const promise = loadOne(key, asset.file).then((texture) => {
+    pendingLoads.delete(key);
+    if (!texture) failedKeys.add(key);
+    notifyLoaded(key, texture);
+    return texture;
   });
+  pendingLoads.set(key, promise);
+  return promise;
+}
+
+/** Subscribe to on-demand loads. Returns an unsubscribe function. */
+export function onSpriteLoaded(listener) {
+  loadListeners.add(listener);
+  return () => loadListeners.delete(listener);
+}
+
+/** Number of sprite fetches still in flight. */
+export function getPendingSpriteCount() {
+  return pendingLoads.size;
+}
+
+/** Resolves once every texture requested so far has loaded or failed. */
+export async function whenSpritesSettled() {
+  while (pendingLoads.size > 0) await Promise.all([...pendingLoads.values()]);
+}
+
+/**
+ * Optional warm-up: fetch the sprites for the given crop ids only (e.g. the
+ * crops already planted in a save). With no ids it fetches nothing, so scene
+ * init stays free of crop PNG traffic. Safe to call repeatedly.
+ */
+export function loadSprites(cropIds = []) {
+  for (const cropId of cropIds) requestTexture(spriteKeyForCrop(cropId));
+  loadPromise = whenSpritesSettled();
   return loadPromise;
+}
+
+/** The one texture a crop's growth accent uses: its sheet, else its icon. */
+function spriteKeyForCrop(cropId) {
+  const sheetKey = `grow-${cropId}`;
+  return SHEET_ASSETS[sheetKey] ? sheetKey : `crop-${cropId}`;
 }
 
 /* ── Accessors ──────────────────────────────────────────────────────── */
@@ -211,6 +255,7 @@ export function getFrame(sheetKey, index) {
 export function getCropIcon(cropId) {
   const key = `crop-${cropId}`;
   const single = getTexture(key);
+  if (!single) requestTexture(key);
   return single ?? null;
 }
 
@@ -223,7 +268,15 @@ export function getCropIcon(cropId) {
  */
 export function getGrowthTexture(cropId, stage) {
   const sheetKey = `grow-${cropId}`;
-  return getFrame(sheetKey, stage) ?? getCropIcon(cropId) ?? getProceduralGrowthTexture(cropId, stage);
+  if (SHEET_ASSETS[sheetKey] && !failedKeys.has(sheetKey)) {
+    // Hand-drawn sheet wins; fetch only it (not the icon) and show the
+    // procedural placeholder until it lands.
+    const frame = getFrame(sheetKey, stage);
+    if (frame) return frame;
+    requestTexture(sheetKey);
+    return getProceduralGrowthTexture(cropId, stage);
+  }
+  return getCropIcon(cropId) ?? getProceduralGrowthTexture(cropId, stage);
 }
 
 /* ── Procedural crop sprites ─────────────────────────────────────────
@@ -363,6 +416,7 @@ export function disposeSprites() {
   }
   textureCache.clear();
   frameCache.clear();
-  loaded = false;
+  pendingLoads.clear();
+  failedKeys.clear();
   loadPromise = null;
 }
