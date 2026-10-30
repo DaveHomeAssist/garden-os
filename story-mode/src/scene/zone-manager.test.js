@@ -26,6 +26,33 @@ afterEach(() => {
 });
 
 describe('ZoneManager', () => {
+
+  it('applies the current portrait viewport to newly entered zones without another resize event', async () => {
+    const manager = new ZoneManager({ render: vi.fn() }, { dispatch: vi.fn() }, { disposeAll: vi.fn() });
+    manager.resize(390, 844);
+    const first = { aspect: 16 / 9, updateProjectionMatrix: vi.fn() };
+    const second = { aspect: 16 / 9, updateProjectionMatrix: vi.fn() };
+    manager.registerZone('player_plot', () => ({ scene: {}, camera: first }));
+    manager.registerZone('village', () => ({ scene: {}, camera: second }));
+    for (const zone of ['player_plot', 'village']) {
+      const transition = manager.transitionTo(zone);
+      await vi.runAllTimersAsync();
+      await transition;
+      expect(manager.getActiveZoneInstance().camera.aspect).toBeCloseTo(390 / 844);
+    }
+    expect(second.updateProjectionMatrix).toHaveBeenCalled();
+  });
+
+  it('uses the actual canvas viewport when a zone activates before the first resize callback', async () => {
+    const manager = new ZoneManager({ domElement: { clientWidth: 375, clientHeight: 812 }, render: vi.fn() }, { dispatch: vi.fn() });
+    const camera = { aspect: 16 / 9, updateProjectionMatrix: vi.fn() };
+    manager.registerZone('village', () => ({ scene: {}, camera }));
+    const transition = manager.transitionTo('village');
+    await vi.runAllTimersAsync();
+    await transition;
+    expect(camera.aspect).toBeCloseTo(375 / 812);
+  });
+
   it('registers zones and reports the active zone after transition', async () => {
     const renderer = { render: vi.fn() };
     const store = { dispatch: vi.fn() };

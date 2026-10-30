@@ -1057,6 +1057,18 @@
       "location": "story-mode/src/ui/beds-panel.js; story-mode/src/scene/",
       "notes": "Beds keep independent grids, soil, and history; this is a presentation gap only.",
       "added": "2026-10-13"
+    },
+    {
+      "id": "063",
+      "severity": "P2",
+      "status": "partial",
+      "area": "Responsive",
+      "tool": "engine",
+      "title": "New zones kept a landscape camera on portrait phones",
+      "impact": "Entering the Village after resizing to a phone could stretch the scene and make the player difficult to read.",
+      "location": "story-mode/src/scene/zone-manager.js; story-mode/src/scene/zone-manager.test.js",
+      "notes": "October30: both new viewport-transition regressions fail before the fix. Cameras now inherit the current canvas size or retained viewport. Dominic: all 1015 tests, build and the unchanged original Village browser flow pass. Corrected phone screenshot inspected. Source delivery, deployment and physical-phone/human acceptance remain separate.",
+      "added": "2026-10-30"
     }
   ]
 }
