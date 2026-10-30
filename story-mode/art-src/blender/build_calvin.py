@@ -11,7 +11,8 @@ unchanged:
   calvin_head       -> dogHeadPivot   (0.30, 0.08, 0 in torso)
   calvin_ear_l / _r -> dogEars[0] / [1] (0.10, 0.10, -/+0.05 in head pivot)
   calvin_tail       -> dogTailPivot   (-0.31, 0.04, 0 in torso)
-  calvin_leg_upper  -> each hipPivot  (front +/-0.18, back -0.12; y -0.08)
+  calvin_leg_upper  -> front hipPivots (x +0.18; y -0.08)
+  calvin_leg_upper_hind -> hind hipPivots (x -0.12), grey thigh, white below the hock
   calvin_leg_lower  -> each kneePivot (0, -0.16, 0 in hip), paw included
   calvin_tongue     -> dogTongue      (hangs down from its own origin)
 
@@ -34,14 +35,16 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 
 # ---- palette (sRGB hex) ----------------------------------------------------
 PAL = {
-    'white': '#ece5d8',      # warm off-white coat (front, head, legs)
-    'white_sh': '#d3ccc0',   # coat underside / inner fringe
-    'grey': '#9aa2ad',       # blue-grey OES back/rump coat
-    'grey_dk': '#858d9a',
-    'nose': '#1e1b1d',
-    'eye': '#262224',
+    # Read off the owner's reference photos (reference only; nothing from them ships).
+    'white': '#eee8dc',      # cream-white head, neck, chest, front legs, hind feet
+    'white_sh': '#d9d1c2',   # coat underside / inner fringe
+    'beard': '#e2d6bf',      # slightly warmer muzzle and beard
+    'grey': '#77797d',       # dark slate-grey saddle
+    'grey_dk': '#636568',    # saddle underside / hind thighs
+    'grey_lt': '#8b8d91',    # saddle top catching light
+    'nose': '#1c1a1c',
+    'eye': '#242022',
     'tongue': '#d9798a',
-    'pad': '#5b5254',
 }
 
 
@@ -186,82 +189,99 @@ def make(part):
 
 
 # ---- coat pattern (torso frame) ---------------------------------------------
+def saddle_edge(y):
+    """x of the white/grey boundary at height y: runs from just behind the
+    white neck ruff at the withers, down and back to the belly behind the
+    elbow (as in the side-on walking photo)."""
+    return 0.06 + 0.45 * (y + 0.02)
+
+
 def coat(c):
-    # OES: blue-grey blanket over the back half and the rump, white forequarters.
     x, y, z = c
-    if y < -0.13:
-        return jitter(PAL['white_sh'])
-    if x < -0.03 and y > -0.08:
-        return jitter(PAL['grey_dk'] if (y < -0.02 or x < -0.3) else PAL['grey'])
-    return jitter(PAL['white'])
+    if x < saddle_edge(y):
+        if y > 0.12:
+            return jitter(PAL['grey_lt'])
+        return jitter(PAL['grey_dk'] if y < -0.06 else PAL['grey'])
+    return jitter(PAL['white_sh'] if y < -0.1 else PAL['white'])
 
 
-def ring_locks(part, cx, cz, rx, rz, y, n, length, width, colour_fn, drop=0.85, spread=0.5, skip=None):
+def at_root(fn, root):
+    """Colour a whole lock by its root so the saddle edge stays clean."""
+    col = fn(root)
+    return lambda c: jitter('#%02x%02x%02x' % tuple(int(v * 255) for v in col), 0.03)
+
+
+def ring_locks(part, cx, cz, rx, rz, y, n, length, width, colour_fn, drop=0.85, spread=0.5):
     for i in range(n):
         a = 2 * math.pi * (i + 0.5) / n
-        if skip and skip(a):
-            continue
         ca, sa = math.cos(a), math.sin(a)
         root = (cx + rx * ca, y + rng.uniform(-0.03, 0.03), cz + rz * sa)
         dvec = (ca * spread, -drop, sa * spread)
-        part.lock(root, dvec, length * rng.uniform(0.75, 1.3), width, colour_fn)
+        part.lock(root, dvec, length * rng.uniform(0.75, 1.3), width, at_root(colour_fn, root))
 
 
 parts = []
 W = solid(PAL['white'])
 WS = solid(PAL['white_sh'])
 
-# ---- body (dogTorso frame): one big round fluffy mop -------------------------
+# ---- body (dogTorso frame): big level barrel, rounded bobtailed rump --------
 body = Part('calvin_body')
-body.blob((0.06, 0.03, 0.0), (0.2, 0.18, 0.175), coat, noise=0.07)     # fore barrel
-body.blob((-0.14, 0.05, 0.0), (0.21, 0.19, 0.18), coat, noise=0.07)    # higher rump (pear topline)
-body.blob((-0.04, 0.13, 0.0), (0.25, 0.09, 0.15), coat, noise=0.08)    # rounded back coat
-body.blob((0.2, 0.0, 0.0), (0.15, 0.17, 0.16), coat, noise=0.07)       # white chest
-body.blob((0.3, 0.08, 0.0), (0.12, 0.15, 0.15), W, noise=0.07)         # neck ruff (head ruff overlaps it)
-# shaggy coat skirt: locks hanging over the tops of the legs, rear ones grey
-ring_locks(body, -0.03, 0.0, 0.25, 0.15, -0.04, 16, 0.15, 0.075, coat, drop=1.0, spread=0.12)
+body.blob((0.05, 0.03, 0.0), (0.22, 0.175, 0.185), coat, noise=0.06)    # fore barrel
+body.blob((-0.15, 0.045, 0.0), (0.21, 0.18, 0.19), coat, noise=0.06)    # round rump, level-to-high topline
+body.blob((-0.05, 0.13, 0.0), (0.27, 0.085, 0.16), coat, noise=0.07)    # level back
+body.blob((0.21, 0.0, 0.0), (0.15, 0.17, 0.165), coat, noise=0.07)      # white chest + shoulders
+body.blob((0.3, 0.09, 0.0), (0.13, 0.16, 0.155), W, noise=0.07)         # thick white neck ruff
+ring_locks(body, -0.03, 0.0, 0.26, 0.16, -0.05, 13, 0.14, 0.08, coat, drop=1.0, spread=0.12)
 parts.append(make(body))
 
-# ---- head (dogHeadPivot frame) ---------------------------------------------
+# ---- head (dogHeadPivot frame): big round white mop ---------------------------
 head = Part('calvin_head')
-head.blob((0.02, -0.02, 0.0), (0.11, 0.13, 0.14), W, noise=0.07)        # head ruff blends into the neck ruff
-head.blob((0.13, 0.04, 0.0), (0.13, 0.12, 0.13), W, noise=0.06)         # broad round skull
-for cz in (-0.085, 0.085):
-    head.blob((0.15, -0.025, cz), (0.07, 0.07, 0.06), W, subdiv=0, noise=0.08)   # fluffy cheeks (behind the eyes)
-head.blob((0.235, -0.03, 0.0), (0.085, 0.062, 0.078), W, noise=0.05, flat_front=0.29)  # square muzzle
-head.blob((0.3, -0.004, 0.0), (0.026, 0.022, 0.033), solid(PAL['nose'], 0.02), noise=0.03)  # clear black nose
-for ez in (-0.05, 0.05):  # dark eyes, peeking under the fringe
-    head.blob((0.247, 0.03, ez), (0.014, 0.016, 0.015), solid(PAL['eye'], 0.01), subdiv=0, noise=0.0)
-head.blob((0.1, 0.12, 0.0), (0.14, 0.07, 0.135), W, noise=0.06)         # top mop
-for i, fz in enumerate((-0.1, -0.06, -0.02, 0.02, 0.06, 0.1)):    # fringe falling over the eyes
-    ln = 0.1 if abs(fz) < 0.05 else 0.085
-    head.lock((0.16, 0.15, fz), (0.55, -0.85, fz * 1.6), ln, 0.045, W)
-head.blob((0.235, -0.078, 0.0), (0.065, 0.042, 0.065), WS, noise=0.12)   # beard under the muzzle
+B = solid(PAL['beard'])
+head.blob((0.02, -0.02, 0.0), (0.12, 0.14, 0.15), W, noise=0.07)        # head ruff, overlaps the neck ruff
+head.blob((0.13, 0.045, 0.0), (0.14, 0.13, 0.145), W, noise=0.06)       # big round skull
+for cz in (-0.09, 0.09):
+    head.blob((0.15, -0.03, cz), (0.075, 0.075, 0.065), W, subdiv=0, noise=0.08)  # cheek fluff
+head.blob((0.218, -0.035, 0.0), (0.068, 0.058, 0.072), B, noise=0.07, flat_front=0.27)  # short furry muzzle
+head.blob((0.275, -0.01, 0.0), (0.022, 0.019, 0.028), solid(PAL['nose'], 0.02), noise=0.03)  # black nose
+for ez in (-0.052, 0.052):  # eyes mostly hidden by the fringe
+    head.blob((0.24, 0.022, ez), (0.011, 0.012, 0.012), solid(PAL['eye'], 0.01), subdiv=0, noise=0.0)
+head.blob((0.1, 0.13, 0.0), (0.15, 0.075, 0.145), W, noise=0.06)        # top of the mop
+for fz in (-0.1, -0.06, -0.02, 0.02, 0.06, 0.1):                    # long fringe over the eyes
+    ln = 0.14 if abs(fz) < 0.05 else 0.12
+    head.lock((0.19, 0.15, fz), (0.42, -0.9, fz * 1.4), ln, 0.052, W)
+head.blob((0.235, -0.085, 0.0), (0.07, 0.05, 0.07), B, noise=0.12)      # white beard
 parts.append(make(head))
 
-# ---- ears (earPivot frame): floppy grey flaps tucked into the mop ----------
+# ---- ears (earPivot frame): long floppy flaps that blend into the head fluff --
 for name, side in (('calvin_ear_l', -1), ('calvin_ear_r', 1)):
     ear = Part(name)
-    ear.blob((0.0, -0.055, side * 0.095), (0.05, 0.075, 0.028), solid(PAL['grey']), subdiv=0, noise=0.1)
-    ear.lock((-0.005, -0.06, side * 0.1), (0.05, -1.0, side * 0.25), 0.075, 0.035, solid(PAL['grey_dk']))
+    ear.lock((0.0, 0.0, side * 0.11), (0.08, -1.0, side * 0.12), 0.15, 0.06, solid('#e4ddd0'))
+    ear.lock((-0.03, -0.01, side * 0.1), (0.0, -1.0, side * 0.2), 0.12, 0.045, solid(PAL['white_sh']))
     parts.append(make(ear))
 
-# ---- tail: OES bob, a grey pom (dogTailPivot frame) ------------------------
+# ---- tail: bobtailed, so only a little grey rump fluff on the tail pivot -----
 tail = Part('calvin_tail')
-tail.blob((-0.05, 0.02, 0.0), (0.065, 0.06, 0.065), solid(PAL['grey']), subdiv=0, noise=0.12)
+tail.blob((-0.045, 0.0, 0.0), (0.06, 0.06, 0.07), solid(PAL['grey']), subdiv=0, noise=0.12)
 parts.append(make(tail))
 
 # ---- legs: one continuous shaggy column per leg -----------------------------
-# The upper column (hip pivot) runs past the knee and ends in a fur skirt, so
-# the lower part (knee pivot: shin + big paw) slides inside it when it bends.
-up = Part('calvin_leg_upper')
-up.blob((0.0, -0.125, 0.0), (0.068, 0.148, 0.064), W, noise=0.07)              # column hip -> ankle, past the knee
-up.blob((0.008, -0.205, 0.0), (0.078, 0.08, 0.073), W, noise=0.08)             # shaggy trouser flare over the ankle, blended into the column
-parts.append(make(up))
+# The upper column (hip pivot) runs past the knee to the ankle; the lower part
+# (knee pivot: shin + big mop foot) slides inside it when it bends.
+# Front legs are white to the paws; hind legs carry the grey saddle down the
+# thigh to about the hock, with white lower legs and feet.
+def leg_upper(name, colour_fn):
+    up = Part(name)
+    up.blob((0.0, -0.125, 0.0), (0.072, 0.15, 0.068), colour_fn, noise=0.07)
+    up.blob((0.008, -0.205, 0.0), (0.082, 0.08, 0.077), W, noise=0.08)    # white trouser flare over the ankle
+    parts.append(make(up))
+
+
+leg_upper('calvin_leg_upper', W)
+leg_upper('calvin_leg_upper_hind', lambda c: jitter(PAL['grey_dk'] if c[1] > -0.15 + 0.25 * c[0] else PAL['white']))
 
 lo = Part('calvin_leg_lower')
 lo.blob((0.006, -0.07, 0.0), (0.05, 0.08, 0.048), W, subdiv=0, noise=0.05)   # shin, hidden in the column at rest
-lo.blob((0.03, -0.148, 0.0), (0.08, 0.044, 0.072), W, noise=0.08, flat_bottom=-0.174)  # big fluffy paw
+lo.blob((0.03, -0.148, 0.0), (0.085, 0.046, 0.076), W, noise=0.08, flat_bottom=-0.174)  # big round mop foot
 parts.append(make(lo))
 
 tg = Part('calvin_tongue')     # hangs down from its origin, slightly forward
@@ -271,9 +291,9 @@ parts.append(make(tg))
 total = 0
 for ob in parts:
     t = len(ob.data.polygons)
-    mult = 4 if ob.name.startswith('calvin_leg') else 1
+    mult = 4 if ob.name == 'calvin_leg_lower' else (2 if ob.name.startswith('calvin_leg_upper') else 1)
     total += t * mult
-    print('PART', ob.name, t, 'tris', '(x4 legs)' if mult == 4 else '')
+    print('PART', ob.name, t, 'tris', f'(x{mult} legs)' if mult > 1 else '')
 print('CALVIN_TOTAL_TRIS', total)
 
 for ob in bpy.context.scene.objects:
