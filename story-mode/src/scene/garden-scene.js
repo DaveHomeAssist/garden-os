@@ -3502,7 +3502,9 @@ function getGrowthScale(phase, season) {
 
         // Facing: atan2 for travel direction along XZ plane
         const runDirection = sheepdogRunState.end.clone().sub(sheepdogRunState.start).normalize();
-        sheepdogGroup.rotation.y = Math.atan2(runDirection.x, runDirection.z);
+        // The dog faces local +X, so heading is atan2(-dz, dx); atan2(dx, dz)
+        // turned him 90° and he ran sideways (back to the camera on the opening run).
+        sheepdogGroup.rotation.y = Math.atan2(-runDirection.z, runDirection.x);
 
         // Tongue visible during run
         dogTongue.visible = true;
