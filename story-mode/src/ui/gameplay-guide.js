@@ -12,7 +12,7 @@ const GUIDE_NAV = [
 
 const MODE_ROWS = [
   ['Story Mode', pill('Live + saved', 'green'), 'Title -> persistent save slot'],
-  ['Free Play', pill('Live + session only', 'amber'), 'Title -> Start Unsaved Free Play'],
+  ['Free Play', pill('Live + saved', 'green'), 'Title -> Start Free Play or Continue Free Play'],
   ['Story Planner', pill('Preview + session only', 'amber'), 'Title -> Start Unsaved Story Planner'],
   ['Let It Grow', pill('Live in Free Play', 'green'), 'Proximity movement and world tools'],
   ['Daily Challenge', pill('Coming soon', 'gray'), 'Locked in this release'],
@@ -69,7 +69,7 @@ const TOUCH_ROWS = [
 ];
 
 const GUIDE_FOOTER =
-  'Story Mode uses persistent save slots. Free Play and Story Planner are session-only previews and are discarded when the page refreshes.';
+  'Story Mode uses three persistent save slots. Free Play saves its own world separately and can resume after refresh. Story Planner is session only; use the main Garden OS Planner to save beds.';
 
 function pill(label, tone = 'gray') {
   return `<span class="gameplay-guide__pill gameplay-guide__pill--${tone}">${escapeHtml(label)}</span>`;
@@ -135,7 +135,7 @@ function renderOverviewSection() {
         tone: 'green',
         label: 'Story Mode is live',
         body:
-          'Choose your gardener, tend the backyard one season at a time, ride out three season beats, harvest and review. Free Play and Story Planner are available from the title screen as clearly labelled session-only modes.',
+          'Choose your gardener, tend the backyard one season at a time, ride out three season beats, harvest and review. Start or continue an independently saved Free Play world from the title screen. Story Planner remains a session-only preview.',
       })}
       ${renderTable(
         ['Mode', 'Status', 'Entry'],

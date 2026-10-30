@@ -93,7 +93,7 @@ The core mission remains the same: make garden decisions explainable, playable, 
 - `gos-time.js` is the current date, ISO-week, day-of-year, season, and week-range authority for Home, Beds, Planner, Doctor, and Journal. Do not add mock dates or independent season defaults to those surfaces.
 - Fresh storage is intentionally empty. Mom's garden is labelled sample data and loads only after the user explicitly chooses it; product counts and advice must come from the active saved bed.
 - All canonical public routes now share a visible, light-default light/dark toggle and one PWA registration path. Browser coverage verifies saved theme persistence, 44px toggle targets, route-level dark contrast, service-worker activation, and an offline Home reload.
-- Story Mode title choices are native keyboard buttons. Story saves persist; Free Play and Story Planner are explicitly session-only. Daily Challenge and Speedrun remain unavailable, with their existing backlog item still open for richer unlock/ETA detail.
+- Story Mode title choices are native keyboard buttons. Three Story slots and the independent Free Play world persist; Story Planner remains session-only. Post-campaign Keep gardening stays in its original Story slot. Daily Challenge and Speedrun remain unavailable, with their existing backlog item still open for richer unlock/ETA detail.
 
 ---
 

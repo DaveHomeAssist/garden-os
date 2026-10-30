@@ -1,6 +1,16 @@
 # Garden OS — 30 / 60 / 90 Day Implementation Plan
 
-**Last verified:** 2026-10-13
+**Last verified:** 2026-10-30 (Free Play persistence copy only; earlier baseline checks retain their dates)
+
+## Free Play persistence clarification, 2026-10-30
+
+The October 27 integration supersedes the September session-only Free Play
+description below. Title-screen Free Play now saves an independent world and
+offers Start Free Play or Continue Free Play. Post-campaign Keep gardening
+retains its original Story slot; Story Planner remains session-only. Help copy
+now follows `story-mode/src/game/save-target.js` and the integration receipt in
+`docs/HANDOFF.md`. This copy correction does not change save behavior or establish
+new deployment or human acceptance evidence.
 
 ## Current Verified Baseline — 2026-10-13
 
