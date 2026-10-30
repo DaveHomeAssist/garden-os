@@ -248,6 +248,15 @@ async function readLayout(page) {
 async function assertViewport(page, viewport) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.waitForTimeout(180);
+  // The helper fades in over a 0.2s CSS transition, and CSS transitions only
+  // advance when a frame is produced. Under SwiftShader the first scene frames
+  // can block the main thread for seconds, so a fixed 180ms wait can read the
+  // helper mid-fade (class is-visible, opacity 0). Wait for the fade to settle.
+  await page.waitForFunction(() => {
+    const helper = document.querySelector('#phase-helper');
+    if (!helper?.classList.contains('is-visible')) return true;
+    return Number.parseFloat(getComputedStyle(helper).opacity || '1') > 0.99;
+  }, null, { timeout: 15000, polling: 'raf' });
 
   const layout = await readLayout(page);
   const label = viewport.name;

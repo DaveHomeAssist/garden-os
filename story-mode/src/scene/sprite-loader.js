@@ -104,7 +104,13 @@ const textureCache = new Map();   // key → THREE.Texture
 const frameCache = new Map();     // 'sheetKey:frameIndex' → THREE.Texture
 let loadPromise = null;
 let missingAssets = [];
-const pendingLoads = new Map();   // key → Promise<THREE.Texture|null> (in flight)
+const pendingLoads = new Map();   // key → Promise<THREE.Texture|null> (queued or in flight)
+const loadQueue = [];             // [{ key, file, resolve }] waiting for a fetch slot
+let activeLoads = 0;
+let loaderGeneration = 0;         // bumped by disposeSprites(); stale loads are dropped
+
+/** At most this many crop PNG fetches run at once (the rest wait in order). */
+export const MAX_CONCURRENT_SPRITE_LOADS = 4;
 const failedKeys = new Set();     // keys whose PNG failed (never refetched)
 const loadListeners = new Set();  // (key, texture|null) => void
 
@@ -117,7 +123,7 @@ function assetPath(filename) {
 
 /* ── Loading ────────────────────────────────────────────────────────── */
 
-function loadOne(key, filename) {
+function loadOne(key, filename, generation = loaderGeneration) {
   if (!filename) {
     console.warn(`[sprite-loader] missing texture filename for: ${key}`);
     missingAssets.push(key);
@@ -128,6 +134,12 @@ function loadOne(key, filename) {
     texLoader.load(
       assetPath(filename),
       (texture) => {
+        if (generation !== loaderGeneration) {
+          // Scene torn down while this PNG was in flight: don't resurrect it.
+          texture.dispose();
+          resolve(null);
+          return;
+        }
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.LinearFilter;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -161,7 +173,12 @@ export function requestTexture(key) {
   if (failedKeys.has(key)) return Promise.resolve(null);
   const asset = SINGLE_ASSETS[key] ?? SHEET_ASSETS[key];
   if (!asset || typeof document === 'undefined') return Promise.resolve(null);
-  const promise = loadOne(key, asset.file).then((texture) => {
+  const generation = loaderGeneration;
+  const promise = new Promise((resolve) => {
+    loadQueue.push({ key, file: asset.file, resolve });
+    pumpLoadQueue();
+  }).then((texture) => {
+    if (generation !== loaderGeneration) return null;
     pendingLoads.delete(key);
     if (!texture) failedKeys.add(key);
     notifyLoaded(key, texture);
@@ -169,6 +186,24 @@ export function requestTexture(key) {
   });
   pendingLoads.set(key, promise);
   return promise;
+}
+
+/** Start queued fetches while fewer than MAX_CONCURRENT_SPRITE_LOADS are active. */
+function pumpLoadQueue() {
+  while (activeLoads < MAX_CONCURRENT_SPRITE_LOADS && loadQueue.length > 0) {
+    const { key, file, resolve } = loadQueue.shift();
+    activeLoads += 1;
+    loadOne(key, file).then((texture) => {
+      activeLoads -= 1;
+      resolve(texture);
+      pumpLoadQueue();
+    });
+  }
+}
+
+/** Fetches currently running (never above MAX_CONCURRENT_SPRITE_LOADS). */
+export function getActiveSpriteLoadCount() {
+  return activeLoads;
 }
 
 /** Subscribe to on-demand loads. Returns an unsubscribe function. */
@@ -405,7 +440,9 @@ export function getMissingAssets() {
 }
 
 /**
- * Dispose all loaded textures. Call on scene teardown.
+ * Dispose every texture the loader created (PNG, sheet frames, procedural
+ * placeholders) and drop queued fetches. Call on scene teardown; in-flight
+ * fetches that land afterwards are disposed instead of cached.
  */
 export function disposeSprites() {
   for (const tex of textureCache.values()) {
@@ -414,8 +451,14 @@ export function disposeSprites() {
   for (const tex of frameCache.values()) {
     if (tex) tex.dispose();
   }
+  for (const tex of proceduralCache.values()) {
+    if (tex) tex.dispose();
+  }
   textureCache.clear();
   frameCache.clear();
+  proceduralCache.clear();
+  loaderGeneration += 1;
+  for (const { resolve } of loadQueue.splice(0)) resolve(null);
   pendingLoads.clear();
   failedKeys.clear();
   loadPromise = null;

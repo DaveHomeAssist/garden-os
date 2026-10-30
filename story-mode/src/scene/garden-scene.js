@@ -13,7 +13,7 @@ import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { createPlayerCharacter } from './player-character.js';
 import { ResourceTracker } from './resource-tracker.js';
-import { getGrowthTexture, getPendingSpriteCount, onSpriteLoaded, GROWTH_STAGE } from './sprite-loader.js';
+import { disposeSprites, getGrowthTexture, getPendingSpriteCount, onSpriteLoaded, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
 import { computeBedFocusView, lerpBedFocusView } from './bed-focus.js';
 import { getCropById } from '../data/crops.js';
@@ -1674,6 +1674,13 @@ export function createGardenScene(container) {
     sprite.renderOrder = 12;
   }
 
+  // Accent sprites borrow their texture from the sprite loader (shared, created
+  // once); detach it so disposing the sprite frees only its own material.
+  function disposeAccent(sprite) {
+    if (sprite?.material) sprite.material.map = null;
+    resourceTracker.disposeObject(sprite);
+  }
+
   function syncCropAccents(grid, phase, season) {
     const style = getStyleForPhase(phase);
     const isPlanner = style === 'planner';
@@ -1688,7 +1695,7 @@ export function createGardenScene(container) {
       // No accent if: planner mode, no crop, or stage is hidden
       if (isPlanner || !cell.cropId || stage < 0) {
         if (accentMeshes.has(key)) {
-          resourceTracker.disposeObject(accentMeshes.get(key));
+          disposeAccent(accentMeshes.get(key));
           accentMeshes.delete(key);
         }
         continue;
@@ -1698,7 +1705,7 @@ export function createGardenScene(container) {
       if (!tex) {
         // No sprite for this crop — procedural fallback, skip silently
         if (accentMeshes.has(key)) {
-          resourceTracker.disposeObject(accentMeshes.get(key));
+          disposeAccent(accentMeshes.get(key));
           accentMeshes.delete(key);
         }
         continue;
@@ -1707,21 +1714,27 @@ export function createGardenScene(container) {
       activeIds.add(key);
       const sig = `${cell.cropId}:${stage}:${cell.damageState ?? 'none'}:${season}:${tex.uuid}`;
 
-      if (accentMeshes.has(key) && accentMeshes.get(key).userData.sig === sig) {
+      // Existing accent: swap the texture in place (placeholder -> PNG, or a
+      // new crop/stage). No new material, no shader work, no dispose of the
+      // loader-owned texture, so the swap can't pop the accent out for a frame.
+      if (accentMeshes.has(key)) {
         const spr = accentMeshes.get(key);
+        if (spr.userData.sig !== sig) {
+          spr.material.map = tex;
+          spr.userData.sig = sig;
+          spr.userData.cropId = cell.cropId;
+          spr.userData.stage = stage;
+          spr.userData.season = season;
+          spr.userData.damageState = cell.damageState ?? null;
+        }
         applyCropAccentState(spr, stage, cell.damageState, season);
         continue;
       }
 
-      // Remove stale accent
-      if (accentMeshes.has(key)) {
-        resourceTracker.disposeObject(accentMeshes.get(key));
-        accentMeshes.delete(key);
-      }
-
-      // Create billboard sprite
+      // Create billboard sprite. The map is attached after tracking so the
+      // resource tracker never owns (or disposes) the shared loader texture.
       const spriteMat = new THREE.SpriteMaterial({
-        map: tex,
+        map: null,
         transparent: true,
         opacity: ACCENT_OPACITY[stage] ?? 0.7,
         depthWrite: false,
@@ -1744,6 +1757,7 @@ export function createGardenScene(container) {
       applyCropAccentState(sprite, stage, cell.damageState, season);
 
       resourceTracker.trackObject(sprite);
+      spriteMat.map = tex;
       root.add(sprite);
       accentMeshes.set(key, sprite);
     }
@@ -1751,7 +1765,7 @@ export function createGardenScene(container) {
     // Remove stale accents
     for (const [key, spr] of accentMeshes) {
       if (!activeIds.has(key)) {
-        resourceTracker.disposeObject(spr);
+        disposeAccent(spr);
         accentMeshes.delete(key);
       }
     }
@@ -3702,6 +3716,8 @@ function getGrowthScale(phase, season) {
         supportMeshes,
         accentMeshes,
       });
+      // Loader-owned textures (PNGs, sheet frames, placeholders) go last.
+      disposeSprites();
     },
   };
 }
