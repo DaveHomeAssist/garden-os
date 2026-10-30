@@ -72,3 +72,54 @@ jobs:
 
       - name: Verify all
         run: node scripts/verify-all.mjs
+
+  village-e2e:
+    name: Village e2e (self-hosted)
+    # Same self-hosted runner as the verify job. Skipped (never sent to a
+    # GitHub-hosted runner) for pull requests from forks, so outside code never
+    # reaches the box.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ vars.GARDEN_OS_RUNNER || 'garden-os' }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: story-mode/package-lock.json
+
+      - name: Install Story Mode dependencies
+        working-directory: story-mode
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: story-mode
+        # Self-hosted: system libraries are provisioned on the machine (no apt).
+        run: npx playwright install chromium
+
+      - name: Village e2e against the vite dev server
+        working-directory: story-mode
+        env:
+          GOS_URL: http://localhost:4318/garden-os/story-mode/
+          GOS_OUT: ${{ runner.temp }}/gos-village-e2e
+        # Start the dev server, wait for it, run the script under the box's
+        # shared browser lock, then stop the server (trap runs on any exit).
+        run: |
+          node node_modules/vite/bin/vite.js --port 4318 --strictPort > "$RUNNER_TEMP/vite-dev.log" 2>&1 &
+          VITE_PID=$!
+          trap 'kill "$VITE_PID" 2>/dev/null || true' EXIT
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null "$GOS_URL" && break
+            kill -0 "$VITE_PID" 2>/dev/null || break
+            sleep 1
+          done
+          if ! curl -sf -o /dev/null "$GOS_URL"; then
+            echo "::error::vite dev server did not come up on $GOS_URL"
+            cat "$RUNNER_TEMP/vite-dev.log"
+            exit 1
+          fi
+          flock /tmp/mixmash-browser-ci.lock node tests/village-e2e.mjs
