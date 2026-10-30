@@ -22,8 +22,9 @@ function fakeRig() {
   ears.forEach((e) => headPivot.add(e));
   const tailPivot = new THREE.Group();
   torso.add(tailPivot);
-  const legRigs = [0, 1, 2, 3].map(() => {
+  const legRigs = [0.18, -0.12, 0.18, -0.12].map((x) => {
     const hipPivot = new THREE.Group();
+    hipPivot.position.x = x;
     const kneePivot = new THREE.Group();
     hipPivot.add(kneePivot);
     torso.add(hipPivot);
@@ -70,6 +71,11 @@ describe('Calvin GLB rig', () => {
       expect(hipPivot.children.some((c) => c.name === `calvin-leg-upper-${i}`)).toBe(true);
       expect(kneePivot.children.map((c) => c.name)).toEqual([`calvin-leg-lower-${i}`]);
     });
+    // front hips get the white leg, hind hips the grey-thigh leg
+    const geoOf = (i) => rig.legRigs[i].hipPivot.getObjectByName(`calvin-leg-upper-${i}`).geometry;
+    expect(geoOf(0)).toBe(geoOf(2));
+    expect(geoOf(1)).toBe(geoOf(3));
+    expect(geoOf(0)).not.toBe(geoOf(1));
     // node transform (dequantize scale) is preserved on the attached part
     expect(rig.torso.getObjectByName('calvin-body').scale.x).toBeCloseTo(0.5);
     // tongue object is reused so the run animation still toggles it

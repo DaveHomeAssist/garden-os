@@ -14,6 +14,7 @@ export const CALVIN_PART_NAMES = Object.freeze([
   'calvin_ear_r',
   'calvin_tail',
   'calvin_leg_upper',
+  'calvin_leg_upper_hind',
   'calvin_leg_lower',
   'calvin_tongue',
 ]);
@@ -74,7 +75,9 @@ export function applyCalvinModel(rig, gltfScene, material = createCalvinMaterial
   added.push(attach(parts.calvin_ear_r, rig.ears[1], material, 'calvin-ear-r'));
   added.push(attach(parts.calvin_tail, rig.tailPivot, material, 'calvin-tail'));
   rig.legRigs.forEach(({ hipPivot, kneePivot }, i) => {
-    added.push(attach(parts.calvin_leg_upper, hipPivot, material, `calvin-leg-upper-${i}`));
+    // Hind hips sit behind the torso origin (x < 0): their thighs carry the grey saddle.
+    const upper = hipPivot.position.x < 0 ? parts.calvin_leg_upper_hind : parts.calvin_leg_upper;
+    added.push(attach(upper, hipPivot, material, `calvin-leg-upper-${i}`));
     added.push(attach(parts.calvin_leg_lower, kneePivot, material, `calvin-leg-lower-${i}`));
   });
   // The tongue keeps its object (the run animation toggles and swings it); only
