@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh } from './zone-interactables.js';
+import { animateNpcFigures } from '../npc-figures.js';
 import { createTradePanel } from '../../ui/trade-panel.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
@@ -103,6 +104,7 @@ export function createMarketSquare(store, tracker) {
 
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
+  let npcTime = 0;
   return {
     scene, camera, interactables, spawnPoints: { ...ZONE_DEF.spawnPoint }, zoneId: ZONE_DEF.id,
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
@@ -112,7 +114,7 @@ export function createMarketSquare(store, tracker) {
       const s = season || 'spring';
       applyBase(this, s, ground, hemi, scene.fog);
     },
-    update() {},
+    update(dt = 0) { npcTime += dt; animateNpcFigures(root, dt, npcTime, playerPosition); },
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tradePanel?.dispose(); tracker.disposeObject(root); },
   };

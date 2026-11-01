@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh, makeForageSpotMesh } from './zone-interactables.js';
+import { animateNpcFigures } from '../npc-figures.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
 const ZONE_DEF = {
@@ -92,6 +93,7 @@ export function createForestEdge(store, tracker) {
 
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
+  let npcTime = 0;
   return {
     scene, camera, interactables, spawnPoints: { ...ZONE_DEF.spawnPoint }, zoneId: ZONE_DEF.id,
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
@@ -106,7 +108,7 @@ export function createForestEdge(store, tracker) {
         c.visible = s !== 'winter';
       });
     },
-    update() {},
+    update(dt = 0) { npcTime += dt; animateNpcFigures(root, dt, npcTime, playerPosition); },
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },
   };
