@@ -70,19 +70,9 @@ function renderTabButton(tabId, activeTab, label) {
   return `
     <button
       type="button"
+      class="shop-tab${active ? ' is-active' : ''}"
       data-shop-tab="${tabId}"
-      style="
-        border:none;
-        border-radius:999px;
-        padding:8px 14px;
-        font-size:12px;
-        font-family:'DM Mono',monospace;
-        letter-spacing:0.08em;
-        text-transform:uppercase;
-        cursor:pointer;
-        color:${active ? '#1a120c' : 'rgba(247,242,234,0.72)'};
-        background:${active ? '#e8c84a' : 'rgba(247,242,234,0.06)'};
-      "
+      aria-pressed="${active ? 'true' : 'false'}"
     >${label}</button>
   `;
 }
@@ -90,42 +80,21 @@ function renderTabButton(tabId, activeTab, label) {
 function renderItemCard(item, tokens) {
   const canAfford = tokens >= item.price;
   return `
-    <div
-      class="shop-item-card"
-      style="
-        display:flex;
-        align-items:center;
-        gap:12px;
-        min-width:0;
-        padding:10px 12px;
-        border-radius:10px;
-        background:rgba(247,242,234,0.04);
-        border:1px solid rgba(247,242,234,0.08);
-      "
-    >
-      <span style="font-size:24px;flex-shrink:0;">${escapeHtml(item.icon)}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
-        <div style="font-size:11px;color:rgba(247,242,234,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.description ?? '')}</div>
+    <div class="shop-item-card${canAfford ? '' : ' is-unaffordable'}">
+      <span class="shop-item-card__icon" aria-hidden="true">${escapeHtml(item.icon)}</span>
+      <div class="shop-item-card__text">
+        <div class="shop-item-card__name">${escapeHtml(item.name)}</div>
+        <div class="shop-item-card__desc">${escapeHtml(item.description ?? '')}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <span style="font-family:'DM Mono',monospace;font-size:12px;color:${canAfford ? '#e8c84a' : '#d2654d'};">${item.price}🪙</span>
+      <div class="shop-item-card__buy">
+        <span class="shop-item-card__price">${item.price}🪙</span>
         <button
           type="button"
+          class="shop-buy-btn"
           data-buy-item="${escapeHtml(item.itemId)}"
           data-buy-price="${item.price}"
           ${item.isRecipe ? 'data-buy-recipe="true"' : ''}
           ${canAfford ? '' : 'disabled'}
-          style="
-            border:none;
-            border-radius:999px;
-            padding:6px 12px;
-            font-size:12px;
-            font-weight:700;
-            cursor:${canAfford ? 'pointer' : 'not-allowed'};
-            background:${canAfford ? '#5aab6b' : 'rgba(247,242,234,0.08)'};
-            color:${canAfford ? '#1a120c' : 'rgba(247,242,234,0.35)'};
-          "
         >Buy</button>
       </div>
     </div>
@@ -178,35 +147,25 @@ export function createShopPanel(container) {
 
     sheet.innerHTML = `
       <div class="panel-handle"></div>
-      <div class="palette-header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div class="palette-header shop-panel__header">
         <div>
-          <div class="palette-title" style="font-family:'Fraunces',serif;font-size:20px;color:#f7f2ea;">${escapeHtml(shopName)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#e8c84a;margin-top:4px;">
-            Balance: ${tokens} 🪙
-          </div>
+          <div class="palette-title shop-panel__title">${escapeHtml(shopName)}</div>
+          <div class="shop-panel__balance">Balance: ${tokens} 🪙</div>
         </div>
-        <button type="button" class="palette-dismiss" id="shop-dismiss" aria-label="Close shop" style="
-          border:none;
-          background:none;
-          color:#f7f2ea;
-          font-size:24px;
-          cursor:pointer;
-          padding:4px 8px;
-          line-height:1;
-        ">&times;</button>
+        <button type="button" class="palette-dismiss shop-panel__close" id="shop-dismiss" aria-label="Close shop">&times;</button>
       </div>
 
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="shop-panel__tabs" role="group" aria-label="Shop sections">
         ${getVisibleTabs().map(([tabId, label]) => renderTabButton(tabId, activeTab, label)).join('')}
       </div>
 
-      <div id="shop-items" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-height:50vh;overflow-y:auto;">
+      <div id="shop-items" class="shop-panel__items">
         ${listings.length
           ? listings.map((item) => renderItemCard(item, tokens)).join('')
-          : '<div style="font-size:13px;color:rgba(247,242,234,0.48);padding:16px 0;">No items available in this category.</div>'
+          : '<div class="shop-panel__empty">No items available in this category.</div>'
         }
       </div>
-      <div data-shop-message role="status" aria-live="polite" style="font-size:12px;color:rgba(247,242,234,0.72);margin-top:10px;min-height:16px;">${escapeHtml(lastMessage)}</div>
+      <div data-shop-message class="shop-panel__message${lastMessage ? ' has-message' : ''}" role="status" aria-live="polite">${escapeHtml(lastMessage)}</div>
     `;
 
     // Bind tab buttons
@@ -263,35 +222,13 @@ export function createShopPanel(container) {
     lastMessage = '';
 
     sheet = document.createElement('div');
-    sheet.className = 'panel-sheet is-open';
+    sheet.className = 'panel-sheet is-open shop-panel';
     sheet.id = 'shop-panel';
-    sheet.style.cssText = `
-      position:fixed;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      box-sizing:border-box;
-      width:min(92vw,420px);
-      max-width:min(92vw,420px);
-      max-height:82vh;
-      overflow:auto;
-      z-index:900;
-      background:#3a2516;
-      border:1px solid rgba(247,242,234,0.12);
-      border-radius:12px;
-      padding:20px;
-      box-shadow:0 8px 32px rgba(0,0,0,0.6);
-    `;
 
     // Backdrop
     const backdrop = document.createElement('div');
     backdrop.id = 'shop-backdrop';
-    backdrop.style.cssText = `
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.5);
-      z-index:899;
-    `;
+    backdrop.className = 'shop-backdrop';
     backdrop.addEventListener('click', () => close());
 
     container.appendChild(backdrop);
