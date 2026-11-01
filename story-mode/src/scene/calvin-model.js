@@ -1,4 +1,4 @@
-// Calvin (the Old English Sheepdog) — low-poly GLB body for the procedural rig
+// Calvin (the Old English Sheepdog) — soft low-poly GLB body for the procedural rig
 // in garden-scene.js. The GLB (art-src/blender/build_calvin.py) carries one
 // named mesh per rig part, each authored in the local frame of the pivot it
 // hangs from, so the existing run / idle / hold animation drives it unchanged.
@@ -19,14 +19,14 @@ export const CALVIN_PART_NAMES = Object.freeze([
   'calvin_tongue',
 ]);
 
-/** Shared painted material: per-face vertex colours, flat normals baked in the GLB. */
+/** Shared painted material: per-vertex colours (coat + baked AO), smooth normals from the GLB. */
 export function createCalvinMaterial() {
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     vertexColors: true,
     roughness: 0.95,
     metalness: 0,
-    flatShading: true,
+    flatShading: false, // soft fur: keep the GLB's smooth vertex normals even though the yard foliage is faceted
   });
   mat.name = 'calvin-coat';
   return mat;

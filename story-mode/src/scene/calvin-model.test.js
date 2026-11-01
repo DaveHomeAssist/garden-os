@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
-import { CALVIN_PART_NAMES, collectCalvinParts, applyCalvinModel } from './calvin-model.js';
+import { CALVIN_PART_NAMES, collectCalvinParts, applyCalvinModel, createCalvinMaterial } from './calvin-model.js';
 
 function fakeGltfScene(names = CALVIN_PART_NAMES) {
   const scene = new THREE.Group();
@@ -46,6 +46,17 @@ describe('Calvin GLB rig', () => {
     const meshNames = json.meshes.map((m) => m.name);
     for (const n of CALVIN_PART_NAMES) expect(meshNames).toContain(n);
     expect(json.images ?? []).toHaveLength(0); // no textures, painted vertex colour only
+    // soft coat: every part ships its own smooth vertex normals and colours
+    for (const m of json.meshes) {
+      expect(m.primitives[0].attributes.NORMAL).toBeDefined();
+      expect(m.primitives[0].attributes.COLOR_0).toBeDefined();
+    }
+  });
+
+  it('shades smooth (no forced flat shading) so the fur reads soft', () => {
+    const mat = createCalvinMaterial();
+    expect(mat.flatShading).toBe(false);
+    expect(mat.vertexColors).toBe(true);
   });
 
   it('reports missing parts instead of half-applying', () => {
