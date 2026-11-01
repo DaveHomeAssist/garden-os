@@ -1710,6 +1710,7 @@ function bindUI({
       if (cropInfo) {
         showPlantedToast(cropInfo);
       }
+      scene.playPlantAction?.(cellIndex);
       try {
         const freshState = store.getState();
         const placed = scoreCell(cellIndex, freshState.season.grid, freshState.season.siteConfig ?? {}, freshState.season.season);
@@ -1771,6 +1772,7 @@ function bindUI({
       if (cropInfo) {
         showPlantedToast(cropInfo);
       }
+      scene.playPlantAction?.(cellIndex);
       if (
         cellIndex === 0
         && state.campaign.currentChapter === 1
@@ -2373,7 +2375,7 @@ function bindUI({
       if (simulationWorker.available) {
         playerController.setState(playerState);
       }
-      scene.setPlayerState?.(playerState);
+      scene.setPlayerState?.(playerState, dt);
       syncPlayerTool();
       const proximityEnabled = isProximityInteractionEnabled();
       interactionSystem.setEnabled(proximityEnabled);

@@ -1518,10 +1518,10 @@ export function createGardenScene(container) {
     setInteractionHighlight(-1, 0);
   }
 
-  function setPlayerState(nextPlayerState) {
+  function setPlayerState(nextPlayerState, dt) {
     if (!nextPlayerState) return;
     playerState = nextPlayerState;
-    playerCharacter.update(nextPlayerState);
+    playerCharacter.update(nextPlayerState, dt);
     playerFollowScratch.copy(playerFollowHome).lerp(
       playerCharacter.getFocusTarget(playerFocusTarget),
       0.28,
@@ -1530,6 +1530,40 @@ export function createGardenScene(container) {
       strength: nextPlayerState.moving ? 0.16 : 0.1,
       enabled: true,
     });
+  }
+
+  // Gardener kneels and plants at a bed square. The crop pop-in and soil poof
+  // for that square (spawned when the crop syncs) are held back until the
+  // trowel meets the soil, so the seedling pops from the gardener's hand.
+  function playPlantAction(cellIndex, opts = {}) {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0) return null;
+    const reducedMotion = opts.reducedMotion
+      ?? Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+    const center = getCellCenter(cellIndex, { x: 0, z: 0 });
+    const result = playerCharacter.playPlantAction?.(center, { reducedMotion });
+    if (result && !result.skipped && result.hitInSec > 0) deferPlantJuice(cellIndex, result.hitInSec);
+    return result;
+  }
+
+  function deferPlantJuice(cellIndex, waitSec) {
+    let found = false;
+    for (const pop of plantPops) {
+      if (pop.cellIndex === cellIndex && pop.t >= 0 && pop.t < 0.06) {
+        pop.t = -waitSec;
+        pop.mesh.scale.setScalar(pop.base * 0.01);
+        found = true;
+      }
+    }
+    // Crop not synced yet: hold its juice when it arrives.
+    if (!found) pendingJuiceWait.set(cellIndex, { waitSec, atMs: performance.now() });
+    for (const dot of soilPoofPool.live()) {
+      if (dot.cellIndex === cellIndex && dot.t >= 0 && dot.t < 0.06) {
+        dot.t = -waitSec;
+        dot.localY = 0;
+        dot.y = dot.baseY;
+        dot.opacity = 0;
+      }
+    }
   }
 
   function setPlayerTool(toolId) {
@@ -1560,8 +1594,21 @@ export function createGardenScene(container) {
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
 
+  // cellIndex -> { waitSec, atMs }: a plant action asked for this square's juice
+  // to wait for the trowel, before the crop synced (see playPlantAction).
+  const pendingJuiceWait = new Map();
+
+  function takeJuiceWait(cellIndex) {
+    const pending = pendingJuiceWait.get(cellIndex);
+    if (!pending) return 0;
+    pendingJuiceWait.delete(cellIndex);
+    const elapsed = (performance.now() - pending.atMs) / 1000;
+    return Math.max(0, pending.waitSec - elapsed);
+  }
+
   function spawnPlantJuice(mesh, cellIndex, baseScale) {
-    plantPops.push({ mesh, t: 0, base: baseScale });
+    const wait = takeJuiceWait(cellIndex);
+    plantPops.push({ mesh, t: -wait, base: baseScale, cellIndex });
     mesh.scale.setScalar(baseScale * 0.01);
     const baseY = bed.soilY + 0.02;
     for (let p = 0; p < SOIL_POOF_DOTS; p++) {
@@ -1574,7 +1621,8 @@ export function createGardenScene(container) {
         z: mesh.position.z,
         baseY,
         localY: 0,
-        t: 0,
+        t: -wait,
+        cellIndex,
         scale: 0.8 + (seed % 4) * 0.15,
         color: p % 2 ? 0x6b4e33 : 0x8a6a45,
         opacity: 0.9,
@@ -1589,12 +1637,14 @@ export function createGardenScene(container) {
     for (let i = plantPops.length - 1; i >= 0; i--) {
       const pop = plantPops[i];
       pop.t += dt;
-      const k = Math.min(pop.t / 0.38, 1);
+      // t < 0: held back until the gardener's trowel meets the soil.
+      const k = Math.min(Math.max(pop.t, 0) / 0.38, 1);
       pop.mesh.scale.setScalar(pop.base * Math.max(easeOutBack(k), 0.01));
       if (k >= 1) plantPops.splice(i, 1);
     }
     for (const dot of soilPoofPool.live()) {
       dot.t += dt;
+      if (dot.t < 0) { dot.opacity = 0; continue; }
       const life = dot.t / 0.55;
       dot.x += dot.vx * dt;
       dot.z += dot.vz * dt;
@@ -3667,6 +3717,9 @@ function getGrowthScale(phase, season) {
     resetMood,
     pulseEventFocus,
     playSceneCue,
+    playPlantAction,
+    getPlayerPlantPose() { return playerCharacter.getPlantPose?.() ?? null; },
+    getPlayerWorldPosition() { return playerCharacter.group.getWorldPosition(new THREE.Vector3()); },
     weather,
     dayNight,
     getRenderer() { return renderer; },
