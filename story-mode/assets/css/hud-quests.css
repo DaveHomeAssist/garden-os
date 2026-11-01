@@ -32,6 +32,15 @@ body:has(#trade-panel) .quest-tracker {
   display: none;
 }
 
+/* Cutscenes (the intro and every talk scene) play in #cutscene-layer, which
+   is only non-inert while one is showing. The tracker used to step aside for
+   them only at 900px and below, so on iPad landscape and laptops it sat over
+   the intro cutscene. Hide it at every width while a cutscene is showing; it
+   comes back as soon as the layer goes inert again. */
+body:has(#cutscene-layer:not([inert])) .quest-tracker {
+  display: none;
+}
+
 /* The pause overlay (#pause-menu, z-index 50) lives inside the app's
    stacking context, which sits below this body-level fixed tracker, so the
    tracker painted over the pause cards (Content Packs at 800px) and took
@@ -257,13 +266,9 @@ body:has(#overlay-container > *) .quest-tracker {
    top-right slot (top: 130px). Use the bottom-anchored placement from 900px
    down, matching the HUD's own breakpoint, instead of only from 720px. */
 @media (max-width: 900px) {
-  /* Bottom-anchored, the tracker sits over the cutscene dialog (and took
-     clicks meant for its Skip button at 820x1180). Step aside while a
-     cutscene is showing; the layer is only non-inert during one. */
-  body:has(#cutscene-layer:not([inert])) .quest-tracker {
-    display: none;
-  }
-
+  /* Bottom-anchored, the tracker would sit over the cutscene dialog (it took
+     clicks meant for its Skip button at 820x1180); the all-widths cutscene
+     rule above keeps it hidden while a cutscene is showing. */
   .quest-tracker {
     top: auto;
     bottom: calc(150px + env(safe-area-inset-bottom, 0px));
