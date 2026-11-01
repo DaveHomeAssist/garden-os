@@ -667,6 +667,11 @@ export function createQuestController({
     return resolveNpcPresence(quest.npc, state, canEnterZone ? { canEnterZone } : {})?.zone ?? null;
   }
 
+  const TRACKER_COLLAPSED_KEY = 'gos-quest-tracker-collapsed';
+  let trackerCollapsed = (() => {
+    try { return globalThis.localStorage?.getItem(TRACKER_COLLAPSED_KEY) === '1'; } catch { return false; }
+  })();
+
   function renderTracker() {
     if (!hudRoot || typeof document === 'undefined') return;
     if (!trackerEl) {
@@ -674,6 +679,12 @@ export function createQuestController({
       trackerEl.className = 'quest-tracker';
       trackerEl.setAttribute('aria-label', 'Active quests');
       trackerEl.addEventListener('click', (event) => {
+        if (event.target.closest('[data-quest-tracker-collapse]')) {
+          trackerCollapsed = !trackerCollapsed;
+          try { globalThis.localStorage?.setItem(TRACKER_COLLAPSED_KEY, trackerCollapsed ? '1' : '0'); } catch { /* private mode */ }
+          renderTracker();
+          return;
+        }
         if (event.target.closest('[data-quest-log-toggle]')) toggleLog();
       }, signal ? { signal } : undefined);
       hudRoot.appendChild(trackerEl);
@@ -700,11 +711,17 @@ export function createQuestController({
             </ul>`}
         </li>`;
     }).join('');
+    trackerEl.classList.toggle('is-collapsed', trackerCollapsed);
     trackerEl.innerHTML = `
-      <button type="button" class="quest-tracker__header" data-quest-log-toggle aria-label="Open quest log (Q)">
-        <span>Quests</span><span class="quest-tracker__count">${active.length}/3</span><kbd>Q</kbd>
-      </button>
-      ${items ? `<ol class="quest-tracker__list">${items}</ol>` : '<p class="quest-tracker__empty">Talk to neighbors to pick up requests.</p>'}
+      <div class="quest-tracker__bar">
+        <button type="button" class="quest-tracker__header" data-quest-log-toggle aria-label="Open quest log (Q)">
+          <span>Quests</span><span class="quest-tracker__count">${active.length}/3</span><kbd>Q</kbd>
+        </button>
+        <button type="button" class="quest-tracker__collapse" data-quest-tracker-collapse
+          aria-expanded="${trackerCollapsed ? 'false' : 'true'}"
+          aria-label="${trackerCollapsed ? 'Show quest list' : 'Hide quest list'}">${trackerCollapsed ? '▾' : '▴'}</button>
+      </div>
+      ${trackerCollapsed ? '' : (items ? `<ol class="quest-tracker__list">${items}</ol>` : '<p class="quest-tracker__empty">Talk to neighbors to pick up requests.</p>')}
     `;
   }
 

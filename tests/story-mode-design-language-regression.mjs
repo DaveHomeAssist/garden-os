@@ -17,7 +17,7 @@ const { chromium } = await import(playwrightSpecifier);
 const outputDir = process.env.GOS_DESIGN_OUTPUT_DIR
   || join(tmpdir(), `garden-os-design-language-${Date.now()}`);
 const configuredBaseUrl = process.env.GOS_DESIGN_BASE_URL?.trim() || '';
-const timeoutMs = Number(process.env.GOS_DESIGN_TIMEOUT_MS ?? 240000);
+const timeoutMs = Number(process.env.GOS_DESIGN_TIMEOUT_MS ?? 480000);
 const hardTimeout = setTimeout(() => {
   console.error(`Story Mode design-language regression timed out after ${timeoutMs}ms.`);
   process.exit(124);

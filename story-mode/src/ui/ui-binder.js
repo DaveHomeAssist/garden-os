@@ -2275,6 +2275,15 @@ function bindUI({
     getArtQuality: () => scene.getArtQuality?.() ?? null,
     setArtQuality: (choice) => scene.setArtQuality?.(choice) ?? null,
   });
+
+  // Touch players have no M key: the pause menu's World Map entry opens the
+  // same map. Pause closes first so the map sheet is the only thing up.
+  document.getElementById('pause-map')?.addEventListener('click', () => {
+    if (audioInitialized) audioManager.playSFX('ui_click');
+    pauseController.close();
+    if (cutsceneMachine.isActive() || interventionTargeting.isActive()) return;
+    if (!worldMapOpen) showWorldMap();
+  }, sessionSignal);
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
   const toggleBugPanel = pauseController.toggleBugPanel;
