@@ -64,6 +64,33 @@ function makeTree(tracker, x, z, season) {
   return group;
 }
 
+const NPC_TALK_RADIUS = 1.2;
+
+/**
+ * Where a neighbour is drawn and where their talk point sits. If the NPC's
+ * slot falls inside a house footprint, the figure is drawn just outside it
+ * (figureStandPosition) and the talk point moves with the figure, so the
+ * prompt comes up where the player can see them. Runtime only: the slot data
+ * (WORLD_MAP npcSlots / schedules) is untouched, and quests only check zone.
+ */
+export function neighborhoodNpcPlacement(npc, blockers = WORLD_MAP.zones?.neighborhood?.blockers ?? []) {
+  const slot = npc.activeSchedule.position;
+  const stand = figureStandPosition(slot, blockers);
+  const moved = stand.x !== slot.x || stand.z !== slot.z;
+  return {
+    stand,
+    moved,
+    interactable: {
+      id: `npc_${npc.id}`,
+      npcId: npc.id,
+      label: npc.name,
+      position: { ...slot, x: stand.x, z: stand.z },
+      slotPosition: { ...slot },
+      radius: NPC_TALK_RADIUS,
+    },
+  };
+}
+
 function makeNpcMarker(tracker, npc) {
   const group = new THREE.Group();
   const marker = new THREE.Mesh(
@@ -83,19 +110,13 @@ function makeNpcMarker(tracker, npc) {
   label.position.set(0, 1.55, 0);
   group.add(label);
 
-  // Draw the NPC just outside a house footprint if their slot falls inside one;
-  // the interactable keeps the slot position, so talking works exactly as before.
-  const stand = figureStandPosition(npc.activeSchedule.position, WORLD_MAP.zones?.neighborhood?.blockers ?? []);
+  // Figure and talk point move together, just outside a house footprint if
+  // the slot falls inside one (see neighborhoodNpcPlacement).
+  const { stand, interactable } = neighborhoodNpcPlacement(npc);
   group.position.set(stand.x, 0, stand.z);
   marker.name = 'npc-marker-primitive';
   group.userData.npcPrimitives = [marker];
-  group.userData.interactable = {
-    id: `npc_${npc.id}`,
-    npcId: npc.id,
-    label: npc.name,
-    position: { ...npc.activeSchedule.position },
-    radius: 1.2,
-  };
+  group.userData.interactable = interactable;
   tracker.track(group);
   return group;
 }

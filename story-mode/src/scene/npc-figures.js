@@ -176,7 +176,8 @@ export function upgradeNpcMarker(marker, npc, { primitives = [], material, load 
 /**
  * Where to draw a figure: the NPC's slot, pushed just outside any house
  * footprint it falls inside (some WORLD_MAP npcSlots sit inside a house
- * blocker). Only the drawing moves; the interactable keeps the slot position.
+ * blocker). The Neighborhood moves the talk point with the figure
+ * (neighborhoodNpcPlacement); the slot data itself is never changed.
  */
 export function figureStandPosition(position, blockers = [], margin = 0.28) {
   let { x, z } = position;
