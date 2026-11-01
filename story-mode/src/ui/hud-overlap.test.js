@@ -82,7 +82,8 @@ describe('quest tracker placement at 900px and below', () => {
     expect(questCss).not.toMatch(/@media \(max-width: 720px\)/);
   });
 
-  it('hides the bottom-anchored tracker while a cutscene is showing', () => {
-    expect(narrow).toMatch(/body:has\(#cutscene-layer:not\(\[inert\]\)\) \.quest-tracker \{\s*display: none;/);
+  it('hides the bottom-anchored tracker while a cutscene is showing (all-widths rule)', () => {
+    const topLevel = questCss.replace(/@media[^{]*\{[\s\S]*?\n\}/g, '');
+    expect(topLevel).toMatch(/body:has\(#cutscene-layer:not\(\[inert\]\)\) \.quest-tracker \{\s*display: none;/);
   });
 });
