@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { getPlayerProfilePalette, normalizePlayerProfile } from '../data/player-profile.js';
+import { createPlantAction, facingToward, lerpAngle } from './plant-action.js';
 
 // Canonical humanoid template. Future characters derive from this rig by
 // overriding palette/features via buildCharacterModel(options) instead of
@@ -185,6 +186,7 @@ export function buildCharacterModel(options = {}) {
 
   // --- Legs ----------------------------------------------------------------
   const legPivots = [];
+  const kneePivots = [];
   for (const side of [-1, 1]) {
     const legPivot = new THREE.Group();
     legPivot.position.set(side * 0.06, 0.3, 0);
@@ -193,17 +195,23 @@ export function buildCharacterModel(options = {}) {
     const upperLeg = addMesh(legPivot, new THREE.CapsuleGeometry(0.042, 0.08, 6, 12), materials.pants);
     upperLeg.position.y = -0.06;
 
-    const lowerLeg = addMesh(legPivot, new THREE.CapsuleGeometry(0.037, 0.07, 5, 10), materials.pants);
-    lowerLeg.position.y = -0.16;
+    // Knee joint: shin + boot hang from it (at rest it reads exactly as before).
+    const kneePivot = new THREE.Group();
+    kneePivot.position.y = -0.11;
+    legPivot.add(kneePivot);
 
-    const boot = addMesh(legPivot, new THREE.CapsuleGeometry(0.042, 0.045, 4, 10), materials.boots);
+    const lowerLeg = addMesh(kneePivot, new THREE.CapsuleGeometry(0.037, 0.07, 5, 10), materials.pants);
+    lowerLeg.position.y = -0.05;
+
+    const boot = addMesh(kneePivot, new THREE.CapsuleGeometry(0.042, 0.045, 4, 10), materials.boots);
     boot.scale.set(1, 0.62, 1.45);
-    boot.position.set(0, -0.265, 0.025);
+    boot.position.set(0, -0.155, 0.025);
 
     legPivots.push(legPivot);
+    kneePivots.push(kneePivot);
   }
 
-  return { rig, torsoPivot, headPivot, armPivots, legPivots, torso, materials, applyPalette };
+  return { rig, torsoPivot, headPivot, armPivots, legPivots, kneePivots, torso, materials, applyPalette };
 }
 
 export function createPlayerCharacter(tracker = null, initialProfile = null) {
@@ -224,7 +232,7 @@ export function createPlayerCharacter(tracker = null, initialProfile = null) {
   group.add(shadow);
 
   const model = buildCharacterModel();
-  const { rig, torsoPivot, headPivot, armPivots, legPivots, torso } = model;
+  const { rig, torsoPivot, headPivot, armPivots, legPivots, kneePivots, torso } = model;
   rig.position.y = 0.02;
   group.add(rig);
 
@@ -288,10 +296,77 @@ export function createPlayerCharacter(tracker = null, initialProfile = null) {
   }
 
   const torsoBaseScaleY = torso.scale.y;
+  const rigBaseY = rig.position.y;
+  const armBaseZ = armPivots.map((a) => a.rotation.z);
+  const plantAction = createPlantAction();
+  let lastActionTime = null;
+  let lastWallMs = null;
 
-  function update(snapshot) {
+  // Seconds since the previous update: the sim clock when it advances, else the
+  // wall clock (the sim clock can sit still while movement is disabled).
+  function frameDelta(snapshot) {
+    const now = globalThis.performance?.now?.() ?? Date.now();
+    const wall = lastWallMs == null ? 0 : (now - lastWallMs) / 1000;
+    lastWallMs = now;
+    const simT = Number.isFinite(snapshot.time) ? snapshot.time : null;
+    const sim = simT != null && lastActionTime != null ? simT - lastActionTime : 0;
+    lastActionTime = simT;
+    return Math.min(0.1, Math.max(0, sim > 0 ? sim : wall));
+  }
+
+  /**
+   * Kneel-and-plant toward a bed square (root-space {x, z}). Never blocks
+   * input: moving skips it; rapid plants queue as quicker pats.
+   * Returns { skipped, queued, hitInSec } — hitInSec is when the trowel meets the soil.
+   */
+  function playPlantAction(target, opts = {}) {
+    return plantAction.trigger(target, opts);
+  }
+
+  function applyPlantPose(pose, snapshot) {
+    const pos = snapshot.position;
+    const dx = pose.target.x - pos.x;
+    const dz = pose.target.z - pos.z;
+    const dist = Math.hypot(dx, dz);
+    group.rotation.y = lerpAngle(snapshot.facing, facingToward(pos, pose.target), pose.turn);
+    // Step in toward the square as he goes down (visual only; the controller
+    // owns the real position, so he settles back as he stands).
+    const step = dist > 0.001 ? Math.min(plantAction.config.stepMax, Math.max(0, dist - 0.55)) : 0;
+    if (step > 0) {
+      group.position.x += (dx / dist) * step * pose.kneel;
+      group.position.z += (dz / dist) * step * pose.kneel;
+    }
+    // Full kneel when the square is in reach after the step; from further away
+    // a lighter crouch-and-reach.
+    const near = dist - step <= plantAction.config.reach ? 1 : 0.45;
+    const kneel = pose.kneel * near;
+    // One-knee kneel: hips drop, front (left) thigh forward with the shin
+    // upright, back (right) knee to the ground with the shin trailing.
+    rig.position.y = rigBaseY - 0.15 * kneel;
+    legPivots[0].rotation.x = -1.4 * kneel;
+    kneePivots[0].rotation.x = 1.25 * kneel;
+    legPivots[1].rotation.x = 0.12 * kneel;
+    kneePivots[1].rotation.x = 1.45 * kneel;
+    torsoPivot.position.y = 0.34;
+    torsoPivot.rotation.x = 0.7 * kneel;
+    torsoPivot.rotation.z = 0;
+    headPivot.rotation.x = 0.12 * kneel;
+    // Tool hand reaches to the soil and pats; the other hand braces on the knee.
+    const reach = pose.reach * (0.55 + 0.45 * near);
+    armPivots[1].rotation.x = -(1.3 * reach) + 0.45 * pose.dig * reach;
+    // Out to the side a little so the trowel hand reads from the follow camera behind.
+    armPivots[1].rotation.z = armBaseZ[1] * (1 + 1.6 * reach);
+    armPivots[0].rotation.x = -0.55 * kneel;
+    shadow.scale.setScalar(1 + 0.15 * kneel);
+    shadow.material.opacity = 0.18;
+  }
+
+  // frameDt: the game loop's step (seconds). Falls back to the snapshot clock.
+  function update(snapshot, frameDt) {
     if (!snapshot) return;
     lastSnapshot = snapshot;
+    const fallbackDt = frameDelta(snapshot);
+    const dt = Number.isFinite(frameDt) && frameDt >= 0 ? Math.min(0.1, frameDt) : fallbackDt;
     const strideStrength = snapshot.moving ? Math.min(1, snapshot.speed / 1.7) : 0;
     const stride = Math.sin(snapshot.time * 9.5) * 0.55 * strideStrength;
     const bob = Math.abs(Math.sin(snapshot.time * 9.5)) * 0.025 * strideStrength;
@@ -310,6 +385,16 @@ export function createPlayerCharacter(tracker = null, initialProfile = null) {
     armPivots[1].rotation.x = -stride;
     legPivots[0].rotation.x = -stride * 0.9;
     legPivots[1].rotation.x = stride * 0.9;
+    kneePivots[0].rotation.x = 0;
+    kneePivots[1].rotation.x = 0;
+    rig.position.y = rigBaseY;
+    torsoPivot.rotation.x = 0;
+    headPivot.rotation.x = 0;
+    armPivots[0].rotation.z = armBaseZ[0];
+    armPivots[1].rotation.z = armBaseZ[1];
+
+    const pose = plantAction.update(dt, { moving: Boolean(snapshot.moving) });
+    if (pose) applyPlantPose(pose, snapshot);
   }
 
   function getFocusTarget(target = new THREE.Vector3()) {
@@ -337,5 +422,8 @@ export function createPlayerCharacter(tracker = null, initialProfile = null) {
     getFocusTarget,
     setEquippedTool,
     setProfile,
+    playPlantAction,
+    isPlanting: () => plantAction.isActive(),
+    getPlantPose: () => plantAction.getPose(),
   };
 }
