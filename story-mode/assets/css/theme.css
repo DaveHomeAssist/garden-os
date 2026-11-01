@@ -1286,7 +1286,7 @@ select:focus-visible {
 }
 
 .dp-panel::before {
-  right: 88px;
+  right: var(--dp-skip-clear, 88px);
 }
 
 .dp-panel[data-side="right"]::before {
@@ -1297,7 +1297,7 @@ select:focus-visible {
 @media (max-width: 480px) {
   .dp-panel::before {
     top: 10px;
-    right: 74px;
+    right: var(--dp-skip-clear, 74px);
   }
 
   .dp-panel[data-side="right"]::before {

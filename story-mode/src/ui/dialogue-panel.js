@@ -292,6 +292,12 @@ export function createDialoguePanel(rootEl) {
       els.advanceHint.hidden = false;
       els.advanceHint.style.opacity = uiState.canAdvance && !(uiState.choices?.length) ? '1' : '0';
       els.skipBtn.style.display = uiState.canSkip ? '' : 'none';
+      // Keep the decorative "field note" tag clear of Skip at any width:
+      // the tag is offset from the right edge by Skip's measured width.
+      const skipWidth = uiState.canSkip ? els.skipBtn.offsetWidth : 0;
+      if (!uiState.canSkip) els.panel.style.setProperty('--dp-skip-clear', '18px');
+      else if (skipWidth > 0) els.panel.style.setProperty('--dp-skip-clear', `${skipWidth + 28}px`);
+      else els.panel.style.removeProperty('--dp-skip-clear');
     },
 
     hide() {
