@@ -568,3 +568,51 @@ body[data-zone="village"] #fab-advance,
 body[data-zone="village"] #hud-action {
   display: none !important;
 }
+
+/* Phones (fix/phone-objective-card): the objective card ran 4-5 lines across
+   the full width and covered the top of the bed / village street. Stack the
+   label over the text, clamp to two lines, and let a tap expand it. The full
+   text stays in the DOM (aria-live and the progression action's
+   aria-describedby still read all of it). */
+@media (max-width: 600px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    min-height: 0;
+    padding: 6px 10px 7px;
+    border-left-width: 4px;
+    font-size: 12px;
+    line-height: 1.38;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-visible[data-truncated="true"],
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-visible.is-expanded {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper::before {
+    display: block;
+    padding: 0 0 1px;
+    border-right: 0;
+    font-size: 8px;
+    line-height: 1.6;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper[data-truncated="true"]::before {
+    content: "Current objective · tap for more";
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded::before {
+    content: "Current objective · tap to shrink";
+  }
+}
