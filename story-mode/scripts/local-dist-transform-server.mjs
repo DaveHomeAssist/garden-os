@@ -3,16 +3,19 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getBuildStatusSnapshot } from './dist-build-meta.mjs';
+import { siteBase } from '../vite.config.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const distDir = resolve(__dirname, '..', 'dist');
 const repoRootThemePath = resolve(__dirname, '..', '..', 'garden-os-theme.css');
 const host = '127.0.0.1';
 const port = 4174;
-const basePath = '/garden-os/story-mode';
-const distBasePath = '/garden-os/story-mode';
+// Same site root as the build (GOS_SITE_BASE, default /garden-os/).
+const siteRoot = siteBase();
+const basePath = `${siteRoot}story-mode`;
+const distBasePath = `${siteRoot}story-mode`;
 const buildStatusPath = `${basePath}/__build`;
-const sharedThemePaths = new Set(['/garden-os/garden-os-theme.css', '/garden-os-theme.css']);
+const sharedThemePaths = new Set([`${siteRoot}garden-os-theme.css`, '/garden-os-theme.css']);
 
 const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',

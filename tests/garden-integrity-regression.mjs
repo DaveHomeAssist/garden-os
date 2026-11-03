@@ -32,10 +32,17 @@ assert.match(theme, /min-height: 44px|garden-theme-toggle/, 'theme controller mu
 const serviceWorker = read('sw.js');
 assert.match(serviceWorker, /garden-theme\.js/);
 assert.match(serviceWorker, /garden-pwa\.js/);
-assert.match(serviceWorker, /2026-09-20-integrity-sprint/);
+assert.match(serviceWorker, /2026-10-19-origin-agnostic/);
 
 const manifest = JSON.parse(read('manifest.json'));
 assert.equal(manifest.name, 'Garden OS');
-assert.equal(manifest.start_url, '/garden-os/');
+// Relative so the same manifest works at /garden-os/ (github.io) and at / (custom domain).
+assert.equal(manifest.start_url, './');
+assert.equal(manifest.scope, './');
+for (const shortcut of manifest.shortcuts ?? []) assert.doesNotMatch(shortcut.url, /^\//, `shortcut ${shortcut.name} must be relative`);
+const storyManifest = JSON.parse(read('story-mode/public/manifest.webmanifest'));
+assert.equal(storyManifest.start_url, '../');
+assert.equal(storyManifest.scope, '../');
+for (const shortcut of storyManifest.shortcuts ?? []) assert.doesNotMatch(shortcut.url, /^\//, `story shortcut ${shortcut.name} must be relative`);
 
 console.log(JSON.stringify({ ok: true, canonicalRoutes: canonicalRootRoutes.length + 1 }, null, 2));

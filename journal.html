@@ -191,6 +191,7 @@
 <script src="gos-time.js"></script>
 <script src="gos-bed.js"></script>
 <script src="gos-journal.js"></script>
+<script src="gos-site-backup.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to Journal</a>
@@ -207,6 +208,8 @@
         <button class="btn" type="button" id="exportBtn">Export</button>
         <label class="btn" for="importFile" style="margin:0">Import</label>
         <input id="importFile" type="file" accept=".gos.json,.json,application/json" class="sr-only">
+        <!-- Beds, journal and settings in one file, to move them to another address or browser. -->
+        <div class="top-actions" data-gos-site-backup></div>
       </div>
     </header>
 
