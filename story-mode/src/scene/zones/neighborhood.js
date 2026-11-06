@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
-import { getZoneExitPoints } from './world-zone-contract.js';
+import { WORLD_MAP, getZoneExitPoints } from './world-zone-contract.js';
 
 import { getNPCsPresentInZone } from '../npc-presence.js';
 import { getQuestSitesForZone } from '../../data/quest-sites.js';
 import { makeQuestSiteMesh } from './zone-interactables.js';
+import { animateNpcFigures, figureStandPosition, upgradeNpcMarker } from '../npc-figures.js';
+import { applyNeighborhoodSet, loadNeighborhoodSet } from '../neighborhood-set.js';
 
 function makeLabelTexture(text) {
   const canvas = document.createElement('canvas');
@@ -62,6 +64,33 @@ function makeTree(tracker, x, z, season) {
   return group;
 }
 
+const NPC_TALK_RADIUS = 1.2;
+
+/**
+ * Where a neighbour is drawn and where their talk point sits. If the NPC's
+ * slot falls inside a house footprint, the figure is drawn just outside it
+ * (figureStandPosition) and the talk point moves with the figure, so the
+ * prompt comes up where the player can see them. Runtime only: the slot data
+ * (WORLD_MAP npcSlots / schedules) is untouched, and quests only check zone.
+ */
+export function neighborhoodNpcPlacement(npc, blockers = WORLD_MAP.zones?.neighborhood?.blockers ?? []) {
+  const slot = npc.activeSchedule.position;
+  const stand = figureStandPosition(slot, blockers);
+  const moved = stand.x !== slot.x || stand.z !== slot.z;
+  return {
+    stand,
+    moved,
+    interactable: {
+      id: `npc_${npc.id}`,
+      npcId: npc.id,
+      label: npc.name,
+      position: { ...slot, x: stand.x, z: stand.z },
+      slotPosition: { ...slot },
+      radius: NPC_TALK_RADIUS,
+    },
+  };
+}
+
 function makeNpcMarker(tracker, npc) {
   const group = new THREE.Group();
   const marker = new THREE.Mesh(
@@ -74,19 +103,20 @@ function makeNpcMarker(tracker, npc) {
   const labelTexture = makeLabelTexture(npc.name);
   const label = new THREE.Mesh(
     new THREE.PlaneGeometry(1.8, 0.5),
-    new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true }),
+    // Name tags are UI: no fog or tone mapping washing them out.
+    new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true, fog: false, toneMapped: false }),
   );
+  label.name = 'npc-name-tag';
   label.position.set(0, 1.55, 0);
   group.add(label);
 
-  group.position.set(npc.activeSchedule.position.x, 0, npc.activeSchedule.position.z);
-  group.userData.interactable = {
-    id: `npc_${npc.id}`,
-    npcId: npc.id,
-    label: npc.name,
-    position: { ...npc.activeSchedule.position },
-    radius: 1.2,
-  };
+  // Figure and talk point move together, just outside a house footprint if
+  // the slot falls inside one (see neighborhoodNpcPlacement).
+  const { stand, interactable } = neighborhoodNpcPlacement(npc);
+  group.position.set(stand.x, 0, stand.z);
+  marker.name = 'npc-marker-primitive';
+  group.userData.npcPrimitives = [marker];
+  group.userData.interactable = interactable;
   tracker.track(group);
   return group;
 }
@@ -127,15 +157,21 @@ export function createNeighborhood(store, tracker, npcRegistry = null) {
   horizontalPath.position.set(0, 0.01, 1.4);
   root.add(horizontalPath);
 
-  root.add(makeBox(tracker, { x: 2.4, y: 1.4, z: 1.8 }, 0x7d5a39, { x: -4.7, y: 0.7, z: 4.8 }));
-  root.add(makeBox(tracker, { x: 2, y: 1.8, z: 1.6 }, 0x6c7f93, { x: 4.6, y: 0.9, z: 2.2 }));
-  root.add(makeBox(tracker, { x: 2.4, y: 1.1, z: 1.4 }, 0x8b6a4d, { x: -1.4, y: 0.55, z: -3.5 }));
-  root.add(makeBox(tracker, { x: 2.8, y: 0.5, z: 2.4 }, 0x6a4a28, { x: 2.8, y: 0.25, z: 4.8 }));
-
-  const archLeft = makeBox(tracker, { x: 0.18, y: 1.8, z: 0.18 }, 0x5d3b22, { x: 0.7, y: 0.9, z: 7.1 });
-  const archRight = makeBox(tracker, { x: 0.18, y: 1.8, z: 0.18 }, 0x5d3b22, { x: -0.7, y: 0.9, z: 7.1 });
-  const archTop = makeBox(tracker, { x: 1.6, y: 0.18, z: 0.18 }, 0x5d3b22, { x: 0, y: 1.75, z: 7.1 });
-  root.add(archLeft, archRight, archTop);
+  // Blockout boxes (footprints match the WORLD_MAP blockers). They are the
+  // fallback: neighborhood-set.js swaps them for the low-poly houses once the
+  // set GLB has loaded.
+  const blockout = {
+    house_west: [makeBox(tracker, { x: 2.4, y: 1.4, z: 1.8 }, 0x7d5a39, { x: -4.7, y: 0.7, z: 4.8 })],
+    house_east: [makeBox(tracker, { x: 2, y: 1.8, z: 1.6 }, 0x6c7f93, { x: 4.6, y: 0.9, z: 2.2 })],
+    cottage_south: [makeBox(tracker, { x: 2.4, y: 1.1, z: 1.4 }, 0x8b6a4d, { x: -1.4, y: 0.55, z: -3.5 })],
+    community_bed: [makeBox(tracker, { x: 2.8, y: 0.5, z: 2.4 }, 0x6a4a28, { x: 2.8, y: 0.25, z: 4.8 })],
+    arbor: [
+      makeBox(tracker, { x: 0.18, y: 1.8, z: 0.18 }, 0x5d3b22, { x: 0.7, y: 0.9, z: 7.1 }),
+      makeBox(tracker, { x: 0.18, y: 1.8, z: 0.18 }, 0x5d3b22, { x: -0.7, y: 0.9, z: 7.1 }),
+      makeBox(tracker, { x: 1.6, y: 0.18, z: 0.18 }, 0x5d3b22, { x: 0, y: 1.75, z: 7.1 }),
+    ],
+  };
+  Object.values(blockout).flat().forEach((mesh) => root.add(mesh));
 
   [
     [-7, -7], [-7, 7], [7, -7], [7, 7], [-1, 7], [6, -2], [-6, 1],
@@ -148,10 +184,16 @@ export function createNeighborhood(store, tracker, npcRegistry = null) {
   const npcs = npcRegistry
     ? npcRegistry.getNPCsInZone('neighborhood', season)
     : getNPCsPresentInZone('neighborhood', state);
+  let disposed = false;
   npcs.forEach((npc) => {
     const marker = makeNpcMarker(tracker, npc);
     root.add(marker);
     interactables.push(marker.userData.interactable);
+    // Low-poly neighbour figure (npc-figures.js); the capsule stays if it fails.
+    upgradeNpcMarker(marker, npc, { primitives: marker.userData.npcPrimitives });
+  });
+  loadNeighborhoodSet().then((art) => {
+    if (art && !disposed) applyNeighborhoodSet(root, blockout, art);
   });
 
   getZoneExitPoints('neighborhood').forEach((exit) => {
@@ -205,17 +247,19 @@ export function createNeighborhood(store, tracker, npcRegistry = null) {
       time += dt;
       root.children.forEach((child) => {
         if (!child.userData?.interactable?.npcId) return;
-        const label = child.children[1];
+        const label = child.getObjectByName('npc-name-tag');
         if (label) {
           label.position.y = 1.55 + Math.sin(time * 2.2) * 0.04;
         }
       });
+      animateNpcFigures(root, dt, time, playerPosition);
     },
     registerInteractables(register) {
       if (typeof register !== 'function') return;
       interactables.forEach((entry) => register(entry));
     },
     dispose() {
+      disposed = true;
       tracker.disposeObject(root);
     },
   };

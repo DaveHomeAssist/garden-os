@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh, makeQuestSiteMesh } from './zone-interactables.js';
+import { animateNpcFigures } from '../npc-figures.js';
 import { getQuestSitesForZone } from '../../data/quest-sites.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 // Greenhouse intentionally ignores external season — always warm and green inside.
@@ -85,6 +86,7 @@ export function createGreenhouse(store, tracker) {
 
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
+  let npcTime = 0;
   return {
     scene, camera, interactables, spawnPoints: { ...ZONE_DEF.spawnPoint }, zoneId: ZONE_DEF.id,
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
@@ -94,7 +96,7 @@ export function createGreenhouse(store, tracker) {
       // Greenhouse interior stays warm and green regardless of outdoor season.
       // Only subtle fog change to hint at exterior conditions.
     },
-    update() {},
+    update(dt = 0) { npcTime += dt; animateNpcFigures(root, dt, npcTime, playerPosition); },
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },
   };
