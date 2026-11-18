@@ -1,0 +1,350 @@
+/* Story Mode UI polish (fix/ui-aesthetics-pass): one field-kit look for the
+   shop, toasts, dialogue choices, prompts and menu buttons, plus shared
+   hover / press feedback. DOM + CSS only; the 3D scene is untouched.
+   Motion lives behind prefers-reduced-motion: no-preference. */
+
+body[data-design-language="field-kit"] {
+  --ui-press-scale: 0.97;
+  --ui-lift: -1px;
+  --ui-pop: 220ms cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  --ui-price: #7a5208;
+  --ui-price-short: #a3361a;
+}
+
+html[data-theme="dark"] body[data-design-language="field-kit"] {
+  --ui-price: #e0b950;
+  --ui-price-short: #ef9877;
+}
+
+/* The play HUD row drew a 1px rule straight across the scene (most visible
+   over the village roads). The status cards already have their own frames. */
+body[data-design-language="field-kit"][data-story-screen="play"] #hud {
+  border-bottom: 0;
+}
+
+/* ── Shop: the last dark-brown sheet, now the same paper sheet as the quest log ── */
+.shop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 899;
+  background: rgba(20, 12, 6, 0.46);
+  backdrop-filter: blur(3px);
+}
+
+#panel-container .panel-sheet.shop-panel,
+#panel-container .panel-sheet.shop-panel.is-open,
+.panel-sheet.shop-panel.is-open {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  z-index: 900;
+  box-sizing: border-box;
+  width: min(92vw, 440px);
+  max-width: min(92vw, 440px);
+  height: auto;
+  max-height: min(84vh, 720px);
+  max-height: min(84dvh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 18px 18px 14px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 16px;
+  transform: translate(-50%, -50%);
+  box-shadow: var(--hud-shadow-raised, 0 14px 34px rgba(42, 25, 13, 0.3));
+  color: var(--hud-ink, #2a190d);
+}
+
+.shop-panel .panel-handle { display: none; }
+
+.shop-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shop-panel .shop-panel__title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--hud-ink, #2a190d);
+}
+
+.shop-panel__balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  font: 600 12px/1.3 'DM Mono', monospace;
+  color: var(--ui-price, #7a5208);
+}
+
+.shop-panel .shop-panel__close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--hud-ink, #2a190d);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-panel__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.shop-tab {
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+  font: 600 12px/1 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hud-ink-soft, #674d38);
+  cursor: pointer;
+}
+
+.shop-tab.is-active {
+  border-color: var(--hud-leaf-dark, #2f5722);
+  background: var(--hud-leaf-dark, #2f5722);
+  color: #fff8e8;
+}
+
+.shop-panel__items {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  /* Fill the sheet instead of stopping at 50vh and leaving a blank band. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 4px 2px 0;
+}
+
+.shop-item-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.shop-item-card__icon { font-size: 24px; flex-shrink: 0; }
+.shop-item-card__text { flex: 1; min-width: 0; }
+
+.shop-item-card__name,
+.shop-item-card__desc {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-item-card__name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 15px;
+  color: var(--hud-ink, #2a190d);
+}
+
+.shop-item-card__desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--hud-ink-muted, #725943);
+}
+
+.shop-item-card__buy { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.shop-item-card__price {
+  font: 600 12px/1 'DM Mono', monospace;
+  color: var(--ui-price, #7a5208);
+}
+
+.shop-item-card.is-unaffordable .shop-item-card__price { color: var(--ui-price-short, #a3361a); }
+.shop-item-card.is-unaffordable .shop-item-card__icon { opacity: 0.6; }
+
+.shop-buy-btn {
+  min-width: 52px;
+  min-height: 32px;
+  padding: 6px 14px;
+  border: 1px solid var(--hud-leaf-dark, #2f5722);
+  border-radius: 999px;
+  background: var(--hud-leaf, #3a6b2a);
+  color: #fff8e8;
+  font: 700 12px/1 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+.shop-buy-btn:disabled {
+  border-color: var(--hud-rule, rgba(79, 48, 27, 0.28));
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--hud-ink-muted, #725943);
+  cursor: not-allowed;
+}
+
+.shop-panel__empty {
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--hud-ink-muted, #725943);
+}
+
+.shop-panel__message {
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--hud-ink-soft, #674d38);
+}
+
+.shop-panel__message.has-message {
+  padding: 6px 10px 6px 13px;
+  border-radius: 6px;
+  box-shadow: inset 3px 0 0 var(--hud-leaf, #3a6b2a);
+  background: var(--hud-leaf-soft, #dbe8d2);
+  color: var(--hud-ink, #2a190d);
+}
+
+/* ── Toasts: paper chip with a variant mark, same family as the HUD cards ── */
+body[data-design-language="field-kit"] .toast-notification {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 12px;
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  border-left-width: 4px;
+  border-left-color: var(--hud-gold, #b6811c);
+  border-radius: var(--hud-radius, 8px);
+  background: var(--hud-paper-wash, rgba(247, 239, 226, 0.96));
+  color: var(--hud-ink, #2a190d);
+  box-shadow: var(--hud-shadow, 0 8px 22px rgba(42, 25, 13, 0.24));
+  font-weight: 500;
+}
+
+body[data-design-language="field-kit"] .toast-notification::before {
+  content: "●";
+  flex-shrink: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--hud-gold, #b6811c);
+}
+
+body[data-design-language="field-kit"] .toast-notification.toast--success { border-left-color: var(--hud-leaf, #3a6b2a); }
+body[data-design-language="field-kit"] .toast-notification.toast--success::before { content: "✓"; font-size: 12px; font-weight: 700; color: var(--hud-leaf, #3a6b2a); }
+body[data-design-language="field-kit"] .toast-notification.toast--error { border-left-color: var(--hud-rust, #a94424); }
+body[data-design-language="field-kit"] .toast-notification.toast--error::before { content: "!"; font-size: 13px; font-weight: 800; color: var(--hud-rust, #a94424); }
+
+/* ── Dialogue choices: real buttons with a hover + chosen state ── */
+body[data-design-language="field-kit"] .dp-choice-btn {
+  border: 1px solid var(--hud-rule, rgba(79, 48, 27, 0.28));
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--hud-ink, #2a190d);
+  cursor: pointer;
+}
+
+body[data-design-language="field-kit"] .dp-choice-btn:hover {
+  border-color: var(--hud-leaf-dark, #2f5722);
+  background: var(--hud-leaf-soft, #dbe8d2);
+}
+
+/* ── Village / world prompt: the key reads as a keycap ── */
+body[data-design-language="field-kit"] .interaction-prompt__hint {
+  box-shadow: inset 0 -2px 0 rgba(42, 25, 13, 0.2);
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+}
+
+/* ── Shared hover / press feedback ── */
+body[data-design-language="field-kit"] :is(
+  .shop-tab, .shop-buy-btn, .shop-panel__close, .dp-choice-btn, .dp-skip-btn,
+  .pause-action, .pause-close-btn, .hud-pause-btn, .interaction-prompt,
+  .quest-tracker button, .quest-log__drop, #fab-backpack, #fab-plant
+) {
+  transition:
+    background-color var(--hud-motion, 160ms ease),
+    border-color var(--hud-motion, 160ms ease),
+    color var(--hud-motion, 160ms ease),
+    box-shadow var(--hud-motion, 160ms ease),
+    transform var(--hud-motion, 160ms ease);
+}
+
+.shop-tab:not(.is-active):hover,
+.shop-panel .shop-panel__close:hover {
+  border-color: var(--hud-rule-strong, rgba(79, 48, 27, 0.46));
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.shop-buy-btn:not(:disabled):hover {
+  background: var(--hud-leaf-dark, #2f5722);
+  box-shadow: 0 4px 10px rgba(42, 25, 13, 0.18);
+}
+
+.shop-item-card:has(.shop-buy-btn:not(:disabled):hover) {
+  border-color: var(--hud-rule-strong, rgba(79, 48, 27, 0.46));
+  background: rgba(255, 255, 255, 0.72);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-design-language="field-kit"] :is(
+    .shop-tab, .shop-buy-btn:not(:disabled), .dp-choice-btn, .pause-action, .hud-pause-btn
+  ):hover {
+    transform: translateY(var(--ui-lift));
+  }
+
+  body[data-design-language="field-kit"] :is(
+    .shop-tab, .shop-buy-btn:not(:disabled), .shop-panel__close, .dp-choice-btn, .dp-skip-btn,
+    .pause-action, .pause-close-btn, .hud-pause-btn, .quest-tracker button, .quest-log__drop
+  ):active {
+    transform: scale(var(--ui-press-scale));
+  }
+
+  .panel-sheet.shop-panel.is-open { animation: ui-sheet-in 200ms ease-out both; }
+  .shop-backdrop { animation: ui-fade-in 180ms ease-out both; }
+  body[data-design-language="field-kit"] .toast-notification.is-visible { animation: ui-toast-pop var(--ui-pop) both; }
+  .shop-panel__message.has-message { animation: ui-fade-in 200ms ease-out both; }
+}
+
+@keyframes ui-sheet-in {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.985); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes ui-toast-pop {
+  0% { transform: translateY(8px) scale(0.96); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-sheet.shop-panel,
+  .shop-backdrop,
+  body[data-design-language="field-kit"] .toast-notification,
+  body[data-design-language="field-kit"] .dp-choice-btn,
+  body[data-design-language="field-kit"] .pause-action {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-theme="dark"] :is(.shop-item-card, .shop-tab:not(.is-active), .shop-panel__balance, .shop-panel .shop-panel__close, .shop-buy-btn:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
