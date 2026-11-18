@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { upgradeNpcMarker } from '../npc-figures.js';
 
 const NPC_COLORS = {
   old_gus: { body: 0x6b4226, head: 0xc8a87a },
@@ -153,6 +154,8 @@ export function makeNpcMesh(npc) {
     id: `npc_${npc.id}`, type: 'npc', npcId: npc.id, label: npc.modded ? `${npc.name} · Modded` : npc.name,
     position: { x: pos.x, z: pos.z }, radius: 1.0,
   };
+  // Swap the cylinder + sphere for the low-poly neighbour figure once it loads.
+  upgradeNpcMarker(g, npc, { primitives: [body, head] });
   return g;
 }
 

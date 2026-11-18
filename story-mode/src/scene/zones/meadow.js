@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SEASON_PALETTE, applyBase } from './season-palette.js';
 import { getNPCsPresentInZone } from '../npc-presence.js';
 import { makeNpcMesh, makeForageSpotMesh, makeQuestSiteMesh } from './zone-interactables.js';
+import { animateNpcFigures } from '../npc-figures.js';
 import { getQuestSitesForZone } from '../../data/quest-sites.js';
 import { getZoneExitPoints } from './world-zone-contract.js';
 
@@ -90,6 +91,7 @@ export function createMeadow(store, tracker) {
 
   tracker.track(root);
   let spawnPoint = { ...ZONE_DEF.spawnPoint }, playerPosition = { ...spawnPoint };
+  let npcTime = 0;
   return {
     scene, camera, interactables, spawnPoints: { ...ZONE_DEF.spawnPoint }, zoneId: ZONE_DEF.id,
     setSpawnPoint(p) { if (p) { spawnPoint = { ...p }; playerPosition = { ...p }; } },
@@ -103,7 +105,7 @@ export function createMeadow(store, tracker) {
       const wfColors = { spring: [0xe84488,0xeecc44], summer: [0xdd66aa,0xff8844], fall: [0xcc6622,0xaa4411] };
       if (wfColors[s]) wildflowers.forEach((w, i) => w.material.color.setHex(wfColors[s][i % wfColors[s].length]));
     },
-    update() {},
+    update(dt = 0) { npcTime += dt; animateNpcFigures(root, dt, npcTime, playerPosition); },
     registerInteractables(r) { if (typeof r === 'function') interactables.forEach((e) => r(e)); },
     dispose() { tracker.disposeObject(root); },
   };
