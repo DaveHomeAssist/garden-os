@@ -119,6 +119,8 @@ export function createQuestController({
   persist = () => {},
   playSfx = () => {},
   isInputBlocked = () => false,
+  // Remappable via the Controls overlay (feat/keyboard-shortcuts); Q by default.
+  isQuestLogKey = (event) => event.key === 'q' || event.key === 'Q',
   canEnterZone = null,
   hudRoot = typeof document !== 'undefined' ? document.body : null,
   signal = null,
@@ -813,7 +815,7 @@ export function createQuestController({
   if (typeof document !== 'undefined') {
     document.addEventListener('keydown', (event) => {
       if (disposed || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
-      if (event.key !== 'q' && event.key !== 'Q') return;
+      if (!isQuestLogKey(event)) return;
       const target = event.target;
       if (target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
       if (isInputBlocked()) return;

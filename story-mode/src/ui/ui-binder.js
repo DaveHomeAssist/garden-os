@@ -63,6 +63,8 @@ import {
   isLetItGrowInteractionMode,
 } from './ui-constants.js';
 import { createPauseController } from './pause-controller.js';
+import { createKeysHelp } from './keys-help.js';
+import { createKeymap, formatKey } from '../input/keybindings.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
 import { createInterventionTargeting } from './intervention-targeting.js';
 import { createOverlayScreens } from './overlay-screens.js';
@@ -116,17 +118,24 @@ function bindUI({
   inputManager.registerAction('pause', { keys: ['Escape'] });
   inputManager.registerAction('cutscene_next', { keys: ['Enter', 'Space'] });
   inputManager.registerAction('advance', { keys: ['Enter'] });
-  inputManager.registerAction('toggle_palette', { keys: ['p'] });
-  inputManager.registerAction('toggle_backpack', { keys: ['b'] });
-  inputManager.registerAction('toggle_world_map', { keys: ['m'] });
   inputManager.registerAction('select_cell', { keys: ['Enter', 'Space'], pointer: true, touch: true });
-  inputManager.registerAction('interact', { keys: ['e'] });
   inputManager.registerAction('next_tool', { keys: ['Tab', ']'] });
   inputManager.registerAction('prev_tool', { keys: ['Shift+Tab', '['] });
-  inputManager.registerAction('move_up', { keys: ['w', 'ArrowUp'] });
-  inputManager.registerAction('move_down', { keys: ['s', 'ArrowDown'] });
-  inputManager.registerAction('move_left', { keys: ['a', 'ArrowLeft'] });
-  inputManager.registerAction('move_right', { keys: ['d', 'ArrowRight'] });
+  inputManager.registerAction('toggle_help', { keys: ['?', 'Shift+?', 'F1'] });
+  // Remappable keys come from the keymap (defaults W/A/S/D, E, P, B, M, Q;
+  // the player can change them in Controls and they persist in localStorage).
+  const keymap = createKeymap();
+  const REMAPPABLE_ACTIONS = ['toggle_palette', 'toggle_backpack', 'toggle_world_map', 'interact', 'move_up', 'move_down', 'move_left', 'move_right'];
+  REMAPPABLE_ACTIONS.forEach((id) => inputManager.registerAction(id, { keys: keymap.getKeys(id) }));
+  const keymapUnsub = keymap.onChange((id, keys) => {
+    if (REMAPPABLE_ACTIONS.includes(id)) inputManager.registerAction(id, { keys });
+    if (id === 'toggle_world_map') updatePauseMapHint();
+  });
+  function updatePauseMapHint() {
+    const copy = document.querySelector('#pause-map .pause-action__copy');
+    if (copy) copy.textContent = `See every zone and travel. Keyboard: ${formatKey(keymap.getPrimary('toggle_world_map'))}.`;
+  }
+  sessionListeners.signal.addEventListener('abort', () => keymapUnsub(), { once: true });
 
   inputManager.onPointerMove(({ position }) => {
     if (isProximityInteractionEnabled()) {
@@ -347,6 +356,7 @@ function bindUI({
       if (audioInitialized) audioManager.playSFX(sfxId);
     },
     isInputBlocked: () => pauseController.isOpen() || cutsceneMachine.isActive(),
+    isQuestLogKey: (event) => keymap.matches('toggle_quest_log', event),
     signal: sessionListeners.signal,
   });
   const dayNightController = new DayNightController(scene, store);
@@ -612,10 +622,11 @@ function bindUI({
   function getMovementVector(dt = 1 / 60) {
     let x = 0;
     let z = 0;
-    if (inputManager.isKeyHeld('a') || inputManager.isKeyHeld('ArrowLeft')) x -= 1;
-    if (inputManager.isKeyHeld('d') || inputManager.isKeyHeld('ArrowRight')) x += 1;
-    if (inputManager.isKeyHeld('w') || inputManager.isKeyHeld('ArrowUp')) z -= 1;
-    if (inputManager.isKeyHeld('s') || inputManager.isKeyHeld('ArrowDown')) z += 1;
+    const held = (id) => keymap.getKeys(id).some((key) => inputManager.isKeyHeld(key));
+    if (held('move_left')) x -= 1;
+    if (held('move_right')) x += 1;
+    if (held('move_up')) z -= 1;
+    if (held('move_down')) z += 1;
 
     const stick = touchStick.getVector();
     if (stick.active) {
@@ -2284,6 +2295,25 @@ function bindUI({
     if (cutsceneMachine.isActive() || interventionTargeting.isActive()) return;
     if (!worldMapOpen) showWorldMap();
   }, sessionSignal);
+  // Controls overlay: ? / F1 in play, or the pause menu's Controls entry.
+  const keysHelp = createKeysHelp({
+    container: document.body,
+    keymap,
+    playSfx: (id) => { if (audioInitialized) audioManager.playSFX(id); },
+  });
+  sessionListeners.signal.addEventListener('abort', () => keysHelp.dispose(), { once: true });
+  document.getElementById('pause-controls')?.addEventListener('click', () => {
+    if (audioInitialized) audioManager.playSFX('ui_click');
+    pauseController.close();
+    keysHelp.open();
+  }, sessionSignal);
+  inputManager.on('toggle_help', (payload) => {
+    if (cutsceneMachine.isActive()) return;
+    payload.preventDefault();
+    if (pauseController.isOpen()) pauseController.close();
+    keysHelp.toggle();
+  });
+  updatePauseMapHint();
   const togglePauseMenu = pauseController.toggle;
   const closePauseMenu = pauseController.close;
   const toggleBugPanel = pauseController.toggleBugPanel;
