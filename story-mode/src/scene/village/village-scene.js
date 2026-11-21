@@ -10,7 +10,11 @@
  *   onTrigger(listener) -> unsubscribe()   listener(phase, { id, type, prompt?, target?, exit? })
  *   registerInteractables([{ id, type, prompt }])
  *   getPlayerPose() -> { x, z, facingY }
- *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events
+ *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events:
+ *                                           triggers are re-seeded silently, so a listener bound
+ *                                           before or after the snap must read getInsideTriggers()
+ *                                           to learn which triggers the new pose is inside
+ *   getInsideTriggers() -> [{ id, type, ... }]   triggers the player is inside now, in enter order
  *
  * Draw-call shape: one InstancedMesh per graybox asset part, one road mesh,
  * one sidewalk mesh, one ground, one sky, one merged props_set1 mesh, the
@@ -609,6 +613,7 @@ export function createVillageScene({
     },
     getPlayerPose,
     setPlayerPose,
+    getInsideTriggers: () => triggers.getInsideTriggers(),
     /** Owner of the walk sim (ui-binder / lab) moves its own state when the pose is set. */
     setPoseHandler(fn) { poseHandler = typeof fn === 'function' ? fn : null; },
     /** Ids the game layer handles (from registerInteractables([...])). */

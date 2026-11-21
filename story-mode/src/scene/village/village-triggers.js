@@ -73,6 +73,8 @@ export function createTriggerTracker(interactables = [], { hysteresis = TRIGGER_
     },
     reset() { inside.clear(); },
     getInside: () => [...inside],
+    /** Payloads (as sent to listeners) of the triggers the player is inside, in enter order. */
+    getInsideTriggers: () => [...inside].map((id) => interactables.find((item) => item.id === id)).filter(Boolean).map(toTriggerPayload),
     dispose() { listeners.clear(); inside.clear(); },
   };
 }
