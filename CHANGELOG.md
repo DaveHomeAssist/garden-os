@@ -34,6 +34,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Story Mode: weather, day/night, atmosphere animation and camera easing now follow real frame time (capped) instead of a fixed 1/60 s step, so they no longer run at double speed on 120 Hz displays. Manual ticks (`window.advanceTime`, tests) still step 1/60 s.
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 - Fixed the Free Play village showing no prompt, and E doing nothing, after you reloaded while standing at the Seed stand or the compost bin.
+- Fixed Free Play harvests losing all their compost scraps when the backpack was nearly full. The scraps now fill the free space, and a "Your backpack is full." message tells you when some were left behind.
 
 ### Added
 - Added two authored choices to all 25 Story Mode quests, and neighbors in other zones now remark on the choice you made.
