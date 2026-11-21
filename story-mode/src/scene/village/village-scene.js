@@ -179,6 +179,9 @@ export function createVillageScene({
   const disposables = [];
   const track = (o) => { disposables.push(o); return o; };
   const assetErrors = [];
+  // Set first thing in dispose(): the props model can finish loading after the
+  // player has already left the village.
+  let disposed = false;
 
   // ---- lights + fog (yard palette and light rig; low tier = no shadows)
   scene.fog = new THREE.FogExp2(pal.horizon, YARD_LIGHT.fogDensity * 0.55);
@@ -322,6 +325,13 @@ export function createVillageScene({
     atlas.flipY = false;
     track(atlas);
     loader.load(PROPS_SET1_URL, (gltf) => {
+      if (disposed) {
+        // Nothing left to show: building the mesh now would add GPU-bound objects to a
+        // cleared scene that dispose() has already walked. Free what the parser made.
+        gltf?.scene?.traverse?.((o) => { if (o.isMesh) o.geometry?.dispose?.(); });
+        resolve({ errors: assetErrors });
+        return;
+      }
       try {
         const byName = propKitGeometriesFromGltf(gltf);
         propsBounds = propKitBounds(byName);
@@ -656,6 +666,7 @@ export function createVillageScene({
       };
     },
     dispose() {
+      disposed = true;
       inputElement?.removeEventListener?.('pointerdown', onPointerDown);
       inputElement?.removeEventListener?.('pointerup', onPointerUp);
       triggers.dispose();
