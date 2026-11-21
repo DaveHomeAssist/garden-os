@@ -10,7 +10,11 @@
  *   onTrigger(listener) -> unsubscribe()   listener(phase, { id, type, prompt?, target?, exit? })
  *   registerInteractables([{ id, type, prompt }])
  *   getPlayerPose() -> { x, z, facingY }
- *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events
+ *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events:
+ *                                           triggers are re-seeded silently, so a listener bound
+ *                                           before or after the snap must read getInsideTriggers()
+ *                                           to learn which triggers the new pose is inside
+ *   getInsideTriggers() -> [{ id, type, ... }]   triggers the player is inside now, in enter order
  *
  * Draw-call shape: one InstancedMesh per graybox asset part, one road mesh,
  * one sidewalk mesh, one ground, one sky, one merged props_set1 mesh, the
@@ -175,6 +179,9 @@ export function createVillageScene({
   const disposables = [];
   const track = (o) => { disposables.push(o); return o; };
   const assetErrors = [];
+  // Set first thing in dispose(): the props model can finish loading after the
+  // player has already left the village.
+  let disposed = false;
 
   // ---- lights + fog (yard palette and light rig; low tier = no shadows)
   scene.fog = new THREE.FogExp2(pal.horizon, YARD_LIGHT.fogDensity * 0.55);
@@ -318,6 +325,13 @@ export function createVillageScene({
     atlas.flipY = false;
     track(atlas);
     loader.load(PROPS_SET1_URL, (gltf) => {
+      if (disposed) {
+        // Nothing left to show: building the mesh now would add GPU-bound objects to a
+        // cleared scene that dispose() has already walked. Free what the parser made.
+        gltf?.scene?.traverse?.((o) => { if (o.isMesh) o.geometry?.dispose?.(); });
+        resolve({ errors: assetErrors });
+        return;
+      }
       try {
         const byName = propKitGeometriesFromGltf(gltf);
         propsBounds = propKitBounds(byName);
@@ -609,6 +623,7 @@ export function createVillageScene({
     },
     getPlayerPose,
     setPlayerPose,
+    getInsideTriggers: () => triggers.getInsideTriggers(),
     /** Owner of the walk sim (ui-binder / lab) moves its own state when the pose is set. */
     setPoseHandler(fn) { poseHandler = typeof fn === 'function' ? fn : null; },
     /** Ids the game layer handles (from registerInteractables([...])). */
@@ -651,6 +666,7 @@ export function createVillageScene({
       };
     },
     dispose() {
+      disposed = true;
       inputElement?.removeEventListener?.('pointerdown', onPointerDown);
       inputElement?.removeEventListener?.('pointerup', onPointerUp);
       triggers.dispose();
