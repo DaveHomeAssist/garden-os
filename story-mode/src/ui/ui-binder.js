@@ -61,6 +61,7 @@ import {
   getRowAverages,
   getYearForChapter,
   isLetItGrowInteractionMode,
+  PHONE_OBJECTIVE_QUERY,
 } from './ui-constants.js';
 import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
@@ -148,9 +149,10 @@ function bindUI({
   const hudCrops = document.getElementById('hud-crops');
   const hudScore = document.getElementById('hud-score');
   const phaseHelper = document.getElementById('phase-helper');
-  // Phones clamp the objective card to two lines (hud-controls.css); a tap
-  // expands it. data-truncated drives the "tap for more" hint.
-  const objectiveNarrow = typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 600px)') : null;
+  // Phones (portrait, and landscape on short screens) clamp the objective card
+  // to two lines (hud-controls.css); a tap expands it. data-truncated drives
+  // the "tap for more" hint.
+  const objectiveNarrow = typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_OBJECTIVE_QUERY) : null;
   let objectiveClampFrame = 0;
   function setObjectiveExpanded(expanded) {
     if (!phaseHelper) return;

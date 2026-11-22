@@ -1,7 +1,7 @@
 // Mobile accessibility audit (manual, not a CI gate).
 // Walks title -> gardener setup (top + scrolled) -> story dialogue -> quest
 // card/log -> Free Play yard -> bug report -> village -> shop -> pause -> world
-// map (+ phone landscape) at phone and iPad sizes,
+// map (+ phone landscape) at phone, phone-landscape and iPad sizes,
 // running axe-core (WCAG 2.x A/AA + best-practice) plus a 44px tap-target,
 // font-size and off-screen-control probe and a keyboard/focus check.
 //
@@ -22,7 +22,9 @@ const URL = process.env.GOS_URL || 'http://localhost:5173/garden-os/story-mode/'
 const LABEL = process.env.LABEL || 'audit';
 const OUT = process.env.GOS_OUT || process.env.OUT || 'mobile-a11y-audit';
 mkdirSync(OUT, { recursive: true });
-const VPS = (process.env.VPS || '390x844,360x800,1024x706').split(',').map((s) => { const [w, h] = s.split('x').map(Number); return { width: w, height: h, tag: s, phone: w < 600 }; });
+// Phone landscape sizes (844x390, 740x360) run every state in landscape;
+// a phone counts by its short side, so they get isMobile + touch too.
+const VPS = (process.env.VPS || '390x844,360x800,844x390,740x360,1024x706').split(',').map((s) => { const [w, h] = s.split('x').map(Number); return { width: w, height: h, tag: s, phone: Math.min(w, h) < 600, landscape: w > h }; });
 const report = { states: {}, errors: [], keyboard: {} };
 const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 
@@ -56,7 +58,10 @@ const probe = () => {
   // Computed size, so it is recorded even while the HUD is hidden (title/setup).
   const pauseBtn = pcs ? `${parseFloat(pcs.width)}x${parseFloat(pcs.height)}` : null;
   const meta = document.querySelector('meta[name=viewport]')?.content;
-  return { small, overlaps, themeToggle, pauseBtn, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
+  // ☰ must take its own taps (in phone landscape the Move stick used to sit on it).
+  const pr = pauseEl && vis(pauseEl);
+  const pauseHit = pr ? Boolean(pauseEl.contains(document.elementFromPoint(pr.left + pr.width / 2, pr.top + pr.height / 2))) : null;
+  return { small, overlaps, themeToggle, pauseBtn, pauseHit, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
 };
 
 async function capture(p, vp, name) {
@@ -71,7 +76,7 @@ async function capture(p, vp, name) {
   } catch (e) { report.errors.push(`${key} axe ${e.message}`); }
   const pr = await p.evaluate(probe).catch((e) => ({ err: e.message }));
   report.states[key] = { axe, ...pr };
-  console.log('state', key, JSON.stringify(axe?.byImpact), 'small', pr.small?.length, 'tiny', pr.tinyCount, 'off', pr.offscreen?.length, 'overlaps', pr.overlaps?.length, 'pause', pr.pauseBtn, pr.small?.length ? JSON.stringify(pr.small) : '', pr.overlaps?.length ? JSON.stringify(pr.overlaps) : '');
+  console.log('state', key, JSON.stringify(axe?.byImpact), 'small', pr.small?.length, 'tiny', pr.tinyCount, 'off', pr.offscreen?.length, 'overlaps', pr.overlaps?.length, 'pause', pr.pauseBtn, 'pauseHit', pr.pauseHit, pr.small?.length ? JSON.stringify(pr.small) : '', pr.overlaps?.length ? JSON.stringify(pr.overlaps) : '');
 }
 
 const mkctx = (vp) => b.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.phone, hasTouch: true, deviceScaleFactor: vp.phone ? 2 : 1 });
@@ -175,7 +180,7 @@ for (const vp of VPS) {
       kb.mapFocusOnOpen = await focusIn('#world-map-panel');
       for (let i = 0; i < 12; i++) await p.keyboard.press('Tab');
       kb.mapFocusAfter12Tabs = await focusIn('#world-map-panel');
-      if (vp.phone) {
+      if (vp.phone && !vp.landscape) {
         await p.keyboard.press('Escape'); await p.waitForTimeout(800);
         if (await p.locator('#pause-menu.is-open, #pause-menu[aria-hidden="false"]').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(800); }
         await p.setViewportSize({ width: vp.height, height: vp.width }); await p.waitForTimeout(2000);
