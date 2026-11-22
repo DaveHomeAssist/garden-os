@@ -181,3 +181,29 @@ describe('tool dock names', () => {
     hud.dispose?.();
   });
 });
+
+describe('follow-up: room playtest of #98', () => {
+  const ruleFor = (selector) => a11yCss.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+
+  it('lifts the setup swatches, bug report actions and pause button to 44px', () => {
+    expect(ruleFor('body .profile-choice')).toMatch(/min-height:\s*44px/);
+    expect(ruleFor('body .bug-report-actions button')).toMatch(/min-height:\s*44px/);
+    const pause = ruleFor('body .hud-pause-btn');
+    expect(pause).toMatch(/width:\s*44px/);
+    expect(pause).toMatch(/height:\s*44px/);
+  });
+
+  it('puts the title theme switch in the title actions, not in a floating pill', () => {
+    const actions = indexHtml.match(/<div class="title-footer-actions" id="title-actions">([\s\S]*?)<\/div>\s*<div class="title-modes"/)?.[1] ?? '';
+    expect(actions).toMatch(/<button type="button" class="title-link-btn" id="title-theme" data-garden-theme-toggle>/);
+    expect(actions).toMatch(/data-theme-icon aria-hidden="true"/);
+    expect(actions).toMatch(/data-theme-label/);
+    expect(mainSrc).toMatch(/getElementById\('title-theme'\)\?\.addEventListener\('click'/);
+    expect(a11yCss).toMatch(/\.garden-theme-toggle:not\(#title-theme\)\s*\{\s*display:\s*none !important;/);
+  });
+
+  it('names Save Report by its visible text', () => {
+    const tag = indexHtml.match(/<button class="bug-btn-send"[^>]*>/)?.[0] ?? '';
+    expect(tag).toMatch(/aria-label="Save Report\b/);
+  });
+});

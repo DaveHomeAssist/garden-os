@@ -25,6 +25,26 @@ body .pause-close-btn {
   min-height: 44px;
 }
 
+/* Follow-up (room playtest of #98): controls that still measured 40-42px. */
+body .hud-pause-btn {
+  width: 44px;
+  height: 44px;
+}
+
+body .profile-choice {
+  min-height: 44px;
+}
+
+body .bug-report-actions button {
+  min-height: 44px;
+}
+
+/* Story Mode mounts no floating theme pill (see #title-theme in main.js);
+   if another script ever adds one, keep it from covering the title or setup. */
+body .garden-theme-toggle:not(#title-theme) {
+  display: none !important;
+}
+
 /* The tap chip is the only live part of the village prompt card. */
 #village-prompt.village-prompt.is-visible .interaction-prompt__hint {
   min-height: 44px;
