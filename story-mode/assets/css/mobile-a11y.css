@@ -124,7 +124,7 @@ body[data-design-language="field-kit"][data-story-screen="play"] #hud {
   body .read-only-sheet__card-meta,
   body .pause-section-label,
   body #pause-status,
-  body .palette-title,
+  body .palette-title:not(.quest-log__title):not([style*="font-size"]),
   body .dp-skip-btn {
     font-size: 12px !important;
   }
