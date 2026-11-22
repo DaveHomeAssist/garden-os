@@ -112,12 +112,16 @@ export function installModalFocus({ doc = document } = {}) {
     (win.requestAnimationFrame ?? ((cb) => win.setTimeout(cb, 16)))(sync);
   }
 
+  // No 'style' in the filter: the HUD and 3D overlays rewrite inline styles
+  // every frame, and watching them cost enough main-thread time to reorder
+  // the main-menu save against the next session's load (village e2e). Every
+  // sheet opens via class / hidden / insertion, which are still observed.
   const observer = new win.MutationObserver(schedule);
   observer.observe(doc.body, {
     subtree: true,
     childList: true,
     attributes: true,
-    attributeFilter: ['class', 'hidden', 'inert', 'aria-hidden', 'aria-modal', 'role', 'style'],
+    attributeFilter: ['class', 'hidden', 'inert', 'aria-hidden', 'aria-modal', 'role'],
   });
 
   function onKeyDown(event) {
