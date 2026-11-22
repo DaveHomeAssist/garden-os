@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#1e110a" />
   <meta name="description" content="Garden OS Story Mode: a 12-chapter raised-bed strategy game with Calvin the sheepdog, month-aware seasons, winter review, and a rebuilt 3D backyard scene." />
@@ -79,15 +79,15 @@
               <span aria-hidden="true">←</span>
               <span>Garden OS Home</span>
             </a>
-            <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="Open how to play guide">
-              <span class="title-link-btn__icon">✦</span>
+            <button type="button" class="title-link-btn" id="title-how-to-play" aria-label="How To Play guide">
+              <span class="title-link-btn__icon" aria-hidden="true">✦</span>
               <span>How To Play</span>
             </button>
-            <button type="button" class="title-link-btn" id="title-export-saves" aria-label="Export all save slots to a file">
+            <button type="button" class="title-link-btn" id="title-export-saves" aria-label="Export Saves: all slots to a file">
               <span class="title-link-btn__icon" aria-hidden="true">⬇</span>
               <span>Export Saves</span>
             </button>
-            <button type="button" class="title-link-btn" id="title-import-save" aria-label="Import a save file into a slot">
+            <button type="button" class="title-link-btn" id="title-import-save" aria-label="Import Save from a file into a slot">
               <span class="title-link-btn__icon" aria-hidden="true">⬆</span>
               <span>Import Save</span>
             </button>
@@ -145,35 +145,35 @@
         <section class="pause-section">
           <div class="pause-section-label">Session</div>
           <div class="pause-action-grid">
-            <button id="pause-resume" class="pause-action pause-action--primary" aria-label="Resume game">
-              <span class="pause-action__icon">▶</span>
+            <button id="pause-resume" class="pause-action pause-action--primary" type="button">
+              <span class="pause-action__icon" aria-hidden="true">▶</span>
               <span>
                 <span class="pause-action__title">Resume</span>
                 <span class="pause-action__copy">Return to the garden without changing state.</span>
               </span>
             </button>
             <button id="pause-main-menu" class="pause-action">
-              <span class="pause-action__icon">⌂</span>
+              <span class="pause-action__icon" aria-hidden="true">⌂</span>
               <span>
                 <span class="pause-action__title">Main Menu</span>
                 <span class="pause-action__copy">Save this run and return to the title screen.</span>
               </span>
             </button>
             <button id="pause-profile" class="pause-action">
-              <span class="pause-action__icon">◉</span>
+              <span class="pause-action__icon" aria-hidden="true">◉</span>
               <span>
                 <span class="pause-action__title">Gardener Profile</span>
                 <span class="pause-action__copy">Change name, skin, hair, and clothes for this save.</span>
               </span>
             </button>
-            <button id="pause-theme" class="pause-action" type="button" aria-label="Toggle light or dark theme">
+            <button id="pause-theme" class="pause-action" type="button">
               <span class="pause-action__icon" data-pause-theme-icon aria-hidden="true">☾</span>
               <span>
                 <span class="pause-action__title" data-pause-theme-title>Theme</span>
                 <span class="pause-action__copy" data-pause-theme-copy>Switch between light and dark appearance.</span>
               </span>
             </button>
-            <button id="pause-graphics" class="pause-action" type="button" aria-label="Change graphics quality">
+            <button id="pause-graphics" class="pause-action" type="button">
               <span class="pause-action__icon" aria-hidden="true">◐</span>
               <span>
                 <span class="pause-action__title" data-pause-graphics-title>Graphics: Auto</span>
@@ -187,21 +187,21 @@
           <div class="pause-section-label">Garden</div>
           <div class="pause-action-grid">
             <button id="pause-beds" class="pause-action">
-              <span class="pause-action__icon">🪴</span>
+              <span class="pause-action__icon" aria-hidden="true">🪴</span>
               <span>
                 <span class="pause-action__title">Garden Beds</span>
                 <span class="pause-action__copy">Build another bed and choose which one to tend.</span>
               </span>
             </button>
             <button id="pause-map" class="pause-action" type="button">
-              <span class="pause-action__icon">🗺️</span>
+              <span class="pause-action__icon" aria-hidden="true">🗺️</span>
               <span>
                 <span class="pause-action__title">World Map</span>
                 <span class="pause-action__copy">See every zone and travel. Keyboard: M.</span>
               </span>
             </button>
             <button id="pause-packs" class="pause-action">
-              <span class="pause-action__icon">🧩</span>
+              <span class="pause-action__icon" aria-hidden="true">🧩</span>
               <span>
                 <span class="pause-action__title">Content Packs</span>
                 <span class="pause-action__copy">Install crops, quests, and neighbors from pack files.</span>
@@ -214,21 +214,21 @@
           <div class="pause-section-label">Story Archive</div>
           <div class="pause-action-grid">
             <button id="pause-journal" class="pause-action">
-              <span class="pause-action__icon">📖</span>
+              <span class="pause-action__icon" aria-hidden="true">📖</span>
               <span>
                 <span class="pause-action__title">Season Journal</span>
                 <span class="pause-action__copy">Read completed seasons in a clean in-app archive.</span>
               </span>
             </button>
             <button id="pause-story-log" class="pause-action">
-              <span class="pause-action__icon">✦</span>
+              <span class="pause-action__icon" aria-hidden="true">✦</span>
               <span>
                 <span class="pause-action__title">Story Log</span>
                 <span class="pause-action__copy">Review quest choices and reputation shifts.</span>
               </span>
             </button>
             <button id="pause-bugs" class="pause-action">
-              <span class="pause-action__icon">🦗</span>
+              <span class="pause-action__icon" aria-hidden="true">🦗</span>
               <span>
                 <span class="pause-action__title">Bug Reports</span>
                 <span class="pause-action__copy">Review saved reports from this device.</span>
@@ -241,14 +241,14 @@
           <div class="pause-section-label">Save Backup</div>
           <div class="pause-action-grid">
             <button id="pause-export" class="pause-action">
-              <span class="pause-action__icon">⬇</span>
+              <span class="pause-action__icon" aria-hidden="true">⬇</span>
               <span>
                 <span class="pause-action__title">Export Save Backup</span>
                 <span class="pause-action__copy">Download this save slot as a JSON file you can keep.</span>
               </span>
             </button>
             <button id="pause-import" class="pause-action">
-              <span class="pause-action__icon">⬆</span>
+              <span class="pause-action__icon" aria-hidden="true">⬆</span>
               <span>
                 <span class="pause-action__title">Import Save Backup</span>
                 <span class="pause-action__copy">Restore a downloaded backup into this save slot.</span>
@@ -261,14 +261,14 @@
           <div class="pause-section-label">Danger Zone</div>
           <div class="pause-action-grid">
             <button id="pause-restart" class="pause-action pause-action--danger">
-              <span class="pause-action__icon">↺</span>
+              <span class="pause-action__icon" aria-hidden="true">↺</span>
               <span>
                 <span class="pause-action__title">Restart Chapter</span>
                 <span class="pause-action__copy">Reset the current chapter and lose bed progress.</span>
               </span>
             </button>
             <button id="pause-new" class="pause-action pause-action--danger">
-              <span class="pause-action__icon">🗑</span>
+              <span class="pause-action__icon" aria-hidden="true">🗑</span>
               <span>
                 <span class="pause-action__title">Delete Current Save</span>
                 <span class="pause-action__copy">Erase this save slot and return to the title screen.</span>
@@ -292,10 +292,10 @@
       </div>
       <div class="bug-meta" id="bug-meta"></div>
     </div>
-    <button id="fab-plant" aria-label="Open planting menu" aria-hidden="true" disabled inert><span aria-hidden="true">🌱</span><span>Plant</span></button>
+    <button id="fab-plant" aria-label="Plant: open planting menu" aria-hidden="true" disabled inert><span aria-hidden="true">🌱</span><span>Plant</span></button>
     <button id="fab-backpack" aria-label="Open crop backpack" aria-hidden="true" disabled inert>🎒</button>
     <button id="fab-advance" aria-label="Advance to next phase" aria-hidden="true" disabled inert>Next</button>
-    <div id="toast-container"></div>
+    <div id="toast-container" role="status" aria-live="polite" aria-relevant="additions"></div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

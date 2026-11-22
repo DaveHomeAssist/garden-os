@@ -108,7 +108,8 @@ export function createPauseController({
     const title = button.querySelector('[data-pause-graphics-title]');
     const label = q.choice === 'auto' ? `Auto (${GRAPHICS_LABEL[q.tier]})` : GRAPHICS_LABEL[q.choice];
     if (title) title.textContent = `Graphics: ${label}`;
-    button.setAttribute('aria-label', `Graphics quality ${label}. Activate to change.`);
+    // The visible title + copy are the accessible name (WCAG 2.5.3 label in name).
+    button.removeAttribute('aria-label');
   }
 
   function syncPauseThemeButton() {
@@ -126,7 +127,7 @@ export function createPauseController({
         ? 'Use the light appearance.'
         : 'Use the dark appearance.';
     }
-    button.setAttribute('aria-label', `Switch to ${next} theme`);
+    button.removeAttribute('aria-label');
   }
 
   function showProfileSheet() {

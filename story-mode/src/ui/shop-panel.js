@@ -70,10 +70,13 @@ function renderTabButton(tabId, activeTab, label) {
   return `
     <button
       type="button"
+      class="shop-tab"
       data-shop-tab="${tabId}"
+      aria-pressed="${active ? 'true' : 'false'}"
       style="
         border:none;
         border-radius:999px;
+        min-height:44px;
         padding:8px 14px;
         font-size:12px;
         font-family:'DM Mono',monospace;
@@ -106,25 +109,29 @@ function renderItemCard(item, tokens) {
       <span style="font-size:24px;flex-shrink:0;">${escapeHtml(item.icon)}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
-        <div style="font-size:11px;color:rgba(247,242,234,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.description ?? '')}</div>
+        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.description ?? '')}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <span style="font-family:'DM Mono',monospace;font-size:12px;color:${canAfford ? '#e8c84a' : '#d2654d'};">${item.price}🪙</span>
+        <span class="shop-item__price" style="font-family:'DM Mono',monospace;font-size:13px;color:${canAfford ? '#e8c84a' : '#ef9877'};">${item.price}<span aria-hidden="true">🪙</span><span class="sr-only"> coins</span></span>
         <button
           type="button"
+          class="shop-buy-btn"
           data-buy-item="${escapeHtml(item.itemId)}"
+          aria-label="Buy ${escapeHtml(item.name)}, ${item.price} coins"
           data-buy-price="${item.price}"
           ${item.isRecipe ? 'data-buy-recipe="true"' : ''}
           ${canAfford ? '' : 'disabled'}
           style="
             border:none;
             border-radius:999px;
-            padding:6px 12px;
-            font-size:12px;
+            min-width:56px;
+            min-height:44px;
+            padding:6px 14px;
+            font-size:13px;
             font-weight:700;
             cursor:${canAfford ? 'pointer' : 'not-allowed'};
             background:${canAfford ? '#5aab6b' : 'rgba(247,242,234,0.08)'};
-            color:${canAfford ? '#1a120c' : 'rgba(247,242,234,0.35)'};
+            color:${canAfford ? '#1a120c' : 'rgba(247,242,234,0.6)'};
           "
         >Buy</button>
       </div>
@@ -141,6 +148,7 @@ export function createShopPanel(container) {
   let currentShopData = null;
   let _isOpen = false;
   let lastMessage = '';
+  let keyHandler = null;
 
   function getTokens() {
     return getCurrencyBalance(currentStore?.getState?.()?.campaign);
@@ -191,6 +199,8 @@ export function createShopPanel(container) {
           color:#f7f2ea;
           font-size:24px;
           cursor:pointer;
+          min-width:44px;
+          min-height:44px;
           padding:4px 8px;
           line-height:1;
         ">&times;</button>
@@ -265,6 +275,9 @@ export function createShopPanel(container) {
     sheet = document.createElement('div');
     sheet.className = 'panel-sheet is-open';
     sheet.id = 'shop-panel';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', currentShopData.name ?? 'Market Shop');
     sheet.style.cssText = `
       position:fixed;
       top:50%;
@@ -296,6 +309,17 @@ export function createShopPanel(container) {
 
     container.appendChild(backdrop);
     container.appendChild(sheet);
+    // Esc closes the shop (and only the shop). Before, Esc fell through to
+    // the game's pause binding and opened the pause menu under the sheet.
+    if (keyHandler) globalThis.document?.removeEventListener('keydown', keyHandler, true);
+    keyHandler = (event) => {
+      if (event.key !== 'Escape') return;
+      if (!sheet?.isConnected) { close(); return; }
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+      close();
+    };
+    globalThis.document?.addEventListener('keydown', keyHandler, true);
     rerender();
   }
 
@@ -303,6 +327,8 @@ export function createShopPanel(container) {
     const wasOpen = _isOpen;
     const onClose = currentShopData?.onClose;
     _isOpen = false;
+    if (keyHandler) globalThis.document?.removeEventListener('keydown', keyHandler, true);
+    keyHandler = null;
     const backdrop = container.querySelector('#shop-backdrop');
     if (backdrop) backdrop.remove();
     if (sheet) {
