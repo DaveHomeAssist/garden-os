@@ -119,6 +119,7 @@ export function createCompostPanel(container) {
     sheet.className = 'panel-sheet is-open';
     sheet.id = 'compost-panel';
     sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
     sheet.setAttribute('aria-label', 'Compost bin');
     sheet.style.cssText = `
       position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);

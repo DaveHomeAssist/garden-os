@@ -19,7 +19,8 @@ function createToolSlot(tool, index) {
   button.className = 'tool-hud__slot';
   button.dataset.toolId = tool.id;
   button.title = tool.label;
-  button.setAttribute('aria-label', `${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`);
+  // Name carries the visible key number so voice control ("tap 2") matches.
+  button.setAttribute('aria-label', `${tool.label}, key ${tool.shortcut ?? String(index + 1)}`);
 
   const icon = document.createElement('span');
   icon.className = 'tool-hud__icon';

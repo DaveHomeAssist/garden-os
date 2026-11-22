@@ -1,0 +1,148 @@
+/* Mobile accessibility pass (Nov 2026).
+   Loaded last from main.js. Phone audit at 390x844 / 360x800 and iPad
+   1024x706 with axe-core + a tap-target / font-size probe; see
+   src/ui/mobile-a11y.test.js for the guarded values.
+
+   1. Tap targets: every HUD, sheet and dialogue control reaches 44x44 CSS px
+      (WCAG 2.5.8 is 24px; 44px is Apple HIG / WCAG 2.5.5) on touch screens
+      and narrow windows. Desktop mouse layouts keep their density.
+   2. Phone type: reading copy >= 14px, labels and metadata >= 12px.
+   3. Safe areas: the HUD rail and corner controls clear the notch, Dynamic
+      Island and home indicator (viewport-fit=cover is on).
+   4. Zoom: the page no longer blocks pinch zoom; the 3D viewport keeps
+      touch-action: none (layout.css) so gestures there still drive the game. */
+
+/* Hidden prompts stay out of the accessibility tree and tab order. The shared
+   .interaction-prompt rule sets display:inline-flex, which beat [hidden]. */
+.interaction-prompt[hidden] {
+  display: none !important;
+}
+
+/* Close buttons on every sheet: 40-42px -> 44px everywhere. */
+body .palette-dismiss,
+body .pause-close-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* The tap chip is the only live part of the village prompt card. */
+#village-prompt.village-prompt.is-visible .interaction-prompt__hint {
+  min-height: 44px;
+}
+
+/* Programmatic focus lands on the dialog itself (modal-focus.js); it is not a
+   control, so it does not draw the control focus ring. */
+[data-modal-focus-target]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  body .dp-skip-btn {
+    min-width: 64px;
+    min-height: 44px;
+    padding: 6px 14px;
+  }
+
+  body .quest-tracker__header,
+  body .quest-tracker__bar .quest-tracker__header {
+    min-height: 44px;
+  }
+
+  body .quest-tracker__collapse {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  body .quest-log__drop {
+    min-height: 44px;
+  }
+
+  body #world-map-panel .read-only-sheet__card button,
+  body .read-only-sheet__card-top > button {
+    min-width: 72px;
+    min-height: 44px;
+    padding-inline: 14px;
+  }
+
+  body .title-link-btn {
+    min-height: 44px;
+  }
+}
+
+/* Safe areas. Phones pin --hud-safe-inline to 10px (hud-controls.css), which
+   put the rail under the notch in landscape; add the insets on top. */
+body[data-design-language="field-kit"] {
+  --hud-safe-inline: max(
+    clamp(12px, 1.6vw, 28px),
+    calc((100vw - 1872px) / 2 + 20px),
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+}
+
+@media (max-width: 900px) {
+  body[data-design-language="field-kit"] {
+    --hud-safe-inline: max(10px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  }
+}
+
+body[data-design-language="field-kit"][data-story-screen="play"] #hud {
+  padding-top: calc(var(--hud-safe-block) + env(safe-area-inset-top, 0px));
+}
+
+@media (max-width: 600px) {
+  /* Reading copy: 14px. */
+  body .title-tagline,
+  body .save-slot-empty-label,
+  body .save-slot-btn,
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper,
+  body .toast-notification,
+  body .quest-tracker__title,
+  body .quest-tracker__steps li,
+  body .quest-log__desc,
+  body .quest-log__subtitle,
+  body .pause-action__copy,
+  body .world-map__lock,
+  body .read-only-sheet__subtitle,
+  body .interaction-prompt__label,
+  body #shop-panel .shop-item__desc {
+    font-size: 14px !important;
+    line-height: 1.35;
+  }
+
+  /* Labels, chips and metadata: 12px. */
+  body .title-eyebrow,
+  body .title-version,
+  body .save-slot-label,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill,
+  body .season-card__chapter,
+  body .season-card__year,
+  body .season-card__beat-label,
+  body .touch-stick__label,
+  body .quest-tracker__header,
+  body .quest-tracker__header span,
+  body .quest-tracker__header kbd,
+  body .quest-tracker__steps li span,
+  body .quest-log__heading,
+  body .read-only-sheet__card-meta,
+  body .pause-section-label,
+  body #pause-status,
+  body .palette-title,
+  body .dp-skip-btn {
+    font-size: 12px !important;
+  }
+
+  body .quest-log__drop,
+  body #shop-panel .shop-tab,
+  body #shop-panel .shop-buy-btn,
+  body #world-map-panel .read-only-sheet__card button {
+    font-size: 13px !important;
+  }
+
+  /* Phone HUD pills: give the larger text room by trimming side padding. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill {
+    padding-inline: 7px;
+    letter-spacing: 0.04em;
+  }
+}

@@ -72,10 +72,11 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
   });
 
   const label = document.createElement('div');
+  label.className = 'touch-stick__label';
   label.textContent = 'Move';
   applyStyles(label, {
     fontFamily: '"DM Mono", monospace',
-    fontSize: '10px',
+    fontSize: '12px',
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
     color: 'rgba(247,242,234,0.62)',

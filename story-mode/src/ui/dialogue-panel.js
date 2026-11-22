@@ -179,6 +179,7 @@ export function createDialoguePanel(rootEl) {
       return `
         <span
           class="dp-cast-token"
+          role="img"
           data-speaker="${escapeHtml(speaker.id)}"
           data-portrait="${escapeHtml(speaker.portraitId)}"
           data-emotion="${escapeHtml(emotion)}"

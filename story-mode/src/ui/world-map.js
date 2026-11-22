@@ -55,7 +55,7 @@ function describeLock(zone) {
 // Built from DOM nodes and textContent only. Locked zones say why on the
 // card itself, since a disabled button cannot explain itself on tap.
 function createWorldMapPanel(model, onTravel) {
-  const panel = el('div', { className: 'panel-sheet is-open', attrs: { id: 'world-map-panel', role: 'dialog', 'aria-label': 'World map' } });
+  const panel = el('div', { className: 'panel-sheet is-open', attrs: { id: 'world-map-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'World map' } });
   const close = el('button', { className: 'palette-dismiss', text: '×', attrs: { type: 'button', 'data-close': 'true', 'aria-label': 'Close world map' } });
   const cards = model.zones.map((zone) => {
     const lock = !zone.current && !zone.allowed ? describeLock(zone) : null;

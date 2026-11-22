@@ -2,6 +2,7 @@ import '../assets/css/hud-foundation.css';
 import '../assets/css/hud-controls.css';
 import '../assets/css/hud-interactions.css';
 import '../assets/css/village-overlays.css';
+import '../assets/css/mobile-a11y.css';
 import '../../garden-theme.js';
 import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
@@ -9,8 +10,10 @@ import { loadContentPacks } from './game/pack-loader.js';
 import { installPackContent, resetPackContent } from './content/content-registry.js';
 import { loadInstalledPacks } from './content/installed-packs.js';
 import { isOfficialContent } from './content/official-content.js';
+import { installModalFocus } from './ui/modal-focus.js';
 
 document.body.dataset.designLanguage = 'field-kit';
+installModalFocus();
 
 let runtimeModulesPromise = null;
 
