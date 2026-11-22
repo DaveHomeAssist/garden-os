@@ -25,12 +25,9 @@ body .pause-close-btn {
   min-height: 44px;
 }
 
-/* Follow-up (room playtest of #98): controls that still measured 40-42px. */
-body .hud-pause-btn {
-  width: 44px;
-  height: 44px;
-}
-
+/* Follow-up (room playtest of #98): controls that still measured 40-42px.
+   The in-game pause button is already 44x44 (hud-controls.css); the 40x40
+   reading came from the hidden pre-game copy, so it is left alone. */
 body .profile-choice {
   min-height: 44px;
 }

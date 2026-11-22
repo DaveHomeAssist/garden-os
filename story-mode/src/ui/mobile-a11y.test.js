@@ -116,6 +116,53 @@ describe('modal focus', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('returns focus to a tapped opener that hides while its sheet is open (village prompt)', () => {
+    let t = 1000;
+    api = installModalFocus({ now: () => t });
+    const opener = document.getElementById('opener');
+    // A tap: pointerdown on the control, no focus (iOS Safari), then it hides.
+    opener.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    opener.hidden = true;
+    t += 100;
+    const sheet = openSheet();
+    api.sync();
+    expect(document.activeElement).toBe(sheet);
+
+    sheet.remove();
+    t += 100;
+    api.sync();
+    // Still hidden: nothing to focus yet, and focus is not forced elsewhere.
+    expect(document.activeElement).toBe(document.body);
+    opener.hidden = false;
+    t += 100;
+    api.sync();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('gives up on an opener that never comes back, and leaves keyboard-opened sheets on body', () => {
+    let t = 1000;
+    api = installModalFocus({ now: () => t });
+    const opener = document.getElementById('opener');
+    opener.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    opener.hidden = true;
+    let sheet = openSheet();
+    api.sync();
+    sheet.remove();
+    api.sync();
+    t += 5000;
+    opener.hidden = false;
+    api.sync();
+    expect(document.activeElement).toBe(document.body);
+
+    // A sheet opened from a game key long after any tap has no opener.
+    t += 5000;
+    sheet = openSheet();
+    api.sync();
+    sheet.remove();
+    api.sync();
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it('leaves Tab alone when no dialog is open', () => {
     api = installModalFocus();
     const gameTab = vi.fn();
@@ -185,12 +232,9 @@ describe('tool dock names', () => {
 describe('follow-up: room playtest of #98', () => {
   const ruleFor = (selector) => a11yCss.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
 
-  it('lifts the setup swatches, bug report actions and pause button to 44px', () => {
+  it('lifts the setup swatches and bug report actions to 44px', () => {
     expect(ruleFor('body .profile-choice')).toMatch(/min-height:\s*44px/);
     expect(ruleFor('body .bug-report-actions button')).toMatch(/min-height:\s*44px/);
-    const pause = ruleFor('body .hud-pause-btn');
-    expect(pause).toMatch(/width:\s*44px/);
-    expect(pause).toMatch(/height:\s*44px/);
   });
 
   it('puts the title theme switch in the title actions, not in a floating pill', () => {
