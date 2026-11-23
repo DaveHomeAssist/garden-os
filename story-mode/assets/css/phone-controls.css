@@ -1,0 +1,113 @@
+/* Phone controls pass (fix/phone-landscape-controls, Nov 2026).
+   Loaded after mobile-a11y.css from main.js. Checked by
+   tests/phone-controls-check.mjs (844x390, 740x360, 932x430, 390x844,
+   360x800 with touch) and src/ui/phone-controls.test.js.
+
+   Phone landscape (short screens): the portrait phone layout (hotbar fixed
+   150px up the left edge, objective banner full width at 194px) turned into a
+   pile-up. The hotbar floated mid-screen over the objective, the Move stick
+   lifted itself above the hotbar onto the pause button (taps on ☰ hit the
+   stick) and the season calendar, and Plant / Backpack sat under the stick.
+   Landscape layout:
+     top-left      HUD rail (☰) and the season calendar (compact)
+     top-centre    objective card (2-line clamp, tap for more)
+     bottom-left   Move stick, parked in the corner
+     bottom-centre tool hotbar, with the village prompt and toasts above it
+     bottom-right  Next / Start Season, Backpack and Plant stacked (Backpack
+                   stays up a slot in the village, clear of the map credits)
+   Portrait phones keep their layout; only the village prompt moves right of
+   the Move stick, which used to cover its left end and the Tap chip. */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] {
+    --phone-ls-edge: max(10px, env(safe-area-inset-right, 0px));
+    --phone-ls-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    /* Hotbar: 52px coarse slots + 6px padding + border. */
+    --phone-ls-hotbar-h: 66px;
+  }
+
+  /* Move stick: bottom-left corner (touch-stick.js reads these). */
+  body[data-design-language="field-kit"][data-story-screen="play"] .touch-stick {
+    --touch-stick-bottom: 6px;
+    --touch-stick-left: 12px;
+  }
+
+  /* Season calendar: compact, so it ends well above the stick (top at
+     360 - 6 - 132 = 222px on a 740x360 phone). */
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
+    top: calc(68px + env(safe-area-inset-top, 0px));
+    left: var(--hud-safe-inline, 10px);
+    min-width: 150px;
+    padding: 8px 10px;
+  }
+
+  /* Objective: top-centre between the calendar (left) and the bug button /
+     Back to village (right), clamped to two lines by hud-controls.css. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    top: calc(68px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(520px, calc(100vw - 400px));
+    max-width: none;
+  }
+
+  /* Tool hotbar: bottom-centre, out of the stick's corner. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud,
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud.is-visible {
+    position: fixed !important;
+    inset: auto auto var(--phone-ls-bottom) 50% !important;
+    width: max-content;
+    max-width: calc(100vw - 2 * 150px);
+    transform: translateX(-50%) !important;
+  }
+
+  /* Toasts and the village prompt sit just above the hotbar. */
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible) #toast-container {
+    bottom: calc(var(--phone-ls-bottom) + var(--phone-ls-hotbar-h) + 10px);
+  }
+
+  #village-prompt.village-prompt {
+    bottom: calc(8px + 66px + 10px + env(safe-area-inset-bottom, 0px)) !important;
+    max-width: calc(100vw - 2 * 150px) !important;
+  }
+
+  /* Right column, bottom up: Next / Start Season, Backpack, Plant. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
+    right: var(--phone-ls-edge);
+    bottom: var(--phone-ls-bottom);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-backpack {
+    left: auto;
+    right: var(--phone-ls-edge);
+    bottom: calc(var(--phone-ls-bottom) + 54px + 8px);
+    width: 52px;
+    height: 52px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-plant {
+    left: auto;
+    right: var(--phone-ls-edge);
+    bottom: calc(var(--phone-ls-bottom) + 54px + 8px + 52px + 8px);
+    height: 48px;
+  }
+}
+
+/* Portrait phones with the Move stick (touch screens only; the stick is not
+   mounted without touch): the prompt card was centred over the stick's right
+   half, so its Tap chip could sit under the ring. Centre it in the space to
+   the right of the stick (18px + 112px + 10px gap) instead. */
+@media (max-width: 600px) and (orientation: portrait) {
+  #app:has(> .touch-stick) #village-prompt.village-prompt {
+    left: calc(50% + 70px) !important;
+    /* Shrink-to-fit would only use the room right of `left` (~125px). */
+    width: max-content;
+    max-width: calc(100vw - 140px - 12px) !important;
+  }
+
+  #app:has(> .touch-stick) #village-prompt.village-prompt .interaction-prompt__label {
+    white-space: normal;
+    text-align: left;
+  }
+}

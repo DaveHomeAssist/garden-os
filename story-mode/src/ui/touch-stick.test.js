@@ -18,7 +18,8 @@ describe('touch stick vs tool row', () => {
     const root = document.querySelector('.touch-stick');
     // jsdom has no layout: report the stick's box from its bottom offset (844 px viewport, 132 px tall)
     vi.spyOn(root, 'getBoundingClientRect').mockImplementation(() => {
-      const bottom = Number(/calc\((\d+)px/.exec(root.style.bottom)[1]);
+      const [, base, lift] = /calc\(var\(--touch-stick-bottom, (\d+)px\) \+ (\d+)px/.exec(root.style.bottom);
+      const bottom = Number(base) + Number(lift);
       return rect(18, 844 - bottom - 132, 112, 132);
     });
     stick.setEnabled(true);

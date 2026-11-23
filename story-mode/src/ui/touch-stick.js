@@ -7,11 +7,21 @@ function clamp(value, min, max) {
 }
 
 const STICK_BOTTOM_PX = 118;
+const STICK_LEFT_PX = 18;
 const TOOL_ROW_GAP_PX = 10;
 const CLEARANCE_CHECK_MS = 400;
 
-function stickBottom(px) {
-  return `calc(${Math.round(px)}px + env(safe-area-inset-bottom, 0px))`;
+// The resting spot comes from CSS custom properties so layouts can move the
+// stick without fighting the inline style: phone landscape
+// (assets/css/phone-controls.css) parks it in the bottom-left corner, clear of
+// the pause button and the season calendar. `lift` (px) is added on top when
+// the tool row would cover it. Both sides keep the safe-area insets.
+function stickBottom(lift) {
+  return `calc(var(--touch-stick-bottom, ${STICK_BOTTOM_PX}px) + ${Math.round(lift)}px + env(safe-area-inset-bottom, 0px))`;
+}
+
+function stickLeft() {
+  return `calc(var(--touch-stick-left, ${STICK_LEFT_PX}px) + env(safe-area-inset-left, 0px))`;
 }
 
 function rectsOverlap(a, b) {
@@ -26,8 +36,8 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
   root.className = 'touch-stick';
   applyStyles(root, {
     position: 'absolute',
-    left: '18px',
-    bottom: stickBottom(STICK_BOTTOM_PX),
+    left: stickLeft(),
+    bottom: stickBottom(0),
     width: '112px',
     height: '132px',
     display: touchCapable ? 'flex' : 'none',
@@ -160,7 +170,7 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
     }
     if (Math.abs(next - lift) < 0.5) return;
     lift = next;
-    root.style.bottom = stickBottom(STICK_BOTTOM_PX + lift);
+    root.style.bottom = stickBottom(lift);
   }
 
   ring.addEventListener('pointerdown', onPointerDown);

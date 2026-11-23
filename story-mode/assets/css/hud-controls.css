@@ -568,3 +568,60 @@ body[data-zone="village"] #fab-advance,
 body[data-zone="village"] #hud-action {
   display: none !important;
 }
+
+/* Phones (fix/phone-objective-card): the objective card ran 4-5 lines across
+   the full width and covered the top of the bed / village street. Stack the
+   label over the text, clamp to two lines, and let a tap expand it. The full
+   text stays in the DOM (aria-live and the progression action's
+   aria-describedby still read all of it). Phone landscape (short screens,
+   fix/phone-landscape-controls) gets the same compact card. */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    min-height: 0;
+    /* 2px under the clamp, not 7px: overflow clips at the padding edge, so a
+       deeper bottom padding showed the top of the hidden third line. The
+       2px stays inside the next line's half-leading. */
+    padding: 6px 10px 2px;
+    border-left-width: 4px;
+    font-size: 12px;
+    line-height: 1.38;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-visible[data-truncated="true"],
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-visible.is-expanded {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper::before {
+    display: block;
+    /* The zone label is a tinted chip (layout.css); keep it chip-sized
+       instead of a full-width stripe once it stacks over the text. */
+    width: fit-content;
+    margin-bottom: 2px;
+    padding: 0 6px 1px;
+    border-right: 0;
+    font-size: 8px;
+    line-height: 1.6;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper[data-truncated="true"]::before {
+    content: "Current objective · tap for more";
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: none;
+    padding-bottom: 7px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded::before {
+    content: "Current objective · tap to shrink";
+  }
+}
