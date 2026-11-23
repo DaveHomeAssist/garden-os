@@ -7,11 +7,15 @@
 //     prompt card, the tool hotbar or the Plant / Backpack / Next buttons,
 //   - the hotbar overlaps the objective card or the prompt card,
 //   - the prompt's Tap chip is covered or under 44x44,
-//   - a tap on ☰ does not open the pause menu.
+//   - a tap on ☰ does not open the pause menu,
+//   - the hotbar scrolls sideways, or a slot is cut off (outside the row or
+//     the screen) or under 44x44 (360x800, 375x667, 320x568 portrait),
+//   - a toast overlaps the Move stick (a test toast is added in the village,
+//     with and without the prompt card showing).
 //
 //   npx vite --port 5341 --strictPort &
 //   GOS_URL=http://localhost:5341/garden-os/story-mode/ GOS_OUT=/tmp/phone-controls node tests/phone-controls-check.mjs
-// Env: VPS=844x390,740x360,932x430,390x844,360x800  LABEL=after  NO_FAIL=1 (report only).
+// Env: VPS=844x390,740x360,932x430,390x844,360x800,375x667,320x568  LABEL=after  NO_FAIL=1 (report only).
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -21,7 +25,7 @@ const URL = process.env.GOS_URL || 'http://localhost:5341/garden-os/story-mode/'
 const OUT = process.env.GOS_OUT || join(tmpdir(), 'gos-phone-controls');
 const LABEL = process.env.LABEL || 'check';
 mkdirSync(OUT, { recursive: true });
-const VPS = (process.env.VPS || '844x390,740x360,932x430,390x844,360x800').split(',').map((s) => {
+const VPS = (process.env.VPS || '844x390,740x360,932x430,390x844,360x800,375x667,320x568').split(',').map((s) => {
   const [width, height] = s.split('x').map(Number);
   return { width, height, tag: s };
 });
@@ -51,6 +55,13 @@ const layout = () => {
     back: vis(document.querySelector('#village-back')),
     bug: vis(document.querySelector('#fab-bug')),
     tracker: vis(document.querySelector('.quest-tracker')),
+    toast: (() => {
+      const boxes = [...document.querySelectorAll('#toast-container > .toast-notification.is-visible')].map(vis).filter(Boolean);
+      if (!boxes.length) return null;
+      const left = Math.min(...boxes.map((b) => b.left)); const top = Math.min(...boxes.map((b) => b.top));
+      const right = Math.max(...boxes.map((b) => b.right)); const bottom = Math.max(...boxes.map((b) => b.bottom));
+      return { left, top, right, bottom, width: right - left, height: bottom - top };
+    })(),
   };
   const hits = {};
   for (const [key, sel] of [['pause', '#hud-pause'], ['chip', '#village-prompt .interaction-prompt__hint'], ['backpack', '#fab-backpack'], ['plant', '#fab-plant'], ['advance', '#fab-advance'], ['back', '#village-back']]) {
@@ -63,9 +74,22 @@ const layout = () => {
   }
   const slots = [...document.querySelectorAll('.tool-hud.is-visible .tool-hud__slot')];
   hits.hotbarSlots = slots.length ? slots.every((s) => { const r = s.getBoundingClientRect(); const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return Boolean(el && s.contains(el)); }) : null;
+  // Every slot whole: inside the row's box and the screen, 44px or more.
+  const bar = document.querySelector('.tool-hud.is-visible');
+  let hotbarFit = null;
+  if (bar) {
+    const b = bar.getBoundingClientRect();
+    const cut = []; const smallSlots = [];
+    slots.forEach((s, i) => {
+      const r = s.getBoundingClientRect();
+      if (r.left < b.left - 0.5 || r.right > b.right + 0.5 || r.left < -0.5 || r.right > innerWidth + 0.5) cut.push(i + 1);
+      if (r.width < 43.5 || r.height < 43.5) smallSlots.push(`${i + 1}:${Math.round(r.width)}x${Math.round(r.height)}`);
+    });
+    hotbarFit = { slots: slots.length, scrolls: bar.scrollWidth > bar.clientWidth + 1, cut, smallSlots };
+  }
   const ring = stickRoot?.firstElementChild;
   if (stickOn && ring) { const r = ring.getBoundingClientRect(); const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); hits.stickRing = Boolean(el && ring.contains(el)); }
-  return { rects, hits, stickOn };
+  return { rects, hits, stickOn, hotbarFit };
 };
 
 const overlap = (a, b, pad = 0) => Boolean(a && b && a.left < b.right - pad && a.right > b.left + pad && a.top < b.bottom - pad && a.bottom > b.top + pad);
@@ -75,7 +99,7 @@ function evaluate(state, tag, l, failures) {
   const { rects: r, hits } = l;
   if (r.pause && hits.pause === false) f('☰ is not hit-testable at its centre');
   if (l.stickOn) {
-    for (const k of ['pause', 'calendar', 'objective', 'prompt', 'hotbar', 'plant', 'backpack', 'advance', 'back']) if (overlap(r.stick, r[k])) f(`Move stick overlaps ${k}`);
+    for (const k of ['pause', 'calendar', 'objective', 'prompt', 'hotbar', 'plant', 'backpack', 'advance', 'back', 'toast']) if (overlap(r.stick, r[k])) f(`Move stick overlaps ${k}`);
     if (hits.stickRing === false) f('Move stick ring is covered');
   }
   if (overlap(r.hotbar, r.objective)) f('hotbar overlaps the objective card');
@@ -85,9 +109,29 @@ function evaluate(state, tag, l, failures) {
   if (r.chip && (r.chip.width < 43.5 || r.chip.height < 43.5)) f(`prompt Tap chip is ${Math.round(r.chip.width)}x${Math.round(r.chip.height)} (< 44)`);
   for (const k of ['chip', 'backpack', 'plant', 'advance', 'back']) if (hits[k] === false) f(`${k} is covered at its centre`);
   if (hits.hotbarSlots === false) f('a hotbar slot is covered');
+  if (l.hotbarFit) {
+    if (l.hotbarFit.scrolls) f('the hotbar scrolls sideways');
+    if (l.hotbarFit.cut.length) f(`hotbar slot(s) ${l.hotbarFit.cut.join(',')} cut off`);
+    if (l.hotbarFit.smallSlots.length) f(`hotbar slot(s) under 44px: ${l.hotbarFit.smallSlots.join(' ')}`);
+  }
+  if (overlap(r.toast, r.prompt)) f('a toast overlaps the prompt card');
+  if (overlap(r.toast, r.hotbar)) f('a toast overlaps the hotbar');
   for (const [k, v] of Object.entries(r)) if (v && (v.left < -0.5 || v.top < -0.5 || v.right > innerWidthOf(tag) + 0.5)) f(`${k} is off screen`);
 }
 const innerWidthOf = (tag) => Number(tag.split('x')[0]);
+
+// A toast like the arrival one ("Entered The Village."), held on screen.
+const addToast = async (p) => {
+  await p.evaluate(() => {
+    const c = document.querySelector('#toast-container');
+    c.querySelectorAll(':scope > *').forEach((e) => e.remove());
+    const t = document.createElement('div');
+    t.className = 'toast-notification toast--info is-visible';
+    t.textContent = 'Entered The Village.';
+    c.appendChild(t);
+  });
+  await p.waitForTimeout(400);
+};
 
 const report = { url: URL, states: {}, failures: [], errors: [] };
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -116,6 +160,8 @@ try {
       await waitFor(() => { const d = window.gardenOS?.village?.getDebugState?.(); return d && d.zone === 'village' && !d.travelling && d.bound; });
       await p.waitForTimeout(1500);
       await snap('01-village-hud');
+      await addToast(p);
+      await snap('01b-village-toast');
       await p.evaluate(() => document.querySelectorAll('#toast-container > *').forEach((e) => e.remove()));
       const target = await p.evaluate(() => window.gardenOS.village.getInteractables().find((t) => t.id === 'shop_stand'));
       await p.evaluate(([x, z]) => window.gardenOS.village.walkTo(x, z), [target.position.x, target.position.z]);
@@ -124,6 +170,9 @@ try {
       await p.waitForTimeout(800);
       await p.evaluate(() => document.querySelectorAll('#toast-container > *').forEach((e) => e.remove()));
       await snap('02-prompt-card');
+      await addToast(p);
+      await snap('02b-prompt-toast');
+      await p.evaluate(() => document.querySelectorAll('#toast-container > *').forEach((e) => e.remove()));
       // Tap ☰ (a real touch at its centre) and expect the pause menu.
       const box = await p.locator('#hud-pause').boundingBox();
       await p.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);

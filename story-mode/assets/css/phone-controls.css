@@ -72,6 +72,12 @@
     max-width: calc(100vw - 2 * 150px) !important;
   }
 
+  /* With the prompt card up, toasts stack above it (84px + 60px card + 12px)
+     instead of on top of it (fix/phone-small-screen). */
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible):has(#village-prompt.is-visible) #toast-container {
+    bottom: calc(var(--phone-ls-bottom) + var(--phone-ls-hotbar-h) + 10px + 72px);
+  }
+
   /* Right column, bottom up: Next / Start Season, Backpack, Plant. */
   body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
     right: var(--phone-ls-edge);
@@ -109,5 +115,121 @@
   #app:has(> .touch-stick) #village-prompt.village-prompt .interaction-prompt__label {
     white-space: normal;
     text-align: left;
+  }
+}
+
+/* Small-screen pass (fix/phone-small-screen, Nov 2026). Checked by
+   tests/phone-controls-check.mjs at 360x800, 375x667 and 320x568 too.
+
+   1. Portrait hotbar: the row was min(354px, 100vw - 20px) wide with six
+      52px touch slots (356px with gaps), so it scrolled sideways on every
+      portrait phone and the 6th slot was cut off at 360px. Size the slots to
+      the screen instead: 52px where there is room, never under 44px
+      (6 x 44.3px fits a 320px phone), no sideways scroll.
+   2. Toasts ("Entered The Village.", keepsakes) were centred over the
+      lifted Move stick, which showed through them. While the hotbar (and so
+      the stick) is up, toasts sit in the column right of the stick, above the
+      village prompt card when that is showing.
+   3. The village prompt card is pinned at 27vh + 40px, which on a short
+      phone (320x568) is below the top of the hotbar. Keep it above the row. */
+@media (max-width: 600px) and (orientation: portrait) {
+  body[data-design-language="field-kit"][data-story-screen="play"] {
+    --phone-pt-hotbar-bottom: 150px;
+    --phone-pt-slot-h: 52px;
+    --phone-pt-slot: clamp(44px, calc((100vw - 20px - 14px - 20px) / 6), 52px);
+    /* Slot + 6px padding top and bottom + 1px border. */
+    --phone-pt-hotbar-h: calc(var(--phone-pt-slot-h) + 14px);
+    --phone-pt-above-hotbar: calc(var(--phone-pt-hotbar-bottom) + var(--phone-pt-hotbar-h) + 10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud,
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud.is-visible {
+    inset: auto auto calc(var(--phone-pt-hotbar-bottom) + env(safe-area-inset-bottom, 0px)) 10px !important;
+    width: max-content;
+    max-width: calc(100vw - 20px);
+    gap: 4px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud .tool-hud__slot {
+    width: var(--phone-pt-slot);
+    height: var(--phone-pt-slot-h);
+    flex: 0 0 var(--phone-pt-slot);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible) #toast-container {
+    bottom: var(--phone-pt-above-hotbar);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible) #app:has(> .touch-stick) #toast-container {
+    left: calc(140px + env(safe-area-inset-left, 0px));
+    right: 10px;
+    width: auto;
+    transform: none;
+    align-items: stretch;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible):has(#village-prompt.is-visible) #app:has(> .touch-stick) #toast-container {
+    /* Same base as the prompt card below, plus its height (60px) + 12px. */
+    bottom: calc(max(calc(27vh + 40px + env(safe-area-inset-bottom, 0px)), var(--phone-pt-above-hotbar)) + 72px);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(.tool-hud.is-visible) #village-prompt.village-prompt {
+    bottom: max(calc(27vh + 40px + env(safe-area-inset-bottom, 0px)), var(--phone-pt-above-hotbar)) !important;
+  }
+}
+
+/* Short portrait phones (iPhone SE 1st gen, 320x568): the lifted Move stick
+   (above the hotbar) reached up over the objective card. Win back ~40px:
+   the hotbar drops to just above Plant with 46px slots, the stick hides its
+   "Move" caption (the ring is the control), and the season calendar and the
+   objective card tighten up. */
+@media (max-width: 600px) and (orientation: portrait) and (max-height: 640px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] {
+    --phone-pt-hotbar-bottom: 142px;
+    --phone-pt-slot-h: 46px;
+  }
+
+  #app > .touch-stick {
+    height: 104px !important;
+  }
+
+  #app > .touch-stick .touch-stick__label {
+    display: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
+    padding: 8px 10px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    top: calc(184px + env(safe-area-inset-top, 0px));
+  }
+}
+
+/* 4. Phone text floor: nothing under 12px. The season calendar's labels
+   (11px), the HUD pills in phone landscape (11px), the Gardener Setup
+   eyebrow / field labels (10px) and the bug report's subtitle (10px) and
+   meta line (9px) were the last text below the 12px label minimum that
+   mobile-a11y.css sets for portrait phones. Sheet titles (World Map, ...)
+   are already 12px and stay in step with each other. */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  body .season-card__chapter,
+  body .season-card__year,
+  body .season-card__beat-label,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill,
+  body .profile-editor__eyebrow,
+  body .profile-name-field span,
+  body .profile-fieldset legend,
+  body .bug-report-panel .bug-subtitle,
+  body .bug-report-panel .bug-meta {
+    font-size: 12px !important;
+  }
+
+  /* Same card height as at 11px, so the calendar still ends above the
+     objective card (the design gate keeps a 4px gap). */
+  body .season-card__chapter,
+  body .season-card__year,
+  body .season-card__beat-label {
+    line-height: 1.15;
   }
 }

@@ -108,7 +108,7 @@
     </main>
     <div id="viewport"></div>
     <div class="vignette-overlay"></div>
-    <div id="hud" aria-hidden="true" inert>
+    <div id="hud" role="region" aria-label="Game status" aria-hidden="true" inert>
       <div class="hud-left">
         <button id="hud-pause" class="hud-pause-btn" aria-label="Pause menu">☰</button>
         <span class="hud-pill season-icon" id="hud-season-icon">🌱</span>
@@ -285,8 +285,8 @@
       </div>
     </div>
     <button id="fab-bug" aria-label="Report a bug" aria-hidden="true" disabled inert>🦗</button>
-    <div class="bug-report-panel" id="bug-panel" aria-hidden="true" inert>
-      <h3>🦗 Report a Bug</h3>
+    <div class="bug-report-panel" id="bug-panel" role="region" aria-labelledby="bug-panel-title" aria-hidden="true" inert>
+      <h3 id="bug-panel-title">🦗 Report a Bug</h3>
       <div class="bug-subtitle">Saved locally on this device for later review</div>
       <label for="bug-text" class="sr-only">Bug report details</label>
       <textarea id="bug-text" placeholder="What happened? What did you expect? Tell us everything..."></textarea>

@@ -34,6 +34,10 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
 
   const root = document.createElement('div');
   root.className = 'touch-stick';
+  // Pointer-only stand-in for WASD / arrow keys / tap-to-move: no keyboard or
+  // screen-reader role, so keep its "Move" caption out of the a11y tree
+  // (it was the one HUD piece outside a landmark on every touch screen).
+  root.setAttribute('aria-hidden', 'true');
   applyStyles(root, {
     position: 'absolute',
     left: stickLeft(),
