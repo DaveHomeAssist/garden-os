@@ -33,10 +33,26 @@ export function createVillageFixtureState(options = {}) {
 /** Write the fixture to the Free Play slot through the real persistence path. */
 export async function seedVillageFixture(options = {}) {
   const { initGame, waitForSessionFlush } = await import('../game/game-init.js');
+  const { loadBestAvailableSave } = await import('../game/save.js');
+  const { getCurrencyBalance } = await import('../game/village/village-economy.js');
+  const { getInventoryItemCount } = await import('../game/inventory.js');
+  const expected = { ...VILLAGE_FIXTURE_DEFAULTS, ...options };
+  // The play session's main-menu persist is async (IndexedDB). Wait for that
+  // flush before writing, or its snapshot can land after this one and
+  // loadBestAvailableSave will prefer the older 100-coin / empty-backpack save.
+  await waitForSessionFlush();
   const state = createVillageFixtureState(options);
   const session = initGame(state, { slot: 'freeplay' });
   await session.persistGameState();
   session.cleanup();
   await waitForSessionFlush();
+  const saved = await loadBestAvailableSave('freeplay');
+  const balance = getCurrencyBalance(saved.campaign);
+  const driedLeaves = getInventoryItemCount(saved.campaign?.inventory, 'dried_leaves');
+  if (balance !== expected.tokens || driedLeaves !== expected.driedLeaves) {
+    throw new Error(
+      `seedVillageFixture did not stick (balance ${balance}, dried_leaves ${driedLeaves}, source ${saved.source})`,
+    );
+  }
   return state;
 }
