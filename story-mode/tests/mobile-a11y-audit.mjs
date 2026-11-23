@@ -1,11 +1,18 @@
 // Mobile accessibility audit (manual, not a CI gate).
-// Walks title -> story dialogue -> quest card/log -> Free Play yard -> village
-// -> shop -> pause -> world map (+ phone landscape) at phone and iPad sizes,
+// Walks title -> gardener setup (top + scrolled) -> story dialogue -> quest
+// card/log -> Free Play yard -> bug report -> village -> shop -> pause -> world
+// map (+ phone landscape) at phone, phone-landscape and iPad sizes,
 // running axe-core (WCAG 2.x A/AA + best-practice) plus a 44px tap-target,
 // font-size and off-screen-control probe and a keyboard/focus check.
 //
 //   npm run dev -- --port 5311 &
 //   GOS_URL=http://localhost:5311/garden-os/story-mode/ GOS_OUT=/tmp/a11y npm run a11y:mobile
+//
+// QUICK=1 stops after the title, setup, yard and bug-report states (no story
+// dialogue, village, shop or map). VPS=390x844,360x800 picks the sizes.
+// Every state also records `overlaps`: visible controls that sit under the
+// theme toggle (floating pill on main, #title-theme after the follow-up);
+// it must cover nothing.
 //
 // Writes <GOS_OUT>/<LABEL>-<viewport>-<state>.png and report-<LABEL>.json.
 import { chromium } from 'playwright';
@@ -15,7 +22,9 @@ const URL = process.env.GOS_URL || 'http://localhost:5173/garden-os/story-mode/'
 const LABEL = process.env.LABEL || 'audit';
 const OUT = process.env.GOS_OUT || process.env.OUT || 'mobile-a11y-audit';
 mkdirSync(OUT, { recursive: true });
-const VPS = (process.env.VPS || '390x844,360x800,1024x706').split(',').map((s) => { const [w, h] = s.split('x').map(Number); return { width: w, height: h, tag: s, phone: w < 600 }; });
+// Phone landscape sizes (844x390, 740x360) run every state in landscape;
+// a phone counts by its short side, so they get isMobile + touch too.
+const VPS = (process.env.VPS || '390x844,360x800,844x390,740x360,1024x706').split(',').map((s) => { const [w, h] = s.split('x').map(Number); return { width: w, height: h, tag: s, phone: Math.min(w, h) < 600, landscape: w > h }; });
 const report = { states: {}, errors: [], keyboard: {} };
 const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 
@@ -32,8 +41,29 @@ const probe = () => {
   while (walker.nextNode()) { const t = walker.currentNode; if (!t.textContent.trim()) continue; const el = t.parentElement; if (!el || seen.has(el)) continue; seen.add(el); const r = vis(el); if (!r) continue; const fs = parseFloat(getComputedStyle(el).fontSize); if (fs < 14 - 0.01) tiny.push(`${name(el)} ${fs}px`); }
   const offscreen = [];
   for (const sel of ['#hud-pause', '#hud-action', '#fab-plant', '#fab-backpack', '#fab-advance', '#village-back', '#village-map', '.quest-tracker [data-quest-log-toggle]']) { const el = document.querySelector(sel); if (!el) continue; const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); if (cs.display === 'none' || el.closest('[inert]')) continue; if (r.width && (r.left < 0 || r.top < 0 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5)) offscreen.push(`${sel} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`); }
+  const overlaps = [];
+  const toggle = document.querySelector('[data-garden-theme-toggle]');
+  let tr = toggle && vis(toggle);
+  // A toggle under an open sheet (e.g. the setup dialog) covers nothing.
+  if (tr) { const hit = document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2); if (!hit || !toggle.contains(hit)) tr = null; }
+  if (tr) {
+    for (const el of document.querySelectorAll('button, a[href], [role="button"], input:not([type=hidden]), select, textarea, label.profile-choice')) {
+      if (el === toggle || toggle.contains(el)) continue; const r = vis(el); if (!r) continue;
+      if (r.left < tr.right - 1 && r.right > tr.left + 1 && r.top < tr.bottom - 1 && r.bottom > tr.top + 1) overlaps.push(name(el));
+    }
+  }
+  const themeToggle = tr ? { x: Math.round(tr.left), y: Math.round(tr.top), w: Math.round(tr.width), h: Math.round(tr.height) } : null;
+  const pauseEl = document.querySelector('#hud-pause');
+  const pcs = pauseEl && getComputedStyle(pauseEl);
+  // Computed size, so it is recorded even while the HUD is hidden (title/setup).
+  const pauseBtn = pcs ? `${parseFloat(pcs.width)}x${parseFloat(pcs.height)}` : null;
   const meta = document.querySelector('meta[name=viewport]')?.content;
-  return { small, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
+  // ☰ must take its own taps (in phone landscape the Move stick used to sit on
+  // it). Not measured while a sheet or the pause menu is open over it.
+  const modalOpen = [...document.querySelectorAll('[aria-modal="true"]')].some((m) => vis(m));
+  const pr = !modalOpen && pauseEl && vis(pauseEl);
+  const pauseHit = pr ? Boolean(pauseEl.contains(document.elementFromPoint(pr.left + pr.width / 2, pr.top + pr.height / 2))) : null;
+  return { small, overlaps, themeToggle, pauseBtn, pauseHit, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
 };
 
 async function capture(p, vp, name) {
@@ -48,7 +78,7 @@ async function capture(p, vp, name) {
   } catch (e) { report.errors.push(`${key} axe ${e.message}`); }
   const pr = await p.evaluate(probe).catch((e) => ({ err: e.message }));
   report.states[key] = { axe, ...pr };
-  console.log('state', key, JSON.stringify(axe?.byImpact), 'small', pr.small?.length, 'tiny', pr.tinyCount, 'off', pr.offscreen?.length);
+  console.log('state', key, JSON.stringify(axe?.byImpact), 'small', pr.small?.length, 'tiny', pr.tinyCount, 'off', pr.offscreen?.length, 'overlaps', pr.overlaps?.length, 'pause', pr.pauseBtn, 'pauseHit', pr.pauseHit, pr.small?.length ? JSON.stringify(pr.small) : '', pr.overlaps?.length ? JSON.stringify(pr.overlaps) : '');
 }
 
 const mkctx = (vp) => b.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.phone, hasTouch: true, deviceScaleFactor: vp.phone ? 2 : 1 });
@@ -59,7 +89,23 @@ for (const vp of VPS) {
     try {
       await p.goto(URL); await p.waitForTimeout(2500);
       await capture(p, vp, '00-title');
+      {
+        const t = p.locator('[data-garden-theme-toggle]').first();
+        const themeOf = () => p.evaluate(() => document.documentElement.dataset.theme);
+        const before = await themeOf(); await t.click(); await p.waitForTimeout(300);
+        const flipped = await themeOf(); await t.click(); await p.waitForTimeout(300);
+        report.theme = report.theme || {};
+        report.theme[vp.tag] = { before, flipped, restored: await themeOf(), works: before !== flipped };
+      }
       await p.locator('button:has-text("New Game")').first().click(); await p.waitForTimeout(800);
+      await p.locator('.title-profile-setup').waitFor({ state: 'visible' }); await p.waitForTimeout(400);
+      await capture(p, vp, '11-setup');
+      // Scroll every scrollable box in the setup sheet to the end: the lower
+      // swatch rows are where a bottom-anchored floating control would sit.
+      await p.evaluate(() => { for (const el of [document.scrollingElement, ...document.querySelectorAll('.title-profile-setup, .title-profile-setup *')]) { if (el && el.scrollHeight > el.clientHeight + 4) el.scrollTop = el.scrollHeight; } });
+      await p.waitForTimeout(400);
+      await capture(p, vp, '12-setup-scrolled');
+      if (process.env.QUICK) throw new Error('QUICK');
       await p.locator('button:has-text("Start Story")').click();
       await p.waitForFunction(() => document.body.dataset.storyScreen === 'play', null, { timeout: 120000 });
       await p.waitForFunction(() => { const panel = document.querySelector('#dp-panel'); return panel?.classList.contains('dp-panel--visible') && parseFloat(getComputedStyle(panel).opacity) > 0.99 && (document.querySelector('#dp-text')?.textContent?.trim().length ?? 0) > 20; }, null, { timeout: 90000 }).catch(() => {});
@@ -78,7 +124,7 @@ for (const vp of VPS) {
       await capture(p, vp, '03-quest-card');
       await p.locator('.quest-tracker [data-quest-log-toggle]').click().catch(() => {}); await p.waitForTimeout(1000);
       await capture(p, vp, '04-quest-log');
-    } catch (e) { report.errors.push(`${vp.tag} story ${e.message.split('\n')[0]}`); }
+    } catch (e) { if (e.message !== 'QUICK') report.errors.push(`${vp.tag} story ${e.message.split('\n')[0]}`); }
     await ctx.close();
   }
   {
@@ -92,6 +138,15 @@ for (const vp of VPS) {
       await waitFor(() => { const d = window.gardenOS?.village?.getDebugState?.(); return d && d.zone === 'player_plot' && !d.travelling; });
       await p.waitForTimeout(1500);
       await capture(p, vp, '05-yard-hud');
+      {
+        const box = await p.locator('#hud-pause').boundingBox();
+        if (box) await p.screenshot({ path: `${OUT}/${LABEL}-${vp.tag}-05b-pause-button.png`, clip: { x: 0, y: 0, width: Math.min(vp.width, box.x + box.width + 160), height: box.y + box.height + 24 } }).catch(() => {});
+        report.states[`${vp.tag}-05-yard-hud`].pauseBox = box && `${Math.round(box.width)}x${Math.round(box.height)}`;
+      }
+      await p.locator('#fab-bug').click(); await p.locator('#bug-panel').waitFor({ state: 'visible' }); await p.waitForTimeout(600);
+      await capture(p, vp, '06-bug-report');
+      await p.locator('#bug-cancel').click(); await p.waitForTimeout(500);
+      if (process.env.QUICK) throw new Error('QUICK');
       await p.locator('#village-back').click();
       await waitFor(() => { const d = window.gardenOS?.village?.getDebugState?.(); return d && d.zone === 'village' && !d.travelling && d.bound; });
       await p.waitForTimeout(1200);
@@ -127,13 +182,13 @@ for (const vp of VPS) {
       kb.mapFocusOnOpen = await focusIn('#world-map-panel');
       for (let i = 0; i < 12; i++) await p.keyboard.press('Tab');
       kb.mapFocusAfter12Tabs = await focusIn('#world-map-panel');
-      if (vp.phone) {
+      if (vp.phone && !vp.landscape) {
         await p.keyboard.press('Escape'); await p.waitForTimeout(800);
         if (await p.locator('#pause-menu.is-open, #pause-menu[aria-hidden="false"]').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(800); }
         await p.setViewportSize({ width: vp.height, height: vp.width }); await p.waitForTimeout(2000);
         await capture(p, { ...vp, tag: `${vp.height}x${vp.width}` }, '10-landscape-village');
       }
-    } catch (e) { report.errors.push(`${vp.tag} freeplay ${e.message.split('\n')[0]}`); await p.screenshot({ path: `${OUT}/${LABEL}-${vp.tag}-ERR.png` }).catch(() => {}); }
+    } catch (e) { if (e.message === 'QUICK') { await ctx.close(); continue; } report.errors.push(`${vp.tag} freeplay ${e.message.split('\n')[0]}`); await p.screenshot({ path: `${OUT}/${LABEL}-${vp.tag}-ERR.png` }).catch(() => {}); }
     await ctx.close();
   }
 }

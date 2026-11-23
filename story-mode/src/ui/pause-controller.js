@@ -83,6 +83,12 @@ export function createPauseController({
       }
       syncPauseThemeButton();
       syncPauseGraphicsButton();
+      // The shell scrolls on short screens and kept its old position, so a
+      // reopened menu could start with Resume under the sticky title.
+      // Always open at the top (phone playthrough, Nov 23).
+      const pauseShell = pauseOverlay?.querySelector('.pause-shell');
+      if (pauseShell) pauseShell.scrollTop = 0;
+      if (pauseOverlay) pauseOverlay.scrollTop = 0;
       pauseOverlay?.classList.add('is-open');
       setElementInteractive(pauseOverlay, true);
     } else {
