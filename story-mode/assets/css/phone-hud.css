@@ -225,6 +225,11 @@
     text-shadow: var(--phone-hud-shadow);
   }
 
+  body[data-design-language="field-kit"] #village-prompt .interaction-prompt__label {
+    color: var(--phone-hud-ink, #fffaf0);
+    font-weight: 700;
+  }
+
   body[data-design-language="field-kit"] #village-prompt .interaction-prompt__hint {
     border: 0;
     background: #3d6b2e;
@@ -259,14 +264,25 @@
     padding: 0;
   }
 
-  /* A greyed-out Start Season is not an action: hide it until it is one. */
-  body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance:not(.is-visible) {
+  /* A greyed-out Start Season, or Plant outside Planning, is not an action:
+     hide it until it is one. */
+  body[data-design-language="field-kit"][data-story-screen="play"] :is(#fab-advance, #fab-plant):not(.is-visible) {
     display: none !important;
+  }
+
+  /* Intervention tokens: just the dots, no pill. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud-tokens {
+    border: 0;
+    background: transparent;
+    min-height: 44px;
+    padding: 0 4px;
   }
 
   body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
     border: 0;
     border-radius: 999px;
+    background: #3d6b2e;
+    color: #fffaf0;
     min-height: 52px;
     padding: 0 20px;
     box-shadow: 0 6px 16px rgba(18, 12, 6, 0.35);

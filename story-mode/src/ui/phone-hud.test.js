@@ -39,10 +39,10 @@ describe('mountPhoneStatusChip', () => {
     const chip = setup();
     expect(document.querySelectorAll('#hud-status-chip')).toHaveLength(1);
     expect(chip.element.parentElement.classList.contains('hud-right')).toBe(true);
-    expect(chip.element.textContent).toBe('🌱 0/32 · 📜 1');
+    expect(chip.element.querySelector('.hud-status-chip__text').textContent).toBe('🌱 0/32 · 📜 1');
     document.getElementById('hud-crops').textContent = '5 / 32';
     await new Promise((r) => setTimeout(r, 0));
-    expect(chip.element.textContent).toBe('🌱 5/32 · 📜 1');
+    expect(chip.element.querySelector('.hud-status-chip__text').textContent).toBe('🌱 5/32 · 📜 1');
     mountPhoneStatusChip({ doc: document });
     expect(document.querySelectorAll('#hud-status-chip')).toHaveLength(1);
   });
@@ -52,6 +52,8 @@ describe('mountPhoneStatusChip', () => {
     chip.element.click();
     expect(document.body.dataset.phoneStatus).toBe('open');
     expect(chip.element.getAttribute('aria-expanded')).toBe('true');
+    expect(chip.element.textContent).toMatch(/^🌱 0\/32 · 📜 1, 0 of 32 squares planted, 1 active quest\. Hide details/);
+    expect(chip.element.hasAttribute('aria-label')).toBe(false);
     document.querySelector('.quest-tracker').dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(document.body.dataset.phoneStatus).toBe('open');
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));

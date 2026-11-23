@@ -49,14 +49,22 @@ export function mountPhoneStatusChip({ doc = globalThis.document, signal } = {})
   chip.id = 'hud-status-chip';
   chip.className = 'hud-status-chip';
   chip.setAttribute('aria-expanded', 'false');
+  const visible = doc.createElement('span');
+  visible.className = 'hud-status-chip__text';
+  const spoken = doc.createElement('span');
+  spoken.className = 'sr-only';
+  chip.append(visible, spoken);
   rail.insertBefore(chip, rail.firstChild);
 
   const isOpen = () => doc.body.dataset[OPEN_ATTR] === 'open';
   const render = () => {
     const state = { crops: crops.textContent, quests: readQuestCount(doc), open: isOpen() };
+    // Visible text first, then the full sentence for screen readers, so the
+    // accessible name contains the visible label (axe label-content-name-mismatch).
     const text = buildStatusChipText(state);
-    if (chip.textContent !== text) chip.textContent = text;
-    chip.setAttribute('aria-label', buildStatusChipLabel(state));
+    const label = buildStatusChipLabel(state);
+    if (visible.textContent !== text) visible.textContent = text;
+    if (spoken.textContent !== `, ${label}`) spoken.textContent = `, ${label}`;
     chip.setAttribute('aria-expanded', state.open ? 'true' : 'false');
   };
   const setOpen = (open) => {
