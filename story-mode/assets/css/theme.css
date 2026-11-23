@@ -1361,3 +1361,60 @@ body[data-scene-held] #cutscene-layer .dp-panel *,
   }
 }
 
+
+/* iPad portrait Field Note overlap (fix/fieldnote-ipad-overlap, 23 Nov 2026).
+   PR #92 offset the decorative ::before stamp so it cleared Skip
+   (--dp-skip-clear), but only at landscape widths, and it never reserved
+   space in the text column. On portrait iPad / any viewport under 900px the
+   44x64 touch Skip and the stamp sat on the end of the dialogue line
+   (Dave's live mixmash.games/garden/ shot, covering "good soil.").
+
+   The stamp and Skip now live in a real .dp-meta-row (speaker | Field Note |
+   Skip) in normal flow, so they cannot cover #dp-text. The card also sits
+   above #fab-advance so Start Season stays visible and tappable. */
+.dp-panel::before,
+.dp-panel[data-side="right"]::before {
+  content: none;
+  display: none;
+}
+
+.dp-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.dp-meta-row .dp-speaker-badge {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dp-field-note {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.32);
+  background: rgba(var(--story-zone-accent-rgb, 138, 125, 61), 0.12);
+  color: rgba(48, 29, 15, 0.82);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.dp-meta-row .dp-skip-btn {
+  position: static;
+  top: auto;
+  right: auto;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Sit the Field Note card above Start Season (#fab-advance). */
+#cutscene-layer {
+  padding-bottom: max(env(safe-area-inset-bottom, 16px), 88px);
+}
