@@ -34,3 +34,43 @@ describe('touch stick vs tool row', () => {
     stick.dispose();
   });
 });
+
+describe('touch stick after a rotation (phone playthrough Nov 23)', () => {
+  afterEach(() => { document.body.innerHTML = ''; });
+
+  const pointer = (type, pointerId, x, y) => {
+    const e = new Event(type, { bubbles: true, cancelable: true });
+    Object.assign(e, { pointerId, clientX: x, clientY: y });
+    return e;
+  };
+
+  it('takes a new touch when the old drag never ended (no pointerup after rotating)', () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, configurable: true });
+    const stick = createTouchStick({ getObstacle: () => null });
+    stick.mount(document.body);
+    const ring = document.querySelector('.touch-stick').firstElementChild;
+    ring.getBoundingClientRect = () => rect(0, 0, 104, 104);
+    stick.setEnabled(true);
+    ring.dispatchEvent(pointer('pointerdown', 1, 52, 52));
+    // Rotation: pointer 1 is gone without a pointerup; jsdom holds no capture.
+    ring.dispatchEvent(pointer('pointerdown', 2, 52, 52));
+    ring.dispatchEvent(pointer('pointermove', 2, 104, 52));
+    expect(stick.getVector().x).toBeGreaterThan(0.9);
+    expect(stick.getVector().active).toBe(true);
+  });
+
+  it('ends a drag on orientationchange', () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, configurable: true });
+    const stick = createTouchStick({ getObstacle: () => null });
+    stick.mount(document.body);
+    const ring = document.querySelector('.touch-stick').firstElementChild;
+    ring.getBoundingClientRect = () => rect(0, 0, 104, 104);
+    stick.setEnabled(true);
+    ring.dispatchEvent(pointer('pointerdown', 1, 52, 52));
+    ring.dispatchEvent(pointer('pointermove', 1, 104, 52));
+    expect(stick.getVector().active).toBe(true);
+    window.dispatchEvent(new Event('orientationchange'));
+    expect(stick.getVector()).toEqual({ x: 0, y: 0, active: false });
+    stick.dispose();
+  });
+});

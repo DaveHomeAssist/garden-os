@@ -10,6 +10,8 @@
 //   - a tap on ☰ does not open the pause menu,
 //   - the hotbar scrolls sideways, or a slot is cut off (outside the row or
 //     the screen) or under 44x44 (360x800, 375x667, 320x568 portrait),
+//   - the bug-report button covers the crop counter, or the counter sits
+//     behind the season calendar,
 //   - a toast overlaps the Move stick (a test toast is added in the village,
 //     with and without the prompt card showing).
 //
@@ -54,6 +56,7 @@ const layout = () => {
     advance: vis(document.querySelector('#fab-advance')),
     back: vis(document.querySelector('#village-back')),
     bug: vis(document.querySelector('#fab-bug')),
+    crops: vis(document.querySelector('#hud-crops')),
     tracker: vis(document.querySelector('.quest-tracker')),
     toast: (() => {
       const boxes = [...document.querySelectorAll('#toast-container > .toast-notification.is-visible')].map(vis).filter(Boolean);
@@ -115,6 +118,9 @@ function evaluate(state, tag, l, failures) {
     if (l.hotbarFit.smallSlots.length) f(`hotbar slot(s) under 44px: ${l.hotbarFit.smallSlots.join(' ')}`);
   }
   if (overlap(r.toast, r.prompt)) f('a toast overlaps the prompt card');
+  if (overlap(r.bug, r.crops)) f('the bug-report button covers the crop counter');
+  if (overlap(r.crops, r.calendar)) f('the crop counter is behind the season calendar');
+  if (l.stickOn) for (const k of ['bug']) if (overlap(r.stick, r[k])) f(`Move stick overlaps ${k}`);
   if (overlap(r.toast, r.hotbar)) f('a toast overlaps the hotbar');
   for (const [k, v] of Object.entries(r)) if (v && (v.left < -0.5 || v.top < -0.5 || v.right > innerWidthOf(tag) + 0.5)) f(`${k} is off screen`);
 }

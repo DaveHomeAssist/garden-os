@@ -78,6 +78,16 @@
     bottom: calc(var(--phone-ls-bottom) + var(--phone-ls-hotbar-h) + 10px + 72px);
   }
 
+  /* The bug-report button sat top-right on the crop counter (48x36 overlap,
+     phone playthrough Nov 23). Top of the right column instead, above Plant
+     (Next 54 + Backpack 52 + Plant 48 + 8px gaps). */
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-bug {
+    top: auto;
+    left: auto;
+    right: var(--phone-ls-edge);
+    bottom: calc(var(--phone-ls-bottom) + 54px + 8px + 52px + 8px + 48px + 8px);
+  }
+
   /* Right column, bottom up: Next / Start Season, Backpack, Plant. */
   body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
     right: var(--phone-ls-edge);
@@ -231,5 +241,15 @@
   body .season-card__year,
   body .season-card__beat-label {
     line-height: 1.15;
+  }
+}
+
+/* Portrait phones: in Early Season the phase pill ("Early Winter") grows, the
+   HUD rail fills the row and the crop counter wrapped down behind the season
+   calendar (phone playthrough Nov 23). The chapter / "Free Play" pill repeats
+   the calendar's own title line, so drop it here and keep the counter in view. */
+@media (max-width: 430px) and (orientation: portrait) {
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud-chapter {
+    display: none !important;
   }
 }
