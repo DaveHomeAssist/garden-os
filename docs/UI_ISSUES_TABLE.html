@@ -975,15 +975,17 @@
     {
       "id": "056",
       "severity": "P2",
-      "status": "open",
+      "status": "done",
       "area": "Touch",
       "tool": "engine",
       "title": "Backpack drag-and-drop has no touch path",
-      "impact": "Seed dragging is unavailable on phones and tablets because the current interaction uses desktop HTML drag events.",
-      "verification": "Confirmed open in GitHub issue #40 on 2026-09-20; no Pointer Events fallback is present yet.",
-      "location": "story-mode/src/ui/backpack-panel.js",
+      "impact": "Seed dragging was unavailable on phones and tablets because the interaction used desktop HTML drag events.",
+      "fix": "One Pointer Events drag path now serves mouse, touch and pen, with touch-action none on slots, pointer capture, a drag ghost and cancel handling (GD-103, PR #50, commit 60d0310).",
+      "verification": "2026-11-23 tracker reconciled: backpack-panel.js and its touch-drag test read on origin/main 8146c33; the fix merged 2026-10-17. GitHub issue #40 had stayed open after the merge and was closed.",
+      "location": "story-mode/src/ui/backpack-panel.js; story-mode/src/ui/backpack-panel.test.js",
       "notes": "Backlog: https://github.com/DaveHomeAssist/garden-os/issues/40",
-      "added": "2026-09-20"
+      "added": "2026-09-20",
+      "resolved": "2026-10-17"
     },
     {
       "id": "057",

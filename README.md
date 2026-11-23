@@ -121,7 +121,7 @@ garden-os/
 - Recover the printable garden plan on the active v5 bed contract
 - Re-plan the live weather coach with explicit privacy, cache, offline, CSP, and
   permission behavior
-- Close the remaining Story Mode touch-drag and window-SFX backlog items
+- Close the remaining Story Mode window-SFX backlog item
 
 ## Links
 
