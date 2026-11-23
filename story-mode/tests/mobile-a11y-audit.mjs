@@ -58,8 +58,10 @@ const probe = () => {
   // Computed size, so it is recorded even while the HUD is hidden (title/setup).
   const pauseBtn = pcs ? `${parseFloat(pcs.width)}x${parseFloat(pcs.height)}` : null;
   const meta = document.querySelector('meta[name=viewport]')?.content;
-  // ☰ must take its own taps (in phone landscape the Move stick used to sit on it).
-  const pr = pauseEl && vis(pauseEl);
+  // ☰ must take its own taps (in phone landscape the Move stick used to sit on
+  // it). Not measured while a sheet or the pause menu is open over it.
+  const modalOpen = [...document.querySelectorAll('[aria-modal="true"]')].some((m) => vis(m));
+  const pr = !modalOpen && pauseEl && vis(pauseEl);
   const pauseHit = pr ? Boolean(pauseEl.contains(document.elementFromPoint(pr.left + pr.width / 2, pr.top + pr.height / 2))) : null;
   return { small, overlaps, themeToggle, pauseBtn, pauseHit, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
 };

@@ -36,7 +36,7 @@
      360 - 6 - 132 = 222px on a 740x360 phone). */
   body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
     top: calc(68px + env(safe-area-inset-top, 0px));
-    left: max(10px, env(safe-area-inset-left, 0px));
+    left: var(--hud-safe-inline, 10px);
     min-width: 150px;
     padding: 8px 10px;
   }
