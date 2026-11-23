@@ -9,9 +9,12 @@ import { getCropsForChapter } from '../../data/crops.js';
 import {
   LEGACY_TOKENS_LEDGER_TYPE,
   SEASON_END_DRIED_LEAVES,
+  applyPantrySale,
   foldLegacyTokens,
+  getCropSellPrice,
   getCurrencyBalance,
   getHarvestCompostScraps,
+  quotePantrySale,
 } from './village-economy.js';
 
 beforeEach(() => {
@@ -146,5 +149,86 @@ describe('compost scraps from a Free Play harvest', () => {
   it('one season of 12 cells is enough for a compost batch (2 leaves + 1 plant matter)', () => {
     const scraps = getHarvestCompostScraps({ occupiedCount: 12 });
     expect(Math.min(Math.floor(scraps.dried_leaves / 2), scraps.plant_matter)).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('village economy: sell pantry crops', () => {
+  function firstCrop() {
+    return getCropsForChapter(1)[0];
+  }
+
+  it('prices a chapter-1 crop at 5 coins, the same as its seed', () => {
+    const crop = firstCrop();
+    const seedPrice = (crop.chapterUnlock ?? 1) * 5;
+    expect(getCropSellPrice(crop.id)).toBe(seedPrice);
+    expect(getCropSellPrice(crop.id)).toBe(5);
+    expect(getCropSellPrice('not_a_crop')).toBe(0);
+  });
+
+  it('refuses sales outside Free Play and when the pantry is short', () => {
+    const story = createSandboxState();
+    story.campaign.sandbox = false;
+    story.campaign.pantry = { [firstCrop().id]: 8 };
+    expect(quotePantrySale(story.campaign, firstCrop().id, 1).ok).toBe(false);
+    expect(quotePantrySale(story.campaign, firstCrop().id, 1).code).toBe('NOT_FREEPLAY');
+
+    const free = createSandboxState();
+    free.campaign.pantry = { [firstCrop().id]: 2 };
+    expect(quotePantrySale(free.campaign, firstCrop().id, 3).code).toBe('NOT_ENOUGH');
+    expect(quotePantrySale(free.campaign, 'not_a_crop', 1).ok).toBe(false);
+  });
+
+  it('eight harvested starter crops pay for eight replacement seeds', () => {
+    const crop = firstCrop();
+    const state = createSandboxState();
+    state.campaign.currency.balance = 0;
+    state.campaign.pantry = { [crop.id]: 8 };
+    const seedPrice = (crop.chapterUnlock ?? 1) * 5;
+    const quote = quotePantrySale(state.campaign, crop.id, 8);
+    expect(quote).toMatchObject({ ok: true, revenue: 8 * seedPrice, unitPrice: seedPrice });
+    expect(quote.revenue).toBeGreaterThanOrEqual(8 * seedPrice);
+
+    const sold = applyPantrySale(state.campaign, crop.id, 8, { timestamp: 1 });
+    expect(sold.ok).toBe(true);
+    expect(sold.after).toBe(40);
+    expect(sold.campaign.pantry[crop.id]).toBeUndefined();
+    expect(sold.campaign.currency.ledger.at(-1)).toMatchObject({
+      type: 'village_sell',
+      cropId: crop.id,
+      count: 8,
+      delta: 40,
+      before: 0,
+      after: 40,
+      timestamp: 1,
+    });
+    // Original campaign is unchanged (pure).
+    expect(state.campaign.currency.balance).toBe(0);
+    expect(state.campaign.pantry[crop.id]).toBe(8);
+    // 40 coins buys eight more starter seeds.
+    expect(Math.floor(sold.after / seedPrice)).toBe(8);
+  });
+
+  it('VILLAGE_SHOP_SELL credits coins and takes pantry crops', () => {
+    const crop = firstCrop();
+    const state = createSandboxState();
+    state.campaign.currency.balance = 65;
+    state.campaign.pantry = { [crop.id]: 3 };
+    const store = new Store(state);
+    store.dispatch({ type: Actions.VILLAGE_SHOP_SELL, payload: { cropId: crop.id, count: 2 } });
+    const after = store.getState().campaign;
+    expect(after.currency.balance).toBe(65 + 10);
+    expect(after.pantry[crop.id]).toBe(1);
+    expect(after.currency.ledger.at(-1)).toMatchObject({ type: 'village_sell', cropId: crop.id, count: 2, delta: 10 });
+  });
+
+  it('VILLAGE_SHOP_SELL is a no-op in Story mode', () => {
+    const crop = firstCrop();
+    const state = createSandboxState();
+    state.campaign.sandbox = false;
+    state.campaign.pantry = { [crop.id]: 8 };
+    const store = new Store(state);
+    store.dispatch({ type: Actions.VILLAGE_SHOP_SELL, payload: { cropId: crop.id, count: 8 } });
+    expect(store.getState().campaign.currency.balance).toBe(100);
+    expect(store.getState().campaign.pantry[crop.id]).toBe(8);
   });
 });

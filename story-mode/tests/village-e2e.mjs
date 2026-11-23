@@ -311,7 +311,12 @@ try {
   await page.getByRole('button', { name: 'Continue Free Play', exact: true }).click();
   await page.waitForFunction(() => typeof window.render_game_to_text === 'function');
   await waitZone('player_plot');
-  await page.locator('#village-back').click();
+  // The back button is type=button and does not navigate. After the fixture
+  // reload, click() can still stall for 30s "waiting for scheduled
+  // navigations to finish" (CI 45260779780 on 9545453). noWaitAfter lets
+  // waitZone('village') be the assertion that travel completed.
+  await page.locator('#village-back').waitFor({ state: 'visible' });
+  await page.locator('#village-back').click({ noWaitAfter: true });
   await waitZone('village');
   await page.waitForTimeout(400);
   const ITEMS = ['dried_leaves', 'plant_matter', 'compost'];
