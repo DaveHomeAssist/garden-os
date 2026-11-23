@@ -143,6 +143,8 @@ for (const vp of VPS) {
         if (box) await p.screenshot({ path: `${OUT}/${LABEL}-${vp.tag}-05b-pause-button.png`, clip: { x: 0, y: 0, width: Math.min(vp.width, box.x + box.width + 160), height: box.y + box.height + 24 } }).catch(() => {});
         report.states[`${vp.tag}-05-yard-hud`].pauseBox = box && `${Math.round(box.width)}x${Math.round(box.height)}`;
       }
+      // Phones fold the bug button into the status chip (phone-hud.js): open it first.
+      if (await p.locator('#hud-status-chip').isVisible().catch(() => false)) { await p.locator('#hud-status-chip').click(); await p.waitForTimeout(300); }
       await p.locator('#fab-bug').click(); await p.locator('#bug-panel').waitFor({ state: 'visible' }); await p.waitForTimeout(600);
       await capture(p, vp, '06-bug-report');
       await p.locator('#bug-cancel').click(); await p.waitForTimeout(500);
