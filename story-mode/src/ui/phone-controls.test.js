@@ -66,4 +66,45 @@ describe('phone controls', () => {
     expect(p).toMatch(/width: max-content;/);
     expect(css).not.toMatch(/#village-prompt[^{]*\{[^}]*pointer-events: auto/);
   });
+
+  describe('small screens (fix/phone-small-screen)', () => {
+    // Second portrait block (the first one is the prompt card's).
+    const portrait = css.slice(css.indexOf('Small-screen pass'), css.indexOf('Short portrait phones'));
+    const short = block('(max-width: 600px) and (orientation: portrait) and (max-height: 640px)');
+    const toolHud = readFileSync(join(here, 'tool-hud.js'), 'utf8');
+    const html = readFileSync(join(here, '../../index.html'), 'utf8');
+
+    it('portrait hotbar sizes six slots to the screen, never under 44px', () => {
+      expect(portrait).toMatch(/--phone-pt-slot: clamp\(44px, calc\(\(100vw - 20px - 14px - 20px\) \/ 6\), 52px\);/);
+      expect(rule(portrait, '.tool-hud .tool-hud__slot')).toMatch(/flex: 0 0 var\(--phone-pt-slot\);/);
+      expect(rule(portrait, '.tool-hud.is-visible')).toMatch(/width: max-content;\s*max-width: calc\(100vw - 20px\);\s*gap: 4px;/);
+      // 6 x 44 + 5 x 4 + 12 + 2 fits a 320px phone with 10px edges.
+      expect(6 * 44 + 5 * 4 + 12 + 2).toBeLessThanOrEqual(320 - 20);
+    });
+
+    it('portrait toasts move right of the Move stick while the hotbar shows', () => {
+      const toast = rule(portrait, '#app:has(> .touch-stick) #toast-container');
+      expect(toast).toMatch(/left: calc\(140px \+ env\(safe-area-inset-left, 0px\)\);/);
+      expect(toast).toMatch(/transform: none;/);
+    });
+
+    it('short portrait phones drop the stick caption and tighten the hotbar', () => {
+      expect(short).toMatch(/--phone-pt-hotbar-bottom: 142px;/);
+      expect(short).toMatch(/--phone-pt-slot-h: 46px;/);
+      expect(rule(short, '#app > .touch-stick .touch-stick__label')).toMatch(/display: none;/);
+    });
+
+    it('HUD regions are landmarks (axe region) without layout wrappers', () => {
+      expect(html).toMatch(/<div id="hud" role="region" aria-label="Game status"/);
+      expect(html).toMatch(/id="bug-panel" role="region" aria-labelledby="bug-panel-title"/);
+      expect(toolHud).toMatch(/this\.region\.style\.display = 'contents';/);
+      expect(stick).toMatch(/root\.setAttribute\('aria-hidden', 'true'\);/);
+    });
+
+    it('phone text floor: calendar, landscape pills, setup and bug report labels at 12px', () => {
+      const floor = block('(max-width: 600px), (orientation: landscape) and (max-height: 500px)');
+      expect(floor).toMatch(/body \.season-card__beat-label,/);
+      expect(floor).toMatch(/body \.bug-report-panel \.bug-meta \{\s*font-size: 12px !important;/);
+    });
+  });
 });

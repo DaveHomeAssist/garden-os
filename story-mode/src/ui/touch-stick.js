@@ -34,6 +34,10 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
 
   const root = document.createElement('div');
   root.className = 'touch-stick';
+  // Pointer-only stand-in for WASD / arrow keys / tap-to-move: no keyboard or
+  // screen-reader role, so keep its "Move" caption out of the a11y tree
+  // (it was the one HUD piece outside a landmark on every touch screen).
+  root.setAttribute('aria-hidden', 'true');
   applyStyles(root, {
     position: 'absolute',
     left: stickLeft(),
@@ -130,7 +134,17 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
   }
 
   function onPointerDown(event) {
-    if (!enabled || activePointerId !== null) return;
+    if (!enabled) return;
+    // A drag that never got its pointerup / pointercancel (the phone rotated
+    // or the page resized mid-drag) left activePointerId set, and every later
+    // touch was ignored: the stick "moved 0 m" after a rotation (phone
+    // playthrough Nov 23, both builds). If the old pointer no longer holds
+    // the capture, it is gone: drop it and take the new touch.
+    if (activePointerId !== null) {
+      const stale = !(ring.hasPointerCapture?.(activePointerId) ?? false);
+      if (!stale) return;
+      reset();
+    }
     activePointerId = event.pointerId;
     ring.setPointerCapture?.(event.pointerId);
     updateVector(event);
@@ -177,6 +191,14 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
   ring.addEventListener('pointermove', onPointerMove);
   ring.addEventListener('pointerup', onPointerEnd);
   ring.addEventListener('pointercancel', onPointerEnd);
+  ring.addEventListener('lostpointercapture', onPointerEnd);
+  // Rotation moves the ring out from under the thumb: end any drag. Any
+  // resize re-checks the hotbar clearance for the new layout (a resize alone,
+  // e.g. the URL bar collapsing, must not end a drag).
+  const onViewportChange = () => { reset(); lastClearanceCheck = -Infinity; };
+  const onResize = () => { lastClearanceCheck = -Infinity; };
+  globalThis.addEventListener?.('orientationchange', onViewportChange);
+  globalThis.addEventListener?.('resize', onResize);
 
   return {
     mount(parent) {
@@ -203,6 +225,9 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
       ring.removeEventListener('pointermove', onPointerMove);
       ring.removeEventListener('pointerup', onPointerEnd);
       ring.removeEventListener('pointercancel', onPointerEnd);
+      ring.removeEventListener('lostpointercapture', onPointerEnd);
+      globalThis.removeEventListener?.('orientationchange', onViewportChange);
+      globalThis.removeEventListener?.('resize', onResize);
       root.remove();
     },
   };
