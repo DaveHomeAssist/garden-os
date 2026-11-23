@@ -2903,25 +2903,27 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
     it('AudioManager initializes only after a user gesture', async () => {
       // Mock AudioContext so init() can construct one
       const mockResume = vi.fn().mockResolvedValue(undefined);
-      const MockAudioContext = vi.fn().mockImplementation(() => ({
-        state: 'suspended',
-        resume: mockResume,
-        createOscillator: vi.fn(() => ({
-          type: 'sine',
-          frequency: { value: 0 },
-          connect: vi.fn(),
-          start: vi.fn(),
-          stop: vi.fn(),
-        })),
-        createGain: vi.fn(() => ({
-          gain: { value: 0 },
-          connect: vi.fn(),
-        })),
-        destination: {},
-        currentTime: 0,
-        close: vi.fn(),
-        suspend: vi.fn(),
-      }));
+      const MockAudioContext = vi.fn().mockImplementation(function () {
+        return {
+          state: 'suspended',
+          resume: mockResume,
+          createOscillator: vi.fn(() => ({
+            type: 'sine',
+            frequency: { value: 0 },
+            connect: vi.fn(),
+            start: vi.fn(),
+            stop: vi.fn(),
+          })),
+          createGain: vi.fn(() => ({
+            gain: { value: 0 },
+            connect: vi.fn(),
+          })),
+          destination: {},
+          currentTime: 0,
+          close: vi.fn(),
+          suspend: vi.fn(),
+        };
+      });
       globalThis.AudioContext = MockAudioContext;
 
       const am = new AudioManager();
@@ -2943,12 +2945,14 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
 
       // Stub Audio so createAudioElement returns a mock with a proper play() -> Promise
       const origAudio = globalThis.Audio;
-      globalThis.Audio = vi.fn().mockImplementation((url) => ({
-        src: url, loop: false, volume: 0, paused: true,
-        play: vi.fn().mockResolvedValue(undefined),
-        pause: vi.fn(),
-        remove: vi.fn(),
-      }));
+      globalThis.Audio = vi.fn().mockImplementation(function (url) {
+        return {
+          src: url, loop: false, volume: 0, paused: true,
+          play: vi.fn().mockResolvedValue(undefined),
+          pause: vi.fn(),
+          remove: vi.fn(),
+        };
+      });
 
       const am = new AudioManager();
 
@@ -2982,16 +2986,18 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
         stop: vi.fn(),
       };
       const mockGain = { gain: { value: 0 }, connect: vi.fn() };
-      const MockAudioContext = vi.fn().mockImplementation(() => ({
-        state: 'running',
-        resume: vi.fn().mockResolvedValue(undefined),
-        createOscillator: vi.fn(() => ({ ...mockOscillator })),
-        createGain: vi.fn(() => ({ ...mockGain })),
-        destination: {},
-        currentTime: 0,
-        close: vi.fn(),
-        suspend: vi.fn(),
-      }));
+      const MockAudioContext = vi.fn().mockImplementation(function () {
+        return {
+          state: 'running',
+          resume: vi.fn().mockResolvedValue(undefined),
+          createOscillator: vi.fn(() => ({ ...mockOscillator })),
+          createGain: vi.fn(() => ({ ...mockGain })),
+          destination: {},
+          currentTime: 0,
+          close: vi.fn(),
+          suspend: vi.fn(),
+        };
+      });
       globalThis.AudioContext = MockAudioContext;
 
       const am = new AudioManager();
@@ -3018,28 +3024,32 @@ describe('Phase 3 — Audio, Day/Night, Festivals, Monthly Events', () => {
     });
 
     it('mute/unmute toggles all audio output', async () => {
-      const MockAudioContext = vi.fn().mockImplementation(() => ({
-        state: 'running',
-        resume: vi.fn().mockResolvedValue(undefined),
-        createOscillator: vi.fn(() => ({
-          type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
-        })),
-        createGain: vi.fn(() => ({ gain: { value: 0 }, connect: vi.fn() })),
-        destination: {},
-        currentTime: 0,
-        close: vi.fn(),
-        suspend: vi.fn(),
-      }));
+      const MockAudioContext = vi.fn().mockImplementation(function () {
+        return {
+          state: 'running',
+          resume: vi.fn().mockResolvedValue(undefined),
+          createOscillator: vi.fn(() => ({
+            type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+          })),
+          createGain: vi.fn(() => ({ gain: { value: 0 }, connect: vi.fn() })),
+          destination: {},
+          currentTime: 0,
+          close: vi.fn(),
+          suspend: vi.fn(),
+        };
+      });
       globalThis.AudioContext = MockAudioContext;
 
       // Stub Audio so createAudioElement returns a mock with play() -> Promise
       const origAudio = globalThis.Audio;
-      globalThis.Audio = vi.fn().mockImplementation((url) => ({
-        src: url, loop: false, volume: 0, paused: true,
-        play: vi.fn().mockResolvedValue(undefined),
-        pause: vi.fn(),
-        remove: vi.fn(),
-      }));
+      globalThis.Audio = vi.fn().mockImplementation(function (url) {
+        return {
+          src: url, loop: false, volume: 0, paused: true,
+          play: vi.fn().mockResolvedValue(undefined),
+          pause: vi.fn(),
+          remove: vi.fn(),
+        };
+      });
 
       const am = new AudioManager();
       await am.init();
