@@ -14,6 +14,7 @@ import { createDialoguePanel } from './dialogue-panel.js';
 import { showWinterReview } from './winter-review.js';
 import { createCutsceneMachine } from '../game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './season-calendar.js';
+import { mountPhoneStatusChip } from './phone-hud.js';
 import {
   canUseTool,
   executeToolAction,
@@ -142,6 +143,8 @@ function bindUI({
 
   const calendarEl = createSeasonCalendar();
   document.getElementById('app')?.appendChild(calendarEl);
+  // Phones: crop counter + quest tracker + bug button fold into one chip.
+  mountPhoneStatusChip({ doc: document, signal: sessionListeners.signal });
 
   const hudChapter = document.getElementById('hud-chapter');
   const hudPhase = document.getElementById('hud-phase');
@@ -154,6 +157,27 @@ function bindUI({
   // the "tap for more" hint.
   const objectiveNarrow = typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_OBJECTIVE_QUERY) : null;
   let objectiveClampFrame = 0;
+  // Phones show a new objective in full once, then settle it to one line
+  // (phone-hud.css); a tap still expands it. Objectives seen before in this
+  // session come back already settled.
+  const OBJECTIVE_FRESH_MS = 7000;
+  const seenObjectives = new Set();
+  let objectiveFreshTimer = 0;
+  function markObjectiveFresh(text) {
+    if (!phaseHelper) return;
+    clearTimeout(objectiveFreshTimer);
+    if (!text || seenObjectives.has(text)) {
+      phaseHelper.classList.remove('is-fresh');
+      return;
+    }
+    seenObjectives.add(text);
+    phaseHelper.classList.add('is-fresh');
+    objectiveFreshTimer = setTimeout(() => {
+      phaseHelper.classList.remove('is-fresh');
+      scheduleObjectiveClampCheck();
+    }, OBJECTIVE_FRESH_MS);
+  }
+  sessionListeners.signal.addEventListener('abort', () => clearTimeout(objectiveFreshTimer));
   function setObjectiveExpanded(expanded) {
     if (!phaseHelper) return;
     phaseHelper.classList.toggle('is-expanded', Boolean(expanded));
@@ -163,6 +187,7 @@ function bindUI({
     objectiveClampFrame = requestAnimationFrame(() => {
       objectiveClampFrame = 0;
       const clamped = Boolean(objectiveNarrow?.matches) && !phaseHelper.classList.contains('is-expanded')
+        && !phaseHelper.classList.contains('is-fresh')
         && phaseHelper.scrollHeight > phaseHelper.clientHeight + 1;
       if (clamped) phaseHelper.dataset.truncated = 'true';
       else if (!phaseHelper.classList.contains('is-expanded')) delete phaseHelper.dataset.truncated;
@@ -1592,6 +1617,7 @@ function bindUI({
       if (phaseHelper.textContent !== helperText) {
         phaseHelper.textContent = helperText;
         setObjectiveExpanded(false);
+        markObjectiveFresh(helperText);
       }
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
       scheduleObjectiveClampCheck();

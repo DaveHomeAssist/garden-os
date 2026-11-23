@@ -4,6 +4,7 @@ import '../assets/css/hud-interactions.css';
 import '../assets/css/village-overlays.css';
 import '../assets/css/mobile-a11y.css';
 import '../assets/css/phone-controls.css';
+import '../assets/css/phone-hud.css';
 import '../../garden-theme.js';
 import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';

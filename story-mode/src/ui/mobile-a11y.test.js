@@ -38,9 +38,10 @@ describe('viewport and page shell', () => {
 
   it('loads the mobile a11y sheet after the HUD sheets and installs modal focus', () => {
     const imports = [...mainSrc.matchAll(/^import '(\.\.\/assets\/css\/[^']+)';/gm)].map((m) => m[1]);
-    // Only the layout-only phone controls sheet (positions, no sizes below
-    // 44px or type) may load after it.
-    expect(imports.slice(imports.indexOf('../assets/css/mobile-a11y.css') + 1)).toEqual(['../assets/css/phone-controls.css']);
+    // Only the phone layout sheets may load after it: phone controls
+    // (positions) and the phone HUD declutter (looks; its 44px / 12px floors
+    // are checked in phone-hud.test.js).
+    expect(imports.slice(imports.indexOf('../assets/css/mobile-a11y.css') + 1)).toEqual(['../assets/css/phone-controls.css', '../assets/css/phone-hud.css']);
     expect(mainSrc).toMatch(/installModalFocus\(\);/);
   });
 
