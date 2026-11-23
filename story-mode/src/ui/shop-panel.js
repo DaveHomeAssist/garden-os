@@ -287,6 +287,7 @@ export function createShopPanel(container) {
       width:min(92vw,420px);
       max-width:min(92vw,420px);
       max-height:82vh;
+      max-height:82dvh;
       overflow:auto;
       z-index:900;
       background:#3a2516;

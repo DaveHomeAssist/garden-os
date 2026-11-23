@@ -19,6 +19,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.
 - Fixed Story Mode switching to a second home plot bed when the player arrived at the home plot.
 - Fixed the quest tracker covering the world map and trade panel.
+- Fixed the Story Mode shop and compost sheets running under a phone browser's URL bar: their height now follows the visible screen.
 - Story Mode How To Play × now dismisses the full blur overlay (not only the inner sheet), so Continue is clickable again without a reload.
 - Harvest dialogue now uses singular/plural correctly ("1 thing" / "N things", "1 pull" / "N pulls") instead of always pluralizing.
 - Story Mode hides the floating light/dark toggle during play and offers Theme in the pause menu, so the toggle no longer covers panel close or Travel buttons.
