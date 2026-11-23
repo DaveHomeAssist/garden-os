@@ -7,11 +7,21 @@ function clamp(value, min, max) {
 }
 
 const STICK_BOTTOM_PX = 118;
+const STICK_LEFT_PX = 18;
 const TOOL_ROW_GAP_PX = 10;
 const CLEARANCE_CHECK_MS = 400;
 
-function stickBottom(px) {
-  return `calc(${Math.round(px)}px + env(safe-area-inset-bottom, 0px))`;
+// The resting spot comes from CSS custom properties so layouts can move the
+// stick without fighting the inline style: phone landscape
+// (assets/css/phone-controls.css) parks it in the bottom-left corner, clear of
+// the pause button and the season calendar. `lift` (px) is added on top when
+// the tool row would cover it. Both sides keep the safe-area insets.
+function stickBottom(lift) {
+  return `calc(var(--touch-stick-bottom, ${STICK_BOTTOM_PX}px) + ${Math.round(lift)}px + env(safe-area-inset-bottom, 0px))`;
+}
+
+function stickLeft() {
+  return `calc(var(--touch-stick-left, ${STICK_LEFT_PX}px) + env(safe-area-inset-left, 0px))`;
 }
 
 function rectsOverlap(a, b) {
@@ -24,10 +34,14 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
 
   const root = document.createElement('div');
   root.className = 'touch-stick';
+  // Pointer-only stand-in for WASD / arrow keys / tap-to-move: no keyboard or
+  // screen-reader role, so keep its "Move" caption out of the a11y tree
+  // (it was the one HUD piece outside a landmark on every touch screen).
+  root.setAttribute('aria-hidden', 'true');
   applyStyles(root, {
     position: 'absolute',
-    left: '18px',
-    bottom: stickBottom(STICK_BOTTOM_PX),
+    left: stickLeft(),
+    bottom: stickBottom(0),
     width: '112px',
     height: '132px',
     display: touchCapable ? 'flex' : 'none',
@@ -120,7 +134,17 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
   }
 
   function onPointerDown(event) {
-    if (!enabled || activePointerId !== null) return;
+    if (!enabled) return;
+    // A drag that never got its pointerup / pointercancel (the phone rotated
+    // or the page resized mid-drag) left activePointerId set, and every later
+    // touch was ignored: the stick "moved 0 m" after a rotation (phone
+    // playthrough Nov 23, both builds). If the old pointer no longer holds
+    // the capture, it is gone: drop it and take the new touch.
+    if (activePointerId !== null) {
+      const stale = !(ring.hasPointerCapture?.(activePointerId) ?? false);
+      if (!stale) return;
+      reset();
+    }
     activePointerId = event.pointerId;
     ring.setPointerCapture?.(event.pointerId);
     updateVector(event);
@@ -160,13 +184,21 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
     }
     if (Math.abs(next - lift) < 0.5) return;
     lift = next;
-    root.style.bottom = stickBottom(STICK_BOTTOM_PX + lift);
+    root.style.bottom = stickBottom(lift);
   }
 
   ring.addEventListener('pointerdown', onPointerDown);
   ring.addEventListener('pointermove', onPointerMove);
   ring.addEventListener('pointerup', onPointerEnd);
   ring.addEventListener('pointercancel', onPointerEnd);
+  ring.addEventListener('lostpointercapture', onPointerEnd);
+  // Rotation moves the ring out from under the thumb: end any drag. Any
+  // resize re-checks the hotbar clearance for the new layout (a resize alone,
+  // e.g. the URL bar collapsing, must not end a drag).
+  const onViewportChange = () => { reset(); lastClearanceCheck = -Infinity; };
+  const onResize = () => { lastClearanceCheck = -Infinity; };
+  globalThis.addEventListener?.('orientationchange', onViewportChange);
+  globalThis.addEventListener?.('resize', onResize);
 
   return {
     mount(parent) {
@@ -193,6 +225,9 @@ export function createTouchStick({ getObstacle = () => document.querySelector('.
       ring.removeEventListener('pointermove', onPointerMove);
       ring.removeEventListener('pointerup', onPointerEnd);
       ring.removeEventListener('pointercancel', onPointerEnd);
+      ring.removeEventListener('lostpointercapture', onPointerEnd);
+      globalThis.removeEventListener?.('orientationchange', onViewportChange);
+      globalThis.removeEventListener?.('resize', onResize);
       root.remove();
     },
   };

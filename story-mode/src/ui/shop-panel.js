@@ -108,8 +108,8 @@ function renderItemCard(item, tokens) {
     >
       <span style="font-size:24px;flex-shrink:0;">${escapeHtml(item.icon)}</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
-        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.description ?? '')}</div>
+        <div class="shop-item__name" style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:normal;overflow-wrap:anywhere;line-height:1.25;">${escapeHtml(item.name)}</div>
+        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;">${escapeHtml(item.description ?? '')}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <span class="shop-item__price" style="font-family:'DM Mono',monospace;font-size:13px;color:${canAfford ? '#e8c84a' : '#ef9877'};">${item.price}<span aria-hidden="true">🪙</span><span class="sr-only"> coins</span></span>

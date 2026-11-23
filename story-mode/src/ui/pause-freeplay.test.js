@@ -20,3 +20,18 @@ it('restarts the Free Play season with its existing dimensions and disposes list
   document.getElementById('pause-restart').click();
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
+
+it('reopens the pause menu scrolled to the top, so Resume is not under the sticky title', () => {
+  document.body.innerHTML = '<div class="pause-overlay" id="pause-menu"><div class="pause-shell"><div style="height:2000px"></div></div></div>';
+  const state = createSandboxState();
+  const controller = createPauseController({ getState: () => state, dispatch: vi.fn(), slot: 'freeplay',
+    updateHUD: vi.fn(), showToast: vi.fn(), syncToolHUDVisibility: vi.fn(),
+    isInterventionTargeting: () => false, isCropPaletteOpen: () => false, closePalette: vi.fn(), closePanelSheets: vi.fn() });
+  const shell = document.querySelector('.pause-shell');
+  controller.toggle();
+  shell.scrollTop = 400;
+  controller.toggle();
+  controller.toggle();
+  expect(shell.scrollTop).toBe(0);
+  controller.dispose();
+});

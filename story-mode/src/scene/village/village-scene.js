@@ -372,6 +372,9 @@ export function createVillageScene({
     creditsEl = document.createElement('div');
     creditsEl.className = 'village-credits';
     creditsEl.dataset.villageCredits = 'true';
+    // Landmark so the attribution is not stray content (axe "region").
+    creditsEl.setAttribute('role', 'region');
+    creditsEl.setAttribute('aria-label', 'Map credits');
     creditsEl.textContent = `Street layout: ${layout.credits.join(' · ')}`;
     Object.assign(creditsEl.style, {
       position: 'fixed', right: '8px', bottom: 'calc(4px + env(safe-area-inset-bottom, 0px))', zIndex: '4',

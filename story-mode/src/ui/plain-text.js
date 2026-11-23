@@ -74,6 +74,8 @@ export function formatHudScore(score) {
 
 /** What the V0 village lets you do (no NPCs, no quests yet). */
 export const VILLAGE_OBJECTIVE_TEXT = 'Village: walk to the seed stand, seed box, tool shed or compost bin and press E or tap the prompt. Walk onto your plot to go home and garden.';
+/** Touch screens have no E key: the prompt's Tap chip is the way in. */
+export const VILLAGE_OBJECTIVE_TEXT_TOUCH = 'Village: walk to the seed stand, seed box, tool shed or compost bin and tap the Tap button on the prompt. Walk onto your plot to go home and garden.';
 
 /**
  * Text for the centred "Current objective" banner.
@@ -91,11 +93,12 @@ export function buildObjectiveText({
   zoneName = 'your garden',
   forageAvailable = 0,
   nextPhaseLabel = null,
+  touch = false,
 } = {}) {
   const atHome = !zoneId || zoneId === 'player_plot';
   // The village has no bed and no neighbours to talk to yet: describe V0's
   // stations whatever the garden phase is.
-  if (zoneId === 'village') return VILLAGE_OBJECTIVE_TEXT;
+  if (zoneId === 'village') return touch ? VILLAGE_OBJECTIVE_TEXT_TOUCH : VILLAGE_OBJECTIVE_TEXT;
   // Free Play has no chapters, no winter review and no 8-crop minimum.
   if (sandbox && phase === 'PLANNING' && season === 'winter') {
     return planted > 0
@@ -111,7 +114,8 @@ export function buildObjectiveText({
     }
     if (!atHome) {
       const forage = forageAvailable > 0 ? ` ${forageAvailable} foraging spot${forageAvailable === 1 ? '' : 's'} here.` : '';
-      return `You're in ${zoneName}. Talk to neighbors with E.${forage} Head home to plant.`;
+      const talk = touch ? 'Walk up to neighbors and tap the prompt to talk.' : 'Talk to neighbors with E.';
+      return `You're in ${zoneName}. ${talk}${forage} Head home to plant.`;
     }
     if (sandbox) {
       return planted === 0
@@ -123,7 +127,9 @@ export function buildObjectiveText({
     return 'Bed is ready. Plant more if you like, or press Start Season.';
   }
   if (phase === 'EARLY_SEASON' || phase === 'MID_SEASON' || phase === 'LATE_SEASON') {
-    return nextPhaseLabel ? `The season is growing. Press Next for ${nextPhaseLabel}.` : 'The season is growing. Press Next to move on.';
+    // Same word as the button: it reads "Continue" all through winter.
+    const advance = season === 'winter' ? 'Continue' : 'Next';
+    return nextPhaseLabel ? `The season is growing. Press ${advance} for ${nextPhaseLabel}.` : `The season is growing. Press ${advance} to move on.`;
   }
   if (phase === 'TRANSITION') return 'Season complete. Press Continue for the next chapter.';
   return '';

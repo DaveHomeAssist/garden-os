@@ -36,9 +36,11 @@ describe('viewport and page shell', () => {
     expect(indexHtml).not.toMatch(/id="pause-resume"[^>]*aria-label/);
   });
 
-  it('loads the mobile a11y sheet last and installs modal focus', () => {
+  it('loads the mobile a11y sheet after the HUD sheets and installs modal focus', () => {
     const imports = [...mainSrc.matchAll(/^import '(\.\.\/assets\/css\/[^']+)';/gm)].map((m) => m[1]);
-    expect(imports.at(-1)).toBe('../assets/css/mobile-a11y.css');
+    // Only the layout-only phone controls sheet (positions, no sizes below
+    // 44px or type) may load after it.
+    expect(imports.slice(imports.indexOf('../assets/css/mobile-a11y.css') + 1)).toEqual(['../assets/css/phone-controls.css']);
     expect(mainSrc).toMatch(/installModalFocus\(\);/);
   });
 
@@ -116,6 +118,53 @@ describe('modal focus', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('returns focus to a tapped opener that hides while its sheet is open (village prompt)', () => {
+    let t = 1000;
+    api = installModalFocus({ now: () => t });
+    const opener = document.getElementById('opener');
+    // A tap: pointerdown on the control, no focus (iOS Safari), then it hides.
+    opener.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    opener.hidden = true;
+    t += 100;
+    const sheet = openSheet();
+    api.sync();
+    expect(document.activeElement).toBe(sheet);
+
+    sheet.remove();
+    t += 100;
+    api.sync();
+    // Still hidden: nothing to focus yet, and focus is not forced elsewhere.
+    expect(document.activeElement).toBe(document.body);
+    opener.hidden = false;
+    t += 100;
+    api.sync();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('gives up on an opener that never comes back, and leaves keyboard-opened sheets on body', () => {
+    let t = 1000;
+    api = installModalFocus({ now: () => t });
+    const opener = document.getElementById('opener');
+    opener.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    opener.hidden = true;
+    let sheet = openSheet();
+    api.sync();
+    sheet.remove();
+    api.sync();
+    t += 5000;
+    opener.hidden = false;
+    api.sync();
+    expect(document.activeElement).toBe(document.body);
+
+    // A sheet opened from a game key long after any tap has no opener.
+    t += 5000;
+    sheet = openSheet();
+    api.sync();
+    sheet.remove();
+    api.sync();
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it('leaves Tab alone when no dialog is open', () => {
     api = installModalFocus();
     const gameTab = vi.fn();
@@ -179,5 +228,28 @@ describe('tool dock names', () => {
     const labels = [...document.querySelectorAll('.tool-hud__slot')].map((b) => b.getAttribute('aria-label'));
     expect(labels).toEqual(['Water, key 1', 'Plant, key 7']);
     hud.dispose?.();
+  });
+});
+
+describe('follow-up: room playtest of #98', () => {
+  const ruleFor = (selector) => a11yCss.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+
+  it('lifts the setup swatches and bug report actions to 44px', () => {
+    expect(ruleFor('body .profile-choice')).toMatch(/min-height:\s*44px/);
+    expect(ruleFor('body .bug-report-actions button')).toMatch(/min-height:\s*44px/);
+  });
+
+  it('puts the title theme switch in the title actions, not in a floating pill', () => {
+    const actions = indexHtml.match(/<div class="title-footer-actions" id="title-actions">([\s\S]*?)<\/div>\s*<div class="title-modes"/)?.[1] ?? '';
+    expect(actions).toMatch(/<button type="button" class="title-link-btn" id="title-theme" data-garden-theme-toggle>/);
+    expect(actions).toMatch(/data-theme-icon aria-hidden="true"/);
+    expect(actions).toMatch(/data-theme-label/);
+    expect(mainSrc).toMatch(/getElementById\('title-theme'\)\?\.addEventListener\('click'/);
+    expect(a11yCss).toMatch(/\.garden-theme-toggle:not\(#title-theme\)\s*\{\s*display:\s*none !important;/);
+  });
+
+  it('names Save Report by its visible text', () => {
+    const tag = indexHtml.match(/<button class="bug-btn-send"[^>]*>/)?.[0] ?? '';
+    expect(tag).toMatch(/aria-label="Save Report\b/);
   });
 });
