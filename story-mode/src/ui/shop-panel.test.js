@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { createShopPanel } from './shop-panel.js';
 import { Store, Actions } from '../game/store.js';
 import { createGameState } from '../game/state.js';
+import { getCropsForChapter } from '../data/crops.js';
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="root"></div>';
@@ -135,6 +136,44 @@ describe('shop-panel', () => {
     const recipeButtons = panel.querySelectorAll('[data-buy-item]');
     expect(recipeButtons.length).toBeGreaterThan(0);
 
+    shop.dispose();
+  });
+
+  it('Free Play seed stand shows a Sell tab and selling raises the balance', () => {
+    const state = createGameState();
+    state.campaign.sandbox = true;
+    state.campaign.currency.balance = 65;
+    const crop = getCropsForChapter(1)[0];
+    state.campaign.pantry = { [crop.id]: 8 };
+    const store = new Store(state);
+    const shop = createShopPanel(getRoot());
+    shop.open({ name: 'Seed stand' }, store);
+
+    const panel = getRoot().querySelector('#shop-panel');
+    const sellTab = panel.querySelector('[data-shop-tab="sell"]');
+    expect(sellTab).not.toBeNull();
+    expect(panel.textContent).toContain('Balance: 65');
+    sellTab.click();
+
+    const sellAll = panel.querySelector(`[data-sell-crop="${crop.id}"][data-sell-count="8"]`);
+    expect(sellAll).not.toBeNull();
+    sellAll.click();
+
+    const after = store.getState();
+    expect(after.campaign.currency.balance).toBe(105);
+    expect(after.campaign.pantry[crop.id]).toBeUndefined();
+    expect(getRoot().querySelector('#shop-panel').textContent).toContain('Balance: 105');
+    expect(getRoot().querySelector('[data-shop-message]').textContent).toMatch(/Sold 8/);
+    shop.dispose();
+  });
+
+  it('Story mode shops do not grow a Sell tab', () => {
+    const state = createGameState();
+    state.campaign.sandbox = false;
+    const store = new Store(state);
+    const shop = createShopPanel(getRoot());
+    shop.open({ name: 'Seed stand' }, store);
+    expect(getRoot().querySelector('[data-shop-tab="sell"]')).toBeNull();
     shop.dispose();
   });
 });
