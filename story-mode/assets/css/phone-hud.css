@@ -95,7 +95,8 @@
 
   body[data-design-language="field-kit"][data-story-screen="play"][data-phone-status="open"] #fab-bug {
     position: fixed;
-    top: calc(var(--hud-safe-block, 8px) + 52px + env(safe-area-inset-top, 0px));
+    /* Under the chip and clear of Back to village (top 88px, 44px tall). */
+    top: calc(140px + env(safe-area-inset-top, 0px));
     right: max(10px, env(safe-area-inset-right, 0px));
     bottom: auto;
     left: auto;
@@ -103,7 +104,7 @@
   }
 
   body[data-design-language="field-kit"][data-story-screen="play"][data-phone-status="open"] .quest-tracker {
-    top: calc(var(--hud-safe-block, 8px) + 52px + 56px + env(safe-area-inset-top, 0px));
+    top: calc(196px + env(safe-area-inset-top, 0px));
     right: max(10px, env(safe-area-inset-right, 0px));
     bottom: auto;
     left: auto;
