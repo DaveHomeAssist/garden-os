@@ -123,7 +123,7 @@ export function createCompostPanel(container) {
     sheet.setAttribute('aria-label', 'Compost bin');
     sheet.style.cssText = `
       position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-      max-width:min(92vw,420px);max-height:82vh;overflow:auto;z-index:900;
+      max-width:min(92vw,420px);max-height:82vh;max-height:82dvh;overflow:auto;z-index:900;
       background:#3a2516;border:1px solid rgba(247,242,234,0.12);border-radius:12px;
       padding:20px;box-shadow:0 8px 32px rgba(0,0,0,0.6);
     `;
