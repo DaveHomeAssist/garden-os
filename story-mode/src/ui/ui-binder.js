@@ -1411,6 +1411,14 @@ function bindUI({
     hudScore?.classList.add('is-harvest-glow');
 
     finalizeHarvestProgression();
+    if (state.campaign.sandbox) {
+      const result = state.season.harvestResult;
+      const units = Object.values(result?.yieldCounts ?? {}).reduce((sum, n) => sum + n, 0)
+        || (result?.yieldList?.length ?? 0);
+      if (units > 0) {
+        showToast('Crops are in the pantry. Sell them at the seed stand for coins.', 2800);
+      }
+    }
     showHarvestReveal(
       document.getElementById('overlay-container'),
       state.season.harvestResult,
