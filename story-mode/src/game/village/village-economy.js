@@ -9,6 +9,8 @@
  * every harvested or failed cell, plus a few dried leaves at each season end.
  */
 
+import { addItemToInventoryState } from '../inventory.js';
+
 export const LEGACY_TOKENS_LEDGER_TYPE = 'legacy_tokens';
 export const VILLAGE_SHOP_LEDGER_TYPE = 'village_shop';
 export const LEDGER_LIMIT = 50;
@@ -73,4 +75,47 @@ export function getHarvestCompostScraps(harvestResult) {
     plant_matter: Math.min(MAX_PLANT_MATTER_PER_HARVEST, Math.max(0, Math.floor(occupied))),
     dried_leaves: SEASON_END_DRIED_LEAVES,
   };
+}
+
+/**
+ * Put compost scraps in the backpack, as many of each kind as fit. A single
+ * all-or-nothing add dropped the whole stack when it was one short, so the
+ * scraps vanished with no message. addItemToInventoryState stays the only
+ * judge of capacity: try the full amount, then one fewer, until it fits.
+ * `added` has the same keys as `scraps` (0 when nothing fit); `leftBehind`
+ * only lists kinds that did not fully fit.
+ * Returns { inventory, added, leftBehind, full }.
+ */
+export function addCompostScrapsToInventory(inventoryState, scraps) {
+  let inventory = inventoryState;
+  const added = {};
+  const leftBehind = {};
+  for (const [itemId, wanted] of Object.entries(scraps ?? {})) {
+    added[itemId] = 0;
+    if (!(wanted > 0)) continue;
+    for (let count = wanted; count > 0; count -= 1) {
+      const result = addItemToInventoryState(inventory, itemId, count);
+      if (!result.success) continue;
+      inventory = result.inventory;
+      added[itemId] = count;
+      break;
+    }
+    if (added[itemId] < wanted) leftBehind[itemId] = wanted - added[itemId];
+  }
+  return { inventory, added, leftBehind, full: Object.keys(leftBehind).length > 0 };
+}
+
+/**
+ * Free Play harvest payout: puts the scraps for `result` in `campaign.inventory`
+ * and marks the result so a re-opened reveal can never pay out twice. Scraps
+ * that do not fit are left behind (the flag is still set). Mutates `campaign`
+ * and `result`, so call it on a draft. Returns { awarded, full }.
+ */
+export function awardHarvestCompostScraps(campaign, result) {
+  if (!campaign?.sandbox || !result || result.compostScrapsAwarded) return { awarded: false, full: false };
+  const delivered = addCompostScrapsToInventory(campaign.inventory, getHarvestCompostScraps(result));
+  campaign.inventory = delivered.inventory;
+  result.compostScrapsAwarded = true;
+  result.compostScraps = delivered.added;
+  return { awarded: true, full: delivered.full };
 }
