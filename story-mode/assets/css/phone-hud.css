@@ -31,6 +31,13 @@
     --phone-hud-well-strong: rgba(26, 18, 10, 0.62);
   }
 
+  /* The touch orbit overlay (z-index 12, right 60% of the screen) sat over
+     the status chip, so taps reached it only through the overlay's tap
+     forwarding. Lift the rail above it; the rail itself is click-through. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud {
+    z-index: 13;
+  }
+
   /* HUD rail: no panels, no pills. ☰ stays a 44px target. */
   body[data-design-language="field-kit"][data-story-screen="play"] .hud-left,
   body[data-design-language="field-kit"][data-story-screen="play"] .hud-right {
