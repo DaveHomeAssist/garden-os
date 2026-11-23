@@ -714,8 +714,8 @@ export function createQuestController({
     trackerEl.classList.toggle('is-collapsed', trackerCollapsed);
     trackerEl.innerHTML = `
       <div class="quest-tracker__bar">
-        <button type="button" class="quest-tracker__header" data-quest-log-toggle aria-label="Open quest log (Q)">
-          <span>Quests</span><span class="quest-tracker__count">${active.length}/3</span><kbd>Q</kbd>
+        <button type="button" class="quest-tracker__header" data-quest-log-toggle>
+          <span>Quests</span> <span class="quest-tracker__count">${active.length}/3</span> <kbd>Q</kbd><span class="sr-only">, open quest log</span>
         </button>
         <button type="button" class="quest-tracker__collapse" data-quest-tracker-collapse
           aria-expanded="${trackerCollapsed ? 'false' : 'true'}"
@@ -789,6 +789,7 @@ export function createQuestController({
     logEl.className = 'panel-sheet is-open quest-log';
     logEl.id = 'quest-log-panel';
     logEl.setAttribute('role', 'dialog');
+    logEl.setAttribute('aria-modal', 'true');
     logEl.setAttribute('aria-label', 'Quest log');
     hudRoot.appendChild(logEl);
     renderLog();

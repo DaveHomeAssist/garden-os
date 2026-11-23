@@ -15,11 +15,13 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Added a walkable village to Free Play, where you can walk or tap your way to your garden, the Seed stand, the Seed box, the Tool shed and the Compost bin. The shops spend your coins, harvests leave compost scraps for the bin, and the yard gained a wheelbarrow, rain barrel, bench and birdhouse.
 
 ### Fixed
+- On a phone-shaped screen, the village camera sits lower and a little closer so the character reads as a person and the street ahead stays in view, instead of a near top-down sliver. Desktop and landscape framing is unchanged.
 - Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.
 - Fixed Story Mode switching to a second home plot bed when the player arrived at the home plot.
 - Fixed the quest tracker covering the world map and trade panel.
+- Fixed the Story Mode shop and compost sheets running under a phone browser's URL bar: their height now follows the visible screen.
 - Story Mode How To Play × now dismisses the full blur overlay (not only the inner sheet), so Continue is clickable again without a reload.
 - Harvest dialogue now uses singular/plural correctly ("1 thing" / "N things", "1 pull" / "N pulls") instead of always pluralizing.
 - Story Mode hides the floating light/dark toggle during play and offers Theme in the pause menu, so the toggle no longer covers panel close or Travel buttons.

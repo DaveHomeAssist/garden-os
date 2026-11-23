@@ -83,6 +83,12 @@ export function createPauseController({
       }
       syncPauseThemeButton();
       syncPauseGraphicsButton();
+      // The shell scrolls on short screens and kept its old position, so a
+      // reopened menu could start with Resume under the sticky title.
+      // Always open at the top (phone playthrough, Nov 23).
+      const pauseShell = pauseOverlay?.querySelector('.pause-shell');
+      if (pauseShell) pauseShell.scrollTop = 0;
+      if (pauseOverlay) pauseOverlay.scrollTop = 0;
       pauseOverlay?.classList.add('is-open');
       setElementInteractive(pauseOverlay, true);
     } else {
@@ -108,7 +114,8 @@ export function createPauseController({
     const title = button.querySelector('[data-pause-graphics-title]');
     const label = q.choice === 'auto' ? `Auto (${GRAPHICS_LABEL[q.tier]})` : GRAPHICS_LABEL[q.choice];
     if (title) title.textContent = `Graphics: ${label}`;
-    button.setAttribute('aria-label', `Graphics quality ${label}. Activate to change.`);
+    // The visible title + copy are the accessible name (WCAG 2.5.3 label in name).
+    button.removeAttribute('aria-label');
   }
 
   function syncPauseThemeButton() {
@@ -126,7 +133,7 @@ export function createPauseController({
         ? 'Use the light appearance.'
         : 'Use the dark appearance.';
     }
-    button.setAttribute('aria-label', `Switch to ${next} theme`);
+    button.removeAttribute('aria-label');
   }
 
   function showProfileSheet() {

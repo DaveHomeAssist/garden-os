@@ -22,11 +22,11 @@ export function createBackToVillageButton(container, onClick) {
   button.type = 'button';
   button.className = 'village-back-button';
   button.id = 'village-back';
-  button.textContent = '← Back to village';
+  button.innerHTML = '<span aria-hidden="true">←</span> Back to village';
   button.setAttribute('aria-label', 'Back to village (Esc)');
   button.style.cssText = `
-    position:fixed;top:calc(88px + env(safe-area-inset-top, 0px));right:12px;z-index:40;
-    border:1px solid rgba(247,242,234,0.12);border-radius:999px;padding:8px 14px;
+    position:fixed;top:calc(88px + env(safe-area-inset-top, 0px));right:calc(12px + env(safe-area-inset-right, 0px));z-index:40;
+    min-height:44px;border:1px solid rgba(247,242,234,0.12);border-radius:999px;padding:8px 14px;
     font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
     background:#3a2516;color:#f7f2ea;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);
   `;
@@ -69,7 +69,9 @@ function createVillagePrompt(container, onActivate) {
       const coarse = globalThis.matchMedia?.('(pointer: coarse)').matches ?? false;
       hint.textContent = coarse ? 'Tap' : 'E';
       label.textContent = text;
-      button.setAttribute('aria-label', `${coarse ? 'Tap' : 'Interact'}: ${text}`);
+      // The visible label is the name (the Tap / E chip is decorative), so
+      // voice control users can say what they see (WCAG 2.5.3).
+      button.removeAttribute('aria-label');
       button.hidden = false;
       button.classList.add('is-visible');
     },

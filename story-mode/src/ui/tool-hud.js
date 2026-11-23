@@ -19,7 +19,8 @@ function createToolSlot(tool, index) {
   button.className = 'tool-hud__slot';
   button.dataset.toolId = tool.id;
   button.title = tool.label;
-  button.setAttribute('aria-label', `${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`);
+  // Name carries the visible key number so voice control ("tap 2") matches.
+  button.setAttribute('aria-label', `${tool.label}, key ${tool.shortcut ?? String(index + 1)}`);
 
   const icon = document.createElement('span');
   icon.className = 'tool-hud__icon';
@@ -46,7 +47,15 @@ export class ToolHUD {
     this.selectedToolId = null;
     this.visible = false;
     this.root = createShell();
-    this.container.append(this.root);
+    // Landmark for the hotbar (axe "region": a toolbar is not a landmark).
+    // display: contents keeps the row's own fixed/absolute layout untouched.
+    this.region = document.createElement('section');
+    this.region.className = 'tool-hud-region';
+    this.region.setAttribute('aria-label', 'Garden tools');
+    this.region.setAttribute('aria-hidden', 'true');
+    this.region.style.display = 'contents';
+    this.region.append(this.root);
+    this.container.append(this.region);
 
     this.inputManager.registerAction('tool_slot_1', { keys: ['1'] });
     this.inputManager.registerAction('tool_slot_2', { keys: ['2'] });
@@ -112,6 +121,7 @@ export class ToolHUD {
     this.root.hidden = !this.visible;
     this.root.classList.toggle('is-visible', this.visible);
     this.root.setAttribute('aria-hidden', this.visible ? 'false' : 'true');
+    this.region.setAttribute('aria-hidden', this.visible ? 'false' : 'true');
   }
 
   dispose() {
@@ -119,6 +129,7 @@ export class ToolHUD {
     this.disposers.length = 0;
     this.buttons.clear();
     this.root.remove();
+    this.region.remove();
   }
 
   selectRelative(delta) {

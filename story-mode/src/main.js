@@ -2,6 +2,8 @@ import '../assets/css/hud-foundation.css';
 import '../assets/css/hud-controls.css';
 import '../assets/css/hud-interactions.css';
 import '../assets/css/village-overlays.css';
+import '../assets/css/mobile-a11y.css';
+import '../assets/css/phone-controls.css';
 import '../../garden-theme.js';
 import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
@@ -9,8 +11,21 @@ import { loadContentPacks } from './game/pack-loader.js';
 import { installPackContent, resetPackContent } from './content/content-registry.js';
 import { loadInstalledPacks } from './content/installed-packs.js';
 import { isOfficialContent } from './content/official-content.js';
+import { installModalFocus } from './ui/modal-focus.js';
 
 document.body.dataset.designLanguage = 'field-kit';
+installModalFocus();
+
+// Theme on the title screen lives in the title actions grid (#title-theme),
+// not in the shared floating toggle: on phones that pill sat on top of Import
+// Save and the setup swatches. garden-theme.js sees this button (it carries
+// data-garden-theme-toggle), skips the floating one and keeps its icon and
+// label in sync; in play, Theme lives in the pause menu.
+document.getElementById('title-theme')?.addEventListener('click', () => {
+  const theme = window.GardenTheme;
+  if (!theme?.setTheme) return;
+  theme.setTheme(theme.getTheme() === 'dark' ? 'light' : 'dark');
+});
 
 let runtimeModulesPromise = null;
 
