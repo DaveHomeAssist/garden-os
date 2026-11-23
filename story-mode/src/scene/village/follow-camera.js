@@ -203,7 +203,12 @@ export function occlusionDistance(origin, dest, obstacles = [], opts = {}) {
     if (metres < limit) limit = metres;
   }
   if (!hit) return full;
-  return Math.max(minDistance, Math.min(full, limit - margin));
+  // Prefer the comfort stand-off, but a wall closer than that wins. Pushing
+  // back out to minDistance would put the camera through the surface.
+  const beforeSurface = Math.max(0.12, limit - margin);
+  const cleared = Math.min(Math.max(0.12, limit - 0.08), beforeSurface);
+  if (cleared >= minDistance) return Math.min(full, cleared);
+  return Math.max(0.12, Math.min(limit - 0.05, cleared));
 }
 
 /** Camera position for a look target. */
@@ -330,11 +335,12 @@ export function createFollowRig(options = {}) {
     const full = Math.hypot(desired.x - chest.x, desired.y - chest.y, desired.z - chest.z) || distance;
     const allowed = occlusionDistance(chest, desired, obstacles, {
       margin: HEADING.pullMargin,
-      minDistance: Math.min(HEADING.minDistance, full),
+      minDistance: HEADING.minDistance,
     });
-    const pullGoal = Math.min(1, Math.max(HEADING.minDistance / Math.max(full, HEADING.minDistance), allowed / full));
+    const pullGoal = full > 1e-4 ? Math.min(1, Math.max(0, allowed / full)) : 1;
     // pullState is applied after it has been sprung by update/snap. place() reads it.
-    const pull = Math.min(1, Math.max(0.18, Number.isFinite(pullState.value) ? pullState.value : pullGoal));
+    // No comfort-distance floor here: a near wall must be allowed to win.
+    const pull = Math.min(1, Math.max(0, Number.isFinite(pullState.value) ? pullState.value : pullGoal));
     const cam = {
       x: chest.x + (desired.x - chest.x) * pull,
       y: chest.y + (desired.y - chest.y) * pull,
@@ -465,10 +471,14 @@ export function createFollowRig(options = {}) {
       const idleDelay = reducedMotion ? 0 : HEADING.idleYawDelay;
       if (facing != null) {
         const behind = behindYaw(facing);
+        // The manual orbit is applied again in place(). The player's facing
+        // already follows getAzimuth(), which includes that offset, so the
+        // heading goal must not include it or forward-walk spins forever.
+        const headingGoal = behind - manualState.value;
         if (moving || activity) {
           holdingIdle = false;
           idleTime = 0;
-          yawGoal = behind;
+          yawGoal = headingGoal;
           activity = false;
         } else if (!holdingIdle) {
           holdingIdle = true;
@@ -477,7 +487,7 @@ export function createFollowRig(options = {}) {
           yawState.velocity = 0;
         } else {
           idleTime += step;
-          if (idleTime >= idleDelay) yawGoal = behind;
+          if (idleTime >= idleDelay) yawGoal = behind - manualState.value;
         }
       }
       if (!moving && !activity && holdingIdle && idleTime >= idleDelay) {

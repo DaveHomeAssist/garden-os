@@ -174,6 +174,50 @@ describe('follow camera', () => {
     expect(Math.abs(wrapAngle(rig.getAzimuth() - behindYaw(Math.PI)))).toBeLessThan(0.2);
   });
 
+  it('keeps a manual orbit from turning a forward walk into a spin', () => {
+    const rig = createFollowRig();
+    rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);
+    rig.addManualYaw(0.5);
+    rig.update({ position: { x: 0, y: 0, z: 0 }, facing: Math.PI, moving: false, speed: 0 }, 1 / 60);
+    const start = rig.getAzimuth();
+    let x = 0;
+    let z = 0;
+    for (let i = 0; i < 60; i += 1) {
+      const az = rig.getAzimuth();
+      const facing = Math.atan2(-Math.sin(az), -Math.cos(az));
+      const speed = 1.85;
+      x += Math.sin(facing) * speed / 60;
+      z += Math.cos(facing) * speed / 60;
+      rig.update({
+        position: { x, y: 0, z },
+        facing,
+        moving: true,
+        speed,
+        velocity: { x: Math.sin(facing) * speed, z: Math.cos(facing) * speed },
+      }, 1 / 60);
+    }
+    expect(Math.abs(wrapAngle(rig.getAzimuth() - start))).toBeLessThan(0.2);
+  });
+
+  it('pulls inside the comfort distance when a wall is closer than that', () => {
+    const cottage = { x: -2.47, z: -7.4, w: 3.4, d: 2.5, h: 4.2, rotationY: 0 };
+    const rig = createFollowRig();
+    rig.snap({ x: -2.47, y: 0, z: -5.8 }, 0);
+    rig.setObstacles([cottage]);
+    for (let i = 0; i < 90; i += 1) {
+      rig.update({
+        position: { x: -2.47, y: 0, z: -5.8 },
+        facing: 0,
+        moving: false,
+        speed: 0,
+      }, 1 / 30);
+    }
+    const cam = rig.getPosition();
+    const chest = { x: -2.47, y: 0.95, z: -5.8 };
+    expect(segmentHitsOrientedBox(chest, cam, cottage)).toBe(false);
+    expect(cam.z).toBeGreaterThan(-6.15);
+  });
+
   it('pulls the camera in when a wall sits between it and the gardener', () => {
     const rig = createFollowRig();
     rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);

@@ -234,9 +234,17 @@ export function createCameraController(camera, domElement) {
       }
     },
     applyOrbitDelta(dTheta, dPhi) {
+      targetPose = null;
+      if (headingFollow) {
+        headingRig.addManualYaw(-dTheta);
+        headingRig.addPitchOffset(-dPhi);
+        headingRig.apply(camera);
+        lastApplied.copy(camera.position);
+        theta = headingRig.getAzimuth();
+        return;
+      }
       theta -= dTheta;
       phi = Math.max(0.48, Math.min(1.34, phi - dPhi));
-      targetPose = null;
       updateOrbit();
     },
     getTarget() { return target; },
