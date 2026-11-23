@@ -1,7 +1,9 @@
 /**
- * Camera Controller — orbit + pinch-zoom for mobile, preset poses.
+ * Camera Controller — orbit + pinch-zoom for mobile, preset poses, and a
+ * third-person heading follow (the same rig as the village).
  */
 import * as THREE from 'three';
+import { createFollowRig, prefersReducedMotion, resolveFollowFrame } from './village/follow-camera.js';
 
 const POSES = {
   overview: { position: [0, 3.45, 5.35], target: [0, 0.44, -0.18] },
@@ -24,6 +26,12 @@ export function createCameraController(camera, domElement) {
   let lerpSpeed = 0.1;
   let followStrength = 0.12;
   let followEnabled = false;
+  let headingFollow = false;
+  let headingPose = null;
+  let headingObstacles = [];
+  const headingRig = createFollowRig();
+  const lastApplied = new THREE.Vector3();
+  let followFov = null;
 
   function updateOrbit() {
     camera.position.set(
@@ -63,9 +71,17 @@ export function createCameraController(camera, domElement) {
     lastX = e.clientX;
     lastY = e.clientY;
 
+    targetPose = null;
+    if (headingFollow) {
+      headingRig.addManualYaw(-dx * 0.005);
+      headingRig.addPitchOffset(-dy * 0.005);
+      headingRig.apply(camera);
+      lastApplied.copy(camera.position);
+      theta = headingRig.getAzimuth();
+      return;
+    }
     theta -= dx * 0.005;
     phi = Math.max(0.48, Math.min(1.34, phi - dy * 0.005));
-    targetPose = null;
     updateOrbit();
   };
   listen('pointermove', onPointerMove);
@@ -91,10 +107,19 @@ export function createCameraController(camera, domElement) {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const delta = pinchDist - dist;
-      radius = Math.max(4.4, Math.min(11.5, radius + delta * 0.02));
-      pinchDist = dist;
       targetPose = null;
-      updateOrbit();
+      if (headingFollow) {
+        const frame = resolveFollowFrame(camera.aspect || 1);
+        const next = headingRig.getUserDistance() + delta * 0.002;
+        const metres = frame.distance * next;
+        headingRig.setUserDistance(Math.min(14, Math.max(4.4, metres)) / frame.distance);
+        headingRig.apply(camera);
+        lastApplied.copy(camera.position);
+      } else {
+        radius = Math.max(4.4, Math.min(11.5, radius + delta * 0.02));
+        updateOrbit();
+      }
+      pinchDist = dist;
     }
   };
   listen('touchmove', onTouchMove, { passive: true });
@@ -102,8 +127,17 @@ export function createCameraController(camera, domElement) {
   // Mouse wheel zoom
   const onWheel = (e) => {
     e.preventDefault();
-    radius = Math.max(4.4, Math.min(11.5, radius + e.deltaY * 0.01));
     targetPose = null;
+    if (headingFollow) {
+      const frame = resolveFollowFrame(camera.aspect || 1);
+      const next = headingRig.getUserDistance() + e.deltaY * 0.001;
+      const metres = frame.distance * next;
+      headingRig.setUserDistance(Math.min(14, Math.max(4.4, metres)) / frame.distance);
+      headingRig.apply(camera);
+      lastApplied.copy(camera.position);
+      return;
+    }
+    radius = Math.max(4.4, Math.min(11.5, radius + e.deltaY * 0.01));
     updateOrbit();
   };
   listen('wheel', onWheel, { passive: false });
@@ -114,7 +148,7 @@ export function createCameraController(camera, domElement) {
     // Horizontal orbit angle. Movement input is rotated by this so "up" walks
     // the way the camera faces (camera-relative), not fixed world-north.
     getAzimuth() {
-      return theta;
+      return headingFollow ? headingRig.getAzimuth() : theta;
     },
     setPose(poseName) {
       const pose = POSES[poseName];
@@ -126,14 +160,36 @@ export function createCameraController(camera, domElement) {
     },
     setFollowTarget(nextTarget, options = {}) {
       if (!nextTarget) return;
-      followTarget.copy(nextTarget);
+      const point = nextTarget.position ?? nextTarget;
+      followTarget.set(point.x ?? 0, point.y ?? 0, point.z ?? 0);
       if (typeof options.strength === 'number') {
         followStrength = options.strength;
       }
       followEnabled = options.enabled ?? true;
+      const facing = options.facing ?? nextTarget.facing;
+      if (Number.isFinite(facing)) {
+        headingFollow = true;
+        headingPose = {
+          position: { x: followTarget.x, y: followTarget.y, z: followTarget.z },
+          facing,
+          moving: Boolean(options.moving),
+          speed: options.speed ?? 0,
+          velocity: options.velocity ?? null,
+        };
+        if (Array.isArray(options.obstacles)) headingObstacles = options.obstacles;
+        headingRig.setObstacles(headingObstacles);
+        headingRig.setReducedMotion(options.reducedMotion ?? prefersReducedMotion());
+        if (!headingRig.isInitialised()) {
+          if (options.snap) headingRig.snap(headingPose.position, facing);
+          else headingRig.seedFromCamera(camera, headingPose);
+          headingRig.apply(camera);
+          lastApplied.copy(camera.position);
+        }
+      }
     },
     clearFollowTarget() {
       followEnabled = false;
+      headingFollow = false;
     },
     // lerpSpeed and followStrength are tuned per 60 Hz frame; convert them to
     // the actual frame time so easing speed doesn't depend on refresh rate.
@@ -148,9 +204,33 @@ export function createCameraController(camera, domElement) {
         if (camera.position.distanceTo(targetPose.position) < 0.01) {
           targetPose = null;
         }
+        lastApplied.copy(camera.position);
+      } else if (headingFollow && headingPose) {
+        if (camera.position.distanceTo(lastApplied) > 0.08) {
+          headingRig.seedFromCamera(camera, headingPose);
+        }
+        const frame = resolveFollowFrame(camera.aspect || 1);
+        headingRig.setFrame(frame);
+        headingRig.setReducedMotion(prefersReducedMotion());
+        headingRig.setObstacles(headingObstacles);
+        headingPose = {
+          ...headingPose,
+          position: { x: followTarget.x, y: followTarget.y, z: followTarget.z },
+        };
+        headingRig.update(headingPose, dt);
+        headingRig.apply(camera);
+        lastApplied.copy(camera.position);
+        theta = headingRig.getAzimuth();
+        target.set(headingRig.getTarget().x, headingRig.getTarget().y, headingRig.getTarget().z);
+        followFov = frame.fov;
+        if (Number.isFinite(followFov) && Math.abs(camera.fov - followFov) > 0.01) {
+          camera.fov = followFov;
+          camera.updateProjectionMatrix();
+        }
       } else if (followEnabled) {
         target.lerp(followTarget, 1 - Math.pow(1 - followStrength, frames));
         updateOrbit();
+        lastApplied.copy(camera.position);
       }
     },
     applyOrbitDelta(dTheta, dPhi) {

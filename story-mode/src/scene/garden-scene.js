@@ -12,6 +12,7 @@ import { applySceneStyle, getStyleForPhase } from './scene-style.js';
 import { createWeatherFX, DayNightCycle } from './weather-fx.js';
 import { createCameraController } from './camera-controller.js';
 import { createPlayerCharacter } from './player-character.js';
+import { COTTAGE, YARD_TREES } from './yard-art/yard-layout.js';
 import { ResourceTracker } from './resource-tracker.js';
 import { disposeSprites, getGrowthTexture, getPendingSpriteCount, onSpriteLoaded, GROWTH_STAGE } from './sprite-loader.js';
 import { COLS, ROWS } from '../game/state.js';
@@ -1221,6 +1222,9 @@ export function createGardenScene(container) {
   }
 
   function setScenePhase(phase, opts = {}) {
+    if (phase === 'CELEBRATION' && currentScenePhase !== 'CELEBRATION') {
+      playerCharacter.playAction?.('celebrate');
+    }
     currentScenePhase = phase;
     setSceneStyle(getStyleForPhase(phase), opts);
   }
@@ -1397,6 +1401,26 @@ export function createGardenScene(container) {
   const playerFollowScratch = new THREE.Vector3();
   const playerFocusTarget = new THREE.Vector3();
   let playerState = null;
+  // Raised bed, cottage and the two yard trees. The follow ray pulls in
+  // instead of letting one of them hide the gardener.
+  const yardOccluders = [
+    { minX: -2.28, maxX: 2.28, minZ: -1.42, maxZ: 1.42, h: 1.05 },
+    {
+      x: COTTAGE.position.x,
+      z: COTTAGE.position.z,
+      w: COTTAGE.halfWidth * 2,
+      d: COTTAGE.halfDepth * 2,
+      h: 4.2,
+      rotationY: COTTAGE.rotationY ?? 0,
+    },
+    ...YARD_TREES.map((tree) => ({
+      kind: 'sphere',
+      x: tree.x,
+      y: 1.45 * tree.scale,
+      z: tree.z,
+      r: 0.95 * tree.scale,
+    })),
+  ];
 
   // Accumulated time for atmosphere animations
   let atmosphereTime = 0;
@@ -1533,13 +1557,15 @@ export function createGardenScene(container) {
     if (!nextPlayerState) return;
     playerState = nextPlayerState;
     playerCharacter.update(nextPlayerState);
-    playerFollowScratch.copy(playerFollowHome).lerp(
-      playerCharacter.getFocusTarget(playerFocusTarget),
-      0.28,
-    );
+    const pos = nextPlayerState.position ?? playerFollowHome;
+    playerFollowScratch.set(pos.x ?? 0, pos.y ?? 0, pos.z ?? 0);
     camCtrl.setFollowTarget(playerFollowScratch, {
-      strength: nextPlayerState.moving ? 0.16 : 0.1,
       enabled: true,
+      facing: nextPlayerState.facing,
+      moving: Boolean(nextPlayerState.moving),
+      speed: nextPlayerState.speed ?? 0,
+      velocity: nextPlayerState.velocity ?? null,
+      obstacles: yardOccluders,
     });
   }
 
@@ -3685,6 +3711,19 @@ function getGrowthScale(phase, season) {
     setCameraPreset,
     getCameraAzimuth() {
       return camCtrl.getAzimuth?.() ?? 0;
+    },
+    getCameraDebug() {
+      return {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z,
+        fov: camera.fov,
+        azimuth: camCtrl.getAzimuth?.() ?? 0,
+        aspect: camera.aspect || 1,
+      };
+    },
+    playPlayerAction(name) {
+      playerCharacter.playAction?.(name);
     },
     applyCameraOrbitDelta(dTheta, dPhi) {
       camCtrl.applyOrbitDelta(dTheta, dPhi);

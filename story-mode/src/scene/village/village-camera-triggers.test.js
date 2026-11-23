@@ -3,12 +3,16 @@ import * as THREE from 'three';
 import {
   FOLLOW_DEFAULTS,
   PORTRAIT_FOLLOW,
+  behindYaw,
   createFollowRig,
+  criticallyDamped,
   dampFactor,
   followOffset,
+  occlusionDistance,
   resolveFollowFrame,
   segmentHitsOrientedBox,
   verticalFovForAspect,
+  wrapAngle,
 } from './follow-camera.js';
 import { createTriggerTracker } from './village-triggers.js';
 import { createVillageScene } from './village-scene.js';
@@ -31,7 +35,7 @@ describe('follow camera', () => {
     expect(dampFactor(6, 0)).toBe(0);
   });
 
-  it('uses a fixed yaw and the planned pitch/distance', () => {
+  it('keeps the framing offset basis at yaw 0 and starts a rig there', () => {
     const off = followOffset({ pitchDeg: 50, distance: 11, yaw: 0 });
     expect(off.x).toBeCloseTo(0, 9);
     expect(Math.hypot(off.x, off.y, off.z)).toBeCloseTo(11, 9);
@@ -83,7 +87,9 @@ describe('follow camera', () => {
       overlayParent: null,
       loadProps: false,
     });
-    village.setPlayerPose({ x: 0, z: 0, facingY: 0 });
+    // Facing -z puts the camera on +z, which is the framing the portrait
+    // numbers were tuned for. Heading follow then keeps that view behind them.
+    village.setPlayerPose({ x: 0, z: 0, facingY: Math.PI });
     village.camera.aspect = 390 / 844;
     village.update(1 / 30);
     const cam = village.camera;
@@ -113,7 +119,7 @@ describe('follow camera', () => {
       overlayParent: null,
       loadProps: false,
     });
-    village.setPlayerPose({ x: 0, z: 0, facingY: 0 });
+    village.setPlayerPose({ x: 0, z: 0, facingY: Math.PI });
     village.camera.aspect = 16 / 9;
     village.update(1 / 30);
     const off = followOffset(FOLLOW_DEFAULTS);
@@ -122,6 +128,112 @@ describe('follow camera', () => {
     expect(village.camera.position.y).toBeCloseTo(FOLLOW_DEFAULTS.lookHeight + off.y, 5);
     expect(village.camera.position.z).toBeCloseTo(off.z, 5);
     village.dispose();
+  });
+
+  it('eases behind a new heading without arriving in one frame, and recentres only after the idle delay', () => {
+    const rig = createFollowRig();
+    rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);
+    expect(rig.getAzimuth()).toBeCloseTo(0, 5);
+    const seeded = rig.getAzimuth();
+    rig.update({ position: { x: 0, y: 0, z: 0 }, facing: Math.PI, moving: false, speed: 0 }, 1 / 60);
+    expect(rig.getAzimuth()).toBeCloseTo(seeded, 5);
+
+    const goal = behindYaw(Math.PI / 2);
+    for (let i = 0; i < 3; i += 1) {
+      rig.update({
+        position: { x: 0.05 * i, y: 0, z: 0 },
+        facing: Math.PI / 2,
+        moving: true,
+        speed: 1.85,
+        velocity: { x: 1.85, z: 0 },
+      }, 1 / 60);
+    }
+    const mid = rig.getAzimuth();
+    expect(Math.abs(wrapAngle(mid - seeded))).toBeGreaterThan(0.02);
+    expect(Math.abs(wrapAngle(mid - goal))).toBeGreaterThan(0.35);
+
+    for (let i = 0; i < 90; i += 1) {
+      rig.update({
+        position: { x: 2, y: 0, z: 0 },
+        facing: Math.PI / 2,
+        moving: true,
+        speed: 1.85,
+        velocity: { x: 1.85, z: 0 },
+      }, 1 / 60);
+    }
+    expect(rig.getAzimuth()).toBeCloseTo(goal, 1);
+
+    const parked = rig.getAzimuth();
+    for (let i = 0; i < 20; i += 1) {
+      rig.update({ position: { x: 2, y: 0, z: 0 }, facing: Math.PI, moving: false, speed: 0 }, 1 / 60);
+    }
+    expect(Math.abs(wrapAngle(rig.getAzimuth() - parked))).toBeLessThan(0.08);
+    for (let i = 0; i < 90; i += 1) {
+      rig.update({ position: { x: 2, y: 0, z: 0 }, facing: Math.PI, moving: false, speed: 0 }, 1 / 60);
+    }
+    expect(Math.abs(wrapAngle(rig.getAzimuth() - behindYaw(Math.PI)))).toBeLessThan(0.2);
+  });
+
+  it('pulls the camera in when a wall sits between it and the gardener', () => {
+    const rig = createFollowRig();
+    rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);
+    const open = rig.getPosition();
+    rig.setObstacles([{ minX: -2, maxX: 2, minZ: 3, maxZ: 4.2, h: 6 }]);
+    for (let i = 0; i < 40; i += 1) {
+      rig.update({ position: { x: 0, y: 0, z: 0 }, facing: Math.PI, moving: false, speed: 0 }, 1 / 30);
+    }
+    const pulled = rig.getPosition();
+    expect(pulled.z).toBeLessThan(open.z - 0.5);
+    expect(pulled.z).toBeGreaterThan(1.2);
+    const origin = { x: 0, y: 0.95, z: 0 };
+    const blocked = occlusionDistance(origin, open, [{ minX: -2, maxX: 2, minZ: 3, maxZ: 4.2, h: 6 }]);
+    expect(blocked).toBeLessThan(Math.hypot(open.x, open.y - origin.y, open.z));
+    expect(blocked).toBeGreaterThan(2);
+  });
+
+  it('damps a critically damped spring the same way at 30 and 144 fps', () => {
+    const run = (fps) => {
+      const state = { value: 0, velocity: 0 };
+      const steps = Math.round(fps * 0.5);
+      for (let i = 0; i < steps; i += 1) criticallyDamped(state, 10, 7.5, 0.5 / steps);
+      return state.value;
+    };
+    expect(run(30)).toBeCloseTo(run(144), 5);
+    expect(run(30)).toBeGreaterThan(8);
+    expect(run(30)).toBeLessThan(10);
+  });
+
+  it('drops the movement look-ahead when reduced motion is on', () => {
+    const rig = createFollowRig({ reducedMotion: true });
+    rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);
+    for (let i = 0; i < 40; i += 1) {
+      rig.update({
+        position: { x: 0, y: 0, z: 0 },
+        facing: Math.PI,
+        moving: true,
+        speed: 1.85,
+        velocity: { x: 0, z: -1.85 },
+      }, 1 / 60);
+    }
+    expect(rig.getTarget().z).toBeGreaterThan(-0.15);
+    expect(rig.getAzimuth()).toBeCloseTo(0, 2);
+  });
+
+  it('adds a movement look-ahead without changing the idle wide framing', () => {
+    const rig = createFollowRig();
+    rig.snap({ x: 0, y: 0, z: 0 }, Math.PI);
+    const idle = rig.getPosition();
+    for (let i = 0; i < 90; i += 1) {
+      rig.update({
+        position: { x: 0, y: 0, z: -2 },
+        facing: Math.PI,
+        moving: true,
+        speed: 1.85,
+        velocity: { x: 0, z: -1.85 },
+      }, 1 / 60);
+    }
+    expect(rig.getTarget().z).toBeLessThan(-2.25);
+    expect(idle.z).toBeGreaterThan(6);
   });
 
   it('finds houses between camera and player (cutaway test)', () => {

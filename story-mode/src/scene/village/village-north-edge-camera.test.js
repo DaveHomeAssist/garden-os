@@ -63,7 +63,8 @@ describe('village north-edge camera', () => {
   it('cuts the boundary trees between the camera and a player at the north edge, then restores them', () => {
     const v = make();
     const all = visibleTrees(v).length;
-    v.setPlayerPose({ x: midX, z: b.maxZ - 0.3, facingY: 0 });
+    // Face south so the follow camera sits north of the player, over the treeline.
+    v.setPlayerPose({ x: midX, z: b.maxZ - 0.3, facingY: Math.PI });
     for (let i = 0; i < 30; i += 1) v.update(1 / 30);
     const cam = v.camera.position;
     expect(cam.z).toBeGreaterThan(b.maxZ + 3); // the camera really is out over the treeline
@@ -84,18 +85,21 @@ describe('village north-edge camera', () => {
 
   it('cuts nothing in the middle of the map or at the south edge', () => {
     const v = make();
-    for (const z of [(b.minZ + b.maxZ) / 2, b.minZ + 0.3]) {
-      v.setPlayerPose({ x: midX, z, facingY: 0 });
-      for (let i = 0; i < 20; i += 1) v.update(1 / 30);
-      expect(v.getDebugState().treesCut).toBe(0);
-    }
+    // Face south at the south edge so the camera stays inside the map, and
+    // face north in the middle (camera still clear of the boundary trees).
+    v.setPlayerPose({ x: midX, z: (b.minZ + b.maxZ) / 2, facingY: 0 });
+    for (let i = 0; i < 20; i += 1) v.update(1 / 30);
+    expect(v.getDebugState().treesCut).toBe(0);
+    v.setPlayerPose({ x: midX, z: b.minZ + 0.3, facingY: Math.PI });
+    for (let i = 0; i < 20; i += 1) v.update(1 / 30);
+    expect(v.getDebugState().treesCut).toBe(0);
     v.dispose();
   });
 
   it('has no canopy on the sight line anywhere along the north edge', () => {
     const v = make();
     for (let x = b.minX + 0.5; x <= b.maxX - 0.5; x += (b.maxX - b.minX) / 8) {
-      v.setPlayerPose({ x, z: b.maxZ - 0.3, facingY: 0 });
+      v.setPlayerPose({ x, z: b.maxZ - 0.3, facingY: Math.PI });
       v.update(1 / 30);
       const cam = v.camera.position;
       const blockers = visibleTrees(v).filter((t) => canopyBlocksSight(t, cam, { x, y: 0.9, z: b.maxZ - 0.3 }));

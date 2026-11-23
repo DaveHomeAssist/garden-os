@@ -276,6 +276,10 @@ export class ZoneManager {
     this.activeZoneId = zoneId;
     this.activeZoneInstance = instance ?? null;
     this.triggerArmed = false;
+    const canvas = this.renderer?.domElement;
+    if (canvas?.clientWidth && canvas?.clientHeight) {
+      this.resize(canvas.clientWidth, canvas.clientHeight);
+    }
     this.activeZoneInstance?.setSpawnPoint?.(spawnPoint);
     this.activeZoneInstance?.setSeason?.(
       this.store?.getState?.()?.season?.season

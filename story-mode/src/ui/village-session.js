@@ -198,6 +198,9 @@ export function createVillageSession({
       activeTrigger: router.getActiveTrigger()?.id ?? null,
       pose: facade.getPlayerPose(),
       village: store.getState().campaign.village,
+      camera: (getCurrentZoneId() === VILLAGE_ZONE_ID
+        ? zoneManager?.getActiveZoneInstance?.()?.getCameraDebug?.()
+        : null) ?? null,
     }),
     dispose() {
       if (disposed) return;
