@@ -163,10 +163,18 @@
 
 .trade-panel__table td { font-family: 'DM Mono', monospace; }
 
-/* World map: the reason a zone is locked, shown on its card. */
+/* World map: the reason a zone is locked, shown on its card. The light
+   field-kit sheet is cream, where the old sun-gold text measured ~1.1:1, so
+   the lock reason uses a dark amber ink (>= 5.5:1 on the card, WCAG AA). The
+   dark theme keeps the field-kit gold, which reads ~6.5:1 on its dark sheet. */
 .world-map__lock {
   margin-top: 4px;
   font-size: 12px;
+  font-weight: 600;
   line-height: 1.35;
-  color: rgba(232, 200, 74, 0.9);
+  color: var(--map-lock-ink, #5a3c06);
+}
+
+html[data-theme="dark"] .world-map__lock {
+  --map-lock-ink: var(--hud-gold, #e0b950);
 }
