@@ -22,7 +22,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { getVillageLayout } from './village-layout.js';
 import { createTriggerTracker } from './village-triggers.js';
-import { createFollowRig, dampFactor, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
+import { createFollowRig, dampFactor, resolveFollowFrame, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
 import { buildWalkGrid, findPath, createPathWalker, hasLineOfSight } from '../../game/village-path.js';
 import { resolveArtQuality, getArtQualityPreset } from '../yard-art/art-quality.js';
 import { YARD_PALETTE, YARD_LIGHT } from '../yard-art/yard-palette.js';
@@ -32,9 +32,8 @@ import { makeRng } from '../yard-art/yard-layout.js';
 import { propKitGeometriesFromGltf, mergePropPlacements, propKitBounds } from '../yard-art/prop-kit.js';
 import { createPlayerCharacter } from '../player-character.js';
 
-const BASE_VFOV = 45;
-const MAX_VFOV = 68;
-const BASE_HFOV = 44; // horizontal FOV kept on portrait screens
+// Wide-viewport vertical FOV policy lives in follow-camera.js (verticalFovForAspect).
+// Narrow aspects use resolveFollowFrame instead of opening the vertical FOV.
 
 const PROPS_SET1_URL = new URL('../../../assets/art/yard/props_set1.glb', import.meta.url).href;
 const PROPS_SET1_ATLAS_URL = new URL('../../../assets/art/yard/props_set1_atlas.webp', import.meta.url).href;
@@ -501,12 +500,15 @@ export function createVillageScene({
     dirty.forEach((m) => { m.instanceMatrix.needsUpdate = true; });
   }
 
-  /** Portrait phones get a wider vertical FOV so the horizontal view stays usable (45 deg landscape, up to 68 deg). */
+  /** Wide aspects keep the 50° / 11 m rig. Narrow aspects lower the pitch and shorten the follow. */
   function syncFov() {
     const aspect = camera.aspect || 1;
-    const halfH = Math.atan(Math.tan(THREE.MathUtils.degToRad(BASE_HFOV / 2)) / aspect);
-    const fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(halfH * 2), BASE_VFOV, MAX_VFOV);
-    if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+    const frame = resolveFollowFrame(aspect);
+    rig.setFrame(frame);
+    if (Number.isFinite(frame.fov) && Math.abs(camera.fov - frame.fov) > 0.01) {
+      camera.fov = frame.fov;
+      camera.updateProjectionMatrix();
+    }
   }
 
   function update(dt = 1 / 60) {

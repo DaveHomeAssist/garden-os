@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFollowRig, dampFactor, followOffset, segmentHitsOrientedBox } from './follow-camera.js';
+import * as THREE from 'three';
+import {
+  FOLLOW_DEFAULTS,
+  PORTRAIT_FOLLOW,
+  createFollowRig,
+  dampFactor,
+  followOffset,
+  resolveFollowFrame,
+  segmentHitsOrientedBox,
+  verticalFovForAspect,
+} from './follow-camera.js';
 import { createTriggerTracker } from './village-triggers.js';
+import { createVillageScene } from './village-scene.js';
 
 describe('follow camera', () => {
   it('damps independently of frame rate', () => {
@@ -26,6 +37,91 @@ describe('follow camera', () => {
     expect(Math.hypot(off.x, off.y, off.z)).toBeCloseTo(11, 9);
     expect(Math.atan2(off.y, off.z) * 180 / Math.PI).toBeCloseTo(50, 6);
     expect(createFollowRig().getAzimuth()).toBe(0);
+  });
+
+  it('keeps the 50° / 11 m rig on desktop and phone landscape', () => {
+    for (const aspect of [16 / 9, 1280 / 800, 844 / 390, 1]) {
+      const frame = resolveFollowFrame(aspect);
+      expect(frame.pitchDeg).toBe(FOLLOW_DEFAULTS.pitchDeg);
+      expect(frame.distance).toBe(FOLLOW_DEFAULTS.distance);
+      expect(frame.lookAhead).toBe(0);
+      expect(frame.yaw).toBe(0);
+      expect(frame.narrow).toBe(0);
+      expect(frame.fov).toBeCloseTo(45, 5);
+    }
+  });
+
+  it('frames a 390×844 phone lower and closer than the old 68° top-down view', () => {
+    const aspect = 390 / 844;
+    // The previous policy opened the vertical FOV to its cap on this aspect.
+    expect(verticalFovForAspect(aspect)).toBeCloseTo(68, 4);
+    const frame = resolveFollowFrame(aspect);
+    expect(frame.narrow).toBe(1);
+    expect(frame.pitchDeg).toBe(PORTRAIT_FOLLOW.pitchDeg);
+    expect(frame.distance).toBe(PORTRAIT_FOLLOW.distance);
+    expect(frame.lookAhead).toBe(PORTRAIT_FOLLOW.lookAhead);
+    expect(frame.fov).toBe(PORTRAIT_FOLLOW.fov);
+    expect(frame.pitchDeg).toBeLessThan(35);
+    expect(frame.fov).toBeLessThan(50);
+    expect(frame.yaw).toBe(0);
+  });
+
+  it('blends between the wide rig and the portrait rig', () => {
+    const mid = resolveFollowFrame(0.75);
+    expect(mid.narrow).toBeGreaterThan(0);
+    expect(mid.narrow).toBeLessThan(1);
+    expect(mid.pitchDeg).toBeGreaterThan(PORTRAIT_FOLLOW.pitchDeg);
+    expect(mid.pitchDeg).toBeLessThan(FOLLOW_DEFAULTS.pitchDeg);
+    expect(mid.distance).toBeGreaterThan(PORTRAIT_FOLLOW.distance);
+    expect(mid.distance).toBeLessThan(FOLLOW_DEFAULTS.distance);
+  });
+
+  it('places a portrait phone camera so the character and the street ahead are both in frame', () => {
+    const village = createVillageScene({
+      renderer: null,
+      quality: { tier: 'high', choice: 'high', source: 'test' },
+      overlayParent: null,
+      loadProps: false,
+    });
+    village.setPlayerPose({ x: 0, z: 0, facingY: 0 });
+    village.camera.aspect = 390 / 844;
+    village.update(1 / 30);
+    const cam = village.camera;
+    cam.updateMatrixWorld(true);
+    const project = (y, z) => new THREE.Vector3(0, y, z).project(cam);
+    const head = project(0.8, 0);
+    const feet = project(0.02, 0);
+    const ahead = project(0, -8);
+    const body = Math.abs(head.y - feet.y);
+    // Was ~0.065 of NDC (about 3% of a 844 px screen) at 50° / 68°.
+    expect(body).toBeGreaterThan(0.18);
+    expect(feet.y).toBeGreaterThan(-0.55);
+    expect(ahead.y).toBeGreaterThan(head.y + 0.25);
+    expect(Math.abs(ahead.x)).toBeLessThan(1);
+    expect(Math.abs(ahead.y)).toBeLessThan(1);
+    expect(cam.position.y).toBeGreaterThan(4.5);
+    expect(cam.position.y).toBeLessThan(7);
+    expect(cam.fov).toBeCloseTo(PORTRAIT_FOLLOW.fov, 4);
+    expect(village.getCameraAzimuth()).toBe(0);
+    village.dispose();
+  });
+
+  it('does not move the wide-aspect follow camera', () => {
+    const village = createVillageScene({
+      renderer: null,
+      quality: { tier: 'high', choice: 'high', source: 'test' },
+      overlayParent: null,
+      loadProps: false,
+    });
+    village.setPlayerPose({ x: 0, z: 0, facingY: 0 });
+    village.camera.aspect = 16 / 9;
+    village.update(1 / 30);
+    const off = followOffset(FOLLOW_DEFAULTS);
+    expect(village.camera.fov).toBeCloseTo(45, 4);
+    expect(village.camera.position.x).toBeCloseTo(off.x, 5);
+    expect(village.camera.position.y).toBeCloseTo(FOLLOW_DEFAULTS.lookHeight + off.y, 5);
+    expect(village.camera.position.z).toBeCloseTo(off.z, 5);
+    village.dispose();
   });
 
   it('finds houses between camera and player (cutaway test)', () => {

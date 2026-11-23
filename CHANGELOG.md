@@ -14,6 +14,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
 
 ### Fixed
+- On a phone-shaped screen, the village camera sits lower and a little closer so the character reads as a person and the street ahead stays in view, instead of a near top-down sliver. Desktop and landscape framing is unchanged.
 - Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.
