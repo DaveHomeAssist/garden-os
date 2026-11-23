@@ -10,7 +10,11 @@
  *   onTrigger(listener) -> unsubscribe()   listener(phase, { id, type, prompt?, target?, exit? })
  *   registerInteractables([{ id, type, prompt }])
  *   getPlayerPose() -> { x, z, facingY }
- *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events
+ *   setPlayerPose({ x, z, facingY })        snaps player + camera, no fade, no stale trigger events:
+ *                                           triggers are re-seeded silently, so a listener bound
+ *                                           before or after the snap must read getInsideTriggers()
+ *                                           to learn which triggers the new pose is inside
+ *   getInsideTriggers() -> [{ id, type, ... }]   triggers the player is inside now, in enter order
  *
  * Draw-call shape: one InstancedMesh per graybox asset part, one road mesh,
  * one sidewalk mesh, one ground, one sky, one merged props_set1 mesh, the
@@ -22,7 +26,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { getVillageLayout } from './village-layout.js';
 import { createTriggerTracker } from './village-triggers.js';
-import { createFollowRig, dampFactor, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
+import { createFollowRig, dampFactor, resolveFollowFrame, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
 import { buildWalkGrid, findPath, createPathWalker, hasLineOfSight } from '../../game/village-path.js';
 import { resolveArtQuality, getArtQualityPreset } from '../yard-art/art-quality.js';
 import { YARD_PALETTE, YARD_LIGHT } from '../yard-art/yard-palette.js';
@@ -32,9 +36,8 @@ import { makeRng } from '../yard-art/yard-layout.js';
 import { propKitGeometriesFromGltf, mergePropPlacements, propKitBounds } from '../yard-art/prop-kit.js';
 import { createPlayerCharacter } from '../player-character.js';
 
-const BASE_VFOV = 45;
-const MAX_VFOV = 68;
-const BASE_HFOV = 44; // horizontal FOV kept on portrait screens
+// Wide-viewport vertical FOV policy lives in follow-camera.js (verticalFovForAspect).
+// Narrow aspects use resolveFollowFrame instead of opening the vertical FOV.
 
 const PROPS_SET1_URL = new URL('../../../assets/art/yard/props_set1.glb', import.meta.url).href;
 const PROPS_SET1_ATLAS_URL = new URL('../../../assets/art/yard/props_set1_atlas.webp', import.meta.url).href;
@@ -175,6 +178,9 @@ export function createVillageScene({
   const disposables = [];
   const track = (o) => { disposables.push(o); return o; };
   const assetErrors = [];
+  // Set first thing in dispose(): the props model can finish loading after the
+  // player has already left the village.
+  let disposed = false;
 
   // ---- lights + fog (yard palette and light rig; low tier = no shadows)
   scene.fog = new THREE.FogExp2(pal.horizon, YARD_LIGHT.fogDensity * 0.55);
@@ -318,6 +324,13 @@ export function createVillageScene({
     atlas.flipY = false;
     track(atlas);
     loader.load(PROPS_SET1_URL, (gltf) => {
+      if (disposed) {
+        // Nothing left to show: building the mesh now would add GPU-bound objects to a
+        // cleared scene that dispose() has already walked. Free what the parser made.
+        gltf?.scene?.traverse?.((o) => { if (o.isMesh) o.geometry?.dispose?.(); });
+        resolve({ errors: assetErrors });
+        return;
+      }
       try {
         const byName = propKitGeometriesFromGltf(gltf);
         propsBounds = propKitBounds(byName);
@@ -504,12 +517,15 @@ export function createVillageScene({
     dirty.forEach((m) => { m.instanceMatrix.needsUpdate = true; });
   }
 
-  /** Portrait phones get a wider vertical FOV so the horizontal view stays usable (45 deg landscape, up to 68 deg). */
+  /** Wide aspects keep the 50° / 11 m rig. Narrow aspects lower the pitch and shorten the follow. */
   function syncFov() {
     const aspect = camera.aspect || 1;
-    const halfH = Math.atan(Math.tan(THREE.MathUtils.degToRad(BASE_HFOV / 2)) / aspect);
-    const fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(halfH * 2), BASE_VFOV, MAX_VFOV);
-    if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+    const frame = resolveFollowFrame(aspect);
+    rig.setFrame(frame);
+    if (Number.isFinite(frame.fov) && Math.abs(camera.fov - frame.fov) > 0.01) {
+      camera.fov = frame.fov;
+      camera.updateProjectionMatrix();
+    }
   }
 
   function update(dt = 1 / 60) {
@@ -612,6 +628,7 @@ export function createVillageScene({
     },
     getPlayerPose,
     setPlayerPose,
+    getInsideTriggers: () => triggers.getInsideTriggers(),
     /** Owner of the walk sim (ui-binder / lab) moves its own state when the pose is set. */
     setPoseHandler(fn) { poseHandler = typeof fn === 'function' ? fn : null; },
     /** Ids the game layer handles (from registerInteractables([...])). */
@@ -654,6 +671,7 @@ export function createVillageScene({
       };
     },
     dispose() {
+      disposed = true;
       inputElement?.removeEventListener?.('pointerdown', onPointerDown);
       inputElement?.removeEventListener?.('pointerup', onPointerUp);
       triggers.dispose();
