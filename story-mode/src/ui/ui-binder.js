@@ -1587,6 +1587,7 @@ function bindUI({
         zoneName: getCurrentZoneName(),
         forageAvailable: foraging.available ?? 0,
         nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+        touch: globalThis.matchMedia?.('(pointer: coarse)').matches ?? false,
       });
       if (phaseHelper.textContent !== helperText) {
         phaseHelper.textContent = helperText;
