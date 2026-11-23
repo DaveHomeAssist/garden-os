@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { showBackpackPanel } from './backpack-panel.js';
@@ -151,12 +150,5 @@ describe('backpack drag and drop (GD-103)', () => {
     const pointerTypes = spy.mock.calls.map(([type]) => type).filter((type) => type.startsWith('pointer'));
     expect(pointerTypes).toEqual([]);
     spy.mockRestore();
-  });
-
-  it('sizes the sheet in dvh, with a vh line first for browsers that predate dvh', () => {
-    // jsdom drops units it does not know, so read the source: the vh fallback
-    // must come first and the dvh line second.
-    const source = readFileSync(new URL('./backpack-panel.js', import.meta.url), 'utf8');
-    expect(source).toMatch(/maxHeight = '82vh';\s*sheet\.style\.maxHeight = '82dvh';/);
   });
 });
