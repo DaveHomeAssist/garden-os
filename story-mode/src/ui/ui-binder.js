@@ -1761,8 +1761,14 @@ function bindUI({
 
     if (activeToolId === 'water') {
       scene.flashCell(cellIndex, 0x4f8fca, 320);
+      scene.playPlayerAction?.('water');
     } else if (activeToolId === 'harvest') {
       scene.flashCell(cellIndex, 0xd0b24a, 320);
+      scene.playPlayerAction?.('harvest');
+      scene.playPlayerAction?.('celebrate');
+    } else if (activeToolId === 'plant') {
+      scene.flashCell(cellIndex, 0xe8c84a, 260);
+      scene.playPlayerAction?.('plant');
     } else if (activeToolId === 'protect') {
       scene.flashCell(cellIndex, 0x88a1d8, 320);
     } else if (activeToolId === 'mulch') {
@@ -2541,6 +2547,7 @@ function bindUI({
       getSnapshot: () => questController.getSnapshot(),
     },
     getVisualDebug: () => scene.getVisualDebug?.() ?? null,
+    getCameraDebug: () => scene.getCameraDebug?.() ?? null,
     getLoopStats: () => ({ ...loop.getStats(), idle: isSessionIdle(), workerPaused: simulationWorker.paused }),
     showHarvestRevealDebug: (result, extras = {}) => {
       showHarvestReveal(

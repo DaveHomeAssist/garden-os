@@ -87,4 +87,19 @@ describe('camera-controller', () => {
 
     controller.dispose();
   });
+
+  it('keeps a touch orbit delta while heading follow is on', () => {
+    const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 100);
+    const element = document.createElement('div');
+    const controller = createCameraController(camera, element);
+    const player = new THREE.Vector3(0, 0, 2.55);
+    controller.setFollowTarget(player, { facing: Math.PI, moving: false, speed: 0 });
+    controller.update(1 / 60);
+    const before = controller.getAzimuth();
+    controller.applyOrbitDelta(0.4, 0.15);
+    for (let i = 0; i < 5; i += 1) controller.update(1 / 60);
+    expect(Math.abs(controller.getAzimuth() - before)).toBeGreaterThan(0.2);
+    expect(camera.position.y).toBeGreaterThan(1);
+    controller.dispose();
+  });
 });

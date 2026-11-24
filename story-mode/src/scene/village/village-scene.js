@@ -26,7 +26,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { getVillageLayout } from './village-layout.js';
 import { createTriggerTracker } from './village-triggers.js';
-import { createFollowRig, dampFactor, resolveFollowFrame, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
+import { createFollowRig, dampFactor, prefersReducedMotion, resolveFollowFrame, segmentHitsOrientedBox, treeInViewCorridor } from './follow-camera.js';
 import { buildWalkGrid, findPath, createPathWalker, hasLineOfSight } from '../../game/village-path.js';
 import { resolveArtQuality, getArtQualityPreset } from '../yard-art/art-quality.js';
 import { YARD_PALETTE, YARD_LIGHT } from '../yard-art/yard-palette.js';
@@ -364,13 +364,34 @@ export function createVillageScene({
   scene.add(player.group);
   player.group.traverse((o) => { if (o.isMesh) o.castShadow = preset.shadows; });
   let playerState = {
-    position: { x: layout.spawn.x, y: 0, z: layout.spawn.z }, facing: layout.spawn.facing, moving: false, speed: 0, time: 0,
+    position: { x: layout.spawn.x, y: 0, z: layout.spawn.z },
+    facing: layout.spawn.facing,
+    moving: false,
+    speed: 0,
+    time: 0,
+    velocity: { x: 0, z: 0 },
   };
+  let reducedMotion = prefersReducedMotion();
+  const motionQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const onMotionChange = () => { reducedMotion = Boolean(motionQuery?.matches); };
+  motionQuery?.addEventListener?.('change', onMotionChange);
+  const OCCLUDER_HEIGHT = {
+    house_graybox: 4.7,
+    shop_graybox: 3.75,
+    shed_graybox: 2.8,
+    hedge_graybox: 1.1,
+    market_stand_graybox: 2.35,
+    compost_bin_graybox: 1.05,
+    seed_box_graybox: 0.75,
+  };
+  const solidOccluders = layout.entries.filter((e) => e.collides && e.footprint && OCCLUDER_HEIGHT[e.asset]).map((e) => ({
+    x: e.x, z: e.z, w: e.footprint.w, d: e.footprint.d, h: OCCLUDER_HEIGHT[e.asset], rotationY: e.rotation ?? 0,
+  }));
   let spawnPoint = { ...layout.spawn };
 
   // ---- camera rig + triggers + path
   const rig = createFollowRig();
-  rig.snap(playerState.position);
+  rig.snap(playerState.position, playerState.facing);
   rig.apply(camera);
   const triggers = createTriggerTracker(layout.interactables);
   const grid = buildWalkGrid({ bounds: layout.bounds, blockers: layout.blockers });
@@ -528,11 +549,33 @@ export function createVillageScene({
     }
   }
 
+  function cameraObstacles() {
+    const cam = camera.position;
+    const playerPos = playerState.position;
+    const spheres = [];
+    for (const c of treeCuts) {
+      if (c.cut > 0.65) continue;
+      const t = c.tree;
+      if (treeInViewCorridor(t, cam, playerPos)) continue;
+      const scale = Math.max(0.001, (t.scale ?? 1) * (1 - c.cut));
+      spheres.push({ kind: 'sphere', x: t.x, y: 1.55 * scale, z: t.z, r: 1.05 * scale });
+    }
+    return solidOccluders.concat(spheres);
+  }
+
   function update(dt = 1 / 60) {
     const clamped = Math.min(0.1, Math.max(0, dt));
     syncFov();
-    player.update(playerState);
-    rig.update(playerState.position, clamped);
+    player.update(playerState, clamped);
+    rig.setReducedMotion(reducedMotion);
+    rig.setObstacles(cameraObstacles());
+    rig.update({
+      position: playerState.position,
+      facing: playerState.facing,
+      moving: playerState.moving,
+      speed: playerState.speed,
+      velocity: playerState.velocity,
+    }, clamped);
     rig.apply(camera);
     sun.target.position.copy(rig.getTarget());
     sun.position.copy(sunDir).multiplyScalar(30).add(sun.target.position);
@@ -581,6 +624,7 @@ export function createVillageScene({
       moving: Boolean(snapshot.moving),
       speed: snapshot.speed ?? 0,
       time: snapshot.time ?? playerState.time,
+      velocity: snapshot.velocity ?? playerState.velocity ?? { x: 0, z: 0 },
     };
   }
 
@@ -594,11 +638,11 @@ export function createVillageScene({
     if (!pose || !Number.isFinite(pose.x) || !Number.isFinite(pose.z)) return;
     const facingY = Number.isFinite(pose.facingY) ? pose.facingY : playerState.facing;
     walker.clear();
-    playerState = { ...playerState, position: { x: pose.x, y: 0, z: pose.z }, facing: facingY, moving: false, speed: 0 };
-    rig.snap(playerState.position);
+    playerState = { ...playerState, position: { x: pose.x, y: 0, z: pose.z }, facing: facingY, moving: false, speed: 0, velocity: { x: 0, z: 0 } };
+    rig.snap(playerState.position, facingY);
     rig.apply(camera);
     updateTreeCuts(1); // snap: no trees fading in/out after a teleport
-    player.update(playerState);
+    player.update(playerState, 0);
     triggers.reseed(playerState.position);
     poseHandler?.({ x: pose.x, z: pose.z, facingY });
   }
@@ -637,6 +681,20 @@ export function createVillageScene({
     getMovementBounds: () => ({ ...layout.bounds }),
     getMovementBlockers: () => layout.blockers.map((bl) => ({ ...bl })),
     getCameraAzimuth: () => rig.getAzimuth(),
+    getCameraDebug() {
+      const frame = resolveFollowFrame(camera.aspect || 1);
+      return {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z,
+        fov: camera.fov,
+        azimuth: rig.getAzimuth(),
+        pitchDeg: frame.pitchDeg,
+        distance: frame.distance,
+        lookAhead: frame.lookAhead,
+        aspect: camera.aspect || 1,
+      };
+    },
     /** Emit-only: listener(phase: 'enter'|'leave', trigger: { id, type, prompt, target?, exit?, radius, position }). Returns unsubscribe. */
     onTrigger: (listener) => triggers.onTrigger(listener),
     /**
@@ -672,6 +730,7 @@ export function createVillageScene({
     },
     dispose() {
       disposed = true;
+      motionQuery?.removeEventListener?.('change', onMotionChange);
       inputElement?.removeEventListener?.('pointerdown', onPointerDown);
       inputElement?.removeEventListener?.('pointerup', onPointerUp);
       triggers.dispose();

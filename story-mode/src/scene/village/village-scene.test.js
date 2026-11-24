@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { createVillageScene } from './village-scene.js';
+import { FOLLOW_DEFAULTS, behindYaw, followOffset } from './follow-camera.js';
 import { getVillageLayout } from './village-layout.js';
 
 const make = () => createVillageScene({ renderer: null, quality: { tier: 'low', choice: 'low', source: 'test' }, overlayParent: null, loadProps: false });
@@ -40,7 +41,11 @@ describe('village engine interface', () => {
     expect(v.getPlayerPose()).toEqual({ x: home.exit.x, z: home.exit.z, facingY: home.exit.facingY });
     expect(handler).toHaveBeenCalledWith({ x: home.exit.x, z: home.exit.z, facingY: home.exit.facingY });
     const cam = v.camera.position;
-    expect(Math.abs(cam.x - home.exit.x)).toBeLessThan(0.01);
+    const rigOff = followOffset({ ...FOLLOW_DEFAULTS, yaw: behindYaw(home.exit.facingY) });
+    // Snaps behind the exit facing at the wide framing distance, same frame.
+    expect(cam.x).toBeCloseTo(home.exit.x + rigOff.x, 3);
+    expect(cam.z).toBeCloseTo(home.exit.z + rigOff.z, 3);
+    expect(Math.hypot(cam.x - home.exit.x, cam.z - home.exit.z)).toBeGreaterThan(6);
     v.setPlayerState({ position: { x: home.exit.x, z: home.exit.z }, facing: home.exit.facingY });
     v.update(1 / 60);
     expect(listener.mock.calls.length).toBe(calls);

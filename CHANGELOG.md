@@ -11,6 +11,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ## [Unreleased]
 
 ### Added
+- Story Mode's gardener is now a stylised low-poly hero (sun hat, apron, gloves, boots, and a trowel) with softer shading, and the camera eases in behind them as they walk and turn.
 - Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
 - Added a walkable village to Free Play, where you can walk or tap your way to your garden, the Seed stand, the Seed box, the Tool shed and the Compost bin. The shops spend your coins, harvests leave compost scraps for the bin, and the yard gained a wheelbarrow, rain barrel, bench and birdhouse.
 

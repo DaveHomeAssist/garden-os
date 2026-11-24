@@ -50,6 +50,24 @@ try {
   await page.locator('#hud-pause').click({ trial: true });
   pass('yard shows Back to village; pause button still clickable');
 
+  // Yard follow: a strafe turns the gardener and the camera eases behind that
+  // heading. The first sample must still be short of the later one (no yaw snap).
+  const angleDelta = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+  const yard0 = await page.evaluate(() => window.gardenOS.getCameraDebug());
+  assert.ok(yard0 && Number.isFinite(yard0.azimuth), `yard camera debug ${JSON.stringify(yard0)}`);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(140);
+  const yardSoon = await page.evaluate(() => window.gardenOS.getCameraDebug());
+  await page.waitForTimeout(900);
+  await page.keyboard.up('d');
+  await page.waitForTimeout(80);
+  const yardLater = await page.evaluate(() => window.gardenOS.getCameraDebug());
+  const yardSoonTurn = angleDelta(yardSoon.azimuth, yard0.azimuth);
+  const yardLaterTurn = angleDelta(yardLater.azimuth, yard0.azimuth);
+  assert.ok(yardLaterTurn > 0.3, `yard camera followed the strafe (${yardLaterTurn.toFixed(2)} rad)`);
+  assert.ok(yardSoonTurn < yardLaterTurn, `yard camera eases (${yardSoonTurn.toFixed(2)} then ${yardLaterTurn.toFixed(2)})`);
+  pass('yard camera eases behind a turn', { soon: +yardSoonTurn.toFixed(2), later: +yardLaterTurn.toFixed(2) });
+
   // Arm a crop so a stray click on the hidden bed would plant it.
   await page.locator('#fab-plant').click();
   // Desktop (live playtest 2026-10-28): "Back to village" was drawn on top of the
@@ -179,6 +197,49 @@ try {
   const moved = Math.hypot(after.x - before.x, after.z - before.z);
   assert.ok(moved > 0.4, `keyboard moved ${moved}`);
   pass('keyboard walk', { moved: Number(moved.toFixed(2)) });
+
+  // Village follow, including the portrait / landscape framing from #104.
+  const villageAngle = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+  const vill0 = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  assert.ok(vill0 && Number.isFinite(vill0.azimuth) && vill0.fov > 40, `village camera ${JSON.stringify(vill0)}`);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(140);
+  const villSoon = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  await page.waitForTimeout(900);
+  await page.keyboard.up('d');
+  await page.waitForTimeout(80);
+  const villLater = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  const villSoonTurn = villageAngle(villSoon.azimuth, vill0.azimuth);
+  const villLaterTurn = villageAngle(villLater.azimuth, vill0.azimuth);
+  assert.ok(villLaterTurn > 0.3, `village camera followed the strafe (${villLaterTurn.toFixed(2)} rad)`);
+  assert.ok(villSoonTurn < villLaterTurn, `village camera eases (${villSoonTurn.toFixed(2)} then ${villLaterTurn.toFixed(2)})`);
+  pass('village camera eases behind a turn', { soon: +villSoonTurn.toFixed(2), later: +villLaterTurn.toFixed(2), fov: +villLater.fov.toFixed(2) });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(350);
+  const portraitCam = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  assert.ok(portraitCam.fov < 50 && portraitCam.fov > 40, `portrait fov ${portraitCam.fov}`);
+  assert.ok(portraitCam.pitchDeg < 35 && portraitCam.pitchDeg > 20, `portrait pitch ${portraitCam.pitchDeg}`);
+  assert.ok(portraitCam.distance < 11 && portraitCam.distance > 8, `portrait distance ${portraitCam.distance}`);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(300);
+  const landCam = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  assert.ok(Math.abs(landCam.fov - 45) < 0.25, `landscape fov ${landCam.fov}`);
+  assert.equal(landCam.pitchDeg, 50);
+  assert.equal(landCam.distance, 11);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForTimeout(300);
+  const deskCam = await page.evaluate(() => window.gardenOS.village.getDebugState().camera);
+  assert.ok(Math.abs(deskCam.fov - 45) < 0.25, `desktop fov ${deskCam.fov}`);
+  assert.equal(deskCam.pitchDeg, 50);
+  assert.equal(deskCam.distance, 11);
+  await page.setViewportSize({ width: 960, height: 600 });
+  await page.waitForTimeout(300);
+  pass('portrait, landscape, and desktop follow framing', {
+    portrait: { fov: portraitCam.fov, pitch: portraitCam.pitchDeg, distance: portraitCam.distance },
+    landscape: { fov: landCam.fov, pitch: landCam.pitchDeg },
+    desktop: { fov: deskCam.fov, pitch: deskCam.pitchDeg },
+  });
 
   // Tap-to-move on the shared canvas.
   const plantedBefore = (await game()).plantedCount;
