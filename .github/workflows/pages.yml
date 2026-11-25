@@ -70,6 +70,15 @@ jobs:
           cp -rf story-mode/dist/* story-mode/
           rm -rf story-mode/dist story-mode/node_modules story-mode/src story-mode/package*.json story-mode/vite.config.js
 
+      - name: Stamp service worker cache version
+        # Every deploy gets its own service worker cache, so activate purges the
+        # previous deploy's HTML and assets instead of serving them offline.
+        run: |
+          STAMP="$(date -u +%Y%m%d)-${GITHUB_SHA::12}"
+          sed -i -E "s/^const CACHE_VERSION = '[^']*';/const CACHE_VERSION = '${STAMP}';/" sw.js
+          grep -q "^const CACHE_VERSION = '${STAMP}';" sw.js || { echo "::error::sw.js CACHE_VERSION was not stamped"; exit 1; }
+          echo "sw.js CACHE_VERSION=${STAMP}"
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 

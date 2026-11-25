@@ -1,6 +1,7 @@
 import { isPersistentSaveTarget } from '../game/save-target.js';
 import { createActionEnvelope } from './authoritative-engine.js';
 import { isModdedQuest } from '../content/content-registry.js';
+import { asSafeStorage, readGlobalIndexedDB, safeLocalStorage } from '../game/safe-storage.js';
 
 const DB_NAME = 'gos-story-authority-v1';
 const DB_VERSION = 1;
@@ -51,11 +52,12 @@ function isValidSnapshot(record, sessionId) {
   );
 }
 
-function getStorage(storage = globalThis.localStorage) {
-  return storage && typeof storage.getItem === 'function' ? storage : null;
+// H2: never-throwing storage; blocked third-party storage falls back to memory.
+function getStorage(storage = safeLocalStorage) {
+  return asSafeStorage(storage);
 }
 
-function getGlobalIndexedDB(indexedDB = globalThis.indexedDB) {
+function getGlobalIndexedDB(indexedDB = readGlobalIndexedDB()) {
   return indexedDB && typeof indexedDB.open === 'function' ? indexedDB : null;
 }
 
@@ -74,7 +76,7 @@ function randomSessionId() {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function ensureSessionPointer(slot, storage = globalThis.localStorage) {
+function ensureSessionPointer(slot, storage = safeLocalStorage) {
   const safeStorage = getStorage(storage);
   const key = sessionPointerKey(slot);
   if (!key) return null;
@@ -89,7 +91,7 @@ function resolveAuthorityUrl({
   authorityUrl,
   document = globalThis.document,
   globalScope = globalThis,
-  storage = globalThis.localStorage,
+  storage = safeLocalStorage,
 } = {}) {
   const explicit = normalizeAuthorityUrl(authorityUrl);
   if (explicit) return explicit;
@@ -727,7 +729,7 @@ function authorityAckToStoreAction(ack, currentState = null, record = null) {
 }
 
 class IndexedDbAuthorityJournal {
-  constructor({ databaseName = DB_NAME, indexedDB = globalThis.indexedDB } = {}) {
+  constructor({ databaseName = DB_NAME, indexedDB = readGlobalIndexedDB() } = {}) {
     this.databaseName = databaseName;
     this.indexedDB = getGlobalIndexedDB(indexedDB);
     this.openPromise = null;
@@ -737,33 +739,76 @@ class IndexedDbAuthorityJournal {
     return Boolean(this.indexedDB);
   }
 
+  /** True once an open has succeeded at least once in this journal. */
+  get connected() {
+    return this.everConnected === true;
+  }
+
   async open() {
     if (!this.indexedDB) {
       throw new Error('IndexedDB is unavailable');
     }
     if (!this.openPromise) {
-      this.openPromise = new Promise((resolve, reject) => {
-        const request = this.indexedDB.open(this.databaseName, DB_VERSION);
+      // H2: a failed open is not cached (the next call retries), a blocked
+      // upgrade rejects instead of hanging, and a synchronous SecurityError
+      // from open() (blocked third-party storage) becomes a rejection.
+      const attempt = new Promise((resolve, reject) => {
+        let request;
+        try {
+          request = this.indexedDB.open(this.databaseName, DB_VERSION);
+        } catch (error) {
+          reject(error);
+          return;
+        }
         request.onupgradeneeded = () => {
-          const db = request.result;
-          for (const storeName of Object.values(STORES)) {
-            if (!db.objectStoreNames.contains(storeName)) {
-              db.createObjectStore(storeName, { keyPath: 'key' });
+          try {
+            const db = request.result;
+            for (const storeName of Object.values(STORES)) {
+              if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName, { keyPath: 'key' });
+              }
             }
+          } catch (error) {
+            reject(error);
           }
         };
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => {
+          const db = request.result;
+          // If another tab upgrades or the browser drops the connection, forget
+          // it so the next call opens a fresh one instead of reusing a dead db.
+          try {
+            db.onversionchange = () => {
+              try { db.close(); } catch { /* already closed */ }
+              if (this.openPromise === attempt) this.openPromise = null;
+            };
+            db.onclose = () => {
+              if (this.openPromise === attempt) this.openPromise = null;
+            };
+          } catch { /* fake / limited IDB implementations */ }
+          this.everConnected = true;
+          resolve(db);
+        };
         request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+        request.onblocked = () => reject(new Error('IndexedDB open blocked by another tab'));
+      });
+      this.openPromise = attempt;
+      attempt.catch(() => {
+        if (this.openPromise === attempt) this.openPromise = null;
       });
     }
     return this.openPromise;
   }
 
   async close() {
-    if (!this.openPromise) return;
-    const db = await this.openPromise;
-    db.close?.();
+    const pending = this.openPromise;
+    if (!pending) return;
     this.openPromise = null;
+    try {
+      const db = await pending;
+      db?.close?.();
+    } catch {
+      // The open had failed; there is nothing to close.
+    }
   }
 
   async putSnapshot({ ledgerCursor = '0', savedAt = isoNow(), sessionId, slot, state }) {
@@ -784,11 +829,16 @@ class IndexedDbAuthorityJournal {
   async readSnapshot(sessionId) {
     if (!sessionId) return null;
     const db = await this.open();
-    const store = transactionStore(db, STORES.SNAPSHOTS, 'readwrite');
-    const record = await requestResult(store.get(sessionId));
+    const record = await requestResult(transactionStore(db, STORES.SNAPSHOTS).get(sessionId));
     if (!record) return null;
     if (!isValidSnapshot(record, sessionId)) {
-      await requestResult(store.delete(sessionId));
+      // Clean up in its own transaction; a failed delete must not hide the
+      // fact that the snapshot is unusable.
+      try {
+        await requestResult(transactionStore(db, STORES.SNAPSHOTS, 'readwrite').delete(sessionId));
+      } catch (error) {
+        console.warn('[GOS] Could not drop invalid snapshot:', error?.message ?? error);
+      }
       return null;
     }
     return cloneValue(record);
@@ -843,8 +893,14 @@ class IndexedDbAuthorityJournal {
       key: storeKey(ack.sessionId, ack.actionId),
       sessionId: ack.sessionId,
     };
-    await requestResult(transactionStore(db, STORES.OUTBOUND, 'readwrite').put(outbound));
-    await requestResult(transactionStore(db, STORES.ACKS, 'readwrite').put(ackRecord));
+    // One transaction across both stores, so the outbound record is never
+    // marked acked without its ack (or the reverse).
+    // (A failing put aborts the whole transaction, which rolls back the other.)
+    const tx = db.transaction([STORES.OUTBOUND, STORES.ACKS], 'readwrite');
+    await Promise.all([
+      requestResult(tx.objectStore(STORES.OUTBOUND).put(outbound)),
+      requestResult(tx.objectStore(STORES.ACKS).put(ackRecord)),
+    ]);
     return cloneValue(ackRecord);
   }
 
@@ -972,10 +1028,11 @@ async function createAuthoritySession({
 function createStoryAuthorityPersistence(store, {
   authorityUrl,
   fetchFn = globalThis.fetch,
-  indexedDB = globalThis.indexedDB,
+  indexedDB = readGlobalIndexedDB(),
   now = Date.now,
+  onUnavailable = null,
   slot = 0,
-  storage = globalThis.localStorage,
+  storage = safeLocalStorage,
   verifyAck,
 } = {}) {
   const journal = new IndexedDbAuthorityJournal({ indexedDB });
@@ -1031,11 +1088,24 @@ function createStoryAuthorityPersistence(store, {
     return sessionPromise;
   }
 
+  let unavailableReported = false;
+  function reportUnavailable(error) {
+    if (unavailableReported || typeof onUnavailable !== 'function') return;
+    unavailableReported = true;
+    try { onUnavailable(error); } catch (callbackError) {
+      console.warn('[GOS] Authority fallback failed:', callbackError?.message ?? callbackError);
+    }
+  }
+
   function enqueue(work, { force = false } = {}) {
     chain = chain
       .then(() => (active || force ? work() : null))
       .catch((error) => {
         console.warn('[GOS] Authority cache unavailable:', error?.message ?? error);
+        // H2: IndexedDB exists but cannot be opened or written (blocked
+        // third-party storage, private mode). Let the caller fall back to the
+        // local save path so progress is not silently dropped.
+        if (!journal.connected) reportUnavailable(error);
       });
     return chain;
   }
