@@ -16,6 +16,7 @@ import { installModalFocus } from './ui/modal-focus.js';
 import { STORAGE_FALLBACK_EVENT, isStorageFallbackActive } from './game/safe-storage.js';
 import { showStorageFallbackNotice } from './ui/storage-notice.js';
 import { renderSessionError } from './ui/session-error.js';
+import { installParentMuteListener } from './audio/parent-mute.js';
 
 document.body.dataset.designLanguage = 'field-kit';
 installModalFocus();
@@ -24,6 +25,10 @@ installModalFocus();
 // mixmash.games iframe) saves live in memory for this tab. Say so once, quietly.
 window.addEventListener(STORAGE_FALLBACK_EVENT, () => showStorageFallbackNotice(), { once: true });
 if (isStorageFallbackActive()) showStorageFallbackNotice();
+
+// Mute All from the mixmash.games wrapper (postMessage; see audio/parent-mute.js).
+// Installed at boot so a mute sent while the title is up still applies.
+installParentMuteListener();
 
 // Theme on the title screen lives in the title actions grid (#title-theme),
 // not in the shared floating toggle: on phones that pill sat on top of Import

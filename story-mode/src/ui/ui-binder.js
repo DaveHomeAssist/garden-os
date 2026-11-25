@@ -76,6 +76,7 @@ import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
 import { getSheetInsets } from '../scene/bed-focus.js';
+import { PARENT_MUTE_EVENT, effectiveMuted } from '../audio/parent-mute.js';
 
 /** H4: save-derived lists can be any JSON type; treat non-arrays as empty. */
 const asArray = (value) => (Array.isArray(value) ? value : []);
@@ -408,6 +409,10 @@ function bindUI({
   const dayNightController = new DayNightController(scene, store);
 
   const audioManager = new AudioManager();
+  // Player mute setting combined with the mixmash.games wrapper's Mute All.
+  const applyAudioMute = () => audioManager.setMuted(effectiveMuted(state.settings?.audio?.muted));
+  applyAudioMute();
+  window.addEventListener(PARENT_MUTE_EVENT, applyAudioMute, { signal: sessionListeners.signal });
   let audioInitialized = false;
   let lastAudioSeason = null;
   let currentAmbientGen = null;
@@ -418,7 +423,7 @@ function bindUI({
     await audioManager.init();
     registerProceduralSFX(audioManager);
     const settings = state.settings?.audio ?? {};
-    if (settings.muted) audioManager.setMuted(true);
+    applyAudioMute();
     if (settings.masterVolume != null) audioManager.setMasterVolume(settings.masterVolume);
     if (settings.sfxVolume != null) audioManager.setSFXVolume(settings.sfxVolume);
     if (settings.ambientVolume != null) audioManager.setAmbientVolume(settings.ambientVolume);
