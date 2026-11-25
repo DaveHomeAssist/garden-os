@@ -63,7 +63,7 @@ const probe = () => {
   const modalOpen = [...document.querySelectorAll('[aria-modal="true"]')].some((m) => vis(m));
   const pr = !modalOpen && pauseEl && vis(pauseEl);
   const pauseHit = pr ? Boolean(pauseEl.contains(document.elementFromPoint(pr.left + pr.width / 2, pr.top + pr.height / 2))) : null;
-  return { small, overlaps, themeToggle, pauseBtn, pauseHit, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, offscreen, meta };
+  return { small, overlaps, themeToggle, pauseBtn, pauseHit, tinyCount: tiny.length, tiny: tiny.slice(0, 60), under12: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).length, under12List: tiny.filter((t) => parseFloat(t.split(" ").at(-1)) < 12 - 0.01).slice(0, 80), offscreen, meta };
 };
 
 async function capture(p, vp, name) {

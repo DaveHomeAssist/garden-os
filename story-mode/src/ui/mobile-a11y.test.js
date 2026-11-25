@@ -254,3 +254,19 @@ describe('follow-up: room playtest of #98', () => {
     expect(tag).toMatch(/aria-label="Save Report\b/);
   });
 });
+
+describe('12px text floor on short and touch screens (bug list Nov 25)', () => {
+  const block = a11yCss.match(/@media \(max-width: 600px\), \(max-height: 600px\), \(pointer: coarse\) \{([\s\S]*?)\n\}/)?.[1] ?? '';
+  it('covers the labels mobile-a11y-audit flagged under 12px at 844x390, 740x360 and 1024x706', () => {
+    for (const sel of ['.save-slot-label', '.title-version', '.title-screen__issue', '.mode-card .mode-desc', '.mode-card .mode-soon',
+      '#hud-phase', '#hud-crops', '.hud-score-label', '#pause-status', '.pause-section-label', '.read-only-sheet__card-meta',
+      '.quest-tracker__count', '.quest-log__heading', '.bug-report-panel .bug-meta', '.profile-fieldset legend', '.dp-skip-btn']) {
+      expect(block, sel).toContain(sel);
+    }
+    expect(block).toMatch(/font-size: 12px !important;/);
+    expect(block).not.toMatch(/font-size: (9|10|11)(\.\d+)?px/);
+  });
+  it('lifts the village map credit to 12px everywhere', () => {
+    expect(a11yCss).toMatch(/body \.village-credits \{\s*font-size: 12px !important;/);
+  });
+});
