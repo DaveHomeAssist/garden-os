@@ -162,21 +162,21 @@ const AUTHORITY_QUEST_REWARDS = {
   lila_salsa: {
     outcomes: {
       block_party: [
-        { amount: 1, id: 'recipe_card_salsa', type: 'item' },
+        { amount: 1, id: 'recipe_garden_deluxe_salsa', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'gardening', type: 'xp' },
         { amount: 5, id: 'neighbor_pat', type: 'reputation' },
         { amount: 5, id: 'social', type: 'xp' },
       ],
       write_ripeness: [
-        { amount: 1, id: 'recipe_card_salsa', type: 'item' },
+        { amount: 1, id: 'recipe_garden_deluxe_salsa', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'gardening', type: 'xp' },
         { amount: 10, id: 'gardening', type: 'xp' },
       ],
     },
     rewards: [
-      { amount: 1, id: 'recipe_card_salsa', type: 'item' },
+      { amount: 1, id: 'recipe_garden_deluxe_salsa', type: 'item' },
       { amount: 20, id: 'lila', type: 'reputation' },
       { amount: 15, id: 'gardening', type: 'xp' },
     ],
@@ -248,19 +248,19 @@ const AUTHORITY_QUEST_REWARDS = {
   jo_compost: {
     outcomes: {
       open_pile: [
-        { amount: 2, id: 'fertilizer', type: 'item' },
+        { amount: 2, id: 'fertilizer_bag', type: 'item' },
         { amount: 10, id: 'neighbor_jo', type: 'reputation' },
         { amount: 3, id: 'neighbor_jo', type: 'reputation' },
         { amount: 1, id: 'compost', type: 'item' },
       ],
       measure_pile: [
-        { amount: 2, id: 'fertilizer', type: 'item' },
+        { amount: 2, id: 'fertilizer_bag', type: 'item' },
         { amount: 10, id: 'neighbor_jo', type: 'reputation' },
         { amount: 10, id: 'composting', type: 'xp' },
       ],
     },
     rewards: [
-      { amount: 2, id: 'fertilizer', type: 'item' },
+      { amount: 2, id: 'fertilizer_bag', type: 'item' },
       { amount: 10, id: 'neighbor_jo', type: 'reputation' },
     ],
   },
@@ -343,21 +343,21 @@ const AUTHORITY_QUEST_REWARDS = {
   lila_watercress: {
     outcomes: {
       stew_night: [
-        { amount: 1, id: 'recipe_card_foragers_stew', type: 'item' },
+        { amount: 1, id: 'recipe_foragers_stew', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'social', type: 'xp' },
         { amount: 5, id: 'lila', type: 'reputation' },
         { amount: 3, id: 'neighbor_jo', type: 'reputation' },
       ],
       leave_patch: [
-        { amount: 1, id: 'recipe_card_foragers_stew', type: 'item' },
+        { amount: 1, id: 'recipe_foragers_stew', type: 'item' },
         { amount: 20, id: 'lila', type: 'reputation' },
         { amount: 15, id: 'social', type: 'xp' },
         { amount: 10, id: 'foraging', type: 'xp' },
       ],
     },
     rewards: [
-      { amount: 1, id: 'recipe_card_foragers_stew', type: 'item' },
+      { amount: 1, id: 'recipe_foragers_stew', type: 'item' },
       { amount: 20, id: 'lila', type: 'reputation' },
       { amount: 15, id: 'social', type: 'xp' },
     ],
