@@ -11,6 +11,12 @@
  *    Tab changed tools behind an open shop instead of moving focus;
  *  - on close, focus was lost to <body>.
  *
+ * The opener is the focused control, or else the control tapped or focused in
+ * the last 1.5s (iOS does not focus a tapped button, and the village prompt
+ * hides before its sheet appears). On close, focus goes back to it once it is
+ * visible again, for up to 1.5s; a sheet opened from a game key (E, Q, M, Esc
+ * with nothing focused) leaves focus on <body>, where game keys keep working.
+ *
  * This watches the DOM for the top-most open modal, moves focus into it when
  * it appears (the dialog itself, not its first button, so a stray Space or
  * Enter cannot buy or travel), wraps Tab / Shift+Tab inside it, and returns
@@ -68,28 +74,68 @@ export function nextTrapTarget(modal, active, backwards) {
   return null;
 }
 
-export function installModalFocus({ doc = document } = {}) {
+// How long a tap or focus on a control still counts as "the opener" of a
+// sheet that appears after it, and how long a closed sheet waits for its
+// opener to come back (the village prompt is hidden while its sheet is open
+// and only reappears after the close).
+const OPENER_WINDOW_MS = 1500;
+const RETURN_WINDOW_MS = 1500;
+
+export function installModalFocus({ doc = document, now = () => Date.now() } = {}) {
   const win = doc.defaultView;
   let current = null;
   let returnTo = null;
+  let pendingReturn = null;
+  let retryTimer = null;
   let scheduled = false;
+  // Last control the player tapped or focused outside any sheet. iOS Safari
+  // does not focus a button on tap, and the village prompt hides (dropping
+  // focus to <body>) before the sheet it opens is observed, so activeElement
+  // alone loses the opener.
+  let lastControl = null;
 
   const focusSoft = (el) => {
     try { el.focus({ preventScroll: true }); } catch { /* detached */ }
   };
 
+  function noteControl(event) {
+    const el = event.target?.closest?.(FOCUSABLE_SELECTOR);
+    if (!el || el.closest(MODAL_SELECTOR)) return;
+    lastControl = { el, at: now() };
+  }
+
+  function findOpener(top) {
+    const active = doc.activeElement;
+    if (active && active !== doc.body && !top.contains(active)) return active;
+    if (lastControl && now() - lastControl.at <= OPENER_WINDOW_MS && !top.contains(lastControl.el)) return lastControl.el;
+    return null;
+  }
+
+  function tryReturn() {
+    if (!pendingReturn) return;
+    const { target, until } = pendingReturn;
+    const active = doc.activeElement;
+    const focusFree = !active || active === doc.body || !active.isConnected;
+    if (!focusFree || !target.isConnected || now() > until) { pendingReturn = null; return; }
+    if (isRendered(target, win) && !target.disabled) {
+      focusSoft(target);
+      pendingReturn = null;
+      return;
+    }
+    // Not back yet (e.g. the prompt re-shows after the close): retry shortly.
+    if (!retryTimer) retryTimer = win.setTimeout(() => { retryTimer = null; tryReturn(); }, 50);
+  }
+
   function sync() {
     scheduled = false;
     const top = findTopModal(doc);
-    if (top === current) return;
+    if (top === current) { tryReturn(); return; }
     const previous = current;
     current = top;
     if (top) {
+      pendingReturn = null;
       // Remember who opened the first modal; stacked modals keep that origin.
-      if (!previous) {
-        const active = doc.activeElement;
-        returnTo = active && active !== doc.body && !top.contains(active) ? active : null;
-      }
+      if (!previous) returnTo = findOpener(top);
       if (!top.contains(doc.activeElement)) {
         if (!top.hasAttribute('tabindex')) top.setAttribute('tabindex', '-1');
         top.dataset.modalFocusTarget = 'true';
@@ -99,9 +145,10 @@ export function installModalFocus({ doc = document } = {}) {
     }
     const target = returnTo;
     returnTo = null;
-    if (target?.isConnected && isRendered(target, win) && !target.disabled) {
-      const active = doc.activeElement;
-      if (!active || active === doc.body || !active.isConnected) focusSoft(target);
+    lastControl = null;
+    if (target) {
+      pendingReturn = { target, until: now() + RETURN_WINDOW_MS };
+      tryReturn();
     }
   }
 
@@ -137,6 +184,8 @@ export function installModalFocus({ doc = document } = {}) {
     }
   }
   doc.addEventListener('keydown', onKeyDown, true);
+  doc.addEventListener('pointerdown', noteControl, true);
+  doc.addEventListener('focusin', noteControl, true);
   schedule();
 
   return {
@@ -144,6 +193,9 @@ export function installModalFocus({ doc = document } = {}) {
     dispose() {
       observer.disconnect();
       doc.removeEventListener('keydown', onKeyDown, true);
+      doc.removeEventListener('pointerdown', noteControl, true);
+      doc.removeEventListener('focusin', noteControl, true);
+      if (retryTimer) win.clearTimeout(retryTimer);
     },
   };
 }

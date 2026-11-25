@@ -40,6 +40,12 @@ export const INTERVENTION_PROMPTS = {
 export const SEASON_ICONS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: '❄️' };
 export const SEASON_LABELS = { spring: 'Spring', summer: 'Summer', fall: 'Fall', winter: 'Winter' };
 
+// Phones in portrait, plus phone landscape (short screens): the compact
+// objective card (hud-controls.css) and the landscape control layout
+// (phone-controls.css) use the same breakpoints.
+export const PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 500px)';
+export const PHONE_OBJECTIVE_QUERY = `(max-width: 600px), ${PHONE_LANDSCAPE_QUERY}`;
+
 export const DEFAULT_TOOLS = [
   { id: 'hand', label: 'Hand', icon: '✋', shortcut: '1' },
   { id: 'water', label: 'Water', icon: '💧', shortcut: '2' },

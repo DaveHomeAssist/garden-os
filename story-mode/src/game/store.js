@@ -1,6 +1,6 @@
 import craftingRecipeSpec from 'specs/CRAFTING_RECIPES.json';
 import { normalizeVillageState } from './village/village-state.js';
-import { foldLegacyTokens, LEDGER_LIMIT, VILLAGE_SHOP_LEDGER_TYPE } from './village/village-economy.js';
+import { applyPantrySale, foldLegacyTokens, LEDGER_LIMIT, VILLAGE_SHOP_LEDGER_TYPE } from './village/village-economy.js';
 import questDeckSpec from 'specs/QUEST_DECK.json';
 
 import { ACTIVITY_REWARD_TABLE, FESTIVALS } from '../data/festivals-data.js';
@@ -147,6 +147,7 @@ const Actions = {
   EXPAND_BED_GRID: 'EXPAND_BED_GRID',
   SET_TOKENS: 'SET_TOKENS',
   VILLAGE_SHOP_BUY: 'VILLAGE_SHOP_BUY',
+  VILLAGE_SHOP_SELL: 'VILLAGE_SHOP_SELL',
   ADD_STORY_LOG: 'ADD_STORY_LOG',
   RECORD_QUEST_CHOICE: 'RECORD_QUEST_CHOICE',
   ADJUST_CURRENCY: 'ADJUST_CURRENCY',
@@ -1420,6 +1421,18 @@ function gameReducer(state, action = {}) {
           },
         ].slice(-LEDGER_LIMIT),
       };
+      return nextState;
+    }
+
+
+    case Actions.VILLAGE_SHOP_SELL: {
+      // Free Play only: sell pantry crops at the seed stand for coins.
+      const nextState = cloneGameState(state);
+      const result = applyPantrySale(nextState.campaign, payload.cropId, payload.count, {
+        timestamp: payload.timestamp,
+      });
+      if (!result.ok) return state;
+      nextState.campaign = result.campaign;
       return nextState;
     }
 

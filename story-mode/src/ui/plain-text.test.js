@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import eventDeck from 'specs/EVENT_DECK.json';
-import { buildObjectiveText, describeEventEffect, formatHudScore, VILLAGE_OBJECTIVE_TEXT } from './plain-text.js';
+import { buildObjectiveText, describeEventEffect, formatHudScore, VILLAGE_OBJECTIVE_TEXT, VILLAGE_OBJECTIVE_TEXT_TOUCH } from './plain-text.js';
 
 const JARGON = /Paths \d|Zone:|current_beat|rest_of_season|carry_forward|row-\d|col-\d|[+-]\d+(\.\d+)? ·/;
 
@@ -70,6 +70,23 @@ describe('village objective text (V0)', () => {
     expect(VILLAGE_OBJECTIVE_TEXT).toMatch(/compost bin/);
     expect(VILLAGE_OBJECTIVE_TEXT).toMatch(/plot/);
     expect(VILLAGE_OBJECTIVE_TEXT).not.toMatch(/neighbo|talk|Start Season|Plant,/i);
+  });
+});
+
+describe('device-aware objective wording (phone playthrough, Nov 23)', () => {
+  it('touch players are told to tap, not to press E', () => {
+    const text = buildObjectiveText({ phase: 'PLANNING', season: 'spring', sandbox: true, zoneId: 'village', touch: true });
+    expect(text).toBe(VILLAGE_OBJECTIVE_TEXT_TOUCH);
+    expect(text).not.toMatch(/\bE\b/);
+    expect(text).toMatch(/Tap/);
+    const zone = buildObjectiveText({ phase: 'PLANNING', season: 'spring', zoneId: 'park', zoneName: 'the park', touch: true });
+    expect(zone).not.toMatch(/with E/);
+  });
+
+  it('says Continue in winter, matching the advance button', () => {
+    const text = buildObjectiveText({ phase: 'EARLY_SEASON', season: 'winter', sandbox: true, nextPhaseLabel: 'Mid Season' });
+    expect(text).toBe('The season is growing. Press Continue for Mid Season.');
+    expect(buildObjectiveText({ phase: 'EARLY_SEASON', season: 'spring', sandbox: true, nextPhaseLabel: 'Mid Season' })).toMatch(/Press Next/);
   });
 });
 

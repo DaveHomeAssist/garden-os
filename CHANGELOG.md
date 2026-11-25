@@ -12,8 +12,10 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ### Added
 - Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
+- Added a walkable village to Free Play, where you can walk or tap your way to your garden, the Seed stand, the Seed box, the Tool shed and the Compost bin. The shops spend your coins, harvests leave compost scraps for the bin, and the yard gained a wheelbarrow, rain barrel, bench and birdhouse.
 
 ### Fixed
+- On a phone-shaped screen, the village camera sits lower and a little closer so the character reads as a person and the street ahead stays in view, instead of a near top-down sliver. Desktop and landscape framing is unchanged.
 - Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.
@@ -34,6 +36,8 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Story Mode: Main Menu then Continue no longer leaks the previous game session. Click listeners on the static HUD and pause buttons are now removed at session cleanup (one AbortController per session), the old renderer's WebGL context and the startup WebGL probe context are released, and stale handlers no longer fire again on each click. Six round trips now leave 0 live WebGL contexts and a flat heap (headless Chrome probe: 4 live contexts and 13.8 MB before, 0 and 5.2 MB after).
 - Story Mode: weather, day/night, atmosphere animation and camera easing now follow real frame time (capped) instead of a fixed 1/60 s step, so they no longer run at double speed on 120 Hz displays. Manual ticks (`window.advanceTime`, tests) still step 1/60 s.
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
+- Fixed the Free Play village showing no prompt, and E doing nothing, after you reloaded while standing at the Seed stand or the compost bin.
+- Fixed Free Play harvests losing all their compost scraps when the backpack was nearly full. The scraps now fill the free space, and a "Your backpack is full." message tells you when some were left behind.
 
 ### Added
 - Added two authored choices to all 25 Story Mode quests, and neighbors in other zones now remark on the choice you made.

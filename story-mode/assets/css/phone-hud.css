@@ -1,0 +1,378 @@
+/* Phone HUD declutter (fix/phone-hud-declutter, Nov 2026).
+   Loaded last from main.js. Phones only: portrait up to 430px wide, and
+   landscape phones (short screens). Desktop and tablet layouts are untouched.
+
+   Dave, Nov 23: "just seems SO busy with all those boxes on screen". Every
+   helper was its own bordered paper card (HUD rail, each pill, the season
+   calendar, the objective, the crop counter, the hotbar panel and each slot,
+   Plant, Backpack, Next, the bug button, Back to village, the prompt card and
+   the stick caption). On phones:
+   - status text (calendar, objective, prompt label, counter) sits straight
+     on the scene as light type with a soft shadow, no card;
+   - the crop counter, quest tracker and 🦗 fold into one status chip
+     (phone-hud.js) that opens on tap;
+   - the objective shows in full once per new objective, then settles to one
+     line (tap to read it again);
+   - Plant / Backpack / Next become one context action (the solid button, bottom
+     right) plus small round icon buttons: Plant is the action until there is
+     something to start, then Start Season / Next takes over and Plant shrinks
+     to an icon beside Backpack;
+   - the hotbar loses its panel; slots are soft round wells;
+   - the redundant pills (phase, chapter, season icon) and the stick's "Move"
+     caption step aside.
+   Tap targets stay at 44px, text stays at 12px or more. */
+
+@media (max-width: 430px) and (orientation: portrait), (orientation: landscape) and (max-height: 500px) {
+  body[data-design-language="field-kit"][data-story-screen="play"] {
+    --phone-hud-ink: #fffaf0;
+    --phone-hud-ink-soft: #f4ead8;
+    --phone-hud-shadow: 0 1px 2px rgba(18, 12, 6, 0.95), 0 0 6px rgba(18, 12, 6, 0.75), 0 0 14px rgba(18, 12, 6, 0.45);
+    --phone-hud-well: rgba(26, 18, 10, 0.42);
+    --phone-hud-well-strong: rgba(26, 18, 10, 0.62);
+  }
+
+  /* The touch orbit overlay (z-index 12, right 60% of the screen) sat over
+     the status chip, so taps reached it only through the overlay's tap
+     forwarding. Lift the rail above it; the rail itself is click-through. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud {
+    z-index: 13;
+  }
+
+  /* HUD rail: no panels, no pills. ☰ stays a 44px target. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-left,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-right {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pause-btn {
+    border: 0;
+    border-radius: 999px;
+    background: var(--phone-hud-well);
+    color: var(--phone-hud-ink);
+    font-size: 20px;
+    text-shadow: none;
+  }
+
+  /* The calendar already names the season, chapter and phase. */
+  body[data-design-language="field-kit"][data-story-screen="play"] :is(#hud-season-icon, #hud-chapter, #hud-phase) {
+    display: none !important;
+  }
+
+  /* Crop counter and score live in the status chip now. */
+  body[data-design-language="field-kit"][data-story-screen="play"] :is(#hud-crops, .hud-score-wrap) {
+    display: none !important;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--phone-hud-well);
+    color: var(--phone-hud-ink);
+    font: 700 13px/1 'DM Mono', ui-monospace, monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-status-chip::after {
+    content: "▾";
+    font-size: 12px;
+    opacity: 0.85;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"][data-phone-status="open"] .hud-status-chip::after {
+    content: "▴";
+  }
+
+  /* Folded away until the chip opens: the quest tracker and the bug button. */
+  body[data-design-language="field-kit"][data-story-screen="play"]:not([data-phone-status="open"]) :is(.quest-tracker, #fab-bug) {
+    display: none !important;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"][data-phone-status="open"] #fab-bug {
+    position: fixed;
+    /* Under the chip and clear of Back to village (top 88px, 44px tall). */
+    top: calc(140px + env(safe-area-inset-top, 0px));
+    right: max(10px, env(safe-area-inset-right, 0px));
+    bottom: auto;
+    left: auto;
+    z-index: 41;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"][data-phone-status="open"] .quest-tracker {
+    top: calc(196px + env(safe-area-inset-top, 0px));
+    right: max(10px, env(safe-area-inset-right, 0px));
+    bottom: auto;
+    left: auto;
+    z-index: 41;
+    max-height: 40vh;
+  }
+
+  /* Season calendar: type on the scene, no card, no beat bars. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar {
+    min-width: 0;
+    padding: 2px 4px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    color: var(--phone-hud-ink);
+    text-shadow: var(--phone-hud-shadow);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar :is(.season-card__beats, .season-card__chapter) {
+    display: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar :is(.season-card__month, .season-card__year, .season-card__beat-label) {
+    color: var(--phone-hud-ink);
+    text-shadow: var(--phone-hud-shadow);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar .season-card__beat-label {
+    margin-top: 2px;
+    color: var(--phone-hud-ink-soft);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #season-calendar .season-card__emoji {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  /* Objective: plain light text, one line once it has been read. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 2px 4px;
+    color: var(--phone-hud-ink);
+    text-shadow: var(--phone-hud-shadow);
+    font-size: 13px;
+    font-weight: 600;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper::before,
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper[data-truncated="true"]::before,
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded::before {
+    display: none;
+    content: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-fresh,
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper.is-expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: none;
+    padding-bottom: 4px;
+  }
+
+  /* Hotbar: no panel; slots are soft round wells, the chosen one ringed. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud,
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud.is-visible {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud .tool-hud__slot {
+    border: 0;
+    border-radius: 999px;
+    background: var(--phone-hud-well);
+    color: var(--phone-hud-ink);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud .tool-hud__slot[aria-pressed="true"] {
+    border: 0;
+    background: rgba(61, 107, 46, 0.86);
+    box-shadow: 0 0 0 3px var(--phone-hud-ink);
+    transform: none;
+  }
+
+  /* Number keys mean nothing on a touch screen. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .tool-hud .tool-hud__shortcut {
+    display: none;
+  }
+
+  /* Move stick: the ring is the control; drop the caption pill. */
+  #app > .touch-stick .touch-stick__label {
+    display: none !important;
+  }
+
+  /* Back to village: a light text link with the same 44px target. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #village-back {
+    border: 0 !important;
+    background: var(--phone-hud-well) !important;
+    box-shadow: none !important;
+    padding: 8px 12px !important;
+    color: var(--phone-hud-ink) !important;
+  }
+
+  /* Village prompt: the label is plain text; only the Tap chip is a button
+     shape (and still the only part that opens the prompt, #83). */
+  body[data-design-language="field-kit"] #village-prompt.interaction-prompt {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--phone-hud-ink);
+    text-shadow: var(--phone-hud-shadow);
+  }
+
+  body[data-design-language="field-kit"] #village-prompt .interaction-prompt__label {
+    color: var(--phone-hud-ink, #fffaf0);
+    font-weight: 700;
+  }
+
+  body[data-design-language="field-kit"] #village-prompt .interaction-prompt__hint {
+    border: 0;
+    background: #3d6b2e;
+    color: #fffaf0;
+    text-shadow: none;
+    font-size: 12px;
+  }
+
+  /* Toasts: one soft dark pill, no border. */
+  body .toast-notification {
+    border: 0 !important;
+    border-radius: 999px;
+    background: rgba(26, 18, 10, 0.78) !important;
+    color: var(--phone-hud-ink, #fffaf0) !important;
+    box-shadow: none !important;
+  }
+
+  /* Plant / Backpack / Next: one context action plus small icon buttons. */
+  body[data-design-language="field-kit"][data-story-screen="play"] :is(#fab-plant, #fab-backpack, #fab-bug) {
+    border: 0;
+    border-radius: 999px;
+    background: var(--phone-hud-well);
+    color: var(--phone-hud-ink);
+    box-shadow: none;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-backpack {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0;
+  }
+
+  /* A greyed-out Start Season, or Plant outside Planning, is not an action:
+     hide it until it is one. */
+  body[data-design-language="field-kit"][data-story-screen="play"] :is(#fab-advance, #fab-plant):not(.is-visible) {
+    display: none !important;
+  }
+
+  /* Intervention tokens: just the dots, no pill. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #hud-tokens {
+    border: 0;
+    background: transparent;
+    min-height: 44px;
+    padding: 0 4px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance {
+    border: 0;
+    border-radius: 999px;
+    background: #3d6b2e;
+    color: #fffaf0;
+    min-height: 52px;
+    padding: 0 20px;
+    box-shadow: 0 6px 16px rgba(18, 12, 6, 0.35);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-advance::before {
+    display: none;
+  }
+
+  /* Plant is the context action while nothing can start yet (solid, labelled);
+     once Start Season / Next shows, Plant shrinks to an icon. */
+  body[data-design-language="field-kit"][data-story-screen="play"]:not(:has(#fab-advance.is-visible)) #fab-plant.is-visible {
+    background: #3d6b2e;
+    color: #fffaf0;
+    box-shadow: 0 6px 16px rgba(18, 12, 6, 0.35);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#fab-advance.is-visible) #fab-plant {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#fab-advance.is-visible) #fab-plant > span:last-child {
+    display: none;
+  }
+}
+
+/* Portrait phones: one bottom row. Backpack and (icon) Plant bottom-left,
+   the context action bottom-right. */
+@media (max-width: 430px) and (orientation: portrait) {
+  body[data-design-language="field-kit"][data-story-screen="play"] #fab-backpack {
+    left: 10px;
+    right: auto;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    top: auto;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#fab-advance.is-visible) #fab-plant {
+    left: 66px;
+    right: auto;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    top: auto;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:not(:has(#fab-advance.is-visible)) #fab-plant {
+    left: auto;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    top: auto;
+    min-height: 52px;
+    padding: 0 20px;
+  }
+
+  /* The calendar is shorter without its card, so the objective moves up. */
+  body[data-design-language="field-kit"][data-story-screen="play"] #phase-helper {
+    top: calc(146px + env(safe-area-inset-top, 0px));
+  }
+}
+
+/* Landscape phones: the right column keeps its slots; with Next hidden
+   Plant drops into the bottom slot as the context action. */
+@media (orientation: landscape) and (max-height: 500px) {
+  body[data-design-language="field-kit"][data-story-screen="play"]:not(:has(#fab-advance.is-visible)) #fab-plant {
+    bottom: var(--phone-ls-bottom);
+    min-height: 52px;
+    padding: 0 20px;
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:not(:has(#fab-advance.is-visible)) #fab-backpack {
+    bottom: calc(var(--phone-ls-bottom) + 52px + 8px);
+  }
+
+  body[data-design-language="field-kit"][data-story-screen="play"]:has(#fab-advance.is-visible) #fab-plant {
+    bottom: calc(var(--phone-ls-bottom) + 54px + 8px + 48px + 8px);
+  }
+}
+
+/* Outside phones (and off the play screen) the chip never shows; the phone
+   rule above has the higher specificity. */
+.hud-status-chip {
+  display: none;
+}

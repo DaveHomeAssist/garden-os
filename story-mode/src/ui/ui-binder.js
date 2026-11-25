@@ -14,6 +14,7 @@ import { createDialoguePanel } from './dialogue-panel.js';
 import { showWinterReview } from './winter-review.js';
 import { createCutsceneMachine } from '../game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './season-calendar.js';
+import { mountPhoneStatusChip } from './phone-hud.js';
 import {
   canUseTool,
   executeToolAction,
@@ -61,6 +62,7 @@ import {
   getRowAverages,
   getYearForChapter,
   isLetItGrowInteractionMode,
+  PHONE_OBJECTIVE_QUERY,
 } from './ui-constants.js';
 import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
@@ -141,6 +143,8 @@ function bindUI({
 
   const calendarEl = createSeasonCalendar();
   document.getElementById('app')?.appendChild(calendarEl);
+  // Phones: crop counter + quest tracker + bug button fold into one chip.
+  mountPhoneStatusChip({ doc: document, signal: sessionListeners.signal });
 
   const hudChapter = document.getElementById('hud-chapter');
   const hudPhase = document.getElementById('hud-phase');
@@ -148,6 +152,54 @@ function bindUI({
   const hudCrops = document.getElementById('hud-crops');
   const hudScore = document.getElementById('hud-score');
   const phaseHelper = document.getElementById('phase-helper');
+  // Phones (portrait, and landscape on short screens) clamp the objective card
+  // to two lines (hud-controls.css); a tap expands it. data-truncated drives
+  // the "tap for more" hint.
+  const objectiveNarrow = typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_OBJECTIVE_QUERY) : null;
+  let objectiveClampFrame = 0;
+  // Phones show a new objective in full once, then settle it to one line
+  // (phone-hud.css); a tap still expands it. Objectives seen before in this
+  // session come back already settled.
+  const OBJECTIVE_FRESH_MS = 7000;
+  const seenObjectives = new Set();
+  let objectiveFreshTimer = 0;
+  function markObjectiveFresh(text) {
+    if (!phaseHelper) return;
+    clearTimeout(objectiveFreshTimer);
+    if (!text || seenObjectives.has(text)) {
+      phaseHelper.classList.remove('is-fresh');
+      return;
+    }
+    seenObjectives.add(text);
+    phaseHelper.classList.add('is-fresh');
+    objectiveFreshTimer = setTimeout(() => {
+      phaseHelper.classList.remove('is-fresh');
+      scheduleObjectiveClampCheck();
+    }, OBJECTIVE_FRESH_MS);
+  }
+  sessionListeners.signal.addEventListener('abort', () => clearTimeout(objectiveFreshTimer));
+  function setObjectiveExpanded(expanded) {
+    if (!phaseHelper) return;
+    phaseHelper.classList.toggle('is-expanded', Boolean(expanded));
+  }
+  function scheduleObjectiveClampCheck() {
+    if (!phaseHelper || objectiveClampFrame || typeof requestAnimationFrame !== 'function') return;
+    objectiveClampFrame = requestAnimationFrame(() => {
+      objectiveClampFrame = 0;
+      const clamped = Boolean(objectiveNarrow?.matches) && !phaseHelper.classList.contains('is-expanded')
+        && !phaseHelper.classList.contains('is-fresh')
+        && phaseHelper.scrollHeight > phaseHelper.clientHeight + 1;
+      if (clamped) phaseHelper.dataset.truncated = 'true';
+      else if (!phaseHelper.classList.contains('is-expanded')) delete phaseHelper.dataset.truncated;
+    });
+  }
+  phaseHelper?.addEventListener('click', () => {
+    if (!objectiveNarrow?.matches) return;
+    if (!phaseHelper.classList.contains('is-expanded') && phaseHelper.dataset.truncated !== 'true') return;
+    setObjectiveExpanded(!phaseHelper.classList.contains('is-expanded'));
+    scheduleObjectiveClampCheck();
+  }, sessionSignal);
+  objectiveNarrow?.addEventListener?.('change', () => { setObjectiveExpanded(false); scheduleObjectiveClampCheck(); }, sessionSignal);
   const panelContainer = document.getElementById('panel-container');
   const phaseDots = document.getElementById('phase-dots');
   const toastContainer = document.getElementById('toast-container');
@@ -1359,6 +1411,14 @@ function bindUI({
     hudScore?.classList.add('is-harvest-glow');
 
     finalizeHarvestProgression();
+    if (state.campaign.sandbox) {
+      const result = state.season.harvestResult;
+      const units = Object.values(result?.yieldCounts ?? {}).reduce((sum, n) => sum + n, 0)
+        || (result?.yieldList?.length ?? 0);
+      if (units > 0) {
+        showToast('Crops are in the pantry. Sell them at the seed stand for coins.', 2800);
+      }
+    }
     showHarvestReveal(
       document.getElementById('overlay-container'),
       state.season.harvestResult,
@@ -1560,9 +1620,15 @@ function bindUI({
         zoneName: getCurrentZoneName(),
         forageAvailable: foraging.available ?? 0,
         nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+        touch: globalThis.matchMedia?.('(pointer: coarse)').matches ?? false,
       });
-      phaseHelper.textContent = helperText;
+      if (phaseHelper.textContent !== helperText) {
+        phaseHelper.textContent = helperText;
+        setObjectiveExpanded(false);
+        markObjectiveFresh(helperText);
+      }
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
+      scheduleObjectiveClampCheck();
     }
 
     if (hudAction?.classList.contains('is-visible')) {

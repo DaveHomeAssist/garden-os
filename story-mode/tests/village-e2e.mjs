@@ -311,7 +311,12 @@ try {
   await page.getByRole('button', { name: 'Continue Free Play', exact: true }).click();
   await page.waitForFunction(() => typeof window.render_game_to_text === 'function');
   await waitZone('player_plot');
-  await page.locator('#village-back').click();
+  // The back button is type=button and does not navigate. After the fixture
+  // reload, click() can still stall for 30s "waiting for scheduled
+  // navigations to finish" (CI 45260779780 on 9545453). noWaitAfter lets
+  // waitZone('village') be the assertion that travel completed.
+  await page.locator('#village-back').waitFor({ state: 'visible' });
+  await page.locator('#village-back').click({ noWaitAfter: true });
   await waitZone('village');
   await page.waitForTimeout(400);
   const ITEMS = ['dried_leaves', 'plant_matter', 'compost'];
@@ -363,17 +368,19 @@ try {
   if (await page.locator('.palette-dismiss:visible').count()) await page.locator('.palette-dismiss:visible').first().click();
   pass('garden HUD returns at home; bought crop is plantable', { cropId });
 
-  // Phone: the counter shows the crop count, not a bare "--".
+  // Phone: the crop count shows (in the status chip since fix/phone-hud-declutter),
+  // not a bare "--".
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(500);
   const phone = await page.evaluate(() => {
     const vis = (el) => el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
     const crops = document.querySelector('#hud-crops');
+    const chip = document.querySelector('#hud-status-chip .hud-status-chip__text');
     const score = document.querySelector('#hud-score');
-    return { crops: vis(crops) ? crops.textContent : null, score: vis(score) ? score.textContent : null };
+    return { crops: vis(crops) ? crops.textContent : null, chip: vis(chip) ? chip.textContent : null, score: vis(score) ? score.textContent : null };
   });
   await page.screenshot({ path: `${OUT}/08-phone-counter.png` });
-  assert.match(phone.crops ?? '', /^\d+ \/ \d+$/, `phone crop counter ${JSON.stringify(phone)}`);
+  assert.ok(/^\d+ \/ \d+$/.test(phone.crops ?? '') || /^🌱 \d+\/\d+/.test(phone.chip ?? ''), `phone crop counter ${JSON.stringify(phone)}`);
   assert.notEqual(phone.score, '--', 'no bare "--" on the phone');
   pass('phone HUD shows the crop counter, no bare "--"', phone);
 
