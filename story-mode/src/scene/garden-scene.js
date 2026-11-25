@@ -315,6 +315,58 @@ function getEmojiColor(emoji, factionColor) {
   return factionColor;
 }
 
+/**
+ * Client (CSS px) -> normalized device coordinates for picking. Returns false
+ * when the canvas has no layout box yet (0x0 during iframe first paint or a
+ * display:none zone switch) or the input is not finite, so callers report a
+ * miss instead of casting an Infinity/NaN ray. Bug pass 2026-11-25.
+ */
+export function clientToNdc(clientX, clientY, rect, out) {
+  const width = rect?.width;
+  const height = rect?.height;
+  if (!(width > 0) || !(height > 0)) return false;
+  const x = ((clientX - rect.left) / width) * 2 - 1;
+  const y = -((clientY - rect.top) / height) * 2 + 1;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  out.x = x;
+  out.y = y;
+  return true;
+}
+
+/**
+ * Keeps a running scene recoverable across a WebGL context loss (tab
+ * discard, GPU reset). three.js already calls preventDefault() and rebuilds
+ * its GL state on restore; this adds the session-level pieces it cannot know
+ * about: an explicit preventDefault (so restore never depends on listener
+ * order), a shadow-map refresh and a size re-sync once the context is back,
+ * and an onChange hook for UI. Returns { isLost, dispose }.
+ */
+export function attachContextLossRecovery(renderer, { onRestore, onChange } = {}) {
+  const canvas = renderer?.domElement;
+  if (!canvas?.addEventListener) return { isLost: () => false, dispose() {} };
+  let lost = false;
+  const handleLost = (event) => {
+    event.preventDefault();
+    lost = true;
+    onChange?.(true);
+  };
+  const handleRestored = () => {
+    lost = false;
+    if (renderer.shadowMap) renderer.shadowMap.needsUpdate = true;
+    try { onRestore?.(); } catch (err) { console.warn('[garden-scene] context restore hook failed', err); }
+    onChange?.(false);
+  };
+  canvas.addEventListener('webglcontextlost', handleLost, false);
+  canvas.addEventListener('webglcontextrestored', handleRestored, false);
+  return {
+    isLost: () => lost,
+    dispose() {
+      canvas.removeEventListener('webglcontextlost', handleLost, false);
+      canvas.removeEventListener('webglcontextrestored', handleRestored, false);
+    },
+  };
+}
+
 export function disposeGardenScene({ container, renderer, scene, weather, dayNight, cameraController, resourceTracker, cropMeshes, supportMeshes, accentMeshes }) {
   resourceTracker?.trackObject(scene);
   weather?.dispose?.();
@@ -366,6 +418,17 @@ export function createGardenScene(container) {
   renderer.toneMappingExposure = 1.18;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   container.appendChild(renderer.domElement);
+  let lastResize = null;
+  const contextRecovery = attachContextLossRecovery(renderer, {
+    onRestore() {
+      // Re-apply the drawing-buffer size the session last asked for; the
+      // restored context starts from the canvas attributes only.
+      if (lastResize) renderer.setSize(lastResize.width, lastResize.height, false);
+    },
+    onChange(isLost) {
+      container?.toggleAttribute?.('data-gl-context-lost', isLost);
+    },
+  });
 
   // Root group
   const root = new THREE.Group();
@@ -3114,9 +3177,7 @@ function getGrowthScale(phase, season) {
   }
 
   function raycastCell(clientX, clientY) {
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    if (!clientToNdc(clientX, clientY, renderer.domElement.getBoundingClientRect(), pointer)) return -1;
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(bed.cellMeshes);
     if (hits.length > 0) return hits[0].object.userData.cellIndex;
@@ -3127,9 +3188,7 @@ function getGrowthScale(phase, season) {
   const groundHitScratch = new THREE.Vector3();
 
   function raycastGround(clientX, clientY) {
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    if (!clientToNdc(clientX, clientY, renderer.domElement.getBoundingClientRect(), pointer)) return null;
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.ray.intersectPlane(groundPlane, groundHitScratch);
     if (!hit) return null;
@@ -3217,6 +3276,7 @@ function getGrowthScale(phase, season) {
   return {
     canvas: renderer.domElement,
     resize(width, height) {
+      lastResize = { width, height };
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -3641,7 +3701,8 @@ function getGrowthScale(phase, season) {
       // ── End harvest FX ──────────────────────────────────────────────
 
       updateBedFocus(now);
-      yardArt.render(skyMat.color);
+      // No GL work while the context is lost; three resumes after restore.
+      if (!contextRecovery.isLost()) yardArt.render(skyMat.color);
     },
     applySeason,
     setBedSize,
@@ -3701,7 +3762,11 @@ function getGrowthScale(phase, season) {
     getArtQuality() { return yardArt.quality; },
     setArtQuality(choice) { return yardArt.setQualityChoice(choice); },
     getYardArtDebug() { return yardArt.getDebugState(); },
+    isContextLost() { return contextRecovery.isLost(); },
     dispose() {
+      // Detach before disposeGardenScene's forceContextLoss() so the
+      // deliberate teardown is not treated as a recoverable loss.
+      contextRecovery.dispose();
       offSpriteLoaded();
       yardArt.dispose();
       disposeGardenScene({

@@ -1834,6 +1834,10 @@ function bindUI({
   function handleCellInteraction(cellIndex, source = 'pointer') {
     if (pauseController.isOpen()) return false;
     if (!gameInputEnabled || cutsceneMachine.isActive()) return false;
+    // A stale mesh index (bed resized, grid shorter than bed.cellMeshes) must
+    // be a no-op, not a TypeError on grid[cellIndex].cropId. -1 (a miss) keeps
+    // its palette behaviour below. Bug pass 2026-11-25.
+    if (cellIndex >= 0 && !state.season.grid?.[cellIndex]) return false;
 
     if (interventionTargeting.isActive()) {
       handleInterventionTargetClick(cellIndex);
