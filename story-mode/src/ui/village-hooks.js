@@ -22,7 +22,9 @@ export function createBackToVillageButton(container, onClick) {
   button.type = 'button';
   button.className = 'village-back-button';
   button.id = 'village-back';
-  button.innerHTML = '<span aria-hidden="true">←</span> Back to village';
+  // "Back to " drops on the narrowest phones (village-overlays.css) so the
+  // button clears the season calendar at 320px; the name stays the same.
+  button.innerHTML = '<span aria-hidden="true">←</span> <span class="village-back-button__lead">Back to </span>village';
   button.setAttribute('aria-label', 'Back to village (Esc)');
   button.style.cssText = `
     position:fixed;top:calc(88px + env(safe-area-inset-top, 0px));right:calc(12px + env(safe-area-inset-right, 0px));z-index:40;

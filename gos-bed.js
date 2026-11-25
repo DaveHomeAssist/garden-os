@@ -84,6 +84,22 @@
     try { global.localStorage.removeItem(key); return true; }
     catch (_) { return false; }
   }
+  // Every key currently in localStorage. Never throws: blocked storage (a
+  // cross-origin iframe with third-party storage off, some private modes)
+  // throws on .length / .key(), and the planner must still render (H2).
+  function safeKeys() {
+    var keys = [];
+    try {
+      var storage = global.localStorage;
+      if (!storage) return keys;
+      var n = storage.length;
+      for (var i = 0; i < n; i++) {
+        var k = storage.key(i);
+        if (k) keys.push(k);
+      }
+    } catch (_) { /* storage blocked; report no keys */ }
+    return keys;
+  }
   function parseJson(raw) {
     if (raw == null) return null;
     try { return JSON.parse(raw); }
@@ -275,14 +291,13 @@
 
   function readAllBeds() {
     var out = [];
-    if (!global.localStorage) return out;
-    for (var i = 0; i < global.localStorage.length; i++) {
-      var k = global.localStorage.key(i);
-      if (!k) continue;
+    var keys = safeKeys();
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
       if (k.indexOf(BED_PREFIX) !== 0) continue;
       if (k === PENDING_KEY) continue;
       if (k === ORDER_KEY) continue;
-      var v = parseJson(global.localStorage.getItem(k));
+      var v = parseJson(safeGet(k));
       if (v && v.id) {
         if (v.revision == null) v.revision = 0;
         out.push(v);
@@ -375,14 +390,11 @@
 
   function estimateStorageUsage() {
     var used = 0;
-    if (!global.localStorage) {
-      return { usedBytes: 0, warningThreshold: WARNING_BYTES, isOverThreshold: false };
-    }
-    for (var i = 0; i < global.localStorage.length; i++) {
-      var k = global.localStorage.key(i);
-      if (!k) continue;
+    var keys = safeKeys();
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
       if (k.indexOf('gos.') !== 0) continue;
-      var v = global.localStorage.getItem(k) || '';
+      var v = safeGet(k) || '';
       // approx UTF-16 in JS strings: 2 bytes per character
       used += (k.length + v.length) * 2;
     }

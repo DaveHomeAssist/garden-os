@@ -14,7 +14,13 @@ const MAX_PACKS = 12;
 const MAX_PACK_BYTES = 64 * 1024;
 
 function getStorage(storage) {
-  return storage ?? globalThis.localStorage ?? null;
+  if (storage) return storage;
+  // H2: reading the getter throws when the browser blocks storage (embed).
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function readStore(storage) {
