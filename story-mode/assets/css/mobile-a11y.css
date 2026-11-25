@@ -207,6 +207,13 @@ body[data-design-language="field-kit"][data-story-screen="play"] #hud {
   body .quest-log__drop {
     font-size: 13px !important;
   }
+
+  /* An unscored bed has no score to label: the empty "Score" wrap sat under
+     the bug button (iPad 1024x706) and the 12px label poked out above it.
+     Phones already drop it (layout.css, <=420px); the crop counter stays. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-wrap[data-empty="true"] {
+    display: none;
+  }
 }
 
 /* Village street-layout credit: 10px inline (village-scene.js) on every
