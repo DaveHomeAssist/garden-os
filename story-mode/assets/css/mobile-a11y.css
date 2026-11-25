@@ -160,3 +160,55 @@ body[data-design-language="field-kit"][data-story-screen="play"] #hud {
     letter-spacing: 0.04em;
   }
 }
+
+/* 12px floor beyond portrait phones (bug list Nov 25, mobile-a11y-audit).
+   The label rule above only ran at <=600px wide, so phone landscape
+   (844x390, 740x360) and touch tablets (iPad 1024x706) still drew 9-11px
+   labels: save-slot labels 9px, the title version / issue lines and mode
+   cards 10px, the HUD pills, crop counter and score label 11px, the pause
+   section labels, quest tracker/log labels, the bug-report meta (9px) and
+   the setup legends. Short screens and touch screens get the same 12px
+   floor; desktop mouse layouts keep their density. */
+@media (max-width: 600px), (max-height: 600px), (pointer: coarse) {
+  body .title-version,
+  body .title-screen__issue,
+  body .save-slot-label,
+  body .mode-card .mode-soon,
+  body .mode-card .mode-desc,
+  body .mode-availability-note,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill,
+  body #hud-season-icon,
+  body #hud-chapter,
+  body #hud-phase,
+  body #hud-crops,
+  body .hud-score-label,
+  body .dp-skip-btn,
+  body .dp-field-note,
+  body #pause-status,
+  body .pause-section-label,
+  body .palette-title:not(.quest-log__title):not([style*="font-size"]),
+  body .read-only-sheet__card-meta,
+  body .profile-editor__eyebrow,
+  body .profile-name-field span,
+  body .profile-fieldset legend,
+  body .quest-tracker__header,
+  body .quest-tracker__header span,
+  body .quest-tracker__header kbd,
+  body .quest-tracker__count,
+  body .quest-log__heading,
+  body .quest-log__heading span,
+  body .bug-report-panel .bug-subtitle,
+  body .bug-report-panel .bug-meta {
+    font-size: 12px !important;
+  }
+
+  body .quest-log__drop {
+    font-size: 13px !important;
+  }
+}
+
+/* Village street-layout credit: 10px inline (village-scene.js) on every
+   screen; 12px is the floor for any visible text. */
+body .village-credits {
+  font-size: 12px !important;
+}
