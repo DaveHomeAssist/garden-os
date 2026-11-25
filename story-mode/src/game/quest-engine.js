@@ -362,6 +362,10 @@ class QuestEngine {
       if (!quest.timed) continue;
       const entry = state.campaign.questLog?.[quest.id];
       if (!entry) continue;
+      // The work was finished before the deadline; let the player still turn
+      // it in (a fall harvest only lands at season end, so the season can turn
+      // before there is time to walk back to the giver).
+      if (entry.state === QuestStates.READY_TO_TURN_IN) continue;
 
       let expired = false;
       if (typeof quest.deadline === 'number') {
