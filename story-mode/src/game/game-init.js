@@ -64,7 +64,8 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function createInitialState(slot, savedCampaign, savedSeason = undefined, options = {}) {
@@ -114,7 +115,8 @@ async function createInitialStateFromSave(slot) {
 }
 
 function formatSeasonLabel(season) {
-  if (!season) return 'Spring';
+  // Save-derived: may be a number, object or markup in a crafted save (H3).
+  if (!season || typeof season !== 'string') return 'Spring';
   return season.charAt(0).toUpperCase() + season.slice(1);
 }
 
@@ -200,11 +202,15 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
         </div>`;
     }
 
-    const sparkline = (entry.gradeHistory ?? []).map((gh) => {
-      const cls = GRADE_DOT_CLASS[gh.grade] ?? '';
-      return `<span class="sparkline-dot ${cls}" title="Ch${gh.chapter}: ${gh.grade}"></span>`;
+    // H3: every value below comes from a save file and is escaped before it
+    // reaches innerHTML, so a crafted save cannot inject markup or script.
+    const gradeHistory = Array.isArray(entry.gradeHistory) ? entry.gradeHistory : [];
+    const sparkline = gradeHistory.map((gh) => {
+      const cls = Object.prototype.hasOwnProperty.call(GRADE_DOT_CLASS, gh?.grade) ? GRADE_DOT_CLASS[gh.grade] : '';
+      return `<span class="sparkline-dot ${escapeHtml(cls)}" title="Ch${escapeHtml(gh?.chapter ?? '')}: ${escapeHtml(gh?.grade ?? '')}"></span>`;
     }).join('');
-    const dateStr = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : 'unknown';
+    const updatedDate = entry.updatedAt ? new Date(entry.updatedAt) : null;
+    const dateStr = updatedDate && Number.isFinite(updatedDate.getTime()) ? updatedDate.toLocaleDateString() : 'unknown';
     const progressCls = getProgressClass(entry.campaign);
     const seasonLabel = formatSeasonLabel(entry.season);
     const gradeLabel = entry.grade ? `Last grade ${entry.grade}` : 'No harvest grade yet';
@@ -216,20 +222,20 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
           <div class="save-slot-label">Slot ${entry.slot + 1}</div>
           <div class="save-slot-stamps">
             <span class="save-slot-stamp">${escapeHtml(gardenerName)}</span>
-            <span class="save-slot-stamp">${seasonLabel}</span>
-            <span class="save-slot-stamp">${gradeLabel}</span>
+            <span class="save-slot-stamp">${escapeHtml(seasonLabel)}</span>
+            <span class="save-slot-stamp">${escapeHtml(gradeLabel)}</span>
           </div>
           <div class="save-slot-chapter">
-            <span class="season-emoji">${entry.seasonEmoji}</span>
+            <span class="season-emoji">${escapeHtml(entry.seasonEmoji ?? '')}</span>
             ${entry.campaign?.postCampaign || entry.chapter === 99
               ? 'Free Play · story complete'
-              : entry.campaign?.complete ? 'Story complete' : `Chapter ${Math.min(entry.chapter ?? 1, 12)}`}
+              : entry.campaign?.complete ? 'Story complete' : `Chapter ${escapeHtml(Math.min(Number(entry.chapter) || 1, 12))}`}
           </div>
-          <div class="save-slot-meta">Score ${entry.score} &middot; Updated ${dateStr}</div>
+          <div class="save-slot-meta">Score ${escapeHtml(entry.score ?? 0)} &middot; Updated ${escapeHtml(dateStr)}</div>
           <div class="save-slot-ledger">
-            <span>Quests ${entry.activeQuests}</span>
-            <span>Zones ${entry.zonesVisited}</span>
-            <span>Archive ${(entry.gradeHistory ?? []).length}</span>
+            <span>Quests ${escapeHtml(entry.activeQuests ?? 0)}</span>
+            <span>Zones ${escapeHtml(entry.zonesVisited ?? 0)}</span>
+            <span>Archive ${gradeHistory.length}</span>
           </div>
           ${sparkline ? `<div class="save-slot-sparkline">${sparkline}</div>` : ''}
         </div>
@@ -352,8 +358,14 @@ function renderTitleScreen(onStart, { saveEntries = listSaves(), hydrateAuthorit
     freeplayBtn.style.display = 'none';
     freeplayBtn.addEventListener('click', async () => {
       freeplayBtn.disabled = true;
-      await waitForSessionFlush();
-      const restored = await loadBestAvailableSave(FREEPLAY_SAVE_TARGET);
+      let restored = { campaign: null, season: null };
+      try {
+        await waitForSessionFlush();
+        restored = await loadBestAvailableSave(FREEPLAY_SAVE_TARGET);
+      } catch (error) {
+        // H2: blocked IndexedDB / storage must not leave the button dead.
+        console.warn('[GOS] Free Play save unavailable, starting fresh:', error?.message ?? error);
+      }
       const initialState = restored.campaign
         ? createInitialState(FREEPLAY_SAVE_TARGET, restored.campaign, restored.season)
         : createSandboxState();
@@ -555,9 +567,25 @@ function showTitleScreen(onStart) {
 
 function initGame(initialState, { slot }) {
   const store = new Store(initialState);
-  const authorityPersistence = createStoryAuthorityPersistence(store, { slot });
+  // H2: if IndexedDB is present but cannot be opened (blocked third-party
+  // storage in the mixmash.games iframe, private mode), switch this session to
+  // the local save path (localStorage, or memory when that is blocked too).
+  let localFallbackUnsubscribe = null;
+  function startLocalSaves() {
+    if (localFallbackUnsubscribe) return;
+    localFallbackUnsubscribe = subscribeToStoreSaves(store, () => slot, {
+      shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
+    });
+    const current = store.getState();
+    saveCampaign(current.campaign, slot);
+    saveSeasonState(current.season, slot);
+  }
+  const authorityPersistence = createStoryAuthorityPersistence(store, {
+    slot,
+    onUnavailable: () => startLocalSaves(),
+  });
   const unsubscribePersistence = authorityPersistence.available
-    ? () => {}
+    ? () => { localFallbackUnsubscribe?.(); }
     : subscribeToStoreSaves(store, () => slot, {
       shouldPersist: (_nextState, action) => action?.meta?.persist !== false,
     });
@@ -568,7 +596,7 @@ function initGame(initialState, { slot }) {
   }
 
   function persistGameState(state = store.getState()) {
-    if (authorityPersistence.available) {
+    if (authorityPersistence.available && !localFallbackUnsubscribe) {
       return authorityPersistence.saveSnapshot(state);
     }
     saveCampaign(state.campaign, slot);

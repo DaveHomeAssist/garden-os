@@ -19,6 +19,12 @@ import { normalizePlayerProfile } from '../data/player-profile.js';
 import { normalizeQuestLedger } from './quest-ledger.js';
 import { normalizeVillageState } from './village/village-state.js';
 import { foldLegacyTokens } from './village/village-economy.js';
+import { asSafeStorage, safeLocalStorage } from './safe-storage.js';
+
+// Every storage access in this module goes through the never-throwing wrapper
+// (H2): blocked third-party storage in the mixmash.games iframe must not stop
+// Story Mode from booting. Saves fall back to memory for the tab's lifetime.
+const store = safeLocalStorage;
 
 const SAVE_SLOTS = 3;
 const ACTIVE_SLOT_KEY = 'gos-story-active-slot';
@@ -31,12 +37,62 @@ const campaignKey = campaignStorageKey;
 
 const seasonKey = seasonStorageKey;
 
+const VALID_SEASONS = ['spring', 'summer', 'fall', 'winter'];
+
+function isPlainRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Array fields that always exist on a campaign: non-arrays become []. */
+const REQUIRED_ARRAY_FIELDS = [
+  'completedChapters',
+  'seasonHistory',
+  'recipesCompleted',
+  'seenCutsceneIds',
+];
+
+/** Array fields that may be absent (callers default them): non-arrays are dropped. */
+const OPTIONAL_ARRAY_FIELDS = ['cropsUnlocked', 'activeNeighbors', 'soilHealth'];
+
+/**
+ * H4 (bug pass 2026-11-25): a save file or edited localStorage value can parse
+ * as JSON but carry `keepsakes: "x"` or `journalEntries: {}`. Later code calls
+ * .find / .map / .push / .length on these, so harvest threw and left input
+ * locked. Coerce every array field here, keep only object entries in the
+ * keepsake and journal lists, and keep chapter / season in their real ranges.
+ */
+function coerceCampaignShape(parsed) {
+  const out = {};
+  for (const field of REQUIRED_ARRAY_FIELDS) {
+    out[field] = Array.isArray(parsed[field]) ? [...parsed[field]] : [];
+  }
+  for (const field of OPTIONAL_ARRAY_FIELDS) {
+    if (parsed[field] === undefined || parsed[field] === null) continue;
+    out[field] = Array.isArray(parsed[field]) ? [...parsed[field]] : undefined;
+  }
+  out.keepsakes = Array.isArray(parsed.keepsakes)
+    ? parsed.keepsakes.filter((entry) => isPlainRecord(entry) && entry.id != null)
+    : [];
+  out.journalEntries = Array.isArray(parsed.journalEntries)
+    ? parsed.journalEntries.filter(isPlainRecord)
+    : [];
+  const chapter = Number.parseInt(parsed.currentChapter, 10);
+  out.currentChapter = Number.isFinite(chapter) && chapter >= 1 ? chapter : 1;
+  if (parsed.currentSeason !== undefined) {
+    out.currentSeason = VALID_SEASONS.includes(parsed.currentSeason)
+      ? parsed.currentSeason
+      : VALID_SEASONS[(out.currentChapter - 1) % 4];
+  }
+  return out;
+}
+
 function normalizeCampaignSave(raw) {
-  if (!raw || typeof raw !== 'object') return null;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   // v10 -> v11: shop tokens (never credited) fold into the shared coin balance.
   const parsed = foldLegacyTokens(raw);
   return {
     ...parsed,
+    ...coerceCampaignShape(parsed),
     version: CAMPAIGN_SCHEMA_VERSION,
     playerProfile: normalizePlayerProfile(parsed.playerProfile),
     questLog: parsed.questLog ?? {},
@@ -95,14 +151,16 @@ function normalizeSeasonSave(parsed) {
   return parsed;
 }
 
-function getSessionPointer(slot, storage = globalThis.localStorage) {
-  if (!isValidSlot(slot) || !storage?.getItem) return null;
-  return storage.getItem(sessionPointerKey(slot));
+function getSessionPointer(slot, storage = safeLocalStorage) {
+  const safe = asSafeStorage(storage);
+  if (!isValidSlot(slot) || !safe) return null;
+  return safe.getItem(sessionPointerKey(slot));
 }
 
-function deleteAuthoritySessionPointer(slot, storage = globalThis.localStorage) {
-  if (!isValidSlot(slot) || !storage?.removeItem) return;
-  storage.removeItem(sessionPointerKey(slot));
+function deleteAuthoritySessionPointer(slot, storage = safeLocalStorage) {
+  const safe = asSafeStorage(storage);
+  if (!isValidSlot(slot) || !safe) return;
+  safe.removeItem(sessionPointerKey(slot));
 }
 
 function savedAtMs(value) {
@@ -130,7 +188,8 @@ function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
   const seasonOrder = ['spring', 'summer', 'fall', 'winter'];
   const seasonIdx = ((campaign.currentChapter - 1) % 4);
   const season = campaign.currentSeason ?? seasonOrder[seasonIdx] ?? 'spring';
-  const lastEntry = (campaign.journalEntries ?? []).slice(-1)[0] ?? null;
+  const journal = Array.isArray(campaign.journalEntries) ? campaign.journalEntries.filter(isPlainRecord) : [];
+  const lastEntry = journal.slice(-1)[0] ?? null;
   return {
     slot,
     campaign,
@@ -147,7 +206,7 @@ function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
       entry?.state === 'ACCEPTED' || entry?.state === 'IN_PROGRESS'
     )).length,
     zonesVisited: (campaign.worldState?.visitedZones ?? DEFAULT_WORLD_STATE.visitedZones).length,
-    gradeHistory: (campaign.journalEntries ?? []).map((e) => ({
+    gradeHistory: journal.map((e) => ({
       chapter: e.chapter,
       grade: e.grade,
     })),
@@ -155,14 +214,14 @@ function buildSaveEntry(slot, campaign, { isCorrupt = false } = {}) {
 }
 
 export function getActiveSaveSlot() {
-  const raw = localStorage.getItem(ACTIVE_SLOT_KEY);
+  const raw = store.getItem(ACTIVE_SLOT_KEY);
   const slot = raw !== null ? parseInt(raw, 10) : 0;
   return isStorySaveSlot(slot) ? slot : 0;
 }
 
 export function setActiveSaveSlot(slot) {
   if (!isStorySaveSlot(slot)) return;
-  localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
+  store.setItem(ACTIVE_SLOT_KEY, String(slot));
 }
 
 /**
@@ -221,7 +280,7 @@ export function saveCampaign(campaign, slot) {
   if (!isCampaignCompatibleWithTarget(campaign, slot)) return null;
   const toSave = prepareCampaignForSave(campaign);
   try {
-    localStorage.setItem(campaignKey(slot), JSON.stringify(toSave));
+    if (!store.setItem(campaignKey(slot), JSON.stringify(toSave))) return null;
     corruptCampaignSlots.delete(slot);
     return toSave;
   } catch (e) {
@@ -233,7 +292,7 @@ export function saveCampaign(campaign, slot) {
 export function loadCampaign(slot) {
   if (!isValidSlot(slot)) return null;
   try {
-    const raw = localStorage.getItem(campaignKey(slot));
+    const raw = store.getItem(campaignKey(slot));
     if (!raw) {
       corruptCampaignSlots.delete(slot);
       return null;
@@ -267,22 +326,24 @@ export function writeSlotSave(slot, { campaign, season = null } = {}) {
   const migratedSeason = normalizeSeasonSave(season);
   const campaignJson = JSON.stringify(migratedCampaign);
   const seasonJson = migratedSeason ? JSON.stringify(migratedSeason) : null;
-  const previousCampaign = localStorage.getItem(campaignKey(slot));
-  const previousSeason = localStorage.getItem(seasonKey(slot));
+  const previousCampaign = store.getItem(campaignKey(slot));
+  const previousSeason = store.getItem(seasonKey(slot));
   try {
-    localStorage.setItem(campaignKey(slot), campaignJson);
+    if (!store.setItem(campaignKey(slot), campaignJson)) {
+      throw new Error('storage is full');
+    }
     if (seasonJson) {
-      localStorage.setItem(seasonKey(slot), seasonJson);
+      if (!store.setItem(seasonKey(slot), seasonJson)) throw new Error('storage is full');
     } else {
-      localStorage.removeItem(seasonKey(slot));
+      store.removeItem(seasonKey(slot));
     }
   } catch (error) {
     // Do not leave a half-written slot behind (e.g. quota hit on the season).
     try {
-      if (previousCampaign === null) localStorage.removeItem(campaignKey(slot));
-      else localStorage.setItem(campaignKey(slot), previousCampaign);
-      if (previousSeason === null) localStorage.removeItem(seasonKey(slot));
-      else localStorage.setItem(seasonKey(slot), previousSeason);
+      if (previousCampaign === null) store.removeItem(campaignKey(slot));
+      else store.setItem(campaignKey(slot), previousCampaign);
+      if (previousSeason === null) store.removeItem(seasonKey(slot));
+      else store.setItem(seasonKey(slot), previousSeason);
     } catch {
       // Best effort only.
     }
@@ -298,8 +359,8 @@ export function writeSlotSave(slot, { campaign, season = null } = {}) {
 
 export function deleteCampaign(slot) {
   if (!isValidSlot(slot)) return;
-  localStorage.removeItem(campaignKey(slot));
-  localStorage.removeItem(seasonKey(slot));
+  store.removeItem(campaignKey(slot));
+  store.removeItem(seasonKey(slot));
   deleteAuthoritySessionPointer(slot);
   corruptCampaignSlots.delete(slot);
   corruptSeasonSlots.delete(slot);
@@ -326,7 +387,7 @@ export function saveSeasonState(season, slot) {
   if (!season || !isValidSlot(slot)) return null;
   try {
     const toSave = prepareSeasonForSave(season);
-    localStorage.setItem(seasonKey(slot), JSON.stringify(toSave));
+    if (!store.setItem(seasonKey(slot), JSON.stringify(toSave))) return null;
     corruptSeasonSlots.delete(slot);
     return toSave;
   } catch (e) {
@@ -338,7 +399,7 @@ export function saveSeasonState(season, slot) {
 export function loadSeasonState(slot) {
   if (!isValidSlot(slot)) return null;
   try {
-    const raw = localStorage.getItem(seasonKey(slot));
+    const raw = store.getItem(seasonKey(slot));
     if (!raw) {
       corruptSeasonSlots.delete(slot);
       return null;
@@ -356,7 +417,7 @@ const SEASON_EMOJIS = { spring: '🌱', summer: '☀️', fall: '🍂', winter: 
 
 export async function loadAuthoritySnapshotSave(slot, {
   indexedDB = globalThis.indexedDB,
-  storage = globalThis.localStorage,
+  storage = safeLocalStorage,
 } = {}) {
   const sessionId = getSessionPointer(slot, storage);
   if (!sessionId) return null;
@@ -420,14 +481,14 @@ export async function loadBestAvailableSave(slot, options = {}) {
 export function listSaves({ authoritySaves = {} } = {}) {
   const saves = [];
   for (let slot = 0; slot < SAVE_SLOTS; slot++) {
-    const rawCampaign = localStorage.getItem(campaignKey(slot));
+    const rawCampaign = store.getItem(campaignKey(slot));
     const campaign = loadCampaign(slot) ?? authoritySaves[slot] ?? null;
     if (!campaign) {
       const hasPointer = Boolean(getSessionPointer(slot));
       const isCorrupt = rawCampaign !== null || corruptCampaignSlots.has(slot) || hasPointer;
       saves.push(buildSaveEntry(slot, null, { isCorrupt }));
     } else {
-      const rawSeason = localStorage.getItem(seasonKey(slot));
+      const rawSeason = store.getItem(seasonKey(slot));
       const seasonCorrupt = rawSeason !== null && loadSeasonState(slot) === null;
       saves.push(buildSaveEntry(slot, campaign, { isCorrupt: seasonCorrupt }));
     }
@@ -436,10 +497,11 @@ export function listSaves({ authoritySaves = {} } = {}) {
 }
 
 export function awardKeepsake(campaign, keepsakeId, meta = {}) {
-  if (!campaign.keepsakes) {
+  if (!campaign || typeof campaign !== 'object') return null;
+  if (!Array.isArray(campaign.keepsakes)) {
     campaign.keepsakes = [];
   }
-  const existing = campaign.keepsakes.find((entry) => entry.id === keepsakeId);
+  const existing = campaign.keepsakes.find((entry) => entry?.id === keepsakeId);
   if (existing) return null;
 
   const awarded = {
@@ -452,7 +514,8 @@ export function awardKeepsake(campaign, keepsakeId, meta = {}) {
 }
 
 export function pushJournalEntry(campaign, entry) {
-  if (!campaign.journalEntries) {
+  if (!campaign || typeof campaign !== 'object' || !entry || typeof entry !== 'object') return;
+  if (!Array.isArray(campaign.journalEntries)) {
     campaign.journalEntries = [];
   }
 
@@ -490,5 +553,5 @@ export {
 };
 
 export function hasSaveTarget(target) {
-  return isPersistentSaveTarget(target) && Boolean(localStorage.getItem(campaignKey(target)) || getSessionPointer(target));
+  return isPersistentSaveTarget(target) && Boolean(store.getItem(campaignKey(target)) || getSessionPointer(target));
 }
