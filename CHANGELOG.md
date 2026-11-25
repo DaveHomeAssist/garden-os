@@ -10,6 +10,9 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 
 ## [Unreleased]
 
+### Changed
+- Story Mode's high-quality yard is cheaper to draw without changing the layout or controls: pixel ratio caps at 1.5, antialiasing lives only on the colour-grade pass (2x, not a second full-screen MSAA buffer), the 2048² sun shadow updates when the sun or a moving character changes rather than every frame, grass no longer samples that shadow map, and the lawn mesh is 32×32 instead of 128×128. A Mid graphics preset now sits between High and Low in the pause menu.
+
 ### Added
 - Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
 - Added a walkable village to Free Play, where you can walk or tap your way to your garden, the Seed stand, the Seed box, the Tool shed and the Compost bin. The shops spend your coins, harvests leave compost scraps for the bin, and the yard gained a wheelbarrow, rain barrel, bench and birdhouse.

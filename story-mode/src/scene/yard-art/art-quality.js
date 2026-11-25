@@ -1,19 +1,26 @@
 /**
  * Art quality tiers for the yard art pass.
  *
- * high: soft PCF shadows, MSAA colour-grade pass, full grass/flower density.
+ * high: soft PCF shadows (static map, dirtied when the sun or casters move),
+ * 2x MSAA colour-grade pass, full grass/flower density, DPR capped at 1.5.
+ * mid: 1024 shadows, grade without MSAA, thinner scatter, same DPR cap.
  * low (phones): no realtime shadows (contact shading is painted into the
- * ground and baked into assets instead), no post pass, capped pixel ratio,
- * thinner scatter. Choose with ?quality=low|high, the pause-menu Graphics
- * toggle (stored in localStorage), or let auto-detect pick.
+ * ground and baked into assets instead), no post pass, tighter pixel-ratio
+ * cap, thinner scatter. Choose with ?quality=low|mid|high, the pause-menu
+ * Graphics toggle (stored in localStorage), or let auto-detect pick high or
+ * low (mid is a manual choice so auto stays visually close to today).
  */
 export const ART_QUALITY_STORAGE_KEY = 'gos-art-quality';
-export const ART_QUALITY_CHOICES = ['auto', 'high', 'low'];
+export const ART_QUALITY_CHOICES = ['auto', 'high', 'mid', 'low'];
 
 export const ART_QUALITY_PRESETS = Object.freeze({
   high: Object.freeze({
-    name: 'high', shadows: true, shadowMapSize: 2048, post: true, msaa: 4, maxPixelRatio: 2,
+    name: 'high', shadows: true, shadowMapSize: 2048, post: true, msaa: 2, maxPixelRatio: 1.5,
     grassClumps: 2600, flowers: 520, treeline: 96, farTrees: 240, skyOctaves: 5,
+  }),
+  mid: Object.freeze({
+    name: 'mid', shadows: true, shadowMapSize: 1024, post: true, msaa: 0, maxPixelRatio: 1.5,
+    grassClumps: 1200, flowers: 280, treeline: 72, farTrees: 160, skyOctaves: 4,
   }),
   low: Object.freeze({
     name: 'low', shadows: false, shadowMapSize: 1024, post: false, msaa: 0, maxPixelRatio: 1.25,
@@ -40,6 +47,10 @@ function readLocalStorage() {
   try { return globalThis?.localStorage; } catch { return undefined; }
 }
 
+function isTier(value) {
+  return value === 'low' || value === 'mid' || value === 'high';
+}
+
 /**
  * Resolve the active tier. Order: URL ?quality=, stored choice, auto-detect.
  * Returns { tier, choice, source }.
@@ -47,9 +58,9 @@ function readLocalStorage() {
 export function resolveArtQuality({ search = globalThis?.location?.search ?? '', storage = readLocalStorage(), env = globalThis } = {}) {
   let fromUrl = null;
   try { fromUrl = new URLSearchParams(search).get('quality'); } catch { fromUrl = null; }
-  if (fromUrl === 'low' || fromUrl === 'high') return { tier: fromUrl, choice: fromUrl, source: 'url' };
+  if (isTier(fromUrl)) return { tier: fromUrl, choice: fromUrl, source: 'url' };
   const stored = safeGet(storage, ART_QUALITY_STORAGE_KEY);
-  if (stored === 'low' || stored === 'high') return { tier: stored, choice: stored, source: 'stored' };
+  if (isTier(stored)) return { tier: stored, choice: stored, source: 'stored' };
   return { tier: detectDefaultArtQuality(env), choice: 'auto', source: 'auto' };
 }
 
@@ -64,7 +75,7 @@ export function storeArtQualityChoice(choice, storage = readLocalStorage()) {
 
 export function nextArtQualityChoice(choice) {
   const i = ART_QUALITY_CHOICES.indexOf(choice);
-  return ART_QUALITY_CHOICES[(i + 1) % ART_QUALITY_CHOICES.length];
+  return ART_QUALITY_CHOICES[(i < 0 ? 0 : i + 1) % ART_QUALITY_CHOICES.length];
 }
 
 export function getArtQualityPreset(tier) {

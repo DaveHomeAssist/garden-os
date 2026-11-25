@@ -114,18 +114,26 @@ describe('yard art layout', () => {
 
 describe('art quality setting', () => {
   it('low drops shadows and post and thins the scatter', () => {
-    const { low, high } = ART_QUALITY_PRESETS;
+    const { low, mid, high } = ART_QUALITY_PRESETS;
     expect(low.shadows).toBe(false);
     expect(low.post).toBe(false);
     expect(low.maxPixelRatio).toBeLessThan(high.maxPixelRatio);
     expect(low.grassClumps).toBeLessThan(high.grassClumps);
     expect(getArtQualityPreset('nope')).toBe(high);
+    expect(mid.shadows).toBe(true);
+    expect(mid.shadowMapSize).toBeLessThan(high.shadowMapSize);
+    expect(mid.msaa).toBeLessThan(high.msaa);
+    expect(mid.grassClumps).toBeGreaterThan(low.grassClumps);
+    expect(mid.grassClumps).toBeLessThan(high.grassClumps);
+    expect(high.maxPixelRatio).toBe(1.5);
+    expect(high.msaa).toBe(2);
   });
 
   it('resolves url > stored > auto', () => {
     const storage = memoryStorage({ [ART_QUALITY_STORAGE_KEY]: 'low' });
     const desktop = { matchMedia: () => ({ matches: false }), screen: { width: 1920, height: 1080 }, navigator: {} };
     expect(resolveArtQuality({ search: '?quality=high', storage, env: desktop })).toEqual({ tier: 'high', choice: 'high', source: 'url' });
+    expect(resolveArtQuality({ search: '?quality=mid', storage, env: desktop })).toEqual({ tier: 'mid', choice: 'mid', source: 'url' });
     expect(resolveArtQuality({ search: '', storage, env: desktop })).toEqual({ tier: 'low', choice: 'low', source: 'stored' });
     expect(resolveArtQuality({ search: '', storage: memoryStorage(), env: desktop })).toEqual({ tier: 'high', choice: 'auto', source: 'auto' });
   });
@@ -144,7 +152,8 @@ describe('art quality setting', () => {
     expect(storeArtQualityChoice('auto', storage)).toBe('auto');
     expect(storage.data.has(ART_QUALITY_STORAGE_KEY)).toBe(false);
     expect(nextArtQualityChoice('auto')).toBe('high');
-    expect(nextArtQualityChoice('high')).toBe('low');
+    expect(nextArtQualityChoice('high')).toBe('mid');
+    expect(nextArtQualityChoice('mid')).toBe('low');
     expect(nextArtQualityChoice('low')).toBe('auto');
     const broken = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
     expect(storeArtQualityChoice('low', broken)).toBe('low');

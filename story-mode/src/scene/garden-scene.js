@@ -411,9 +411,12 @@ export function createGardenScene(container) {
   let lightingState = null;
 
   const preserveDrawingBuffer = Boolean(globalThis.GARDEN_OS_PRESERVE_DRAWING_BUFFER);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer });
+  // Antialias the grade target when the high/mid post pass is on; the default
+  // framebuffer does not need a second MSAA allocation.
+  const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, preserveDrawingBuffer });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.18;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -485,7 +488,9 @@ export function createGardenScene(container) {
   const cellCenterScratch = { x: 0, z: 0 };
 
   // Ground plane — grass-like, slightly darker near the bed via vertex colors
-  const groundGeo = new THREE.PlaneGeometry(360, 360, 128, 128);
+  // 32×32 is enough once flattenYardGround levels the playable lawn; 128×128
+  // was 32,768 tris of leftover displacement.
+  const groundGeo = new THREE.PlaneGeometry(360, 360, 32, 32);
   const groundColors = [];
   const posAttr = groundGeo.getAttribute('position');
   const grassTexture = createGrassTexture(5.5, 5.5);
@@ -3702,7 +3707,11 @@ function getGrowthScale(phase, season) {
 
       updateBedFocus(now);
       // No GL work while the context is lost; three resumes after restore.
-      if (!contextRecovery.isLost()) yardArt.render(skyMat.color);
+      if (!contextRecovery.isLost()) {
+        yardArt.notifyCasterPose?.('calvin', sheepdogGroup);
+        yardArt.notifyCasterPose?.('player', playerCharacter.group);
+        yardArt.render(skyMat.color);
+      }
     },
     applySeason,
     setBedSize,
