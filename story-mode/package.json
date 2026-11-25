@@ -15,7 +15,8 @@
     "e2e:campaign": "node tests/campaign-e2e.mjs",
     "e2e:freeplay": "node tests/freeplay-e2e.mjs",
     "e2e:village": "node tests/village-e2e.mjs",
-    "a11y:mobile": "node tests/mobile-a11y-audit.mjs"
+    "a11y:mobile": "node tests/mobile-a11y-audit.mjs",
+    "test:fieldnote-overlap": "node tests/fieldnote-overlap-check.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

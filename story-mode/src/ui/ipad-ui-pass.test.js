@@ -133,33 +133,43 @@ describe('quest log contrast on the cream sheet', () => {
   }
 });
 
-describe('Field Note tag clears Skip', () => {
+describe('Field Note and Skip stay clear of the dialogue text', () => {
   afterEach(() => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
   });
 
-  it('offsets the tag by a CSS variable with the old values as fallbacks', () => {
-    expect(themeCss).toMatch(/\.dp-panel::before \{\s*right: var\(--dp-skip-clear, 88px\);/);
-    expect(themeCss).toMatch(/right: var\(--dp-skip-clear, 74px\);/);
+  it('puts Field Note and Skip in a normal-flow meta row and disables the old stamp', () => {
+    expect(themeCss).toMatch(/\.dp-meta-row \{/);
+    expect(themeCss).toMatch(/\.dp-field-note \{/);
+    expect(themeCss).toMatch(/\.dp-meta-row \.dp-skip-btn \{[^}]*position:\s*static;/);
+    expect(themeCss).toMatch(/\.dp-panel::before,\s*\.dp-panel\[data-side="right"\]::before \{[^}]*content:\s*none;/);
+    expect(themeCss).toMatch(/#cutscene-layer \{[^}]*padding-bottom:\s*max\([^;]*88px\)/);
   });
 
-  it('sets --dp-skip-clear from Skip and drops the reserve when Skip is hidden', () => {
+  it('renders Field Note and Skip in the meta row, above the text, and can hide Skip', () => {
     document.head.innerHTML = `<style>${themeCss}</style>`;
     document.body.innerHTML = '<div id="cutscene-layer"><div id="dialogue-root"></div></div>';
     const panel = createDialoguePanel(document.getElementById('dialogue-root'));
     const el = panel.getPanelElement();
     const skip = panel.getSkipButton();
-    // jsdom has no layout; give Skip a measured width.
-    Object.defineProperty(skip, 'offsetWidth', { configurable: true, get: () => 60 });
+    const note = el.querySelector('.dp-field-note');
+    const row = el.querySelector('.dp-meta-row');
+    const text = el.querySelector('#dp-text');
+    expect(row).not.toBeNull();
+    expect(note).not.toBeNull();
+    expect(note.textContent).toMatch(/field note/i);
+    expect(row.contains(skip)).toBe(true);
+    expect(row.contains(note)).toBe(true);
+    expect(row.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const beat = (extra) => ({
       visible: true, speaker: 'narrator', speakerName: 'Narrator', textVisible: 'Hello.',
       canAdvance: true, canSkip: true, beatIndex: 0, beatCount: 1, ...extra,
     });
     panel.render(beat());
-    expect(el.style.getPropertyValue('--dp-skip-clear')).toBe('88px');
+    expect(skip.style.display).toBe('');
     panel.render(beat({ canSkip: false }));
-    expect(el.style.getPropertyValue('--dp-skip-clear')).toBe('18px');
+    expect(skip.style.display).toBe('none');
   });
 });
 
