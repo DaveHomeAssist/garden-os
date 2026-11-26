@@ -18,6 +18,12 @@ import { COLS, ROWS } from '../game/state.js';
 import { computeBedFocusView, lerpBedFocusView } from './bed-focus.js';
 import { getCropById } from '../data/crops.js';
 
+// Calvin's coat tiles, sampled from the owner's 3D scan of the real dog.
+const CALVIN_COAT_URLS = {
+  dark: new URL('../../assets/art/yard/calvin_coat_dark.webp', import.meta.url).href,
+  light: new URL('../../assets/art/yard/calvin_coat_light.webp', import.meta.url).href,
+};
+
 const DESIGN_TOKENS = {
   soil: 0x5c3d1e,
   leaf: 0x3d7a4f,
@@ -766,6 +772,25 @@ export function createGardenScene(container) {
   const dogEyeMat = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.6 });
   const dogShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.17, depthWrite: false });
 
+  // Calvin's coat is real Calvin: two small tiling fur textures sampled from
+  // the owner's 3D scan of him (art-src/textures/make_calvin_coat.py). The flat
+  // colours above stay as the fallback until a tile loads (or if it fails).
+  // Textures are tracked up front so scene dispose frees them either way.
+  const calvinCoatLoader = new THREE.TextureLoader();
+  // Saddle tile spans once around (big mottles); white coat repeats twice.
+  for (const [material, url, repeat] of [[dogFurDark, CALVIN_COAT_URLS.dark, 1], [dogFurLight, CALVIN_COAT_URLS.light, 2]]) {
+    const coat = calvinCoatLoader.load(url, () => {
+      material.map = coat;
+      material.color.set(0xffffff);
+      material.needsUpdate = true;
+    }, undefined, () => {});
+    coat.colorSpace = THREE.SRGBColorSpace;
+    coat.wrapS = THREE.RepeatWrapping;
+    coat.wrapT = THREE.RepeatWrapping;
+    coat.repeat.set(repeat, 1);
+    resourceTracker.track(coat);
+  }
+
   const dogShadow = new THREE.Mesh(new THREE.CircleGeometry(0.33, 18), dogShadowMat);
   dogShadow.rotation.x = -Math.PI / 2;
   dogShadow.position.y = -0.038;
@@ -827,7 +852,9 @@ export function createGardenScene(container) {
   dogHead.castShadow = true;
   dogHeadPivot.add(dogHead);
 
-  const dogFacePatch = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), dogFurDark);
+  // Calvin's face is white in the scan (no dark mask), so the patch keeps the
+  // head shape but wears the white coat.
+  const dogFacePatch = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), dogFurLight);
   dogFacePatch.position.set(0.175, 0.015, 0);
   dogFacePatch.scale.set(0.62, 1.0, 0.92);
   dogFacePatch.castShadow = true;
@@ -897,7 +924,8 @@ export function createGardenScene(container) {
   for (const [ez, rz] of [[-0.05, 0.22], [0.05, -0.22]]) {
     const earPivot = new THREE.Group();
     earPivot.position.set(0.1, 0.1, ez);
-    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.028, 0.12, 8), dogFurDark);
+    // White ears: Calvin's head is white all over.
+    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.028, 0.12, 8), dogFurLight);
     ear.position.set(-0.005, -0.06, 0);
     ear.rotation.z = rz;
     ear.scale.set(1, 1, 0.85);
