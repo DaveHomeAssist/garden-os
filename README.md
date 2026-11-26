@@ -32,6 +32,7 @@ The system also highlights the limiting factor so users can make high-leverage c
 - Light-default, user-selectable light/dark themes shared across public routes
 - Installable PWA with verified first-visit registration and offline reload
 - Story Mode, Free Play, and Story Planner with explicit persistence boundaries
+- [How to play the 3D game](docs/HOW_TO_PLAY_3D.md) (movement, camera, controls; multiplayer is not in this release)
 
 ## Quick Start
 
