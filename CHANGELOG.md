@@ -67,6 +67,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
   Planner reminders.
 
 ### Changed
+- Sped up the first load of Home, Planner, Doctor, Beds and How It Thinks on phones: the deploy now compiles their JSX ahead of time, so the browser no longer downloads and runs the 650 KiB babel-standalone compiler before drawing the page.
 - Reconciled v4 references in HANDOFF.md, FEATURES.md, and README: active v5 surfaces now listed correctly in Root Track table, nav track updated to current two-track model, crop count updated to 51, recipe count corrected to 8, Cross-Runtime Scoring updated to reference gos-suitability-core.js, Code Entry Points and Roadmap sections reflect shipped Phases 1-9, Season Engine and Today Coach sections marked as archived references.
 - Reconciled the implementation plan, progression roster, gameplay guide,
   hosted-route inventory, brand theme policy, and UI backlog with current v5 and

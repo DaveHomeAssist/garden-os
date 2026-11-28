@@ -68,6 +68,7 @@ Four characters with fixed speaking order: Garden GURL → Onion Man → Vegeman
 ## Deployment
 
 - GitHub Pages from `main` branch, repo root. Auto-deploys on push via `.github/workflows/pages.yml`.
+- The deploy compiles the JSX in the root React pages (the five that load `vendor/babel-standalone`) with `story-mode/scripts/precompile-root-jsx.mjs --write`, so the live pages ship plain JS and no babel. Keep JSX in one `<script type="text/babel" data-presets="react">` block per page; the source still runs as written with `python3 -m http.server`.
 - Live at: `davehomeassist.github.io/garden-os/`
 - Root tools local test: `python3 -m http.server 8000`
 - `story-mode/` local runtime: run from `story-mode/` with `npm run dev`, `npm test`, and `npm run build`
