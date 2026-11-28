@@ -73,6 +73,7 @@ export function createGradePass({ samples = 4 } = {}) {
 
   return {
     material,
+    samples,
     render(renderer, scene, camera) {
       renderer.getDrawingBufferSize(size);
       if (target.width !== size.x || target.height !== size.y) target.setSize(size.x, size.y);

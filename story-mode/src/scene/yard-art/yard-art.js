@@ -244,7 +244,9 @@ export function createYardArt(refs) {
   const grassBaseGeo = buildGrassClumpGeometry(YARD_PALETTE.spring);
   const grassMesh = instancePlacements(grassBaseGeo, grassMat, grassPlacements);
   grassMesh.name = 'yard-art-grass';
-  grassMesh.receiveShadow = true;
+  // Contact shade is already painted into the lawn; PCF-sampling 140k tris
+  // against the sun map is the largest fill cost in the default view.
+  grassMesh.receiveShadow = false;
   grassMesh.userData.capacity = grassPlacements.length;
   group.add(grassMesh);
 
@@ -343,8 +345,38 @@ export function createYardArt(refs) {
   const rimDir = new THREE.Vector3(...YARD_LIGHT.rimDirection).normalize();
 
   let grade = null;
+  let shadowsNeedUpdate = true;
+  let lastSunKey = '';
+  const lastCasterPose = new Map();
+  const CASTER_POS_EPS = 0.03;
+  const CASTER_ROT_EPS = 0.04;
+
+  function invalidateShadows() {
+    shadowsNeedUpdate = true;
+  }
+
+  function notifyCasterPose(id, obj) {
+    if (!preset.shadows || !obj) return;
+    const x = obj.position.x;
+    const y = obj.position.y;
+    const z = obj.position.z;
+    const r = obj.rotation?.y ?? 0;
+    const prev = lastCasterPose.get(id);
+    if (
+      !prev
+      || Math.abs(prev.x - x) > CASTER_POS_EPS
+      || Math.abs(prev.y - y) > CASTER_POS_EPS
+      || Math.abs(prev.z - z) > CASTER_POS_EPS
+      || Math.abs(prev.r - r) > CASTER_ROT_EPS
+    ) {
+      lastCasterPose.set(id, { x, y, z, r });
+      shadowsNeedUpdate = true;
+    }
+  }
+
   function applyTier() {
     preset = getArtQualityPreset(quality.tier);
+    renderer.shadowMap.autoUpdate = false;
     renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, preset.maxPixelRatio));
     const size = new THREE.Vector2();
     renderer.getSize(size);
@@ -354,6 +386,7 @@ export function createYardArt(refs) {
       sun.shadow.map?.dispose?.();
       sun.shadow.map = null;
     }
+    invalidateShadows();
     grassMesh.count = Math.min(grassMesh.userData.capacity, preset.grassClumps);
     flowerMesh.count = season === 'winter' ? 0 : Math.min(flowerMesh.userData.capacity, Math.round(preset.flowers * (season === 'fall' ? 0.35 : 1)));
     const farShare = preset.farTrees / ART_QUALITY_PRESETS.high.farTrees;
@@ -364,8 +397,15 @@ export function createYardArt(refs) {
       m.count = m.userData.keepCount + Math.round(extra * lineShare);
     }
     if (skyMat.defines.SKY_OCTAVES !== preset.skyOctaves) { skyMat.defines.SKY_OCTAVES = preset.skyOctaves; skyMat.needsUpdate = true; }
-    if (preset.post && !grade) grade = createGradePass({ samples: preset.msaa });
-    if (!preset.post && grade) { grade.dispose(); grade = null; }
+    if (preset.post) {
+      if (!grade || grade.samples !== preset.msaa) {
+        grade?.dispose();
+        grade = createGradePass({ samples: preset.msaa });
+      }
+    } else if (grade) {
+      grade.dispose();
+      grade = null;
+    }
     if (typeof document !== 'undefined' && document.body) {
       document.body.dataset.artQuality = quality.tier;
       document.body.dataset.artQualityChoice = quality.choice;
@@ -455,6 +495,11 @@ export function createYardArt(refs) {
     sun.color.set(pal.sun).lerp(tmpColor.copy(legacyState.fogColor), w * 0.35);
     sun.intensity = YARD_LIGHT.sunIntensity * nudge.sun * seasonSun * THREE.MathUtils.lerp(1, hemiMood, 0.8);
     sun.position.copy(sunDir).multiplyScalar(16);
+    const sunKey = `${sun.position.x.toFixed(3)},${sun.position.y.toFixed(3)},${sun.position.z.toFixed(3)},${sun.intensity.toFixed(3)},${sun.castShadow ? 1 : 0},${preset.shadowMapSize}`;
+    if (sunKey !== lastSunKey) {
+      lastSunKey = sunKey;
+      invalidateShadows();
+    }
     fill.color.set(pal.fill);
     fill.intensity = YARD_LIGHT.fillIntensity * hemiMood;
     fill.position.copy(fillDir).multiplyScalar(10);
@@ -487,10 +532,16 @@ export function createYardArt(refs) {
       const legacyState = snapshotRig(rigRefs);
       legacyState.skyTint = skyTint ?? new THREE.Color(1, 1, 1);
       applyArtRig(legacyState);
+      if (preset.shadows && shadowsNeedUpdate) {
+        renderer.shadowMap.needsUpdate = true;
+        shadowsNeedUpdate = false;
+      }
       if (grade) grade.render(renderer, scene, camera);
       else renderer.render(scene, camera);
       restoreRig(rigRefs, legacyState);
     },
+    invalidateShadows,
+    notifyCasterPose,
     getDebugState() {
       const meshes = [];
       group.traverse((o) => {

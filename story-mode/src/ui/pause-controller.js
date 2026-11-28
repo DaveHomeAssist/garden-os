@@ -104,8 +104,8 @@ export function createPauseController({
     setElementInteractive(pauseOverlay, false);
   }
 
-  const GRAPHICS_ORDER = ['auto', 'high', 'low'];
-  const GRAPHICS_LABEL = { auto: 'Auto', high: 'High', low: 'Low' };
+  const GRAPHICS_ORDER = ['auto', 'high', 'mid', 'low'];
+  const GRAPHICS_LABEL = { auto: 'Auto', high: 'High', mid: 'Mid', low: 'Low' };
   function syncPauseGraphicsButton() {
     const button = document.getElementById('pause-graphics');
     if (!button) return;
