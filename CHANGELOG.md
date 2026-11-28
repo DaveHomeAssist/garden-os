@@ -41,6 +41,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Fixed the Free Play village showing no prompt, and E doing nothing, after you reloaded while standing at the Seed stand or the compost bin.
 - Fixed Free Play harvests losing all their compost scraps when the backpack was nearly full. The scraps now fill the free space, and a "Your backpack is full." message tells you when some were left behind.
 - Fixed the open world phases smoke failing silently on a Windows CI runner: it now starts npm through a shell there, as `verify-all` already does, and prints the error if npm cannot start.
+- Fixed the Village e2e CI job starting its dev server before taking the machine's browser lock. With two runners on one machine, a second job could find the first job's server on port 4318 and test code it never checked out. The lock now covers the whole step, and the job refuses to test a server it did not start.
 
 ### Added
 - Added two authored choices to all 25 Story Mode quests, and neighbors in other zones now remark on the choice you made.
