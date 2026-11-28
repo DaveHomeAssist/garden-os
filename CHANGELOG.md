@@ -13,9 +13,11 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 ### Added
 - Saved Free Play as an independent world that resumes after refresh, with checksummed save export/import kept separate from the three Story slots.
 - Added a walkable village to Free Play, where you can walk or tap your way to your garden, the Seed stand, the Seed box, the Tool shed and the Compost bin. The shops spend your coins, harvests leave compost scraps for the bin, and the yard gained a wheelbarrow, rain barrel, bench and birdhouse.
+- Added maskable app icons to the Garden OS and Story Mode manifests, so Android's adaptive launcher shows the whole tulip on a cream tile instead of cropping or letterboxing it.
 
 ### Fixed
 - On a phone-shaped screen, the village camera sits lower and a little closer so the character reads as a person and the street ahead stays in view, instead of a near top-down sliver. Desktop and landscape framing is unchanged.
+- Fixed the Story Mode backpack sheet running under a phone browser's URL bar: its height now follows the visible screen.
 - Replaced the arrow glyph on weak Garden Painting cells with a drawn marker, so it looks the same on every font and screen readers no longer announce "down arrow".
 - Fixed a Story Mode market loop where buying in one season and selling or bartering in another made free credits. Sell prices now stay under the cheapest buy price of any season, and every trade settles on the save authority.
 - Fixed Story Mode travel snapping back to the previous zone when the save confirmation for an earlier trip arrived late.

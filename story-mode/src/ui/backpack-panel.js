@@ -278,7 +278,11 @@ export function showBackpackPanel(container, initialData, onClose) {
   sheet.className = 'panel-sheet is-open';
   sheet.id = 'backpack-panel';
   sheet.style.maxWidth = 'min(92vw, 372px)';
+  // vh first for browsers that predate dvh (they drop the second line); dvh
+  // follows the visible screen, so the sheet stays clear of a phone browser's
+  // collapsing URL bar.
   sheet.style.maxHeight = '82vh';
+  sheet.style.maxHeight = '82dvh';
   sheet.style.overflow = 'auto';
   sheet.tabIndex = 0;
 
