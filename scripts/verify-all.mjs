@@ -178,6 +178,7 @@ async function runLocalVerification() {
     ['Sync worker security tests', ['--test', 'tests/sync-worker-security.test.mjs']],
     ['Authority worker security tests', ['--test', 'tests/authority-worker.test.mjs']],
     ['Vercel authority API import tests', ['--test', 'tests/vercel-authority-api-import.test.mjs']],
+    ['Root page JSX precompile tests', ['--test', 'tests/precompile-root-jsx.test.mjs']],
   ];
 
   for (const [name, scriptArgs, options] of nodeRegressionScripts) {
@@ -207,6 +208,9 @@ async function runLocalVerification() {
     });
     await runStep('V5 What-If and experiment browser regression', nodeBin, ['tests/what-if-experiments-regression.mjs'], {
       env: browserEnv({ BASE_URL: baseUrl, OUTPUT_DIR: join(outputDir, 'what-if-experiments') }),
+    });
+    await runStep('Precompiled root pages browser regression', nodeBin, ['tests/precompiled-root-pages-regression.mjs'], {
+      env: browserEnv({ BASE_URL: baseUrl }),
     });
     await runStep('Planner reasoning browser smoke', nodeBin, ['docs/phase-reasoning-smoke.mjs'], {
       env: browserEnv({

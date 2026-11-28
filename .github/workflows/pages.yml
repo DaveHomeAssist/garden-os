@@ -65,6 +65,19 @@ jobs:
       - name: Verify before deploy
         run: node scripts/verify-all.mjs
 
+      - name: Precompile root page JSX
+        # The root React pages ship their JSX in a text/babel block. Compile it
+        # here so phones no longer download and run babel-standalone (about
+        # 650 KiB, render blocking) on every cold load. Source files stay as
+        # written; only this artifact is rewritten. Runs before staging because
+        # it uses Story Mode's esbuild and Playwright.
+        run: node story-mode/scripts/precompile-root-jsx.mjs --write
+
+      - name: Check precompiled root pages in a browser
+        env:
+          PRECOMPILED_ONLY: '1'
+        run: node tests/precompiled-root-pages-regression.mjs
+
       - name: Stage Story Mode for Pages
         run: |
           cp -rf story-mode/dist/* story-mode/
