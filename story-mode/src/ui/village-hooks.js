@@ -22,7 +22,9 @@ export function createBackToVillageButton(container, onClick) {
   button.type = 'button';
   button.className = 'village-back-button';
   button.id = 'village-back';
-  button.innerHTML = '<span aria-hidden="true">←</span> Back to village';
+  // "Back to " drops on the narrowest phones (village-overlays.css) so the
+  // button clears the season calendar at 320px; the name stays the same.
+  button.innerHTML = '<span aria-hidden="true">←</span> <span class="village-back-button__lead">Back to </span>village';
   button.setAttribute('aria-label', 'Back to village (Esc)');
   button.style.cssText = `
     position:fixed;top:calc(88px + env(safe-area-inset-top, 0px));right:calc(12px + env(safe-area-inset-right, 0px));z-index:40;
@@ -240,6 +242,16 @@ export function createVillageEngineFacade() {
     emit(phase, trigger);
   }
 
+  // The scene re-seeds its triggers silently on a pose snap (spawn, restore),
+  // so a player who is already standing in a station never produces an `enter`.
+  // Compare what the router was told with where the scene says the player is.
+  function syncInside() {
+    if (typeof instance?.getInsideTriggers !== 'function') return;
+    const now = new Map(instance.getInsideTriggers().map((trigger) => [trigger.id, trigger]));
+    [...inside.values()].filter((trigger) => !now.has(trigger.id)).forEach((trigger) => forward('leave', trigger));
+    now.forEach((trigger, id) => { if (!inside.has(id)) forward('enter', trigger); });
+  }
+
   function bind(next = null) {
     if (next === instance) return;
     off?.();
@@ -251,6 +263,7 @@ export function createVillageEngineFacade() {
     if (instance?.onTrigger) {
       off = instance.onTrigger(forward);
       if (registered.length) instance.registerInteractables?.(registered);
+      syncInside();
     }
   }
 
@@ -268,6 +281,7 @@ export function createVillageEngineFacade() {
     },
     setPlayerPose(pose) {
       instance?.setPlayerPose?.(pose);
+      syncInside();
     },
     setTapToMoveEnabled(on) {
       instance?.setTapToMoveEnabled?.(on);

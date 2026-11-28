@@ -25,6 +25,23 @@ body .pause-close-btn {
   min-height: 44px;
 }
 
+/* Follow-up (room playtest of #98): controls that still measured 40-42px.
+   The in-game pause button is already 44x44 (hud-controls.css); the 40x40
+   reading came from the hidden pre-game copy, so it is left alone. */
+body .profile-choice {
+  min-height: 44px;
+}
+
+body .bug-report-actions button {
+  min-height: 44px;
+}
+
+/* Story Mode mounts no floating theme pill (see #title-theme in main.js);
+   if another script ever adds one, keep it from covering the title or setup. */
+body .garden-theme-toggle:not(#title-theme) {
+  display: none !important;
+}
+
 /* The tap chip is the only live part of the village prompt card. */
 #village-prompt.village-prompt.is-visible .interaction-prompt__hint {
   min-height: 44px;
@@ -125,7 +142,8 @@ body[data-design-language="field-kit"][data-story-screen="play"] #hud {
   body .pause-section-label,
   body #pause-status,
   body .palette-title:not(.quest-log__title):not([style*="font-size"]),
-  body .dp-skip-btn {
+  body .dp-skip-btn,
+  body .dp-field-note {
     font-size: 12px !important;
   }
 
@@ -141,4 +159,65 @@ body[data-design-language="field-kit"][data-story-screen="play"] #hud {
     padding-inline: 7px;
     letter-spacing: 0.04em;
   }
+}
+
+/* 12px floor beyond portrait phones (bug list Nov 25, mobile-a11y-audit).
+   The label rule above only ran at <=600px wide, so phone landscape
+   (844x390, 740x360) and touch tablets (iPad 1024x706) still drew 9-11px
+   labels: save-slot labels 9px, the title version / issue lines and mode
+   cards 10px, the HUD pills, crop counter and score label 11px, the pause
+   section labels, quest tracker/log labels, the bug-report meta (9px) and
+   the setup legends. Short screens and touch screens get the same 12px
+   floor; desktop mouse layouts keep their density. */
+@media (max-width: 600px), (max-height: 600px), (pointer: coarse) {
+  body .title-version,
+  body .title-screen__issue,
+  body .save-slot-label,
+  body .mode-card .mode-soon,
+  body .mode-card .mode-desc,
+  body .mode-availability-note,
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-pill,
+  body #hud-season-icon,
+  body #hud-chapter,
+  body #hud-phase,
+  body #hud-crops,
+  body .hud-score-label,
+  body .dp-skip-btn,
+  body .dp-field-note,
+  body #pause-status,
+  body .pause-section-label,
+  body .palette-title:not(.quest-log__title):not([style*="font-size"]),
+  body .read-only-sheet__card-meta,
+  body .profile-editor__eyebrow,
+  body .profile-name-field span,
+  body .profile-fieldset legend,
+  body .quest-tracker__header,
+  body .quest-tracker__header span,
+  body .quest-tracker__header kbd,
+  body .quest-tracker__count,
+  body .quest-tracker__steps li span,
+  body .quest-log__steps li span,
+  body .quest-log__heading,
+  body .quest-log__heading span,
+  body .bug-report-panel .bug-subtitle,
+  body .bug-report-panel .bug-meta {
+    font-size: 12px !important;
+  }
+
+  body .quest-log__drop {
+    font-size: 13px !important;
+  }
+
+  /* An unscored bed has no score to label: the empty "Score" wrap sat under
+     the bug button (iPad 1024x706) and the 12px label poked out above it.
+     Phones already drop it (layout.css, <=420px); the crop counter stays. */
+  body[data-design-language="field-kit"][data-story-screen="play"] .hud-score-wrap[data-empty="true"] {
+    display: none;
+  }
+}
+
+/* Village street-layout credit: 10px inline (village-scene.js) on every
+   screen; 12px is the floor for any visible text. */
+body .village-credits {
+  font-size: 12px !important;
 }

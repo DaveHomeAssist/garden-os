@@ -52,7 +52,7 @@ describe('village hooks (UI wiring with a mock engine)', () => {
     key('e');
     const shop = container.querySelector('#shop-panel');
     expect(shop).not.toBeNull();
-    expect([...shop.querySelectorAll('[data-shop-tab]')].map((b) => b.dataset.shopTab)).toEqual(['seeds', 'tools', 'recipes']);
+    expect([...shop.querySelectorAll('[data-shop-tab]')].map((b) => b.dataset.shopTab)).toEqual(['seeds', 'tools', 'recipes', 'sell']);
     expect(shop.querySelector('.palette-title').textContent).toBe('Seed stand');
     expect(prompt.hidden).toBe(true);
     shop.querySelector('#shop-dismiss').click();

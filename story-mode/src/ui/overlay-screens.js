@@ -15,6 +15,18 @@ import { SEASON_LABELS } from './ui-constants.js';
 import { getRotatedSeasonLabel } from './ui-data-builders.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
 
+/** H4: save-derived lists can be any JSON type; treat non-arrays as empty. */
+const asArray = (value) => (Array.isArray(value) ? value : []);
+
+function escapeOverlayText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function createOverlayScreens(ctx) {
   function buildRecipeRewards(state) {
     return (state.season.harvestResult?.recipeMatches ?? []).map((recipeId) => {
@@ -72,43 +84,58 @@ export function createOverlayScreens(ctx) {
 
     ctx.hudScore?.classList.add('is-harvest-glow');
 
-    ctx.finalizeHarvestProgression();
-    showHarvestReveal(
-      document.getElementById('overlay-container'),
-      ctx.getState().season.harvestResult,
-      {
-        keepsakes: ctx.getState().season.newlyEarnedKeepsakes
-          .map((entry) => ctx.getKeepsakeById(entry.id))
-          .filter(Boolean),
-        unlockedCount: ctx.getState().campaign.keepsakes.length,
-        totalKeepsakes: ctx.getKeepsakeSlots().length,
-        recipeNames: (ctx.getState().season.harvestResult.recipeMatches ?? [])
-          .map((recipeId) => getProfileRecipeName(recipeId, ctx.getRecipeById(recipeId)?.name, ctx.getState().campaign)),
-        recipeRewards: buildRecipeRewards(ctx.getState()),
-        onViewBackpack: () => {
-          ctx.showBackpack();
+    // H4: never leave input locked if the reveal or its continue throws.
+    try {
+      ctx.finalizeHarvestProgression();
+      showHarvestReveal(
+        document.getElementById('overlay-container'),
+        ctx.getState().season.harvestResult,
+        {
+          keepsakes: asArray(ctx.getState().season.newlyEarnedKeepsakes)
+            .map((entry) => ctx.getKeepsakeById(entry?.id))
+            .filter(Boolean),
+          unlockedCount: asArray(ctx.getState().campaign.keepsakes).length,
+          totalKeepsakes: ctx.getKeepsakeSlots().length,
+          recipeNames: (ctx.getState().season.harvestResult.recipeMatches ?? [])
+            .map((recipeId) => getProfileRecipeName(recipeId, ctx.getRecipeById(recipeId)?.name, ctx.getState().campaign)),
+          recipeRewards: buildRecipeRewards(ctx.getState()),
+          onViewBackpack: () => {
+            ctx.showBackpack();
+          },
         },
-      },
-      () => {
-        ctx.hudScore?.classList.remove('is-harvest-glow');
-        ctx.persistState();
+        () => {
+          let handedOff = false;
+          try {
+            ctx.hudScore?.classList.remove('is-harvest-glow');
+            ctx.persistState();
 
-        const postState = ctx.getState();
-        if (postState.season.phase === PHASES.HARVEST && canAdvance(postState.season)) {
-          const transitionResult = ctx.produceState(Actions.ADVANCE_PHASE, (draft) => advance(draft));
-          ctx.updateHUD();
-          ctx.persistState();
+            const postState = ctx.getState();
+            if (postState.season.phase === PHASES.HARVEST && canAdvance(postState.season)) {
+              const transitionResult = ctx.produceState(Actions.ADVANCE_PHASE, (draft) => advance(draft));
+              ctx.updateHUD();
+              ctx.persistState();
 
-          if (transitionResult.advanced && transitionResult.trigger) {
-            ctx.phaseRouter.handleNarrativeTrigger(transitionResult.trigger);
-            return;
+              if (transitionResult.advanced && transitionResult.trigger) {
+                ctx.phaseRouter.handleNarrativeTrigger(transitionResult.trigger);
+                handedOff = true;
+              }
+            }
+          } catch (error) {
+            console.error('[GOS] Harvest continue failed:', error);
+          } finally {
+            if (!handedOff) {
+              ctx.setGameInputEnabled(true);
+              ctx.updateHUD();
+            }
           }
-        }
-
-        ctx.setGameInputEnabled(true);
-        ctx.updateHUD();
-      },
-    );
+        },
+      );
+    } catch (error) {
+      console.error('[GOS] Harvest reveal failed:', error);
+      ctx.hudScore?.classList.remove('is-harvest-glow');
+      ctx.setGameInputEnabled(true);
+      ctx.updateHUD();
+    }
   }
 
   function openSeasonTransition() {
@@ -118,31 +145,37 @@ export function createOverlayScreens(ctx) {
 
     const state = ctx.getState();
     const isSandbox = state.campaign?.sandbox;
-    const nextChapter = state.campaign.currentChapter + 1;
+    // H3: chapter and season come from the save; keep them in range and
+    // escape them before they reach innerHTML.
+    const parsedChapter = Number.parseInt(state.campaign?.currentChapter, 10);
+    const currentChapter = Number.isFinite(parsedChapter) && parsedChapter >= 1 ? parsedChapter : 1;
+    const nextChapter = currentChapter + 1;
+    const seasonId = state.season?.season;
+    const seasonLabel = Object.prototype.hasOwnProperty.call(SEASON_LABELS, seasonId) ? SEASON_LABELS[seasonId] : 'The season';
     const campaignComplete = !isSandbox && nextChapter > 12;
-    const nextSeasonLabel = getRotatedSeasonLabel(state.season.season);
+    const nextSeasonLabel = getRotatedSeasonLabel(seasonId);
 
     const overlay = document.createElement('div');
     overlay.className = 'chapter-intro';
     overlay.id = 'season-transition-overlay';
     overlay.innerHTML = `
       <div class="chapter-num">Season Complete</div>
-      <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
+      <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${escapeOverlayText(currentChapter)} Complete`}</h2>
       <p>
         ${campaignComplete
           ? 'You have reached the end of the current campaign. Continue to view the closing season.'
           : isSandbox
-            ? `${SEASON_LABELS[state.season.season]} is finished. Continue into ${nextSeasonLabel}.`
-            : state.season.season === 'winter'
-              ? `Winter review is complete. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`
-              : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
+            ? `${escapeOverlayText(seasonLabel)} is finished. Continue into ${escapeOverlayText(nextSeasonLabel)}.`
+            : seasonId === 'winter'
+              ? `Winter review is complete. Continue into Chapter ${escapeOverlayText(nextChapter)} and ${escapeOverlayText(nextSeasonLabel)}.`
+              : `Late ${escapeOverlayText(seasonLabel)} is finished. Continue into Chapter ${escapeOverlayText(nextChapter)} and ${escapeOverlayText(nextSeasonLabel)}.`}
       </p>
       <div class="tap-hint" style="margin-top:20px;margin-bottom:10px;">
         ${campaignComplete ? 'Tap continue for the ending' : 'Tap continue to roll into the next season'}
       </div>
       <div class="start-choice-actions">
         <button type="button" class="start-choice-btn start-choice-btn--primary" id="season-transition-continue">
-          ${campaignComplete ? 'Continue' : isSandbox ? `Continue to ${nextSeasonLabel}` : `Continue to Chapter ${nextChapter}`}
+          ${campaignComplete ? 'Continue' : isSandbox ? `Continue to ${escapeOverlayText(nextSeasonLabel)}` : `Continue to Chapter ${escapeOverlayText(nextChapter)}`}
         </button>
       </div>
     `;

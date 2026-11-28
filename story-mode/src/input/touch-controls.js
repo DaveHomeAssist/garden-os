@@ -58,6 +58,46 @@ export function createTouchControls(container, { onOrbitDelta } = {}) {
     target.dispatchEvent(new view.MouseEvent('click', init));
   }
 
+  // Mouse, pen and trackpad input on a touch-capable device (iPad with a
+  // trackpad, touchscreen laptop, Playwright isMobile + mouse) also hit the
+  // overlay, which only handles touch: every click, hover and right-click on
+  // the right 60% of the screen died there (phone check Nov 23: 2 of 8 bed
+  // clicks planted, all in the left 40%). Re-dispatch non-touch pointer input
+  // to whatever sits underneath, unchanged.
+  const FORWARDED = ['pointerdown', 'pointermove', 'pointerup', 'click', 'contextmenu', 'wheel', 'dblclick'];
+  function forwardNonTouch(e) {
+    if (e.pointerType === 'touch') return;
+    // Touch-generated click / contextmenu carry pointerType 'touch' (handled
+    // by forwardTap / the long-press path); plain MouseEvents from a mouse
+    // have no pointerType in some engines, so treat "missing" as a mouse.
+    const doc = overlay.ownerDocument;
+    const prev = overlay.style.pointerEvents;
+    overlay.style.pointerEvents = 'none';
+    const target = doc.elementFromPoint?.(e.clientX, e.clientY);
+    overlay.style.pointerEvents = prev;
+    if (!target || target === overlay || overlay.contains(target)) return;
+    const view = doc.defaultView;
+    const init = {
+      bubbles: true, cancelable: true, composed: true,
+      clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY,
+      button: e.button ?? 0, buttons: e.buttons ?? 0,
+      ctrlKey: e.ctrlKey, shiftKey: e.shiftKey, altKey: e.altKey, metaKey: e.metaKey,
+      pointerId: e.pointerId ?? 1, pointerType: e.pointerType || 'mouse', isPrimary: e.isPrimary ?? true,
+    };
+    let forwarded;
+    if (e.type === 'wheel') {
+      const WheelCtor = view?.WheelEvent ?? view.MouseEvent;
+      forwarded = new WheelCtor('wheel', { ...init, deltaX: e.deltaX, deltaY: e.deltaY, deltaZ: e.deltaZ, deltaMode: e.deltaMode });
+    } else {
+      // click / contextmenu are PointerEvents in current browsers too, so the
+      // input manager can still read pointerType off them.
+      const PointerCtor = view?.PointerEvent ?? view.MouseEvent;
+      forwarded = new PointerCtor(e.type, init);
+    }
+    const allowed = target.dispatchEvent(forwarded);
+    if (!allowed && e.cancelable) e.preventDefault();
+  }
+
   function onPointerDown(e) {
     if (e.pointerType !== 'touch') return;
     if (activeId !== null) return;
@@ -95,6 +135,7 @@ export function createTouchControls(container, { onOrbitDelta } = {}) {
   overlay.addEventListener('pointermove', onPointerMove);
   overlay.addEventListener('pointerup', onPointerEnd);
   overlay.addEventListener('pointercancel', onPointerEnd);
+  FORWARDED.forEach((type) => overlay.addEventListener(type, forwardNonTouch, type === 'wheel' ? { passive: false } : undefined));
 
   // Only show the overlay on touch-capable devices
   const touchCapable =
@@ -115,6 +156,7 @@ export function createTouchControls(container, { onOrbitDelta } = {}) {
       overlay.removeEventListener('pointermove', onPointerMove);
       overlay.removeEventListener('pointerup', onPointerEnd);
       overlay.removeEventListener('pointercancel', onPointerEnd);
+      FORWARDED.forEach((type) => overlay.removeEventListener(type, forwardNonTouch));
       overlay.remove();
     },
   };

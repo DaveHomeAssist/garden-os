@@ -35,11 +35,16 @@ export function detectDefaultArtQuality(env = globalThis) {
   return 'high';
 }
 
+// H2: the localStorage getter itself throws when storage is blocked (embed).
+function readLocalStorage() {
+  try { return globalThis?.localStorage; } catch { return undefined; }
+}
+
 /**
  * Resolve the active tier. Order: URL ?quality=, stored choice, auto-detect.
  * Returns { tier, choice, source }.
  */
-export function resolveArtQuality({ search = globalThis?.location?.search ?? '', storage = globalThis?.localStorage, env = globalThis } = {}) {
+export function resolveArtQuality({ search = globalThis?.location?.search ?? '', storage = readLocalStorage(), env = globalThis } = {}) {
   let fromUrl = null;
   try { fromUrl = new URLSearchParams(search).get('quality'); } catch { fromUrl = null; }
   if (fromUrl === 'low' || fromUrl === 'high') return { tier: fromUrl, choice: fromUrl, source: 'url' };
@@ -48,7 +53,7 @@ export function resolveArtQuality({ search = globalThis?.location?.search ?? '',
   return { tier: detectDefaultArtQuality(env), choice: 'auto', source: 'auto' };
 }
 
-export function storeArtQualityChoice(choice, storage = globalThis?.localStorage) {
+export function storeArtQualityChoice(choice, storage = readLocalStorage()) {
   const value = ART_QUALITY_CHOICES.includes(choice) ? choice : 'auto';
   try {
     if (value === 'auto') storage?.removeItem?.(ART_QUALITY_STORAGE_KEY);

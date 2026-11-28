@@ -14,6 +14,7 @@ import { createDialoguePanel } from './dialogue-panel.js';
 import { showWinterReview } from './winter-review.js';
 import { createCutsceneMachine } from '../game/cutscene-machine.js';
 import { createSeasonCalendar, updateSeasonCalendar } from './season-calendar.js';
+import { mountPhoneStatusChip } from './phone-hud.js';
 import {
   canUseTool,
   executeToolAction,
@@ -61,6 +62,7 @@ import {
   getRowAverages,
   getYearForChapter,
   isLetItGrowInteractionMode,
+  PHONE_OBJECTIVE_QUERY,
 } from './ui-constants.js';
 import { createPauseController } from './pause-controller.js';
 import { getRotatedSeasonLabel, buildBackpackData as buildBackpackData_imported, buildWinterReviewData as buildWinterReviewData_imported } from './ui-data-builders.js';
@@ -74,13 +76,18 @@ import { setButtonInteractive, setElementInteractive } from './focus-state.js';
 import { scoreCell } from '../scoring/cell-score.js';
 import { getProfileRecipeName } from '../data/player-profile.js';
 import { getSheetInsets } from '../scene/bed-focus.js';
+import { PARENT_MUTE_EVENT, effectiveMuted } from '../audio/parent-mute.js';
+
+/** H4: save-derived lists can be any JSON type; treat non-arrays as empty. */
+const asArray = (value) => (Array.isArray(value) ? value : []);
 
 function escapePaletteText(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function bindUI({
@@ -141,6 +148,8 @@ function bindUI({
 
   const calendarEl = createSeasonCalendar();
   document.getElementById('app')?.appendChild(calendarEl);
+  // Phones: crop counter + quest tracker + bug button fold into one chip.
+  mountPhoneStatusChip({ doc: document, signal: sessionListeners.signal });
 
   const hudChapter = document.getElementById('hud-chapter');
   const hudPhase = document.getElementById('hud-phase');
@@ -148,6 +157,54 @@ function bindUI({
   const hudCrops = document.getElementById('hud-crops');
   const hudScore = document.getElementById('hud-score');
   const phaseHelper = document.getElementById('phase-helper');
+  // Phones (portrait, and landscape on short screens) clamp the objective card
+  // to two lines (hud-controls.css); a tap expands it. data-truncated drives
+  // the "tap for more" hint.
+  const objectiveNarrow = typeof window.matchMedia === 'function' ? window.matchMedia(PHONE_OBJECTIVE_QUERY) : null;
+  let objectiveClampFrame = 0;
+  // Phones show a new objective in full once, then settle it to one line
+  // (phone-hud.css); a tap still expands it. Objectives seen before in this
+  // session come back already settled.
+  const OBJECTIVE_FRESH_MS = 7000;
+  const seenObjectives = new Set();
+  let objectiveFreshTimer = 0;
+  function markObjectiveFresh(text) {
+    if (!phaseHelper) return;
+    clearTimeout(objectiveFreshTimer);
+    if (!text || seenObjectives.has(text)) {
+      phaseHelper.classList.remove('is-fresh');
+      return;
+    }
+    seenObjectives.add(text);
+    phaseHelper.classList.add('is-fresh');
+    objectiveFreshTimer = setTimeout(() => {
+      phaseHelper.classList.remove('is-fresh');
+      scheduleObjectiveClampCheck();
+    }, OBJECTIVE_FRESH_MS);
+  }
+  sessionListeners.signal.addEventListener('abort', () => clearTimeout(objectiveFreshTimer));
+  function setObjectiveExpanded(expanded) {
+    if (!phaseHelper) return;
+    phaseHelper.classList.toggle('is-expanded', Boolean(expanded));
+  }
+  function scheduleObjectiveClampCheck() {
+    if (!phaseHelper || objectiveClampFrame || typeof requestAnimationFrame !== 'function') return;
+    objectiveClampFrame = requestAnimationFrame(() => {
+      objectiveClampFrame = 0;
+      const clamped = Boolean(objectiveNarrow?.matches) && !phaseHelper.classList.contains('is-expanded')
+        && !phaseHelper.classList.contains('is-fresh')
+        && phaseHelper.scrollHeight > phaseHelper.clientHeight + 1;
+      if (clamped) phaseHelper.dataset.truncated = 'true';
+      else if (!phaseHelper.classList.contains('is-expanded')) delete phaseHelper.dataset.truncated;
+    });
+  }
+  phaseHelper?.addEventListener('click', () => {
+    if (!objectiveNarrow?.matches) return;
+    if (!phaseHelper.classList.contains('is-expanded') && phaseHelper.dataset.truncated !== 'true') return;
+    setObjectiveExpanded(!phaseHelper.classList.contains('is-expanded'));
+    scheduleObjectiveClampCheck();
+  }, sessionSignal);
+  objectiveNarrow?.addEventListener?.('change', () => { setObjectiveExpanded(false); scheduleObjectiveClampCheck(); }, sessionSignal);
   const panelContainer = document.getElementById('panel-container');
   const phaseDots = document.getElementById('phase-dots');
   const toastContainer = document.getElementById('toast-container');
@@ -352,6 +409,10 @@ function bindUI({
   const dayNightController = new DayNightController(scene, store);
 
   const audioManager = new AudioManager();
+  // Player mute setting combined with the mixmash.games wrapper's Mute All.
+  const applyAudioMute = () => audioManager.setMuted(effectiveMuted(state.settings?.audio?.muted));
+  applyAudioMute();
+  window.addEventListener(PARENT_MUTE_EVENT, applyAudioMute, { signal: sessionListeners.signal });
   let audioInitialized = false;
   let lastAudioSeason = null;
   let currentAmbientGen = null;
@@ -362,7 +423,7 @@ function bindUI({
     await audioManager.init();
     registerProceduralSFX(audioManager);
     const settings = state.settings?.audio ?? {};
-    if (settings.muted) audioManager.setMuted(true);
+    applyAudioMute();
     if (settings.masterVolume != null) audioManager.setMasterVolume(settings.masterVolume);
     if (settings.sfxVolume != null) audioManager.setSFXVolume(settings.sfxVolume);
     if (settings.ambientVolume != null) audioManager.setAmbientVolume(settings.ambientVolume);
@@ -917,6 +978,9 @@ function bindUI({
 
       const awarded = [];
       draft.season.newlyEarnedKeepsakes = [];
+      // H4: older or hand-edited saves can carry non-array lists here.
+      if (!Array.isArray(draft.campaign.keepsakes)) draft.campaign.keepsakes = [];
+      if (!Array.isArray(draft.campaign.recipesCompleted)) draft.campaign.recipesCompleted = [];
 
       // One pantry unit per harvested cell (3 basil cells -> basil +3).
       // yieldList stays de-duplicated for recipes and the summary text.
@@ -1358,42 +1422,70 @@ function bindUI({
 
     hudScore?.classList.add('is-harvest-glow');
 
-    finalizeHarvestProgression();
-    showHarvestReveal(
-      document.getElementById('overlay-container'),
-      state.season.harvestResult,
-      {
-        keepsakes: state.season.newlyEarnedKeepsakes.map((entry) => getKeepsakeById(entry.id)).filter(Boolean),
-        unlockedCount: state.campaign.keepsakes.length,
-        totalKeepsakes: getKeepsakeSlots().length,
-        recipeNames: (state.season.harvestResult.recipeMatches ?? [])
-          .map((recipeId) => getProfileRecipeName(recipeId, getRecipeById(recipeId)?.name, state.campaign)),
-        recipeRewards: buildHarvestRecipeRewards(state),
-        onViewBackpack: () => {
-          showBackpack();
-          fabBackpack?.classList.add('is-open');
-        },
-      },
-      () => {
-        hudScore?.classList.remove('is-harvest-glow');
-
-        persistState();
-
-        if (state.season.phase === PHASES.HARVEST && canAdvance(state.season)) {
-          const transitionResult = produceState(Actions.ADVANCE_PHASE, (draft) => advance(draft));
-          updateHUD();
-          persistState();
-
-          if (transitionResult.advanced && transitionResult.trigger) {
-            phaseRouter.handleNarrativeTrigger(transitionResult.trigger);
-            return;
-          }
+    // H4: a malformed save (non-array keepsakes, null newlyEarnedKeepsakes)
+    // must never abort harvest with input still locked. Any throw while
+    // building or showing the reveal restores input and the HUD.
+    try {
+      finalizeHarvestProgression();
+      if (state.campaign.sandbox) {
+        const result = state.season.harvestResult;
+        const units = Object.values(result?.yieldCounts ?? {}).reduce((sum, n) => sum + n, 0)
+          || (result?.yieldList?.length ?? 0);
+        if (units > 0) {
+          showToast('Crops are in the pantry. Sell them at the seed stand for coins.', 2800);
         }
+      }
+      showHarvestReveal(
+        document.getElementById('overlay-container'),
+        state.season.harvestResult,
+        {
+          keepsakes: asArray(state.season.newlyEarnedKeepsakes)
+            .map((entry) => getKeepsakeById(entry?.id)).filter(Boolean),
+          unlockedCount: asArray(state.campaign.keepsakes).length,
+          totalKeepsakes: getKeepsakeSlots().length,
+          recipeNames: (state.season.harvestResult.recipeMatches ?? [])
+            .map((recipeId) => getProfileRecipeName(recipeId, getRecipeById(recipeId)?.name, state.campaign)),
+          recipeRewards: buildHarvestRecipeRewards(state),
+          onViewBackpack: () => {
+            showBackpack();
+            fabBackpack?.classList.add('is-open');
+          },
+        },
+        () => {
+          // The narrative trigger owns input once it has taken over; every other
+          // path (including a throw anywhere in here) re-enables it.
+          let handedOff = false;
+          try {
+            hudScore?.classList.remove('is-harvest-glow');
 
-        setGameInputEnabled(true);
-        updateHUD();
-      },
-    );
+            persistState();
+
+            if (state.season.phase === PHASES.HARVEST && canAdvance(state.season)) {
+              const transitionResult = produceState(Actions.ADVANCE_PHASE, (draft) => advance(draft));
+              updateHUD();
+              persistState();
+
+              if (transitionResult.advanced && transitionResult.trigger) {
+                phaseRouter.handleNarrativeTrigger(transitionResult.trigger);
+                handedOff = true;
+              }
+            }
+          } catch (error) {
+            console.error('[GOS] Harvest continue failed:', error);
+          } finally {
+            if (!handedOff) {
+              setGameInputEnabled(true);
+              updateHUD();
+            }
+          }
+        },
+      );
+    } catch (error) {
+      console.error('[GOS] Harvest reveal failed:', error);
+      hudScore?.classList.remove('is-harvest-glow');
+      setGameInputEnabled(true);
+      updateHUD();
+    }
   }
 
   function openSeasonTransitionOverlay() {
@@ -1402,31 +1494,37 @@ function bindUI({
     overlayContainer?.querySelector('#season-transition-overlay')?.remove();
 
     const isSandbox = state.campaign?.sandbox;
-    const nextChapter = state.campaign.currentChapter + 1;
+    // H3: chapter and season come from the save; keep them in range and
+    // escape them before they reach innerHTML.
+    const parsedChapter = Number.parseInt(state.campaign?.currentChapter, 10);
+    const currentChapter = Number.isFinite(parsedChapter) && parsedChapter >= 1 ? parsedChapter : 1;
+    const nextChapter = currentChapter + 1;
+    const seasonId = state.season?.season;
+    const seasonLabel = Object.prototype.hasOwnProperty.call(SEASON_LABELS, seasonId) ? SEASON_LABELS[seasonId] : 'The season';
     const campaignComplete = !isSandbox && nextChapter > 12;
-    const nextSeasonLabel = getRotatedSeasonLabel(state.season.season);
+    const nextSeasonLabel = getRotatedSeasonLabel(seasonId);
 
     const overlay = document.createElement('div');
     overlay.className = 'chapter-intro';
     overlay.id = 'season-transition-overlay';
     overlay.innerHTML = `
       <div class="chapter-num">Season Complete</div>
-      <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${state.campaign.currentChapter} Complete`}</h2>
+      <h2>${campaignComplete ? 'The Garden Stays' : isSandbox ? 'Season Complete' : `Chapter ${escapePaletteText(currentChapter)} Complete`}</h2>
       <p>
         ${campaignComplete
           ? 'All twelve chapters are done. Continue for the ending.'
           : isSandbox
-            ? `${SEASON_LABELS[state.season.season]} is finished. Continue into ${nextSeasonLabel}.`
-            : state.season.season === 'winter'
-              ? `Winter review is complete. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`
-              : `Late ${SEASON_LABELS[state.season.season]} is finished. Continue into Chapter ${nextChapter} and ${nextSeasonLabel}.`}
+            ? `${escapePaletteText(seasonLabel)} is finished. Continue into ${escapePaletteText(nextSeasonLabel)}.`
+            : seasonId === 'winter'
+              ? `Winter review is complete. Continue into Chapter ${escapePaletteText(nextChapter)} and ${escapePaletteText(nextSeasonLabel)}.`
+              : `Late ${escapePaletteText(seasonLabel)} is finished. Continue into Chapter ${escapePaletteText(nextChapter)} and ${escapePaletteText(nextSeasonLabel)}.`}
       </p>
       <div class="tap-hint" style="margin-top:20px;margin-bottom:10px;">
         ${campaignComplete ? 'Tap continue for the ending' : 'Tap continue to roll into the next season'}
       </div>
       <div class="start-choice-actions">
         <button type="button" class="start-choice-btn start-choice-btn--primary" id="season-transition-continue">
-          ${campaignComplete ? 'Continue' : isSandbox ? `Continue to ${nextSeasonLabel}` : `Continue to Chapter ${nextChapter}`}
+          ${campaignComplete ? 'Continue' : isSandbox ? `Continue to ${escapePaletteText(nextSeasonLabel)}` : `Continue to Chapter ${escapePaletteText(nextChapter)}`}
         </button>
       </div>
     `;
@@ -1560,9 +1658,15 @@ function bindUI({
         zoneName: getCurrentZoneName(),
         forageAvailable: foraging.available ?? 0,
         nextPhaseLabel: nextPhase ? getPhaseLabel(nextPhase) : null,
+        touch: globalThis.matchMedia?.('(pointer: coarse)').matches ?? false,
       });
-      phaseHelper.textContent = helperText;
+      if (phaseHelper.textContent !== helperText) {
+        phaseHelper.textContent = helperText;
+        setObjectiveExpanded(false);
+        markObjectiveFresh(helperText);
+      }
       phaseHelper.classList.toggle('is-visible', Boolean(helperText) && gameInputEnabled && !cutsceneMachine.isActive());
+      scheduleObjectiveClampCheck();
     }
 
     if (hudAction?.classList.contains('is-visible')) {
@@ -1730,6 +1834,10 @@ function bindUI({
   function handleCellInteraction(cellIndex, source = 'pointer') {
     if (pauseController.isOpen()) return false;
     if (!gameInputEnabled || cutsceneMachine.isActive()) return false;
+    // A stale mesh index (bed resized, grid shorter than bed.cellMeshes) must
+    // be a no-op, not a TypeError on grid[cellIndex].cropId. -1 (a miss) keeps
+    // its palette behaviour below. Bug pass 2026-11-25.
+    if (cellIndex >= 0 && !state.season.grid?.[cellIndex]) return false;
 
     if (interventionTargeting.isActive()) {
       handleInterventionTargetClick(cellIndex);

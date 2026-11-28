@@ -32,7 +32,9 @@ assert.match(theme, /min-height: 44px|garden-theme-toggle/, 'theme controller mu
 const serviceWorker = read('sw.js');
 assert.match(serviceWorker, /garden-theme\.js/);
 assert.match(serviceWorker, /garden-pwa\.js/);
-assert.match(serviceWorker, /2026-09-20-integrity-sprint/);
+assert.match(serviceWorker, /^const CACHE_VERSION = '[^']+';$/m, 'sw.js must keep a single stampable CACHE_VERSION line');
+assert.doesNotMatch(serviceWorker, /cache\.addAll\(/, 'precache must be per-asset so one failed asset cannot block install');
+assert.match(read('.github/workflows/pages.yml'), /Stamp service worker cache version/, 'Pages deploy must stamp sw.js CACHE_VERSION');
 
 const manifest = JSON.parse(read('manifest.json'));
 assert.equal(manifest.name, 'Garden OS');

@@ -86,13 +86,16 @@ export function createDialoguePanel(rootEl) {
         <div class="dp-cast-strip" id="dp-cast-strip" aria-label="Core cast portrait strip"></div>
       </div>
       <div class="dp-content-area">
-        <div class="dp-speaker-badge" id="dp-speaker-badge"></div>
+        <div class="dp-meta-row">
+          <div class="dp-speaker-badge" id="dp-speaker-badge"></div>
+          <span class="dp-field-note" aria-hidden="true">Field Note</span>
+          <button class="dp-skip-btn" id="dp-skip-btn" aria-label="Skip cutscene">Skip</button>
+        </div>
         <div class="dp-text" id="dp-text"></div>
         <div class="dp-choice-row" id="dp-choice-row" role="group" aria-label="Dialogue choices"></div>
         <div class="dp-dots" id="dp-dots"></div>
         <div class="dp-advance-hint" id="dp-advance-hint" aria-hidden="true">tap to continue ▼</div>
       </div>
-      <button class="dp-skip-btn" id="dp-skip-btn" aria-label="Skip cutscene">Skip</button>
     </div>
   `;
 
@@ -293,12 +296,8 @@ export function createDialoguePanel(rootEl) {
       els.advanceHint.hidden = false;
       els.advanceHint.style.opacity = uiState.canAdvance && !(uiState.choices?.length) ? '1' : '0';
       els.skipBtn.style.display = uiState.canSkip ? '' : 'none';
-      // Keep the decorative "field note" tag clear of Skip at any width:
-      // the tag is offset from the right edge by Skip's measured width.
-      const skipWidth = uiState.canSkip ? els.skipBtn.offsetWidth : 0;
-      if (!uiState.canSkip) els.panel.style.setProperty('--dp-skip-clear', '18px');
-      else if (skipWidth > 0) els.panel.style.setProperty('--dp-skip-clear', `${skipWidth + 28}px`);
-      else els.panel.style.removeProperty('--dp-skip-clear');
+      // Field Note and Skip live in .dp-meta-row (normal flow), so they
+      // cannot cover the dialogue text. --dp-skip-clear is no longer needed.
     },
 
     hide() {

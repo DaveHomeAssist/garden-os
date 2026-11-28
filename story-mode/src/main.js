@@ -3,6 +3,8 @@ import '../assets/css/hud-controls.css';
 import '../assets/css/hud-interactions.css';
 import '../assets/css/village-overlays.css';
 import '../assets/css/mobile-a11y.css';
+import '../assets/css/phone-controls.css';
+import '../assets/css/phone-hud.css';
 import '../../garden-theme.js';
 import '../../garden-pwa.js';
 import { initGame, showTitleScreen } from './game/game-init.js';
@@ -11,9 +13,33 @@ import { installPackContent, resetPackContent } from './content/content-registry
 import { loadInstalledPacks } from './content/installed-packs.js';
 import { isOfficialContent } from './content/official-content.js';
 import { installModalFocus } from './ui/modal-focus.js';
+import { STORAGE_FALLBACK_EVENT, isStorageFallbackActive } from './game/safe-storage.js';
+import { showStorageFallbackNotice } from './ui/storage-notice.js';
+import { renderSessionError } from './ui/session-error.js';
+import { installParentMuteListener } from './audio/parent-mute.js';
 
 document.body.dataset.designLanguage = 'field-kit';
 installModalFocus();
+
+// H2: when the browser blocks storage (for example third-party storage in the
+// mixmash.games iframe) saves live in memory for this tab. Say so once, quietly.
+window.addEventListener(STORAGE_FALLBACK_EVENT, () => showStorageFallbackNotice(), { once: true });
+if (isStorageFallbackActive()) showStorageFallbackNotice();
+
+// Mute All from the mixmash.games wrapper (postMessage; see audio/parent-mute.js).
+// Installed at boot so a mute sent while the title is up still applies.
+installParentMuteListener();
+
+// Theme on the title screen lives in the title actions grid (#title-theme),
+// not in the shared floating toggle: on phones that pill sat on top of Import
+// Save and the setup swatches. garden-theme.js sees this button (it carries
+// data-garden-theme-toggle), skips the floating one and keeps its icon and
+// label in sync; in play, Theme lives in the pause menu.
+document.getElementById('title-theme')?.addEventListener('click', () => {
+  const theme = window.GardenTheme;
+  if (!theme?.setTheme) return;
+  theme.setTheme(theme.getTheme() === 'dark' ? 'light' : 'dark');
+});
 
 let runtimeModulesPromise = null;
 
@@ -143,23 +169,7 @@ async function startSession({ initialState, slot, viewport, planner }) {
   } catch (err) {
     clearLoading();
     console.error('[GOS] Session failed:', err);
-    const host = viewport ?? document.getElementById('app');
-    if (host) {
-      host.innerHTML = `
-        <div style="padding:32px;max-width:480px;margin:auto;text-align:center;font-family:'DM Sans',sans-serif;color:#f7f2ea">
-          <h2 style="color:#e8c84a;font-family:'Fraunces',serif;font-size:1.4rem;margin-bottom:12px">Something went wrong</h2>
-          <p style="font-size:0.875rem;line-height:1.5;color:rgba(247,242,234,0.7);margin-bottom:20px">
-            The garden couldn't load. This usually resolves with a refresh.
-          </p>
-          <button onclick="location.reload()" style="padding:10px 20px;border-radius:999px;border:1px solid rgba(232,200,74,0.3);background:rgba(232,200,74,0.1);color:#e8c84a;font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer">
-            Reload
-          </button>
-          <details style="margin-top:20px;text-align:left;font-size:0.75rem;color:rgba(247,242,234,0.35)">
-            <summary style="cursor:pointer">Technical details</summary>
-            <pre style="margin-top:8px;white-space:pre-wrap;word-break:break-word">${err.stack || err.message}</pre>
-          </details>
-        </div>`;
-    }
+    renderSessionError(viewport ?? document.getElementById('app'), err);
   }
 }
 

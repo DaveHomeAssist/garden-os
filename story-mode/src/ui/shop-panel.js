@@ -1,11 +1,12 @@
 /**
- * Shop Panel — modal overlay for the Market Square shop.
- * Players buy seeds, tools, and recipes with their coins: the same
- * campaign.currency.balance the market uses (village-economy.js).
+ * Shop Panel — modal overlay for the village seed stand (and the Market
+ * Square shop). Players buy seeds, tools, and recipes with their coins:
+ * the same campaign.currency.balance the market uses (village-economy.js).
+ * In Free Play the seed stand also has a Sell tab for pantry crops.
  */
-import { getCropsForChapter, getRecipes } from '../data/crops.js';
+import { getCropById, getCropsForChapter, getRecipes } from '../data/crops.js';
 import { getSeedItemId, getItemDef, getInventoryItemCount } from '../game/inventory.js';
-import { getCurrencyBalance } from '../game/village/village-economy.js';
+import { getCropSellPrice, getCurrencyBalance, quotePantrySale } from '../game/village/village-economy.js';
 
 function escapeHtml(value) {
   return String(value)
@@ -65,6 +66,28 @@ function getRecipeListings() {
   });
 }
 
+
+function getSellListings(campaign) {
+  if (!campaign?.sandbox) return [];
+  const pantry = campaign.pantry ?? {};
+  return Object.entries(pantry)
+    .filter(([, count]) => count > 0)
+    .map(([cropId, count]) => {
+      const crop = getCropById(cropId);
+      const unitPrice = getCropSellPrice(cropId);
+      return {
+        cropId,
+        name: crop?.name ?? cropId,
+        icon: crop?.emoji ?? '🥬',
+        count,
+        unitPrice,
+        description: `In the pantry: ${count}. The stand pays ${unitPrice} coins each.`,
+      };
+    })
+    .filter((item) => item.unitPrice > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function renderTabButton(tabId, activeTab, label) {
   const active = tabId === activeTab;
   return `
@@ -108,8 +131,8 @@ function renderItemCard(item, tokens) {
     >
       <span style="font-size:24px;flex-shrink:0;">${escapeHtml(item.icon)}</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
-        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.description ?? '')}</div>
+        <div class="shop-item__name" style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:normal;overflow-wrap:anywhere;line-height:1.25;">${escapeHtml(item.name)}</div>
+        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;">${escapeHtml(item.description ?? '')}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <span class="shop-item__price" style="font-family:'DM Mono',monospace;font-size:13px;color:${canAfford ? '#e8c84a' : '#ef9877'};">${item.price}<span aria-hidden="true">🪙</span><span class="sr-only"> coins</span></span>
@@ -139,6 +162,64 @@ function renderItemCard(item, tokens) {
   `;
 }
 
+
+function renderSellCard(item) {
+  const sellOneLabel = `Sell 1 ${item.name} for ${item.unitPrice} coins`;
+  const sellAllLabel = `Sell all ${item.count} ${item.name} for ${item.unitPrice * item.count} coins`;
+  const btnStyle = `
+            border:none;
+            border-radius:999px;
+            min-width:56px;
+            min-height:44px;
+            padding:6px 14px;
+            font-size:13px;
+            font-weight:700;
+            cursor:pointer;
+            background:#5aab6b;
+            color:#1a120c;
+          `;
+  return `
+    <div
+      class="shop-item-card"
+      style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        min-width:0;
+        padding:10px 12px;
+        border-radius:10px;
+        background:rgba(247,242,234,0.04);
+        border:1px solid rgba(247,242,234,0.08);
+      "
+    >
+      <span style="font-size:24px;flex-shrink:0;">${escapeHtml(item.icon)}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="shop-item__name" style="font-family:'Fraunces',serif;font-size:14px;color:#f7f2ea;white-space:normal;overflow-wrap:anywhere;line-height:1.25;">${escapeHtml(item.name)} · ${item.count}</div>
+        <div class="shop-item__desc" style="font-size:12px;color:rgba(247,242,234,0.74);margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;">${escapeHtml(item.description ?? '')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+        <span class="shop-item__price" style="font-family:'DM Mono',monospace;font-size:13px;color:#e8c84a;">${item.unitPrice}<span aria-hidden="true">🪙</span><span class="sr-only"> coins each</span></span>
+        <button
+          type="button"
+          class="shop-sell-btn"
+          data-sell-crop="${escapeHtml(item.cropId)}"
+          data-sell-count="1"
+          aria-label="${escapeHtml(sellOneLabel)}"
+          style="${btnStyle}"
+        >Sell 1</button>
+        ${item.count > 1 ? `<button
+          type="button"
+          class="shop-sell-btn"
+          data-sell-crop="${escapeHtml(item.cropId)}"
+          data-sell-count="${item.count}"
+          aria-label="${escapeHtml(sellAllLabel)}"
+          style="${btnStyle}"
+        >Sell all</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
 const SHOP_TABS = [['seeds', 'Seeds'], ['tools', 'Tools'], ['recipes', 'Recipes']];
 
 export function createShopPanel(container) {
@@ -162,11 +243,21 @@ export function createShopPanel(container) {
 
   // shopData.tabs limits which tabs show (e.g. the village seed box shows
   // only Seeds); shopData.tab picks the opening tab. Default: all, Seeds.
+  function isSandbox() {
+    return Boolean(currentStore?.getState?.()?.campaign?.sandbox);
+  }
+
   function getVisibleTabs() {
     const allowed = Array.isArray(currentShopData?.tabs) && currentShopData.tabs.length
       ? currentShopData.tabs
       : null;
-    return SHOP_TABS.filter(([tabId]) => !allowed || allowed.includes(tabId));
+    const tabs = SHOP_TABS.filter(([tabId]) => !allowed || allowed.includes(tabId));
+    // The village seed stand (default tabs) grows a Sell tab in Free Play.
+    if (isSandbox() && !allowed) tabs.push(['sell', 'Sell']);
+    else if (isSandbox() && allowed?.includes('sell') && !tabs.some(([id]) => id === 'sell')) {
+      tabs.push(['sell', 'Sell']);
+    }
+    return tabs;
   }
 
   function getListingsForTab(tab) {
@@ -174,6 +265,7 @@ export function createShopPanel(container) {
       case 'seeds': return getSeedListings(getChapter());
       case 'tools': return getToolListings();
       case 'recipes': return getRecipeListings();
+      case 'sell': return getSellListings(currentStore?.getState?.()?.campaign);
       default: return [];
     }
   }
@@ -212,8 +304,12 @@ export function createShopPanel(container) {
 
       <div id="shop-items" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-height:50vh;overflow-y:auto;">
         ${listings.length
-          ? listings.map((item) => renderItemCard(item, tokens)).join('')
-          : '<div style="font-size:13px;color:rgba(247,242,234,0.48);padding:16px 0;">No items available in this category.</div>'
+          ? listings.map((item) => (activeTab === 'sell' ? renderSellCard(item) : renderItemCard(item, tokens))).join('')
+          : `<div style="font-size:13px;color:rgba(247,242,234,0.48);padding:16px 0;">${
+            activeTab === 'sell'
+              ? 'Harvest a crop in the yard, then sell it here for coins.'
+              : 'No items available in this category.'
+          }</div>`
         }
       </div>
       <div data-shop-message role="status" aria-live="polite" style="font-size:12px;color:rgba(247,242,234,0.72);margin-top:10px;min-height:16px;">${escapeHtml(lastMessage)}</div>
@@ -242,6 +338,12 @@ export function createShopPanel(container) {
         handleBuy(itemId, price, isRecipe);
       });
     });
+
+    sheet.querySelectorAll('[data-sell-crop]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        handleSell(btn.dataset.sellCrop, Number(btn.dataset.sellCount));
+      });
+    });
   }
 
   function handleBuy(itemId, price, isRecipe) {
@@ -261,6 +363,33 @@ export function createShopPanel(container) {
     const name = getItemDef(inventoryItemId)?.name ?? inventoryItemId;
     lastMessage = bought ? `Bought ${name}. It's in your backpack.` : 'Your backpack is full.';
     if (bought) currentShopData?.onBuy?.({ itemId: inventoryItemId, price });
+    rerender();
+  }
+
+  function handleSell(cropId, count) {
+    if (!currentStore) return;
+    const quote = quotePantrySale(currentStore.getState()?.campaign, cropId, count);
+    if (!quote.ok) {
+      lastMessage = quote.message ?? 'Could not sell that.';
+      rerender();
+      return;
+    }
+    const haveBefore = currentStore.getState()?.campaign?.pantry?.[cropId] ?? 0;
+    currentStore.dispatch({
+      type: 'VILLAGE_SHOP_SELL',
+      payload: { cropId, count: quote.count },
+    });
+    const haveAfter = currentStore.getState()?.campaign?.pantry?.[cropId] ?? 0;
+    const sold = haveAfter === haveBefore - quote.count;
+    const name = getCropById(cropId)?.name ?? cropId;
+    if (sold) {
+      lastMessage = quote.count === 1
+        ? `Sold 1 ${name} for ${quote.revenue} coins.`
+        : `Sold ${quote.count} ${name} for ${quote.revenue} coins.`;
+      currentShopData?.onSell?.({ cropId, count: quote.count, revenue: quote.revenue });
+    } else {
+      lastMessage = 'Could not sell that.';
+    }
     rerender();
   }
 
