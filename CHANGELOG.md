@@ -38,6 +38,7 @@ reports, FEATURES.md, progress.md, and Notion release records. Entries before
 - Added explicit SVG favicon link tag to all five user-track pages so the browser resolves the tab icon from assets/ instead of requesting the missing /favicon.ico, eliminating a console 404 on every cold load.
 - Fixed the Free Play village showing no prompt, and E doing nothing, after you reloaded while standing at the Seed stand or the compost bin.
 - Fixed Free Play harvests losing all their compost scraps when the backpack was nearly full. The scraps now fill the free space, and a "Your backpack is full." message tells you when some were left behind.
+- Fixed the open world phases smoke failing silently on a Windows CI runner: it now starts npm through a shell there, as `verify-all` already does, and prints the error if npm cannot start.
 
 ### Added
 - Added two authored choices to all 25 Story Mode quests, and neighbors in other zones now remark on the choice you made.
